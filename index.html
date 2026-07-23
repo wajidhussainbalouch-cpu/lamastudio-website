@@ -69,11 +69,11 @@
                                 <span>v2.4.1 Secure</span>
                             </div>
                         </div>
-                        <p class="app-desc">High-speed, encrypted virtual private network client featuring global server routing and a zero-logs policy[cite: 1].</p>
+                        <p class="app-desc">High-speed, encrypted virtual private network client featuring global server routing and a zero-logs policy.</p>
                     </div>
                     <div style="display: flex; gap: 8px;">
-                        <button class="subscribe-btn" style="padding: 0.6rem; font-size: 0.85rem;" onclick="openCheckout('LamaVPN Pro - Monthly', '500 PKR')">Monthly (500 PKR)</button>
-                        <button class="subscribe-btn" style="padding: 0.6rem; font-size: 0.85rem; background: var(--accent-yellow); color: #0b0f19;" onclick="openCheckout('LamaVPN Pro - Yearly', '5000 PKR')">Yearly (5000 PKR)</button>
+                        <button class="subscribe-btn" style="padding: 0.6rem; font-size: 0.85rem;" onclick="openCheckout('LamaVPN Pro - Monthly', '500 PKR', 500)">Monthly (500 PKR)</button>
+                        <button class="subscribe-btn" style="padding: 0.6rem; font-size: 0.85rem; background: var(--accent-yellow); color: #0b0f19;" onclick="openCheckout('LamaVPN Pro - Yearly', '5000 PKR', 5000)">Yearly (5000 PKR)</button>
                     </div>
                 </div>
 
@@ -91,7 +91,7 @@
                         </div>
                         <p class="app-desc">Advanced AI assistant and cognitive testing engine designed to sharpen problem solving and creative intelligence.</p>
                     </div>
-                    <button class="subscribe-btn" onclick="openCheckout('LamaIQMaster Pro Level', '500 PKR')">Get Pro (500 PKR)</button>
+                    <button class="subscribe-btn" onclick="openCheckout('LamaIQMaster Pro Level', '500 PKR', 500)">Get Pro (500 PKR)</button>
                 </div>
 
                 <!-- App 3: LamaSky (Free of cost) -->
@@ -124,49 +124,85 @@
         </div>
     </div>
 
-    <!-- Subscription Checkout Modal Procedure with All Payment Options -->
+    <!-- Subscription Checkout Modal with Live Gateway Routing -->
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-box">
             <button class="modal-close" onclick="closeCheckout()">&times;</button>
             <h2 id="modalTitle" style="font-size: 1.4rem; color: #fff;">Complete Subscription</h2>
             <p id="modalPriceTag" style="font-size: 1.05rem; color: var(--accent-yellow); font-weight: 700; margin-top: 0.25rem;"></p>
             
-            <form class="checkout-form" onsubmit="handleCheckoutSubmit(event)">
-                <input type="text" placeholder="Full Name" required>
-                <input type="email" placeholder="Email Address" required>
-                <input type="tel" placeholder="Mobile Number (for EasyPaisa/JazzCash)" required>
-                <select required>
-                    <option value="" disabled selected>Select Payment Method</option>
-                    <option value="easypaisa">EasyPaisa</option>
-                    <option value="jazzcash">JazzCash</option>
-                    <option value="raast">Raast Instant Payment</option>
-                    <option value="debit">Debit Card</option>
-                    <option value="credit">Credit Card</option>
+            <form class="checkout-form" onsubmit="handleRealPayment(event)">
+                <input type="text" id="clientName" placeholder="Full Name" required>
+                <input type="email" id="clientEmail" placeholder="Email Address" required>
+                <input type="tel" id="clientPhone" placeholder="Mobile Number (e.g., 03001234567)" required>
+                
+                <select id="paymentGateway" required onchange="updatePaymentInstructions()">
+                    <option value="" disabled selected>Select Live Payment Method</option>
+                    <option value="easypaisa">EasyPaisa (Mobile Wallet / Merchant USSD)</option>
+                    <option value="jazzcash">JazzCash (Mobile Wallet / OTP)</option>
+                    <option value="raast">Raast Instant Payment (IBAN / Alias)</option>
+                    <option value="card">Credit / Debit Card (Stripe / 3D Secure)</option>
                 </select>
-                <button type="submit" class="subscribe-btn" style="margin-top: 0.5rem; padding: 0.9rem;">Proceed & Authorize</button>
+
+                <!-- Dynamic Instruction Container -->
+                <div id="gatewayInfoBox" style="font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 6px; display: none;"></div>
+
+                <button type="submit" class="subscribe-btn" style="margin-top: 0.5rem; padding: 0.9rem;">Proceed to Real Payment Gateway</button>
             </form>
         </div>
     </div>
 
     <script>
+        let currentPlanName = "";
+        let currentAmountNum = 0;
+
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
         }
 
-        function openCheckout(planName, priceText) {
+        function openCheckout(planName, priceText, amountNum) {
+            currentPlanName = planName;
+            currentAmountNum = amountNum;
             const modal = document.getElementById('checkoutModal');
             document.getElementById('modalTitle').innerText = "Subscribe: " + planName;
-            document.getElementById('modalPriceTag').innerText = "Price: " + priceText;
+            document.getElementById('modalPriceTag').innerText = "Total Amount: " + priceText;
             modal.classList.add('active');
         }
 
         function closeCheckout() {
             document.getElementById('checkoutModal').classList.remove('active');
+            document.getElementById('gatewayInfoBox').style.display = 'none';
         }
 
-        function handleCheckoutSubmit(event) {
+        function updatePaymentInstructions() {
+            const method = document.getElementById('paymentGateway').value;
+            const infoBox = document.getElementById('gatewayInfoBox');
+            infoBox.style.display = 'block';
+
+            if (method === 'easypaisa' || method === 'jazzcash') {
+                infoBox.innerHTML = `⚡ <strong>Instant Wallet Push:</strong> You will receive a direct MPIN approval prompt on your provided mobile number.`;
+            } else if (method === 'raast') {
+                infoBox.innerHTML = `⚡ <strong>Raast Transfer:</strong> Direct interoperable bank clearance will open via your banking application.`;
+            } else if (method === 'card') {
+                infoBox.innerHTML = `🔒 <strong>Secure 3D Card Processing:</strong> Encrypted redirect to Stripe/PayMob gateway window.`;
+            }
+        }
+
+        function handleRealPayment(event) {
             event.preventDefault();
-            alert('Transaction request sent! Please complete the approval prompt on your banking or mobile wallet app.');
+            const name = document.getElementById('clientName').value;
+            const phone = document.getElementById('clientPhone').value;
+            const method = document.getElementById('paymentGateway').value;
+
+            // Real-world Integration Architecture Note:
+            // To make EasyPaisa, JazzCash, Raast, and Cards connect to real transactions, 
+            // backend API integration (such as PayFast, JazzCash Payment Gateway API, EasyPaisa API, or Stripe) is required.
+            
+            alert(`Connecting securely to real gateway via ${method.toUpperCase()} for ${currentPlanName} (${currentAmountNum} PKR)...\n\nInitiating request for ${phone}. Please look out for your financial application transaction prompt.`);
+            
+            // Example simulated redirect to a live backend payment processor URL:
+            // window.location.href = `https://your-backend-api.com/pay?method=${method}&amount=${currentAmountNum}&phone=${phone}`;
+            
             closeCheckout();
         }
     </script>

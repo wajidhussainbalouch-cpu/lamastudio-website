@@ -1,13 +1,12 @@
 :root {
-    --primary: #f59e0b; /* Vibrant Orange/Amber */
+    --primary: #f59e0b;
     --primary-dark: #d97706;
     --bg-color: #0f172a;
     --sidebar-bg: #1e293b;
-    /* Rich, vibrant orange-shaded box background */
     --card-bg: linear-gradient(135deg, #3d2206, #261404);
     --card-border: rgba(245, 158, 11, 0.4);
     --text-main: #f8fafc;
-    --text-muted: #fde68a; /* Warm golden/orange text tone to match */
+    --text-muted: #fde68a;
     --border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -29,7 +28,7 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar Styling - Top Aligned Menu */
+/* Sidebar Styling */
 .sidebar {
     width: 280px;
     background-color: var(--sidebar-bg);
@@ -42,6 +41,8 @@ body {
     height: 100vh;
     left: 0;
     top: 0;
+    z-index: 100;
+    transition: transform 0.3s ease;
 }
 
 .sidebar h2 {
@@ -49,7 +50,6 @@ body {
     font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 2rem;
-    letter-spacing: -0.5px;
 }
 
 .sidebar ul {
@@ -84,83 +84,192 @@ body {
     padding-top: 2rem;
 }
 
+/* Mobile Toggle Bar */
+.mobile-nav-bar {
+    display: none;
+    background: var(--sidebar-bg);
+    padding: 1rem 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 101;
+}
+
+.mobile-nav-bar h2 {
+    font-size: 1.2rem;
+    color: var(--text-main);
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
 /* Main Content Area */
 .content {
     margin-left: 280px;
     flex-grow: 1;
     padding: 4rem 5%;
     max-width: 1200px;
+    width: 100%;
 }
 
-/* Common Components */
 h1 {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     font-weight: 800;
-    letter-spacing: -1px;
     color: var(--text-main);
     margin-bottom: 0.5rem;
 }
 
 p {
     color: #cbd5e1;
-    font-size: 1.05rem;
+    font-size: 1rem;
 }
 
-.hero-banner {
-    background: linear-gradient(135deg, #3d2206, #211102);
-    border: 1px solid var(--card-border);
-    padding: 3rem;
-    border-radius: 16px;
-    margin-bottom: 2.5rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.hero-banner h1 {
-    color: #ffffff;
-    margin-bottom: 1rem;
-}
-
-.hero-banner p {
-    color: #fde68a;
-    font-size: 1.15rem;
-    font-weight: 400;
-}
-
-.grid {
+/* App Store Grid Layout */
+.app-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 1.5rem;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
 }
 
-/* All Cards & Boxes forced into Orange Shade with Matched Text */
-.card, .service-item, .contact-box {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--card-border) !important;
-    padding: 2rem;
+.app-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 1.5rem;
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
-.card:hover, .service-item:hover, .contact-box:hover {
-    transform: translateY(-3px);
-    border-color: rgba(245, 158, 11, 0.8) !important;
+.app-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(245, 158, 11, 0.9);
 }
 
-.card h3, .service-item h3, .contact-box h3 {
-    color: #ffb703 !important;
-    font-size: 1.3rem;
-    margin-bottom: 0.75rem;
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
 }
 
-.card p, .service-item p, .contact-box p {
-    color: #fef3c7 !important;
-    font-size: 0.95rem;
+.app-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    flex-shrink: 0;
 }
 
+.app-title-group h3 {
+    color: #ffb703;
+    font-size: 1.15rem;
+}
+
+.app-title-group span {
+    font-size: 0.8rem;
+    color: #fde68a;
+}
+
+.app-desc {
+    color: #fef3c7;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-details {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    text-align: center;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid var(--card-border);
+}
+
+/* Detailed App View Container */
+.app-detail-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 2.5rem;
+    border-radius: 16px;
+    margin-top: 2rem;
+}
+
+.app-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.app-large-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.download-btn {
+    display: inline-block;
+    background: #f59e0b;
+    color: #0f172a;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-top: 1.5rem;
+    transition: background 0.2s;
+}
+
+.download-btn:hover {
+    background: #fbbf24;
+}
+
+/* Responsive Breakpoints for Mobile */
 @media (max-width: 900px) {
-    .layout { flex-direction: column; }
-    .sidebar { position: relative; width: 100%; height: auto; padding: 1.5rem; }
-    .content { margin-left: 0; padding: 2rem 5%; }
+    .layout {
+        flex-direction: column;
+    }
+    .sidebar {
+        transform: translateX(-100%);
+        width: 100%;
+        height: 100vh;
+        top: 60px;
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .mobile-nav-bar {
+        display: flex;
+    }
+    .content {
+        margin-left: 0;
+        padding: 2rem 1rem;
+    }
 }

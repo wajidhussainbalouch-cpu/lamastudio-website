@@ -1,561 +1,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LamaVPN Pro — WireGuard VPN by LamaStudio</title>
-    <meta name="description" content="LamaVPN Pro is a WireGuard-based Android VPN with hardware-backed key storage, a genuine free tier, and no traffic logging.">
-    <link rel="canonical" href="https://lamastudio.pk/apps/lamavpnpro/">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="LamaVPN Pro — WireGuard VPN by LamaStudio">
-    <meta property="og:description" content="A WireGuard-based Android VPN with hardware-backed key storage and no traffic logging.">
-    <meta property="og:url" content="https://lamastudio.pk/apps/lamavpnpro/">
-    <link rel="icon" href="data:,">
-    
-    <!-- Futuristic Artistic Styling Sheet (Consistent with main dashboard) -->
-    <style>
-        :root {
-            --bg-color: #07090e;
-            --sidebar-bg: rgba(13, 17, 28, 0.85);
-            --card-bg: linear-gradient(145deg, rgba(22, 29, 46, 0.6), rgba(11, 15, 25, 0.8));
-            --card-border: rgba(245, 158, 11, 0.2);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            
-            /* Theme Color Variables per Application */
-            --vpn-color: #5EE8C5;
-            --iq-color: #a855f7;
-            --sky-color: #38bdf8;
-            --img-color: #f59e0b;
-            --cal-color: #10b981;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LamaStudio — Independent Android Apps Built in Pakistan</title>
+<meta name="description" content="LamaStudio is an independent Android app studio building LamaVPN Pro, LamaSky, and LamaIQMaster — privacy tools, calendars, and learning apps made for Pakistan and beyond.">
+<meta name="keywords" content="LamaStudio, LamaVPN Pro, LamaSky, LamaIQMaster, Android apps Pakistan, VPN app, Hijri calendar app, kids learning app">
+<link rel="canonical" href="https://lamastudio.pk/">
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="LamaStudio — Independent Android Apps Built in Pakistan">
+<meta property="og:description" content="Privacy tools, calendars, and learning apps — built independently, priced for the region.">
+<meta property="og:url" content="https://lamastudio.pk/">
+<meta property="og:image" content="https://lamastudio.pk/assets/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.6;
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.06) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.05) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(94, 232, 197, 0.03) 0%, transparent 60%);
-            background-attachment: fixed;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar Navigation */
-        .sidebar {
-            width: 280px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            padding: 3rem 2rem;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            z-index: 100;
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            overflow-y: auto;
-        }
-
-        .sidebar h2 {
-            color: var(--text-main);
-            font-size: 1.8rem;
-            font-weight: 900;
-            letter-spacing: -0.8px;
-            margin-bottom: 2.5rem;
-            background: linear-gradient(135deg, #fff 30%, #fbbf24 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
-        }
-
-        .nav-group {
-            margin-bottom: 1.8rem;
-        }
-
-        .nav-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            margin-bottom: 0.8rem;
-            display: block;
-            padding-left: 0.5rem;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .sidebar a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0.8rem 1rem;
-            border-radius: 14px;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            border: 1px solid transparent;
-        }
-
-        .sidebar a:hover, .sidebar a.active {
-            color: var(--text-main);
-            background: rgba(94, 232, 197, 0.08);
-            border-color: rgba(94, 232, 197, 0.25);
-            box-shadow: 0 0 20px rgba(94, 232, 197, 0.12);
-            transform: translateX(4px);
-        }
-
-        /* Sidebar Item Icons */
-        .sidebar-icon {
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .sidebar-icon svg, .sidebar-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .sidebar-footer {
-            margin-top: auto;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
-            line-height: 1.5;
-        }
-
-        /* Mobile Top Navbar */
-        .mobile-nav-bar {
-            display: none;
-            background: var(--sidebar-bg);
-            backdrop-filter: blur(20px);
-            padding: 1.2rem 1.5rem;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            position: sticky;
-            top: 0;
-            z-index: 101;
-        }
-
-        .mobile-nav-bar h2 {
-            font-size: 1.3rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #fff, #fbbf24);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .menu-toggle {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            font-size: 1.6rem;
-            cursor: pointer;
-        }
-
-        /* Main Content Wrapper */
-        .content {
-            margin-left: 280px;
-            flex-grow: 1;
-            padding: 4rem 6%;
-            max-width: 1450px;
-        }
-
-        /* App Hero Banner */
-        .app-hero {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(11, 15, 25, 0.8) 100%);
-            border: 1px solid rgba(94, 232, 197, 0.25);
-            padding: 3.5rem;
-            border-radius: 28px;
-            margin-bottom: 3rem;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 3rem;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .app-hero::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(94, 232, 197, 0.12) 0%, transparent 70%);
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .app-hero > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        .eyebrow {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--vpn-color);
-            font-weight: 700;
-            margin-bottom: 0.8rem;
-            display: block;
-        }
-
-        .app-hero h1 {
-            font-size: 2.5rem;
-            font-weight: 900;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, #ffffff 20%, var(--vpn-color) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 1.2rem;
-            line-height: 1.2;
-        }
-
-        .feature-list {
-            list-style: none;
-            margin: 1.8rem 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.95rem;
-            color: var(--text-main);
-        }
-
-        .tick {
-            color: var(--vpn-color);
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 2rem;
-        }
-
-        /* Interactive Glow Action Button */
-        .btn-app {
-            background: var(--vpn-color);
-            border: 1px solid var(--vpn-color);
-            color: #07090e;
-            padding: 0.9rem 2rem;
-            border-radius: 14px;
-            font-weight: 800;
-            font-size: 0.95rem;
-            text-decoration: none;
-            box-shadow: 0 0 25px rgba(94, 232, 197, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.4);
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-        .btn-app:hover {
-            background: #7efce0;
-            box-shadow: 0 0 35px var(--vpn-color), 0 0 15px rgba(126, 252, 224, 0.9);
-            transform: translateY(-2px);
-        }
-        .btn-app:active {
-            background: var(--vpn-color);
-            box-shadow: 0 0 50px var(--vpn-color), 0 0 25px var(--vpn-color);
-            transform: scale(0.98);
-        }
-
-        .btn-ghost {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: var(--text-main);
-            padding: 0.9rem 1.8rem;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            display: inline-block;
-        }
-        .btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Two-Column Panel Grid */
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin-bottom: 1.5rem;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .section-title::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 24px;
-            background: var(--vpn-color);
-            border-radius: 4px;
-            box-shadow: 0 0 12px var(--vpn-color);
-        }
-
-        .two-col {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.8rem;
-            margin-bottom: 3rem;
-        }
-
-        .panel {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 2.2rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .panel:hover {
-            transform: translateY(-5px);
-            border-color: rgba(94, 232, 197, 0.4);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), 0 0 25px rgba(94, 232, 197, 0.2);
-        }
-
-        .panel h3 {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--vpn-color);
-            margin-bottom: 0.8rem;
-            letter-spacing: -0.3px;
-        }
-
-        .panel p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        /* Site Footer */
-        .site-footer {
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .site-footer nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-left: 1rem;
-            transition: color 0.2s;
-        }
-        .site-footer nav a:hover {
-            color: var(--vpn-color);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 900px) {
-            .layout {
-                flex-direction: column;
-            }
-            .sidebar {
-                transform: translateX(-100%);
-                width: 100%;
-                height: 100vh;
-                top: 70px;
-                padding: 2rem;
-            }
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            .mobile-nav-bar {
-                display: flex;
-            }
-            .content {
-                margin-left: 0;
-                padding: 2.5rem 1.25rem;
-            }
-            .app-hero {
-                grid-template-columns: 1fr;
-                padding: 2.2rem;
-            }
-            .app-hero h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000" crossorigin="anonymous"></script>
 </head>
-<body data-app="vpn">
+<body>
 
-    <!-- Mobile Top Header Bar -->
-    <header class="mobile-nav-bar">
-        <h2>LamaStudio</h2>
-        <button class="menu-toggle" onclick="toggleMenu()" aria-label="Toggle navigation menu">☰</button>
-    </header>
-
-    <div class="layout">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar" id="sidebar">
-            <h2>LamaStudio</h2>
-            
-            <nav class="nav-group">
-                <span class="nav-label">Store</span>
-                <ul>
-                    <li><a href="../../index.html"><span class="sidebar-icon">🏠</span>Home</a></li>
-                    <li><a href="../../services.html"><span class="sidebar-icon">⚡</span>Services</a></li>
-                    <li><a href="../../about.html"><span class="sidebar-icon">ℹ️</span>About</a></li>
-                    <li><a href="../../privacy.html"><span class="sidebar-icon">🔒</span>Privacy Policy</a></li>
-                </ul>
-            </nav>
-
-            <nav class="nav-group">
-                <span class="nav-label">Apps</span>
-                <ul>
-                    <li>
-                        <a href="../lamavpnpro/" class="active">
-                            <div class="sidebar-icon" style="background: #111e1b; border: 1px solid var(--vpn-color); border-radius: 6px;">
-                                <svg viewBox="0 0 120 120" width="100%" height="100%">
-                                    <path fill="#5EE8C5" d="M46,110 L46,58 C46,44 52,34 60,34 C68,34 74,44 74,58 L74,110 Z"/>
-                                </svg>
-                            </div>
-                            LamaVPN Pro
-                        </a>
-                    </li>
-                    <li>
-                        <a href="../lamasky/">
-                            <div class="sidebar-icon" style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px;">
-                                <span style="font-size:10px; font-weight:800; color:var(--sky-color);">SKY</span>
-                            </div>
-                            LamaSky
-                        </a>
-                    </li>
-                    <li>
-                        <a href="../lamaiqmaster/">
-                            <div class="sidebar-icon" style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px;">
-                                <span style="font-size:10px; font-weight:800; color:var(--iq-color);">IQ</span>
-                            </div>
-                            LamaIQMaster
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-            <div class="sidebar-footer">
-                LamaStudio<br>Islamabad, Pakistan<br>&copy; 2026 lamastudio.pk
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="content">
-            <div class="app-hero">
-                <div>
-                    <span class="eyebrow">LamaVPN Pro</span>
-                    <h1>A VPN that tells you exactly what it does with your traffic: nothing.</h1>
-                    <p style="color:var(--text-muted); max-width:520px;">Built on the WireGuard protocol with keys generated and held inside the Android Keystore. No traffic logs, no DNS logs — just a fast, direct tunnel.</p>
-                    <ul class="feature-list">
-                        <li><span class="tick">✓</span>WireGuard protocol for low-latency, modern encryption</li>
-                        <li><span class="tick">✓</span>Hardware-backed key storage via Android Keystore</li>
-                        <li><span class="tick">✓</span>Real free tier — not a 3-day trial disguised as one</li>
-                        <li><span class="tick">✓</span>One-tap connect, MVVM architecture under the hood</li>
-                    </ul>
-                    <div class="hero-actions">
-                        <a href="#" class="btn-app">Get LamaVPN Pro</a>
-                        <a href="../../index.html" class="btn-ghost">Back to Store</a>
-                    </div>
-                </div>
-                
-                <!-- Interactive App Visual Graphic Icon Box -->
-                <div style="display: flex; align-items: center; justify-content: center; min-height: 280px;">
-                    <div style="width: 180px; height: 180px; background: #111e1b; border: 2.5px solid var(--vpn-color); border-radius: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(94, 232, 197, 0.25);">
-                        <svg viewBox="0 0 120 120" width="110px" height="110px">
-                            <path fill="#5EE8C5" d="M46,110 L46,58 C46,44 52,34 60,34 C68,34 74,44 74,58 L74,110 Z"/>
-                            <path fill="#5EE8C5" d="M60,10 C72,10 81,19 81,31 C81,40 76,46 69,49 L69,54 L51,54 L51,49 C44,46 39,40 39,31 C39,19 48,10 60,10 Z"/>
-                            <path fill="#2E7D6B" d="M46,14 C40,10 33,12 31,19 C29,25 33,31 40,31 C44,31 47,28 48,24 C49,20 48,16 46,14 Z"/>
-                            <path fill="#2E7D6B" d="M74,14 C80,10 87,12 89,19 C91,25 87,31 80,31 C76,31 73,28 72,24 C71,20 72,16 74,14 Z"/>
-                            <path fill="#0E1116" opacity="0.18" d="M51,44 L69,44 L69,52 C69,54 66,56 60,56 C54,56 51,54 51,52 Z"/>
-                            <circle fill="#0E1116" cx="67" cy="26" r="3"/>
-                            <path fill="#0E1116" opacity="0.22" d="M60,72 L68,84 L60,108 L52,84 Z"/>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <h2 class="section-title">Under the hood</h2>
-            <div class="two-col">
-                <div class="panel">
-                    <h3>Architecture</h3>
-                    <p>MVVM with Jetpack Compose, keeping connection state, server selection, and billing status cleanly separated so the UI never blocks on network calls.</p>
-                </div>
-                <div class="panel">
-                    <h3>Monetization</h3>
-                    <p>Freemium via AdMob and Google Play Billing — free users get a genuinely usable tier, Pro removes ads and unlocks the full server list.</p>
-                </div>
-                <div class="panel">
-                    <h3>Security posture</h3>
-                    <p>Private keys never leave the device's secure hardware. The app is designed so that even a compromised app process can't export a raw key.</p>
-                </div>
-                <div class="panel">
-                    <h3>What's still in progress</h3>
-                    <p>The backend API, WireGuard VPS fleet, and full auth flow are being built alongside the client — this page reflects the app's design, not a finished server network.</p>
-                </div>
-            </div>
-
-            <footer class="site-footer">
-                <span>&copy; 2026 LamaStudio. All rights reserved.</span>
-                <nav><a href="../../privacy.html">Privacy</a> · <a href="../../about.html">About</a></nav>
-            </footer>
-        </main>
+<div class="topbar">
+    <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+    <div class="topbar-links">
+        <a href="services.html">Services</a>
+        <a href="about.html">About</a>
+        <a href="privacy.html">Privacy</a>
     </div>
+</div>
 
-    <script>
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
-    </script>
+<div class="layout">
+    <aside class="sidebar">
+        <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+
+        <nav class="nav-group">
+            <span class="nav-label">Store</span>
+            <a href="index.html" class="nav-link active"><span class="nav-dot"></span>Home</a>
+            <a href="services.html" class="nav-link"><span class="nav-dot"></span>Services</a>
+            <a href="about.html" class="nav-link"><span class="nav-dot"></span>About</a>
+            <a href="privacy.html" class="nav-link"><span class="nav-dot"></span>Privacy Policy</a>
+        </nav>
+
+        <nav class="nav-group">
+            <span class="nav-label">Apps</span>
+            <a href="apps/lamavpnpro/" class="nav-link" data-app="vpn"><span class="nav-dot"></span>LamaVPN Pro</a>
+            <a href="apps/lamasky/" class="nav-link" data-app="sky"><span class="nav-dot"></span>LamaSky</a>
+            <a href="apps/lamaiqmaster/" class="nav-link" data-app="iq"><span class="nav-dot"></span>LamaIQMaster</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            LamaStudio<br>
+            Islamabad, Pakistan<br>
+            &copy; 2026 lamastudio.pk
+        </div>
+    </aside>
+
+    <main class="content">
+        <section class="hero">
+            <span class="eyebrow">Independent Android Studio · Pakistan</span>
+            <h1>Software built close to home, for how people here actually use their phones.</h1>
+            <p>LamaStudio designs and ships Android apps end to end — from WireGuard-grade privacy tools to calendars that understand the Hijri and Nanakshahi systems, to learning apps that speak Urdu and English at once. No outsourced templates. No borrowed backend.</p>
+            <div class="hero-actions">
+                <a href="apps/lamavpnpro/" class="btn-action">Browse Apps</a>
+                <a href="services.html" class="btn-ghost">Work With Us</a>
+            </div>
+        </section>
+
+        <div class="ad-slot" role="complementary" aria-label="Advertisement">
+            <ins class="adsbygoogle"
+                 style="display:block;width:100%;height:90px"
+                 data-ad-client="ca-pub-0000000000000000"
+                 data-ad-slot="0000000000"
+                 data-ad-format="horizontal"></ins>
+        </div>
+
+        <h2 class="section-title">Our Apps</h2>
+        <div class="app-grid">
+
+            <a href="apps/lamavpnpro/" class="app-card" data-app="vpn">
+                <div class="app-icon">VP</div>
+                <h3>LamaVPN Pro</h3>
+                <p>A WireGuard-based VPN built around a hardware-backed keystore, with a clear free tier and no dark patterns around your traffic.</p>
+                <div class="app-tags">
+                    <span class="app-tag">WireGuard</span>
+                    <span class="app-tag">Privacy-first</span>
+                    <span class="app-tag">Freemium</span>
+                </div>
+                <span class="app-card-cta">View app →</span>
+            </a>
+
+            <a href="apps/lamasky/" class="app-card" data-app="sky">
+                <div class="app-icon">SK</div>
+                <h3>LamaSky</h3>
+                <p>One calendar for Gregorian, Hijri, and Nanakshahi dates, with home-screen widgets that stay accurate without opening the app.</p>
+                <div class="app-tags">
+                    <span class="app-tag">Multi-calendar</span>
+                    <span class="app-tag">Widgets</span>
+                    <span class="app-tag">RTL support</span>
+                </div>
+                <span class="app-card-cta">View app →</span>
+            </a>
+
+            <a href="apps/lamaiqmaster/" class="app-card" data-app="iq">
+                <div class="app-icon">IQ</div>
+                <h3>LamaIQMaster</h3>
+                <p>A bilingual practice app for grades 1–5 that adjusts its difficulty to each child, in Urdu and English.</p>
+                <div class="app-tags">
+                    <span class="app-tag">Grades 1–5</span>
+                    <span class="app-tag">Bilingual</span>
+                    <span class="app-tag">Adaptive</span>
+                </div>
+                <span class="app-card-cta">View app →</span>
+            </a>
+
+        </div>
+
+        <h2 class="section-title">Why LamaStudio</h2>
+        <div class="two-col">
+            <div class="panel">
+                <h3>Built and billed locally</h3>
+                <p>Subscriptions run through EasyPaisa, JazzCash, and Raast alongside Play Billing, so paying for an app doesn't require a foreign card.</p>
+            </div>
+            <div class="panel">
+                <h3>Small studio, full ownership</h3>
+                <p>Every app in this store is designed, coded, and supported in-house — architecture, billing, and backend included, not assembled from a template marketplace.</p>
+            </div>
+        </div>
+
+        <footer class="site-footer">
+            <span>&copy; 2026 LamaStudio. All rights reserved.</span>
+            <nav>
+                <a href="about.html">About</a> ·
+                <a href="services.html">Services</a> ·
+                <a href="privacy.html">Privacy</a>
+            </nav>
+        </footer>
+    </main>
+</div>
+
 </body>
 </html>

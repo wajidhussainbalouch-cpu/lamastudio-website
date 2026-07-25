@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LamaSky - Next-Gen Weather Utility | LamaStudio</title>
+    <title>LamaSky - Atmospheric Suite | LamaStudio</title>
     <meta name="description" content="Discover LamaSky by LamaStudio. Live real-time atmospheric tracking, dynamic home screen weather widgets, and elite performance with a vibrant solar-gold theme.">
     <link rel="stylesheet" href="../../style.css">
     <style>
-        /* Immersive Solar-Gold Weather Theme System (Zero White Boxes) */
+        /* Solar-Gold Immersive Dashboard Layout */
         :root {
             --bg-deep: #080705;
             --bg-surface: #14110b;
-            --bg-glass: rgba(20, 17, 11, 0.7);
-            --border-glass: rgba(255, 170, 0, 0.12);
-            --border-glow: rgba(255, 153, 0, 0.4);
+            --bg-sidebar: #0f0d09;
+            --border-glow: rgba(255, 170, 0, 0.25);
             --accent-sun: #ffaa00;
             --accent-glow: rgba(255, 170, 0, 0.15);
             --text-main: #fffbeb;
@@ -28,15 +27,90 @@
             padding: 0;
             line-height: 1.8;
             background-image: 
-                radial-gradient(circle at 15% 10%, rgba(255, 170, 0, 0.08) 0%, transparent 45%),
-                radial-gradient(circle at 85% 90%, rgba(249, 115, 22, 0.06) 0%, transparent 45%);
+                radial-gradient(circle at 20% 10%, rgba(255, 170, 0, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 90% 90%, rgba(249, 115, 22, 0.04) 0%, transparent 45%);
             background-attachment: fixed;
         }
 
-        .app-hero-container {
-            max-width: 900px;
-            margin: 5rem auto;
-            padding: 0 2rem;
+        /* Dashboard App Grid Layout */
+        .app-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Custom Sidebar Navigation Specific to LamaSky */
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-glow);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .sidebar-brand {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-brand span {
+            color: var(--accent-sun);
+            text-shadow: 0 0 12px var(--accent-sun);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: var(--accent-glow);
+            color: var(--accent-sun);
+            border-color: var(--border-glow);
+            box-shadow: 0 0 15px rgba(255, 170, 0, 0.1);
+        }
+
+        .sidebar-footer {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-glow);
+            padding-top: 1.25rem;
+        }
+
+        /* Main Content Panel */
+        .main-content {
+            padding: 4rem;
+            max-width: 950px;
+            box-sizing: border-box;
         }
 
         .hero-badge {
@@ -55,93 +129,72 @@
         }
 
         .hero-title {
-            font-size: 3rem;
+            font-size: 2.8rem;
             font-weight: 900;
             color: var(--text-main);
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
             letter-spacing: -1px;
-            line-height: 1.2;
             background: linear-gradient(135deg, #ffffff 30%, #ffaa00 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .hero-subtitle {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             color: var(--text-muted);
             margin-bottom: 3rem;
-            max-width: 750px;
             line-height: 1.7;
         }
 
-        /* Modern Glass Feature Pods with Solar Orange/Yellow Outlines */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .glass-pod {
+        /* Glass Cards with Solar Orange/Yellow Outlines */
+        .glass-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-glow);
-            border-radius: 24px;
-            padding: 3rem;
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 170, 0, 0.03);
             backdrop-filter: blur(16px);
-            position: relative;
-            overflow: hidden;
-            transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            transition: border-color 0.3s ease, transform 0.3s ease;
         }
 
-        .glass-pod:hover {
+        .glass-card:hover {
             border-color: rgba(255, 170, 0, 0.7);
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 170, 0, 0.15);
         }
 
-        .glass-pod::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--accent-sun), transparent);
-            opacity: 0.8;
-        }
-
-        .glass-pod h2 {
-            font-size: 1.6rem;
-            color: var(--text-main);
+        .glass-card h2 {
+            font-size: 1.4rem;
+            color: var(--accent-sun);
             margin-top: 0;
             margin-bottom: 1rem;
-            font-weight: 800;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        .glass-pod h2::before {
+        .glass-card h2::before {
             content: "";
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: var(--accent-sun);
             border-radius: 50%;
-            box-shadow: 0 0 12px var(--accent-sun);
+            box-shadow: 0 0 10px var(--accent-sun);
         }
 
-        .glass-pod p {
+        .glass-card p {
             color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
         }
 
-        /* Weather Highlight Features inside the About Card */
+        /* Weather Features Grid */
         .weather-features {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 1.25rem;
             margin-bottom: 2rem;
         }
@@ -154,33 +207,27 @@
         }
 
         .weather-feature-item h3 {
-            font-size: 1.05rem;
+            font-size: 1rem;
             color: var(--accent-sun);
             margin: 0 0 0.5rem 0;
             font-weight: 700;
         }
 
         .weather-feature-item p {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             color: var(--text-muted);
             margin: 0;
         }
 
-        /* Solar-Gold Pro Buttons */
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
+        /* Solar-Gold Buttons */
         .btn-primary {
             display: inline-flex;
             align-items: center;
             gap: 0.75rem;
             background: linear-gradient(135deg, #ffaa00 0%, #f97316 100%);
             color: #14110b;
-            padding: 0.95rem 2.2rem;
-            border-radius: 14px;
+            padding: 0.9rem 2rem;
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 800;
             box-shadow: 0 10px 25px rgba(255, 170, 0, 0.3);
@@ -193,79 +240,92 @@
             background: linear-gradient(135deg, #ffb71c, #fb8532);
         }
 
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: rgba(255, 170, 0, 0.05);
-            border: 1px solid rgba(255, 170, 0, 0.3);
-            color: var(--accent-sun);
-            padding: 0.95rem 2.2rem;
-            border-radius: 14px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.25s ease;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 170, 0, 0.12);
-            border-color: var(--accent-sun);
-            color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            .app-hero-container {
-                margin: 2rem 1rem;
-                padding: 0 0.5rem;
+        @media (max-width: 900px) {
+            .app-layout {
+                grid-template-columns: 1fr;
             }
-            .hero-title {
-                font-size: 2.3rem;
+            .sidebar {
+                position: relative;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border-glow);
+                padding: 1.5rem;
             }
-            .glass-pod {
-                padding: 1.75rem;
+            .main-content {
+                padding: 2rem 1rem;
             }
         }
     </style>
 </head>
 <body>
 
-    <main class="app-hero-container">
-        <span class="hero-badge">LamaStudio Ecosystem</span>
-        <h1 class="hero-title">LamaSky Atmospheric Suite</h1>
-        <p class="hero-subtitle">Your ultimate real-time weather companion for next-gen meteorological tracking, dynamic live home screen widgets, and complete offline data security.</p>
+    <div class="app-layout">
+        <!-- Dedicated LamaSky Sidebar Menu -->
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-brand">
+                    ☀️ <span>LamaSky</span> Hub
+                </div>
+                <ul class="sidebar-menu">
+                    <li><a href="#overview" class="active">Overview & Details</a></li>
+                    <li><a href="#widgets">Live Widgets</a></li>
+                    <li><a href="#downloads">Download APK</a></li>
+                    <li><a href="privacy.html">Privacy Policy</a></li>
+                    <li><a href="../../index.html">&larr; Main Studio Website</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-footer">
+                &copy; 2026 LamaStudio. All rights reserved.
+            </div>
+        </aside>
 
-        <div class="content-grid">
-            <!-- About Weather App Pod -->
-            <div class="glass-pod">
+        <!-- Main Content Area with Detailed Weather Specifications -->
+        <main class="main-content">
+            <span class="hero-badge">Atmospheric Suite</span>
+            <h1 class="hero-title">LamaSky Weather Experience</h1>
+            <p class="hero-subtitle">Your ultimate real-time meteorological companion engineered with hyper-accurate tracking, live home screen widgets, and complete offline data privacy.</p>
+
+            <!-- Overview Section -->
+            <section id="overview" class="glass-card">
                 <h2>About LamaSky Weather</h2>
-                <p>LamaSky brings hyper-accurate atmospheric data and sleek interface design straight to your fingertips. Built with smart optimization to deliver low battery consumption while maintaining instant weather syncing.</p>
+                <p>LamaSky brings precise atmospheric metrics, real-time temperature fluctuations, and an immaculate solar interface straight to your fingertips. Built with advanced optimization algorithms to guarantee minimal battery consumption while delivering instant weather updates.</p>
                 
                 <div class="weather-features">
                     <div class="weather-feature-item">
-                        <h3>Live Widgets</h3>
-                        <p>Real-time temperature and radar updates directly on your home screen layout.</p>
+                        <h3>Global Radar Sync</h3>
+                        <p>Real-time Doppler cloud mapping and live precipitation tracking across regions.</p>
                     </div>
                     <div class="weather-feature-item">
-                        <h3>Hyper-Local</h3>
-                        <p>Precise neighborhood-level meteorological metrics and forecasts instantly.</p>
+                        <h3>Hyper-Local Forecasts</h3>
+                        <p>Precise neighborhood-level meteorological breakdowns updated every minute.</p>
                     </div>
                 </div>
+            </section>
 
-                <div class="btn-group">
-                    <a href="#" class="btn-primary">Download LamaSky APK</a>
+            <!-- Live Widgets Section -->
+            <section id="widgets" class="glass-card">
+                <h2>Dynamic Home Screen Widgets</h2>
+                <p>Customize your mobile interface with interactive solar and atmospheric widgets. Monitor weather trends, UV indexes, humidity levels, and wind vectors directly from your home screen layout without opening the application.</p>
+                <div class="weather-features">
+                    <div class="weather-feature-item">
+                        <h3>Minimalist Glass Clocks</h3>
+                        <p>Sleek widget integrations blending time, temperature, and atmospheric status.</p>
+                    </div>
+                    <div class="weather-feature-item">
+                        <h3>Low Power Impact</h3>
+                        <p>Optimized background fetching architecture to preserve device battery life.</p>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <!-- Legal & Compliance Pod -->
-            <div class="glass-pod">
-                <h2>Legal & Privacy Standards</h2>
-                <p>We believe in absolute transparency. Read our data handling commitments, location usage policy, and security protocols tailored specifically for LamaSky.</p>
-                <div class="btn-group">
-                    <a href="privacy.html" class="btn-secondary">View LamaSky Privacy Policy &rarr;</a>
-                </div>
-            </div>
-        </div>
-    </main>
+            <!-- Download Section -->
+            <section id="downloads" class="glass-card">
+                <h2>Download LamaSky APK</h2>
+                <p>Get the latest stable release of LamaSky completely free. Fast installation, clean layout, and total data privacy assurance.</p>
+                <a href="#" class="btn-primary">Download Free APK v2.4</a>
+            </section>
+        </main>
+    </div>
 
 </body>
 </html>

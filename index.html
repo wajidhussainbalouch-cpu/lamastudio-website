@@ -29,7 +29,6 @@
     <style>
         :root {
             --primary: #f59e0b;
-            --primary-glow: rgba(245, 158, 11, 0.35);
             --bg-color: #0b0f19;
             --sidebar-bg: #111827;
             --card-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(17, 24, 39, 0.8));
@@ -227,6 +226,13 @@
             margin-top: 1.5rem;
         }
 
+        /* App Card Link Wrapper (Enables pointer cursor and full-box clicking) */
+        .app-card-link {
+            text-decoration: none;
+            display: block;
+            cursor: pointer;
+        }
+
         .app-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -235,15 +241,66 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            height: 100%;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .app-card:hover {
+        /* Dynamic Theme Hover States */
+        .app-card-link[data-theme="vpn"]:hover .app-card {
             transform: translateY(-6px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px var(--primary-glow);
+            border-color: #5EE8C5;
+            box-shadow: 0 20px 40px rgba(94, 232, 197, 0.35);
+        }
+        .app-card-link[data-theme="vpn"]:hover .btn-details {
+            background: #5EE8C5;
+            color: #0b0f19;
+            box-shadow: 0 0 15px #5EE8C5;
+        }
+
+        .app-card-link[data-theme="ai"]:hover .app-card {
+            transform: translateY(-6px);
+            border-color: #c084fc;
+            box-shadow: 0 20px 40px rgba(192, 132, 252, 0.35);
+        }
+        .app-card-link[data-theme="ai"]:hover .btn-details {
+            background: #c084fc;
+            color: #0b0f19;
+            box-shadow: 0 0 15px #c084fc;
+        }
+
+        .app-card-link[data-theme="sky"]:hover .app-card {
+            transform: translateY(-6px);
+            border-color: #38bdf8;
+            box-shadow: 0 20px 40px rgba(56, 189, 248, 0.35);
+        }
+        .app-card-link[data-theme="sky"]:hover .btn-details {
+            background: #38bdf8;
+            color: #0b0f19;
+            box-shadow: 0 0 15px #38bdf8;
+        }
+
+        .app-card-link[data-theme="photo"]:hover .app-card {
+            transform: translateY(-6px);
+            border-color: #f59e0b;
+            box-shadow: 0 20px 40px rgba(245, 158, 11, 0.35);
+        }
+        .app-card-link[data-theme="photo"]:hover .btn-details {
+            background: #f59e0b;
+            color: #0b0f19;
+            box-shadow: 0 0 15px #f59e0b;
+        }
+
+        .app-card-link[data-theme="calendar"]:hover .app-card {
+            transform: translateY(-6px);
+            border-color: #10b981;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.35);
+        }
+        .app-card-link[data-theme="calendar"]:hover .btn-details {
+            background: #10b981;
+            color: #0b0f19;
+            box-shadow: 0 0 15px #10b981;
         }
 
         .app-header {
@@ -303,22 +360,15 @@
         }
 
         .btn-details {
-            background: rgba(245, 158, 11, 0.15);
-            color: var(--accent-yellow);
             text-align: center;
             padding: 0.75rem;
             border-radius: 12px;
             font-weight: 600;
             font-size: 0.95rem;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
             display: block;
             text-decoration: none;
-        }
-
-        .app-card:hover .btn-details {
-            background: var(--primary);
-            color: #0b0f19;
         }
 
         /* Mobile Breakpoints */
@@ -397,107 +447,117 @@
             <div class="app-grid">
                 
                 <!-- App 1: LamaVPN Pro -->
-                <article class="app-card">
-                    <div>
-                        <div class="app-header">
-                            <div class="app-icon" style="background: #111e1b; border: 1.5px solid #5EE8C5; padding: 4px;">
-                                <svg viewBox="0 0 120 120" width="100%" height="100%">
-                                    <path fill="#5EE8C5" d="M46,110 L46,58 C46,44 52,34 60,34 C68,34 74,44 74,58 L74,110 Z"/>
-                                    <path fill="#5EE8C5" d="M60,10 C72,10 81,19 81,31 C81,40 76,46 69,49 L69,54 L51,54 L51,49 C44,46 39,40 39,31 C39,19 48,10 60,10 Z"/>
-                                    <path fill="#2E7D6B" d="M46,14 C40,10 33,12 31,19 C29,25 33,31 40,31 C44,31 47,28 48,24 C49,20 48,16 46,14 Z"/>
-                                    <path fill="#2E7D6B" d="M74,14 C80,10 87,12 89,19 C91,25 87,31 80,31 C76,31 73,28 72,24 C71,20 72,16 74,14 Z"/>
-                                    <path fill="#0E1116" opacity="0.18" d="M51,44 L69,44 L69,52 C69,54 66,56 60,56 C54,56 51,54 51,52 Z"/>
-                                    <circle fill="#0E1116" cx="67" cy="26" r="3"/>
-                                    <path fill="#0E1116" opacity="0.22" d="M60,72 L68,84 L60,108 L52,84 Z"/>
-                                </svg>
+                <a href="/apps/lamavpnpro/index.html" class="app-card-link" data-theme="vpn">
+                    <article class="app-card">
+                        <div>
+                            <div class="app-header">
+                                <div class="app-icon" style="background: #111e1b; border: 1.5px solid #5EE8C5; padding: 4px;">
+                                    <svg viewBox="0 0 120 120" width="100%" height="100%">
+                                        <path fill="#5EE8C5" d="M46,110 L46,58 C46,44 52,34 60,34 C68,34 74,44 74,58 L74,110 Z"/>
+                                        <path fill="#5EE8C5" d="M60,10 C72,10 81,19 81,31 C81,40 76,46 69,49 L69,54 L51,54 L51,49 C44,46 39,40 39,31 C39,19 48,10 60,10 Z"/>
+                                        <path fill="#2E7D6B" d="M46,14 C40,10 33,12 31,19 C29,25 33,31 40,31 C44,31 47,28 48,24 C49,20 48,16 46,14 Z"/>
+                                        <path fill="#2E7D6B" d="M74,14 C80,10 87,12 89,19 C91,25 87,31 80,31 C76,31 73,28 72,24 C71,20 72,16 74,14 Z"/>
+                                        <path fill="#0E1116" opacity="0.18" d="M51,44 L69,44 L69,52 C69,54 66,56 60,56 C54,56 51,54 51,52 Z"/>
+                                        <circle fill="#0E1116" cx="67" cy="26" r="3"/>
+                                        <path fill="#0E1116" opacity="0.22" d="M60,72 L68,84 L60,108 L52,84 Z"/>
+                                    </svg>
+                                </div>
+                                <div class="app-title-group">
+                                    <h3>LamaVPN Pro</h3>
+                                    <span style="background: rgba(94, 232, 197, 0.15); color: #5EE8C5;">v2.4.1 Secure</span>
+                                </div>
                             </div>
-                            <div class="app-title-group">
-                                <h3>LamaVPN Pro</h3>
-                                <span style="background: rgba(94, 232, 197, 0.15); color: #5EE8C5;">v2.4.1 Secure</span>
-                            </div>
+                            <p class="app-desc">High-speed, encrypted virtual private network client featuring global server routing and a zero-logs policy.</p>
                         </div>
-                        <p class="app-desc">High-speed, encrypted virtual private network client featuring global server routing and a zero-logs policy.</p>
-                    </div>
-                    <div>
-                        <a href="/apps/lamavpnpro/index.html" class="btn-details" style="color: #5EE8C5; background: rgba(94, 232, 197, 0.1); border-color: rgba(94, 232, 197, 0.25);">Open VPN Suite</a>
-                    </div>
-                </article>
+                        <div>
+                            <span class="btn-details" style="color: #5EE8C5; background: rgba(94, 232, 197, 0.1); border-color: rgba(94, 232, 197, 0.25);">Open VPN Suite</span>
+                        </div>
+                    </article>
+                </a>
 
                 <!-- App 2: LamaIQMaster -->
-                <article class="app-card">
-                    <div>
-                        <div class="app-header">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #6366f1, #a855f7); border: 1.5px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #fff;">
-                                IQ
+                <a href="/apps/lamaiqmaster/index.html" class="app-card-link" data-theme="ai">
+                    <article class="app-card">
+                        <div>
+                            <div class="app-header">
+                                <div class="app-icon" style="background: linear-gradient(135deg, #6366f1, #a855f7); border: 1.5px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #fff;">
+                                    IQ
+                                </div>
+                                <div class="app-title-group">
+                                    <h3>LamaIQMaster</h3>
+                                    <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Pro Level Available</span>
+                                </div>
                             </div>
-                            <div class="app-title-group">
-                                <h3>LamaIQMaster</h3>
-                                <span style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Pro Level Available</span>
-                            </div>
+                            <p class="app-desc">Advanced AI assistant and cognitive testing engine designed to sharpen problem solving and creative intelligence.</p>
                         </div>
-                        <p class="app-desc">Advanced AI assistant and cognitive testing engine designed to sharpen problem solving and creative intelligence.</p>
-                    </div>
-                    <div>
-                        <a href="/apps/lamaiqmaster/index.html" class="btn-details" style="color: #c084fc; background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.25);">Open AI Suite</a>
-                    </div>
-                </article>
+                        <div>
+                            <span class="btn-details" style="color: #c084fc; background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.25);">Open AI Suite</span>
+                        </div>
+                    </article>
+                </a>
 
                 <!-- App 3: LamaSky -->
-                <article class="app-card">
-                    <div>
-                        <div class="app-header">
-                            <div class="app-icon" style="background: transparent; border: none; padding: 0;">
-                                <img src="/apps/lamasky/lamasky-icon.png" alt="LamaSky App Icon" style="width: 100%; height: 100%; object-fit: contain; border-radius: 17px;">
+                <a href="/apps/lamasky/index.html" class="app-card-link" data-theme="sky">
+                    <article class="app-card">
+                        <div>
+                            <div class="app-header">
+                                <div class="app-icon" style="background: transparent; border: none; padding: 0;">
+                                    <img src="/apps/lamasky/lamasky-icon.png" alt="LamaSky App Icon" style="width: 100%; height: 100%; object-fit: contain; border-radius: 17px;">
+                                </div>
+                                <div class="app-title-group">
+                                    <h3>LamaSky</h3>
+                                    <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Atmospheric Suite</span>
+                                </div>
                             </div>
-                            <div class="app-title-group">
-                                <h3>LamaSky</h3>
-                                <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Atmospheric Suite</span>
-                            </div>
+                            <p class="app-desc">Dynamic weather application featuring main screen live widgets with real-time temperature, time, and date syncing.</p>
                         </div>
-                        <p class="app-desc">Dynamic weather application featuring main screen live widgets with real-time temperature, time, and date syncing.</p>
-                    </div>
-                    <div>
-                        <a href="/apps/lamasky/index.html" class="btn-details" style="color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.25);">Open Weather Suite</a>
-                    </div>
-                </article>
+                        <div>
+                            <span class="btn-details" style="color: #38bdf8; background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.25);">Open Weather Suite</span>
+                        </div>
+                    </article>
+                </a>
 
                 <!-- App 4: LamaPhotoResizer -->
-                <article class="app-card">
-                    <div>
-                        <div class="app-header">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: 1.5px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: #fff;">
-                                IMG
+                <a href="/apps/lamaphotoresizer/index.html" class="app-card-link" data-theme="photo">
+                    <article class="app-card">
+                        <div>
+                            <div class="app-header">
+                                <div class="app-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: 1.5px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: #fff;">
+                                    IMG
+                                </div>
+                                <div class="app-title-group">
+                                    <h3>LamaPhotoResizer</h3>
+                                    <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">Image Utility</span>
+                                </div>
                             </div>
-                            <div class="app-title-group">
-                                <h3>LamaPhotoResizer</h3>
-                                <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">Image Utility</span>
-                            </div>
+                            <p class="app-desc">Batch resize, compress, and convert high-resolution photographs instantly without losing quality.</p>
                         </div>
-                        <p class="app-desc">Batch resize, compress, and convert high-resolution photographs instantly without losing quality.</p>
-                    </div>
-                    <div>
-                        <a href="/apps/lamaphotoresizer/index.html" class="btn-details">Open Tool Suite</a>
-                    </div>
-                </article>
+                        <div>
+                            <span class="btn-details" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25);">Open Tool Suite</span>
+                        </div>
+                    </article>
+                </a>
 
                 <!-- App 5: LamaMultiCalander -->
-                <article class="app-card">
-                    <div>
-                        <div class="app-header">
-                            <div class="app-icon" style="background: linear-gradient(135deg, #10b981, #059669); border: 1.5px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: #fff;">
-                                CAL
+                <a href="/apps/lamamulticalander/index.html" class="app-card-link" data-theme="calendar">
+                    <article class="app-card">
+                        <div>
+                            <div class="app-header">
+                                <div class="app-icon" style="background: linear-gradient(135deg, #10b981, #059669); border: 1.5px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: #fff;">
+                                    CAL
+                                </div>
+                                <div class="app-title-group">
+                                    <h3>LamaMultiCalander</h3>
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Productivity Suite</span>
+                                </div>
                             </div>
-                            <div class="app-title-group">
-                                <h3>LamaMultiCalander</h3>
-                                <span style="background: rgba(16, 185, 129, 0.15); color: #10b981;">Productivity Suite</span>
-                            </div>
+                            <p class="app-desc">Manage multiple calendar systems, events, and schedules simultaneously with effortless synchronization.</p>
                         </div>
-                        <p class="app-desc">Manage multiple calendar systems, events, and schedules simultaneously with effortless synchronization.</p>
-                    </div>
-                    <div>
-                        <a href="/apps/lamamulticalander/index.html" class="btn-details" style="color: #10b981; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25);">Open Calendar Suite</a>
-                    </div>
-                </article>
+                        <div>
+                            <span class="btn-details" style="color: #10b981; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25);">Open Calendar Suite</span>
+                        </div>
+                    </article>
+                </a>
 
             </div>
         </main>

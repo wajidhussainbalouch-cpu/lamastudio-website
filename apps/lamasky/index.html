@@ -1,495 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LamaSky - Atmospheric Suite | LamaStudio</title>
-    <meta name="description" content="Discover LamaSky by LamaStudio. Live real-time atmospheric tracking, dynamic home screen weather widgets, and elite performance styled directly from the official LamaSky icon palette.">
-    <link rel="stylesheet" href="../../style.css">
-    <style>
-        /* Official Icon Palette Theme System (Dominant Blue & Yellow Atmosphere) */
-        :root {
-            --bg-deep: #060b14;
-            --bg-surface: #0d1626;
-            --bg-sidebar: #09101d;
-            --border-glow: rgba(250, 204, 21, 0.35);
-            --accent-sun: #facc15;
-            --accent-peach: #f59e0b;
-            --accent-sky: #38bdf8;
-            --accent-glow: rgba(250, 204, 21, 0.2);
-            --text-main: #fef9c3;
-            --text-muted: #e2e8f0;
-        }
-
-        body {
-            background-color: var(--bg-deep);
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            line-height: 1.8;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.25) 0%, transparent 50%),
-                radial-gradient(circle at 90% 80%, rgba(250, 204, 21, 0.22) 0%, transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.15) 0%, transparent 60%);
-            background-attachment: fixed;
-        }
-
-        /* Dashboard App Grid Layout */
-        .app-layout {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            min-height: 100vh;
-        }
-
-        /* Custom Sidebar Navigation Matched to Official App Icon */
-        .sidebar {
-            background: var(--bg-sidebar);
-            border-right: 1px solid var(--border-glow);
-            padding: 2rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .sidebar-app-header {
-            text-align: center;
-            padding-bottom: 1.75rem;
-            border-bottom: 1px solid var(--border-glow);
-            margin-bottom: 1.75rem;
-        }
-
-        .sidebar-app-icon-wrapper {
-            width: 76px;
-            height: 76px;
-            background: transparent;
-            border-radius: 20px;
-            margin: 0 auto 0.85rem auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: none;
-            border: none;
-            overflow: visible;
-            padding: 0;
-        }
-
-        .sidebar-app-icon-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 17px;
-        }
-
-        .sidebar-app-title {
-            font-size: 1.35rem;
-            font-weight: 900;
-            color: var(--text-main);
-            margin: 0 0 0.2rem 0;
-            letter-spacing: -0.5px;
-        }
-
-        .sidebar-app-subtitle {
-            font-size: 0.78rem;
-            color: var(--accent-sun);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-            flex-grow: 1;
-        }
-
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            padding: 0.8rem 1rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.25s ease;
-            border: 1px solid transparent;
-        }
-
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background: var(--accent-glow);
-            color: var(--accent-sun);
-            border-color: var(--border-glow);
-            box-shadow: 0 0 15px rgba(250, 204, 21, 0.3);
-        }
-
-        .sidebar-footer {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            border-top: 1px solid var(--border-glow);
-            padding-top: 1.2rem;
-            text-align: center;
-        }
-
-        /* Main Content Panel */
-        .main-content {
-            padding: 4rem;
-            max-width: 1000px;
-            box-sizing: border-box;
-        }
-
-        .hero-badge {
-            display: inline-block;
-            background: var(--accent-glow);
-            color: var(--accent-sun);
-            border: 1px solid var(--border-glow);
-            padding: 0.35rem 1.1rem;
-            border-radius: 50px;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 0 20px rgba(250, 204, 21, 0.25);
-        }
-
-        .hero-title {
-            font-size: 2.8rem;
-            font-weight: 900;
-            color: var(--text-main);
-            margin-bottom: 1rem;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, #ffffff 20%, #38bdf8 60%, #facc15 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtitle {
-            font-size: 1.15rem;
-            color: var(--text-muted);
-            margin-bottom: 3rem;
-            line-height: 1.7;
-        }
-
-        /* Glass Cards with Yellow and Blue Atmosphere */
-        .glass-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-glow);
-            border-radius: 20px;
-            padding: 2.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 25px 50px rgba(4, 8, 18, 0.7), inset 0 0 20px rgba(56, 189, 248, 0.08);
-            backdrop-filter: blur(16px);
-            transition: border-color 0.3s ease, transform 0.3s ease;
-        }
-
-        .glass-card:hover {
-            border-color: rgba(56, 189, 248, 0.8);
-            transform: translateY(-2px);
-            box-shadow: 0 30px 60px rgba(4, 8, 18, 0.8), 0 0 30px rgba(250, 204, 21, 0.25);
-        }
-
-        .glass-card h2 {
-            font-size: 1.4rem;
-            color: var(--accent-sun);
-            margin-top: 0;
-            margin-bottom: 1rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .glass-card h2::before {
-            content: "";
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--accent-sky);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent-sky);
-        }
-
-        .glass-card p {
-            color: var(--text-muted);
-            font-size: 1.05rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Weather Features Grid */
-        .weather-features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .weather-feature-item {
-            background: rgba(56, 189, 248, 0.06);
-            border: 1px solid rgba(56, 189, 248, 0.25);
-            padding: 1.25rem;
-            border-radius: 14px;
-        }
-
-        .weather-feature-item h3 {
-            font-size: 1rem;
-            color: var(--accent-sky);
-            margin: 0 0 0.5rem 0;
-            font-weight: 700;
-        }
-
-        .weather-feature-item p {
-            font-size: 0.92rem;
-            color: var(--text-muted);
-            margin: 0;
-        }
-
-        /* App Mockup Screenshot Gallery */
-        .screenshot-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-        }
-
-        .screenshot-card {
-            background: rgba(6, 11, 20, 0.85);
-            border: 1px solid rgba(250, 204, 21, 0.3);
-            border-radius: 16px;
-            overflow: hidden;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .screenshot-card:hover {
-            border-color: var(--accent-sky);
-            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35);
-            transform: translateY(-4px);
-        }
-
-        .screenshot-mockup {
-            height: 220px;
-            background: linear-gradient(135deg, #0d1e38 0%, #060b14 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-            position: relative;
-        }
-
-        .mockup-ui-temp {
-            font-size: 2.8rem;
-            font-weight: 900;
-            color: var(--accent-sun);
-            text-shadow: 0 0 20px rgba(250, 204, 21, 0.5);
-            margin-bottom: 0.25rem;
-        }
-
-        .mockup-ui-condition {
-            font-size: 0.95rem;
-            color: var(--text-main);
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-
-        .mockup-ui-details {
-            font-size: 0.8rem;
-            color: var(--accent-sky);
-            margin-top: 0.75rem;
-            background: rgba(56, 189, 248, 0.12);
-            padding: 0.3rem 0.75rem;
-            border-radius: 20px;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-        }
-
-        .screenshot-info {
-            padding: 1.25rem;
-        }
-
-        .screenshot-info h4 {
-            color: var(--text-main);
-            font-size: 1.05rem;
-            margin: 0 0 0.35rem 0;
-            font-weight: 700;
-        }
-
-        .screenshot-info p {
-            color: var(--text-muted);
-            font-size: 0.88rem;
-            margin: 0;
-        }
-
-        /* Gradient Buttons Matching Yellow and Blue Theme */
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: linear-gradient(135deg, #38bdf8 0%, #facc15 100%);
-            color: #060b14;
-            padding: 0.9rem 2rem;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 800;
-            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
-            transition: all 0.25s ease;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(250, 204, 21, 0.6);
-            filter: brightness(1.1);
-        }
-
-        @media (max-width: 900px) {
-            .app-layout {
-                grid-template-columns: 1fr;
-            }
-            .sidebar {
-                position: relative;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--border-glow);
-                padding: 1.5rem;
-            }
-            .main-content {
-                padding: 2rem 1rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LamaSky — Gregorian, Hijri & Nanakshahi Calendar by LamaStudio</title>
+<meta name="description" content="LamaSky is a multi-calendar Android app covering Gregorian, Hijri, and Nanakshahi systems, with home-screen widgets and full RTL support.">
+<link rel="canonical" href="https://lamastudio.pk/apps/lamasky/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="LamaSky — Multi-Calendar App by LamaStudio">
+<meta property="og:description" content="Gregorian, Hijri, and Nanakshahi dates in one app, with home-screen widgets.">
+<meta property="og:url" content="https://lamastudio.pk/apps/lamasky/">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../../style.css">
 </head>
-<body>
+<body data-app="sky">
 
-    <div class="app-layout">
-        <!-- Dedicated LamaSky Sidebar Menu with Official App Icon & Palette -->
-        <aside class="sidebar">
-            <div>
-                <div class="sidebar-app-header">
-                    <div class="sidebar-app-icon-wrapper">
-                        <img src="lamasky-icon.png" alt="LamaSky Official App Icon">
-                    </div>
-                    <h2 class="sidebar-app-title">LamaSky</h2>
-                    <p class="sidebar-app-subtitle">Atmospheric Suite</p>
-                </div>
-                <ul class="sidebar-menu">
-                    <li><a href="#overview" class="active">Overview & Details</a></li>
-                    <li><a href="#previews">App Screenshots</a></li>
-                    <li><a href="#widgets">Live Widgets</a></li>
-                    <li><a href="#downloads">Download APK</a></li>
-                    <li><a href="privacy.html">Privacy Policy</a></li>
-                    <li><a href="../../index.html">&larr; Main Studio Website</a></li>
-                </ul>
-            </div>
-            <div class="sidebar-footer">
-                &copy; 2026 LamaStudio. All rights reserved.
-            </div>
-        </aside>
-
-        <!-- Main Content Area Styled with Icon Palette -->
-        <main class="main-content">
-            <span class="hero-badge">Atmospheric Suite</span>
-            <h1 class="hero-title">LamaSky Weather Experience</h1>
-            <p class="hero-subtitle">Your ultimate real-time meteorological companion engineered with hyper-accurate tracking, live home screen widgets, and complete offline data privacy.</p>
-
-            <!-- Overview Section -->
-            <section id="overview" class="glass-card">
-                <h2>About LamaSky Weather</h2>
-                <p>LamaSky brings precise atmospheric metrics, real-time temperature fluctuations, and an immaculate blue-sky and golden-sun interface straight to your fingertips. Built with advanced optimization algorithms to guarantee minimal battery consumption while delivering instant weather updates.</p>
-                
-                <div class="weather-features">
-                    <div class="weather-feature-item">
-                        <h3>Global Radar Sync</h3>
-                        <p>Real-time Doppler cloud mapping and live precipitation tracking across regions.</p>
-                    </div>
-                    <div class="weather-feature-item">
-                        <h3>Hyper-Local Forecasts</h3>
-                        <p>Precise neighborhood-level meteorological breakdowns updated every minute.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Interactive App Previews / Screenshots Section -->
-            <section id="previews" class="glass-card">
-                <h2>App Interface & Previews</h2>
-                <p>Explore the clean icon-matched aesthetic, streamlined dashboard panels, and crystal-clear atmospheric data visualization designed for ultimate user clarity.</p>
-                
-                <div class="screenshot-grid">
-                    <!-- Screenshot 1 -->
-                    <div class="screenshot-card">
-                        <div class="screenshot-mockup">
-                            <div class="mockup-ui-temp">28°C</div>
-                            <div class="mockup-ui-condition">☀️ Sunny & Clear Skies</div>
-                            <div class="mockup-ui-details">H: 31° • L: 22° • Wind: 12 km/h</div>
-                        </div>
-                        <div class="screenshot-info">
-                            <h4>Main Dashboard</h4>
-                            <p>Real-time live temperature sync with dynamic blue and golden sun gradients.</p>
-                        </div>
-                    </div>
-
-                    <!-- Screenshot 2 -->
-                    <div class="screenshot-card">
-                        <div class="screenshot-mockup">
-                            <div class="mockup-ui-temp" style="font-size: 2.2rem; color: #38bdf8;">💧 78%</div>
-                            <div class="mockup-ui-condition">High Humidity Index</div>
-                            <div class="mockup-ui-details">Pressure: 1013 hPa • UV: Moderate</div>
-                        </div>
-                        <div class="screenshot-info">
-                            <h4>Atmospheric Metrics</h4>
-                            <p>Detailed meteorological breakdowns including pressure, humidity, and UV.</p>
-                        </div>
-                    </div>
-
-                    <!-- Screenshot 3 -->
-                    <div class="screenshot-card">
-                        <div class="screenshot-mockup">
-                            <div class="mockup-ui-temp" style="font-size: 2.2rem; color: #facc15;">⚡ Live</div>
-                            <div class="mockup-ui-condition">Home Screen Widgets</div>
-                            <div class="mockup-ui-details">Zero Battery Drain Optimization</div>
-                        </div>
-                        <div class="screenshot-info">
-                            <h4>Interactive Widgets</h4>
-                            <p>Sleek glass layout configurations directly on your mobile desktop.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Live Widgets Section -->
-            <section id="widgets" class="glass-card">
-                <h2>Dynamic Home Screen Widgets</h2>
-                <p>Customize your mobile interface with interactive solar and atmospheric widgets. Monitor weather trends, UV indexes, humidity levels, and wind vectors directly from your home screen layout without opening the application.</p>
-                <div class="weather-features">
-                    <div class="weather-feature-item">
-                        <h3>Minimalist Glass Clocks</h3>
-                        <p>Sleek widget integrations blending time, temperature, and atmospheric status.</p>
-                    </div>
-                    <div class="weather-feature-item">
-                        <h3>Low Power Impact</h3>
-                        <p>Optimized background fetching architecture to preserve device battery life.</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Download Section -->
-            <section id="downloads" class="glass-card">
-                <h2>Download LamaSky APK</h2>
-                <p>Get the latest stable release of LamaSky completely free. Fast installation, clean layout, and total data privacy assurance.</p>
-                <a href="#" class="btn-primary">Download Free APK v2.4</a>
-            </section>
-        </main>
+<div class="topbar">
+    <a href="../../index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+    <div class="topbar-links">
+        <a href="../../services.html">Services</a>
+        <a href="../../about.html">About</a>
+        <a href="../../privacy.html">Privacy</a>
     </div>
+</div>
+
+<div class="layout">
+    <aside class="sidebar">
+        <a href="../../index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+        <nav class="nav-group">
+            <span class="nav-label">Store</span>
+            <a href="../../index.html" class="nav-link"><span class="nav-dot"></span>Home</a>
+            <a href="../../services.html" class="nav-link"><span class="nav-dot"></span>Services</a>
+            <a href="../../about.html" class="nav-link"><span class="nav-dot"></span>About</a>
+            <a href="../../privacy.html" class="nav-link"><span class="nav-dot"></span>Privacy Policy</a>
+        </nav>
+        <nav class="nav-group">
+            <span class="nav-label">Apps</span>
+            <a href="../lamavpnpro/" class="nav-link" data-app="vpn"><span class="nav-dot"></span>LamaVPN Pro</a>
+            <a href="../lamasky/" class="nav-link active" data-app="sky"><span class="nav-dot"></span>LamaSky</a>
+            <a href="../lamaiqmaster/" class="nav-link" data-app="iq"><span class="nav-dot"></span>LamaIQMaster</a>
+        </nav>
+        <div class="sidebar-footer">LamaStudio<br>Islamabad, Pakistan<br>&copy; 2026 lamastudio.pk</div>
+    </aside>
+
+    <main class="content">
+        <div class="app-hero">
+            <div>
+                <span class="eyebrow">LamaSky</span>
+                <h1>Three calendars, one date that's always right.</h1>
+                <p style="color:var(--text-muted); max-width:520px;">Gregorian, Hijri, and Nanakshahi dates live side by side, kept in sync on your home screen — not just inside the app.</p>
+                <ul class="feature-list">
+                    <li><span class="tick">✓</span>Gregorian, Hijri, and Nanakshahi calendars in one view</li>
+                    <li><span class="tick">✓</span>Home-screen Glance widgets with a three-layer sync strategy</li>
+                    <li><span class="tick">✓</span>Full RTL layout and multilingual support</li>
+                    <li><span class="tick">✓</span>Hilt-based architecture for fast, testable date logic</li>
+                </ul>
+                <div class="hero-actions">
+                    <a href="#" class="btn-app">Get LamaSky</a>
+                    <a href="../../index.html" class="btn-ghost">Back to Store</a>
+                </div>
+            </div>
+            <div class="phone">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="sky-grid">
+                        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                        <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Under the hood</h2>
+        <div class="two-col">
+            <div class="panel">
+                <h3>Date engine</h3>
+                <p>Conversion logic for three calendar systems is isolated behind Hilt-injected interfaces, so widget, app, and notification code all read from the same source of truth.</p>
+            </div>
+            <div class="panel">
+                <h3>Widgets</h3>
+                <p>A three-layer sync strategy keeps home-screen widgets current even when the app hasn't been opened in days.</p>
+            </div>
+            <div class="panel">
+                <h3>Language & layout</h3>
+                <p>Full right-to-left layout support alongside multilingual strings, so the app reads naturally in Urdu as well as English.</p>
+            </div>
+            <div class="panel">
+                <h3>Who it's for</h3>
+                <p>Anyone tracking events across more than one calendar system — religious, cultural, or civic — without juggling three separate apps.</p>
+            </div>
+        </div>
+
+        <footer class="site-footer">
+            <span>&copy; 2026 LamaStudio. All rights reserved.</span>
+            <nav><a href="../../privacy.html">Privacy</a> · <a href="../../about.html">About</a></nav>
+        </footer>
+    </main>
+</div>
 
 </body>
 </html>

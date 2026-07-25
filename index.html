@@ -253,18 +253,6 @@
         }
 
         /* Full Theme Glow & Solid Theme Fill on Hover for Buttons */
-        .app-card-link[data-theme="vpn"]:hover .app-card {
-            transform: translateY(-6px);
-            border-color: #5EE8C5;
-            box-shadow: 0 20px 40px rgba(94, 232, 197, 0.35);
-        }
-        .app-card-link[data-theme="vpn"]:hover .action-btn {
-            background: #5EE8C5 !important;
-            color: #0b0f19 !important;
-            box-shadow: 0 0 25px #5EE8C5, 0 0 50px rgba(94, 232, 197, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.6);
-            border-color: #5EE8C5 !important;
-        }
-
         .app-card-link[data-theme="ai"]:hover .app-card {
             transform: translateY(-6px);
             border-color: #c084fc;
@@ -383,6 +371,114 @@
             color: #fff;
         }
 
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--sidebar-bg);
+            border: 1px solid var(--card-border);
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--text-main);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .modal-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .payment-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .payment-option:hover, .payment-option.selected {
+            background: rgba(94, 232, 197, 0.1);
+            border-color: #5EE8C5;
+            color: #5EE8C5;
+        }
+
+        .payment-option input {
+            accent-color: #5EE8C5;
+        }
+
+        .pay-submit-btn {
+            background: #5EE8C5;
+            color: #0b0f19;
+            border: none;
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+
+        .pay-submit-btn:hover {
+            box-shadow: 0 0 20px rgba(94, 232, 197, 0.4);
+        }
+
         /* Responsive */
         @media (max-width: 900px) {
             .layout { flex-direction: column; }
@@ -432,7 +528,7 @@
                     <div class="app-grid">
                         
                         <!-- App 1: LamaVPN Pro -->
-                        <a href="apps/lamavpnpro/index.html" class="app-card-link" data-theme="vpn">
+                        <div class="app-card-link" data-theme="vpn">
                             <article class="app-card">
                                 <div>
                                     <div class="app-header">
@@ -450,18 +546,19 @@
                                         <div class="app-title-group">
                                             <div class="app-title-row">
                                                 <h3>LamaVPN Pro</h3>
-                                                <span style="background: rgba(94, 232, 197, 0.15); color: #5EE8C5; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">v1.0</span>
+                                                <span style="background: rgba(94, 232, 197, 0.15); color: #5EE8C5; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">v2.4.1</span>
                                             </div>
-                                            <span style="color: var(--text-muted); font-size: 0.8rem;">Secure Network Suite</span>
+                                            <span style="color: var(--text-muted); font-size: 0.8rem;">Secure</span>
                                         </div>
                                     </div>
                                     <p class="app-desc">High-speed, encrypted virtual private network client featuring global server routing and a zero-logs policy.</p>
                                 </div>
-                                <div style="margin-top: 1.2rem; width: 100%;">
-                                    <span class="action-btn">Open Tool Suite</span>
+                                <div style="margin-top: 1.2rem; display: flex; flex-direction: column; gap: 8px;">
+                                    <span class="action-btn" onclick="openPaymentModal('Monthly (500 PKR)', 500)">Monthly (500 PKR)</span>
+                                    <span class="action-btn" onclick="openPaymentModal('Yearly (5000 PKR)', 5000)">Yearly (5000 PKR)</span>
                                 </div>
                             </article>
-                        </a>
+                        </div>
 
                         <!-- App 2: LamaIQMaster -->
                         <a href="apps/lamaiqmaster/index.html" class="app-card-link" data-theme="ai">
@@ -482,7 +579,7 @@
                                     <p class="app-desc">Advanced AI assistant and cognitive testing engine designed to sharpen problem solving and creative intelligence.</p>
                                 </div>
                                 <div style="margin-top: 1.2rem; width: 100%;">
-                                    <span class="action-btn">Open Tool Suite</span>
+                                    <span class="action-btn" onclick="openPaymentModal('Get Pro (500 PKR)', 500)">Get Pro (500 PKR)</span>
                                 </div>
                             </article>
                         </a>
@@ -506,7 +603,7 @@
                                     <p class="app-desc">Dynamic weather application featuring main screen live widgets with real-time temperature, time, and date syncing.</p>
                                 </div>
                                 <div style="margin-top: 1.2rem; width: 100%;">
-                                    <span class="action-btn">Open Tool Suite</span>
+                                    <span class="action-btn">Open App Suite & Privacy</span>
                                 </div>
                             </article>
                         </a>
@@ -554,7 +651,7 @@
                                     <p class="app-desc">Manage multiple calendar systems, events, and schedules simultaneously with effortless synchronization.</p>
                                 </div>
                                 <div style="margin-top: 1.2rem; width: 100%;">
-                                    <span class="action-btn">Open Tool Suite</span>
+                                    <span class="action-btn">Open Calendar Suite</span>
                                 </div>
                             </article>
                         </a>
@@ -581,10 +678,56 @@
         </main>
     </div>
 
+    <!-- Live Payment Gateway Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+            <div class="modal-title">Complete Subscription</div>
+            <div class="modal-subtitle" id="selectedPlanTitle">Select Live Payment Method</div>
+            
+            <div class="payment-options">
+                <label class="payment-option selected" onclick="selectPayment(this)">
+                    <input type="radio" name="gateway" checked> EasyPaisa (Mobile Wallet / Merchant USSD)
+                </label>
+                <label class="payment-option" onclick="selectPayment(this)">
+                    <input type="radio" name="gateway"> JazzCash (Mobile Wallet / OTP)
+                </label>
+                <label class="payment-option" onclick="selectPayment(this)">
+                    <input type="radio" name="gateway"> Raast Instant Payment (IBAN / Alias)
+                </label>
+                <label class="payment-option" onclick="selectPayment(this)">
+                    <input type="radio" name="gateway"> Credit / Debit Card (Stripe / 3D Secure)
+                </label>
+            </div>
+
+            <button class="pay-submit-btn" onclick="proceedToPayment()">Proceed to Real Payment Gateway</button>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>
         function toggleMenu() {
             document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function openPaymentModal(planName, price) {
+            document.getElementById('selectedPlanTitle').innerText = planName + ' - Select Live Payment Method';
+            document.getElementById('paymentModal').classList.add('active');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+
+        function selectPayment(element) {
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            element.querySelector('input').checked = true;
+        }
+
+        function proceedToPayment() {
+            alert('Redirecting to secure live payment gateway checkout...');
+            closePaymentModal();
         }
     </script>
 </body>

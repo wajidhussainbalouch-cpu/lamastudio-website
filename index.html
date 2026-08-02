@@ -29,6 +29,16 @@ html, body {
     box-sizing: inherit;
 }
 
+/* Mobile-Friendly Adjustments for Topbar Links & Overflow */
+@media (max-width: 768px) {
+    .topbar .topbar-links {
+        display: none !important; /* Hide crowded links on small mobile screens; use hamburger/sidebar instead */
+    }
+    .topbar {
+        padding: 10px 15px;
+    }
+}
+
 /* App Card Theme Colors & Glowing Borders */
 .app-card[data-app="vpn"] {
     border: 1px solid rgba(94, 232, 197, 0.4);
@@ -256,7 +266,7 @@ html, body {
 .sidebar .nav-link[data-app="store"] { border-color: rgba(248, 113, 113, 0.3); box-shadow: 0 0 8px rgba(248, 113, 113, 0.15); }
 .sidebar .nav-link[data-app="store"]:hover, .sidebar .nav-link[data-app="store"].active { background-color: #f87171; color: #0f172a; border-color: #f87171; box-shadow: 0 0 15px #f87171; font-weight: 600; }
 
-/* 2-Column Grid Layout: Hero on Left, Right Side containing both Mobile Flipper and YouTube Card Side-by-Side */
+/* Responsive Grid Layout: Stacks vertically on mobile screens so nothing gets stuck */
 .corner-widget-grid {
     display: grid;
     grid-template-columns: 1fr 780px;
@@ -267,19 +277,24 @@ html, body {
 }
 @media (max-width: 1300px) {
     .corner-widget-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Stacks Hero on top and widgets below on mobile/tablet */
     }
 }
 
-/* Right Column Flex Container holding Mobile Flipper (outside) and YouTube Box side by side */
+/* Right Column Flex Container holding Mobile Flipper and YouTube Box */
 .right-side-media-group {
     display: flex;
     gap: 16px;
     align-items: stretch;
     width: 100%;
 }
+@media (max-width: 768px) {
+    .right-side-media-group {
+        flex-direction: column; /* Stacks Mobile Flipper and YouTube card vertically (up-down) on mobile */
+    }
+}
 
-/* Separate Mobile Flipper Box matching YouTube card's exact height and width structure */
+/* Separate Mobile Flipper Box matching card structure */
 .flipper-external-box {
     background: #141c28;
     border: 1px solid rgba(56, 189, 248, 0.3);
@@ -299,11 +314,11 @@ html, body {
     white-space: nowrap;
 }
 
-/* Mobile Screen Screenshot Flipper Widget sized to match the video container height */
+/* Mobile Screen Screenshot Flipper Widget */
 .mobile-flipper-container {
     position: relative;
     width: 100%;
-    padding-bottom: 75%; /* Matches the video container padding-bottom */
+    padding-bottom: 75%;
     height: 0;
     background: #000;
     border: 4px solid #2d3748;
@@ -521,7 +536,7 @@ html, body {
 
     <main class="content">
         
-        <!-- Top Layout: Hero on Left, Right Side Group containing Standalone Mobile Flipper & YouTube Widget Side-by-Side -->
+        <!-- Top Layout: Hero on Left, Right Side Group containing Standalone Mobile Flipper & YouTube Widget Stacked on Mobile -->
         <div class="corner-widget-grid">
             
             <!-- Central Hero Section -->
@@ -535,10 +550,10 @@ html, body {
                 </div>
             </section>
 
-            <!-- Right Group: Mobile Flipper positioned outside on the left of the YouTube box -->
+            <!-- Right Group: Stacks vertically (up-down) on mobile screens so nothing is stuck -->
             <div class="right-side-media-group">
                 
-                <!-- Standalone Mobile Flipper Box (Outside YouTube Player Box, but matching video size & structure) -->
+                <!-- Standalone Mobile Flipper Box -->
                 <div class="flipper-external-box">
                     <h4>Our Apps</h4>
                     <div class="mobile-flipper-container">
@@ -553,7 +568,6 @@ html, body {
                         <img src="assets/screenshots/lamastore.png" alt="LamaStore" class="app-screenshot">
                     </div>
 
-                    <!-- Matching element below screenshot to mirror layout with YouTube card -->
                     <a href="apps/lamamulticalendar/" class="btn-edu-services" style="background: linear-gradient(135deg, #38bdf8, #0284c7); color: #0b0f19;">🚀 Explore All Lama Apps</a>
 
                     <div class="live-news-box">
@@ -577,10 +591,8 @@ html, body {
                         <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
                     </div>
 
-                    <!-- Educational Services Button leading to Boards Directory -->
                     <a href="boards.html" class="btn-edu-services">🎓 Educational Services for Students</a>
 
-                    <!-- Live Results & Admissions Ticker linking directly to Boards Directory -->
                     <div class="live-news-box">
                         <h5>Live Updates</h5>
                         <a href="boards.html" class="news-item">📋 All Board Exam Results & Official Portals</a>

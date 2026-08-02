@@ -189,10 +189,10 @@
 .sidebar .nav-link[data-app="resizer"] { border-color: rgba(244, 114, 182, 0.3); box-shadow: 0 0 8px rgba(244, 114, 182, 0.15); }
 .sidebar .nav-link[data-app="resizer"]:hover, .sidebar .nav-link[data-app="resizer"].active { background-color: #f472b6; color: #0f172a; border-color: #f472b6; box-shadow: 0 0 15px #f472b6; font-weight: 600; }
 
-/* 3-Column Layout: Mobile Flipper on Left, Hero/Content in Middle, YouTube Player Box on Right */
+/* 2-Column Grid Layout: Hero on Left, Right Side containing both Mobile Flipper and YouTube Card Side-by-Side */
 .corner-widget-grid {
     display: grid;
-    grid-template-columns: 150px 1fr 340px;
+    grid-template-columns: 1fr 340px;
     gap: 20px;
     align-items: start;
     margin-bottom: 2rem;
@@ -203,31 +203,39 @@
     }
 }
 
-/* Separate Mobile Flipper Box on the Left */
-.flipper-standalone-card {
+/* Right Column Flex Container holding Mobile Flipper (outside) and YouTube Box */
+.right-side-media-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Separate Mobile Flipper placed right next to the YouTube Box on its left */
+.flipper-external-box {
     background: #141c28;
     border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 12px;
-    padding: 16px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    flex-shrink: 0;
 }
-.flipper-standalone-card h4 {
+.flipper-external-box h5 {
     color: #38bdf8;
-    font-size: 0.95rem;
-    margin: 0 0 12px 0;
+    font-size: 0.8rem;
+    margin: 0 0 8px 0;
 }
 
 /* Mobile Screen Screenshot Flipper Widget */
 .mobile-flipper-container {
     position: relative;
-    width: 110px;
-    height: 200px;
+    width: 100px;
+    height: 185px;
     background: #000;
     border: 4px solid #2d3748;
-    border-radius: 16px;
+    border-radius: 14px;
     box-shadow: 0 0 15px rgba(0,0,0,0.6), inset 0 0 6px rgba(255,255,255,0.1);
     overflow: hidden;
     display: flex;
@@ -239,11 +247,11 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 36px;
-    height: 7px;
+    width: 32px;
+    height: 6px;
     background: #2d3748;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
     z-index: 10;
 }
 .app-screenshot {
@@ -266,6 +274,7 @@
     border: 1px solid rgba(251, 191, 36, 0.3);
     border-radius: 12px;
     padding: 16px;
+    flex-grow: 1;
 }
 .corner-card h4 {
     color: #fbbf24;
@@ -438,22 +447,9 @@
 
     <main class="content">
         
-        <!-- 3-Column Top Layout: Standalone Mobile Flipper on Left, Hero in Center, YouTube Player Widget on Right -->
+        <!-- Top Layout: Hero on Left, Right Side Group containing Standalone Mobile Flipper & YouTube Widget Side-by-Side -->
         <div class="corner-widget-grid">
             
-            <!-- Left Standalone Mobile Flipper Box -->
-            <div class="flipper-standalone-card">
-                <h4>Our Apps</h4>
-                <div class="mobile-flipper-container">
-                    <div class="phone-notch"></div>
-                    <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active">
-                    <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot">
-                    <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot">
-                    <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot">
-                    <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot">
-                </div>
-            </div>
-
             <!-- Central Hero Section -->
             <section class="hero" style="margin-bottom: 0;">
                 <span class="eyebrow">Next-Gen App Store</span>
@@ -465,29 +461,47 @@
                 </div>
             </section>
 
-            <!-- Right YouTube Player Widget Box -->
-            <div class="corner-card">
-                <h4>Featured Video</h4>
+            <!-- Right Group: Mobile Flipper positioned outside on the left of the YouTube box -->
+            <div class="right-side-media-group">
                 
-                <div class="small-video-container">
-                    <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
+                <!-- Standalone Mobile Flipper Box (Outside YouTube Player Box, but right next to its left side) -->
+                <div class="flipper-external-box">
+                    <h5>Our Apps</h5>
+                    <div class="mobile-flipper-container">
+                        <div class="phone-notch"></div>
+                        <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active">
+                        <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot">
+                        <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot">
+                        <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot">
+                        <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot">
+                    </div>
                 </div>
 
-                <!-- Educational Services Button leading to Boards Directory -->
-                <a href="boards.html" class="btn-edu-services">🎓 Educational Services for Students</a>
+                <!-- Right YouTube Player Widget Box -->
+                <div class="corner-card">
+                    <h4>Featured Video</h4>
+                    
+                    <div class="small-video-container">
+                        <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
+                    </div>
 
-                <!-- Live Results & Admissions Ticker linking directly to Boards Directory -->
-                <div class="live-news-box">
-                    <h5>Live Updates</h5>
-                    <a href="boards.html" class="news-item">📋 All Board Exam Results & Official Portals</a>
-                    <a href="boards.html" class="news-item">🏛️ University & HEC Admission Details</a>
-                    <a href="boards.html" class="news-item">📢 Inter & Matric Supplementary Schedules</a>
+                    <!-- Educational Services Button leading to Boards Directory -->
+                    <a href="boards.html" class="btn-edu-services">🎓 Educational Services for Students</a>
+
+                    <!-- Live Results & Admissions Ticker linking directly to Boards Directory -->
+                    <div class="live-news-box">
+                        <h5>Live Updates</h5>
+                        <a href="boards.html" class="news-item">📋 All Board Exam Results & Official Portals</a>
+                        <a href="boards.html" class="news-item">🏛️ University & HEC Admission Details</a>
+                        <a href="boards.html" class="news-item">📢 Inter & Matric Supplementary Schedules</a>
+                    </div>
+
+                    <div class="social-links-row">
+                        <a href="https://web.facebook.com/lamastudiopk/" target="_blank" class="btn-social-sm">📘 Facebook</a>
+                        <a href="https://www.youtube.com/channel/UCi1w07U76CVSjA9yuJArxEQ" target="_blank" class="btn-social-sm">▶ YouTube</a>
+                    </div>
                 </div>
 
-                <div class="social-links-row">
-                    <a href="https://web.facebook.com/lamastudiopk/" target="_blank" class="btn-social-sm">📘 Facebook</a>
-                    <a href="https://www.youtube.com/channel/UCi1w07U76CVSjA9yuJArxEQ" target="_blank" class="btn-social-sm">▶ YouTube</a>
-                </div>
             </div>
         </div>
 

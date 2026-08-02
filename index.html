@@ -232,6 +232,47 @@
     border: 0;
 }
 
+/* Mobile Screen Screenshot Flipper Widget */
+.mobile-flipper-container {
+    position: relative;
+    width: 160px;
+    height: 310px;
+    margin: 0 auto 12px auto;
+    background: #000;
+    border: 6px solid #2d3748;
+    border-radius: 24px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mobile-flipper-container .phone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 12px;
+    background: #2d3748;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    z-index: 10;
+}
+.app-screenshot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+}
+.app-screenshot.active {
+    opacity: 1;
+}
+
 /* Educational Services Button */
 .btn-edu-services {
     display: block;
@@ -377,7 +418,7 @@
 
     <main class="content">
         
-        <!-- Top Corner Layout: Hero on Left, Compact Video / Educational Services / Socials on Right -->
+        <!-- Top Corner Layout: Hero on Left, Compact Video / Screenshots / Educational Services / Socials on Right -->
         <div class="corner-widget-grid">
             <section class="hero" style="margin-bottom: 0;">
                 <span class="eyebrow">Next-Gen App Store</span>
@@ -389,12 +430,23 @@
                 </div>
             </section>
 
-            <!-- Compact Video & Educational Services Corner Widget -->
+            <!-- Compact Video, Mobile Screenshots Flipper & Educational Services Corner Widget -->
             <div class="corner-card">
                 <h4>Featured Video</h4>
                 <div class="small-video-container">
                     <!-- Live Embedded Video BwOW3MkqaKc -->
                     <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
+                </div>
+
+                <!-- Our Apps Mobile Screen Flipper Section -->
+                <h4 style="text-align: center; margin-top: 15px;">Our Apps</h4>
+                <div class="mobile-flipper-container">
+                    <div class="phone-notch"></div>
+                    <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active">
+                    <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot">
+                    <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot">
+                    <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot">
+                    <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot">
                 </div>
 
                 <!-- Educational Services Button leading to Boards Directory -->
@@ -533,6 +585,22 @@
         </footer>
     </main>
 </div>
+
+<!-- JavaScript to automatically rotate app screenshots every 3 seconds -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const screenshots = document.querySelectorAll(".app-screenshot");
+        let currentIndex = 0;
+
+        if (screenshots.length > 0) {
+            setInterval(() => {
+                screenshots[currentIndex].classList.remove("active");
+                currentIndex = (currentIndex + 1) % screenshots.length;
+                screenshots[currentIndex].classList.add("active");
+            }, 3000);
+        }
+    });
+</script>
 
 </body>
 </html>

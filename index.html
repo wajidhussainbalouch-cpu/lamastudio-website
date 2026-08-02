@@ -86,12 +86,12 @@ html, body {
 }
 
 .app-card[data-app="park"] {
-    border: 1px solid rgba(45, 212, 191, 0.4);
-    box-shadow: 0 0 15px rgba(45, 212, 191, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4); /* Unique Emerald Green Theme for LamaPark */
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
 }
 .app-card[data-app="park"]:hover {
-    border-color: rgba(45, 212, 191, 0.8);
-    box-shadow: 0 0 25px rgba(45, 212, 191, 0.3);
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.3);
 }
 
 .app-card[data-app="sync"] {
@@ -162,9 +162,9 @@ html, body {
 }
 
 .app-card[data-app="park"] .app-icon {
-    background: rgba(45, 212, 191, 0.2);
-    color: #2dd4bf;
-    box-shadow: 0 0 20px #2dd4bf, inset 0 0 10px rgba(45, 212, 191, 0.5);
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    box-shadow: 0 0 20px #10b981, inset 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 .app-card[data-app="sync"] .app-icon {
@@ -212,7 +212,7 @@ html, body {
 .app-card[data-app="iq"] .app-tag { color: #a855f7; border-color: rgba(168, 85, 247, 0.4); }
 .app-card[data-app="calendar"] .app-tag { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); }
 .app-card[data-app="resizer"] .app-tag { color: #f472b6; border-color: rgba(244, 114, 182, 0.4); }
-.app-card[data-app="park"] .app-tag { color: #2dd4bf; border-color: rgba(45, 212, 191, 0.4); }
+.app-card[data-app="park"] .app-tag { color: #10b981; border-color: rgba(16, 185, 129, 0.4); }
 .app-card[data-app="sync"] .app-tag { color: #818cf8; border-color: rgba(129, 140, 248, 0.4); }
 .app-card[data-app="store"] .app-tag { color: #f87171; border-color: rgba(248, 113, 113, 0.4); }
 
@@ -257,8 +257,8 @@ html, body {
 .sidebar .nav-link[data-app="resizer"] { border-color: rgba(244, 114, 182, 0.3); box-shadow: 0 0 8px rgba(244, 114, 182, 0.15); }
 .sidebar .nav-link[data-app="resizer"]:hover, .sidebar .nav-link[data-app="resizer"].active { background-color: #f472b6; color: #0f172a; border-color: #f472b6; box-shadow: 0 0 15px #f472b6; font-weight: 600; }
 
-.sidebar .nav-link[data-app="park"] { border-color: rgba(45, 212, 191, 0.3); box-shadow: 0 0 8px rgba(45, 212, 191, 0.15); }
-.sidebar .nav-link[data-app="park"]:hover, .sidebar .nav-link[data-app="park"].active { background-color: #2dd4bf; color: #0f172a; border-color: #2dd4bf; box-shadow: 0 0 15px #2dd4bf; font-weight: 600; }
+.sidebar .nav-link[data-app="park"] { border-color: rgba(16, 185, 129, 0.3); box-shadow: 0 0 8px rgba(16, 185, 129, 0.15); }
+.sidebar .nav-link[data-app="park"]:hover, .sidebar .nav-link[data-app="park"].active { background-color: #10b981; color: #0f172a; border-color: #10b981; box-shadow: 0 0 15px #10b981; font-weight: 600; }
 
 .sidebar .nav-link[data-app="sync"] { border-color: rgba(129, 140, 248, 0.3); box-shadow: 0 0 8px rgba(129, 140, 248, 0.15); }
 .sidebar .nav-link[data-app="sync"]:hover, .sidebar .nav-link[data-app="sync"].active { background-color: #818cf8; color: #0f172a; border-color: #818cf8; box-shadow: 0 0 15px #818cf8; font-weight: 600; }
@@ -353,6 +353,26 @@ html, body {
     opacity: 1;
 }
 
+/* Overlay App Name Banner inside the Flipper Container to show ALL app names sequentially */
+.app-name-overlay {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #38bdf8;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 12;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(4px);
+}
+
 /* Right Corner YouTube Box */
 .corner-card {
     background: #141c28;
@@ -361,6 +381,8 @@ html, body {
     padding: 16px;
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 .corner-card h4 {
     color: #fbbf24;
@@ -388,23 +410,41 @@ html, body {
     border: 0;
 }
 
-/* Educational Services Button */
-.btn-edu-services {
-    display: block;
+/* Unified Button Styling: Perfect horizontal & vertical alignment across both feature boxes */
+.btn-feature-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     width: 100%;
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-    color: #0b0f19;
-    text-align: center;
-    padding: 10px 12px;
+    height: 42px; /* Fixed identical height for precise alignment */
+    padding: 0 12px;
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 700;
     text-decoration: none;
-    box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
-    transition: 0.2s ease;
+    box-sizing: border-box;
     margin-bottom: 12px;
+    transition: 0.2s ease;
 }
-.btn-edu-services:hover {
+
+.btn-feature-blue {
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    color: #0b0f19;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+}
+.btn-feature-blue:hover {
+    background: #7dd3fc;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
+    transform: translateY(-1px);
+}
+
+.btn-feature-yellow {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #0b0f19;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+}
+.btn-feature-yellow:hover {
     background: #fde047;
     box-shadow: 0 0 20px rgba(251, 191, 36, 0.7);
     transform: translateY(-1px);
@@ -558,17 +598,21 @@ html, body {
                     <h4>Our Apps</h4>
                     <div class="mobile-flipper-container">
                         <div class="phone-notch"></div>
-                        <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active">
-                        <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot">
-                        <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot">
-                        <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot">
-                        <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot">
-                        <img src="assets/screenshots/lamapark.png" alt="LamaPark" class="app-screenshot">
-                        <img src="assets/screenshots/lamasync.png" alt="LamaSync" class="app-screenshot">
-                        <img src="assets/screenshots/lamastore.png" alt="LamaStore" class="app-screenshot">
+                        <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active" data-name="LamaVPN Pro v1.0">
+                        <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot" data-name="LamaSky v1.0">
+                        <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot" data-name="LamaIQMaster v1.0">
+                        <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot" data-name="LamaMultiCalendar v1.0">
+                        <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot" data-name="LamaPhotoResizer v1.0">
+                        <img src="assets/screenshots/lamapark.png" alt="LamaPark" class="app-screenshot" data-name="LamaPark v1.0">
+                        <img src="assets/screenshots/lamasync.png" alt="LamaSync" class="app-screenshot" data-name="LamaSync v1.0">
+                        <img src="assets/screenshots/lamastore.png" alt="LamaStore" class="app-screenshot" data-name="LamaStore v1.0">
+                        
+                        <!-- Overlay dynamically showing current app name -->
+                        <div class="app-name-overlay" id="flipperAppName">LamaVPN Pro v1.0</div>
                     </div>
 
-                    <a href="apps/lamamulticalendar/" class="btn-edu-services" style="background: linear-gradient(135deg, #38bdf8, #0284c7); color: #0b0f19;">🚀 Explore All Lama Apps</a>
+                    <!-- Perfectly aligned button matching Featured Video button height and alignment -->
+                    <a href="apps/lamamulticalendar/" class="btn-feature-action btn-feature-blue">🚀 Explore All Lama Apps</a>
 
                     <div class="live-news-box">
                         <h5>App Highlights</h5>
@@ -591,7 +635,8 @@ html, body {
                         <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
                     </div>
 
-                    <a href="boards.html" class="btn-edu-services">🎓 Educational Services for Students</a>
+                    <!-- Perfectly aligned yellow button matching Our Apps button height and alignment -->
+                    <a href="boards.html" class="btn-feature-action btn-feature-yellow">🎓 Educational Services for Students</a>
 
                     <div class="live-news-box">
                         <h5>Live Updates</h5>
@@ -722,7 +767,7 @@ html, body {
                     </div>
                     <div class="app-title-area">
                         <h3>LamaPark</h3>
-                        <span class="app-version" style="color: #2dd4bf;">v1.0</span>
+                        <span class="app-version" style="color: #10b981;">v1.0</span>
                     </div>
                 </div>
                 <p>Smart vehicle parking locator and timer utility designed to save your exact spot, track rates, and manage space efficiently.</p>
@@ -731,7 +776,7 @@ html, body {
                     <span class="app-tag">Parking Timer</span>
                     <span class="app-tag">Offline Map</span>
                 </div>
-                <span class="app-card-cta" style="color: #2dd4bf;">View app →</span>
+                <span class="app-card-cta" style="color: #10b981;">View app →</span>
             </a>
 
             <a href="apps/lamasync/" class="app-card" data-app="sync">
@@ -785,10 +830,11 @@ html, body {
     </main>
 </div>
 
-<!-- JavaScript to automatically rotate app screenshots every 3 seconds -->
+<!-- JavaScript to automatically rotate app screenshots and update the app name overlay sequentially -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const screenshots = document.querySelectorAll(".app-screenshot");
+        const appNameOverlay = document.getElementById("flipperAppName");
         let currentIndex = 0;
 
         if (screenshots.length > 0) {
@@ -796,6 +842,11 @@ html, body {
                 screenshots[currentIndex].classList.remove("active");
                 currentIndex = (currentIndex + 1) % screenshots.length;
                 screenshots[currentIndex].classList.add("active");
+                
+                // Update overlay text to show all apps sequentially
+                if (appNameOverlay) {
+                    appNameOverlay.textContent = screenshots[currentIndex].getAttribute("data-name");
+                }
             }, 3000);
         }
     });

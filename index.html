@@ -189,15 +189,15 @@
 .sidebar .nav-link[data-app="resizer"] { border-color: rgba(244, 114, 182, 0.3); box-shadow: 0 0 8px rgba(244, 114, 182, 0.15); }
 .sidebar .nav-link[data-app="resizer"]:hover, .sidebar .nav-link[data-app="resizer"].active { background-color: #f472b6; color: #0f172a; border-color: #f472b6; box-shadow: 0 0 15px #f472b6; font-weight: 600; }
 
-/* Small Corner Widget Layout for Video & Socials */
+/* Adjusted Corner Widget Grid Layout to accommodate the Flipper beside the Video */
 .corner-widget-grid {
     display: grid;
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr 340px;
     gap: 20px;
     align-items: start;
     margin-bottom: 2rem;
 }
-@media (max-width: 900px) {
+@media (max-width: 950px) {
     .corner-widget-grid {
         grid-template-columns: 1fr;
     }
@@ -213,35 +213,25 @@
     font-size: 0.95rem;
     margin: 0 0 10px 0;
 }
-.small-video-container {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%;
-    height: 0;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #000;
+
+/* Side-by-side layout for mobile flipper and YouTube player */
+.media-flex-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
     margin-bottom: 12px;
-}
-.small-video-container iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
 }
 
 /* Mobile Screen Screenshot Flipper Widget */
 .mobile-flipper-container {
     position: relative;
-    width: 160px;
-    height: 310px;
-    margin: 0 auto 12px auto;
+    width: 120px;
+    height: 220px;
+    flex-shrink: 0;
     background: #000;
-    border: 6px solid #2d3748;
-    border-radius: 24px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.1);
+    border: 4px solid #2d3748;
+    border-radius: 16px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.6), inset 0 0 6px rgba(255,255,255,0.1);
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -252,11 +242,11 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 12px;
+    width: 40px;
+    height: 8px;
     background: #2d3748;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
     z-index: 10;
 }
 .app-screenshot {
@@ -271,6 +261,30 @@
 }
 .app-screenshot.active {
     opacity: 1;
+}
+
+/* Video Wrapper */
+.video-side-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+.small-video-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 75%;
+    height: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+}
+.small-video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
 }
 
 /* Educational Services Button */
@@ -418,7 +432,7 @@
 
     <main class="content">
         
-        <!-- Top Corner Layout: Hero on Left, Compact Video / Screenshots / Educational Services / Socials on Right -->
+        <!-- Top Corner Layout: Hero on Left, Media Row (Mobile Flipper + YouTube Video) on Right -->
         <div class="corner-widget-grid">
             <section class="hero" style="margin-bottom: 0;">
                 <span class="eyebrow">Next-Gen App Store</span>
@@ -430,23 +444,30 @@
                 </div>
             </section>
 
-            <!-- Compact Video, Mobile Screenshots Flipper & Educational Services Corner Widget -->
+            <!-- Right Corner Widget: Mobile Flipper placed directly to the left of the YouTube Player -->
             <div class="corner-card">
                 <h4>Featured Video</h4>
-                <div class="small-video-container">
-                    <!-- Live Embedded Video BwOW3MkqaKc -->
-                    <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
-                </div>
+                
+                <div class="media-flex-row">
+                    <!-- Our Apps Mobile Screen Flipper (Positioned on the Left of YouTube) -->
+                    <div style="text-align: center;">
+                        <span style="font-size: 0.75rem; font-weight: 600; color: #38bdf8; display: block; margin-bottom: 4px;">Our Apps</span>
+                        <div class="mobile-flipper-container">
+                            <div class="phone-notch"></div>
+                            <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active">
+                            <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot">
+                            <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot">
+                            <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot">
+                            <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot">
+                        </div>
+                    </div>
 
-                <!-- Our Apps Mobile Screen Flipper Section -->
-                <h4 style="text-align: center; margin-top: 15px;">Our Apps</h4>
-                <div class="mobile-flipper-container">
-                    <div class="phone-notch"></div>
-                    <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active">
-                    <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot">
-                    <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot">
-                    <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot">
-                    <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot">
+                    <!-- YouTube Video Player (Positioned on the Right) -->
+                    <div class="video-side-wrapper">
+                        <div class="small-video-container">
+                            <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Educational Services Button leading to Boards Directory -->

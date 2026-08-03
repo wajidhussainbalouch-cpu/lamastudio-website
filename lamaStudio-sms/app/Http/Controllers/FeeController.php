@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class FeeController extends Controller
 {
+    /**
+     * Generate a new fee challan for a student.
+     */
     public function generateChallan(Request $request, $studentId)
     {
         $school = Auth::user()->school;
@@ -34,5 +37,21 @@ class FeeController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Fee challan generated successfully!');
+    }
+
+    /**
+     * Mark an existing fee challan as paid.
+     */
+    public function markAsPaid($id)
+    {
+        $school = Auth::user()->school;
+        $fee = Fee::where('school_id', $school->id)->findOrFail($id);
+
+        $fee->update([
+            'status' => 'paid',
+            'updated_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', 'Fee challan marked as paid successfully!');
     }
 }

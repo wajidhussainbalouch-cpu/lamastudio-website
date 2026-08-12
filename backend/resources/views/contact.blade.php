@@ -19,10 +19,10 @@
         <div class="sidebar">
             <h2>LamaStudio</h2>
             <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="services.html">Services</a></li>
-                <li><a href="contact.html" class="active">Contact</a></li>
+                <li><a href="/">Home</a></li>
+                <li><a href=\"/about\">About</a></li>
+                <li><a href=\"/services\">Services</a></li>
+                <li><a href=\"/contact\" class="active">Contact</a></li>
             </ul>
         </div>
 

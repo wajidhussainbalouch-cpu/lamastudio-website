@@ -671,22 +671,22 @@ html, body {
 <body data-app="home">
 
 <div class="topbar">
-    <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+    <a href="/" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
     <div class="topbar-links">
-        <a href="services.html">Services</a>
-        <a href="about.html">About</a>
+        <a href=\"/services\">Services</a>
+        <a href=\"/about\">About</a>
     </div>
 </div>
 
 <div class="layout">
     <aside class="sidebar">
-        <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+        <a href="/" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
 
         <nav class="nav-group">
             <span class="nav-label">Store</span>
-            <a href="index.html" class="nav-link active">Home</a>
-            <a href="services.html" class="nav-link">Services</a>
-            <a href="about.html" class="nav-link">About</a>
+            <a href="/" class="nav-link active">Home</a>
+            <a href=\"/services\" class="nav-link">Services</a>
+            <a href=\"/about\" class="nav-link">About</a>
         </nav>
 
         <nav class="nav-group">
@@ -719,7 +719,7 @@ html, body {
                 <h1>Software built close to home, for how people here actually use their phones.</h1>
                 <p>LamaStudio designs and ships Android apps end to end — from privacy tools, weather forecasting, multi-calendars, and learning tools to parking management, cloud sync, and app store utilities. Access board results and official educational services.</p>
                 <div class="hero-actions" style="margin-top: 15px;">
-                    <a href="boards.html" class="btn-action" style="background: #fbbf24; color: #0b0f19;">Educational Services</a>
+                    <a href=\"/boards\" class="btn-action" style="background: #fbbf24; color: #0b0f19;">Educational Services</a>
                     <a href="apps/lamamulticalendar/" class="btn-ghost">Browse Apps</a>
                 </div>
             </section>
@@ -773,7 +773,7 @@ html, body {
                         <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Video" allowfullscreen></iframe>
                     </div>
 
-                    <a href="boards.html" class="btn-feature-action btn-feature-yellow">Our Softwares</a>
+                    <a href=\"/boards\" class="btn-feature-action btn-feature-yellow">Our Softwares</a>
 
                     <div class="live-news-box">
                         <h5>Live Updates</h5>
@@ -955,7 +955,7 @@ html, body {
         <footer class="site-footer">
             <span>&copy; 2026 LamaStudio. All rights reserved.</span>
             <nav>
-                <a href="about.html">About</a>
+                <a href=\"/about\">About</a>
             </nav>
         </footer>
     </main>

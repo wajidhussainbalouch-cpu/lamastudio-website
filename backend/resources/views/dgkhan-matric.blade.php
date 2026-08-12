@@ -103,7 +103,7 @@ body {
     </form>
 
     <div class="brand-footer">
-        Powered by <a href="index.html">LamaStudio</a> | Visit <a href="https://www.bisedgkhan.edu.pk/" target="_blank">BISE DG Khan</a>
+        Powered by <a href="/">LamaStudio</a> | Visit <a href="https://www.bisedgkhan.edu.pk/" target="_blank">BISE DG Khan</a>
     </div>
 </div>
 

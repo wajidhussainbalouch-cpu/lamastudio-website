@@ -17,23 +17,23 @@
 <body>
 
 <div class="topbar">
-    <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+    <a href="/" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
     <div class="topbar-links">
-        <a href="services.html">Services</a>
-        <a href="about.html">About</a>
-        <a href="privacy.html">Privacy</a>
+        <a href=\"/services\">Services</a>
+        <a href=\"/about\">About</a>
+        <a href=\"/privacy\">Privacy</a>
     </div>
 </div>
 
 <div class="layout">
     <aside class="sidebar">
-        <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+        <a href="/" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
         <nav class="nav-group">
             <span class="nav-label">Store</span>
-            <a href="index.html" class="nav-link"><span class="nav-dot"></span>Home</a>
-            <a href="services.html" class="nav-link"><span class="nav-dot"></span>Services</a>
-            <a href="about.html" class="nav-link active"><span class="nav-dot"></span>About</a>
-            <a href="privacy.html" class="nav-link"><span class="nav-dot"></span>Privacy Policy</a>
+            <a href="/" class="nav-link"><span class="nav-dot"></span>Home</a>
+            <a href=\"/services\" class="nav-link"><span class="nav-dot"></span>Services</a>
+            <a href=\"/about\" class="nav-link active"><span class="nav-dot"></span>About</a>
+            <a href=\"/privacy\" class="nav-link"><span class="nav-dot"></span>Privacy Policy</a>
         </nav>
         <nav class="nav-group">
             <span class="nav-label">Apps</span>
@@ -79,11 +79,11 @@
             </div>
         </div>
 
-        <a href="index.html" class="btn-action">Return to Store Home</a>
+        <a href="/" class="btn-action">Return to Store Home</a>
 
         <footer class="site-footer">
             <span>&copy; 2026 LamaStudio. All rights reserved.</span>
-            <nav><a href="services.html">Services</a> · <a href="privacy.html">Privacy</a></nav>
+            <nav><a href=\"/services\">Services</a> · <a href=\"/privacy\">Privacy</a></nav>
         </footer>
     </main>
 </div>

@@ -122,25 +122,25 @@
 <body>
 
 <div class="topbar">
-    <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+    <a href="/" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
     <div class="topbar-links">
-        <a href="index.html">Home</a>
-        <a href="boards.html" style="color: #fbbf24; font-weight: 600;">Educational Services</a>
-        <a href="portal.html">Student Portal</a>
+        <a href="/">Home</a>
+        <a href=\"/boards\" style="color: #fbbf24; font-weight: 600;">Educational Services</a>
+        <a href=\"/portal\">Student Portal</a>
     </div>
 </div>
 
 <div class="layout">
     <aside class="sidebar">
-        <a href="index.html" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
+        <a href="/" class="brand"><span class="brand-mark">L</span>LamaStudio</a>
 
         <nav class="nav-group">
             <span class="nav-label">Store</span>
-            <a href="index.html" class="nav-link">Home</a>
-            <a href="boards.html" class="nav-link active" style="background-color: #fbbf24; color: #0f172a; font-weight: 600;">Educational Services</a>
-            <a href="portal.html" class="nav-link">Student Portal</a>
-            <a href="services.html" class="nav-link">Services</a>
-            <a href="about.html" class="nav-link">About</a>
+            <a href="/" class="nav-link">Home</a>
+            <a href=\"/boards\" class="nav-link active" style="background-color: #fbbf24; color: #0f172a; font-weight: 600;">Educational Services</a>
+            <a href=\"/portal\" class="nav-link">Student Portal</a>
+            <a href=\"/services\" class="nav-link">Services</a>
+            <a href=\"/about\" class="nav-link">About</a>
         </nav>
 
         <div class="sidebar-footer">
@@ -256,9 +256,9 @@
         <footer class="site-footer" style="margin-top: 2rem;">
             <span>&copy; 2026 LamaStudio. All rights reserved.</span>
             <nav>
-                <a href="index.html">Home</a> ·
-                <a href="portal.html">Student Portal</a> ·
-                <a href="about.html">About</a>
+                <a href="/">Home</a> ·
+                <a href=\"/portal\">Student Portal</a> ·
+                <a href=\"/about\">About</a>
             </nav>
         </footer>
     </main>

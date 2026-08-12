@@ -27,7 +27,14 @@
   // background replacement is actually requested, and cached afterwards.
   const MEDIAPIPE_VERSION = "0.10.14";
   const VISION_BUNDLE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_VERSION}/vision_bundle.mjs`;
-  const WASM_ROOT = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_VERSION}/wasm`;
+// ---- lamaPhotoResizer API (Laravel backend) — trial/license + payment claims.
+  // Dynamically switches between local development server and central production backend.
+  const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://lamastudio.pk/backend/public/api';
+
+  const DEVICE_ID_KEY = "lamaPhotoResizer.deviceId";
+  const LICENSE_KEY_KEY = "lamaPhotoResizer.licenseKey";
   const SELFIE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite";
 
   // ---- lamaPhotoResizer API (Laravel backend) — trial/license + payment claims.

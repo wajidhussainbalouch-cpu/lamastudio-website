@@ -11,7 +11,7 @@
 <meta property="og:description" content="An independent Android app studio based in Pakistan.">
 <meta property="og:url" content="https://lamastudio.pk/about.html">
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href=\"{{ asset(\"style.css\") }}\">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4212196297960637" crossorigin="anonymous"></script>
 </head>
 <body>

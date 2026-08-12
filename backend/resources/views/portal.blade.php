@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Portal & Media Hub - LamaStudio</title>
     <meta name="description" content="Access the LamaStudio Student Portal for the latest educational news, exam updates, board results, and watch our latest YouTube videos and connect on Facebook.">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href=\"{{ asset(\"style.css\") }}\">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4212196297960637" crossorigin="anonymous"></script>
     <style>
         :root {

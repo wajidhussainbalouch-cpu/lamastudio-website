@@ -12,7 +12,7 @@
 <meta property="og:url" content="https://www.lamastudio.pk/dgkhan-matric.html">
 <meta property="og:type" content="website">
 
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href=\"{{ asset(\"style.css\") }}\">
 <style>
 body {
     background-color: #0b0f19;

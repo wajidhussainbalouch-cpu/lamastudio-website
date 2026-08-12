@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - LamaStudio</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href=\"{{ asset(\"style.css\") }}\">
     <style>
         .contact-box { background: #fff; border: 1px solid #e2e8f0; padding: 30px; border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         .contact-box h3 { color: #111; margin-bottom: 10px; }

@@ -23,7 +23,7 @@
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href=\"{{ asset(\"style.css\") }}\">
 <style>
 /* Prevent horizontal page scrolling */
 html, body {
@@ -732,14 +732,14 @@ html, body {
                     <h4>Our Apps</h4>
                     <div class="mobile-flipper-container">
                         <div class="phone-notch"></div>
-                        <img src="assets/screenshots/lamavpn.png" alt="LamaVPN Pro" class="app-screenshot active" data-name="LamaVPN Pro v1.0">
-                        <img src="assets/screenshots/lamasky.png" alt="LamaSky" class="app-screenshot" data-name="LamaSky v1.0">
-                        <img src="assets/screenshots/lamaiq.png" alt="LamaIQMaster" class="app-screenshot" data-name="LamaIQMaster v1.0">
-                        <img src="assets/screenshots/lamacalendar.png" alt="LamaMultiCalendar" class="app-screenshot" data-name="LamaMultiCalendar v1.0">
-                        <img src="assets/screenshots/lamaresizer.png" alt="LamaPhotoResizer" class="app-screenshot" data-name="LamaPhotoResizer v1.0">
-                        <img src="assets/screenshots/lamapark.png" alt="LamaPark" class="app-screenshot" data-name="LamaPark v1.0">
-                        <img src="assets/screenshots/lamasync.png" alt="LamaSync" class="app-screenshot" data-name="LamaSync v1.0">
-                        <img src="assets/screenshots/lamastore.png" alt="LamaStore" class="app-screenshot" data-name="LamaStore v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamavpn.png\") }}\" alt="LamaVPN Pro" class="app-screenshot active" data-name="LamaVPN Pro v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamasky.png\") }}\" alt="LamaSky" class="app-screenshot" data-name="LamaSky v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamaiq.png\") }}\" alt="LamaIQMaster" class="app-screenshot" data-name="LamaIQMaster v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamacalendar.png\") }}\" alt="LamaMultiCalendar" class="app-screenshot" data-name="LamaMultiCalendar v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamaresizer.png\") }}\" alt="LamaPhotoResizer" class="app-screenshot" data-name="LamaPhotoResizer v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamapark.png\") }}\" alt="LamaPark" class="app-screenshot" data-name="LamaPark v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamasync.png\") }}\" alt="LamaSync" class="app-screenshot" data-name="LamaSync v1.0">
+                        <img src=\"{{ asset(\"assets/screenshots/lamastore.png\") }}\" alt="LamaStore" class="app-screenshot" data-name="LamaStore v1.0">
                         
                         <div class="app-name-overlay" id="flipperAppName">LamaVPN Pro v1.0</div>
                     </div>

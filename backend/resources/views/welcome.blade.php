@@ -962,27 +962,66 @@ html, body {
 </div>
 
 <!-- JavaScript to automatically rotate app screenshots and update overlay text -->
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const screenshots = document.querySelectorAll(".app-screenshot");
-        const appNameOverlay = document.getElementById("flipperAppName");
-        let currentIndex = 0;
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const screenshots = document.querySelectorAll(".app-screenshot");
+            const appNameOverlay = document.getElementById("flipperAppName");
+            let currentIndex = 0;
 
-        if (screenshots.length > 0) {
-            setInterval(() => {
-                screenshots[currentIndex].classList.remove("active");
-                currentIndex = (currentIndex + 1) % screenshots.length;
-                screenshots[currentIndex].classList.add("active");
-                
-                if (appNameOverlay) {
-                    appNameOverlay.textContent = screenshots[currentIndex].getAttribute("data-name");
-                }
-            }, 3000);
-        }
-    });
-</script>
+            if (screenshots.length > 0) {
+                setInterval(() => {
+                    screenshots[currentIndex].classList.remove("active");
+                    currentIndex = (currentIndex + 1) % screenshots.length;
+                    screenshots[currentIndex].classList.add("active");
+                    
+                    if (appNameOverlay) {
+                        appNameOverlay.textContent = screenshots[currentIndex].getAttribute("data-name");
+                    }
+                }, 3000);
+            }
+        });
+    </script>
+
+    <!-- Compact Ecosystem Bar & AskLama Widget -->
+    <div style="background: #0f172a; padding: 20px; border-top: 1px solid #1e293b; text-align: center; color: #fff;">
+        <div style="max-width: 800px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; align-items: center;">
+            <a href="/apps/lamaschool" style="background: #1e293b; border: 1px solid #334155; color: #38bdf8; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">🏫 LamaSchool SMS</a>
+            <button onclick="toggleAskLamaChat()" style="background: #0ea5e9; border: none; color: white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">🤖 AskLama Assistant</button>
+        </div>
+    </div>
+
+    <!-- Floating AskLama Widget -->
+    <div id="askLamaWidget" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 320px; height: 400px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 9999; flex-direction: column; overflow: hidden;">
+        <div style="background: #0f172a; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+            <span style="font-weight: bold; color: #38bdf8; font-size: 0.95rem;">AskLama Chat</span>
+            <button onclick="toggleAskLamaChat()" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;">&times;</button>
+        </div>
+        <div id="askLamaMessages" style="flex: 1; padding: 12px; overflow-y: auto; color: #e2e8f0; font-size: 0.85rem;">
+            <div style="background: #334155; padding: 8px 10px; border-radius: 6px; margin-bottom: 8px; width: fit-content;">Hello! How can I help you today?</div>
+        </div>
+        <div style="padding: 8px; background: #0f172a; border-top: 1px solid #334155; display: flex;">
+            <input type="text" id="askLamaInput" placeholder="Ask anything..." style="flex: 1; background: #1e293b; border: 1px solid #475569; color: white; padding: 6px 10px; border-radius: 6px; outline: none; font-size: 0.85rem;">
+            <button onclick="sendAskLamaMessage()" style="background: #0ea5e9; border: none; color: white; padding: 6px 12px; margin-left: 6px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Send</button>
+        </div>
+    </div>
+
+    <script>
+    function toggleAskLamaChat() {
+        const w = document.getElementById('askLamaWidget');
+        w.style.display = w.style.display === 'flex' ? 'none' : 'flex';
+    }
+    function sendAskLamaMessage() {
+        const input = document.getElementById('askLamaInput');
+        const box = document.getElementById('askLamaMessages');
+        if (!input.value.trim()) return;
+        box.innerHTML += `<div style="background: #0ea5e9; color: white; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; margin-left: auto; width: fit-content;">${input.value}</div>`;
+        const q = input.value; input.value = ''; box.scrollTop = box.scrollHeight;
+        setTimeout(() => {
+            box.innerHTML += `<div style="background: #334155; color: #e2e8f0; padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; width: fit-content;">AskLama: Systems are running smoothly!</div>`;
+            box.scrollTop = box.scrollHeight;
+        }, 500);
+    }
+    </script>
 
 </body>
 </html>
-<x-ask-lama />
-<x-ask-lama />

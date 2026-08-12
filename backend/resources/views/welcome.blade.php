@@ -219,5 +219,10 @@
         @if (Route::has('login'))
             <div class="h-14.5 hidden lg:block"></div>
         @endif
+        <!-- Main Landing Content -->
+        </div>
+
+        <!-- AskLama Floating Chat Widget -->
+        @include('components.ask-lama')
     </body>
 </html>

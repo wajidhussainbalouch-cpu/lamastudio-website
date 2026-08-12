@@ -8,31 +8,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('payment_claims', function (Blueprint $table) {
+        Schema::create('licenses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('license_id')->constrained()->cascadeOnDelete();
+            $table->string('license_key', 40)->unique();
+            $table->string('device_id')->index(); // stable id generated client-side, stored in localStorage
+            $table->string('email')->nullable();
 
-            $table->enum('method', ['easypaisa', 'jazzcash', 'bank', 'raast']);
-            $table->string('tx_id', 100);
-            $table->decimal('amount', 10, 2);
-            $table->string('payer_name')->nullable();
-            $table->string('payer_contact')->nullable(); // phone / account used to pay
-            $table->enum('plan_requested', ['pro_monthly', 'pro_yearly', 'lifetime']);
+            $table->enum('status', ['trial', 'active', 'expired', 'revoked'])->default('trial');
+            $table->enum('plan', ['trial', 'pro_monthly', 'pro_yearly', 'lifetime'])->default('trial');
 
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
-            $table->text('admin_note')->nullable();
-            $table->foreignId('reviewed_by')->nullable()->constrained('admins')->nullOnDelete();
-            $table->timestamp('reviewed_at')->nullable();
+            // Trial gating: whichever limit is hit first ends the trial.
+            $table->timestamp('trial_ends_at')->nullable();
+            $table->unsignedInteger('trial_photo_limit')->default(20);
+            $table->unsignedInteger('photos_used')->default(0);
+
+            $table->timestamp('activated_at')->nullable();
+            $table->timestamp('pro_expires_at')->nullable(); // null = lifetime / not applicable
 
             $table->timestamps();
-
-            // Prevents the same transaction ID being submitted twice by mistake or abuse.
-            $table->unique(['method', 'tx_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('payment_claims');
+        Schema::dropIfExists('licenses');
     }
 };

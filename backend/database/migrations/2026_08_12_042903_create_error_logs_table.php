@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('app_trackers', function (Blueprint $table) {
+        Schema::create('error_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('app_key')->unique();
-            $table->string('name');
-            $table->integer('total_downloads')->default(0);
-            $table->integer('active_users')->default(0);
-            $table->decimal('success_rate', 5, 2)->default(100.00);
+            $table->string('app_key');
+            $table->text('error_message');
+            $table->string('user_device_id')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('app_trackers');
+        Schema::dropIfExists('error_logs');
     }
 };

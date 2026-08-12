@@ -19,6 +19,7 @@
   "use strict";
 
   /* ---------------- Constants ---------------- */
+  /* ---------------- Constants ---------------- */
   const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
   const PRESET_KEY = "lamaPhotoResizer.preset.v1";
   const THEME_KEY = "lamaPhotoResizer.theme";
@@ -27,7 +28,8 @@
   // background replacement is actually requested, and cached afterwards.
   const MEDIAPIPE_VERSION = "0.10.14";
   const VISION_BUNDLE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_VERSION}/vision_bundle.mjs`;
-// ---- lamaPhotoResizer API (Laravel backend) — trial/license + payment claims.
+
+  // ---- lamaPhotoResizer API (Laravel backend) — trial/license + payment claims.
   // Dynamically switches between local development server and central production backend.
   const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://127.0.0.1:8000/api'
@@ -37,17 +39,10 @@
   const LICENSE_KEY_KEY = "lamaPhotoResizer.licenseKey";
   const SELFIE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite";
 
-  // ---- lamaPhotoResizer API (Laravel backend) — trial/license + payment claims.
-  // Change this to your deployed API origin (see backend README).
-  const API_BASE_URL = "https://api.lamastudio.pk";
-  const DEVICE_ID_KEY = "lamaPhotoResizer.deviceId";
-  const LICENSE_KEY_KEY = "lamaPhotoResizer.licenseKey";
-
   // ---- remove.bg cloud engine — key stays in this browser and is sent
   // directly to remove.bg; lamaStudio.pk's own server never sees it.
   const REMOVEBG_ENDPOINT = "https://api.remove.bg/v1.0/removebg";
   const REMOVEBG_KEY_STORAGE = "lamaPhotoResizer.removebg.key";
-
   /* ---------------- DOM refs ---------------- */
   const $ = (sel) => document.querySelector(sel);
 

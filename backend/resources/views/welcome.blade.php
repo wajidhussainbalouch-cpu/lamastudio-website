@@ -23,7 +23,7 @@
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href=\"{{ asset(\"style.css\") }}\">
+<link rel="stylesheet" href="{{ asset("style.css") }}">
 <style>
 /* Prevent horizontal page scrolling */
 html, body {

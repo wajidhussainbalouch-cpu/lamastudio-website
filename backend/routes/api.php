@@ -5,15 +5,15 @@ use App\Http\Controllers\Api\Admin\AdminLicenseController;
 use App\Http\Controllers\Api\Admin\AdminPaymentClaimController;
 use App\Http\Controllers\Api\LicenseController;
 use App\Http\Controllers\Api\PaymentClaimController;
+use App\Http\Controllers\Api\TelemetryController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| lamaPhotoResizer API routes
+| lamaPhotoResizer & LamaStudio API routes
 |--------------------------------------------------------------------------
-| Public routes are called directly from the static lamaPhotoResizer web
-| app (index.html/app.js). Admin routes require a Sanctum bearer token
-| obtained from POST /api/admin/login and are used by admin.html.
+| Public routes are called directly from the static apps. Admin routes require 
+| a Sanctum bearer token obtained from POST /api/admin/login.
 */
 
 // ---- Public: license lifecycle ----
@@ -27,6 +27,11 @@ Route::get('/payment-claims/{id}/status', [PaymentClaimController::class, 'statu
 
 // ---- Admin auth ----
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
+
+// ---- Authenticated Apps & Telemetry (requires Bearer token) ----
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/app/telemetry', [TelemetryController::class, 'store']);
+});
 
 // ---- Admin dashboard (requires Authorization: Bearer <token>) ----
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {

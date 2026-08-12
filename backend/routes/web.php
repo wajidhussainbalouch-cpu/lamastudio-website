@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\LamaController; // 1. Import your controller
+use App\Http\Controllers\LamaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -12,7 +12,6 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// 2. Add the AskLama route here
 Route::post('/api/ask-lama', [LamaController::class, 'ask']);
 
 Route::middleware('auth')->group(function () {

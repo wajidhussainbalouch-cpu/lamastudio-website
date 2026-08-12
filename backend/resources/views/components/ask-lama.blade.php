@@ -1,3 +1,4 @@
+cat << 'EOF' > resources/views/components/ask-lama.blade.php
 <!-- AskLama Floating Chat Widget Styles -->
 <style>
 #ask-lama-widget {
@@ -142,12 +143,10 @@ async function sendToAskLama() {
     
     if (!userText) return;
 
-    // Append User Message
     messageContainer.innerHTML += `<div class="lama-msg user-msg">${escapeHtml(userText)}</div>`;
     inputField.value = '';
     messageContainer.scrollTop = messageContainer.scrollHeight;
 
-    // Add temporary loading indicator
     const loadingId = 'loading-' + Date.now();
     messageContainer.innerHTML += `<div id="${loadingId}" class="lama-msg ai-msg">Thinking...</div>`;
     messageContainer.scrollTop = messageContainer.scrollHeight;
@@ -165,7 +164,6 @@ async function sendToAskLama() {
         const data = await response.json();
         document.getElementById(loadingId).remove();
 
-        // Extract Gemini text response safely
         const aiReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process that.";
         messageContainer.innerHTML += `<div class="lama-msg ai-msg">${escapeHtml(aiReply)}</div>`;
     } catch (error) {
@@ -179,3 +177,4 @@ function escapeHtml(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 </script>
+EOF

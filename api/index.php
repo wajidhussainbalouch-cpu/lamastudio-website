@@ -1,3 +1,0 @@
-<?php
-chdir(__DIR__ . '/../backend');
-require __DIR__ . '/../backend/public/index.php';

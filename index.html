@@ -59,11 +59,6 @@ html[data-theme="light"] {
    ========================================================= */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-}
-
 body {
   background-color: var(--bg);
   color: var(--text-main);
@@ -89,7 +84,7 @@ img { max-width: 100%; display: block; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
 
 /* =========================================================
-   Top Banner (Independence Day) - Compact Fix
+   Top Banner (Independence Day)
    ========================================================= */
 .ind-banner {
   background: linear-gradient(135deg, #046A38 0%, #165b33 50%, #046A38 100%);
@@ -212,7 +207,7 @@ html[data-theme="light"] .icon-moon { display: none; }
 html[data-theme="light"] .icon-sun { display: block; }
 
 /* =========================================================
-   Sidebar Drawer (Left Navigation) - Live & Functional
+   Sidebar Drawer (Left Navigation) - Always Visible / Live
    ========================================================= */
 .sidebar-overlay {
   position: fixed; inset: 0; z-index: 9998;
@@ -350,7 +345,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 .video-wrapper {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  padding-bottom: 56.25%;
   height: 0;
   border-radius: 8px;
   overflow: hidden;
@@ -515,19 +510,21 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 <!-- Header -->
 <header class="site-header">
   <div class="util-row">
-    <a href="index.html" class="brand">
-      <span class="brand-mark">L</span>
-      <span>LamaStudio<small>Portal · Pakistan</small></span>
-    </a>
+    <!-- Three buttons / menu toggle on the left side -->
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open sidebar menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="index.html" class="brand">
+        <span class="brand-mark">L</span>
+        <span>LamaStudio<small>Portal · Pakistan</small></span>
+      </a>
+    </div>
     
     <div class="header-actions">
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
-      
-      <button class="menu-toggle" id="menuToggle" aria-label="Open sidebar menu">
-        <span></span><span></span><span></span>
       </button>
     </div>
   </div>
@@ -546,7 +543,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
   </div>
 </header>
 
-<!-- Sidebar Drawer Menu (Live Across Pages) -->
+<!-- Sidebar Drawer Menu (Live Across Pages, without categories) -->
 <div class="sidebar-overlay" id="sidebarOverlay">
   <div class="sidebar-drawer" id="sidebarDrawer" role="dialog" aria-modal="true" aria-label="Sidebar Menu">
     <div class="sidebar-header">
@@ -578,18 +575,6 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
         <li><a href="apps/lamaphotoresizer/">LamaPhotoResizer</a></li>
       </ul>
     </div>
-
-    <div class="sidebar-nav-group">
-      <h5>Categories</h5>
-      <ul>
-        <li><a href="index.html" onclick="sessionStorage.setItem('preferredCat','business')">Business</a></li>
-        <li><a href="index.html" onclick="sessionStorage.setItem('preferredCat','fashion')">Fashion</a></li>
-        <li><a href="index.html" onclick="sessionStorage.setItem('preferredCat','education')">Education</a></li>
-        <li><a href="index.html" onclick="sessionStorage.setItem('preferredCat','weather')">Weather</a></li>
-        <li><a href="index.html" onclick="sessionStorage.setItem('preferredCat','health')">Health</a></li>
-        <li><a href="index.html" onclick="sessionStorage.setItem('preferredCat','tech')">Tech</a></li>
-      </ul>
-    </div>
   </div>
 </div>
 
@@ -607,21 +592,21 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     </div>
 
     <div class="side-widgets">
-      <!-- Live YouTube Player Widget replacing weather -->
+      <!-- Live YouTube Player Widget with exact requested video & links -->
       <div class="widget">
         <div class="widget-head">
           <span class="widget-title">Featured Stream</span>
           <span class="live-dot"><i></i>Live Video</span>
         </div>
         <div class="video-wrapper">
-          <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="LamaStudio Featured Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Featured Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
         <div class="social-buttons-grid">
-          <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" class="btn-social btn-youtube">
+          <a href="https://www.youtube.com/channel/UCi1w07U76CVSjA9yuJArxEQ" target="_blank" rel="noopener noreferrer" class="btn-social btn-youtube">
             <svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
             YouTube
           </a>
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="btn-social btn-facebook">
+          <a href="https://www.facebook.com/lamastudiopk" target="_blank" rel="noopener noreferrer" class="btn-social btn-facebook">
             <svg viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
             Facebook
           </a>
@@ -886,13 +871,6 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
   var blogClear = document.getElementById('blogFilterClear');
   if (appClear) appClear.addEventListener('click', function () { applyFilter('all'); });
   if (blogClear) blogClear.addEventListener('click', function () { applyFilter('all'); });
-
-  // Handle session category persistence across pages
-  var prefCat = sessionStorage.getItem('preferredCat');
-  if (prefCat) {
-    sessionStorage.removeItem('preferredCat');
-    applyFilter(prefCat);
-  }
 
   // Animate Stat Counters
   var counted = false;

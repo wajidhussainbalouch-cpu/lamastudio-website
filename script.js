@@ -40,12 +40,13 @@
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-  // App Ecosystem Data with pricing, dual links, and specific themes
+  // App Ecosystem Data with pricing, dual links, and specific types (apps/software)
   var apps = [
     { 
       id: 'vpn', 
       name: 'LamaVPN Pro', 
       cat: 'tech', 
+      type: 'apps',
       icon: '🛡️', 
       tag: 'Privacy & Security', 
       desc: 'A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.', 
@@ -57,6 +58,7 @@
       id: 'sky', 
       name: 'LamaSky', 
       cat: 'weather', 
+      type: 'apps',
       icon: '🌤️', 
       tag: 'Weather & Planning', 
       desc: 'Local weather, prayer-aligned scheduling, and daily planning built around how Pakistani users structure their day.', 
@@ -68,6 +70,7 @@
       id: 'iq', 
       name: 'LamaIQMaster', 
       cat: 'education', 
+      type: 'software',
       icon: '🧠', 
       tag: 'Cognitive Training', 
       desc: 'Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.', 
@@ -79,6 +82,7 @@
       id: 'cal', 
       name: 'LamaMultiCalendar', 
       cat: 'business', 
+      type: 'apps',
       icon: '📅', 
       tag: 'Productivity', 
       desc: 'Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.', 
@@ -90,6 +94,7 @@
       id: 'photo', 
       name: 'LamaPhotoResizer', 
       cat: 'fashion', 
+      type: 'software',
       icon: '🖼️', 
       tag: 'Photo Tools', 
       desc: 'On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.', 
@@ -127,6 +132,7 @@
       card.className = 'app-card';
       card.style.setProperty('--pc', 'var(--c-' + app.cat + ')');
       card.dataset.cat = app.cat;
+      card.dataset.type = app.type;
       card.innerHTML =
         '<div class="app-icon">' + app.icon + '</div>' +
         '<div><span class="tag-pill">' + app.tag + '</span><h3>' + app.name + '</h3></div>' +
@@ -168,7 +174,7 @@
     tickerTrack.innerHTML = tickerHTML() + tickerHTML();
   }
 
-  // Category Filter Functionality
+  // Top Category Filter Functionality
   var pills = Array.prototype.slice.call(document.querySelectorAll('.cat-pill'));
   var appFilterNote = document.getElementById('appFilterNote');
   var appFilterLabel = document.getElementById('appFilterLabel');
@@ -180,33 +186,53 @@
     var appCards = appGrid.querySelectorAll('.app-card');
     var blogCards = blogGrid.querySelectorAll('.blog-card');
 
-    appCards.forEach(function (c) { c.classList.toggle('is-hidden', cat !== 'all' && c.dataset.cat !== cat); });
-    blogCards.forEach(function (c) { c.classList.toggle('is-hidden', cat !== 'all' && c.dataset.cat !== cat); });
+    appCards.forEach(function (c) { c.classList.toggle('is-hidden', c.dataset.cat !== cat); });
+    blogCards.forEach(function (c) { c.classList.toggle('is-hidden', c.dataset.cat !== cat); });
 
-    var showNote = cat !== 'all';
-    if (appFilterNote) appFilterNote.hidden = !showNote;
-    if (blogFilterNote) blogFilterNote.hidden = !showNote;
-    if (showNote) {
-      var label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      if (appFilterLabel) appFilterLabel.textContent = label;
-      if (blogFilterLabel) blogFilterLabel.textContent = label;
-    }
+    if (appFilterNote) appFilterNote.hidden = false;
+    if (blogFilterNote) blogFilterNote.hidden = false;
+    
+    var label = cat.charAt(0).toUpperCase() + cat.slice(1);
+    if (appFilterLabel) appFilterLabel.textContent = label;
+    if (blogFilterLabel) blogFilterLabel.textContent = label;
 
     pills.forEach(function (p) {
-      var isActive = p.dataset.cat === cat;
-      p.classList.toggle('is-active', isActive);
+      p.classList.toggle('is-active', p.dataset.cat === cat);
     });
-    document.documentElement.style.setProperty('--c-active', cat === 'all' ? 'var(--primary)' : 'var(--c-' + cat + ')');
+    document.documentElement.style.setProperty('--c-active', 'var(--c-' + cat + ')');
   }
 
-  pills.forEach(function (p) {
+  pills.forEach(function (p, index) {
     p.addEventListener('click', function () { applyFilter(p.dataset.cat); });
+    // Default select first category on load
+    if (index === 0) {
+      applyFilter(p.dataset.cat);
+    }
   });
-  
+
+  // Sidebar Filter Links for Apps vs Software
+  var sidebarFilterLinks = document.querySelectorAll('.sidebar-filter-link');
+  sidebarFilterLinks.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var targetType = link.dataset.type;
+      
+      var appCards = appGrid.querySelectorAll('.app-card');
+      appCards.forEach(function (c) {
+        c.classList.toggle('is-hidden', c.dataset.type !== targetType);
+      });
+
+      if (appFilterNote) appFilterNote.hidden = false;
+      if (appFilterLabel) appFilterLabel.textContent = targetType === 'apps' ? 'Mobile Apps' : 'Desktop Software';
+      
+      closeSidebar();
+    });
+  });
+
   var appClear = document.getElementById('appFilterClear');
   var blogClear = document.getElementById('blogFilterClear');
-  if (appClear) appClear.addEventListener('click', function () { applyFilter('all'); });
-  if (blogClear) blogClear.addEventListener('click', function () { applyFilter('all'); });
+  if (appClear) appClear.addEventListener('click', function () { applyFilter('tech'); });
+  if (blogClear) blogClear.addEventListener('click', function () { applyFilter('tech'); });
 
   // Animate Stat Counters
   var counted = false;

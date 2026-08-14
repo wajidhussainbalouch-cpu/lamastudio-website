@@ -40,7 +40,66 @@
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-// App Ecosystem Data (Links updated to point directly to app index files)
+  // Quick-View Modal Logic References (Declared early so render loops can access openModal safely)
+  var overlay = document.getElementById('modalOverlay');
+  var modalBox = document.getElementById('modalBox');
+  var modalIcon = document.getElementById('modalIcon');
+  var modalTag = document.getElementById('modalTag');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalDesc = document.getElementById('modalDesc');
+  var modalPrice = document.getElementById('modalPrice');
+  var modalMobileBtn = document.getElementById('modalMobileBtn');
+  var modalPcBtn = document.getElementById('modalPcBtn');
+  var lastFocused = null;
+
+  function openModal(app) {
+    lastFocused = document.activeElement;
+    if (modalBox) modalBox.style.setProperty('--pc', 'var(--c-' + app.cat + ')');
+    if (modalIcon) {
+      modalIcon.textContent = app.icon;
+      modalIcon.style.background = 'color-mix(in srgb, var(--c-' + app.cat + ') 14%, transparent)';
+      modalIcon.style.borderColor = 'color-mix(in srgb, var(--c-' + app.cat + ') 40%, transparent)';
+    }
+    if (modalTag) {
+      modalTag.textContent = app.tag;
+      modalTag.style.color = 'var(--c-' + app.cat + ')';
+    }
+    if (modalTitle) modalTitle.textContent = app.name;
+    if (modalDesc) modalDesc.textContent = app.desc;
+    if (modalPrice) {
+      modalPrice.textContent = app.price;
+      modalPrice.style.color = 'var(--c-' + app.cat + ')';
+    }
+    
+    if (modalMobileBtn) {
+      modalMobileBtn.href = app.mobileHref;
+      modalMobileBtn.style.background = 'var(--c-' + app.cat + ')';
+      modalMobileBtn.style.borderColor = 'var(--c-' + app.cat + ')';
+      modalMobileBtn.style.color = '#07090e';
+    }
+
+    if (modalPcBtn) modalPcBtn.href = app.pcHref;
+
+    if (overlay) overlay.classList.add('is-open');
+    var closeBtn = document.getElementById('modalClose');
+    if (closeBtn) closeBtn.focus();
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    if (overlay) overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+    if (lastFocused) lastFocused.focus();
+  }
+
+  var modalCloseBtn = document.getElementById('modalClose');
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+  if (overlay) {
+    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay && overlay.classList.contains('is-open')) closeModal(); });
+
+  // App Ecosystem Data
   var apps = [
     { 
       id: 'vpn', 
@@ -103,6 +162,7 @@
       pcHref: 'apps/lamaphotoresizer/index.html'
     }
   ];
+
   // Blog Articles Data
   var posts = [
     { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },
@@ -268,53 +328,4 @@
   } else {
     animateCounters();
   }
-
-  // Quick-View Modal Logic with Pricing & Dual Action Links
-  var overlay = document.getElementById('modalOverlay');
-  var modalBox = document.getElementById('modalBox');
-  var modalIcon = document.getElementById('modalIcon');
-  var modalTag = document.getElementById('modalTag');
-  var modalTitle = document.getElementById('modalTitle');
-  var modalDesc = document.getElementById('modalDesc');
-  var modalPrice = document.getElementById('modalPrice');
-  var modalMobileBtn = document.getElementById('modalMobileBtn');
-  var modalPcBtn = document.getElementById('modalPcBtn');
-  var lastFocused = null;
-
-  function openModal(app) {
-    lastFocused = document.activeElement;
-    modalBox.style.setProperty('--pc', 'var(--c-' + app.cat + ')');
-    modalIcon.textContent = app.icon;
-    modalIcon.style.background = 'color-mix(in srgb, var(--c-' + app.cat + ') 14%, transparent)';
-    modalIcon.style.borderColor = 'color-mix(in srgb, var(--c-' + app.cat + ') 40%, transparent)';
-    modalTag.textContent = app.tag;
-    modalTag.style.color = 'var(--c-' + app.cat + ')';
-    modalTitle.textContent = app.name;
-    modalDesc.textContent = app.desc;
-    modalPrice.textContent = app.price;
-    modalPrice.style.color = 'var(--c-' + app.cat + ')';
-    
-    modalMobileBtn.href = app.mobileHref;
-    modalMobileBtn.style.background = 'var(--c-' + app.cat + ')';
-    modalMobileBtn.style.borderColor = 'var(--c-' + app.cat + ')';
-    modalMobileBtn.style.color = '#07090e';
-
-    modalPcBtn.href = app.pcHref;
-
-    overlay.classList.add('is-open');
-    var closeBtn = document.getElementById('modalClose');
-    if (closeBtn) closeBtn.focus();
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal() {
-    overlay.classList.remove('is-open');
-    document.body.style.overflow = '';
-    if (lastFocused) lastFocused.focus();
-  }
-  var modalCloseBtn = document.getElementById('modalClose');
-  if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
-  if (overlay) {
-    overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
-  }
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay && overlay.classList.contains('is-open')) closeModal(); });
 })();

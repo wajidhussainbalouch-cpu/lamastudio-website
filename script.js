@@ -18,7 +18,7 @@
     });
   }
 
-  // 2. Sidebar & Mobile Navigation Functionality (Merged from nav.js)
+  // 2. Sidebar & Mobile Navigation Functionality
   document.addEventListener('DOMContentLoaded', function () {
     var menuToggle = document.getElementById('menuToggle') || document.querySelector('.nav-toggle');
     var sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -38,7 +38,6 @@
       menuToggle.setAttribute('aria-expanded', 'false');
     }
 
-    // Toggle drawer on button click
     menuToggle.addEventListener('click', function () {
       var isOpen = sidebarOverlay.classList.contains('is-open');
       if (isOpen) {
@@ -48,26 +47,22 @@
       }
     });
 
-    // Close on backdrop overlay click
     sidebarOverlay.addEventListener('click', function (e) {
       if (e.target === sidebarOverlay) {
         closeSidebar();
       }
     });
 
-    // Close on 'X' button click
     if (sidebarClose) {
       sidebarClose.addEventListener('click', closeSidebar);
     }
 
-    // Close on Escape key press
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && sidebarOverlay.classList.contains('is-open')) {
         closeSidebar();
       }
     });
 
-    // Close automatically when any link inside the sidebar menu is clicked
     sidebarOverlay.querySelectorAll('a').forEach(function (a) {
       a.addEventListener('click', closeSidebar);
     });
@@ -132,7 +127,7 @@
     }
   ];
 
-// 4. Blog Articles Data with unique URLs
+  // 4. Blog Articles Data with unique URLs
   var posts = [
     { cat: 'tech', icon: '💻', title: 'Building Robust Mobile Software in 2026', excerpt: 'Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.', time: '6 min read', url: 'blog/building-robust-mobile-software-in-2026/' },
     { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read', url: 'blog/local-payment-rails/' },
@@ -145,48 +140,7 @@
     { cat: 'travel', icon: '✈️', title: 'Building Tourism Guides for Northern Pakistan', excerpt: 'Offline map caches and localized trail references for remote mountain areas.', time: '6 min read', url: 'blog/tourism-northern-pakistan/' }
   ];
 
-  // 6. Render Blog Posts Grid as clickable anchors
-  var blogGrid = document.getElementById('blogGrid');
-  if (blogGrid) {
-    posts.forEach(function (post) {
-      var card = document.createElement('a');
-      card.href = post.url;
-      card.className = 'blog-card';
-      card.style.setProperty('--pc', 'var(--c-' + post.cat + ')');
-      card.dataset.cat = post.cat;
-      card.innerHTML =
-        '<div class="blog-thumb">' + post.icon + '</div>' +
-        '<div class="blog-body">' +
-          '<div class="blog-meta"><span class="tag-pill">' + post.cat + '</span><span class="read-time">' + post.time + '</span></div>' +
-          '<h3>' + post.title + '</h3>' +
-          '<p>' + post.excerpt + '</p>' +
-          '<span class="read-link">Read article →</span>' +
-        '</div>';
-      blogGrid.appendChild(card);
-    });
-  }
-
-  // 6. Render Blog Posts Grid as clickable anchors
-  var blogGrid = document.getElementById('blogGrid');
-  if (blogGrid) {
-    posts.forEach(function (post) {
-      var card = document.createElement('a');
-      card.href = post.url;
-      card.className = 'blog-card';
-      card.style.setProperty('--pc', 'var(--c-' + post.cat + ')');
-      card.dataset.cat = post.cat;
-      card.innerHTML =
-        '<div class="blog-thumb">' + post.icon + '</div>' +
-        '<div class="blog-body">' +
-          '<div class="blog-meta"><span class="tag-pill">' + post.cat + '</span><span class="read-time">' + post.time + '</span></div>' +
-          '<h3>' + post.title + '</h3>' +
-          '<p>' + post.excerpt + '</p>' +
-          '<span class="read-link">Read article →</span>' +
-        '</div>';
-      blogGrid.appendChild(card);
-    });
-  }
-  // 5. Render Apps Grid (Links directly to subfolder apps/)
+  // 5. Render Apps Grid
   var appGrid = document.getElementById('appGrid');
   if (appGrid) {
     apps.forEach(function (app) {
@@ -205,11 +159,12 @@
     });
   }
 
-  // 6. Render Blog Posts Grid
+  // 6. Render Blog Posts Grid (Clickable anchors linking to individual posts)
   var blogGrid = document.getElementById('blogGrid');
   if (blogGrid) {
     posts.forEach(function (post) {
-      var card = document.createElement('article');
+      var card = document.createElement('a');
+      card.href = post.url;
       card.className = 'blog-card';
       card.style.setProperty('--pc', 'var(--c-' + post.cat + ')');
       card.dataset.cat = post.cat;

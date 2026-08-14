@@ -40,12 +40,12 @@
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-  // App Ecosystem Data
+  // App Ecosystem Data (LamaPhotoResizer correctly configured as software)
   var apps = [
     { 
       id: 'vpn', 
       name: 'LamaVPN Pro', 
-      cat: 'tech', 
+      cat: 'business', 
       type: 'apps',
       icon: '🛡️', 
       tag: 'Privacy & Security', 
@@ -106,7 +106,6 @@
 
   // Blog Articles Data
   var posts = [
-    { cat: 'tech', icon: '⚙️', title: 'Why On-Device AI Is the Right Call for Budget Android Phones', excerpt: 'Cloud inference sounds convenient until your user’s connection drops mid-task. Here’s the case for local-first processing.', time: '6 min read' },
     { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },
     { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.', time: '7 min read' },
     { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don’t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.', time: '4 min read' },
@@ -118,7 +117,6 @@
   ];
 
   var tickerHeadlines = [
-    { tag: 'TECH', text: 'On-device segmentation models are getting small enough for mid-range phones' },
     { tag: 'BIZ', text: 'Raast adoption keeps climbing among small merchant apps' },
     { tag: 'EDU', text: 'Offline-first tools remain the biggest unlock for rural classrooms' },
     { tag: 'HEALTH', text: 'Habit-tracking apps are quietly dropping streak-shame mechanics' }

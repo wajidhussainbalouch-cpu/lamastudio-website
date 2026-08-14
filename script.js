@@ -40,7 +40,7 @@
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-  // App Ecosystem Data (LamaPhotoResizer correctly configured as software)
+// App Ecosystem Data (Links updated to point directly to app index files)
   var apps = [
     { 
       id: 'vpn', 
@@ -103,7 +103,6 @@
       pcHref: 'apps/lamaphotoresizer/index.html'
     }
   ];
-
   // Blog Articles Data
   var posts = [
     { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },

@@ -40,7 +40,7 @@
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-  // Quick-View Modal Logic References (Declared early so render loops can access openModal safely)
+  // Quick-View Modal References & Logic
   var overlay = document.getElementById('modalOverlay');
   var modalBox = document.getElementById('modalBox');
   var modalIcon = document.getElementById('modalIcon');

@@ -132,19 +132,60 @@
     }
   ];
 
-  // 4. Blog Articles Data
+// 4. Blog Articles Data with unique URLs
   var posts = [
-    { cat: 'tech', icon: '💻', title: 'Building Robust Mobile Software in 2026', excerpt: 'Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.', time: '6 min read' },
-    { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },
-    { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.', time: '7 min read' },
-    { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don’t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.', time: '4 min read' },
-    { cat: 'fashion', icon: '👗', title: 'Designing for Small Screens: Lessons from Fashion E-Commerce', excerpt: 'What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.', time: '5 min read' },
-    { cat: 'weather', icon: '🌦️', title: 'Why Weather Apps Feel Unreliable in South Asia', excerpt: 'Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.', time: '6 min read' },
-    { cat: 'sports', icon: '⚽', title: 'Local Sports Fan Engagement on Budget Handsets', excerpt: 'How lightweight tracking engines keep users connected during live matches.', time: '5 min read' },
-    { cat: 'news', icon: '📰', title: 'Delivering Low-Bandwidth News Feeds Effectively', excerpt: 'Optimizing payload sizes for intermittent regional internet coverage.', time: '4 min read' },
-    { cat: 'travel', icon: '✈️', title: 'Building Tourism Guides for Northern Pakistan', excerpt: 'Offline map caches and localized trail references for remote mountain areas.', time: '6 min read' }
+    { cat: 'tech', icon: '💻', title: 'Building Robust Mobile Software in 2026', excerpt: 'Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.', time: '6 min read', url: 'blog/building-robust-mobile-software-in-2026/' },
+    { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read', url: 'blog/local-payment-rails/' },
+    { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.', time: '7 min read', url: 'blog/edtech-pakistani-classrooms/' },
+    { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don’t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.', time: '4 min read', url: 'blog/building-habit-apps/' },
+    { cat: 'fashion', icon: '👗', title: 'Designing for Small Screens: Lessons from Fashion E-Commerce', excerpt: 'What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.', time: '5 min read', url: 'blog/fashion-ecommerce/' },
+    { cat: 'weather', icon: '🌦️', title: 'Why Weather Apps Feel Unreliable in South Asia', excerpt: 'Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.', time: '6 min read', url: 'blog/weather-apps-south-asia/' },
+    { cat: 'sports', icon: '⚽', title: 'Local Sports Fan Engagement on Budget Handsets', excerpt: 'How lightweight tracking engines keep users connected during live matches.', time: '5 min read', url: 'blog/local-sports-engagement/' },
+    { cat: 'news', icon: '📰', title: 'Delivering Low-Bandwidth News Feeds Effectively', excerpt: 'Optimizing payload sizes for intermittent regional internet coverage.', time: '4 min read', url: 'blog/low-bandwidth-news/' },
+    { cat: 'travel', icon: '✈️', title: 'Building Tourism Guides for Northern Pakistan', excerpt: 'Offline map caches and localized trail references for remote mountain areas.', time: '6 min read', url: 'blog/tourism-northern-pakistan/' }
   ];
 
+  // 6. Render Blog Posts Grid as clickable anchors
+  var blogGrid = document.getElementById('blogGrid');
+  if (blogGrid) {
+    posts.forEach(function (post) {
+      var card = document.createElement('a');
+      card.href = post.url;
+      card.className = 'blog-card';
+      card.style.setProperty('--pc', 'var(--c-' + post.cat + ')');
+      card.dataset.cat = post.cat;
+      card.innerHTML =
+        '<div class="blog-thumb">' + post.icon + '</div>' +
+        '<div class="blog-body">' +
+          '<div class="blog-meta"><span class="tag-pill">' + post.cat + '</span><span class="read-time">' + post.time + '</span></div>' +
+          '<h3>' + post.title + '</h3>' +
+          '<p>' + post.excerpt + '</p>' +
+          '<span class="read-link">Read article →</span>' +
+        '</div>';
+      blogGrid.appendChild(card);
+    });
+  }
+
+  // 6. Render Blog Posts Grid as clickable anchors
+  var blogGrid = document.getElementById('blogGrid');
+  if (blogGrid) {
+    posts.forEach(function (post) {
+      var card = document.createElement('a');
+      card.href = post.url;
+      card.className = 'blog-card';
+      card.style.setProperty('--pc', 'var(--c-' + post.cat + ')');
+      card.dataset.cat = post.cat;
+      card.innerHTML =
+        '<div class="blog-thumb">' + post.icon + '</div>' +
+        '<div class="blog-body">' +
+          '<div class="blog-meta"><span class="tag-pill">' + post.cat + '</span><span class="read-time">' + post.time + '</span></div>' +
+          '<h3>' + post.title + '</h3>' +
+          '<p>' + post.excerpt + '</p>' +
+          '<span class="read-link">Read article →</span>' +
+        '</div>';
+      blogGrid.appendChild(card);
+    });
+  }
   // 5. Render Apps Grid (Links directly to subfolder apps/)
   var appGrid = document.getElementById('appGrid');
   if (appGrid) {

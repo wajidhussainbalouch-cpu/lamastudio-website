@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LamaStudio — Apps, Insights &amp; Tools Built for Pakistan</title>
+<meta name="description" content="LamaStudio is a Pakistani multi-service portal: privacy-first Android apps, a live dashboard, and articles across business, tech, health, education, fashion, and weather.">
+<meta name="keywords" content="LamaStudio, Android apps Pakistan, tech dashboard, Pakistani app studio, EasyPaisa app, JazzCash app, Raast">
+<link rel="canonical" href="https://lamastudio.pk/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="LamaStudio — Apps, Insights &amp; Tools Built for Pakistan">
+<meta property="og:description" content="A live dashboard of LamaStudio apps and articles across business, tech, health, education, fashion, and weather.">
+<meta property="og:url" content="https://lamastudio.pk/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:,">
+
+<style>
+/* =========================================================
+   LamaStudio — Dashboard Portal
+   Design tokens
+   ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --primary: #f59e0b;
+  --primary-glow: rgba(245, 158, 11, 0.5);
+  --accent-yellow: #fbbf24;
+  --bg: #07090e;
+  --bg-elevated: rgba(13, 17, 28, 0.85);
+  --card-bg: linear-gradient(145deg, rgba(22, 29, 46, 0.62), rgba(11, 15, 25, 0.82));
+  --card-border: rgba(148, 163, 184, 0.14);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-faint: #5b6577;
+  --radius-lg: 22px;
+  --radius-md: 14px;
+  --radius-sm: 9px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --nav-h: 72px;
+  --cat-h: 58px;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Category accent colors */
+  --c-business: #f59e0b;
+  --c-fashion: #f472b6;
+  --c-education: #a855f7;
+  --c-weather: #38bdf8;
+  --c-health: #34d399;
+  --c-tech: #818cf8;
+  --c-active: var(--primary);
+}
+
+html[data-theme="light"] {
+  --bg: #f3f2ee;
+  --bg-elevated: rgba(255, 255, 255, 0.85);
+  --card-bg: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(245,244,240,0.85));
+  --card-border: rgba(15, 23, 42, 0.1);
+  --text-main: #14181f;
+  --text-muted: #4b5563;
+  --text-faint: #8892a0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  transition: background-color 0.4s var(--ease), color 0.4s var(--ease);
+  overflow-x: hidden;
+}
+html[data-theme="dark"] body {
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(245,158,11,0.07) 0%, transparent 42%),
+    radial-gradient(circle at 90% 15%, rgba(129,140,248,0.06) 0%, transparent 40%),
+    radial-gradient(circle at 85% 90%, rgba(52,211,153,0.05) 0%, transparent 45%),
+    radial-gradient(circle at 8% 88%, rgba(168,85,247,0.05) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+button { font: inherit; }
+img { max-width: 100%; display: block; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.eyebrow::before {
+  content: '';
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* =========================================================
+   Header + Category bar
+   ========================================================= */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  border-bottom: 1px solid var(--card-border);
+}
+.util-row {
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.brand { display: flex; align-items: center; gap: 0.6rem; font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; }
+.brand-mark {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--primary), var(--accent-yellow));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; color: #07090e;
+  box-shadow: 0 0 20px var(--primary-glow);
+  flex-shrink: 0;
+}
+.brand small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--text-faint); text-transform: uppercase; }
+
+.util-links { display: flex; align-items: center; gap: 1.7rem; }
+.util-links a { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); transition: color 0.2s var(--ease); }
+.util-links a:hover { color: var(--text-main); }
+
+.theme-toggle {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-main);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease);
+  flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(--primary); transform: rotate(15deg); }
+.theme-toggle svg { width: 17px; height: 17px; }
+.icon-sun { display: none; }
+html[data-theme="light"] .icon-moon { display: none; }
+html[data-theme="light"] .icon-sun { display: block; }
+
+.header-actions { display: flex; align-items: center; gap: 1.1rem; }
+.mobile-only-toggle { display: none; }
+
+/* Category strip */
+.category-strip {
+  border-top: 1px solid var(--card-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.category-strip::-webkit-scrollbar { display: none; }
+.category-track {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 5%;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: var(--cat-h);
+  width: max-content;
+  min-width: 100%;
+}
+.cat-pill {
+  --pc: var(--c-active);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease), transform 0.2s var(--ease);
+}
+.cat-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pc); box-shadow: 0 0 8px var(--pc); }
+.cat-pill:hover { color: var(--text-main); border-color: var(--pc); transform: translateY(-1px); }
+.cat-pill.is-active {
+  color: #07090e;
+  background: var(--pc);
+  border-color: var(--pc);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--pc) 55%, transparent);
+}
+html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
+.cat-pill.is-active .dot { background: #07090e; box-shadow: none; }
+
+/* =========================================================
+   Buttons
+   ========================================================= */
+.btn-action {
+  background: var(--primary);
+  color: #07090e;
+  text-align: center;
+  padding: 0.8rem 1.5rem;
+  border-radius: 13px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  border: 1px solid var(--primary);
+  transition: all 0.3s var(--ease);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  box-shadow: 0 0 22px rgba(245,158,11,0.3), inset 0 0 10px rgba(255,255,255,0.22);
+}
+.btn-action:hover { background: var(--accent-yellow); box-shadow: 0 0 32px var(--primary-glow); transform: translateY(-2px); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--card-border);
+  padding: 0.8rem 1.5rem;
+  border-radius: 13px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+}
+.btn-ghost:hover { border-color: var(--text-muted); background: color-mix(in srgb, var(--text-main) 6%, transparent); }
+
+/* =========================================================
+   Hero / Dashboard
+   ========================================================= */
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3.4rem 5% 1rem;
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 1.6rem;
+}
+.hero-panel {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 2.6rem;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  top: -40%; right: -20%;
+  width: 60%; height: 160%;
+  background: radial-gradient(circle, rgba(245,158,11,0.12), transparent 65%);
+  pointer-events: none;
+}
+.hero-panel h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0.9rem 0 1rem;
+  max-width: 620px;
+}
+.hero-panel h1 em {
+  font-style: normal;
+  background: linear-gradient(100deg, var(--primary), var(--c-tech) 65%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero-panel p.lede { color: var(--text-muted); max-width: 480px; margin-bottom: 1.6rem; font-size: 1rem; }
+.hero-cta { display: flex; gap: 0.9rem; flex-wrap: wrap; }
+
+.side-widgets { display: flex; flex-direction: column; gap: 1.1rem; }
+.widget {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 1.3rem 1.4rem;
+}
+.widget-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem; }
+.widget-title { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); }
+.live-dot { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.65rem; color: var(--c-health); letter-spacing: 0.06em; }
+.live-dot i { width: 6px; height: 6px; border-radius: 50%; background: var(--c-health); box-shadow: 0 0 8px var(--c-health); animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.75); } }
+
+/* Weather widget */
+.weather-body { display: flex; align-items: center; justify-content: space-between; }
+.weather-temp { font-family: var(--font-display); font-size: 2.2rem; font-weight: 700; }
+.weather-meta { text-align: right; }
+.weather-meta .loc { font-weight: 600; font-size: 0.92rem; }
+.weather-meta .cond { color: var(--text-muted); font-size: 0.8rem; }
+.weather-sub { display: flex; gap: 1.1rem; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--card-border); }
+.weather-sub div { font-size: 0.72rem; color: var(--text-faint); font-family: var(--font-mono); }
+.weather-sub b { display: block; color: var(--text-main); font-family: var(--font-body); font-size: 0.86rem; }
+
+/* Ticker widget */
+.ticker-wrap { overflow: hidden; position: relative; }
+.ticker-wrap::before, .ticker-wrap::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 28px; z-index: 2;
+}
+.ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent); }
+.ticker-wrap::after { right: 0; background: linear-gradient(270deg, var(--bg), transparent); }
+.ticker-track { display: flex; gap: 2.4rem; width: max-content; animation: ticker 26s linear infinite; }
+.ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+.ticker-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; color: var(--text-muted); white-space: nowrap; }
+.ticker-item .tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--c-tech); border: 1px solid color-mix(in srgb, var(--c-tech) 40%, transparent); padding: 0.1rem 0.4rem; border-radius: 5px; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Stats widget */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
+.stat-cell b { display: block; font-family: var(--font-display); font-size: 1.5rem; }
+.stat-cell span { font-size: 0.66rem; color: var(--text-faint); font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+
+@media (max-width: 980px) {
+  .dashboard { grid-template-columns: 1fr; }
+}
+
+/* =========================================================
+   Section shells
+   ========================================================= */
+.section { max-width: 1400px; margin: 0 auto; padding: 3.4rem 5%; }
+.section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.section-head h2 { font-family: var(--font-display); font-size: clamp(1.5rem, 2.4vw, 2rem); margin-top: 0.55rem; letter-spacing: -0.01em; }
+.section-head p { color: var(--text-muted); max-width: 440px; font-size: 0.93rem; }
+.filter-note { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint); display: flex; align-items: center; gap: 0.5rem; }
+.filter-note button { background: none; border: none; color: var(--primary); cursor: pointer; font-family: var(--font-mono); font-size: 0.72rem; text-decoration: underline; }
+
+/* =========================================================
+   App cards
+   ========================================================= */
+.app-grid, .blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.4rem; }
+
+.app-card {
+  --pc: var(--c-tech);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  cursor: pointer;
+  transition: transform 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease), opacity 0.3s var(--ease);
+}
+.app-card:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--pc) 55%, transparent); box-shadow: 0 22px 45px -22px rgba(0,0,0,0.55), 0 0 26px -10px var(--pc); }
+.app-icon { width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: color-mix(in srgb, var(--pc) 14%, transparent); border: 1px solid color-mix(in srgb, var(--pc) 40%, transparent); }
+.app-card h3 { font-family: var(--font-display); font-size: 1.15rem; letter-spacing: -0.01em; }
+.tag-pill { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--font-mono); font-size: 0.63rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pc); }
+.tag-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--pc); }
+.app-card p.desc { color: var(--text-muted); font-size: 0.88rem; flex-grow: 1; }
+.app-card .card-actions { display: flex; gap: 0.6rem; align-items: center; }
+.app-card .btn-action { padding: 0.65rem 1.2rem; font-size: 0.8rem; background: var(--pc); border-color: var(--pc); box-shadow: 0 0 18px color-mix(in srgb, var(--pc) 45%, transparent); }
+.app-card .btn-action:hover { filter: brightness(1.1); }
+
+.app-card.is-hidden, .blog-card.is-hidden { display: none; }
+
+/* =========================================================
+   Blog cards
+   ========================================================= */
+.blog-card {
+  --pc: var(--c-business);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+.blog-card:hover { transform: translateY(-5px); border-color: color-mix(in srgb, var(--pc) 50%, transparent); box-shadow: 0 20px 40px -22px rgba(0,0,0,0.55); }
+.blog-thumb {
+  height: 130px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.1rem;
+  background:
+    radial-gradient(circle at 25% 20%, color-mix(in srgb, var(--pc) 35%, transparent), transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--pc) 20%, transparent), transparent);
+  border-bottom: 1px solid var(--card-border);
+}
+.blog-body { padding: 1.4rem; display: flex; flex-direction: column; gap: 0.7rem; flex-grow: 1; }
+.blog-meta { display: flex; align-items: center; justify-content: space-between; }
+.blog-body h3 { font-family: var(--font-display); font-size: 1.02rem; line-height: 1.35; letter-spacing: -0.005em; }
+.blog-body p { color: var(--text-muted); font-size: 0.85rem; flex-grow: 1; }
+.read-time { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-faint); }
+.blog-body .read-link { font-size: 0.8rem; font-weight: 600; color: var(--pc); display: inline-flex; align-items: center; gap: 0.3rem; }
+
+/* =========================================================
+   Modal (quick view)
+   ========================================================= */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(3,4,7,0.7);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 5%;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+.modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  --pc: var(--c-tech);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-top: 3px solid var(--pc);
+  border-radius: var(--radius-lg);
+  max-width: 460px;
+  width: 100%;
+  padding: 2rem;
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.3s var(--ease);
+  position: relative;
+}
+.modal-overlay.is-open .modal-box { transform: translateY(0) scale(1); }
+.modal-close {
+  position: absolute; top: 1.1rem; right: 1.1rem;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--card-border); background: transparent; color: var(--text-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.modal-close:hover { color: var(--text-main); border-color: var(--text-muted); }
+.modal-box .app-icon { margin-bottom: 1.1rem; width: 54px; height: 54px; font-size: 1.6rem; }
+.modal-box h3 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; }
+.modal-box p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.5rem; }
+
+/* =========================================================
+   Footer
+   ========================================================= */
+.site-footer { border-top: 1px solid var(--card-border); margin-top: 2rem; padding: 3rem 5% 2.2rem; }
+.footer-grid { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 2.2rem; }
+.footer-brand p { color: var(--text-faint); font-size: 0.85rem; max-width: 280px; margin-top: 0.8rem; }
+.footer-col h4 { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 0.85rem; }
+.footer-col a, .footer-col span { display: block; color: var(--text-muted); font-size: 0.86rem; margin-bottom: 0.55rem; }
+.footer-col a:hover { color: var(--text-main); }
+.footer-bottom { max-width: 1400px; margin: 2.4rem auto 0; padding-top: 1.5rem; border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; color: var(--text-faint); font-size: 0.76rem; font-family: var(--font-mono); }
+
+@media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr 1fr; } .util-links { display: none; } }
+@media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="util-row">
+    <a href="index.html" class="brand">
+      <span class="brand-mark">L</span>
+      <span>LamaStudio<small>Portal · Pakistan</small></span>
+    </a>
+    <nav class="util-links" aria-label="Primary">
+      <a href="index.html">Dashboard</a>
+      <a href="services.html">Services</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy</a>
+    </nav>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" id="categoryTrack" role="tablist" aria-label="Filter by category">
+      <button class="cat-pill is-active" data-cat="all" style="--pc:var(--primary)"><span class="dot"></span>All</button>
+      <button class="cat-pill" data-cat="business" style="--pc:var(--c-business)"><span class="dot"></span>Business</button>
+      <button class="cat-pill" data-cat="fashion" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion</button>
+      <button class="cat-pill" data-cat="education" style="--pc:var(--c-education)"><span class="dot"></span>Education</button>
+      <button class="cat-pill" data-cat="weather" style="--pc:var(--c-weather)"><span class="dot"></span>Weather</button>
+      <button class="cat-pill" data-cat="health" style="--pc:var(--c-health)"><span class="dot"></span>Health</button>
+      <button class="cat-pill" data-cat="tech" style="--pc:var(--c-tech)"><span class="dot"></span>Tech</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section class="dashboard">
+    <div class="hero-panel">
+      <span class="eyebrow">Islamabad, Pakistan</span>
+      <h1>One dashboard for the apps, tools, and <em>ideas</em> LamaStudio ships.</h1>
+      <p class="lede">Launch a LamaStudio app, catch up on what we're writing across tech, business, health, and more, or filter everything on this page by category using the bar above.</p>
+      <div class="hero-cta">
+        <a href="#apps" class="btn-action"><span>Explore apps</span></a>
+        <a href="#blog" class="btn-ghost"><span>Read the blog</span></a>
+      </div>
+    </div>
+
+    <div class="side-widgets">
+      <div class="widget" id="weatherWidget">
+        <div class="widget-head">
+          <span class="widget-title">Weather · Islamabad</span>
+          <span class="live-dot"><i></i>Live</span>
+        </div>
+        <div class="weather-body">
+          <span class="weather-temp" id="weatherTemp">31°C</span>
+          <div class="weather-meta">
+            <div class="loc">Partly Cloudy</div>
+            <div class="cond">Feels like 33°C</div>
+          </div>
+        </div>
+        <div class="weather-sub">
+          <div>Humidity<b>54%</b></div>
+          <div>Wind<b>11 km/h</b></div>
+          <div>UV<b>Moderate</b></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-head">
+          <span class="widget-title">Tech Ticker</span>
+          <span class="live-dot"><i></i>Updating</span>
+        </div>
+        <div class="ticker-wrap">
+          <div class="ticker-track" id="tickerTrack"></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-head"><span class="widget-title">Studio Stats</span></div>
+        <div class="stats-grid">
+          <div class="stat-cell"><b data-count="5">0</b><span>Apps</span></div>
+          <div class="stat-cell"><b data-count="3">0</b><span>Payment Rails</span></div>
+          <div class="stat-cell"><b data-count="6">0</b><span>Categories</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPS -->
+  <section class="section" id="apps">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">The Ecosystem</span>
+        <h2>Apps &amp; utilities</h2>
+        <p>Tap a card for a quick overview, or launch straight in.</p>
+      </div>
+      <div class="filter-note" id="appFilterNote" hidden>
+        Filtered by <span id="appFilterLabel"></span> · <button id="appFilterClear">clear</button>
+      </div>
+    </div>
+    <div class="app-grid" id="appGrid"></div>
+  </section>
+
+  <div class="section" style="padding-top:0;">
+    <div style="border:1px dashed var(--card-border); border-radius:14px; padding:1.1rem; text-align:center; font-family:var(--font-mono); font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-faint);">Ad placement — in-feed / native</div>
+  </div>
+
+  <!-- BLOG -->
+  <section class="section" id="blog">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">From the Studio</span>
+        <h2>Latest articles</h2>
+        <p>Notes on building software for the Pakistani market, one category at a time.</p>
+      </div>
+      <div class="filter-note" id="blogFilterNote" hidden>
+        Filtered by <span id="blogFilterLabel"></span> · <button id="blogFilterClear">clear</button>
+      </div>
+    </div>
+    <div class="blog-grid" id="blogGrid"></div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="brand"><span class="brand-mark">L</span><span>LamaStudio</span></a>
+      <p>An independent Android app studio based in Pakistan, building privacy-first utilities and locally-monetized software.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Store</h4>
+      <a href="#apps">All apps</a>
+      <a href="apps/lamavpnpro/">LamaVPN Pro</a>
+      <a href="apps/lamaiqmaster/">LamaIQ Master</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="privacy.html">Privacy Policy</a>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <span>hello@lamastudio.pk</span>
+      <span>Islamabad, Pakistan</span>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 LamaStudio. All rights reserved.</span>
+    <span>lamastudio.pk</span>
+  </div>
+</footer>
+
+<!-- Quick-view modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    <div class="app-icon" id="modalIcon"></div>
+    <span class="tag-pill" id="modalTag"></span>
+    <h3 id="modalTitle"></h3>
+    <p id="modalDesc"></p>
+    <a href="#" class="btn-action" id="modalLaunch"><span>Launch app</span></a>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Theme toggle ---------- */
+  var root = document.documentElement;
+  var themeToggle = document.getElementById('themeToggle');
+  var savedTheme = localStorage.getItem('lama-theme');
+  if (savedTheme) root.setAttribute('data-theme', savedTheme);
+
+  themeToggle.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem('lama-theme', next);
+  });
+
+  /* ---------- Data: apps ---------- */
+  var apps = [
+    { id: 'vpn', name: 'LamaVPN Pro', cat: 'tech', icon: '🛡️', tag: 'Privacy & Security',
+      desc: 'A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.',
+      href: 'apps/lamavpnpro/' },
+    { id: 'sky', name: 'LamaSky', cat: 'weather', icon: '🌤️', tag: 'Weather & Planning',
+      desc: 'Local weather, prayer-aligned scheduling, and daily planning built around how Pakistani users structure their day.',
+      href: 'apps/lamasky/' },
+    { id: 'iq', name: 'LamaIQMaster', cat: 'education', icon: '🧠', tag: 'Cognitive Training',
+      desc: 'Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.',
+      href: 'apps/lamaiqmaster/' },
+    { id: 'cal', name: 'LamaMultiCalendar', cat: 'business', icon: '📅', tag: 'Productivity',
+      desc: 'Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.',
+      href: 'apps/mixcalendar/' },
+    { id: 'photo', name: 'LamaPhotoResizer', cat: 'tech', icon: '🖼️', tag: 'Photo Tools',
+      desc: 'On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.',
+      href: 'apps/lamaphotoresizer/' }
+  ];
+
+  /* ---------- Data: blog ---------- */
+  var posts = [
+    { cat: 'tech', icon: '⚙️', title: 'Why On-Device AI Is the Right Call for Budget Android Phones', excerpt: 'Cloud inference sounds convenient until your user\u2019s connection drops mid-task. Here\u2019s the case for local-first processing.', time: '6 min read' },
+    { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren\u2019t optional add-ons anymore \u2014 they\u2019re how most of your users expect to pay.', time: '5 min read' },
+    { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn\u2019t match the average government-school classroom.', time: '7 min read' },
+    { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don\u2019t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There\u2019s a better way to design for consistency.', time: '4 min read' },
+    { cat: 'fashion', icon: '👗', title: 'Designing for Small Screens: Lessons from Fashion E-Commerce', excerpt: 'What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.', time: '5 min read' },
+    { cat: 'weather', icon: '🌦️', title: 'Why Weather Apps Feel Unreliable in South Asia', excerpt: 'Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.', time: '6 min read' }
+  ];
+
+  var tickerHeadlines = [
+    { tag: 'TECH', text: 'On-device segmentation models are getting small enough for mid-range phones' },
+    { tag: 'BIZ', text: 'Raast adoption keeps climbing among small merchant apps' },
+    { tag: 'EDU', text: 'Offline-first tools remain the biggest unlock for rural classrooms' },
+    { tag: 'HEALTH', text: 'Habit-tracking apps are quietly dropping streak-shame mechanics' }
+  ];
+
+  /* ---------- Render: apps ---------- */
+  var appGrid = document.getElementById('appGrid');
+  apps.forEach(function (app) {
+    var card = document.createElement('article');
+    card.className = 'app-card';
+    card.style.setProperty('--pc', 'var(--c-' + app.cat + ')');
+    card.dataset.cat = app.cat;
+    card.innerHTML =
+      '<div class="app-icon">' + app.icon + '</div>' +
+      '<div><span class="tag-pill">' + app.tag + '</span><h3>' + app.name + '</h3></div>' +
+      '<p class="desc">' + app.desc + '</p>' +
+      '<div class="card-actions"><a href="' + app.href + '" class="btn-action" onclick="event.stopPropagation()"><span>Launch app</span></a></div>';
+    card.addEventListener('click', function () { openModal(app); });
+    appGrid.appendChild(card);
+  });
+
+  /* ---------- Render: blog ---------- */
+  var blogGrid = document.getElementById('blogGrid');
+  posts.forEach(function (post) {
+    var card = document.createElement('article');
+    card.className = 'blog-card';
+    card.style.setProperty('--pc', 'var(--c-' + post.cat + ')');
+    card.dataset.cat = post.cat;
+    card.innerHTML =
+      '<div class="blog-thumb">' + post.icon + '</div>' +
+      '<div class="blog-body">' +
+        '<div class="blog-meta"><span class="tag-pill">' + post.cat + '</span><span class="read-time">' + post.time + '</span></div>' +
+        '<h3>' + post.title + '</h3>' +
+        '<p>' + post.excerpt + '</p>' +
+        '<span class="read-link">Read article →</span>' +
+      '</div>';
+    blogGrid.appendChild(card);
+  });
+
+  /* ---------- Render: ticker (duplicated for seamless loop) ---------- */
+  var tickerTrack = document.getElementById('tickerTrack');
+  function tickerHTML() {
+    return tickerHeadlines.map(function (h) {
+      return '<span class="ticker-item"><span class="tag">' + h.tag + '</span>' + h.text + '</span>';
+    }).join('');
+  }
+  tickerTrack.innerHTML = tickerHTML() + tickerHTML();
+
+  /* ---------- Category filtering ---------- */
+  var pills = Array.prototype.slice.call(document.querySelectorAll('.cat-pill'));
+  var appFilterNote = document.getElementById('appFilterNote');
+  var appFilterLabel = document.getElementById('appFilterLabel');
+  var blogFilterNote = document.getElementById('blogFilterNote');
+  var blogFilterLabel = document.getElementById('blogFilterLabel');
+
+  function applyFilter(cat) {
+    var appCards = appGrid.querySelectorAll('.app-card');
+    var blogCards = blogGrid.querySelectorAll('.blog-card');
+
+    appCards.forEach(function (c) { c.classList.toggle('is-hidden', cat !== 'all' && c.dataset.cat !== cat); });
+    blogCards.forEach(function (c) { c.classList.toggle('is-hidden', cat !== 'all' && c.dataset.cat !== cat); });
+
+    var showNote = cat !== 'all';
+    appFilterNote.hidden = !showNote;
+    blogFilterNote.hidden = !showNote;
+    if (showNote) {
+      var label = cat.charAt(0).toUpperCase() + cat.slice(1);
+      appFilterLabel.textContent = label;
+      blogFilterLabel.textContent = label;
+    }
+
+    pills.forEach(function (p) {
+      var isActive = p.dataset.cat === cat;
+      p.classList.toggle('is-active', isActive);
+    });
+    document.documentElement.style.setProperty('--c-active', cat === 'all' ? 'var(--primary)' : 'var(--c-' + cat + ')');
+  }
+
+  pills.forEach(function (p) {
+    p.addEventListener('click', function () { applyFilter(p.dataset.cat); });
+  });
+  document.getElementById('appFilterClear').addEventListener('click', function () { applyFilter('all'); });
+  document.getElementById('blogFilterClear').addEventListener('click', function () { applyFilter('all'); });
+
+  /* ---------- Stat counters (animate on first view) ---------- */
+  var counted = false;
+  var counters = document.querySelectorAll('[data-count]');
+  function animateCounters() {
+    if (counted) return;
+    counted = true;
+    counters.forEach(function (el) {
+      var target = parseInt(el.dataset.count, 10);
+      var start = 0;
+      var duration = 900;
+      var startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        el.textContent = Math.floor(progress * (target - start) + start);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  var statsSection = document.querySelector('.stats-grid');
+  if ('IntersectionObserver' in window && statsSection) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) { if (entry.isIntersecting) animateCounters(); });
+    }, { threshold: 0.4 });
+    io.observe(statsSection);
+  } else {
+    animateCounters();
+  }
+
+  /* ---------- Quick-view modal ---------- */
+  var overlay = document.getElementById('modalOverlay');
+  var modalBox = document.getElementById('modalBox');
+  var modalIcon = document.getElementById('modalIcon');
+  var modalTag = document.getElementById('modalTag');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalDesc = document.getElementById('modalDesc');
+  var modalLaunch = document.getElementById('modalLaunch');
+  var lastFocused = null;
+
+  function openModal(app) {
+    lastFocused = document.activeElement;
+    modalBox.style.setProperty('--pc', 'var(--c-' + app.cat + ')');
+    modalIcon.textContent = app.icon;
+    modalIcon.style.background = 'color-mix(in srgb, var(--c-' + app.cat + ') 14%, transparent)';
+    modalIcon.style.borderColor = 'color-mix(in srgb, var(--c-' + app.cat + ') 40%, transparent)';
+    modalTag.textContent = app.tag;
+    modalTag.style.color = 'var(--c-' + app.cat + ')';
+    modalTitle.textContent = app.name;
+    modalDesc.textContent = app.desc;
+    modalLaunch.href = app.href;
+    modalLaunch.style.background = 'var(--c-' + app.cat + ')';
+    modalLaunch.style.borderColor = 'var(--c-' + app.cat + ')';
+    overlay.classList.add('is-open');
+    document.getElementById('modalClose').focus();
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    overlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+    if (lastFocused) lastFocused.focus();
+  }
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeModal(); });
+})();
+</script>
+</body>
+</html>

@@ -45,10 +45,10 @@
     { 
       id: 'vpn', 
       name: 'LamaVPN Pro', 
-      cat: 'business', 
+      cat: 'tech', 
       type: 'apps',
       icon: '🛡️', 
-      tag: 'Business Security', 
+      tag: 'Privacy & Security', 
       desc: 'A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.', 
       price: 'Free / Premium PKR 500/mo',
       mobileHref: 'apps/lamavpnpro/mobile.html',
@@ -72,7 +72,7 @@
       cat: 'education', 
       type: 'software',
       icon: '🧠', 
-      tag: 'Education', 
+      tag: 'Cognitive Training', 
       desc: 'Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.', 
       price: 'Freemium (PKR 300 unlock)',
       mobileHref: 'apps/lamaiqmaster/mobile.html',
@@ -84,7 +84,7 @@
       cat: 'business', 
       type: 'apps',
       icon: '📅', 
-      tag: 'Business', 
+      tag: 'Productivity', 
       desc: 'Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.', 
       price: '100% Free',
       mobileHref: 'apps/multicalendar/mobile.html',
@@ -96,7 +96,7 @@
       cat: 'fashion', 
       type: 'software',
       icon: '🖼️', 
-      tag: 'Fashion & Style', 
+      tag: 'Photo Tools', 
       desc: 'On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.', 
       price: 'Free / Pro Tier PKR 400',
       mobileHref: 'apps/lamaphotoresizer/mobile.html',
@@ -106,6 +106,7 @@
 
   // Blog Articles Data
   var posts = [
+    { cat: 'tech', icon: '⚙️', title: 'Why On-Device AI Is the Right Call for Budget Android Phones', excerpt: 'Cloud inference sounds convenient until your user’s connection drops mid-task. Here’s the case for local-first processing.', time: '6 min read' },
     { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },
     { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.', time: '7 min read' },
     { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don’t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.', time: '4 min read' },
@@ -117,6 +118,7 @@
   ];
 
   var tickerHeadlines = [
+    { tag: 'TECH', text: 'On-device segmentation models are getting small enough for mid-range phones' },
     { tag: 'BIZ', text: 'Raast adoption keeps climbing among small merchant apps' },
     { tag: 'EDU', text: 'Offline-first tools remain the biggest unlock for rural classrooms' },
     { tag: 'HEALTH', text: 'Habit-tracking apps are quietly dropping streak-shame mechanics' }

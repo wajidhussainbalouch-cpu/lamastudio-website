@@ -51,8 +51,8 @@
       tag: 'Privacy & Security', 
       desc: 'A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.', 
       price: 'Free / Premium PKR 500/mo',
-      mobileHref: 'apps/lamavpnpro/mobile.html',
-      pcHref: 'apps/lamavpnpro/pc.html'
+      mobileHref: 'apps/lamavpnpro/index.html',
+      pcHref: 'apps/lamavpnpro/index.html'
     },
     { 
       id: 'sky', 
@@ -63,8 +63,8 @@
       tag: 'Weather & Planning', 
       desc: 'Local weather, prayer-aligned scheduling, and daily planning built around how Pakistani users structure their day.', 
       price: 'Free Ad-Supported',
-      mobileHref: 'apps/lamasky/mobile.html',
-      pcHref: 'apps/lamasky/pc.html'
+      mobileHref: 'apps/lamasky/index.html',
+      pcHref: 'apps/lamasky/index.html'
     },
     { 
       id: 'iq', 
@@ -75,8 +75,8 @@
       tag: 'Cognitive Training', 
       desc: 'Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.', 
       price: 'Freemium (PKR 300 unlock)',
-      mobileHref: 'apps/lamaiqmaster/mobile.html',
-      pcHref: 'apps/lamaiqmaster/pc.html'
+      mobileHref: 'apps/lamaiqmaster/index.html',
+      pcHref: 'apps/lamaiqmaster/index.html'
     },
     { 
       id: 'cal', 
@@ -87,8 +87,8 @@
       tag: 'Productivity', 
       desc: 'Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.', 
       price: '100% Free',
-      mobileHref: 'apps/multicalendar/mobile.html',
-      pcHref: 'apps/multicalendar/pc.html'
+      mobileHref: 'apps/lamamulticalendar/index.html',
+      pcHref: 'apps/lamamulticalendar/index.html'
     },
     { 
       id: 'photo', 
@@ -99,8 +99,8 @@
       tag: 'Photo Tools', 
       desc: 'On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.', 
       price: 'Free / Pro Tier PKR 400',
-      mobileHref: 'apps/lamaphotoresizer/mobile.html',
-      pcHref: 'apps/lamaphotoresizer/pc.html'
+      mobileHref: 'apps/lamaphotoresizer/index.html',
+      pcHref: 'apps/lamaphotoresizer/index.html'
     }
   ];
 

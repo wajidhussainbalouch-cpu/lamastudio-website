@@ -40,7 +40,7 @@
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-  // App Ecosystem Data with pricing, dual links, and specific types (apps/software)
+  // App Ecosystem Data
   var apps = [
     { 
       id: 'vpn', 
@@ -199,15 +199,10 @@
     pills.forEach(function (p) {
       p.classList.toggle('is-active', p.dataset.cat === cat);
     });
-    document.documentElement.style.setProperty('--c-active', 'var(--c-' + cat + ')');
   }
 
-  pills.forEach(function (p, index) {
+  pills.forEach(function (p) {
     p.addEventListener('click', function () { applyFilter(p.dataset.cat); });
-    // Default select first category on load
-    if (index === 0) {
-      applyFilter(p.dataset.cat);
-    }
   });
 
   // Sidebar Filter Links for Apps vs Software
@@ -231,8 +226,21 @@
 
   var appClear = document.getElementById('appFilterClear');
   var blogClear = document.getElementById('blogFilterClear');
-  if (appClear) appClear.addEventListener('click', function () { applyFilter('tech'); });
-  if (blogClear) blogClear.addEventListener('click', function () { applyFilter('tech'); });
+  if (appClear) {
+    appClear.addEventListener('click', function () {
+      var appCards = appGrid.querySelectorAll('.app-card');
+      appCards.forEach(function (c) { c.classList.remove('is-hidden'); });
+      if (appFilterNote) appFilterNote.hidden = true;
+    });
+  }
+  if (blogClear) {
+    blogClear.addEventListener('click', function () {
+      var blogCards = blogGrid.querySelectorAll('.blog-card');
+      blogCards.forEach(function (c) { c.classList.remove('is-hidden'); });
+      if (blogFilterNote) blogFilterNote.hidden = true;
+      pills.forEach(function (p) { p.classList.remove('is-active'); });
+    });
+  }
 
   // Animate Stat Counters
   var counted = false;

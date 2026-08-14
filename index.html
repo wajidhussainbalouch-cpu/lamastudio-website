@@ -16,8 +16,8 @@
 
 <style>
 /* =========================================================
-   LamaStudio — Dashboard Portal
-   Design tokens
+    LamaStudio — Dashboard Portal
+    Design tokens
    ========================================================= */
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
@@ -93,6 +93,36 @@ button { font: inherit; }
 img { max-width: 100%; display: block; }
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
 
+/* =========================================================
+    Top Priority: Independence Day Banner
+   ========================================================= */
+.ind-banner {
+  background: linear-gradient(135deg, #046A38 0%, #165b33 50%, #046A38 100%);
+  color: #ffffff;
+  padding: 0.65rem 5%;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  border-bottom: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(4, 106, 56, 0.3);
+  position: relative;
+  z-index: 300;
+}
+.ind-banner span {
+  background: #ffffff;
+  color: #046A38;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -112,7 +142,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* =========================================================
-   Header + Category bar
+    Header + Category bar
    ========================================================= */
 .site-header {
   position: sticky;
@@ -143,9 +173,23 @@ img { max-width: 100%; display: block; }
 }
 .brand small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 0.6rem; letter-spacing: 0.12em; color: var(--text-faint); text-transform: uppercase; }
 
-.util-links { display: flex; align-items: center; gap: 1.7rem; }
-.util-links a { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); transition: color 0.2s var(--ease); }
-.util-links a:hover { color: var(--text-main); }
+.header-actions { display: flex; align-items: center; gap: 1.1rem; }
+
+/* Hamburger Menu Button */
+.menu-toggle {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--text-main);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color 0.25s var(--ease), transform 0.25s var(--ease);
+  flex-shrink: 0;
+}
+.menu-toggle:hover { border-color: var(--primary); }
+.menu-toggle span { display: block; width: 16px; height: 2px; background: currentColor; border-radius: 2px; transition: transform 0.3s var(--ease); }
 
 .theme-toggle {
   width: 38px; height: 38px;
@@ -164,8 +208,39 @@ img { max-width: 100%; display: block; }
 html[data-theme="light"] .icon-moon { display: none; }
 html[data-theme="light"] .icon-sun { display: block; }
 
-.header-actions { display: flex; align-items: center; gap: 1.1rem; }
-.mobile-only-toggle { display: none; }
+/* Sidebar Drawer Overlay & Container */
+.sidebar-overlay {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(3,4,7,0.7);
+  backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+.sidebar-overlay.is-open { opacity: 1; pointer-events: auto; }
+
+.sidebar-drawer {
+  position: fixed; top: 0; right: -360px; width: 100%; max-width: 360px; height: 100%;
+  background: var(--bg);
+  border-left: 1px solid var(--card-border);
+  z-index: 601;
+  padding: 2rem;
+  display: flex; flex-direction: column; gap: 1.8rem;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+  transition: right 0.35s var(--ease);
+  overflow-y: auto;
+}
+.sidebar-overlay.is-open .sidebar-drawer { right: 0; }
+.sidebar-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; }
+.sidebar-close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--card-border); background: transparent; color: var(--text-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.sidebar-close:hover { color: var(--text-main); border-color: var(--text-muted); }
+.sidebar-nav-group h5 { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 0.8rem; }
+.sidebar-nav-group ul { display: flex; flex-direction: column; gap: 0.6rem; }
+.sidebar-nav-group a { font-size: 0.95rem; font-weight: 500; color: var(--text-muted); transition: color 0.2s var(--ease); display: block; padding: 0.3rem 0; }
+.sidebar-nav-group a:hover { color: var(--primary); padding-left: 4px; }
 
 /* Category strip */
 .category-strip {
@@ -214,7 +289,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .cat-pill.is-active .dot { background: #07090e; box-shadow: none; }
 
 /* =========================================================
-   Buttons
+    Buttons
    ========================================================= */
 .btn-action {
   background: var(--primary);
@@ -250,7 +325,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .btn-ghost:hover { border-color: var(--text-muted); background: color-mix(in srgb, var(--text-main) 6%, transparent); }
 
 /* =========================================================
-   Hero / Dashboard
+    Hero / Dashboard
    ========================================================= */
 .dashboard {
   max-width: 1400px;
@@ -341,7 +416,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 }
 
 /* =========================================================
-   Section shells
+    Section shells
    ========================================================= */
 .section { max-width: 1400px; margin: 0 auto; padding: 3.4rem 5%; }
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 2rem; }
@@ -351,7 +426,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .filter-note button { background: none; border: none; color: var(--primary); cursor: pointer; font-family: var(--font-mono); font-size: 0.72rem; text-decoration: underline; }
 
 /* =========================================================
-   App cards
+    App cards
    ========================================================= */
 .app-grid, .blog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.4rem; }
 
@@ -380,7 +455,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .app-card.is-hidden, .blog-card.is-hidden { display: none; }
 
 /* =========================================================
-   Blog cards
+    Blog cards
    ========================================================= */
 .blog-card {
   --pc: var(--c-business);
@@ -410,7 +485,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .blog-body .read-link { font-size: 0.8rem; font-weight: 600; color: var(--pc); display: inline-flex; align-items: center; gap: 0.3rem; }
 
 /* =========================================================
-   Modal (quick view)
+    Modal (quick view)
    ========================================================= */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 500;
@@ -449,7 +524,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .modal-box p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.5rem; }
 
 /* =========================================================
-   Footer
+    Footer
    ========================================================= */
 .site-footer { border-top: 1px solid var(--card-border); margin-top: 2rem; padding: 3rem 5% 2.2rem; }
 .footer-grid { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 2.2rem; }
@@ -459,11 +534,16 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 .footer-col a:hover { color: var(--text-main); }
 .footer-bottom { max-width: 1400px; margin: 2.4rem auto 0; padding-top: 1.5rem; border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; color: var(--text-faint); font-size: 0.76rem; font-family: var(--font-mono); }
 
-@media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr 1fr; } .util-links { display: none; } }
+@media (max-width: 760px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
+
+<!-- Top Priority Independence Day Banner -->
+<div class="ind-banner">
+  <span>14 August</span> 🇵🇰 Happy Independence Day of Pakistan! Proudly building for the nation.
+</div>
 
 <header class="site-header">
   <div class="util-row">
@@ -471,19 +551,22 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
       <span class="brand-mark">L</span>
       <span>LamaStudio<small>Portal · Pakistan</small></span>
     </a>
-    <nav class="util-links" aria-label="Primary">
-      <a href="index.html">Dashboard</a>
-      <a href="services.html">Services</a>
-      <a href="about.html">About</a>
-      <a href="privacy.html">Privacy</a>
-    </nav>
+    
     <div class="header-actions">
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
+      
+      <!-- 3-Lines Hamburger Menu Toggle -->
+      <button class="menu-toggle" id="menuToggle" aria-label="Open sidebar menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </div>
+
   <div class="category-strip">
     <div class="category-track" id="categoryTrack" role="tablist" aria-label="Filter by category">
       <button class="cat-pill is-active" data-cat="all" style="--pc:var(--primary)"><span class="dot"></span>All</button>
@@ -496,6 +579,49 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
     </div>
   </div>
 </header>
+
+<!-- Sidebar Drawer Menu -->
+<div class="sidebar-overlay" id="sidebarOverlay">
+  <div class="sidebar-drawer" id="sidebarDrawer" role="dialog" aria-modal="true" aria-label="Sidebar Menu">
+    <div class="sidebar-header">
+      <span class="brand" style="font-size: 0.95rem;">
+        <span class="brand-mark" style="width:26px;height:26px;font-size:0.8rem;">L</span>
+        <span>LamaStudio</span>
+      </span>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">✕</button>
+    </div>
+    
+    <div class="sidebar-nav-group">
+      <h5>Navigation</h5>
+      <ul>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="#blog">Blogs</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-nav-group">
+      <h5>Our Apps</h5>
+      <ul>
+        <li><a href="apps/lamavpnpro/">LamaVPN Pro</a></li>
+        <li><a href="apps/lamasky/">LamaSky</a></li>
+        <li><a href="apps/lamaiqmaster/">LamaIQ Master</a></li>
+        <li><a href="apps/mixcalendar/">LamaMultiCalendar</a></li>
+        <li><a href="apps/lamaphotoresizer/">LamaPhotoResizer</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-nav-group">
+      <h5>Our Softwares</h5>
+      <ul>
+        <li><a href="#apps">Dashboard Hub</a></li>
+        <li><a href="#apps">Bilingual Education Tools</a></li>
+        <li><a href="#apps">Local Payment SDK Utils</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
 
 <main>
 
@@ -646,6 +772,29 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
     localStorage.setItem('lama-theme', next);
   });
 
+  /* ---------- Sidebar Menu Toggle ---------- */;
+  var menuToggle = document.getElementById('menuToggle');
+  var sidebarOverlay = document.getElementById('sidebarOverlay');
+  var sidebarClose = document.getElementById('sidebarClose');
+
+  function openSidebar() {
+    sidebarOverlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    sidebarOverlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  menuToggle.addEventListener('click', openSidebar);
+  sidebarClose.addEventListener('click', closeSidebar);
+  sidebarOverlay.addEventListener('click', function (e) {
+    if (e.target === sidebarOverlay) closeSidebar();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && sidebarOverlay.classList.contains('is-open')) closeSidebar();
+  });
+
   /* ---------- Data: apps ---------- */
   var apps = [
     { id: 'vpn', name: 'LamaVPN Pro', cat: 'tech', icon: '🛡️', tag: 'Privacy & Security',
@@ -667,10 +816,10 @@ html[data-theme="light"] .cat-pill.is-active { color: #07090e; }
 
   /* ---------- Data: blog ---------- */
   var posts = [
-    { cat: 'tech', icon: '⚙️', title: 'Why On-Device AI Is the Right Call for Budget Android Phones', excerpt: 'Cloud inference sounds convenient until your user\u2019s connection drops mid-task. Here\u2019s the case for local-first processing.', time: '6 min read' },
-    { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren\u2019t optional add-ons anymore \u2014 they\u2019re how most of your users expect to pay.', time: '5 min read' },
-    { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn\u2019t match the average government-school classroom.', time: '7 min read' },
-    { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don\u2019t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There\u2019s a better way to design for consistency.', time: '4 min read' },
+    { cat: 'tech', icon: '⚙️', title: 'Why On-Device AI Is the Right Call for Budget Android Phones', excerpt: 'Cloud inference sounds convenient until your user’s connection drops mid-task. Here’s the case for local-first processing.', time: '6 min read' },
+    { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },
+    { cat: 'education', icon: '🎓', title: 'What EdTech Gets Wrong About Pakistani Classrooms', excerpt: 'Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.', time: '7 min read' },
+    { cat: 'health', icon: '💚', title: 'Building Habit Apps That Don’t Guilt-Trip Users', excerpt: 'Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.', time: '4 min read' },
     { cat: 'fashion', icon: '👗', title: 'Designing for Small Screens: Lessons from Fashion E-Commerce', excerpt: 'What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.', time: '5 min read' },
     { cat: 'weather', icon: '🌦️', title: 'Why Weather Apps Feel Unreliable in South Asia', excerpt: 'Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.', time: '6 min read' }
   ];

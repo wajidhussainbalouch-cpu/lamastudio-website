@@ -1,11 +1,14 @@
 (function () {
   "use strict";
 
-  // Theme Toggle Functionality
+  // 1. Theme Toggle Functionality
   var root = document.documentElement;
   var themeToggle = document.getElementById('themeToggle');
   var savedTheme = localStorage.getItem('lama-theme');
-  if (savedTheme) root.setAttribute('data-theme', savedTheme);
+  
+  if (savedTheme) {
+    root.setAttribute('data-theme', savedTheme);
+  }
 
   if (themeToggle) {
     themeToggle.addEventListener('click', function () {
@@ -15,32 +18,62 @@
     });
   }
 
-  // Sidebar Toggle Functionality
-  var menuToggle = document.getElementById('menuToggle');
-  var sidebarOverlay = document.getElementById('sidebarOverlay');
-  var sidebarClose = document.getElementById('sidebarClose');
+  // 2. Sidebar & Mobile Navigation Functionality (Merged from nav.js)
+  document.addEventListener('DOMContentLoaded', function () {
+    var menuToggle = document.getElementById('menuToggle') || document.querySelector('.nav-toggle');
+    var sidebarOverlay = document.getElementById('sidebarOverlay');
+    var sidebarClose = document.getElementById('sidebarClose');
 
-  function openSidebar() {
-    sidebarOverlay.classList.add('is-open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSidebar() {
-    sidebarOverlay.classList.remove('is-open');
-    document.body.style.overflow = '';
-  }
+    if (!menuToggle || !sidebarOverlay) return;
 
-  if (menuToggle) menuToggle.addEventListener('click', openSidebar);
-  if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
-  if (sidebarOverlay) {
-    sidebarOverlay.addEventListener('click', function (e) {
-      if (e.target === sidebarOverlay) closeSidebar();
+    function openSidebar() {
+      sidebarOverlay.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+      menuToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeSidebar() {
+      sidebarOverlay.classList.remove('is-open');
+      document.body.style.overflow = '';
+      menuToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    // Toggle drawer on button click
+    menuToggle.addEventListener('click', function () {
+      var isOpen = sidebarOverlay.classList.contains('is-open');
+      if (isOpen) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
     });
-  }
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
+
+    // Close on backdrop overlay click
+    sidebarOverlay.addEventListener('click', function (e) {
+      if (e.target === sidebarOverlay) {
+        closeSidebar();
+      }
+    });
+
+    // Close on 'X' button click
+    if (sidebarClose) {
+      sidebarClose.addEventListener('click', closeSidebar);
+    }
+
+    // Close on Escape key press
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sidebarOverlay.classList.contains('is-open')) {
+        closeSidebar();
+      }
+    });
+
+    // Close automatically when any link inside the sidebar menu is clicked
+    sidebarOverlay.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', closeSidebar);
+    });
   });
 
-  // App Ecosystem Data with Subfolder Links
+  // 3. App Ecosystem Data with Subfolder Links
   var apps = [
     { 
       id: 'vpn', 
@@ -99,7 +132,7 @@
     }
   ];
 
-  // Blog Articles Data
+  // 4. Blog Articles Data
   var posts = [
     { cat: 'tech', icon: '💻', title: 'Building Robust Mobile Software in 2026', excerpt: 'Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.', time: '6 min read' },
     { cat: 'business', icon: '💳', title: 'Local Payment Rails Are the New Table Stakes for Pakistani Apps', excerpt: 'EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.', time: '5 min read' },
@@ -112,7 +145,7 @@
     { cat: 'travel', icon: '✈️', title: 'Building Tourism Guides for Northern Pakistan', excerpt: 'Offline map caches and localized trail references for remote mountain areas.', time: '6 min read' }
   ];
 
-  // Render Apps as functional anchors linking to subfolders
+  // 5. Render Apps Grid (Links directly to subfolder apps/)
   var appGrid = document.getElementById('appGrid');
   if (appGrid) {
     apps.forEach(function (app) {
@@ -131,7 +164,7 @@
     });
   }
 
-  // Render Blog Posts
+  // 6. Render Blog Posts Grid
   var blogGrid = document.getElementById('blogGrid');
   if (blogGrid) {
     posts.forEach(function (post) {

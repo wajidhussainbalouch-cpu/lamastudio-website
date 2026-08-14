@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LamaStudio —App & Software Portal · </title>
+<title>LamaStudio — App & Software Portal</title>
 
 <!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -183,7 +183,7 @@ img { max-width: 100%; display: block; }
 }
 .header-actions { display: flex; align-items: center; gap: 1.1rem; }
 
-/* Control Buttons (Theme & Menu) */
+/* Control Buttons */
 .menu-toggle, .theme-toggle {
   width: 38px; height: 38px;
   border-radius: 9px;
@@ -207,27 +207,37 @@ html[data-theme="light"] .icon-moon { display: none; }
 html[data-theme="light"] .icon-sun { display: block; }
 
 /* =========================================================
-   Sidebar Drawer (Left Navigation) - Always Visible / Live
+   Sidebar Drawer (Left Navigation)
    ========================================================= */
+.sidebar-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(3,4,7,0.7); backdrop-filter: blur(6px);
+  display: none; align-items: stretch; justify-content: flex-start;
+}
+.sidebar-overlay.is-open { display: flex; }
 .sidebar-drawer {
   position: fixed; top: 0; left: 0; width: 280px; height: 100%;
   background: var(--bg);
   border-right: 1px solid var(--card-border);
-  z-index: 999;
   padding: 2rem;
   display: flex; flex-direction: column; gap: 1.8rem;
   overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.3s var(--ease);
 }
+.sidebar-overlay.is-open .sidebar-drawer { transform: translateX(0); }
 
-/* Shift main content to the right so it doesn't hide behind the sidebar */
-main {
-  margin-left: 280px;
+@media (min-width: 992px) {
+  /* Permanent sidebar appearance on large screens if desired, or drawer style */
 }
 
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 1rem; }
 .sidebar-close {
-  display: none; /* Hidden since sidebar is permanent */
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--card-border);
+  background: transparent; color: var(--text-main); cursor: pointer; display: flex;
+  align-items: center; justify-content: center; font-weight: 700;
 }
+.sidebar-close:hover { color: var(--primary); border-color: var(--primary); }
 
 .sidebar-nav-group h5 {
   font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em;
@@ -239,6 +249,10 @@ main {
   transition: color 0.2s var(--ease), padding-left 0.2s var(--ease); display: block; padding: 0.35rem 0;
 }
 .sidebar-nav-group a:hover { color: var(--primary); padding-left: 6px; }
+
+main {
+  /* full width layout since sidebar is overlay drawer */
+}
 
 /* =========================================================
    Category Strip Bar - Centered
@@ -333,37 +347,16 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 
 /* YouTube Widget & Social Buttons */
 .video-wrapper {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%;
-  height: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #000;
-  border: 1px solid var(--card-border);
-  margin-bottom: 0.9rem;
+  position: relative; width: 100%; padding-bottom: 56.25%; height: 0;
+  border-radius: 8px; overflow: hidden; background: #000;
+  border: 1px solid var(--card-border); margin-bottom: 0.9rem;
 }
-.video-wrapper iframe {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  border: 0;
-}
-.social-buttons-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
-}
+.video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+.social-buttons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .btn-social {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  border-radius: 9px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  border: 1px solid transparent;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.65rem 1rem; border-radius: 9px; font-size: 0.82rem; font-weight: 700;
+  cursor: pointer; border: 1px solid transparent;
   transition: transform 0.2s var(--ease), filter 0.2s var(--ease);
 }
 .btn-social:hover { transform: translateY(-1px); filter: brightness(1.1); }
@@ -371,7 +364,16 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 .btn-facebook { background: #1877f2; color: #ffffff; }
 .btn-social svg { width: 16px; height: 16px; fill: currentColor; }
 
-/* Ticker Container */
+/* Stats Widget */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
+.stat-cell b { display: block; font-family: var(--font-display); font-size: 1.5rem; color: var(--text-main); }
+.stat-cell span { font-size: 0.66rem; color: var(--text-faint); font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
+
+@media (max-width: 980px) { .dashboard { grid-template-columns: 1fr; } }
+
+/* =========================================================
+   Ticker Container (At Bottom)
+   ========================================================= */
 .ticker-container-bottom {
   max-width: 1400px;
   margin: 1.5rem auto 0;
@@ -386,15 +388,6 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 .ticker-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; color: var(--text-main); white-space: nowrap; }
 .ticker-item .tag { font-family: var(--font-mono); font-size: 0.65rem; color: var(--c-tech); border: 1px solid color-mix(in srgb, var(--c-tech) 40%, transparent); padding: 0.1rem 0.4rem; border-radius: 5px; }
 @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-/* Stats Widget */
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; }
-.stat-cell b { display: block; font-family: var(--font-display); font-size: 1.5rem; color: var(--text-main); }
-.stat-cell span { font-size: 0.66rem; color: var(--text-faint); font-family: var(--font-mono); letter-spacing: 0.05em; text-transform: uppercase; }
-
-@media (max-width: 980px) {
-  .dashboard { grid-template-columns: 1fr; }
-}
 
 /* =========================================================
    Section Layouts & Grids
@@ -447,7 +440,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 .blog-body .read-link { font-size: 0.8rem; font-weight: 600; color: var(--pc); display: inline-flex; align-items: center; gap: 0.3rem; }
 
 /* =========================================================
-   Quick-View Modal Window
+   Quick-View Modal Window with Pricing & Dual Action Links
    ========================================================= */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 99999;
@@ -460,8 +453,9 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 .modal-box {
   --pc: var(--c-tech);
   background: var(--card-bg); border: 1px solid var(--card-border); border-top: 3px solid var(--pc);
-  border-radius: var(--radius-lg); max-width: 460px; width: 100%; padding: 2rem;
+  border-radius: var(--radius-lg); max-width: 520px; width: 100%; padding: 2rem;
   transform: translateY(14px) scale(0.98); transition: transform 0.3s var(--ease); position: relative;
+  max-height: 90vh; overflow-y: auto;
 }
 .modal-overlay.is-open .modal-box { transform: translateY(0) scale(1); }
 .modal-close {
@@ -473,7 +467,30 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 .modal-close:hover { color: var(--primary); border-color: var(--primary); }
 .modal-box .app-icon { margin-bottom: 1.1rem; width: 54px; height: 54px; font-size: 1.6rem; }
 .modal-box h3 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--text-main); }
-.modal-box p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.5rem; }
+.modal-box p { color: var(--text-muted); font-size: 0.92rem; margin-bottom: 1.2rem; }
+
+.modal-pricing-box {
+  background: color-mix(in srgb, var(--pc) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pc) 30%, transparent);
+  border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 1.4rem;
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-main);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-pricing-box .price-tag { font-weight: 700; color: var(--pc); font-size: 0.95rem; }
+
+.modal-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;
+}
+.modal-actions .btn-action {
+  background: var(--pc); border-color: var(--pc); color: #07090e; font-size: 0.82rem; padding: 0.75rem 1rem;
+}
+.modal-actions .btn-ghost-action {
+  background: transparent; border: 1px solid var(--card-border); color: var(--text-main);
+  border-radius: 13px; font-weight: 700; font-size: 0.82rem; padding: 0.75rem 1rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; cursor: pointer;
+  transition: all 0.25s var(--ease);
+}
+.modal-actions .btn-ghost-action:hover { border-color: var(--pc); color: var(--pc); background: color-mix(in srgb, var(--pc) 6%, transparent); }
 
 /* =========================================================
    Footer Elements
@@ -494,7 +511,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
 
 <!-- Top Banner -->
 <div class="ind-banner">
-  <span>14 August</span>  Happy Independence Day of Pakistan! Proudly building for the nation.
+  <span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.
 </div>
 
 <!-- Header -->
@@ -507,7 +524,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
       </button>
       <a href="index.html" class="brand">
         <span class="brand-mark">L</span>
-        <span>LamaStudio<small>App & SoftwarePortal · </small></span>
+        <span>LamaStudio<small>App & Software Portal</small></span>
       </a>
     </div>
     
@@ -524,8 +541,6 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     <div class="category-track" id="categoryTrack" role="tablist" aria-label="Filter by category">
       <button class="cat-pill is-active" data-cat="all" style="--pc:var(--primary)"><span class="dot"></span>All</button>
       <button class="cat-pill" data-cat="business" style="--pc:var(--c-business)"><span class="dot"></span>Business</button>
-      <button class="cat-pill" data-cat="business" style="--pc:var(--c-business)"><span class="dot"></span>Travel</button>
-      <button class="cat-pill" data-cat="business" style="--pc:var(--c-business)"><span class="dot"></span>Sports</button>
       <button class="cat-pill" data-cat="fashion" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion</button>
       <button class="cat-pill" data-cat="education" style="--pc:var(--c-education)"><span class="dot"></span>Education</button>
       <button class="cat-pill" data-cat="weather" style="--pc:var(--c-weather)"><span class="dot"></span>Weather</button>
@@ -535,7 +550,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
   </div>
 </header>
 
-<!-- Sidebar Drawer Menu (Live Across Pages, without categories) -->
+<!-- Sidebar Drawer Menu Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay">
   <div class="sidebar-drawer" id="sidebarDrawer" role="dialog" aria-modal="true" aria-label="Sidebar Menu">
     <div class="sidebar-header">
@@ -587,7 +602,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     </div>
 
     <div class="side-widgets">
-      <!-- Live YouTube Player Widget with exact requested video & links -->
+      <!-- Live YouTube Player Widget -->
       <div class="widget">
         <div class="widget-head">
           <span class="widget-title">Featured Stream</span>
@@ -608,6 +623,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
         </div>
       </div>
 
+      <!-- Studio Stats Widget -->
       <div class="widget">
         <div class="widget-head"><span class="widget-title">Studio Stats</span></div>
         <div class="stats-grid">
@@ -619,7 +635,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     </div>
   </section>
 
-  <!-- Ticker Container -->
+  <!-- Ticker Container at Bottom of Dashboard Section -->
   <div class="ticker-container-bottom">
     <div class="widget" style="padding: 1rem 1.2rem;">
       <div class="widget-head" style="margin-bottom: 0.6rem;">
@@ -638,7 +654,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
       <div>
         <span class="eyebrow">The Ecosystem</span>
         <h2>Apps &amp; utilities</h2>
-        <p>Tap a card for a quick overview, or launch straight in.</p>
+        <p>Tap a card for a quick overview, pricing details, or launch straight in.</p>
       </div>
       <div class="filter-note" id="appFilterNote" hidden>
         Filtered by <span id="appFilterLabel"></span> · <button id="appFilterClear">clear</button>
@@ -672,7 +688,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
   <div class="footer-grid">
     <div class="footer-brand">
       <a href="index.html" class="brand"><span class="brand-mark">L</span><span>LamaStudio</span></a>
-      <p>An independent Android app studio based in Pakistan, building privacy-first utilities and locally-monetized software.</p>
+      <p>An independent Android app studio based in DG Khan, Pakistan, building privacy-first utilities and locally-monetized software.</p>
     </div>
     <div class="footer-col">
       <h4>Store</h4>
@@ -689,7 +705,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     <div class="footer-col">
       <h4>Contact</h4>
       <span>hello@lamastudio.pk</span>
-      <span>Islamabad, Pakistan</span>
+      <span>DG Khan, Pakistan</span>
     </div>
   </div>
   <div class="footer-bottom">
@@ -698,7 +714,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
   </div>
 </footer>
 
-<!-- Quick-View Modal Overlay -->
+<!-- Quick-View & Pricing Modal Overlay -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-box" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
@@ -706,7 +722,16 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     <span class="tag-pill" id="modalTag"></span>
     <h3 id="modalTitle"></h3>
     <p id="modalDesc"></p>
-    <a href="#" class="btn-action" id="modalLaunch"><span>Launch app</span></a>
+    
+    <div class="modal-pricing-box">
+      <span>Pricing Model:</span>
+      <span class="price-tag" id="modalPrice"></span>
+    </div>
+
+    <div class="modal-actions">
+      <a href="#" class="btn-action" id="modalMobileBtn"><span>📱 Mobile App</span></a>
+      <a href="#" class="btn-ghost-action" id="modalPcBtn"><span>💻 PC / Website</span></a>
+    </div>
   </div>
 </div>
 
@@ -727,7 +752,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     localStorage.setItem('lama-theme', next);
   });
 
-  // Sidebar Toggle Functionality (Live across pages)
+  // Sidebar Toggle Functionality
   var menuToggle = document.getElementById('menuToggle');
   var sidebarOverlay = document.getElementById('sidebarOverlay');
   var sidebarClose = document.getElementById('sidebarClose');
@@ -752,13 +777,63 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     if (e.key === 'Escape' && sidebarOverlay && sidebarOverlay.classList.contains('is-open')) closeSidebar();
   });
 
-  // App Ecosystem Data
+  // App Ecosystem Data with pricing and dual links
   var apps = [
-    { id: 'vpn', name: 'LamaVPN Pro', cat: 'tech', icon: '🛡️', tag: 'Privacy & Security', desc: 'A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.', href: 'apps/lamavpnpro/' },
-    { id: 'sky', name: 'LamaSky', cat: 'weather', icon: '🌤️', tag: 'Weather & Planning', desc: 'Local weather, prayer-aligned scheduling, and daily planning built around how Pakistani users structure their day.', href: 'apps/lamasky/' },
-    { id: 'iq', name: 'LamaIQMaster', cat: 'education', icon: '🧠', tag: 'Cognitive Training', desc: 'Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.', href: 'apps/lamaiqmaster/' },
-    { id: 'cal', name: 'LamaMultiCalendar', cat: 'business', icon: '📅', tag: 'Productivity', desc: 'Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.', href: 'apps/mixcalendar/' },
-    { id: 'photo', name: 'LamaPhotoResizer', cat: 'tech', icon: '🖼️', tag: 'Photo Tools', desc: 'On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.', href: 'apps/lamaphotoresizer/' }
+    { 
+      id: 'vpn', 
+      name: 'LamaVPN Pro', 
+      cat: 'tech', 
+      icon: '🛡️', 
+      tag: 'Privacy & Security', 
+      desc: 'A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.', 
+      price: 'Free / Premium PKR 500/mo',
+      mobileHref: 'apps/lamavpnpro/mobile.html',
+      pcHref: 'apps/lamavpnpro/pc.html'
+    },
+    { 
+      id: 'sky', 
+      name: 'LamaSky', 
+      cat: 'weather', 
+      icon: '🌤️', 
+      tag: 'Weather & Planning', 
+      desc: 'Local weather, prayer-aligned scheduling, and daily planning built around how Pakistani users structure their day.', 
+      price: 'Free Ad-Supported',
+      mobileHref: 'apps/lamasky/mobile.html',
+      pcHref: 'apps/lamasky/pc.html'
+    },
+    { 
+      id: 'iq', 
+      name: 'LamaIQMaster', 
+      cat: 'education', 
+      icon: '🧠', 
+      tag: 'Cognitive Training', 
+      desc: 'Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.', 
+      price: 'Freemium (PKR 300 unlock)',
+      mobileHref: 'apps/lamaiqmaster/mobile.html',
+      pcHref: 'apps/lamaiqmaster/pc.html'
+    },
+    { 
+      id: 'cal', 
+      name: 'LamaMultiCalendar', 
+      cat: 'business', 
+      icon: '📅', 
+      tag: 'Productivity', 
+      desc: 'Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.', 
+      price: '100% Free',
+      mobileHref: 'apps/multicalendar/mobile.html',
+      pcHref: 'apps/multicalendar/pc.html'
+    },
+    { 
+      id: 'photo', 
+      name: 'LamaPhotoResizer', 
+      cat: 'tech', 
+      icon: '🖼️', 
+      tag: 'Photo Tools', 
+      desc: 'On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.', 
+      price: 'Free / Pro Tier PKR 400',
+      mobileHref: 'apps/lamaphotoresizer/mobile.html',
+      pcHref: 'apps/lamaphotoresizer/pc.html'
+    }
   ];
 
   // Blog Articles Data
@@ -790,7 +865,7 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
         '<div class="app-icon">' + app.icon + '</div>' +
         '<div><span class="tag-pill">' + app.tag + '</span><h3>' + app.name + '</h3></div>' +
         '<p class="desc">' + app.desc + '</p>' +
-        '<div class="card-actions"><a href="' + app.href + '" class="btn-action" onclick="event.stopPropagation()"><span>Launch app</span></a></div>';
+        '<div class="card-actions"><button type="button" class="btn-action"><span>View Details</span></button></div>';
       card.addEventListener('click', function () { openModal(app); });
       appGrid.appendChild(card);
     });
@@ -897,14 +972,16 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     animateCounters();
   }
 
-  // Quick-View Modal Logic
+  // Quick-View Modal Logic with Pricing & Dual Action Links
   var overlay = document.getElementById('modalOverlay');
   var modalBox = document.getElementById('modalBox');
   var modalIcon = document.getElementById('modalIcon');
   var modalTag = document.getElementById('modalTag');
   var modalTitle = document.getElementById('modalTitle');
   var modalDesc = document.getElementById('modalDesc');
-  var modalLaunch = document.getElementById('modalLaunch');
+  var modalPrice = document.getElementById('modalPrice');
+  var modalMobileBtn = document.getElementById('modalMobileBtn');
+  var modalPcBtn = document.getElementById('modalPcBtn');
   var lastFocused = null;
 
   function openModal(app) {
@@ -917,9 +994,16 @@ html[data-theme="light"] .cat-pill.is-active { color: #ffffff; }
     modalTag.style.color = 'var(--c-' + app.cat + ')';
     modalTitle.textContent = app.name;
     modalDesc.textContent = app.desc;
-    modalLaunch.href = app.href;
-    modalLaunch.style.background = 'var(--c-' + app.cat + ')';
-    modalLaunch.style.borderColor = 'var(--c-' + app.cat + ')';
+    modalPrice.textContent = app.price;
+    modalPrice.style.color = 'var(--c-' + app.cat + ')';
+    
+    modalMobileBtn.href = app.mobileHref;
+    modalMobileBtn.style.background = 'var(--c-' + app.cat + ')';
+    modalMobileBtn.style.borderColor = 'var(--c-' + app.cat + ')';
+    modalMobileBtn.style.color = '#07090e';
+
+    modalPcBtn.href = app.pcHref;
+
     overlay.classList.add('is-open');
     var closeBtn = document.getElementById('modalClose');
     if (closeBtn) closeBtn.focus();

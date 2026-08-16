@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LamaStudio — Advanced Windy Weather Hub</title>
+<title>LamaStudio — Advanced Windy Weather & Rain Formula Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
@@ -24,21 +24,29 @@
     .utility-btn { background: var(--category-color); color: #0f172a; border: none; padding: 12px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
     .utility-btn:hover { opacity: 0.9; }
     
-    /* Expanded Results Grid */
+    /* Expanded Results & 4-Map Grid */
     .weather-result-box { margin-top: 25px; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 25px; display: none; }
     .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
     .metric-card { background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; color: var(--text-muted); }
     .metric-card span { display: block; font-size: 1.2rem; font-weight: 700; color: var(--text); margin-top: 5px; }
 
-    /* Side-by-Side Windy Maps Layout */
-    .maps-wrapper { margin-top: 25px; }
-    .maps-wrapper h4 { color: var(--text); font-size: 1.05rem; margin-bottom: 12px; }
-    .side-by-side-maps { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    @media (max-width: 900px) { .side-by-side-maps { grid-template-columns: 1fr; } }
+    /* 4 Live Windy Maps Grid */
+    .maps-wrapper { margin-top: 30px; }
+    .maps-wrapper h4 { color: var(--text); font-size: 1.1rem; margin-bottom: 15px; }
+    .quad-maps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    @media (max-width: 900px) { .quad-maps-grid { grid-template-columns: 1fr; } }
     .map-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
     .map-box .map-title { padding: 10px 15px; font-size: 0.85rem; font-weight: 600; color: var(--category-color); background: rgba(56, 189, 248, 0.05); border-bottom: 1px solid var(--border); }
-    .map-container { width: 100%; height: 320px; border: 0; }
+    .map-container { width: 100%; height: 300px; border: 0; }
     .map-container iframe { width: 100%; height: 100%; border: 0; }
+
+    /* Rain Forecast Formula Box */
+    .formula-panel { margin-top: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .formula-panel h5 { color: var(--category-color); font-size: 1rem; margin-top: 0; margin-bottom: 8px; }
+    .formula-box { background: var(--background); padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--text); border: 1px dashed var(--border); margin: 10px 0; }
+    .formula-calc-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+    .formula-calc-row input { width: 120px; padding: 8px 12px; background: var(--background); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+    .calc-output { font-weight: 700; color: var(--category-color); font-size: 1rem; margin-left: 10px; }
 </style>
 </head>
 <body style="--category-color: var(--c-weather);">
@@ -96,11 +104,11 @@
     </div>
   </section>
 
-  <!-- Live Global Weather & Windy Maps Search Utility -->
+  <!-- Live Global Weather & Quad-Map Windy Hub -->
   <section class="section">
     <div class="utility-panel">
-      <h3>Live Global Weather, Time & Windy Live Maps</h3>
-      <p style="color: var(--text-muted); font-size: 0.92rem; margin-top: 5px;">Type any city name and press Enter to instantly load live temperature, wind metrics, solar schedules, local time, and side-by-side live Windy maps.</p>
+      <h3>Live Global Weather, Time & Quad-Windy Maps</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; margin-top: 5px;">Type any city name and press Enter to load live metrics, solar schedules, local time, 4 simultaneous live Windy maps, and our integrated rain accumulation formula.</p>
       
       <div class="search-box-row">
         <input type="text" id="cityNameInput" placeholder="Enter city name (e.g., Lahore, London, Tokyo)..." onkeypress="handleKeyPress(event)">
@@ -123,22 +131,39 @@
           <div class="metric-card">Sunrise / Sunset <span id="resSun" style="font-size: 1rem;">--</span></div>
         </div>
 
-        <!-- Side-by-Side Live Windy Maps -->
+        <!-- 4 Live Side-by-Side Windy Maps -->
         <div class="maps-wrapper">
-          <h4>Live Windy Meteorological Maps (Side-by-Side)</h4>
-          <div class="side-by-side-maps">
+          <h4>Live Multi-Layer Windy Maps (Quad View)</h4>
+          <div class="quad-maps-grid">
             <div class="map-box">
-              <div class="map-title">🌬️ Live Wind Stream Map</div>
-              <div class="map-container">
-                <iframe id="windMapIframe" src="" loading="lazy"></iframe>
-              </div>
+              <div class="map-title">🌬️ 1. Wind Streams Map</div>
+              <div class="map-container"><iframe id="mapWind" src="" loading="lazy"></iframe></div>
             </div>
             <div class="map-box">
-              <div class="map-title">🌧️ Live Rain & Radar Map</div>
-              <div class="map-container">
-                <iframe id="rainMapIframe" src="" loading="lazy"></iframe>
-              </div>
+              <div class="map-title">🌧️ 2. Rain & Thunderstorm Radar</div>
+              <div class="map-container"><iframe id="mapRain" src="" loading="lazy"></iframe></div>
             </div>
+            <div class="map-box">
+              <div class="map-title">🌡️ 3. Temperature Thermal Map</div>
+              <div class="map-container"><iframe id="mapTemp" src="" loading="lazy"></iframe></div>
+            </div>
+            <div class="map-box">
+              <div class="map-title">☁️ 4. Clouds & Pressure Map</div>
+              <div class="map-container"><iframe id="mapClouds" src="" loading="lazy"></iframe></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rain Accumulation & Forecast Formula Box -->
+        <div class="formula-panel">
+          <h5>🌧️ Rain Forecast & Accumulation Estimator Formula</h5>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 5px;">Meteorologists estimate total precipitation accumulation ($R$) using precipitation intensity ($i$) and duration ($t$):</p>
+          <div class="formula-box">$$R = i \times t \times C_f$$ (Where $C_f$ is the runoff/atmospheric saturation coefficient $\approx 0.85$)</div>
+          
+          <div class="formula-calc-row">
+            <label style="font-size: 0.85rem; color: var(--text-muted);">Rate (mm/h): <input type="number" id="rainRateInput" value="4.5" step="0.1" oninput="calculateRainTotal()"></label>
+            <label style="font-size: 0.85rem; color: var(--text-muted);">Hours ($t$): <input type="number" id="rainHoursInput" value="3" step="0.5" oninput="calculateRainTotal()"></label>
+            <div>Estimated Accumulation: <span id="calcResultOutput" class="calc-output">11.48 mm</span></div>
           </div>
         </div>
 
@@ -210,11 +235,14 @@
         document.getElementById('resHumidity').innerText = '--';
         document.getElementById('resPrecip').innerText = '--';
         document.getElementById('resSun').innerText = '--';
-        document.getElementById('windMapIframe').src = '';
-        document.getElementById('rainMapIframe').src = '';
+        
+        document.getElementById('mapWind').src = '';
+        document.getElementById('mapRain').src = '';
+        document.getElementById('mapTemp').src = '';
+        document.getElementById('mapClouds').src = '';
 
         try {
-            // Step 1: Get Geocoding Data (Lat, Lon, Timezone, Country)
+            // Step 1: Get Geocoding Data
             const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`);
             const geoData = await geoRes.json();
 
@@ -227,14 +255,13 @@
             const loc = geoData.results[0];
             const { latitude, longitude, name, country, timezone } = loc;
 
-            // Step 2: Fetch Weather and Daily Sunrise/Sunset data
+            // Step 2: Fetch Weather Data
             const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation&daily=sunrise,sunset&timezone=auto`);
             const weatherData = await weatherRes.json();
 
             const current = weatherData.current;
             const daily = weatherData.daily;
 
-            // Extract Local Time based on city's timezone
             const localTimeStr = new Intl.DateTimeFormat('en-US', {
                 timeZone: timezone || 'UTC',
                 dateStyle: 'full',
@@ -248,25 +275,39 @@
             document.getElementById('resHumidity').innerText = `${current.relative_humidity_2m}%`;
             document.getElementById('resPrecip').innerText = `${current.precipitation} mm`;
             
+            // Auto-update rain calculator rate if live precipitation is available
+            if (current.precipitation > 0) {
+                document.getElementById('rainRateInput').value = current.precipitation;
+                calculateRainTotal();
+            }
+
             const sunriseStr = daily.sunrise && daily.sunrise[0] ? formatTimeOnly(daily.sunrise[0]) : 'N/A';
             const sunsetStr = daily.sunset && daily.sunset[0] ? formatTimeOnly(daily.sunset[0]) : 'N/A';
             document.getElementById('resSun').innerText = `🌅 ${sunriseStr} | 🌇 ${sunsetStr}`;
 
-            // Step 3: Embed Side-by-Side Live Windy Maps 
-            // Windy Embed URLs structure: https://embed.windy.com/embed2.html?lat={lat}&lon={lon}&zoom=8&level=surface&overlay={layer}&menu=&message=&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=true&metricWind=default&metricTemp=default
+            // Step 3: Embed 4 Live Windy Maps
             const latFixed = latitude.toFixed(2);
             const lonFixed = longitude.toFixed(2);
 
-            const windMapUrl = `https://embed.windy.com/embed2.html?lat=${latFixed}&lon=${lonFixed}&zoom=8&level=surface&overlay=wind&menu=&message=&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C`;
-            const rainMapUrl = `https://embed.windy.com/embed2.html?lat=${latFixed}&lon=${lonFixed}&zoom=8&level=surface&overlay=rain&menu=&message=&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C`;
+            const baseWindyUrl = (overlay) => `https://embed.windy.com/embed2.html?lat=${latFixed}&lon=${lonFixed}&zoom=7&level=surface&overlay=${overlay}&menu=&message=&marker=true&calendar=now&pressure=true&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C`;
 
-            document.getElementById('windMapIframe').src = windMapUrl;
-            document.getElementById('rainMapIframe').src = rainMapUrl;
+            document.getElementById('mapWind').src = baseWindyUrl('wind');
+            document.getElementById('mapRain').src = baseWindyUrl('rain');
+            document.getElementById('mapTemp').src = baseWindyUrl('temp');
+            document.getElementById('mapClouds').src = baseWindyUrl('clouds');
 
         } catch (error) {
             document.getElementById('resCityName').innerText = 'Error loading data';
             document.getElementById('resLocalTime').innerText = 'Please verify your connection or try another city.';
         }
+    }
+
+    function calculateRainTotal() {
+        const rate = parseFloat(document.getElementById('rainRateInput').value) || 0;
+        const hours = parseFloat(document.getElementById('rainHoursInput').value) || 0;
+        const Cf = 0.85; // Runoff / Saturation coefficient
+        const total = (rate * hours * Cf).toFixed(2);
+        document.getElementById('calcResultOutput').innerText = total + ' mm';
     }
 
     function formatTimeOnly(isoString) {

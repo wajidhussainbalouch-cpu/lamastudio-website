@@ -15,11 +15,15 @@
     .city-card h4 { margin: 0 0 0.4rem; color: var(--text); font-size: 1rem; }
     .city-card .temp { font-size: 1.6rem; font-weight: 800; color: var(--category-color); }
     .city-card .cond { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+    
+    /* Live Search Tool Styles */
     .utility-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin: 30px 0; }
     .utility-panel h3 { margin-top: 0; color: var(--text); font-size: 1.2rem; }
-    .utility-row-tools { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-    .utility-btn { background: var(--category-color); color: #0f172a; border: none; padding: 10px 18px; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
+    .search-box-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+    .search-box-row input { flex: 1; min-width: 220px; padding: 12px 16px; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.95rem; }
+    .utility-btn { background: var(--category-color); color: #0f172a; border: none; padding: 12px 20px; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 0.9rem; }
     .utility-btn:hover { opacity: 0.9; }
+    .weather-result-box { margin-top: 20px; background: var(--background); border: 1px solid var(--border); border-radius: 10px; padding: 20px; display: none; text-align: center; }
 </style>
 </head>
 <body style="--category-color: var(--c-weather);">
@@ -39,10 +43,8 @@
     </div>
   </div>
   
-  <!-- AdSense Top Banner Slot -->
   <div class="ad-container">Advertisement Space (Google AdSense Header)</div>
 
-  <!-- Complete Category Strip including New and Existing Categories -->
   <div class="category-strip">
     <div class="category-track" role="tablist">
       <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
@@ -79,7 +81,26 @@
     </div>
   </section>
 
-  <!-- Live Weather Utilities & City Trackers -->
+  <!-- Live Global Weather Search Utility -->
+  <section class="section">
+    <div class="utility-panel">
+      <h3>Live Global Weather & City Search Tool</h3>
+      <p style="color: var(--text-muted); font-size: 0.92rem; margin-top: 5px;">Type any city worldwide to instantly retrieve live temperature, wind speed, and atmospheric indicators powered by open-source meteorological data.</p>
+      
+      <div class="search-box-row">
+        <input type="text" id="cityNameInput" placeholder="Enter city name (e.g., Lahore, London, Tokyo)...">
+        <button class="utility-btn" onclick="fetchLiveWeather()">Search Weather</button>
+      </div>
+
+      <div id="weatherResultBox" class="weather-result-box">
+        <h4 id="resCityName" style="color: var(--category-color); font-size: 1.2rem; margin-bottom: 5px;"></h4>
+        <div id="resTemp" style="font-size: 2.2rem; font-weight: 800; color: var(--text);"></div>
+        <div id="resDetails" style="font-size: 0.9rem; color: var(--text-muted); margin-top: 8px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Cities Weather Monitor -->
   <section class="section">
     <div class="section-head"><div><span class="eyebrow" style="color: var(--category-color);">Live Data Feed</span><h2>Main Cities Weather Monitor</h2></div></div>
     <div class="city-grid">
@@ -87,18 +108,6 @@
         <div class="city-card"><h4>Islamabad</h4><div class="temp">33&deg;C</div><div class="cond">Monsoon Showers</div></div>
         <div class="city-card"><h4>Karachi</h4><div class="temp">32&deg;C</div><div class="cond">Breezy & Humid</div></div>
         <div class="city-card"><h4>Multan</h4><div class="temp">39&deg;C</div><div class="cond">Hot & Dry</div></div>
-    </div>
-  </section>
-
-  <!-- Built-in Interactive Weather Utility Widget -->
-  <section class="section">
-    <div class="utility-panel">
-      <h3>Interactive Meteorological Utilities</h3>
-      <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 15px;">Access real-time regional metrics, precipitation warnings, and monsoon radar tracking tools engineered by LamaStudio.</p>
-      <div class="utility-row-tools">
-        <button class="utility-btn" onclick="alert('Syncing live atmospheric pressure and radar grids...')">Check Regional Radar</button>
-        <a href="../../apps/lamasky/index.html" class="utility-btn" style="background: transparent; border: 1px solid var(--category-color); color: var(--category-color);">Get LamaSky Android App</a>
-      </div>
     </div>
   </section>
 
@@ -131,5 +140,51 @@
   <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
 </footer>
 <script src="../../script.js"></script>
+<script>
+    // Free Live Weather API Integration (Open-Meteo)
+    async function fetchLiveWeather() {
+        const query = document.getElementById('cityNameInput').value.trim();
+        const resultBox = document.getElementById('weatherResultBox');
+        
+        if (!query) {
+            alert('Please enter a valid city name.');
+            return;
+        }
+
+        resultBox.style.display = 'block';
+        document.getElementById('resCityName').innerText = 'Searching for ' + query + '...';
+        document.getElementById('resTemp').innerText = '--°C';
+        document.getElementById('resDetails').innerText = '';
+
+        try {
+            // Step 1: Get Latitude and Longitude using free geocoding API
+            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`);
+            const geoData = await geoRes.json();
+
+            if (!geoData.results || geoData.results.length === 0) {
+                document.getElementById('resCityName').innerText = 'City not found.';
+                document.getElementById('resDetails').innerText = 'Please check the spelling and try again.';
+                return;
+            }
+
+            const location = geoData.results[0];
+            const { latitude, longitude, name, country } = location;
+
+            // Step 2: Get Live Weather Data
+            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation`);
+            const weatherData = await weatherRes.json();
+
+            const current = weatherData.current;
+            
+            document.getElementById('resCityName').innerText = `${name}, ${country || ''}`;
+            document.getElementById('resTemp').innerText = `${current.temperature_2m}°C`;
+            document.getElementById('resDetails').innerText = `Humidity: ${current.relative_humidity_2m}% | Wind Speed: ${current.wind_speed_10m} km/h | Precipitation: ${current.precipitation} mm`;
+
+        } catch (error) {
+            document.getElementById('resCityName').innerText = 'Error fetching data';
+            document.getElementById('resDetails').innerText = 'Please check your internet connection.';
+        }
+    }
+</script>
 </body>
 </html>

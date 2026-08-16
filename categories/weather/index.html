@@ -30,7 +30,7 @@
     @media (max-width: 768px) { .result-grid { grid-template-columns: 1fr; } }
     .metric-card { background: var(--surface); padding: 15px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; color: var(--text-muted); }
     .metric-card span { display: block; font-size: 1.2rem; font-weight: 700; color: var(--text); margin-top: 5px; }
-    .map-container { width: 100%; height: 250px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); margin-top: 15px; }
+    .map-container { width: 100%; height: 280px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); margin-top: 20px; }
     .map-container iframe { width: 100%; height: 100%; border: 0; }
 </style>
 </head>
@@ -218,17 +218,16 @@
                 timeStyle: 'medium'
             }).format(new Date());
 
-            // Extract Sunrise and Sunset time strings
-            const sunriseTime = daily.sunrise && daily.sunrise[0] ? new DXTimeFormat(daily.sunrise[0]) : 'N/A';
-            const sunsetTime = daily.sunset && daily.sunset[0] ? new DXTimeFormat(daily.sunset[0]) : 'N/A';
-
             document.getElementById('resCityName').innerText = `${name}, ${country || ''}`;
             document.getElementById('resLocalTime').innerText = `Local Time: ${localTimeStr}`;
             document.getElementById('resTemp').innerText = `${current.temperature_2m}°C`;
             document.getElementById('resWind').innerText = `${current.wind_speed_10m} km/h`;
             document.getElementById('resHumidity').innerText = `${current.relative_humidity_2m}%`;
             document.getElementById('resPrecip').innerText = `${current.precipitation} mm`;
-            document.getElementById('resSun').innerText = `🌅 ${formatTimeOnly(daily.sunrise[0])} | 🌇 ${formatTimeOnly(daily.sunset[0])}`;
+            
+            const sunriseStr = daily.sunrise && daily.sunrise[0] ? formatTimeOnly(daily.sunrise[0]) : 'N/A';
+            const sunsetStr = daily.sunset && daily.sunset[0] ? formatTimeOnly(daily.sunset[0]) : 'N/A';
+            document.getElementById('resSun').innerText = `🌅 ${sunriseStr} | 🌇 ${sunsetStr}`;
 
             // Step 3: Embed OpenStreetMap for the searched location
             const mapIframe = document.getElementById('resMap');

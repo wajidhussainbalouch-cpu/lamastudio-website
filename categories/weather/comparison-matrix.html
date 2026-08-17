@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-City Weather Comparison Matrix — LamaStudio</title>
+<meta name="description" content="Compare side-by-side temperatures, wind speeds, and atmospheric metrics across international cities using LamaStudio's matrix engine.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-weather);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="utility-btn" style="padding: 8px 12px; font-size: 0.8rem;">&larr; Back to LamaSky Engine</a>
+    </div>
+  </div>
+</header>
+
+<main class="dashboard" style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+    <span class="hub-badge" style="display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px;">SDK Analysis Engine</span>
+    <h1>Multi-City Weather Comparison Matrix</h1>
+    <p class="lede">Compare live telemetry across major world hubs side by side.</p>
+  </div>
+
+  <div class="utility-panel" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-top: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <h3>Global Node Benchmarks</h3>
+      <button class="utility-btn" onclick="loadMatrixData()">🔄 Refresh Matrix</button>
+    </div>
+
+    <div style="overflow-x: auto; margin-top: 20px;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); color: var(--text-muted);">
+            <th style="padding: 12px;">City / Node</th>
+            <th style="padding: 12px;">Temperature</th>
+            <th style="padding: 12px;">Humidity</th>
+            <th style="padding: 12px;">Wind Speed</th>
+            <th style="padding: 12px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="matrixTableBody">
+          <tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">Click refresh to pull live international node telemetry...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const presetCities = [
+    { name: "Lahore, Pakistan", lat: 31.52, lon: 74.35 },
+    { name: "London, UK", lat: 51.50, lon: -0.12 },
+    { name: "Tokyo, Japan", lat: 35.67, lon: 139.65 },
+    { name: "Riyadh, Saudi Arabia", lat: 24.71, lon: 46.67 },
+    { name: "New York, USA", lat: 40.71, lon: -74.00 }
+];
+
+async function loadMatrixData() {
+    const tbody = document.getElementById('matrixTableBody');
+    tbody.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--category-color);">Querying global node cluster telemetry...</td></tr>`;
+
+    let htmlRows = '';
+    for (let city of presetCities) {
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`);
+            const data = await res.json();
+            const cur = data.current;
+
+            htmlRows += `
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 12px; font-weight: 600; color: var(--text);">${city.name}</td>
+                  <td style="padding: 12px; color: var(--category-color); font-weight: 700;">${cur.temperature_2m}°C</td>
+                  <td style="padding: 12px; color: var(--text-muted);">${cur.relative_humidity_2m}%</td>
+                  <td style="padding: 12px; color: var(--text-muted);">${cur.wind_speed_10m} km/h</td>
+                  <td style="padding: 12px;"><span style="background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Online</span></td>
+                </tr>
+            `;
+        } catch (e) {
+            htmlRows += `
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 12px; font-weight: 600;">${city.name}</td>
+                  <td colspan="4" style="padding: 12px; color: #f87171;">Connection Error</td>
+                </tr>
+            `;
+        }
+    }
+    tbody.innerHTML = htmlRows;
+}
+
+window.onload = loadMatrixData;
+</script>
+</body>
+</html>

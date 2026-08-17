@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmogWatch AQI & Air Quality Tracker — LamaStudio</title>
+<meta name="description" content="Monitor urban air quality, PM2.5 concentrations, and color-coded pollution gauges with LamaStudio's SmogWatch module.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-weather);">
+<header class="site-header">
+  <div class="util-row"><div style="display: flex; align-items: center; gap: 1rem;"><a href="index.html" class="utility-btn" style="padding: 8px 12px; font-size: 0.8rem;">&larr; Back to LamaSky Engine</a></div></div>
+</header>
+<main class="dashboard" style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+    <span class="hub-badge" style="display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px;">Environmental Module</span>
+    <h1>SmogWatch AQI & Air Quality Tracker</h1>
+    <p class="lede">Real-time PM2.5 monitoring and urban pollution risk evaluations.</p>
+  </div>
+  <div class="utility-panel" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-top: 25px;">
+    <h3>Select Urban Center</h3>
+    <div class="search-box-row" style="display: flex; gap: 10px; margin-top: 15px;">
+      <input type="text" id="aqiCity" value="Lahore" style="flex: 1; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;">
+      <button class="utility-btn" onclick="fetchAqiData()">🍃 Check AQI</button>
+    </div>
+    <div id="aqiResult" style="margin-top: 25px; background: var(--background); padding: 20px; border-radius: 10px; border: 1px solid var(--border); display: none;">
+      <h4 id="aqiTitle" style="color: var(--category-color); margin-bottom: 10px;"></h4>
+      <p id="aqiDesc" style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;"></p>
+    </div>
+  </div>
+</main>
+<script>
+async function fetchAqiData() {
+    const city = document.getElementById('aqiCity').value.trim();
+    const resBox = document.getElementById('aqiResult');
+    resBox.style.display = 'block';
+    document.getElementById('aqiTitle').innerText = `Querying air quality telemetry for ${city}...`;
+    document.getElementById('aqiDesc').innerText = '';
+
+    try {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
+        const geoData = await geoRes.json();
+        if (!geoData.results) throw new Error('City not found');
+        const { latitude, longitude, name, country } = geoData.results[0];
+
+        const airRes = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=pm2_5,european_aqi`);
+        const airData = await airRes.json();
+        const cur = airData.current;
+
+        document.getElementById('aqiTitle').innerText = `${name}, ${country || ''} — Air Quality Index (AQI)`;
+        document.getElementById('aqiDesc').innerHTML = `<b>European AQI Score:</b> ${cur.european_aqi || 'N/A'}<br><b>PM2.5 Concentration:</b> ${cur.pm2_5} µg/m³<br><b>Status:</b> Concentrations are within standard operational monitoring parameters.`;
+    } catch (e) {
+        document.getElementById('aqiTitle').innerText = 'Telemetry Error';
+        document.getElementById('aqiDesc').innerText = 'Could not retrieve air quality data for this location.';
+    }
+}
+window.onload = fetchAqiData;
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extreme Heat & Hydration Alert — LamaStudio</title>
+<meta name="description" content="Calculate heat index stress scores, thermal thresholds, and personalized hydration requirements with LamaStudio." >
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-weather);">
+<header class="site-header">
+  <div class="util-row"><div style="display: flex; align-items: center; gap: 1rem;"><a href="index.html" class="utility-btn" style="padding: 8px 12px; font-size: 0.8rem;">&larr; Back to LamaSky Engine</a></div></div>
+</header>
+<main class="dashboard" style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+    <span class="hub-badge" style="display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px;">Thermal Module</span>
+    <h1>Extreme Heat & Hydration Alert</h1>
+    <p class="lede">Temperature warning indexes and personalized fluid intake recommendations.</p>
+  </div>
+  <div class="utility-panel" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-top: 25px;">
+    <h3>Heat Stress Calculator</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+      <div>
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Temperature (°C):</label>
+        <input type="number" id="heatTemp" value="40" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;" oninput="calcHeat()">
+      </div>
+      <div>
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Humidity (%):</label>
+        <input type="number" id="heatHumid" value="45" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;" oninput="calcHeat()">
+      </div>
+    </div>
+    <div style="margin-top: 20px; background: var(--background); padding: 20px; border-radius: 10px; border: 1px solid var(--border);">
+      <h4 style="color: var(--category-color); margin-bottom: 8px;">Thermal Assessment</h4>
+      <p id="heatOutput" style="color: var(--text); font-size: 0.95rem; line-height: 1.5;"></p>
+    </div>
+  </div>
+</main>
+<script>
+function calcHeat() {
+    const t = parseFloat(document.getElementById('heatTemp').value) || 0;
+    const h = parseFloat(document.getElementById('heatHumid').value) || 0;
+    const heatIndex = (t + (0.0555 * h * (t - 14.5))).toFixed(1);
+    
+    let advice = `Calculated Apparent Temperature (Heat Index): <b>${heatIndex}°C</b>.<br>`;
+    if (heatIndex > 41) {
+        advice += `🚨 <b>Danger:</b> Extreme heat stress risk. High fluid intake recommended (3.5 - 4.5 liters daily). Avoid direct sun exposure.`;
+    } else {
+        advice += `⚠️ <b>Caution:</b> Moderate thermal load. Stay hydrated and take regular shaded breaks.`;
+    }
+    document.getElementById('heatOutput').innerHTML = advice;
+}
+window.onload = calcHeat;
+</script>
+</body>
+</html>

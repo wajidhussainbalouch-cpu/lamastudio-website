@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Historical Weather Archive — LamaStudio Weather SDK</title>
+<meta name="description" content="Explore historical weather telemetry, past climate logs, and multi-year meteorological datasets using LamaStudio's archive engine.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="--category-color: var(--c-weather);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="utility-btn" style="padding: 8px 12px; font-size: 0.8rem;">&larr; Back to LamaSky Engine</a>
+    </div>
+  </div>
+</header>
+
+<main class="dashboard" style="max-width: 1000px; margin: 40px auto; padding: 0 20px;">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+    <span class="hub-badge" style="display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px;">Archive Tool v1.0</span>
+    <h1>Interactive Historical Weather Archive</h1>
+    <p class="lede">Query historical meteorological records and temperature baselines for any region.</p>
+  </div>
+
+  <div class="utility-panel" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-top: 25px;">
+    <h3>Archive Query Parameters</h3>
+    <div class="search-box-row" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+      <input type="text" id="archiveCity" placeholder="Enter city (e.g., Karachi, London)..." value="Lahore" style="flex: 1; min-width: 200px; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;">
+      <input type="date" id="startDate" value="2025-06-01" style="padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;">
+      <input type="date" id="endDate" value="2025-06-07" style="padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;">
+      <button class="utility-btn" onclick="fetchArchiveData()">📊 Fetch Archive</button>
+    </div>
+
+    <div id="archiveResultBox" style="margin-top: 25px; display: none;">
+      <h4 id="archiveStatusTitle" style="color: var(--category-color); margin-bottom: 15px;"></h4>
+      <div style="background: var(--background); padding: 20px; border-radius: 10px; border: 1px solid var(--border);">
+        <canvas id="archiveChart" style="width: 100%; height: 300px;"></canvas>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let archiveChartInstance = null;
+
+async function fetchArchiveData() {
+    const city = document.getElementById('archiveCity').value.trim();
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    const resBox = document.getElementById('archiveResultBox');
+    
+    if (!city || !start || !end) {
+        alert('Please fill out all archive fields.');
+        return;
+    }
+
+    resBox.style.display = 'block';
+    document.getElementById('archiveStatusTitle').innerText = `Loading historical archive for ${city} (${start} to ${end})...`;
+
+    try {
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
+        const geoData = await geoRes.json();
+        if (!geoData.results) throw new Error('Location not found');
+
+        const { latitude, longitude, name, country } = geoData.results[0];
+        const archiveRes = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`);
+        const archiveData = await archiveRes.json();
+
+        document.getElementById('archiveStatusTitle').innerText = `Historical Archive: ${name}, ${country || ''} (${start} to ${end})`;
+
+        const daily = archiveData.daily;
+        renderArchiveChart(daily.time, daily.temperature_2m_max, daily.temperature_2m_min);
+    } catch (err) {
+        document.getElementById('archiveStatusTitle').innerText = 'Failed to load archive telemetry. Please check dates.';
+    }
+}
+
+function renderArchiveChart(labels, maxTemps, minTemps) {
+    const ctx = document.getElementById('archiveChart').getContext('2d');
+    if (archiveChartInstance) archiveChartInstance.destroy();
+
+    archiveChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Max Temp (°C)', data: maxTemps, borderColor: '#f87171', backgroundColor: 'rgba(248, 113, 113, 0.1)', borderWidth: 2, tension: 0.2 },
+                { label: 'Min Temp (°C)', data: minTemps, borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 2, tension: 0.2 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
+</script>
+</body>
+</html>

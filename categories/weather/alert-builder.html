@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Severe Weather Alert Broadcast Builder — LamaStudio</title>
+<meta name="description" content="Build and export severe weather warning notifications, emergency banner widgets, and automated JSON meteorological triggers.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-weather);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="utility-btn" style="padding: 8px 12px; font-size: 0.8rem;">&larr; Back to LamaSky Engine</a>
+    </div>
+  </div>
+</header>
+
+<main class="dashboard" style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+    <span class="hub-badge" style="display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px;">SDK Broadcast Tool</span>
+    <h1>Severe Weather Alert Broadcast Builder</h1>
+    <p class="lede">Design custom emergency notification banners and generate live webhook payloads for your apps.</p>
+  </div>
+
+  <div class="utility-panel" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-top: 25px;">
+    <h3>Alert Configuration Parameters</h3>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+      <div>
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Alert Severity Level:</label>
+        <select id="alertSeverity" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;">
+          <option value="ADVISORY">Yellow Advisory (Moderate)</option>
+          <option value="WARNING" selected>Orange Warning (Severe)</option>
+          <option value="CRITICAL">Red Emergency (Extreme)</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Hazard Category:</label>
+        <select id="alertHazard" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;">
+          <option value="Heavy Thunderstorm & Rain">Heavy Thunderstorm & Rain</option>
+          <option value="Extreme Heatwave">Extreme Heatwave</option>
+          <option value="High Velocity Wind Gusts">High Velocity Wind Gusts</option>
+          <option value="Dense Fog / Low Visibility">Dense Fog / Low Visibility</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top: 15px;">
+      <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Broadcast Target Zone / City:</label>
+      <input type="text" id="alertTargetCity" value="Lahore, Pakistan" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px; box-sizing: border-box;">
+    </div>
+
+    <button class="utility-btn" style="margin-top: 20px;" onclick="generateAlertPayload()">⚡ Generate Broadcast Package</button>
+
+    <div id="alertOutputContainer" style="margin-top: 25px; display: none;">
+      <h4 style="color: var(--category-color); margin-bottom: 10px;">Generated Webhook & Widget Payload</h4>
+      <pre id="alertJsonOutput" style="background: var(--background); padding: 15px; border-radius: 8px; border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--category-color); overflow-x: auto; white-space: pre-wrap;"></pre>
+    </div>
+  </div>
+</main>
+
+<script>
+function generateAlertPayload() {
+    const severity = document.getElementById('alertSeverity').value;
+    const hazard = document.getElementById('alertHazard').value;
+    const city = document.getElementById('alertTargetCity').value;
+
+    const payload = {
+        version: "1.1",
+        publisher: "LamaStudio Meteorological SDK",
+        timestamp: new Date().toISOString(),
+        broadcast_target: city,
+        alert: {
+            level: severity,
+            condition: hazard,
+            status: "ACTIVE",
+            instructions: "Take necessary precautions and secure outdoor equipment immediately."
+        }
+    };
+
+    document.getElementById('alertOutputContainer').style: 'block';
+    document.getElementById('alertOutputContainer').style.display = 'block';
+    document.getElementById('alertJsonOutput').innerText = JSON.stringify(payload, null, 2);
+}
+</script>
+</body>
+</html>

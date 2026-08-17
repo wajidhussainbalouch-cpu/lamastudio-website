@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarYield PK Rooftop Calculator — LamaStudio Weather SDK</title>
+<meta name="description" content="Calculate rooftop solar photovoltaic energy generation, daily kWh yield curves, and system efficiency for Pakistani regions.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="--category-color: var(--c-weather);">
+<header class="site-header">
+  <div class="util-row"><div style="display: flex; align-items: center; gap: 1rem;"><a href="index.html" class="utility-btn" style="padding: 8px 12px; font-size: 0.8rem;">&larr; Back to LamaSky Engine</a></div></div>
+</header>
+<main class="dashboard" style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+    <span class="hub-badge" style="display: inline-block; background: rgba(56, 189, 248, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px;">Solar SDK v1.0</span>
+    <h1>SolarYield PK Rooftop Calculator</h1>
+    <p class="lede">Estimate daily kWh generation based on system capacity and local solar irradiance.</p>
+  </div>
+  <div class="utility-panel" style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; margin-top: 25px;">
+    <h3>Configuration</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+      <div>
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">System Capacity (kW):</label>
+        <input type="number" id="sysKw" value="5" step="0.5" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;" oninput="calcSolar()">
+      </div>
+      <div>
+        <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Peak Sun Hours / Day:</label>
+        <input type="number" id="sunHours" value="5.2" step="0.1" style="width: 100%; padding: 12px; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 8px;" oninput="calcSolar()">
+      </div>
+    </div>
+    <div style="margin-top: 20px; font-size: 1.1rem; font-weight: 700; color: var(--category-color);">Estimated Daily Yield: <span id="yieldOutput">26.00 kWh</span></div>
+    <div style="background: var(--background); padding: 20px; border-radius: 10px; border: 1px solid var(--border); margin-top: 20px;">
+      <canvas id="solarChart" style="width: 100%; height: 250px;"></canvas>
+    </div>
+  </div>
+</main>
+<script>
+let solarChartInstance = null;
+function calcSolar() {
+    const kw = parseFloat(document.getElementById('sysKw').value) || 0;
+    const hrs = parseFloat(document.getElementById('sunHours').value) || 0;
+    const total = (kw * hrs * 0.85).toFixed(2);
+    document.getElementById('yieldOutput').innerText = total + ' kWh';
+    
+    const labels = ['6 AM', '9 AM', '12 PM', '3 PM', '6 PM'];
+    const data = [0, kw * 1.2, kw * 2.5, kw * 1.5, 0];
+    
+    const ctx = document.getElementById('solarChart').getContext('2d');
+    if (solarChartInstance) solarChartInstance.destroy();
+    solarChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: 'Hourly Generation (kW)', data: data, backgroundColor: 'rgba(56, 189, 248, 0.3)', borderColor: '#38bdf8', borderWidth: 1, borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+    });
+}
+window.onload = calcSolar;
+</script>
+</body>
+</html>

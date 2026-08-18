@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlitz English Level Test - Form 1</title>
+    <title>English Language Testing Portal</title>
     <style>
         :root {
-            --primary-color: #1e293b;
-            --accent-color: #2563eb;
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --success-bg: #dcfce7;
+            --error: #dc2626;
+            --error-bg: #fee2e2;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
-            --text-color: #334155;
+            --text-color: #1e293b;
             --border-color: #cbd5e1;
-            --success-color: #16a34a;
         }
 
         body {
@@ -21,190 +24,298 @@
             color: var(--text-color);
             margin: 0;
             padding: 20px;
-            line-height: 1.6;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 850px;
             margin: 0 auto;
             background: var(--card-bg);
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         }
 
         h1 {
-            color: var(--primary-color);
             text-align: center;
-            margin-bottom: 5px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #64748b;
+            color: var(--primary);
             margin-bottom: 25px;
-            font-size: 1.1rem;
         }
 
-        /* Navigation Buttons Container */
+        /* Navigation Button Panel */
         .nav-buttons {
             display: flex;
-            justify-content: center;
-            gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 35px;
-            padding-bottom: 20px;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
             border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
         }
 
-        .nav-btn {
+        .tab-btn {
             background-color: #e2e8f0;
-            color: #475569;
+            color: #334155;
             border: none;
-            padding: 10px 20px;
-            font-size: 0.95rem;
+            padding: 10px 18px;
+            font-size: 15px;
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s ease;
         }
 
-        .nav-btn:hover {
+        .tab-btn:hover {
             background-color: #cbd5e1;
         }
 
-        /* Active / New Berlitz English Form 1 Button Styling */
-        .nav-btn.active, .nav-btn#berlitz-btn {
-            background-color: var(--accent-color);
-            color: #ffffff;
+        .tab-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
         }
 
-        .nav-btn#berlitz-btn:hover {
-            background-color: #1d4ed8;
+        /* Test Section Panes */
+        .test-section {
+            display: none;
         }
 
-        /* Quiz Section Styling */
-        .section-title {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            padding: 10px 15px;
-            border-radius: 6px;
-            margin-top: 30px;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
+        .test-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .question-card {
-            background: #ffffff;
+            background: #f8fafc;
             border: 1px solid var(--border-color);
-            padding: 20px;
+            padding: 18px 22px;
             border-radius: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
 
-        .question-text {
+        .question-title {
             font-weight: 600;
+            font-size: 16px;
             margin-bottom: 12px;
-            color: #0f172a;
         }
 
-        .options-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .options-list li {
+        label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             padding: 8px 12px;
-            margin-bottom: 6px;
-            border-radius: 4px;
-            background: #f1f5f9;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
             border: 1px solid #e2e8f0;
+            transition: background 0.2s;
         }
 
-        .options-list li.correct {
-            background-color: #dcfce7;
-            border-color: #86efac;
-            color: #166534;
+        label:hover {
+            background: #f1f5f9;
+        }
+
+        input[type="radio"] {
+            accent-color: var(--primary);
+        }
+
+        /* Green and Red Feedback States */
+        .correct-answer {
+            background-color: var(--success-bg) !important;
+            border-color: var(--success) !important;
+            color: #14532d;
             font-weight: 600;
         }
 
-        .reading-text {
-            background: #f8fafc;
-            border-left: 4px solid var(--accent-color);
-            padding: 15px;
-            margin-bottom: 15px;
-            font-style: italic;
-            color: #1e293b;
+        .incorrect-answer {
+            background-color: var(--error-bg) !important;
+            border-color: var(--error) !important;
+            color: #7f1d1d;
+            font-weight: 600;
         }
 
-        .writing-response {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 6px;
-        }
-
-        footer {
+        .submit-container {
             text-align: center;
-            margin-top: 40px;
-            color: #94a3b8;
-            font-size: 0.85rem;
+            margin-top: 25px;
+        }
+
+        .submit-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .score-display {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: var(--primary);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>English Assessment Portal</h1>
-    <p class="subtitle">Berlitz English Level Test & Practice Module</p>
+    <h1>English Language Testing Portal</h1>
 
     <div class="nav-buttons">
-        <button class="nav-btn" onclick="filterSection('form-general')">General English</button>
-        <button class="nav-btn" onclick="filterSection('form-intermediate')">Intermediate Level</button>
-        <button class="nav-btn active" id="berlitz-btn" onclick="filterSection('berlitz-form-1')">Berlitz English Form 1</button>
-        <button class="nav-btn" onclick="filterSection('advanced-test')">Advanced Test</button>
+        <button class="tab-btn active" onclick="switchTab('set1', event)">General English - Set 1</button>
+        <button class="tab-btn" onclick="switchTab('set2', event)">General English - Set 2</button>
+        <button class="tab-btn" onclick="switchTab('set3', event)">General English - Set 3</button>
+        <button class="tab-btn" onclick="switchTab('berlitz', event)">Berlitz English Form 1</button>
     </div>
 
-    <div id="berlitz-form-1" class="quiz-content">
-        
-        <div class="section-title">Section 1: Listening Comprehension</div>
+    <div id="set1" class="test-section active">
+        <h2>General English: Set 1</h2>
+        <form id="form-set1">
+            <div class="question-card" data-correct="b">
+                <div class="question-title">1. Choose the correct synonym for "Benevolent".</div>
+                <div class="options-group">
+                    <label><input type="radio" name="q1" value="a"> Hostile</label>
+                    <label><input type="radio" name="q1" value="b"> Kind-hearted</label>
+                    <label><input type="radio" name="q1" value="c"> Malevolent</label>
+                    <label><input type="radio" name="q1" value="d"> Indifferent</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="c">
+                <div class="question-title">2. Identify the correct passive voice: "She writes a letter."</div>
+                <div class="options-group">
+                    <label><input type="radio" name="q2" value="a"> A letter was written by her.</label>
+                    <label><input type="radio" name="q2" value="b"> A letter is being written by her.</label>
+                    <label><input type="radio" name="q2" value="c"> A letter is written by her.</label>
+                    <label><input type="radio" name="q2" value="d"> A letter has been written by her.</label>
+                </div>
+            </div>
+            <div class="submit-container">
+                <button type="button" class="submit-btn" onclick="gradeTest('form-set1', 'score1')">Submit Set 1</button>
+            </div>
+            <div id="score1" class="score-display"></div>
+        </form>
+    </div>
 
-        <div class="question-card">
-            <div class="question-text">1. Listen to the speaker, then choose the best response.</div>
-            <ul class="options-list">
-                <li>a) We like it very much.</li>
-                <li>b) We haven't moved yet.</li>
-                <li class="correct">c) No, we're still looking. (Correct Answer)</li>
-            </ul>
-        </div>
+    <div id="set2" class="test-section">
+        <h2>General English: Set 2</h2>
+        <form id="form-set2">
+            <div class="question-card" data-correct="a">
+                <div class="question-title">1. Fill in the blank: Neither John nor his friends _____ coming to the party.</div>
+                <div class="options-group">
+                    <label><input type="radio" name="q21" value="a"> are</label>
+                    <label><input type="radio" name="q21" value="b"> is</label>
+                    <label><input type="radio" name="q21" value="c"> was</label>
+                    <label><input type="radio" name="q21" value="d"> has</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="d">
+                <div class="question-title">2. What is the antonym of "Abundant"?</div>
+                <div class="options-group">
+                    <label><input type="radio" name="q22" value="a"> Plentiful</label>
+                    <label><input type="radio" name="q22" value="b"> Ample</label>
+                    <label><input type="radio" name="q22" value="c"> Copious</label>
+                    <label><input type="radio" name="q22" value="d"> Scarce</label>
+                </div>
+            </div>
+            <div class="submit-container">
+                <button type="button" class="submit-btn" onclick="gradeTest('form-set2', 'score2')">Submit Set 2</button>
+            </div>
+            <div id="score2" class="score-display"></div>
+        </form>
+    </div>
 
-        <div class="question-card">
-            <div class="question-text">2. Listen to the speaker, then choose the best response.</div>
-            <ul class="options-list">
-                <li>a) I had the pasta primavera.</li>
-                <li class="correct">b) I had some vegetables with the salmon. (Correct Answer)</li>
-                <li>c) The salmon was overcooked and the meal was overpriced.</li>
-            </ul>
-        </div>
+    <div id="set3" class="test-section">
+        <h2>General English: Set 3</h2>
+        <form id="form-set3">
+            <div class="question-card" data-correct="b">
+                <div class="question-title">1. Choose the correctly spelled word.</div>
+                <div class="options-group">
+                    <label><input type="radio" name="q31" value="a"> Accomodation</label>
+                    <label><input type="radio" name="q31" value="b"> Accommodation</label>
+                    <label><input type="radio" name="q31" value="c"> Acommodation</label>
+                    <label><input type="radio" name="q31" value="d"> Accomodadtion</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="a">
+                <div class="question-title">2. Identify the idiom meaning: "To break the ice".</div>
+                <div class="options-group">
+                    <label><input type="radio" name="q32" value="a"> To initiate conversation in a social setting</label>
+                    <label><input type="radio" name="q32" value="b"> To destroy something valuable</label>
+                    <label><input type="radio" name="q32" value="c"> To feel extremely cold</label>
+                    <label><input type="radio" name="q32" value="d"> To solve a complex puzzle</label>
+                </div>
+            </div>
+            <div class="submit-container">
+                <button type="button" class="submit-btn" onclick="gradeTest('form-set3', 'score3')">Submit Set 3</button>
+            </div>
+            <div id="score3" class="score-display"></div>
+        </form>
+    </div>
 
-        <div class="question-card">
-            <div class="question-text">3. Listen to the speaker, then choose the best response.</div>
-            <ul class="options-list">
-                <li>a) Yes, I'd like to check in.</li>
-                <li>b) Security has already checked my bags.</li>
-                <li class="correct">c) No, I just have this carry-on. (Correct Answer)</li>
-            </ul>
-        </div>
-
-        <div class="question-card">
-            <div class="question-text">4. Listen to the speaker, then choose the best response.</div>
-            <ul class="options-list">
-                <li>a) Take Route 95.</li>
-                <li>b) The stadium is on the other side of the city.</li>
-                <li class="correct">c) It's near the Hillsdale Mall. (Correct Answer)</li>
-            </ul>
-        </div>
-
-        <div
+    <div id="berlitz" class="test-section">
+        <h2>Berlitz English Form 1 (Extended Test)</h2>
+        <form id="form-berlitz">
+            <div class="question-card" data-correct="c">
+                <div class="question-title">1. [Berlitz Grammar] If I _____ about the traffic, I would have taken another route.</div>
+                <div class="options-group">
+                    <label><input type="radio" name="bq1" value="a"> know</label>
+                    <label><input type="radio" name="bq1" value="b"> knew</label>
+                    <label><input type="radio" name="bq1" value="c"> had known</label>
+                    <label><input type="radio" name="bq1" value="d"> would know</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="b">
+                <div class="question-title">2. [Berlitz Vocabulary] Select the word that best fits: "Her presentation was so _____ that everyone lost interest."</div>
+                <div class="options-group">
+                    <label><input type="radio" name="bq2" value="a"> engaging</label>
+                    <label><input type="radio" name="bq2" value="b"> monotonous</label>
+                    <label><input type="radio" name="bq2" value="c"> vibrant</label>
+                    <label><input type="radio" name="bq2" value="d"> succinct</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="a">
+                <div class="question-title">3. [Berlitz Business English] What is the most appropriate response to: "Could you please elaborate on that point?"</div>
+                <div class="options-group">
+                    <label><input type="radio" name="bq3" value="a"> Certainly, let me provide more specific details.</label>
+                    <label><input type="radio" name="bq3" value="b"> No, I cannot explain it anymore.</label>
+                    <label><input type="radio" name="bq3" value="c"> That is none of your concern.</label>
+                    <label><input type="radio" name="bq3" value="d"> I disagree completely with your statement.</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="d">
+                <div class="question-title">4. [Extended Berlitz Syntax] Choose the sentence with correct punctuation and grammar.</div>
+                <div class="options-group">
+                    <label><input type="radio" name="bq4" value="a"> Their going to store their equipment over their for the weekend.</label>
+                    <label><input type="radio" name="bq4" value="b"> They're going to store there equipment over their for the weekend.</label>
+                    <label><input type="radio" name="bq4" value="c"> There going to store their equipment over they're for the weekend.</label>
+                    <label><input type="radio" name="bq4" value="d"> They're going to store their equipment over there for the weekend.</label>
+                </div>
+            </div>
+            <div class="question-card" data-correct="c">
+                <div class="question-title">5. [Extended Berlitz Idioms] What does the phrasal verb "bring to light" mean?</div>
+                <div class="options-group">
+                    <label><input type="radio" name="bq5" value="a"> To turn on a desk lamp</label>
+                    <label><input type="radio" name="bq5" value="b"> To carry heavy luggage outside</label>
+                    <label><input type="radio" name="bq5" value="c"> To reveal or make known publicly</label>
+                    <label><input type="radio" name="bq5" value="d"> To paint a room in bright colors</label>
+                </div>
+    </div>
+                               

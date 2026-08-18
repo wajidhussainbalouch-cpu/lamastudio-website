@@ -1,69 +1,541 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlitz English - Form 2</title>
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --accent-color: #3498db;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #dcdde1;
-            --correct-color: #2ecc71;
-            --incorrect-color: #e74c3c;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; line-height: 1.6; }
-        .container { max-width: 900px; margin: 0 auto; background: var(--card-bg); padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
-        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; }
-        .back-btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none; }
-        .stats-bar { display: flex; justify-content: space-between; background: #f1f2f6; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
-        h1, h2, h3 { color: var(--primary-color); }
-        .question-card { background: #fff; border: 1px solid var(--border-color); padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .question-title { font-weight: 600; margin-bottom: 12px; }
-        .options label { display: block; margin-bottom: 8px; cursor: pointer; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .options input { margin-right: 10px; }
-        label.correct { background-color: rgba(46, 204, 113, 0.2) !important; border-color: var(--correct-color) !important; color: #155724; font-weight: bold; }
-        label.incorrect { background-color: rgba(231, 76, 60, 0.2) !important; border-color: var(--incorrect-color) !important; color: #721c24; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berlitz English - Level Test 3 - Test Form 2</title>
+<style>
+:root {
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --text-color: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --accent-color: #3b82f6;
+  --success-color: #22c55e;
+  --error-color: #ef4444;
+}
+[data-theme="light"] {
+  --bg-color: #f1f5f9;
+  --surface-color: #ffffff;
+  --text-color: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #cbd5e1;
+  --accent-color: #2563eb;
+  --success-color: #16a34a;
+  --error-color: #dc2626;
+}
+body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; line-height: 1.5; transition: background 0.3s, color 0.3s; }
+.test-container { max-width: 850px; margin: 0 auto; padding-bottom: 60px; }
+.nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+.nav-header h2 { margin: 0; font-size: 20px; }
+.theme-btn { background: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.stats-bar { position: sticky; top: 15px; z-index: 100; display: flex; justify-content: space-between; align-items: center; background: var(--surface-color); border: 1px solid var(--border-color); padding: 15px 25px; border-radius: 12px; margin-bottom: 30px; font-weight: 700; font-size: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); backdrop-filter: blur(8px); }
+.timer-display { color: var(--accent-color); font-family: monospace; font-size: 18px; }
+.section-title { margin-top: 40px; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; color: var(--accent-color); }
+.subsection-title { margin-top: 25px; margin-bottom: 15px; font-size: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.question-card { background: var(--surface-color); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+.question-title { font-weight: 600; margin-bottom: 12px; font-size: 15px; }
+.options { display: flex; flex-direction: column; gap: 8px; }
+.options label { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.01); transition: all 0.2s ease; font-size: 14px; }
+.options label:hover { border-color: var(--accent-color); background: rgba(59,130,246,0.04); }
+input[type="radio"] { accent-color: var(--accent-color); width: 16px; height: 16px; cursor: pointer; }
+
+label.correct { background-color: rgba(34, 197, 94, 0.15) !important; border-color: var(--success-color) !important; color: var(--success-color); font-weight: 600; }
+label.incorrect { background-color: rgba(239, 68, 68, 0.15) !important; border-color: var(--error-color) !important; color: var(--error-color); }
+
+.reading-box { background: rgba(0,0,0,0.03); border: 1px solid var(--border-color); padding: 16px; border-left: 4px solid var(--accent-color); margin-bottom: 15px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; }
+.writing-section { background: var(--surface-color); border: 1px solid var(--border-color); padding: 24px; border-radius: 12px; margin-top: 30px; }
+.writing-section ul { margin: 10px 0 20px 20px; color: var(--text-muted); font-size: 14px; }
+.sample-response { background: rgba(0,0,0,0.04); padding: 15px; border-radius: 8px; border: 1px dashed var(--border-color); font-size: 14px; color: var(--text-muted); }
+
+.submit-container { text-align: center; margin-top: 40px; }
+.submit-btn { background-color: var(--accent-color); color: white; border: none; padding: 14px 35px; font-size: 16px; font-weight: 700; border-radius: 10px; cursor: pointer; transition: opacity 0.2s; }
+.submit-btn:hover { opacity: 0.9; }
+
+/* Review Modal Overlay */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+.modal-content { background: var(--surface-color); border: 1px solid var(--border-color); width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; padding: 30px; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+.modal-content h3 { margin-top: 0; font-size: 22px; color: var(--accent-color); }
+.review-item { padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 14px; }
+.review-item.pass { background: rgba(34, 197, 94, 0.1); border-color: var(--success-color); }
+.review-item.fail { background: rgba(239, 68, 68, 0.1); border-color: var(--error-color); }
+.close-modal { background: var(--text-muted); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; }
+</style>
 </head>
 <body>
 
-<div class="container">
-    <div class="nav-header">
-        <a href="index.html" class="back-btn">🏠 English Menu</a>
-        <h2>Berlitz English - Form 2</h2>
-    </div>
+<main class="test-container">
+  <div class="nav-header">
+    <h2>ENGLISH LEVEL TEST — Level Test 3 — Test Form 2</h2>
+    <button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+  </div>
 
-    <div class="stats-bar">
-        <div>Score: <span id="score">0</span> / <span id="total-questions">1</span></div>
-        <div>Time: <span id="timer">00:00</span></div>
-    </div>
+  <div class="stats-bar">
+    <div>Score: <span id="score">0</span> / 40</div>
+    <div>Time Left: <span id="timer" class="timer-display">30:00</span></div>
+  </div>
 
-    <h2>Level Test 3 — Test Form 2</h2>
-    
-    <h3>Section 1: Listening Comprehension</h3>
-    <div class="question-card" data-correct="b">
-        <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
-        <div class="options">
-            <label><input type="radio" name="f2_q1" value="a"> a) I went to Harvard Law School.</label>
-            <label><input type="radio" name="f2_q1" value="b"> b) I have an MBA and three years of management experience.</label>
-            <label><input type="radio" name="f2_q1" value="c"> c) I enjoy playing tennis, swimming, and reading.</label>
-        </div>
+  <!-- SECTION 1 — LISTENING COMPREHENSION -->
+  <h2 class="section-title">SECTION 1 — LISTENING COMPREHENSION</h2>
+  <h3 class="subsection-title">Part 1 — Cue Response</h3>
+  
+  <div class="question-card" data-correct="b" data-qnum="1">
+    <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q1" value="a"> a) I went to Harvard Law School.</label>
+      <label><input type="radio" name="f2_q1" value="b"> b) I have an MBA and three years of management experience.</label>
+      <label><input type="radio" name="f2_q1" value="c"> c) I enjoy playing tennis, swimming, and reading.</label>
     </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="2">
+    <div class="question-title">2. Listen to the speaker, then choose the best response.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q2" value="a"> a) Just the check, please.</label>
+      <label><input type="radio" name="f2_q2" value="b"> b) Everything was delicious.</label>
+      <label><input type="radio" name="f2_q2" value="c"> c) How much was the coffee?</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="3">
+    <div class="question-title">3. Listen to the speaker, then choose the best response.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q3" value="a"> a) So what a great idea!</label>
+      <label><input type="radio" name="f2_q3" value="b"> b) What a great idea!</label>
+      <label><input type="radio" name="f2_q3" value="c"> c) That a great idea!</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="4">
+    <div class="question-title">4. Listen to the speaker, then choose the best response.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q4" value="a"> a) It's going to rain all day today.</label>
+      <label><input type="radio" name="f2_q4" value="b"> b) It rained last week.</label>
+      <label><input type="radio" name="f2_q4" value="c"> c) It's sunny.</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="5">
+    <div class="question-title">5. Listen to the speaker, then choose the best response.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q5" value="a"> a) I don't know. It's taking longer than planned.</label>
+      <label><input type="radio" name="f2_q5" value="b"> b) They're sending it soon.</label>
+      <label><input type="radio" name="f2_q5" value="c"> c) Yes, I'll respond to you before 3 p.m.</label>
+    </div>
+  </div>
+
+  <h3 class="subsection-title">Part 2 — Conversation</h3>
+
+  <div class="question-card" data-correct="a" data-qnum="6">
+    <div class="question-title">6. Conversation 1: What sport aren't the speakers going to try?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q6" value="a"> a) sailing</label>
+      <label><input type="radio" name="f2_q6" value="b"> b) waterskiing</label>
+      <label><input type="radio" name="f2_q6" value="c"> c) surfing</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="7">
+    <div class="question-title">7. Conversation 1: Which sentence is true?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q7" value="a"> a) The woman has surfed before.</label>
+      <label><input type="radio" name="f2_q7" value="b"> b) The speakers haven't seen a beach before.</label>
+      <label><input type="radio" name="f2_q7" value="c"> c) The beaches are the most beautiful the man and woman have seen.</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="8">
+    <div class="question-title">8. Conversation 2: Which sentence is true?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q8" value="a"> a) Susie is sitting in her parked car.</label>
+      <label><input type="radio" name="f2_q8" value="b"> b) Susie is waiting for Peter.</label>
+      <label><input type="radio" name="f2_q8" value="c"> c) Susie is driving her car.</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="9">
+    <div class="question-title">9. Conversation 2: Where does Susie want to go?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q9" value="a"> a) to Arlington Avenue</label>
+      <label><input type="radio" name="f2_q9" value="b"> b) to the hospital</label>
+      <label><input type="radio" name="f2_q9" value="c"> c) to Peter's place</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="10">
+    <div class="question-title">10. Conversation 2: What happened to Susie during her conversation with Peter?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q10" value="a"> a) She was stopped by a policeman.</label>
+      <label><input type="radio" name="f2_q10" value="b"> b) She almost ran into the car in front of her.</label>
+      <label><input type="radio" name="f2_q10" value="c"> c) She dropped her phone.</label>
+    </div>
+  </div>
+
+  <!-- SECTION 2 — READING COMPREHENSION & STRUCTURE -->
+  <h2 class="section-title">SECTION 2 — READING COMPREHENSION</h2>
+  <h3 class="subsection-title">Part 1 — Structure</h3>
+
+  <div class="question-card" data-correct="b" data-qnum="11">
+    <div class="question-title">11. Ashley has been back at school _____</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q11" value="a"> a) more than two years ago</label>
+      <label><input type="radio" name="f2_q11" value="b"> b) for more than two years</label>
+      <label><input type="radio" name="f2_q11" value="c"> c) since more than two years</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="12">
+    <div class="question-title">12. How many apartments _____ the Gordons _____ to far?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q12" value="a"> a) have / looked at</label>
+      <label><input type="radio" name="f2_q12" value="b"> b) do / look at</label>
+      <label><input type="radio" name="f2_q12" value="c"> c) have / been looking at</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="13">
+    <div class="question-title">13. Tokyo is one of the _____ cities in Asia.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q13" value="a"> a) busier</label>
+      <label><input type="radio" name="f2_q13" value="b"> b) busiest</label>
+      <label><input type="radio" name="f2_q13" value="c"> c) busy</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="14">
+    <div class="question-title">14. The turkey was _____ we asked for the recipe.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q14" value="a"> a) so well</label>
+      <label><input type="radio" name="f2_q14" value="b"> b) delicious</label>
+      <label><input type="radio" name="f2_q14" value="c"> c) so good</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="15">
+    <div class="question-title">15. I think Ms. Greenberg _____ someone in her office at the moment.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q15" value="a"> a) was interviewing</label>
+      <label><input type="radio" name="f2_q15" value="b"> b) is interviewing</label>
+      <label><input type="radio" name="f2_q15" value="c"> c) will be interviewing</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="16">
+    <div class="question-title">16. I need to _____ my laptop repaired.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q16" value="a"> a) have</label>
+      <label><input type="radio" name="f2_q16" value="b"> b) make</label>
+      <label><input type="radio" name="f2_q16" value="c"> c) let</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="17">
+    <div class="question-title">17. The police officer said to turn right _____ traffic light.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q17" value="a"> a) at the next</label>
+      <label><input type="radio" name="f2_q17" value="b"> b) at next</label>
+      <label><input type="radio" name="f2_q17" value="c"> c) next</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="18">
+    <div class="question-title">18. The movie was _____</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q18" value="a"> a) confuse</label>
+      <label><input type="radio" name="f2_q18" value="b"> b) confused</label>
+      <label><input type="radio" name="f2_q18" value="c"> c) confusing</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="19">
+    <div class="question-title">19. This article says _____ too much sugar is bad for you.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q19" value="a"> a) eating</label>
+      <label><input type="radio" name="f2_q19" value="b"> b) you eat</label>
+      <label><input type="radio" name="f2_q19" value="c"> c) to eat</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="20">
+    <div class="question-title">20. A: I have never been to Egypt. B: _____ have I.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q20" value="a"> a) So</label>
+      <label><input type="radio" name="f2_q20" value="b"> b) Neither</label>
+      <label><input type="radio" name="f2_q20" value="c"> c) Either</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="21">
+    <div class="question-title">21. Mr. Edwards has 15 years of marketing _____</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q21" value="a"> a) experience</label>
+      <label><input type="radio" name="f2_q21" value="b"> b) jobs</label>
+      <label><input type="radio" name="f2_q21" value="c"> c) skills</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="22">
+    <div class="question-title">22. Who is _____ the children at school in the morning?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q22" value="a"> a) dropping off</label>
+      <label><input type="radio" name="f2_q22" value="b"> b) picking up</label>
+      <label><input type="radio" name="f2_q22" value="c"> c) giving back</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="23">
+    <div class="question-title">23. We'd like to go on a _____ around the Caribbean.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q23" value="a"> a) ship trip</label>
+      <label><input type="radio" name="f2_q23" value="b"> b) sailing</label>
+      <label><input type="radio" name="f2_q23" value="c"> c) cruise</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="24">
+    <div class="question-title">24. Let's have a _____ meal before the meeting.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q24" value="a"> a) light</label>
+      <label><input type="radio" name="f2_q24" value="b"> b) weak</label>
+      <label><input type="radio" name="f2_q24" value="c"> c) little</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="25">
+    <div class="question-title">25. Passengers arriving on Flight 432 can now pick up their luggage in the _____</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q25" value="a"> a) overhead compartment</label>
+      <label><input type="radio" name="f2_q25" value="b"> b) lost and found</label>
+      <label><input type="radio" name="f2_q25" value="c"> c) baggage claim area</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="26">
+    <div class="question-title">26. Janet usually _____ errands during her lunch hour.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q26" value="a"> a) runs</label>
+      <label><input type="radio" name="f2_q26" value="b"> b) keeps</label>
+      <label><input type="radio" name="f2_q26" value="c"> c) makes</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="27">
+    <div class="question-title">27. Be careful! The floor is very _____ after the rain.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q27" value="a"> a) smooth</label>
+      <label><input type="radio" name="f2_q27" value="b"> b) slippery</label>
+      <label><input type="radio" name="f2_q27" value="c"> c) shiny</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="28">
+    <div class="question-title">28. You can get tickets at the _____ or on the Internet.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q28" value="a"> a) box office</label>
+      <label><input type="radio" name="f2_q28" value="b"> b) balcony</label>
+      <label><input type="radio" name="f2_q28" value="c"> c) matinee</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="29">
+    <div class="question-title">29. The project was completed late — we _____ our deadline.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q29" value="a"> a) missed</label>
+      <label><input type="radio" name="f2_q29" value="b"> b) reached</label>
+      <label><input type="radio" name="f2_q29" value="c"> c) met</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="30">
+    <div class="question-title">30. My brother and I _____ the same sports club.</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q30" value="a"> a) belong to</label>
+      <label><input type="radio" name="f2_q30" value="b"> b) arrive</label>
+      <label><input type="radio" name="f2_q30" value="c"> c) attend to</label>
+    </div>
+  </div>
+
+  <!-- Reading Passages & Questions 31-35 -->
+  <h3 class="subsection-title">Part 2 — Reading Comprehension</h3>
+
+  <div class="reading-box">
+    <strong>Reading Text 1 (Larry Gallen):</strong><br>
+    Larry Gallen<br>
+    618 W. Brier Place<br>
+    Chicago, IL 60657<br>
+    Professional Experience<br>
+    2000 – present: Vice President of Operations, XAct Wireless, Chicago, IL<br>
+    1997 – 1998: Director of Product Development, Zip Multimedia, San Francisco, CA<br>
+    1993 – 1996: Creative Director, ToonTime Animation, San Francisco, CA
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="31">
+    <div class="question-title">31. Which sentence is true?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q31" value="a"> a) This is a job advertisement.</label>
+      <label><input type="radio" name="f2_q31" value="b"> b) This is a list of Larry Gallen's skills.</label>
+      <label><input type="radio" name="f2_q31" value="c"> c) This is a résumé for Larry Gallen.</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="32">
+    <div class="question-title">32. How long did he work in San Francisco?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q32" value="a"> a) for 1 year</label>
+      <label><input type="radio" name="f2_q32" value="b"> b) for about 5 years</label>
+      <label><input type="radio" name="f2_q32" value="c"> c) for over 10 years</label>
+    </div>
+  </div>
+
+  <div class="reading-box">
+    <strong>Reading Text 2 (Karen & Amanda):</strong><br>
+    Dear Amanda,<br>
+    What a week I've had! Fred and I decided to do some spring cleaning this week. We cleaned all the rooms, including the closets. You should have seen the trash we threw out. The children helped with their rooms, and we did the washing together in the evenings. The house looks great now.<br>
+    We thought we'd invite you and Bill to come visit us next month. The children are always asking me when they will see you again. Let me know what you think about the week of March 21st.<br>
+    Looking forward to your response.<br>
+    Karen
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="33">
+    <div class="question-title">33. Who is Karen writing to?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q33" value="a"> a) a family friend</label>
+      <label><input type="radio" name="f2_q33" value="b"> b) her boss</label>
+      <label><input type="radio" name="f2_q33" value="c"> c) a stranger</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="34">
+    <div class="question-title">34. Why does she ask her to come for a visit?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q34" value="a"> a) they have a spring vacation</label>
+      <label><input type="radio" name="f2_q34" value="b"> b) they come every month</label>
+      <label><input type="radio" name="f2_q34" value="c"> c) the house is clean</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a" data-qnum="35">
+    <div class="question-title">35. What did the children help with?</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q35" value="a"> a) cleaning their rooms</label>
+      <label><input type="radio" name="f2_q35" value="b"> b) washing the car</label>
+      <label><input type="radio" name="f2_q35" value="c"> c) vacuuming</label>
+    </div>
+  </div>
+
+  <!-- SECTION 3 — LANGUAGE USE -->
+  <h2 class="section-title">SECTION 3 — LANGUAGE USE</h2>
+  
+  <div class="reading-box">
+    <strong>Instruction:</strong> Choose the word or phrase that best completes each sentence.<br><br>
+    Dear Ms. Gordon,<br>
+    After our meeting on Monday, I would like you to _____ (36) me and the other meeting participants for lunch. We _____ (37) reservations _____ (38) Emilia's for 1:00 p.m. I expect we will be finished _____ (39) 3:00. _____ (40) me know if you can come.<br>
+    Sincerely,<br>
+    April Davis
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="36">
+    <div class="question-title">36. (Choose option for blank 36)</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q36" value="a"> a) join</label>
+      <label><input type="radio" name="f2_q36" value="b"> b) invite</label>
+      <label><input type="radio" name="f2_q36" value="c"> c) get together</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="37">
+    <div class="question-title">37. (Choose option for blank 37)</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q37" value="a"> a) placed</label>
+      <label><input type="radio" name="f2_q37" value="b"> b) make</label>
+      <label><input type="radio" name="f2_q37" value="c"> c) have</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="38">
+    <div class="question-title">38. (Choose option for blank 38)</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q38" value="a"> a) to</label>
+      <label><input type="radio" name="f2_q38" value="b"> b) at</label>
+      <label><input type="radio" name="f2_q38" value="c"> c) near</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b" data-qnum="39">
+    <div class="question-title">39. (Choose option for blank 39)</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q39" value="a"> a) until</label>
+      <label><input type="radio" name="f2_q39" value="b"> b) by</label>
+      <label><input type="radio" name="f2_q39" value="c"> c) to</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c" data-qnum="40">
+    <div class="question-title">40. (Choose option for blank 40)</div>
+    <div class="options">
+      <label><input type="radio" name="f2_q40" value="a"> a) Allow</label>
+      <label><input type="radio" name="f2_q40" value="b"> b) Permit</label>
+      <label><input type="radio" name="f2_q40" value="c"> c) let</label>
+    </div>
+  </div>
+
+  <!-- Writing Section Display -->
+  <div class="writing-section">
+    <h3 style="margin-top:0;">SECTION 3 — WRITING</h3>
+    <p>Part 4 — Writing about a Topic. Choose ONE of these topics and write 100–150 words:</p>
+    <ul>
+      <li>Describe your ideal vacation. Explain where you would go and what activities you would do.</li>
+      <li>Write about someone who has had a positive influence on your life.</li>
+      <li>Describe an interesting event you recently attended.</li>
+      <li>Write about a skill you would like to learn and explain why it is important to you.</li>
+    </ul>
+    <p><strong>Sample Student Response:</strong></p>
+    <div class="sample-response">
+      "My ideal vacation in Pakistan is to the breathtaking landscapes of Hunza valley and Skardu in Gilgit-Baltistan. The northern areas offer the perfect escape from the tough routine of life. The journey would begin in Hunza where I would spend the mornings walking through the historic Baltit fort soaking in the rich heritage and stunning views of the valley..."
+    </div>
+  </div>
+
+  <div class="submit-container">
+    <button class="submit-btn" onclick="finishTest()">Submit & View Detailed Answers</button>
+  </div>
+</main>
+
+<!-- Review Modal -->
+<div id="resultModal" class="modal">
+  <div class="modal-content">
+    <h3>Test Completed — Review Summary</h3>
+    <p id="finalScoreText" style="font-weight: 700; font-size: 16px; margin-bottom: 20px;"></p>
+    <div id="reviewList"></div>
+    <button class="close-modal" onclick="closeModal()">Close & Retest</button>
+  </div>
 </div>
 
 <script>
-    let seconds = 0;
+    // Theme Toggle Function
+    function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme');
+        html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
+    }
+
+    // Countdown Timer (30 Minutes)
+    let timeLeft = 30 * 60;
+    const timerElement = document.getElementById('timer');
     const timerInterval = setInterval(() => {
-        seconds++;
-        let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-        let secs = (seconds % 60).toString().padStart(2, '0');
-        document.getElementById('timer').textContent = `${mins}:${secs}`;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            alert("Time's up! Submitting your test automatically.");
+            finishTest();
+            return;
+        }
+        timeLeft--;
+        let minutes = Math.floor(timeLeft / 60);
+        let seconds = timeLeft % 60;
+        timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     }, 1000);
 
+    // Live Scoring & Tracking Logic
     const answeredQuestions = new Set();
     let currentScore = 0;
 
@@ -95,7 +567,45 @@
             }
         }
     });
-</script>
 
+    // Submit & Summary Modal Logic
+    function finishTest() {
+        clearInterval(timerInterval);
+        const modal = document.getElementById('resultModal');
+        const finalScoreText = document.getElementById('finalScoreText');
+        const reviewList = document.getElementById('reviewList');
+        
+        finalScoreText.textContent = `You scored ${currentScore} out of 40 correct answers.`;
+        reviewList.innerHTML = '';
+
+        const cards = document.querySelectorAll('.question-card');
+        cards.forEach((card, index) => {
+            const qNum = index + 1;
+            const correctAnswer = card.getAttribute('data-correct');
+            const radios = card.querySelectorAll('input[type="radio"]');
+            let selectedVal = 'None';
+            let isCorrect = false;
+
+            radios.forEach(r => {
+                if (r.checked) {
+                    selectedVal = r.value;
+                    if (selectedVal === correctAnswer) isCorrect = true;
+                }
+            });
+
+            const item = document.createElement('div');
+            item.className = `review-item ${isCorrect ? 'pass' : 'fail'}`;
+            item.innerHTML = `<strong>Q${qNum}:</strong> Your Answer: <b>${selectedVal.toUpperCase()}</b> | Correct Answer: <b>${correctAnswer.toUpperCase()}</b> ${isCorrect ? '✅' : '❌'}`;
+            reviewList.appendChild(item);
+        });
+
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('resultModal').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
 </body>
-</html>
+      </html>

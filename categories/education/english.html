@@ -1,289 +1,301 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English Language Testing Portal</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --success: #16a34a;
-            --success-bg: #dcfce7;
-            --error: #dc2626;
-            --error-bg: #fee2e2;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #cbd5e1;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>English Proficiency Test — LamaStudio Education Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+.test-container { max-width: 720px; margin: 40px auto; padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.test-header { text-align: center; margin-bottom: 25px; }
+.test-header h1 { font-size: 2rem; color: var(--text); margin-bottom: 8px; }
+.test-brand { font-size: 0.9rem; color: var(--text-muted); }
+.progress-box { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+.question { font-size: 1.25rem; font-weight: 700; line-height: 1.5; margin: 20px 0; color: var(--text); }
+.option { display: block; width: 100%; padding: 16px 20px; margin: 12px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--background); text-align: left; font-size: 1rem; color: var(--text); cursor: pointer; transition: all .2s ease; }
+.option:hover:not(:disabled) { background: var(--surface); border-color: var(--category-color); transform: translateY(-2px); }
+.option.correct { background: rgba(34, 197, 94, 0.15) !important; border-color: #22c55e !important; color: #16a34a !important; font-weight: bold; }
+.option.wrong { background: rgba(239, 68, 68, 0.15) !important; border-color: #ef4444 !important; color: #dc2626 !important; font-weight: bold; }
+.option:disabled { cursor: default; transform: none; }
+#next { display: none; margin: 25px auto 5px; padding: 14px 30px; border: 0; border-radius: 10px; background: var(--category-color); color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+#next:hover { opacity: 0.9; }
+.feedback { text-align: center; font-size: 1.1rem; font-weight: 700; margin: 20px 0; min-height: 28px; }
+.result { text-align: center; padding: 20px 0; }
+.restart { padding: 14px 30px; border: 0; border-radius: 10px; background: var(--category-color); color: white; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 15px; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 850px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--primary);
-            margin-bottom: 25px;
-        }
-
-        /* Navigation Button Panel */
-        .nav-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 20px;
-        }
-
-        .tab-btn {
-            background-color: #e2e8f0;
-            color: #334155;
-            border: none;
-            padding: 10px 18px;
-            font-size: 15px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn:hover {
-            background-color: #cbd5e1;
-        }
-
-        .tab-btn.active {
-            background-color: var(--primary);
-            color: white;
-            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
-        }
-
-        /* Test Section Panes */
-        .test-section {
-            display: none;
-        }
-
-        .test-section.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .question-card {
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            padding: 18px 22px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .question-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 12px;
-        }
-
-        .options-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            background: white;
-            border: 1px solid #e2e8f0;
-            transition: background 0.2s;
-        }
-
-        label:hover {
-            background: #f1f5f9;
-        }
-
-        input[type="radio"] {
-            accent-color: var(--primary);
-        }
-
-        /* Green and Red Feedback States */
-        .correct-answer {
-            background-color: var(--success-bg) !important;
-            border-color: var(--success) !important;
-            color: #14532d;
-            font-weight: 600;
-        }
-
-        .incorrect-answer {
-            background-color: var(--error-bg) !important;
-            border-color: var(--error) !important;
-            color: #7f1d1d;
-            font-weight: 600;
-        }
-
-        .submit-container {
-            text-align: center;
-            margin-top: 25px;
-        }
-
-        .submit-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .submit-btn:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .score-display {
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-            color: var(--primary);
-        }
-    </style>
+/* Enhanced Footer Styles */
+.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 20px 20px;margin-top:60px;color:var(--text-muted)}
+.footer-content{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:30px;margin-bottom:30px}
+.footer-col h4{color:var(--text);font-size:16px;margin-bottom:12px;font-weight:600}
+.footer-col ul{list-style:none;padding:0;margin:0}
+.footer-col ul li{margin-bottom:8px}
+.footer-col ul li a{color:var(--text-muted);text-decoration:none;font-size:14px;transition:.2s}
+.footer-col ul li a:hover{color:var(--category-color)}
+.footer-bottom{max-width:1000px;margin:0 auto;border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px}
+</style>
 </head>
-<body>
+<body style="--category-color: var(--c-education);">
 
-<div class="container">
-    <h1>English Language Testing Portal</h1>
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
 
-    <div class="nav-buttons">
-        <button type="button" class="tab-btn active" onclick="switchTab('set1', event)">General English - Set 1</button>
-        <button type="button" class="tab-btn" onclick="switchTab('set2', event)">General English - Set 2</button>
-        <button type="button" class="tab-btn" onclick="switchTab('set3', event)">General English - Set 3</button>
-        <button type="button" class="tab-btn" onclick="switchTab('berlitz', event)">Berlitz English Form 1</button>
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="./" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="test-container">
+    <div class="test-header">
+      <h1>🧠 English Proficiency Test</h1>
+      <div class="test-brand">Interactive Online Assessment & Practice Hub</div>
     </div>
 
-    <div id="set1" class="test-section active">
-        <h2>General English: Set 1</h2>
-        <form id="form-set1">
-            <div class="question-card" data-correct="b">
-                <div class="question-title">1. Choose the correct synonym for "Benevolent".</div>
-                <div class="options-group">
-                    <label><input type="radio" name="q1" value="a"> Hostile</label>
-                    <label><input type="radio" name="q1" value="b"> Kind-hearted</label>
-                    <label><input type="radio" name="q1" value="c"> Malevolent</label>
-                    <label><input type="radio" name="q1" value="d"> Indifferent</label>
-                </div>
-            </div>
-            <div class="question-card" data-correct="c">
-                <div class="question-title">2. Identify the correct passive voice: "She writes a letter."</div>
-                <div class="options-group">
-                    <label><input type="radio" name="q2" value="a"> A letter was written by her.</label>
-                    <label><input type="radio" name="q2" value="b"> A letter is being written by her.</label>
-                    <label><input type="radio" name="q2" value="c"> A letter is written by her.</label>
-                    <label><input type="radio" name="q2" value="d"> A letter has been written by her.</label>
-                </div>
-            </div>
-            <div class="submit-container">
-                <button type="button" class="submit-btn" onclick="gradeTest('form-set1', 'score1')">Submit Set 1</button>
-            </div>
-            <div id="score1" class="score-display"></div>
-        </form>
-    </div>
+    <div id="progress" class="progress-box"></div>
+    <div id="quiz"></div>
+    <div id="feedback" class="feedback"></div>
+    <button id="next">Next Question →</button>
+    <div id="result" class="result"></div>
+  </div>
+</main>
 
-    <div id="set2" class="test-section">
-        <h2>General English: Set 2</h2>
-        <form id="form-set2">
-            <div class="question-card" data-correct="a">
-                <div class="question-title">1. Fill in the blank: Neither John nor his friends _____ coming to the party.</div>
-                <div class="options-group">
-                    <label><input type="radio" name="q21" value="a"> are</label>
-                    <label><input type="radio" name="q21" value="b"> is</label>
-                    <label><input type="radio" name="q21" value="c"> was</label>
-                    <label><input type="radio" name="q21" value="d"> has</label>
-                </div>
-            </div>
-            <div class="question-card" data-correct="d">
-                <div class="question-title">2. What is the antonym of "Abundant"?</div>
-                <div class="options-group">
-                    <label><input type="radio" name="q22" value="a"> Plentiful</label>
-                    <label><input type="radio" name="q22" value="b"> Ample</label>
-                    <label><input type="radio" name="q22" value="c"> Copious</label>
-                    <label><input type="radio" name="q22" value="d"> Scarce</label>
-                </div>
-            </div>
-            <div class="submit-container">
-                <button type="button" class="submit-btn" onclick="gradeTest('form-set2', 'score2')">Submit Set 2</button>
-            </div>
-            <div id="score2" class="score-display"></div>
-        </form>
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-col">
+      <a href="../../index.html" class="brand" style="margin-bottom:12px; display:inline-flex;"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a>
+      <p style="font-size:13px; margin:0;">Independent Android app studio in DG Khan, Pakistan. Building interactive learning utilities for students.</p>
     </div>
-
-    <div id="set3" class="test-section">
-        <h2>General English: Set 3</h2>
-        <form id="form-set3">
-            <div class="question-card" data-correct="b">
-                <div class="question-title">1. Choose the correctly spelled word.</div>
-                <div class="options-group">
-                    <label><input type="radio" name="q31" value="a"> Accomodation</label>
-                    <label><input type="radio" name="q31" value="b"> Accommodation</label>
-                    <label><input type="radio" name="q31" value="c"> Acommodation</label>
-                    <label><input type="radio" name="q31" value="d"> Accomodadtion</label>
-                </div>
-            </div>
-            <div class="question-card" data-correct="a">
-                <div class="question-title">2. Identify the idiom meaning: "To break the ice".</div>
-                <div class="options-group">
-                    <label><input type="radio" name="q32" value="a"> To initiate conversation in a social setting</label>
-                    <label><input type="radio" name="q32" value="b"> To destroy something valuable</label>
-                    <label><input type="radio" name="q32" value="c"> To feel extremely cold</label>
-                    <label><input type="radio" name="q32" value="d"> To solve a complex puzzle</label>
-                </div>
-            </div>
-            <div class="submit-container">
-                <button type="button" class="submit-btn" onclick="gradeTest('form-set3', 'score3')">Submit Set 3</button>
-            </div>
-            <div id="score3" class="score-display"></div>
-        </form>
+    <div class="footer-col">
+      <h4>Quick Categories</h4>
+      <ul>
+        <li><a href="../tech/">Tech & Code</a></li>
+        <li><a href="./">Education Hub</a></li>
+        <li><a href="../business/">Business</a></li>
+        <li><a href="../news/">Global News</a></li>
+      </ul>
     </div>
+    <div class="footer-col">
+      <h4>Platform Tools</h4>
+      <ul>
+        <li><a href="english.html">Online English Tests</a></li>
+        <li><a href="math.html">Math Practice</a></li>
+        <li><a href="computer.html">Computer Quizzes</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 LamaStudio. All rights reserved.</p>
+    <p>Designed with ❤️ for Pakistani Students & Professionals</p>
+  </div>
+</footer>
 
-    <div id="berlitz" class="test-section">
-        <h2>Berlitz English Form 1 (Extended Test)</h2>
-        <form id="form-berlitz">
-            <div class="question-card" data-correct="c">
-                <div class="question-title">1. [Berlitz Grammar] If I _____ about the traffic, I would have taken another route.</div>
-                <div class="options-group">
-                    <label><input type="radio" name="bq1" value="a"> know</label>
-                    <label><input type="radio" name="bq1" value="b"> knew</label>
-                    <label><input type="radio" name="bq1" value="c"> had known</label>
-                    <label><input type="radio" name="bq1" value="d"> would know</label>
-                </div>
-            </div>
-            <div class="question-card" data-correct="b">
-                <div class="question-title">2. [Berlitz Vocabulary] Select the word that best fits: "Her presentation was so _____ that everyone lost interest."</div>
-                <div class="options-group">
-                    <label><input type="radio" name="bq2" value="a
-                               
+<script src="../../script.js"></script>
+<script>
+const questions = [
+{
+ q:"She _____ to school every day.",
+ a:["go","goes","going","gone"], c:1
+},
+{
+ q:"I _____ this book twice.",
+ a:["read","have read","am reading","had read"], c:1
+},
+{
+ q:"If I _____ enough money, I would buy a new laptop.",
+ a:["have","had","will have","having"], c:1
+},
+{
+ q:"They _____ dinner when I arrived.",
+ a:["have","had","were having","are having"], c:2
+},
+{
+ q:"He has lived in Lahore _____ 2019.",
+ a:["for","since","from","during"], c:1
+},
+{
+ q:"Neither Ali nor his friends _____ coming today.",
+ a:["is","was","are","has"], c:2
+},
+{
+ q:"This is the _____ movie I have ever watched.",
+ a:["better","best","good","well"], c:1
+},
+{
+ q:"You _____ smoke in this building.",
+ a:["mustn't","don't have","wouldn't","couldn't"], c:0
+},
+{
+ q:"The letter _____ yesterday.",
+ a:["sends","sent","was sent","has sent"], c:2
+},
+{
+ q:"I am interested _____ learning English.",
+ a:["on","at","in","for"], c:2
+},
+{
+ q:"The word 'rapid' means:",
+ a:["slow","quick","weak","difficult"], c:1
+},
+{
+ q:"Someone who is 'generous' is:",
+ a:["willing to give","always angry","very lazy","afraid of people"], c:0
+},
+{
+ q:"The opposite of 'ancient' is:",
+ a:["old","historic","modern","traditional"], c:2
+},
+{
+ q:"If something is 'essential,' it is:",
+ a:["unnecessary","expensive","very important","unusual"], c:2
+},
+{
+ q:"Choose the correct expression:",
+ a:["make a decision","do a decision","take a decisioning","create decision"], c:0
+},
+{
+ q:"'I ran out of money' means:",
+ a:["I found some money","I lost my wallet","I had no money left","I borrowed money"], c:2
+},
+{
+ q:"Choose the correct sentence:",
+ a:["She don't like tea.","She doesn't likes tea.","She doesn't like tea.","She not like tea."], c:2
+},
+{
+ q:"Choose the correct sentence:",
+ a:["I have seen him yesterday.","I saw him yesterday.","I had see him yesterday.","I see him yesterday."], c:1
+},
+{
+ q:"By the time we arrived, the train _____.",
+ a:["leaves","has left","had left","was leave"], c:2
+},
+{
+ q:"If she had studied harder, she _____ the examination.",
+ a:["will pass","would pass","would have passed","passed"], c:2
+}
+];
+
+let current=0;
+let score=0;
+let answered=false;
+
+const quiz=document.getElementById("quiz");
+const progress=document.getElementById("progress");
+const feedback=document.getElementById("feedback");
+const next=document.getElementById("next");
+const result=document.getElementById("result");
+
+function showQuestion(){
+ answered=false;
+ next.style.display="none";
+ feedback.textContent="";
+ result.innerHTML="";
+
+ const item=questions[current];
+
+ progress.innerHTML=
+ "<span>Question "+(current+1)+" of "+questions.length+"</span><span>Score: "+score+"</span>";
+
+ quiz.innerHTML=
+ '<div class="question">'+item.q+'</div>';
+
+ item.a.forEach((answer,index)=>{
+   const button=document.createElement("button");
+   button.className="option";
+   button.innerHTML=
+     "<b>"+String.fromCharCode(65+index)+")</b> "+answer;
+   button.onclick=()=>checkAnswer(index);
+   quiz.appendChild(button);
+ });
+}
+
+function checkAnswer(selected){
+ if(answered)return;
+ answered=true;
+
+ const correct=questions[current].c;
+ const buttons=document.querySelectorAll(".option");
+
+ buttons.forEach((button,index)=>{
+   button.disabled=true;
+   if(index===correct){
+      button.classList.add("correct");
+      button.innerHTML += "  🟢 CORRECT ANSWER";
+   }
+ });
+
+ if(selected===correct){
+   score++;
+   feedback.innerHTML="🟢 Correct!";
+ }else{
+   buttons[selected].classList.add("wrong");
+   buttons[selected].innerHTML += "  🔴 WRONG";
+   feedback.innerHTML="🔴 Incorrect — the green box shows the correct answer.";
+ }
+
+ progress.innerHTML=
+ "<span>Question "+(current+1)+" of "+questions.length+"</span><span>Score: "+score+"</span>";
+
+ next.style.display="block";
+ next.textContent=
+ current===questions.length-1 ? "🏆 Show Final Result" : "Next Question →";
+}
+
+next.onclick=function(){
+ if(current<questions.length-1){
+   current++;
+   showQuestion();
+ }else{
+   showResult();
+ }
+};
+
+function showResult(){
+ quiz.innerHTML="";
+ feedback.innerHTML="";
+
+ const percentage=Math.round((score/questions.length)*100);
+
+ let level;
+ if(percentage>=85) level="Advanced";
+ else if(percentage>=60) level="Intermediate";
+ else level="Beginner";
+
+ progress.innerHTML="<span>🎉 Test Complete</span><span>Final Score</span>";
+
+ result.innerHTML=
+ "<h2>Your Final Result</h2>"+
+ "<p style='font-size:28px;font-weight:bold; color:var(--category-color); margin:10px 0;'>"+score+" / "+questions.length+" ("+percentage+"%)</p>"+
+ "<p style='font-size:18px; margin-bottom:20px;'>Proficiency Level: <b>"+level+"</b></p>"+
+ "<button class='restart' onclick='location.reload()'>Take Test Again</button>";
+
+ next.style.display="none";
+}
+
+showQuestion();
+</script>
+
+</body>
+    </html>
+    

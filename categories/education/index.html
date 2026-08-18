@@ -3,9 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LamaStudio — Education</title>
+<title>LamaStudio — Education & Online Testing Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<style>
+/* Online Test Hub Custom Styles */
+.test-hub-container{max-width:800px;margin:20px auto;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.15)}
+.subjects-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin:20px 0}
+.subject-btn{padding:14px 18px;border:2px solid var(--border);border-radius:12px;background:var(--background);color:var(--text);font-weight:600;font-size:15px;cursor:pointer;transition:.2s;text-align:center}
+.subject-btn:hover,.subject-btn.active{border-color:var(--category-color);background:var(--category-color);color:#fff}
+.sets-container{display:flex;gap:10px;flex-wrap:wrap;margin:15px 0}
+.set-btn{padding:10px 20px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font-weight:600;cursor:pointer;transition:.2s}
+.set-btn:hover,.set-btn.active{background:var(--category-color);color:#fff;border-color:var(--category-color)}
+.quiz-box{margin-top:20px;border-top:1px solid var(--border);padding-top:20px}
+.quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;font-weight:bold;color:var(--text-muted)}
+.timer{background:#ff4d4d;color:#fff;padding:6px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:14px}
+.question{font-size:19px;font-weight:700;line-height:1.4;margin:15px 0;color:var(--text)}
+.option{display:block;width:100%;padding:15px;margin:10px 0;border:2px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);text-align:left;font-size:16px;cursor:pointer;transition:.2s}
+.option:hover:not(:disabled){background:rgba(23,78,166,0.1);border-color:var(--category-color)}
+.option.correct{background:#b9f6c5!important;border-color:#159447!important;color:#075b2a!important;font-weight:bold}
+.option.wrong{background:#ffb8b8!important;border-color:#d93025!important;color:#8b0000!important;font-weight:bold}
+.option:disabled{cursor:default}
+#next-btn{display:none;margin:20px auto 0;padding:12px 24px;border:0;border-radius:8px;background:var(--category-color);color:white;font-size:16px;font-weight:bold;cursor:pointer}
+.back-hub-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;cursor:pointer;margin-bottom:15px;font-weight:600}
+</style>
 </head>
 <body style="--category-color: var(--c-education);">
 
@@ -42,29 +63,55 @@
   <section class="dashboard">
     <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
       <span class="eyebrow" style="color: var(--category-color);">Category Hub</span>
-      <h1>Education & Learning Tools</h1>
-      <p class="lede">Empowering students with interactive software, learning utilities, and expert articles.</p>
-    </div>
-    <div class="side-widgets">
-      <div class="widget">
-        <div class="widget-head"><span class="widget-title">Featured Stream</span><span class="live-dot"><i></i>Live Video</span></div>
-        <div class="video-wrapper"><iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="Featured Video" allowfullscreen></iframe></div>
-      </div>
+      <h1>Education & Online Testing Hub</h1>
+      <p class="lede">Select your subject and practice with interactive timed online tests for Pakistani academic standards.</p>
     </div>
   </section>
 
   <section class="section">
-    <div class="section-head"><div><span class="eyebrow" style="color: var(--category-color);">Education Feed</span><h2>Latest educational stories</h2></div></div>
-    <div class="blog-grid">
-      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
-        <div style="width: 100%; height: 180px; overflow: hidden;"><img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80" alt="Education" style="width: 100%; height: 100%; object-fit: cover;"></div>
-        <div style="padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
-          <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Education</span>
-          <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text);">Mastering Mobile Development Fundamentals</h3>
-          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; flex: 1;">Leveraging interactive tools and accessible platforms to transform how students acquire new technical skills.</p>
-          <a href="../../blogs/mastering-mobile-development-fundamentals/" style="margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none;">Read article →</a>
+    <div class="test-hub-container" id="testHub">
+      <div id="hub-home">
+        <h2 style="margin-top:0; color:var(--text);">Select a Subject for Online Test</h2>
+        <p style="color:var(--text-muted)">Choose any subject below to explore available question sets:</p>
+        <div class="subjects-grid">
+          <button class="subject-btn active" onclick="selectSubject('english')">English</button>
+          <button class="subject-btn" onclick="selectSubject('urdu')">Urdu</button>
+          <button class="subject-btn" onclick="selectSubject('pakstudies')">Pak Studies</button>
+          <button class="subject-btn" onclick="selectSubject('gk')">Gen. Knowledge</button>
+          <button class="subject-btn" onclick="selectSubject('computer')">Computer</button>
+          <button class="subject-btn" onclick="selectSubject('math')">Mathematics</button>
         </div>
-      </article>
+
+        <div id="sets-selection-area" style="margin-top:25px;">
+          <h3 id="selected-subject-title" style="color:var(--text);">English Test Sets</h3>
+          <p style="color:var(--text-muted)">Select a test set to begin:</p>
+          <div class="sets-container" id="setsContainer">
+            </div>
+        </div>
+      </div>
+
+      <div id="quiz-interface" style="display:none;">
+        <button class="back-hub-btn" onclick="backToHub()">← Back to Subjects</button>
+        <div class="quiz-header">
+          <span id="quiz-progress-text">Question 1 of 5</span>
+          <div class="timer" id="timerDisplay">⏱ 02:00</div>
+        </div>
+        <div class="quiz-box">
+          <div class="question" id="quizQuestionText">Loading question...</div>
+          <div id="quizOptionsContainer"></div>
+          <div id="quizFeedback" style="margin-top:15px; font-weight:bold; text-align:center;"></div>
+          <button id="next-btn" onclick="nextQuestion()">Next Question →</button>
+        </div>
+      </div>
+
+      <div id="quiz-result-view" style="display:none; text-align:center; padding:20px;">
+        <h2 style="color:var(--text);">🎉 Test Completed!</h2>
+        <p style="font-size:32px; font-weight:bold; color:var(--category-color); margin:10px 0;" id="finalScoreDisplay">0 / 5</p>
+        <p style="font-size:18px; color:var(--text-muted);" id="finalPercentageDisplay">0%</p>
+        <p style="font-size:20px; margin:15px 0;" id="finalPerformanceMessage">Good effort!</p>
+        <button class="subject-btn" style="background:var(--category-color); color:#fff; margin:10px auto;" onclick="backToHub()">Take Another Test</button>
+      </div>
+
     </div>
   </section>
 </main>
@@ -74,6 +121,54 @@
     <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
   </div>
 </footer>
+
 <script src="../../script.js"></script>
-</body>
-</html>
+<script>
+// Test Database containing subjects, sets, and timed questions
+const testDatabase = {
+  english: {
+    name: "English Proficiency",
+    sets: {
+      "Set 1 (Grammar Basics)": [
+        { q: "She _____ to school every day.", a: ["go", "goes", "going", "gone"], c: 1 },
+        { q: "I _____ this book twice.", a: ["read", "have read", "am reading", "had read"], c: 1 },
+        { q: "If I _____ enough money, I would buy a new laptop.", a: ["have", "had", "will have", "having"], c: 1 },
+        { q: "They _____ dinner when I arrived.", a: ["have", "had", "were having", "are having"], c: 2 },
+        { q: "He has lived in Lahore _____ 2019.", a: ["for", "since", "from", "during"], c: 1 }
+      ],
+      "Set 2 (Advanced Structure)": [
+        { q: "Neither Ali nor his friends _____ coming today.", a: ["is", "was", "are", "has"], c: 2 },
+        { q: "This is the _____ movie I have ever watched.", a: ["better", "best", "good", "well"], c: 1 },
+        { q: "You _____ smoke in this building.", a: ["mustn't", "don't have", "wouldn't", "couldn't"], c: 0 },
+        { q: "The letter _____ yesterday.", a: ["sends", "sent", "was sent", "has sent"], c: 2 },
+        { q: "I am interested _____ learning English.", a: ["on", "at", "in", "for"], c: 2 }
+      ],
+      "Set 3 (Vocabulary & Idioms)": [
+        { q: "The word 'rapid' means:", a: ["slow", "quick", "weak", "difficult"], c: 1 },
+        { q: "Someone who is 'generous' is:", a: ["willing to give", "always angry", "very lazy", "afraid of people"], c: 0 },
+        { q: "The opposite of 'ancient' is:", a: ["old", "historic", "modern", "traditional"], c: 2 },
+        { q: "If something is 'essential,' it is:", a: ["unnecessary", "expensive", "very important", "unusual"], c: 2 },
+        { q: "Choose the correct expression:", a: ["make a decision", "do a decision", "take a decisioning", "create decision"], c: 0 }
+      ]
+    }
+  },
+  urdu: {
+    name: "Urdu (اردو)",
+    sets: {
+      "Set 1 (Urdu Grammar)": [
+        { q: "اردو زبان کا پہلا باقاعدہ ناول کون سا سمجھا جاتا ہے؟", a: ["توبۃ النصوح", "امراؤ جان ادا", "فدونس", "آبِ حیات"], c: 0 },
+        { q: "اسم نکرہ کی شناخت کریں:", a: ["لاہور", "قرآن", "دریا", "قائد اعظم"], c: 2 },
+        { q: "'آسمان سر پر اٹھانا' محاورے کا کیا مطلب ہے؟", a: ["بہت شور مچانا", "آسمان دیکھنا", "خوش ہونا", "ناراض ہونا"], c: 0 },
+        { q: "علامہ اقبال کا پہلا شعری مجموعہ کون سا ہے؟", a: ["بانگ درا", "بال جبرئیل", "ضرب کلیم", "ارمغان حجاز"], c: 0 },
+        { q: "لفظ 'خوبصورت' میں لاحقہ کون سا ہے؟", a: ["خوب", "صورت", "ت", "کوئی نہیں"], c: 1 }
+      ]
+    }
+  },
+  pakstudies: {
+    name: "Pakistan Studies",
+    sets: {
+      "Set 1 (History & Geography)": [
+        { q: "When was the Objective Resolution passed?", a: ["1947", "1949", "1956", "1973"], c: 1 },
+        { q: "Who was the first Governor-General of Pakistan?", a: ["Liaquat Ali Khan", "Allama Iqbal", "Quaid-e-Azam Muhammad Ali Jinnah", "Ayub Khan"], c: 2 },
+        { q: "What is the total area of Pakistan?", a: ["796,095 sq km", "881,912 sq km", "650,000 sq km", "900,000 sq km"], c: 0 },
+        { q: "Which mountain

@@ -1,351 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlitz English Tests Hub</title>
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --accent-color: #3498db;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #dcdde1;
-            --correct-color: #2ecc71;
-            --incorrect-color: #e74c3c;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berlitz English Tests Hub — LamaStudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+.test-hub-container { max-width: 900px; margin: 30px auto; padding: 20px; }
+.test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 30px; }
+.test-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; text-decoration: none; display: flex; flex-direction: column; gap: 12px; transition: all .25s ease; box-shadow: 0 4px 20px rgba(0,0,0,.08); text-align: left; }
+.test-card:hover { transform: translateY(-4px); border-color: var(--category-color); box-shadow: 0 8px 30px rgba(23,78,166,.15); }
+.test-card h3 { margin: 0; font-size: 20px; color: var(--text); font-weight: 700; }
+.test-card p { margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+.badge { display: inline-block; background: rgba(23,78,166,0.15); color: var(--category-color); font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; width: fit-content; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .nav-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-        }
-
-        .back-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .back-btn:active {
-            background-color: var(--accent-color);
-        }
-
-        .stats-bar {
-            display: none;
-            justify-content: space-between;
-            background: #f1f2f6;
-            padding: 12px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
-        h1, h2, h3 {
-            color: var(--primary-color);
-        }
-
-        .test-section {
-            display: none;
-        }
-
-        .test-section.active {
-            display: block !important;
-        }
-
-        .landing-page {
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        .test-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 30px;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .test-card-btn {
-            background: white;
-            border: 2px solid var(--accent-color);
-            border-radius: 8px;
-            padding: 20px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            cursor: pointer;
-            width: 100%;
-            text-align: center;
-        }
-
-        .test-card-btn:active {
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .question-card {
-            background: #fff;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .question-title {
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        .options label {
-            display: block;
-            margin-bottom: 8px;
-            cursor: pointer;
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .options input {
-            margin-right: 10px;
-        }
-
-        label.correct {
-            background-color: rgba(46, 204, 113, 0.2) !important;
-            border-color: var(--correct-color) !important;
-            color: #155724;
-            font-weight: bold;
-        }
-
-        label.incorrect {
-            background-color: rgba(231, 76, 60, 0.2) !important;
-            border-color: var(--incorrect-color) !important;
-            color: #721c24;
-        }
-
-        .reading-box {
-            background: #f1f2f6;
-            padding: 15px;
-            border-left: 4px solid var(--accent-color);
-            font-style: italic;
-            margin-bottom: 15px;
-            border-radius: 0 6px 6px 0;
-        }
-    </style>
+/* Enhanced Footer Styles */
+.site-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 40px 20px 20px; margin-top: 50px; color: var(--text-muted); }
+.footer-content { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; margin-bottom: 30px; }
+.footer-col h4 { color: var(--text); font-size: 16px; margin-bottom: 12px; font-weight: 600; }
+.footer-col ul { list-style: none; padding: 0; margin: 0; }
+.footer-col ul li { margin-bottom: 8px; }
+.footer-col ul li a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: .2s; }
+.footer-col ul li a:hover { color: var(--category-color); }
+.footer-bottom { max-width: 1000px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+</style>
 </head>
-<body>
+<body style="--category-color: var(--c-education);">
 
-<div class="container">
-    <div class="nav-header">
-        <button class="back-btn" id="home-btn">🏠 English Menu</button>
-        <h2 id="page-title">Berlitz English Level Tests</h2>
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="../education/" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="dashboard">
+    <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
+      <span class="eyebrow" style="color: var(--category-color);">English Hub</span>
+      <h1>Berlitz English Level Tests</h1>
+      <p class="lede">Select a test form below to begin your timed listening and grammar assessment.</p>
+    </div>
+  </section>
+
+  <section class="test-hub-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <a href="index.html" class="badge" style="text-decoration: none; padding: 8px 14px;">← Back to Subjects Hub</a>
     </div>
 
-    <div id="stats-bar" class="stats-bar">
-        <div>Score: <span id="score">0</span> / <span id="total-questions">40</span></div>
-        <div>Time: <span id="timer">00:00</span></div>
+    <div class="test-grid">
+      <a href="f1.html" class="test-card">
+        <span class="badge">Assessment Form 1</span>
+        <h3>Berlitz English Form 1</h3>
+        <p>Complete set of listening comprehension and structure practice questions.</p>
+      </a>
+
+      <a href="f2.html" class="test-card">
+        <span class="badge">Assessment Form 2</span>
+        <h3>Berlitz English Form 2</h3>
+        <p>Advanced grammar, vocabulary, and targeted response exercises.</p>
+      </a>
+
+      <a href="f3.html" class="test-card">
+        <span class="badge">Assessment Form 3</span>
+        <h3>Berlitz English Form 3</h3>
+        <p>Comprehensive English evaluation test form with instantaneous checks.</p>
+      </a>
     </div>
+  </section>
+</main>
 
-    <!-- ================= LANDING PAGE ================= -->
-    <div id="landing-page" class="test-section active landing-page">
-        <h1>Welcome to English Level Testing</h1>
-        <p>Select a test form below to begin your assessment.</p>
-        
-        <div class="test-grid">
-            <button class="test-card-btn" data-form="form1">Berlitz English Form 1</button>
-            <button class="test-card-btn" data-form="form2">Berlitz English Form 2</button>
-            <button class="test-card-btn" data-form="form3">Berlitz English Form 3</button>
-        </div>
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-col">
+      <a href="../../index.html" class="brand" style="margin-bottom:12px; display:inline-flex;"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a>
+      <p style="font-size:13px; margin:0;">Independent Android app studio in DG Khan, Pakistan. Building interactive learning utilities for students.</p>
     </div>
-
-    <!-- ================= TEST FORM 1 ================= -->
-    <div id="form1" class="test-section">
-        <h2>Level Test 3 — Test Form 1</h2>
-        <h3>Section 1: Listening Comprehension</h3>
-        <div class="question-card" data-correct="c">
-            <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
-            <div class="options">
-                <label><input type="radio" name="f1_q1" value="a"> a) We like it very much.</label>
-                <label><input type="radio" name="f1_q1" value="b"> b) We haven't moved yet.</label>
-                <label><input type="radio" name="f1_q1" value="c"> c) No, we're still looking.</label>
-            </div>
-        </div>
-        <div class="question-card" data-correct="c">
-            <div class="question-title">2. Listen to the speaker, then choose the best response.</div>
-            <div class="options">
-                <label><input type="radio" name="f1_q2" value="a"> a) I had the pasta primavera.</label>
-                <label><input type="radio" name="f1_q2" value="b"> b) I had some vegetables with the salmon.</label>
-                <label><input type="radio" name="f1_q2" value="c"> c) The salmon was overcooked and the meal was overpriced.</label>
-            </div>
-        </div>
+    <div class="footer-col">
+      <h4>Quick Categories</h4>
+      <ul>
+        <li><a href="../tech/">Tech & Code</a></li>
+        <li><a href="../education/">Education Hub</a></li>
+        <li><a href="../business/">Business</a></li>
+        <li><a href="../news/">Global News</a></li>
+      </ul>
     </div>
-
-    <!-- ================= TEST FORM 2 ================= -->
-    <div id="form2" class="test-section">
-        <h2>Level Test 3 — Test Form 2</h2>
-        <h3>Section 1: Listening Comprehension</h3>
-        <div class="question-card" data-correct="b">
-            <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
-            <div class="options">
-                <label><input type="radio" name="f2_q1" value="a"> a) I went to Harvard Law School.</label>
-                <label><input type="radio" name="f2_q1" value="b"> b) I have an MBA and three years of management experience.</label>
-                <label><input type="radio" name="f2_q1" value="c"> c) I enjoy playing tennis, swimming, and reading.</label>
-            </div>
-        </div>
+    <div class="footer-col">
+      <h4>Platform Tools</h4>
+      <ul>
+        <li><a href="english.html">Online English Tests</a></li>
+        <li><a href="math.html">Math Practice</a></li>
+        <li><a href="computer.html">Computer Quizzes</a></li>
+      </ul>
     </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 LamaStudio. All rights reserved.</p>
+    <p>Designed with ❤️ for Pakistani Students</p>
+  </div>
+</footer>
 
-    <!-- ================= TEST FORM 3 ================= -->
-    <div id="form3" class="test-section">
-        <h2>Level Test 3 — Test Form 3</h2>
-        <h3>Section 1: Listening Comprehension</h3>
-        <div class="question-card" data-correct="a">
-            <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
-            <div class="options">
-                <label><input type="radio" name="f3_q1" value="a"> a) Yes, I am. It looks like a great opportunity.</label>
-                <label><input type="radio" name="f3_q1" value="b"> b) I've been a manager for the past 20 years.</label>
-                <label><input type="radio" name="f3_q1" value="c"> c) I have a lot of experience in this field.</label>
-            </div>
-        </div>
-        <div class="question-card" data-correct="b">
-            <div class="question-title">2. Listen to the speaker, then choose the best response.</div>
-            <div class="options">
-                <label><input type="radio" name="f3_q2" value="a"> a) The chicken was $21.</label>
-                <label><input type="radio" name="f3_q2" value="b"> b) It was undercooked.</label>
-                <label><input type="radio" name="f3_q2" value="c"> c) Please hold the sauce.</label>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    let seconds = 0;
-    let timerInterval = null;
-
-    function startTimer() {
-        clearInterval(timerInterval);
-        seconds = 0;
-        timerInterval = setInterval(() => {
-            seconds++;
-            let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-            let secs = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById('timer').textContent = `${mins}:${secs}`;
-        }, 1000);
-    }
-
-    const answeredQuestions = new Set();
-    let currentScore = 0;
-
-    // Robust Event Delegation for Radio Options
-    document.addEventListener('change', function(event) {
-        if (event.target.matches('input[type="radio"]')) {
-            const inputElement = event.target;
-            const card = inputElement.closest('.question-card');
-            const correctAnswer = card.getAttribute('data-correct');
-            const questionName = inputElement.name;
-            const labels = card.querySelectorAll('label');
-
-            const alreadyAnswered = answeredQuestions.has(questionName);
-
-            labels.forEach(label => {
-                const radio = label.querySelector('input');
-                label.classList.remove('correct', 'incorrect');
-                if (radio.value === correctAnswer) {
-                    label.classList.add('correct');
-                } else if (radio.checked) {
-                    label.classList.add('incorrect');
-                }
-            });
-
-            if (!alreadyAnswered) {
-                answeredQuestions.add(questionName);
-                if (inputElement.value === correctAnswer) {
-                    currentScore++;
-                    document.getElementById('score').textContent = currentScore;
-                }
-            }
-        }
-    });
-
-    // Event Delegation for Test Menu Cards
-    document.querySelectorAll('.test-card-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const formId = this.getAttribute('data-form');
-            openTest(formId);
-        });
-    });
-
-    document.getElementById('home-btn').addEventListener('click', goToLandingPage);
-
-    function openTest(formId) {
-        document.querySelectorAll('.test-section').forEach(section => {
-            section.classList.remove('active');
-        });
-
-        const targetSection = document.getElementById(formId);
-        if (targetSection) {
-            targetSection.classList.add('active');
-        }
-
-        document.getElementById('landing-page').style.display = 'none';
-        document.getElementById('stats-bar').style.display = 'flex';
-        
-        const titles = { 
-            'form1': 'Berlitz English - Form 1', 
-            'form2': 'Berlitz English - Form 2', 
-            'form3': 'Berlitz English - Form 3' 
-        };
-        document.getElementById('page-title').textContent = titles[formId];
-
-        const activeCardCount = targetSection.querySelectorAll('.question-card').length;
-        document.getElementById('total-questions').textContent = activeCardCount;
-
-        startTimer();
-    }
-
-    function goToLandingPage() {
-        clearInterval(timerInterval);
-        document.querySelectorAll('.test-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        const landing = document.getElementById('landing-page');
-        landing.classList.add('active');
-        landing.style.display = 'block';
-
-        document.getElementById('stats-bar').style.display = 'none';
-        document.getElementById('page-title').textContent = 'Berlitz English Level Tests';
-    }
-</script>
-
+<script src="../../script.js"></script>
 </body>
-                           </html>
-    
+</html>

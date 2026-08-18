@@ -1,229 +1,281 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>English Practice Hub — LamaStudio Education</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../style.css">
-<style>
-.test-container { max-width: 800px; margin: 40px auto; padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
-.test-header { text-align: center; margin-bottom: 25px; }
-.test-header h1 { font-size: 2rem; color: var(--text); margin-bottom: 8px; }
-.test-brand { font-size: 0.9rem; color: var(--text-muted); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berlitz English Level Tests - Form 1 & Form 2</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dcdde1;
+        }
 
-/* Landing Menu & Set Selection Grid */
-.landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px; }
-.set-btn { background: var(--background); border: 2px solid var(--border); border-radius: 12px; padding: 20px; text-align: left; cursor: pointer; transition: all .2s ease; color: var(--text); display: flex; flex-direction: column; gap: 5px; }
-.set-btn:hover { border-color: var(--category-color); transform: translateY(-2px); background: var(--surface); }
-.set-btn h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
-.set-btn p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
 
-.progress-box { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-.timer-display { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; }
-.question { font-size: 1.2rem; font-weight: 700; line-height: 1.5; margin: 20px 0; color: var(--text); font-family: 'JetBrains Mono', monospace; }
-.option { display: block; width: 100%; padding: 14px 18px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--background); text-align: left; font-size: 1rem; color: var(--text); cursor: pointer; transition: all .2s ease; }
-.option:hover:not(:disabled) { background: var(--surface); border-color: var(--category-color); transform: translateY(-2px); }
-.option.correct { background: rgba(34, 197, 94, 0.15) !important; border-color: #22c55e !important; color: #16a34a !important; font-weight: bold; }
-.option.wrong { background: rgba(239, 68, 68, 0.15) !important; border-color: #ef4444 !important; color: #dc2626 !important; font-weight: bold; }
-.option:disabled { cursor: default; transform: none; }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
 
-#next { display: none; margin: 25px auto 5px; padding: 14px 30px; border: 0; border-radius: 10px; background: var(--category-color); color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
-#next:hover { opacity: 0.9; }
-.feedback { text-align: center; font-size: 1.05rem; font-weight: 700; margin: 20px 0; min-height: 28px; }
-.result { text-align: center; padding: 20px 0; }
-.restart { display: inline-block; margin-top: 15px; padding: 12px 24px; background: var(--category-color); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 700; cursor: pointer; border: 0; }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
 
-/* Enhanced Footer */
-.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 20px 20px;margin-top:60px;color:var(--text-muted)}
-.footer-content{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:30px;margin-bottom:30px}
-.footer-col h4{color:var(--text);font-size:16px;margin-bottom:12px;font-weight:600}
-.footer-col ul{list-style:none;padding:0;margin:0}
-.footer-col ul li{margin-bottom:8px}
-.footer-col ul li a{color:var(--text-muted);text-decoration:none;font-size:14px;transition:.2s}
-.footer-col ul li a:hover{color:var(--category-color)}
-.footer-bottom{max-width:1000px;margin:0 auto;border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px}
-</style>
+        .back-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            background-color: var(--accent-color);
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: #e4e7eb;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .test-section {
+            display: none;
+        }
+
+        .test-section.active {
+            display: block;
+        }
+
+        .question-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .question-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .options label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 4px;
+            transition: background 0.1s;
+        }
+
+        .options label:hover {
+            background-color: #f1f2f6;
+        }
+
+        .options input {
+            margin-right: 10px;
+        }
+
+        .reading-box {
+            background: #f1f2f6;
+            padding: 15px;
+            border-left: 4px solid var(--accent-color);
+            font-style: italic;
+            margin-bottom: 15px;
+            border-radius: 0 6px 6px 0;
+        }
+    </style>
 </head>
-<body style="--category-color: var(--c-education);">
+<body>
 
-<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
-
-<header class="site-header">
-  <div class="util-row">
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
-    </div>
-    <div class="header-actions">
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-      </button>
-    </div>
-  </div>
-  <div class="category-strip">
-    <div class="category-track" role="tablist">
-      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
-      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
-      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
-      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
-      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
-      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
-      <a href="./" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
-      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
-      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
-    </div>
-  </div>
-</header>
-
-<main>
-  <div class="test-container" id="app">
-    <!-- Landing Menu View -->
-    <div id="landing-view">
-      <div class="test-header">
-        <h1>📖 English Practice Hub</h1>
-        <div class="test-brand">Select a Berlitz Level or Skill Module Below</div>
-      </div>
-      
-      <div class="landing-grid">
-        <button class="set-btn" onclick="startQuiz('berlitz1')">
-          <h3>Berlitz Level 1 (A1)</h3>
-          <p>10 Questions • Absolute Beginner & Basics</p>
-        </button>
-        <button class="set-btn" onclick="startQuiz('berlitz2')">
-          <h3>Berlitz Level 2 (A2.1)</h3>
-          <p>10 Questions • Elementary routines & tenses</p>
-        </button>
-        <button class="set-btn" onclick="startQuiz('berlitz3')">
-          <h3>Berlitz Level 3 (A2.2)</h3>
-          <p>10 Questions • Intermediate social & business</p>
-        </button>
-        <button class="set-btn" onclick="startQuiz('grammar')">
-          <h3>Grammar & Tenses</h3>
-          <p>10 Questions • Verbs, prepositions & structure</p>
-        </button>
-        <button class="set-btn" onclick="startQuiz('vocab')">
-          <h3>Vocabulary & Synonyms</h3>
-          <p>10 Questions • Advanced words & meanings</p>
-        </button>
-        <button class="set-btn" onclick="startQuiz('idioms')">
-          <h3>Idioms & Phrasal Verbs</h3>
-          <p>10 Questions • Common expressions & usage</p>
-        </button>
-        <button class="set-btn" onclick="startQuiz('correction')">
-          <h3>Sentence Correction</h3>
-          <p>10 Questions • Error spotting & editing</p>
-        </button>
-      </div>
+<div class="container">
+    <div class="nav-header">
+        <button class="back-btn" onclick="goToEducation()">← Back to Education</button>
+        <h2>Berlitz English Level Test</h2>
     </div>
 
-    <!-- Quiz Active View -->
-    <div id="quiz-view" style="display:none;">
-      <div id="progress" class="progress-box"></div>
-      <div id="quiz"></div>
-      <div id="feedback" class="feedback"></div>
-      <button id="next">Next Question →</button>
-      <div id="result" class="result"></div>
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchTab('form1')">Test Form 1</button>
+        <button class="tab-btn tab-btn-inactive" onclick="switchTab('form2')">Test Form 2</button>
     </div>
-  </div>
-</main>
 
-<footer class="site-footer">
-  <div class="footer-content">
-    <div class="footer-col">
-      <a href="../../index.html" class="brand" style="margin-bottom:12px; display:inline-flex;"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a>
-      <p style="font-size:13px; margin:0;">Independent Android app studio in DG Khan, Pakistan. Building interactive learning utilities for students.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Quick Categories</h4>
-      <ul>
-        <li><a href="../tech/">Tech & Code</a></li>
-        <li><a href="./">Education Hub</a></li>
-        <li><a href="../business/">Business</a></li>
-        <li><a href="../news/">Global News</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Platform Tools</h4>
-      <ul>
-        <li><a href="english.html">Online English Tests</a></li>
-        <li><a href="math.html">Math Practice</a></li>
-        <li><a href="computer.html">Computer Quizzes</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p>&copy; 2026 LamaStudio. All rights reserved.</p>
-    <p>Designed with ❤️ for Pakistani Students & Professionals</p>
-  </div>
-</footer>
+    <!-- TEST FORM 1 -->
+    <div id="form1" class="test-section active">
+        <h2>Level Test 3 — Test Form 1</h2>
+        
+        <h3>Section 1: Listening Comprehension</h3>
+        <div class="question-card">
+            <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
+            <div class="options">
+                <label><input type="radio" name="f1_q1" value="a"> a) We like it very much.</label>
+                <label><input type="radio" name="f1_q1" value="b"> b) We haven't moved yet.</label>
+                <label><input type="radio" name="f1_q1" value="c"> c) No, we're still looking.</label>
+            </div>
+        </div>
 
-<script src="../../script.js"></script>
+        <div class="question-card">
+            <div class="question-title">2. Listen to the speaker, then choose the best response.</div>
+            <div class="options">
+                <label><input type="radio" name="f1_q2" value="a"> a) I had the pasta primavera.</label>
+                <label><input type="radio" name="f1_q2" value="b"> b) I had some vegetables with the salmon.</label>
+                <label><input type="radio" name="f1_q2" value="c"> c) The salmon was overcooked and the meal was overpriced.</label>
+            </div>
+        </div>
+
+        <h3>Section 2: Reading Comprehension & Structure</h3>
+        <div class="question-card">
+            <div class="question-title">11. Have you seen Colin ______?</div>
+            <div class="options">
+                <label><input type="radio" name="f1_q11" value="a"> a) lately</label>
+                <label><input type="radio" name="f1_q11" value="b"> b) four days ago</label>
+                <label><input type="radio" name="f1_q11" value="c"> c) in a month</label>
+            </div>
+        </div>
+
+        <div class="question-card">
+            <div class="question-title">12. We have visited this museum three times ______ this year.</div>
+            <div class="options">
+                <label><input type="radio" name="f1_q12" value="a"> a) already</label>
+                <label><input type="radio" name="f1_q12" value="b"> b) so far</label>
+                <label><input type="radio" name="f1_q12" value="c"> c) ago</label>
+            </div>
+        </div>
+
+        <div class="question-card">
+            <div class="question-title">14. A: How was Emilio's Café? B: It was ______, we had to wait for more than an hour for a table.</div>
+            <div class="options">
+                <label><input type="radio" name="f1_q14" value="a"> a) so busy</label>
+                <label><input type="radio" name="f1_q14" value="b"> b) busy</label>
+                <label><input type="radio" name="f1_q14" value="c"> c) such busy</label>
+            </div>
+        </div>
+
+        <div class="question-card">
+            <div class="question-title">Reading Passage: Marta Ramirez & Mr. Wilson</div>
+            <div class="reading-box">
+                "Dear Mr. Wilson, It was a pleasure to meet you last week at PC Expo. I would very much like to continue our discussions of your current database systems and the improvements you would like to make to them. I expect to be in New York next week. Could we arrange a time to meet? Best regards, Marta Ramirez"
+            </div>
+            <div class="question-title">31. Why is Ms. Ramirez writing to Mr. Wilson?</div>
+            <div class="options">
+                <label><input type="radio" name="f1_q31" value="a"> a) She wants to make an appointment to visit him.</label>
+                <label><input type="radio" name="f1_q31" value="b"> b) She wants to thank him for coming to the PC Expo.</label>
+                <label><input type="radio" name="f1_q31" value="c"> c) She is sending him the information he requested.</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEST FORM 2 -->
+    <div id="form2" class="test-section">
+        <h2>Level Test 3 — Test Form 2</h2>
+        
+        <h3>Section 1: Listening Comprehension</h3>
+        <div class="question-card">
+            <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
+            <div class="options">
+                <label><input type="radio" name="f2_q1" value="a"> a) I went to Harvard Law School.</label>
+                <label><input type="radio" name="f2_q1" value="b"> b) I have an MBA and three years of management experience.</label>
+                <label><input type="radio" name="f2_q1" value="c"> c) I enjoy playing tennis, swimming, and reading.</label>
+            </div>
+        </div>
+
+        <h3>Section 2: Reading Comprehension & Structure</h3>
+        <div class="question-card">
+            <div class="question-title">11. Ashley has been back at school ______.</div>
+            <div class="options">
+                <label><input type="radio" name="f2_q11" value="a"> a) more than two years ago</label>
+                <label><input type="radio" name="f2_q11" value="b"> b) for more than two years</label>
+                <label><input type="radio" name="f2_q11" value="c"> c) since more than two years</label>
+            </div>
+        </div>
+
+        <div class="question-card">
+            <div class="question-title">12. How many apartments ______ the Gordons ______ so far?</div>
+            <div class="options">
+                <label><input type="radio" name="f2_q12" value="a"> a) have / looked at</label>
+                <label><input type="radio" name="f2_q12" value="b"> b) do / look at</label>
+                <label><input type="radio" name="f2_q12" value="c"> c) have / been looking at</label>
+            </div>
+        </div>
+
+        <div class="question-card">
+            <div class="question-title">Reading Passage: Larry Gallen Résumé</div>
+            <div class="reading-box">
+                "Larry Gallen, 618 W. Brier Place, Chicago, IL 60657. Professional Experience: 1999–present Vice President of Operations, XAct Wireless, Chicago, IL; 1997–1998 Director of Product Development, Zip Multimedia, San Francisco, CA; 1993–1996 Creative Director, ToonTime Animation, San Francisco, CA."
+            </div>
+            <div class="question-title">31. Which sentence is true?</div>
+            <div class="options">
+                <label><input type="radio" name="f2_q31" value="a"> a) This is a job advertisement.</label>
+                <label><input type="radio" name="f2_q31" value="b"> b) This is a list of Larry Gallen's skills.</label>
+                <label><input type="radio" name="f2_q31" value="c"> c) This is a résumé for Larry Gallen.</label>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-const englishData = {
-  berlitz1: [
-    { q: "How do you correctly introduce yourself in a simple situation?", a: ["Hello, my name is Ali.", "I am go to office.", "Yesterday I was run.", "Goodbye see you tomorrow."], c: 0 },
-    { q: "Choose the correct basic response: 'Where do you live?'", a: ["I live in Lahore.", "I am 20 years old of apple.", "Yes, I like yesterday.", "It is 5 o'clock."], c: 0 },
-    { q: "Which option correctly states a personal preference or like?", a: ["I like drinking tea in the morning.", "I am live in a house.", "She yesterday come home.", "They will writing a letter."], c: 0 },
-    { q: "Choose the correct numbers or date expression:", a: ["Today is Monday, August 18.", "Today is run and walk.", "He is table chair.", "We are yesterday."], c: 0 },
-    { q: "How do you politely ask for basic information?", a: ["Excuse me, what time is it?", "Give me all your money.", "Why you are talking?", "Shut the door now."], c: 0 },
-    { q: "Choose the correct basic greeting response to 'How are you?'", a: ["I am fine, thank you.", "I am a book.", "It is a red car.", "She goes to sleep."], c: 0 },
-    { q: "How do you order a meal simply at a restaurant?", a: ["I would like a chicken burger, please.", "I am eating the entire restaurant.", "Food is cooking by chef.", "Bring me food or else."], c: 0 },
-    { q: "Identify the correct elementary vocabulary for family:", a: ["Father, mother, brother, sister", "Computer, router, server, cpu", "Balance sheet, ledger, profit", "Algorithm, array, stack"], c: 0 },
-    { q: "Choose the correct simple sentence describing colors/objects:", a: ["The pen is blue.", "The pen is running fastly.", "The pen yesterday walked.", "The pen will been flying."], c: 0 },
-    { q: "Select the correct elementary closing expression:", a: ["Goodbye, have a nice day!", "You must execution program.", "Error 404 not found.", "Balance statement verified."], c: 0 }
-  ],
-  berlitz2: [
-    { q: "Which sentence correctly describes a daily routine at home or work?", a: ["I wake up at 7 AM every day and go to work.", "I waking up yesterday at 8.", "I will waking up tomorrow.", "I have been woke up."], c: 0 },
-    { q: "Choose the correct sentence using the past tense:", a: ["We visited our grandparents last weekend.", "We visit our grandparents tomorrow.", "We are visiting yesterday.", "We visits them every past."], c: 0 },
-    { q: "How do you ask for simple travel or shopping information?", a: ["How much does this ticket cost?", "How much does the sun weigh?", "Why did the universe expand?", "Where is the past tense located?"], c: 0 },
-    { q: "Choose the correct future expression for an upcoming plan:", a: ["I am going to travel to Islamabad next week.", "I traveled to Islamabad tomorrow.", "I travels Islamabad yesterday.", "I travel Islamabad last year."], c: 0 },
-    { q: "Select the correct phrase to express likes and dislikes:", a: ["I really enjoy reading books, but I dislike cooking.", "I am like book very much of yesterday.", "She hate running on tomorrow.", "They loves to walked."], c: 0 },
-    { q: "How do you handle a general problem on the phone at Level 2?", a: ["Hello, my internet connection is not working.", "Hello, your phone is a computer device.", "Call me back in the year 2050.", "I am speaking telephone wire."], c: 0 },
-    { q: "Choose the correct simple description of a workplace task:", a: ["I check customer emails every morning.", "I checked emails tomorrow morning.", "I will checking emails last week.", "I have check email yesterday."], c: 0 },
-    { q: "Which sentence correctly describes a person's appearance or character?", a: ["He is tall and has short black hair.", "He is tall yesterday.", "He will be height tomorrow.", "He has height of running."], c: 0 },
-    { q: "Choose the correct expression for booking a hotel room:", a: ["I would like to reserve a single room for two nights.", "I reservation hotel room for last week.", "Give me bed or I sleep floor.", "Hotel room is booking me."], c: 0 },
-    { q: "Select the sentence with correct simple past and present contrast:", a: ["I used to live in Multan, but now I live in Lahore.", "I live in Multan tomorrow, but now Multan.", "I living Multan yesterday, but now future.", "I lived Lahore, but now was Karachi."], c: 0 }
-  ],
-  berlitz3: [
-    { q: "How do you start and manage a simple professional discussion?", a: ["Good morning everyone, let us discuss the project status.", "Stop talking and look at the wall.", "I am a table in this meeting.", "Yesterday we will talk tomorrow."], c: 0 },
-    { q: "Choose the correct way to explain a simple problem and propose a solution:", a: ["The printer is jammed; let me clear the paper tray.", "The printer is happy; let us sing a song.", "The printer ate my homework yesterday.", "The printer will fly to Karachi."], c: 0 },
-    { q: "How do you politely accept or decline a business invitation?", a: ["Thank you for the invitation; I would be delighted to attend.", "No, your party is terrible and I refuse.", "I will attend your party last week.", "Invitation accepted by computer protocol."], c: 0 },
-    { q: "Choose the appropriate phrase to guide visitors through your company office:", a: ["Let me show you our main conference room and reception area.", "Walk into the wall until you find a door.", "Here is a broom to clean the floor.", "Company office is running on battery."], c: 0 },
-    { q: "Select the correct phrasing for expressing a formal complaint:", a: ["I am writing to report an issue with the recent shipment quality.", "Your company is made of cheese and cookies.", "Why did you send me a spaceship?", "Complaint registered into deep space."], c: 0 },
-    { q: "How do you give simple professional instructions to a colleague?", a: ["Please review this report before the 3 PM meeting.", "Please eat this computer mouse immediately.", "You must run faster than the server.", "Instructions are forbidden today."], c: 0 },
-    { q: "Choose the correct expression to voice agreement in a discussion:", a: ["I completely agree with your proposal on this matter.", "I disagree with the existence of oxygen.", "Tables are running across the ceiling.", "Your opinion is a math equation."], c: 0 },
-    { q: "How do you report on the current status of an ongoing project?", a: ["Phase one is complete, and we are currently testing phase two.", "Phase one was finished next year.", "Phase one will be running yesterday.", "We are building a bridge to the moon."], c: 0 },
-    { q: "Select the correct way to offer congratulations for an achievement:", a: ["Congratulations on successfully completing your professional certification!", "Congratulations on breaking your computer screen!", "Congratulations on sleeping for ten hours!", "Congratulations on becoming a chair!"], c: 0 },
-    { q: "Choose the correct phrase to gracefully end a professional phone conversation:", a: ["Thank you for your time today. Goodbye!", "Never call this phone number again forever.", "Disconnecting wires now, bye.", "The conversation has expired."], c: 0 }
-  ],
-  grammar: [
-    { q: "Choose the correct form: She _____ to the office every morning.", a: ["go", "goes", "is going", "gone"], c: 1 },
-    { q: "Identify the correct preposition: He is good _____ mathematics.", a: ["at", "in", "on", "with"], c: 0 },
-    { q: "Fill in the blank: If I _____ rich, I would travel the world.", a: ["am", "was", "were", "had been"], c: 2 },
-    { q: "Choose the correct passive voice: 'They are building a new bridge.'", a: ["A new bridge is built.", "A new bridge is being built.", "A new bridge was built.", "A new bridge has been built."], c: 1 },
-    { q: "Choose the correct modal verb: You _____ wear a helmet while riding a motorcycle.", a: ["might", "must", "can", "may"], c: 1 },
-    { q: "Select the correct article: He wants to become _____ engineer.", a: ["a", "an", "the", "no article"], c: 1 },
-    { q: "Choose the correct past participle of 'write':", a: ["wrote", "writed", "written", "writing"], c: 2 },
-    { q: "Identify the tense: 'By next year, we will have completed the project.'", a: ["Future Simple", "Future Continuous", "Future Perfect", "Future Perfect Continuous"], c: 2 },
-    { q: "Choose the correct pronoun: Neither of the boys _____ completed his homework.", a: ["have", "has", "are", "were"], c: 1 },
-    { q: "Choose the correct comparative adjective: This book is _____ than that one.", a: ["more interesting", "most interesting", "interestinger", "much interesting"], c: 0 }
-  ],
-  vocab: [
-    { q: "Choose the synonym for 'Benevolent':", a: ["Hostile", "Kind", "Greedy", "Lazy"], c: 1 },
-    { q: "Choose the antonym for 'Abundant':", a: ["Plentiful", "Scanty", "Ample", "Generous"], c: 1 },
-    { q: "What does the word 'Meticulous' mean?", a: ["Extremely careful and precise", "Very loud and noisy", "Careless and messy", "Quick and hurried"], c: 0 },
-    { q: "Choose the synonym for 'Candid':", a: ["Deceitful", "Frank and open", "Secretive", "Complex"], c: 1 },
-    { q: "What is the meaning of 'Prudent'?", a: ["Foolish", "Wise and careful", "Arrogant", "Timid"], c: 1 },
-    { q: "Choose the antonym for 'Transparent':", a: ["Clear", "Opaque", "Lucid", "Translucent"], c: 1 },
-    { q: "What does 'Ephemeral' mean?", a: ["Lasting forever", "Short-lived or temporary", "Very heavy", "Extremely bright"], c: 1 },
-    { q: "Choose the synonym for 'Resilient':", a: ["Fragile", "Flexible and recovering quickly", "Stubborn", "Weak"], c: 1 },
-    { q: "What is the meaning of 'Alacrity'?", a: ["Slowness", "Brisk and cheerful readiness", "Sadness", "Anger"], c: 1 },
-    { q: "Choose the antonym for 'Augment':", a: ["Increase", "Decrease", "Expand", "Enlarge"], c: 1 }
-  ],
-  idioms: [
-    { q: "What does the idiom 'Bite the bullet' mean?", a: ["To eat something spicy", "To face a difficult situation with courage", "To make a mistake", "To rush into danger"], c: 1 },
-    { q: "What does 'A blessing in disguise' mean?", a: ["Something good that seemed bad at first", "An undercover detective", "A hidden treasure", "A lucky guess"], c: 0 },
-    { q: "What does 'Break a leg' mean in performance arts?", a: ["To injure oneself", "Good luck", "To fail miserably", "To dance energetically"], c: 1 },
-    { q: "What does 'Call it a day' mean?", a: ["To stop working on something", "To wish someone good morning", "To work extra hours", "To schedule a meeting"], c: 0 },
-    { q: "What is the meaning of 'Cost an arm and a
+    function switchTab(formId) {
+        document.querySelectorAll('.test-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById(formId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
+    function goToEducation() {
+        // Redirects back to the Education category view/page as requested
+        window.location.href = "education.html"; 
+    }
+</script>
+
+</body>
+</html>

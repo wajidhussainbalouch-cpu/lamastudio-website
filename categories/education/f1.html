@@ -385,5 +385,120 @@ label.incorrect { background-color: rgba(239, 68, 68, 0.15) !important; border-c
     </div>
   </div>
 
+  <  <div class="question-card" data-correct="a">
+    <div class="question-title">35. Which sentence is not true?</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q35" value="a"> a) So far, Don has been pleased with the results of the C7 project.</label>
+      <label><input type="radio" name="f1_q35" value="b"> b) Don thinks Tamako will be a good project manager for the C7 project.</label>
+      <label><input type="radio" name="f1_q35" value="c"> c) Don would like Tamako to make a decision quickly.</label>
+    </div>
+  </div>
+
+  <!-- SECTION 3 — LANGUAGE USE -->
+  <h2 class="section-title">SECTION 3 — LANGUAGE USE</h2>
+  
+  <div class="reading-box">
+    <strong>Instruction:</strong> Choose the word or phrase that best completes each sentence.<br><br>
+    Dear June,<br>
+    I will be arriving on Thursday _____ (36) 3 p.m. I am planning to _____ (37) a car at the airport. Could you please send me _____ (38) on how to get from the airport to your office? _____ (39) should it take me to get there? Will _____ (40) traffic be a problem?<br>
+    Thanks,<br>
+    Dan
+  </div>
+
+  <div class="question-card" data-correct="b">
+    <div class="question-title">36. (Choose option for blank 36)</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q36" value="a"> a) near</label>
+      <label><input type="radio" name="f1_q36" value="b"> b) around</label>
+      <label><input type="radio" name="f1_q36" value="c"> c) from</label>
+    </div>
+  </div>
+
   <div class="question-card" data-correct="a">
-    <div class="question-title">35. Whic
+    <div class="question-title">37. (Choose option for blank 37)</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q37" value="a"> a) rent</label>
+      <label><input type="radio" name="f1_q37" value="b"> b) take</label>
+      <label><input type="radio" name="f1_q37" value="c"> c) buy</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="b">
+    <div class="question-title">38. (Choose option for blank 38)</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q38" value="a"> a) rules</label>
+      <label><input type="radio" name="f1_q38" value="b"> b) directions</label>
+      <label><input type="radio" name="f1_q38" value="c"> c) diversions</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c">
+    <div class="question-title">39. (Choose option for blank 39)</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q39" value="a"> a) How far</label>
+      <label><input type="radio" name="f1_q39" value="b"> b) How often</label>
+      <label><input type="radio" name="f1_q39" value="c"> c) How long</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a">
+    <div class="question-title">40. (Choose option for blank 40)</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q40" value="a"> a) rush hour</label>
+      <label><input type="radio" name="f1_q40" value="b"> b) jam time</label>
+      <label><input type="radio" name="f1_q40" value="c"> c) prime time</label>
+    </div>
+  </div>
+
+  <!-- Writing Section Display -->
+  <div class="writing-section">
+    <h3 style="margin-top:0;">SECTION 3 — WRITING</h3>
+    <p>Part 4 — Writing about a Topic. Choose ONE of these topics and write 100–150 words:</p>
+    <ul>
+      <li>Describe a memorable trip you have taken. Explain where you went, what you did, and why you enjoyed it.</li>
+      <li>Write about a time when you solved a problem at work or school.</li>
+      <li>Describe your favorite restaurant and explain why you would recommend it.</li>
+      <li>Write about an important goal you have achieved and how you accomplished it.</li>
+    </ul>
+    <p><strong>Sample Student Response:</strong></p>
+    <div class="sample-response">
+      "My favourite restaurant is KFC because it serves delicious fried chicken, burgers and crispy fries. The restaurant is always clean, the staff are friendly, and the service is quick. I enjoy the comfortable atmosphere, which makes it a great place to eat with family and friends..."
+    </div>
+  </div>
+</main>
+
+<script>
+    const answeredQuestions = new Set();
+    let currentScore = 0;
+
+    document.addEventListener('change', function(event) {
+        if (event.target.matches('input[type="radio"]')) {
+            const inputElement = event.target;
+            const card = inputElement.closest('.question-card');
+            const correctAnswer = card.getAttribute('data-correct');
+            const questionName = inputElement.name;
+            const labels = card.querySelectorAll('label');
+            const alreadyAnswered = answeredQuestions.has(questionName);
+
+            labels.forEach(label => {
+                const radio = label.querySelector('input');
+                label.classList.remove('correct', 'incorrect');
+                if (radio.value === correctAnswer) {
+                    label.classList.add('correct');
+                } else if (radio.checked) {
+                    label.classList.add('incorrect');
+                }
+            });
+
+            if (!alreadyAnswered) {
+                answeredQuestions.add(questionName);
+                if (inputElement.value === correctAnswer) {
+                    currentScore++;
+                    document.getElementById('score').textContent = currentScore;
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

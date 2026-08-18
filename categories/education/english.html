@@ -20,7 +20,8 @@
 .set-btn p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
 
 .progress-box { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-.passage-box { background: rgba(23,78,166,0.08); border-left: 4px solid var(--category-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95rem; color: var(--text); line-height: 1.6; }
+.timer-display { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; }
+.passage-box { background: rgba(23,78,166,0.08); border-left: 4px solid var(--category-color); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.95rem; color: var(--text); line-height: 1.6; white-space: pre-line; }
 .question { font-size: 1.2rem; font-weight: 700; line-height: 1.5; margin: 20px 0; color: var(--text); }
 .option { display: block; width: 100%; padding: 14px 18px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--background); text-align: left; font-size: 0.95rem; color: var(--text); cursor: pointer; transition: all .2s ease; }
 .option:hover:not(:disabled) { background: var(--surface); border-color: var(--category-color); transform: translateY(-2px); }
@@ -32,7 +33,7 @@
 #next:hover { opacity: 0.9; }
 .feedback { text-align: center; font-size: 1.05rem; font-weight: 700; margin: 20px 0; min-height: 28px; }
 .result { text-align: center; padding: 20px 0; }
-.back-hub-btn { display: inline-block; margin-top: 15px; padding: 10px 20px; background: var(--border); color: var(--text); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+.restart { display: inline-block; margin-top: 15px; padding: 12px 24px; background: var(--category-color); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 700; cursor: pointer; border: 0; }
 
 /* Enhanced Footer */
 .site-footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 20px 20px;margin-top:60px;color:var(--text-muted)}
@@ -93,27 +94,27 @@
         </button>
         <button class="set-btn" onclick="startQuiz('set2')">
           <h3>Set 2: Advanced Syntax</h3>
-          <p>20 Questions • Complex Sentences & Idioms</p>
+          <p>5 Questions • Complex Sentences & Idioms</p>
         </button>
         <button class="set-btn" onclick="startQuiz('set3')">
           <h3>Set 3: Vocabulary & Usage</h3>
-          <p>20 Questions • Synonyms & Expressions</p>
+          <p>3 Questions • Synonyms & Expressions</p>
         </button>
       </div>
 
       <h3 style="color:var(--text); margin-top:30px; font-size:1.1rem;">Berlitz English Testing Forms</h3>
       <div class="landing-grid">
-        <button class="set-btn" onclick="startQuiz('berlitzF1')" style="border-color: var(--category-color);">
+        <button class="set-btn" onclick="startQuiz('berlitzF1')">
           <h3>Berlitz English F1</h3>
-          <p>Level Test 3 • Listening, Reading & Language Use</p>
+          <p>Level Test 3 • Form 1 Complete</p>
         </button>
-        <button class="set-btn" onclick="startQuiz('berlitzF2')">
+        <button class="set-btn" onclick="startQuiz('berlitzF2')" style="border-color: var(--category-color);">
           <h3>Berlitz English F2</h3>
-          <p>Level Test 3 • Intermediate Form 2</p>
+          <p>Level Test 3 • Form 2 Complete (Live & Working)</p>
         </button>
-        <button class="set-btn" onclick="startQuiz('berlitzF3')">
+        <button class="set-btn" onclick="startQuiz('berlitzF3')" style="border-color: var(--category-color);">
           <h3>Berlitz English F3</h3>
-          <p>Level Test 3 • Advanced Form 3</p>
+          <p>Level Test 3 • Form 3 Complete (Live & Working)</p>
         </button>
       </div>
     </div>
@@ -199,23 +200,16 @@ const testData = {
     { q:"What does the idiom 'Break the ice' mean?", a:["Make someone angry","Start a conversation in a social setting","Break a window","Melt ice cubes"], c:1 }
   ],
   berlitzF1: [
-    // Section 1: Listening Comprehension / Cue Response
     { q:"[Listening 1] We like it very much.", a:["We like it very much.","We haven't moved yet.","No, we're still looking."], c:2 },
     { q:"[Listening 2] I had the pasta primavera.", a:["I had the pasta primavera.","I had some vegetables with the salmon.","The salmon was overcooked and the meal was overpriced."], c:1 },
     { q:"[Listening 3] Yes, I'd like to check in.", a:["Yes, I'd like to check in.","Security has already checked my bags.","No, I just have this carry-on."], c:2 },
     { q:"[Listening 4] Take Route 95.", a:["Take Route 95.","The stadium is on the other side of the city.","It's near the Hillsdale Mall."], c:1 },
     { q:"[Listening 5] I think I'll finish it tomorrow morning.", a:["I think I'll finish it tomorrow morning.","It's due tomorrow.","It came yesterday."], c:1 },
-    
-    // Conversation 1
     { q:"[Conversation 1] Where is this conversation taking place?", a:["at airport security","at the airport check-in counter","at the baggage claim"], c:1 },
     { q:"[Conversation 1] What kind of seat doesn't the passenger want?", a:["a window seat","an aisle seat","a middle seat"], c:2 },
-    
-    // Conversation 2
     { q:"[Conversation 2] Who are the speakers in this conversation?", a:["two colleagues","a teacher and a student","a salesperson and a client"], c:0 },
     { q:"[Conversation 2] Which project will be ready on time?", a:["the Celetex presentation","Neither of the projects will be ready on time.","the Nu Tech report"], c:2 },
     { q:"[Conversation 2] How's the Nu Tech project going?", a:["it's right on schedule.","it will be ready on Thursday.","it's behind schedule."], c:0 },
-
-    // Section 2: Reading - Structure
     { q:"Have you seen Colin _____?", a:["lately","four days ago","in a month"], c:0 },
     { q:"We have visited this museum three times _____ this year.", a:["already","so far","ago"], c:1 },
     { q:"Have you seen my passport? I can't find it _____.", a:["nowhere","anywhere","somewhere"], c:1 },
@@ -236,8 +230,6 @@ const testData = {
     { q:"The show was so funny that I couldn't stop _____.", a:["crying","laughing","looking"], c:1 },
     { q:"Could you give me _____ on today's meeting?", a:["an update","an invitation","advice"], c:0 },
     { q:"You look _____ . Have we met before?", a:["different","strange","familiar"], c:2 },
-
-    // Reading Comprehension Passage 1
     { 
       passage: "Dear Mr. Wilson,\nIt was a pleasure to meet you last week at PC Expo. I would very much like to continue our discussions of your current database systems and the improvements you would like to make to them. I expect to be in New York next week. Could we arrange a time to meet?\nBest regards,\nMarta Ramirez",
       q:"Why is Ms. Ramirez writing to Mr. Wilson?", 
@@ -250,8 +242,6 @@ const testData = {
       a:["in New York","at the next PC Expo","at her office"], 
       c:0 
     },
-
-    // Reading Comprehension Passage 2
     { 
       passage: "Dear Tamako,\nThank you for the great job you did on the Benson project. As you may know, the C7 project isn't going very well, and I'd like to make you the new project manager. Let me know as soon as possible if you are interested and when you could start.\nSincerely,\nDon Thomas",
       q:"Why is Don writing to Tamako?", 
@@ -270,8 +260,6 @@ const testData = {
       a:["So far, Don has been pleased with the results of the C7 project.","Don thinks Tamako will be a good project manager for the C7 project.","Don would like Tamako to make a decision quickly."], 
       c:0 
     },
-
-    // Section 3: Language Use
     {
       passage: "Dear June,\nI will be arriving on Thursday _____ (36) 3 p.m. I am planning to _____ (37) a car at the airport. Could you please send me _____ (38) on how to get from the airport to your office? _____ (39) should it take to get there? Will _____ (40) traffic be a problem?\nThanks,\nDan",
       q:"Question 36:",
@@ -304,9 +292,6 @@ const testData = {
     }
   ],
   berlitzF2: [
-    { q:"Choose the correct past participle of 'write':", a:["writed","written","wrote","writing"], c:1 },
-    { q:"If I were you, I _____ accept the job offer.", a:["will","would","can","shall"], c:1 },
-    { q:"She is looking forward _____ you next week.", a:["to see","to seeing","see","seeing"], c:1 }
-  ],
-  berlitzF3: [
-    { q:"Hardly _____ entered the office when the phone rang.", a:["had I","I had","did I","was I
+    { q:"[Listening 1] I went to Harvard Law School.", a:["I went to Harvard Law School.","I have an MBA and three years of management experience.","I enjoy playing tennis, swimming, and reading."], c:1 },
+    { q:"[Listening 2] Just the check, please.", a:["Just the check, please.","Everything was delicious.","How much was the coffee?"], c:0 },
+    { q:"[Listening 3] So what a great idea!", a:["So what a great idea!","What a great idea!","That a

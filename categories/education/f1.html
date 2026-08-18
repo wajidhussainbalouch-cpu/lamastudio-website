@@ -1,76 +1,57 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Berlitz English - Form 1 — LamaStudio</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../style.css">
+<title>Berlitz English - Form 1 Online Test</title>
 <style>
-.test-container { max-width: 900px; margin: 30px auto; padding: 20px; }
-.nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-.back-btn { background-color: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: .2s; }
-.back-btn:hover { border-color: var(--category-color); color: var(--category-color); }
-.stats-bar { display: flex; justify-content: center; background: var(--surface); border: 1px solid var(--border); padding: 14px 20px; border-radius: 12px; margin-bottom: 30px; font-weight: 600; font-family: 'JetBrains Mono', monospace; font-size: 16px; }
-h2, h3 { color: var(--text); }
-.section-title { margin-top: 40px; margin-bottom: 20px; font-size: 22px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
-.subsection-title { margin-top: 25px; margin-bottom: 15px; font-size: 18px; color: var(--category-color); }
-.question-card { background: var(--surface); border: 1px solid var(--border); padding: 22px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,.05); }
-.question-title { font-weight: 600; margin-bottom: 14px; color: var(--text); font-size: 16px; }
+:root {
+  --bg-color: #0f172a;
+  --surface-color: #1e293b;
+  --text-color: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --accent-color: #3b82f6;
+  --success-color: #22c55e;
+  --error-color: #ef4444;
+}
+body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; line-height: 1.5; }
+.test-container { max-width: 850px; margin: 0 auto; padding-bottom: 60px; }
+.nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+.nav-header h2 { margin: 0; font-size: 20px; }
+.stats-bar { position: sticky; top: 15px; z-index: 100; display: flex; justify-content: space-between; align-items: center; background: var(--surface-color); border: 1px solid var(--border-color); padding: 15px 25px; border-radius: 12px; margin-bottom: 30px; font-weight: 700; font-size: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); backdrop-filter: blur(8px); }
+.section-title { margin-top: 40px; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; color: #60a5fa; }
+.subsection-title { margin-top: 25px; margin-bottom: 15px; font-size: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.question-card { background: var(--surface-color); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; margin-bottom: 18px; }
+.question-title { font-weight: 600; margin-bottom: 12px; font-size: 15px; }
 .options { display: flex; flex-direction: column; gap: 8px; }
-.options label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); transition: all .2s ease; font-size: 14px; }
-.options label:hover { border-color: var(--category-color); background: rgba(23,78,166,0.05); }
+.options label { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.01); transition: all 0.2s ease; font-size: 14px; }
+.options label:hover { border-color: var(--accent-color); background: rgba(59,130,246,0.05); }
+input[type="radio"] { accent-color: var(--accent-color); width: 16px; height: 16px; cursor: pointer; }
 
-label.correct { background-color: rgba(46, 204, 113, 0.15) !important; border-color: #2ecc71 !important; color: #2ecc71; font-weight: 600; }
-label.incorrect { background-color: rgba(231, 76, 60, 0.15) !important; border-color: #e74c3c !important; color: #e74c3c; }
+label.correct { background-color: rgba(34, 197, 94, 0.15) !important; border-color: var(--success-color) !important; color: #86efac; font-weight: 600; }
+label.incorrect { background-color: rgba(239, 68, 68, 0.15) !important; border-color: var(--error-color) !important; color: #fca5a5; }
 
-.reading-box { background: rgba(0,0,0,0.03); border: 1px solid var(--border); padding: 16px; border-left: 4px solid var(--category-color); font-style: italic; margin-bottom: 15px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; }
-.writing-section { background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: 12px; margin-top: 30px; }
+.reading-box { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); padding: 16px; border-left: 4px solid var(--accent-color); margin-bottom: 15px; border-radius: 0 8px 8px 0; font-size: 14px; line-height: 1.6; }
+.writing-section { background: var(--surface-color); border: 1px solid var(--border-color); padding: 24px; border-radius: 12px; margin-top: 30px; }
 .writing-section ul { margin: 10px 0 20px 20px; color: var(--text-muted); font-size: 14px; }
-.sample-response { background: rgba(0,0,0,0.04); padding: 15px; border-radius: 8px; border: 1px dashed var(--border); font-family: 'Inter', sans-serif; font-size: 14px; }
-
-/* Footer */
-.site-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 40px 20px 20px; margin-top: 50px; color: var(--text-muted); }
-.footer-content { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; margin-bottom: 30px; }
-.footer-col h4 { color: var(--text); font-size: 16px; margin-bottom: 12px; font-weight: 600; }
-.footer-col ul { list-style: none; padding: 0; margin: 0; }
-.footer-col ul li { margin-bottom: 8px; }
-.footer-col ul li a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: .2s; }
-.footer-col ul li a:hover { color: var(--category-color); }
-.footer-bottom { max-width: 1000px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+.sample-response { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px dashed var(--border-color); font-size: 14px; color: var(--text-muted); }
 </style>
 </head>
-<body style="--category-color: var(--c-education);">
-
-<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
-
-<header class="site-header">
-  <div class="util-row">
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
-    </div>
-    <div class="header-actions">
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-      </button>
-    </div>
-  </div>
-</header>
+<body>
 
 <main class="test-container">
   <div class="nav-header">
-    <a href="english.html" class="back-btn">← Back to English Hub</a>
     <h2>ENGLISH LEVEL TEST — Level Test 3 (Form 1)</h2>
   </div>
 
   <div class="stats-bar">
-    <div>Score Obtained: <span id="score">0</span> / <span id="total-questions">40</span></div>
+    <div>Live Score Tracking</div>
+    <div><span id="score">0</span> / <span id="total-questions">40</span></div>
   </div>
 
   <!-- SECTION 1 — LISTENING COMPREHENSION -->
   <h2 class="section-title">SECTION 1 — LISTENING COMPREHENSION</h2>
-
   <h3 class="subsection-title">Part 1 — Cue Response</h3>
   
   <div class="question-card" data-correct="c">
@@ -370,4 +351,39 @@ label.incorrect { background-color: rgba(231, 76, 60, 0.15) !important; border-c
   </div>
 
   <div class="question-card" data-correct="a">
-    <div 
+    <div class="question-title">32. Where would Marta like to meet Mr. Wilson?</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q32" value="a"> a) in New York</label>
+      <label><input type="radio" name="f1_q32" value="b"> b) at the next PC Expo</label>
+      <label><input type="radio" name="f1_q32" value="c"> c) at her office</label>
+    </div>
+  </div>
+
+  <div class="reading-box">
+    <strong>Reading Text 2:</strong><br>
+    Dear Tamako,<br>
+    Thank you for the great job you did on the Benson project. As you may know, the C7 project isn't going very well, and I'd like to make you the new project manager. Let me know as soon as possible if you are interested and when you could start.<br>
+    Sincerely,<br>
+    Don Thomas
+  </div>
+
+  <div class="question-card" data-correct="b">
+    <div class="question-title">33. Why is Don writing to Tamako?</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q33" value="a"> a) He wants her to send him a status report.</label>
+      <label><input type="radio" name="f1_q33" value="b"> b) He is offering her a job at C7.</label>
+      <label><input type="radio" name="f1_q33" value="c"> c) He wants her to take over another project.</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="c">
+    <div class="question-title">34. Which sentence is true?</div>
+    <div class="options">
+      <label><input type="radio" name="f1_q34" value="a"> a) The C7 project was completed recently.</label>
+      <label><input type="radio" name="f1_q34" value="b"> b) The Benson project failed.</label>
+      <label><input type="radio" name="f1_q34" value="c"> c) Tamako played an important role on the Benson project.</label>
+    </div>
+  </div>
+
+  <div class="question-card" data-correct="a">
+    <div class="question-title">35. Whic

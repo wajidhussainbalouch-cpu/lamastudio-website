@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Computer Science Quiz Hub — LamaStudio Education</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+.test-container { max-width: 800px; margin: 40px auto; padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.test-header { text-align: center; margin-bottom: 25px; }
+.test-header h1 { font-size: 2rem; color: var(--text); margin-bottom: 8px; }
+.test-brand { font-size: 0.9rem; color: var(--text-muted); }
+
+/* Landing Menu & Set Selection Grid */
+.landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px; }
+.set-btn { background: var(--background); border: 2px solid var(--border); border-radius: 12px; padding: 20px; text-align: left; cursor: pointer; transition: all .2s ease; color: var(--text); display: flex; flex-direction: column; gap: 5px; }
+.set-btn:hover { border-color: var(--category-color); transform: translateY(-2px); background: var(--surface); }
+.set-btn h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
+.set-btn p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+
+.progress-box { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+.timer-display { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; }
+.question { font-size: 1.2rem; font-weight: 700; line-height: 1.5; margin: 20px 0; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.option { display: block; width: 100%; padding: 14px 18px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--background); text-align: left; font-size: 1rem; color: var(--text); cursor: pointer; transition: all .2s ease; }
+.option:hover:not(:disabled) { background: var(--surface); border-color: var(--category-color); transform: translateY(-2px); }
+.option.correct { background: rgba(34, 197, 94, 0.15) !important; border-color: #22c55e !important; color: #16a34a !important; font-weight: bold; }
+.option.wrong { background: rgba(239, 68, 68, 0.15) !important; border-color: #ef4444 !important; color: #dc2626 !important; font-weight: bold; }
+.option:disabled { cursor: default; transform: none; }
+
+#next { display: none; margin: 25px auto 5px; padding: 14px 30px; border: 0; border-radius: 10px; background: var(--category-color); color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
+#next:hover { opacity: 0.9; }
+.feedback { text-align: center; font-size: 1.05rem; font-weight: 700; margin: 20px 0; min-height: 28px; }
+.result { text-align: center; padding: 20px 0; }
+.restart { display: inline-block; margin-top: 15px; padding: 12px 24px; background: var(--category-color); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 700; cursor: pointer; border: 0; }
+
+/* Enhanced Footer */
+.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 20px 20px;margin-top:60px;color:var(--text-muted)}
+.footer-content{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:30px;margin-bottom:30px}
+.footer-col h4{color:var(--text);font-size:16px;margin-bottom:12px;font-weight:600}
+.footer-col ul{list-style:none;padding:0;margin:0}
+.footer-col ul li{margin-bottom:8px}
+.footer-col ul li a{color:var(--text-muted);text-decoration:none;font-size:14px;transition:.2s}
+.footer-col ul li a:hover{color:var(--category-color)}
+.footer-bottom{max-width:1000px;margin:0 auto;border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px}
+</style>
+</head>
+<body style="--category-color: var(--c-education);">
+
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="./" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="test-container" id="app">
+    <!-- Landing Menu View -->
+    <div id="landing-view">
+      <div class="test-header">
+        <h1>💻 Computer Science Quiz Hub</h1>
+        <div class="test-brand">Select a Computer Science Knowledge Module Below</div>
+      </div>
+      
+      <div class="landing-grid">
+        <button class="set-btn" onclick="startQuiz('dsa')">
+          <h3>Data Structures & Algorithms</h3>
+          <p>10 Questions • Big-O, sorting & trees</p>
+        </button>
+        <button class="set-btn" onclick="startQuiz('networking')">
+          <h3>Computer Networking</h3>
+          <p>10 Questions • OSI layers, TCP/IP & IPs</p>
+        </button>
+        <button class="set-btn" onclick="startQuiz('os')">
+          <h3>Operating Systems</h3>
+          <p>10 Questions • Processes, memory & threads</p>
+        </button>
+        <button class="set-btn" onclick="startQuiz('cybersecurity')">
+          <h3>Cybersecurity & Web</h3>
+          <p>10 Questions • Encryption, protocols & security</p>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quiz Active View -->
+    <div id="quiz-view" style="display:none;">
+      <div id="progress" class="progress-box"></div>
+      <div id="quiz"></div>
+      <div id="feedback" class="feedback"></div>
+      <button id="next">Next Question →</button>
+      <div id="result" class="result"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-col">
+      <a href="../../index.html" class="brand" style="margin-bottom:12px; display:inline-flex;"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a>
+      <p style="font-size:13px; margin:0;">Independent Android app studio in DG Khan, Pakistan. Building interactive learning utilities for students.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Categories</h4>
+      <ul>
+        <li><a href="../tech/">Tech & Code</a></li>
+        <li><a href="./">Education Hub</a></li>
+        <li><a href="../business/">Business</a></li>
+        <li><a href="../news/">Global News</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Platform Tools</h4>
+      <ul>
+        <li><a href="english.html">Online English Tests</a></li>
+        <li><a href="math.html">Math Practice</a></li>
+        <li><a href="computer.html">Computer Quizzes</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2026 LamaStudio. All rights reserved.</p>
+    <p>Designed with ❤️ for Pakistani Students & Professionals</p>
+  </div>
+</footer>
+
+<script src="../../script.js"></script>
+<script>
+const csData = {
+  dsa: [
+    { q: "What is the worst-case time complexity of binary search?", a: ["O(n)", "O(log n)", "O(n log n)", "O(1)"], c: 1 },
+    { q: "Which data structure operates on a Last-In, First-Out (LIFO) basis?", a: ["Queue", "Stack", "Array", "Linked List"], c: 1 },
+    { q: "What is the time complexity of inserting an element at the end of a dynamic array (amortized)?", a: ["O(1)", "O(n)", "O(log n)", "O(n^2)"], c: 0 },
+    { q: "Which sorting algorithm has the best average-case time complexity of O(n log n)?", a: ["Bubble Sort", "Insertion Sort", "Merge Sort", "Selection Sort"], c: 2 },
+    { q: "In a min-heap, where is the smallest element stored?", a: ["At the root", "At the last leaf", "At a random position", "In the middle node"], c: 0 },
+    { q: "Which traversal method of a binary search tree visits nodes in ascending order?", a: ["Pre-order", "Post-order", "In-order", "Level-order"], c: 2 },
+    { q: "What data structure is typically used to implement Breadth-First Search (BFS) in a graph?", a: ["Stack", "Queue", "Priority Queue", "Set"], c: 1 },
+    { q: "What is the space complexity of a recursive function that makes n recursive calls sequentially?", a: ["O(1)", "O(log n)", "O(n)", "O(n^2)"], c: 2 },
+    { q: "Which of the following data structures allows efficient O(1) average time lookups?", a: ["Linked List", "Hash Table", "Binary Search Tree", "Doubly Linked List"], c: 1 },
+    { q: "What is a graph that contains no cycles called?", a: ["Complete Graph", "Directed Graph", "Acyclic Graph (Tree/Forest)", "Weighted Graph"], c: 2 }
+  ],
+  networking: [
+    { q: "Which layer of the OSI model is responsible for routing and packet forwarding (e.g., IP addresses)?", a: ["Physical Layer", "Data Link Layer", "Network Layer", "Transport Layer"], c: 2 },
+    { q: "What port number does HTTPS default to securely?", a: ["80", "443", "21", "8080"], c: 1 },
+    { q: "Which protocol is connection-oriented and guarantees reliable packet delivery?", a: ["UDP", "IP", "TCP", "ICMP"], c: 2 },
+    { q: "What does DHCP stand for in networking?", a: ["Dynamic Host Configuration Protocol", "Data Hyper Control Port", "Domain Host Control Program", "Direct Hyperlink Connection Protocol"], c: 0 },
+    { q: "Which IP address class is reserved for private local area networks starting with 192.168.x.x?", a: ["Class A", "Class B", "Class C", "Class D"], c: 2 },
+    { q: "What device operates at the Data Link (Layer 2) to filter traffic using MAC addresses?", a: ["Hub", "Router", "Network Switch", "Repeater"], c: 2 },
+    { q: "What is the primary function of DNS?", a: ["Encrypting web packets", "Translating domain names to IP addresses", "Assigning dynamic MAC addresses", "Filtering spam emails"], c: 1 },
+    { q: "Which protocol is used to securely log into remote servers over a network?", a: ["Telnet", "FTP", "SSH", "HTTP"], c: 2 },
+    { q: "How many bits are in an IPv4 address?", a: ["32 bits", "64 bits", "128 bits", "16 bits"], c: 0 },
+    { q: "What does an HTTP 404 status code indicate?", a: ["Unauthorized Access", "Internal Server Error", "Not Found", "Bad Request"], c: 2 }
+  ],
+  os: [
+    { q: "What is the core component of an operating system that manages system resources?", a: ["Shell", "Kernel", "Compiler", "Daemon"], c: 1 },
+    { q: "Which process scheduling algorithm can cause process starvation?", a: ["Round Robin", "First-Come, First-Served", "Shortest Job First (non-preemptive)", "Multi-level Feedback Queue"], c: 2 },
+    { q: "What condition does NOT cause a deadlock?", a: ["Mutual Exclusion", "Hold and Wait", "No Preemption", "Multi-threading"], c: 3 },
+    { q: "What is virtual memory primarily used for?", a: ["Increasing CPU cache speed", "Mapping physical RAM to disk storage to expand usable memory space", "Compressing hard drive files", "Speeding up network latency"], c: 1 },
+    { q: "What is a semaphore used for in operating systems?", a: ["Process synchronization and mutual exclusion", "Accelerating disk I/O reads", "Managing screen resolution", "Allocating network sockets"], c: 0 },
+    { q: "What is the term for a program in execution?", a: ["Thread", "Process", "Job", "Applet"], c: 1 },
+    { q: "Which memory allocation strategy suffers from external fragmentation?", a: ["Paging", "Segmentation", "Virtual Memory", "Cache Memory"], c: 1 },
+    { q: "What is a context switch?", a: ["Switching between dark and light OS themes", "Saving the state of a running process and loading the state of another", "Rebooting the system kernel", "Changing active network adapters"], c: 1 },
+    { q: "What is Thrashing in an operating system?", a: ["CPU running at maximum temperature", "Excessive paging activity leading to severe performance degradation", "Hard drive mechanical failure", "Infinite loop execution in a thread"], c: 1 },
+    { q: "Which scheduling algorithm assigns a fixed time quantum to each process in a cyclic queue?", a: ["First-Come, First-Served", "Shortest Remaining Time", "Round Robin", "Priority Scheduling"], c: 2 }
+  ],
+  cybersecurity: [
+    { q: "What type of malware disguises itself as legitimate software to trick users into installing it?", a: ["Worm", "Trojan Horse", "Ransomware", "Spyware"], c: 1 },
+    { q: "Which cryptographic algorithm is asymmetric?", a: ["AES", "DES", "RSA", "MD5"], c: 2 },
+    { q: "What does CIA triad stand for in information security?", a: ["Confidentiality, Integrity, Availability", "Control, Intelligence, Access", "Certificate, Identification, Authentication", "Cipher, Integration, Application"], c: 0 },
+    { q: "What attack involves an unauthorized intermediary intercepting or altering communications between two parties?", a: ["DDoS Attack", "Man-in-the-Middle (MitM)", "SQL Injection", "Cross-Site Scripting"], c: 1 },
+    { q: "What is SQL Injection used to target?", a: ["Browser cookies", "Backend database queries via user input fields", "DNS servers", "Wireless encryption keys"], c: 1 },
+    { q: "Which protocol is designed to protect passwords by hashing them with a salt?", a: ["Plaintext storage", "Salting & Hashing (e.g., bcrypt)", "Base64 Encoding", "ROT13 Cipher"], c: 1 },
+    { q: "What is a zero-day vulnerability?", a: ["A bug that is fixed within zero seconds", "A software vulnerability unknown to the vendor and unpatched", "An expired security certificate", "A virus that deletes files at midnight"], c: 1 },
+    { q: "What is multi-factor authentication (MFA)?", a: ["Using multiple passwords for one account", "Authentication requiring two or more verification factors from different categories", "Logging in from multiple devices simultaneously", "Changing passwords every day"], c: 1 },
+    { q: "What does a firewall do?", a: ["Extinguishes server room electrical fires", "Monitors and filters incoming/outgoing network traffic based on security rules", "Backs up files automatically", "Speeds up internet connection"], c: 1 },
+    { q: "What is Phishing?", a: ["Catching network packets using Wireshark", "Social engineering attack using deceptive emails to steal credentials", "Cracking Wi-Fi passwords using brute force", "Overloading a web server with traffic"], c: 1 }
+  ]
+};
+
+let currentSet = [];
+let current = 0;
+let score = 0;
+let answered = false;
+let timerInterval = null;
+let secondsElapsed = 0;
+
+const landingView = document.getElementById("landing-view");
+const quizView = document.getElementById("quiz-view");
+const quiz = document.getElementById("quiz");
+const progress = document.getElementById("progress");
+const feedback = document.getElementById("feedback");
+const next = document.getElementById("next");
+const result = document.getElementById("result");
+
+function startQuiz(setName) {
+  currentSet = csData[setName];
+  current = 0;
+  score = 0;
+  answered = false;
+  secondsElapsed = 0;
+  
+  landingView.style.display = "none";
+  quizView.style.display = "block";
+
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    secondsElapsed++;
+    const timerEl = document.getElementById("timer-val");
+    if (timerEl) {
+      const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+      const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+      timerEl.textContent = mins + ":" + secs;
+    }
+  }, 1000);
+
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  next.style.display = "none";
+  feedback.textContent = "";
+  result.innerHTML = "";
+
+  const item = currentSet[current];
+  const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+  const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+
+  progress.innerHTML =
+    "<span>Question " + (current + 1) + " of " + currentSet.length + " | Score: " + score + "</span>" +
+    "<span class='timer-display'>⏱ <span id='timer-val'>" + mins + ":" + secs + "</span></span>";
+
+  quiz.innerHTML = '<div class="question">' + item.q + '</div>';
+
+  item.a.forEach((answer, index) => {
+    const button = document.createElement("button");
+    button.className = "option";
+    button.innerHTML = "<b>" + String.fromCharCode(65 + index) + ")</b> " + answer;
+    button.onclick = () => checkAnswer(index);
+    quiz.appendChild(button);
+  });
+}
+
+function checkAnswer(selected) {
+  if (answered) return;
+  answered = true;
+
+  const correct = currentSet[current].c;
+  const buttons = document.querySelectorAll(".option");
+
+  buttons.forEach((button, index) => {
+    button.disabled = true;
+    if (index === correct) {
+      button.classList.add("correct");
+      button.innerHTML += "  🟢 CORRECT";
+    }
+  });
+
+  if (selected === correct) {
+    score++;
+    feedback.innerHTML = "🟢 Correct!";
+  } else {
+    buttons[selected].classList.add("wrong");
+    buttons[selected].innerHTML += "  🔴 WRONG";
+    feedback.innerHTML = "🔴 Incorrect — the green box shows the correct solution.";
+  }
+
+  const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+  const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+  progress.innerHTML =
+    "<span>Question " + (current + 1) + " of " + currentSet.length + " | Score: " + score + "</span>" +
+    "<span class='timer-display'>⏱ <span id='timer-val'>" + mins + ":" + secs + "</span></span>";
+
+  next.style.display = "block";
+  next.textContent = current === currentSet.length - 1 ? "🏆 Show Final Result" : "Next Question →";
+}
+
+next.onclick = function() {
+  if (current < currentSet.length - 1) {
+    current++;
+    showQuestion();
+  } else {
+    showResult();
+  }
+};
+
+function showResult() {
+  if (timerInterval) clearInterval(timerInterval);
+  quiz.innerHTML = "";
+  feedback.innerHTML = "";
+
+  const percentage = Math.round((score / currentSet.length) * 100);
+  const totalMins = Math.floor(secondsElapsed / 60);
+  const totalSecs = secondsElapsed % 60;
+
+  let grade;
+  if (percentage >= 90) grade = "A* (Systems Architect)";
+  else if (percentage >= 75) grade = "A (Proficient Developer)";
+  else if (percentage >= 50) grade = "B (Competent)";
+  else grade = "Needs Improvement";
+
+  progress

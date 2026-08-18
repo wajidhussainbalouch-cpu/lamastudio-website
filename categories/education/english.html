@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Berlitz English Level Tests - Form 1 & Form 2</title>
+    <title>Berlitz English Level Tests - Form 1, 2 & 3</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -12,6 +12,8 @@
             --card-bg: #ffffff;
             --text-color: #333333;
             --border-color: #dcdde1;
+            --correct-color: #2ecc71;
+            --incorrect-color: #e74c3c;
         }
 
         body {
@@ -24,7 +26,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: var(--card-bg);
             padding: 30px;
@@ -36,7 +38,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 15px;
         }
@@ -50,11 +52,20 @@
             cursor: pointer;
             font-weight: 600;
             transition: background 0.2s;
-            text-decoration: none;
         }
 
         .back-btn:hover {
             background-color: var(--accent-color);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #f1f2f6;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
         }
 
         h1, h2, h3 {
@@ -109,8 +120,9 @@
             display: block;
             margin-bottom: 8px;
             cursor: pointer;
-            padding: 6px 10px;
-            border-radius: 4px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid transparent;
             transition: background 0.1s;
         }
 
@@ -120,6 +132,20 @@
 
         .options input {
             margin-right: 10px;
+        }
+
+        /* Correct and Incorrect styling */
+        label.correct {
+            background-color: rgba(46, 204, 113, 0.2) !important;
+            border-color: var(--correct-color) !important;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        label.incorrect {
+            background-color: rgba(231, 76, 60, 0.2) !important;
+            border-color: var(--incorrect-color) !important;
+            color: #721c24;
         }
 
         .reading-box {
@@ -137,128 +163,171 @@
 <div class="container">
     <div class="nav-header">
         <button class="back-btn" onclick="goToEducation()">← Back to Education</button>
-        <h2>Berlitz English Level Test</h2>
+        <h2>Berlitz English Level Tests</h2>
+    </div>
+
+    <div class="stats-bar">
+        <div>Score: <span id="score">0</span> / <span id="total-questions">12</span></div>
+        <div>Time Elapsed: <span id="timer">00:00</span></div>
     </div>
 
     <div class="tab-container">
         <button class="tab-btn active" onclick="switchTab('form1')">Test Form 1</button>
-        <button class="tab-btn tab-btn-inactive" onclick="switchTab('form2')">Test Form 2</button>
+        <button class="tab-btn" onclick="switchTab('form2')">Test Form 2</button>
+        <button class="tab-btn" onclick="switchTab('form3')">Test Form 3</button>
     </div>
 
-    <!-- TEST FORM 1 -->
+    <!-- ================= TEST FORM 1 ================= -->
     <div id="form1" class="test-section active">
         <h2>Level Test 3 — Test Form 1</h2>
         
-        <h3>Section 1: Listening Comprehension</h3>
-        <div class="question-card">
+        <div class="question-card" data-correct="c">
             <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
             <div class="options">
-                <label><input type="radio" name="f1_q1" value="a"> a) We like it very much.</label>
-                <label><input type="radio" name="f1_q1" value="b"> b) We haven't moved yet.</label>
-                <label><input type="radio" name="f1_q1" value="c"> c) No, we're still looking.</label>
+                <label><input type="radio" name="f1_q1" value="a" onclick="checkAnswer(this, 'c')"> a) We like it very much.</label>
+                <label><input type="radio" name="f1_q1" value="b" onclick="checkAnswer(this, 'c')"> b) We haven't moved yet.</label>
+                <label><input type="radio" name="f1_q1" value="c" onclick="checkAnswer(this, 'c')"> c) No, we're still looking.</label>
             </div>
         </div>
 
-        <div class="question-card">
+        <div class="question-card" data-correct="c">
             <div class="question-title">2. Listen to the speaker, then choose the best response.</div>
             <div class="options">
-                <label><input type="radio" name="f1_q2" value="a"> a) I had the pasta primavera.</label>
-                <label><input type="radio" name="f1_q2" value="b"> b) I had some vegetables with the salmon.</label>
-                <label><input type="radio" name="f1_q2" value="c"> c) The salmon was overcooked and the meal was overpriced.</label>
+                <label><input type="radio" name="f1_q2" value="a" onclick="checkAnswer(this, 'c')"> a) I had the pasta primavera.</label>
+                <label><input type="radio" name="f1_q2" value="b" onclick="checkAnswer(this, 'c')"> b) I had some vegetables with the salmon.</label>
+                <label><input type="radio" name="f1_q2" value="c" onclick="checkAnswer(this, 'c')"> c) The salmon was overcooked and the meal was overpriced.</label>
             </div>
         </div>
 
-        <h3>Section 2: Reading Comprehension & Structure</h3>
-        <div class="question-card">
+        <div class="question-card" data-correct="a">
             <div class="question-title">11. Have you seen Colin ______?</div>
             <div class="options">
-                <label><input type="radio" name="f1_q11" value="a"> a) lately</label>
-                <label><input type="radio" name="f1_q11" value="b"> b) four days ago</label>
-                <label><input type="radio" name="f1_q11" value="c"> c) in a month</label>
+                <label><input type="radio" name="f1_q11" value="a" onclick="checkAnswer(this, 'a')"> a) lately</label>
+                <label><input type="radio" name="f1_q11" value="b" onclick="checkAnswer(this, 'a')"> b) four days ago</label>
+                <label><input type="radio" name="f1_q11" value="c" onclick="checkAnswer(this, 'a')"> c) in a month</label>
             </div>
         </div>
 
-        <div class="question-card">
-            <div class="question-title">12. We have visited this museum three times ______ this year.</div>
+        <div class="question-card" data-correct="b">
+            <div class="question-title">31. Why is Ms. Ramirez writing to Mr. Wilson? (Reading Passage)</div>
             <div class="options">
-                <label><input type="radio" name="f1_q12" value="a"> a) already</label>
-                <label><input type="radio" name="f1_q12" value="b"> b) so far</label>
-                <label><input type="radio" name="f1_q12" value="c"> c) ago</label>
-            </div>
-        </div>
-
-        <div class="question-card">
-            <div class="question-title">14. A: How was Emilio's Café? B: It was ______, we had to wait for more than an hour for a table.</div>
-            <div class="options">
-                <label><input type="radio" name="f1_q14" value="a"> a) so busy</label>
-                <label><input type="radio" name="f1_q14" value="b"> b) busy</label>
-                <label><input type="radio" name="f1_q14" value="c"> c) such busy</label>
-            </div>
-        </div>
-
-        <div class="question-card">
-            <div class="question-title">Reading Passage: Marta Ramirez & Mr. Wilson</div>
-            <div class="reading-box">
-                "Dear Mr. Wilson, It was a pleasure to meet you last week at PC Expo. I would very much like to continue our discussions of your current database systems and the improvements you would like to make to them. I expect to be in New York next week. Could we arrange a time to meet? Best regards, Marta Ramirez"
-            </div>
-            <div class="question-title">31. Why is Ms. Ramirez writing to Mr. Wilson?</div>
-            <div class="options">
-                <label><input type="radio" name="f1_q31" value="a"> a) She wants to make an appointment to visit him.</label>
-                <label><input type="radio" name="f1_q31" value="b"> b) She wants to thank him for coming to the PC Expo.</label>
-                <label><input type="radio" name="f1_q31" value="c"> c) She is sending him the information he requested.</label>
+                <label><input type="radio" name="f1_q31" value="a" onclick="checkAnswer(this, 'b')"> a) She wants to make an appointment to visit him.</label>
+                <label><input type="radio" name="f1_q31" value="b" onclick="checkAnswer(this, 'b')"> b) She wants to thank him for coming to the PC Expo.</label>
+                <label><input type="radio" name="f1_q31" value="c" onclick="checkAnswer(this, 'b')"> c) She is sending him the information he requested.</label>
             </div>
         </div>
     </div>
 
-    <!-- TEST FORM 2 -->
+    <!-- ================= TEST FORM 2 ================= -->
     <div id="form2" class="test-section">
         <h2>Level Test 3 — Test Form 2</h2>
-        
-        <h3>Section 1: Listening Comprehension</h3>
-        <div class="question-card">
+
+        <div class="question-card" data-correct="b">
             <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
             <div class="options">
-                <label><input type="radio" name="f2_q1" value="a"> a) I went to Harvard Law School.</label>
-                <label><input type="radio" name="f2_q1" value="b"> b) I have an MBA and three years of management experience.</label>
-                <label><input type="radio" name="f2_q1" value="c"> c) I enjoy playing tennis, swimming, and reading.</label>
+                <label><input type="radio" name="f2_q1" value="a" onclick="checkAnswer(this, 'b')"> a) I went to Harvard Law School.</label>
+                <label><input type="radio" name="f2_q1" value="b" onclick="checkAnswer(this, 'b')"> b) I have an MBA and three years of management experience.</label>
+                <label><input type="radio" name="f2_q1" value="c" onclick="checkAnswer(this, 'b')"> c) I enjoy playing tennis, swimming, and reading.</label>
             </div>
         </div>
 
-        <h3>Section 2: Reading Comprehension & Structure</h3>
-        <div class="question-card">
+        <div class="question-card" data-correct="b">
             <div class="question-title">11. Ashley has been back at school ______.</div>
             <div class="options">
-                <label><input type="radio" name="f2_q11" value="a"> a) more than two years ago</label>
-                <label><input type="radio" name="f2_q11" value="b"> b) for more than two years</label>
-                <label><input type="radio" name="f2_q11" value="c"> c) since more than two years</label>
+                <label><input type="radio" name="f2_q11" value="a" onclick="checkAnswer(this, 'b')"> a) more than two years ago</label>
+                <label><input type="radio" name="f2_q11" value="b" onclick="checkAnswer(this, 'b')"> b) for more than two years</label>
+                <label><input type="radio" name="f2_q11" value="c" onclick="checkAnswer(this, 'b')"> c) since more than two years</label>
             </div>
         </div>
 
-        <div class="question-card">
-            <div class="question-title">12. How many apartments ______ the Gordons ______ so far?</div>
+        <div class="question-card" data-correct="c">
+            <div class="question-title">31. Which sentence is true? (Larry Gallen Résumé)</div>
             <div class="options">
-                <label><input type="radio" name="f2_q12" value="a"> a) have / looked at</label>
-                <label><input type="radio" name="f2_q12" value="b"> b) do / look at</label>
-                <label><input type="radio" name="f2_q12" value="c"> c) have / been looking at</label>
+                <label><input type="radio" name="f2_q31" value="a" onclick="checkAnswer(this, 'c')"> a) This is a job advertisement.</label>
+                <label><input type="radio" name="f2_q31" value="b" onclick="checkAnswer(this, 'c')"> b) This is a list of Larry Gallen's skills.</label>
+                <label><input type="radio" name="f2_q31" value="c" onclick="checkAnswer(this, 'c')"> c) This is a résumé for Larry Gallen.</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TEST FORM 3 ================= -->
+    <div id="form3" class="test-section">
+        <h2>Level Test 3 — Test Form 3</h2>
+
+        <div class="question-card" data-correct="a">
+            <div class="question-title">1. Listen to the speaker, then choose the best response.</div>
+            <div class="options">
+                <label><input type="radio" name="f3_q1" value="a" onclick="checkAnswer(this, 'a')"> a) Yes, I am. It looks like a great opportunity.</label>
+                <label><input type="radio" name="f3_q1" value="b" onclick="checkAnswer(this, 'a')"> b) I've been a manager for the past 20 years.</label>
+                <label><input type="radio" name="f3_q1" value="c" onclick="checkAnswer(this, 'a')"> c) I have a lot of experience in this field.</label>
             </div>
         </div>
 
-        <div class="question-card">
-            <div class="question-title">Reading Passage: Larry Gallen Résumé</div>
-            <div class="reading-box">
-                "Larry Gallen, 618 W. Brier Place, Chicago, IL 60657. Professional Experience: 1999–present Vice President of Operations, XAct Wireless, Chicago, IL; 1997–1998 Director of Product Development, Zip Multimedia, San Francisco, CA; 1993–1996 Creative Director, ToonTime Animation, San Francisco, CA."
-            </div>
-            <div class="question-title">31. Which sentence is true?</div>
+        <div class="question-card" data-correct="b">
+            <div class="question-title">11. A: Where's Harold? B: He _______.</div>
             <div class="options">
-                <label><input type="radio" name="f2_q31" value="a"> a) This is a job advertisement.</label>
-                <label><input type="radio" name="f2_q31" value="b"> b) This is a list of Larry Gallen's skills.</label>
-                <label><input type="radio" name="f2_q31" value="c"> c) This is a résumé for Larry Gallen.</label>
+                <label><input type="radio" name="f3_q11" value="a" onclick="checkAnswer(this, 'b')"> a) has gone to Berlin</label>
+                <label><input type="radio" name="f3_q11" value="b" onclick="checkAnswer(this, 'b')"> b) has been to Berlin</label>
+                <label><input type="radio" name="f3_q11" value="c" onclick="checkAnswer(this, 'b')"> c) has left</label>
+            </div>
+        </div>
+
+        <div class="question-card" data-correct="a">
+            <div class="question-title">31. What does the family package offer that the holiday package does not offer?</div>
+            <div class="options">
+                <label><input type="radio" name="f3_q31" value="a" onclick="checkAnswer(this, 'a')"> a) ski lessons for all levels</label>
+                <label><input type="radio" name="f3_q31" value="b" onclick="checkAnswer(this, 'a')"> b) ski lessons just for kids</label>
+                <label><input type="radio" name="f3_q31" value="c" onclick="checkAnswer(this, 'a')"> c) ski lessons for beginners</label>
             </div>
         </div>
     </div>
 </div>
 
 <script>
+    // Timer functionality
+    let seconds = 0;
+    let timerInterval = setInterval(() => {
+        seconds++;
+        let mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        let secs = (seconds % 60).toString().padStart(2, '0');
+        document.getElementById('timer').textContent = `${mins}:${secs}`;
+    }, 1000);
+
+    // Track answered questions to prevent multiple score increments per question
+    const answeredQuestions = new Set();
+    let currentScore = 0;
+
+    // Set total questions counter dynamically based on rendered questions
+    const totalQCount = document.querySelectorAll('.question-card').length;
+    document.getElementById('total-questions').textContent = totalQCount;
+
+    function checkAnswer(inputElement, correctAnswer) {
+        const card = inputElement.closest('.question-card');
+        const questionName = inputElement.name;
+        const labels = card.querySelectorAll('label');
+
+        // If this question was already answered, do not re-evaluate score
+        const alreadyAnswered = answeredQuestions.has(questionName);
+
+        labels.forEach(label => {
+            const radio = label.querySelector('input');
+            label.classList.remove('correct', 'incorrect');
+            if (radio.value === correctAnswer) {
+                label.classList.add('correct');
+            } else if (radio.checked) {
+                label.classList.add('incorrect');
+            }
+        });
+
+        if (!alreadyAnswered) {
+            answeredQuestions.add(questionName);
+            if (inputElement.value === correctAnswer) {
+                currentScore++;
+                document.getElementById('score').textContent = currentScore;
+            }
+        }
+    }
+
     function switchTab(formId) {
         document.querySelectorAll('.test-section').forEach(section => {
             section.classList.remove('active');
@@ -272,10 +341,11 @@
     }
 
     function goToEducation() {
-        // Redirects back to the Education category view/page as requested
-        window.location.href = "education.html"; 
+        // Returns directly back to the Education category page as requested
+        window.location.href = "education.html";
     }
 </script>
 
 </body>
-</html>
+                           </html>
+                           

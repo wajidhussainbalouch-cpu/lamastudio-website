@@ -39,8 +39,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--category-color); cursor: pointer; }
 
 .outline-box { background: rgba(23, 78, 166, 0.04); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 12px; }
-.outline-box h4 { margin: 0 0 5px 0; color: var(--text); font-size: 1rem; }
-.outline-box p { margin: 0; font-size: 0.88rem; color: var(--text-muted); }
+.outline-box h4 { margin: 0 0 5px 0; color: var(--text); font-size: 1rem; display: flex; align-items: center; justify-content: space-between; }
+.outline-edit-area { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 0.9rem; margin-top: 8px; resize: vertical; height: 60px; }
+.outline-edit-area:focus { outline: none; border-color: var(--category-color); }
+.hint-badge { background: rgba(23, 78, 166, 0.15); color: var(--category-color); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 15px; display: inline-block; font-weight: 500; }
 </style>
 </head>
 <body style="--category-color: var(--c-education);">
@@ -68,13 +70,13 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
   <div class="tool-card">
     <div class="tool-header">
       <h1>MPhil & PhD Research Assistant</h1>
-      <p>Analyze academic text structure, format citations, generate thesis outlines, and manage supervisor submission protocols.</p>
+      <p>Analyze academic text structure, format citations, generate editable thesis layouts, and manage supervisor submissions.</p>
     </div>
 
     <div class="calc-tabs">
       <button class="tab-btn active" onclick="switchTab('analyzer', event)">Academic Tone & Metrics</button>
       <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
-      <button class="tab-btn" onclick="switchTab('outline', event)">Thesis Outline Generator</button>
+      <button class="tab-btn" onclick="switchTab('outline', event)">Editable Thesis Layout</button>
       <button class="tab-btn" onclick="switchTab('checklist', event)">Submission Checklist</button>
     </div>
 
@@ -87,8 +89,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
         <div class="stat-box"><h3 id="formalScore">Standard</h3><p>Academic Rigor Index</p></div>
       </div>
       <div class="form-group">
-        <label>Paste your abstract, introduction, or literature review draft below:</label>
-        <textarea id="researchText" placeholder="Paste text here to evaluate academic style..." oninput="analyzeResearchText()"></textarea>
+        <label>Demo Research Text Loaded (Feel free to edit or replace with your own draft):</label>
+        <textarea id="researchText" oninput="analyzeResearchText()">This study investigates the integration of deep neural networks within decentralized predictive healthcare frameworks. By utilizing an optimized federated learning architecture, the proposed model successfully preserves patient data privacy while achieving a 94.2% diagnostic accuracy rate across distributed clinical nodes. Experimental results indicate significant reductions in communication overhead compared to centralized baseline models, highlighting a scalable solution for modern medical diagnostics.</textarea>
       </div>
       <button class="btn btn-outline" onclick="clearResearchText()">Clear Text</button>
     </div>
@@ -106,20 +108,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
         <div class="form-group">
           <label>Author Name(s)</label>
-          <input type="text" id="citAuthor" placeholder="e.g., Smith, J. A., & Doe, B.">
+          <input type="text" id="citAuthor" placeholder="e.g., Smith, J. A., & Doe, B." value="Smith, J. A., & Doe, B.">
         </div>
         <div class="form-group">
           <label>Publication Year</label>
-          <input type="text" id="citYear" placeholder="e.g., 2026">
+          <input type="text" id="citYear" placeholder="e.g., 2026" value="2026">
         </div>
       </div>
       <div class="form-group">
         <label>Article / Book Title</label>
-        <input type="text" id="citTitle" placeholder="e.g., Advanced Neural Networks in Healthcare">
+        <input type="text" id="citTitle" placeholder="e.g., Advanced Neural Networks in Healthcare" value="Advanced Neural Networks in Healthcare">
       </div>
       <div class="form-group">
         <label>Source / Journal Name / Publisher</label>
-        <input type="text" id="citSource" placeholder="e.g., Journal of Artificial Intelligence Research">
+        <input type="text" id="citSource" placeholder="e.g., Journal of Artificial Intelligence Research" value="Journal of Artificial Intelligence Research">
       </div>
       <button class="btn" onclick="generateCitation()">Generate Formatted Reference</button>
       
@@ -139,14 +141,15 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
           <option value="medical">Medical / Life Sciences</option>
         </select>
       </div>
-      <div id="outlineContainer" style="margin-top: 20px;"></div>
+      <div class="hint-badge">💡 Tip: Every chapter description box below is fully editable. Customize them to fit your specific research proposal structure!</div>
+      <div id="outlineContainer"></div>
     </div>
 
     <!-- TAB 4: CHECKLIST -->
     <div id="checklistTab" class="calc-section">
       <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential technical checks before sending your manuscript to your supervisor:</p>
       
-      <div class="checklist-item"><input type="checkbox"><span>Run through institutional Plagiarism Scanner (e.g., Turnitin) & ensure similarity is below acceptable threshold (&lt;15%).</span></div>
+      <div class="checklist-item"><input type="checkbox" checked><span>Run through institutional Plagiarism Scanner (e.g., Turnitin) & ensure similarity is below acceptable threshold (&lt;15%).</span></div>
       <div class="checklist-item"><input type="checkbox"><span>Verify all in-text citations match the bibliography list precisely.</span></div>
       <div class="checklist-item"><input type="checkbox"><span>Check all figure captions, table headings, and equation numbers for sequential accuracy.</span></div>
       <div class="checklist-item"><input type="checkbox"><span>Ensure adherence to institutional formatting guidelines (Margins, Spacing, Font family).</span></div>
@@ -219,36 +222,38 @@ function generateOutline() {
 
   if (domain === 'stem') {
     outlineHTML = `
-      <div class="outline-box"><h4>Chapter 1: Introduction</h4><p>Background, Problem Statement, Research Objectives, Scope, and Contributions.</p></div>
-      <div class="outline-box"><h4>Chapter 2: Literature Review</h4><p>State-of-the-art analysis, comparative table of existing algorithms/systems, identification of research gaps.</p></div>
-      <div class="outline-box"><h4>Chapter 3: Methodology / System Architecture</h4><p>Proposed framework design, mathematical formulations, algorithms, and technical workflows.</p></div>
-      <div class="outline-box"><h4>Chapter 4: Implementation & Experimentation</h4><p>Hardware/software setup, dataset descriptions, simulation environments, and execution parameters.</p></div>
-      <div class="outline-box"><h4>Chapter 5: Results & Discussion</h4><p>Performance metrics evaluation, graphs, comparative benchmarking, and threat to validity.</p></div>
-      <div class="outline-box"><h4>Chapter 6: Conclusion & Future Work</h4><p>Summary of findings, core takeaways, and future research directions.</p></div>
+      <div class="outline-box"><h4>Chapter 1: Introduction</h4><textarea class="outline-edit-area">Background, Problem Statement, Research Objectives, Scope, and Contributions.</textarea></div>
+      <div class="outline-box"><h4>Chapter 2: Literature Review</h4><textarea class="outline-edit-area">State-of-the-art analysis, comparative table of existing algorithms, identification of research gaps.</textarea></div>
+      <div class="outline-box"><h4>Chapter 3: Methodology / System Architecture</h4><textarea class="outline-edit-area">Proposed framework design, mathematical formulations, algorithms, and technical workflows.</textarea></div>
+      <div class="outline-box"><h4>Chapter 4: Implementation & Experimentation</h4><textarea class="outline-edit-area">Hardware/software setup, dataset descriptions, simulation environments, and execution parameters.</textarea></div>
+      <div class="outline-box"><h4>Chapter 5: Results & Discussion</h4><textarea class="outline-edit-area">Performance metrics evaluation, graphs, comparative benchmarking, and threat to validity.</textarea></div>
+      <div class="outline-box"><h4>Chapter 6: Conclusion & Future Work</h4><textarea class="outline-edit-area">Summary of findings, core takeaways, and future research directions.</textarea></div>
     `;
   } else if (domain === 'social') {
     outlineHTML = `
-      <div class="outline-box"><h4>Chapter 1: Introduction</h4><p>Context, Significance of the Study, Research Questions, and Hypotheses.</p></div>
-      <div class="outline-box"><h4>Chapter 2: Literature Review</h4><p>Theoretical framework, historical context, prior empirical studies, and conceptual model development.</p></div>
-      <div class="outline-box"><h4>Chapter 3: Research Methodology</h4><p>Research design, sampling techniques, data collection instruments, and statistical analysis tools.</p></div>
-      <div class="outline-box"><h4>Chapter 4: Data Analysis & Empirical Findings</h4><p>Descriptive statistics, hypothesis testing, regression analysis, and qualitative themes.</p></div>
-      <div class="outline-box"><h4>Chapter 5: Discussion</h4><p>Interpretation of results in light of prior theories, policy implications, and practical recommendations.</p></div>
-      <div class="outline-box"><h4>Chapter 6: Conclusion</h4><p>Core contributions, limitations of the study, and recommendations for future scholars.</p></div>
+      <div class="outline-box"><h4>Chapter 1: Introduction</h4><textarea class="outline-edit-area">Context, Significance of the Study, Research Questions, and Hypotheses.</textarea></div>
+      <div class="outline-box"><h4>Chapter 2: Literature Review</h4><textarea class="outline-edit-area">Theoretical framework, historical context, prior empirical studies, and conceptual model development.</textarea></div>
+      <div class="outline-box"><h4>Chapter 3: Research Methodology</h4><textarea class="outline-edit-area">Research design, sampling techniques, data collection instruments, and statistical analysis tools.</textarea></div>
+      <div class="outline-box"><h4>Chapter 4: Data Analysis & Empirical Findings</h4><textarea class="outline-edit-area">Descriptive statistics, hypothesis testing, regression analysis, and qualitative themes.</textarea></div>
+      <div class="outline-box"><h4>Chapter 5: Discussion</h4><textarea class="outline-edit-area">Interpretation of results in light of prior theories, policy implications, and practical recommendations.</textarea></div>
+      <div class="outline-box"><h4>Chapter 6: Conclusion</h4><textarea class="outline-edit-area">Core contributions, limitations of the study, and recommendations for future scholars.</textarea></div>
     `;
   } else {
     outlineHTML = `
-      <div class="outline-box"><h4>Chapter 1: Introduction & Background</h4><p>Clinical/biological relevance, epidemiological background, and clinical problem statement.</p></div>
-      <div class="outline-box"><h4>Chapter 2: Comprehensive Literature Review</h4><p>Pathophysiology, existing clinical guidelines, pharmacological or biological interventions.</p></div>
-      <div class="outline-box"><h4>Chapter 3: Materials & Methods</h4><p>Study design, inclusion/exclusion criteria, ethical approvals, sample sizing, and laboratory protocols.</p></div>
-      <div class="outline-box"><h4>Chapter 4: Results & Observations</h4><p>Clinical trial data, diagnostic metrics, statistical significance, and graphical pathology mapping.</p></div>
-      <div class="outline-box"><h4>Chapter 5: Clinical Discussion</h4><p>Comparison with global clinical trials, limitations, and therapeutic implications.</p></div>
-      <div class="outline-box"><h4>Chapter 6: Summary & Conclusion</h4><p>Final diagnostic takeaways and clinical recommendations.</p></div>
+      <div class="outline-box"><h4>Chapter 1: Introduction & Background</h4><textarea class="outline-edit-area">Clinical/biological relevance, epidemiological background, and clinical problem statement.</textarea></div>
+      <div class="outline-box"><h4>Chapter 2: Comprehensive Literature Review</h4><textarea class="outline-edit-area">Pathophysiology, existing clinical guidelines, pharmacological or biological interventions.</textarea></div>
+      <div class="outline-box"><h4>Chapter 3: Materials & Methods</h4><textarea class="outline-edit-area">Study design, inclusion/exclusion criteria, ethical approvals, sample sizing, and laboratory protocols.</textarea></div>
+      <div class="outline-box"><h4>Chapter 4: Results & Observations</h4><textarea class="outline-edit-area">Clinical trial data, diagnostic metrics, statistical significance, and graphical pathology mapping.</textarea></div>
+      <div class="outline-box"><h4>Chapter 5: Clinical Discussion</h4><textarea class="outline-edit-area">Comparison with global clinical trials, limitations, and therapeutic implications.</textarea></div>
+      <div class="outline-box"><h4>Chapter 6: Summary & Conclusion</h4><textarea class="outline-edit-area">Final diagnostic takeaways and clinical recommendations.</textarea></div>
     `;
   }
   container.innerHTML = outlineHTML;
 }
 
-// Initial call
+// Run initial initializations on page load
+analyzeResearchText();
+generateCitation();
 generateOutline();
 </script>
 </body>

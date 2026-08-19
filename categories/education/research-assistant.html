@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Academic Research Assistant & Paper Generator — LamaStudio</title>
+<title>Gemini Academic Research Assistant & Paper Generator — LamaStudio</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
@@ -23,7 +23,7 @@
 .form-group { margin-bottom: 16px; }
 label { display: block; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted); font-weight: 500; }
 input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; }
-textarea { height: 200px; resize: vertical; }
+textarea { height: 220px; resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--category-color); }
 
 .btn { background: var(--category-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 8px; }
@@ -39,12 +39,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .checklist-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; }
 .checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--category-color); cursor: pointer; }
 
-.hint-badge { background: rgba(23, 78, 166, 0.15); color: var(--category-color); padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 15px; display: block; font-weight: 500; }
+.hint-box { background: rgba(23, 78, 166, 0.08); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
 
 /* Print Styles for Hard / Soft PDF Copy Generation */
 @media print {
   body { background: #fff !important; color: #000 !important; }
-  .site-header, .calc-tabs, .btn, .hint-badge, .tool-header p { display: none !important; }
+  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .api-config-panel { display: none !important; }
   .tool-card { border: none; box-shadow: none; padding: 0; background: #fff !important; }
   .calc-section { display: block !important; }
   textarea, input { border: none !important; background: transparent !important; color: #000 !important; font-size: 12pt !important; resize: none; }
@@ -75,45 +75,56 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 <main class="util-container">
   <div class="tool-card">
     <div class="tool-header">
-      <h1>Academic Research Assistant & Paper Generator</h1>
-      <p>Draft research papers by topic, format academic references, check tone, and print or save soft copies for your supervisor.</p>
+      <h1>Gemini Academic Research Assistant</h1>
+      <p>Universal paper generator and study utility designed for undergraduate, master's, and doctoral research students.</p>
+    </div>
+
+    <!-- API Configuration Panel -->
+    <div class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key (Required for AI generation)</label>
+        <a href="https://aistudio.google.com/" target="_blank" style="font-size: 0.85rem; color: var(--category-color); text-decoration: underline;">Get free API key</a>
+      </div>
+      <input type="password" id="geminiApiKey" placeholder="Paste your AI Studio API key here..." style="font-family: monospace;">
     </div>
 
     <div class="calc-tabs">
-      <button class="tab-btn active" onclick="switchTab('generator', event)">Paper Generator & Editor</button>
+      <button class="tab-btn active" onclick="switchTab('generator', event)">AI Paper Generator</button>
       <button class="tab-btn" onclick="switchTab('analyzer', event)">Tone & Word Metrics</button>
       <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
-      <button class="tab-btn" onclick="switchTab('checklist', event)">Submission Checklist</button>
+      <button class="tab-btn" onclick="switchTab('checklist', event)">Supervisor Checklist</button>
     </div>
 
-    <!-- TAB 1: PAPER GENERATOR & EDITOR -->
+    <!-- TAB 1: PAPER GENERATOR -->
     <div id="generatorTab" class="calc-section active">
-      <span class="hint-badge">💡 Enter your topic and select your study section below. Once you refine your text, click <strong>"Print / Save as PDF / Word Copy"</strong> at the bottom to export your work!</span>
+      <div class="hint-box">
+        <strong>How to use:</strong> Enter any study topic, choose the paper section you want to draft, and click <strong>"Generate with Gemini AI"</strong>. You can edit the text directly in the box below, then click <strong>"Print / Save as PDF / Word Copy"</strong> to export your formal document.
+      </div>
       
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
         <div class="form-group">
-          <label>Research Topic / Title</label>
-          <input type="text" id="paperTopic" placeholder="e.g., Impact of Artificial Intelligence on Higher Education" value="Impact of Artificial Intelligence on Higher Education">
+          <label>Research Topic / Paper Title</label>
+          <input type="text" id="paperTopic" placeholder="e.g., Impact of Renewable Energy on Global Economies" value="Impact of Renewable Energy on Global Economies">
         </div>
         <div class="form-group">
-          <label>Select Section to Draft</label>
-          <select id="paperSection" onchange="generatePaperDraft()">
-            <option value="abstract">Abstract & Keywords</option>
-            <option value="intro">Chapter 1: Introduction</option>
-            <option value="lit">Chapter 2: Literature Review</option>
-            <option value="method">Chapter 3: Methodology</option>
-            <option value="conclusion">Chapter 5: Conclusion & Recommendations</option>
+          <label>Select Paper Section</label>
+          <select id="paperSection">
+            <option value="Abstract">Abstract & Keywords</option>
+            <option value="Introduction">1. Introduction & Background</option>
+            <option value="Literature Review">2. Literature Review Framework</option>
+            <option value="Methodology">3. Methodology & Approach</option>
+            <option value="Conclusion">5. Conclusion & Recommendations</option>
           </select>
         </div>
       </div>
 
       <div class="form-group" style="margin-top: 10px;">
-        <label>Editable Research Content (Modify freely before exporting):</label>
-        <textarea id="paperContent" style="height: 280px;"></textarea>
+        <label>Generated Content (Fully Editable before printing):</label>
+        <textarea id="paperContent" placeholder="Click generate to create text or type manually..."></textarea>
       </div>
 
       <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
-        <button class="btn" onclick="generatePaperDraft()">🔄 Regenerate Template</button>
+        <button class="btn" onclick="callGeminiAPI()">✨ Generate with Gemini AI</button>
         <button class="btn btn-success" onclick="exportToPrint()">🖨️ Print / Save as PDF or Word Copy</button>
       </div>
     </div>
@@ -191,24 +202,43 @@ function switchTab(tabName, evt) {
   evt.currentTarget.classList.add('active');
 }
 
-function generatePaperDraft() {
-  const topic = document.getElementById('paperTopic').value || "Your Research Topic";
+async function callGeminiAPI() {
+  const apiKey = document.getElementById('geminiApiKey').value.trim();
+  const topic = document.getElementById('paperTopic').value.trim();
   const section = document.getElementById('paperSection').value;
-  let draftText = "";
+  const outputBox = document.getElementById('paperContent');
 
-  if (section === 'abstract') {
-    draftText = `ABSTRACT\n\nBackground: This research explores the core dynamics of ${topic} within contemporary educational systems.\n\nObjective: To examine systemic impacts, evaluate performance outcomes, and establish strategic frameworks for future development.\n\nMethodology: A mixed-methods evaluative approach was utilized, gathering analytical data across representative sample groups.\n\nConclusion: Findings indicate substantial operational enhancements, offering actionable insights for academics and institutional leaders.\n\nKeywords: ${topic}; Educational Frameworks; Analytical Evaluation; Academic Research.`;
-  } else if (section === 'intro') {
-    draftText = `CHAPTER 1: INTRODUCTION\n\n1.1 Background\nThe continuous evolution of academic standards has highlighted the critical importance of ${topic}. As educational models transition toward modern methodologies, addressing structural challenges becomes paramount.\n\n1.2 Problem Statement\nDespite widespread adoption, current approaches regarding ${topic} face persistent constraints in adaptability, standardization, and resource allocation.\n\n1.3 Research Objectives\n- To investigate the underlying factors influencing ${topic}.\n- To propose an updated framework ensuring operational efficiency.\n- To evaluate the proposed metrics through formal academic analysis.`;
-  } else if (section === 'lit') {
-    draftText = `CHAPTER 2: LITERATURE REVIEW\n\n2.1 Theoretical Foundations\nEarly scholarship surrounding ${topic} primarily focused on foundational definitions and baseline observations, laying the groundwork for contemporary models.\n\n2.2 Evolution of Prior Frameworks\nRecent studies have expanded upon earlier assumptions, introducing advanced metrics and cross-disciplinary analyses.\n\n2.3 Identification of Research Gaps\nWhile extensive theoretical work exists, limited empirical validation has been performed in real-world educational ecosystems, presenting the core rationale for the present study.`;
-  } else if (section === 'method') {
-    draftText = `CHAPTER 3: METHODOLOGY\n\n3.1 Research Design\nThis study implements a structured research design combining qualitative insights with quantitative evaluations to assess ${topic} accurately.\n\n3.2 Data Collection Protocols\nData was sourced via verified institutional repositories, surveys, and controlled observational testing.\n\n3.3 Analytical Tools\nStatistical and qualitative evaluation methods were applied to process findings and verify hypothesis validity.`;
-  } else {
-    draftText = `CHAPTER 5: CONCLUSION & RECOMMENDATIONS\n\n5.1 Summary of Findings\nThe investigation into ${topic} successfully validated primary research objectives, confirming significant correlations between optimized frameworks and performance outcomes.\n\n5.2 Practical Recommendations\nInstitutions should adopt structured protocols to integrate these findings seamlessly into ongoing curricula.\n\n5.3 Future Scope\nFuture scholars are encouraged to expand sample sizes and explore broader demographic applications of ${topic}.`;
+  if (!apiKey) {
+    alert("Please enter your Gemini API Key in the configuration box above first.");
+    return;
+  }
+  if (!topic) {
+    alert("Please enter a research topic.");
+    return;
   }
 
-  document.getElementById('paperContent').value = draftText;
+  outputBox.value = "Generating academic draft using Gemini AI...";
+
+  const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      outputBox.value = data.candidates[0].content.parts[0].text;
+    } else {
+      outputBox.value = "Error generating content. Please check your API key and try again.";
+    }
+  } catch (err) {
+    outputBox.value = "Network error or invalid API key. Please verify your connection.";
+  }
 }
 
 function exportToPrint() {
@@ -259,7 +289,6 @@ function generateCitation() {
 // Initial triggers
 analyzeResearchText();
 generateCitation();
-generatePaperDraft();
 </script>
 </body>
 </html>

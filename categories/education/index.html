@@ -30,6 +30,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .btn:hover { opacity: 0.9; }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-success { background: #10b981; color: #fff; }
+.btn-secondary { background: #3b82f6; color: #fff; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .stat-box { background: rgba(23, 78, 166, 0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; }
@@ -41,10 +42,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
 .hint-box { background: rgba(23, 78, 166, 0.08); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
 
+/* Result Card Container Styles */
+#resultsContainer { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+.result-card-item { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
+.result-card-item h4 { margin: 0 0 6px 0; color: var(--category-color); font-size: 1.05rem; }
+.result-card-item p { margin: 0; font-size: 0.9rem; color: var(--text-muted); white-space: pre-wrap; }
+
 /* Print Styles for Hard / Soft PDF Copy Generation */
 @media print {
   body { background: #fff !important; color: #000 !important; }
-  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .mode-selector-panel, .api-config-panel { display: none !important; }
+  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .mode-selector-panel, .api-config-panel, #resultsContainer { display: none !important; }
   .tool-card { border: none; box-shadow: none; padding: 0; background: #fff !important; }
   .calc-section { display: block !important; }
   textarea, input { border: none !important; background: transparent !important; color: #000 !important; font-size: 12pt !important; resize: none; }
@@ -54,7 +61,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 <body style="--category-color: var(--c-education);">
 
 <header class="site-header">
-  <div class="util-row" style="width: 100%; display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 0 1rem;">
+  <div class="util-row" style="width: 100%; display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 0.8rem 1rem;">
     <div style="display: flex; align-items: center; gap: 1rem;">
       <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
       <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education Hub</small></span></a>
@@ -65,10 +72,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       </button>
     </div>
   </div>
-  <div class="category-strip">
-    <div class="category-track" role="tablist">
-      <a href="index.html" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>← Back to Education Hub</a>
-    </div>
+  
+  <!-- Back Button positioned on the left side under the LamaStudio brand name -->
+  <div style="max-width: 1280px; margin: 0 auto; padding: 0 1rem 0.8rem 1rem;">
+    <a href="index.html" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none; background: rgba(23, 78, 166, 0.08); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border);">
+      ← Back to Education Hub
+    </a>
   </div>
 </header>
 
@@ -85,7 +94,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       <button class="btn btn-outline" id="manualModeBtn" onclick="setWorkingMode('manual')" style="justify-content: center;">✍️ Mode: Manual Writing (No AI)</button>
     </div>
 
-    <!-- API CONFIGURATION PANEL (Only shown in AI Mode) -->
+    <!-- API CONFIGURATION PANEL -->
     <div id="apiConfigPanel" class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key (Supports AQ. or AIza keys)</label>
@@ -104,7 +113,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
     <!-- TAB 1: PAPER GENERATOR -->
     <div id="generatorTab" class="calc-section active">
       <div class="hint-box" id="instructionBox">
-        <strong>AI Mode Active:</strong> Enter your topic, select a section, and click <strong>"Generate Section with AI"</strong>. Afterward, review and edit your document freely before exporting.
+        <strong>AI Mode Active:</strong> Enter your topic, select a section, and click <strong>"Generate Section with AI"</strong>. Review and edit freely before exporting.
       </div>
       
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
@@ -131,7 +140,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
       <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
         <button class="btn" id="generateActionBtn" onclick="handlePrimaryAction()">✨ Generate Section with AI</button>
+        <button class="btn btn-secondary" onclick="createResultCard()">➕ Create Result Card</button>
         <button class="btn btn-success" onclick="exportToPrint()">🖨️ Print / Save as PDF or Word Copy</button>
+      </div>
+
+      <!-- Result Cards Collection Section -->
+      <div style="margin-top: 25px;">
+        <label style="font-weight: 600; color: var(--text); margin-bottom: 10px;">Saved Result Cards Snapshot:</label>
+        <div id="resultsContainer">
+          <p id="noResultsMsg" style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No result cards created yet. Click "Create Result Card" to snapshot your content here.</p>
+        </div>
       </div>
     </div>
 
@@ -229,7 +247,7 @@ function setWorkingMode(mode) {
     apiPanel.style.display = 'none';
     aiBtn.className = 'btn btn-outline';
     manualBtn.className = 'btn';
-    actionBtn.style.display = 'none'; // hide generate button for pure manual entry
+    actionBtn.style.display = 'none';
     instructionBox.innerHTML = '<strong>Manual Mode Active:</strong> Type or paste your research notes, chapters, and thoughts directly into the text box below without AI assistance.';
   }
 }
@@ -259,15 +277,13 @@ async function callGeminiAPI() {
 
   const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
 
-  // Passing the key securely as a URL parameter to completely bypass browser CORS header blocks
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+  // Using the up-to-date gemini-3.7-flash model endpoint
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
       })
@@ -284,6 +300,30 @@ async function callGeminiAPI() {
   } catch (err) {
     outputBox.value = "Network error or invalid connection. Please check your internet.";
   }
+}
+
+function createResultCard() {
+  const section = document.getElementById('paperSection').value;
+  const content = document.getElementById('paperContent').value.trim();
+  const container = document.getElementById('resultsContainer');
+  const noResultsMsg = document.getElementById('noResultsMsg');
+
+  if (!content) {
+    alert("There is no content to create a result card from.");
+    return;
+  }
+
+  if (noResultsMsg) {
+    noResultsMsg.remove();
+  }
+
+  const card = document.createElement('div');
+  card.className = 'result-card-item';
+  card.innerHTML = `
+    <h4>📑 Section Snapshot: ${section}</h4>
+    <p>${content.length > 250 ? content.substring(0, 250) + '...' : content}</p>
+  `;
+  container.prepend(card);
 }
 
 function exportToPrint() {
@@ -331,7 +371,6 @@ function generateCitation() {
   document.getElementById('citOutput').value = formatted;
 }
 
-// Initial triggers
 analyzeResearchText();
 generateCitation();
 </script>

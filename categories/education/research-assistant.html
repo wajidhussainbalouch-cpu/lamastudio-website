@@ -37,6 +37,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
 .checklist-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; }
 .checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--category-color); cursor: pointer; }
+
+.outline-box { background: rgba(23, 78, 166, 0.04); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 12px; }
+.outline-box h4 { margin: 0 0 5px 0; color: var(--text); font-size: 1rem; }
+.outline-box p { margin: 0; font-size: 0.88rem; color: var(--text-muted); }
 </style>
 </head>
 <body style="--category-color: var(--c-education);">
@@ -64,13 +68,14 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
   <div class="tool-card">
     <div class="tool-header">
       <h1>MPhil & PhD Research Assistant</h1>
-      <p>Analyze academic writing tone, generate clean reference citations, and manage thesis defense checklists.</p>
+      <p>Analyze academic text structure, format citations, generate thesis outlines, and manage supervisor submission protocols.</p>
     </div>
 
     <div class="calc-tabs">
       <button class="tab-btn active" onclick="switchTab('analyzer', event)">Academic Tone & Metrics</button>
       <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
-      <button class="tab-btn" onclick="switchTab('checklist', event)">Supervisor Submission Checklist</button>
+      <button class="tab-btn" onclick="switchTab('outline', event)">Thesis Outline Generator</button>
+      <button class="tab-btn" onclick="switchTab('checklist', event)">Submission Checklist</button>
     </div>
 
     <!-- TAB 1: ANALYZER -->
@@ -79,7 +84,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
         <div class="stat-box"><h3 id="wordCount">0</h3><p>Word Count</p></div>
         <div class="stat-box"><h3 id="sentenceCount">0</h3><p>Sentences</p></div>
         <div class="stat-box"><h3 id="avgSentenceLen">0</h3><p>Avg Words / Sentence</p></div>
-        <div class="stat-box"><h3 id="formalScore">High</h3><p>Academic Rigor Index</p></div>
+        <div class="stat-box"><h3 id="formalScore">Standard</h3><p>Academic Rigor Index</p></div>
       </div>
       <div class="form-group">
         <label>Paste your abstract, introduction, or literature review draft below:</label>
@@ -88,7 +93,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       <button class="btn btn-outline" onclick="clearResearchText()">Clear Text</button>
     </div>
 
-    <!-- TAB 2: CITATION FORMATTER -->
+    <!-- TAB 2: CITATIONS -->
     <div id="citationsTab" class="calc-section">
       <div class="form-group">
         <label>Citation Style</label>
@@ -105,7 +110,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
         </div>
         <div class="form-group">
           <label>Publication Year</label>
-          <input type="text" id="citYear" placeholder="e.g., 2025">
+          <input type="text" id="citYear" placeholder="e.g., 2026">
         </div>
       </div>
       <div class="form-group">
@@ -124,16 +129,29 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       </div>
     </div>
 
-    <!-- TAB 3: CHECKLIST -->
+    <!-- TAB 3: THESIS OUTLINE -->
+    <div id="outlineTab" class="calc-section">
+      <div class="form-group">
+        <label>Select Research Domain / Discipline</label>
+        <select id="domainSelect" onchange="generateOutline()">
+          <option value="stem">STEM / Computer Science / Engineering</option>
+          <option value="social">Social Sciences / Management / Humanities</option>
+          <option value="medical">Medical / Life Sciences</option>
+        </select>
+      </div>
+      <div id="outlineContainer" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- TAB 4: CHECKLIST -->
     <div id="checklistTab" class="calc-section">
       <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential technical checks before sending your manuscript to your supervisor:</p>
       
-      <div class="checklist-item"><input type="checkbox"><span>Run through a trusted institutional Plagiarism Scanner (e.g., Turnitin) & ensure similarity is below acceptable threshold (&lt;15%).</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Verify all in-text citations have a matching entry in the References/Bibliography list.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Run through institutional Plagiarism Scanner (e.g., Turnitin) & ensure similarity is below acceptable threshold (&lt;15%).</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Verify all in-text citations match the bibliography list precisely.</span></div>
       <div class="checklist-item"><input type="checkbox"><span>Check all figure captions, table headings, and equation numbers for sequential accuracy.</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Ensure adherence to institutional formatting guidelines (Font size, Margins, Line spacing).</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Run grammar and spelling diagnostics (Check for passive voice overuse or colloquial phrasing).</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Confirm Abstract concisely summarizes objective, methodology, key findings, and conclusion.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Ensure adherence to institutional formatting guidelines (Margins, Spacing, Font family).</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Run grammar diagnostics and check for passive voice overuse.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Confirm Abstract covers objective, methodology, key findings, and conclusion.</span></div>
     </div>
 
   </div>
@@ -146,6 +164,7 @@ function switchTab(tabName, evt) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(tabName + 'Tab').classList.add('active');
   evt.currentTarget.classList.add('active');
+  if(tabName === 'outline') generateOutline();
 }
 
 function analyzeResearchText() {
@@ -192,6 +211,45 @@ function generateCitation() {
 
   document.getElementById('citOutput').value = formatted;
 }
+
+function generateOutline() {
+  const domain = document.getElementById('domainSelect').value;
+  const container = document.getElementById('outlineContainer');
+  let outlineHTML = '';
+
+  if (domain === 'stem') {
+    outlineHTML = `
+      <div class="outline-box"><h4>Chapter 1: Introduction</h4><p>Background, Problem Statement, Research Objectives, Scope, and Contributions.</p></div>
+      <div class="outline-box"><h4>Chapter 2: Literature Review</h4><p>State-of-the-art analysis, comparative table of existing algorithms/systems, identification of research gaps.</p></div>
+      <div class="outline-box"><h4>Chapter 3: Methodology / System Architecture</h4><p>Proposed framework design, mathematical formulations, algorithms, and technical workflows.</p></div>
+      <div class="outline-box"><h4>Chapter 4: Implementation & Experimentation</h4><p>Hardware/software setup, dataset descriptions, simulation environments, and execution parameters.</p></div>
+      <div class="outline-box"><h4>Chapter 5: Results & Discussion</h4><p>Performance metrics evaluation, graphs, comparative benchmarking, and threat to validity.</p></div>
+      <div class="outline-box"><h4>Chapter 6: Conclusion & Future Work</h4><p>Summary of findings, core takeaways, and future research directions.</p></div>
+    `;
+  } else if (domain === 'social') {
+    outlineHTML = `
+      <div class="outline-box"><h4>Chapter 1: Introduction</h4><p>Context, Significance of the Study, Research Questions, and Hypotheses.</p></div>
+      <div class="outline-box"><h4>Chapter 2: Literature Review</h4><p>Theoretical framework, historical context, prior empirical studies, and conceptual model development.</p></div>
+      <div class="outline-box"><h4>Chapter 3: Research Methodology</h4><p>Research design, sampling techniques, data collection instruments, and statistical analysis tools.</p></div>
+      <div class="outline-box"><h4>Chapter 4: Data Analysis & Empirical Findings</h4><p>Descriptive statistics, hypothesis testing, regression analysis, and qualitative themes.</p></div>
+      <div class="outline-box"><h4>Chapter 5: Discussion</h4><p>Interpretation of results in light of prior theories, policy implications, and practical recommendations.</p></div>
+      <div class="outline-box"><h4>Chapter 6: Conclusion</h4><p>Core contributions, limitations of the study, and recommendations for future scholars.</p></div>
+    `;
+  } else {
+    outlineHTML = `
+      <div class="outline-box"><h4>Chapter 1: Introduction & Background</h4><p>Clinical/biological relevance, epidemiological background, and clinical problem statement.</p></div>
+      <div class="outline-box"><h4>Chapter 2: Comprehensive Literature Review</h4><p>Pathophysiology, existing clinical guidelines, pharmacological or biological interventions.</p></div>
+      <div class="outline-box"><h4>Chapter 3: Materials & Methods</h4><p>Study design, inclusion/exclusion criteria, ethical approvals, sample sizing, and laboratory protocols.</p></div>
+      <div class="outline-box"><h4>Chapter 4: Results & Observations</h4><p>Clinical trial data, diagnostic metrics, statistical significance, and graphical pathology mapping.</p></div>
+      <div class="outline-box"><h4>Chapter 5: Clinical Discussion</h4><p>Comparison with global clinical trials, limitations, and therapeutic implications.</p></div>
+      <div class="outline-box"><h4>Chapter 6: Summary & Conclusion</h4><p>Final diagnostic takeaways and clinical recommendations.</p></div>
+    `;
+  }
+  container.innerHTML = outlineHTML;
+}
+
+// Initial call
+generateOutline();
 </script>
 </body>
 </html>

@@ -1,15 +1,12 @@
 /**
- * AskLama Global AI Agent & Walking Robotic Mascot
- * Automatically injects the assistant widget and walking character into any page.
+ * AskLama Global AI Agent, Walking Robotic Mascot, FAQs & Interaction Tracker
  */
 (function() {
-  // CONFIGURATION: Asset paths (Make sure walking-lama.gif is an animated file for moving legs!)
   const CONFIG = {
     avatarImg: '/ask-lama-3d.png',
-    walkingImg: '/walking-lama.gif' // Use a .gif file here so the legs animate and move
+    walkingImg: '/walking-lama.gif'
   };
 
-  // Combined HTML & CSS Template
   const widgetHTML = `
   <!-- Walking Robotic Mascot -->
   <div id="walkingLamaContainer">
@@ -18,28 +15,32 @@
 
   <!-- Chat Widget Container -->
   <div id="askLamaWidget">
-    <!-- Trigger Button with Picture and Text -->
     <button id="lamaToggleBtn" onclick="toggleLamaChat()">
       <img src="${CONFIG.avatarImg}" alt="Ask Lama">
       <span>Ask Lama</span>
     </button>
 
-    <!-- Chat Box Window -->
     <div id="lamaChatBox">
       <!-- Header -->
       <div class="lama-header">
         <img src="${CONFIG.avatarImg}" alt="AskLama AI" class="lama-avatar">
         <div>
           <strong style="font-size: 1.05rem;">AskLama AI</strong>
-          <div style="font-size: 0.75rem; opacity: 0.9;">Your Site Assistant</div>
+          <div style="font-size: 0.75rem; opacity: 0.9;" id="lamaUserStatus">Visitor #Connected</div>
         </div>
         <button onclick="toggleLamaChat()" class="lama-close-btn">&times;</button>
       </div>
 
-      <!-- Messages Area -->
+      <!-- Messages Area with Quick FAQs -->
       <div id="lamaMessages">
         <div class="lama-bubble lama-incoming">
-          👋 Hello! I'm AskLama. Ask me anything about LamaStudio's tools or pages!
+          👋 Hello! I'm AskLama. How can I help you today?
+        </div>
+        <!-- FAQ Quick Action Buttons -->
+        <div class="lama-faqs">
+          <button onclick="askLamaFAQ('What tools does LamaStudio offer?')">🛠️ What tools do you offer?</button>
+          <button onclick="askLamaFAQ('How do I contact support?')">📞 Contact Support</button>
+          <button onclick="askLamaFAQ('Is LamaStudio free to use?')">💡 Is it free?</button>
         </div>
       </div>
 
@@ -53,7 +54,6 @@
 
   <!-- Stylesheet -->
   <style>
-    /* Walking Mascot Styles */
     #walkingLamaContainer {
       position: fixed;
       bottom: 0;
@@ -75,7 +75,6 @@
       100% { left: -120px; transform: scaleX(1); }
     }
 
-    /* Chat Widget Styles */
     #askLamaWidget {
       position: fixed;
       bottom: 20px;
@@ -83,8 +82,6 @@
       z-index: 9999;
       font-family: 'Inter', sans-serif;
     }
-    
-    /* Redesigned Floating Button with Image & Text */
     #lamaToggleBtn {
       background: var(--category-color, #174ea6);
       color: #fff;
@@ -121,7 +118,7 @@
     #lamaChatBox {
       display: none;
       width: 340px;
-      height: 460px;
+      height: 480px;
       background: var(--surface, #1e1e1e);
       border: 1px solid var(--border, #333);
       border-radius: 16px;
@@ -159,6 +156,7 @@
       opacity: 0.7;
     }
     .lama-close-btn:hover { opacity: 1; }
+    
     #lamaMessages {
       flex: 1;
       padding: 12px;
@@ -186,6 +184,31 @@
       border-top-right-radius: 4px;
       align-self: flex-end;
     }
+
+    /* FAQ Buttons Layout */
+    .lama-faqs {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      align-self: flex-start;
+      width: 100%;
+    }
+    .lama-faqs button {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text, #fff);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .lama-faqs button:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
     .lama-input-bar {
       padding: 10px;
       border-top: 1px solid var(--border, #333);
@@ -218,25 +241,34 @@
     }
   </style>`;
 
-  // Inject elements on page load
   document.addEventListener("DOMContentLoaded", () => {
     const container = document.createElement('div');
     container.innerHTML = widgetHTML;
     document.body.appendChild(container);
+    initializeUserSession();
   });
 })();
 
 // =========================================
-// Functional Logic
+// Functional Logic & Interaction Tracking
 // =========================================
+function initializeUserSession() {
+  let userId = localStorage.getItem('lama_user_id');
+  if (!userId) {
+    userId = 'visitor_' + Math.random().toString(36).substring(2, 9);
+    localStorage.setItem('lama_user_id', userId);
+  }
+  const statusEl = document.getElementById('lamaUserStatus');
+  if (statusEl) {
+    statusEl.textContent = `ID: ${userId.substring(0, 10)}`;
+  }
+}
+
 function toggleLamaChat() {
   const box = document.getElementById('lamaChatBox');
-  
   if (box.style.display === 'none' || box.style.display === '') {
     box.style.display = 'flex';
     document.getElementById('lamaInput').focus();
-    
-    // Smoothly scroll down the page so the user's attention focuses on the active chat widget
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   } else {
     box.style.display = 'none';
@@ -247,12 +279,21 @@ function handleLamaEnter(e) {
   if (e.key === 'Enter') sendToAskLama();
 }
 
+function askLamaFAQ(question) {
+  document.getElementById('lamaInput').value = question;
+  sendToAskLama();
+}
+
 async function sendToAskLama() {
   const input = document.getElementById('lamaInput');
   const messages = document.getElementById('lamaMessages');
   const query = input.value.trim();
 
   if (!query) return;
+
+  // Track Interaction locally or send to backend analytics
+  const userId = localStorage.getItem('lama_user_id') || 'guest';
+  trackInteractionAnalytics(userId, query);
 
   // User Bubble
   const userBubble = document.createElement('div');
@@ -273,7 +314,7 @@ async function sendToAskLama() {
 
   const websiteContext = `
     You are "AskLama", the official AI assistant for LamaStudio (lamastudio.pk).
-    Your job is to help users navigate tools, research generators, and educational pages. Keep responses concise and friendly.
+    Your job is to help users navigate tools, FAQs, research generators, and resources. Keep responses concise and friendly.
   `;
 
   try {
@@ -308,4 +349,20 @@ async function sendToAskLama() {
     messages.appendChild(errBubble);
     messages.scrollTop = messages.scrollHeight;
   }
+}
+
+// Log interaction metrics
+function trackInteractionAnalytics(userId, query) {
+  // Increments local count for metrics visualization
+  let totalInteractions = parseInt(localStorage.getItem('lama_total_interactions') || '0', 10) + 1;
+  localStorage.setItem('lama_total_interactions', totalInteractions);
+
+  // Optional: Send data to your backend endpoint if you've set up an analytics route
+  fetch('/api/track-interaction', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, query, count: totalInteractions, timestamp: new Date().toISOString() })
+  }).catch(() => {
+    // Fails silently if backend analytics route isn't set up yet
+  });
 }

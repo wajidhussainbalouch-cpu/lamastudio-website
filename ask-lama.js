@@ -3,13 +3,13 @@
  * Automatically injects the assistant widget and walking character into any page.
  */
 (function() {
-  // CONFIGURATION: Asset paths
+  // CONFIGURATION: Asset paths (Make sure walking-lama.gif is an animated file for moving legs!)
   const CONFIG = {
     avatarImg: '/ask-lama-3d.png',
-    walkingImg: '/walking-lama.png'
+    walkingImg: '/walking-lama.gif' // Use a .gif file here so the legs animate and move
   };
 
-  // 1. Combined HTML & CSS Template
+  // Combined HTML & CSS Template
   const widgetHTML = `
   <!-- Walking Robotic Mascot -->
   <div id="walkingLamaContainer">
@@ -18,8 +18,11 @@
 
   <!-- Chat Widget Container -->
   <div id="askLamaWidget">
-    <!-- Trigger Button -->
-    <button id="lamaToggleBtn" onclick="toggleLamaChat()">lama</button>
+    <!-- Trigger Button with Picture and Text -->
+    <button id="lamaToggleBtn" onclick="toggleLamaChat()">
+      <img src="${CONFIG.avatarImg}" alt="Ask Lama">
+      <span>Ask Lama</span>
+    </button>
 
     <!-- Chat Box Window -->
     <div id="lamaChatBox">
@@ -57,10 +60,10 @@
       left: -120px;
       z-index: 9998;
       pointer-events: none;
-      animation: walkAcross 20s linear infinite;
+      animation: walkAcross 22s linear infinite;
     }
     #walkingLamaImg {
-      width: 85px;
+      width: 95px;
       height: auto;
       filter: drop-shadow(0 5px 8px rgba(0,0,0,0.3));
     }
@@ -80,25 +83,41 @@
       z-index: 9999;
       font-family: 'Inter', sans-serif;
     }
+    
+    /* Redesigned Floating Button with Image & Text */
     #lamaToggleBtn {
       background: var(--category-color, #174ea6);
       color: #fff;
       border: none;
-      width: 60px;
-      height: 60px;
+      width: 75px;
+      height: 75px;
       border-radius: 50%;
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       cursor: pointer;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      font-size: 1.2rem;
+      gap: 2px;
       transition: transform 0.2s;
     }
     #lamaToggleBtn:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
     }
+    #lamaToggleBtn img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+    #lamaToggleBtn span {
+      font-size: 0.62rem;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
     #lamaChatBox {
       display: none;
       width: 340px;
@@ -212,16 +231,15 @@
 // =========================================
 function toggleLamaChat() {
   const box = document.getElementById('lamaChatBox');
-  const btn = document.getElementById('lamaToggleBtn');
+  
   if (box.style.display === 'none' || box.style.display === '') {
     box.style.display = 'flex';
-    btn.innerHTML = '&times;';
-    btn.style.fontSize = '1.6rem';
     document.getElementById('lamaInput').focus();
+    
+    // Smoothly scroll down the page so the user's attention focuses on the active chat widget
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   } else {
     box.style.display = 'none';
-    btn.innerHTML = 'lama';
-    btn.style.fontSize = '1.2rem';
   }
 }
 

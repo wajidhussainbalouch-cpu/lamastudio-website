@@ -23,7 +23,7 @@
 .form-group { margin-bottom: 16px; }
 label { display: block; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted); font-weight: 500; }
 input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; }
-textarea { height: 220px; resize: vertical; }
+textarea { height: 260px; resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--category-color); }
 
 .btn { background: var(--category-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 8px; }
@@ -44,7 +44,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 /* Print Styles for Hard / Soft PDF Copy Generation */
 @media print {
   body { background: #fff !important; color: #000 !important; }
-  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .api-config-panel { display: none !important; }
+  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .mode-selector-panel, .api-config-panel { display: none !important; }
   .tool-card { border: none; box-shadow: none; padding: 0; background: #fff !important; }
   .calc-section { display: block !important; }
   textarea, input { border: none !important; background: transparent !important; color: #000 !important; font-size: 12pt !important; resize: none; }
@@ -75,32 +75,38 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 <main class="util-container">
   <div class="tool-card">
     <div class="tool-header">
-      <h1>Gemini Academic Research Assistant</h1>
-      <p>Universal paper generator and study utility designed for undergraduate, master's, and doctoral research students.</p>
+      <h1>Gemini Academic Research Assistant & Paper Generator</h1>
+      <p>Universal paper generator and study studio designed for undergraduate, master's, and doctoral students.</p>
     </div>
 
-    <!-- API Configuration Panel -->
-    <div class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
+    <!-- WORKING MODE SELECTOR -->
+    <div class="mode-selector-panel" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+      <button class="btn" id="aiModeBtn" onclick="setWorkingMode('ai')" style="justify-content: center;">🤖 Mode: AI-Assisted Generation</button>
+      <button class="btn btn-outline" id="manualModeBtn" onclick="setWorkingMode('manual')" style="justify-content: center;">✍️ Mode: Manual Writing (No AI)</button>
+    </div>
+
+    <!-- API CONFIG PANEL -->
+    <div id="apiConfigPanel" class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key (Required for AI generation)</label>
+        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key (Supports AQ. or AIza keys)</label>
         <a href="https://aistudio.google.com/" target="_blank" style="font-size: 0.85rem; color: var(--category-color); text-decoration: underline;">Get free API key</a>
       </div>
-      <input type="password" id="geminiApiKey" placeholder="Paste your AI Studio API key here..." style="font-family: monospace;">
+      <input type="password" id="geminiApiKey" placeholder="Paste your Google AI Studio API key here..." style="font-family: monospace;">
     </div>
 
     <div class="calc-tabs">
-      <button class="tab-btn active" onclick="switchTab('generator', event)">AI Paper Generator</button>
+      <button class="tab-btn active" onclick="switchTab('generator', event)">Paper Generator & Editor</button>
       <button class="tab-btn" onclick="switchTab('analyzer', event)">Tone & Word Metrics</button>
       <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
       <button class="tab-btn" onclick="switchTab('checklist', event)">Supervisor Checklist</button>
     </div>
 
-    <!-- TAB 1: PAPER GENERATOR -->
+    <!-- TAB 1: GENERATOR -->
     <div id="generatorTab" class="calc-section active">
-      <div class="hint-box">
-        <strong>How to use:</strong> Enter any study topic, choose the paper section you want to draft, and click <strong>"Generate with Gemini AI"</strong>. You can edit the text directly in the box below, then click <strong>"Print / Save as PDF / Word Copy"</strong> to export your formal document.
+      <div class="hint-box" id="instructionBox">
+        <strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Edit text directly in the box below before exporting.
       </div>
-      
+
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
         <div class="form-group">
           <label>Research Topic / Paper Title</label>
@@ -119,12 +125,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       </div>
 
       <div class="form-group" style="margin-top: 10px;">
-        <label>Generated Content (Fully Editable before printing):</label>
-        <textarea id="paperContent" placeholder="Click generate to create text or type manually..."></textarea>
+        <label>Final Document Content (Fully Editable before printing):</label>
+        <textarea id="paperContent" placeholder="Write or generate your research content here..."></textarea>
       </div>
 
       <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
-        <button class="btn" onclick="callGeminiAPI()">✨ Generate with Gemini AI</button>
+        <button class="btn" id="generateActionBtn" onclick="handlePrimaryAction()">✨ Generate Section with AI</button>
         <button class="btn btn-success" onclick="exportToPrint()">🖨️ Print / Save as PDF or Word Copy</button>
       </div>
     </div>
@@ -138,8 +144,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
         <div class="stat-box"><h3 id="formalScore">Standard</h3><p>Academic Rigor Index</p></div>
       </div>
       <div class="form-group">
-        <label>Paste your drafted text below to evaluate academic style:</label>
-        <textarea id="researchText" placeholder="Paste text here..." oninput="analyzeResearchText()">This study investigates the profound integration of emerging technologies within modern academic curricula.</textarea>
+        <label>Paste text below to check academic phrasing and word length:</label>
+        <textarea id="researchText" placeholder="Paste your text here..." oninput="analyzeResearchText()">This study investigates the profound integration of emerging technologies within modern academic curricula.</textarea>
       </div>
       <button class="btn btn-outline" onclick="clearResearchText()">Clear Text</button>
     </div>
@@ -157,20 +163,20 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
         <div class="form-group">
           <label>Author Name(s)</label>
-          <input type="text" id="citAuthor" placeholder="e.g., Smith, J. A." value="Smith, J. A.">
+          <input type="text" id="citAuthor" value="Smith, J. A.">
         </div>
         <div class="form-group">
           <label>Publication Year</label>
-          <input type="text" id="citYear" placeholder="2026" value="2026">
+          <input type="text" id="citYear" value="2026">
         </div>
       </div>
       <div class="form-group">
         <label>Article / Book Title</label>
-        <input type="text" id="citTitle" placeholder="Title" value="Digital Learning Frameworks">
+        <input type="text" id="citTitle" value="Digital Learning Frameworks">
       </div>
       <div class="form-group">
         <label>Source / Journal Name</label>
-        <input type="text" id="citSource" placeholder="Journal" value="Journal of Educational Technology">
+        <input type="text" id="citSource" value="Journal of Educational Technology">
       </div>
       <button class="btn" onclick="generateCitation()">Generate Formatted Reference</button>
       
@@ -182,12 +188,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
     <!-- TAB 4: CHECKLIST -->
     <div id="checklistTab" class="calc-section">
-      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential checks before sending your final paper to your supervisor:</p>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential checks before submitting your final paper to your supervisor:</p>
       
-      <div class="checklist-item"><input type="checkbox"><span>Run through a plagiarism scanner to verify originality and similarity indices.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Run through a plagiarism scanner to verify originality and similarity index.</span></div>
       <div class="checklist-item"><input type="checkbox"><span>Confirm all in-text citations correspond correctly with reference items.</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Verify headings, subheadings, and font styles meet institutional guidelines.</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Check spelling, grammar, and sentence transitions.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Verify headings, subheadings, and formatting match university guidelines.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Check spelling, grammar, punctuation, and smooth paragraph transitions.</span></div>
     </div>
 
   </div>
@@ -195,11 +201,42 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
 <script src="../../script.js"></script>
 <script>
+let currentMode = 'ai';
+
 function switchTab(tabName, evt) {
   document.querySelectorAll('.calc-section').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(tabName + 'Tab').classList.add('active');
   evt.currentTarget.classList.add('active');
+}
+
+function setWorkingMode(mode) {
+  currentMode = mode;
+  const apiPanel = document.getElementById('apiConfigPanel');
+  const aiBtn = document.getElementById('aiModeBtn');
+  const manualBtn = document.getElementById('manualModeBtn');
+  const actionBtn = document.getElementById('generateActionBtn');
+  const instructionBox = document.getElementById('instructionBox');
+
+  if (mode === 'ai') {
+    apiPanel.style.display = 'block';
+    aiBtn.className = 'btn';
+    manualBtn.className = 'btn btn-outline';
+    actionBtn.style.display = 'inline-flex';
+    instructionBox.innerHTML = '<strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Edit text directly in the box below before exporting.';
+  } else {
+    apiPanel.style.display = 'none';
+    aiBtn.className = 'btn btn-outline';
+    manualBtn.className = 'btn';
+    actionBtn.style.display = 'none';
+    instructionBox.innerHTML = '<strong>Manual Mode Active:</strong> Type or paste your research notes, chapters, and drafts directly into the text box below without AI assistance.';
+  }
+}
+
+function handlePrimaryAction() {
+  if (currentMode === 'ai') {
+    callGeminiAPI();
+  }
 }
 
 async function callGeminiAPI() {
@@ -209,7 +246,7 @@ async function callGeminiAPI() {
   const outputBox = document.getElementById('paperContent');
 
   if (!apiKey) {
-    alert("Please enter your Gemini API Key in the configuration box above first.");
+    alert("Please enter your Google Gemini API Key in the configuration box above.");
     return;
   }
   if (!topic) {
@@ -221,8 +258,11 @@ async function callGeminiAPI() {
 
   const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
 
+  // Updated endpoint using gemini-3.7-flash with url query key for secure cross-origin support
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -233,11 +273,13 @@ async function callGeminiAPI() {
     const data = await response.json();
     if (data.candidates && data.candidates[0].content.parts[0].text) {
       outputBox.value = data.candidates[0].content.parts[0].text;
+    } else if (data.error) {
+      outputBox.value = `API Error: ${data.error.message || "Please verify your key and try again."}`;
     } else {
-      outputBox.value = "Error generating content. Please check your API key and try again.";
+      outputBox.value = "Error generating content. Please verify your API key and try again.";
     }
   } catch (err) {
-    outputBox.value = "Network error or invalid API key. Please verify your connection.";
+    outputBox.value = "Network error or invalid connection. Please check your internet.";
   }
 }
 
@@ -286,7 +328,6 @@ function generateCitation() {
   document.getElementById('citOutput').value = formatted;
 }
 
-// Initial triggers
 analyzeResearchText();
 generateCitation();
 </script>

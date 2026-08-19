@@ -88,7 +88,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
     <!-- API CONFIG PANEL -->
     <div id="apiConfigPanel" class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key (Supports AQ. or AIza keys)</label>
+        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key</label>
         <a href="https://aistudio.google.com/" target="_blank" style="font-size: 0.85rem; color: var(--category-color); text-decoration: underline;">Get free API key</a>
       </div>
       <input type="password" id="geminiApiKey" placeholder="Paste your Google AI Studio API key here..." style="font-family: monospace;">
@@ -223,7 +223,7 @@ function setWorkingMode(mode) {
     aiBtn.className = 'btn';
     manualBtn.className = 'btn btn-outline';
     actionBtn.style.display = 'inline-flex';
-    instructionBox.innerHTML = '<strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Edit text directly in the box below before exporting.';
+    instructionBox.innerHTML = '<strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Edit text directly in the box before exporting.';
   } else {
     apiPanel.style.display = 'none';
     aiBtn.className = 'btn btn-outline';
@@ -235,11 +235,11 @@ function setWorkingMode(mode) {
 
 function handlePrimaryAction() {
   if (currentMode === 'ai') {
-    callGeminiAPI();
+    callGeminiAPIWithRetry();
   }
 }
 
-async function callGeminiAPI() {
+async function callGeminiAPIWithRetry() {
   const apiKey = document.getElementById('geminiApiKey').value.trim();
   const topic = document.getElementById('paperTopic').value.trim();
   const section = document.getElementById('paperSection').value;
@@ -254,32 +254,50 @@ async function callGeminiAPI() {
     return;
   }
 
-  outputBox.value = "Generating academic draft using Gemini AI...";
-
   const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
-
-  // Updated endpoint using gemini-3.7-flash with url query key for secure cross-origin support
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
+  let retries = 3;
+  let delay = 2000;
 
-    const data = await response.json();
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      outputBox.value = data.candidates[0].content.parts[0].text;
-    } else if (data.error) {
-      outputBox.value = `API Error: ${data.error.message || "Please verify your key and try again."}`;
-    } else {
-      outputBox.value = "Error generating content. Please verify your API key and try again.";
+  for (let i = 0; i < retries; i++) {
+    try {
+      outputBox.value = i === 0 ? "Generating academic draft using Gemini AI..." : `Server busy. Retrying in ${delay / 1000}s (Attempt ${i + 1} of ${retries})...`;
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+
+      const data = await response.json();
+
+      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        outputBox.value = data.candidates[0].content.parts[0].text;
+        return;
+      } else if (data.error) {
+        const errorMsg = data.error.message || "";
+        // Check if it's a high demand/overload error
+        if ((errorMsg.includes("high demand") || errorMsg.includes("overloaded")) && i < retries - 1) {
+          await new Promise(res => setTimeout(res, delay));
+          delay *= 2; // Exponential backoff
+          continue;
+        } else {
+          outputBox.value = `API Error: ${errorMsg || "Please verify your key and try again."}`;
+          return;
+        }
+      } else {
+        outputBox.value = "Error generating content. Please verify your API key and try again.";
+        return;
+      }
+    } catch (err) {
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay));
+        delay *= 2;
+        continue;
+      }
+      outputBox.value = "Network error or connection lost. Please check your internet connection.";
     }
-  } catch (err) {
-    outputBox.value = "Network error or invalid connection. Please check your internet.";
   }
 }
 

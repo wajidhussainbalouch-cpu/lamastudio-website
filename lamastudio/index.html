@@ -66,7 +66,6 @@
             signInWithPopup
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Your exact Firebase configuration keys
         const firebaseConfig = {
             apiKey: "AIzaSyC0vca_Ed_k8hCmxgPqd7URoHerNiGXdO0",
             authDomain: "lamastudio-web.firebaseapp.com",
@@ -77,12 +76,10 @@
             measurementId: "G-PRFCQHGWCH"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        // UI Elements
         const form = document.getElementById('auth-form');
         const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
@@ -94,15 +91,18 @@
         const messageBox = document.getElementById('message');
         const googleBtn = document.getElementById('google-btn');
 
-        let mode = 'signin'; // Options: 'signin', 'signup', 'forgot'
+        let mode = 'signin'; 
 
-        // Google Sign-In Handler
+        // Google Sign-In Handler with Redirect
         googleBtn.addEventListener('click', () => {
             messageBox.textContent = '';
             signInWithPopup(auth, googleProvider)
                 .then((result) => {
                     messageBox.className = "mb-4 text-sm text-center font-medium text-green-600";
-                    messageBox.textContent = "Success! Welcome " + result.user.displayName;
+                    messageBox.textContent = "Success! Redirecting to tools...";
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // Change to your tool/dashboard page if separate
+                    }, 1000);
                 })
                 .catch((error) => {
                     messageBox.className = "mb-4 text-sm text-center font-medium text-red-600";
@@ -110,7 +110,6 @@
                 });
         });
 
-        // Switch between Sign-In and Sign-Up modes
         toggleMode.addEventListener('click', (e) => {
             e.preventDefault();
             messageBox.textContent = '';
@@ -129,7 +128,6 @@
             }
         });
 
-        // Switch to Forgot Password mode
         forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
             mode = 'forgot';
@@ -140,7 +138,6 @@
             toggleMode.textContent = 'Back to Sign In';
         });
 
-        // Form Submission Handler
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = emailInput.value;
@@ -151,7 +148,10 @@
                 signInWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
                         messageBox.className = "mb-4 text-sm text-center font-medium text-green-600";
-                        messageBox.textContent = "Success! Logged in as " + userCredential.user.email;
+                        messageBox.textContent = "Success! Redirecting...";
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
                     })
                     .catch((error) => {
                         messageBox.className = "mb-4 text-sm text-center font-medium text-red-600";
@@ -161,7 +161,10 @@
                 createUserWithEmailAndPassword(auth, email, password)
                     .then((userCredential) => {
                         messageBox.className = "mb-4 text-sm text-center font-medium text-green-600";
-                        messageBox.textContent = "Account created successfully! You can now log in.";
+                        messageBox.textContent = "Account created successfully! Redirecting...";
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1200);
                     })
                     .catch((error) => {
                         messageBox.className = "mb-4 text-sm text-center font-medium text-red-600";

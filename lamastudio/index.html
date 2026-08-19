@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LamaStudio Portal - Sign In</title>
+    <!-- Tailwind CSS for clean styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+        <h2 id="form-title" class="text-2xl font-bold text-center text-slate-800 mb-6">Welcome to LamaStudio</h2>
+        
+        <!-- Status Messages -->
+        <div id="message" class="mb-4 text-sm text-center font-medium"></div>
+
+        <!-- Main Form -->
+        <form id="auth-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Email Address</label>
+                <input type="email" id="email" required class="w-full mt-1 p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+
+            <div id="password-group">
+                <label class="block text-sm font-medium text-slate-700">Password</label>
+                <input type="password" id="password" class="w-full mt-1 p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full bg-blue-600 text-white p-2 rounded-lg font-semibold hover:bg-blue-700 transition">Sign In</button>
+        </form>
+
+        <!-- Toggle Links -->
+        <div class="mt-6 text-sm text-center space-y-2">
+            <p><a href="#" id="toggle-mode" class="text-blue-600 hover:underline">Don't have an account? Sign Up</a></p>
+            <p><a href="#" id="forgot-password" class="text-slate-500 hover:underline">Forgot your password?</a></p>
+        </div>
+    </div>
+
+    <!-- Firebase Logic Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            sendPasswordResetEmail 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // Your exact Firebase configuration keys
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0vca_Ed_k8hCmxgPqd7URoHerNiGXdO0",
+            authDomain: "lamastudio-web.firebaseapp.com",
+            projectId: "lamastudio-web",
+            storageBucket: "lamastudio-web.firebasestorage.app",
+            messagingSenderId: "60066283145",
+            appId: "1:60066283145:web:6f0ad2d1e596711d5cd058",
+            measurementId: "G-PRFCQHGWCH"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // UI Elements
+        const form = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const passwordGroup = document.getElementById('password-group');
+        const formTitle = document.getElementById('form-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleMode = document.getElementById('toggle-mode');
+        const forgotPasswordLink = document.getElementById('forgot-password');
+        const messageBox = document.getElementById('message');
+
+        let mode = 'signin'; // Options: 'signin', 'signup', 'forgot'
+
+        // Switch between modes
+        toggleMode.addEventListener('click', (e) => {
+            e.preventDefault();
+            messageBox.textContent = '';
+            if (mode === 'signin') {
+                mode = 'signup';
+                formTitle.textContent = 'Create LamaStudio Account';
+                submitBtn.textContent = 'Sign Up';
+                toggleMode.textContent = 'Already have an account? Sign In';
+                passwordGroup.style.display = 'block';
+            } else {
+                mode = 'signin';
+                formTitle.textContent = 'Welcome to LamaStudio';
+                submitBtn.textContent = 'Sign In';
+                toggleMode.textContent = "Don't have an account? Sign Up";
+                passwordGroup.style.display = 'block';
+            }
+        });
+
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            mode = 'forgot';
+            formTitle.textContent = 'Reset Password';
+            submitBtn.textContent = 'Send Reset Email';
+            passwordGroup.style.display = 'none';
+            messageBox.textContent = '';
+            toggleMode.textContent = 'Back to Sign In';
+        });
+
+        // Form Submission Handler
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            messageBox.textContent = '';
+
+            if (mode === 'signin') {
+                signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        messageBox.className = "mb-4 text-sm text-center font-medium text-green-600";
+                        messageBox.textContent = "Success! Logged in as " + userCredential.user.email;
+                    })
+                    .catch((error) => {
+                        messageBox.className = "mb-4 text-sm text-center font-medium text-red-600";
+                        messageBox.textContent = error.message;
+                    });
+            } else if (mode === 'signup') {
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        messageBox.className = "mb-4 text-sm text-center font-medium text-green-600";
+                        messageBox.textContent = "Account created successfully! You can now log in.";
+                    })
+                    .catch((error) => {
+                        messageBox.className = "mb-4 text-sm text-center font-medium text-red-600";
+                        messageBox.textContent = error.message;
+                    });
+            } else if (mode === 'forgot') {
+                sendPasswordResetEmail(auth, email)
+                    .then(() => {
+                        messageBox.className = "mb-4 text-sm text-center font-medium text-green-600";
+                        messageBox.textContent = "Password reset email sent! Check your inbox.";
+                    })
+                    .catch((error) => {
+                        messageBox.className = "mb-4 text-sm text-center font-medium text-red-600";
+                        messageBox.textContent = error.message;
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

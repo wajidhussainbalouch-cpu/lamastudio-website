@@ -6,151 +6,291 @@
 <title>Account Access — LamaStudio</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+  /* Theme variables for smooth transitions */
+  :root {
+    --bg-main: #121212;
+    --surface: #1e1e1e;
+    --border: #333333;
+    --text: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.6);
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --input-border: rgba(255, 255, 255, 0.1);
+  }
+  [data-theme="light"] {
+    --bg-main: #f8fafc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --input-bg: #f8fafc;
+    --input-border: #cbd5e1;
+  }
+  body {
+    background-color: var(--bg-main);
+    color: var(--text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .auth-input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text);
+  }
+  .auth-input:focus {
+    border-color: #2563eb;
+    outline: none;
+  }
+</style>
 </head>
 <body>
 
 <header class="site-header">
-  <div class="util-row">
+  <div class="util-row" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem;">
     <div style="display: flex; align-items: center; gap: 1rem;">
-      <a href="index.html" class="brand">
-        <span class="brand-mark">L</span>
-        <span>LamaStudio<small>App & Software Portal</small></span>
+      <a href="index.html" class="brand" style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem; color: var(--text);">
+        <span class="brand-mark" style="background: #2563eb; color: #fff; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold;">L</span>
+        <span>LamaStudio<small style="display: block; font-size: 0.7rem; color: var(--text-muted);">App & Software Portal</small></span>
       </a>
     </div>
-    <div class="header-actions">
-      <a href="index.html" class="btn-ghost" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; text-decoration: none;">← Back to Home</a>
+    <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+      <!-- Theme Toggle Button -->
+      <button id="themeToggleBtn" onclick="toggleTheme()" style="background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">
+        🌙 Dark
+      </button>
+      <a href="index.html" class="btn-ghost" style="font-size: 0.85rem; padding: 0.4rem 0.8rem; text-decoration: none; color: var(--text);">← Back to Home</a>
     </div>
   </div>
 </header>
 
-<main style="max-width: 440px; margin: 60px auto; padding: 0 20px; font-family: 'Inter', sans-serif;">
-  <div style="background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); border-radius: 20px; padding: 35px 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+<main style="max-width: 440px; margin: 40px auto; padding: 0 20px; font-family: 'Inter', sans-serif;">
+  <div class="auth-card" style="border-radius: 20px; padding: 35px 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
     
     <div style="text-align: center; margin-bottom: 25px;">
-      <span class="brand-mark" style="width: 40px; height: 40px; font-size: 1.2rem; margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center;">L</span>
-      <h1 id="formTitle" style="color: var(--text, #fff); font-size: 1.6rem; margin-bottom: 6px;">Welcome Back</h1>
-      <p id="formSubtitle" style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Access your LamaStudio developer portal & apps.</p>
+      <span class="brand-mark" style="background: #2563eb; color: #fff; width: 40px; height: 40px; font-size: 1.2rem; margin: 0 auto 12px auto; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: bold;">L</span>
+      <h1 id="formTitle" style="font-size: 1.6rem; margin-bottom: 6px;">Welcome Back</h1>
+      <p id="formSubtitle" style="color: var(--text-muted); font-size: 0.85rem;">Access your LamaStudio developer portal & apps.</p>
     </div>
 
+    <!-- Status message banner -->
+    <div id="messageBanner" style="display: none; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; text-align: center;"></div>
+
     <!-- Google Auto-Sync Button -->
-    <button onclick="handleGoogleSignIn()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 11px 16px; color: #fff; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
+    <button type="button" id="googleBtn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 12px; padding: 11px 16px; color: var(--text); font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s;">
       <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.18 21.31 7.22 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.6H1.18C.43 8.1 0 9.89 0 12s.43 3.9 1.18 5.4l4.09-3.16z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.22 0 3.18 2.69 1.18 6.6l4.09 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
       Continue with Google
     </button>
 
-    <div style="display: flex; align-items: center; margin: 20px 0; color: rgba(255,255,255,0.3); font-size: 0.8rem;">
-      <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+    <div style="display: flex; align-items: center; margin: 20px 0; color: var(--text-muted); font-size: 0.8rem;">
+      <div style="flex: 1; height: 1px; background: var(--input-border);"></div>
       <span style="padding: 0 10px;">or email</span>
-      <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+      <div style="flex: 1; height: 1px; background: var(--input-border);"></div>
     </div>
 
-    <form id="authForm" onsubmit="handleAuth(event)" style="display: flex; flex-direction: column; gap: 15px;">
+    <!-- Main Auth Form -->
+    <form id="authForm" style="display: flex; flex-direction: column; gap: 15px;">
       
       <div id="nameFieldGroup" style="display: none;">
-        <label style="display: block; color: rgba(255,255,255,0.8); font-size: 0.82rem; font-weight: 600; margin-bottom: 6px;">Full Name</label>
-        <input type="text" id="fullName" placeholder="John Doe" style="width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none;">
+        <label style="display: block; color: var(--text); font-size: 0.82rem; font-weight: 600; margin-bottom: 6px;">Full Name</label>
+        <input type="text" id="fullName" placeholder="John Doe" class="auth-input" style="width: 100%; padding: 11px 14px; border-radius: 10px; font-size: 0.9rem;">
       </div>
 
       <div>
-        <label style="display: block; color: rgba(255,255,255,0.8); font-size: 0.82rem; font-weight: 600; margin-bottom: 6px;">Email Address</label>
-        <input type="email" id="emailInput" placeholder="name@example.com" required style="width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none;">
+        <label style="display: block; color: var(--text); font-size: 0.82rem; font-weight: 600; margin-bottom: 6px;">Email Address</label>
+        <input type="email" id="emailInput" placeholder="name@example.com" required class="auth-input" style="width: 100%; padding: 11px 14px; border-radius: 10px; font-size: 0.9rem;">
       </div>
 
       <div id="passwordGroup">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <label style="color: rgba(255,255,255,0.8); font-size: 0.82rem; font-weight: 600;">Password</label>
-          <a href="#" onclick="switchMode('forgot'); return false;" style="color: var(--category-color, #174ea6); font-size: 0.78rem; text-decoration: none;">Forgot password?</a>
+          <label style="color: var(--text); font-size: 0.82rem; font-weight: 600;">Password</label>
+          <a href="#" id="forgotLink" style="color: #2563eb; font-size: 0.78rem; text-decoration: none;">Forgot password?</a>
         </div>
-        <input type="password" id="passwordInput" placeholder="••••••••" required style="width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none;">
+        <input type="password" id="passwordInput" placeholder="••••••••" class="auth-input" style="width: 100%; padding: 11px 14px; border-radius: 10px; font-size: 0.9rem;">
       </div>
 
-      <button type="submit" id="submitBtn" class="btn-action" style="width: 100%; padding: 11px; text-align: center; justify-content: center; font-weight: 600; margin-top: 5px; border: none; cursor: pointer;">
+      <button type="submit" id="submitBtn" style="width: 100%; padding: 12px; text-align: center; justify-content: center; font-weight: 600; margin-top: 5px; background: #2563eb; color: #fff; border: none; border-radius: 10px; cursor: pointer; transition: background 0.2s;">
         <span id="submitBtnText">Sign In</span>
       </button>
 
     </form>
 
-    <div style="text-align: center; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px;">
-      <p id="switchText" style="color: rgba(255,255,255,0.6); font-size: 0.83rem;">
-        Don't have an account? <a href="#" onclick="switchMode('signup'); return false;" style="color: var(--text, #fff); font-weight: 600; text-decoration: underline;">Create account</a>
+    <div style="text-align: center; margin-top: 20px; border-top: 1px solid var(--input-border); padding-top: 18px;">
+      <p id="switchText" style="color: var(--text-muted); font-size: 0.83rem;">
+        Don't have an account? <a href="#" id="toggleModeLink" style="color: var(--text); font-weight: 600; text-decoration: underline;">Create account</a>
       </p>
     </div>
 
   </div>
 </main>
 
-<script>
-  let currentMode = 'signin';
+<!-- Firebase App & Authentication Logic Script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      sendPasswordResetEmail,
+      GoogleAuthProvider,
+      signInWithPopup
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  function switchMode(mode) {
+  // Your exact Firebase project configuration
+  const firebaseConfig = {
+      apiKey: "AIzaSyC0vca_Ed_k8hCmxgPqd7URoHerNiGXdO0",
+      authDomain: "lamastudio-web.firebaseapp.com",
+      projectId: "lamastudio-web",
+      storageBucket: "lamastudio-web.firebasestorage.app",
+      messagingSenderId: "60066283145",
+      appId: "1:60066283145:web:6f0ad2d1e596711d5cd058",
+      measurementId: "G-PRFCQHGWCH"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  let currentMode = 'signin'; // 'signin', 'signup', 'forgot'
+
+  // DOM Elements
+  const formTitle = document.getElementById('formTitle');
+  const formSubtitle = document.getElementById('formSubtitle');
+  const nameFieldGroup = document.getElementById('nameFieldGroup');
+  const passwordGroup = document.getElementById('passwordGroup');
+  const submitBtnText = document.getElementById('submitBtnText');
+  const switchText = document.getElementById('switchText');
+  const toggleModeLink = document.getElementById('toggleModeLink');
+  const forgotLink = document.getElementById('forgotLink');
+  const authForm = document.getElementById('authForm');
+  const googleBtn = document.getElementById('googleBtn');
+  const messageBanner = document.getElementById('messageBanner');
+
+  function showMessage(text, isError = false) {
+    messageBanner.style.display = 'block';
+    messageBanner.innerText = text;
+    messageBanner.style.background = isError ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)';
+    messageBanner.style.color = isError ? '#ef4444' : '#22c55e';
+    messageBanner.style.border = `1px solid ${isError ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`;
+  }
+
+  // Switch Modes handler
+  function setMode(mode) {
     currentMode = mode;
-    const title = document.getElementById('formTitle');
-    const subtitle = document.getElementById('formSubtitle');
-    const nameGroup = document.getElementById('nameFieldGroup');
-    const passwordGroup = document.getElementById('passwordGroup');
-    const submitBtnText = document.getElementById('submitBtnText');
-    const switchText = document.getElementById('switchText');
-
+    messageBanner.style.display = 'none';
     if (mode === 'signin') {
-      title.innerText = 'Welcome Back';
-      subtitle.innerText = 'Access your LamaStudio developer portal & apps.';
-      nameGroup.style.display = 'none';
+      formTitle.innerText = 'Welcome Back';
+      formSubtitle.innerText = 'Access your LamaStudio developer portal & apps.';
+      nameFieldGroup.style.display = 'none';
       passwordGroup.style.display = 'block';
       submitBtnText.innerText = 'Sign In';
-      switchText.innerHTML = `Don't have an account? <a href="#" onclick="switchMode('signup'); return false;" style="color: var(--text, #fff); font-weight: 600; text-decoration: underline;">Create account</a>`;
+      switchText.innerHTML = `Don't have an account? <a href="#" id="toggleModeLink" style="color: var(--text); font-weight: 600; text-decoration: underline;">Create account</a>`;
     } else if (mode === 'signup') {
-      title.innerText = 'Create Account';
-      subtitle.innerText = 'Join LamaStudio to manage apps & track utilities.';
-      nameGroup.style.display = 'block';
+      formTitle.innerText = 'Create Account';
+      formSubtitle.innerText = 'Join LamaStudio to manage apps & track utilities.';
+      nameFieldGroup.style.display = 'block';
       passwordGroup.style.display = 'block';
       submitBtnText.innerText = 'Create Account';
-      switchText.innerHTML = `Already have an account? <a href="#" onclick="switchMode('signin'); return false;" style="color: var(--text, #fff); font-weight: 600; text-decoration: underline;">Sign In</a>`;
+      switchText.innerHTML = `Already have an account? <a href="#" id="toggleModeLink" style="color: var(--text); font-weight: 600; text-decoration: underline;">Sign In</a>`;
     } else if (mode === 'forgot') {
-      title.innerText = 'Reset Password';
-      subtitle.innerText = 'Enter your email and we will send you a recovery link.';
-      nameGroup.style.display = 'none';
+      formTitle.innerText = 'Reset Password';
+      formSubtitle.innerText = 'Enter your email and we will send you a recovery link.';
+      nameFieldGroup.style.display = 'none';
       passwordGroup.style.display = 'none';
       submitBtnText.innerText = 'Send Reset Link';
-      switchText.innerHTML = `Remembered your password? <a href="#" onclick="switchMode('signin'); return false;" style="color: var(--text, #fff); font-weight: 600; text-decoration: underline;">Sign In</a>`;
+      switchText.innerHTML = `Remembered your password? <a href="#" id="toggleModeLink" style="color: var(--text); font-weight: 600; text-decoration: underline;">Sign In</a>`;
     }
+    // Re-bind click event for dynamically updated link
+    document.getElementById('toggleModeLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      setMode(currentMode === 'signin' ? 'signup' : 'signin');
+    });
   }
 
-  function handleGoogleSignIn() {
-    // Simulate auto-syncing Google account name/email
-    const googleUser = {
-      name: "Google Viewer",
-      email: "viewer@gmail.com"
-    };
-    localStorage.setItem("lamastudio_user", JSON.stringify(googleUser));
-    alert("Google Account synced successfully!");
-    window.location.href = 'index.html';
-  }
+  toggleModeLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    setMode('signup');
+  });
 
-  function handleAuth(event) {
-    event.preventDefault();
+  forgotLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    setMode('forgot');
+  });
+
+  // Google Login Handler
+  googleBtn.addEventListener('click', () => {
+    signInWithPopup(auth, googleProvider)
+      .then((result) => {
+        const user = result.user;
+        localStorage.setItem("lamastudio_user", JSON.stringify({ name: user.displayName || "Google User", email: user.email }));
+        showMessage("Google sign-in successful! Redirecting...");
+        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+      })
+      .catch((error) => {
+        showMessage(error.message, true);
+      });
+  });
+
+  // Form Submit Handler (Firebase Authentication)
+  authForm.addEventListener('submit', (e) => {
+    e.preventDefault();
     const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
 
     if (currentMode === 'forgot') {
-      alert('Password reset link dispatched to ' + email);
-      switchMode('signin');
+      sendPasswordResetEmail(auth, email)
+        .then(() => {
+          showMessage("Password reset email sent! Check your inbox.");
+          setTimeout(() => setMode('signin'), 2000);
+        })
+        .catch((error) => {
+          showMessage(error.message, true);
+        });
       return;
     }
 
-    let name = "Valued Viewer";
     if (currentMode === 'signup') {
-      name = document.getElementById('fullName').value || "New User";
+      const fullName = document.getElementById('fullName').value || "New User";
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          localStorage.setItem("lamastudio_user", JSON.stringify({ name: fullName, email: email }));
+          showMessage("Account created successfully! Welcome to LamaStudio.");
+          setTimeout(() => { window.location.href = 'index.html'; }, 1200);
+        })
+        .catch((error) => {
+          showMessage(error.message, true);
+        });
     } else {
-      // Extract name portion from email if signing in directly
-      name = email.split('@')[0];
-      name = name.charAt(0).toUpperCase() + name.slice(1);
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          const name = email.split('@')[0];
+          const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+          localStorage.setItem("lamastudio_user", JSON.stringify({ name: formattedName, email: email }));
+          showMessage("Welcome back, " + formattedName + "!");
+          setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+        })
+        .catch((error) => {
+          showMessage(error.message, true);
+        });
     }
+  });
+</script>
 
-    // Save session record locally
-    const userData = { name: name, email: email };
-    localStorage.setItem("lamastudio_user", JSON.stringify(userData));
-
-    alert('Welcome back, ' + name + '!');
-    window.location.href = 'index.html';
+<!-- Global Theme Toggle Script -->
+<script>
+  function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.getElementById('themeToggleBtn');
+    if (html.getAttribute('data-theme') === 'dark') {
+      html.setAttribute('data-theme', 'light');
+      btn.innerText = '☀️ Light';
+    } else {
+      html.setAttribute('data-theme', 'dark');
+      btn.innerText = '🌙 Dark';
+    }
   }
 </script>
 

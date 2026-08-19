@@ -3,51 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LamaStudio — Education Hub & Software Suite</title>
+<title>Gemini Academic Research Assistant & Paper Generator — LamaStudio</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-.ad-container { width: 100%; max-width: 1280px; min-height: 90px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; margin: 15px auto; color: var(--text-muted); font-size: 0.8rem; border-radius: 12px; box-sizing: border-box; }
-.hub-badge { display: inline-block; background: rgba(23, 78, 166, 0.1); color: var(--category-color); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 12px; border: 1px solid rgba(23, 78, 166, 0.2); }
+.util-container { max-width: 950px; margin: 30px auto; padding: 0 1rem; }
+.tool-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 30px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-bottom: 25px; }
+.tool-header { margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+.tool-header h1 { font-size: 1.8rem; color: var(--text); margin: 0 0 8px 0; }
+.tool-header p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
 
-/* Main Hub Layout & Sizing Matched */
-main { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
-.dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start; margin-top: 20px; }
-@media(max-width: 950px) { .dashboard { grid-template-columns: 1fr; } }
+.calc-tabs { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+.tab-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.tab-btn.active { background: var(--category-color); color: #fff; border-color: var(--category-color); }
 
-.hero-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; border-left: 4px solid var(--category-color); height: 100%; box-sizing: border-box; }
-.hero-panel h1 { font-size: 1.8rem; margin-top: 0.5rem; margin-bottom: 1rem; color: var(--text); }
-.hero-panel p { color: var(--text-muted); line-height: 1.6; margin: 0; }
+.calc-section { display: none; }
+.calc-section.active { display: block; }
 
-.side-widgets .widget { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.side-widgets .widget-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(23, 78, 166, 0.06); border-bottom: 1px solid var(--border); font-weight: 700; color: var(--text); }
+.form-group { margin-bottom: 16px; }
+label { display: block; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted); font-weight: 500; }
+input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; }
+textarea { height: 240px; resize: vertical; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--category-color); }
 
-.hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; margin-bottom: 40px; }
-.subject-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; text-decoration: none; display: flex; align-items: center; gap: 18px; transition: all .25s ease; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
-.subject-card:hover { transform: translateY(-4px); border-color: var(--category-color); box-shadow: 0 8px 30px rgba(23,78,166,.15); }
-.subject-icon { width: 56px; height: 56px; border-radius: 12px; background: rgba(23,78,166,0.1); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
-.subject-info h3 { margin: 0 0 5px 0; font-size: 18px; color: var(--text); font-weight: 700; }
-.subject-info p { margin: 0; font-size: 13px; color: var(--text-muted); }
+.btn { background: var(--category-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn:hover { opacity: 0.9; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-success { background: #10b981; color: #fff; }
 
-.site-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 40px 20px 20px; margin-top: 50px; color: var(--text-muted); }
-.footer-content { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; margin-bottom: 30px; }
-.footer-col h4 { color: var(--text); font-size: 16px; margin-bottom: 12px; font-weight: 600; }
-.footer-col ul { list-style: none; padding: 0; margin: 0; }
-.footer-col ul li { margin-bottom: 8px; }
-.footer-col ul li a { color: var(--text-muted); text-decoration: none; font-size: 14px; transition: .2s; }
-.footer-col ul li a:hover { color: var(--category-color); }
-.footer-bottom { max-width: 1280px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: 13px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+.stat-box { background: rgba(23, 78, 166, 0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; }
+.stat-box h3 { font-size: 1.5rem; color: var(--category-color); margin: 0 0 4px 0; font-family: 'JetBrains Mono', monospace; }
+.stat-box p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+.checklist-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; }
+.checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--category-color); cursor: pointer; }
+
+.hint-box { background: rgba(23, 78, 166, 0.08); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+
+/* Print Styles for Hard / Soft PDF Copy Generation */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .mode-selector-panel, .api-config-panel { display: none !important; }
+  .tool-card { border: none; box-shadow: none; padding: 0; background: #fff !important; }
+  .calc-section { display: block !important; }
+  textarea, input { border: none !important; background: transparent !important; color: #000 !important; font-size: 12pt !important; resize: none; }
+}
 </style>
 </head>
 <body style="--category-color: var(--c-education);">
-
-<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
 
 <header class="site-header">
   <div class="util-row" style="width: 100%; display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 0 1rem;">
     <div style="display: flex; align-items: center; gap: 1rem;">
       <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education Hub</small></span></a>
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education Hub</small></span></a>
     </div>
     <div class="header-actions">
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
@@ -55,122 +65,271 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
       </button>
     </div>
   </div>
-  
-  <div class="ad-container">Advertisement Space (Google AdSense Header)</div>
-
   <div class="category-strip">
     <div class="category-track" role="tablist">
-      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
-      <a href="../devtools/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Developer Tools</a>
-      <a href="../productivity/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Productivity</a>
-      <a href="../security/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Network & Security</a>
-      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
-      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
-      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
-      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
-      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
-      <a href="../education/" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
-      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Updates</a>
-      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+      <a href="index.html" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>← Back to Education Hub</a>
     </div>
   </div>
 </header>
 
-<main>
-  <section class="dashboard">
-    <div class="hero-panel">
-      <span class="hub-badge">Software Suite v1.1</span>
-      <h1>Lama IQ Master & Workstation Engine</h1>
-      <p>Explore our multi-platform cognitive development ecosystem. Download mobile application packages, deploy desktop workstation clients, or launch standalone web utilities below.</p>
+<main class="util-container">
+  <div class="tool-card">
+    <div class="tool-header">
+      <h1>Gemini Academic Research Assistant & Paper Generator</h1>
+      <p>Universal drafting studio for all academic levels. Choose between automated AI assistance or completely manual writing.</p>
     </div>
-    
-    <div class="side-widgets">
-      <div class="widget">
-        <div class="widget-head"><span>LAMA IQ MASTER MOBILE</span><span style="font-size: 0.75rem; color: var(--category-color);">APK Live</span></div>
-        <div style="padding: 1rem; font-size: 0.88rem; color: var(--text-muted);">
-          Download the latest Android APK for mobile IQ challenges and offline cognitive tracking.
-          <a href="#" style="display: block; margin-top: 8px; color: var(--category-color); font-weight: 600; text-decoration: none;">Get Mobile App &rarr;</a>
-        </div>
+
+    <!-- MODE SELECTOR -->
+    <div class="mode-selector-panel" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+      <button class="btn" id="aiModeBtn" onclick="setWorkingMode('ai')" style="justify-content: center;">🤖 Mode: AI-Assisted Generation</button>
+      <button class="btn btn-outline" id="manualModeBtn" onclick="setWorkingMode('manual')" style="justify-content: center;">✍️ Mode: Manual Writing (No AI)</button>
+    </div>
+
+    <!-- API CONFIGURATION PANEL (Only shown in AI Mode) -->
+    <div id="apiConfigPanel" class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key (Supports AQ. or AIza keys)</label>
+        <a href="https://aistudio.google.com/" target="_blank" style="font-size: 0.85rem; color: var(--category-color); text-decoration: underline;">Get free API key</a>
+      </div>
+      <input type="password" id="geminiApiKey" placeholder="Paste your Google AI Studio API key here..." style="font-family: monospace;">
+    </div>
+
+    <div class="calc-tabs">
+      <button class="tab-btn active" onclick="switchTab('generator', event)">Paper Generator & Editor</button>
+      <button class="tab-btn" onclick="switchTab('analyzer', event)">Tone & Word Metrics</button>
+      <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
+      <button class="tab-btn" onclick="switchTab('checklist', event)">Supervisor Checklist</button>
+    </div>
+
+    <!-- TAB 1: PAPER GENERATOR -->
+    <div id="generatorTab" class="calc-section active">
+      <div class="hint-box" id="instructionBox">
+        <strong>AI Mode Active:</strong> Enter your topic, select a section, and click <strong>"Generate Section with AI"</strong>. Afterward, review and edit your document freely before exporting.
       </div>
       
-      <div class="widget" style="margin-top: 15px;">
-        <div class="widget-head"><span>PC DESKTOP CLIENT</span><span style="color: var(--category-color); font-size: 0.75rem; font-weight: 700;">Windows/Linux</span></div>
-        <div style="padding: 1rem; font-size: 0.88rem; color: var(--text-muted);">
-          Monitor intensive academic metrics and manage study profiles natively on your desktop.
-          <a href="#" style="display: block; margin-top: 8px; color: var(--category-color); font-weight: 600; text-decoration: none;">Download Desktop Client &rarr;</a>
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Research Topic / Paper Title</label>
+          <input type="text" id="paperTopic" placeholder="e.g., Impact of Renewable Energy on Global Economies" value="Impact of Renewable Energy on Global Economies">
+        </div>
+        <div class="form-group">
+          <label>Select Paper Section</label>
+          <select id="paperSection">
+            <option value="Abstract">Abstract & Keywords</option>
+            <option value="Introduction">1. Introduction & Background</option>
+            <option value="Literature Review">2. Literature Review Framework</option>
+            <option value="Methodology">3. Methodology & Approach</option>
+            <option value="Conclusion">5. Conclusion & Recommendations</option>
+          </select>
         </div>
       </div>
+
+      <div class="form-group" style="margin-top: 10px;">
+        <label>Final Document Content (Fully Editable / Type Anything):</label>
+        <textarea id="paperContent" placeholder="Write or generate your paper content here..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+        <button class="btn" id="generateActionBtn" onclick="handlePrimaryAction()">✨ Generate Section with AI</button>
+        <button class="btn btn-success" onclick="exportToPrint()">🖨️ Print / Save as PDF or Word Copy</button>
+      </div>
     </div>
-  </section>
 
-  <div style="margin-top: 40px; margin-bottom: 10px;">
-    <h2 style="color:var(--text); margin-bottom:5px; font-size: 1.5rem;">Standalone Web Utilities & Professional Tools</h2>
-    <p style="color:var(--text-muted); margin-top:0;">Click any utility to open its dedicated landing page:</p>
-  </div>
+    <!-- TAB 2: ANALYZER -->
+    <div id="analyzerTab" class="calc-section">
+      <div class="stats-grid">
+        <div class="stat-box"><h3 id="wordCount">0</h3><p>Word Count</p></div>
+        <div class="stat-box"><h3 id="sentenceCount">0</h3><p>Sentences</p></div>
+        <div class="stat-box"><h3 id="avgSentenceLen">0</h3><p>Avg Words / Sentence</p></div>
+        <div class="stat-box"><h3 id="formalScore">Standard</h3><p>Academic Rigor Index</p></div>
+      </div>
+      <div class="form-group">
+        <label>Paste your drafted text below to evaluate academic style:</label>
+        <textarea id="researchText" placeholder="Paste text here..." oninput="analyzeResearchText()">This study investigates the profound integration of emerging technologies within modern academic curricula.</textarea>
+      </div>
+      <button class="btn btn-outline" onclick="clearResearchText()">Clear Text</button>
+    </div>
 
-<a href="research-assistant.html" class="subject-card">
-  <div class="subject-icon">🔬</div>
-  <div class="subject-info">
-    <h3>Gemini Academic Research Assistant</h3>
-    <p>AI paper generator, academic tone analyzer, citation formatter & PDF/Word export.</p>
-  </div>
-</a>
-    <a href="calculator_utility.html" class="subject-card"><div class="subject-icon">📊</div><div class="subject-info"><h3>GPA & Percentage Calculator</h3><p>Open calculator landing page & absolute mark evaluator.</p></div></a>
-    <a href="cgpa-calculator.html" class="subject-card"><div class="subject-icon">🧮</div><div class="subject-info"><h3>Advanced CGPA Calculator</h3><p>Compute multi-semester cumulative grade point averages.</p></div></a>
-    <a href="text-analyzer.html" class="subject-card"><div class="subject-icon">📝</div><div class="subject-info"><h3>Live Text & Word Counter</h3><p>Analyze essays, word counts, characters, and reading times.</p></div></a>
-    <a href="salary-estimator.html" class="subject-card"><div class="subject-icon">💼</div><div class="subject-info"><h3>Professional Salary & Tax Estimator</h3><p>Estimate annual net income and tax brackets.</p></div></a>
-    <a href="pomodoro.html" class="subject-card"><div class="subject-icon">⏱️</div><div class="subject-info"><h3>Study Pomodoro Timer</h3><p>Focus session planner for structured academic success.</p></div></a>
-    <a href="unit-converter.html" class="subject-card"><div class="subject-icon">📐</div><div class="subject-info"><h3>Scientific Unit Converter</h3><p>Quick conversions for technical and academic metrics.</p></div></a>
-  </div>
+    <!-- TAB 3: CITATIONS -->
+    <div id="citationsTab" class="calc-section">
+      <div class="form-group">
+        <label>Citation Style</label>
+        <select id="citStyle">
+          <option value="apa">APA (7th Edition)</option>
+          <option value="ieee">IEEE</option>
+          <option value="harvard">Harvard</option>
+        </select>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Author Name(s)</label>
+          <input type="text" id="citAuthor" placeholder="e.g., Smith, J. A." value="Smith, J. A.">
+        </div>
+        <div class="form-group">
+          <label>Publication Year</label>
+          <input type="text" id="citYear" placeholder="2026" value="2026">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Article / Book Title</label>
+        <input type="text" id="citTitle" placeholder="Title" value="Digital Learning Frameworks">
+      </div>
+      <div class="form-group">
+        <label>Source / Journal Name</label>
+        <input type="text" id="citSource" placeholder="Journal" value="Journal of Educational Technology">
+      </div>
+      <button class="btn" onclick="generateCitation()">Generate Formatted Reference</button>
+      
+      <div class="form-group" style="margin-top: 20px;">
+        <label>Formatted Result</label>
+        <input type="text" id="citOutput" readonly>
+      </div>
+    </div>
 
-  <div style="margin-top: 40px; margin-bottom: 10px;">
-    <h2 style="color:var(--text); margin-bottom:5px; font-size: 1.5rem;">Online Testing & Subject Hub</h2>
-    <p style="color:var(--text-muted); margin-top:0;">Click any subject to open its multi-set practice tests:</p>
-  </div>
+    <!-- TAB 4: CHECKLIST -->
+    <div id="checklistTab" class="calc-section">
+      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential checks before sending your final paper to your supervisor:</p>
+      
+      <div class="checklist-item"><input type="checkbox"><span>Run through a plagiarism scanner to verify originality and similarity indices.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Confirm all in-text citations correspond correctly with reference items.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Verify headings, subheadings, and font styles meet institutional guidelines.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Check spelling, grammar, and sentence transitions.</span></div>
+    </div>
 
-  <div class="hub-grid">
-    <a href="english.html" class="subject-card"><div class="subject-icon">📚</div><div class="subject-info"><h3>English</h3><p>Grammar, Vocabulary & Comprehension</p></div></a>
-    <a href="math.html" class="subject-card"><div class="subject-icon">🔢</div><div class="subject-info"><h3>Mathematics</h3><p>Arithmetic, Algebra & Logic</p></div></a>
-    <a href="urdu.html" class="subject-card"><div class="subject-icon">✍️</div><div class="subject-info"><h3>Urdu</h3><p>Grammar, Literature & Poetry</p></div></a>
-    <a href="pak-studies.html" class="subject-card"><div class="subject-icon">🇵🇰</div><div class="subject-info"><h3>Pakistan Studies</h3><p>History, Culture & Geography</p></div></a>
-    <a href="computer.html" class="subject-card"><div class="subject-icon">💻</div><div class="subject-info"><h3>Computer Science</h3><p>Basics, Software & Programming</p></div></a>
-    <a href="gk.html" class="subject-card"><div class="subject-icon">🌍</div><div class="subject-info"><h3>General Knowledge</h3><p>World Facts & Current Affairs</p></div></a>
-    <a href="bio.html" class="subject-card"><div class="subject-icon">🧬</div><div class="subject-info"><h3>Biology</h3><p>Life Sciences, Anatomy & Botany</p></div></a>
-    <a href="physics.html" class="subject-card"><div class="subject-icon">⚡</div><div class="subject-info"><h3>Physics</h3><p>Mechanics, Energy & Laws</p></div></a>
-    <a href="chemistry.html" class="subject-card"><div class="subject-icon">🧪</div><div class="subject-info"><h3>Chemistry</h3><p>Elements, Reactions & Compounds</p></div></a>
   </div>
 </main>
 
-<footer class="site-footer">
-  <div class="footer-content">
-    <div class="footer-col">
-      <a href="../../index.html" class="brand" style="margin-bottom:12px; display:inline-flex;"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a>
-      <p style="font-size:13px; margin:0;">Independent Android app studio in DG Khan. Building multi-platform interactive learning software.</p>
-    </div>
-    <div class="footer-col">
-      <h4>Quick Categories</h4>
-      <ul>
-        <li><a href="../tech/">Tech & Code</a></li>
-        <li><a href="../education/">Education Hub</a></li>
-        <li><a href="../business/">Business</a></li>
-        <li><a href="../news/">Global News</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Platform Tools</h4>
-      <ul>
-        <li><a href="calculator_utility.html">GPA Calculator</a></li>
-        <li><a href="english.html">Online English Tests</a></li>
-        <li><a href="math.html">Math Practice</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <p>&copy; 2026 LamaStudio. All rights reserved.</p>
-    <p>Designed with ❤️ for learners worldwide</p>
-  </div>
-</footer>
-
 <script src="../../script.js"></script>
+<script>
+let currentMode = 'ai';
+
+function switchTab(tabName, evt) {
+  document.querySelectorAll('.calc-section').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabName + 'Tab').classList.add('active');
+  evt.currentTarget.classList.add('active');
+}
+
+function setWorkingMode(mode) {
+  currentMode = mode;
+  const apiPanel = document.getElementById('apiConfigPanel');
+  const aiBtn = document.getElementById('aiModeBtn');
+  const manualBtn = document.getElementById('manualModeBtn');
+  const actionBtn = document.getElementById('generateActionBtn');
+  const instructionBox = document.getElementById('instructionBox');
+
+  if (mode === 'ai') {
+    apiPanel.style.display = 'block';
+    aiBtn.className = 'btn';
+    manualBtn.className = 'btn btn-outline';
+    actionBtn.style.display = 'inline-flex';
+    actionBtn.innerText = '✨ Generate Section with AI';
+    instructionBox.innerHTML = '<strong>AI Mode Active:</strong> Enter your topic, select a section, and click <strong>"Generate Section with AI"</strong>. Review and edit freely before exporting.';
+  } else {
+    apiPanel.style.display = 'none';
+    aiBtn.className = 'btn btn-outline';
+    manualBtn.className = 'btn';
+    actionBtn.style.display = 'none'; // hide generate button for pure manual entry
+    instructionBox.innerHTML = '<strong>Manual Mode Active:</strong> Type or paste your research notes, chapters, and thoughts directly into the text box below without AI assistance.';
+  }
+}
+
+function handlePrimaryAction() {
+  if (currentMode === 'ai') {
+    callGeminiAPI();
+  }
+}
+
+async function callGeminiAPI() {
+  const apiKey = document.getElementById('geminiApiKey').value.trim();
+  const topic = document.getElementById('paperTopic').value.trim();
+  const section = document.getElementById('paperSection').value;
+  const outputBox = document.getElementById('paperContent');
+
+  if (!apiKey) {
+    alert("Please enter your Google Gemini API Key in the configuration box above.");
+    return;
+  }
+  if (!topic) {
+    alert("Please enter a research topic.");
+    return;
+  }
+
+  outputBox.value = "Generating academic draft using Gemini AI...";
+
+  const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
+
+  try {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      outputBox.value = data.candidates[0].content.parts[0].text;
+    } else {
+      outputBox.value = "Error generating content. Please verify your API key and try again.";
+    }
+  } catch (err) {
+    outputBox.value = "Network error or invalid API key. Please verify your connection.";
+  }
+}
+
+function exportToPrint() {
+  window.print();
+}
+
+function analyzeResearchText() {
+  const text = document.getElementById('researchText').value;
+  const words = text.trim() ? text.trim().split(/\s+/) : [];
+  const sentences = text.split(/[.!?]+/).filter(Boolean);
+  
+  const wordCount = words.length;
+  const sentenceCount = sentences.length;
+  const avgLen = sentenceCount > 0 ? (wordCount / sentenceCount).toFixed(1) : 0;
+
+  document.getElementById('wordCount').innerText = wordCount;
+  document.getElementById('sentenceCount').innerText = sentenceCount;
+  document.getElementById('avgSentenceLen').innerText = avgLen;
+
+  let rigor = "Standard";
+  if (avgLen >= 15 && avgLen <= 25) rigor = "Optimal Academic";
+  else if (avgLen > 25) rigor = "Complex / Dense";
+  else if (wordCount > 0 && avgLen < 12) rigor = "Too Conversational";
+  
+  document.getElementById('formalScore').innerText = rigor;
+}
+
+function clearResearchText() {
+  document.getElementById('researchText').value = '';
+  analyzeResearchText();
+}
+
+function generateCitation() {
+  const style = document.getElementById('citStyle').value;
+  const author = document.getElementById('citAuthor').value || "Author, A.";
+  const year = document.getElementById('citYear').value || "2026";
+  const title = document.getElementById('citTitle').value || "Title";
+  const source = document.getElementById('citSource').value || "Publisher";
+
+  let formatted = "";
+  if (style === 'apa') formatted = `${author} (${year}). ${title}. ${source}.`;
+  else if (style === 'ieee') formatted = `${author}, "${title}," ${source}, ${year}.`;
+  else if (style === 'harvard') formatted = `${author} (${year}) '${title}', ${source}.`;
+
+  document.getElementById('citOutput').value = formatted;
+}
+
+// Initial triggers
+analyzeResearchText();
+generateCitation();
+</script>
 </body>
 </html>

@@ -44,7 +44,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 /* Print Styles for Hard / Soft PDF Copy Generation */
 @media print {
   body { background: #fff !important; color: #000 !important; }
-  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .mode-selector-panel, .api-config-panel { display: none !important; }
+  .site-header, .calc-tabs, .btn, .hint-box, .tool-header p, .mode-selector-panel { display: none !important; }
   .tool-card { border: none; box-shadow: none; padding: 0; background: #fff !important; }
   .calc-section { display: block !important; }
   textarea, input { border: none !important; background: transparent !important; color: #000 !important; font-size: 12pt !important; resize: none; }
@@ -80,18 +80,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
     </div>
 
     <!-- WORKING MODE SELECTOR -->
-    <div class="mode-selector-panel" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+    <div class="mode-selector-panel" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
       <button class="btn" id="aiModeBtn" onclick="setWorkingMode('ai')" style="justify-content: center;">🤖 Mode: AI-Assisted Generation</button>
       <button class="btn btn-outline" id="manualModeBtn" onclick="setWorkingMode('manual')" style="justify-content: center;">✍️ Mode: Manual Writing (No AI)</button>
-    </div>
-
-    <!-- API CONFIG PANEL -->
-    <div id="apiConfigPanel" class="api-config-panel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <label style="margin: 0; font-weight: 600; color: var(--text);">🔑 Google Gemini API Key</label>
-        <a href="https://aistudio.google.com/" target="_blank" style="font-size: 0.85rem; color: var(--category-color); text-decoration: underline;">Get free API key</a>
-      </div>
-      <input type="password" id="geminiApiKey" placeholder="Paste your Google AI Studio API key here..." style="font-family: monospace;">
     </div>
 
     <div class="calc-tabs">
@@ -104,7 +95,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
     <!-- TAB 1: GENERATOR -->
     <div id="generatorTab" class="calc-section active">
       <div class="hint-box" id="instructionBox">
-        <strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Edit text directly in the box below before exporting.
+        <strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Your secure cloud assistant will write the content automatically.
       </div>
 
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
@@ -212,20 +203,17 @@ function switchTab(tabName, evt) {
 
 function setWorkingMode(mode) {
   currentMode = mode;
-  const apiPanel = document.getElementById('apiConfigPanel');
   const aiBtn = document.getElementById('aiModeBtn');
   const manualBtn = document.getElementById('manualModeBtn');
   const actionBtn = document.getElementById('generateActionBtn');
   const instructionBox = document.getElementById('instructionBox');
 
   if (mode === 'ai') {
-    apiPanel.style.display = 'block';
     aiBtn.className = 'btn';
     manualBtn.className = 'btn btn-outline';
     actionBtn.style.display = 'inline-flex';
-    instructionBox.innerHTML = '<strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Edit text directly in the box before exporting.';
+    instructionBox.innerHTML = '<strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Your secure cloud assistant will write the content automatically.';
   } else {
-    apiPanel.style.display = 'none';
     aiBtn.className = 'btn btn-outline';
     manualBtn.className = 'btn';
     actionBtn.style.display = 'none';
@@ -235,69 +223,39 @@ function setWorkingMode(mode) {
 
 function handlePrimaryAction() {
   if (currentMode === 'ai') {
-    callGeminiAPIWithRetry();
+    callSecureBackend();
   }
 }
 
-async function callGeminiAPIWithRetry() {
-  const apiKey = document.getElementById('geminiApiKey').value.trim();
+async function callSecureBackend() {
   const topic = document.getElementById('paperTopic').value.trim();
   const section = document.getElementById('paperSection').value;
   const outputBox = document.getElementById('paperContent');
 
-  if (!apiKey) {
-    alert("Please enter your Google Gemini API Key in the configuration box above.");
-    return;
-  }
   if (!topic) {
     alert("Please enter a research topic.");
     return;
   }
 
+  outputBox.value = "Generating academic draft securely via server...";
+
   const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-  let retries = 3;
-  let delay = 2000;
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, section })
+    });
 
-  for (let i = 0; i < retries; i++) {
-    try {
-      outputBox.value = i === 0 ? "Generating academic draft using Gemini AI..." : `Server busy. Retrying in ${delay / 1000}s (Attempt ${i + 1} of ${retries})...`;
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-      });
-
-      const data = await response.json();
-
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-        outputBox.value = data.candidates[0].content.parts[0].text;
-        return;
-      } else if (data.error) {
-        const errorMsg = data.error.message || "";
-        // Check if it's a high demand/overload error
-        if ((errorMsg.includes("high demand") || errorMsg.includes("overloaded")) && i < retries - 1) {
-          await new Promise(res => setTimeout(res, delay));
-          delay *= 2; // Exponential backoff
-          continue;
-        } else {
-          outputBox.value = `API Error: ${errorMsg || "Please verify your key and try again."}`;
-          return;
-        }
-      } else {
-        outputBox.value = "Error generating content. Please verify your API key and try again.";
-        return;
-      }
-    } catch (err) {
-      if (i < retries - 1) {
-        await new Promise(res => setTimeout(res, delay));
-        delay *= 2;
-        continue;
-      }
-      outputBox.value = "Network error or connection lost. Please check your internet connection.";
+    const data = await response.json();
+    if (data.text) {
+      outputBox.value = data.text;
+    } else {
+      outputBox.value = `API Error: ${data.error || "Failed to generate content."}`;
     }
+  } catch (err) {
+    outputBox.value = "Network error connecting to the secure backend server.";
   }
 }
 

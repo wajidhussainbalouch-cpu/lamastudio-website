@@ -1,76 +1,134 @@
-/* lamaPhotoResizer — admin.css (extends style.css tokens) */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Portal — lamaPhotoResizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-shell" data-theme="dark">
 
-.admin-shell{ min-height:100vh; }
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div id="loginScreen" class="admin-login">
+    <div class="login-card">
+      <span class="brand-seal" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="30" height="30">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
+        </svg>
+      </span>
+      <h1>Admin Portal Access</h1>
+      <p class="panel-hint">Sign in to manage client licenses and review payment claims.</p>
+      
+      <form id="adminLoginForm" style="width: 100%;">
+        <label class="field" style="margin-bottom: 10px;">
+          <span>Admin Email</span>
+          <input type="email" id="adminEmail" required placeholder="admin@lamastudio.pk" />
+        </label>
+        <label class="field" style="margin-bottom: 14px;">
+          <span>Password</span>
+          <input type="password" id="adminPassword" required placeholder="••••••••" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        <p id="loginError" class="claim-status" style="color: var(--danger); margin-top: 8px;" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
 
-.admin-login{
-  min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
-}
-.login-card{
-  width:100%; max-width:360px; background: var(--paper-raised); border:1px solid var(--line);
-  border-radius: var(--radius-lg); box-shadow: var(--shadow-2); padding: 28px 26px;
-  display:flex; flex-direction:column; gap:12px; align-items:flex-start;
-}
-.login-card .brand-seal{ color: var(--emerald); margin-bottom:4px; }
-.login-card h1{ font-family: var(--font-display); font-size:20px; margin:0; }
-.login-card .field{ width:100%; }
-.login-card input{
-  width:100%; border:1px solid var(--line-strong); background: var(--paper);
-  border-radius: var(--radius-sm); padding: 9px 10px; font-size:13.5px; color: var(--ink);
-}
-.login-card button{ margin-top:4px; }
+  <!-- ===================== ADMIN DASHBOARD ===================== -->
+  <div id="adminDashboard" class="admin-main" hidden>
+    
+    <!-- Top Bar Header -->
+    <header class="admin-panel-head" style="margin-bottom: 24px;">
+      <div>
+        <h2 style="font-family: var(--font-display); font-size: 22px;">lamaPhotoResizer Control Center</h2>
+        <p class="panel-hint">Manage client verification, subscriptions, and active usage quotas.</p>
+      </div>
+      <button id="adminLogoutBtn" class="btn btn-ghost btn-small">Sign Out</button>
+    </header>
 
-.admin-main{ padding: 24px 30px 60px; max-width:1100px; margin:0 auto; }
+    <!-- Stat Overview Cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotalUsers">0</div>
+        <div class="stat-label">Total Clients</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statPendingClaims">0</div>
+        <div class="stat-label">Pending Claims</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statActivePro">0</div>
+        <div class="stat-label">Active Pro Subs</div>
+      </div>
+    </div>
 
-.stat-grid{
-  display:grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:24px;
-}
-.stat-card{
-  background: var(--paper-raised); border:1px solid var(--line); border-radius: var(--radius-md);
-  padding: 14px 16px; box-shadow: var(--shadow-1);
-}
-.stat-card .stat-value{ font-family: var(--font-mono); font-size:22px; font-weight:700; color: var(--emerald-dark); }
-[data-theme="dark"] .stat-card .stat-value{ color: var(--emerald); }
-.stat-card .stat-label{ font-size:11.5px; color: var(--ink-soft); margin-top:4px; }
+    <!-- Payment Claims Panel -->
+    <section class="admin-panel">
+      <div class="admin-panel-head">
+        <h2>Payment Claims Review</h2>
+        <div class="tab-row">
+          <button type="button" class="tab-btn" data-tab="claims" aria-selected="true">Pending Claims</button>
+        </div>
+      </div>
 
-.admin-panel{
-  background: var(--paper-raised); border:1px solid var(--line); border-radius: var(--radius-lg);
-  padding: 18px 20px 22px; margin-bottom: 24px; box-shadow: var(--shadow-1);
-}
-.admin-panel-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
-.admin-panel-head h2{ font-family: var(--font-display); font-size:17px; margin:0; }
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Client ID</th>
+              <th>Method</th>
+              <th>Amount (Rs.)</th>
+              <th>Transaction ID</th>
+              <th>Contact Info</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="claimsTableBody">
+            <!-- Dynamically populated via admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-.tab-row{ display:flex; gap:6px; }
-.tab-btn{
-  border:1px solid var(--line-strong); background: var(--paper); border-radius:999px;
-  padding: 5px 12px; font-size:12px; font-weight:600; color: var(--ink-soft);
-}
-.tab-btn[aria-selected="true"]{ border-color: var(--emerald); color: var(--emerald-dark); background: color-mix(in srgb, var(--emerald) 10%, var(--paper)); }
-[data-theme="dark"] .tab-btn[aria-selected="true"]{ color: var(--emerald); }
+    <!-- Client Database Panel -->
+    <section class="admin-panel">
+      <div class="admin-panel-head">
+        <h2>Client Directory & Quotas</h2>
+        <input type="text" id="licenseSearch" class="input" placeholder="Search by Client ID..." />
+      </div>
 
-.table-wrap{ overflow-x:auto; }
-.admin-table{ width:100%; border-collapse: collapse; font-size:12.5px; }
-.admin-table th{
-  text-align:left; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
-  color: var(--ink-soft); padding: 8px 10px; border-bottom:1px solid var(--line);
-}
-.admin-table td{ padding: 9px 10px; border-bottom:1px solid var(--line); vertical-align:middle; white-space:nowrap; }
-.admin-table code{ font-family: var(--font-mono); font-size:11.5px; }
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Client ID</th>
+              <th>Status</th>
+              <th>Plan</th>
+              <th>Attempts Used</th>
+              <th>Last Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTableBody">
+            <!-- Dynamically populated via admin.js -->
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-.badge{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:10.5px; font-weight:700; }
-.badge-pending{ background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
-.badge-approved{ background: color-mix(in srgb, var(--emerald) 16%, transparent); color: var(--emerald-dark); }
-[data-theme="dark"] .badge-approved{ color: var(--emerald); }
-.badge-rejected{ background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
-.badge-trial{ background: color-mix(in srgb, var(--gold) 18%, transparent); color: var(--gold); }
-.badge-active{ background: color-mix(in srgb, var(--emerald) 16%, transparent); color: var(--emerald-dark); }
-[data-theme="dark"] .badge-active{ color: var(--emerald); }
-.badge-expired{ background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+  </div>
 
-.row-actions{ display:flex; gap:6px; }
-.row-actions .btn{ padding: 5px 10px; font-size:11.5px; }
-
-#licenseSearch{ max-width:240px; }
-
-@media (max-width: 720px){
-  .admin-main{ padding: 18px 14px 40px; }
-}
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

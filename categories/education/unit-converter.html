@@ -52,36 +52,42 @@ input:focus, select:focus { outline: none; border-color: var(--category-color); 
 <main class="util-container">
   <div class="tool-card">
     <div class="tool-header">
-      <h1>Scientific Unit Converter</h1>
-      <p>Quickly convert length, mass, and temperature for academic and technical applications.</p>
+      <h1>Comprehensive Scientific Unit Converter</h1>
+      <p>Seamlessly convert length, mass, temperature, area, volume, time, speed, digital data, and energy metrics.</p>
     </div>
 
     <div class="form-group">
-      <label>Conversion Type</label>
+      <label>Conversion Category</label>
       <select id="convType" onchange="updateUnits()">
-        <option value="length">Length (Meters, Kilometers, Miles, Feet)</option>
-        <option value="mass">Mass (Kilograms, Grams, Pounds, Ounces)</option>
-        <option value="temp">Temperature (°C, °F, Kelvin)</option>
+        <option value="length">Length & Distance</option>
+        <option value="mass">Mass & Weight</option>
+        <option value="temp">Temperature</option>
+        <option value="area">Area</option>
+        <option value="volume">Volume</option>
+        <option value="time">Time</option>
+        <option value="speed">Speed</option>
+        <option value="digital">Digital Storage</option>
+        <option value="energy">Energy</option>
       </select>
     </div>
 
     <div class="converter-grid">
       <div class="form-group">
-        <label>From</label>
+        <label>From Unit</label>
         <select id="unitFrom"></select>
       </div>
       <div class="form-group">
-        <label>To</label>
+        <label>To Unit</label>
         <select id="unitTo"></select>
       </div>
     </div>
 
     <div class="form-group">
       <label>Value to Convert</label>
-      <input type="number" id="inputValue" value="1" placeholder="Enter value">
+      <input type="number" id="inputValue" value="1" placeholder="Enter numeric value">
     </div>
 
-    <button class="btn" onclick="convertUnits()">Convert Unit</button>
+    <button class="btn" onclick="convertUnits()">Convert Units</button>
 
     <div class="result-box" id="convResultBox" style="display:none;">
       <h3 id="convOutput">0</h3>
@@ -93,8 +99,67 @@ input:focus, select:focus { outline: none; border-color: var(--category-color); 
 <script src="../../script.js"></script>
 <script>
 const unitsData = {
-  length: { meters: 1, kilometers: 1000, miles: 1609.34, feet: 0.3048 },
-  mass: { kilograms: 1, grams: 0.001, pounds: 0.453592, ounces: 0.0283495 }
+  length: {
+    meters: 1,
+    kilometers: 1000,
+    centimeters: 0.01,
+    millimeters: 0.001,
+    miles: 1609.344,
+    yards: 0.9144,
+    feet: 0.3048,
+    inches: 0.0254
+  },
+  mass: {
+    kilograms: 1,
+    grams: 0.001,
+    milligrams: 0.000001,
+    metric_tons: 1000,
+    pounds: 0.45359237,
+    ounces: 0.028349523125
+  },
+  area: {
+    square_meters: 1,
+    square_kilometers: 1000000,
+    square_miles: 2589988.11,
+    square_feet: 0.092903,
+    acres: 4046.86,
+    hectares: 10000
+  },
+  volume: {
+    liters: 1,
+    milliliters: 0.001,
+    cubic_meters: 1000,
+    gallons_us: 3.78541,
+    fluid_ounces_us: 0.0295735
+  },
+  time: {
+    seconds: 1,
+    minutes: 60,
+    hours: 3600,
+    days: 86400,
+    weeks: 604800,
+    years: 31536000
+  },
+  speed: {
+    meters_per_second: 1,
+    kilometers_per_hour: 0.277778,
+    miles_per_hour: 0.44704,
+    knots: 0.514444
+  },
+  digital: {
+    bytes: 1,
+    kilobytes: 1024,
+    megabytes: 1048576,
+    gigabytes: 1073741824,
+    terabytes: 1099511627776
+  },
+  energy: {
+    joules: 1,
+    kilojoules: 1000,
+    calories: 4.184,
+    kilocalories: 4184,
+    watt_hours: 3600
+  }
 };
 
 function updateUnits() {
@@ -105,15 +170,20 @@ function updateUnits() {
   toSelect.innerHTML = '';
 
   if (type === 'temp') {
-    ['Celsius', 'Fahrenheit', 'Kelvin'].forEach(u => {
+    const tempUnits = ['Celsius', 'Fahrenheit', 'Kelvin'];
+    tempUnits.forEach(u => {
       fromSelect.add(new Option(u, u));
       toSelect.add(new Option(u, u));
     });
+    toSelect.selectedIndex = 1; // Default to Fahrenheit
   } else {
-    Object.keys(unitsData[type]).forEach(u => {
-      fromSelect.add(new Option(u, u));
-      toSelect.add(new Option(u, u));
+    const keys = Object.keys(unitsData[type]);
+    keys.forEach(u => {
+      const formattedName = u.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      fromSelect.add(new Option(formattedName, u));
+      toSelect.add(new Option(formattedName, u));
     });
+    if (keys.length > 1) toSelect.selectedIndex = 1;
   }
 }
 
@@ -131,24 +201,32 @@ function convertUnits() {
   let result = 0;
 
   if (type === 'temp') {
-    if (from === to) result = val;
-    else if (from === 'Celsius' && to === 'Fahrenheit') result = (val * 9/5) + 32;
-    else if (from === 'Fahrenheit' && to === 'Celsius') result = (val - 32) * 5/9;
-    else if (from === 'Celsius' && to === 'Kelvin') result = val + 273.15;
-    else if (from === 'Kelvin' && to === 'Celsius') result = val - 273.15;
-    else if (from === 'Fahrenheit' && to === 'Kelvin') result = (val - 32) * 5/9 + 273.15;
-    else if (from === 'Kelvin' && to === 'Fahrenheit') result = (val - 273.15) * 9/5 + 32;
+    if (from === to) {
+      result = val;
+    } else if (from === 'Celsius' && to === 'Fahrenheit') {
+      result = (val * 9/5) + 32;
+    } else if (from === 'Fahrenheit' && to === 'Celsius') {
+      result = (val - 32) * 5/9;
+    } else if (from === 'Celsius' && to === 'Kelvin') {
+      result = val + 273.15;
+    } else if (from === 'Kelvin' && to === 'Celsius') {
+      result = val - 273.15;
+    } else if (from === 'Fahrenheit' && to === 'Kelvin') {
+      result = (val - 32) * 5/9 + 273.15;
+    } else if (from === 'Kelvin' && to === 'Fahrenheit') {
+      result = (val - 273.15) * 9/5 + 32;
+    }
   } else {
     const baseVal = val * unitsData[type][from];
     result = baseVal / unitsData[type][to];
   }
 
   document.getElementById('convOutput').innerText = result.toLocaleString(undefined, {maximumFractionDigits: 4});
-  document.getElementById('convLabel').innerText = `${val} ${from} = ${result.toFixed(4)} ${to}`;
+  document.getElementById('convLabel').innerText = `${val} ${from.replace(/_/g, ' ')} = ${result.toLocaleString(undefined, {maximumFractionDigits: 4})} ${to.replace(/_/g, ' ')}`;
   document.getElementById('convResultBox').style.display = 'block';
 }
 
-// Initialize on load
+// Initialize on page load
 updateUnits();
 </script>
 </body>

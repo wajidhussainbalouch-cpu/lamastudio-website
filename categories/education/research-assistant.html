@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MPhil & PhD Research Assistant — LamaStudio</title>
+<title>Academic Research Assistant & Paper Generator — LamaStudio</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
@@ -23,12 +23,13 @@
 .form-group { margin-bottom: 16px; }
 label { display: block; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted); font-weight: 500; }
 input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; }
-textarea { height: 180px; resize: vertical; }
+textarea { height: 200px; resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--category-color); }
 
-.btn { background: var(--category-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btn { background: var(--category-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 8px; }
 .btn:hover { opacity: 0.9; }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-success { background: #10b981; color: #fff; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .stat-box { background: rgba(23, 78, 166, 0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; }
@@ -38,11 +39,16 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .checklist-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; }
 .checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--category-color); cursor: pointer; }
 
-.outline-box { background: rgba(23, 78, 166, 0.04); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 12px; }
-.outline-box h4 { margin: 0 0 5px 0; color: var(--text); font-size: 1rem; }
-.outline-edit-area { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: inherit; font-size: 0.9rem; margin-top: 8px; resize: vertical; height: 80px; }
-.outline-edit-area:focus { outline: none; border-color: var(--category-color); }
 .hint-badge { background: rgba(23, 78, 166, 0.15); color: var(--category-color); padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 15px; display: block; font-weight: 500; }
+
+/* Print Styles for Hard / Soft PDF Copy Generation */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .site-header, .calc-tabs, .btn, .hint-badge, .tool-header p { display: none !important; }
+  .tool-card { border: none; box-shadow: none; padding: 0; background: #fff !important; }
+  .calc-section { display: block !important; }
+  textarea, input { border: none !important; background: transparent !important; color: #000 !important; font-size: 12pt !important; resize: none; }
+}
 </style>
 </head>
 <body style="--category-color: var(--c-education);">
@@ -69,38 +75,46 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 <main class="util-container">
   <div class="tool-card">
     <div class="tool-header">
-      <h1>MPhil & PhD Research Assistant</h1>
-      <p>Draft thesis sections by topic, evaluate academic tone, format references, and prepare submissions.</p>
+      <h1>Academic Research Assistant & Paper Generator</h1>
+      <p>Draft research papers by topic, format academic references, check tone, and print or save soft copies for your supervisor.</p>
     </div>
 
     <div class="calc-tabs">
-      <button class="tab-btn active" onclick="switchTab('generator', event)">AI Section Draft Generator</button>
-      <button class="tab-btn" onclick="switchTab('analyzer', event)">Academic Tone & Metrics</button>
+      <button class="tab-btn active" onclick="switchTab('generator', event)">Paper Generator & Editor</button>
+      <button class="tab-btn" onclick="switchTab('analyzer', event)">Tone & Word Metrics</button>
       <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
       <button class="tab-btn" onclick="switchTab('checklist', event)">Submission Checklist</button>
     </div>
 
-    <!-- TAB 1: AI SECTION DRAFT GENERATOR -->
+    <!-- TAB 1: PAPER GENERATOR & EDITOR -->
     <div id="generatorTab" class="calc-section active">
-      <span class="hint-badge">🤖 Enter your topic and select a section below to instantly draft an editable academic framework.</span>
-      <div class="form-group">
-        <label>Your Specific Research Topic / Title</label>
-        <input type="text" id="aiTopic" placeholder="e.g., Deep Learning in Decentralized Healthcare Systems" value="Deep Learning in Decentralized Healthcare Systems">
+      <span class="hint-badge">💡 Enter your topic and select your study section below. Once you refine your text, click <strong>"Print / Save as PDF / Word Copy"</strong> at the bottom to export your work!</span>
+      
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Research Topic / Title</label>
+          <input type="text" id="paperTopic" placeholder="e.g., Impact of Artificial Intelligence on Higher Education" value="Impact of Artificial Intelligence on Higher Education">
+        </div>
+        <div class="form-group">
+          <label>Select Section to Draft</label>
+          <select id="paperSection" onchange="generatePaperDraft()">
+            <option value="abstract">Abstract & Keywords</option>
+            <option value="intro">Chapter 1: Introduction</option>
+            <option value="lit">Chapter 2: Literature Review</option>
+            <option value="method">Chapter 3: Methodology</option>
+            <option value="conclusion">Chapter 5: Conclusion & Recommendations</option>
+          </select>
+        </div>
       </div>
-      <div class="form-group">
-        <label>Select Thesis Section to Generate</label>
-        <select id="aiSection">
-          <option value="intro">Chapter 1: Introduction & Problem Statement</option>
-          <option value="lit">Chapter 2: Literature Review Framework</option>
-          <option value="method">Chapter 3: Methodology & Implementation Approach</option>
-          <option value="conclusion">Chapter 6: Conclusion & Future Scope</option>
-        </select>
-      </div>
-      <button class="btn" onclick="generateAIDraft()">Generate Editable Draft Section</button>
 
-      <div class="form-group" style="margin-top: 25px;">
-        <label>Generated Draft (Fully Editable - Refine for your supervisor):</label>
-        <textarea id="aiOutputText" style="height: 220px;"></textarea>
+      <div class="form-group" style="margin-top: 10px;">
+        <label>Editable Research Content (Modify freely before exporting):</label>
+        <textarea id="paperContent" style="height: 280px;"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+        <button class="btn" onclick="generatePaperDraft()">🔄 Regenerate Template</button>
+        <button class="btn btn-success" onclick="exportToPrint()">🖨️ Print / Save as PDF or Word Copy</button>
       </div>
     </div>
 
@@ -114,7 +128,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       </div>
       <div class="form-group">
         <label>Paste your drafted text below to evaluate academic style:</label>
-        <textarea id="researchText" placeholder="Paste text here..." oninput="analyzeResearchText()">This study investigates the integration of deep neural networks within decentralized predictive healthcare frameworks.</textarea>
+        <textarea id="researchText" placeholder="Paste text here..." oninput="analyzeResearchText()">This study investigates the profound integration of emerging technologies within modern academic curricula.</textarea>
       </div>
       <button class="btn btn-outline" onclick="clearResearchText()">Clear Text</button>
     </div>
@@ -141,11 +155,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       </div>
       <div class="form-group">
         <label>Article / Book Title</label>
-        <input type="text" id="citTitle" placeholder="Title" value="Advanced Neural Networks">
+        <input type="text" id="citTitle" placeholder="Title" value="Digital Learning Frameworks">
       </div>
       <div class="form-group">
         <label>Source / Journal Name</label>
-        <input type="text" id="citSource" placeholder="Journal" value="Journal of AI Research">
+        <input type="text" id="citSource" placeholder="Journal" value="Journal of Educational Technology">
       </div>
       <button class="btn" onclick="generateCitation()">Generate Formatted Reference</button>
       
@@ -157,14 +171,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
     <!-- TAB 4: CHECKLIST -->
     <div id="checklistTab" class="calc-section">
-      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential technical checks before sending your manuscript to your supervisor:</p>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential checks before sending your final paper to your supervisor:</p>
       
-      <div class="checklist-item"><input type="checkbox"><span>Run through institutional Plagiarism Scanner (e.g., Turnitin) & ensure similarity is below acceptable threshold (&lt;15%).</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Verify all in-text citations match the bibliography list precisely.</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Check all figure captions, table headings, and equation numbers for sequential accuracy.</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Ensure adherence to institutional formatting guidelines (Margins, Spacing, Font family).</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Run grammar diagnostics and check for passive voice overuse.</span></div>
-      <div class="checklist-item"><input type="checkbox"><span>Confirm Abstract covers objective, methodology, key findings, and conclusion.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Run through a plagiarism scanner to verify originality and similarity indices.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Confirm all in-text citations correspond correctly with reference items.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Verify headings, subheadings, and font styles meet institutional guidelines.</span></div>
+      <div class="checklist-item"><input type="checkbox"><span>Check spelling, grammar, and sentence transitions.</span></div>
     </div>
 
   </div>
@@ -179,22 +191,28 @@ function switchTab(tabName, evt) {
   evt.currentTarget.classList.add('active');
 }
 
-function generateAIDraft() {
-  const topic = document.getElementById('aiTopic').value || "Your Research Topic";
-  const section = document.getElementById('aiSection').value;
+function generatePaperDraft() {
+  const topic = document.getElementById('paperTopic').value || "Your Research Topic";
+  const section = document.getElementById('paperSection').value;
   let draftText = "";
 
-  if (section === 'intro') {
-    draftText = `1.1 Background and Context\nRecent advancements in technology have underscored the growing significance of ${topic}. As industries shift toward data-driven paradigms, addressing inefficiencies in traditional setups has become crucial.\n\n1.2 Problem Statement\nDespite notable improvements, current methodologies concerning ${topic} continue to suffer from scalability bottlenecks, high overhead costs, and a lack of standardized evaluative frameworks.\n\n1.3 Research Objectives\n- To analyze current systemic limitations associated with ${topic}.\n- To propose an optimized model that enhances operational efficiency.\n- To empirically validate the proposed approach through rigorous experimentation.`;
+  if (section === 'abstract') {
+    draftText = `ABSTRACT\n\nBackground: This research explores the core dynamics of ${topic} within contemporary educational systems.\n\nObjective: To examine systemic impacts, evaluate performance outcomes, and establish strategic frameworks for future development.\n\nMethodology: A mixed-methods evaluative approach was utilized, gathering analytical data across representative sample groups.\n\nConclusion: Findings indicate substantial operational enhancements, offering actionable insights for academics and institutional leaders.\n\nKeywords: ${topic}; Educational Frameworks; Analytical Evaluation; Academic Research.`;
+  } else if (section === 'intro') {
+    draftText = `CHAPTER 1: INTRODUCTION\n\n1.1 Background\nThe continuous evolution of academic standards has highlighted the critical importance of ${topic}. As educational models transition toward modern methodologies, addressing structural challenges becomes paramount.\n\n1.2 Problem Statement\nDespite widespread adoption, current approaches regarding ${topic} face persistent constraints in adaptability, standardization, and resource allocation.\n\n1.3 Research Objectives\n- To investigate the underlying factors influencing ${topic}.\n- To propose an updated framework ensuring operational efficiency.\n- To evaluate the proposed metrics through formal academic analysis.`;
   } else if (section === 'lit') {
-    draftText = `2.1 Theoretical Framework\nPrior literature on ${topic} establishes a foundational understanding of core variables, yet notable gaps remain regarding real-world adaptability.\n\n2.2 Comparative Analysis of Existing Works\nEarly models prioritized foundational processing speeds but compromised accuracy. Subsequent studies attempted to bridge this gap via hybrid architectures.\n\n2.3 Identification of Research Gaps\nWhile previous researchers focused extensively on theoretical simulations, limited empirical testing has been conducted under dynamic operational environments, forming the core motivation of this study.`;
+    draftText = `CHAPTER 2: LITERATURE REVIEW\n\n2.1 Theoretical Foundations\nEarly scholarship surrounding ${topic} primarily focused on foundational definitions and baseline observations, laying the groundwork for contemporary models.\n\n2.2 Evolution of Prior Frameworks\nRecent studies have expanded upon earlier assumptions, introducing advanced metrics and cross-disciplinary analyses.\n\n2.3 Identification of Research Gaps\nWhile extensive theoretical work exists, limited empirical validation has been performed in real-world educational ecosystems, presenting the core rationale for the present study.`;
   } else if (section === 'method') {
-    draftText = `3.1 Research Design\nThis study adopts an experimental and quantitative methodology structured to evaluate ${topic} systematically.\n\n3.2 Data Collection & Environment\nDatasets were curated from verified institutional repositories. Simulations were executed within a controlled digital environment to maintain consistency.\n\n3.3 Evaluation Metrics\nPerformance was measured using accuracy indexes, error variance calculations, and computational execution times.`;
+    draftText = `CHAPTER 3: METHODOLOGY\n\n3.1 Research Design\nThis study implements a structured research design combining qualitative insights with quantitative evaluations to assess ${topic} accurately.\n\n3.2 Data Collection Protocols\nData was sourced via verified institutional repositories, surveys, and controlled observational testing.\n\n3.3 Analytical Tools\nStatistical and qualitative evaluation methods were applied to process findings and verify hypothesis validity.`;
   } else {
-    draftText = `6.1 Summary of Findings\nThis research successfully demonstrated the integration and application of ${topic}, confirming initial hypotheses regarding operational enhancement.\n\n6.2 Theoretical and Practical Implications\nThe findings offer clear guidelines for practitioners seeking to implement advanced frameworks within similar academic or industrial sectors.\n\n6.3 Recommendations for Future Work\nFuture investigations should expand sample sizes and explore cross-disciplinary applications of ${topic}.`;
+    draftText = `CHAPTER 5: CONCLUSION & RECOMMENDATIONS\n\n5.1 Summary of Findings\nThe investigation into ${topic} successfully validated primary research objectives, confirming significant correlations between optimized frameworks and performance outcomes.\n\n5.2 Practical Recommendations\nInstitutions should adopt structured protocols to integrate these findings seamlessly into ongoing curricula.\n\n5.3 Future Scope\nFuture scholars are encouraged to expand sample sizes and explore broader demographic applications of ${topic}.`;
   }
 
-  document.getElementById('aiOutputText').value = draftText;
+  document.getElementById('paperContent').value = draftText;
+}
+
+function exportToPrint() {
+  window.print();
 }
 
 function analyzeResearchText() {
@@ -241,7 +259,7 @@ function generateCitation() {
 // Initial triggers
 analyzeResearchText();
 generateCitation();
-generateAIDraft();
+generatePaperDraft();
 </script>
 </body>
 </html>

@@ -3,38 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Math Practice Hub — LamaStudio Education</title>
+<title>Math Practice Hub & Certificate Generator — LamaStudio Education</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-.test-container { max-width: 800px; margin: 40px auto; padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); }
+.test-container { max-width: 850px; margin: 40px auto; padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
 .test-header { text-align: center; margin-bottom: 25px; }
 .test-header h1 { font-size: 2rem; color: var(--text); margin-bottom: 8px; }
 .test-brand { font-size: 0.9rem; color: var(--text-muted); }
 
-/* Landing Menu & Set Selection Grid */
+/* Landing Menu & Level Select */
 .landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px; }
 .set-btn { background: var(--background); border: 2px solid var(--border); border-radius: 12px; padding: 20px; text-align: left; cursor: pointer; transition: all .2s ease; color: var(--text); display: flex; flex-direction: column; gap: 5px; }
 .set-btn:hover { border-color: var(--category-color); transform: translateY(-2px); background: var(--surface); }
 .set-btn h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
 .set-btn p { margin: 0; font-size: 0.85rem; color: var(--text-muted); }
 
+.level-panel { background: rgba(23, 78, 166, 0.05); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center; display: none; }
+.level-btns { display: flex; justify-content: center; gap: 12px; margin-top: 15px; flex-wrap: wrap; }
+.lvl-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); color: var(--text); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.lvl-btn.active { background: var(--category-color); color: #fff; border-color: var(--category-color); }
+
 .progress-box { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
 .timer-display { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; }
-.question { font-size: 1.3rem; font-weight: 700; line-height: 1.5; margin: 20px 0; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.question { font-size: 1.25rem; font-weight: 700; line-height: 1.5; margin: 20px 0; color: var(--text); font-family: 'JetBrains Mono', monospace; }
 .option { display: block; width: 100%; padding: 14px 18px; margin: 10px 0; border: 2px solid var(--border); border-radius: 12px; background: var(--background); text-align: left; font-size: 1rem; color: var(--text); cursor: pointer; transition: all .2s ease; }
 .option:hover:not(:disabled) { background: var(--surface); border-color: var(--category-color); transform: translateY(-2px); }
 .option.correct { background: rgba(34, 197, 94, 0.15) !important; border-color: #22c55e !important; color: #16a34a !important; font-weight: bold; }
 .option.wrong { background: rgba(239, 68, 68, 0.15) !important; border-color: #ef4444 !important; color: #dc2626 !important; font-weight: bold; }
 .option:disabled { cursor: default; transform: none; }
 
+/* Hint Toggle Box */
+.hint-toggle-btn { background: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; }
+.hint-box { background: rgba(234, 179, 8, 0.05); border-left: 3px solid #eab308; padding: 12px; border-radius: 6px; font-size: 0.9rem; color: var(--text-muted); margin-top: 10px; display: none; }
+
 #next { display: none; margin: 25px auto 5px; padding: 14px 30px; border: 0; border-radius: 10px; background: var(--category-color); color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .2s; }
 #next:hover { opacity: 0.9; }
 .feedback { text-align: center; font-size: 1.05rem; font-weight: 700; margin: 20px 0; min-height: 28px; }
-.result { text-align: center; padding: 20px 0; }
+.result { text-align: center; padding: 10px 0; }
+
+/* Trophy & Certificate Styles */
+.trophy-banner { font-size: 3.5rem; margin-bottom: 5px; animation: bounce 1s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+
+.certificate-card { background: #fff; color: #111; border: 6px double var(--category-color); border-radius: 12px; padding: 30px; text-align: center; margin: 20px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.certificate-card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; color: #1e3a8a; margin: 5px 0; text-transform: uppercase; letter-spacing: 1px; }
+.certificate-card h4 { font-size: 1rem; color: #64748b; margin-bottom: 20px; font-weight: 500; }
+.cert-name { font-size: 1.5rem; font-weight: 800; border-bottom: 2px solid #cbd5e1; display: inline-block; padding: 0 20px; margin: 10px 0; color: #0f172a; }
+.cert-details { font-size: 0.95rem; color: #334155; line-height: 1.6; margin: 15px 0; }
+
 .restart { display: inline-block; margin-top: 15px; padding: 12px 24px; background: var(--category-color); color: #fff; border-radius: 10px; text-decoration: none; font-weight: 700; cursor: pointer; border: 0; }
 
-/* Enhanced Footer */
+/* Print mode for certificates */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  .site-header, .site-footer, .landing-grid, .level-panel, #progress, .test-header, .restart { display: none !important; }
+  .test-container { border: none; box-shadow: none; margin: 0; padding: 0; max-width: 100%; }
+  .certificate-card { border: 4px solid #000; box-shadow: none; margin: 0; width: 100%; }
+}
+
 .site-footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 20px 20px;margin-top:60px;color:var(--text-muted)}
 .footer-content{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:30px;margin-bottom:30px}
 .footer-col h4{color:var(--text);font-size:16px;margin-bottom:12px;font-weight:600}
@@ -50,7 +77,7 @@
 <div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
 
 <header class="site-header">
-  <div class="util-row">
+  <div class="util-row" style="width: 100%; display: flex; justify-content: space-between; align-items: center; max-width: 1280px; margin: 0 auto; padding: 0 1rem;">
     <div style="display: flex; align-items: center; gap: 1rem;">
       <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
       <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
@@ -63,15 +90,9 @@
   </div>
   <div class="category-strip">
     <div class="category-track" role="tablist">
+      <a href="./" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education Hub</a>
       <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
       <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
-      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
-      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
-      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
-      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
-      <a href="./" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
-      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
-      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
     </div>
   </div>
 </header>
@@ -82,25 +103,36 @@
     <div id="landing-view">
       <div class="test-header">
         <h1>📐 Math Practice Hub</h1>
-        <div class="test-brand">Select a Mathematical Practice Module Below</div>
+        <div class="test-brand">Select your mathematical module & academic difficulty tier below</div>
+      </div>
+
+      <!-- Level Selector Panel -->
+      <div class="level-panel" id="levelPanel" style="display:block;">
+        <h3 style="margin:0 0 5px 0; color:var(--text); font-size:1.05rem;">Select Difficulty Tier</h3>
+        <p style="margin:0; font-size:0.85rem; color:var(--text-muted);">Choose grade level or cognitive complexity:</p>
+        <div class="level-btns">
+          <button class="lvl-btn active" onclick="setLevel(1, this)">Level 1 (Grade 6–8 / Beginner)</button>
+          <button class="lvl-btn" onclick="setLevel(2, this)">Level 2 (Grade 9–10 / Intermediate)</button>
+          <button class="lvl-btn" onclick="setLevel(3, this)">Level 3 (College Prep / Advanced)</button>
+        </div>
       </div>
       
       <div class="landing-grid">
-        <button class="set-btn" onclick="startQuiz('algebra')">
+        <button class="set-btn" onclick="selectTopic('algebra')">
           <h3>Algebra & Equations</h3>
-          <p>10 Questions • Linear equations & quadratics</p>
+          <p>Linear expressions, quadratics & systems</p>
         </button>
-        <button class="set-btn" onclick="startQuiz('arithmetic')">
+        <button class="set-btn" onclick="selectTopic('arithmetic')">
           <h3>Arithmetic & Percentages</h3>
-          <p>10 Questions • Ratios, fractions & percentages</p>
+          <p>Ratios, fractions, interest & roots</p>
         </button>
-        <button class="set-btn" onclick="startQuiz('geometry')">
+        <button class="set-btn" onclick="selectTopic('geometry')">
           <h3>Geometry & Mensuration</h3>
-          <p>10 Questions • Areas, angles & volumes</p>
+          <p>Areas, angles, volumes & triangles</p>
         </button>
-        <button class="set-btn" onclick="startQuiz('wordproblems')">
+        <button class="set-btn" onclick="selectTopic('wordproblems')">
           <h3>Applied Word Problems</h3>
-          <p>10 Questions • Speed, distance & logic</p>
+          <p>Speed, distance, logic & age puzzles</p>
         </button>
       </div>
     </div>
@@ -128,77 +160,19 @@
         <li><a href="../tech/">Tech & Code</a></li>
         <li><a href="./">Education Hub</a></li>
         <li><a href="../business/">Business</a></li>
-        <li><a href="../news/">Global News</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Platform Tools</h4>
-      <ul>
-        <li><a href="english.html">Online English Tests</a></li>
-        <li><a href="math.html">Math Practice</a></li>
-        <li><a href="computer.html">Computer Quizzes</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
     <p>&copy; 2026 LamaStudio. All rights reserved.</p>
-    <p>Designed with ❤️ for Pakistani Students & Professionals</p>
+    <p>Designed with ❤️ for Students & Professionals</p>
   </div>
 </footer>
 
 <script src="../../script.js"></script>
 <script>
-const mathData = {
-  algebra: [
-    { q: "Solve for x: 3x + 5 = 20", a: ["x = 3", "x = 5", "x = 7", "x = 15"], c: 1 },
-    { q: "Expand the expression: (x + 3)(x + 2)", a: ["x^2 + 5x + 6", "x^2 + 6x + 5", "x^2 + 5x + 5", "x^2 + 6x + 6"], c: 0 },
-    { q: "Find the roots of: x^2 - 9 = 0", a: ["x = ±2", "x = ±3", "x = ±9", "x = 3 only"], c: 1 },
-    { q: "If 2(x - 4) = 12, what is x?", a: ["x = 6", "x = 8", "x = 10", "x = 12"], c: 2 },
-    { q: "Simplify: 5x^2 - 3x^2 + 4x", a: ["2x^2 + 4x", "6x^3", "2x^4 + 4x", "8x^2"], c: 0 },
-    { q: "What is the slope of the line y = -3x + 7?", a: ["7", "3", "-3", "-7"], c: 2 },
-    { q: "Solve the system: x + y = 10 and x - y = 4", a: ["x=6, y=4", "x=7, y=3", "x=8, y=2", "x=5, y=5"], c: 1 },
-    { q: "Evaluate 3x^2 when x = -2", a: ["-12", "12", "-6", "6"], c: 1 },
-    { q: "Factor completely: x^2 - 5x + 6", a: ["(x-1)(x-6)", "(x-2)(x-3)", "(x+2)(x+3)", "(x-5)(x+1)"], c: 1 },
-    { q: "What is the y-intercept of y = 4x - 5?", a: ["4", "-5", "5", "0"], c: 1 }
-  ],
-  arithmetic: [
-    { q: "What is 15% of 240?", a: ["30", "36", "40", "45"], c: 1 },
-    { q: "Evaluate: 3/4 + 2/5", a: ["5/9", "23/20", "15/20", "7/9"], c: 1 },
-    { q: "If 8 workers complete a job in 6 days, how many days for 4 workers?", a: ["3 days", "9 days", "12 days", "16 days"], c: 2 },
-    { q: "What is the square root of 1225?", a: ["25", "35", "45", "55"], c: 1 },
-    { q: "Convert 0.375 into a simplified fraction.", a: ["3/8", "3/5", "5/8", "7/16"], c: 0 },
-    { q: "Calculate simple interest on $1000 at 5% per annum for 3 years.", a: ["$150", "$300", "$450", "$50"], c: 0 },
-    { q: "What is the next prime number after 47?", a: ["49", "51", "53", "57"], c: 2 },
-    { q: "Simplify the ratio 45 : 75 in lowest terms.", a: ["3 : 5", "5 : 7", "9 : 15", "2 : 3"], c: 0 },
-    { q: "Evaluate: 50 + 50 * 0 - 50 + 50", a: ["0", "50", "100", "150"], c: 1 },
-    { q: "Find the Least Common Multiple (LCM) of 12 and 18.", a: ["24", "36", "72", "6"], c: 1 }
-  ],
-  geometry: [
-    { q: "What is the area of a circle with radius 7 cm? (Use π = 22/7)", a: ["44 cm²", "88 cm²", "154 cm²", "308 cm²"], c: 2 },
-    { q: "The sum of interior angles of a pentagon is:", a: ["360°", "540°", "720°", "900°"], c: 1 },
-    { q: "Find the perimeter of a rectangle with length 12m and width 8m.", a: ["40 m", "96 m", "20 m", "48 m"], c: 0 },
-    { q: "What is the volume of a cube with edge length 5 cm?", a: ["125 cm³", "75 cm³", "25 cm³", "150 cm³"], c: 0 },
-    { q: "In a right triangle, if legs are 6 cm and 8 cm, what is the hypotenuse?", a: ["9 cm", "10 cm", "12 cm", "14 cm"], c: 1 },
-    { q: "What is the area of a triangle with base 10 cm and height 6 cm?", a: ["60 cm²", "30 cm²", "15 cm²", "20 cm²"], c: 1 },
-    { q: "An angle measuring 110° is classified as:", a: ["Acute", "Right", "Obtuse", "Straight"], c: 2 },
-    { q: "How many degrees are in a semicircle?", a: ["90°", "180°", "270°", "360°"], c: 1 },
-    { q: "Find the circumference of a circle with diameter 14 cm (π = 22/7).", a: ["44 cm", "88 cm", "22 cm", "154 cm"], c: 0 },
-    { q: "What is the area of a trapezoid with parallel sides 6 cm and 10 cm, and height 4 cm?", a: ["32 cm²", "64 cm²", "40 cm²", "48 cm²"], c: 0 }
-  ],
-  wordproblems: [
-    { q: "A car travels 180 km in 3 hours. What is its average speed?", a: ["50 km/h", "60 km/h", "75 km/h", "90 km/h"], c: 1 },
-    { q: "The sum of three consecutive integers is 72. What is the middle number?", a: ["23", "24", "25", "26"], c: 1 },
-    { q: "A shirt marked at $80 is sold at a 20% discount. What is the selling price?", a: ["$60", "$64", "$68", "$72"], c: 1 },
-    { q: "Ali is 4 times as old as his son. In 20 years, he will be twice as old. How old is Ali now?", a: ["30 years", "40 years", "50 years", "60 years"], c:1 },
-    { q: "If 5 machines make 5 widgets in 5 minutes, how many minutes for 100 machines to make 100 widgets?", a: ["5 minutes", "20 minutes", "50 minutes", "100 minutes"], c: 0 },
-    { q: "A tank can be filled by pipe A in 6 hours and emptied by pipe B in 8 hours. Time to fill when both open:", a: ["12 hours", "18 hours", "24 hours", "48 hours"], c: 2 },
-    { q: "The average of 5 numbers is 20. If one number is removed, the average becomes 18. What was the removed number?", a: ["22", "24", "28", "30"], c: 2 },
-    { q: "A train 150m long is running at 54 km/h. How long does it take to pass a pole?", a: ["5 seconds", "10 seconds", "15 seconds", "20 seconds"], c: 1 },
-    { q: "In a class of 40 students, 60% are girls. How many boys are in the class?", a: ["12", "16", "24", "28"], c: 1 },
-    { q: "Two numbers are in the ratio 3:4 and their sum is 84. What is the larger number?", a: ["36", "42", "48", "54"], c: 2 }
-  ]
-};
-
+let selectedLevel = 1;
+let selectedTopicName = '';
 let currentSet = [];
 let current = 0;
 let score = 0;
@@ -206,23 +180,117 @@ let answered = false;
 let timerInterval = null;
 let secondsElapsed = 0;
 
-const landingView = document.getElementById("landing-view");
-const quizView = document.getElementById("quiz-view");
-const quiz = document.getElementById("quiz");
-const progress = document.getElementById("progress");
-const feedback = document.getElementById("feedback");
-const next = document.getElementById("next");
-const result = document.getElementById("result");
+const mathData = {
+  algebra: {
+    1: [
+      { q: "Solve for x: 2x + 4 = 12", a: ["x = 2", "x = 4", "x = 6", "x = 8"], c: 1, hint: "Subtract 4 from both sides, then divide by 2." },
+      { q: "Evaluate 3x when x = 5", a: ["8", "12", "15", "18"], c: 2, hint: "Substitute 5 in place of x and multiply by 3." },
+      { q: "Simplify: 4x + 3x - 2x", a: ["5x", "7x", "9x", "6x"], c: 0, hint: "Combine like terms by adding and subtracting coefficients." },
+      { q: "If x - 5 = 10, what is x?", a: ["5", "10", "15", "20"], c: 2, hint: "Add 5 to both sides to isolate x." },
+      { q: "Find the value of y if y / 3 = 7", a: ["10", "14", "21", "28"], c: 2, hint: "Multiply both sides by 3." }
+    ],
+    2: [
+      { q: "Solve for x: 3x + 5 = 20", a: ["x = 3", "x = 5", "x = 7", "x = 15"], c: 1, hint: "Isolate terms with x on one side." },
+      { q: "Expand the expression: (x + 3)(x + 2)", a: ["x^2 + 5x + 6", "x^2 + 6x + 5", "x^2 + 5x + 5", "x^2 + 6x + 6"], c: 0, hint: "Use FOIL (First, Outer, Inner, Last)." },
+      { q: "Find the roots of: x^2 - 9 = 0", a: ["x = ±2", "x = ±3", "x = ±9", "x = 3 only"], c: 1, hint: "Move 9 to the right side and take the square root of both sides." },
+      { q: "If 2(x - 4) = 12, what is x?", a: ["x = 6", "x = 8", "x = 10", "x = 12"], c: 2, hint: "Divide both sides by 2 first, then add 4." },
+      { q: "What is the slope of the line y = -3x + 7?", a: ["7", "3", "-3", "-7"], c: 2, hint: "Look at the coefficient of x in slope-intercept form (y = mx + b)." }
+    ],
+    3: [
+      { q: "Solve the system: x + y = 10 and x - y = 4", a: ["x=6, y=4", "x=7, y=3", "x=8, y=2", "x=5, y=5"], c: 1, hint: "Add the two equations together to eliminate y." },
+      { q: "Factor completely: x^2 - 5x + 6", a: ["(x-1)(x-6)", "(x-2)(x-3)", "(x+2)(x+3)", "(x-5)(x+1)"], c: 1, hint: "Find two numbers that multiply to 6 and add up to -5." },
+      { q: "Evaluate 3x^2 - 2x when x = -2", a: ["8", "12", "16", "-12"], c: 2, hint: "Carefully apply exponents before multiplying or adding negative signs." },
+      { q: "Find the vertex x-coordinate of y = 2x^2 - 8x + 5", a: ["x = 1", "x = 2", "x = 4", "x = -2"], c: 1, hint: "Use the vertex formula x = -b / (2a)." },
+      { q: "Solve for x: log2(x) = 4", a: ["x = 8", "x = 12", "x = 16", "x = 32"], c: 2, hint: "Rewrite the logarithmic equation as an exponential equation: 2^4 = x." }
+    ]
+  },
+  arithmetic: {
+    1: [
+      { q: "What is 10% of 150?", a: ["10", "15", "20", "25"], c: 1, hint: "Divide 150 by 10." },
+      { q: "Evaluate: 1/2 + 1/4", a: ["1/6", "2/6", "3/4", "2/4"], c: 2, hint: "Convert 1/2 into 2/4 before adding." },
+      { q: "What is the square root of 81?", a: ["7", "8", "9", "10"], c: 2, hint: "Find a number that multiplied by itself equals 81." },
+      { q: "Convert 0.5 into a simplified fraction.", a: ["1/4", "1/2", "3/4", "2/5"], c: 1, hint: "0.5 is equal to 50/100 simplified." },
+      { q: "What is 25 * 4?", a: ["50", "75", "100", "125"], c: 2, hint: "Four quarters equal 100 cents." }
+    ],
+    2: [
+      { q: "What is 15% of 240?", a: ["30", "36", "40", "45"], c: 1, hint: "Find 10% (24) plus 5% (12)." },
+      { q: "Evaluate: 3/4 + 2/5", a: ["5/9", "23/20", "15/20", "7/9"], c: 1, hint: "Find a common denominator of 20." },
+      { q: "What is the square root of 1225?", a: ["25", "35", "45", "55"], c: 1, hint: "The number ends in 25, so it must end in 5." },
+      { q: "Convert 0.375 into a simplified fraction.", a: ["3/8", "3/5", "5/8", "7/16"], c: 0, hint: "Divide 375 by 1000 and reduce by 125." },
+      { q: "Find the Least Common Multiple (LCM) of 12 and 18.", a: ["24", "36", "72", "6"], c: 1, hint: "List multiples of 18 until divisible by 12." }
+    ],
+    3: [
+      { q: "Calculate compound interest on $1000 at 10% per annum for 2 years.", a: ["$200", "$210", "$220", "$250"], c: 1, hint: "Calculate year 1 interest, add to principal, then calculate year 2." },
+      { q: "Evaluate: (3^3 + 4^2) / 2", a: ["20.5", "21.5", "22.5", "25"], c: 1, hint: "Evaluate exponents first: 27 + 16 = 43." },
+      { q: "What is the Greatest Common Divisor (GCD) of 84 and 126?", a: ["14", "21", "42", "28"], c: 2, hint: "Find prime factorizations or use the Euclidean algorithm." },
+      { q: "If 3^x = 81, what is x?", a: ["2", "3", "4", "5"], c: 2, hint: "Multiply 3 by itself until you reach 81." },
+      { q: "Evaluate: log10(1000) + log2(32)", a: ["7", "8", "10", "12"], c: 1, hint: "10^? = 1000 and 2^? = 32." }
+    ]
+  },
+  geometry: {
+    1: [
+      { q: "How many degrees are in a triangle?", a: ["90°", "180°", "270°", "360°"], c: 1, hint: "The interior angles of any triangle always add up to a straight line angle." },
+      { q: "Find the perimeter of a square with side length 6 cm.", a: ["12 cm", "18 cm", "24 cm", "36 cm"], c: 2, hint: "A square has 4 equal sides." },
+      { q: "What is the area of a rectangle with length 5cm and width 3cm?", a: ["8 cm²", "15 cm²", "16 cm²", "25 cm²"], c: 1, hint: "Multiply length by width." },
+      { q: "An angle measuring 90° is called a:", a: ["Acute angle", "Right angle", "Obtuse angle", "Straight angle"], c: 1, hint: "It forms a square corner." },
+      { q: "How many sides does a hexagon have?", a: ["5", "6", "7", "8"], c: 1, hint: "Hex means six." }
+    ],
+    2: [
+      { q: "What is the area of a circle with radius 7 cm? (Use π = 22/7)", a: ["44 cm²", "88 cm²", "154 cm²", "308 cm²"], c: 2, hint: "Use formula Area = pi * r^2." },
+      { q: "The sum of interior angles of a pentagon is:", a: ["360°", "540°", "720°", "900°"], c: 1, hint: "Use formula (n - 2) * 180° where n = 5." },
+      { q: "What is the volume of a cube with edge length 5 cm?", a: ["125 cm³", "75 cm³", "25 cm³", "150 cm³"], c: 0, hint: "Cube the edge length: 5 * 5 * 5." },
+      { q: "In a right triangle, if legs are 6 cm and 8 cm, what is the hypotenuse?", a: ["9 cm", "10 cm", "12 cm", "14 cm"], c: 1, hint: "Use Pythagorean theorem: a^2 + b^2 = c^2." },
+      { q: "What is the area of a triangle with base 10 cm and height 6 cm?", a: ["60 cm²", "30 cm²", "15 cm²", "20 cm²"], c: 1, hint: "Use 1/2 * base * height." }
+    ],
+    3: [
+      { q: "Find the volume of a cylinder with radius 3 cm and height 10 cm (Use π = 3.14).", a: ["282.6 cm³", "188.4 cm³", "94.2 cm³", "314.0 cm³"], c: 0, hint: "Volume = pi * r^2 * h." },
+      { q: "What is the interior angle measure of a regular decagon (10 sides)?", a: ["120°", "135°", "144°", "150°"], c: 2, hint: "Sum of angles / 10." },
+      { q: "Find the diagonal of a rectangle with sides 9 cm and 12 cm.", a: ["13 cm", "15 cm", "17 cm", "21 cm"], c: 1, hint: "Use Pythagorean theorem on the right triangle formed by the diagonal." },
+      { q: "What is the surface area of a sphere with radius 6 cm? (π = 3.14)", a: ["452.16 cm²", "301.44 cm²", "904.32 cm²", "150.72 cm²"], c: 0, hint: "Surface area of sphere = 4 * pi * r^2." },
+      { q: "In circle O, chord AB is 16 cm long and is 6 cm from the center. Find the radius.", a: ["8 cm", "10 cm", "12 cm", "14 cm"], c: 1, hint: "Draw a radius to form a right triangle with half the chord and the distance to the center." }
+    ]
+  },
+  wordproblems: {
+    1: [
+      { q: "Ali has 12 apples. He gives 4 to his sister. How many does he have left?", a: ["6", "8", "10", "16"], c: 1, hint: "Subtract 4 from 12." },
+      { q: "A book costs $15. How much do 3 books cost?", a: ["$30", "$40", "$45", "$60"], c: 2, hint: "Multiply 15 by 3." },
+      { q: "Sara runs 2 km every day. How many km does she run in a week (7 days)?", a: ["10 km", "12 km", "14 km", "16 km"], c: 2, hint: "Multiply 2 by 7." },
+      { q: "There are 24 students in a bus. 10 get off. How many remain?", a: ["12", "14", "16", "34"], c: 1, hint: "Subtract 10 from 24." },
+      { q: "A dozen eggs contains 12 eggs. How many eggs in 3 dozens?", a: ["24", "30", "36", "42"], c: 2, hint: "Multiply 12 by 3." }
+    ],
+    2: [
+      { q: "A car travels 180 km in 3 hours. What is its average speed?", a: ["50 km/h", "60 km/h", "75 km/h", "90 km/h"], c: 1, hint: "Speed = Distance / Time." },
+      { q: "The sum of three consecutive integers is 72. What is the middle number?", a: ["23", "24", "25", "26"], c: 1, hint: "Divide the sum by 3." },
+      { q: "A shirt marked at $80 is sold at a 20% discount. What is the selling price?", a: ["$60", "$64", "$68", "$72"], c: 1, hint: "Find 20% of 80 ($16) and subtract it from 80." },
+      { q: "In a class of 40 students, 60% are girls. How many boys are in the class?", a: ["12", "16", "24", "28"], c: 1, hint: "If 60% are girls, 40% are boys." },
+      { q: "Two numbers are in the ratio 3:4 and their sum is 84. What is the larger number?", a: ["36", "42", "48", "54"], c: 2, hint: "Divide 84 by (3 + 4) = 12 parts, then multiply by 4." }
+    ],
+    3: [
+      { q: "A tank can be filled by pipe A in 6 hours and emptied by pipe B in 8 hours. Time to fill when both open:", a: ["12 hours", "18 hours", "24 hours", "48 hours"], c: 2, hint: "Calculate net hourly rate: 1/6 - 1/8 = 1/24." },
+      { q: "The average of 5 numbers is 20. If one number is removed, the average becomes 18. What was the removed number?", a: ["22", "24", "28", "30"], c: 2, hint: "Compare total sum of 5 numbers (100) with total sum of 4 numbers (72)." },
+      { q: "A train 150m long is running at 54 km/h. How long does it take to pass a pole?", a: ["5 seconds", "10 seconds", "15 seconds", "20 seconds"], c: 1, hint: "Convert speed to m/s by multiplying by 5/18 (54 * 5/18 = 15 m/s)." },
+      { q: "A sum of money doubles itself in 5 years at simple interest. In how many years will it become 4 times?", a: ["10 years", "15 years", "20 years", "25 years"], c: 1, hint: "Doubling in 5 years means 100% interest accrues in 5 years." },
+      { q: "A father is 3 times as old as his son. After 15 years, he will be twice as old. Son's current age:", a: ["10 years", "12 years", "15 years", "18 years"], c: 2, hint: "Set up algebraic equation: 3x + 15 = 2(x + 15)." }
+    ]
+  }
+};
 
-function startQuiz(setName) {
-  currentSet = mathData[setName];
+function setLevel(lvl, btn) {
+  selectedLevel = lvl;
+  document.querySelectorAll('.lvl-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function selectTopic(setName) {
+  selectedTopicName = setName;
+  currentSet = mathData[setName][selectedLevel];
   current = 0;
   score = 0;
   answered = false;
   secondsElapsed = 0;
   
-  landingView.style.display = "none";
-  quizView.style.display = "block";
+  document.getElementById("landing-view").style.display = "none";
+  document.getElementById("quiz-view").style.display = "block";
 
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -240,27 +308,35 @@ function startQuiz(setName) {
 
 function showQuestion() {
   answered = false;
-  next.style.display = "none";
-  feedback.textContent = "";
-  result.innerHTML = "";
+  document.getElementById("next").style.display = "none";
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("result").innerHTML = "";
 
   const item = currentSet[current];
   const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
   const secs = (secondsElapsed % 60).toString().padStart(2, '0');
 
-  progress.innerHTML =
+  document.getElementById("progress").innerHTML =
     "<span>Question " + (current + 1) + " of " + currentSet.length + " | Score: " + score + "</span>" +
     "<span class='timer-display'>⏱ <span id='timer-val'>" + mins + ":" + secs + "</span></span>";
 
-  quiz.innerHTML = '<div class="question">' + item.q + '</div>';
-
+  let html = '<div class="question">' + item.q + '</div>';
+  
   item.a.forEach((answer, index) => {
-    const button = document.createElement("button");
-    button.className = "option";
-    button.innerHTML = "<b>" + String.fromCharCode(65 + index) + ")</b> " + answer;
-    button.onclick = () => checkAnswer(index);
-    quiz.appendChild(button);
+    html += `<button class="option" onclick="checkAnswer(${index})"><b>${String.fromCharCode(65 + index)})</b> ${answer}</button>`;
   });
+
+  html += `
+    <button class="hint-toggle-btn" onclick="toggleHint()">💡 Need a Hint?</button>
+    <div id="hintBox" class="hint-box"><b>Hint:</b> ${item.hint}</div>
+  `;
+
+  document.getElementById("quiz").innerHTML = html;
+}
+
+function toggleHint() {
+  const box = document.getElementById("hintBox");
+  box.style.display = box.style.display === "block" ? "none" : "block";
 }
 
 function checkAnswer(selected) {
@@ -280,24 +356,25 @@ function checkAnswer(selected) {
 
   if (selected === correct) {
     score++;
-    feedback.innerHTML = "🟢 Correct!";
+    document.getElementById("feedback").innerHTML = "🟢 Correct!";
   } else {
     buttons[selected].classList.add("wrong");
     buttons[selected].innerHTML += "  🔴 WRONG";
-    feedback.innerHTML = "🔴 Incorrect — the green box shows the correct solution.";
+    document.getElementById("feedback").innerHTML = "🔴 Incorrect — the green box shows the correct solution.";
   }
 
   const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
   const secs = (secondsElapsed % 60).toString().padStart(2, '0');
-  progress.innerHTML =
+  document.getElementById("progress").innerHTML =
     "<span>Question " + (current + 1) + " of " + currentSet.length + " | Score: " + score + "</span>" +
     "<span class='timer-display'>⏱ <span id='timer-val'>" + mins + ":" + secs + "</span></span>";
 
-  next.style.display = "block";
-  next.textContent = current === currentSet.length - 1 ? "🏆 Show Final Result" : "Next Question →";
+  const nextBtn = document.getElementById("next");
+  nextBtn.style.display = "block";
+  nextBtn.textContent = current === currentSet.length - 1 ? "🏆 Show Final Result & Certificate" : "Next Question →";
 }
 
-next.onclick = function() {
+document.getElementById("next").onclick = function() {
   if (current < currentSet.length - 1) {
     current++;
     showQuestion();
@@ -308,32 +385,60 @@ next.onclick = function() {
 
 function showResult() {
   if (timerInterval) clearInterval(timerInterval);
-  quiz.innerHTML = "";
-  feedback.innerHTML = "";
+  document.getElementById("quiz").innerHTML = "";
+  document.getElementById("feedback").innerHTML = "";
+  document.getElementById("next").style.display = "none";
 
   const percentage = Math.round((score / currentSet.length) * 100);
   const totalMins = Math.floor(secondsElapsed / 60);
   const totalSecs = secondsElapsed % 60;
 
-  let grade;
-  if (percentage >= 90) grade = "A* (Master Mathematician)";
-  else if (percentage >= 75) grade = "A (Proficient)";
-  else if (percentage >= 50) grade = "B (Satisfactory)";
-  else grade = "Needs Improvement";
+  document.getElementById("progress").innerHTML = "<span>🎉 Evaluation Complete</span><span>Score Summary</span>";
 
-  progress.innerHTML = "<span>🎉 Practice Complete</span><span>Final Evaluation</span>";
+  let resultHtml = "";
 
-  result.innerHTML =
-    "<h2>Your Math Test Result</h2>" +
-    "<p style='font-size:28px;font-weight:bold; color:var(--category-color); margin:10px 0;'>" + score + " / " + currentSet.length + " (" + percentage + "%)</p>" +
-    "<p style='font-size:16px; color:var(--text-muted); margin-bottom:5px;'>Total Time Taken: <b>" + totalMins + "m " + totalSecs + "s</b></p>" +
-    "<p style='font-size:18px; margin-bottom:20px;'>Performance Rating: <b>" + grade + "</b></p>" +
-    "<button class='restart' onclick='location.reload()'>Return to Math Hub Menu</button>";
+  if (percentage === 100) {
+    // Full Marks Celebration & Certificate
+    resultHtml = `
+      <div class="trophy-banner">🏆</div>
+      <h2 style="color: #22c55e; margin-bottom: 5px;">Flawless Victory! Perfect Score!</h2>
+      <p style="color: var(--text-muted); margin-bottom: 15px;">You have successfully mastered Level ${selectedLevel} in this mathematical module.</p>
+      
+      <div class="certificate-card" id="certificateBox">
+        <div style="font-size: 24px; margin-bottom: 5px;">📜</div>
+        <div style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a; letter-spacing: 2px;">LAMASTUDO EDUCATION HUB</div>
+        <h2>Certificate of Excellence</h2>
+        <h4>This is proudly presented to</h4>
+        <div class="cert-name">Master Mathematician</div>
+        <div class="cert-details">
+          For achieving a stellar <b>100% score</b> (${score}/${currentSet.length}) in <b>Level ${selectedLevel} ${selectedTopicName.toUpperCase()}</b><br>
+          Completed in ${totalMins}m ${totalSecs}s with exceptional precision and accuracy.
+        </div>
+        <div style="margin-top: 25px; display: flex; justify-content: space-between; padding: 0 30px; font-size: 0.85rem; color: #64748b;">
+          <div>Date: <b>August 20, 2026</b></div>
+          <div>Verified By: <b>LamaStudio Academic Board</b></div>
+        </div>
+      </div>
 
-  next.style.display = "none";
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+        <button class="restart" onclick="window.print()">🖨️ Print / Save Certificate</button>
+        <button class="restart" onclick="location.reload()" style="background: var(--surface); color: var(--text); border: 1px solid var(--border);">Return to Hub</button>
+      </div>
+    `;
+  } else {
+    let grade = percentage >= 75 ? "A (Proficient)" : percentage >= 50 ? "B (Satisfactory)" : "Needs Improvement";
+    resultHtml = `
+      <h2>Your Math Test Result</h2>
+      <p style="font-size:28px;font-weight:bold; color:var(--category-color); margin:10px 0;">${score} / ${currentSet.length} (${percentage}%)</p>
+      <p style="font-size:16px; color:var(--text-muted); margin-bottom:5px;">Total Time Taken: <b>${totalMins}m ${totalSecs}s</b></p>
+      <p style="font-size:18px; margin-bottom:20px;">Performance Rating: <b>${grade}</b></p>
+      <p style="font-size:0.9rem; color: #eab308; margin-bottom: 20px;">💡 Tip: Score 100% next time to unlock your official LamaStudio Winner Certificate!</p>
+      <button class="restart" onclick="location.reload()">Return to Math Hub Menu</button>
+    `;
+  }
+
+  document.getElementById("result").innerHTML = resultHtml;
 }
 </script>
-
 </body>
-  </html>
-  
+</html>

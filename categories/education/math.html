@@ -12,6 +12,11 @@
 .test-header h1 { font-size: 2rem; color: var(--text); margin-bottom: 8px; }
 .test-brand { font-size: 0.9rem; color: var(--text-muted); }
 
+/* Promo Ad Banner */
+.ad-banner { background: linear-gradient(135deg, rgba(23, 78, 166, 0.1), rgba(168, 85, 247, 0.1)); border: 1px dashed var(--category-color); border-radius: 10px; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 0.85rem; }
+.ad-banner span { color: var(--text); }
+.ad-tag { background: var(--category-color); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+
 /* Landing Menu & Level Select */
 .landing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-top: 25px; }
 .set-btn { background: var(--background); border: 2px solid var(--border); border-radius: 12px; padding: 20px; text-align: left; cursor: pointer; transition: all .2s ease; color: var(--text); display: flex; flex-direction: column; gap: 5px; }
@@ -57,19 +62,25 @@
 /* Print mode for certificates */
 @media print {
   body { background: #fff !important; color: #000 !important; }
-  .site-header, .site-footer, .landing-grid, .level-panel, #progress, .test-header, .restart { display: none !important; }
+  .site-header, .site-footer, .landing-grid, .level-panel, #progress, .test-header, .restart, .ad-banner { display: none !important; }
   .test-container { border: none; box-shadow: none; margin: 0; padding: 0; max-width: 100%; }
   .certificate-card { border: 4px solid #000; box-shadow: none; margin: 0; width: 100%; }
 }
 
-.site-footer{background:var(--surface);border-top:1px solid var(--border);padding:40px 20px 20px;margin-top:60px;color:var(--text-muted)}
-.footer-content{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:30px;margin-bottom:30px}
-.footer-col h4{color:var(--text);font-size:16px;margin-bottom:12px;font-weight:600}
-.footer-col ul{list-style:none;padding:0;margin:0}
-.footer-col ul li{margin-bottom:8px}
-.footer-col ul li a{color:var(--text-muted);text-decoration:none;font-size:14px;transition:.2s}
-.footer-col ul li a:hover{color:var(--category-color)}
-.footer-bottom{max-width:1000px;margin:0 auto;border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:13px}
+/* Full Index-Style Footer */
+.site-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 50px 20px 25px; margin-top: 60px; color: var(--text-muted); }
+.footer-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+@media(max-width: 768px) { .footer-container { grid-template-columns: 1fr; gap: 25px; } }
+.footer-col h4 { color: var(--text); font-size: 1rem; margin-bottom: 16px; font-weight: 700; }
+.footer-col p { font-size: 0.9rem; line-height: 1.6; margin-bottom: 15px; }
+.footer-col ul { list-style: none; padding: 0; margin: 0; }
+.footer-col ul li { margin-bottom: 10px; }
+.footer-col ul li a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+.footer-col ul li a:hover { color: var(--category-color); }
+.footer-bottom { max-width: 1200px; margin: 0 auto; border-top: 1px solid var(--border); padding-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; font-size: 0.85rem; }
+.footer-socials { display: flex; gap: 15px; }
+.footer-socials a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+.footer-socials a:hover { color: var(--category-color); }
 </style>
 </head>
 <body style="--category-color: var(--c-education);">
@@ -99,6 +110,12 @@
 
 <main>
   <div class="test-container" id="app">
+    <!-- Sponsored Ad Banner -->
+    <div class="ad-banner" id="adBanner">
+      <span>🚀 <b>Sponsored:</b> Master advanced STEM topics with LamaStudio Interactive Pro Apps.</span>
+      <span class="ad-tag">Ad</span>
+    </div>
+
     <!-- Landing Menu View -->
     <div id="landing-view">
       <div class="test-header">
@@ -130,6 +147,14 @@
           <h3>Geometry & Mensuration</h3>
           <p>Areas, angles, volumes & triangles</p>
         </button>
+        <button class="set-btn" onclick="selectTopic('trigonometry')">
+          <h3>Trigonometry & Pre-Calc</h3>
+          <p>Sinx, Cosx, identities & functions</p>
+        </button>
+        <button class="set-btn" onclick="selectTopic('statistics')">
+          <h3>Statistics & Probability</h3>
+          <p>Mean, median, variance & odds</p>
+        </button>
         <button class="set-btn" onclick="selectTopic('wordproblems')">
           <h3>Applied Word Problems</h3>
           <p>Speed, distance, logic & age puzzles</p>
@@ -148,24 +173,49 @@
   </div>
 </main>
 
+<!-- Full Index-Style Footer -->
 <footer class="site-footer">
-  <div class="footer-content">
+  <div class="footer-container">
     <div class="footer-col">
       <a href="../../index.html" class="brand" style="margin-bottom:12px; display:inline-flex;"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a>
-      <p style="font-size:13px; margin:0;">Independent Android app studio in DG Khan, Pakistan. Building interactive learning utilities for students.</p>
+      <p>Independent app studio based in DG Khan, Pakistan. Crafting high-performance educational utilities, developer tools, and modern web experiences for students globally.</p>
+      <div class="footer-socials">
+        <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://twitter.com" target="_blank" rel="noopener">Twitter / X</a>
+        <a href="https://linkedin.com" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
     </div>
     <div class="footer-col">
-      <h4>Quick Categories</h4>
+      <h4>Hub Modules</h4>
       <ul>
-        <li><a href="../tech/">Tech & Code</a></li>
         <li><a href="./">Education Hub</a></li>
-        <li><a href="../business/">Business</a></li>
+        <li><a href="../tech/">Tech & Code</a></li>
+        <li><a href="../business/">Business Tools</a></li>
+        <li><a href="../../index.html">All Projects</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="../../index.html">Documentation</a></li>
+        <li><a href="../../index.html">API Reference</a></li>
+        <li><a href="../../index.html">Design Guidelines</a></li>
+        <li><a href="../../index.html">Changelog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Studio</h4>
+      <ul>
+        <li><a href="../../index.html">About LamaStudio</a></li>
+        <li><a href="../../index.html">Privacy Policy</a></li>
+        <li><a href="../../index.html">Terms of Service</a></li>
+        <li><a href="../../index.html">Contact Us</a></li>
       </ul>
     </div>
   </div>
   <div class="footer-bottom">
     <p>&copy; 2026 LamaStudio. All rights reserved.</p>
-    <p>Designed with ❤️ for Students & Professionals</p>
+    <p>Designed with ❤️ for Students & Developers</p>
   </div>
 </footer>
 
@@ -187,21 +237,29 @@ const mathData = {
       { q: "Evaluate 3x when x = 5", a: ["8", "12", "15", "18"], c: 2, hint: "Substitute 5 in place of x and multiply by 3." },
       { q: "Simplify: 4x + 3x - 2x", a: ["5x", "7x", "9x", "6x"], c: 0, hint: "Combine like terms by adding and subtracting coefficients." },
       { q: "If x - 5 = 10, what is x?", a: ["5", "10", "15", "20"], c: 2, hint: "Add 5 to both sides to isolate x." },
-      { q: "Find the value of y if y / 3 = 7", a: ["10", "14", "21", "28"], c: 2, hint: "Multiply both sides by 3." }
+      { q: "Find the value of y if y / 3 = 7", a: ["10", "14", "21", "28"], c: 2, hint: "Multiply both sides by 3." },
+      { q: "Solve for x: 5x = 35", a: ["x = 5", "x = 7", "x = 10", "x = 30"], c: 1, hint: "Divide 35 by 5." },
+      { q: "What is the coefficient of x in 7x - 4?", a: ["-4", "1", "7", "x"], c: 2, hint: "The coefficient is the number attached to the variable." },
+      { q: "Simplify: 2(x + 3)", a: ["2x + 3", "2x + 6", "x + 6", "2x - 6"], c: 1, hint: "Distribute the 2 into both terms inside the parentheses." }
     ],
     2: [
       { q: "Solve for x: 3x + 5 = 20", a: ["x = 3", "x = 5", "x = 7", "x = 15"], c: 1, hint: "Isolate terms with x on one side." },
       { q: "Expand the expression: (x + 3)(x + 2)", a: ["x^2 + 5x + 6", "x^2 + 6x + 5", "x^2 + 5x + 5", "x^2 + 6x + 6"], c: 0, hint: "Use FOIL (First, Outer, Inner, Last)." },
       { q: "Find the roots of: x^2 - 9 = 0", a: ["x = ±2", "x = ±3", "x = ±9", "x = 3 only"], c: 1, hint: "Move 9 to the right side and take the square root of both sides." },
       { q: "If 2(x - 4) = 12, what is x?", a: ["x = 6", "x = 8", "x = 10", "x = 12"], c: 2, hint: "Divide both sides by 2 first, then add 4." },
-      { q: "What is the slope of the line y = -3x + 7?", a: ["7", "3", "-3", "-7"], c: 2, hint: "Look at the coefficient of x in slope-intercept form (y = mx + b)." }
+      { q: "What is the slope of the line y = -3x + 7?", a: ["7", "3", "-3", "-7"], c: 2, hint: "Look at the coefficient of x in slope-intercept form (y = mx + b)." },
+      { q: "Solve for x: 4x - 3 = 2x + 7", a: ["x = 2", "x = 5", "x = 7", "x = 10"], c: 1, hint: "Bring all x terms to the left and constants to the right." },
+      { q: "Factor: x^2 - 16", a: ["(x-4)(x-4)", "(x+4)(x+4)", "(x-4)(x+4)", "(x-8)(x+2)"], c: 2, hint: "This is a difference of two squares: a^2 - b^2 = (a-b)(a+b)." },
+      { q: "What is the y-intercept of y = 4x - 9?", a: ["4", "-4", "9", "-9"], c: 3, hint: "The y-intercept corresponds to constant 'b' in y = mx + b." }
     ],
     3: [
       { q: "Solve the system: x + y = 10 and x - y = 4", a: ["x=6, y=4", "x=7, y=3", "x=8, y=2", "x=5, y=5"], c: 1, hint: "Add the two equations together to eliminate y." },
       { q: "Factor completely: x^2 - 5x + 6", a: ["(x-1)(x-6)", "(x-2)(x-3)", "(x+2)(x+3)", "(x-5)(x+1)"], c: 1, hint: "Find two numbers that multiply to 6 and add up to -5." },
       { q: "Evaluate 3x^2 - 2x when x = -2", a: ["8", "12", "16", "-12"], c: 2, hint: "Carefully apply exponents before multiplying or adding negative signs." },
       { q: "Find the vertex x-coordinate of y = 2x^2 - 8x + 5", a: ["x = 1", "x = 2", "x = 4", "x = -2"], c: 1, hint: "Use the vertex formula x = -b / (2a)." },
-      { q: "Solve for x: log2(x) = 4", a: ["x = 8", "x = 12", "x = 16", "x = 32"], c: 2, hint: "Rewrite the logarithmic equation as an exponential equation: 2^4 = x." }
+      { q: "Solve for x: log2(x) = 4", a: ["x = 8", "x = 12", "x = 16", "x = 32"], c: 2, hint: "Rewrite the logarithmic equation as an exponential equation: 2^4 = x." },
+      { q: "Find the discriminant of 2x^2 - 4x + 1 = 0", a: ["8", "12", "16", "24"], c: 0, hint: "Use formula D = b^2 - 4ac." },
+      { q: "Solve for x: e^(2x) = 7", a: ["ln(7)/2", "ln(3.5)", "2 ln(7)", "e^(3.5)"], c: 0, hint: "Take the natural logarithm (ln) of both sides." }
     ]
   },
   arithmetic: {
@@ -210,14 +268,17 @@ const mathData = {
       { q: "Evaluate: 1/2 + 1/4", a: ["1/6", "2/6", "3/4", "2/4"], c: 2, hint: "Convert 1/2 into 2/4 before adding." },
       { q: "What is the square root of 81?", a: ["7", "8", "9", "10"], c: 2, hint: "Find a number that multiplied by itself equals 81." },
       { q: "Convert 0.5 into a simplified fraction.", a: ["1/4", "1/2", "3/4", "2/5"], c: 1, hint: "0.5 is equal to 50/100 simplified." },
-      { q: "What is 25 * 4?", a: ["50", "75", "100", "125"], c: 2, hint: "Four quarters equal 100 cents." }
+      { q: "What is 25 * 4?", a: ["50", "75", "100", "125"], c: 2, hint: "Four quarters equal 100 cents." },
+      { q: "What is 3 squared plus 4 squared?", a: ["7", "12", "25", "49"], c: 2, hint: "9 + 16." },
+      { q: "What is 50 divided by 0.5?", a: ["25", "50", "100", "200"], c: 2, hint: "Dividing by half is the same as multiplying by 2." }
     ],
     2: [
       { q: "What is 15% of 240?", a: ["30", "36", "40", "45"], c: 1, hint: "Find 10% (24) plus 5% (12)." },
       { q: "Evaluate: 3/4 + 2/5", a: ["5/9", "23/20", "15/20", "7/9"], c: 1, hint: "Find a common denominator of 20." },
       { q: "What is the square root of 1225?", a: ["25", "35", "45", "55"], c: 1, hint: "The number ends in 25, so it must end in 5." },
       { q: "Convert 0.375 into a simplified fraction.", a: ["3/8", "3/5", "5/8", "7/16"], c: 0, hint: "Divide 375 by 1000 and reduce by 125." },
-      { q: "Find the Least Common Multiple (LCM) of 12 and 18.", a: ["24", "36", "72", "6"], c: 1, hint: "List multiples of 18 until divisible by 12." }
+      { q: "Find the Least Common Multiple (LCM) of 12 and 18.", a: ["24", "36", "72", "6"], c: 1, hint: "List multiples of 18 until divisible by 12." },
+      { q: "Evaluate: 5! (5 factorial)", a: ["24", "60", "120", "720"], c: 2, hint: "Multiply 5 * 4 * 3 * 2 * 1." }
     ],
     3: [
       { q: "Calculate compound interest on $1000 at 10% per annum for 2 years.", a: ["$200", "$210", "$220", "$250"], c: 1, hint: "Calculate year 1 interest, add to principal, then calculate year 2." },
@@ -246,31 +307,57 @@ const mathData = {
       { q: "Find the volume of a cylinder with radius 3 cm and height 10 cm (Use π = 3.14).", a: ["282.6 cm³", "188.4 cm³", "94.2 cm³", "314.0 cm³"], c: 0, hint: "Volume = pi * r^2 * h." },
       { q: "What is the interior angle measure of a regular decagon (10 sides)?", a: ["120°", "135°", "144°", "150°"], c: 2, hint: "Sum of angles / 10." },
       { q: "Find the diagonal of a rectangle with sides 9 cm and 12 cm.", a: ["13 cm", "15 cm", "17 cm", "21 cm"], c: 1, hint: "Use Pythagorean theorem on the right triangle formed by the diagonal." },
-      { q: "What is the surface area of a sphere with radius 6 cm? (π = 3.14)", a: ["452.16 cm²", "301.44 cm²", "904.32 cm²", "150.72 cm²"], c: 0, hint: "Surface area of sphere = 4 * pi * r^2." },
-      { q: "In circle O, chord AB is 16 cm long and is 6 cm from the center. Find the radius.", a: ["8 cm", "10 cm", "12 cm", "14 cm"], c: 1, hint: "Draw a radius to form a right triangle with half the chord and the distance to the center." }
+      { q: "What is the surface area of a sphere with radius 6 cm? (π = 3.14)", a: ["452.16 cm²", "301.44 cm²", "904.32 cm²", "150.72 cm²"], c: 0, hint: "Surface area of sphere = 4 * pi * r^2." }
+    ]
+  },
+  trigonometry: {
+    1: [
+      { q: "In a right triangle, sin(θ) is equal to:", a: ["Opposite / Hypotenuse", "Adjacent / Hypotenuse", "Opposite / Adjacent", "Hypotenuse / Opposite"], c: 0, hint: "Remember SOH-CAH-TOA." },
+      { q: "What is cos(0°)?", a: ["0", "1", "-1", "Undefined"], c: 1, hint: "At 0 degrees on the unit circle, the x-coordinate is 1." },
+      { q: "What is sin(90°)?", a: ["0", "0.5", "1", "-1"], c: 2, hint: "At 90 degrees on the unit circle, the y-coordinate is 1." }
+    ],
+    2: [
+      { q: "What is tan(45°)?", a: ["0", "0.5", "1", "√3"], c: 2, hint: "At 45 degrees, sine and cosine are equal, so sin/cos = 1." },
+      { q: "If sin(θ) = 3/5 in a right triangle, what is cos(θ)?", a: ["3/4", "4/5", "5/3", "1/5"], c: 1, hint: "Use Pythagorean triple 3-4-5 (adjacent is 4)." },
+      { q: "Convert 180 degrees to radians.", a: ["π/2 radians", "π radians", "2π radians", "3π/2 radians"], c: 1, hint: "180° equals half a circle, which is pi radians." }
+    ],
+    3: [
+      { q: "What is the exact value of sin(30°)?", a: ["1/2", "√3/2", "√2/2", "1"], c: 0, hint: "Recall standard 30-60-90 triangle ratios." },
+      { q: "Simplify the trigonometric identity: sin²(θ) + cos²(θ)", a: ["0", "1", "2", "tan(θ)"], c: 1, hint: "This is the Pythagorean trigonometric identity." },
+      { q: "What is the period of the function f(x) = sin(2x)?", a: ["π/2", "π", "2π", "4π"], c: 1, hint: "Period = 2π / b, where b = 2." }
+    ]
+  },
+  statistics: {
+    1: [
+      { q: "Find the mean of the data set: 2, 4, 6, 8, 10", a: ["5", "6", "7", "8"], c: 1, hint: "Add all numbers together and divide by the count (5)." },
+      { q: "What is the median of: 3, 1, 7, 9, 5", a: ["3", "5", "7", "5.5"], c: 1, hint: "Sort the numbers first: 1, 3, 5, 7, 9." },
+      { q: "Find the mode of: 4, 2, 4, 6, 8, 4, 10", a: ["2", "4", "6", "10"], c: 1, hint: "The mode is the number that appears most frequently." }
+    ],
+    2: [
+      { q: "What is the probability of rolling a number greater than 4 on a standard 6-sided die?", a: ["1/6", "1/3", "1/2", "2/3"], c: 1, hint: "Favorable outcomes are 5 and 6 (2 outcomes out of 6)." },
+      { q: "Find the range of the dataset: 12, 4, 25, 18, 7", a: ["13", "18", "21", "25"], c: 2, hint: "Subtract the minimum value from the maximum value." },
+      { q: "If a coin is flipped 3 times, what is the probability of getting all heads?", a: ["1/3", "1/6", "1/8", "1/4"], c: 2, hint: "(1/2) * (1/2) * (1/2)." }
+    ],
+    3: [
+      { q: "What is the variance of the sample set: 2, 4, 4, 4, 5, 5, 7, 9? (Mean = 5)", a: ["4", "4.5", "5", "6.2"], c: 1, hint: "Sum of squared deviations from mean divided by (n - 1)." },
+      { q: "In a standard normal distribution, what percentage of data falls within 1 standard deviation of the mean?", a: ["50%", "68%", "95%", "99.7%"], c: 1, hint: "Recall the Empirical Rule (68-95-99.7 rule)." }
     ]
   },
   wordproblems: {
     1: [
       { q: "Ali has 12 apples. He gives 4 to his sister. How many does he have left?", a: ["6", "8", "10", "16"], c: 1, hint: "Subtract 4 from 12." },
       { q: "A book costs $15. How much do 3 books cost?", a: ["$30", "$40", "$45", "$60"], c: 2, hint: "Multiply 15 by 3." },
-      { q: "Sara runs 2 km every day. How many km does she run in a week (7 days)?", a: ["10 km", "12 km", "14 km", "16 km"], c: 2, hint: "Multiply 2 by 7." },
-      { q: "There are 24 students in a bus. 10 get off. How many remain?", a: ["12", "14", "16", "34"], c: 1, hint: "Subtract 10 from 24." },
-      { q: "A dozen eggs contains 12 eggs. How many eggs in 3 dozens?", a: ["24", "30", "36", "42"], c: 2, hint: "Multiply 12 by 3." }
+      { q: "Sara runs 2 km every day. How many km does she run in a week (7 days)?", a: ["10 km", "12 km", "14 km", "16 km"], c: 2, hint: "Multiply 2 by 7." }
     ],
     2: [
       { q: "A car travels 180 km in 3 hours. What is its average speed?", a: ["50 km/h", "60 km/h", "75 km/h", "90 km/h"], c: 1, hint: "Speed = Distance / Time." },
       { q: "The sum of three consecutive integers is 72. What is the middle number?", a: ["23", "24", "25", "26"], c: 1, hint: "Divide the sum by 3." },
-      { q: "A shirt marked at $80 is sold at a 20% discount. What is the selling price?", a: ["$60", "$64", "$68", "$72"], c: 1, hint: "Find 20% of 80 ($16) and subtract it from 80." },
-      { q: "In a class of 40 students, 60% are girls. How many boys are in the class?", a: ["12", "16", "24", "28"], c: 1, hint: "If 60% are girls, 40% are boys." },
-      { q: "Two numbers are in the ratio 3:4 and their sum is 84. What is the larger number?", a: ["36", "42", "48", "54"], c: 2, hint: "Divide 84 by (3 + 4) = 12 parts, then multiply by 4." }
+      { q: "A shirt marked at $80 is sold at a 20% discount. What is the selling price?", a: ["$60", "$64", "$68", "$72"], c: 1, hint: "Find 20% of 80 ($16) and subtract it from 80." }
     ],
     3: [
       { q: "A tank can be filled by pipe A in 6 hours and emptied by pipe B in 8 hours. Time to fill when both open:", a: ["12 hours", "18 hours", "24 hours", "48 hours"], c: 2, hint: "Calculate net hourly rate: 1/6 - 1/8 = 1/24." },
       { q: "The average of 5 numbers is 20. If one number is removed, the average becomes 18. What was the removed number?", a: ["22", "24", "28", "30"], c: 2, hint: "Compare total sum of 5 numbers (100) with total sum of 4 numbers (72)." },
-      { q: "A train 150m long is running at 54 km/h. How long does it take to pass a pole?", a: ["5 seconds", "10 seconds", "15 seconds", "20 seconds"], c: 1, hint: "Convert speed to m/s by multiplying by 5/18 (54 * 5/18 = 15 m/s)." },
-      { q: "A sum of money doubles itself in 5 years at simple interest. In how many years will it become 4 times?", a: ["10 years", "15 years", "20 years", "25 years"], c: 1, hint: "Doubling in 5 years means 100% interest accrues in 5 years." },
-      { q: "A father is 3 times as old as his son. After 15 years, he will be twice as old. Son's current age:", a: ["10 years", "12 years", "15 years", "18 years"], c: 2, hint: "Set up algebraic equation: 3x + 15 = 2(x + 15)." }
+      { q: "A train 150m long is running at 54 km/h. How long does it take to pass a pole?", a: ["5 seconds", "10 seconds", "15 seconds", "20 seconds"], c: 1, hint: "Convert speed to m/s by multiplying by 5/18 (54 * 5/18 = 15 m/s)." }
     ]
   }
 };
@@ -283,7 +370,7 @@ function setLevel(lvl, btn) {
 
 function selectTopic(setName) {
   selectedTopicName = setName;
-  currentSet = mathData[setName][selectedLevel];
+  currentSet = mathData[setName][selectedLevel] || mathData[setName][1];
   current = 0;
   score = 0;
   answered = false;
@@ -398,7 +485,6 @@ function showResult() {
   let resultHtml = "";
 
   if (percentage === 100) {
-    // Full Marks Celebration & Certificate
     resultHtml = `
       <div class="trophy-banner">🏆</div>
       <h2 style="color: #22c55e; margin-bottom: 5px;">Flawless Victory! Perfect Score!</h2>

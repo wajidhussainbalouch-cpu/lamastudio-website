@@ -30,6 +30,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .btn:hover { opacity: 0.9; }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .btn-success { background: #10b981; color: #fff; }
+.btn-danger { background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
 .stat-box { background: rgba(23, 78, 166, 0.05); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; }
@@ -40,6 +41,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .checklist-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--category-color); cursor: pointer; }
 
 .hint-box { background: rgba(23, 78, 166, 0.08); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+
+.ref-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; }
 
 /* Print Styles for Hard / Soft PDF Copy Generation */
 @media print {
@@ -76,7 +79,7 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
   <div class="tool-card">
     <div class="tool-header">
       <h1>Gemini Academic Research Assistant & Paper Generator</h1>
-      <p>Universal paper generator and study studio designed for undergraduate, master's, and doctoral students.</p>
+      <p>Universal 6-chapter paper generator and reference studio designed for undergraduate, master's, and doctoral students.</p>
     </div>
 
     <!-- WORKING MODE SELECTOR -->
@@ -88,14 +91,14 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
     <div class="calc-tabs">
       <button class="tab-btn active" onclick="switchTab('generator', event)">Paper Generator & Editor</button>
       <button class="tab-btn" onclick="switchTab('analyzer', event)">Tone & Word Metrics</button>
-      <button class="tab-btn" onclick="switchTab('citations', event)">Citation Formatter</button>
+      <button class="tab-btn" onclick="switchTab('references', event)">References & Citations</button>
       <button class="tab-btn" onclick="switchTab('checklist', event)">Supervisor Checklist</button>
     </div>
 
     <!-- TAB 1: GENERATOR -->
     <div id="generatorTab" class="calc-section active">
       <div class="hint-box" id="instructionBox">
-        <strong>AI Mode Active:</strong> Choose your topic and section, then click <strong>"Generate Section with AI"</strong>. Your secure cloud assistant will write the content automatically.
+        <strong>AI Mode Active:</strong> Choose your topic and standard chapter section, then click <strong>"Generate Section with AI"</strong>. Your secure cloud assistant will write the content automatically.
       </div>
 
       <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
@@ -104,14 +107,14 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
           <input type="text" id="paperTopic" placeholder="e.g., Impact of Renewable Energy on Global Economies" value="Impact of Renewable Energy on Global Economies">
         </div>
         <div class="form-group">
-          <label>Select Paper Section</label>
+          <label>Select 6-Standard Chapter</label>
           <select id="paperSection">
-            <option value="Abstract">Abstract & Keywords</option>
-            <option value="Introduction">1. Introduction & Background</option>
-            <option value="Literature Review">2. Literature Review Framework</option>
-            <option value="Methodology">3. Methodology & Approach</option>
-            <option value="Results & Discussion">4. Results & Discussion</option>
-            <option value="Conclusion">5. Conclusion & Recommendations</option>
+            <option value="Title and Abstract">1. Title and Abstract</option>
+            <option value="Introduction">2. Introduction</option>
+            <option value="Literature Review">3. Literature Review</option>
+            <option value="Methodology">4. Methodology</option>
+            <option value="Results and Discussion">5. Results and Discussion</option>
+            <option value="Conclusion and References">6. Conclusion and References</option>
           </select>
         </div>
       </div>
@@ -123,7 +126,9 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 
       <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
         <button class="btn" id="generateActionBtn" onclick="handlePrimaryAction()">✨ Generate Section with AI</button>
-        <button class="btn btn-success" onclick="exportToPrint()">🖨️ Print / Save as PDF or Word Copy</button>
+        <button class="btn btn-outline" onclick="appendReferencesToContent()">📥 Append Saved References to Section</button>
+        <button class="btn btn-success" onclick="exportToPrint('current')">🖨️ Print Active Section</button>
+        <button class="btn btn-success" onclick="exportToPrint('all')">📚 Print Entire 6-Chapter Paper</button>
       </div>
     </div>
 
@@ -142,10 +147,10 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       <button class="btn btn-outline" onclick="clearResearchText()">Clear Text</button>
     </div>
 
-    <!-- TAB 3: CITATIONS -->
-    <div id="citationsTab" class="calc-section">
+    <!-- TAB 3: REFERENCES & CITATIONS -->
+    <div id="referencesTab" class="calc-section">
       <div class="form-group">
-        <label>Citation Style</label>
+        <label>Citation Style Format</label>
         <select id="citStyle">
           <option value="apa">APA (7th Edition)</option>
           <option value="ieee">IEEE</option>
@@ -155,32 +160,34 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
         <div class="form-group">
           <label>Author Name(s)</label>
-          <input type="text" id="citAuthor" value="Smith, J. A.">
+          <input type="text" id="citAuthor" placeholder="e.g., Smith, J. A.">
         </div>
         <div class="form-group">
           <label>Publication Year</label>
-          <input type="text" id="citYear" value="2026">
+          <input type="text" id="citYear" placeholder="e.g., 2026">
         </div>
       </div>
       <div class="form-group">
         <label>Article / Book Title</label>
-        <input type="text" id="citTitle" value="Digital Learning Frameworks">
+        <input type="text" id="citTitle" placeholder="e.g., Digital Learning Frameworks">
       </div>
       <div class="form-group">
         <label>Source / Journal Name</label>
-        <input type="text" id="citSource" value="Journal of Educational Technology">
+        <input type="text" id="citSource" placeholder="e.g., Journal of Educational Technology">
       </div>
-      <button class="btn" onclick="generateCitation()">Generate Formatted Reference</button>
-      
-      <div class="form-group" style="margin-top: 20px;">
-        <label>Formatted Result</label>
-        <input type="text" id="citOutput" readonly>
+      <button class="btn" onclick="addReferenceItem()">➕ Add Reference to Library</button>
+
+      <div style="margin-top: 25px;">
+        <label>Saved Reference Library (<span id="refCount">0</span> items)</label>
+        <div id="referenceListContainer" style="margin-top: 10px; max-height: 220px; overflow-y: auto;">
+          <p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet. Add references above to include them in Chapter 6.</p>
+        </div>
       </div>
     </div>
 
     <!-- TAB 4: CHECKLIST -->
     <div id="checklistTab" class="calc-section">
-      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential checks before submitting your final paper to your supervisor:</p>
+      <p style="color: var(--text-muted); margin-bottom: 20px;">Complete these essential checks before submitting your final 6-chapter paper to your supervisor:</p>
       
       <div class="checklist-item"><input type="checkbox"><span>Run through a plagiarism scanner to verify originality and similarity index.</span></div>
       <div class="checklist-item"><input type="checkbox"><span>Confirm all in-text citations correspond correctly with reference items.</span></div>
@@ -194,13 +201,42 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 <script src="../../script.js"></script>
 <script>
 let currentMode = 'ai';
+let savedReferences = [];
+let chapterCache = {
+  "Title and Abstract": "",
+  "Introduction": "",
+  "Literature Review": "",
+  "Methodology": "",
+  "Results and Discussion": "",
+  "Conclusion and References": ""
+};
 
 function switchTab(tabName, evt) {
+  saveCurrentChapterContent();
   document.querySelectorAll('.calc-section').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById(tabName + 'Tab').classList.add('active');
   evt.currentTarget.classList.add('active');
+  
+  if (tabName === 'generator') {
+    loadChapterContent();
+  }
 }
+
+function saveCurrentChapterContent() {
+  const currentSec = document.getElementById('paperSection').value;
+  chapterCache[currentSec] = document.getElementById('paperContent').value;
+}
+
+function loadChapterContent() {
+  const currentSec = document.getElementById('paperSection').value;
+  document.getElementById('paperContent').value = chapterCache[currentSec] || "";
+}
+
+document.getElementById('paperSection').addEventListener('change', () => {
+  saveCurrentChapterContent();
+  loadChapterContent();
+});
 
 function setWorkingMode(mode) {
   currentMode = mode;
@@ -238,9 +274,9 @@ async function callSecureBackend() {
     return;
   }
 
-  outputBox.value = "Generating academic draft securely via server...";
+  outputBox.value = "Generating formal academic section securely via server...";
 
-  const prompt = `Write a formal, high-level academic research paper section for the "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
+  const prompt = `Write a formal, high-level academic research paper chapter for "${section}" about the topic: "${topic}". Use rigorous academic vocabulary, formal phrasing, and structured subsection headers suitable for submission to an academic supervisor. Do not include conversational remarks.`;
 
   try {
     const response = await fetch('/api/generate', {
@@ -252,6 +288,7 @@ async function callSecureBackend() {
     const data = await response.json();
     if (data.text) {
       outputBox.value = data.text;
+      chapterCache[section] = data.text;
     } else {
       outputBox.value = `API Error: ${data.error || "Failed to generate content."}`;
     }
@@ -260,7 +297,92 @@ async function callSecureBackend() {
   }
 }
 
-function exportToPrint() {
+function addReferenceItem() {
+  const style = document.getElementById('citStyle').value;
+  const author = document.getElementById('citAuthor').value.trim() || "Author, A.";
+  const year = document.getElementById('citYear').value.trim() || "2026";
+  const title = document.getElementById('citTitle').value.trim() || "Untitled Study";
+  const source = document.getElementById('citSource').value.trim() || "Academic Journal";
+
+  let formatted = "";
+  if (style === 'apa') formatted = `${author} (${year}). ${title}. ${source}.`;
+  else if (style === 'ieee') formatted = `${author}, "${title}," ${source}, ${year}.`;
+  else if (style === 'harvard') formatted = `${author} (${year}) '${title}', ${source}.`;
+
+  savedReferences.push(formatted);
+  renderReferenceList();
+  
+  // Clear input fields
+  document.getElementById('citAuthor').value = '';
+  document.getElementById('citYear').value = '';
+  document.getElementById('citTitle').value = '';
+  document.getElementById('citSource').value = '';
+}
+
+function renderReferenceList() {
+  const container = document.getElementById('referenceListContainer');
+  document.getElementById('refCount').innerText = savedReferences.length;
+
+  if (savedReferences.length === 0) {
+    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No references added yet. Add references above to include them in Chapter 6.</p>';
+    return;
+  }
+
+  let html = '';
+  savedReferences.forEach((ref, index) => {
+    html += `
+      <div class="ref-item">
+        <span>[${index + 1}] ${ref}</span>
+        <button class="btn-danger" onclick="removeReference(${index})">Remove</button>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+function removeReference(index) {
+  savedReferences.splice(index, 1);
+  renderReferenceList();
+}
+
+function appendReferencesToContent() {
+  saveCurrentChapterContent();
+  const currentSec = document.getElementById('paperSection').value;
+  
+  if (savedReferences.length === 0) {
+    alert("Please add references in the References & Citations tab first.");
+    return;
+  }
+
+  let refText = "\n\nReferences:\n";
+  savedReferences.forEach((ref, i) => {
+    refText += `[${i + 1}] ${ref}\n`;
+  });
+
+  chapterCache[currentSec] += refText;
+  loadChapterContent();
+}
+
+function exportToPrint(mode) {
+  saveCurrentChapterContent();
+  if (mode === 'all') {
+    let fullPaperText = "";
+    const chapters = [
+      "1. Title and Abstract",
+      "2. Introduction",
+      "3. Literature Review",
+      "4. Methodology",
+      "5. Results and Discussion",
+      "6. Conclusion and References"
+    ];
+
+    chapters.forEach(chKey => {
+      fullPaperText += `\n\n========================================\nCHAPTER: ${chKey}\n========================================\n\n`;
+      fullPaperText += (chapterCache[chKey] || "[Chapter content is empty]\n");
+    });
+
+    document.getElementById('paperContent').value = fullPaperText;
+  }
   window.print();
 }
 
@@ -290,23 +412,7 @@ function clearResearchText() {
   analyzeResearchText();
 }
 
-function generateCitation() {
-  const style = document.getElementById('citStyle').value;
-  const author = document.getElementById('citAuthor').value || "Author, A.";
-  const year = document.getElementById('citYear').value || "2026";
-  const title = document.getElementById('citTitle').value || "Title";
-  const source = document.getElementById('citSource').value || "Publisher";
-
-  let formatted = "";
-  if (style === 'apa') formatted = `${author} (${year}). ${title}. ${source}.`;
-  else if (style === 'ieee') formatted = `${author}, "${title}," ${source}, ${year}.`;
-  else if (style === 'harvard') formatted = `${author} (${year}) '${title}', ${source}.`;
-
-  document.getElementById('citOutput').value = formatted;
-}
-
 analyzeResearchText();
-generateCitation();
 </script>
 </body>
 </html>

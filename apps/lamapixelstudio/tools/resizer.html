@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Photo &amp; Document Resizer — lamaPixelStudio</title>
+<meta name="description" content="Bulk photo resizing, background fill, and precision file-size compression, done entirely in your browser." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Note the relative path '../style.css' to reach the root stylesheet -->
+<link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===================== TOP BAR ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <a href="../index.html" class="brand-seal" aria-hidden="true" style="text-decoration:none; color:inherit;">
+        <svg viewBox="0 0 48 48" width="34" height="34">
+          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
+          <circle cx="24" cy="24" r="15.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2.2 3.2"/>
+          <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
+        </svg>
+      </a>
+      <div class="brand-text">
+        <span class="brand-name"><a href="../index.html" style="text-decoration:none; color:inherit;">lama<em>PixelStudio</em></a></span>
+        <span class="brand-sub">Photo &amp; Document Resizer</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <a href="../index.html" class="btn btn-small btn-ghost">← Back to Hub</a>
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle dark / light theme" title="Toggle theme">
+        <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-body">
+
+    <!-- ===================== SIDEBAR: SETTINGS ===================== -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-scroll">
+
+        <section class="panel">
+          <h2 class="panel-title"><span class="eyebrow">01</span> Background fill</h2>
+          <p class="panel-hint">Cuts the subject out and fills behind it with your chosen colour.</p>
+
+          <div class="engine-row" role="radiogroup" aria-label="Background removal engine">
+            <button type="button" class="engine-btn" id="engineOnDevice" data-engine="on_device" aria-pressed="true">
+              <strong>On-device AI</strong>
+              <span>Free · private · needs no key</span>
+            </button>
+            <button type="button" class="engine-btn" id="engineRemoveBg" data-engine="remove_bg" aria-pressed="false">
+              <strong>remove.bg Cloud</strong>
+              <span>Paid · sharper cutouts · needs an API key</span>
+            </button>
+          </div>
+
+          <div class="removebg-key-row" id="removeBgKeyRow" hidden>
+            <label class="field">
+              <span>remove.bg API key</span>
+              <input type="password" id="removeBgKeyInput" placeholder="Paste your remove.bg API key" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="swatch-row" id="bgSwatches" role="radiogroup" aria-label="Background colour">
+            <button type="button" class="swatch" data-bg="none" data-color="transparent" aria-pressed="true">
+              <span class="swatch-chip chip-none"></span> Keep original
+            </button>
+            <button type="button" class="swatch" data-bg="white" data-color="#ffffff" aria-pressed="false">
+              <span class="swatch-chip" style="background:#ffffff;border:1px solid #d8d8d8"></span> White
+            </button>
+            <button type="button" class="swatch" data-bg="blue" data-color="#1E6FD9" aria-pressed="false">
+              <span class="swatch-chip" style="background:#1E6FD9"></span> Blue
+            </button>
+            <button type="button" class="swatch" data-bg="navy" data-color="#0B1F3A" aria-pressed="false">
+              <span class="swatch-chip" style="background:#0B1F3A"></span> Navy blue
+            </button>
+          </div>
+          <p class="bg-ai-status" id="bgAiStatus" aria-live="polite"></p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title"><span class="eyebrow">02</span> Dimensions</h2>
+          <div class="field-row">
+            <select id="dimPreset" class="select">
+              <option value="custom">Custom size</option>
+              <option value="800x600">800 × 600 — Standard</option>
+              <option value="1200x900">1200 × 900 — Standard HD</option>
+              <option value="413x531">413 × 531 — Passport (Pak/US)</option>
+              <option value="354x472">354 × 472 — CNIC form photo</option>
+              <option value="600x600">600 × 600 — Square / ID</option>
+            </select>
+          </div>
+
+          <div class="field-row two-col">
+            <label class="field">
+              <span>Width (px)</span>
+              <input type="number" id="widthInput" min="16" max="6000" value="800" />
+            </label>
+            <label class="field">
+              <span>Height (px)</span>
+              <input type="number" id="heightInput" min="16" max="6000" value="600" />
+            </label>
+          </div>
+
+          <label class="check-row">
+            <input type="checkbox" id="lockAspect" />
+            <span>Lock aspect ratio to original photo</span>
+          </label>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title"><span class="eyebrow">03</span> Target file size</h2>
+          <div class="field-row two-col">
+            <label class="field">
+              <span>Min (KB)</span>
+              <input type="number" id="minKB" min="1" max="10000" value="10" />
+            </label>
+            <label class="field">
+              <span>Max (KB)</span>
+              <input type="number" id="maxKB" min="1" max="10000" value="25" />
+            </label>
+          </div>
+          <label class="field">
+            <span>Output format</span>
+            <select id="outputFormat" class="select">
+              <option value="image/jpeg">JPEG (smallest, no transparency)</option>
+              <option value="image/webp">WebP (smaller, modern browsers)</option>
+              <option value="image/png">PNG (lossless, larger)</option>
+            </select>
+          </label>
+        </section>
+
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="processAllBtn" class="btn btn-accent btn-block" type="button" disabled>Process batch</button>
+        <button id="downloadZipBtn" class="btn btn-ghost btn-block" type="button" disabled>Download all as .zip</button>
+      </div>
+    </aside>
+
+    <!-- ===================== MAIN ===================== -->
+    <main class="main">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload photos">
+        <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" multiple hidden />
+        <div class="dropzone-inner">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M12 16V4M12 4 7 9M12 4l5 5"/>
+            <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
+          </svg>
+          <p class="dz-title">Drop photos here, or click to browse</p>
+          <p class="dz-sub">JPG · JPEG · PNG · WEBP — batches of any size</p>
+        </div>
+      </div>
+
+      <div class="batch-bar" id="batchBar" hidden>
+        <span id="batchCount">0 photos</span>
+        <span class="dot">·</span>
+        <span id="batchStatus">waiting</span>
+        <button class="link-btn" id="clearAllBtn" type="button">Clear all</button>
+      </div>
+
+      <div class="grid" id="previewGrid" aria-live="polite"></div>
+
+      <p class="empty-note" id="emptyNote">
+        Nothing here yet — your batch preview grid will appear once you add photos.
+      </p>
+    </main>
+  </div>
+</div>
+
+<!-- Card template -->
+<template id="cardTemplate">
+  <article class="card">
+    <div class="card-media">
+      <div class="img-pane before-pane">
+        <img class="before-img" alt="Original photo" />
+        <span class="pane-tag">Original</span>
+      </div>
+      <div class="img-pane after-pane">
+        <img class="after-img" alt="Processed photo" hidden />
+        <div class="spinner" aria-hidden="true"></div>
+        <span class="pane-tag pane-tag-accent">Processed</span>
+      </div>
+    </div>
+    <div class="card-meta">
+      <div class="card-name" title=""></div>
+      <div class="card-stats">
+        <span class="stat stat-dim"></span>
+        <span class="stat stat-size"></span>
+      </div>
+    </div>
+    <div class="card-actions">
+      <button type="button" class="btn btn-small btn-download" disabled>Download</button>
+      <button type="button" class="btn btn-small btn-ghost btn-remove">Remove</button>
+    </div>
+  </article>
+</template>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../js/app.js"></script>
+</body>
+</html>

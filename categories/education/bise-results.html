@@ -32,7 +32,33 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
 }
 .result-search-box p {
   color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* External Quick Action Bar */
+.quick-board-links {
+  display: flex;
+  gap: 12px;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+.btn-external-board {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(23, 78, 166, 0.15);
+  border: 1px solid var(--category-color);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: background 0.2s, transform 0.2s;
+}
+.btn-external-board:hover {
+  background: rgba(23, 78, 166, 0.25);
+  transform: translateY(-2px);
 }
 
 .form-grid {
@@ -147,14 +173,22 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
     <h1>BISE Annual Examination Results Center</h1>
     <p>Select your educational board, examination class, and enter your roll number or student name to lookup verified marks.</p>
 
+    <!-- Quick External Board Link Button (BISE DG Khan) -->
+    <div class="quick-board-links">
+      <a href="https://www.bisedgkhan.edu.pk" target="_blank" rel="noopener noreferrer" class="btn-external-board">
+        <span>🌐 Open Official BISE DG Khan Portal</span>
+        <span style="color: var(--category-color);">&rarr;</span>
+      </a>
+    </div>
+
     <form id="biseResultForm" onsubmit="handleResultSearch(event)">
       <div class="form-grid">
         <div class="form-group">
           <label for="boardSelect">Select Educational Board</label>
           <select id="boardSelect" required>
             <option value="">-- Choose BISE Board --</option>
-            <option value="multan">BISE Multan</option>
             <option value="dgkhan">BISE DG Khan</option>
+            <option value="multan">BISE Multan</option>
             <option value="lahore">BISE Lahore</option>
             <option value="rawalpindi">BISE Rawalpindi</option>
             <option value="faisalabad">BISE Faisalabad</option>
@@ -194,14 +228,16 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9rem; color: var(--text-muted);">
         <div><strong>Student Name:</strong> <span id="resName" style="color: var(--text);">Muhammad Ahmed</span></div>
         <div><strong>Roll Number:</strong> <span id="resRoll" style="color: var(--text);">458921</span></div>
-        <div><strong>Board:</strong> <span id="resBoard" style="color: var(--text);">BISE Multan</span></div>
+        <div><strong>Board:</strong> <span id="resBoard" style="color: var(--text);">BISE DG Khan</span></div>
         <div><strong>Total Marks:</strong> <span style="color: var(--text);">550</span></div>
         <div><strong>Obtained Marks:</strong> <span style="color: var(--category-color); font-weight: 700; font-size: 1.1rem;">472</span></div>
         <div><strong>Status:</strong> <span style="color: #22c55e; font-weight: 600;">PASS (Grade: A+)</span></div>
       </div>
-      <div style="margin-top: 20px; display: flex; gap: 10px;">
+      <div style="margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
         <button onclick="window.print()" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;">Print Result Card</button>
-        <a href="#" onclick="alert('SMS service: Send Roll Number to 800293 for official quick inquiry.'); return false;" style="color: var(--category-color); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; font-weight: 600;">Check via SMS code 800293 &rarr;</a>
+        <a href="https://www.bisedgkhan.edu.pk" target="_blank" rel="noopener noreferrer" style="background: var(--category-color); color: #ffffff; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+          Visit BISE DG Khan Site &rarr;
+        </a>
       </div>
     </div>
   </div>
@@ -241,14 +277,15 @@ main { max-width: 1280px; margin: 0 auto; padding: 0 1rem; }
 <script>
   function handleResultSearch(event) {
     event.preventDefault();
-    var board = document.getElementById('boardSelect').value;
+    var boardSelect = document.getElementById('boardSelect');
+    var boardName = boardSelect.options[boardSelect.selectedIndex].text;
     var rollNo = document.getElementById('rollNumberInput').value;
     
-    if(!board || !rollNo) return;
+    if(!boardSelect.value || !rollNo) return;
     
     // Update output card dynamically
     document.getElementById('resRoll').innerText = rollNo;
-    document.getElementById('resBoard').innerText = board.toUpperCase();
+    document.getElementById('resBoard').innerText = boardName;
     
     var outputCard = document.getElementById('resultOutput');
     outputCard.classList.add('active');

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAGR Calculator — LamaStudio Business</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 700px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+  .input-group { margin-bottom: 1.5rem; }
+  .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .input-group input { width: 100%; padding: 0.75rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; font-family: inherit; }
+  .calc-btn { width: 100%; padding: 0.85rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .calc-btn:hover { opacity: 0.9; }
+  .result-box { margin-top: 2rem; padding: 1.5rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; text-align: center; display: none; }
+  .result-value { font-size: 2.2rem; font-weight: 800; color: var(--category-color); margin-top: 0.5rem; }
+</style>
+</head>
+<body style="--category-color: var(--c-business);">
+
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Business</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../business/" class="cat-pill active" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="../education/" class="cat-pill" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="dashboard" style="display: block; max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+    <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
+      <span class="eyebrow" style="color: var(--category-color);">Professional Utility</span>
+      <h1>Compound Annual Growth Rate (CAGR) Calculator</h1>
+      <p class="lede">Measure the mean annual growth rate of an investment or revenue stream over multiple years.</p>
+    </div>
+
+    <div class="tool-container">
+      <div class="input-group">
+        <label for="initialValue">Initial Value ($)</label>
+        <input type="number" id="initialValue" placeholder="e.g. 10000">
+      </div>
+      <div class="input-group">
+        <label for="finalValue">Final Value ($)</label>
+        <input type="number" id="finalValue" placeholder="e.g. 25000">
+      </div>
+      <div class="input-group">
+        <label for="numYears">Number of Years</label>
+        <input type="number" id="numYears" placeholder="e.g. 3" step="0.5">
+      </div>
+      <button class="calc-btn" onclick="calculateCAGR()">Calculate CAGR</button>
+
+      <div class="result-box" id="cagrResultBox">
+        <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Compound Annual Growth Rate</span>
+        <div class="result-value" id="cagrVal">0%</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
+    <div class="footer-col"><h4>Store</h4><a href="../../apps/lamavpnpro/">LamaVPN Pro</a></div>
+    <div class="footer-col"><h4>Company</h4><a href="../../about.html">About</a></div>
+  </div>
+  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  function calculateCAGR() {
+    const init = parseFloat(document.getElementById('initialValue').value) || 0;
+    const final = parseFloat(document.getElementById('finalValue').value) || 0;
+    const years = parseFloat(document.getElementById('numYears').value) || 0;
+    const box = document.getElementById('cagrResultBox');
+    const val = document.getElementById('cagrVal');
+
+    if (init <= 0 || final <= 0 || years <= 0) {
+      alert('Please fill out all fields with values greater than zero.');
+      return;
+    }
+
+    const cagr = (Math.pow((final / init), (1 / years)) - 1) * 100;
+    val.textContent = cagr.toFixed(2) + "%";
+    box.style.display = 'block';
+  }
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

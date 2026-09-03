@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Data Formatter & Linter — LamaStudio Tech</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 800px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+  .grid-dual { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media(max-width: 768px) { .grid-dual { grid-template-columns: 1fr; } }
+  .input-group { margin-bottom: 1.25rem; }
+  .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); font-size: 0.9rem; }
+  textarea { width: 100%; height: 240px; padding: 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; resize: vertical; }
+  .btn-row { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tool-btn { padding: 0.75rem 1.25rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .tool-btn.secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  .tool-btn:hover { opacity: 0.9; }
+  .status-msg { font-size: 0.85rem; font-weight: 600; margin-top: 0.5rem; }
+  .status-error { color: #f87171; }
+  .status-success { color: #4ade80; }
+</style>
+</head>
+<body style="--category-color: var(--c-tech);">
+
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Tech</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill active" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="../education/" class="cat-pill" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="dashboard" style="display: block; max-width: 900px; margin: 0 auto; padding: 2rem 1rem;">
+    <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
+      <span class="eyebrow" style="color: var(--category-color);">Professional Utility</span>
+      <h1>JSON Data Formatter &amp; Linter</h1>
+      <p class="lede">Validate, clean, and prettify messy JSON payloads instantly in your browser.</p>
+    </div>
+
+    <div class="tool-container">
+      <div class="grid-dual">
+        <div class="input-group">
+          <label for="jsonInput">Input Raw JSON</label>
+          <textarea id="jsonInput" placeholder='{"name":"LamaStudio","active":true,"version":1.0}'></textarea>
+        </div>
+        <div class="input-group">
+          <label for="jsonOutput">Formatted / Minified Output</label>
+          <textarea id="jsonOutput" readonly placeholder="Formatted result will appear here..."></textarea>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="tool-btn" onclick="formatJSON(2)">Format (2 Spaces)</button>
+        <button class="tool-btn secondary" onclick="formatJSON(4)">Format (4 Spaces)</button>
+        <button class="tool-btn secondary" onclick="minifyJSON()">Minify</button>
+        <button class="tool-btn secondary" onclick="clearJSON()">Clear</button>
+      </div>
+      <div id="statusMsg" class="status-msg"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
+    <div class="footer-col"><h4>Store</h4><a href="../../apps/lamavpnpro/">LamaVPN Pro</a></div>
+    <div class="footer-col"><h4>Company</h4><a href="../../about.html">About</a></div>
+  </div>
+  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  function formatJSON(spaces) {
+    const raw = document.getElementById('jsonInput').value;
+    const out = document.getElementById('jsonOutput');
+    const msg = document.getElementById('statusMsg');
+
+    if (!raw.trim()) {
+      out.value = '';
+      msg.textContent = '';
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      out.value = JSON.stringify(parsed, null, spaces);
+      msg.className = 'status-msg status-success';
+      msg.textContent = '✓ JSON is valid and formatted successfully.';
+    } catch (e) {
+      out.value = '';
+      msg.className = 'status-msg status-error';
+      msg.textContent = '✕ Syntax Error: ' + e.message;
+    }
+  }
+
+  function minifyJSON() {
+    const raw = document.getElementById('jsonInput').value;
+    const out = document.getElementById('jsonOutput');
+    const msg = document.getElementById('statusMsg');
+
+    if (!raw.trim()) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+      out.value = JSON.stringify(parsed);
+      msg.className = 'status-msg status-success';
+      msg.textContent = '✓ JSON minified successfully.';
+    } catch (e) {
+      out.value = '';
+      msg.className = 'status-msg status-error';
+      msg.textContent = '✕ Syntax Error: ' + e.message;
+    }
+  }
+
+  function clearJSON() {
+    document.getElementById('jsonInput').value = '';
+    document.getElementById('jsonOutput').value = '';
+    document.getElementById('statusMsg').textContent = '';
+  }
+</script>
+<script src="../../script.js"></script>
+</body>
+  </html>
+  

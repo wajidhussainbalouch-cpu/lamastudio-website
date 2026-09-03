@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Flight Marketplace & Booking — LamaStudio Travel</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  /* Flashing News Banner Styles */
+  .flash-news-ticker {
+    background: linear-gradient(90deg, #ff4757, #ff6b81, #ff4757);
+    background-size: 200% 100%;
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    text-align: center;
+    font-size: 0.95rem;
+    animation: flashGradient 3s linear infinite;
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+    position: relative;
+    z-index: 100;
+  }
+  @keyframes flashGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .flight-marketplace { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+  .flight-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: var(--surface); border: 1px solid var(--border); padding: 1rem 1.5rem; border-radius: 12px; flex-wrap: wrap; gap: 1rem; }
+  .flight-controls select { padding: 0.5rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; }
+  
+  .flights-grid { display: grid; gap: 1.25rem; }
+  .flight-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s, border-color 0.2s; flex-wrap: wrap; gap: 1.5rem; }
+  .flight-card:hover { border-color: var(--category-color); transform: translateY(-2px); }
+  
+  .flight-info h3 { font-size: 1.2rem; color: var(--text); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+  .flight-route { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+  .flight-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 6px; text-transform: uppercase; }
+  .badge-eco { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+  .badge-biz { background: rgba(155, 89, 182, 0.15); color: #9b59b6; }
+  .badge-luggage { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+
+  .flight-pricing { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; width: 100%; sm:width: auto; justify-content: space-between; flex-direction: row; }
+  @media(min-width: 600px) { .flight-pricing { flex-direction: column; align-items: flex-end; } }
+  .price-val { font-size: 1.8rem; font-weight: 800; color: var(--category-color); font-family: 'JetBrains Mono', monospace; }
+  .book-now-btn { padding: 0.65rem 1.5rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .book-now-btn:hover { opacity: 0.85; }
+
+  /* Booking Modal Overlay */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
+  .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 500px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); animation: modalPop 0.3s ease; }
+  @keyframes modalPop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .modal-content h3 { margin-bottom: 1rem; color: var(--text); }
+  .form-row { margin-bottom: 1rem; }
+  .form-row label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; color: var(--text); }
+  .form-row input { width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; }
+  .modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 600; }
+  .btn-confirm { background: var(--category-color); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 700; }
+</style>
+</head>
+<body style="--category-color: var(--c-travel);">
+
+<div class="flash-news-ticker">
+  ⚡ FLASHING TRAVEL ALERT: Book your flight now with 0% booking fees! Special seasonal discounts active across Economy and Business class seats! ✈️
+</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Travel</small></span></a>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" style="font-size: 0.9rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Travel Tools</a>
+    </div>
+  </div>
+</header>
+
+<main class="flight-marketplace">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color); margin-bottom: 2rem;">
+    <span class="eyebrow" style="color: var(--category-color);">Live Marketplace</span>
+    <h1>Trending Flights &amp; Fairs</h1>
+    <p class="lede">Browse available flights across Economy and Business tiers. Sorted automatically from cheapest rates on top to highest rates on the bottom.</p>
+  </div>
+
+  <div class="flight-controls">
+    <div>
+      <span style="font-size: 0.9rem; font-weight: 600; margin-right: 0.5rem;">Filter Class:</span>
+      <select id="classFilter" onchange="renderFlights()">
+        <option value="all">All Classes</option>
+        <option value="Economy">Economy Only</option>
+        <option value="Business">Business Only</option>
+      </select>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted);" id="flightCountIndicator">Showing 6 trending flights</div>
+  </div>
+
+  <div class="flights-grid" id="flightsGridContainer">
+    </div>
+</main>
+
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-content">
+    <h3 id="modalFlightTitle">Complete Ticket Purchase</h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="modalFlightDetails">Airline & Fare info</p>
+    
+    <div class="form-row">
+      <label>Passenger Full Name</label>
+      <input type="text" id="passengerName" placeholder="e.g. Alexander Khan">
+    </div>
+    <div class="form-row">
+      <label>Email Address for E-Ticket</label>
+      <input type="email" id="passengerEmail" placeholder="e.g. alexander@lamastudio.io">
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="completePurchase()">Confirm &amp; Purchase</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer" style="margin-top: 4rem;">
+  <div class="footer-bottom" style="text-align:center; padding: 2rem;"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  // Mock flight database with varied pricing, classes, and luggage allowances
+  const flightsData = [
+    { id: 1, airline: "Emirates", route: "Dubai (DXB) ➔ London (LHR)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 340 },
+    { id: 2, airline: "Qatar Airways", route: "Doha (DOH) ➔ Paris (CDG)", classType: "Economy", luggage: "25 kg Checked + 7 kg Cabin", price: 290 },
+    { id: 3, airline: "Turkish Airlines", route: "Istanbul (IST) ➔ New York (JFK)", classType: "Business", luggage: "40 kg Checked + 10 kg Cabin", price: 1450 },
+    { id: 4, airline: "PIA (Pakistan Intl)", route: "Islamabad (ISB) ➔ London (LHR)", classType: "Economy", luggage: "40 kg Checked + 7 kg Cabin", price: 410 },
+    { id: 5, airline: "Etihad Airways", route: "Abu Dhabi (AUH) ➔ Sydney (SYD)", classType: "Business", luggage: "50 kg Checked + 12 kg Cabin", price: 2100 },
+    { id: 6, airline: "Singapore Airlines", route: "Singapore (SIN) ➔ Tokyo (NRT)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 520 }
+  ];
+
+  let selectedFlight = null;
+
+  function renderFlights() {
+    const filter = document.getElementById('classFilter').value;
+    const container = document.getElementById('flightsGridContainer');
+    
+    // Filter data if needed
+    let filtered = filter === 'all' ? [...flightsData] : flightsData.filter(f => f.classType === filter);
+
+    // SORT RULE: Cheapest prices on top (ascending), highest rates on the bottom
+    filtered.sort((a, b) => a.price - b.price);
+
+    document.getElementById('flightCountIndicator').textContent = `Showing ${filtered.length} trending flights`;
+    container.innerHTML = '';
+
+    if(filtered.length === 0) {
+      container.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted);">No flights match this filter right now.</div>`;
+      return;
+    }
+
+    filtered.forEach(flight => {
+      const card = document.createElement('div');
+      card.className = 'flight-card';
+      const classBadge = flight.classType === 'Business' ? 'badge-biz' : 'badge-eco';
+      
+      card.innerHTML = `
+        <div class="flight-info">
+          <h3>✈️ ${flight.airline}</h3>
+          <div class="flight-route">${flight.route}</div>
+          <div class="flight-tags">
+            <span class="badge ${classBadge}">${flight.classType} Class</span>
+            <span class="badge badge-luggage">🧳 ${flight.luggage}</span>
+          </div>
+        </div>
+        <div class="flight-pricing">
+          <div class="price-val">$${flight.price}</div>
+          <button class="book-now-btn" onclick="openBookingModal(${flight.id})">Book Ticket</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function openBookingModal(id) {
+    selectedFlight = flightsData.find(f => f.id === id);
+    if (!selectedFlight) return;
+    
+    document.getElementById('modalFlightTitle').textContent = `Book: ${selectedFlight.airline}`;
+    document.getElementById('modalFlightDetails').textContent = `${selectedFlight.route} | ${selectedFlight.classType} | $${selectedFlight.price}`;
+    document.getElementById('passengerName').value = '';
+    document.getElementById('passengerEmail').value = '';
+    document.getElementById('bookingModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('bookingModal').style.display = 'none';
+    selectedFlight = null;
+  }
+
+  function completePurchase() {
+    const name = document.getElementById('passengerName').value.trim();
+    const email = document.getElementById('passengerEmail').value.trim();
+
+    if(!name || !email) {
+      alert('Please fill in both your name and email address to complete booking.');
+      return;
+    }
+
+    alert(`🎉 Success! Ticket purchased for ${selectedFlight.airline} (${selectedFlight.route}). An e-ticket receipt has been dispatched to ${email}. Thank you for booking with LamaStudio!`);
+    closeModal();
+  }
+
+  // Initialize display on load
+  window.addEventListener('DOMContentLoaded', renderFlights);
+</script>
+<script src="../../script.js"></script>
+</body>
+      </html>
+      

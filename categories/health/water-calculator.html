@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Water Intake Tracker — LamaStudio Health</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 700px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+  .input-group { margin-bottom: 1.5rem; }
+  .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .input-group input, .input-group select { width: 100%; padding: 0.75rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; font-family: inherit; }
+  .calc-btn { width: 100%; padding: 0.85rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .calc-btn:hover { opacity: 0.9; }
+  .result-box { margin-top: 2rem; padding: 1.5rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; text-align: center; display: none; }
+  .result-value { font-size: 2.2rem; font-weight: 800; color: var(--category-color); margin: 0.5rem 0; }
+</style>
+</head>
+<body style="--category-color: var(--c-health);">
+
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Health</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="../education/" class="cat-pill" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill active" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="dashboard" style="display: block; max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
+    <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
+      <span class="eyebrow" style="color: var(--category-color);">Interactive Tool</span>
+      <h1>Daily Water Intake Calculator</h1>
+      <p class="lede">Find out how much water your body needs based on your body weight and activity level.</p>
+    </div>
+
+    <div class="tool-container">
+      <div class="input-group">
+        <label for="waterWeight">Weight (kg)</label>
+        <input type="number" id="waterWeight" placeholder="e.g. 68" step="0.1">
+      </div>
+      <div class="input-group">
+        <label for="activityLevel">Daily Activity Level</label>
+        <select id="activityLevel">
+          <option value="1">Low / Sedentary</option>
+          <option value="1.2">Moderate Workout</option>
+          <option value="1.5">High Intensity / Athlete</option>
+        </select>
+      </div>
+      <button class="calc-btn" onclick="calculateWater()">Calculate Target</button>
+
+      <div class="result-box" id="waterResultBox">
+        <span style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Recommended Daily Intake</span>
+        <div class="result-value" id="waterValue">0.0 Liters</div>
+        <p style="font-size: 0.95rem; color: var(--text-muted); margin: 0;">Roughly equivalent to <span id="glassCount" style="color: var(--text); font-weight: 700;">0</span> standard glasses.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
+    <div class="footer-col"><h4>Store</h4><a href="../../apps/lamavpnpro/">LamaVPN Pro</a></div>
+    <div class="footer-col"><h4>Company</h4><a href="../../about.html">About</a></div>
+  </div>
+  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  function calculateWater() {
+    const weight = parseFloat(document.getElementById('waterWeight').value);
+    const multiplier = parseFloat(document.getElementById('activityLevel').value);
+    const resultBox = document.getElementById('waterResultBox');
+    const waterValue = document.getElementById('waterValue');
+    const glassCount = document.getElementById('glassCount');
+
+    if (!weight || weight <= 0) {
+      alert('Please enter a valid weight.');
+      return;
+    }
+
+    // Calculation: ~35ml per kg of body weight adjusted by activity
+    const totalMl = (weight * 35 * multiplier);
+    const totalLiters = (totalMl / 1000).toFixed(2);
+    const glasses = Math.round(totalMl / 250); // assuming 250ml per glass
+
+    waterValue.textContent = totalLiters + " Liters";
+    glassCount.textContent = glasses + " glasses";
+    resultBox.style.display = 'block';
+  }
+</script>
+<script src="../../script.js"></script>
+</body>
+                                                                                                                                                                            </html>
+          

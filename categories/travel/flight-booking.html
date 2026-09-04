@@ -87,11 +87,13 @@
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
-  .price-val { font-size: 1.8rem; font-weight: 800; color: var(--category-color); font-family: 'JetBrains Mono', monospace; }
+  .price-val { font-size: 1.6rem; font-weight: 800; color: var(--category-color); font-family: 'JetBrains Mono', monospace; }
+  .price-pkr { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
   .book-now-btn {
-    padding: 0.65rem 1.5rem;
+    margin-top: 0.3rem;
+    padding: 0.6rem 1.4rem;
     background: var(--category-color);
     color: #ffffff;
     border: none;
@@ -160,7 +162,7 @@
   <div class="hero-panel" style="border-left: 4px solid var(--category-color); margin-bottom: 2rem;">
     <span class="eyebrow" style="color: var(--category-color);">Live Portal</span>
     <h1>Global Flight Marketplace</h1>
-    <p class="lede">Explore live rates across popular international hubs. Filter by route, airline, or cabin class to find the best value for your next trip.</p>
+    <p class="lede">Explore live rates in US Dollars and Pakistani Rupees. Filter by route, airline, or cabin class to find the best value for your trip.</p>
   </div>
 
   <!-- Advanced Filtering & Sorting Toolbar -->
@@ -221,15 +223,17 @@
 </footer>
 
 <script>
+  const USD_TO_PKR = 277.55; // Exchange rate reference
+
   const flightsData = [
-    { id: 1, airline: "Fly Jinnah", route: "Lahore (LHE) ➔ Sharjah (SHJ)", classType: "Economy", luggage: "20 kg Checked + 7 kg Cabin", price: 185 },
-    { id: 2, airline: "Airblue", route: "Islamabad (ISB) ➔ Dubai (DXB)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 210 },
-    { id: 3, airline: "Qatar Airways", route: "Doha (DOH) ➔ Paris (CDG)", classType: "Economy", luggage: "25 kg Checked + 7 kg Cabin", price: 290 },
-    { id: 4, airline: "Emirates", route: "Dubai (DXB) ➔ London (LHR)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 340 },
-    { id: 5, airline: "PIA", route: "Islamabad (ISB) ➔ London (LHR)", classType: "Economy", luggage: "40 kg Checked + 7 kg Cabin", price: 410 },
-    { id: 6, airline: "Singapore Airlines", route: "Singapore (SIN) ➔ Tokyo (NRT)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 520 },
-    { id: 7, airline: "Turkish Airlines", route: "Istanbul (IST) ➔ New York (JFK)", classType: "Business", luggage: "40 kg Checked + 10 kg Cabin", price: 1450 },
-    { id: 8, airline: "Etihad Airways", route: "Abu Dhabi (AUH) ➔ Sydney (SYD)", classType: "Business", luggage: "50 kg Checked + 12 kg Cabin", price: 2100 }
+    { id: 1, airline: "Fly Jinnah", route: "Lahore (LHE) ➔ Sharjah (SHJ)", classType: "Economy", luggage: "20 kg Checked + 7 kg Cabin", priceUSD: 185 },
+    { id: 2, airline: "Airblue", route: "Islamabad (ISB) ➔ Dubai (DXB)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", priceUSD: 210 },
+    { id: 3, airline: "Qatar Airways", route: "Doha (DOH) ➔ Paris (CDG)", classType: "Economy", luggage: "25 kg Checked + 7 kg Cabin", priceUSD: 290 },
+    { id: 4, airline: "Emirates", route: "Dubai (DXB) ➔ London (LHR)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", priceUSD: 340 },
+    { id: 5, airline: "PIA", route: "Islamabad (ISB) ➔ London (LHR)", classType: "Economy", luggage: "40 kg Checked + 7 kg Cabin", priceUSD: 410 },
+    { id: 6, airline: "Singapore Airlines", route: "Singapore (SIN) ➔ Tokyo (NRT)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", priceUSD: 520 },
+    { id: 7, airline: "Turkish Airlines", route: "Istanbul (IST) ➔ New York (JFK)", classType: "Business", luggage: "40 kg Checked + 10 kg Cabin", priceUSD: 1450 },
+    { id: 8, airline: "Etihad Airways", route: "Abu Dhabi (AUH) ➔ Sydney (SYD)", classType: "Business", luggage: "50 kg Checked + 12 kg Cabin", priceUSD: 2100 }
   ];
 
   let selectedFlight = null;
@@ -246,12 +250,10 @@
 
     if (!container) return;
 
-    // 1. Filter by Class
     let filtered = classFilter === 'all' 
       ? [...flightsData] 
       : flightsData.filter(f => f.classType === classFilter);
 
-    // 2. Filter by Search Query (Airline or Route)
     if (searchQuery !== '') {
       filtered = filtered.filter(f => 
         f.airline.toLowerCase().includes(searchQuery) || 
@@ -259,12 +261,10 @@
       );
     }
 
-    // 3. Sort Order
     filtered.sort((a, b) => {
-      return sortOrder === 'low-high' ? a.price - b.price : b.price - a.price;
+      return sortOrder === 'low-high' ? a.priceUSD - b.priceUSD : b.priceUSD - a.priceUSD;
     });
 
-    // Update Counter
     const counterElem = document.getElementById('flightCountIndicator');
     if (counterElem) {
       counterElem.textContent = `Showing ${filtered.length} matching flight(s)`;
@@ -281,11 +281,11 @@
       return;
     }
 
-    // Render Cards
     filtered.forEach(flight => {
       const card = document.createElement('div');
       card.className = 'flight-card';
       const classBadge = flight.classType === 'Business' ? 'badge-biz' : 'badge-eco';
+      const pricePKR = Math.round(flight.priceUSD * USD_TO_PKR).toLocaleString();
       
       card.innerHTML = `
         <div class="flight-info">
@@ -297,7 +297,8 @@
           </div>
         </div>
         <div class="flight-pricing">
-          <div class="price-val">$${flight.price}</div>
+          <div class="price-val">$${flight.priceUSD} USD</div>
+          <div class="price-pkr">≈ Rs. ${pricePKR} PKR</div>
           <button class="book-now-btn" onclick="openBookingModal(${flight.id})">Book Ticket</button>
         </div>
       `;
@@ -309,8 +310,9 @@
     selectedFlight = flightsData.find(f => f.id === id);
     if (!selectedFlight) return;
     
+    const pricePKR = Math.round(selectedFlight.priceUSD * USD_TO_PKR).toLocaleString();
     document.getElementById('modalFlightTitle').textContent = `Book: ${selectedFlight.airline}`;
-    document.getElementById('modalFlightDetails').textContent = `${selectedFlight.route} | ${selectedFlight.classType} Class | Total: $${selectedFlight.price}`;
+    document.getElementById('modalFlightDetails').textContent = `${selectedFlight.route} | ${selectedFlight.classType} Class | Total: $${selectedFlight.priceUSD} USD (Rs. ${pricePKR} PKR)`;
     document.getElementById('passengerName').value = '';
     document.getElementById('passengerEmail').value = '';
     document.getElementById('bookingModal').style.display = 'flex';
@@ -330,11 +332,11 @@
       return;
     }
 
-    alert(`🎉 Success! Ticket successfully purchased for ${selectedFlight.airline} (${selectedFlight.route}). Your verified e-ticket receipt has been sent to ${email}. Thank you for booking with LamaStudio!`);
+    const pricePKR = Math.round(selectedFlight.priceUSD * USD_TO_PKR).toLocaleString();
+    alert(`🎉 Success! Ticket successfully purchased for ${selectedFlight.airline} (${selectedFlight.route}) at $${selectedFlight.priceUSD} USD / Rs. ${pricePKR} PKR. Your verified e-ticket receipt has been sent to ${email}. Thank you for booking with LamaStudio!`);
     closeModal();
   }
 
-  // Ensure DOM is fully ready before execution
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', filterAndRenderFlights);
   } else {

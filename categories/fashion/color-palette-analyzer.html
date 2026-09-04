@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seasonal Color Palette Finder — LamaStudio Fashion Hub</title>
+<meta name="description" content="Discover whether you fall into Winter, Spring, Summer, or Autumn color palettes based on skin undertones.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; text-align: center; display: none; }
+  .result-value { font-size: 1.75rem; font-weight: 700; color: var(--category-color); margin: 0.5rem 0; }
+</style>
+</head>
+<body style="--category-color: var(--c-fashion, #e91e63);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Color Palette</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Seasonal Color Palette Finder</h1>
+    
+    <div class="form-group">
+      <label for="veins">What color do your wrist veins appear under natural light?</label>
+      <select id="veins" class="form-control">
+        <option value="blue">Blue or Purple (Cool Undertone)</option>
+        <option value="green">Green or Olive (Warm Undertone)</option>
+        <option value="both">Mix of both (Neutral Undertone)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="contrast">Natural Hair and Skin Contrast Level</label>
+      <select id="contrast" class="form-control">
+        <option value="high">High Contrast (Dark hair / Light skin)</option>
+        <option value="low">Low / Soft Contrast (Muted or soft features)</option>
+      </select>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="analyzeColor()">Discover Season</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Your Recommended Palette</span>
+      <div class="result-value" id="seasonOutput">Winter Season</div>
+      <p id="seasonAdvice" style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.5;"></p>
+    </div>
+  </div>
+</main>
+
+<script>
+function analyzeColor() {
+  const veins = document.getElementById('veins').value;
+  const contrast = document.getElementById('contrast').value;
+
+  let season = "Winter Palette";
+  let advice = "You suit bold, saturated, and icy tones like royal blue, emerald, pure white, and jet black.";
+
+  if (veins === 'green' && contrast === 'low') {
+    season = "Autumn Palette";
+    advice = "Earthy, warm, and rich muted tones look incredible on you: terracotta, mustard, olive green, and warm camel.";
+  } else if (veins === 'blue' && contrast === 'low') {
+    season = "Summer Palette";
+    advice = "Soft, muted cool tones complement you best: dusty rose, lavender, soft powder blue, and cool cocoa brown.";
+  } else if (veins === 'green' && contrast === 'high') {
+    season = "Spring Palette";
+    advice = "Clear, vibrant, and warm tones illuminate your complexion: peach, coral, bright turquoise, and golden yellow.";
+  }
+
+  document.getElementById('seasonOutput').innerText = season;
+  document.getElementById('seasonAdvice').innerText = advice;
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+  </html>
+  

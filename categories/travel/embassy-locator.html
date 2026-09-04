@@ -11,7 +11,7 @@
 <style>
   .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 800px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
   .input-group { margin-bottom: 1.5rem; }
-  .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); font-size: 0.9rem; text-transform: uppercase; }
   .input-group select { width: 100%; padding: 0.75rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; }
   .calc-btn { width: 100%; padding: 0.85rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
   .calc-btn:hover { opacity: 0.85; }
@@ -20,7 +20,6 @@
   .embassy-details { margin-bottom: 1.25rem; font-size: 0.95rem; color: var(--text); line-height: 1.6; }
   .embassy-details strong { color: var(--category-color); }
   
-  /* Map Container */
   #map {
     width: 100%;
     height: 350px;
@@ -49,21 +48,34 @@
     <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
       <span class="eyebrow" style="color: var(--category-color);">Travel Tool 10</span>
       <h1>Emergency Embassy &amp; Consulate Locator</h1>
-      <p class="lede">Interactive mapper and directory guidance for localized diplomatic and passport emergency support.</p>
+      <p class="lede">Select your citizenship and current destination country to pinpoint your nearest diplomatic mission on the map.</p>
     </div>
     
     <div class="tool-container">
+      <!-- Step 1: Home Country / Citizenship -->
       <div class="input-group">
-        <label for="country">Select Home Country Representation</label>
-        <select id="country">
-          <option value="us">United States Embassy (Islamabad, Pakistan)</option>
-          <option value="uk">British High Commission (Islamabad, Pakistan)</option>
-          <option value="pk">Embassy of Pakistan (Washington D.C., USA)</option>
-          <option value="uae">Embassy of UAE (Islamabad, Pakistan)</option>
+        <label for="homeCountry">Step 1: Select Your Home Citizenship</label>
+        <select id="homeCountry">
+          <option value="us">United States (US Citizen)</option>
+          <option value="uk">United Kingdom (UK Citizen)</option>
+          <option value="pk">Pakistan (Pakistani Citizen)</option>
+          <option value="uae">United Arab Emirates (UAE Citizen)</option>
+        </select>
+      </div>
+
+      <!-- Step 2: Destination Country -->
+      <div class="input-group">
+        <label for="destCountry">Step 2: Select Your Current Travel Destination Country</label>
+        <select id="destCountry">
+          <option value="pk">Pakistan</option>
+          <option value="uae">United Arab Emirates (UAE)</option>
+          <option value="uk">United Kingdom</option>
+          <option value="usa">United States</option>
+          <option value="fr">France</option>
         </select>
       </div>
       
-      <button class="calc-btn" onclick="locateEmbassy()">Locate Embassy &amp; View Map</button>
+      <button class="calc-btn" onclick="locateEmbassy()">Locate Nearest Embassy &amp; Map</button>
       
       <div class="result-box" id="embassyResult">
         <h4 style="color: var(--category-color); margin-bottom: 0.5rem;" id="embassyTitle">Diplomatic Mission Details</h4>
@@ -84,65 +96,182 @@
   let map = null;
   let marker = null;
 
-  // Database of embassies with coordinates
-  const embassyData = {
-    us: {
-      name: "Embassy of the United States - Islamabad",
+  // Embassy Database mapped by [HomeCountry]_[DestinationCountry]
+  const embassyDatabase = {
+    "us_pk": {
+      name: "Embassy of the United States - Islamabad, Pakistan",
       address: "RAMNA 4, Diplomatic Enclave, Islamabad, Pakistan",
       phone: "+92 51 201 4000",
-      lat: 33.7294,
-      lng: 73.1118,
-      googleMaps: "https://maps.google.com/?q=US+Embassy+Islamabad"
+      lat: 33.7294, lng: 73.1118,
+      maps: "https://maps.google.com/?q=US+Embassy+Islamabad"
     },
-    uk: {
-      name: "British High Commission - Islamabad",
+    "us_uae": {
+      name: "U.S. Embassy - Abu Dhabi, UAE",
+      address: "Al Emreef St, Sector W56-02, Abu Dhabi, UAE",
+      phone: "+971 2 414 2200",
+      lat: 24.4173, lng: 54.4375,
+      maps: "https://maps.google.com/?q=US+Embassy+Abu+Dhabi"
+    },
+    "us_uk": {
+      name: "U.S. Embassy - London, United Kingdom",
+      address: "33 Nine Elms Ln, Nine Elms, London SW11 7US, UK",
+      phone: "+44 20 7499 9000",
+      lat: 51.4826, lng: -0.1419,
+      maps: "https://maps.google.com/?q=US+Embassy+London"
+    },
+    "us_usa": {
+      name: "U.S. Department of State (HQ) - Washington D.C.",
+      address: "2201 C St NW, Washington, DC 20520, USA",
+      phone: "+1 202 501 4444",
+      lat: 38.8951, lng: -77.0478,
+      maps: "https://maps.google.com/?q=US+Department+of+State+Washington"
+    },
+    "us_fr": {
+      name: "U.S. Embassy - Paris, France",
+      address: "2 Av. Gabriel, 75008 Paris, France",
+      phone: "+33 1 43 12 22 22",
+      lat: 48.8687, lng: 2.3175,
+      maps: "https://maps.google.com/?q=US+Embassy+Paris"
+    },
+
+    "uk_pk": {
+      name: "British High Commission - Islamabad, Pakistan",
       address: "Ramna 5, Diplomatic Enclave, Islamabad, Pakistan",
       phone: "+92 51 201 2000",
-      lat: 33.7262,
-      lng: 73.1132,
-      googleMaps: "https://maps.google.com/?q=British+High+Commission+Islamabad"
+      lat: 33.7262, lng: 73.1132,
+      maps: "https://maps.google.com/?q=British+High+Commission+Islamabad"
     },
-    pk: {
-      name: "Embassy of Pakistan - Washington D.C.",
+    "uk_uae": {
+      name: "British Embassy - Dubai, UAE",
+      address: "Al Seef Rd, Umm Hurair 1, Dubai, UAE",
+      phone: "+971 4 309 4444",
+      lat: 25.2532, lng: 55.3056,
+      maps: "https://maps.google.com/?q=British+Embassy+Dubai"
+    },
+    "uk_uk": {
+      name: "Foreign, Commonwealth & Development Office - London",
+      address: "King Charles St, London SW1A 2AH, UK",
+      phone: "+44 20 7008 1500",
+      lat: 51.5033, lng: -0.1276,
+      maps: "https://maps.google.com/?q=FCDO+London"
+    },
+    "uk_usa": {
+      name: "British Embassy - Washington D.C., USA",
+      address: "3100 Massachusetts Ave NW, Washington, DC 20008, USA",
+      phone: "+1 202 588 6500",
+      lat: 38.9234, lng: -77.0620,
+      maps: "https://maps.google.com/?q=British+Embassy+Washington+DC"
+    },
+    "uk_fr": {
+      name: "British Embassy - Paris, France",
+      address: "35 Rue du Faubourg Saint-Honoré, 75008 Paris, France",
+      phone: "+33 1 44 51 31 00",
+      lat: 48.8703, lng: 2.3214,
+      maps: "https://maps.google.com/?q=British+Embassy+Paris"
+    },
+
+    "pk_pk": {
+      name: "Ministry of Foreign Affairs - Islamabad, Pakistan",
+      address: "Constitution Ave, G-5, Islamabad, Pakistan",
+      phone: "+92 51 921 0335",
+      lat: 33.7275, lng: 73.0850,
+      maps: "https://maps.google.com/?q=Ministry+of+Foreign+Affairs+Islamabad"
+    },
+    "pk_uae": {
+      name: "Embassy of Pakistan - Abu Dhabi, UAE",
+      address: "Plot # 2, Sector W-30, Diplomatic Area, Abu Dhabi, UAE",
+      phone: "+971 2 444 7800",
+      lat: 24.4740, lng: 54.3708,
+      maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Abu+Dhabi"
+    },
+    "pk_uk": {
+      name: "High Commission for Pakistan - London, UK",
+      address: "36 Lowndes Square, Belgravia, London SW1X 9JN, UK",
+      phone: "+44 20 7664 9200",
+      lat: 51.5002, lng: -0.1585,
+      maps: "https://maps.google.com/?q=Pakistan+High+Commission+London"
+    },
+    "pk_usa": {
+      name: "Embassy of Pakistan - Washington D.C., USA",
       address: "3517 International Ct NW, Washington, DC 20008, USA",
       phone: "+1 202 243 6500",
-      lat: 38.9431,
-      lng: -77.0625,
-      googleMaps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC"
+      lat: 38.9431, lng: -77.0625,
+      maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC"
     },
-    uae: {
-      name: "Embassy of the United Arab Emirates - Islamabad",
+    "pk_fr": {
+      name: "Embassy of Pakistan - Paris, France",
+      address: "10 Rue Lord Byron, 75008 Paris, France",
+      phone: "+33 1 45 62 23 32",
+      lat: 48.8732, lng: 2.3011,
+      maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Paris"
+    },
+
+    "uae_pk": {
+      name: "Embassy of the UAE - Islamabad, Pakistan",
       address: "Plot No. 1-2, Diplomatic Enclave Sector G-5, Islamabad, Pakistan",
       phone: "+92 51 209 8888",
-      lat: 33.7251,
-      lng: 73.1105,
-      googleMaps: "https://maps.google.com/?q=UAE+Embassy+Islamabad"
+      lat: 33.7251, lng: 73.1105,
+      maps: "https://maps.google.com/?q=UAE+Embassy+Islamabad"
+    },
+    "uae_uae": {
+      name: "Ministry of Foreign Affairs - Abu Dhabi, UAE",
+      address: "King Abdullah Bin Abdulaziz Al Saud St, Abu Dhabi, UAE",
+      phone: "+971 2 493 3333",
+      lat: 24.4485, lng: 54.3940,
+      maps: "https://maps.google.com/?q=MOFA+Abu+Dhabi"
+    },
+    "uae_uk": {
+      name: "Embassy of the UAE - London, UK",
+      address: "1-2 Grosvenor Cres, Belgravia, London SW1X 7EE, UK",
+      phone: "+44 20 7581 1281",
+      lat: 51.5011, lng: -0.1534,
+      maps: "https://maps.google.com/?q=UAE+Embassy+London"
+    },
+    "uae_usa": {
+      name: "Embassy of the UAE - Washington D.C., USA",
+      address: "3522 International Ct NW, Washington, DC 20008, USA",
+      phone: "+1 202 243 2400",
+      lat: 38.9435, lng: -77.0628,
+      maps: "https://maps.google.com/?q=UAE+Embassy+Washington+DC"
+    },
+    "uae_fr": {
+      name: "Embassy of the UAE - Paris, France",
+      address: "2 Boulevard de la Républiue, 92100 Boulogne-Billancourt, Paris",
+      phone: "+33 1 44 34 02 00",
+      lat: 48.8397, lng: 2.2412,
+      maps: "https://maps.google.com/?q=UAE+Embassy+Paris"
     }
   };
 
   function locateEmbassy() {
-    const selectedKey = document.getElementById('country').value;
-    const info = embassyData[selectedKey];
+    const home = document.getElementById('homeCountry').value;
+    const dest = document.getElementById('destCountry').value;
+    const lookupKey = `${home}_${dest}`;
+    
+    const info = embassyDatabase[lookupKey] || {
+      name: "Consular Emergency Assistance Desk",
+      address: "Primary diplomatic mission office in destination country capital.",
+      phone: "+1 (888) 407-4747 (Global Emergency Hotline)",
+      lat: 33.6844, lng: 73.0479, // Default fallback coordinates (Islamabad center)
+      maps: "https://maps.google.com/?q=Embassy+Consulate+Emergency"
+    };
+
     const resultBox = document.getElementById('embassyResult');
     const titleElem = document.getElementById('embassyTitle');
     const textElem = document.getElementById('embassyText');
 
-    if (!info) return;
-
-    // Show result container
     resultBox.style.display = 'block';
     titleElem.textContent = info.name;
     textElem.innerHTML = `
       📍 <strong>Address:</strong> ${info.address}<br>
       📞 <strong>Emergency Hotline:</strong> ${info.phone}<br>
-      ⚠️ <em>In case of lost passports or legal crises, keep digital copies of your identification handy and call ahead.</em><br><br>
-      <a href="${info.googleMaps}" target="_blank" style="display: inline-block; padding: 0.5rem 1rem; background: var(--category-color); color: #fff; font-weight: 700; border-radius: 6px; text-decoration: none;">Open Directions in Google Maps ↗</a>
+      ⚠️ <em>Keep digital backup copies of your passport and travel identification accessible securely offline.</em><br><br>
+      <a href="${info.maps}" target="_blank" style="display: inline-block; padding: 0.6rem 1.2rem; background: var(--category-color); color: #fff; font-weight: 700; border-radius: 6px; text-decoration: none;">Get Turn-by-Turn Directions ↗</a>
     `;
 
-    // Initialize or Update Leaflet Map
     setTimeout(() => {
       if (!map) {
-        map = L.map('map').setView([info.lat, info.lng], 15);
+        map = L.map('map').setView([info.lat, info.lng], 14);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap contributors'
@@ -150,7 +279,7 @@
         marker = L.marker([info.lat, info.lng]).addTo(map);
         marker.bindPopup(`<b>${info.name}</b><br>${info.address}`).openPopup();
       } else {
-        map.setView([info.lat, info.lng], 15);
+        map.setView([info.lat, info.lng], 14);
         marker.setLatLng([info.lat, info.lng]);
         marker.setPopupContent(`<b>${info.name}</b><br>${info.address}`).openPopup();
         map.invalidateSize();

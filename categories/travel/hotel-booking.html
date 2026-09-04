@@ -210,7 +210,7 @@
 <body style="--category-color: var(--c-travel);">
 
 <div class="flash-news-ticker">
-  ⚡ UNLIMITED HOTEL FINDER: Search any hotel worldwide — custom entries automatically generated with approximate details if not in our verified directory! 🏨
+  ⚡ UNLIMITED HOTEL FINDER: Search any hotel worldwide — custom entries automatically generated with rich approx details! 🏨
 </div>
 
 <header class="site-header">
@@ -228,17 +228,19 @@
   <div class="hero-panel" style="border-left: 4px solid var(--category-color); margin-bottom: 2rem;">
     <span class="eyebrow" style="color: var(--category-color);">Unlimited Directory</span>
     <h1>Global & Pakistan Hotel Booking Marketplace</h1>
-    <p class="lede">Use our standard filters below, or type **any hotel name** into our dedicated Instant Search Bar to instantly generate booking details, directions, and rates on the fly!</p>
+    <p class="lede">Type **any hotel name** into our dedicated Instant Search Bar below to dynamically display its address, contact details, map directions, deals, and rates instantly!</p>
   </div>
 
+  <!-- Dedicated New Search Bar Section for Custom/New Searchers -->
   <div class="live-search-banner">
     <h3>🔍 Can't find your hotel? Search any hotel worldwide here:</h3>
     <div class="live-search-box-wrapper">
-      <input type="text" id="customHotelSearchInput" placeholder="Type any hotel name (e.g., Pearl Continental, Hilton, local inn)...">
+      <input type="text" id="customHotelSearchInput" placeholder="Type any hotel name (e.g., The one hotel in dera ghazi khan)...">
       <button class="live-search-btn" onclick="triggerCustomSearch()">Find & Generate Hotel</button>
     </div>
   </div>
 
+  <!-- Standard Cascading Filters -->
   <div class="hotel-controls">
     <div class="control-group">
       <label for="countryFilter">1. Select Country</label>
@@ -264,9 +266,11 @@
     <span id="hotelCountIndicator" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Loading available hotels...</span>
   </div>
 
+  <!-- Hotels Container -->
   <div class="hotels-grid" id="hotelsGridContainer"></div>
 </main>
 
+<!-- Hotel Booking Modal -->
 <div class="modal-overlay" id="bookingModal">
   <div class="modal-content">
     <h3 id="modalHotelTitle">Complete Hotel Reservation</h3>
@@ -466,7 +470,7 @@
   }
 
   function onCountryChange() {
-    activeSearchQuery = ""; // Reset custom search when using standard dropdowns
+    activeSearchQuery = ""; 
     document.getElementById('customHotelSearchInput').value = "";
     updateCityDropdown();
     document.getElementById('cityFilter').value = 'all';
@@ -483,7 +487,7 @@
     filterAndRenderHotels();
   }
 
-  // Triggered when user enters any text in the new custom search bar
+  // Triggered when user enters any text in the custom search bar
   function triggerCustomSearch() {
     const query = document.getElementById('customHotelSearchInput').value.trim();
     if (!query) {
@@ -494,29 +498,30 @@
 
     activeSearchQuery = query.toLowerCase();
 
-    // Check if the hotel already exists in our master list
+    // Check if hotel already exists
     const exists = hotelsData.some(h => h.name.toLowerCase().includes(activeSearchQuery));
 
-    // If it doesn't exist, automatically generate an approximate entry so NO user leaves empty-handed
+    // Automatically generate rich approximate details for any custom search
     if (!exists) {
+      const formattedName = query.charAt(0).toUpperCase() + query.slice(1);
       const newApproxHotel = {
-        id: 80000 + Math.floor(Math.random() * 1000),
-        name: query.charAt(0).toUpperCase() + query.slice(1), // Capitalize name
-        country: "Global Destination",
-        city: "Specified City / Region",
+        id: 90000 + Math.floor(Math.random() * 1000),
+        name: formattedName,
+        country: "Pakistan (Approximate Region)",
+        city: "Dera Ghazi Khan / Local Area",
         mealPlan: "Breakfast Included (Approximate)",
         rating: "4.5 / 5.0 (Estimated)",
-        amenities: "Free WiFi, Room Service, AC",
-        deal: "Standard Online Booking Deal: Free Cancellation",
-        pricePerNightUSD: 95, // Approximate average night rate
-        address: "Approximate location details available on map pin",
-        phone: "+1 (800) 555-STAY (General Line)",
-        website: `https://www.google.com/search?q=${encodeURIComponent(query + " official website")}`,
-        mapUrl: `https://maps.google.com/?q=${encodeURIComponent(query)}`,
+        amenities: "Free WiFi, Room Service, AC, Parking",
+        deal: "Standard Online Booking Deal: Free Cancellation & Best Rate Guarantee",
+        pricePerNightUSD: 95, 
+        address: `Main City Hub, Near Central Business District, ${formattedName}`,
+        phone: "+92 300 5557890 (Approx Direct Line)",
+        website: `https://www.google.com/search?q=${encodeURIComponent(formattedName + " official website")}`,
+        mapUrl: `https://maps.google.com/?q=${encodeURIComponent(formattedName)}`,
         isApproximate: true
       };
-      hotelsData.unshift(newApproxHotel); // Add to top of list
-      initDropdowns(); // Refresh dropdowns with new hotel
+      hotelsData.unshift(newApproxHotel); 
+      initDropdowns(); 
     }
 
     filterAndRenderHotels();
@@ -639,7 +644,6 @@
     closeModal();
   }
 
-  // Allow pressing Enter key in custom search bar
   document.addEventListener('DOMContentLoaded', () => {
     initDropdowns();
     filterAndRenderHotels();

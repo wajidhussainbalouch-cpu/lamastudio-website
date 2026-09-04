@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intermittent Fasting Window Tracker — LamaStudio Health Hub</title>
+<meta name="description" content="Track 16:8, 18:6, and OMAD fasting windows with countdown timers and milestone alerts.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: none; text-align: center; }
+  .timer-display { font-size: 2.25rem; font-weight: 700; color: var(--category-color); font-family: 'JetBrains Mono', monospace; margin: 0.5rem 0; }
+</style>
+</head>
+<body style="--category-color: var(--c-health, #e74c3c);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Fasting Tracker</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Intermittent Fasting Window Tracker</h1>
+    
+    <div class="form-group">
+      <label for="fastProtocol">Fasting Protocol</label>
+      <select id="fastProtocol" class="form-control">
+        <option value="16">16:8 Protocol (16 Hours Fast / 8 Hours Eat)</option>
+        <option value="18">18:6 Protocol (18 Hours Fast / 6 Hours Eat)</option>
+        <option value="20">20:4 Protocol (20 Hours Fast / 4 Hours Eat)</option>
+        <option value="23">OMAD - One Meal A Day (23 Hours Fast)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="lastMealTime">Last Meal / Fast Start Time</label>
+      <input type="time" id="lastMealTime" class="form-control" value="20:00" required>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="calculateFastingWindow()">Calculate Window</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Your Eating Window Opens At</span>
+      <div class="timer-display" id="eatingWindowOutput">--:--</div>
+      <p id="fastingSummary" style="color: var(--text-muted); font-size: 0.9rem; margin: 0;"></p>
+    </div>
+  </div>
+</main>
+
+<script>
+function calculateFastingWindow() {
+  const protocolHours = parseInt(document.getElementById('fastProtocol').value);
+  const timeVal = document.getElementById('lastMealTime').value;
+
+  if (!timeVal) {
+    alert('Please select a valid start time.');
+    return;
+  }
+
+  const [hours, minutes] = timeVal.split(':').map(Number);
+  const startDate = new Date();
+  startDate.setHours(hours, minutes, 0, 0);
+
+  // Add fasting hours to start time
+  const eatingStartDate = new Date(startDate.getTime() + protocolHours * 3600000);
+  const eatingWindowHours = 24 - protocolHours;
+  const eatingEndDate = new Date(eatingStartDate.getTime() + eatingWindowHours * 3600000);
+
+  const startStr = eatingStartDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const endStr = eatingEndDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  document.getElementById('eatingWindowOutput').innerText = `${startStr} -

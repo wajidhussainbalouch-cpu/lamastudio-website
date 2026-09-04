@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Global Emergency Embassy & Consulate Locator — LamaStudio Travel</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Leaflet CSS for Interactive Map -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<!-- Master LamaStudio Portal Stylesheet -->
 <link rel="stylesheet" href="../../style.css">
 <style>
   .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 950px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
@@ -38,12 +36,19 @@
   .embassy-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    padding: 1rem;
+    padding: 1.25rem;
     border-radius: 8px;
     font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
-  .embassy-card strong { color: var(--category-color); display: block; margin-bottom: 0.25rem; }
-  
+  .embassy-card strong { color: var(--category-color); display: block; margin-bottom: 0.35rem; font-size: 1rem; }
+  .embassy-card p { margin: 0.3rem 0; color: var(--text-muted); font-size: 0.85rem; }
+  .embassy-card .links-row { margin-top: 0.75rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .embassy-card a { color: var(--category-color); font-weight: 700; text-decoration: none; font-size: 0.85rem; }
+  .embassy-card a:hover { text-decoration: underline; }
+
   .theme-toggle-btn {
     background: var(--background);
     border: 1px solid var(--border);
@@ -55,7 +60,6 @@
     font-size: 0.85rem;
   }
 </style>
-<!-- Script to apply theme immediately before paint to prevent flashing -->
 <script>
   (function() {
     const savedTheme = localStorage.getItem('lamastudio_theme') || 'dark';
@@ -87,7 +91,6 @@
     
     <div class="tool-container">
       <div class="input-grid">
-        <!-- Destination Country -->
         <div class="input-group">
           <label for="destCountry">1. Where are you traveling to?</label>
           <select id="destCountry">
@@ -107,7 +110,6 @@
           </select>
         </div>
 
-        <!-- Embassy Representation Country -->
         <div class="input-group">
           <label for="embassyCountry">2. Whose embassy do you need?</label>
           <select id="embassyCountry">
@@ -132,7 +134,7 @@
       
       <div class="result-box" id="embassyResult">
         <h4 style="color: var(--category-color); margin-bottom: 0.5rem;">Diplomatic Mission Network Map</h4>
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Inspect individual pins on the map or review emergency hotlines below.</p>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Inspect individual pins on the map or review complete directory details below.</p>
         
         <div id="map"></div>
         <div class="embassy-list" id="embassyListContainer"></div>
@@ -145,125 +147,4 @@
   <div class="footer-bottom" style="text-align:center; padding: 2rem;"><span>© 2026 LamaStudio. All rights reserved.</span></div>
 </footer>
 
-<!-- Leaflet JS Library -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>
-  let mapInstance = null;
-  let markersLayer = null;
-
-  // Granular Global Directory Database covering multiple offices per state matrix
-  const globalEmbassiesDatabase = {
-    "pk_us": {
-      center: [30.3, 69.3], zoom: 5,
-      missions: [
-        { name: "U.S. Embassy - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 4000", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=US+Embassy+Islamabad" },
-        { name: "U.S. Consulate General - Karachi", address: "Plot 4-5 Air Force Officers Housing Scheme, Karachi", phone: "+92 21 3527 5000", lat: 24.8471, lng: 67.0326, maps: "https://maps.google.com/?q=US+Consulate+General+Karachi" },
-        { name: "U.S. Consulate General - Lahore", address: "Lake Road, Old Campus, Lahore", phone: "+92 42 3603 4000", lat: 31.5600, lng: 74.3220, maps: "https://maps.google.com/?q=US+Consulate+Lahore" }
-      ]
-    },
-    "pk_uk": {
-      center: [30.3, 69.3], zoom: 5,
-      missions: [
-        { name: "British High Commission - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 2000", lat: 33.7262, lng: 73.1132, maps: "https://maps.google.com/?q=British+High+Commission+Islamabad" },
-        { name: "British Deputy High Commission - Karachi", address: "Shahrah-e-Iran, Clifton, Karachi", phone: "+92 21 3582 7000", lat: 24.8138, lng: 67.0311, maps: "https://maps.google.com/?q=British+Deputy+High+Commission+Karachi" }
-      ]
-    },
-    "pk_pk": {
-      center: [33.68, 73.04], zoom: 11,
-      missions: [
-        { name: "Ministry of Foreign Affairs - Islamabad", address: "Constitution Ave, G-5, Islamabad", phone: "+92 51 921 0335", lat: 33.7275, lng: 73.0850, maps: "https://maps.google.com/?q=Ministry+of+Foreign+Affairs+Islamabad" }
-      ]
-    },
-    "usa_us": {
-      center: [38.89, -77.04], zoom: 12,
-      missions: [{ name: "U.S. Department of State - Washington D.C.", address: "2201 C St NW, Washington, DC", phone: "+1 202 501 4444", lat: 38.8951, lng: -77.0478, maps: "https://maps.google.com/?q=US+Department+of+State+Washington" }]
-    },
-    "usa_pk": {
-      center: [38.94, -77.06], zoom: 5,
-      missions: [
-        { name: "Embassy of Pakistan - Washington D.C.", address: "3517 International Ct NW, Washington, DC", phone: "+1 202 243 6500", lat: 38.9431, lng: -77.0625, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC" },
-        { name: "Pakistan Consulate General - New York", address: "12 E 65th St, New York, NY", phone: "+1 212 879 5800", lat: 40.7650, lng: -73.9680, maps: "https://maps.google.com/?q=Pakistan+Consulate+New+York" }
-      ]
-    }
-  };
-
-  function loadGlobalMappedEmbassies() {
-    const dest = document.getElementById('destCountry').value;
-    const embassy = document.getElementById('embassyCountry').value;
-    const key = `${dest}_${embassy}`;
-    
-    const record = globalEmbassiesDatabase[key] || {
-      center: [33.72, 73.11], zoom: 6,
-      missions: [
-        { name: "Diplomatic Representation", address: "Capital Diplomatic Core Area", phone: "+1 (800) 555-0199", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=Embassy+Consulate" },
-        { name: "Regional Consular Office", address: "Secondary Commercial District Hub", phone: "+1 (800) 555-0188", lat: 24.8471, lng: 67.0326, maps: "https://maps.google.com/?q=Consulate+General" }
-      ]
-    };
-
-    const resultBox = document.getElementById('embassyResult');
-    const listContainer = document.getElementById('embassyListContainer');
-
-    resultBox.style.display = 'block';
-    listContainer.innerHTML = '';
-
-    setTimeout(() => {
-      if (!mapInstance) {
-        mapInstance = L.map('map').setView(record.center, record.zoom);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(mapInstance);
-      } else {
-        mapInstance.setView(record.center, record.zoom);
-      }
-
-      mapInstance.invalidateSize();
-
-      if (markersLayer) {
-        mapInstance.removeLayer(markersLayer);
-      }
-
-      markersLayer = L.layerGroup();
-
-      record.missions.forEach(mission => {
-        const marker = L.marker([mission.lat, mission.lng]);
-        marker.bindPopup(`<b>${mission.name}</b><br>${mission.address}<br>📞 ${mission.phone}`);
-        markersLayer.addLayer(marker);
-
-        const card = document.createElement('div');
-        card.className = 'embassy-card';
-        card.innerHTML = `
-          <strong>📍 ${mission.name}</strong>
-          <p style="margin: 0.25rem 0; color: var(--text-muted);">${mission.address}</p>
-          <p style="margin: 0.25rem 0;">📞 <strong>Hotline:</strong> ${mission.phone}</p>
-          <a href="${mission.maps}" target="_blank" style="display: inline-block; margin-top: 0.5rem; color: var(--category-color); font-weight: 700; text-decoration: none;">Get Directions ↗</a>
-        `;
-        listContainer.appendChild(card);
-      });
-
-      markersLayer.addTo(mapInstance);
-    }, 150);
-  }
-
-  // Event Listeners setup
-  document.addEventListener('DOMContentLoaded', () => {
-    const themeBtn = document.getElementById('themeToggleBtn');
-    if (themeBtn) {
-      themeBtn.addEventListener('click', () => {
-        const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme');
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('lamastudio_theme', newTheme);
-      });
-    }
-
-    const submitBtn = document.getElementById('mapSubmitBtn');
-    if (submitBtn) {
-      submitBtn.addEventListener('click', loadGlobalMappedEmbassies);
-    }
-  });
-</script>
-<script src="../../script.js"></script>
-</body>
-</html>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9

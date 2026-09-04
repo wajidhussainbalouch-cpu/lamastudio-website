@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Hotel Booking & Stay Rates — LamaStudio Travel</title>
+<meta name="description" content="Browse economical global hotel listings with real-time room rates, meal plans, amenities, contact details, official websites, and instant reservation.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.com/categories/travel/hotel-booking.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .flash-news-ticker {
+    background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+    background-size: 200% 100%;
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    text-align: center;
+    font-size: 0.95rem;
+    animation: flashGradient 3s linear infinite;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    position: relative;
+    z-index: 100;
+  }
+  @keyframes flashGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .hotel-marketplace { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+  
+  .hotel-controls {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    border-radius: 14px;
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
+  }
+  @media(max-width: 768px) {
+    .hotel-controls { grid-template-columns: 1fr; }
+  }
+  .control-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; }
+  .control-group input, .control-group select {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+
+  .hotels-grid { display: grid; gap: 1.25rem; }
+  .hotel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .hotel-card:hover {
+    border-color: var(--category-color);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px -5px rgba(0,0,0,0.15);
+  }
+
+  .hotel-info { flex: 1; min-width: 280px; }
+  .hotel-info h3 { font-size: 1.2rem; color: var(--text); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+  .hotel-location { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+  
+  .hotel-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--background);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .hotel-meta-item strong { color: var(--category-color); }
+  .hotel-meta-item a { color: var(--text); text-decoration: underline; word-break: break-all; }
+  .hotel-meta-item a:hover { color: var(--category-color); }
+
+  .hotel-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  
+  .badge { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 6px; text-transform: uppercase; }
+  .badge-meal { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+  .badge-rating { background: rgba(241, 196, 15, 0.15); color: #f1c40f; }
+  .badge-amenity { background: rgba(52, 152, 219, 0.15); color: #3498db; }
+
+  .hotel-pricing {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    min-width: 180px;
+  }
+  .price-val { font-size: 1.6rem; font-weight: 800; color: var(--category-color); font-family: 'JetBrains Mono', monospace; }
+  .price-pkr { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+  .book-now-btn {
+    margin-top: 0.5rem;
+    padding: 0.6rem 1.4rem;
+    background: var(--category-color);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    width: 100%;
+  }
+  .book-now-btn:hover { opacity: 0.85; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    backdrop-filter: blur(4px);
+  }
+  .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+  }
+  .modal-content h3 { margin-bottom: 0.5rem; color: var(--text); font-size: 1.25rem; }
+  .form-row { margin-bottom: 1.25rem; }
+  .form-row label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; color: var(--text); }
+  .form-row input, .form-row select {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+  }
+  .modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 600; }
+  .btn-confirm { background: var(--category-color); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 700; }
+</style>
+</head>
+<body style="--category-color: var(--c-travel);">
+
+<div class="flash-news-ticker">
+  ⚡ HOTEL DEALS: Free airport pickup & complimentary breakfast on all bookings made through LamaStudio! 🏨
+</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Travel</small></span></a>
+    </div>
+    <div class="header-actions">
+      <a href="index.html" style="font-size: 0.9rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Travel Hub</a>
+    </div>
+  </div>
+</header>
+
+<main class="hotel-marketplace">
+  <div class="hero-panel" style="border-left: 4px solid var(--category-color); margin-bottom: 2rem;">
+    <span class="eyebrow" style="color: var(--category-color);">Live Portal</span>
+    <h1>Global Hotel Booking Marketplace</h1>
+    <p class="lede">Discover top-rated economical stays worldwide. Check nightly rates in US Dollars and Pakistani Rupees, meal inclusions, contact info, and official website links.</p>
+  </div>
+
+  <!-- Advanced Filtering & Sorting Toolbar -->
+  <div class="hotel-controls">
+    <div class="control-group">
+      <label for="searchInput">Search Hotel or City</label>
+      <input type="text" id="searchInput" placeholder="e.g. Dubai, London, Grand..." onkeyup="filterAndRenderHotels()" oninput="filterAndRenderHotels()">
+    </div>
+    <div class="control-group">
+      <label for="mealFilter">Meal Plan</label>
+      <select id="mealFilter" onchange="filterAndRenderHotels()">
+        <option value="all">All Meal Plans</option>
+        <option value="Breakfast Included">Breakfast Included</option>
+        <option value="Half Board">Half Board (Breakfast + Dinner)</option>
+        <option value="All Inclusive">All Inclusive</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="sortBy">Sort By Nightly Rate</label>
+      <select id="sortBy" onchange="filterAndRenderHotels()">
+        <option value="low-high">Cheapest First</option>
+        <option value="high-low">Highest Price First</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0 0.25rem;">
+    <span id="hotelCountIndicator" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Loading available hotels...</span>
+  </div>
+
+  <!-- Hotels Container -->
+  <div class="hotels-grid" id="hotelsGridContainer"></div>
+</main>
+
+<!-- Hotel Booking Modal -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-content">
+    <h3 id="modalHotelTitle">Complete Hotel Reservation</h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="modalHotelDetails">Hotel & Meal info</p>
+    
+    <div class="form-row">
+      <label for="guestName">Guest Full Name</label>
+      <input type="text" id="guestName" placeholder="e.g. Michael Vance">
+    </div>
+    <div class="form-row">
+      <label for="guestEmail">Email Address for Voucher</label>
+      <input type="email" id="guestEmail" placeholder="e.g. michael@lamastudio.io">
+    </div>
+    <div class="form-row">
+      <label for="roomNights">Number of Nights</label>
+      <input type="number" id="roomNights" min="1" value="3" onchange="updateModalTotal()">
+    </div>
+    
+    <div id="modalTotalPriceDisplay" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--category-color); margin-top: 1rem; font-size: 1.1rem;">
+      Total: $0 USD
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="completePurchase()">Confirm &amp; Reserve</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer" style="margin-top: 4rem;">
+  <div class="footer-bottom" style="text-align:center; padding: 2rem;"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  const USD_TO_PKR = 277.55; // Exchange rate reference
+
+  const hotelsData = [
+    { 
+      id: 1, 
+      name: "Grand Continental Hotel", 
+      location: "Deira, Dubai, UAE", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.5 / 5.0", 
+      amenities: "Free WiFi, Pool, Gym", 
+      pricePerNightUSD: 48, 
+      address: "Al Rigga Road, Deira, Dubai, UAE",
+      phone: "+971 4 295 2222",
+      website: "https://grandcontinentaldubai.example.com"
+    },
+    { 
+      id: 2, 
+      name: "Swiss-Belinn Airport", 
+      location: "Istanbul, Turkey", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.7 / 5.0", 
+      amenities: "Airport Shuttle, Free WiFi, Spa", 
+      pricePerNightUSD: 55, 
+      address: "Merkez Mah, Istanbul Airport Corridor, Turkey",
+      phone: "+90 212 555 0144",
+      website: "https://swissbelinnistanbul.example.com"
+    },
+    { 
+      id: 3, 
+      name: "Premier Inn London Hub", 
+      location: "King's Cross, London, UK", 
+      mealPlan: "Half Board", 
+      rating: "4.6 / 5.0", 
+      amenities: "24/7 Desk, Restaurant, AC", 
+      pricePerNightUSD: 75, 
+      address: "2 York Way, King's Cross, London N1 0AX, UK",
+      phone: "+44 333 321 9283",
+      website: "https://premierinnlondon.example.com"
+    },
+    { 
+      id: 4, 
+      name: "Al Safwah Royale Orchid", 
+      location: "Makkah, Saudi Arabia", 
+      mealPlan: "All Inclusive", 
+      rating: "4.9 / 5.0", 
+      amenities: "Haram View, Fine Dining, Concierge", 
+      pricePerNightUSD: 120, 
+      address: "Abraj Al Bait Complex, Makkah, Saudi Arabia",
+      phone: "+966 12 577 8888",
+      website: "https://alsafwahhotel.example.com"
+    },
+    { 
+      id: 5, 
+      name: "Bangkok City Inn", 
+      location: "Ratchadamri, Bangkok, Thailand", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.3 / 5.0", 
+      amenities: "Central Location, Laundry, WiFi", 
+      pricePerNightUSD: 35, 
+      address: "88/1 Rajadamri Road, Bangkok, Thailand",
+      phone: "+66 2 253 0130",
+      website: "https://bangkokcityinn.example.com"
+    },
+    { 
+      id: 6, 
+      name: "Parisian Garden Hotel", 
+      location: "Montmartre, Paris, France", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.4 / 5.0", 
+      amenities: "Terrace Garden, Cozy Lounge, WiFi", 
+      pricePerNightUSD: 95, 
+      address: "14 Rue Custine, 75018 Paris, France",
+      phone: "+33 1 42 64 5000",
+      website: "https://parisiangardenhotel.example.com"
+    },
+    { 
+      id: 7, 
+      name: "Marina Bay Budget Stay", 
+      location: "Geylang, Singapore", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.2 / 5.0", 
+      amenities: "MRT Access, 24-hr Security, WiFi", 
+      pricePerNightUSD: 65, 
+      address: "15 Lorong 12 Geylang, Singapore 398988",
+      phone: "+65 6742 1188",
+      website: "https://marinabaybudget.example.com"
+    },
+    { 
+      id: 8, 
+      name: "Manhattan Downtown Lodge", 
+      location: "Times Square, New York, USA", 
+      mealPlan: "Half Board", 
+      rating: "4.7 / 5.0", 
+      amenities: "Rooftop Lounge, Gym, Business Center", 
+      pricePerNightUSD: 155, 
+      address: "220 W 41st St, New York, NY 10036, USA",
+      phone: "+1 212 398 6500",
+      website: "https://manhattandownetownlodge.example.com"
+    }
+  ];
+
+  let selectedHotel = null;
+
+  function filterAndRenderHotels() {
+    const searchInputElem = document.getElementById('searchInput');
+    const mealFilterElem = document.getElementById('mealFilter');
+    const sortByElem = document.getElementById('sortBy');
+    
+    const searchQuery = searchInputElem ? searchInputElem.value.toLowerCase().trim() : '';
+    const mealFilter = mealFilterElem ? mealFilterElem.value : 'all';
+    const sortOrder = sortByElem ? sortByElem.value : 'low-high';
+    const container = document.getElementById('hotelsGridContainer');
+
+    if (!container) return;
+
+    let filtered = mealFilter === 'all' 
+      ? [...hotelsData] 
+      : hotelsData.filter(h => h.mealPlan === mealFilter);
+
+    if (searchQuery !== '') {
+      filtered = filtered.filter(h => 
+        h.name.toLowerCase().includes(searchQuery) || 
+        h.location.toLowerCase().includes(searchQuery)
+      );
+    }
+
+    filtered.sort((a, b) => {
+      return sortOrder === 'low-high' ? a.pricePerNightUSD - b.pricePerNightUSD : b.pricePerNightUSD - a.pricePerNightUSD;
+    });
+
+    const counterElem = document.getElementById('hotelCountIndicator');
+    if (counterElem) {
+      counterElem.textContent = `Showing ${filtered.length} matching hotel(s)`;
+    }
+    
+    container.innerHTML = '';
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted);">
+          <p style="font-size: 1rem; font-weight: 600;">No hotels found matching your criteria.</p>
+          <p style="font-size: 0.85rem; margin-top: 0.3rem;">Try broadening your search or resetting filters.</p>
+        </div>`;
+      return;
+    }
+
+    filtered.forEach(hotel => {
+      const card = document.createElement('div');
+      card.className = 'hotel-card';
+      const pricePKR = Math.round(hotel.pricePerNightUSD * USD_TO_PKR).toLocaleString();
+      
+      card.innerHTML = `
+        <div class="hotel-info">
+          <h3>🏨 ${hotel.name}</h3>
+          <div class="hotel-location">📍 ${hotel.location}</div>
+          
+          <div class="hotel-meta-grid">
+            <div class="hotel-meta-item"><strong>Address:</strong> ${hotel.address}</div>
+            <div class="hotel-meta-item"><strong>Phone:</strong> ${hotel.phone}</div>
+            <div class="hotel-meta-item" style="grid-column: 1 / -1;"><strong>Website:</strong> <a href="${hotel.website}" target="_blank" rel="noopener">${hotel.website}</a></div>
+          </div>
+
+          <div class="hotel-tags">
+            <span class="badge badge-rating">⭐ ${hotel.rating}</span>
+            <span class="badge badge-meal">🍽️ ${hotel.mealPlan}</span>
+            <span class="badge badge-amenity">✨ ${hotel.amenities}</span>
+          </div>
+        </div>
+        <div class="hotel-pricing">
+          <div class="price-val">$${hotel.pricePerNightUSD}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">per night</div>
+          <div class="price-pkr">≈ Rs. ${pricePKR} PKR</div>
+          <button class="book-now-btn" onclick="openBookingModal(${hotel.id})">Book Room</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function openBookingModal(id) {
+    selectedHotel = hotelsData.find(h => h.id === id);
+    if (!selectedHotel) return;
+    
+    document.getElementById('modalHotelTitle').textContent = `Reserve: ${selectedHotel.name}`;
+    document.getElementById('modalHotelDetails').textContent = `${selectedHotel.location} | Meal: ${selectedHotel.mealPlan} | Rate: $${selectedHotel.pricePerNightUSD} USD/night`;
+    document.getElementById('guestName').value = '';
+    document.getElementById('guestEmail').value = '';
+    document.getElementById('roomNights').value = 3;
+    updateModalTotal();
+    document.getElementById('bookingModal').style.display = 'flex';
+  }
+
+  function updateModalTotal() {
+    if (!selectedHotel) return;
+    const nights = parseInt(document.getElementById('roomNights').value) || 1;
+    const totalUSD = selectedHotel.pricePerNightUSD * nights;
+    const totalPKR = Math.round(totalUSD * USD_TO_PKR).toLocaleString();
+    document.getElementById('modalTotalPriceDisplay').textContent = `Total: $${totalUSD} USD (≈ Rs. ${totalPKR} PKR) for ${nights} night(s)`;
+  }
+
+  function closeModal() {
+    document.getElementById('bookingModal').style.display = 'none';
+    selectedHotel = null;
+  }
+
+  function completePurchase() {
+    const name = document.getElementById('guestName').value.trim();
+    const email = document.getElementById('guestEmail').value.trim();
+    const nights = parseInt(document.getElementById('roomNights').value) || 1;
+
+    if (!name || !email) {
+      alert('Please fill out both your full name and email address.');
+      return;
+    }
+
+    const totalUSD = selectedHotel.pricePerNightUSD * nights;
+    const totalPKR = Math.round(totalUSD * USD_TO_PKR).toLocaleString();
+    alert(`🎉 Success! Room reserved at ${selectedHotel.name} (${selectedHotel.location}) for ${nights} night(s). Total: $${totalUSD} USD / Rs. ${totalPKR} PKR. Your confirmed booking voucher has been sent to ${email}. Thank you for booking with LamaStudio!`);
+    closeModal();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', filterAndRenderHotels);
+  } else {
+    filterAndRenderHotels();
+  }
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

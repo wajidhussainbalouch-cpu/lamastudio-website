@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desk Posture & Ergonomics Checker — LamaStudio Health Hub</title>
+<meta name="description" content="Evaluate your office workstation ergonomics and get customized stretches for back pain relief.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: none; }
+  .ergo-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .ergo-item { background: var(--surface); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.9rem; color: var(--text); }
+</style>
+</head>
+<body style="--category-color: var(--c-health, #e74c3c);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Ergonomics Checker</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Desk Posture &amp; Ergonomics Checker</h1>
+    
+    <div class="form-group">
+      <label for="monitorHeight">Where is the top of your monitor positioned?</label>
+      <select id="monitorHeight" class="form-control">
+        <option value="eye">At or slightly below eye level</option>
+        <option value="low">Significantly below eye level (looking down)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="feetPosition">Are your feet flat on the floor?</label>
+      <select id="feetPosition" class="form-control">
+        <option value="yes">Yes, flat or on a footrest</option>
+        <option value="no">No, dangling or crossed</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="breakFrequency">How often do you take a standing micro-break?</label>
+      <select id="breakFrequency" class="form-control">
+        <option value="often">Every 30–60 minutes</option>
+        <option value="rarely">Rarely / Sit continuously for hours</option>
+      </select>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="checkErgonomics()">Evaluate Workstation</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; text-align: center;">Ergonomic Assessment &amp; Fixes</span>
+      <div class="ergo-list" id="ergoList"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+function checkErgonomics() {
+  const monitor = document.getElementById('monitorHeight').value;
+  const feet = document.getElementById('feetPosition').value;
+  const breaks = document.getElementById('breakFrequency').value;
+
+  const ergoList = document.getElementById('ergoList');
+  ergoList.innerHTML = '';
+
+  let issues = 0;
+
+  if (monitor === 'low') {
+    issues++;
+    const div = document.createElement('div');
+    div.className = 'ergo-item';
+    div.innerHTML = `⚠️ <strong>Monitor Height:</strong> Looking down constantly strains your cervical spine ("tech neck"). Raise your monitor or laptop stand so the top third is at eye level.`;
+    ergoList.appendChild(div);
+  }
+
+  if (feet === 'no') {
+    issues++;
+    const div = document.createElement('div');
+    div.className = 'ergo-item';
+    div.innerHTML = `⚠️ <strong>Foot Position:</strong> Dangling feet reduce circulation and pressure lower back. Adjust your chair height or use a sturdy footrest so thighs are parallel to the floor.`;
+    ergoList.appendChild(div);
+  }
+
+  if (breaks === 'rarely') {
+    issues++;
+    const div = document.createElement('div');
+    div.className = 'ergo-item';
+    div.innerHTML = `⚠️ <strong>Sedentary Routine:</strong> Prolonged sitting stiffens hip flexors. Follow the 20-20-20 rule and stand up every 45 minutes for a quick spinal stretch.`;
+    ergoList.appendChild(div);
+  }
+
+  if (issues === 0) {
+    const div = document.createElement('div');
+    div.className = 'ergo-item';
+    div.innerHTML = `✅ <strong>Great Job!</strong> Your workstation setup meets optimal ergonomic baselines. Keep maintaining regular micro-breaks.`;
+    ergoList.appendChild(div);
+  }
+
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

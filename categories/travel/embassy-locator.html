@@ -22,7 +22,7 @@
   
   #map {
     width: 100%;
-    height: 350px;
+    height: 380px;
     border-radius: 10px;
     border: 1px solid var(--border);
     margin-top: 1rem;
@@ -48,7 +48,7 @@
     <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
       <span class="eyebrow" style="color: var(--category-color);">Travel Tool 10</span>
       <h1>Emergency Embassy &amp; Consulate Locator</h1>
-      <p class="lede">Select your citizenship and current destination country to pinpoint your nearest diplomatic mission on the map.</p>
+      <p class="lede">Choose your citizenship and your active travel destination to view official mission maps and directions instantly.</p>
     </div>
     
     <div class="tool-container">
@@ -60,6 +60,8 @@
           <option value="uk">United Kingdom (UK Citizen)</option>
           <option value="pk">Pakistan (Pakistani Citizen)</option>
           <option value="uae">United Arab Emirates (UAE Citizen)</option>
+          <option value="ca">Canada (Canadian Citizen)</option>
+          <option value="au">Australia (Australian Citizen)</option>
         </select>
       </div>
 
@@ -72,10 +74,14 @@
           <option value="uk">United Kingdom</option>
           <option value="usa">United States</option>
           <option value="fr">France</option>
+          <option value="sa">Saudi Arabia</option>
+          <option value="tr">Turkey</option>
+          <option value="ca">Canada</option>
+          <option value="au">Australia</option>
         </select>
       </div>
       
-      <button class="calc-btn" onclick="locateEmbassy()">Locate Nearest Embassy &amp; Map</button>
+      <button class="calc-btn" onclick="locateEmbassy()">Locate Embassy &amp; View Map Pin</button>
       
       <div class="result-box" id="embassyResult">
         <h4 style="color: var(--category-color); margin-bottom: 0.5rem;" id="embassyTitle">Diplomatic Mission Details</h4>
@@ -96,151 +102,73 @@
   let map = null;
   let marker = null;
 
-  // Embassy Database mapped by [HomeCountry]_[DestinationCountry]
+  // Comprehensive Global Embassy Database
   const embassyDatabase = {
-    "us_pk": {
-      name: "Embassy of the United States - Islamabad, Pakistan",
-      address: "RAMNA 4, Diplomatic Enclave, Islamabad, Pakistan",
-      phone: "+92 51 201 4000",
-      lat: 33.7294, lng: 73.1118,
-      maps: "https://maps.google.com/?q=US+Embassy+Islamabad"
-    },
-    "us_uae": {
-      name: "U.S. Embassy - Abu Dhabi, UAE",
-      address: "Al Emreef St, Sector W56-02, Abu Dhabi, UAE",
-      phone: "+971 2 414 2200",
-      lat: 24.4173, lng: 54.4375,
-      maps: "https://maps.google.com/?q=US+Embassy+Abu+Dhabi"
-    },
-    "us_uk": {
-      name: "U.S. Embassy - London, United Kingdom",
-      address: "33 Nine Elms Ln, Nine Elms, London SW11 7US, UK",
-      phone: "+44 20 7499 9000",
-      lat: 51.4826, lng: -0.1419,
-      maps: "https://maps.google.com/?q=US+Embassy+London"
-    },
-    "us_usa": {
-      name: "U.S. Department of State (HQ) - Washington D.C.",
-      address: "2201 C St NW, Washington, DC 20520, USA",
-      phone: "+1 202 501 4444",
-      lat: 38.8951, lng: -77.0478,
-      maps: "https://maps.google.com/?q=US+Department+of+State+Washington"
-    },
-    "us_fr": {
-      name: "U.S. Embassy - Paris, France",
-      address: "2 Av. Gabriel, 75008 Paris, France",
-      phone: "+33 1 43 12 22 22",
-      lat: 48.8687, lng: 2.3175,
-      maps: "https://maps.google.com/?q=US+Embassy+Paris"
-    },
+    // --- US Citizens Abroad ---
+    "us_pk": { name: "U.S. Embassy - Islamabad, Pakistan", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 4000", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=US+Embassy+Islamabad" },
+    "us_uae": { name: "U.S. Embassy - Abu Dhabi, UAE", address: "Al Emreef St, Sector W56-02, Abu Dhabi", phone: "+971 2 414 2200", lat: 24.4173, lng: 54.4375, maps: "https://maps.google.com/?q=US+Embassy+Abu+Dhabi" },
+    "us_uk": { name: "U.S. Embassy - London, UK", address: "33 Nine Elms Ln, London SW11 7US", phone: "+44 20 7499 9000", lat: 51.4826, lng: -0.1419, maps: "https://maps.google.com/?q=US+Embassy+London" },
+    "us_usa": { name: "U.S. Department of State - Washington D.C.", address: "2201 C St NW, Washington, DC", phone: "+1 202 501 4444", lat: 38.8951, lng: -77.0478, maps: "https://maps.google.com/?q=US+Department+of+State+Washington" },
+    "us_fr": { name: "U.S. Embassy - Paris, France", address: "2 Av. Gabriel, 75008 Paris", phone: "+33 1 43 12 22 22", lat: 48.8687, lng: 2.3175, maps: "https://maps.google.com/?q=US+Embassy+Paris" },
+    "us_sa": { name: "U.S. Embassy - Riyadh, Saudi Arabia", address: "Abdullah Ibn Hudhafah As Sahmi St, Riyadh", phone: "+966 11 488 3800", lat: 24.6814, lng: 46.6214, maps: "https://maps.google.com/?q=US+Embassy+Riyadh" },
+    "us_tr": { name: "U.S. Embassy - Ankara, Turkey", address: "1410 Cadessi No: 100, Çukurambar, Ankara", phone: "+90 312 294 0000", lat: 39.9158, lng: 32.8078, maps: "https://maps.google.com/?q=US+Embassy+Ankara" },
+    "us_ca": { name: "U.S. Embassy - Ottawa, Canada", address: "490 Sussex Dr, Ottawa, ON K1N 1G8", phone: "+1 613 238 5335", lat: 45.4281, lng: -75.7001, maps: "https://maps.google.com/?q=US+Embassy+Ottawa" },
+    "us_au": { name: "U.S. Embassy - Canberra, Australia", address: "Moonah Pl, Yarralumla ACT 2600", phone: "+61 2 6214 5600", lat: -35.3081, lng: 149.1244, maps: "https://maps.google.com/?q=US+Embassy+Canberra" },
 
-    "uk_pk": {
-      name: "British High Commission - Islamabad, Pakistan",
-      address: "Ramna 5, Diplomatic Enclave, Islamabad, Pakistan",
-      phone: "+92 51 201 2000",
-      lat: 33.7262, lng: 73.1132,
-      maps: "https://maps.google.com/?q=British+High+Commission+Islamabad"
-    },
-    "uk_uae": {
-      name: "British Embassy - Dubai, UAE",
-      address: "Al Seef Rd, Umm Hurair 1, Dubai, UAE",
-      phone: "+971 4 309 4444",
-      lat: 25.2532, lng: 55.3056,
-      maps: "https://maps.google.com/?q=British+Embassy+Dubai"
-    },
-    "uk_uk": {
-      name: "Foreign, Commonwealth & Development Office - London",
-      address: "King Charles St, London SW1A 2AH, UK",
-      phone: "+44 20 7008 1500",
-      lat: 51.5033, lng: -0.1276,
-      maps: "https://maps.google.com/?q=FCDO+London"
-    },
-    "uk_usa": {
-      name: "British Embassy - Washington D.C., USA",
-      address: "3100 Massachusetts Ave NW, Washington, DC 20008, USA",
-      phone: "+1 202 588 6500",
-      lat: 38.9234, lng: -77.0620,
-      maps: "https://maps.google.com/?q=British+Embassy+Washington+DC"
-    },
-    "uk_fr": {
-      name: "British Embassy - Paris, France",
-      address: "35 Rue du Faubourg Saint-Honoré, 75008 Paris, France",
-      phone: "+33 1 44 51 31 00",
-      lat: 48.8703, lng: 2.3214,
-      maps: "https://maps.google.com/?q=British+Embassy+Paris"
-    },
+    // --- UK Citizens Abroad ---
+    "uk_pk": { name: "British High Commission - Islamabad, Pakistan", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 2000", lat: 33.7262, lng: 73.1132, maps: "https://maps.google.com/?q=British+High+Commission+Islamabad" },
+    "uk_uae": { name: "British Embassy - Dubai, UAE", address: "Al Seef Rd, Umm Hurair 1, Dubai", phone: "+971 4 309 4444", lat: 25.2532, lng: 55.3056, maps: "https://maps.google.com/?q=British+Embassy+Dubai" },
+    "uk_uk": { name: "FCDO Headquarters - London, UK", address: "King Charles St, London SW1A 2AH", phone: "+44 20 7008 1500", lat: 51.5033, lng: -0.1276, maps: "https://maps.google.com/?q=FCDO+London" },
+    "uk_usa": { name: "British Embassy - Washington D.C., USA", address: "3100 Massachusetts Ave NW, Washington, DC", phone: "+1 202 588 6500", lat: 38.9234, lng: -77.0620, maps: "https://maps.google.com/?q=British+Embassy+Washington+DC" },
+    "uk_fr": { name: "British Embassy - Paris, France", address: "35 Rue du Faubourg Saint-Honoré, Paris", phone: "+33 1 44 51 31 00", lat: 48.8703, lng: 2.3214, maps: "https://maps.google.com/?q=British+Embassy+Paris" },
+    "uk_sa": { name: "British Embassy - Riyadh, Saudi Arabia", address: "Assafa Area, Diplomatic Quarter, Riyadh", phone: "+966 11 810 6000", lat: 24.6738, lng: 46.6189, maps: "https://maps.google.com/?q=British+Embassy+Riyadh" },
+    "uk_tr": { name: "British Embassy - Ankara, Turkey", address: "Şht. Mehmet Caddesi No: 4, Çankaya, Ankara", phone: "+90 312 455 3300", lat: 39.9192, lng: 32.8531, maps: "https://maps.google.com/?q=British+Embassy+Ankara" },
+    "uk_ca": { name: "British High Commission - Ottawa, Canada", address: "80 Elgin St, Ottawa, ON K1P 5K7", phone: "+1 613 237 1530", lat: 45.4241, lng: -75.6943, maps: "https://maps.google.com/?q=British+High+Commission+Ottawa" },
+    "uk_au": { name: "British High Commission - Canberra, Australia", address: "Commonwealth Ave, Yarralumla ACT 2600", phone: "+61 2 6270 6666", lat: -35.3039, lng: 149.1235, maps: "https://maps.google.com/?q=British+High+Commission+Canberra" },
 
-    "pk_pk": {
-      name: "Ministry of Foreign Affairs - Islamabad, Pakistan",
-      address: "Constitution Ave, G-5, Islamabad, Pakistan",
-      phone: "+92 51 921 0335",
-      lat: 33.7275, lng: 73.0850,
-      maps: "https://maps.google.com/?q=Ministry+of+Foreign+Affairs+Islamabad"
-    },
-    "pk_uae": {
-      name: "Embassy of Pakistan - Abu Dhabi, UAE",
-      address: "Plot # 2, Sector W-30, Diplomatic Area, Abu Dhabi, UAE",
-      phone: "+971 2 444 7800",
-      lat: 24.4740, lng: 54.3708,
-      maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Abu+Dhabi"
-    },
-    "pk_uk": {
-      name: "High Commission for Pakistan - London, UK",
-      address: "36 Lowndes Square, Belgravia, London SW1X 9JN, UK",
-      phone: "+44 20 7664 9200",
-      lat: 51.5002, lng: -0.1585,
-      maps: "https://maps.google.com/?q=Pakistan+High+Commission+London"
-    },
-    "pk_usa": {
-      name: "Embassy of Pakistan - Washington D.C., USA",
-      address: "3517 International Ct NW, Washington, DC 20008, USA",
-      phone: "+1 202 243 6500",
-      lat: 38.9431, lng: -77.0625,
-      maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC"
-    },
-    "pk_fr": {
-      name: "Embassy of Pakistan - Paris, France",
-      address: "10 Rue Lord Byron, 75008 Paris, France",
-      phone: "+33 1 45 62 23 32",
-      lat: 48.8732, lng: 2.3011,
-      maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Paris"
-    },
+    // --- Pakistani Citizens Abroad ---
+    "pk_pk": { name: "Ministry of Foreign Affairs - Islamabad, Pakistan", address: "Constitution Ave, G-5, Islamabad", phone: "+92 51 921 0335", lat: 33.7275, lng: 73.0850, maps: "https://maps.google.com/?q=Ministry+of+Foreign+Affairs+Islamabad" },
+    "pk_uae": { name: "Embassy of Pakistan - Abu Dhabi, UAE", address: "Plot # 2, Sector W-30, Abu Dhabi", phone: "+971 2 444 7800", lat: 24.4740, lng: 54.3708, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Abu+Dhabi" },
+    "pk_uk": { name: "Pakistan High Commission - London, UK", address: "36 Lowndes Square, Belgravia, London", phone: "+44 20 7664 9200", lat: 51.5002, lng: -0.1585, maps: "https://maps.google.com/?q=Pakistan+High+Commission+London" },
+    "pk_usa": { name: "Embassy of Pakistan - Washington D.C., USA", address: "3517 International Ct NW, Washington, DC", phone: "+1 202 243 6500", lat: 38.9431, lng: -77.0625, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC" },
+    "pk_fr": { name: "Embassy of Pakistan - Paris, France", address: "10 Rue Lord Byron, 75008 Paris", phone: "+33 1 45 62 23 32", lat: 48.8732, lng: 2.3011, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Paris" },
+    "pk_sa": { name: "Embassy of Pakistan - Riyadh, Saudi Arabia", address: "Diplomatic Quarter, Riyadh", phone: "+966 11 488 4111", lat: 24.6750, lng: 46.6198, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Riyadh" },
+    "pk_tr": { name: "Embassy of Pakistan - Ankara, Turkey", address: "Cinnah Caddesi No: 53, Çankaya, Ankara", phone: "+90 312 427 8841", lat: 39.8972, lng: 32.8590, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Ankara" },
+    "pk_ca": { name: "High Commission for Pakistan - Ottawa, Canada", address: "10 Range Rd, Ottawa, ON K1N 8J3", phone: "+1 613 238 7881", lat: 45.4262, lng: -75.6811, maps: "https://maps.google.com/?q=Pakistan+High+Commission+Ottawa" },
+    "pk_au": { name: "High Commission for Pakistan - Canberra, Australia", address: "4 Beale Crescent, Deakin ACT 2600", phone: "+61 2 6290 1335", lat: -35.3194, lng: 149.1172, maps: "https://maps.google.com/?q=Pakistan+High+Commission+Canberra" },
 
-    "uae_pk": {
-      name: "Embassy of the UAE - Islamabad, Pakistan",
-      address: "Plot No. 1-2, Diplomatic Enclave Sector G-5, Islamabad, Pakistan",
-      phone: "+92 51 209 8888",
-      lat: 33.7251, lng: 73.1105,
-      maps: "https://maps.google.com/?q=UAE+Embassy+Islamabad"
-    },
-    "uae_uae": {
-      name: "Ministry of Foreign Affairs - Abu Dhabi, UAE",
-      address: "King Abdullah Bin Abdulaziz Al Saud St, Abu Dhabi, UAE",
-      phone: "+971 2 493 3333",
-      lat: 24.4485, lng: 54.3940,
-      maps: "https://maps.google.com/?q=MOFA+Abu+Dhabi"
-    },
-    "uae_uk": {
-      name: "Embassy of the UAE - London, UK",
-      address: "1-2 Grosvenor Cres, Belgravia, London SW1X 7EE, UK",
-      phone: "+44 20 7581 1281",
-      lat: 51.5011, lng: -0.1534,
-      maps: "https://maps.google.com/?q=UAE+Embassy+London"
-    },
-    "uae_usa": {
-      name: "Embassy of the UAE - Washington D.C., USA",
-      address: "3522 International Ct NW, Washington, DC 20008, USA",
-      phone: "+1 202 243 2400",
-      lat: 38.9435, lng: -77.0628,
-      maps: "https://maps.google.com/?q=UAE+Embassy+Washington+DC"
-    },
-    "uae_fr": {
-      name: "Embassy of the UAE - Paris, France",
-      address: "2 Boulevard de la Républiue, 92100 Boulogne-Billancourt, Paris",
-      phone: "+33 1 44 34 02 00",
-      lat: 48.8397, lng: 2.2412,
-      maps: "https://maps.google.com/?q=UAE+Embassy+Paris"
-    }
+    // --- UAE Citizens Abroad ---
+    "uae_pk": { name: "Embassy of the UAE - Islamabad, Pakistan", address: "Plot No. 1-2, Diplomatic Enclave G-5, Islamabad", phone: "+92 51 209 8888", lat: 33.7251, lng: 73.1105, maps: "https://maps.google.com/?q=UAE+Embassy+Islamabad" },
+    "uae_uae": { name: "MOFA Headquarters - Abu Dhabi, UAE", address: "King Abdullah Bin Abdulaziz St, Abu Dhabi", phone: "+971 2 493 3333", lat: 24.4485, lng: 54.3940, maps: "https://maps.google.com/?q=MOFA+Abu+Dhabi" },
+    "uae_uk": { name: "Embassy of the UAE - London, UK", address: "1-2 Grosvenor Cres, Belgravia, London", phone: "+44 20 7581 1281", lat: 51.5011, lng: -0.1534, maps: "https://maps.google.com/?q=UAE+Embassy+London" },
+    "uae_usa": { name: "Embassy of the UAE - Washington D.C., USA", address: "3522 International Ct NW, Washington, DC", phone: "+1 202 243 2400", lat: 38.9435, lng: -77.0628, maps: "https://maps.google.com/?q=UAE+Embassy+Washington+DC" },
+    "uae_fr": { name: "Embassy of the UAE - Paris, France", address: "2 Boulevard de la République, Paris", phone: "+33 1 44 34 02 00", lat: 48.8397, lng: 2.2412, maps: "https://maps.google.com/?q=UAE+Embassy+Paris" },
+    "uae_sa": { name: "Embassy of the UAE - Riyadh, Saudi Arabia", address: "Diplomatic Quarter, Riyadh", phone: "+966 11 488 0044", lat: 24.6782, lng: 46.6190, maps: "https://maps.google.com/?q=UAE+Embassy+Riyadh" },
+    "uae_tr": { name: "Embassy of the UAE - Ankara, Turkey", address: "Recai Gökdeniz Cad. No: 51, Çankaya, Ankara", phone: "+90 312 490 4155", lat: 39.8901, lng: 32.8610, maps: "https://maps.google.com/?q=UAE+Embassy+Ankara" },
+    "uae_ca": { name: "Embassy of the UAE - Ottawa, Canada", address: "125 Boteler St, Ottawa, ON K1N 0A4", phone: "+1 613 565 7272", lat: 45.4312, lng: -75.6908, maps: "https://maps.google.com/?q=UAE+Embassy+Ottawa" },
+    "uae_au": { name: "Embassy of the UAE - Canberra, Australia", address: "14 Beale Crescent, Deakin ACT 2600", phone: "+61 2 6120 1100", lat: -35.3181, lng: 149.1165, maps: "https://maps.google.com/?q=UAE+Embassy+Canberra" },
+
+    // --- Canadian Citizens Abroad ---
+    "ca_pk": { name: "High Commission of Canada - Islamabad, Pakistan", address: "Sector G-5, Diplomatic Enclave, Islamabad", phone: "+92 51 208 6000", lat: 33.7258, lng: 73.1112, maps: "https://maps.google.com/?q=Canadian+High+Commission+Islamabad" },
+    "ca_uae": { name: "Embassy of Canada - Abu Dhabi, UAE", address: "Standard Chartered Tower, 1st Floor, Abu Dhabi", phone: "+971 2 694 0300", lat: 24.4988, lng: 54.3815, maps: "https://maps.google.com/?q=Canadian+Embassy+Abu+Dhabi" },
+    "ca_uk": { name: "High Commission of Canada - London, UK", address: "Trafalgar Square, London SW1Y 5BJ", phone: "+44 20 7004 6000", lat: 51.5074, lng: -0.1278, maps: "https://maps.google.com/?q=Canada+House+London" },
+    "ca_usa": { name: "Embassy of Canada - Washington D.C., USA", address: "501 Pennsylvania Ave NW, Washington, DC", phone: "+1 202 682 1740", lat: 38.8929, lng: -77.0197, maps: "https://maps.google.com/?q=Canadian+Embassy+Washington+DC" },
+    "ca_fr": { name: "Embassy of Canada - Paris, France", address: "130 Rue du Faubourg Saint-Honoré, Paris", phone: "+33 1 44 43 29 00", lat: 48.8735, lng: 2.3114, maps: "https://maps.google.com/?q=Canadian+Embassy+Paris" },
+    "ca_sa": { name: "Embassy of Canada - Riyadh, Saudi Arabia", address: "Diplomatic Quarter, Riyadh", phone: "+966 11 488 2288", lat: 24.6720, lng: 46.6150, maps: "https://maps.google.com/?q=Canadian+Embassy+Riyadh" },
+    "ca_tr": { name: "Embassy of Canada - Ankara, Turkey", address: "Cinnah Caddesi No: 58, Çankaya, Ankara", phone: "+90 312 409 2700", lat: 39.8960, lng: 32.8582, maps: "https://maps.google.com/?q=Canadian+Embassy+Ankara" },
+    "ca_ca": { name: "Global Affairs Canada - Ottawa", address: "125 Sussex Dr, Ottawa, ON K1N 0G2", phone: "+1 800 267 8376", lat: 45.4285, lng: -75.7012, maps: "https://maps.google.com/?q=Global+Affairs+Canada+Ottawa" },
+    "ca_au": { name: "High Commission of Canada - Canberra, Australia", address: "Commonwealth Ave, Yarralumla ACT 2600", phone: "+61 2 6270 4000", lat: -35.3045, lng: 149.1221, maps: "https://maps.google.com/?q=Canadian+High+Commission+Canberra" },
+
+    // --- Australian Citizens Abroad ---
+    "au_pk": { name: "Australian High Commission - Islamabad, Pakistan", address: "Diplomatic Enclave No. 2, Sector G-5, Islamabad", phone: "+92 51 835 5500", lat: 33.7265, lng: 73.1140, maps: "https://maps.google.com/?q=Australian+High+Commission+Islamabad" },
+    "au_uae": { name: "Australian Embassy - Abu Dhabi, UAE", address: "Al Saada St, East Sector, Abu Dhabi", phone: "+971 2 401 7500", lat: 24.4789, lng: 54.3901, maps: "https://maps.google.com/?q=Australian+Embassy+Abu+Dhabi" },
+    "au_uk": { name: "Australian High Commission - London, UK", address: "Australia House, Strand, London WC2B 4LA", phone: "+44 20 7887 5800", lat: 51.5115, lng: -0.1160, maps: "https://maps.google.com/?q=Australia+House+London" },
+    "au_usa": { name: "Australian Embassy - Washington D.C., USA", address: "1601 Massachusetts Ave NW, Washington, DC", phone: "+1 202 797 3000", lat: 38.9105, lng: -77.0390, maps: "https://maps.google.com/?q=Australian+Embassy+Washington+DC" },
+    "au_fr": { name: "Australian Embassy - Paris, France", address: "4 Rue Jean Rey, 75015 Paris", phone: "+33 1 40 59 33 00", lat: 48.8523, lng: 2.2905, maps: "https://maps.google.com/?q=Australian+Embassy+Paris" },
+    "au_sa": { name: "Australian Embassy - Riyadh, Saudi Arabia", address: "Diplomatic Quarter, Riyadh", phone: "+966 11 250 0900", lat: 24.6800, lng: 46.6180, maps: "https://maps.google.com/?q=Australian+Embassy+Riyadh" },
+    "au_tr": { name: "Australian Embassy - Ankara, Turkey", address: "Mithatpaşa Cad. No: 33, Çankaya, Ankara", phone: "+90 312 459 9500", lat: 39.9240, lng: 32.8550, maps: "https://maps.google.com/?q=Australian+Embassy+Ankara" },
+    "au_ca": { name: "Australian High Commission - Ottawa, Canada", address: "50 O'Connor St, Ottawa, ON K1P 6L2", phone: "+1 613 236 0841", lat: 45.4215, lng: -75.6972, maps: "https://maps.google.com/?q=Australian+High+Commission+Ottawa" },
+    "au_au": { name: "Department of Foreign Affairs and Trade - Canberra", address: "R.G. Casey Building, John McEwen Crescent, Barton ACT", phone: "+61 2 6261 1111", lat: -35.3090, lng: 149.1300, maps: "https://maps.google.com/?q=DFAT+Canberra" }
   };
 
   function locateEmbassy() {
@@ -248,11 +176,12 @@
     const dest = document.getElementById('destCountry').value;
     const lookupKey = `${home}_${dest}`;
     
+    // Fallback if specific pairing isn't explicitly pre-mapped
     const info = embassyDatabase[lookupKey] || {
-      name: "Consular Emergency Assistance Desk",
-      address: "Primary diplomatic mission office in destination country capital.",
-      phone: "+1 (888) 407-4747 (Global Emergency Hotline)",
-      lat: 33.6844, lng: 73.0479, // Default fallback coordinates (Islamabad center)
+      name: "Global Consular Emergency Assistance Desk",
+      address: "Primary diplomatic mission office in capital destination center.",
+      phone: "+1 (888) 407-4747 (Worldwide Emergency Hotline)",
+      lat: 33.7294, lng: 73.1118, 
       maps: "https://maps.google.com/?q=Embassy+Consulate+Emergency"
     };
 
@@ -265,7 +194,7 @@
     textElem.innerHTML = `
       📍 <strong>Address:</strong> ${info.address}<br>
       📞 <strong>Emergency Hotline:</strong> ${info.phone}<br>
-      ⚠️ <em>Keep digital backup copies of your passport and travel identification accessible securely offline.</em><br><br>
+      ⚠️ <em>In case of lost documentation or emergencies, keep a digital backup copy of your passport handy.</em><br><br>
       <a href="${info.maps}" target="_blank" style="display: inline-block; padding: 0.6rem 1.2rem; background: var(--category-color); color: #fff; font-weight: 700; border-radius: 6px; text-decoration: none;">Get Turn-by-Turn Directions ↗</a>
     `;
 

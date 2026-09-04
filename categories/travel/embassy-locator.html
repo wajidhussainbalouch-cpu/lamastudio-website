@@ -39,7 +39,7 @@
     border-radius: 8px;
     font-size: 0.9rem;
   }
-  .embassy-card strong { color: var(--category-color); display: block; margin-bottom: 0.25srem; }
+  .embassy-card strong { color: var(--category-color); display: block; margin-bottom: 0.25rem; }
 </style>
 </head>
 <body style="--category-color: var(--c-travel);">
@@ -59,26 +59,38 @@
   <section class="dashboard" style="display: block; max-width: 950px; margin: 0 auto; padding: 2rem 1rem;">
     <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
       <span class="eyebrow" style="color: var(--category-color);">Travel Tool 10</span>
-      <h1>All-in-One Embassy &amp; Consulate Locator Map</h1>
-      <p class="lede">Select a destination country to map all prominent foreign embassies and high commissions simultaneously.</p>
+      <h1>Embassy &amp; Consulate Country Locator</h1>
+      <p class="lede">Select your travel destination, then choose which country's mission you are looking for to view all mapped locations.</p>
     </div>
     
     <div class="tool-container">
+      <!-- Step 1: Destination Country -->
       <div class="input-group">
-        <label for="destCountry">Select Travel Destination Country</label>
+        <label for="destCountry">Step 1: Select Destination Country</label>
         <select id="destCountry">
-          <option value="pk">Pakistan (Multiple Missions in Islamabad, Karachi, Lahore)</option>
-          <option value="uae">United Arab Emirates (Abu Dhabi &amp; Dubai)</option>
-          <option value="uk">United Kingdom (London Central)</option>
-          <option value="usa">United States (Washington D.C. &amp; Major Hubs)</option>
+          <option value="pk">Pakistan</option>
+          <option value="uae">United Arab Emirates</option>
+          <option value="uk">United Kingdom</option>
+          <option value="usa">United States</option>
+        </select>
+      </div>
+
+      <!-- Step 2: Embassy Representation -->
+      <div class="input-group">
+        <label for="embassyCountry">Step 2: Select Embassy Representation Country</label>
+        <select id="embassyCountry">
+          <option value="us">United States Missions</option>
+          <option value="uk">United Kingdom Missions</option>
+          <option value="pk">Pakistan Missions</option>
+          <option value="uae">UAE Missions</option>
         </select>
       </div>
       
-      <button class="calc-btn" onclick="loadAllEmbassiesMap()">Show All Embassies on Map</button>
+      <button class="calc-btn" onclick="loadMappedEmbassies()">Show All Mapped Missions</button>
       
       <div class="result-box" id="embassyResult">
-        <h4 style="color: var(--category-color); margin-bottom: 0.5rem;" id="embassyTitle">Mapped Diplomatic Missions</h4>
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Click on any pin marker on the map or check the directory below for details.</p>
+        <h4 style="color: var(--category-color); margin-bottom: 0.5rem;" id="embassyTitle">Diplomatic Mission Map</h4>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Explore pins on the map or review contact options in the directory below.</p>
         
         <div id="map"></div>
         <div class="embassy-list" id="embassyListContainer"></div>
@@ -97,95 +109,165 @@
   let map = null;
   let markersLayer = null;
 
-  // Country database holding multiple embassies/consulates per destination
-  const countryEmbassiesMap = {
-    pk: {
-      center: [32.0853, 72.6950], // Centered roughly over Pakistan
-      zoom: 6,
+  // Master Global Matrix: [DestinationCountry]_[EmbassyCountry]
+  const globalEmbassies = {
+    "pk_us": {
+      center: [30.3753, 69.3451], zoom: 5,
       missions: [
         { name: "U.S. Embassy - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 4000", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=US+Embassy+Islamabad" },
-        { name: "British High Commission - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 2000", lat: 33.7262, lng: 73.1132, maps: "https://maps.google.com/?q=British+High+Commission+Islamabad" },
         { name: "U.S. Consulate General - Karachi", address: "Plot 4-5 Air Force Officers Housing Scheme, Karachi", phone: "+92 21 3527 5000", lat: 24.8471, lng: 67.0326, maps: "https://maps.google.com/?q=US+Consulate+General+Karachi" },
-        { name: "British Deputy High Commission - Karachi", address: "Shahrah-e-Iran, Clifton, Karachi", phone: "+92 21 3582 7000", lat: 24.8138, lng: 67.0311, maps: "https://maps.google.com/?q=British+Deputy+High+Commission+Karachi" },
-        { name: "Chinese Consulate General - Lahore", address: "Mustafa Town, Lahore", phone: "+92 42 3586 1536", lat: 31.5189, lng: 74.2831, maps: "https://maps.google.com/?q=Chinese+Consulate+Lahore" }
+        { name: "U.S. Consulate General - Lahore", address: "Lake Road, Old Campus, Lahore", phone: "+92 42 3603 4000", lat: 31.5600, lng: 74.3220, maps: "https://maps.google.com/?q=US+Consulate+Lahore" }
       ]
     },
-    uae: {
-      center: [24.2985, 54.5867], // Centered between Abu Dhabi and Dubai
-      zoom: 9,
+    "pk_uk": {
+      center: [31.5, 71.0], zoom: 5,
+      missions: [
+        { name: "British High Commission - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 2000", lat: 33.7262, lng: 73.1132, maps: "https://maps.google.com/?q=British+High+Commission+Islamabad" },
+        { name: "British Deputy High Commission - Karachi", address: "Shahrah-e-Iran, Clifton, Karachi", phone: "+92 21 3582 7000", lat: 24.8138, lng: 67.0311, maps: "https://maps.google.com/?q=British+Deputy+High+Commission+Karachi" }
+      ]
+    },
+    "pk_pk": {
+      center: [33.6844, 73.0479], zoom: 12,
+      missions: [
+        { name: "Ministry of Foreign Affairs - Islamabad", address: "Constitution Ave, G-5, Islamabad", phone: "+92 51 921 0335", lat: 33.7275, lng: 73.0850, maps: "https://maps.google.com/?q=Ministry+of+Foreign+Affairs+Islamabad" }
+      ]
+    },
+    "pk_uae": {
+      center: [31.0, 72.0], zoom: 5,
+      missions: [
+        { name: "Embassy of the UAE - Islamabad", address: "Plot No. 1-2, Diplomatic Enclave G-5, Islamabad", phone: "+92 51 209 8888", lat: 33.7251, lng: 73.1105, maps: "https://maps.google.com/?q=UAE+Embassy+Islamabad" },
+        { name: "UAE Consulate General - Karachi", address: "Clifton Block 5, Karachi", phone: "+92 21 3582 3000", lat: 24.8190, lng: 67.0330, maps: "https://maps.google.com/?q=UAE+Consulate+Karachi" }
+      ]
+    },
+
+    "uae_us": {
+      center: [24.0, 54.0], zoom: 8,
       missions: [
         { name: "U.S. Embassy - Abu Dhabi", address: "Al Emreef St, Sector W56-02, Abu Dhabi", phone: "+971 2 414 2200", lat: 24.4173, lng: 54.4375, maps: "https://maps.google.com/?q=US+Embassy+Abu+Dhabi" },
-        { name: "U.S. Consulate General - Dubai", address: "Al Seef Rd, Dubai", phone: "+971 4 309 4000", lat: 25.2532, lng: 55.3056, maps: "https://maps.google.com/?q=US+Consulate+General+Dubai" },
-        { name: "British Embassy - Dubai", address: "Al Seef Rd, Umm Hurair 1, Dubai", phone: "+971 4 309 4444", lat: 25.2512, lng: 55.3040, maps: "https://maps.google.com/?q=British+Embassy+Dubai" },
-        { name: "Embassy of Pakistan - Abu Dhabi", address: "Plot # 2, Sector W-30, Diplomatic Area, Abu Dhabi", phone: "+971 2 444 7800", lat: 24.4740, lng: 54.3708, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Abu+Dhabi" }
+        { name: "U.S. Consulate General - Dubai", address: "Al Seef Rd, Dubai", phone: "+971 4 309 4000", lat: 25.2532, lng: 55.3056, maps: "https://maps.google.com/?q=US+Consulate+General+Dubai" }
       ]
     },
-    uk: {
-      center: [51.5074, -0.1278],
-      zoom: 12,
+    "uae_uk": {
+      center: [24.5, 54.5], zoom: 8,
       missions: [
-        { name: "U.S. Embassy - London", address: "33 Nine Elms Ln, London SW11 7US", phone: "+44 20 7499 9000", lat: 51.4826, lng: -0.1419, maps: "https://maps.google.com/?q=US+Embassy+London" },
-        { name: "Pakistan High Commission - London", address: "36 Lowndes Square, Belgravia, London", phone: "+44 20 7664 9200", lat: 51.5002, lng: -0.1585, maps: "https://maps.google.com/?q=Pakistan+High+Commission+London" },
+        { name: "British Embassy - Abu Dhabi", address: "Khalid Bin Al Waleed St, Abu Dhabi", phone: "+971 2 610 6300", lat: 24.4690, lng: 54.3680, maps: "https://maps.google.com/?q=British+Embassy+Abu+Dhabi" },
+        { name: "British Embassy - Dubai", address: "Al Seef Rd, Umm Hurair 1, Dubai", phone: "+971 4 309 4444", lat: 25.2512, lng: 55.3040, maps: "https://maps.google.com/?q=British+Embassy+Dubai" }
+      ]
+    },
+    "uae_pk": {
+      center: [24.4, 54.3], zoom: 9,
+      missions: [
+        { name: "Embassy of Pakistan - Abu Dhabi", address: "Plot # 2, Sector W-30, Abu Dhabi", phone: "+971 2 444 7800", lat: 24.4740, lng: 54.3708, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Abu+Dhabi" },
+        { name: "Consulate General of Pakistan - Dubai", address: "Khaled Bin Waleed Rd, Bur Dubai, Dubai", phone: "+971 4 397 3600", lat: 25.2520, lng: 55.3015, maps: "https://maps.google.com/?q=Pakistan+Consulate+Dubai" }
+      ]
+    },
+    "uae_uae": {
+      center: [24.4485, 54.3940], zoom: 11,
+      missions: [
+        { name: "MOFA Headquarters - Abu Dhabi", address: "King Abdullah Bin Abdulaziz St, Abu Dhabi", phone: "+971 2 493 3333", lat: 24.4485, lng: 54.3940, maps: "https://maps.google.com/?q=MOFA+Abu+Dhabi" }
+      ]
+    },
+
+    "uk_us": {
+      center: [51.5, -0.1], zoom: 11,
+      missions: [
+        { name: "U.S. Embassy - London", address: "33 Nine Elms Ln, London SW11 7US", phone: "+44 20 7499 9000", lat: 51.4826, lng: -0.1419, maps: "https://maps.google.com/?q=US+Embassy+London" }
+      ]
+    },
+    "uk_uk": {
+      center: [51.5033, -0.1276], zoom: 12,
+      missions: [
+        { name: "FCDO Headquarters - London", address: "King Charles St, London SW1A 2AH", phone: "+44 20 7008 1500", lat: 51.5033, lng: -0.1276, maps: "https://maps.google.com/?q=FCDO+London" }
+      ]
+    },
+    "uk_pk": {
+      center: [51.5, -0.15], zoom: 12,
+      missions: [
+        { name: "Pakistan High Commission - London", address: "36 Lowndes Square, Belgravia, London", phone: "+44 20 7664 9200", lat: 51.5002, lng: -0.1585, maps: "https://maps.google.com/?q=Pakistan+High+Commission+London" }
+      ]
+    },
+    "uk_uae": {
+      center: [51.5, -0.15], zoom: 12,
+      missions: [
         { name: "UAE Embassy - London", address: "1-2 Grosvenor Cres, Belgravia, London", phone: "+44 20 7581 1281", lat: 51.5011, lng: -0.1534, maps: "https://maps.google.com/?q=UAE+Embassy+London" }
       ]
     },
-    usa: {
-      center: [38.9072, -77.0369],
-      zoom: 11,
+
+    "usa_us": {
+      center: [38.8951, -77.0478], zoom: 11,
       missions: [
-        { name: "U.S. Department of State - Washington D.C.", address: "2201 C St NW, Washington, DC", phone: "+1 202 501 4444", lat: 38.8951, lng: -77.0478, maps: "https://maps.google.com/?q=US+Department+of+State+Washington" },
-        { name: "Embassy of Pakistan - Washington D.C.", address: "3517 International Ct NW, Washington, DC", phone: "+1 202 243 6500", lat: 38.9431, lng: -77.0625, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC" },
-        { name: "Embassy of the UAE - Washington D.C.", address: "3522 International Ct NW, Washington, DC", phone: "+1 202 243 2400", lat: 38.9435, lng: -77.0628, maps: "https://maps.google.com/?q=UAE+Embassy+Washington+DC" },
+        { name: "U.S. Department of State - Washington D.C.", address: "2201 C St NW, Washington, DC", phone: "+1 202 501 4444", lat: 38.8951, lng: -77.0478, maps: "https://maps.google.com/?q=US+Department+of+State+Washington" }
+      ]
+    },
+    "usa_uk": {
+      center: [38.92, -77.06], zoom: 12,
+      missions: [
         { name: "British Embassy - Washington D.C.", address: "3100 Massachusetts Ave NW, Washington, DC", phone: "+1 202 588 6500", lat: 38.9234, lng: -77.0620, maps: "https://maps.google.com/?q=British+Embassy+Washington+DC" }
+      ]
+    },
+    "usa_pk": {
+      center: [38.94, -77.06], zoom: 12,
+      missions: [
+        { name: "Embassy of Pakistan - Washington D.C.", address: "3517 International Ct NW, Washington, DC", phone: "+1 202 243 6500", lat: 38.9431, lng: -77.0625, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC" }
+      ]
+    },
+    "usa_uae": {
+      center: [38.94, -77.06], zoom: 12,
+      missions: [
+        { name: "Embassy of the UAE - Washington D.C.", address: "3522 International Ct NW, Washington, DC", phone: "+1 202 243 2400", lat: 38.9435, lng: -77.0628, maps: "https://maps.google.com/?q=UAE+Embassy+Washington+DC" }
       ]
     }
   };
 
-  function loadAllEmbassiesMap() {
+  function loadMappedEmbassies() {
     const dest = document.getElementById('destCountry').value;
-    const countryData = countryEmbassiesMap[dest];
+    const embassy = document.getElementById('embassyCountry').value;
+    const key = `${dest}_${embassy}`;
+    
+    const record = globalEmbassies[key] || {
+      center: [33.6844, 73.0479], zoom: 5,
+      missions: [
+        { name: "Global Consular Mission", address: "Capital Administrative District", phone: "+1 (888) 407-4747", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=Embassy+Consulate" }
+      ]
+    };
+
     const resultBox = document.getElementById('embassyResult');
     const listContainer = document.getElementById('embassyListContainer');
-
-    if (!countryData) return;
 
     resultBox.style.display = 'block';
     listContainer.innerHTML = '';
 
-    // Initialize Leaflet map if not already created
     setTimeout(() => {
       if (!map) {
-        map = L.map('map').setView(countryData.center, countryData.zoom);
+        map = L.map('map').setView(record.center, record.zoom);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
       } else {
-        map.setView(countryData.center, countryData.zoom);
+        map.setView(record.center, record.zoom);
       }
 
-      // Remove previous marker layers if they exist
       if (markersLayer) {
         map.removeLayer(markersLayer);
       }
 
       markersLayer = L.layerGroup();
 
-      // Loop through missions and add pins + cards
-      countryData.missions.forEach((mission, index) => {
-        // Add Pin to Map
+      record.missions.forEach(mission => {
+        // Drop Pin Marker
         const marker = L.marker([mission.lat, mission.lng]);
         marker.bindPopup(`<b>${mission.name}</b><br>${mission.address}<br>📞 ${mission.phone}`);
         markersLayer.addLayer(marker);
 
-        // Add Card to List below map
+        // Populate Card Listing
         const card = document.createElement('div');
         card.className = 'embassy-card';
         card.innerHTML = `
           <strong>📍 ${mission.name}</strong>
           <p style="margin: 0.25rem 0; color: var(--text-muted);">${mission.address}</p>
-          <p style="margin: 0.25rem 0;">📞 <strong>Hotline:</strong> ${mission.phone}</p>
-          <a href="${mission.maps}" target="_blank" style="display: inline-block; margin-top: 0.5rem; color: var(--category-color); font-weight: 700; text-decoration: none;">Get Directions ↗</a>
+          <p style="margin: 0.25rem 0;">📞 <strong>Emergency Contact:</strong> ${mission.phone}</p>
+          <a href="${mission.maps}" target="_blank" style="display: inline-block; margin-top: 0.5rem; color: var(--category-color); font-weight: 700; text-decoration: none;">Get Turn-by-Turn Directions ↗</a>
         `;
         listContainer.appendChild(card);
       });

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Target Heart Rate Zone Finder — LamaStudio Health Hub</title>
+<meta name="description" content="Compute your fat-burning and cardiovascular endurance heart rate zones using age formulas.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: none; }
+  .zone-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .zone-item { background: var(--surface); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; }
+  .zone-item span { color: var(--category-color); font-weight: 700; }
+</style>
+</head>
+<body style="--category-color: var(--c-health, #e74c3c);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Heart Rate Finder</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Target Heart Rate Zone Finder</h1>
+    
+    <div class="form-group">
+      <label for="age">Your Age (Years)</label>
+      <input type="number" id="age" class="form-control" placeholder="e.g., 30" required>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="calculateHeartRate()">Calculate Heart Rate Zones</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; text-align: center;">Your Training Zones</span>
+      <div id="maxHeartRateText" style="text-align: center; font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 1rem;"></div>
+      <div class="zone-list" id="zoneList"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+function calculateHeartRate() {
+  const age = parseFloat(document.getElementById('age').value);
+
+  if (!age || age <= 0) {
+    alert('Please enter a valid age.');
+    return;
+  }
+
+  // Standard max heart rate formula: 220 - age
+  const maxHr = 220 - age;
+
+  document.getElementById('maxHeartRateText').innerText = `Estimated Maximum Heart Rate: ${maxHr} BPM`;
+
+  const zones = [
+    { name: "Restorative / Warm-up (50-60%)", min: Math.round(maxHr * 0.5), max: Math.round(maxHr * 0.6) },
+    { name: "Fat Burning Zone (60-70%)", min: Math.round(maxHr * 0.6), max: Math.round(maxHr * 0.7) },
+    { name: "Aerobic Endurance (70-80%)", min: Math.round(maxHr * 0.7), max: Math.round(maxHr * 0.8) },
+    { name: "Anaerobic Performance (80-90%)", min: Math.round(maxHr * 0.8), max: Math.round(maxHr * 0.9) },
+    { name: "Maximum Effort (90-100%)", min: Math.round(maxHr * 0.9), max: maxHr }
+  ];
+
+  const zoneList = document.getElementById('zoneList');
+  zoneList.innerHTML = '';
+
+  zones.forEach(zone => {
+    const div = document.createElement('div');
+    div.className = 'zone-item';
+    div.innerHTML = `${zone.name} <span>${zone.min} - ${zone.max} BPM</span>`;
+    zoneList.appendChild(div);
+  });
+
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

@@ -97,7 +97,7 @@
     transition: opacity 0.2s ease;
   }
   .live-search-btn:hover { opacity: 0.85; }
-  .search-status { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; }
+  .search-status { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; display: none; }
 
   .hotels-grid { display: grid; gap: 1.25rem; }
   .hotel-card {
@@ -229,17 +229,17 @@
   <div class="hero-panel" style="border-left: 4px solid var(--category-color); margin-bottom: 2rem;">
     <span class="eyebrow" style="color: var(--category-color);">Photon & Nominatim API Directory</span>
     <h1>Global & Pakistan Hotel Booking Marketplace</h1>
-    <p class="lede">Type <strong>any hotel name and location</strong> (e.g., <em>"Hotel Millan Inn in DG Khan"</em>) below. Our integrated **Photon Geocoding API** fetches exact street addresses, regions, and pinpoint map directions instantly!</p>
+    <p class="lede">Type <strong>any hotel name</strong> (e.g., <em>"Hotel Millan Inn"</em>) below. Our integrated **Photon Geocoding API** fetches exact street addresses, regions, and pinpoint map directions instantly!</p>
   </div>
 
   <!-- Dedicated Photon API Search Bar -->
   <div class="live-search-banner">
     <h3>🔍 Photon Geo API Search (Precise Street Addresses & Maps)</h3>
     <div class="live-search-box-wrapper">
-      <input type="text" id="photonSearchInput" placeholder="Enter hotel name and city (e.g., Hotel millan inn in dg khan)...">
+      <input type="text" id="photonSearchInput" placeholder="Enter hotel name (e.g., Hotel Millan Inn)..." value="Hotel Millan Inn">
       <button class="live-search-btn" onclick="performPhotonGeoSearch()">Fetch Live Address & Map</button>
     </div>
-    <div class="search-status" id="geoSearchStatus">Type a hotel name to query exact coordinates and addresses via Photon API.</div>
+    <div class="search-status" id="geoSearchStatus"></div>
   </div>
 
   <!-- Standard Cascading Filters -->
@@ -474,7 +474,6 @@
   function onCountryChange() {
     activeSearchQuery = ""; 
     document.getElementById('photonSearchInput').value = "";
-    document.getElementById('geoSearchStatus').textContent = "Type a hotel name to query exact coordinates and addresses via Photon API.";
     updateCityDropdown();
     document.getElementById('cityFilter').value = 'all';
     updateHotelDropdown();
@@ -485,7 +484,6 @@
   function onCityChange() {
     activeSearchQuery = "";
     document.getElementById('photonSearchInput').value = "";
-    document.getElementById('geoSearchStatus').textContent = "Type a hotel name to query exact coordinates and addresses via Photon API.";
     updateHotelDropdown();
     document.getElementById('hotelFilter').value = 'all';
     filterAndRenderHotels();
@@ -494,16 +492,12 @@
   // Photon API Geolocation Integration (komoot's Photon Geocoder)
   async function performPhotonGeoSearch() {
     const query = document.getElementById('photonSearchInput').value.trim();
-    const statusElem = document.getElementById('geoSearchStatus');
 
     if (!query) {
       activeSearchQuery = "";
-      statusElem.textContent = "Please enter a hotel name and location to search.";
       filterAndRenderHotels();
       return;
     }
-
-    statusElem.textContent = `🌍 Querying Photon Geocoding API for "${query}"...`;
 
     try {
       const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1`);
@@ -538,10 +532,6 @@
           const lat = coords[1];
           mapUrl = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=17/${lat}/${lon}`;
         }
-
-        statusElem.textContent = `✅ Photon API successfully retrieved exact street address and map coordinates!`;
-      } else {
-        statusElem.textContent = `⚠️ Detailed match not returned by Photon; generating precise location routing for "${query}".`;
       }
 
       const formattedName = query.charAt(0).toUpperCase() + query.slice(1);
@@ -576,8 +566,6 @@
 
     } catch (err) {
       console.error("Photon API error:", err);
-      statusElem.textContent = `⚠️ API fallback triggered. Displaying direct map directions and address for "${query}".`;
-      
       const formattedName = query.charAt(0).toUpperCase() + query.slice(1);
       const newGeoHotel = {
         id: 98000 + Math.floor(Math.random() * 1000),
@@ -722,7 +710,8 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initDropdowns();
-    filterAndRenderHotels();
+    // Pre-load default hotel query "Hotel Millan Inn" on page load
+    performPhotonGeoSearch();
 
     const searchInput = document.getElementById('photonSearchInput');
     if (searchInput) {

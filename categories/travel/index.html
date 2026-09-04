@@ -3,60 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LamaStudio — Travel & Tourism Tools & Flight Booking</title>
+<title>LamaStudio — Travel & Tourism Tools & Flight Booking Hub</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-  /* Layout container to place vertical news on the side */
-  .main-layout {
+  /* Layout container for Hero + Right Side News Ticker */
+  .hero-news-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 1fr 320px;
     gap: 2rem;
-    max-width: 1400px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    align-items: stretch;
+    margin-bottom: 2.5rem;
   }
-
   @media(max-width: 1024px) {
-    .main-layout {
+    .hero-news-layout {
       grid-template-columns: 1fr;
     }
   }
 
-  /* 1. Vertical Side News Ticker Styles */
-  .side-news-container {
+  /* Vertical Right-Side News Ticker Styles */
+  .side-news-panel {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.25rem;
-    height: 600px;
-    position: sticky;
-    top: 2rem;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: 100%;
+    min-height: 280px;
     box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
   }
   .side-news-header {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     margin-bottom: 1rem;
     color: var(--category-color);
     display: flex;
     align-items: center;
     gap: 0.5rem;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
   }
   .vertical-ticker-wrapper {
     position: relative;
-    height: 100%;
+    height: 220px;
     overflow: hidden;
   }
   .vertical-ticker-track {
     position: absolute;
     width: 100%;
-    animation: scrollVertical 18s linear infinite;
+    animation: scrollVertical 15s linear infinite;
   }
   .vertical-ticker-track:hover {
     animation-play-state: paused;
@@ -65,14 +62,14 @@
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 0.85rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.82rem;
     color: var(--text);
   }
   .ticker-item span {
     display: block;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--text-muted);
     margin-top: 0.2rem;
   }
@@ -82,65 +79,31 @@
     100% { transform: translateY(-50%); }
   }
 
-  /* 2. Running Flight Rates Ticker Bar */
-  .running-rates-bar {
-    background: linear-gradient(90deg, #1e293b, #0f172a, #1e293b);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 2rem;
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
-  }
-  .rates-track {
-    display: inline-block;
-    animation: scrollRates 25s linear infinite;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    color: #38bdf8;
-  }
-  @keyframes scrollRates {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-  }
-
-  /* 3. Flight Booking Box & Portal Styles */
-  .flight-booking-box {
-    background: var(--surface);
-    border: 2px solid var(--category-color);
+  /* Portal Banner Link Style */
+  .portal-banner {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
+    border: 2px dashed var(--category-color);
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2.5rem;
-    box-shadow: 0 15px 30px -5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
   }
-
-  .flights-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
-  .flight-card { background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s, border-color 0.2s; flex-wrap: wrap; gap: 1rem; }
-  .flight-card:hover { border-color: var(--category-color); transform: translateY(-2px); }
-  
-  .flight-info h3 { font-size: 1.15rem; color: var(--text); margin-bottom: 0.2rem; display: flex; align-items: center; gap: 0.5rem; }
-  .flight-route { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-  .flight-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-  .badge { font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; text-transform: uppercase; }
-  .badge-eco { background: rgba(52, 152, 219, 0.15); color: #3498db; }
-  .badge-biz { background: rgba(155, 89, 182, 0.15); color: #9b59b6; }
-  .badge-luggage { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
-
-  .flight-pricing { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
-  .price-val { font-size: 1.6rem; font-weight: 800; color: var(--category-color); font-family: 'JetBrains Mono', monospace; }
-  .book-now-btn { padding: 0.5rem 1.25rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-  .book-now-btn:hover { opacity: 0.85; }
-
-  /* Modal Purchase Window */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; backdrop-filter: blur(4px); }
-  .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 500px; width: 100%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
-  .form-row { margin-bottom: 1rem; }
-  .form-row label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.3rem; color: var(--text); }
-  .form-row input { width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; }
-  .modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 600; }
-  .btn-confirm { background: var(--category-color); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer; flex: 1; font-weight: 700; }
+  .portal-banner h3 { font-size: 1.3rem; color: var(--text); margin-bottom: 0.3rem; }
+  .portal-banner p { font-size: 0.9rem; color: var(--text-muted); }
+  .portal-btn {
+    background: var(--category-color);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .portal-btn:hover { opacity: 0.85; }
 </style>
 </head>
 <body style="--category-color: var(--c-travel);">
@@ -172,190 +135,151 @@
   </div>
 </header>
 
-<main>
-  <div class="main-layout">
-    <!-- Side Vertical News Ticker Column -->
-    <aside class="side-news-container">
+<main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+  
+  <!-- Hero Section paired with the Right-Side Vertical News Ticker -->
+  <div class="hero-news-layout">
+    <div class="hero-panel" style="border-left: 4px solid var(--category-color); height: 100%; display: flex; flex-direction: column; justify-content: center;">
+      <span class="eyebrow" style="color: var(--category-color);">Travel &amp; Tourism Category Hub</span>
+      <h1>Travel Utilities Suite &amp; Live Booking Portal</h1>
+      <p class="lede" style="margin-top: 0.5rem;">Manage your journeys with our comprehensive travel suite or purchase verified airline tickets directly through our dedicated flight portal.</p>
+    </div>
+
+    <!-- Vertical News Ticker on the Right Side -->
+    <aside class="side-news-panel">
       <div class="side-news-header">
-        <span>⚡ Live News Feed</span>
+        <span>⚡ Live Travel News</span>
       </div>
       <div class="vertical-ticker-wrapper">
         <div class="vertical-ticker-track">
           <div class="ticker-item">
-            Fly Jinnah announces new budget frequencies to Gulf destinations.
+            Fly Jinnah expands winter flight frequencies to Gulf region.
             <span>10 mins ago</span>
           </div>
           <div class="ticker-item">
-            UAE updates visa-on-arrival requirements for international travelers.
-            <span>25 mins ago</span>
+            UAE updates entry guidelines and visa verification rules.
+            <span>35 mins ago</span>
           </div>
           <div class="ticker-item">
-            Saudi Arabia expands seasonal pilgrim flight slots from Lahore & Islamabad.
+            Saudi Arabia introduces new transit visa protocols.
             <span>1 hour ago</span>
           </div>
           <div class="ticker-item">
-            Emirates introduces upgraded economy luggage allowances for winter.
+            Emirates modifies baggage policy for international sectors.
             <span>2 hours ago</span>
           </div>
-          <!-- Duplicated list for seamless infinite vertical scrolling loop -->
+          <!-- Seamless loop items -->
           <div class="ticker-item">
-            Fly Jinnah announces new budget frequencies to Gulf destinations.
+            Fly Jinnah expands winter flight frequencies to Gulf region.
             <span>10 mins ago</span>
           </div>
           <div class="ticker-item">
-            UAE updates visa-on-arrival requirements for international travelers.
-            <span>25 mins ago</span>
+            UAE updates entry guidelines and visa verification rules.
+            <span>35 mins ago</span>
           </div>
           <div class="ticker-item">
-            Saudi Arabia expands seasonal pilgrim flight slots from Lahore & Islamabad.
+            Saudi Arabia introduces new transit visa protocols.
             <span>1 hour ago</span>
           </div>
           <div class="ticker-item">
-            Emirates introduces upgraded economy luggage allowances for winter.
+            Emirates modifies baggage policy for international sectors.
             <span>2 hours ago</span>
           </div>
         </div>
       </div>
     </aside>
+  </div>
 
-    <!-- Main Content Area -->
+  <!-- Dedicated Flight Portal Link Banner -->
+  <div class="portal-banner">
     <div>
-      <section class="dashboard" style="margin-bottom: 2rem;">
-        <div class="hero-panel" style="border-left: 4px solid var(--category-color);">
-          <span class="eyebrow" style="color: var(--category-color);">Travel &amp; Tourism Category Hub</span>
-          <h1>Travel Utilities Suite &amp; Live Booking Portal</h1>
-          <p class="lede">Manage your journeys with our comprehensive travel suite or purchase verified airline tickets directly through our dedicated flight portal.</p>
-        </div>
-      </section>
-
-      <!-- Running Flight Rates Marquee Bar -->
-      <div class="running-rates-bar">
-        <div class="rates-track">
-          ✈️ LIVE TAPE: [LHE ➔ SHJ]: $185 &nbsp;&nbsp;|&nbsp;&nbsp; [ISB ➔ DXB]: $210 &nbsp;&nbsp;|&nbsp;&nbsp; [KHI ➔ JED]: $265 &nbsp;&nbsp;|&nbsp;&nbsp; [ISB ➔ DXB]: $320 &nbsp;&nbsp;|&nbsp;&nbsp; [PEW ➔ DOH]: $345 &nbsp;&nbsp;|&nbsp;&nbsp; [ISB ➔ LHR]: $450 &nbsp;&nbsp;⚡ Cheapest rates sorted below!
-        </div>
-      </div>
-
-      <section class="flight-booking-box">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <span class="eyebrow" style="color: var(--category-color);">Dedicated Portal</span>
-            <h2 style="font-size: 1.5rem; color: var(--text);">Pakistan to Gulf &amp; International Flight Bookings</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.25rem;">Accurate live fares sorted automatically from cheapest rates on top to highest on bottom.</p>
-          </div>
-          <div>
-            <select id="routeClassFilter" onchange="renderIndexFlights()" style="padding: 0.5rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem;">
-              <option value="all">All Classes</option>
-              <option value="Economy">Economy Only</option>
-              <option value="Business">Business Only</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="flights-grid" id="indexFlightsContainer">
-          </div>
-      </section>
-
-      <section class="section">
-        <div class="section-head"><div><span class="eyebrow" style="color: var(--category-color);">Directory</span><h2>10 Essential Travel Utilities</h2></div></div>
-        
-        <div class="blog-grid">
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 01</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Trip Budget &amp; Expense Estimator</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Calculate overall trip expenses including lodging, food, and flights.</p>
-            <a href="trip-budget-calculator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 02</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Smart Packing List Generator</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Generate customized checklists based on local destination climate and length.</p>
-            <a href="packing-list-generator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 03</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Multi-City Route Planner</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Estimate transit logistics and travel durations between global landmarks.</p>
-            <a href="route-planner.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 04</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Time Zone &amp; Jet Lag Optimizer</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Calculate optimal sleep adjustment schedules across international borders.</p>
-            <a href="jetlag-optimizer.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 05</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Flight Carbon Footprint Calculator</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Estimate environmental emissions per flight route for sustainable travel.</p>
-            <a href="carbon-calculator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 06</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Visa Requirement Checker Hub</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Quick-reference passport strength and entry documentation lookup.</p>
-            <a href="visa-checker.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 07</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Group Trip Expense Splitter</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Calculate shared balances, multi-currencies, and settlements for groups.</p>
-            <a href="expense-splitter.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 08</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Global Tipping &amp; Etiquette Guide</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Determine local service custom tipping standards worldwide.</p>
-            <a href="tipping-calculator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 09</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Nomad Cost of Living Indexer</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Compare monthly expat housing, coworking, and local food expenses.</p>
-            <a href="nomad-index.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-
-          <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
-            <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 10</span>
-            <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Embassy &amp; Consulate Locator</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted);">Quick directory mapper for localized diplomatic emergency support.</p>
-            <a href="embassy-locator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
-          </article>
-        </div>
-      </section>
+      <h3>✈️ Looking to Book Tickets?</h3>
+      <p>Access our standalone real-time flight marketplace page with instant filtering, sorting, and e-ticket checkout.</p>
+    </div>
+    <div>
+      <a href="flight-booking.html" class="portal-btn">Open Flight Marketplace →</a>
     </div>
   </div>
+
+  <!-- Essential Travel Utilities Directory -->
+  <section class="section">
+    <div class="section-head"><div><span class="eyebrow" style="color: var(--category-color);">Directory</span><h2>10 Essential Travel Utilities</h2></div></div>
+    
+    <div class="blog-grid">
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 01</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Trip Budget &amp; Expense Estimator</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Calculate overall trip expenses including lodging, food, and flights.</p>
+        <a href="trip-budget-calculator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 02</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Smart Packing List Generator</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Generate customized checklists based on local destination climate and length.</p>
+        <a href="packing-list-generator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 03</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Multi-City Route Planner</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Estimate transit logistics and travel durations between global landmarks.</p>
+        <a href="route-planner.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 04</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Time Zone &amp; Jet Lag Optimizer</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Calculate optimal sleep adjustment schedules across international borders.</p>
+        <a href="jetlag-optimizer.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 05</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Flight Carbon Footprint Calculator</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Estimate environmental emissions per flight route for sustainable travel.</p>
+        <a href="carbon-calculator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 06</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Visa Requirement Checker Hub</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Quick-reference passport strength and entry documentation lookup.</p>
+        <a href="visa-checker.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 07</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Group Trip Expense Splitter</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Calculate shared balances, multi-currencies, and settlements for groups.</p>
+        <a href="expense-splitter.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 08</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Global Tipping &amp; Etiquette Guide</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Determine local service custom tipping standards worldwide.</p>
+        <a href="tipping-calculator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 09</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Nomad Cost of Living Indexer</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Compare monthly expat housing, coworking, and local food expenses.</p>
+        <a href="nomad-index.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+
+      <article class="blog-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--category-color);">Tool 10</span>
+        <h3 style="font-size: 1.1rem; margin: 0.5rem 0;">Embassy &amp; Consulate Locator</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Quick directory mapper for localized diplomatic emergency support.</p>
+        <a href="embassy-locator.html" style="display:inline-block; margin-top: 1rem; font-size: 0.85rem; font-weight: 600; color: var(--category-color);">Launch Utility →</a>
+      </article>
+    </div>
+  </section>
 </main>
 
-<div class="modal-overlay" id="bookingModal">
-  <div class="modal-content">
-    <h3 id="modalFlightTitle" style="color: var(--text); margin-bottom: 0.5rem;">Complete Ticket Purchase</h3>
-    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="modalFlightDetails">Airline &amp; Fare info</p>
-    
-    <div class="form-row">
-      <label>Passenger Full Name</label>
-      <input type="text" id="passengerName" placeholder="e.g. Muhammad Ali">
-    </div>
-    <div class="form-row">
-      <label>Email Address for E-Ticket</label>
-      <input type="email" id="passengerEmail" placeholder="e.g. ali@lamastudio.io">
-    </div>
-    
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-confirm" onclick="completePurchase()">Confirm &amp; Purchase</button>
-    </div>
-  </div>
-</div>
-
-<footer class="site-footer">
+<footer class="site-footer" style="margin-top: 4rem;">
   <div class="footer-grid">
     <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
     <div class="footer-col"><h4>Store</h4><a href="../../apps/lamavpnpro/">LamaVPN Pro</a></div>
@@ -364,90 +288,6 @@
   <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
 </footer>
 
-<script>
-  const pakistanFlightsData = [
-    { id: 1, airline: "Fly Jinnah", route: "Lahore (LHE) ➔ Sharjah, UAE (SHJ)", classType: "Economy", luggage: "20 kg Checked + 7 kg Cabin", price: 185 },
-    { id: 2, airline: "Airblue", route: "Islamabad (ISB) ➔ Dubai, UAE (DXB)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 210 },
-    { id: 3, airline: "Saudi Arabian Airlines", route: "Karachi (KHI) ➔ Jeddah, KSA (JED)", classType: "Economy", luggage: "35 kg Checked + 7 kg Cabin", price: 265 },
-    { id: 4, airline: "Emirates", route: "Islamabad (ISB) ➔ Dubai, UAE (DXB)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 320 },
-    { id: 5, airline: "Qatar Airways", route: "Peshawar (PEW) ➔ Doha, Qatar (DOH)", classType: "Economy", luggage: "30 kg Checked + 7 kg Cabin", price: 345 },
-    { id: 6, airline: "PIA (Pakistan International)", route: "Islamabad (ISB) ➔ London, UK (LHR)", classType: "Economy", luggage: "40 kg Checked + 7 kg Cabin", price: 450 },
-    { id: 7, airline: "Turkish Airlines", route: "Lahore (LHE) ➔ Istanbul, Turkey (IST)", classType: "Business", luggage: "40 kg Checked + 10 kg Cabin", price: 1350 },
-    { id: 8, airline: "Emirates", route: "Karachi (KHI) ➔ Dubai, UAE (DXB)", classType: "Business", luggage: "40 kg Checked + 12 kg Cabin", price: 1680 }
-  ];
-
-  let selectedFlight = null;
-
-  function renderIndexFlights() {
-    const filter = document.getElementById('routeClassFilter').value;
-    const container = document.getElementById('indexFlightsContainer');
-    
-    let filtered = filter === 'all' ? [...pakistanFlightsData] : pakistanFlightsData.filter(f => f.classType === filter);
-
-    // Sort cheapest on top, highest on bottom
-    filtered.sort((a, b) => a.price - b.price);
-
-    container.innerHTML = '';
-
-    if(filtered.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No flights match this filter right now.</div>`;
-      return;
-    }
-
-    filtered.forEach(flight => {
-      const card = document.createElement('div');
-      card.className = 'flight-card';
-      const classBadge = flight.classType === 'Business' ? 'badge-biz' : 'badge-eco';
-      
-      card.innerHTML = `
-        <div class="flight-info">
-          <h3>✈️ ${flight.airline}</h3>
-          <div class="flight-route">${flight.route}</div>
-          <div class="flight-tags">
-            <span class="badge ${classBadge}">${flight.classType} Class</span>
-            <span class="badge badge-luggage">🧳 ${flight.luggage}</span>
-          </div>
-        </div>
-        <div class="flight-pricing">
-          <div class="price-val">$${flight.price}</div>
-          <button class="book-now-btn" onclick="openBookingModal(${flight.id})">Book Ticket</button>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-  }
-
-  function openBookingModal(id) {
-    selectedFlight = pakistanFlightsData.find(f => f.id === id);
-    if (!selectedFlight) return;
-    
-    document.getElementById('modalFlightTitle').textContent = `Book: ${selectedFlight.airline}`;
-    document.getElementById('modalFlightDetails').textContent = `${selectedFlight.route} | ${selectedFlight.classType} | $${selectedFlight.price}`;
-    document.getElementById('passengerName').value = '';
-    document.getElementById('passengerEmail').value = '';
-    document.getElementById('bookingModal').style.display = 'flex';
-  }
-
-  function closeModal() {
-    document.getElementById('bookingModal').style.display = 'none';
-    selectedFlight = null;
-  }
-
-  function completePurchase() {
-    const name = document.getElementById('passengerName').value.trim();
-    const email = document.getElementById('passengerEmail').value.trim();
-
-    if(!name || !email) {
-      alert('Please fill in both your passenger name and email address.');
-      return;
-    }
-
-    alert(`🎉 Success! Ticket successfully purchased for ${selectedFlight.airline} (${selectedFlight.route}). Your verified e-ticket has been sent to ${email}. Thank you for booking with LamaStudio!`);
-    closeModal();
-  }
-
-  window.addEventListener('DOMContentLoaded', renderIndexFlights);
-</script>
 <script src="../../script.js"></script>
 </body>
 </html>

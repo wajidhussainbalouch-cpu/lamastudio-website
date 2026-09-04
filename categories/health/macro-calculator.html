@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macronutrient & Protein Splitter — LamaStudio Health Hub</title>
+<meta name="description" content="Determine optimal daily grams of protein, carbohydrates, and healthy fats tailored to your goals.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: none; }
+  .macro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; text-align: center; }
+  .macro-item { background: var(--surface); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; }
+  .macro-value { font-size: 1.5rem; font-weight: 700; color: var(--category-color); font-family: 'JetBrains Mono', monospace; margin-top: 0.25rem; }
+  @media(max-width: 600px) { .macro-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body style="--category-color: var(--c-health, #e74c3c);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Macro Splitter</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Macronutrient &amp; Protein Splitter</h1>
+    
+    <div class="form-group">
+      <label for="calories">Target Daily Calories (kcal)</label>
+      <input type="number" id="calories" class="form-control" placeholder="e.g., 2000" required>
+    </div>
+
+    <div class="form-group">
+      <label for="goal">Fitness Goal Split</label>
+      <select id="goal" class="form-control">
+        <option value="balanced">Balanced Fitness (30% P / 40% C / 30% F)</option>
+        <option value="highprotein">High Protein / Muscle Gain (40% P / 35% C / 25% F)</option>
+        <option value="lowcarb">Low Carb / Fat Loss (40% P / 20% C / 40% F)</option>
+      </select>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="calculateMacros()">Calculate Macros</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; text-align: center;">Recommended Daily Macronutrients</span>
+      <div class="macro-grid">
+        <div class="macro-item">
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Protein</div>
+          <div class="macro-value" id="proteinOutput">0g</div>
+        </div>
+        <div class="macro-item">
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Carbs</div>
+          <div class="macro-value" id="carbsOutput">0g</div>
+        </div>
+        <div class="macro-item">
+          <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Fats</div>
+          <div class="macro-value" id="fatsOutput">0g</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function calculateMacros() {
+  const cals = parseFloat(document.getElementById('calories').value);
+  const goal = document.getElementById('goal').value;
+
+  if (!cals || cals <= 0) {
+    alert('Please enter a valid target calorie amount.');
+    return;
+  }
+
+  let pRatio = 0.30, cRatio = 0.40, fRatio = 0.30;
+  if (goal === 'highprotein') {
+    pRatio = 0.40; cRatio = 0.35; fRatio = 0.25;
+  } else if (goal === 'lowcarb') {
+    pRatio = 0.40; cRatio = 0.20; fRatio = 0.40;
+  }
+
+  // Protein and carbs = 4 kcal per gram, fat = 9 kcal per gram
+  const proteinGrams = (cals * pRatio) / 4;
+  const carbGrams = (cals * cRatio) / 4;
+  const fatGrams = (cals * fRatio) / 9;
+
+  document.getElementById('proteinOutput').innerText = Math.round(proteinGrams) + "g";
+  document.getElementById('carbsOutput').innerText = Math.round(carbGrams) + "g";
+  document.getElementById('fatsOutput').innerText = Math.round(fatGrams) + "g";
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

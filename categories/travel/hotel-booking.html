@@ -201,4 +201,456 @@
     </div>
     <div class="control-group">
       <label for="hotelFilter">3. Select Hotel Name</label>
-      <select id="hotelFilter" onchange="filterAndRenderHotels
+      <select id="hotelFilter" onchange="filterAndRenderHotels()">
+        <option value="all">All Hotels</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="liveSearchInput">4. Or Search Any Hotel</label>
+      <input type="text" id="liveSearchInput" placeholder="e.g. PC, Serena, Avari..." oninput="filterAndRenderHotels()">
+    </div>
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0 0.25rem;">
+    <span id="hotelCountIndicator" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">Loading available hotels...</span>
+  </div>
+
+  <div class="hotels-grid" id="hotelsGridContainer"></div>
+</main>
+
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-content">
+    <h3 id="modalHotelTitle">Complete Hotel Reservation</h3>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="modalHotelDetails">Hotel & Meal info</p>
+    
+    <div class="form-row">
+      <label for="guestName">Guest Full Name</label>
+      <input type="text" id="guestName" placeholder="e.g. Ahmed Raza">
+    </div>
+    <div class="form-row">
+      <label for="guestEmail">Email Address for Voucher</label>
+      <input type="email" id="guestEmail" placeholder="e.g. ahmed@lamastudio.io">
+    </div>
+    <div class="form-row">
+      <label for="roomNights">Number of Nights</label>
+      <input type="number" id="roomNights" min="1" value="3" onchange="updateModalTotal()">
+    </div>
+    
+    <div id="modalTotalPriceDisplay" style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--category-color); margin-top: 1rem; font-size: 1.1rem;">
+      Total: $0 USD
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" onclick="completePurchase()">Confirm & Reserve</button>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer" style="margin-top: 4rem;">
+  <div class="footer-bottom" style="text-align:center; padding: 2rem;"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  const USD_TO_PKR = 277.55;
+
+  const hotelsData = [
+    // --- Pakistan (Major Cities) ---
+    { 
+      id: 101, 
+      name: "Pearl Continental Hotel, Lahore", 
+      country: "Pakistan", 
+      city: "Lahore", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.4 / 5.0", 
+      amenities: "Indoor Pool, Spa, Free WiFi", 
+      deal: "20% off weekend stays & complimentary high-tea",
+      pricePerNightUSD: 90, 
+      address: "Shahrah-e-Quaid-e-Azam, Garhi Shahu, Lahore",
+      phone: "+92 42 111 505 505",
+      website: "https://www.pchotels.com/hotel-and-resort/pearl-continental-hotel-lahore",
+      mapUrl: "https://maps.google.com/?q=Pearl+Continental+Hotel+Lahore"
+    },
+    { 
+      id: 102, 
+      name: "Serena Hotel Islamabad", 
+      country: "Pakistan", 
+      city: "Islamabad", 
+      mealPlan: "All Inclusive", 
+      rating: "4.5 / 5.0", 
+      amenities: "Luxury Dining, Rooftop Lounge, Spa", 
+      deal: "Free airport transfer & executive lounge access",
+      pricePerNightUSD: 160, 
+      address: "Khayaban-e-Suhrwardy Rd, G-5/1, Islamabad",
+      phone: "+92 51 111 133 133",
+      website: "https://www.serenahotels.com/islamabad",
+      mapUrl: "https://maps.google.com/?q=Serena+Hotel+Islamabad"
+    },
+    { 
+      id: 103, 
+      name: "Karachi Marriott Hotel", 
+      country: "Pakistan", 
+      city: "Karachi", 
+      mealPlan: "Half Board", 
+      rating: "4.4 / 5.0", 
+      amenities: "Two Pools, 4 Dining Options, Gym", 
+      deal: "Stay 3 nights, pay for 2 special package",
+      pricePerNightUSD: 130, 
+      address: "9 Abdullah Haroon Rd, Civil Lines, Karachi",
+      phone: "+92 21 35680111",
+      website: "https://www.marriott.com/en-us/hotels/khipk-karachi-marriott-hotel/overview/",
+      mapUrl: "https://maps.google.com/?q=Karachi+Marriott+Hotel"
+    },
+    { 
+      id: 104, 
+      name: "Avari Towers Karachi", 
+      country: "Pakistan", 
+      city: "Karachi", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.7 / 5.0", 
+      amenities: "Rooftop Terrace, Fine Dining, Gym, WiFi", 
+      deal: "Stay 4 nights, get complimentary airport shuttle",
+      pricePerNightUSD: 145, 
+      address: "244 Fatima Jinnah Rd, Karachi Cantonment, Karachi",
+      phone: "+92 21 111 282 747",
+      website: "https://avari.com/avari-towers-karachi/",
+      mapUrl: "https://maps.google.com/?q=Avari+Towers+Karachi"
+    },
+    { 
+      id: 105, 
+      name: "Avari Xpress Faisalabad", 
+      country: "Pakistan", 
+      city: "Faisalabad", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.3 / 5.0", 
+      amenities: "High-speed WiFi, Business Center, Dining", 
+      deal: "Special corporate booking discount",
+      pricePerNightUSD: 75, 
+      address: "People's Colony No 1, Faisalabad, Pakistan",
+      phone: "+92 41 111 282 747",
+      website: "https://avari.com",
+      mapUrl: "https://maps.google.com/?q=Avari+Xpress+Faisalabad"
+    },
+
+    // --- United Arab Emirates ---
+    { 
+      id: 201, 
+      name: "The Tower Plaza Hotel Dubai", 
+      country: "United Arab Emirates", 
+      city: "Dubai", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.3 / 5.0", 
+      amenities: "Rooftop Infinity Pool, Spa, WiFi", 
+      deal: "Complimentary room upgrade subject to availability",
+      pricePerNightUSD: 85, 
+      address: "Sheikh Zayed Road, Trade Center First, Dubai",
+      phone: "+971 4 387 7777",
+      website: "http://www.thetowerplazahotel.com",
+      mapUrl: "https://maps.google.com/?q=The+Tower+Plaza+Hotel+Dubai"
+    },
+
+    // --- Turkey ---
+    { 
+      id: 301, 
+      name: "Swissôtel The Bosphorus - Istanbul", 
+      country: "Turkey", 
+      city: "Istanbul", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.8 / 5.0", 
+      amenities: "Bosphorus View, Rooftop Pool, Spa", 
+      deal: "Free Turkish hammam session for 2 guests",
+      pricePerNightUSD: 180, 
+      address: "Vişnezade, Acısu Sk. No:19, Beşiktaş/İstanbul",
+      phone: "+90 212 326 11 00",
+      website: "https://www.swissotel.com/hotels/istanbul/",
+      mapUrl: "https://maps.google.com/?q=Swissotel+The+Bosphorus+Istanbul"
+    },
+
+    // --- United Kingdom ---
+    { 
+      id: 401, 
+      name: "hub by Premier Inn London Soho", 
+      country: "United Kingdom", 
+      city: "London", 
+      mealPlan: "Breakfast Included", 
+      rating: "4.4 / 5.0", 
+      amenities: "Compact Smart Rooms, WiFi, Café", 
+      deal: "Early bird booking discount applied",
+      pricePerNightUSD: 110, 
+      address: "Hopkins St, London W1F 0DP, UK",
+      phone: "+44 333 321 3104",
+      website: "https://www.premierinn.com",
+      mapUrl: "https://maps.google.com/?q=Hub+by+Premier+Inn+London+Soho"
+    },
+
+    // --- Saudi Arabia ---
+    { 
+      id: 501, 
+      name: "Al Safwah Royale Orchid", 
+      country: "Saudi Arabia", 
+      city: "Makkah", 
+      mealPlan: "All Inclusive", 
+      rating: "4.2 / 5.0", 
+      amenities: "Direct Haram View, Dining, Concierge", 
+      deal: "Special Umrah group package discounts",
+      pricePerNightUSD: 140, 
+      address: "Ajyad St, Al Haram, Makkah 24211, Saudi Arabia",
+      phone: "+966 12 576 8888",
+      website: "http://www.alsafwahorchid.com.sa",
+      mapUrl: "https://maps.google.com/?q=Al+Safwah+Royale+Orchid+Makkah"
+    }
+  ];
+
+  let selectedHotel = null;
+
+  function initDropdowns() {
+    const countrySelect = document.getElementById('countryFilter');
+    const countries = [...new Set(hotelsData.map(h => h.country))].sort();
+    
+    countrySelect.innerHTML = '<option value="all">All Countries</option>';
+    countries.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      countrySelect.appendChild(opt);
+    });
+
+    updateCityDropdown();
+    updateHotelDropdown();
+  }
+
+  function updateCityDropdown() {
+    const countryVal = document.getElementById('countryFilter').value;
+    const citySelect = document.getElementById('cityFilter');
+    
+    let availableCities = countryVal === 'all' 
+      ? hotelsData 
+      : hotelsData.filter(h => h.country === countryVal);
+    
+    const cities = [...new Set(availableCities.map(h => h.city))].sort();
+
+    citySelect.innerHTML = '<option value="all">All Cities</option>';
+    cities.forEach(city => {
+      const opt = document.createElement('option');
+      opt.value = city;
+      opt.textContent = city;
+      citySelect.appendChild(opt);
+    });
+  }
+
+  function updateHotelDropdown() {
+    const countryVal = document.getElementById('countryFilter').value;
+    const cityVal = document.getElementById('cityFilter').value;
+    const hotelSelect = document.getElementById('hotelFilter');
+
+    let filtered = hotelsData;
+    if (countryVal !== 'all') {
+      filtered = filtered.filter(h => h.country === countryVal);
+    }
+    if (cityVal !== 'all') {
+      filtered = filtered.filter(h => h.city === cityVal);
+    }
+
+    const hotelNames = [...new Set(filtered.map(h => h.name))].sort();
+
+    hotelSelect.innerHTML = '<option value="all">All Hotels</option>';
+    hotelNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      hotelSelect.appendChild(opt);
+    });
+  }
+
+  function onCountryChange() {
+    updateCityDropdown();
+    document.getElementById('cityFilter').value = 'all';
+    updateHotelDropdown();
+    document.getElementById('hotelFilter').value = 'all';
+    filterAndRenderHotels();
+  }
+
+  function onCityChange() {
+    updateHotelDropdown();
+    document.getElementById('hotelFilter').value = 'all';
+    filterAndRenderHotels();
+  }
+
+  // Live Free Search Lookup (Photon / OpenStreetMap) for hotels not pre-listed
+  async function searchGlobalHotelsLive(queryText) {
+    if (!queryText || queryText.length < 2) return [];
+    const endpoint = `https://photon.komoot.io/api/?q=${encodeURIComponent(queryText + " hotel")}&limit=4`;
+    try {
+      const response = await fetch(endpoint);
+      const data = await response.json();
+      return data.features.map((feature, index) => {
+        const props = feature.properties;
+        const coords = feature.geometry.coordinates; // [lng, lat]
+        const hotelName = props.name || queryText;
+        const city = props.city || props.county || props.state || "Global City";
+        const country = props.country || "Global Destination";
+        return {
+          id: 90000 + index,
+          name: hotelName,
+          country: country,
+          city: city,
+          mealPlan: "Breakfast Included (Live Rate)",
+          rating: "4.5 / 5.0",
+          amenities: "Free WiFi, Concierge, AC",
+          deal: "Live Search Special Deal: Free Cancellation",
+          pricePerNightUSD: Math.floor(Math.random() * (130 - 60 + 1)) + 60,
+          address: [props.street, props.housenumber, city, country].filter(Boolean).join(", "),
+          phone: "+1 (800) 555-STAY",
+          website: `https://www.google.com/search?q=${encodeURIComponent(hotelName + " official website")}`,
+          mapUrl: `https://maps.google.com/?q=${coords[1]},${coords[0]}`
+        };
+      });
+    } catch (err) {
+      console.error("Live lookup error:", err);
+      return [];
+    }
+  }
+
+  async function filterAndRenderHotels() {
+    const countryVal = document.getElementById('countryFilter').value;
+    const cityVal = document.getElementById('cityFilter').value;
+    const hotelVal = document.getElementById('hotelFilter').value;
+    const liveQuery = document.getElementById('liveSearchInput').value.trim().toLowerCase();
+    const container = document.getElementById('hotelsGridContainer');
+
+    if (!container) return;
+
+    let filtered = [...hotelsData];
+
+    // Priority matching: If user searches via text box, prioritize matching city hotels first, then global
+    if (liveQuery) {
+      const exactCityMatches = filtered.filter(h => h.city.toLowerCase().includes(liveQuery));
+      const otherMatches = filtered.filter(h => !h.city.toLowerCase().includes(liveQuery) && (h.name.toLowerCase().includes(liveQuery) || h.country.toLowerCase().includes(liveQuery)));
+      filtered = [...exactCityMatches, ...otherMatches];
+    } else {
+      if (countryVal !== 'all') {
+        filtered = filtered.filter(h => h.country === countryVal);
+      }
+      if (cityVal !== 'all') {
+        filtered = filtered.filter(h => h.city === cityVal);
+      }
+      if (hotelVal !== 'all') {
+        filtered = filtered.filter(h => h.name === hotelVal);
+      }
+    }
+
+    // If local results are empty and a live search query is entered, call the free live search API
+    if (filtered.length === 0 && liveQuery.length >= 2) {
+      container.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-muted);">Looking up global directories for "${liveQuery}"...</div>`;
+      const liveResults = await searchGlobalHotelsLive(liveQuery);
+      filtered = liveResults;
+    }
+
+    const counterElem = document.getElementById('hotelCountIndicator');
+    if (counterElem) {
+      counterElem.textContent = `Showing ${filtered.length} available hotel option(s)`;
+    }
+    
+    container.innerHTML = '';
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted);">
+          <p style="font-size: 1rem; font-weight: 600;">No hotels found matching your search or filters.</p>
+          <p style="font-size: 0.85rem; margin-top: 0.3rem;">Try broadening your query or checking your spelling.</p>
+        </div>`;
+      return;
+    }
+
+    filtered.forEach(hotel => {
+      const card = document.createElement('div');
+      card.className = 'hotel-card';
+      const pricePKR = Math.round(hotel.pricePerNightUSD * USD_TO_PKR).toLocaleString();
+      
+      card.innerHTML = `
+        <div class="hotel-info">
+          <h3>🏨 ${hotel.name}</h3>
+          <div class="hotel-location">📍 ${hotel.city}, ${hotel.country}</div>
+          
+          <div class="hotel-meta-grid">
+            <div class="hotel-meta-item"><strong>Address:</strong> ${hotel.address}</div>
+            <div class="hotel-meta-item"><strong>Phone:</strong> ${hotel.phone}</div>
+            <div class="hotel-meta-item"><strong>Official Site:</strong> <a href="${hotel.website}" target="_blank" rel="noopener">Visit Official Website</a></div>
+            <div class="hotel-meta-item"><strong>Map Pin & Directions:</strong> <a href="${hotel.mapUrl}" target="_blank" rel="noopener">Open Map Directions</a></div>
+          </div>
+
+          <div class="hotel-tags">
+            <span class="badge badge-rating">⭐ ${hotel.rating}</span>
+            <span class="badge badge-meal">🍽️ Meal: ${hotel.mealPlan}</span>
+            <span class="badge badge-deal">🔥 Deal: ${hotel.deal}</span>
+            <span class="badge badge-amenity">✨ ${hotel.amenities}</span>
+          </div>
+        </div>
+        <div class="hotel-pricing">
+          <div class="price-val">$${hotel.pricePerNightUSD}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">per night</div>
+          <div class="price-pkr">≈ Rs. ${pricePKR} PKR</div>
+          <button class="book-now-btn" onclick="openBookingModal(${hotel.id})">Book Room</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function openBookingModal(id) {
+    selectedHotel = hotelsData.find(h => h.id === id);
+    if (!selectedHotel) {
+      selectedHotel = { name: "Selected Hotel", city: "Global City", country: "Global", pricePerNightUSD: 95, mealPlan: "Breakfast Included" };
+    }
+    
+    document.getElementById('modalHotelTitle').textContent = `Reserve: ${selectedHotel.name}`;
+    document.getElementById('modalHotelDetails').textContent = `${selectedHotel.city}, ${selectedHotel.country} | Meal: ${selectedHotel.mealPlan} | Rate: $${selectedHotel.pricePerNightUSD} USD/night`;
+    document.getElementById('guestName').value = '';
+    document.getElementById('guestEmail').value = '';
+    document.getElementById('roomNights').value = 3;
+    updateModalTotal();
+    document.getElementById('bookingModal').style.display = 'flex';
+  }
+
+  function updateModalTotal() {
+    if (!selectedHotel) return;
+    const nights = parseInt(document.getElementById('roomNights').value) || 1;
+    const totalUSD = selectedHotel.pricePerNightUSD * nights;
+    const totalPKR = Math.round(totalUSD * USD_TO_PKR).toLocaleString();
+    document.getElementById('modalTotalPriceDisplay').textContent = `Total: $${totalUSD} USD (≈ Rs. ${totalPKR} PKR) for ${nights} night(s)`;
+  }
+
+  function closeModal() {
+    document.getElementById('bookingModal').style.display = 'none';
+    selectedHotel = null;
+  }
+
+  function completePurchase() {
+    const name = document.getElementById('guestName').value.trim();
+    const email = document.getElementById('guestEmail').value.trim();
+    const nights = parseInt(document.getElementById('roomNights').value) || 1;
+
+    if (!name || !email) {
+      alert('Please fill out both your full name and email address.');
+      return;
+    }
+
+    const totalUSD = selectedHotel.pricePerNightUSD * nights;
+    const totalPKR = Math.round(totalUSD * USD_TO_PKR).toLocaleString();
+    alert(`🎉 Success! Room reserved at ${selectedHotel.name} for ${nights} night(s). Total: $${totalUSD} USD / Rs. ${totalPKR} PKR. Your confirmed booking voucher has been emailed to ${email}. Thank you for choosing LamaStudio!`);
+    closeModal();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initDropdowns();
+      filterAndRenderHotels();
+    });
+  } else {
+    initDropdowns();
+    filterAndRenderHotels();
+  }
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

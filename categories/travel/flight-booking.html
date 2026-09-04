@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-  /* Professional Flashing News Banner */
   .flash-news-ticker {
     background: linear-gradient(90deg, #ff4757, #ff6b81, #ff4757);
     background-size: 200% 100%;
@@ -29,7 +28,6 @@
 
   .flight-marketplace { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
   
-  /* Filter & Control Bar */
   .flight-controls {
     display: grid;
     grid-template-columns: 2fr 1fr 1fr;
@@ -56,7 +54,6 @@
     font-size: 0.95rem;
   }
 
-  /* Flight Listing Grid */
   .flights-grid { display: grid; gap: 1.25rem; }
   .flight-card {
     background: var(--surface);
@@ -105,7 +102,6 @@
   }
   .book-now-btn:hover { opacity: 0.85; }
 
-  /* Polished Modal Overlay */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -125,11 +121,6 @@
     max-width: 500px;
     width: 100%;
     box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
-    animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @keyframes modalPop {
-    0% { transform: scale(0.95); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
   }
   .modal-content h3 { margin-bottom: 0.5rem; color: var(--text); font-size: 1.25rem; }
   .form-row { margin-bottom: 1.25rem; }
@@ -176,7 +167,7 @@
   <div class="flight-controls">
     <div class="control-group">
       <label for="searchInput">Search Airline or Route</label>
-      <input type="text" id="searchInput" placeholder="e.g. Emirates, London, Dubai..." oninput="filterAndRenderFlights()">
+      <input type="text" id="searchInput" placeholder="e.g. Emirates, London, Dubai..." onkeyup="filterAndRenderFlights()" oninput="filterAndRenderFlights()">
     </div>
     <div class="control-group">
       <label for="classFilter">Cabin Class</label>
@@ -244,10 +235,16 @@
   let selectedFlight = null;
 
   function filterAndRenderFlights() {
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
-    const classFilter = document.getElementById('classFilter').value;
-    const sortOrder = document.getElementById('sortBy').value;
+    const searchInputElem = document.getElementById('searchInput');
+    const classFilterElem = document.getElementById('classFilter');
+    const sortByElem = document.getElementById('sortBy');
+    
+    const searchQuery = searchInputElem ? searchInputElem.value.toLowerCase().trim() : '';
+    const classFilter = classFilterElem ? classFilterElem.value : 'all';
+    const sortOrder = sortByElem ? sortByElem.value : 'low-high';
     const container = document.getElementById('flightsGridContainer');
+
+    if (!container) return;
 
     // 1. Filter by Class
     let filtered = classFilter === 'all' 
@@ -255,7 +252,7 @@
       : flightsData.filter(f => f.classType === classFilter);
 
     // 2. Filter by Search Query (Airline or Route)
-    if (searchQuery) {
+    if (searchQuery !== '') {
       filtered = filtered.filter(f => 
         f.airline.toLowerCase().includes(searchQuery) || 
         f.route.toLowerCase().includes(searchQuery)
@@ -268,7 +265,10 @@
     });
 
     // Update Counter
-    document.getElementById('flightCountIndicator').textContent = `Showing ${filtered.length} matching flight(s)`;
+    const counterElem = document.getElementById('flightCountIndicator');
+    if (counterElem) {
+      counterElem.textContent = `Showing ${filtered.length} matching flight(s)`;
+    }
     
     container.innerHTML = '';
 
@@ -334,7 +334,12 @@
     closeModal();
   }
 
-  window.addEventListener('DOMContentLoaded', filterAndRenderFlights);
+  // Ensure DOM is fully ready before execution
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', filterAndRenderFlights);
+  } else {
+    filterAndRenderFlights();
+  }
 </script>
 <script src="../../script.js"></script>
 </body>

@@ -7,110 +7,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Leaflet CSS for Interactive Map -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- Master LamaStudio Portal Stylesheet -->
+<link rel="stylesheet" href="../../style.css">
 <style>
-  :root {
-    --bg-light: #f8fafc;
-    --surface-light: #ffffff;
-    --text-light: #1e293b;
-    --text-muted-light: #64748b;
-    --border-light: #cbd5e1;
-
-    --bg-dark: #0f172a;
-    --surface-dark: #1e293b;
-    --text-dark: #f1f5f9;
-    --text-muted-dark: #94a3b8;
-    --border-dark: #334155;
-  }
-
-  [data-theme="light"] {
-    --background: var(--bg-light);
-    --surface: var(--surface-light);
-    --text: var(--text-light);
-    --text-muted: var(--text-muted-light);
-    --border: var(--border-light);
-  }
-
-  [data-theme="dark"] {
-    --background: var(--bg-dark);
-    --surface: var(--surface-dark);
-    --text: var(--text-dark);
-    --text-muted: var(--text-muted-dark);
-    --border: var(--border-dark);
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-
-  .site-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 2rem;
-  }
-
-  .util-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  .brand {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--text);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .brand-mark {
-    width: 28px;
-    height: 28px;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    background: #3b82f6;
-  }
-
-  .theme-toggle-btn {
-    background: var(--background);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.5rem 0.85rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.85rem;
-  }
-
-  .tool-container { 
-    background: var(--surface); 
-    border: 1px solid var(--border); 
-    border-radius: 16px; 
-    padding: 2.5rem; 
-    max-width: 950px; 
-    margin: 2rem auto; 
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); 
-  }
-
+  .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 950px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
   .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
   @media(max-width: 768px) { .input-grid { grid-template-columns: 1fr; } }
-  
   .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); font-size: 0.9rem; text-transform: uppercase; }
   .input-group select { width: 100%; padding: 0.75rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; }
-  
-  .calc-btn { width: 100%; padding: 0.85rem; background: #3b82f6; color: #ffffff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+  .calc-btn { width: 100%; padding: 0.85rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
   .calc-btn:hover { opacity: 0.85; }
   
   .result-box { margin-top: 2rem; padding: 1.5rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; display: none; }
@@ -130,7 +35,6 @@
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
   }
-  
   .embassy-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -138,7 +42,18 @@
     border-radius: 8px;
     font-size: 0.9rem;
   }
-  .embassy-card strong { color: #3b82f6; display: block; margin-bottom: 0.25rem; }
+  .embassy-card strong { color: var(--category-color); display: block; margin-bottom: 0.25rem; }
+  
+  .theme-toggle-btn {
+    background: var(--background);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
 </style>
 <!-- Script to apply theme immediately before paint to prevent flashing -->
 <script>
@@ -148,23 +63,26 @@
   })();
 </script>
 </head>
-<body>
+<body style="--category-color: var(--c-travel, #3b82f6);">
 
 <header class="site-header">
   <div class="util-row">
-    <a href="#" class="brand"><span class="brand-mark">L</span><span>LamaStudio<small>Travel</small></span></a>
-    <div style="display: flex; gap: 1rem; align-items: center;">
-      <button class="theme-toggle-btn" id="themeToggleBtn" type="button">🌓 Toggle Light/Dark</button>
-      <a href="#" style="font-size: 0.9rem; font-weight: 600; color: #3b82f6; text-decoration: none;">← Back</a>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Travel</small></span></a>
+    </div>
+    <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+      <button class="theme-toggle-btn" id="themeToggleBtn" type="button">🌓 Toggle Theme</button>
+      <a href="index.html" style="font-size: 0.9rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Travel Tools</a>
     </div>
   </div>
 </header>
 
 <main>
-  <section style="display: block; max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
-    <div style="text-align: center; margin-bottom: 1.5rem;">
-      <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 2rem; margin-bottom: 0.5rem;">Global Embassy & Consulate Locator</h1>
-      <p style="color: var(--text-muted); font-size: 1rem;">Pinpoint all high commissions, embassies, and regional consulates for any country simultaneously on one map.</p>
+  <section class="dashboard" style="display: block; max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+    <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
+      <span class="eyebrow" style="color: var(--category-color);">Travel Tool 10</span>
+      <h1>Comprehensive Global Embassy & Consulate Locator</h1>
+      <p class="lede">Pinpoint all high commissions, embassies, and regional consulates for any country on a single dynamic map view.</p>
     </div>
     
     <div class="tool-container">
@@ -182,6 +100,10 @@
             <option value="fr">France</option>
             <option value="ca">Canada</option>
             <option value="au">Australia</option>
+            <option value="de">Germany</option>
+            <option value="cn">China</option>
+            <option value="in">India</option>
+            <option value="jp">Japan</option>
           </select>
         </div>
 
@@ -196,8 +118,12 @@
             <option value="ca">Canada</option>
             <option value="au">Australia</option>
             <option value="fr">France</option>
+            <option value="de">Germany</option>
             <option value="cn">China</option>
             <option value="sa">Saudi Arabia</option>
+            <option value="tr">Turkey</option>
+            <option value="in">India</option>
+            <option value="jp">Japan</option>
           </select>
         </div>
       </div>
@@ -205,7 +131,7 @@
       <button class="calc-btn" id="mapSubmitBtn" type="button">Map All Missions on Page</button>
       
       <div class="result-box" id="embassyResult">
-        <h4 style="color: #3b82f6; margin-bottom: 0.5rem;">Diplomatic Mission Network Map</h4>
+        <h4 style="color: var(--category-color); margin-bottom: 0.5rem;">Diplomatic Mission Network Map</h4>
         <p style="font-size: 0.85rem; color: var(--text-muted);">Inspect individual pins on the map or review emergency hotlines below.</p>
         
         <div id="map"></div>
@@ -215,44 +141,48 @@
   </section>
 </main>
 
+<footer class="site-footer" style="margin-top: 4rem;">
+  <div class="footer-bottom" style="text-align:center; padding: 2rem;"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
 <!-- Leaflet JS Library -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
   let mapInstance = null;
   let markersLayer = null;
 
-  // Global Directory Matrix covering multi-city branches
+  // Granular Global Directory Database covering multiple offices per state matrix
   const globalEmbassiesDatabase = {
     "pk_us": {
       center: [30.3, 69.3], zoom: 5,
       missions: [
-        { name: "U.S. Embassy - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 4000", lat: 33.7294, lng: 73.1118 },
-        { name: "U.S. Consulate General - Karachi", address: "Plot 4-5 Air Force Officers Housing Scheme, Karachi", phone: "+92 21 3527 5000", lat: 24.8471, lng: 67.0326 },
-        { name: "U.S. Consulate General - Lahore", address: "Lake Road, Old Campus, Lahore", phone: "+92 42 3603 4000", lat: 31.5600, lng: 74.3220 }
+        { name: "U.S. Embassy - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 4000", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=US+Embassy+Islamabad" },
+        { name: "U.S. Consulate General - Karachi", address: "Plot 4-5 Air Force Officers Housing Scheme, Karachi", phone: "+92 21 3527 5000", lat: 24.8471, lng: 67.0326, maps: "https://maps.google.com/?q=US+Consulate+General+Karachi" },
+        { name: "U.S. Consulate General - Lahore", address: "Lake Road, Old Campus, Lahore", phone: "+92 42 3603 4000", lat: 31.5600, lng: 74.3220, maps: "https://maps.google.com/?q=US+Consulate+Lahore" }
       ]
     },
     "pk_uk": {
       center: [30.3, 69.3], zoom: 5,
       missions: [
-        { name: "British High Commission - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 2000", lat: 33.7262, lng: 73.1132 },
-        { name: "British Deputy High Commission - Karachi", address: "Shahrah-e-Iran, Clifton, Karachi", phone: "+92 21 3582 7000", lat: 24.8138, lng: 67.0311 }
+        { name: "British High Commission - Islamabad", address: "Ramna 5, Diplomatic Enclave, Islamabad", phone: "+92 51 201 2000", lat: 33.7262, lng: 73.1132, maps: "https://maps.google.com/?q=British+High+Commission+Islamabad" },
+        { name: "British Deputy High Commission - Karachi", address: "Shahrah-e-Iran, Clifton, Karachi", phone: "+92 21 3582 7000", lat: 24.8138, lng: 67.0311, maps: "https://maps.google.com/?q=British+Deputy+High+Commission+Karachi" }
       ]
     },
     "pk_pk": {
       center: [33.68, 73.04], zoom: 11,
       missions: [
-        { name: "Ministry of Foreign Affairs - Islamabad", address: "Constitution Ave, G-5, Islamabad", phone: "+92 51 921 0335", lat: 33.7275, lng: 73.0850 }
+        { name: "Ministry of Foreign Affairs - Islamabad", address: "Constitution Ave, G-5, Islamabad", phone: "+92 51 921 0335", lat: 33.7275, lng: 73.0850, maps: "https://maps.google.com/?q=Ministry+of+Foreign+Affairs+Islamabad" }
       ]
     },
     "usa_us": {
       center: [38.89, -77.04], zoom: 12,
-      missions: [{ name: "U.S. Department of State - Washington D.C.", address: "2201 C St NW, Washington, DC", phone: "+1 202 501 4444", lat: 38.8951, lng: -77.0478 }]
+      missions: [{ name: "U.S. Department of State - Washington D.C.", address: "2201 C St NW, Washington, DC", phone: "+1 202 501 4444", lat: 38.8951, lng: -77.0478, maps: "https://maps.google.com/?q=US+Department+of+State+Washington" }]
     },
     "usa_pk": {
       center: [38.94, -77.06], zoom: 5,
       missions: [
-        { name: "Embassy of Pakistan - Washington D.C.", address: "3517 International Ct NW, Washington, DC", phone: "+1 202 243 6500", lat: 38.9431, lng: -77.0625 },
-        { name: "Pakistan Consulate General - New York", address: "12 E 65th St, New York, NY", phone: "+1 212 879 5800", lat: 40.7650, lng: -73.9680 }
+        { name: "Embassy of Pakistan - Washington D.C.", address: "3517 International Ct NW, Washington, DC", phone: "+1 202 243 6500", lat: 38.9431, lng: -77.0625, maps: "https://maps.google.com/?q=Embassy+of+Pakistan+Washington+DC" },
+        { name: "Pakistan Consulate General - New York", address: "12 E 65th St, New York, NY", phone: "+1 212 879 5800", lat: 40.7650, lng: -73.9680, maps: "https://maps.google.com/?q=Pakistan+Consulate+New+York" }
       ]
     }
   };
@@ -265,8 +195,8 @@
     const record = globalEmbassiesDatabase[key] || {
       center: [33.72, 73.11], zoom: 6,
       missions: [
-        { name: "Embassy/Consulate Representation", address: "Capital Diplomatic Core Area", phone: "+1 (800) 555-0199", lat: 33.7294, lng: 73.1118 },
-        { name: "Consular Regional Branch", address: "Secondary Commercial District Hub", phone: "+1 (800) 555-0188", lat: 24.8471, lng: 67.0326 }
+        { name: "Diplomatic Representation", address: "Capital Diplomatic Core Area", phone: "+1 (800) 555-0199", lat: 33.7294, lng: 73.1118, maps: "https://maps.google.com/?q=Embassy+Consulate" },
+        { name: "Regional Consular Office", address: "Secondary Commercial District Hub", phone: "+1 (800) 555-0188", lat: 24.8471, lng: 67.0326, maps: "https://maps.google.com/?q=Consulate+General" }
       ]
     };
 
@@ -306,7 +236,7 @@
           <strong>📍 ${mission.name}</strong>
           <p style="margin: 0.25rem 0; color: var(--text-muted);">${mission.address}</p>
           <p style="margin: 0.25rem 0;">📞 <strong>Hotline:</strong> ${mission.phone}</p>
-          <a href="https://maps.google.com/?q=${mission.lat},${mission.lng}" target="_blank" style="display: inline-block; margin-top: 0.5rem; color: #3b82f6; font-weight: 700; text-decoration: none;">Get Directions ↗</a>
+          <a href="${mission.maps}" target="_blank" style="display: inline-block; margin-top: 0.5rem; color: var(--category-color); font-weight: 700; text-decoration: none;">Get Directions ↗</a>
         `;
         listContainer.appendChild(card);
       });
@@ -334,5 +264,6 @@
     }
   });
 </script>
+<script src="../../script.js"></script>
 </body>
 </html>

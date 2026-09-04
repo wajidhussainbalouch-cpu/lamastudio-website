@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sleep Cycle & Wake-Up Calculator — LamaStudio Health Hub</title>
+<meta name="description" content="Calculate optimal bedtimes and wake-up times based on 90-minute sleep cycles to avoid grogginess.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; display: none; }
+  .cycle-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  .cycle-item { background: var(--surface); border: 1px solid var(--border); padding: 0.85rem 1rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; }
+  .cycle-item span { color: var(--category-color); font-weight: 700; }
+</style>
+</head>
+<body style="--category-color: var(--c-health, #e74c3c);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Sleep Calculator</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Sleep Cycle &amp; Wake-Up Calculator</h1>
+    
+    <div class="form-group">
+      <label for="calcMode">Calculation Mode</label>
+      <select id="calcMode" class="form-control" onchange="toggleMode()">
+        <option value="wake">I want to wake up at...</option>
+        <option value="sleep">I want to go to sleep at...</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="timeInput" id="timeLabel">Target Wake-Up Time</label>
+      <input type="time" id="timeInput" class="form-control" value="07:00" required>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="calculateSleep()">Calculate Cycles</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; display: block; text-align: center;" id="resultTitle">Optimal Times to Sleep</span>
+      <div class="cycle-list" id="cycleList"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+function toggleMode() {
+  const mode = document.getElementById('calcMode').value;
+  const label = document.getElementById('timeLabel');
+  if (mode === 'wake') {
+    label.innerText = "Target Wake-Up Time";
+  } else {
+    label.innerText = "Target Bedtime";
+  }
+}
+
+function calculateSleep() {
+  const mode = document.getElementById('calcMode').value;
+  const timeVal = document.getElementById('timeInput').value;
+
+  if (!timeVal) {
+    alert('Please enter a valid time.');
+    return;
+  }
+
+  const [hours, minutes] = timeVal.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  const cycleList = document.getElementById('cycleList');
+  cycleList.innerHTML = '';
+
+  // Average person takes 14 minutes to fall asleep
+  const fallAsleepBufferMinutes = 14;
+
+  if (mode === 'wake') {
+    document.getElementById('resultTitle').innerText = "Optimal Bedtimes (to wake up refreshed)";
+    // Count backwards for 6, 5, 4, 3 cycles (each cycle = 90 mins)
+    [6, 5, 4, 3].forEach(cycles => {
+      const totalMinutesBack = (cycles * 90) + fallAsleepBufferMinutes;
+      const targetDate = new Date(date.getTime() - totalMinutesBack * 60000);
+      const timeStr = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const div = document.createElement('div');
+      div.className = 'cycle-item';
+      div.innerHTML = `${cycles} Sleep Cycles (${cycles * 1.5} Hours) <span>${timeStr}</span>`;
+      cycleList.appendChild(div);
+    });
+  } else {
+    document.getElementById('resultTitle').innerText = "Optimal Wake-Up Times";
+    // Count forwards for 3, 4, 5, 6 cycles from bedtime + buffer
+    const sleepStart = new Date(date.getTime() + fallAsleepBufferMinutes * 60000);
+    [3, 4, 5, 6].forEach(cycles => {
+      const totalMinutesForward = cycles * 90;
+      const targetDate = new Date(sleepStart.getTime() + totalMinutesForward * 60000);
+      const timeStr = targetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const div = document.createElement('div');
+      div.className = 'cycle-item';
+      div.innerHTML = `${cycles} Sleep Cycles (${cycles * 1.5} Hours) <span>${timeStr}</span>`;
+      cycleList.appendChild(div);
+    });
+  }
+
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

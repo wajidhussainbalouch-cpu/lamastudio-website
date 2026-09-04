@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Body Shape Silhouette & Style Guide — LamaStudio Fashion Hub</title>
+<meta name="description" content="Determine your silhouette type based on shoulder, waist, and hip proportions to discover flattering cuts.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; text-align: center; display: none; }
+  .result-value { font-size: 1.75rem; font-weight: 700; color: var(--category-color); margin: 0.5rem 0; }
+</style>
+</head>
+<body style="--category-color: var(--c-fashion, #e91e63);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Body Silhouette</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Body Silhouette &amp; Style Guide</h1>
+    
+    <div class="form-group">
+      <label for="shoulders">Shoulder Width Relative to Hips</label>
+      <select id="shoulders" class="form-control">
+        <option value="wider">Significantly wider than hips (Inverted Triangle)</option>
+        <option value="balanced">Balanced / Similar width to hips</option>
+        <option value="narrower">Narrower than hips (Pear / Triangle)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="waist">Waist Definition</label>
+      <select id="waist" class="form-control">
+        <option value="defined">Well-defined / Narrow waist</option>
+        <option value="straight">Straight / Un-accentuated waist (Rectangle)</option>
+      </select>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="analyzeShape()">Analyze Silhouette</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Detected Silhouette Category</span>
+      <div class="result-value" id="shapeOutput">Hourglass</div>
+      <p id="shapeAdvice" style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.5;"></p>
+    </div>
+  </div>
+</main>
+
+<script>
+function analyzeShape() {
+  const shoulders = document.getElementById('shoulders').value;
+  const waist = document.getElementById('waist').value;
+
+  let shape = "Hourglass Silhouette";
+  let advice = "Your shoulders and hips are balanced with a distinct waistline. Opt for wrap dresses, fitted waist belts, and tailored pieces that emphasize natural curves.";
+
+  if (shoulders === 'wider') {
+    shape = "Inverted Triangle Silhouette";
+    advice = "Your upper body is broader. Balance your silhouette with A-line skirts, wide-leg trousers, and V-necklines to draw vertical lines downward.";
+  } else if (shoulders === 'narrower') {
+    shape = "Pear / Triangle Silhouette";
+    advice = "Your hips are fuller than your shoulders. Highlight your upper torso with statement sleeves, bright top layers, and structured jackets paired with dark bottoms.";
+  } else if (shoulders === 'balanced' && waist === 'straight') {
+    shape = "Rectangle / Athletic Silhouette";
+    advice = "Your proportions are uniform. Create artificial curves and waist definition using belted jackets, ruffles, peplum tops, and textured layering.";
+  }
+
+  document.getElementById('shapeOutput').innerText = shape;
+  document.getElementById('shapeAdvice').innerText = advice;
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

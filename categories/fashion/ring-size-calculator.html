@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ring Size Circumference Calculator — LamaStudio Fashion Hub</title>
+<meta name="description" content="Calculate your precise ring size using finger circumference measurements in millimeters or inches.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-container { max-width: 700px; margin: 3rem auto; padding: 0 1rem; }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+  .form-control { width: 100%; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+  .form-control:focus { outline: none; border-color: var(--category-color); }
+  .calc-btn { width: 100%; background: var(--category-color); color: #fff; border: none; border-radius: 8px; padding: 0.85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-top: 1rem; }
+  .calc-btn:hover { opacity: 0.85; }
+  .result-box { margin-top: 2rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; text-align: center; display: none; }
+  .result-value { font-size: 2.25rem; font-weight: 700; color: var(--category-color); font-family: 'JetBrains Mono', monospace; margin: 0.5rem 0; }
+</style>
+</head>
+<body style="--category-color: var(--c-fashion, #e91e63);">
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Ring Size Finder</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main class="tool-container">
+  <div class="calc-card">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.75rem; margin-top: 0.4rem; margin-bottom: 1.5rem;">Ring Size Circumference Calculator</h1>
+    
+    <div class="form-group">
+      <label for="circumference">Finger Circumference (Millimeters)</label>
+      <input type="number" id="circumference" class="form-control" placeholder="e.g., 54" required>
+    </div>
+
+    <button type="button" class="calc-btn" onclick="calculateRingSize()">Calculate Ring Size</button>
+
+    <div class="result-box" id="resultBox">
+      <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Estimated US Ring Size</span>
+      <div class="result-value" id="ringOutput">Size 7</div>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Standard jewelry sizing reference chart.</p>
+    </div>
+  </div>
+</main>
+
+<script>
+function calculateRingSize() {
+  const mm = parseFloat(document.getElementById('circumference').value);
+
+  if (!mm || mm <= 30 || mm > 90) {
+    alert('Please enter a valid finger circumference in mm (typically 40mm to 75mm).');
+    return;
+  }
+
+  let usSize = "7";
+  if (mm <= 46.8) usSize = "4";
+  else if (mm <= 49.3) usSize = "5";
+  else if (mm <= 51.9) usSize = "6";
+  else if (mm <= 54.4) usSize = "7";
+  else if (mm <= 57.0) usSize = "8";
+  else if (mm <= 59.5) usSize = "9";
+  else if (mm <= 62.1) usSize = "10";
+  else usSize = "11+";
+
+  document.getElementById('ringOutput').innerText = `US Size ${usSize} (${mm} mm)`;
+  document.getElementById('resultBox').style.display = 'block';
+}
+</script>
+<script src="../../script.js"></script>
+</body>
+</html>

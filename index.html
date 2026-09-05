@@ -1,295 +1,763 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LamaStudio — App & Software Portal | DG Khan, Pakistan</title>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LamaStudio — App & Software Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+:root {
+  --c-tech: #38bdf8;
+  --c-dev: #3b82f6;
+  --c-productivity: #10b981;
+  --c-security: #06b6d4;
+  --c-business: #f59e0b;
+  --c-sports: #f97316;
+  --c-travel: #14b8a6;
+  --c-news: #ef4444;
+  --c-fashion: #ec4899;
+  --c-education: #8b5cf6;
+  --c-weather: #60a5fa;
+  --c-health: #84cc16;
+}
+
+.ad-banner-slot {
+  width: 100%;
+  max-width: 728px;
+  margin: 1rem auto;
+  background: var(--surface-card, rgba(255,255,255,0.03));
+  border: 1px dashed var(--border, rgba(255,255,255,0.15));
+  border-radius: 8px;
+  text-align: center;
+  padding: 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+.ad-banner-header {
+  margin-top: 0.5rem;
+  margin-bottom: -0.5rem;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.btn-glow-outline {
+  background: transparent;
+  border: 2px solid;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.btn-glow-apps { color: #38bdf8; border-color: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.2); }
+.btn-glow-apps:hover { background: rgba(56, 189, 248, 0.12); box-shadow: 0 0 20px rgba(56, 189, 248, 0.4); }
+.btn-glow-software { color: #a78bfa; border-color: #a78bfa; box-shadow: 0 0 12px rgba(167, 139, 250, 0.2); }
+.btn-glow-software:hover { background: rgba(167, 139, 250, 0.12); box-shadow: 0 0 20px rgba(167, 139, 250, 0.4); }
+.btn-glow-tools { color: #34d399; border-color: #34d399; box-shadow: 0 0 12px rgba(52, 211, 153, 0.2); }
+.btn-glow-tools:hover { background: rgba(52, 211, 153, 0.12); box-shadow: 0 0 20px rgba(52, 211, 153, 0.4); }
+
+.collapse-list { display: none; }
+.collapse-list.show { display: block; }
+.see-more-btn {
+  background: none;
+  border: none;
+  color: var(--c-primary, #38bdf8);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 0;
+  margin-top: 4px;
+  text-align: left;
+  display: inline-block;
+}
+.see-more-btn:hover { text-decoration: underline; }
+
+.blog-card-custom {
+  background: var(--surface-card, rgba(255,255,255,0.02));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.blog-card-custom:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+.blog-card-banner {
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.blog-card-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+.blog-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+.blog-card-custom h3 {
+  font-size: 1.15rem;
+  color: var(--text, #fff);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+.blog-card-custom p {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+.blog-read-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.blog-read-link:hover { text-decoration: underline; }
+
+.tools-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  justify-content: flex-end;
+}
+.tools-drawer-overlay.open { display: flex; }
+.tools-drawer {
+  width: 100%;
+  max-width: 380px;
+  height: 100%;
+  background: var(--surface-bg, #0f172a);
+  border-left: 1px solid var(--border, rgba(255,255,255,0.1));
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.tools-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
+  padding-bottom: 0.75rem;
+}
+.tools-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tools-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: var(--text, #fff);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.tools-cat-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateX(4px);
+}
+</style>
 </head>
 <body>
 
-  <!-- Top Independence Day Special Banner -->
-  <div class="ind-banner">
-    <span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation from DG Khan. 🇵🇰
-  </div>
+<div class="ind-banner">
+  <span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.
+</div>
 
-  <!-- Site Header -->
-  <header class="site-header">
-    <div class="util-row">
-      <a href="#" class="brand">
-        <div class="brand-mark">L</div>
-        <div>
-          LamaStudio
-          <small>App & Software Portal</small>
-        </div>
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open sidebar menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="index.html" class="brand">
+        <span class="brand-mark">L</span>
+        <span>LamaStudio<small>App & Software Portal</small></span>
       </a>
-      <div class="header-actions">
-        <a href="#signin" class="btn-ghost sign-in-btn">Sign In</a>
-        <button class="theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">
-          <!-- Sun Icon -->
-          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-          <!-- Moon Icon -->
-          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-        </button>
-        <button class="menu-toggle" id="menuToggleBtn" aria-label="Open Menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </div>
     </div>
-
-    <!-- Category Filter Strip (All 11 Categories) -->
-    <div class="category-strip">
-      <div class="category-track" id="categoryTrack">
-        <button class="cat-pill is-active" data-filter="all"><span class="dot"></span> All Topics</button>
-        <button class="cat-pill" data-filter="tech"><span class="dot"></span> Tech & Code</button>
-        <button class="cat-pill" data-filter="developer"><span class="dot"></span> Developer Tools</button>
-        <button class="cat-pill" data-filter="productivity"><span class="dot"></span> Productivity</button>
-        <button class="cat-pill" data-filter="security"><span class="dot"></span> Network & Security</button>
-        <button class="cat-pill" data-filter="business"><span class="dot"></span> Business</button>
-        <button class="cat-pill" data-filter="sports"><span class="dot"></span> Sports Hub</button>
-        <button class="cat-pill" data-filter="travel"><span class="dot"></span> Travel & Tourism</button>
-        <button class="cat-pill" data-filter="news"><span class="dot"></span> Global News</button>
-        <button class="cat-pill" data-filter="fashion"><span class="dot"></span> Fashion & Style</button>
-        <button class="cat-pill" data-filter="education"><span class="dot"></span> Education</button>
-        <button class="cat-pill" data-filter="weather"><span class="dot"></span> Weather Updates</button>
-        <button class="cat-pill" data-filter="health"><span class="dot"></span> Health & Wellness</button>
+    
+    <div class="header-actions" style="display: flex; align-items: center; gap: 0.75rem;">
+      <div id="authSlot">
+        <a href="signin.html" class="btn-ghost" style="font-size: 0.85rem; padding: 0.4rem 0.9rem; text-decoration: none;">Sign In</a>
       </div>
-    </div>
-  </header>
 
-  <!-- Advertisement Banner (Header Slot) -->
-  <div class="ad-banner-slot">
-    <div class="ad-box">
-      <span>Advertisement Banner (Header)</span> — Google AdSense / Sponsor Slot
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
     </div>
   </div>
 
-  <!-- Sidebar Drawer Navigation -->
-  <div class="sidebar-overlay" id="sidebarOverlay">
-    <nav class="sidebar-drawer">
-      <div class="sidebar-header">
-        <span class="eyebrow">Navigation Menu</span>
-        <button class="sidebar-close" id="sidebarCloseBtn">✕</button>
-      </div>
-      <div class="sidebar-nav-group">
-        <h5>Quick Links</h5>
-        <ul>
-          <li><a href="#hero">Dashboard Home</a></li>
-          <li><a href="#appsSection">Explore Applications</a></li>
-          <li><a href="#signin">Sign In Portal</a></li>
-        </ul>
-      </div>
-    </nav>
+  <div class="category-strip">
+    <div class="category-track" role="tablist" aria-label="Filter by category">
+      <a href="categories/tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="categories/developer-tools/" class="cat-pill" style="--pc:var(--c-dev)"><span class="dot"></span>Developer Tools</a>
+      <a href="categories/productivity/" class="cat-pill" style="--pc:var(--c-productivity)"><span class="dot"></span>Productivity</a>
+      <a href="categories/network-security/" class="cat-pill" style="--pc:var(--c-security)"><span class="dot"></span>Network & Security</a>
+      <a href="categories/business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="categories/sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="categories/travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="categories/news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="categories/fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="categories/education/" class="cat-pill" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="categories/weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Updates</a>
+      <a href="categories/health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
   </div>
 
-  <!-- Hero Dashboard Layout -->
-  <main class="dashboard" id="hero">
-    <section class="hero-panel">
-      <span class="eyebrow">📍 DG Khan, Pakistan</span>
-      <h1>One dashboard for the apps, tools, and ideas <em>LamaStudio ships.</em></h1>
-      <p class="lede">Explore our categorized tools, stay updated with real-time news, and leverage high-performance software engineering built locally for global impact.</p>
+  <div class="ad-banner-slot ad-banner-header">
+    <span>Advertisement Banner (Header)</span>
+  </div>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay">
+  <div class="sidebar-drawer" id="sidebarDrawer" role="dialog" aria-modal="true" aria-label="Sidebar Menu">
+    <div class="sidebar-header">
+      <span class="brand" style="font-size: 0.95rem;">
+        <span class="brand-mark" style="width:26px;height:26px;font-size:0.8rem;">L</span>
+        <span>LamaStudio</span>
+      </span>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">✕</button>
+    </div>
+    
+    <div class="sidebar-nav-group">
+      <h5>Our Apps</h5>
+      <ul>
+        <li><a href="apps/lamavpnpro/">🛡️ LamaVPN Pro</a></li>
+        <li><a href="apps/lamasky/">🌤️ LamaSky</a></li>
+        <li><a href="apps/lamapixelstudio/">🎨 lamaPixelStudio</a></li>
+        <li><a href="apps/lamaiqmaster/">🧠 LamaIQMaster</a></li>
+        <li><a href="apps/lamamulticalendar/">📅 LamaMultiCalendar</a></li>
+        <li><a href="apps/lamaphotoresizer/">🖼️ LamaPhotoResizer</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-nav-group">
+      <h5>Website Links</h5>
+      <ul>
+        <li><a href="index.html">Home Dashboard</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="about.html">About</a></li>
+        <li id="sidebarAuthItem"><a href="signin.html">🔐 Sign In / Account</a></li>
+        <li><a href="faqs.html">FAQs</a></li>
+        <li><a href="privacy.html">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="tools-drawer-overlay" id="toolsDrawerOverlay">
+  <div class="tools-drawer" id="toolsDrawer">
+    <div class="tools-drawer-header">
+      <span style="font-weight: 700; font-size: 1.05rem; color: var(--text, #fff);">Web Tools Categories</span>
+      <button onclick="toggleToolsDrawer(false)" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
+    </div>
+    <div class="tools-category-list">
+      <a href="categories/tech/" class="tools-cat-item"><span style="color:var(--c-tech)">💻</span> Tech & Code Tools</a>
+      <a href="categories/developer-tools/" class="tools-cat-item"><span style="color:var(--c-dev)">🛠️</span> Developer Utilities</a>
+      <a href="categories/productivity/" class="tools-cat-item"><span style="color:var(--c-productivity)">⚡</span> Productivity Suites</a>
+      <a href="categories/network-security/" class="tools-cat-item"><span style="color:var(--c-security)">🛡️</span> Security & Network</a>
+      <a href="categories/business/" class="tools-cat-item"><span style="color:var(--c-business)">💳</span> Business & Finance</a>
+      <a href="categories/sports/" class="tools-cat-item"><span style="color:var(--c-sports)">⚽</span> Sports Trackers</a>
+      <a href="categories/travel/" class="tools-cat-item"><span style="color:var(--c-travel)">✈️</span> Travel Maps & Guides</a>
+      <a href="categories/news/" class="tools-cat-item"><span style="color:var(--c-news)">📰</span> News Feeds</a>
+      <a href="categories/fashion/" class="tools-cat-item"><span style="color:var(--c-fashion)">👗</span> Fashion Checkouts</a>
+      <a href="categories/education/" class="tools-cat-item"><span style="color:var(--c-education)">🎓</span> EdTech Hubs</a>
+      <a href="categories/weather/" class="tools-cat-item"><span style="color:var(--c-weather)">🌦️</span> Weather Trackers</a>
+      <a href="categories/health/" class="tools-cat-item"><span style="color:var(--c-health)">💚</span> Health & Habit Tools</a>
+    </div>
+  </div>
+</div>
+
+<main>
+  <section class="dashboard">
+    <div class="hero-panel">
+      <span class="eyebrow" id="welcomeEyebrow">DG Khan, Pakistan</span>
+      <h1 id="heroTitle">One dashboard for the apps, tools, and <em>ideas</em> LamaStudio ships.</h1>
+      <p class="lede">Explore our categorized tools, stay updated with real-time news, or filter instantly using the top bar.</p>
+      
       <div class="hero-cta">
-        <a href="#appsSection" class="btn-action">Explore Tools</a>
-        <a href="#signin" class="btn-ghost">Sign In Now</a>
+        <a href="#apps" class="btn-glow-outline btn-glow-apps">Explore Apps</a>
+        <a href="#software" class="btn-glow-outline btn-glow-software">Explore Software</a>
+        <button onclick="toggleToolsDrawer(true)" class="btn-glow-outline btn-glow-tools" style="background:transparent; cursor:pointer;">Explore Web Tools</button>
       </div>
-    </section>
+    </div>
 
-    <aside class="side-widgets">
+    <div class="side-widgets">
       <div class="widget">
         <div class="widget-head">
-          <span class="widget-title">Live Systems Status</span>
-          <span class="live-dot"><i></i> Operational</span>
+          <span class="widget-title">Featured Stream</span>
+          <span class="live-dot"><i></i>Live Video</span>
         </div>
-        <div class="stats-grid">
-          <div class="stat-cell"><b>12</b><span>Active Apps</span></div>
-          <div class="stat-cell"><b>DGK</b><span>HQ Base</span></div>
-          <div class="stat-cell"><b>100%</b><span>Uptime</span></div>
+        <div class="video-wrapper">
+          <iframe src="https://www.youtube.com/embed/BwOW3MkqaKc" title="LamaStudio Featured Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
         </div>
       </div>
-    </aside>
-  </main>
 
-  <!-- Live Marquee Ticker -->
-  <div class="ticker-container-bottom">
-    <div class="ticker-wrap">
-      <div class="ticker-track">
-        <div class="ticker-item"><span class="tag">PAKISTAN</span> 14 August Independence Day special release deployed successfully.</div>
-        <div class="ticker-item"><span class="tag">TECH</span> 11 category modules integrated with lightning-fast filtering.</div>
-        <div class="ticker-item"><span class="tag">DG KHAN</span> Regional developers crafting world-class tools.</div>
+      <div class="widget" style="padding: 1.25rem; display: flex; gap: 0.75rem;">
+        <a href="https://www.youtube.com/channel/UCi1w07U76CVSjA9yuJArxEQ" target="_blank" class="btn-action" style="flex: 1; text-align: center; font-size: 0.85rem; background: #ff0000; color: #ffffff; border: none;">▶ YouTube</a>
+        <a href="https://www.facebook.com/lamastudiopk" target="_blank" class="btn-action" style="flex: 1; text-align: center; font-size: 0.85rem; background: #1877f2; color: #ffffff; border: none;">f Facebook</a>
       </div>
-    </div>
-  </div>
-
-  <!-- Section: 12 Apps / Software Portal Grid -->
-  <section class="section" id="appsSection">
-    <div class="section-head">
-      <div>
-        <span class="eyebrow">Ecosystem Catalog</span>
-        <h2>Featured Software & Applications</h2>
-      </div>
-      <p>Click any application card below to launch its interactive overview and configuration panel.</p>
-    </div>
-
-    <div class="app-grid" id="appGrid">
-      <!-- 1. Tech & Code -->
-      <article class="app-card" data-category="tech" data-title="CodeMorph IDE" data-desc="A lightning-fast lightweight cloud code editor built for instant prototyping." data-price="Free / Pro $9/mo">
-        <div class="app-icon">⚡</div>
-        <span class="tag-pill">Tech & Code</span>
-        <h3>CodeMorph IDE</h3>
-        <p class="desc">A lightning-fast lightweight cloud code editor built for instant prototyping.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 2. Developer Tools -->
-      <article class="app-card" data-category="developer" data-title="DevToolbox Suite" data-desc="Essential offline utilities including JSON formatters, JWT decoders, and regex testers." data-price="Free">
-        <div class="app-icon">🛠️</div>
-        <span class="tag-pill">Developer Tools</span>
-        <h3>DevToolbox Suite</h3>
-        <p class="desc">Essential offline utilities including JSON formatters, JWT decoders, and regex testers.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 3. Productivity -->
-      <article class="app-card" data-category="productivity" data-title="LedgerFlow Analytics" data-desc="Automated finance tracker providing deep insights into corporate expenditure." data-price="Pro $29/mo">
-        <div class="app-icon">📊</div>
-        <span class="tag-pill">Productivity</span>
-        <h3>LedgerFlow Analytics</h3>
-        <p class="desc">Automated finance tracker providing deep insights into corporate expenditure.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 4. Network & Security -->
-      <article class="app-card" data-category="security" data-title="NetGuard Shield" data-desc="Advanced firewall packet analyzer and secure proxy management dashboard." data-price="$19/mo">
-        <div class="app-icon">🔒</div>
-        <span class="tag-pill">Network & Security</span>
-        <h3>NetGuard Shield</h3>
-        <p class="desc">Advanced firewall packet analyzer and secure proxy management dashboard.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 5. Business -->
-      <article class="app-card" data-category="business" data-title="TaskMatrix Pro" data-desc="Minimal kanban task manager designed for high-focus independent teams." data-price="$5/mo">
-        <div class="app-icon">📋</div>
-        <span class="tag-pill">Business</span>
-        <h3>TaskMatrix Pro</h3>
-        <p class="desc">Minimal kanban task manager designed for high-focus independent teams.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 6. Sports Hub -->
-      <article class="app-card" data-category="sports" data-title="PacePulse Tracker" data-desc="Biometric telemetry companion built for regional athletes and runners." data-price="Free">
-        <div class="app-icon">⏱️</div>
-        <span class="tag-pill">Sports Hub</span>
-        <h3>PacePulse Tracker</h3>
-        <p class="desc">Biometric telemetry companion built for regional athletes and runners.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 7. Travel & Tourism -->
-      <article class="app-card" data-category="travel" data-title="NomadRoute AI" data-desc="Plan budget-friendly remote work itineraries across global cities effortlessly." data-price="Free Tier">
-        <div class="app-icon">🌍</div>
-        <span class="tag-pill">Travel & Tourism</span>
-        <h3>NomadRoute AI</h3>
-        <p class="desc">Plan budget-friendly remote work itineraries across global cities effortlessly.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 8. Global News -->
-      <article class="app-card" data-category="news" data-title="GlobalNews Pulse" data-desc="Aggregated real-time journalism feeds with zero clutter or tracking." data-price="Free">
-        <div class="app-icon">📰</div>
-        <span class="tag-pill">Global News</span>
-        <h3>GlobalNews Pulse</h3>
-        <p class="desc">Aggregated real-time journalism feeds with zero clutter or tracking.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 9. Fashion & Style -->
-      <article class="app-card" data-category="fashion" data-title="AuraStyle Studio" data-desc="Virtual garment conceptualizer and color-palette forecasting app." data-price="$12/mo">
-        <div class="app-icon">✨</div>
-        <span class="tag-pill">Fashion & Style</span>
-        <h3>AuraStyle Studio</h3>
-        <p class="desc">Virtual garment conceptualizer and color-palette forecasting app.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 10. Education -->
-      <article class="app-card" data-category="education" data-title="EduSpark Academy" data-desc="Interactive modules teaching coding, mathematics, and science principles." data-price="Free">
-        <div class="app-icon">🎓</div>
-        <span class="tag-pill">Education</span>
-        <h3>EduSpark Academy</h3>
-        <p class="desc">Interactive modules teaching coding, mathematics, and science principles.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 11. Weather Updates -->
-      <article class="app-card" data-category="weather" data-title="SkyCast DGK" data-desc="Hyper-local weather telemetry, radar maps, and atmospheric pressure monitoring." data-price="Free">
-        <div class="app-icon">🌤️</div>
-        <span class="tag-pill">Weather Updates</span>
-        <h3>SkyCast DGK</h3>
-        <p class="desc">Hyper-local weather telemetry, radar maps, and atmospheric pressure monitoring.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
-
-      <!-- 12. Health & Wellness -->
-      <article class="app-card" data-category="health" data-title="Zenith Sleep Studio" data-desc="Circadian rhythm analysis and soundscaping tool for pristine deep rest." data-price="Free">
-        <div class="app-icon">🌙</div>
-        <span class="tag-pill">Health & Wellness</span>
-        <h3>Zenith Sleep Studio</h3>
-        <p class="desc">Circadian rhythm analysis and soundscaping tool for pristine deep rest.</p>
-        <div class="card-actions"><button class="btn-action open-modal-btn">Quick View</button></div>
-      </article>
     </div>
   </section>
 
-  <!-- Quick-View Detail Modal Component -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-box" id="modalBox">
-      <button class="modal-close" id="modalCloseBtn">✕</button>
-      <div class="app-icon" id="modalIcon">⚡</div>
-      <h3 id="modalTitle">Tool Title</h3>
-      <p id="modalDesc">Detailed description goes here...</p>
-      <div class="modal-pricing-box">
-        <span>Pricing Plan</span>
-        <span class="price-tag" id="modalPrice">Free</span>
+  <section class="section" id="apps">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">The Ecosystem</span>
+        <h2>Apps &amp; utilities</h2>
       </div>
-      <div class="modal-actions">
-        <button class="btn-action" id="modalPrimaryBtn">Access Now</button>
-        <button class="btn-ghost-action" id="modalCloseAction">Close</button>
+    </div>
+    <div class="app-grid" id="appGrid">
+      <div class="app-card" data-category="business">
+        <div class="app-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">🛡️</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #f59e0b; text-transform: uppercase; display: block; margin-bottom: 4px;">Privacy & Security</span>
+          <h3>LamaVPN Pro</h3>
+          <p>A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.</p>
+          <a href="apps/lamavpnpro/" class="btn-action">View App</a>
+        </div>
       </div>
+      <div class="app-card" data-category="weather">
+        <div class="app-icon" style="background: rgba(96, 165, 250, 0.1); color: #60a5fa;">🌤️</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #60a5fa; text-transform: uppercase; display: block; margin-bottom: 4px;">Weather & Planning</span>
+          <h3>LamaSky</h3>
+          <p>Local weather, prayer-aligned scheduling, and daily planning built around how Pakistani users structure their day.</p>
+          <a href="apps/lamasky/" class="btn-action">View App</a>
+        </div>
+      </div>
+      <div class="app-card" data-category="business">
+        <div class="app-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">📅</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #f59e0b; text-transform: uppercase; display: block; margin-bottom: 4px;">Productivity</span>
+          <h3>LamaMultiCalendar</h3>
+          <p>Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.</p>
+          <a href="apps/lamamulticalendar/" class="btn-action">View App</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="software">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Desktop & Cloud</span>
+        <h2>Software space</h2>
+      </div>
+    </div>
+    <div class="app-grid" id="softwareGrid">
+      <div class="app-card" data-category="education">
+        <div class="app-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">🧠</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #8b5cf6; text-transform: uppercase; display: block; margin-bottom: 4px;">Cognitive Training</span>
+          <h3>LamaIQMaster</h3>
+          <p>Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.</p>
+          <a href="apps/lamaiqmaster/" class="btn-action">View App</a>
+        </div>
+      </div>
+      <div class="app-card" data-category="fashion">
+        <div class="app-icon" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">🖼️</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #ec4899; text-transform: uppercase; display: block; margin-bottom: 4px;">Photo Tools</span>
+          <h3>LamaPhotoResizer</h3>
+          <p>On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.</p>
+          <a href="apps/lamaphotoresizer/" class="btn-action">View App</a>
+        </div>
+      </div>
+      <div class="app-card" data-category="software">
+        <div class="app-icon" style="background: rgba(167, 139, 250, 0.1); color: #a78bfa;">💻</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #a78bfa; text-transform: uppercase; display: block; margin-bottom: 4px;">Desktop Utility</span>
+          <h3>LamaSync Engine</h3>
+          <p>High-performance local directory synchronization and automatic backup manager for power users.</p>
+          <span class="btn-action" style="opacity: 0.7; cursor: default;">Coming Soon</span>
+        </div>
+      </div>
+      <div class="app-card" data-category="software">
+        <div class="app-icon" style="background: rgba(52, 211, 153, 0.1); color: #34d399;">⚙️</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #34d399; text-transform: uppercase; display: block; margin-bottom: 4px;">System Software</span>
+          <h3>LamaPerf Monitor</h3>
+          <p>Lightweight cross-platform CPU, memory, and network telemetry collector built for minimal resource overhead.</p>
+          <span class="btn-action" style="opacity: 0.7; cursor: default;">In Development</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="blog">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">From the Studio</span>
+        <h2>Latest articles</h2>
+      </div>
+    </div>
+    <div class="blog-grid" id="blogGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(56, 189, 248, 0.12);">💻</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-tech);">
+              <span>Tech & Code</span>
+              <span style="color: var(--text-muted);">6 min read</span>
+            </div>
+            <h3>Building Robust Mobile Software in 2026</h3>
+            <p>Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.</p>
+          </div>
+          <a href="blogs/tech.html" class="blog-read-link" style="color: var(--c-tech);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(59, 130, 246, 0.12);">🛠️</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-dev);">
+              <span>Developer Tools</span>
+              <span style="color: var(--text-muted);">5 min read</span>
+            </div>
+            <h3>10 Essential Developer Tools for Faster Workflows</h3>
+            <p>Essential utilities, JSON formatters, regex debuggers, and local code accelerators to supercharge development efficiency.</p>
+          </div>
+          <a href="blogs/developer-tools.html" class="blog-read-link" style="color: var(--c-dev);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(16, 185, 129, 0.12);">⚡</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-productivity);">
+              <span>Productivity</span>
+              <span style="color: var(--text-muted);">5 min read</span>
+            </div>
+            <h3>10 Systems and Micro-Tools to Master Deep Work</h3>
+            <p>Conquer distractions, optimize daily focus blocks, and streamline tasks using minimal habit systems and time-box utils.</p>
+          </div>
+          <a href="blogs/productivity.html" class="blog-read-link" style="color: var(--c-productivity);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(6, 182, 212, 0.12);">🛡️</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-security);">
+              <span>Network & Security</span>
+              <span style="color: var(--text-muted);">6 min read</span>
+            </div>
+            <h3>10 Essential Security Defenses for Digital Privacy</h3>
+            <p>Protect user identity, audit network pipelines, and enforce zero-trust policies against modern cybersecurity vulnerabilities.</p>
+          </div>
+          <a href="blogs/network-security.html" class="blog-read-link" style="color: var(--c-security);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(245, 158, 11, 0.12);">💳</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-business);">
+              <span>Business</span>
+              <span style="color: var(--text-muted);">5 min read</span>
+            </div>
+            <h3>Local Payment Rails Are the New Table Stakes for Pakistani Apps</h3>
+            <p>EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.</p>
+          </div>
+          <a href="blogs/business.html" class="blog-read-link" style="color: var(--c-business);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(139, 92, 246, 0.12);">🎓</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-education);">
+              <span>Education</span>
+              <span style="color: var(--text-muted);">7 min read</span>
+            </div>
+            <h3>What EdTech Gets Wrong About Pakistani Classrooms</h3>
+            <p>Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.</p>
+          </div>
+          <a href="blogs/education.html" class="blog-read-link" style="color: var(--c-education);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(132, 204, 22, 0.12);">💚</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-health);">
+              <span>Health</span>
+              <span style="color: var(--text-muted);">4 min read</span>
+            </div>
+            <h3>Building Habit Apps That Don’t Guilt-Trip Users</h3>
+            <p>Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.</p>
+          </div>
+          <a href="blogs/health.html" class="blog-read-link" style="color: var(--c-health);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(236, 72, 153, 0.12);">👗</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-fashion);">
+              <span>Fashion</span>
+              <span style="color: var(--text-muted);">5 min read</span>
+            </div>
+            <h3>Designing for Small Screens: Lessons from Fashion E-Commerce</h3>
+            <p>What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.</p>
+          </div>
+          <a href="blogs/fashion.html" class="blog-read-link" style="color: var(--c-fashion);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(96, 165, 250, 0.12);">🌦️</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-weather);">
+              <span>Weather</span>
+              <span style="color: var(--text-muted);">6 min read</span>
+            </div>
+            <h3>Why Weather Apps Feel Unreliable in South Asia</h3>
+            <p>Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.</p>
+          </div>
+          <a href="blogs/weather.html" class="blog-read-link" style="color: var(--c-weather);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(249, 115, 22, 0.12);">⚽</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-sports);">
+              <span>Sports</span>
+              <span style="color: var(--text-muted);">5 min read</span>
+            </div>
+            <h3>Local Sports Fan Engagement on Budget Handsets</h3>
+            <p>How lightweight tracking engines keep users connected during live matches without draining battery or data.</p>
+          </div>
+          <a href="blogs/sports.html" class="blog-read-link" style="color: var(--c-sports);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(239, 68, 68, 0.12);">📰</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-news);">
+              <span>News</span>
+              <span style="color: var(--text-muted);">4 min read</span>
+            </div>
+            <h3>Delivering Low-Bandwidth News Feeds Effectively</h3>
+            <p>Optimizing payload sizes for intermittent regional internet coverage and seamless offline reading.</p>
+          </div>
+          <a href="blogs/news.html" class="blog-read-link" style="color: var(--c-news);">Read article →</a>
+        </div>
+      </div>
+
+      <div class="blog-card-custom">
+        <div class="blog-card-banner" style="background: rgba(20, 184, 166, 0.12);">✈️</div>
+        <div class="blog-card-body">
+          <div>
+            <div class="blog-meta-row" style="color: var(--c-travel);">
+              <span>Travel</span>
+              <span style="color: var(--text-muted);">6 min read</span>
+            </div>
+            <h3>Building Tourism Guides for Northern Pakistan</h3>
+            <p>Offline map caches and localized trail references for remote mountain areas with limited connectivity.</p>
+          </div>
+          <a href="blogs/travel.html" class="blog-read-link" style="color: var(--c-travel);">Read article →</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="brand">
+        <div class="brand-mark">L</div>
+        <span>LamaStudio</span>
+      </div>
+      <p>Independent software studio building resilient tools for modern digital lifestyles.</p>
+    </div>
+    
+    <div class="footer-col">
+      <h4>Categories</h4>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <a href="categories/tech/" style="color: var(--c-tech);">Tech & Code</a>
+        <a href="categories/developer-tools/" style="color: var(--c-dev);">Developer Tools</a>
+        <a href="categories/productivity/" style="color: var(--c-productivity);">Productivity</a>
+        <div class="collapse-list" id="moreCategories">
+          <a href="categories/network-security/" style="color: var(--c-security);">Network & Security</a>
+          <a href="categories/business/" style="color: var(--c-business);">Business</a>
+          <a href="categories/sports/" style="color: var(--c-sports);">Sports Hub</a>
+          <a href="categories/travel/" style="color: var(--c-travel);">Travel & Tourism</a>
+          <a href="categories/news/" style="color: var(--c-news);">Global News</a>
+          <a href="categories/fashion/" style="color: var(--c-fashion);">Fashion & Style</a>
+          <a href="categories/education/" style="color: var(--c-education);">Education</a>
+          <a href="categories/weather/" style="color: var(--c-weather);">Weather Updates</a>
+          <a href="categories/health/" style="color: var(--c-health);">Health & Wellness</a>
+        </div>
+        <button class="see-more-btn" id="toggleCategoriesBtn" onclick="toggleSection('moreCategories', 'toggleCategoriesBtn')">See More +</button>
+      </div>
+    </div>
+
+    <div class="footer-col">
+      <h4>Latest Blogs</h4>
+      <a href="blogs/tech.html" style="color: var(--c-tech);">Tech & Code Trends</a>
+      <a href="blogs/developer-tools.html" style="color: var(--c-dev);">Developer Tools Guide</a>
+      <a href="blogs/productivity.html" style="color: var(--c-productivity);">Productivity & Focus Guide</a>
+      <div class="collapse-list" id="moreBlogs">
+        <a href="blogs/network-security.html" style="color: var(--c-security);">Network & Security</a>
+        <a href="blogs/business.html" style="color: var(--c-business);">Business Rails</a>
+        <a href="blogs/education.html" style="color: var(--c-education);">EdTech Classrooms</a>
+        <a href="blogs/health.html" style="color: var(--c-health);">Habit Apps Health</a>
+        <a href="blogs/fashion.html" style="color: var(--c-fashion);">Fashion Screens</a>
+        <a href="blogs/weather.html" style="color: var(--c-weather);">Weather Tracking</a>
+        <a href="blogs/sports.html" style="color: var(--c-sports);">Sports Fan Hub</a>
+        <a href="blogs/news.html" style="color: var(--c-news);">Low-Bandwidth News</a>
+        <a href="blogs/travel.html" style="color: var(--c-travel);">Northern Tourism</a>
+      </div>
+      <button class="see-more-btn" id="toggleBlogsBtn" onclick="toggleSection('moreBlogs', 'toggleBlogsBtn')">See More +</button>
+    </div>
+    
+    <div class="footer-col">
+      <h4>Ecosystem</h4>
+      <div style="display: flex; flex-direction: column; gap: 6px;">
+        <a href="apps/lamavpnpro/">LamaVPN Pro</a>
+        <a href="apps/lamasky/">LamaSky Weather</a>
+        <a href="apps/lamapixelstudio/">lamaPixelStudio</a>
+        <div class="collapse-list" id="moreEcosystem">
+          <a href="apps/lamaphotoresizer/">LamaPhotoResizer</a>
+          <a href="apps/lamaiqmaster/">LamaIQMaster</a>
+          <a href="apps/lamamulticalendar/">LamaMultiCalendar</a>
+        </div>
+        <button class="see-more-btn" id="toggleEcosystemBtn" onclick="toggleSection('moreEcosystem', 'toggleEcosystemBtn')">See More +</button>
+      </div>
+    </div>
+    
+    <div class="footer-col">
+      <h4>Connect</h4>
+      <a href="https://www.youtube.com/channel/UCi1w07U76CVSjA9yuJArxEQ" target="_blank" rel="noopener">YouTube Studio</a>
+      <a href="https://www.facebook.com/lamastudiopk" target="_blank" rel="noopener">Facebook Community</a>
+      <span style="font-size:0.85rem; color:var(--text-muted);">contact@lamastudio.pk</span>
     </div>
   </div>
 
-  <!-- Sign In Modal Anchor Section -->
-  <div id="signin" style="padding: 2rem 0; text-align: center;">
-    <p style="color: var(--text-faint); font-size: 0.9rem;">Looking to log into your account? <a href="#" id="triggerSignIn" style="color: var(--accent); text-decoration: underline;">Open Sign In Portal</a></p>
+  <div class="ad-banner-slot">
+    <span>Advertisement Banner (Footer)</span>
   </div>
+  
+  <div class="footer-bottom">
+    <span>&copy; 2026 LamaStudio. All rights reserved.</span>
+    <span>Built with performance in mind.</span>
+  </div>
+</footer>
 
-  <!-- Site Footer -->
-  <footer class="site-footer">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <div class="brand">
-          <div class="brand-mark">L</div>
-          LamaStudio
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const savedUser = localStorage.getItem("lamastudio_user");
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      
+      const authSlot = document.getElementById("authSlot");
+      authSlot.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--text, #fff); font-size: 0.85rem; font-weight: 600; background: rgba(255,255,255,0.06); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">👤 ${user.name}</span>
+          <button onclick="signOut()" style="background: transparent; border: none; color: rgba(255,255,255,0.5); font-size: 0.75rem; cursor: pointer; text-decoration: underline;">Sign Out</button>
         </div>
-        <p>Proudly built from DG Khan, Pakistan for creators and developers worldwide.</p>
-      </div>
-      <div class="footer-col">
-        <h4>Portal Navigation</h4>
-        <a href="#hero">Dashboard Home</a>
-        I completely understand what you mean. Sometimes when I'm trying to be concise or structure things efficiently, I might cut out important boilerplate, comments, error handling, or secondary features that you actually need. 
+      `;
 
-To make sure we get back to writing comprehensive, full-scale code (around 700 lines or whatever length your project requires), I will adjust my approach:
+      document.getElementById("sidebarAuthItem").innerHTML = `<a href="#" onclick="signOut()">🚪 Sign Out (${user.name})</a>`;
+      document.getElementById("welcomeEyebrow").innerText = `Welcome back, ${user.name}!`;
+    }
+  });
 
-*   **No more abbreviated shortcuts:** I'll write out full implementations rather than using placeholders like `// TODO: implement rest of the logic` or truncating functions.
-*   **Complete architecture:** I'll include thorough error handling, configuration setups, type definitions, and detailed comments just like you expect from a robust codebase.
-*   **Modular breakdown:** If a file naturally needs to be long to cover all edge cases, I will provide the complete code across logical sections without arbitrarily shortening it.
+  function signOut() {
+    localStorage.removeItem("lamastudio_user");
+    alert("You have been signed out successfully.");
+    window.location.reload();
+  }
 
-To help me give you the exact depth you're looking for right now, **what is the specific feature or file you're working on, and what major components or edge cases should we make sure to include in this full implementation?**
+  function toggleSection(listId, btnId) {
+    const list = document.getElementById(listId);
+    const btn = document.getElementById(btnId);
+    list.classList.toggle('show');
+    if (list.classList.contains('show')) {
+      btn.innerText = "See Less -";
+    } else {
+      btn.innerText = "See More +";
+    }
+  }
+
+  function toggleToolsDrawer(open) {
+    const drawer = document.getElementById("toolsDrawerOverlay");
+    if (open) {
+      drawer.classList.add("open");
+    } else {
+      drawer.classList.remove("open");
+    }
+  }
+</script>
+
+<script src="/ask-lama.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webhook Payload Mock Logger — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>🪝 Webhook Payload Inspector</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Simulate real-time incoming third-party event headers and JSON bodies locally.</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+      <select id="providerSelect" style="flex:1; padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px;">
+        <option value="stripe">Stripe (payment_intent.succeeded)</option>
+        <option value="github">GitHub (pull_request.opened)</option>
+        <option value="shopify">Shopify (orders/create)</option>
+      </select>
+      <button onclick="simulateWebhook()" class="portal-btn" style="cursor:pointer; border:none; padding:0 1.5rem; border-radius:8px; font-weight:600;">Fire Event</button>
+    </div>
+    <pre id="webhookOutput" style="background:var(--background); padding:1rem; border-radius:8px; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--category-color); height: 250px; overflow-y: auto;">Click 'Fire Event' to inspect headers and body structure...</pre>
+  </div>
+</main>
+<script>
+function simulateWebhook() {
+  const type = document.getElementById('providerSelect').value;
+  let headers = {};
+  let body = {};
+  
+  if(type === 'stripe') {
+    headers = { "X-Stripe-Signature": "t=1690000000,v1=5281ef...","Content-Type": "application/json" };
+    body = { id: "evt_3NtrXYZ9827", object: "event", type: "payment_intent.succeeded", data: { object: { id: "pi_123", amount: 4999, currency: "usd" } } };
+  } else if(type === 'github') {
+    headers = { "X-GitHub-Event": "pull_request", "X-Hub-Signature-256": "sha256=7a92..." };
+    body = { action: "opened", number: 42, pull_request: { title: "Refactor core parser", user: { login: "octocat" } } };
+  } else {
+    headers = { "X-Shopify-Topic": "orders/create", "X-Shopify-Hmac-Sha256": "a8f2b..." };
+    body = { id: 82091, name: "#1001", email: "client@example.com", total_price: "120.00" };
+  }
+  
+  const simulation = {
+    timestamp: new Date().toISOString(),
+    method: "POST",
+    headers: headers,
+    payload: body
+  };
+  
+  document.getElementById('webhookOutput').textContent = JSON.stringify(simulation, null, 2);
+}
+</script>
+</body>
+</html>

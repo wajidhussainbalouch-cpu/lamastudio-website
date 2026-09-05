@@ -10,29 +10,171 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-  .hero-news-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; align-items: stretch; margin-bottom: 2.5rem; }
-  @media(max-width: 1024px) { .hero-news-layout { grid-template-columns: 1fr; } }
-  .side-news-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; overflow: hidden; height: 100%; min-height: 280px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); }
-  .side-news-header { font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem; color: var(--category-color); display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; }
-  .vertical-ticker-wrapper { position: relative; height: 220px; overflow: hidden; }
-  .vertical-ticker-track { position: absolute; width: 100%; animation: scrollVertical 15s linear infinite; }
-  .vertical-ticker-track:hover { animation-play-state: paused; }
-  .ticker-item { background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; margin-bottom: 0.6rem; font-size: 0.82rem; color: var(--text); }
-  .ticker-item span { display: block; font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem; }
-  @keyframes scrollVertical { 0% { transform: translateY(0%); } 100% { transform: translateY(-50%); } }
-  .live-rates-ticker-container { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; overflow: hidden; white-space: nowrap; }
-  .live-rates-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--category-color); background: var(--background); padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
-  .rates-ticker-track-wrapper { overflow: hidden; width: 100%; position: relative; }
-  .rates-ticker-track { display: flex; gap: 2rem; animation: scrollHorizontal 22s linear infinite; }
-  .rates-ticker-track:hover { animation-play-state: paused; }
-  .rate-chip { font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; color: var(--text); background: var(--background); padding: 0.3rem 0.75rem; border-radius: 6px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 0.5rem; }
+  .hero-news-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    align-items: stretch;
+    margin-bottom: 2.5rem;
+  }
+  @media(max-width: 1024px) {
+    .hero-news-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .side-news-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    min-height: 280px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+  }
+  .side-news-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    color: var(--category-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.6rem;
+  }
+  .vertical-ticker-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+  }
+  .vertical-ticker-track {
+    position: absolute;
+    width: 100%;
+    animation: scrollVertical 15s linear infinite;
+  }
+  .vertical-ticker-track:hover {
+    animation-play-state: paused;
+  }
+  .ticker-item {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+  .ticker-item span {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  @keyframes scrollVertical {
+    0% { transform: translateY(0%); }
+    100% { transform: translateY(-50%); }
+  }
+
+  .live-rates-ticker-container {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .live-rates-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--category-color);
+    background: var(--background);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .rates-ticker-track-wrapper {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+  }
+  .rates-ticker-track {
+    display: flex;
+    gap: 2rem;
+    animation: scrollHorizontal 22s linear infinite;
+  }
+  .rates-ticker-track:hover {
+    animation-play-state: paused;
+  }
+  .rate-chip {
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    background: var(--background);
+    padding: 0.3rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
   .rate-chip span { color: var(--category-color); font-weight: 700; }
-  @keyframes scrollHorizontal { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
-  .ad-banner-header { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; margin-bottom: 1rem; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  .tool-icon { font-size: 2rem; margin-bottom: 0.75rem; display: inline-block; }
-  .hero-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-  .blog-btn-link { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--surface); border: 1px solid var(--border); color: var(--category-color); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; transition: background 0.2s; }
-  .blog-btn-link:hover { background: var(--background); }
+
+  @keyframes scrollHorizontal {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .ad-banner-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .category-ad-banner {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
+    border: 1px dashed var(--category-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    text-align: center;
+    margin: 3rem 0;
+  }
+  .category-ad-banner h4 { margin: 0 0 0.5rem 0; color: var(--category-color); font-size: 1.2rem; }
+  .category-ad-banner p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+
+  .tool-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    display: inline-block;
+  }
+  
+  .portal-btn {
+    background: var(--category-color);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: opacity 0.2s;
+  }
+  .portal-btn:hover { opacity: 0.85; }
 </style>
 </head>
 <body style="--category-color: var(--c-tech);">
@@ -53,7 +195,9 @@
   </div>
   
   <div style="max-width: 1200px; margin: 0 auto; padding: 0.5rem 1rem 0 1rem;">
-    <div class="ad-banner-header" role="region" aria-label="Advertisement"><span>Advertisement Banner (Header)</span></div>
+    <div class="ad-banner-header" role="region" aria-label="Advertisement">
+      <span>Advertisement Banner (Header)</span>
+    </div>
   </div>
 
   <div class="category-strip">
@@ -75,35 +219,58 @@
 </header>
 
 <main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+  
   <div class="hero-news-layout">
     <div class="hero-panel" style="border-left: 4px solid var(--category-color); height: 100%; display: flex; flex-direction: column; justify-content: center;">
-      <div class="hero-header-row">
-        <div>
-          <span class="eyebrow" style="color: var(--category-color);">Tech &amp; Code Category Hub</span>
-          <h1>Complete Developer Utilities &amp; Programming Suite</h1>
-        </div>
-        <a href="../../blogs/tech.html" class="blog-btn-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-          Read Blog Article
-        </a>
-      </div>
+      <span class="eyebrow" style="color: var(--category-color);">Tech &amp; Code Category Hub</span>
+      <h1>Complete Developer Utilities &amp; Programming Suite</h1>
       <p class="lede" style="margin-top: 0.5rem;">Access 10 robust client-side web developer tools designed for instant encoding, text parsing, security hashing, and payload validation directly in your browser.</p>
     </div>
 
     <aside class="side-news-panel">
-      <div class="side-news-header"><span>💻 Tech &amp; Code Updates</span></div>
+      <div class="side-news-header">
+        <span>💻 Tech &amp; Code Updates</span>
+      </div>
       <div class="vertical-ticker-wrapper">
         <div class="vertical-ticker-track">
-          <div class="ticker-item">WebAssembly adoption grows for complex client-side parsing.<span>12 mins ago</span></div>
-          <div class="ticker-item">New ECMAScript proposal focuses on advanced data immutability.<span>45 mins ago</span></div>
-          <div class="ticker-item">Secure local-first web utilities eliminate third-party server risks.<span>2 hours ago</span></div>
-          <div class="ticker-item">Zero-dependency lightweight web tools trend among indie developers.<span>4 hours ago</span></div>
+          <div class="ticker-item">
+            WebAssembly adoption grows for complex client-side parsing.
+            <span>12 mins ago</span>
+          </div>
+          <div class="ticker-item">
+            New ECMAScript proposal focuses on advanced data immutability.
+            <span>45 mins ago</span>
+          </div>
+          <div class="ticker-item">
+            Secure local-first web utilities eliminate third-party server risks.
+            <span>2 hours ago</span>
+          </div>
+          <div class="ticker-item">
+            Zero-dependency lightweight web tools trend among indie developers.
+            <span>4 hours ago</span>
+          </div>
+          <div class="ticker-item">
+            WebAssembly adoption grows for complex client-side parsing.
+            <span>12 mins ago</span>
+          </div>
+          <div class="ticker-item">
+            New ECMAScript proposal focuses on advanced data immutability.
+            <span>45 mins ago</span>
+          </div>
+          <div class="ticker-item">
+            Secure local-first web utilities eliminate third-party server risks.
+            <span>2 hours ago</span>
+          </div>
+          <div class="ticker-item">
+            Zero-dependency lightweight web tools trend among indie developers.
+            <span>4 hours ago</span>
+          </div>
         </div>
       </div>
     </aside>
   </div>
 
-  <div class="live-rates-ticker-container" style="background: var(--surface); padding: 1.0rem 1.25rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 2.5rem;">
+  <div class="live-rates-ticker-container" style="background: var(--surface); padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 2.5rem;">
     <div class="live-rates-label">Tech Standards</div>
     <div class="rates-ticker-track-wrapper">
       <div class="rates-ticker-track">
@@ -111,8 +278,19 @@
         <div class="rate-chip">Encoding: <span>UTF-8 / Base64 / JWT</span></div>
         <div class="rate-chip">Security: <span>SHA-256 / UUID v4</span></div>
         <div class="rate-chip">Execution: <span>100% Client-Side JS</span></div>
+        <div class="rate-chip">Sandbox: <span>Zero Server Logs</span></div>
+        <div class="rate-chip">Tools Available: <span>10 Utilities</span></div>
+        <div class="rate-chip">Encoding: <span>UTF-8 / Base64 / JWT</span></div>
+        <div class="rate-chip">Security: <span>SHA-256 / UUID v4</span></div>
+        <div class="rate-chip">Execution: <span>100% Client-Side JS</span></div>
+        <div class="rate-chip">Sandbox: <span>Zero Server Logs</span></div>
       </div>
     </div>
+  </div>
+
+  <div class="category-ad-banner" role="region" aria-label="Sponsored Advertisement">
+    <h4>💻 Sponsor Your Dev Tool, SaaS or API With LamaStudio</h4>
+    <p>Connect with thousands of software engineers, full-stack developers, and technical founders seeking reliable client-side productivity utilities daily.</p>
   </div>
 
   <section class="section">
@@ -202,6 +380,15 @@
 
     </div>
   </section>
+
+  <section style="margin-top: 3rem; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px;">
+    <span class="eyebrow" style="color: var(--category-color);">Editorial &amp; Documentation</span>
+    <h2 style="font-size: 1.5rem; color: var(--text); margin-top: 0.4rem; margin-bottom: 1rem;">Complete Guide to LamaStudio's Tech &amp; Code Digital Utilities</h2>
+    <p style="color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; margin-bottom: 1.5rem;">
+      Modern software engineering relies heavily on instantaneous data formatting, payload inspection, security string hashing, and token parsing. While heavy desktop IDE plugins have their place, having quick web access to lightweight utilities speeds up repetitive debugging cycles. Explore our complete editorial publication hosted in our blogs directory to learn how these secure local-first web tools protect your privacy.
+    </p>
+    <a href="../../blogs/tech.html" class="portal-btn" style="display: inline-block; padding: 0.75rem 1.5rem; font-size: 0.9rem;">Read the full article →</a>
+  </section>
 </main>
 
 <footer class="site-footer" style="margin-top: 4rem;">
@@ -215,4 +402,5 @@
 
 <script src="../../script.js"></script>
 </body>
-</html>
+        </html>
+        

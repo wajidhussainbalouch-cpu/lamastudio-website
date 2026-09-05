@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dockerfile Health Inspector — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>🐳 Dockerfile Best Practices Inspector</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Audit container build instructions instantly for caching layer improvements and security gaps.</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <textarea id="dockerInput" style="width:100%; height:120px; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-family:'JetBrains Mono',monospace;">FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm install
+EXPOSE 3000
+CMD ["node", "index.js"]</textarea>
+    <button onclick="auditDocker()" class="portal-btn" style="cursor:pointer; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600;">Audit Configuration</button>
+    <pre id="dockerOutput" style="background:var(--background); padding:1rem; border-radius:8px; margin-top:1rem; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--category-color);">Run audit to check container safety rules...</pre>
+  </div>
+</main>
+<script>
+function auditDocker() {
+  const content = document.getElementById('dockerInput').value;
+  const lines = content.split('\n').map(l => l.trim());
+  let warnings = [];
+  
+  if (!content.includes('USER ')) {
+    warnings.push("⚠️ Security Risk: Container runs as root user by default. Add a non-privileged `USER` directive.");
+  }
+  if (content.includes('COPY . .') && content.indexOf('COPY . .') < content.indexOf('RUN npm install')) {
+    warnings.push("⚡ Caching Inefficiency: `COPY . .` occurs before dependency installation. Copy package manifests first to optimize build layers.");
+  }
+  if (!content.includes('AS builder') && lines.filter(l => l.startsWith('FROM')).length === 1) {
+    warnings.push("💡 Optimization Idea: Consider multi-stage builds to strip development files from the production artifact.");
+  }
+  
+  if(warnings.length === 0) {
+    document.getElementById('dockerOutput').textContent = "✅ Excellent! No major structural optimizations or security flags detected.";
+  } else {
+    document.getElementById('dockerOutput').textContent = warnings.join('\n\n');
+  }
+}
+</script>
+</body>
+</html>

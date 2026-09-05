@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redis Command Syntax Helper — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>⚡ Redis In-Memory Command Quick Ref</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Lookup complex high-performance caching commands, TTL expirations, and data structures.</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <select id="redisCmd" onchange="showRedis()" style="width:100%; padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px; margin-bottom:1rem; font-family:inherit;">
+      <option value="setex">SETEX — Set value with time-to-live seconds</option>
+      <option value="hset">HSET — Insert hash key mapping fields</option>
+      <option value="zadd">ZADD — Add element into sorted sets collection</option>
+      <option value="blpop">BLPOP — Blocking left pop queue operation</option>
+    </select>
+    <div id="redisDesc" style="background:var(--background); padding:1rem; border-radius:8px; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.9rem; color:var(--category-color); line-height:1.5;"></div>
+  </div>
+</main>
+<script>
+const redisMap = {
+  'setex': "Syntax: SETEX key seconds value\nDescription: Atomically sets key to hold string value and sets key to timeout after a given number of seconds.",
+  'hset': "Syntax: HSET key field value [field value ...]\nDescription: Sets field in the hash stored at key to value. Creates hash if it doesn't exist.",
+  'zadd': "Syntax: ZADD key score member [score member ...]\nDescription: Adds all specified members with the specified scores to the sorted set stored at key.",
+  'blpop': "Syntax: BLPOP key [key ...] timeout\nDescription: BLPOP is a blocking list pop primitive. It is the blocking version of LPOP."
+};
+function showRedis() {
+  const v = document.getElementById('redisCmd').value;
+  document.getElementById('redisDesc').textContent = redisMap[v];
+}
+showRedis();
+</script>
+</body>
+</html>

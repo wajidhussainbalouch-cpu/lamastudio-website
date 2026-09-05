@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Live Previewer — LamaStudio Tech</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 700px; margin: 2rem auto; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group textarea { width: 100%; height: 120px; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; resize: vertical; }
+  .preview-pane { margin-top: 1rem; padding: 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); min-height: 80px; }
+</style>
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Markdown Tool</small></span></a></div></header>
+<main style="padding: 2rem 1rem;">
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">Markdown Text Inspector</h1>
+    <div class="form-group"><label>Markdown Source</label><textarea id="mdInput" oninput="renderMD()" placeholder="# Heading\n* Bullet list"># Welcome to LamaStudio
+* Fast client-side tools
+* Secure local processing</textarea></div>
+    <div class="form-group"><label>Rendered Output View</label><div class="preview-pane" id="mdOutput"></div></div>
+  </div>
+</main>
+<script>
+function renderMD() {
+  const val = document.getElementById('mdInput').value;
+  // Simple basic text substitution for preview safety
+  let safe = val.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  safe = safe.replace(/^# (.*$)/gim, '<h2 style="color:var(--category-color);margin:0.5rem 0;">$1</h2>');
+  safe = safe.replace(/^\* (.*$)/gim, '<li style="margin-left:1.2rem;">$1</li>');
+  document.getElementById('mdOutput').innerHTML = safe;
+}
+renderMD();
+</script>
+</body>
+</html>

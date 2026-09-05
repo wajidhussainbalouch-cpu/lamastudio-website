@@ -1,13 +1,39 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Theme Toggle Logic
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  // ---------------------------------------------------------
+  // 1. Mobile Sidebar Navigation Drawer Toggle
+  // ---------------------------------------------------------
+  const menuToggle = document.getElementById("menuToggle");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+  const sidebarClose = document.getElementById("sidebarClose");
+
+  function openSidebar() {
+    if (sidebarOverlay) sidebarOverlay.classList.add("is-open");
+  }
+
+  function closeSidebar() {
+    if (sidebarOverlay) sidebarOverlay.classList.remove("is-open");
+  }
+
+  if (menuToggle) menuToggle.addEventListener("click", openSidebar);
+  if (sidebarClose) sidebarClose.addEventListener("click", closeSidebar);
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", (e) => {
+      if (e.target === sidebarOverlay) closeSidebar();
+    });
+  }
+
+  // ---------------------------------------------------------
+  // 2. Dark / Light Theme Switcher
+  // ---------------------------------------------------------
+  const themeToggle = document.getElementById("themeToggle");
   const htmlRoot = document.documentElement;
 
+  // Check for saved user preference
   const savedTheme = localStorage.getItem("lamastudio_theme") || "dark";
   htmlRoot.setAttribute("data-theme", savedTheme);
 
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener("click", () => {
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
       const currentTheme = htmlRoot.getAttribute("data-theme");
       const newTheme = currentTheme === "dark" ? "light" : "dark";
       htmlRoot.setAttribute("data-theme", newTheme);
@@ -15,99 +41,80 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2. Sidebar Navigation Drawer Logic
-  const menuToggleBtn = document.getElementById("menuToggleBtn");
-  const sidebarOverlay = document.getElementById("sidebarOverlay");
-  const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
+  // ---------------------------------------------------------
+  // 3. Category Filter Strip Logic (Fixes Stuck Filtering)
+  // ---------------------------------------------------------
+  const filterPills = document.querySelectorAll(".cat-pill");
+  const appCards = document.querySelectorAll(".app-card");
 
-  if (menuToggleBtn && sidebarOverlay && sidebarCloseBtn) {
-    menuToggleBtn.addEventListener("click", () => sidebarOverlay.classList.add("is-open"));
-    sidebarCloseBtn.addEventListener("click", () => sidebarOverlay.classList.remove("is-open"));
+  filterPills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      // Remove active state from all pills
+      filterPills.forEach((p) => p.classList.remove("is-active"));
+      pill.classList.add("is-active");
 
-    sidebarOverlay.addEventListener("click", (e) => {
-      if (e.target === sidebarOverlay) sidebarOverlay.classList.remove("is-open");
-    });
+      const filterValue = pill.getAttribute("data-filter");
 
-    sidebarOverlay.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => sidebarOverlay.classList.remove("is-open"));
-    });
-  }
-
-  // 3. Category Filter Strip Logic
-  const categoryTrack = document.getElementById("categoryTrack");
-  if (categoryTrack) {
-    const catPills = categoryTrack.querySelectorAll(".cat-pill");
-    const appCards = document.querySelectorAll(".app-card");
-    const blogCards = document.querySelectorAll(".blog-card");
-
-    catPills.forEach(pill => {
-      pill.addEventListener("click", () => {
-        catPills.forEach(p => p.classList.remove("is-active"));
-        pill.classList.add("is-active");
-
-        const filterValue = pill.getAttribute("data-filter");
-
-        appCards.forEach(card => {
-          const cardCat = card.getAttribute("data-category");
-          card.classList.toggle("is-hidden", filterValue !== "all" && cardCat !== filterValue);
-        });
-
-        blogCards.forEach(card => {
-          const cardCat = card.getAttribute("data-category");
-          card.classList.toggle("is-hidden", filterValue !== "all" && cardCat !== filterValue);
-        });
+      appCards.forEach((card) => {
+        const cardCategory = card.getAttribute("data-category");
+        if (filterValue === "all" || cardCategory === filterValue) {
+          card.classList.remove("is-hidden");
+        } else {
+          card.classList.add("is-hidden");
+        }
       });
-    });
-  }
-
-  // 4. Advanced Quick-View Modal Logic
-  const modalOverlay = document.getElementById("modalOverlay");
-  const modalCloseBtn = document.getElementById("modalCloseBtn");
-  const modalCloseAction = document.getElementById("modalCloseAction");
-  const modalPrimaryBtn = document.getElementById("modalPrimaryBtn");
-  
-  const modalIcon = document.getElementById("modalIcon");
-  const modalTitle = document.getElementById("modalTitle");
-  const modalDesc = document.getElementById("modalDesc");
-  const modalPrice = document.getElementById("modalPrice");
-
-  document.querySelectorAll(".open-modal-btn").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      const card = e.target.closest(".app-card, .blog-card");
-      if (!card) return;
-
-      const title = card.getAttribute("data-title");
-      const desc = card.getAttribute("data-desc");
-      const price = card.getAttribute("data-price");
-      const icon = card.querySelector(".app-icon, .blog-thumb")?.textContent || "✨";
-      const cardStyleColor = card.style.getPropertyValue("--pc") || "var(--c-tech)";
-
-      if (modalTitle) modalTitle.textContent = title;
-      if (modalDesc) modalDesc.textContent = desc;
-      if (modalPrice) modalPrice.textContent = price;
-      if (modalIcon) modalIcon.textContent = icon;
-
-      const modalBox = modalOverlay?.querySelector(".modal-box");
-      if (modalBox) modalBox.style.setProperty("--pc", cardStyleColor);
-
-      if (modalOverlay) modalOverlay.classList.add("is-open");
     });
   });
 
-  const closeModal = () => modalOverlay?.classList.remove("is-open");
+  // ---------------------------------------------------------
+  // 4. Quick-View Modal Popup Handler
+  // ---------------------------------------------------------
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalClose = document.getElementById("modalClose");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+  const quickViewBtns = document.querySelectorAll(".quick-view-btn");
 
+  const modalTitle = document.getElementById("modalTitle");
+  const modalDesc = document.getElementById("modalDesc");
+  const modalPrice = document.getElementById("modalPrice");
+  const modalCategory = document.getElementById("modalCategory");
+  const modalIcon = document.getElementById("modalIcon");
+  const modalActionLink = document.getElementById("modalActionLink");
+
+  function openModal(data) {
+    if (!modalOverlay) return;
+    if (modalTitle) modalTitle.textContent = data.title;
+    if (modalDesc) modalDesc.textContent = data.desc;
+    if (modalPrice) modalPrice.textContent = data.price;
+    if (modalCategory) modalCategory.textContent = data.category;
+    
+    modalOverlay.classList.add("is-open");
+  }
+
+  function closeModal() {
+    if (modalOverlay) modalOverlay.classList.remove("is-open");
+  }
+
+  quickViewBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".app-card");
+      const iconText = card ? card.querySelector(".app-icon").textContent : "📦";
+      
+      openModal({
+        title: btn.getAttribute("data-title"),
+        desc: btn.getAttribute("data-desc"),
+        price: btn.getAttribute("data-price"),
+        category: btn.getAttribute("data-category"),
+        icon: iconText
+      });
+    });
+  });
+
+  if (modalClose) modalClose.addEventListener("click", closeModal);
   if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
-  if (modalCloseAction) modalCloseAction.addEventListener("click", closeModal);
   if (modalOverlay) {
     modalOverlay.addEventListener("click", (e) => {
       if (e.target === modalOverlay) closeModal();
-    });
-  }
-
-  if (modalPrimaryBtn) {
-    modalPrimaryBtn.addEventListener("click", () => {
-      alert("Redirecting to secure access destination...");
-      closeModal();
     });
   }
 });

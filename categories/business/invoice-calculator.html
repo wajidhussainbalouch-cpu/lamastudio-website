@@ -1,121 +1,41 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Invoice Discount & Cash Flow Calculator — LamaStudio Business</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Total Calculator — LamaStudio Business</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-  .tool-container { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; max-width: 700px; margin: 2rem auto; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-  .input-group { margin-bottom: 1.5rem; }
-  .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
-  .input-group input { width: 100%; padding: 0.75rem 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; font-family: inherit; }
-  .calc-btn { width: 100%; padding: 0.85rem; background: var(--category-color); color: #ffffff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-  .calc-btn:hover { opacity: 0.9; }
-  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; display: none; }
-  .result-card { padding: 1.5rem; background: var(--background); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
-  .result-value { font-size: 1.8rem; font-weight: 800; color: var(--category-color); margin-top: 0.5rem; }
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 600px; margin: 2rem auto; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group input { width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .calc-btn { background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 1rem; }
+  .result-box { margin-top: 1.5rem; padding: 1.25rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; text-align: center; color: var(--category-color); }
 </style>
 </head>
 <body style="--category-color: var(--c-business);">
-
-<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
-
-<header class="site-header">
-  <div class="util-row">
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Business</small></span></a>
-    </div>
-    <div class="header-actions">
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-      </button>
-    </div>
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Invoice Calculator</small></span></a></div></header>
+<main style="padding: 2rem 1rem;">
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">Invoice Total Calculator</h1>
+    <div class="form-group"><label>Subtotal Amount ($)</label><input type="number" id="subtotal" value="1250"></div>
+    <div class="form-group"><label>Tax Rate (%)</label><input type="number" id="taxRate" value="8.5"></div>
+    <div class="form-group"><label>Shipping / Handling Fee ($)</label><input type="number" id="shipping" value="45"></div>
+    <button class="calc-btn" onclick="calcInvoice()">Calculate Total Due</button>
+    <div class="result-box" id="output">Result will appear here...</div>
   </div>
-  <div class="category-strip">
-    <div class="category-track" role="tablist">
-      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
-      <a href="../business/" class="cat-pill active" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
-      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
-      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
-      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
-      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
-      <a href="../education/" class="cat-pill" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
-      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
-      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
-    </div>
-  </div>
-</header>
-
-<main>
-  <section class="dashboard" style="display: block; max-width: 800px; margin: 0 auto; padding: 2rem 1rem;">
-    <div class="hero-panel" style="border-left: 4px solid var(--category-color); text-align: center; margin-bottom: 1rem;">
-      <span class="eyebrow" style="color: var(--category-color);">Professional Utility</span>
-      <h1>Invoice Discounting &amp; Cash Advance Calculator</h1>
-      <p class="lede">Estimate immediate cash liquidity and financing fees when factoring outstanding invoices.</p>
-    </div>
-
-    <div class="tool-container">
-      <div class="input-group">
-        <label for="invoiceAmt">Total Invoice Amount ($)</label>
-        <input type="number" id="invoiceAmt" placeholder="e.g. 10000">
-      </div>
-      <div class="input-group">
-        <label for="advanceRate">Advance Rate Percentage (%)</label>
-        <input type="number" id="advanceRate" placeholder="e.g. 80" value="80" step="1">
-      </div>
-      <div class="input-group">
-        <label for="discountFee">Factor / Discount Fee Percentage (%)</label>
-        <input type="number" id="discountFee" placeholder="e.g. 3" value="3" step="0.1">
-      </div>
-      <button class="calc-btn" onclick="calculateInvoice()">Calculate Cash Advance</button>
-
-      <div class="result-grid" id="invoiceGrid">
-        <div class="result-card">
-          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Immediate Cash Advance</span>
-          <div class="result-value" id="cashAdvVal">$0</div>
-        </div>
-        <div class="result-card">
-          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Financing Fee</span>
-          <div class="result-value" id="feeVal">$0</div>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
-
-<footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
-    <div class="footer-col"><h4>Store</h4><a href="../../apps/lamavpnpro/">LamaVPN Pro</a></div>
-    <div class="footer-col"><h4>Company</h4><a href="../../about.html">About</a></div>
-  </div>
-  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
-</footer>
-
 <script>
-  function calculateInvoice() {
-    const inv = parseFloat(document.getElementById('invoiceAmt').value) || 0;
-    const advPct = parseFloat(document.getElementById('advanceRate').value) || 0;
-    const feePct = parseFloat(document.getElementById('discountFee').value) || 0;
-    const grid = document.getElementById('invoiceGrid');
-
-    if (inv <= 0) {
-      alert('Please enter a valid invoice amount.');
-      return;
-    }
-
-    const cashAdvance = inv * (advPct / 100);
-    const totalFee = inv * (feePct / 100);
-
-    document.getElementById('cashAdvVal').textContent = "$" + cashAdvance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('feeVal').textContent = "$" + totalFee.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    grid.style.display = 'grid';
-  }
+function calcInvoice() {
+  const sub = parseFloat(document.getElementById('subtotal').value);
+  const tax = parseFloat(document.getElementById('taxRate').value) / 100;
+  const ship = parseFloat(document.getElementById('shipping').value);
+  const taxAmount = sub * tax;
+  const total = sub + taxAmount + ship;
+  document.getElementById('output').innerHTML = `Tax Amount: $${taxAmount.toFixed(2)}<br><strong>Total Invoice Amount: $${total.toFixed(2)}</strong>`;
+}
 </script>
-<script src="../../script.js"></script>
 </body>
-        </html>
-        
+</html>

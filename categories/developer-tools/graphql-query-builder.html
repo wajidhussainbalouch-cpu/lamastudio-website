@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GraphQL Query Scaffolder — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>📊 GraphQL Query Scaffolder</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Draft typed selection sets and operation stubs for front-end client integration.</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <div style="display:flex; gap:1rem; margin-bottom:1rem;">
+      <select id="gqlType" style="flex:1; padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px;">
+        <option value="user">Query: User Profile</option>
+        <option value="posts">Query: Paginated Feed List</option>
+        <option value="mutation">Mutation: Create Resource Entry</option>
+      </select>
+      <button onclick="makeGraphQL()" class="portal-btn" style="cursor:pointer; border:none; padding:0 1.5rem; border-radius:8px; font-weight:600;">Generate Query</button>
+    </div>
+    <pre id="gqlOutput" style="background:var(--background); padding:1rem; border-radius:8px; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--category-color);"></pre>
+  </div>
+</main>
+<script>
+function makeGraphQL() {
+  const type = document.getElementById('gqlType').value;
+  let code = "";
+  if(type === 'user') {
+    code = `query GetUserProfile($id: ID!) {\n  user(id: $id) {\n    id\n    username\n    email\n    createdAt\n  }\n}`;
+  } else if(type === 'posts') {
+    code = `query GetFeed($limit: Int, $offset: Int) {\n  feed(limit: $limit, offset: $offset) {\n    edges {\n      node {\n        title\n        slug\n        author { name }\n      }\n    }\n  }\n}`;
+  } else {
+    code = `mutation CreateRecord($input: NewRecordInput!) {\n  createRecord(input: $input) {\n    success\n    recordId\n    message\n  }\n}`;
+  }
+  document.getElementById('gqlOutput').textContent = code;
+}
+makeGraphQL();
+</script>
+</body>
+</html>

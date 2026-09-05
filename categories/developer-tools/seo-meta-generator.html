@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenGraph Meta Tag Generator — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>🌐 OpenGraph & Social Meta Tag Generator</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Generate reliable meta tags for Twitter cards, LinkedIn scrapers, and OpenGraph crawlers.</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1rem;">
+      <input type="text" id="pageTitle" value="LamaStudio Developer Hub" placeholder="Page Title" oninput="genMeta()" style="padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px;">
+      <input type="text" id="pageImg" value="https://lamastudio.dev/og-image.jpg" placeholder="Image URL" oninput="genMeta()" style="padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px;">
+    </div>
+    <textarea id="pageDesc" placeholder="Page description..." oninput="genMeta()" style="width:100%; height:70px; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-family:inherit;">High-performance developer tools for modern full-stack workflows.</textarea>
+    <pre id="metaOutput" style="background:var(--background); padding:1rem; border-radius:8px; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--category-color);"></pre>
+  </div>
+</main>
+<script>
+function genMeta() {
+  const t = document.getElementById('pageTitle').value;
+  const d = document.getElementById('pageDesc').value;
+  const img = document.getElementById('pageImg').value;
+  
+  const markup = `<!-- Primary Meta Tags -->\n<title>${t}</title>\n<meta name="description" content="${d}">\n\n<!-- Open Graph / Facebook -->\n<meta property="og:type" content="website">\n<meta property="og:title" content="${t}">\n<meta property="og:description" content="${d}">\n<meta property="og:image" content="${img}">\n\n<!-- Twitter -->\n<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:title" content="${t}">\n<meta name="twitter:description" content="${d}">`;
+  
+  document.getElementById('metaOutput').textContent = markup;
+}
+genMeta();
+</script>
+</body>
+</html>

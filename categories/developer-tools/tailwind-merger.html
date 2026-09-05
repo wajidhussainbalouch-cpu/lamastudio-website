@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tailwind CSS Class Resolver — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>🎨 Tailwind Class Conflict Resolver</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">De-duplicate conflicting utility classes intelligently (e.g. overrides like px-2 vs px-4).</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <label style="display:block; font-size:0.85rem; margin-bottom:0.5rem; color:var(--text-muted);">Input Conflicting Classes</label>
+    <input type="text" id="twInput" value="px-2 py-1 bg-red-500 px-6 text-white font-bold py-3 text-sm" oninput="mergeTailwind()" style="width:100%; padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px; margin-bottom:1rem; font-family:'JetBrains Mono',monospace;">
+    <label style="display:block; font-size:0.85rem; margin-bottom:0.5rem; color:var(--text-muted);">Resolved Output String</label>
+    <div id="twOutput" style="background:var(--background); padding:1rem; border-radius:8px; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.95rem; color:var(--category-color); word-break:break-all;"></div>
+  </div>
+</main>
+<script>
+function mergeTailwind() {
+  const tokens = document.getElementById('twInput').value.trim().split(/\s+/);
+  const registry = {};
+  
+  tokens.forEach(token => {
+    if (!token) return;
+    const base = token.split('-')[0];
+    const modifierMatch = token.match(/^(hover:|focus:|active:|dark:|sm:|md:|lg:|xl:|2xl:)/);
+    const prefix = modifierMatch ? modifierMatch[0] + base : base;
+    
+    // Group keys that conflict natively
+    if (['p', 'px', 'py', 'pt', 'pr', 'pb', 'pl', 'm', 'mx', 'my', 'mt', 'mr', 'mb', 'ml', 'text', 'bg', 'font', 'w', 'h'].includes(base)) {
+      registry[prefix] = token;
+    } else {
+      registry[token] = token; // Unique or layout classes keep additive nature
+    }
+  });
+  
+  document.getElementById('twOutput').textContent = Object.values(registry).join(' ');
+}
+mergeTailwind();
+</script>
+</body>
+</html>

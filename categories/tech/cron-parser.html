@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cron Expression Explainer — LamaStudio Tech</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 650px; margin: 2rem auto; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group input { width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .calc-btn { background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
+  .result-box { margin-top: 1.25rem; padding: 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: var(--category-color); text-align: center; }
+</style>
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Cron Parser</small></span></a></div></header>
+<main style="padding: 2rem 1rem;">
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">Cron Schedule Explainer</h1>
+    <div class="form-group"><label>Cron Expression (e.g. 0 * * * *)</label><input type="text" id="cronInput" value="0 0 * * *"></div>
+    <button class="calc-btn" onclick="parseCron()">Explain Schedule</button>
+    <div class="result-box" id="output">Schedule description will appear here...</div>
+  </div>
+</main>
+<script>
+function parseCron() {
+  const val = document.getElementById('cronInput').value.trim();
+  const parts = val.split(' ');
+  if(parts.length < 5) { document.getElementById('output').innerText = "Please enter at least 5 cron parameters."; return; }
+  let desc = `Runs at minute ${parts[0]}, hour ${parts[1]}, day of month ${parts[2]}, month ${parts[3]}, day of week ${parts[4]}.`;
+  if(val === "0 0 * * *") desc = "Runs every day at midnight (00:00).";
+  if(val === "*/15 * * * *") desc = "Runs every 15 minutes.";
+  document.getElementById('output').innerHTML = `<strong>Schedule:</strong> ${desc}`;
+}
+parseCron();
+</script>
+</body>
+</html>

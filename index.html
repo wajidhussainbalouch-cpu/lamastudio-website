@@ -152,6 +152,65 @@
   gap: 4px;
 }
 .blog-read-link:hover { text-decoration: underline; }
+
+/* Side Drawer for Web Tools Categories */
+.tools-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  justify-content: flex-end;
+}
+.tools-drawer-overlay.open { display: flex; }
+.tools-drawer {
+  width: 100%;
+  max-width: 380px;
+  height: 100%;
+  background: var(--surface-bg, #0f172a);
+  border-left: 1px solid var(--border, rgba(255,255,255,0.1));
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+.tools-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
+  padding-bottom: 0.75rem;
+}
+.tools-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tools-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  color: var(--text, #fff);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.tools-cat-item:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateX(4px);
+}
 </style>
 </head>
 <body>
@@ -247,6 +306,30 @@
   </div>
 </div>
 
+<!-- Web Tools Side Drawer (Opens Categories on Side) -->
+<div class="tools-drawer-overlay" id="toolsDrawerOverlay">
+  <div class="tools-drawer" id="toolsDrawer">
+    <div class="tools-drawer-header">
+      <span style="font-weight: 700; font-size: 1.05rem; color: var(--text, #fff);">Web Tools Categories</span>
+      <button onclick="toggleToolsDrawer(false)" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✕</button>
+    </div>
+    <div class="tools-category-list">
+      <a href="categories/tech/" class="tools-cat-item"><span style="color:var(--c-tech)">💻</span> Tech & Code Tools</a>
+      <a href="categories/developer-tools/" class="tools-cat-item"><span style="color:var(--c-dev)">🛠️</span> Developer Utilities</a>
+      <a href="categories/productivity/" class="tools-cat-item"><span style="color:var(--c-productivity)">⚡</span> Productivity Suites</a>
+      <a href="categories/network-security/" class="tools-cat-item"><span style="color:var(--c-security)">🛡️</span> Security & Network</a>
+      <a href="categories/business/" class="tools-cat-item"><span style="color:var(--c-business)">💳</span> Business & Finance</a>
+      <a href="categories/sports/" class="tools-cat-item"><span style="color:var(--c-sports)">⚽</span> Sports Trackers</a>
+      <a href="categories/travel/" class="tools-cat-item"><span style="color:var(--c-travel)">✈️</span> Travel Maps & Guides</a>
+      <a href="categories/news/" class="tools-cat-item"><span style="color:var(--c-news)">📰</span> News Feeds</a>
+      <a href="categories/fashion/" class="tools-cat-item"><span style="color:var(--c-fashion)">👗</span> Fashion Checkouts</a>
+      <a href="categories/education/" class="tools-cat-item"><span style="color:var(--c-education)">🎓</span> EdTech Hubs</a>
+      <a href="categories/weather/" class="tools-cat-item"><span style="color:var(--c-weather)">🌦️</span> Weather Trackers</a>
+      <a href="categories/health/" class="tools-cat-item"><span style="color:var(--c-health)">💚</span> Health & Habit Tools</a>
+    </div>
+  </div>
+</div>
+
 <main>
   <section class="dashboard">
     <div class="hero-panel">
@@ -257,7 +340,7 @@
       <div class="hero-cta">
         <a href="#apps" class="btn-glow-outline btn-glow-apps">Explore Apps</a>
         <a href="#software" class="btn-glow-outline btn-glow-software">Explore Software</a>
-        <a href="#tools" class="btn-glow-outline btn-glow-tools">Explore Web Tools</a>
+        <button onclick="toggleToolsDrawer(true)" class="btn-glow-outline btn-glow-tools" style="background:transparent; cursor:pointer;">Explore Web Tools</button>
       </div>
     </div>
 
@@ -300,7 +383,37 @@
     </div>
   </section>
 
-  <!-- Latest Articles Section (Only the 12 Connected Blogs) -->
+  <!-- Software Space Section (Dummy Software Cards Added) -->
+  <section class="section" id="software">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow">Desktop & Cloud</span>
+        <h2>Software space</h2>
+      </div>
+    </div>
+    <div class="app-grid" id="softwareGrid">
+      <div class="app-card" data-category="software">
+        <div class="app-icon" style="background: rgba(167, 139, 250, 0.1); color: #a78bfa;">💻</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #a78bfa; text-transform: uppercase; display: block; margin-bottom: 4px;">Desktop Utility</span>
+          <h3>LamaSync Engine</h3>
+          <p>High-performance local directory synchronization and automatic backup manager for power users.</p>
+          <span class="btn-action" style="opacity: 0.7; cursor: default;">Coming Soon</span>
+        </div>
+      </div>
+      <div class="app-card" data-category="software">
+        <div class="app-icon" style="background: rgba(52, 211, 153, 0.1); color: #34d399;">⚙️</div>
+        <div class="app-info">
+          <span style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; color: #34d399; text-transform: uppercase; display: block; margin-bottom: 4px;">System Software</span>
+          <h3>LamaPerf Monitor</h3>
+          <p>Lightweight cross-platform CPU, memory, and network telemetry collector built for minimal resource overhead.</p>
+          <span class="btn-action" style="opacity: 0.7; cursor: default;">In Development</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Latest Articles Section (Only the 12 Connected Blogs, Duplicates Cleared) -->
   <section class="section" id="blog">
     <div class="section-head">
       <div>
@@ -629,6 +742,15 @@
       btn.innerText = "See Less -";
     } else {
       btn.innerText = "See More +";
+    }
+  }
+
+  function toggleToolsDrawer(open) {
+    const drawer = document.getElementById("toolsDrawerOverlay");
+    if (open) {
+      drawer.classList.add("open");
+    } else {
+      drawer.classList.remove("open");
     }
   }
 </script>

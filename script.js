@@ -21,24 +21,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 
   if (menuToggleBtn && sidebarOverlay && sidebarCloseBtn) {
-    menuToggleBtn.addEventListener("click", () => {
-      sidebarOverlay.classList.add("is-open");
-    });
-
-    sidebarCloseBtn.addEventListener("click", () => {
-      sidebarOverlay.classList.remove("is-open");
-    });
+    menuToggleBtn.addEventListener("click", () => sidebarOverlay.classList.add("is-open"));
+    sidebarCloseBtn.addEventListener("click", () => sidebarOverlay.classList.remove("is-open"));
 
     sidebarOverlay.addEventListener("click", (e) => {
-      if (e.target === sidebarOverlay) {
-        sidebarOverlay.classList.remove("is-open");
-      }
+      if (e.target === sidebarOverlay) sidebarOverlay.classList.remove("is-open");
     });
 
     sidebarOverlay.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => {
-        sidebarOverlay.classList.remove("is-open");
-      });
+      link.addEventListener("click", () => sidebarOverlay.classList.remove("is-open"));
     });
   }
 
@@ -58,26 +49,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         appCards.forEach(card => {
           const cardCat = card.getAttribute("data-category");
-          if (filterValue === "all" || cardCat === filterValue) {
-            card.classList.remove("is-hidden");
-          } else {
-            card.classList.add("is-hidden");
-          }
+          card.classList.toggle("is-hidden", filterValue !== "all" && cardCat !== filterValue);
         });
 
         blogCards.forEach(card => {
           const cardCat = card.getAttribute("data-category");
-          if (filterValue === "all" || cardCat === filterValue) {
-            card.classList.remove("is-hidden");
-          } else {
-            card.classList.add("is-hidden");
-          }
+          card.classList.toggle("is-hidden", filterValue !== "all" && cardCat !== filterValue);
         });
       });
     });
   }
 
-  // 4. Advanced Quick-View Modal Logic (Synced with CSS modal-box & pricing tags)
+  // 4. Advanced Quick-View Modal Logic
   const modalOverlay = document.getElementById("modalOverlay");
   const modalCloseBtn = document.getElementById("modalCloseBtn");
   const modalCloseAction = document.getElementById("modalCloseAction");
@@ -104,19 +87,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (modalPrice) modalPrice.textContent = price;
       if (modalIcon) modalIcon.textContent = icon;
 
-      // Apply dynamic category color theme accent to modal box if container exists
       const modalBox = modalOverlay?.querySelector(".modal-box");
-      if (modalBox) {
-        modalBox.style.setProperty("--pc", cardStyleColor);
-      }
+      if (modalBox) modalBox.style.setProperty("--pc", cardStyleColor);
 
       if (modalOverlay) modalOverlay.classList.add("is-open");
     });
   });
 
-  function closeModal() {
-    if (modalOverlay) modalOverlay.classList.remove("is-open");
-  }
+  const closeModal = () => modalOverlay?.classList.remove("is-open");
 
   if (modalCloseBtn) modalCloseBtn.addEventListener("click", closeModal);
   if (modalCloseAction) modalCloseAction.addEventListener("click", closeModal);

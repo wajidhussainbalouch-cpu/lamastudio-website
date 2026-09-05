@@ -68,6 +68,6 @@
     });
   });
 
-  // NOTE: Dynamic app and blog injection loops have been completely removed. 
-  // All elements are now cleanly and statically managed directly inside index.html.
+  // NOTE: All dynamic blog and app rendering loops have been removed. 
+  // Everything is fully controlled via index.html.
 })();

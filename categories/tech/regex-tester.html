@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regular Expression Tester — LamaStudio Tech</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 650px; margin: 2rem auto; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group input, .form-group textarea { width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+  .form-group textarea { height: 100px; resize: vertical; }
+  .calc-btn { background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
+  .result-box { margin-top: 1.25rem; padding: 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--category-color); }
+</style>
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Regex Tool</small></span></a></div></header>
+<main style="padding: 2rem 1rem;">
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
+    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">Regular Expression Tester</h1>
+    <div class="form-group"><label>Regular Expression Pattern</label><input type="text" id="pattern" value="\\w+@\\w+\\.\\w+"></div>
+    <div class="form-group"><label>Test String</label><textarea id="testStr">Contact support at test@lamastudio.com for help.</textarea></div>
+    <button class="calc-btn" onclick="testRegex()">Test Pattern Match</button>
+    <div class="result-box" id="output">Match results will appear here...</div>
+  </div>
+</main>
+<script>
+function testRegex() {
+  try {
+    const p = document.getElementById('pattern').value;
+    const str = document.getElementById('testStr').value;
+    const regex = new RegExp(p, 'g');
+    const matches = str.match(regex);
+    document.getElementById('output').innerHTML = matches ? `<strong>Matches Found (${matches.length}):</strong><br>${matches.join(', ')}` : "No matches found.";
+  } catch(e) {
+    document.getElementById('output').innerText = "Invalid Regular Expression: " + e.message;
+  }
+}
+</script>
+</body>
+</html>

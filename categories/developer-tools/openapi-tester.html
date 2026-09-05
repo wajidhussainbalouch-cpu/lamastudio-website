@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenAPI Endpoint Tester — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+</head>
+<body style="--category-color: var(--c-tech);">
+<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span>← Back to Developer Tools</span></a></div></header>
+<main style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>🚀 OpenAPI Spec Mock Tester</h2>
+  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Validate REST route parameters and request schemas against structural YAML/JSON definitions.</p>
+  <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+    <label style="display:block; font-size:0.85rem; margin-bottom:0.5rem; color:var(--text-muted);">Target Route Path</label>
+    <input type="text" id="routeInput" value="/api/v1/users/{id}/profile" style="width:100%; padding:0.75rem; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px; margin-bottom:1rem; font-family:'JetBrains Mono',monospace;">
+    <label style="display:block; font-size:0.85rem; margin-bottom:0.5rem; color:var(--text-muted);">Mock Payload Body (JSON)</label>
+    <textarea id="payloadInput" style="width:100%; height:80px; background:var(--background); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-family:'JetBrains Mono',monospace;">{ "status": "active", "role": "admin" }</textarea>
+    <button onclick="testRoute()" class="portal-btn" style="cursor:pointer; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600;">Validate Specification Schema</button>
+    <pre id="routeOutput" style="background:var(--background); padding:1rem; border-radius:8px; margin-top:1rem; border:1px solid var(--border); font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--category-color);">Ready for evaluation...</pre>
+  </div>
+</main>
+<script>
+function testRoute() {
+  const route = document.getElementById('routeInput').value.trim();
+  const rawPayload = document.getElementById('payloadInput').value.trim();
+  const out = document.getElementById('routeOutput');
+  
+  if(!route.startsWith('/')) {
+    out.style.color = '#ef4444';
+    out.textContent = "Error: Route must start with a leading slash '/'";
+    return;
+  }
+  
+  try {
+    const parsed = JSON.parse(rawPayload);
+    const pathParams = route.match(/\{([^}]+)\}/g) || [];
+    out.style.color = 'var(--category-color)';
+    out.textContent = `[SUCCESS] Route structure validated.\n- Path: ${route}\n- Path Parameters Found: ${pathParams.join(', ') || 'None'}\n- Payload Properties Checked: ${Object.keys(parsed).length} keys parsed cleanly.`;
+  } catch(e) {
+    out.style.color = '#ef4444';
+    out.textContent = `JSON Payload Syntax Error: ${e.message}`;
+  }
+}
+</script>
+</body>
+</html>

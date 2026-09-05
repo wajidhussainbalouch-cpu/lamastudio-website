@@ -1,73 +1,125 @@
-(function () {
-  "use strict";
+document.addEventListener("DOMContentLoaded", () => {
+  // 1. Theme Toggle Logic
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  const htmlRoot = document.documentElement;
 
-  // 1. Theme Toggle Functionality
-  var root = document.documentElement;
-  var themeToggle = document.getElementById('themeToggle');
-  var savedTheme = localStorage.getItem('lama-theme');
-  
-  if (savedTheme) {
-    root.setAttribute('data-theme', savedTheme);
-  }
+  // Check saved preference or default to dark
+  const savedTheme = localStorage.getItem("lamastudio_theme") || "dark";
+  htmlRoot.setAttribute("data-theme", savedTheme);
 
-  if (themeToggle) {
-    themeToggle.addEventListener('click', function () {
-      var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      root.setAttribute('data-theme', next);
-      localStorage.setItem('lama-theme', next);
-    });
-  }
+  themeToggleBtn.addEventListener("click", () => {
+    const currentTheme = htmlRoot.getAttribute("data-theme");
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    htmlRoot.setAttribute("data-theme", newTheme);
+    localStorage.setItem("lamastudio_theme", newTheme);
+  });
 
-  // 2. Sidebar & Mobile Navigation Functionality
-  document.addEventListener('DOMContentLoaded', function () {
-    var menuToggle = document.getElementById('menuToggle') || document.querySelector('.nav-toggle');
-    var sidebarOverlay = document.getElementById('sidebarOverlay');
-    var sidebarClose = document.getElementById('sidebarClose');
+  // 2. Sidebar Navigation Drawer Logic
+  const menuToggleBtn = document.getElementById("menuToggleBtn");
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+  const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
 
-    if (!menuToggle || !sidebarOverlay) return;
+  menuToggleBtn.addEventListener("click", () => {
+    sidebarOverlay.classList.add("is-open");
+  });
 
-    function openSidebar() {
-      sidebarOverlay.classList.add('is-open');
-      document.body.style.overflow = 'hidden';
-      menuToggle.setAttribute('aria-expanded', 'true');
+  sidebarCloseBtn.addEventListener("click", () => {
+    sidebarOverlay.classList.remove("is-open");
+  });
+
+  sidebarOverlay.addEventListener("click", (e) => {
+    if (e.target === sidebarOverlay) {
+      sidebarOverlay.classList.remove("is-open");
     }
+  });
 
-    function closeSidebar() {
-      sidebarOverlay.classList.remove('is-open');
-      document.body.style.overflow = '';
-      menuToggle.setAttribute('aria-expanded', 'false');
-    }
-
-    menuToggle.addEventListener('click', function () {
-      var isOpen = sidebarOverlay.classList.contains('is-open');
-      if (isOpen) {
-        closeSidebar();
-      } else {
-        openSidebar();
-      }
-    });
-
-    sidebarOverlay.addEventListener('click', function (e) {
-      if (e.target === sidebarOverlay) {
-        closeSidebar();
-      }
-    });
-
-    if (sidebarClose) {
-      sidebarClose.addEventListener('click', closeSidebar);
-    }
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && sidebarOverlay.classList.contains('is-open')) {
-        closeSidebar();
-      }
-    });
-
-    sidebarOverlay.querySelectorAll('a').forEach(function (a) {
-      a.addEventListener('click', closeSidebar);
+  // Close sidebar when clicking links inside it
+  sidebarOverlay.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      sidebarOverlay.classList.remove("is-open");
     });
   });
 
-  // NOTE: All dynamic blog and app rendering loops have been removed. 
-  // Everything is fully controlled via index.html.
-})();
+  // 3. Category Filter Strip Logic
+  const categoryTrack = document.getElementById("categoryTrack");
+  const catPills = categoryTrack.querySelectorAll(".cat-pill");
+  const appCards = document.querySelectorAll(".app-card");
+  const blogCards = document.querySelectorAll(".blog-card");
+
+  catPills.forEach(pill => {
+    pill.addEventListener("click", () => {
+      // Update active pill state
+      catPills.forEach(p => p.classList.remove("is-active"));
+      pill.classList.add("is-active");
+
+      const filterValue = pill.getAttribute("data-filter");
+
+      // Filter Applications
+      appCards.forEach(card => {
+        const cardCat = card.getAttribute("data-category");
+        if (filterValue === "all" || cardCat === filterValue) {
+          card.classList.remove("is-hidden");
+        } else {
+          card.classList.add("is-hidden");
+        }
+      });
+
+      // Filter Blog Cards
+      blogCards.forEach(card => {
+        const cardCat = card.getAttribute("data-category");
+        if (filterValue === "all" || cardCat === filterValue) {
+          card.classList.remove("is-hidden");
+        } else {
+          card.classList.add("is-hidden");
+        }
+      });
+    });
+  });
+
+  // 4. Quick-View Modal Logic
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+  const modalCloseAction = document.getElementById("modalCloseAction");
+  const modalPrimaryBtn = document.getElementById("modalPrimaryBtn");
+  
+  const modalIcon = document.getElementById("modalIcon");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalDesc = document.getElementById("modalDesc");
+  const modalPrice = document.getElementById("modalPrice");
+
+  // Attach event listeners to all card open buttons
+  document.querySelectorAll(".open-modal-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const card = e.target.closest(".app-card, .blog-card");
+      if (!card) return;
+
+      const title = card.getAttribute("data-title");
+      const desc = card.getAttribute("data-desc");
+      const price = card.getAttribute("data-price");
+      const icon = card.querySelector(".app-icon, .blog-thumb")?.textContent || "✨";
+
+      // Populate modal content
+      modalTitle.textContent = title;
+      modalDesc.textContent = desc;
+      modalPrice.textContent = price;
+      modalIcon.textContent = icon;
+
+      modalOverlay.classList.add("is-open");
+    });
+  });
+
+  function closeModal() {
+    modalOverlay.classList.remove("is-open");
+  }
+
+  modalCloseBtn.addEventListener("click", closeModal);
+  modalCloseAction.addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  modalPrimaryBtn.addEventListener("click", () => {
+    alert("Redirecting to secure access destination...");
+    closeModal();
+  });
+});

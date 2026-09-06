@@ -1,41 +1,394 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cron Expression Explainer — LamaStudio Tech</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cron Expression Explainer &amp; Next Run Calculator | LamaStudio</title>
+<meta name="description" content="Parse any 5-field cron expression into plain English, validate each field, and see the next 5 scheduled run times — entirely in your browser.">
+<link rel="canonical" href="https://www.lamastudio.pk/tools/cron-explainer/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Cron Expression Explainer — LamaStudio">
+<meta property="og:description" content="Free client-side cron parser with field-by-field validation and real computed next-run times.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d12">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; script-src 'self'; object-src 'none'; base-uri 'self';">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Cron Expression Explainer",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "LamaStudio" }
+}
+</script>
 <style>
-  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 650px; margin: 2rem auto; }
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 900px; margin: 2rem auto; }
   .form-group { margin-bottom: 1.25rem; }
   .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
-  .form-group input { width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; }
-  .calc-btn { background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
-  .result-box { margin-top: 1.25rem; padding: 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: var(--category-color); text-align: center; }
+  .form-group input {
+    width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 1rem;
+  }
+  .form-group input:focus { outline: 2px solid var(--category-color); outline-offset: 1px; }
+  .form-group input.has-error { border-color: #ef6b6b; }
+  .preset-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+  .preset-chip {
+    background: var(--background); border: 1px solid var(--border); color: var(--text);
+    font-size: 0.78rem; padding: 0.35rem 0.7rem; border-radius: 999px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .preset-chip:hover { border-color: var(--category-color); }
+  .calc-btn {
+    background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem;
+    border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 0.5rem; font-size: 0.92rem;
+  }
+  .result-box {
+    margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: var(--background); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 1rem; color: var(--text);
+  }
+  .result-box.err { border-color: #ef6b6b; color: #ef6b6b; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; }
+  .field-table { width: 100%; border-collapse: collapse; margin-top: 1.25rem; font-size: 0.82rem; }
+  .field-table th, .field-table td { text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); }
+  .field-table th { color: var(--text-muted, #8a93a6); font-weight: 600; }
+  .field-table td.raw { font-family: 'JetBrains Mono', monospace; color: var(--category-color); }
+  .field-table td.vals { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--text); }
+  .runs-list { margin-top: 1.25rem; }
+  .run-row {
+    display: flex; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+  }
+  .run-row:last-child { border-bottom: none; }
+  .run-row .rel { color: var(--text-muted, #8a93a6); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+  .explainer { max-width: 900px; margin: 2rem auto 3rem auto; padding: 0 0.5rem; font-size: 0.92rem; line-height: 1.65; }
+  .explainer h2 { font-size: 1.15rem; margin-top: 2rem; }
+  .explainer details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.75rem; }
+  .explainer summary { cursor: pointer; font-weight: 600; }
+  .field-labels { display: flex; gap: 1rem; font-size: 0.7rem; color: var(--text-muted, #8a93a6); font-family: 'JetBrains Mono', monospace; margin-top: 0.35rem; }
 </style>
 </head>
 <body style="--category-color: var(--c-tech);">
-<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Cron Parser</small></span></a></div></header>
-<main style="padding: 2rem 1rem;">
-  <div class="tool-box">
-    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
-    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">Cron Schedule Explainer</h1>
-    <div class="form-group"><label>Cron Expression (e.g. 0 * * * *)</label><input type="text" id="cronInput" value="0 0 * * *"></div>
-    <button class="calc-btn" onclick="parseCron()">Explain Schedule</button>
-    <div class="result-box" id="output">Schedule description will appear here...</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <a href="../../index.html" class="brand">
+      <span class="brand-mark" style="background: var(--category-color);">L</span>
+      <span>LamaStudio<small>Cron Explainer</small></span>
+    </a>
+    <nav>
+      <a href="../">All Tools</a>
+      <a href="../../index.html">Store</a>
+    </nav>
   </div>
+</header>
+
+<main style="padding: 2rem 1rem;">
+
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility · Client-Side Only</span>
+    <h1 style="font-size: 1.6rem; margin: 0.5rem 0 0.35rem 0;">Cron Expression Explainer</h1>
+    <p style="margin: 0 0 1.5rem 0; font-size: 0.88rem; color: var(--text-muted, #8a93a6);">
+      Parses the actual expression — including ranges, steps, lists, and named months/days — and
+      computes real upcoming run times rather than matching against a few hardcoded examples.
+    </p>
+
+    <div class="preset-row" id="presetRow"></div>
+
+    <div class="form-group">
+      <label for="cronInput">Cron Expression (5 fields: minute hour day-of-month month day-of-week)</label>
+      <input type="text" id="cronInput" value="*/15 9-17 * * MON-FRI" spellcheck="false" autocomplete="off">
+      <div class="field-labels"><span style="flex:1;">minute</span><span style="flex:1;">hour</span><span style="flex:1;">day-of-month</span><span style="flex:1;">month</span><span style="flex:1;">day-of-week</span></div>
+    </div>
+
+    <button class="calc-btn" id="explainBtn">Explain Schedule</button>
+
+    <div class="result-box" id="output">Schedule description will appear here...</div>
+
+    <table class="field-table" id="fieldTable" style="display:none;">
+      <thead><tr><th>Field</th><th>Expression</th><th>Matches</th></tr></thead>
+      <tbody id="fieldTableBody"></tbody>
+    </table>
+
+    <div class="runs-list" id="runsList" style="display:none;">
+      <h2 style="font-size: 1rem; margin: 0 0 0.5rem 0;">Next 5 scheduled runs (your local time)</h2>
+      <div id="runsBody"></div>
+    </div>
+  </div>
+
+  <section class="explainer">
+    <h2>Supported cron syntax</h2>
+    <p>
+      Each of the 5 fields accepts a wildcard (<code>*</code>), a single value, a range
+      (<code>1-5</code>), a step (<code>*/15</code> or <code>1-30/5</code>), or a comma-separated list
+      combining any of those (<code>1,15,30-45/5</code>). Months and weekdays also accept 3-letter
+      names — <code>JAN-DEC</code> and <code>SUN-SAT</code> — case-insensitively.
+    </p>
+
+    <details>
+      <summary>Why does a day sometimes run even though "day-of-month" doesn't match?</summary>
+      <p style="margin-top:0.6rem;">
+        This is a genuine cron quirk, not a bug: when <em>both</em> day-of-month and day-of-week are
+        restricted (neither is <code>*</code>), a day matches if <strong>either</strong> field matches —
+        not both. So <code>0 0 1 * MON</code> runs on the 1st of every month <em>and</em> every Monday,
+        not only on Mondays that happen to fall on the 1st. If only one of the two fields is restricted,
+        it behaves as you'd expect and only that field constrains the match.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why didn't it find any upcoming runs?</summary>
+      <p style="margin-top:0.6rem;">
+        Some expressions describe a date that can never occur — for example, day-of-month 30 combined
+        with month February. This tool searches up to 5 years ahead before giving up, so if nothing is
+        found, the expression likely describes an impossible or extremely rare combination worth
+        double-checking.
+      </p>
+    </details>
+  </section>
+
 </main>
+
 <script>
-function parseCron() {
-  const val = document.getElementById('cronInput').value.trim();
-  const parts = val.split(' ');
-  if(parts.length < 5) { document.getElementById('output').innerText = "Please enter at least 5 cron parameters."; return; }
-  let desc = `Runs at minute ${parts[0]}, hour ${parts[1]}, day of month ${parts[2]}, month ${parts[3]}, day of week ${parts[4]}.`;
-  if(val === "0 0 * * *") desc = "Runs every day at midnight (00:00).";
-  if(val === "*/15 * * * *") desc = "Runs every 15 minutes.";
-  document.getElementById('output').innerHTML = `<strong>Schedule:</strong> ${desc}`;
-}
-parseCron();
+(function () {
+  'use strict';
+
+  const cronInput = document.getElementById('cronInput');
+  const output = document.getElementById('output');
+  const fieldTable = document.getElementById('fieldTable');
+  const fieldTableBody = document.getElementById('fieldTableBody');
+  const runsList = document.getElementById('runsList');
+  const runsBody = document.getElementById('runsBody');
+  const presetRow = document.getElementById('presetRow');
+
+  const MONTH_NAMES = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
+  const DOW_NAMES = { SUN:0, MON:1, TUE:2, WED:3, THU:4, FRI:5, SAT:6 };
+  const DOW_LABEL = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTH_LABEL = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const PRESETS = [
+    { label: 'Every minute', expr: '* * * * *' },
+    { label: 'Every 15 min', expr: '*/15 * * * *' },
+    { label: 'Hourly', expr: '0 * * * *' },
+    { label: 'Daily midnight', expr: '0 0 * * *' },
+    { label: 'Weekdays 9am', expr: '0 9 * * MON-FRI' },
+    { label: 'Weekly (Mon)', expr: '0 0 * * MON' },
+    { label: 'Monthly (1st)', expr: '0 0 1 * *' },
+    { label: 'Yearly (Jan 1)', expr: '0 0 1 1 *' }
+  ];
+  PRESETS.forEach(p => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'preset-chip';
+    chip.textContent = p.label;
+    chip.addEventListener('click', () => { cronInput.value = p.expr; explain(); });
+    presetRow.appendChild(chip);
+  });
+
+  function parseNamedValue(str, names) {
+    const up = str.toUpperCase();
+    if (names && names[up] !== undefined) return names[up];
+    const n = parseInt(str, 10);
+    return isNaN(n) ? NaN : n;
+  }
+
+  function expandField(raw, min, max, names, fieldLabel) {
+    const set = new Set();
+    const tokens = raw.split(',');
+    for (const token of tokens) {
+      if (!token) throw new Error(`${fieldLabel}: empty value in "${raw}"`);
+      const slashParts = token.split('/');
+      const rangePart = slashParts[0];
+      let step = 1;
+      if (slashParts.length > 1) {
+        step = parseInt(slashParts[1], 10);
+        if (isNaN(step) || step <= 0) throw new Error(`${fieldLabel}: invalid step "${slashParts[1]}" in "${token}"`);
+      }
+      let start, end;
+      if (rangePart === '*') {
+        start = min; end = max;
+      } else if (rangePart.includes('-')) {
+        const [a, b] = rangePart.split('-');
+        start = parseNamedValue(a, names);
+        end = parseNamedValue(b, names);
+        if (isNaN(start) || isNaN(end)) throw new Error(`${fieldLabel}: invalid range "${rangePart}"`);
+      } else {
+        start = end = parseNamedValue(rangePart, names);
+        if (isNaN(start)) throw new Error(`${fieldLabel}: invalid value "${rangePart}"`);
+      }
+      if (start < min || end > max || start > end) {
+        throw new Error(`${fieldLabel}: "${token}" is out of range (valid: ${min}-${max})`);
+      }
+      for (let v = start; v <= end; v += step) set.add(v);
+    }
+    return Array.from(set).sort((a, b) => a - b);
+  }
+
+  function compress(list, labels) {
+    if (list.length === 0) return '(none)';
+    const items = list.map(v => (labels ? labels[v] : v));
+    if (list.length > 12) {
+      return items.slice(0, 12).join(', ') + `, … (${list.length} total)`;
+    }
+    return items.join(', ');
+  }
+
+  function describeSchedule(minutes, hours, doms, months, dows, domRestricted, dowRestricted) {
+    const parts = [];
+
+    if (minutes.length === 60 && hours.length === 24) {
+      parts.push('Runs every minute');
+    } else if (minutes.length === 60) {
+      parts.push('Runs every minute of the selected hours');
+    } else if (minutes.length === 1 && hours.length === 24) {
+      parts.push(`Runs at minute ${minutes[0]} of every hour`);
+    } else {
+      parts.push(`Runs at minute(s) ${compress(minutes)} of hour(s) ${compress(hours)}`);
+    }
+
+    if (doms.length < 31) parts.push(`on day-of-month ${compress(doms)}`);
+    if (months.length < 12) parts.push(`in ${compress(months, MONTH_LABEL)}`);
+    if (dows.length < 7) parts.push(`on ${compress(dows, DOW_LABEL)}`);
+    if (domRestricted && dowRestricted) parts.push('(day-of-month OR day-of-week — either match qualifies)');
+
+    return parts.join(', ') + '.';
+  }
+
+  function computeNextRuns(minutes, hours, doms, months, dows, domRestricted, dowRestricted, count) {
+    const now = new Date();
+    const results = [];
+    const maxDays = 5 * 366;
+
+    for (let d = 0; d <= maxDays && results.length < count; d++) {
+      const candidateDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + d);
+      const month = candidateDay.getMonth() + 1;
+      const domVal = candidateDay.getDate();
+      const dowVal = candidateDay.getDay();
+
+      if (!months.includes(month)) continue;
+
+      const domMatch = doms.includes(domVal);
+      const dowMatch = dows.includes(dowVal);
+      const dayMatch = (domRestricted && dowRestricted) ? (domMatch || dowMatch) : (domMatch && dowMatch);
+      if (!dayMatch) continue;
+
+      for (const h of hours) {
+        for (const m of minutes) {
+          const candidate = new Date(candidateDay.getFullYear(), candidateDay.getMonth(), candidateDay.getDate(), h, m, 0);
+          if (candidate > now) {
+            results.push(candidate);
+            if (results.length >= count) break;
+          }
+        }
+        if (results.length >= count) break;
+      }
+    }
+    return results;
+  }
+
+  function relativeFromNow(date) {
+    const diffMs = date - new Date();
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 60) return `in ${diffMin} min`;
+    if (diffMin < 1440) return `in ${Math.round(diffMin / 60)} hr`;
+    return `in ${Math.round(diffMin / 1440)} day(s)`;
+  }
+
+  function explain() {
+    const raw = cronInput.value.trim();
+    cronInput.classList.remove('has-error');
+    fieldTable.style.display = 'none';
+    runsList.style.display = 'none';
+    output.classList.remove('err');
+
+    const fields = raw.split(/\s+/);
+    if (fields.length !== 5) {
+      output.textContent = `Expected exactly 5 fields (minute hour day-of-month month day-of-week), found ${fields.length}.`;
+      output.classList.add('err');
+      cronInput.classList.add('has-error');
+      return;
+    }
+
+    const [minRaw, hourRaw, domRaw, monthRaw, dowRaw] = fields;
+
+    try {
+      const minutes = expandField(minRaw, 0, 59, null, 'Minute');
+      const hours = expandField(hourRaw, 0, 23, null, 'Hour');
+      const doms = expandField(domRaw, 1, 31, null, 'Day-of-month');
+      const months = expandField(monthRaw, 1, 12, MONTH_NAMES, 'Month');
+      let dows = expandField(dowRaw, 0, 7, DOW_NAMES, 'Day-of-week');
+      dows = Array.from(new Set(dows.map(v => v === 7 ? 0 : v))).sort((a, b) => a - b);
+
+      const domRestricted = domRaw.trim() !== '*';
+      const dowRestricted = dowRaw.trim() !== '*';
+
+      output.textContent = describeSchedule(minutes, hours, doms, months, dows, domRestricted, dowRestricted);
+
+      fieldTableBody.innerHTML = '';
+      const rows = [
+        ['Minute', minRaw, compress(minutes)],
+        ['Hour', hourRaw, compress(hours)],
+        ['Day-of-month', domRaw, compress(doms)],
+        ['Month', monthRaw, compress(months, MONTH_LABEL)],
+        ['Day-of-week', dowRaw, compress(dows, DOW_LABEL)]
+      ];
+      for (const [label, rawVal, valsVal] of rows) {
+        const tr = document.createElement('tr');
+        const tdLabel = document.createElement('td'); tdLabel.textContent = label;
+        const tdRaw = document.createElement('td'); tdRaw.className = 'raw'; tdRaw.textContent = rawVal;
+        const tdVals = document.createElement('td'); tdVals.className = 'vals'; tdVals.textContent = valsVal;
+        tr.appendChild(tdLabel); tr.appendChild(tdRaw); tr.appendChild(tdVals);
+        fieldTableBody.appendChild(tr);
+      }
+      fieldTable.style.display = 'table';
+
+      const nextRuns = computeNextRuns(minutes, hours, doms, months, dows, domRestricted, dowRestricted, 5);
+      runsBody.innerHTML = '';
+      if (nextRuns.length === 0) {
+        const p = document.createElement('p');
+        p.style.fontSize = '0.85rem';
+        p.style.color = 'var(--text-muted, #8a93a6)';
+        p.textContent = 'No matching run found in the next 5 years — this expression may describe an impossible date.';
+        runsBody.appendChild(p);
+      } else {
+        nextRuns.forEach(date => {
+          const row = document.createElement('div');
+          row.className = 'run-row';
+          const left = document.createElement('span');
+          left.textContent = date.toLocaleString(undefined, {
+            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+          const right = document.createElement('span');
+          right.className = 'rel';
+          right.textContent = relativeFromNow(date);
+          row.appendChild(left); row.appendChild(right);
+          runsBody.appendChild(row);
+        });
+      }
+      runsList.style.display = 'block';
+
+    } catch (e) {
+      output.textContent = e.message;
+      output.classList.add('err');
+      cronInput.classList.add('has-error');
+    }
+  }
+
+  document.getElementById('explainBtn').addEventListener('click', explain);
+
+  let debounceTimer;
+  cronInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(explain, 400);
+  });
+  cronInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); explain(); }
+  });
+
+  explain();
+})();
 </script>
 </body>
 </html>

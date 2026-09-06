@@ -50,6 +50,51 @@
       background: var(--pc, #2563eb);
     }
     
+    /* Standalone Ad Banner Styling */
+    .section-ad-banner {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(14, 165, 233, 0.1));
+      border: 1px dashed var(--border, #333);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .section-ad-banner .ad-text span {
+      font-size: 0.7rem;
+      background: #2563eb;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+    .section-ad-banner .ad-text strong {
+      color: var(--text, #fff);
+      font-size: 0.95rem;
+    }
+    .section-ad-banner .ad-text p {
+      color: var(--text-muted, #aaa);
+      font-size: 0.82rem;
+      margin: 4px 0 0 0;
+    }
+    .section-ad-banner .ad-cta-btn {
+      background: #2563eb;
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .section-ad-banner .ad-cta-btn:hover {
+      background: #1d4ed8;
+    }
+
     /* Blog Grid & Design-Matched Cards */
     .blog-grid {
       display: grid;
@@ -198,11 +243,35 @@
             <a href="https://www.facebook.com/lamastudiopk" target="_blank" rel="noopener noreferrer" class="btn-social btn-facebook">Facebook</a>
           </div>
         </div>
+
+        <!-- AskLama Integration Directly Underneath the YouTube Video Player in the Sidebar -->
+        <div class="widget asklama-sidebar-widget" style="margin-top: 20px; padding: 16px; background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); border-radius: 16px; position: relative;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <img src="ask-lama-3d.png" alt="AskLama Mascot" id="sidebarAskLamaImage" style="width: 44px; height: 44px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/44?text=Lama';">
+            <div>
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--text);">AskLama AI</h4>
+              <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: var(--text-muted);">Your ecosystem guide</p>
+            </div>
+          </div>
+          <button onclick="toggleLamaChat();" style="width: 100%; background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+            💬 Open AskLama Chat
+          </button>
+        </div>
       </aside>
     </div>
 
+    <!-- Standalone Ad Banner placed SEPARATELY above the Apps & Utilities section -->
+    <div class="section-ad-banner" style="margin-top: 50px;">
+      <div class="ad-text">
+        <span>Sponsored</span>
+        <strong>Supercharge Your Setup with Lama Cloud</strong>
+        <p>Get high-speed regional deployment nodes across Pakistan starting at just PKR 1,200/mo.</p>
+      </div>
+      <a href="https://lamastudio.pk/cloud" target="_blank" rel="noopener noreferrer" class="ad-cta-btn">Learn More</a>
+    </div>
+
     <!-- Apps Section -->
-    <section class="section" id="apps" style="margin-top: 50px;">
+    <section class="section" id="apps">
       <div class="section-head">
         <div>
           <span class="eyebrow">The Ecosystem</span>
@@ -555,9 +624,9 @@
 
   <script src="script.js"></script>
   <script type="module">
-    // ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Centered Bottom Floating)
+    // ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Centered Bottom Floating with Opaque Background)
     (function() {
-      // Inject required styling for bottom-centered floating widget & animations
+      // Inject required styling for bottom-centered floating widget & opaque solid chat box background
       const style = document.createElement('style');
       style.innerHTML = `
         .asklama-widget-container {
@@ -598,9 +667,10 @@
           width: 340px;
           max-height: 480px;
           background: var(--surface, #1e1e1e);
+          opacity: 1;
           border: 1px solid var(--border, #333);
           border-radius: 20px;
-          box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+          box-shadow: 0 15px 35px rgba(0,0,0,0.6);
           display: flex;
           flex-direction: column;
           overflow: hidden;
@@ -640,6 +710,7 @@
           flex-direction: column;
           gap: 10px;
           font-size: 0.85rem;
+          background: var(--surface, #1e1e1e);
         }
         .asklama-msg {
           padding: 10px 14px;
@@ -649,7 +720,7 @@
           word-break: break-word;
         }
         .asklama-msg.bot {
-          background: rgba(255,255,255,0.07);
+          background: rgba(255,255,255,0.08);
           color: var(--text, #fff);
           align-self: flex-start;
           border-bottom-left-radius: 2px;
@@ -718,6 +789,7 @@
       // Element references
       const mascotBtn = document.getElementById('askLamaMascotBtn');
       const mascotImg = document.getElementById('askLamaImage');
+      const sidebarMascotImg = document.getElementById('sidebarAskLamaImage');
       const chatBox = document.getElementById('askLamaChatBox');
       const closeBtn = document.getElementById('askLamaCloseBtn');
       const sendBtn = document.getElementById('askLamaSendBtn');
@@ -726,16 +798,18 @@
 
       let isOpen = false;
 
-      // Global toggle function referenced by any external trigger buttons
+      // Global toggle function referenced by external trigger buttons (sidebar widget, etc.)
       window.toggleLamaChat = function() {
         isOpen = !isOpen;
         if (isOpen) {
           chatBox.classList.add('active');
-          mascotImg.src = 'walking-lama.gif'; // Switch to animated walking state when active
+          if (mascotImg) mascotImg.src = 'walking-lama.gif';
+          if (sidebarMascotImg) sidebarMascotImg.src = 'walking-lama.gif';
           inputField.focus();
         } else {
           chatBox.classList.remove('active');
-          mascotImg.src = 'ask-lama-3d.png'; // Revert back to 3D static icon
+          if (mascotImg) mascotImg.src = 'ask-lama-3d.png';
+          if (sidebarMascotImg) sidebarMascotImg.src = 'ask-lama-3d.png';
         }
       };
 
@@ -755,7 +829,7 @@
         inputField.value = '';
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        // Simulated intelligent bot response based on user inquiry keywords
+        // Simulated intelligent bot response based on query keywords
         setTimeout(() => {
           const botMsg = document.createElement('div');
           botMsg.className = 'asklama-msg bot';

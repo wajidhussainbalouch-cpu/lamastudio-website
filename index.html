@@ -16,67 +16,178 @@
   
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Category track scrollability & container fixes */
-    .category-strip {
-      width: 100%;
-      overflow-x: auto;
-      padding: 12px 0;
-      scrollbar-width: thin;
-    }
-    .category-track {
+    /* 1. Categories in Two Rows (No Scrollbar) */
+    .category-strip-grid {
       display: flex;
-      gap: 10px;
-      flex-wrap: nowrap;
-      padding: 0 1rem;
-      min-width: max-content;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      padding: 10px 0;
+      margin-bottom: 20px;
     }
     .cat-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
+      padding: 6px 12px;
       background: var(--surface, #1e1e1e);
       border: 1px solid var(--border, #333);
-      border-radius: 20px;
+      border-radius: 16px;
       color: var(--text, #fff);
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       text-decoration: none;
-      white-space: nowrap;
       transition: border-color 0.2s;
     }
     .cat-pill:hover {
       border-color: #2563eb;
     }
     .cat-pill .dot {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--pc, #2563eb);
     }
-    /* Uniform blog card styling */
+
+    /* 2. Article Design Matching your Image Layout */
     .blog-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
     }
-    .blog-card.article-card-style {
-      background: var(--surface, #1e1e1e);
-      border: 1px solid var(--border, #333);
+    .blog-card.image-matched-card {
+      background: var(--surface, #ffffff);
+      color: #111827;
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 16px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .blog-card.article-card-style:hover {
+    [data-theme="dark"] .blog-card.image-matched-card {
+      background: #18181b;
+      color: #f3f4f6;
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    .blog-card.image-matched-card:hover {
       transform: translateY(-3px);
-      border-color: #2563eb;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
     }
-    .blog-body {
+    .blog-card-top-banner {
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      background: linear-gradient(135deg, rgba(37,99,235,0.06), rgba(37,99,235,0.12));
+    }
+    .blog-body-content {
       padding: 20px;
       display: flex;
       flex-direction: column;
       flex: 1;
+    }
+    .blog-meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .blog-body-content h3 {
+      font-size: 1.05rem;
+      line-height: 1.4;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    .blog-body-content p {
+      font-size: 0.85rem;
+      color: #6b7280;
+      line-height: 1.5;
+      flex: 1;
+      margin-bottom: 20px;
+    }
+    [data-theme="dark"] .blog-body-content p {
+      color: #9ca3af;
+    }
+    .blog-read-link {
+      color: #2563eb;
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .blog-read-link:hover {
+      text-decoration: underline;
+    }
+
+    /* 3. Ad Banner Styling */
+    .studio-ad-banner {
+      width: 100%;
+      background: linear-gradient(90deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 40px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .studio-ad-content h4 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+      color: #38bdf8;
+    }
+    .studio-ad-content p {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      margin: 0;
+    }
+    .studio-ad-btn {
+      background: #2563eb;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .studio-ad-btn:hover {
+      background: #1d4ed8;
+    }
+
+    /* 4. Active Bottom-Left Floating AskLama Widget override */
+    #askLamaFloatingWidget {
+      position: fixed !important;
+      bottom: 20px !important;
+      left: 20px !important;
+      right: auto !important;
+      top: auto !important;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface, #1e1e1e);
+      border: 1px solid var(--border, #333);
+      padding: 10px 14px;
+      border-radius: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    #askLamaFloatingWidget img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
     }
   </style>
 </head>
@@ -96,10 +207,6 @@
         <a href="signin.html" class="icon-btn" style="text-decoration: none; background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; color: var(--text);">
           👤 Account
         </a>
-
-        <button class="icon-btn asklama-trigger" id="askLamaTriggerBtn" onclick="toggleLamaChat()" aria-label="Open AskLama AI Agent" style="background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text);">
-          🤖 <span class="desktop-only">AskLama</span>
-        </button>
 
         <button class="icon-btn theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme" style="background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem; border-radius: 8px; cursor: pointer; color: var(--text);">
           <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -152,297 +259,156 @@
 
   <main id="main-content" class="site-main" style="padding: 20px;">
     
-    <!-- All 12 Categories Fully Rendered in Horizontal Scroll Track -->
-    <div class="category-strip">
-      <div class="category-track" id="categoryTrack">
-        <a href="categories/tech/" class="cat-pill" style="--pc: var(--c-tech);"><span class="dot"></span>Tech &amp; Code</a>
-        <a href="categories/developer-tools/" class="cat-pill" style="--pc: var(--c-travel);"><span class="dot"></span>Developer Tools</a>
-        <a href="categories/productivity/" class="cat-pill" style="--pc: var(--c-health);"><span class="dot"></span>Productivity</a>
-        <a href="categories/network-security/" class="cat-pill" style="--pc: var(--c-weather);"><span class="dot"></span>Network &amp; Security</a>
-        <a href="categories/business/" class="cat-pill" style="--pc: var(--c-business);"><span class="dot"></span>Business</a>
-        <a href="categories/sports/" class="cat-pill" style="--pc: var(--c-sports);"><span class="dot"></span>Sports Hub</a>
-        <a href="categories/travel/" class="cat-pill" style="--pc: var(--c-travel);"><span class="dot"></span>Travel &amp; Tourism</a>
-        <a href="categories/news/" class="cat-pill" style="--pc: var(--c-news);"><span class="dot"></span>Global News</a>
-        <a href="categories/fashion/" class="cat-pill" style="--pc: var(--c-fashion);"><span class="dot"></span>Fashion &amp; Style</a>
-        <a href="categories/education/" class="cat-pill" style="--pc: var(--c-education);"><span class="dot"></span>Education</a>
-        <a href="categories/weather/" class="cat-pill" style="--pc: var(--c-weather);"><span class="dot"></span>Weather Forecast</a>
-        <a href="categories/health/" class="cat-pill" style="--pc: var(--c-health);"><span class="dot"></span>Health &amp; Wellness</a>
+    <!-- All 12 Categories Displayed in Two Rows (No scrollbar) -->
+    <div class="category-strip-grid">
+      <a href="categories/tech/" class="cat-pill" style="--pc: #2563eb;"><span class="dot"></span>Tech &amp; Code</a>
+      <a href="categories/developer-tools/" class="cat-pill" style="--pc: #38bdf8;"><span class="dot"></span>Developer Tools</a>
+      <a href="categories/productivity/" class="cat-pill" style="--pc: #22c55e;"><span class="dot"></span>Productivity</a>
+      <a href="categories/network-security/" class="cat-pill" style="--pc: #eab308;"><span class="dot"></span>Network &amp; Security</a>
+      <a href="categories/business/" class="cat-pill" style="--pc: #a855f7;"><span class="dot"></span>Business</a>
+      <a href="categories/sports/" class="cat-pill" style="--pc: #f97316;"><span class="dot"></span>Sports Hub</a>
+      <a href="categories/travel/" class="cat-pill" style="--pc: #06b6d4;"><span class="dot"></span>Travel &amp; Tourism</a>
+      <a href="categories/news/" class="cat-pill" style="--pc: #ef4444;"><span class="dot"></span>Global News</a>
+      <a href="categories/fashion/" class="cat-pill" style="--pc: #ec4899;"><span class="dot"></span>Fashion &amp; Style</a>
+      <a href="categories/education/" class="cat-pill" style="--pc: #3b82f6;"><span class="dot"></span>Education</a>
+      <a href="categories/weather/" class="cat-pill" style="--pc: #64748b;"><span class="dot"></span>Weather Forecast</a>
+      <a href="categories/health/" class="cat-pill" style="--pc: #10b981;"><span class="dot"></span>Health &amp; Wellness</a>
+    </div>
+
+    <div class="dashboard" style="margin-top: 20px;">
+      <div class="hero-panel" style="padding: 40px; background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); border-radius: 20px;">
+        <span class="eyebrow" style="color: #2563eb; font-weight: 600; font-size: 0.85rem;">Independent Studio · DG Khan, Pakistan</span>
+        <h1 style="font-size: 2.4rem; margin: 10px 0;">Resilient digital tools for <em>modern workflows</em></h1>
+        <p class="lede" style="color: var(--text-muted, rgba(255,255,255,0.6)); font-size: 1rem; margin-bottom: 20px;">Building privacy-focused applications, lightweight utilities, and open developer systems tailored for regional performance.</p>
+        <div class="hero-cta" style="display: flex; gap: 12px;">
+          <a href="#apps" class="btn-action" style="background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 10px; text-decoration: none; font-weight: 600;">Explore Apps</a>
+          <a href="#blog" class="btn-ghost" style="border: 1px solid var(--border, #333); color: var(--text); padding: 10px 20px; border-radius: 10px; text-decoration: none;">Read Studio Blog</a>
+        </div>
       </div>
     </div>
 
-    <div class="dashboard" style="margin-top: 30px;">
-      <div class="hero-panel">
-        <span class="eyebrow">Independent Studio · DG Khan, Pakistan</span>
-        <h1>Resilient digital tools for <em>modern workflows</em></h1>
-        <p class="lede">Building privacy-focused applications, lightweight utilities, and open developer systems tailored for regional performance.</p>
-        <div class="hero-cta">
-          <a href="#apps" class="btn-action">Explore Apps</a>
-          <a href="#blog" class="btn-ghost">Read Studio Blog</a>
-        </div>
+    <!-- Added Studio Ad Banner Section -->
+    <div class="studio-ad-banner">
+      <div class="studio-ad-content">
+        <h4>💡 Build Smarter with LamaTools Suite v2.4</h4>
+        <p>Get full offline utility access, priority sync engines, and advanced developer diagnostics today.</p>
       </div>
-
-      <aside class="side-widgets" aria-label="Sidebar Content">
-        <div class="widget">
-          <div class="widget-head">
-            <span class="widget-title">Featured Stream</span>
-            <span class="live-dot" aria-hidden="true"><i></i>Live Video</span>
-          </div>
-          <div class="video-wrapper">
-            <iframe 
-              src="https://www.youtube-nocookie.com/embed/BwOW3MkqaKc" 
-              title="LamaStudio Featured Video Stream" 
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowfullscreen>
-            </iframe>
-          </div>
-          <div class="social-buttons-grid">
-            <a href="https://www.youtube.com/@lamastudio" target="_blank" rel="noopener noreferrer" class="btn-social btn-youtube">YouTube</a>
-            <a href="https://www.facebook.com/lamastudiopk" target="_blank" rel="noopener noreferrer" class="btn-social btn-facebook">Facebook</a>
-          </div>
-        </div>
-      </aside>
+      <a href="apps/lamavpnpro/" class="studio-ad-btn">Learn More</a>
     </div>
 
-    <section class="section" id="apps" style="margin-top: 50px;">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">The Ecosystem</span>
-          <h2>Apps &amp; utilities</h2>
-        </div>
+    <section class="section" id="apps" style="margin-top: 40px;">
+      <div class="section-head" style="margin-bottom: 20px;">
+        <span class="eyebrow" style="color: #2563eb; font-size: 0.85rem;">The Ecosystem</span>
+        <h2 style="font-size: 1.8rem;">Apps &amp; utilities</h2>
       </div>
-      <div class="app-grid" id="appGrid">
+      <div class="app-grid" id="appGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
         
-        <article class="app-card" data-category="business" data-title="LamaVPN Pro" data-desc="A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection." data-price="Free / Pro Upgrade" style="--pc: var(--c-business);">
-          <div class="app-icon" aria-hidden="true">🛡️</div>
-          <span class="tag-pill">Privacy &amp; Security</span>
-          <h3>LamaVPN Pro</h3>
-          <p class="desc">A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.</p>
+        <article class="app-card" style="background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); padding: 24px; border-radius: 16px;">
+          <div class="app-icon" aria-hidden="true" style="font-size: 2rem; margin-bottom: 12px;">🛡️</div>
+          <span class="tag-pill" style="font-size: 0.75rem; background: rgba(37,99,235,0.1); color: #2563eb; padding: 4px 8px; border-radius: 6px;">Privacy &amp; Security</span>
+          <h3 style="margin: 10px 0 6px 0;">LamaVPN Pro</h3>
+          <p class="desc" style="color: var(--text-muted, rgba(255,255,255,0.6)); font-size: 0.88rem; margin-bottom: 15px;">A full WireGuard VPN client with on-device key generation and encrypted storage.</p>
           <div class="card-actions">
-            <a href="apps/lamavpnpro/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
+            <a href="apps/lamavpnpro/" class="btn-action" style="background: #2563eb; color: #fff; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; display: inline-block;">View App</a>
           </div>
         </article>
 
-        <article class="app-card" data-category="weather" data-title="LamaSky" data-desc="Local weather, prayer-aligned scheduling, and daily planning built around how users structure their day." data-price="Free" style="--pc: var(--c-weather);">
-          <div class="app-icon" aria-hidden="true">🌤️</div>
-          <span class="tag-pill">Weather &amp; Planning</span>
-          <h3>LamaSky</h3>
-          <p class="desc">Local weather, prayer-aligned scheduling, and daily planning built around how users structure their day.</p>
+        <article class="app-card" style="background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); padding: 24px; border-radius: 16px;">
+          <div class="app-icon" aria-hidden="true" style="font-size: 2rem; margin-bottom: 12px;">🌤️</div>
+          <span class="tag-pill" style="font-size: 0.75rem; background: rgba(37,99,235,0.1); color: #2563eb; padding: 4px 8px; border-radius: 6px;">Weather &amp; Planning</span>
+          <h3 style="margin: 10px 0 6px 0;">LamaSky</h3>
+          <p class="desc" style="color: var(--text-muted, rgba(255,255,255,0.6)); font-size: 0.88rem; margin-bottom: 15px;">Local weather, prayer-aligned scheduling, and daily planning tools.</p>
           <div class="card-actions">
-            <a href="apps/lamasky/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
+            <a href="apps/lamasky/" class="btn-action" style="background: #2563eb; color: #fff; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; display: inline-block;">View App</a>
           </div>
         </article>
 
-        <article class="app-card" data-category="business" data-title="LamaMultiCalendar" data-desc="Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets." data-price="Free" style="--pc: var(--c-business);">
-          <div class="app-icon" aria-hidden="true">📅</div>
-          <span class="tag-pill">Productivity</span>
-          <h3>LamaMultiCalendar</h3>
-          <p class="desc">Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.</p>
-          <div class="card-actions">
-            <a href="apps/lamamulticalendar/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
-          </div>
-        </article>
-
-        <article class="app-card" data-category="education" data-title="LamaIQMaster" data-desc="Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content." data-price="Freemium" style="--pc: var(--c-education);">
-          <div class="app-icon" aria-hidden="true">🧠</div>
-          <span class="tag-pill">Cognitive Training</span>
-          <h3>LamaIQMaster</h3>
-          <p class="desc">Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.</p>
-          <div class="card-actions">
-            <a href="apps/lamaiqmaster/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
-          </div>
-        </article>
-
-        <article class="app-card" data-category="fashion" data-title="LamaPhotoResizer" data-desc="On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds." data-price="Free" style="--pc: var(--c-fashion);">
-          <div class="app-icon" aria-hidden="true">🖼️</div>
-          <span class="tag-pill">Photo Tools</span>
-          <h3>LamaPhotoResizer</h3>
-          <p class="desc">On-device AI subject segmentation for clean cutouts, with an optional cloud upgrade for harder backgrounds.</p>
-          <div class="card-actions">
-            <a href="apps/lamaphotoresizer/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
-          </div>
-        </article>
-
-        <article class="app-card" data-category="software" data-title="LamaSync Engine" data-desc="High-performance local directory synchronization and automatic backup manager for power users." data-price="Coming Soon" style="--pc: var(--c-tech);">
-          <div class="app-icon" aria-hidden="true">💻</div>
-          <span class="tag-pill">Desktop Utility</span>
-          <h3>LamaSync Engine</h3>
-          <p class="desc">High-performance local directory synchronization and automatic backup manager for power users.</p>
-          <div class="card-actions">
-            <span class="btn-ghost disabled-badge">Coming Soon</span>
-          </div>
-        </article>
       </div>
     </section>
 
-    <!-- All 12 Studio Blog Articles Restored -->
+    <!-- Studio Articles Styled matching Image Design -->
     <section class="section" id="blog" style="margin-top: 50px;">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">From the Studio</span>
-          <h2>Latest articles</h2>
-        </div>
+      <div class="section-head" style="margin-bottom: 20px;">
+        <span class="eyebrow" style="color: #2563eb; font-size: 0.85rem;">From the Studio</span>
+        <h2 style="font-size: 1.8rem;">Latest articles</h2>
       </div>
       <div class="blog-grid" id="blogGrid">
         
-        <article class="blog-card article-card-style" data-category="tech" data-title="Building Robust Mobile Software in 2026" data-desc="Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios." data-price="Article" style="--pc: var(--c-tech);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Tech &amp; Code</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
+        <article class="blog-card image-matched-card">
+          <div class="blog-card-top-banner">💻</div>
+          <div class="blog-body-content">
+            <div class="blog-meta-row">
+              <span style="color: #2563eb;">Tech</span>
+              <span style="color: #6b7280;">6 min read</span>
             </div>
             <h3>Building Robust Mobile Software in 2026</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/tech.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
+            <p>Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.</p>
+            <a href="blogs/tech.html" class="blog-read-link">Read article →</a>
           </div>
         </article>
 
-        <article class="blog-card article-card-style" data-category="developer-tools" data-title="10 Essential Developer Tools for Faster Workflows" data-desc="Essential utilities, JSON formatters, regex debuggers, and local code accelerators to supercharge development efficiency." data-price="Article" style="--pc: var(--c-travel);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Developer Tools</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
-            </div>
-            <h3>10 Essential Developer Tools for Faster Workflows</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Essential utilities, JSON formatters, regex debuggers, and local code accelerators to supercharge development efficiency.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/developer-tools.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
-          </div>
-        </article>
-
-        <article class="blog-card article-card-style" data-category="productivity" data-title="10 Systems and Micro-Tools to Master Deep Work" data-desc="Conquer distractions, optimize daily focus blocks, and streamline tasks using minimal habit systems and time-box utils." data-price="Article" style="--pc: var(--c-health);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Productivity</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
-            </div>
-            <h3>10 Systems and Micro-Tools to Master Deep Work</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Conquer distractions, optimize daily focus blocks, and streamline tasks using minimal habit systems and time-box utils.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/productivity.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
-          </div>
-        </article>
-
-        <article class="blog-card article-card-style" data-category="network-security" data-title="10 Essential Security Defenses for Digital Privacy" data-desc="Protect user identity, audit network pipelines, and enforce zero-trust policies against modern cybersecurity vulnerabilities." data-price="Article" style="--pc: var(--c-weather);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Network &amp; Security</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
-            </div>
-            <h3>10 Essential Security Defenses for Digital Privacy</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Protect user identity, audit network pipelines, and enforce zero-trust policies against modern cybersecurity vulnerabilities.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/network-security.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
-          </div>
-        </article>
-
-        <article class="blog-card article-card-style" data-category="business" data-title="Local Payment Rails Are the New Table Stakes" data-desc="EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay." data-price="Article" style="--pc: var(--c-business);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Business</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
+        <article class="blog-card image-matched-card">
+          <div class="blog-card-top-banner">💼</div>
+          <div class="blog-body-content">
+            <div class="blog-meta-row">
+              <span style="color: #f59e0b;">Business</span>
+              <span style="color: #6b7280;">5 min read</span>
             </div>
             <h3>Local Payment Rails Are the New Table Stakes for Apps</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/business.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
+            <p>EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.</p>
+            <a href="blogs/business.html" class="blog-read-link">Read article →</a>
           </div>
         </article>
 
-        <article class="blog-card article-card-style" data-category="education" data-title="What EdTech Gets Wrong About Modern Classrooms" data-desc="Most education apps are built for a device, connection, and curriculum that doesn’t match the average classroom." data-price="Article" style="--pc: var(--c-education);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Education</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">7 min read</span>
+        <article class="blog-card image-matched-card">
+          <div class="blog-card-top-banner">🎓</div>
+          <div class="blog-body-content">
+            <div class="blog-meta-row">
+              <span style="color: #8b5cf6;">Education</span>
+              <span style="color: #6b7280;">7 min read</span>
             </div>
-            <h3>What EdTech Gets Wrong About Modern Classrooms</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Most education apps are built for a device, connection, and curriculum that doesn’t match the average classroom.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/education.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
+            <h3>What EdTech Gets Wrong About Pakistani Classrooms</h3>
+            <p>Most education apps are built for a device, connection, and curriculum that doesn’t match the average government-school classroom.</p>
+            <a href="blogs/education.html" class="blog-read-link">Read article →</a>
           </div>
         </article>
 
-        <article class="blog-card article-card-style" data-category="health" data-title="Building Habit Apps That Don’t Guilt-Trip Users" data-desc="Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency." data-price="Article" style="--pc: var(--c-health);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Health</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">4 min read</span>
+        <article class="blog-card image-matched-card">
+          <div class="blog-card-top-banner">💚</div>
+          <div class="blog-body-content">
+            <div class="blog-meta-row">
+              <span style="color: #10b981;">Health</span>
+              <span style="color: #6b7280;">4 min read</span>
             </div>
             <h3>Building Habit Apps That Don’t Guilt-Trip Users</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/health.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
+            <p>Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.</p>
+            <a href="blogs/health.html" class="blog-read-link">Read article →</a>
           </div>
         </article>
 
-        <article class="blog-card article-card-style" data-category="fashion" data-title="Designing for Small Screens: Lessons from Fashion E-Commerce" data-desc="What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout." data-price="Article" style="--pc: var(--c-fashion);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Fashion</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
+        <article class="blog-card image-matched-card">
+          <div class="blog-card-top-banner">👗</div>
+          <div class="blog-body-content">
+            <div class="blog-meta-row">
+              <span style="color: #ec4899;">Fashion</span>
+              <span style="color: #6b7280;">5 min read</span>
             </div>
             <h3>Designing for Small Screens: Lessons from Fashion E-Commerce</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/fashion.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
+            <p>What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout flows.</p>
+            <a href="blogs/fashion.html" class="blog-read-link">Read article →</a>
           </div>
         </article>
 
-        <article class="blog-card article-card-style" data-category="weather" data-title="Why Weather Apps Feel Unreliable in South Asia" data-desc="Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize." data-price="Article" style="--pc: var(--c-weather);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Weather</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
+        <article class="blog-card image-matched-card">
+          <div class="blog-card-top-banner">🌧️</div>
+          <div class="blog-body-content">
+            <div class="blog-meta-row">
+              <span style="color: #0ea5e9;">Weather</span>
+              <span style="color: #6b7280;">6 min read</span>
             </div>
             <h3>Why Weather Apps Feel Unreliable in South Asia</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/weather.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
-          </div>
-        </article>
-
-        <article class="blog-card article-card-style" data-category="sports" data-title="Local Sports Fan Engagement on Budget Handsets" data-desc="How lightweight tracking engines keep users connected during live matches without draining battery or data." data-price="Article" style="--pc: var(--c-sports);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Sports</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
-            </div>
-            <h3>Local Sports Fan Engagement on Budget Handsets</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">How lightweight tracking engines keep users connected during live matches without draining battery or data.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/sports.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
-          </div>
-        </article>
-
-        <article class="blog-card article-card-style" data-category="news" data-title="Delivering Low-Bandwidth News Feeds Effectively" data-desc="Optimizing payload sizes for intermittent regional internet coverage and seamless offline reading." data-price="Article" style="--pc: var(--c-news);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">News</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">4 min read</span>
-            </div>
-            <h3>Delivering Low-Bandwidth News Feeds Effectively</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Optimizing payload sizes for intermittent regional internet coverage and seamless offline reading.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/news.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
-          </div>
-        </article>
-
-        <article class="blog-card article-card-style" data-category="travel" data-title="Building Tourism Guides for Northern Pakistan" data-desc="Offline map caches and localized trail references for remote mountain areas with limited connectivity." data-price="Article" style="--pc: var(--c-travel);">
-          <div class="blog-body">
-            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <span class="tag-pill">Travel</span>
-              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
-            </div>
-            <h3>Building Tourism Guides for Northern Pakistan</h3>
-            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Offline map caches and localized trail references for remote mountain areas with limited connectivity.</p>
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/travel.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
+            <p>Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.</p>
+            <a href="blogs/weather.html" class="blog-read-link">Read article →</a>
           </div>
         </article>
 
@@ -450,59 +416,20 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <div class="brand">
-          <div class="brand-mark" aria-hidden="true">L</div>
-          <div>
-            LamaStudio
-            <small>Digital Ecosystem</small>
-          </div>
-        </div>
-        <p>Independent software studio building resilient tools for modern digital lifestyles.</p>
-        <p class="footer-address">📍 Dera Ghazi Khan, Punjab, Pakistan</p>
-      </div>
-      
-      <div class="footer-col">
-        <h4>Category Hubs (1-6)</h4>
-        <a href="categories/tech/">Tech &amp; Code</a>
-        <a href="categories/developer-tools/">Developer Tools</a>
-        <a href="categories/productivity/">Productivity</a>
-        <a href="categories/network-security/">Network &amp; Security</a>
-        <a href="categories/business/">Business</a>
-        <a href="categories/sports/">Sports Hub</a>
-      </div>
-
-      <div class="footer-col">
-        <h4>Category Hubs (7-12)</h4>
-        <a href="categories/travel/">Travel &amp; Tourism</a>
-        <a href="categories/news/">Global News</a>
-        <a href="categories/fashion/">Fashion &amp; Style</a>
-        <a href="categories/education/">Education</a>
-        <a href="categories/weather/">Weather Forecast</a>
-        <a href="categories/health/">Health &amp; Wellness</a>
-      </div>
-
-      <div class="footer-col">
-        <h4>Studio &amp; Legal</h4>
-        <a href="signin.html">Account Access</a>
-        <a href="privacy-policy.html">Privacy Policy</a>
-        <a href="terms.html">Terms of Service</a>
-        <a href="about.html">About Studio</a>
-        <a href="https://www.youtube.com/@lamastudio" target="_blank" rel="noopener noreferrer">YouTube Channel</a>
-        <a href="https://www.facebook.com/lamastudiopk" target="_blank" rel="noopener noreferrer">Facebook Page</a>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
+  <footer class="site-footer" style="padding: 40px 20px; border-top: 1px solid var(--border, #333); margin-top: 60px; color: var(--text-muted);">
+    <div class="footer-bottom" style="display: flex; justify-content: space-between; font-size: 0.85rem;">
       <span>&copy; 2026 LamaStudio. All rights reserved.</span>
-      <span>Built with performance and accessibility in mind.</span>
+      <span>Dera Ghazi Khan, Punjab, Pakistan</span>
     </div>
   </footer>
 
+  <!-- Active AskLama Floating Widget in Bottom-Left -->
+  <div id="askLamaFloatingWidget" onclick="toggleLamaChat()" role="button" aria-label="Open AskLama Agent">
+    <img src="lamastudio/ask-lama-3d.png" alt="AskLama Icon" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><circle cx=\'16\' cy=\'16\' r=\'14\' fill=\'%232563eb\'/></svg>'">
+    <span style="font-size: 0.85rem; font-weight: 600; color: var(--text);">AskLama AI</span>
+  </div>
+
   <script src="script.js"></script>
-  <!-- AskLama AI Agent script pinned to bottom-left -->
   <script src="ask-lama.js"></script>
 </body>
 </html>

@@ -1,43 +1,356 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JWT Inspector &amp; Decoder — LamaStudio Tech</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWT Decoder &amp; Inspector — Free Online Tool | LamaStudio</title>
+<meta name="description" content="Decode and inspect JSON Web Tokens (JWT) — header, payload, and expiry status — entirely in your browser. This tool decodes tokens only; it never verifies signatures.">
+<link rel="canonical" href="https://www.lamastudio.pk/tools/jwt-decoder/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="JWT Decoder &amp; Inspector — LamaStudio">
+<meta property="og:description" content="Free client-side JWT decoder with claim interpretation (expiry, issued-at) and safe rendering. Decoding only — no signature verification.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d12">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; script-src 'self'; object-src 'none'; base-uri 'self';">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "JWT Decoder & Inspector",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "LamaStudio" }
+}
+</script>
 <style>
-  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 650px; margin: 2rem auto; }
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 900px; margin: 2rem auto; }
+  .warning-banner {
+    display: flex; gap: 0.75rem; align-items: flex-start; background: rgba(239,107,107,0.08);
+    border: 1px solid rgba(239,107,107,0.35); border-radius: 10px; padding: 0.9rem 1.1rem;
+    margin-bottom: 1.5rem; font-size: 0.85rem; line-height: 1.5;
+  }
+  .warning-banner strong { color: #ef6b6b; }
   .form-group { margin-bottom: 1.25rem; }
-  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
-  .form-group textarea { width: 100%; height: 100px; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; resize: vertical; }
-  .calc-btn { background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 0.5rem; }
-  .result-box { margin-top: 1.25rem; padding: 1rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; white-space: pre-wrap; color: var(--text); }
+  .form-group label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group label .meta { font-weight: 500; font-size: 0.78rem; color: var(--text-muted, #8a93a6); font-family: 'JetBrains Mono', monospace; }
+  .form-group textarea {
+    width: 100%; min-height: 100px; padding: 0.75rem; background: var(--background);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; resize: vertical;
+  }
+  .form-group textarea:focus { outline: 2px solid var(--category-color); outline-offset: 1px; }
+  .calc-btn {
+    background: var(--category-color); color: #fff; width: 100%; padding: 0.85rem;
+    border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 0.5rem;
+    font-size: 0.92rem; transition: filter 0.15s ease;
+  }
+  .calc-btn:hover { filter: brightness(1.1); }
+  .status-line { font-size: 0.82rem; margin-top: 0.75rem; min-height: 1.2rem; }
+  .status-line.ok { color: #3ecf8e; }
+  .status-line.err { color: #ef6b6b; }
+  .claims-panel { margin-top: 1.5rem; display: none; }
+  .claims-panel.visible { display: block; }
+  .claim-row {
+    display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border); font-size: 0.85rem;
+  }
+  .claim-row:last-child { border-bottom: none; }
+  .claim-row .k { color: var(--text-muted, #8a93a6); font-family: 'JetBrains Mono', monospace; }
+  .claim-row .v { text-align: right; font-weight: 600; }
+  .claim-row .v.warn { color: #f0b429; }
+  .claim-row .v.bad { color: #ef6b6b; }
+  .claim-row .v.good { color: #3ecf8e; }
+  .parts-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-top: 1.25rem; }
+  @media (min-width: 720px) { .parts-grid { grid-template-columns: 1fr 1fr; } }
+  .part-block label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .part-block textarea {
+    width: 100%; min-height: 180px; padding: 0.75rem; background: var(--background);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; resize: vertical;
+  }
+  .mini-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+    font-size: 0.72rem; padding: 0.2rem 0.55rem; border-radius: 6px; cursor: pointer;
+  }
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.65rem 1.25rem; font-size: 0.85rem; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .explainer { max-width: 900px; margin: 0 auto 3rem auto; padding: 0 0.5rem; font-size: 0.92rem; line-height: 1.65; }
+  .explainer h2 { font-size: 1.15rem; margin-top: 2rem; }
+  .explainer details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.75rem; }
+  .explainer summary { cursor: pointer; font-weight: 600; }
 </style>
 </head>
 <body style="--category-color: var(--c-tech);">
-<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>JWT Decoder</small></span></a></div></header>
-<main style="padding: 2rem 1rem;">
-  <div class="tool-box">
-    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
-    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">JSON Web Token (JWT) Decoder</h1>
-    <div class="form-group"><label>Encoded JWT String</label><textarea id="jwtInput" placeholder="Paste eyJhbGciOi..."></textarea></div>
-    <button class="calc-btn" onclick="decodeJWT()">Decode Token Parts</button>
-    <div class="result-box" id="output">Decoded payload will appear here...</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <a href="../../index.html" class="brand">
+      <span class="brand-mark" style="background: var(--category-color);">L</span>
+      <span>LamaStudio<small>JWT Decoder</small></span>
+    </a>
+    <nav>
+      <a href="../">All Tools</a>
+      <a href="../../index.html">Store</a>
+    </nav>
   </div>
+</header>
+
+<main style="padding: 2rem 1rem;">
+
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility · Client-Side Only</span>
+    <h1 style="font-size: 1.6rem; margin: 0.5rem 0 0.35rem 0;">JSON Web Token (JWT) Decoder</h1>
+
+    <div class="warning-banner">
+      <span>⚠️</span>
+      <span>
+        <strong>This tool decodes — it does not verify signatures.</strong>
+        A JWT's header and payload are only base64url-encoded, not encrypted, so anyone can read them
+        without the signing key. That's all this tool does. It cannot confirm a token is authentic or
+        unmodified — only a server holding the correct signing secret or public key can do that. Never
+        paste a production signing key or secret into any online tool, including this one.
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="jwtInput">Encoded JWT <span class="meta" id="inputMeta">0 chars</span></label>
+      <textarea id="jwtInput" placeholder="Paste eyJhbGciOi..." spellcheck="false"></textarea>
+    </div>
+
+    <button class="calc-btn" id="decodeBtn">Decode Token</button>
+    <p class="status-line" id="statusLine" role="status" aria-live="assertive"></p>
+
+    <div class="claims-panel" id="claimsPanel">
+      <h2 style="font-size: 1rem; margin: 0 0 0.5rem 0;">Claim Summary</h2>
+      <div id="claimsBody"></div>
+    </div>
+
+    <div class="parts-grid" id="partsGrid" style="display:none;">
+      <div class="part-block">
+        <label>Header <button class="mini-btn" id="copyHeader">Copy</button></label>
+        <textarea id="headerOutput" readonly></textarea>
+      </div>
+      <div class="part-block">
+        <label>Payload <button class="mini-btn" id="copyPayload">Copy</button></label>
+        <textarea id="payloadOutput" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <section class="explainer">
+    <h2>Why this tool doesn't verify signatures</h2>
+    <p>
+      Verifying a JWT's signature requires the same secret (HMAC algorithms like HS256) or public key
+      (RSA/ECDSA algorithms like RS256, ES256) that the issuing server used to sign it. A tool that
+      invited you to paste that secret into a browser field to "verify" a token would be teaching a
+      habit — pasting signing secrets into random web tools — that eventually leads to a real production
+      secret ending up somewhere it shouldn't. Decoding is safe to do anywhere, on any token, because the
+      payload was never confidential in the first place. Verification is a server-side concern and
+      belongs in your backend's JWT library, not in a browser tool.
+    </p>
+
+    <details>
+      <summary>What do the standard claims (exp, iat, nbf, sub) mean?</summary>
+      <p style="margin-top:0.6rem;">
+        <code>iat</code> (issued at) and <code>exp</code> (expiry) are Unix timestamps marking when the
+        token was created and when it stops being valid. <code>nbf</code> (not before) marks a time
+        before which the token should be rejected even though it's already signed. <code>sub</code>
+        (subject) typically identifies the user or entity the token represents. None of these are
+        enforced by the token itself — enforcing them is the receiving server's job.
+      </p>
+    </details>
+
+    <details>
+      <summary>What does it mean if the algorithm is "none"?</summary>
+      <p style="margin-top:0.6rem;">
+        <code>"alg": "none"</code> is a valid but dangerous JWT header value meaning the token is
+        intentionally unsigned. A server that doesn't explicitly reject <code>none</code> tokens can be
+        tricked into accepting a token an attacker forged by hand. If you see this in a token you didn't
+        generate yourself for testing, treat it as a signal to check your server's JWT library
+        configuration, not as normal behavior.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why does a valid-looking token sometimes fail to decode here?</summary>
+      <p style="margin-top:0.6rem;">
+        A JWT must have exactly three base64url segments separated by periods. Truncated tokens (common
+        when copying from a terminal that wraps or clips text), tokens with extra surrounding whitespace,
+        or a payload that isn't valid JSON once decoded are the most common causes of a decode failure
+        here.
+      </p>
+    </details>
+  </section>
+
 </main>
+
+<div class="toast" id="toast" role="status"></div>
+
 <script>
-function decodeJWT() {
-  try {
-    const token = document.getElementById('jwtInput').value.trim();
-    const parts = token.split('.');
-    if(parts.length !== 3) throw new Error("Invalid JWT format (must have 3 parts)");
-    const header = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    document.getElementById('output').innerHTML = `<strong>HEADER:</strong>\n${JSON.stringify(header, null, 2)}\n\n<strong>PAYLOAD:</strong>\n${JSON.stringify(payload, null, 2)}`;
-  } catch(e) {
-    document.getElementById('output').innerText = "Error decoding JWT: " + e.message;
+(function () {
+  'use strict';
+
+  const jwtInput = document.getElementById('jwtInput');
+  const inputMeta = document.getElementById('inputMeta');
+  const statusLine = document.getElementById('statusLine');
+  const claimsPanel = document.getElementById('claimsPanel');
+  const claimsBody = document.getElementById('claimsBody');
+  const partsGrid = document.getElementById('partsGrid');
+  const headerOutput = document.getElementById('headerOutput');
+  const payloadOutput = document.getElementById('payloadOutput');
+  const toast = document.getElementById('toast');
+
+  jwtInput.addEventListener('input', () => {
+    inputMeta.textContent = jwtInput.value.length + ' chars';
+  });
+
+  function setStatus(msg, cls) {
+    statusLine.textContent = msg;
+    statusLine.className = 'status-line ' + (cls || '');
   }
-}
+
+  function base64UrlDecode(str) {
+    let s = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const binary = atob(s);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  function fmtTimestamp(unixSeconds) {
+    const d = new Date(unixSeconds * 1000);
+    return d.toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+  }
+
+  function relativeFromNow(unixSeconds) {
+    const diffMs = unixSeconds * 1000 - Date.now();
+    const diffMin = Math.round(diffMs / 60000);
+    const abs = Math.abs(diffMin);
+    let unit, val;
+    if (abs < 60) { unit = 'minute'; val = abs; }
+    else if (abs < 1440) { unit = 'hour'; val = Math.round(abs / 60); }
+    else { unit = 'day'; val = Math.round(abs / 1440); }
+    const plural = val === 1 ? '' : 's';
+    return diffMin >= 0 ? `in ${val} ${unit}${plural}` : `${val} ${unit}${plural} ago`;
+  }
+
+  function addClaimRow(label, valueText, cls) {
+    const row = document.createElement('div');
+    row.className = 'claim-row';
+    const k = document.createElement('span');
+    k.className = 'k';
+    k.textContent = label;
+    const v = document.createElement('span');
+    v.className = 'v' + (cls ? ' ' + cls : '');
+    v.textContent = valueText;
+    row.appendChild(k);
+    row.appendChild(v);
+    claimsBody.appendChild(row);
+  }
+
+  function decodeJWT() {
+    claimsBody.innerHTML = '';
+    claimsPanel.classList.remove('visible');
+    partsGrid.style.display = 'none';
+    headerOutput.value = '';
+    payloadOutput.value = '';
+
+    const token = jwtInput.value.trim();
+    if (!token) { setStatus('Paste a JWT to decode.', 'err'); return; }
+
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      setStatus('Invalid JWT — expected exactly 3 dot-separated parts, found ' + parts.length + '.', 'err');
+      return;
+    }
+
+    let header, payload;
+    try {
+      header = JSON.parse(base64UrlDecode(parts[0]));
+    } catch (e) {
+      setStatus('Could not decode header: ' + e.message, 'err');
+      return;
+    }
+    try {
+      payload = JSON.parse(base64UrlDecode(parts[1]));
+    } catch (e) {
+      setStatus('Header decoded, but payload is not valid JSON: ' + e.message, 'err');
+      headerOutput.value = JSON.stringify(header, null, 2);
+      partsGrid.style.display = 'grid';
+      return;
+    }
+
+    headerOutput.value = JSON.stringify(header, null, 2);
+    payloadOutput.value = JSON.stringify(payload, null, 2);
+    partsGrid.style.display = 'grid';
+
+    addClaimRow('Algorithm (alg)', header.alg || '(none specified)',
+      header.alg === 'none' ? 'bad' : (header.alg ? 'good' : 'warn'));
+    addClaimRow('Token type (typ)', header.typ || '(not specified)');
+
+    if (payload.sub) addClaimRow('Subject (sub)', String(payload.sub));
+    if (payload.iss) addClaimRow('Issuer (iss)', String(payload.iss));
+    if (payload.aud) addClaimRow('Audience (aud)', Array.isArray(payload.aud) ? payload.aud.join(', ') : String(payload.aud));
+
+    if (typeof payload.iat === 'number') {
+      addClaimRow('Issued at (iat)', fmtTimestamp(payload.iat) + '  (' + relativeFromNow(payload.iat) + ')');
+    }
+    if (typeof payload.nbf === 'number') {
+      const isFuture = payload.nbf * 1000 > Date.now();
+      addClaimRow('Not before (nbf)', fmtTimestamp(payload.nbf) + '  (' + relativeFromNow(payload.nbf) + ')',
+        isFuture ? 'warn' : 'good');
+    }
+    if (typeof payload.exp === 'number') {
+      const expired = payload.exp * 1000 < Date.now();
+      addClaimRow('Expires (exp)', fmtTimestamp(payload.exp) + '  (' + relativeFromNow(payload.exp) + ')',
+        expired ? 'bad' : 'good');
+      addClaimRow('Status', expired ? '✕ Expired' : '✓ Currently valid (time-wise)', expired ? 'bad' : 'good');
+    } else {
+      addClaimRow('Status', '⚠ No expiry claim — token never expires', 'warn');
+    }
+
+    claimsPanel.classList.add('visible');
+    setStatus('Decoded successfully. Remember: signature not verified.', 'ok');
+  }
+
+  document.getElementById('decodeBtn').addEventListener('click', decodeJWT);
+
+  jwtInput.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      decodeJWT();
+    }
+  });
+
+  function copyField(el) {
+    if (!el.value) { showToast('Nothing to copy yet'); return; }
+    navigator.clipboard.writeText(el.value).then(
+      () => showToast('Copied to clipboard'),
+      () => { el.select(); document.execCommand('copy'); showToast('Copied to clipboard'); }
+    );
+  }
+  document.getElementById('copyHeader').addEventListener('click', () => copyField(headerOutput));
+  document.getElementById('copyPayload').addEventListener('click', () => copyField(payloadOutput));
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+})();
 </script>
 </body>
 </html>

@@ -3,19 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Habit Tracker — LamaStudio</title>
+<title>Daily Habit Streak Tracker & Loop Builder — LamaStudio</title>
+<meta name="description" content="Build consistent positive psychological routines with our advanced habit streak tracker. Monitor milestones and maintain daily momentum.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.com/categories/productivity/habit-tracker.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<style>
+  body { font-family: 'Inter', sans-serif; background: var(--background); color: var(--text); margin: 0; padding: 0; }
+  .app-container { max-width: 720px; margin: 3rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+  .nav-back { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--category-color); font-weight: 600; text-decoration: none; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .habit-card { background: var(--background); border: 1px solid var(--border); padding: 1.25rem; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; transition: border-color 0.2s; }
+  .habit-card.completed { border-color: var(--category-color); background: rgba(16,185,129,0.05); }
+  .habit-info h4 { margin: 0 0 0.25rem 0; font-size: 1rem; color: var(--text); }
+  .habit-info span { font-size: 0.78rem; color: var(--text-muted); }
+  .habit-check { width: 28px; height: 28px; accent-color: var(--category-color); cursor: pointer; }
+  .add-habit-box { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+  .add-habit-box input { flex: 1; padding: 0.75rem 1rem; background: var(--background); border: 1px solid var(--border); color: var(--text); border-radius: 10px; }
+  .add-habit-box button { background: var(--category-color); color: #fff; border: none; padding: 0 1.5rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .adsense-slot { margin: 2rem 0; padding: 1rem; background: var(--background); border: 1px dashed var(--border); border-radius: 10px; text-align: center; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+</style>
 </head>
 <body style="--category-color: #10B981;">
-<main style="max-width: 700px; margin: 4rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;">
-  <a href="index.html" style="color: var(--category-color); text-decoration: none; font-weight: 600;">← Back to Productivity</a>
-  <h1 style="margin-top: 1rem;">🔄 Daily Habit Streak Tracker</h1>
-  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Check off your daily core consistency habits.</p>
-  <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-    <label style="background: var(--background); padding: 1rem; border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; gap: 1rem;"><input type="checkbox" style="width: 20px; height: 20px;"> <span>Early Morning Hydration (500ml) — 🔥 12 Day Streak</span></label>
-    <label style="background: var(--background); padding: 1rem; border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; gap: 1rem;"><input type="checkbox" style="width: 20px; height: 20px;"> <span>Deep Work Block (90 Mins) — 🔥 5 Day Streak</span></label>
-    <label style="background: var(--background); padding: 1rem; border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; gap: 1rem;"><input type="checkbox" style="width: 20px; height: 20px;"> <span>Evening Physical Stretching — 🔥 8 Day Streak</span></label>
+<main class="app-container">
+  <a href="index.html" class="nav-back">← Back to Productivity Hub</a>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="font-size: 1.75rem; margin: 0;">🔄 Daily Habit Streak Tracker</h1>
+    <button id="themeToggle" style="background:none; border:1px solid var(--border); padding:0.5rem 0.75rem; border-radius:8px; cursor:pointer; color:var(--text)">🌓 Theme</button>
   </div>
+  <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Track core daily milestones and cultivate compounding positive routines.</p>
+
+  <div id="habitList" style="margin-top: 2rem;"></div>
+
+  <div class="add-habit-box">
+    <input type="text" id="habitInput" placeholder="Add new daily habit...">
+    <button id="addHabitBtn">Add Habit</button>
+  </div>
+
+  <div class="adsense-slot" role="region" aria-label="Advertisement">Sponsored Ad Slot (Habit Tracker Footer)</div>
 </main>
+<script>
+  let habits = JSON.parse(localStorage.getItem('lamastudio_habits')) || [
+    { title: "Morning Hydration (500ml)", streak: 12, done: false },
+    { title: "Deep Work Sprint (90 Mins)", streak: 5, done: true },
+    { title: "Evening Physical Stretching", streak: 8, done: false }
+  ];
+
+  const habitListEl = document.getElementById('habitList');
+
+  function renderHabits() {
+    habitListEl.innerHTML = '';
+    habits.forEach((h, idx) => {
+      const div = document.createElement('div');
+      div.className = `habit-card ${h.done ? 'completed' : ''}`;
+      div.innerHTML = `
+        <div class="habit-info">
+          <h4>${h.title}</h4>
+          <span>🔥 ${h.streak} Day Streak</span>
+        </div>
+        <input type="checkbox" class="habit-check" ${h.done ? 'checked' : ''} onchange="toggleHabit(${idx})">
+      `;
+      habitListEl.appendChild(div);
+    });
+    localStorage.setItem('lamastudio_habits', JSON.stringify(habits));
+  }
+
+  window.toggleHabit = (idx) => {
+    habits[idx].done = !habits[idx].done;
+    if(habits[idx].done) habits[idx].streak++;
+    else habits[idx].streak = Math.max(0, habits[idx].streak - 1);
+    renderHabits();
+  };
+
+  document.getElementById('addHabitBtn').onclick = () => {
+    const input = document.getElementById('habitInput');
+    if(input.value.trim()) {
+      habits.push({ title: input.value.trim(), streak: 1, done: false });
+      input.value = '';
+      renderHabits();
+    }
+  };
+
+  document.getElementById('themeToggle').onclick = () => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  };
+
+  renderHabits();
+</script>
 </body>
-</html>
+  </html>
+  

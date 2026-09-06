@@ -142,6 +142,7 @@
           👤 Account
         </a>
 
+        <!-- Theme Toggle Button restored explicitly in top header -->
         <button class="icon-btn theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme" style="background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem; border-radius: 8px; cursor: pointer; color: var(--text);">
           <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         </button>
@@ -211,8 +212,11 @@
       </div>
     </div>
 
-    <div class="dashboard" style="margin-top: 30px;">
-      <div class="hero-panel">
+    <!-- Dashboard Layout with Side-by-Side Containers Aligned Properly -->
+    <div class="dashboard" style="margin-top: 30px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+      
+      <!-- Container 1: Hero Panel (Left Column) -->
+      <div class="hero-panel" style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
         <span class="eyebrow">Independent Studio · DG Khan, Pakistan</span>
         <h1>Resilient digital tools for <em>modern workflows</em></h1>
         <p class="lede">Building privacy-focused applications, lightweight utilities, and open developer systems tailored for regional performance.</p>
@@ -222,8 +226,11 @@
         </div>
       </div>
 
-      <aside class="side-widgets" aria-label="Sidebar Content">
-        <div class="widget">
+      <!-- Right Column Stacking Container 2 & Container 3 cleanly -->
+      <div class="side-widgets" aria-label="Sidebar Content" style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Container 2: Featured Stream Widget -->
+        <div class="widget" style="margin: 0;">
           <div class="widget-head">
             <span class="widget-title">Featured Stream</span>
             <span class="live-dot" aria-hidden="true"><i></i>Live Video</span>
@@ -244,8 +251,8 @@
           </div>
         </div>
 
-        <!-- AskLama Integration Directly Underneath the YouTube Video Player in the Sidebar -->
-        <div class="widget asklama-sidebar-widget" style="margin-top: 20px; padding: 16px; background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); border-radius: 16px; position: relative;">
+        <!-- Container 3: AskLama Integration Widget -->
+        <div class="widget asklama-sidebar-widget" style="margin: 0; padding: 16px; background: var(--surface, #1e1e1e); border: 1px solid var(--border, #333); border-radius: 16px; position: relative;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
             <img src="ask-lama-3d.png" alt="AskLama Mascot" id="sidebarAskLamaImage" style="width: 44px; height: 44px; object-fit: contain;" onerror="this.src='https://via.placeholder.com/44?text=Lama';">
             <div>
@@ -257,7 +264,8 @@
             💬 Open AskLama Chat
           </button>
         </div>
-      </aside>
+
+      </div>
     </div>
 
     <!-- Standalone Ad Banner placed SEPARATELY above the Apps & Utilities section -->
@@ -623,240 +631,7 @@
   </footer>
 
   <script src="script.js"></script>
-  <script type="module">
-    // ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Centered Bottom Floating with Opaque Background)
-    (function() {
-      // Inject required styling for bottom-centered floating widget & opaque solid chat box background
-      const style = document.createElement('style');
-      style.innerHTML = `
-        .asklama-widget-container {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 9999;
-          font-family: 'Inter', sans-serif;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .asklama-mascot-btn {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          width: 75px;
-          height: 75px;
-          transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          position: relative;
-        }
-        .asklama-mascot-btn:hover {
-          transform: scale(1.1);
-        }
-        .asklama-mascot-btn img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
-        }
-        .asklama-chat-box {
-          position: absolute;
-          bottom: 90px;
-          left: 50%;
-          transform: translateX(-50%) scale(0.9);
-          width: 340px;
-          max-height: 480px;
-          background: var(--surface, #1e1e1e);
-          opacity: 1;
-          border: 1px solid var(--border, #333);
-          border-radius: 20px;
-          box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          opacity: 0;
-          pointer-events: none;
-          transform-origin: bottom center;
-          transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .asklama-chat-box.active {
-          transform: translateX(-50%) scale(1);
-          opacity: 1;
-          pointer-events: auto;
-        }
-        .asklama-header {
-          background: linear-gradient(135deg, #2563eb, #174ea6);
-          color: #fff;
-          padding: 14px 18px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-weight: 700;
-          font-size: 0.95rem;
-        }
-        .asklama-close {
-          background: none;
-          border: none;
-          color: #fff;
-          font-size: 1.2rem;
-          cursor: pointer;
-        }
-        .asklama-messages {
-          flex: 1;
-          padding: 15px;
-          overflow-y: auto;
-          max-height: 320px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          font-size: 0.85rem;
-          background: var(--surface, #1e1e1e);
-        }
-        .asklama-msg {
-          padding: 10px 14px;
-          border-radius: 12px;
-          max-width: 85%;
-          line-height: 1.4;
-          word-break: break-word;
-        }
-        .asklama-msg.bot {
-          background: rgba(255,255,255,0.08);
-          color: var(--text, #fff);
-          align-self: flex-start;
-          border-bottom-left-radius: 2px;
-        }
-        .asklama-msg.user {
-          background: #2563eb;
-          color: #fff;
-          align-self: flex-end;
-          border-bottom-right-radius: 2px;
-        }
-        .asklama-input-area {
-          padding: 12px;
-          border-top: 1px solid var(--border, #333);
-          display: flex;
-          gap: 8px;
-          background: var(--surface, #1e1e1e);
-        }
-        .asklama-input-area input {
-          flex: 1;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid var(--border, #333);
-          border-radius: 8px;
-          padding: 8px 12px;
-          color: var(--text, #fff);
-          font-size: 0.85rem;
-          outline: none;
-        }
-        .asklama-input-area input:focus {
-          border-color: #2563eb;
-        }
-        .asklama-input-area button {
-          background: #2563eb;
-          color: #fff;
-          border: none;
-          border-radius: 8px;
-          padding: 0 14px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-      `;
-      document.head.appendChild(style);
-
-      // Construct widget DOM structure centered at the bottom
-      const widgetContainer = document.createElement('div');
-      widgetContainer.className = 'asklama-widget-container';
-      widgetContainer.innerHTML = `
-        <div class="asklama-chat-box" id="askLamaChatBox">
-          <div class="asklama-header">
-            <span>AskLama AI Guide</span>
-            <button class="asklama-close" id="askLamaCloseBtn">&times;</button>
-          </div>
-          <div class="asklama-messages" id="askLamaMessages">
-            <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, your personal guide to LamaStudio. How can I help you navigate our ecosystem today?</div>
-          </div>
-          <div class="asklama-input-area">
-            <input type="text" id="askLamaInput" placeholder="Ask about tools, apps, or links...">
-            <button id="askLamaSendBtn">Send</button>
-          </div>
-        </div>
-        <button class="asklama-mascot-btn" id="askLamaMascotBtn" title="Chat with AskLama">
-          <img src="ask-lama-3d.png" alt="AskLama Mascot" id="askLamaImage" onerror="this.src='https://via.placeholder.com/75?text=Lama';">
-        </button>
-      `;
-      document.body.appendChild(widgetContainer);
-
-      // Element references
-      const mascotBtn = document.getElementById('askLamaMascotBtn');
-      const mascotImg = document.getElementById('askLamaImage');
-      const sidebarMascotImg = document.getElementById('sidebarAskLamaImage');
-      const chatBox = document.getElementById('askLamaChatBox');
-      const closeBtn = document.getElementById('askLamaCloseBtn');
-      const sendBtn = document.getElementById('askLamaSendBtn');
-      const inputField = document.getElementById('askLamaInput');
-      const messagesContainer = document.getElementById('askLamaMessages');
-
-      let isOpen = false;
-
-      // Global toggle function referenced by external trigger buttons (sidebar widget, etc.)
-      window.toggleLamaChat = function() {
-        isOpen = !isOpen;
-        if (isOpen) {
-          chatBox.classList.add('active');
-          if (mascotImg) mascotImg.src = 'walking-lama.gif';
-          if (sidebarMascotImg) sidebarMascotImg.src = 'walking-lama.gif';
-          inputField.focus();
-        } else {
-          chatBox.classList.remove('active');
-          if (mascotImg) mascotImg.src = 'ask-lama-3d.png';
-          if (sidebarMascotImg) sidebarMascotImg.src = 'ask-lama-3d.png';
-        }
-      };
-
-      mascotBtn.addEventListener('click', window.toggleLamaChat);
-      closeBtn.addEventListener('click', window.toggleLamaChat);
-
-      // Handle message dispatch and smart responses
-      function handleUserMessage() {
-        const text = inputField.value.trim();
-        if (!text) return;
-
-        // Append user message
-        const userMsg = document.createElement('div');
-        userMsg.className = 'asklama-msg user';
-        userMsg.innerText = text;
-        messagesContainer.appendChild(userMsg);
-        inputField.value = '';
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-        // Simulated intelligent bot response based on query keywords
-        setTimeout(() => {
-          const botMsg = document.createElement('div');
-          botMsg.className = 'asklama-msg bot';
-          
-          const query = text.toLowerCase();
-          if (query.includes('vpn') || query.includes('app') || query.includes('security')) {
-            botMsg.innerHTML = 'You can check out our flagship utility <a href="apps/lamavpnpro/" style="color:#60a5fa;">LamaVPN Pro</a> right from the apps ecosystem section!';
-          } else if (query.includes('contact') || query.includes('email') || query.includes('support')) {
-            botMsg.innerText = 'You can reach the team directly at contact@lamastudio.pk or through our community footer links.';
-          } else if (query.includes('free') || query.includes('pricing')) {
-            botMsg.innerText = 'Yes! Most core web utilities and developer research generators on LamaStudio are completely free to use.';
-          } else if (query.includes('weather') || query.includes('sky')) {
-            botMsg.innerHTML = 'Looking for local weather and prayer scheduling? Try out <a href="apps/lamasky/" style="color:#60a5fa;">LamaSky</a>!';
-          } else {
-            botMsg.innerText = 'I can help you locate apps, answer FAQs, or navigate documentation across LamaStudio. Feel free to ask specifics!';
-          }
-
-          messagesContainer.appendChild(botMsg);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }, 600);
-      }
-
-      sendBtn.addEventListener('click', handleUserMessage);
-      inputField.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleUserMessage();
-      });
-    })();
-  </script>
+  <!-- AskLama script successfully separated into its own external file as recommended! -->
+  <script src="ask-lama.js"></script>
 </body>
 </html>

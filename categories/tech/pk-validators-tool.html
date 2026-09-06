@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pakistan Fintech &amp; Identity Toolkit | LamaStudio</title>
-<meta name="description" content="Validate bank IBANs, generate IBANs, lookup mobile network carriers, generate mobile wallet IBANs, and decode Pakistani CNIC details.">
+<meta name="description" content="Validate bank IBANs, generate IBANs, lookup mobile network carriers, generate wallet IBANs, and decode Pakistani CNIC details.">
 <link rel="stylesheet" href="../../style.css">
 <style>
   .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 900px; margin: 2rem auto; }
@@ -60,15 +60,15 @@
   <div class="tool-box">
     <h1 style="font-size: 1.5rem; margin: 0.5rem 0 0.35rem 0;">Pakistan Fintech &amp; Identity Toolkit</h1>
     <p style="margin: 0 0 1.5rem 0; font-size: 0.88rem; color: var(--text-muted, #8a93a6);">
-      Select a specific tool below to execute lookups securely in your browser.
+      Select a specific tool below to execute lookups and validations securely in your browser.
     </p>
 
     <!-- TABS -->
     <div class="tab-row">
       <button class="tab-btn active" data-tab="iban-val">1. IBAN Validator</button>
-      <button class="tab-btn" data-tab="iban-gen">2. IBAN Generator</button>
+      <button class="tab-btn" data-tab="iban-gen">2. Bank IBAN Generator</button>
       <button class="tab-btn" data-tab="mob-net">3. Mobile Network</button>
-      <button class="tab-btn" data-tab="mob-iban">4. Mobile Wallet IBAN</button>
+      <button class="tab-btn" data-tab="mob-iban">4. Wallet IBAN Generator</button>
       <button class="tab-btn" data-tab="cnic-dec">5. CNIC Decoder</button>
     </div>
 
@@ -76,7 +76,7 @@
     <div class="panel active" id="panel-iban-val">
       <div class="form-group">
         <label>Full IBAN Number</label>
-        <input type="text" id="ibanInput" placeholder="PK36SCBL0000001123456702">
+        <input type="text" id="ibanInput" placeholder="PK92TMFB0000000025923095">
       </div>
       <button class="calc-btn" id="validateIbanBtn">Validate IBAN</button>
       <div class="result-box" id="ibanResult" style="display:none;"></div>
@@ -94,7 +94,7 @@
           <input type="text" id="accountNumberInput" placeholder="0000001123456702">
         </div>
       </div>
-      <button class="calc-btn" id="generateIbanBtn">Generate IBAN</button>
+      <button class="calc-btn" id="generateIbanBtn">Generate Bank IBAN</button>
       <div class="result-box" id="generateResult" style="display:none;"></div>
     </div>
 
@@ -102,7 +102,7 @@
     <div class="panel" id="panel-mob-net">
       <div class="form-group">
         <label>Mobile Number</label>
-        <input type="text" id="mobileInput" placeholder="03001234567">
+        <input type="text" id="mobileInput" placeholder="03437064536">
       </div>
       <button class="calc-btn" id="lookupMobileBtn">Identify Carrier</button>
       <div class="result-box" id="mobileResult" style="display:none;"></div>
@@ -110,19 +110,18 @@
 
     <!-- PANEL 4 -->
     <div class="panel" id="panel-mob-iban">
+      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Note: Mobile wallets use internal bank account numbers (e.g., TMFB or MMBL) rather than a direct mathematical translation of mobile numbers. Enter your wallet's core account number below.</p>
       <div class="row-2">
         <div class="form-group">
-          <label>Select Wallet / Fintech</label>
-          <select id="walletProvider">
-            <option value="jazzcash">JazzCash (MMBL)</option>
-            <option value="easypaisa">EasyPaisa (TMFB)</option>
-            <option value="sadapay">SadaPay</option>
-            <option value="nayapay">NayaPay</option>
+          <label>Wallet Bank Code</label>
+          <select id="walletBankCode">
+            <option value="TMFB">Telenor Microfinance Bank (EasyPaisa)</option>
+            <option value="MMBL">Mobilink Microfinance Bank (JazzCash)</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Mobile Number (11 Digits)</label>
-          <input type="text" id="walletMobileInput" placeholder="03001234567">
+          <label>Wallet Internal Account Number (16 Digits)</label>
+          <input type="text" id="walletAccountInput" placeholder="0000000025923095">
         </div>
       </div>
       <button class="calc-btn" id="walletIbanBtn">Generate Wallet IBAN</button>
@@ -235,7 +234,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const check = generateIbanCheckDigits(code, padded);
     const iban = 'PK' + check + code + padded;
     box.className = 'result-box ok';
-    box.innerHTML = `<div style="font-weight:700;">Generated IBAN</div><div class="big">${iban.match(/.{1,4}/g).join(' ')}</div>`;
+    box.innerHTML = `<div style="font-weight:700;">Generated Bank IBAN</div><div class="big">${iban.match(/.{1,4}/g).join(' ')}</div>`;
     box.style.display = 'block';
   });
 
@@ -251,11 +250,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     const p = parseInt(raw.slice(0, 4), 10);
     let net = 'Unknown Carrier';
-    if (p >= 300 && p <= 309) net = 'Jazz';
+    if (p >= 300 && p <= 309) net = 'Telenor / Jazz';
     else if (p >= 320 && p <= 329) net = 'Jazz (Warid)';
     else if (p >= 310 && p <= 319) net = 'Zong';
     else if (p >= 330 && p <= 339) net = 'Ufone';
-    else if (p >= 340 && p <= 347) net = 'Telenor';
+    else if (p >= 340 && p <= 347) net = 'Telenor Pakistan';
     else if (p === 355) net = 'SCOM';
 
     box.className = 'result-box ok';
@@ -263,30 +262,26 @@ document.addEventListener("DOMContentLoaded", function () {
     box.style.display = 'block';
   });
 
-  // 4. Wallet IBAN
+  // 4. Wallet IBAN Generator
   document.getElementById('walletIbanBtn')?.addEventListener('click', () => {
-    const prov = document.getElementById('walletProvider').value;
-    let raw = document.getElementById('walletMobileInput').value.replace(/[\s-]/g, '').replace(/^\+92/, '0');
+    const code = document.getElementById('walletBankCode').value;
+    const acc = document.getElementById('walletAccountInput').value.replace(/\s+/g, '');
     const box = document.getElementById('walletResult');
-    if (!/^0\d{10}$/.test(raw)) {
+    if (!/^\d{1,16}$/.test(acc)) {
       box.className = 'result-box err';
-      box.textContent = 'Enter a valid 11-digit mobile number.';
+      box.textContent = 'Enter up to 16 numeric digits for the wallet account number.';
       box.style.display = 'block';
       return;
     }
-    let code = prov === 'easypaisa' ? 'TMFB' : 'MMBL';
-    if (prov === 'sadapay') code = 'SADA';
-    if (prov === 'nayapay') code = 'NAYA';
-
-    const subAcc = raw.slice(1).padStart(16, '0');
-    const check = generateIbanCheckDigits(code, subAcc);
-    const iban = 'PK' + check + code + subAcc;
+    const padded = acc.padStart(16, '0');
+    const check = generateIbanCheckDigits(code, padded);
+    const iban = 'PK' + check + code + padded;
     box.className = 'result-box ok';
-    box.innerHTML = `<div style="font-weight:700;">Wallet IBAN Generated</div><div class="big">${iban.match(/.{1,4}/g).join(' ')}</div>`;
+    box.innerHTML = `<div style="font-weight:700;">Generated Wallet IBAN</div><div class="big">${iban.match(/.{1,4}/g).join(' ')}</div>`;
     box.style.display = 'block';
   });
 
-  // 5. CNIC Decoder
+  // 5. CNIC Decoder with explicit number mappings
   document.getElementById('formatCnicBtn')?.addEventListener('click', () => {
     let raw = document.getElementById('cnicInput').value.replace(/[\s-]/g, '');
     const box = document.getElementById('cnicResult');
@@ -299,28 +294,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const f1 = raw.charAt(0);
     let prov = 'Unknown Province';
     if (f1 === '1') prov = 'Khyber Pakhtunkhwa (KP)';
-    else if (f1 === '2') prov = 'Ex-FATA';
-    else if (f1 === '3') prov = 'Punjab';
-    else if (f1 === '4') prov = 'Sindh';
-    else if (f1 === '5') prov = 'Balochistan';
-    else if (f1 === '6') prov = 'Islamabad (ICT)';
-    else if (f1 === '7') prov = 'Gilgit-Baltistan';
+    else if (f1 === '2') prov = 'Ex-FATA Region';
+    else if (f1 === '3') prov = 'Punjab Province';
+    else if (f1 === '4') prov = 'Sindh Province';
+    else if (f1 === '5') prov = 'Balochistan Province';
+    else if (f1 === '6') prov = 'Islamabad Capital Territory (ICT)';
+    else if (f1 === '7') prov = 'Gilgit-Baltistan (GB)';
     else if (f1 === '8') prov = 'Azad Jammu & Kashmir (AJK)';
 
     const formatted = `${raw.slice(0, 5)}-${raw.slice(5, 12)}-${raw.slice(12)}`;
-    const gender = parseInt(raw.slice(12), 10) % 2 !== 0 ? 'Male' : 'Female';
+    const genderDigit = raw.charAt(12);
+    const gender = parseInt(genderDigit, 10) % 2 !== 0 ? 'Male' : 'Female';
 
     box.className = 'result-box ok';
     box.innerHTML = `
-      <div style="font-weight:700;">Decoded CNIC</div>
+      <div style="font-weight:700;">Decoded CNIC Breakdown</div>
       <div class="big">${formatted}</div>
-      <div class="kv-row"><span class="k">Province / Region</span><span class="v">${prov}</span></div>
-      <div class="kv-row"><span class="k">District Code</span><span class="v">${raw.slice(0, 3)}</span></div>
-      <div class="kv-row"><span class="k">Gender</span><span class="v">${gender}</span></div>
+      <div class="kv-row"><span class="k">Province Number Code</span><span class="v">Digit [${f1}] → ${prov}</span></div>
+      <div class="kv-row"><span class="k">District / Area Code</span><span class="v">Digits [${raw.slice(0, 5)}]</span></div>
+      <div class="kv-row"><span class="k">Family Number Series</span><span class="v">Digits [${raw.slice(5, 12)}]</span></div>
+      <div class="kv-row"><span class="k">Gender Number Code</span><span class="v">Digit [${genderDigit}] → ${gender}</span></div>
     `;
     box.style.display = 'block';
   });
 });
 </script>
 </body>
-</html>
+            </html>
+            

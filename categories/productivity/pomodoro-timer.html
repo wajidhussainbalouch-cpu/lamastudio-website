@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pomodoro Focus Timer — LamaStudio</title>
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .timer-display { font-size: 5rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-align: center; margin: 2rem 0; color: var(--category-color); }
+  .controls { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+  .btn { background: var(--category-color); color: #fff; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+</style>
+</head>
+<body style="--category-color: #10B981;">
+<main style="max-width: 600px; margin: 4rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;">
+  <a href="index.html" style="color: var(--category-color); text-decoration: none; font-weight: 600;">← Back to Productivity</a>
+  <h1 style="margin-top: 1rem;">⏱️ Pomodoro Focus Timer</h1>
+  <div class="timer-display" id="timer">25:00</div>
+  <div class="controls">
+    <button class="btn" id="startBtn">Start</button>
+    <button class="btn btn-secondary" id="pauseBtn">Pause</button>
+    <button class="btn btn-secondary" id="resetBtn">Reset</button>
+  </div>
+</main>
+<script>
+  let timeLeft = 1500, timerId = null, isRunning = false;
+  const timerEl = document.getElementById('timer');
+  function updateDisplay() {
+    let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+    timerEl.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  }
+  document.getElementById('startBtn').onclick = () => {
+    if(!isRunning) {
+      isRunning = true;
+      timerId = setInterval(() => { if(timeLeft > 0) { timeLeft--; updateDisplay(); } else { clearInterval(timerId); alert('Session completed!'); } }, 1000);
+    }
+  };
+  document.getElementById('pauseBtn').onclick = () => { clearInterval(timerId); isRunning = false; };
+  document.getElementById('resetBtn').onclick = () => { clearInterval(timerId); isRunning = false; timeLeft = 1500; updateDisplay(); };
+</script>
+</body>
+</html>

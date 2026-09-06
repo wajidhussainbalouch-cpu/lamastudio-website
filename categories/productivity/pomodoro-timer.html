@@ -3,41 +3,128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pomodoro Focus Timer — LamaStudio</title>
+<title>Pomodoro Focus Timer & Deep Work Workstation — LamaStudio</title>
+<meta name="description" content="Boost productivity with our advanced Pomodoro focus timer. Customize work intervals, track deep work sessions, and maintain flow state with zero distractions.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.com/categories/productivity/pomodoro-timer.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-  .timer-display { font-size: 5rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-align: center; margin: 2rem 0; color: var(--category-color); }
-  .controls { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
-  .btn { background: var(--category-color); color: #fff; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
-  .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  body { font-family: 'Inter', sans-serif; background: var(--background); color: var(--text); margin: 0; padding: 0; }
+  .app-container { max-width: 680px; margin: 3rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+  .nav-back { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--category-color); font-weight: 600; text-decoration: none; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .mode-selectors { display: flex; gap: 0.5rem; background: var(--background); padding: 0.4rem; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 2rem; }
+  .mode-btn { flex: 1; background: transparent; border: none; padding: 0.75rem; border-radius: 8px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+  .mode-btn.active { background: var(--category-color); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+  .timer-display { font-size: 6rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-align: center; margin: 1.5rem 0; color: var(--text); letter-spacing: -2px; }
+  .controls { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
+  .btn { padding: 0.85rem 2rem; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; font-size: 1rem; transition: transform 0.1s, opacity 0.2s; }
+  .btn-primary { background: var(--category-color); color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
+  .btn-secondary { background: var(--background); border: 1px solid var(--border); color: var(--text); }
+  .btn:active { transform: scale(0.98); }
+  .adsense-slot { margin: 2rem 0; padding: 1rem; background: var(--background); border: 1px dashed var(--border); border-radius: 10px; text-align: center; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 </style>
 </head>
 <body style="--category-color: #10B981;">
-<main style="max-width: 600px; margin: 4rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;">
-  <a href="index.html" style="color: var(--category-color); text-decoration: none; font-weight: 600;">← Back to Productivity</a>
-  <h1 style="margin-top: 1rem;">⏱️ Pomodoro Focus Timer</h1>
+<main class="app-container">
+  <a href="index.html" class="nav-back">← Back to Productivity Hub</a>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="font-size: 1.75rem; margin: 0;">⏱️ Pomodoro Focus Timer</h1>
+    <button id="themeToggle" style="background:none; border:1px solid var(--border); padding:0.5rem 0.75rem; border-radius:8px; cursor:pointer; color:var(--text)">🌓 Theme</button>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Maintain laser focus using structured 25-minute deep work intervals.</p>
+  
+  <div class="mode-selectors">
+    <button class="mode-btn active" data-time="1500" data-mode="pomodoro">Pomodoro (25m)</button>
+    <button class="mode-btn" data-time="300" data-mode="short">Short Break (5m)</button>
+    <button class="mode-btn" data-time="900" data-mode="long">Long Break (15m)</button>
+  </div>
+
   <div class="timer-display" id="timer">25:00</div>
+
   <div class="controls">
-    <button class="btn" id="startBtn">Start</button>
-    <button class="btn btn-secondary" id="pauseBtn">Pause</button>
+    <button class="btn btn-primary" id="startBtn">Start Session</button>
     <button class="btn btn-secondary" id="resetBtn">Reset</button>
   </div>
+
+  <div class="adsense-slot" role="region" aria-label="Advertisement">Sponsored Ad Slot (Pomodoro Footer)</div>
 </main>
 <script>
   let timeLeft = 1500, timerId = null, isRunning = false;
   const timerEl = document.getElementById('timer');
+  const startBtn = document.getElementById('startBtn');
+  const modeBtns = document.querySelectorAll('.mode-btn');
+
   function updateDisplay() {
     let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
     timerEl.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    document.title = `(${timerEl.textContent}) Pomodoro Focus Timer — LamaStudio`;
   }
-  document.getElementById('startBtn').onclick = () => {
-    if(!isRunning) {
+
+  function playAlertSound() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    osc.start(); osc.stop(ctx.currentTime + 0.6);
+  }
+
+  startBtn.onclick = () => {
+    if (!isRunning) {
       isRunning = true;
-      timerId = setInterval(() => { if(timeLeft > 0) { timeLeft--; updateDisplay(); } else { clearInterval(timerId); alert('Session completed!'); } }, 1000);
+      startBtn.textContent = "Pause";
+      startBtn.style.background = "var(--border)";
+      timerId = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          updateDisplay();
+        } else {
+          clearInterval(timerId);
+          isRunning = false;
+          startBtn.textContent = "Start Session";
+          startBtn.style.background = "var(--category-color)";
+          playAlertSound();
+          alert("Focus session complete! Take a well-deserved break.");
+        }
+      }, 1000);
+    } else {
+      clearInterval(timerId);
+      isRunning = false;
+      startBtn.textContent = "Resume";
+      startBtn.style.background = "var(--category-color)";
     }
   };
-  document.getElementById('pauseBtn').onclick = () => { clearInterval(timerId); isRunning = false; };
-  document.getElementById('resetBtn').onclick = () => { clearInterval(timerId); isRunning = false; timeLeft = 1500; updateDisplay(); };
+
+  document.getElementById('resetBtn').onclick = () => {
+    clearInterval(timerId);
+    isRunning = false;
+    startBtn.textContent = "Start Session";
+    startBtn.style.background = "var(--category-color)";
+    const activeMode = document.querySelector('.mode-btn.active');
+    timeLeft = parseInt(activeMode.getAttribute('data-time'));
+    updateDisplay();
+  };
+
+  modeBtns.forEach(btn => {
+    btn.onclick = (e) => {
+      modeBtns.forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      clearInterval(timerId);
+      isRunning = false;
+      startBtn.textContent = "Start Session";
+      startBtn.style.background = "var(--category-color)";
+      timeLeft = parseInt(e.target.getAttribute('data-time'));
+      updateDisplay();
+    };
+  });
+
+  document.getElementById('themeToggle').onclick = () => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  };
 </script>
 </body>
-</html>
+  </html>
+  

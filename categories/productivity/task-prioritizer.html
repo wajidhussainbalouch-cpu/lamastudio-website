@@ -3,25 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eisenhower Task Prioritizer — LamaStudio</title>
+<title>Eisenhower Task Prioritizer & Matrix — LamaStudio</title>
+<meta name="description" content="Organize your daily tasks by urgency and importance with our interactive Eisenhower Matrix workstation. Eliminate trivial distractions and maximize output.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.com/categories/productivity/task-prioritizer.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
 <style>
-  .matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
-  .quadrant { background: var(--background); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; min-height: 180px; }
-  .quadrant h3 { font-size: 0.95rem; color: var(--category-color); margin-bottom: 0.75rem; }
-  input { width: 100%; padding: 0.5rem; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; margin-bottom: 0.5rem; }
+  body { font-family: 'Inter', sans-serif; background: var(--background); color: var(--text); margin: 0; padding: 0; }
+  .app-container { max-width: 960px; margin: 3rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+  .nav-back { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--category-color); font-weight: 600; text-decoration: none; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem; }
+  @media(max-width: 768px) { .matrix-grid { grid-template-columns: 1fr; } }
+  .quadrant { background: var(--background); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; display: flex; flex-direction: column; min-height: 220px; }
+  .quadrant h3 { font-size: 0.95rem; font-weight: 700; color: var(--category-color); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+  .input-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+  .input-row input { flex: 1; padding: 0.6rem 0.75rem; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 8px; font-size: 0.9rem; }
+  .input-row button { background: var(--category-color); color: #fff; border: none; padding: 0 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  .task-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; overflow-y: auto; max-height: 200px; }
+  .task-item { background: var(--surface); border: 1px solid var(--border); padding: 0.6rem 0.75rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; }
+  .task-item button { background: none; border: none; color: #ef4444; cursor: pointer; font-weight: 700; }
+  .adsense-slot { margin: 2rem 0; padding: 1rem; background: var(--background); border: 1px dashed var(--border); border-radius: 10px; text-align: center; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 </style>
 </head>
 <body style="--category-color: #10B981;">
-<main style="max-width: 800px; margin: 4rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;">
-  <a href="index.html" style="color: var(--category-color); text-decoration: none; font-weight: 600;">← Back to Productivity</a>
-  <h1 style="margin-top: 1rem;">📋 Eisenhower Task Prioritizer</h1>
-  <div class="matrix">
-    <div class="quadrant"><h3>🔥 Urgent & Important (Do First)</h3><input placeholder="Add task..." type="text"><ul id="q1"></ul></div>
-    <div class="quadrant"><h3>📅 Not Urgent & Important (Schedule)</h3><input placeholder="Add task..." type="text"><ul id="q2"></ul></div>
-    <div class="quadrant"><h3>⚡ Urgent & Not Important (Delegate)</h3><input placeholder="Add task..." type="text"><ul id="q3"></ul></div>
-    <div class="quadrant"><h3>🗑️ Not Urgent & Not Important (Eliminate)</h3><input placeholder="Add task..." type="text"><ul id="q4"></ul></div>
+<main class="app-container">
+  <a href="index.html" class="nav-back">← Back to Productivity Hub</a>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="font-size: 1.75rem; margin: 0;">📋 Eisenhower Task Prioritizer</h1>
+    <button id="themeToggle" style="background:none; border:1px solid var(--border); padding:0.5rem 0.75rem; border-radius:8px; cursor:pointer; color:var(--text)">🌓 Theme</button>
   </div>
+  <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Classify tasks by urgency and importance to focus your energy where it matters most.</p>
+
+  <div class="matrix-grid">
+    <div class="quadrant" data-q="q1">
+      <h3>🔥 Urgent & Important <span class="count" style="font-size:0.8rem; background:var(--surface); padding:2px 8px; border-radius:6px; border:1px solid var(--border)">0</span></h3>
+      <div class="input-row"><input type="text" placeholder="Add urgent task..."><button>+</button></div>
+      <ul class="task-list"></ul>
+    </div>
+    <div class="quadrant" data-q="q2">
+      <h3>📅 Not Urgent & Important <span class="count" style="font-size:0.8rem; background:var(--surface); padding:2px 8px; border-radius:6px; border:1px solid var(--border)">0</span></h3>
+      <div class="input-row"><input type="text" placeholder="Add schedule task..."><button>+</button></div>
+      <ul class="task-list"></ul>
+    </div>
+    <div class="quadrant" data-q="q3">
+      <h3>⚡ Urgent & Not Important <span class="count" style="font-size:0.8rem; background:var(--surface); padding:2px 8px; border-radius:6px; border:1px solid var(--border)">0</span></h3>
+      <div class="input-row"><input type="text" placeholder="Add delegate task..."><button>+</button></div>
+      <ul class="task-list"></ul>
+    </div>
+    <div class="quadrant" data-q="q4">
+      <h3>🗑️ Not Urgent & Not Important <span class="count" style="font-size:0.8rem; background:var(--surface); padding:2px 8px; border-radius:6px; border:1px solid var(--border)">0</span></h3>
+      <div class="input-row"><input type="text" placeholder="Add eliminate task..."><button>+</button></div>
+      <ul class="task-list"></ul>
+    </div>
+  </div>
+
+  <div class="adsense-slot" role="region" aria-label="Advertisement">Sponsored Ad Slot (Matrix Footer)</div>
 </main>
+<script>
+  let tasks = JSON.parse(localStorage.getItem('lamastudio_eisenhower')) || { q1: [], q2: [], q3: [], q4: [] };
+
+  function renderTasks() {
+    ['q1', 'q2', 'q3', 'q4'].forEach(qKey => {
+      const quad = document.querySelector(`[data-q="${qKey}"]`);
+      const list = quad.querySelector('.task-list');
+      const count = quad.querySelector('.count');
+      list.innerHTML = '';
+      count.textContent = tasks[qKey].length;
+      tasks[qKey].forEach((t, idx) => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        li.innerHTML = `<span>${t}</span><button onclick="removeTask('${qKey}', ${idx})">&times;</button>`;
+        list.appendChild(li);
+      });
+    });
+    localStorage.setItem('lamastudio_eisenhower', JSON.stringify(tasks));
+  }
+
+  document.querySelectorAll('.quadrant').forEach(quad => {
+    const qKey = quad.getAttribute('data-q');
+    const input = quad.querySelector('input');
+    const btn = quad.querySelector('button');
+
+    const addItem = () => {
+      if(input.value.trim()) {
+        tasks[qKey].push(input.value.trim());
+        input.value = '';
+        renderTasks();
+      }
+    };
+    btn.onclick = addItem;
+    input.onkeypress = (e) => { if(e.key === 'Enter') addItem(); };
+  });
+
+  window.removeTask = (qKey, idx) => {
+    tasks[qKey].splice(idx, 1);
+    renderTasks();
+  };
+
+  document.getElementById('themeToggle').onclick = () => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  };
+
+  renderTasks();
+</script>
 </body>
-</html>
+  </html>
+  

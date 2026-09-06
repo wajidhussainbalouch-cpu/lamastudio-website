@@ -3,14 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quick Scratchpad — LamaStudio</title>
+<title>Quick Scratchpad & Auto-Saver — LamaStudio</title>
+<meta name="description" content="Jot down quick notes, code snippets, or ideas with local browser persistence and live word counting.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.com/categories/productivity/quick-scratchpad.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<style>
+  body { font-family: 'Inter', sans-serif; background: var(--background); color: var(--text); margin: 0; padding: 0; }
+  .app-container { max-width: 760px; margin: 3rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+  .nav-back { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--category-color); font-weight: 600; text-decoration: none; margin-bottom: 1.5rem; font-size: 0.9rem; }
+  textarea { width: 100%; height: 320px; background: var(--background); border: 1px solid var(--border); color: var(--text); padding: 1rem; border-radius: 12px; font-family: inherit; font-size: 0.95rem; line-height: 1.6; resize: vertical; }
+  .meta-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); }
+  .adsense-slot { margin: 2rem 0; padding: 1rem; background: var(--background); border: 1px dashed var(--border); border-radius: 10px; text-align: center; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+</style>
 </head>
 <body style="--category-color: #10B981;">
-<main style="max-width: 700px; margin: 4rem auto; padding: 2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;">
-  <a href="index.html" style="color: var(--category-color); text-decoration: none; font-weight: 600;">← Back to Productivity</a>
-  <h1 style="margin-top: 1rem;">📝 Quick Scratchpad &amp; Auto-Saver</h1>
-  <textarea id="pad" style="width: 100%; height: 250px; background: var(--background); border: 1px solid var(--border); color: var(--text); padding: 1rem; border-radius: 8px; margin-top: 1rem;" placeholder="Type notes here..."></textarea>
+<main class="app-container">
+  <a href="index.html" class="nav-back">← Back to Productivity Hub</a>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="font-size: 1.75rem; margin: 0;">📝 Quick Scratchpad &amp; Auto-Saver</h1>
+    <button id="themeToggle" style="background:none; border:1px solid var(--border); padding:0.5rem 0.75rem; border-radius:8px; cursor:pointer; color:var(--text)">🌓 Theme</button>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Jot down quick thoughts or code snippets. Saved instantly to your browser storage.</p>
+
+  <div style="margin-top: 2rem;">
+    <textarea id="pad" placeholder="Type or paste notes here..."></textarea>
+    <div class="meta-bar">
+      <span id="wordCount">Words: 0 | Characters: 0</span>
+      <span id="saveStatus" style="color: var(--category-color); font-weight: 600;">Saved</span>
+    </div>
+  </div>
+
+  <div class="adsense-slot" role="region" aria-label="Advertisement">Sponsored Ad Slot (Scratchpad Footer)</div>
 </main>
+<script>
+  const pad = document.getElementById('pad');
+  const wordCount = document.getElementById('wordCount');
+  const saveStatus = document.getElementById('saveStatus');
+
+  pad.value = localStorage.getItem('lamastudio_scratchpad') || '';
+
+  function updateMetrics() {
+    const text = pad.value;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const chars = text.length;
+    wordCount.textContent = `Words: ${words} | Characters: ${chars}`;
+  }
+
+  pad.oninput = () => {
+    localStorage.setItem('lamastudio_scratchpad', pad.value);
+    updateMetrics();
+    saveStatus.textContent = "Saving...";
+    setTimeout(() => { saveStatus.textContent = "Saved"; }, 400);
+  };
+
+  document.getElementById('themeToggle').onclick = () => {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  };
+
+  updateMetrics();
+</script>
 </body>
 </html>

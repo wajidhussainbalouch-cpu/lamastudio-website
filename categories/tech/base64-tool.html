@@ -1,51 +1,360 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Base64 Encoder &amp; Decoder — LamaStudio Tech</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base64 Encoder &amp; Decoder — Free Online Tool | LamaStudio</title>
+<meta name="description" content="Encode and decode Base64 and Base64URL strings, or convert files to Base64 data URIs — entirely in your browser. Nothing you paste or upload ever leaves your device.">
+<link rel="canonical" href="https://www.lamastudio.pk/tools/base64/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Base64 Encoder &amp; Decoder — LamaStudio">
+<meta property="og:description" content="Free client-side Base64 / Base64URL encoder and decoder with file support. No data ever leaves your browser.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d12">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; script-src 'self'; object-src 'none'; base-uri 'self';">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Base64 Encoder & Decoder",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "LamaStudio" }
+}
+</script>
 <style>
-  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 650px; margin: 2rem auto; }
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 760px; margin: 2rem auto; }
+  .tool-box.wide { max-width: 900px; }
   .form-group { margin-bottom: 1.25rem; }
-  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
-  .form-group textarea { width: 100%; height: 120px; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; resize: vertical; }
-  .btn-row { display: flex; gap: 1rem; margin-top: 1rem; }
-  .calc-btn { background: var(--category-color); color: #fff; flex: 1; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  .form-group label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group label .meta { font-weight: 500; font-size: 0.78rem; color: var(--text-muted, #8a93a6); font-family: 'JetBrains Mono', monospace; }
+  .form-group textarea {
+    width: 100%; min-height: 130px; padding: 0.75rem; background: var(--background);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; resize: vertical;
+  }
+  .form-group textarea:focus { outline: 2px solid var(--category-color); outline-offset: 1px; }
+  .options-row { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; margin-bottom: 1.25rem; font-size: 0.85rem; }
+  .options-row label { display: flex; align-items: center; gap: 0.4rem; font-weight: 500; cursor: pointer; }
+  .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+  .calc-btn {
+    background: var(--category-color); color: #fff; flex: 1; min-width: 140px;
+    padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700;
+    cursor: pointer; font-size: 0.92rem; transition: filter 0.15s ease;
+  }
+  .calc-btn:hover { filter: brightness(1.1); }
+  .calc-btn:active { filter: brightness(0.95); }
   .calc-btn.secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  .calc-btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); flex: 0 0 auto; }
+  .calc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .dropzone {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 1.25rem;
+    text-align: center; font-size: 0.85rem; color: var(--text); cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease; margin-bottom: 1.25rem;
+  }
+  .dropzone.dragover { border-color: var(--category-color); background: var(--background); }
+  .dropzone input[type="file"] { display: none; }
+  .status-line { font-size: 0.8rem; margin-top: 0.5rem; min-height: 1.1rem; }
+  .status-line.ok { color: #3ecf8e; }
+  .status-line.err { color: #ef6b6b; }
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.65rem 1.25rem; font-size: 0.85rem; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .explainer { max-width: 760px; margin: 0 auto 3rem auto; padding: 0 0.5rem; font-size: 0.92rem; line-height: 1.65; }
+  .explainer h2 { font-size: 1.15rem; margin-top: 2rem; }
+  .explainer details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.75rem; }
+  .explainer summary { cursor: pointer; font-weight: 600; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 </style>
 </head>
 <body style="--category-color: var(--c-tech);">
-<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Base64 Tool</small></span></a></div></header>
-<main style="padding: 2rem 1rem;">
-  <div class="tool-box">
-    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
-    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">Base64 Encoder &amp; Decoder</h1>
-    <div class="form-group"><label>Input Text / Base64 String</label><textarea id="inputText" placeholder="Enter text here..."></textarea></div>
-    <div class="btn-row">
-      <button class="calc-btn" onclick="encodeBase64()">Encode to Base64</button>
-      <button class="calc-btn secondary" onclick="decodeBase64()">Decode from Base64</button>
-    </div>
-    <div class="form-group" style="margin-top: 1.5rem;"><label>Result Output</label><textarea id="outputText" readonly placeholder="Output will appear here..."></textarea></div>
+
+<header class="site-header">
+  <div class="util-row">
+    <a href="../../index.html" class="brand">
+      <span class="brand-mark" style="background: var(--category-color);">L</span>
+      <span>LamaStudio<small>Base64 Tool</small></span>
+    </a>
+    <nav>
+      <a href="../">All Tools</a>
+      <a href="../../index.html">Store</a>
+    </nav>
   </div>
+</header>
+
+<main style="padding: 2rem 1rem;">
+
+  <div class="tool-box wide">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility · Client-Side Only</span>
+    <h1 style="font-size: 1.6rem; margin: 0.5rem 0 0.35rem 0;">Base64 Encoder &amp; Decoder</h1>
+    <p style="margin: 0 0 1.5rem 0; font-size: 0.88rem; color: var(--text-muted, #8a93a6);">
+      Nothing you type or upload here is sent anywhere — encoding and decoding both run entirely in your browser.
+    </p>
+
+    <div class="options-row" role="group" aria-label="Encoding options">
+      <label><input type="checkbox" id="urlSafe"> URL-safe (Base64URL: <code>-_</code> instead of <code>+/</code>, no padding)</label>
+      <label><input type="checkbox" id="stripNewlines" checked> Strip newlines from input before encoding</label>
+    </div>
+
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drop a file here or click to select a file to encode as Base64">
+      📎 Drop a file here to encode it as Base64 — or click to choose one
+      <input type="file" id="fileInput">
+    </div>
+
+    <div class="form-group">
+      <label for="inputText">Input <span class="meta" id="inputMeta">0 chars</span></label>
+      <textarea id="inputText" placeholder="Enter plain text or a Base64 string..." aria-describedby="inputMeta"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="calc-btn" id="encodeBtn">Encode → Base64</button>
+      <button class="calc-btn secondary" id="decodeBtn">Decode → Text</button>
+      <button class="calc-btn ghost" id="swapBtn" title="Swap input and output">⇅ Swap</button>
+      <button class="calc-btn ghost" id="clearBtn" title="Clear both fields">Clear</button>
+    </div>
+
+    <div class="form-group" style="margin-top: 1.5rem;">
+      <label for="outputText">Result <span class="meta" id="outputMeta">0 chars</span></label>
+      <textarea id="outputText" readonly placeholder="Output will appear here..." aria-live="polite"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="calc-btn secondary" id="copyBtn">Copy Result</button>
+      <button class="calc-btn ghost" id="downloadBtn">Download Result as File</button>
+    </div>
+
+    <p class="status-line" id="statusLine" role="status" aria-live="assertive"></p>
+  </div>
+
+  <section class="explainer">
+    <h2>How Base64 encoding actually works</h2>
+    <p>
+      Base64 converts arbitrary binary data into a sequence of 64 printable ASCII characters
+      (A–Z, a–z, 0–9, <code>+</code>, <code>/</code>), so binary content can safely travel through
+      systems built for text — email bodies, JSON fields, URLs, or data URIs in HTML/CSS. It groups
+      input into 3-byte chunks and re-maps each into four 6-bit characters, which is why encoded
+      output is roughly 33% larger than the original.
+    </p>
+
+    <details>
+      <summary>What's the difference between standard Base64 and Base64URL?</summary>
+      <p style="margin-top:0.6rem;">
+        Standard Base64 uses <code>+</code> and <code>/</code>, both of which have special meaning inside
+        a URL. Base64URL swaps them for <code>-</code> and <code>_</code> and typically drops the
+        <code>=</code> padding, so the result can be dropped directly into a URL path or query string
+        without extra escaping — this is the variant used inside JWTs.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why does decoding sometimes fail?</summary>
+      <p style="margin-top:0.6rem;">
+        Base64 strings must have a length that's a multiple of 4 once padding is accounted for, and may
+        only contain the valid alphabet for the mode you're using. A truncated string, stray whitespace,
+        or mixing standard and URL-safe characters in the same string are the most common causes of a
+        decode error — this tool reports which of those it detects.
+      </p>
+    </details>
+
+    <details>
+      <summary>Is this safe for encoding secrets or tokens?</summary>
+      <p style="margin-top:0.6rem;">
+        Base64 is an encoding, not encryption — anyone with the encoded string can decode it instantly.
+        It's safe to use this tool on secrets in the sense that the string never leaves your browser
+        while you're using it, but the encoded output itself provides no confidentiality once you paste
+        it somewhere else.
+      </p>
+    </details>
+  </section>
+
 </main>
+
+<div class="toast" id="toast" role="status"></div>
+
 <script>
-function encodeBase64() {
-  try {
-    const val = document.getElementById('inputText').value;
-    document.getElementById('outputText').value = btoa(unescape(encodeURIComponent(val)));
-  } catch(e) {
-    document.getElementById('outputText').value = "Error: Invalid string for Base64 encoding.";
+(function () {
+  'use strict';
+
+  const inputEl = document.getElementById('inputText');
+  const outputEl = document.getElementById('outputText');
+  const inputMeta = document.getElementById('inputMeta');
+  const outputMeta = document.getElementById('outputMeta');
+  const statusLine = document.getElementById('statusLine');
+  const urlSafe = document.getElementById('urlSafe');
+  const stripNewlines = document.getElementById('stripNewlines');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const toast = document.getElementById('toast');
+
+  function setStatus(msg, isError) {
+    statusLine.textContent = msg;
+    statusLine.className = 'status-line ' + (isError ? 'err' : 'ok');
   }
-}
-function decodeBase64() {
-  try {
-    const val = document.getElementById('inputText').value;
-    document.getElementById('outputText').value = decodeURIComponent(escape(atob(val)));
-  } catch(e) {
-    document.getElementById('outputText').value = "Error: Invalid Base64 input string.";
+
+  function updateCounts() {
+    inputMeta.textContent = inputEl.value.length + ' chars';
+    outputMeta.textContent = outputEl.value.length + ' chars';
   }
-}
+  inputEl.addEventListener('input', updateCounts);
+
+  function toUrlSafe(b64) {
+    return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function fromUrlSafe(str) {
+    let s = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return s;
+  }
+
+  function encodeBase64() {
+    try {
+      let val = inputEl.value;
+      if (stripNewlines.checked) val = val.replace(/[\r\n]+/g, '');
+      if (val.length === 0) { setStatus('Nothing to encode — input is empty.', true); return; }
+      let encoded = btoa(unescape(encodeURIComponent(val)));
+      if (urlSafe.checked) encoded = toUrlSafe(encoded);
+      outputEl.value = encoded;
+      setStatus('Encoded ' + val.length + ' characters successfully.', false);
+    } catch (e) {
+      outputEl.value = '';
+      setStatus('Encoding failed: input contains characters that could not be processed.', true);
+    }
+    updateCounts();
+  }
+
+  function decodeBase64() {
+    try {
+      let val = inputEl.value.trim();
+      if (val.length === 0) { setStatus('Nothing to decode — input is empty.', true); return; }
+      const looksUrlSafe = urlSafe.checked || /[-_]/.test(val) && !/[+/]/.test(val);
+      const normalized = looksUrlSafe ? fromUrlSafe(val) : val;
+      if (!/^[A-Za-z0-9+/]*={0,2}$/.test(normalized) || normalized.length % 4 !== 0) {
+        setStatus('Decoding failed: input is not a valid Base64 string (wrong length or invalid characters).', true);
+        outputEl.value = '';
+        updateCounts();
+        return;
+      }
+      const decoded = decodeURIComponent(escape(atob(normalized)));
+      outputEl.value = decoded;
+      setStatus('Decoded successfully.', false);
+    } catch (e) {
+      outputEl.value = '';
+      setStatus('Decoding failed: input is not valid Base64.', true);
+    }
+    updateCounts();
+  }
+
+  document.getElementById('encodeBtn').addEventListener('click', encodeBase64);
+  document.getElementById('decodeBtn').addEventListener('click', decodeBase64);
+
+  document.getElementById('swapBtn').addEventListener('click', function () {
+    const tmp = inputEl.value;
+    inputEl.value = outputEl.value;
+    outputEl.value = tmp;
+    updateCounts();
+    setStatus('Swapped input and output.', false);
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    inputEl.value = '';
+    outputEl.value = '';
+    updateCounts();
+    setStatus('Cleared.', false);
+    inputEl.focus();
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async function () {
+    if (!outputEl.value) { setStatus('Nothing to copy yet.', true); return; }
+    try {
+      await navigator.clipboard.writeText(outputEl.value);
+      showToast('Copied to clipboard');
+    } catch (e) {
+      outputEl.select();
+      document.execCommand('copy');
+      showToast('Copied to clipboard');
+    }
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', function () {
+    if (!outputEl.value) { setStatus('Nothing to download yet.', true); return; }
+    const blob = new Blob([outputEl.value], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lamastudio-base64-output.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Download started');
+  });
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  // Keyboard shortcut: Ctrl/Cmd+Enter encodes by default
+  inputEl.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      encodeBase64();
+    }
+  });
+
+  // Drag-and-drop + click-to-select file -> Base64 (e.g. for data URIs)
+  ['dragenter', 'dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('dragover'); })
+  );
+  ['dragleave', 'drop'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('dragover'); })
+  );
+  dropzone.addEventListener('drop', function (e) {
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB guard so the tab doesn't lock up
+    if (file.size > MAX_SIZE) {
+      setStatus('File too large for browser-based encoding (max 5MB).', true);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function () {
+      const bytes = new Uint8Array(reader.result);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      let encoded = btoa(binary);
+      if (urlSafe.checked) encoded = toUrlSafe(encoded);
+      inputEl.value = '';
+      outputEl.value = encoded;
+      updateCounts();
+      setStatus('Encoded file "' + file.name + '" (' + file.size + ' bytes).', false);
+    };
+    reader.onerror = function () {
+      setStatus('Could not read the selected file.', true);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  updateCounts();
+})();
 </script>
 </body>
-</html>
+  </html>
+  

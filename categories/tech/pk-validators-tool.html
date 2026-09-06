@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pakistan IBAN Validator, Mobile Network &amp; CNIC Format Checker | LamaStudio</title>
+<meta name="description" content="Validate and generate Pakistani bank IBANs with real ISO 7064 checksum verification, identify a mobile number's original network (Jazz, Zong, Ufone, Telenor, SCOM), and format-check CNIC numbers — all client-side.">
+<link rel="canonical" href="https://www.lamastudio.pk/tools/pk-validators/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Pakistan IBAN, Mobile Network &amp; CNIC Validator — LamaStudio">
+<meta property="og:description" content="The developer utility every Pakistani fintech, e-commerce, and KYC form needs: real IBAN checksum validation, mobile carrier lookup, and CNIC formatting — built for local developers, by a local studio.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d12">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; script-src 'self'; object-src 'none'; base-uri 'self';">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pakistan IBAN, Mobile Network & CNIC Format Validator",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "LamaStudio" }
+}
+</script>
+<style>
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 900px; margin: 2rem auto; }
+  .tab-row { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tab-btn {
+    background: var(--background); border: 1px solid var(--border); color: var(--text);
+    padding: 0.55rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+  }
+  .tab-btn.active { background: var(--category-color); border-color: var(--category-color); color: #fff; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group input, .form-group select {
+    width: 100%; padding: 0.75rem; background: var(--background); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
+  }
+  .form-group input:focus, .form-group select:focus { outline: 2px solid var(--category-color); outline-offset: 1px; }
+  .form-group input.has-error { border-color: #ef6b6b; }
+  .row-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  @media (min-width: 640px) { .row-2 { grid-template-columns: 1fr 1fr; } }
+  .calc-btn {
+    background: var(--category-color); color: #fff; padding: 0.85rem 1.25rem; border: none;
+    border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.92rem;
+  }
+  .result-box {
+    margin-top: 1.25rem; padding: 1.1rem 1.25rem; background: var(--background); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem; color: var(--text);
+  }
+  .result-box.ok { border-color: #3ecf8e; }
+  .result-box.err { border-color: #ef6b6b; color: #ef6b6b; }
+  .result-box .big { font-family: 'JetBrains Mono', monospace; font-size: 1.15rem; color: var(--category-color); letter-spacing: 0.03em; margin: 0.4rem 0; word-break: break-all; }
+  .kv-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-row .k { color: var(--text-muted, #8a93a6); }
+  .kv-row .v { font-weight: 600; }
+  .caveat {
+    font-size: 0.78rem; color: var(--text-muted, #8a93a6); margin-top: 0.75rem; line-height: 1.5;
+    border-top: 1px dashed var(--border); padding-top: 0.75rem;
+  }
+  .bank-table, .prefix-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; font-size: 0.82rem; }
+  .bank-table th, .bank-table td, .prefix-table th, .prefix-table td {
+    text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border);
+  }
+  .bank-table th, .prefix-table th { color: var(--text-muted, #8a93a6); font-weight: 600; }
+  .bank-table td.code, .prefix-table td.code { font-family: 'JetBrains Mono', monospace; color: var(--category-color); }
+  .explainer { max-width: 900px; margin: 2rem auto 3rem auto; padding: 0 0.5rem; font-size: 0.92rem; line-height: 1.65; }
+  .explainer h2 { font-size: 1.15rem; margin-top: 2rem; }
+  .explainer details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.75rem; }
+  .explainer summary { cursor: pointer; font-weight: 600; }
+</style>
+</head>
+<body style="--category-color: var(--c-tech);">
+
+<header class="site-header">
+  <div class="util-row">
+    <a href="../../index.html" class="brand">
+      <span class="brand-mark" style="background: var(--category-color);">L</span>
+      <span>LamaStudio<small>PK Validators</small></span>
+    </a>
+    <nav>
+      <a href="../">All Tools</a>
+      <a href="../../index.html">Store</a>
+    </nav>
+  </div>
+</header>
+
+<main style="padding: 2rem 1rem;">
+
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Original LamaStudio Utility · Client-Side Only</span>
+    <h1 style="font-size: 1.6rem; margin: 0.5rem 0 0.35rem 0;">Pakistan IBAN, Mobile Network &amp; CNIC Format Validator</h1>
+    <p style="margin: 0 0 1.5rem 0; font-size: 0.88rem; color: var(--text-muted, #8a93a6);">
+      Every generic dev-tool site online has a Base64 encoder. None of them can validate a Pakistani
+      IBAN's actual checksum, generate one from a bank code and account number, or tell you which
+      network a local mobile number was originally issued on. This one does — nothing you enter here
+      leaves your browser.
+    </p>
+
+    <div class="tab-row">
+      <button class="tab-btn active" data-tab="iban">IBAN Validate/Generate</button>
+      <button class="tab-btn" data-tab="mobile">Mobile Network Lookup</button>
+      <button class="tab-btn" data-tab="cnic">CNIC Format Checker</button>
+    </div>
+
+    <!-- IBAN PANEL -->
+    <div class="panel active" id="panel-iban">
+      <div class="form-group">
+        <label for="ibanInput">Full IBAN (validate) — or leave blank to generate one below</label>
+        <input type="text" id="ibanInput" placeholder="PK36 SCBL 0000 0011 2345 6702" spellcheck="false" autocomplete="off">
+      </div>
+      <button class="calc-btn" id="validateIbanBtn">Validate IBAN</button>
+      <div class="result-box" id="ibanResult" style="display:none;"></div>
+
+      <hr style="border-color: var(--border); margin: 1.75rem 0;">
+
+      <h3 style="font-size: 1rem; margin: 0 0 1rem 0;">Or generate an IBAN from bank code + account number</h3>
+      <div class="row-2">
+        <div class="form-group">
+          <label for="bankCodeSelect">Bank</label>
+          <select id="bankCodeSelect"></select>
+        </div>
+        <div class="form-group">
+          <label for="accountNumberInput">Account Number (up to 16 digits)</label>
+          <input type="text" id="accountNumberInput" placeholder="0000001123456702" spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+      <button class="calc-btn" id="generateIbanBtn">Generate IBAN</button>
+      <div class="result-box" id="generateResult" style="display:none;"></div>
+
+      <table class="bank-table" id="bankTable">
+        <thead><tr><th>Bank</th><th>Code</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- MOBILE PANEL -->
+    <div class="panel" id="panel-mobile">
+      <div class="form-group">
+        <label for="mobileInput">Mobile Number</label>
+        <input type="text" id="mobileInput" placeholder="0300 1234567 or +92 300 1234567" spellcheck="false" autocomplete="off">
+      </div>
+      <button class="calc-btn" id="lookupMobileBtn">Identify Network</button>
+      <div class="result-box" id="mobileResult" style="display:none;"></div>
+
+      <table class="prefix-table" id="prefixTable">
+        <thead><tr><th>Prefix range</th><th>Originally assigned to</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- CNIC PANEL -->
+    <div class="panel" id="panel-cnic">
+      <div class="form-group">
+        <label for="cnicInput">CNIC Number</label>
+        <input type="text" id="cnicInput" placeholder="3520112345671" spellcheck="false" autocomplete="off">
+      </div>
+      <button class="calc-btn" id="formatCnicBtn">Format &amp; Check</button>
+      <div class="result-box" id="cnicResult" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <section class="explainer">
+    <h2>What's actually happening under the hood</h2>
+    <p>
+      The IBAN checker implements the real ISO 7064 MOD 97-10 checksum algorithm — the same
+      verification international banking systems use — not a lookup against known examples. It converts
+      letters to numbers (A=10 … Z=35), rearranges the string per the standard, and computes an exact
+      modulo-97 check using native BigInt arithmetic so precision isn't lost on the very large numbers
+      involved.
+    </p>
+
+    <details>
+      <summary>Does a valid checksum mean the account actually exists?</summary>
+      <p style="margin-top:0.6rem;">
+        No. A passing checksum only confirms the IBAN is internally well-formed — it catches typos,
+        transposed digits, and copy-paste errors, which is the vast majority of real-world IBAN
+        mistakes. Confirming the account is open, active, and belongs to who you think it does requires
+        the receiving bank's own verification, not a client-side format check.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why does the mobile lookup say "originally assigned" instead of just naming the network?</summary>
+      <p style="margin-top:0.6rem;">
+        Since Mobile Number Portability launched in Pakistan, a subscriber can switch operators while
+        keeping their number, so the prefix reflects who the number was first issued to by PTA — not
+        necessarily who's carrying the call today. For anything where the live carrier actually matters
+        (SMS delivery routing, for instance), that has to be confirmed with the telecom itself, not
+        inferred from the prefix alone.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why doesn't the CNIC checker validate against NADRA?</summary>
+      <p style="margin-top:0.6rem;">
+        Unlike IBANs, CNIC numbers don't have a publicly documented checksum digit — the 13th digit is
+        not a self-verifying check digit the way a credit card or IBAN's is. This tool only confirms the
+        input has the correct digit count and formats it into the standard
+        <code>XXXXX-XXXXXXX-X</code> pattern. Confirming a CNIC is genuine requires NADRA's own
+        verification systems, which this tool intentionally does not attempt to replicate or bypass.
+      </p>
+    </details>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Tab switching ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------- Bank code table (verify current codes with your bank if precision matters) ----------
+  const BANKS = [
+    { name: 'Standard Chartered Bank Pakistan', code: 'SCBL' },
+    { name: 'Habib Bank Limited (HBL)', code: 'HABB' },
+    { name: 'United Bank Limited (UBL)', code: 'UNIL' },
+    { name: 'MCB Bank Limited', code: 'MUCB' },
+    { name: 'MCB Islamic Bank', code: 'MCIB' },
+    { name: 'Meezan Bank', code: 'MEZN' },
+    { name: 'Bank Alfalah', code: 'ALFH' },
+    { name: 'Allied Bank Limited', code: 'ABPA' },
+    { name: 'Faysal Bank', code: 'FAYS' },
+    { name: 'Askari Bank', code: 'ASCM' },
+    { name: 'Habib Metropolitan Bank', code: 'MPBL' },
+    { name: 'JS Bank', code: 'JSBL' },
+    { name: 'National Bank of Pakistan', code: 'NBPA' },
+    { name: 'Bank of Punjab', code: 'BPUN' },
+    { name: 'Bank of Khyber', code: 'KHYB' },
+    { name: 'Sindh Bank', code: 'SIND' },
+    { name: 'Soneri Bank', code: 'SONE' },
+    { name: 'Silk Bank', code: 'SILK' },
+    { name: 'Summit Bank', code: 'SUMB' },
+    { name: 'Samba Bank', code: 'SAMB' }
+  ];
+  const bankSelect = document.getElementById('bankCodeSelect');
+  const bankTableBody = document.querySelector('#bankTable tbody');
+  BANKS.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.code;
+    opt.textContent = `${b.name} (${b.code})`;
+    bankSelect.appendChild(opt);
+
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td'); tdName.textContent = b.name;
+    const tdCode = document.createElement('td'); tdCode.className = 'code'; tdCode.textContent = b.code;
+    tr.appendChild(tdName); tr.appendChild(tdCode);
+    bankTableBody.appendChild(tr);
+  });
+
+  // ---------- IBAN: ISO 7064 MOD 97-10 ----------
+  function ibanToNumeric(rearranged) {
+    let numeric = '';
+    for (const ch of rearranged) {
+      if (/[A-Z]/.test(ch)) numeric += (ch.charCodeAt(0) - 55).toString();
+      else numeric += ch;
+    }
+    return numeric;
+  }
+
+  function validateIban(rawInput) {
+    const iban = rawInput.replace(/\s+/g, '').toUpperCase();
+    if (!/^PK\d{2}[A-Z]{4}\d{16}$/.test(iban)) {
+      return { valid: false, reason: 'Format must be PK + 2 check digits + 4-letter bank code + 16 digits (24 characters total).' };
+    }
+    const rearranged = iban.slice(4) + iban.slice(0, 4);
+    const numeric = ibanToNumeric(rearranged);
+    const remainder = BigInt(numeric) % 97n;
+    const bankCode = iban.slice(4, 8);
+    const accountNumber = iban.slice(8);
+    const bank = BANKS.find(b => b.code === bankCode);
+    return {
+      valid: remainder === 1n,
+      bankCode, accountNumber,
+      bankName: bank ? bank.name : '(not in local lookup table — verify bank code independently)',
+      formatted: iban.match(/.{1,4}/g).join(' ')
+    };
+  }
+
+  function generateIbanCheckDigits(bankCode, accountNumber16) {
+    const bban = bankCode + accountNumber16;
+    const rearranged = bban + 'PK' + '00';
+    const numeric = ibanToNumeric(rearranged);
+    const remainder = BigInt(numeric) % 97n;
+    let check = 98n - remainder;
+    return check.toString().padStart(2, '0');
+  }
+
+  const ibanResult = document.getElementById('ibanResult');
+  document.getElementById('validateIbanBtn').addEventListener('click', () => {
+    const val = document.getElementById('ibanInput').value.trim();
+    if (!val) { showIbanResult('Enter an IBAN to validate.', false); return; }
+    const res = validateIban(val);
+    if (!res.valid && res.reason) {
+      showIbanResult(res.reason, false);
+      return;
+    }
+    if (res.valid) {
+      ibanResult.className = 'result-box ok';
+      ibanResult.innerHTML = '';
+      const title = document.createElement('div'); title.textContent = '✓ Checksum valid'; title.style.fontWeight = '700';
+      const big = document.createElement('div'); big.className = 'big'; big.textContent = res.formatted;
+      ibanResult.appendChild(title); ibanResult.appendChild(big);
+      addKv(ibanResult, 'Bank', res.bankName);
+      addKv(ibanResult, 'Bank code', res.bankCode);
+      addKv(ibanResult, 'Account number', res.accountNumber);
+    } else {
+      ibanResult.className = 'result-box err';
+      ibanResult.textContent = '✕ Checksum invalid — this IBAN does not pass the MOD 97-10 check. Verify for typos or transposed digits.';
+    }
+    ibanResult.style.display = 'block';
+  });
+
+  function showIbanResult(msg, ok) {
+    ibanResult.className = 'result-box ' + (ok ? 'ok' : 'err');
+    ibanResult.textContent = msg;
+    ibanResult.style.display = 'block';
+  }
+
+  function addKv(container, k, v) {
+    const row = document.createElement('div'); row.className = 'kv-row';
+    const kEl = document.createElement('span'); kEl.className = 'k'; kEl.textContent = k;
+    const vEl = document.createElement('span'); vEl.className = 'v'; vEl.textContent = v;
+    row.appendChild(kEl); row.appendChild(vEl);
+    container.appendChild(row);
+  }
+
+  const generateResult = document.getElementById('generateResult');
+  document.getElementById('generateIbanBtn').addEventListener('click', () => {
+    const bankCode = bankSelect.value;
+    const accRaw = document.getElementById('accountNumberInput').value.replace(/\s+/g, '');
+    if (!/^\d{1,16}$/.test(accRaw)) {
+      generateResult.className = 'result-box err';
+      generateResult.textContent = 'Enter a numeric account number (up to 16 digits).';
+      generateResult.style.display = 'block';
+      return;
+    }
+    const padded = accRaw.padStart(16, '0');
+    const checkDigits = generateIbanCheckDigits(bankCode, padded);
+    const fullIban = 'PK' + checkDigits + bankCode + padded;
+    generateResult.className = 'result-box ok';
+    generateResult.innerHTML = '';
+    const title = document.createElement('div'); title.textContent = 'Generated IBAN'; title.style.fontWeight = '700';
+    const big = document.createElement('div'); big.className = 'big'; big.textContent = fullIban.match(/.{1,4}/g).join(' ');
+    generateResult.appendChild(title); generateResult.appendChild(big);
+    generateResult.style.display = 'block';
+  });
+
+  // ---------- Mobile network prefix lookup ----------
+  // Ranges reflect PTA's original numbering-plan assignment. Mobile Number Portability (MNP)
+  // means the number's live carrier can differ from its original prefix — see explainer below.
+  const PREFIX_RANGES = [
+    { start: 300, end: 306, network: 'Jazz (Mobilink)' },
+    { start: 307, end: 309, network: 'Jazz (Mobilink)' },
+    { start: 320, end: 329, network: 'Jazz (legacy Warid block)' },
+    { start: 310, end: 319, network: 'Zong' },
+    { start: 370, end: 373, network: 'Zong (newer block)' },
+    { start: 330, end: 339, network: 'Ufone (0339 = Onic digital brand)' },
+    { start: 340, end: 347, network: 'Telenor' },
+    { start: 355, end: 355, network: 'SCOM (Azad Kashmir / Gilgit-Baltistan)' }
+  ];
+  const prefixTableBody = document.querySelector('#prefixTable tbody');
+  PREFIX_RANGES.forEach(r => {
+    const tr = document.createElement('tr');
+    const tdRange = document.createElement('td'); tdRange.className = 'code';
+    tdRange.textContent = r.start === r.end ? `03${r.start}` : `03${r.start}–03${r.end}`;
+    const tdNet = document.createElement('td'); tdNet.textContent = r.network;
+    tr.appendChild(tdRange); tr.appendChild(tdNet);
+    prefixTableBody.appendChild(tr);
+  });
+
+  const mobileResult = document.getElementById('mobileResult');
+  document.getElementById('lookupMobileBtn').addEventListener('click', () => {
+    let raw = document.getElementById('mobileInput').value.trim();
+    raw = raw.replace(/[\s-]/g, '');
+    raw = raw.replace(/^\+92/, '0').replace(/^0092/, '0').replace(/^92/, '0');
+    if (!/^0\d{10}$/.test(raw)) {
+      mobileResult.className = 'result-box err';
+      mobileResult.textContent = 'Enter a valid 11-digit Pakistani mobile number (e.g. 03001234567).';
+      mobileResult.style.display = 'block';
+      retu

@@ -15,33 +15,98 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Category track scrollability & container fixes */
+    .category-strip {
+      width: 100%;
+      overflow-x: auto;
+      padding: 12px 0;
+      scrollbar-width: thin;
+    }
+    .category-track {
+      display: flex;
+      gap: 10px;
+      flex-wrap: nowrap;
+      padding: 0 1rem;
+      min-width: max-content;
+    }
+    .cat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: var(--surface, #1e1e1e);
+      border: 1px solid var(--border, #333);
+      border-radius: 20px;
+      color: var(--text, #fff);
+      font-size: 0.85rem;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: border-color 0.2s;
+    }
+    .cat-pill:hover {
+      border-color: #2563eb;
+    }
+    .cat-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--pc, #2563eb);
+    }
+    /* Uniform blog card styling */
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .blog-card.article-card-style {
+      background: var(--surface, #1e1e1e);
+      border: 1px solid var(--border, #333);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .blog-card.article-card-style:hover {
+      transform: translateY(-3px);
+      border-color: #2563eb;
+    }
+    .blog-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+  </style>
 </head>
 <body>
 
   <header class="site-header">
-    <div class="util-row">
-      <a href="index.html" class="brand">
-        <div class="brand-mark" aria-hidden="true">L</div>
+    <div class="util-row" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem;">
+      <a href="index.html" class="brand" style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem; color: var(--text);">
+        <div class="brand-mark" aria-hidden="true" style="background: #2563eb; color: #fff; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold;">L</div>
         <div>
           LamaStudio
-          <small>Digital Ecosystem</small>
+          <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">Digital Ecosystem</small>
         </div>
       </a>
       
-      <div class="header-actions">
-        <button class="icon-btn asklama-trigger" id="askLamaTriggerBtn" onclick="toggleLamaChat()" aria-label="Open AskLama AI Agent">
+      <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+        <a href="signin.html" class="icon-btn" style="text-decoration: none; background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem; color: var(--text);">
+          👤 Account
+        </a>
+
+        <button class="icon-btn asklama-trigger" id="askLamaTriggerBtn" onclick="toggleLamaChat()" aria-label="Open AskLama AI Agent" style="background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem 0.8rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; color: var(--text);">
           🤖 <span class="desktop-only">AskLama</span>
         </button>
 
-        <button class="icon-btn theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme">
-          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <button class="icon-btn theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme" style="background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem; border-radius: 8px; cursor: pointer; color: var(--text);">
+          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         </button>
 
-        <button class="icon-btn menu-toggle" id="menuToggleBtn" aria-label="Open Navigation Menu">
-          <span></span>
-          <span></span>
-          <span></span>
+        <button class="icon-btn menu-toggle" id="menuToggleBtn" aria-label="Open Navigation Menu" style="background: var(--input-bg, rgba(255,255,255,0.05)); border: 1px solid var(--input-border, rgba(255,255,255,0.1)); padding: 0.4rem 0.6rem; border-radius: 8px; cursor: pointer; color: var(--text);">
+          ☰
         </button>
       </div>
     </div>
@@ -59,6 +124,7 @@
       
       <div class="sidebar-quick">
         <a class="sidebar-quick-btn" href="index.html">Home Dashboard</a>
+        <a class="sidebar-quick-btn" href="signin.html">Sign In / Account</a>
         <a class="sidebar-quick-btn" href="#apps">Apps &amp; Utilities</a>
         <a class="sidebar-quick-btn" href="#blog">Studio Blog</a>
         <a class="sidebar-quick-btn ai-agent-btn" href="javascript:void(0);" onclick="toggleLamaChat();">🤖 AskLama AI Agent</a>
@@ -84,20 +150,11 @@
     </nav>
   </div>
 
-  <main id="main-content" class="site-main">
+  <main id="main-content" class="site-main" style="padding: 20px;">
     
-    <div class="ad-container ad-banner-top">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-           data-ad-slot="1234567890"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
-
+    <!-- All 12 Categories Fully Rendered in Horizontal Scroll Track -->
     <div class="category-strip">
-      <div class="category-track two-line-wrap" id="categoryTrack">
+      <div class="category-track" id="categoryTrack">
         <a href="categories/tech/" class="cat-pill" style="--pc: var(--c-tech);"><span class="dot"></span>Tech &amp; Code</a>
         <a href="categories/developer-tools/" class="cat-pill" style="--pc: var(--c-travel);"><span class="dot"></span>Developer Tools</a>
         <a href="categories/productivity/" class="cat-pill" style="--pc: var(--c-health);"><span class="dot"></span>Productivity</a>
@@ -113,7 +170,7 @@
       </div>
     </div>
 
-    <div class="dashboard">
+    <div class="dashboard" style="margin-top: 30px;">
       <div class="hero-panel">
         <span class="eyebrow">Independent Studio · DG Khan, Pakistan</span>
         <h1>Resilient digital tools for <em>modern workflows</em></h1>
@@ -144,21 +201,10 @@
             <a href="https://www.facebook.com/lamastudiopk" target="_blank" rel="noopener noreferrer" class="btn-social btn-facebook">Facebook</a>
           </div>
         </div>
-
-        <div class="widget ad-widget">
-          <div class="widget-head"><span class="widget-title">Sponsored</span></div>
-          <ins class="adsbygoogle"
-               style="display:block"
-               data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-               data-ad-slot="0987654321"
-               data-ad-format="auto"
-               data-full-width-responsive="true"></ins>
-          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-        </div>
       </aside>
     </div>
 
-    <section class="section" id="apps">
+    <section class="section" id="apps" style="margin-top: 50px;">
       <div class="section-head">
         <div>
           <span class="eyebrow">The Ecosystem</span>
@@ -234,17 +280,8 @@
       </div>
     </section>
 
-    <div class="ad-container ad-banner-mid">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-           data-ad-slot="5556667788"
-           data-ad-format="fluid"
-           data-ad-layout-key="-fb+5w+4e-db+86"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    </div>
-
-    <section class="section" id="blog">
+    <!-- All 12 Studio Blog Articles Restored -->
+    <section class="section" id="blog" style="margin-top: 50px;">
       <div class="section-head">
         <div>
           <span class="eyebrow">From the Studio</span>
@@ -254,170 +291,158 @@
       <div class="blog-grid" id="blogGrid">
         
         <article class="blog-card article-card-style" data-category="tech" data-title="Building Robust Mobile Software in 2026" data-desc="Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios." data-price="Article" style="--pc: var(--c-tech);">
-          <div class="blog-thumb" aria-hidden="true">💻</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Tech &amp; Code</span>
-              <span class="read-time">6 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
             </div>
             <h3>Building Robust Mobile Software in 2026</h3>
-            <p>Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Deep dive into modern developer tools, framework patterns, and efficient coding workflows for independent studios.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/tech.html" class="read-link">Read article →</a>
+            <a href="blogs/tech.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="developer-tools" data-title="10 Essential Developer Tools for Faster Workflows" data-desc="Essential utilities, JSON formatters, regex debuggers, and local code accelerators to supercharge development efficiency." data-price="Article" style="--pc: var(--c-travel);">
-          <div class="blog-thumb" aria-hidden="true">🛠️</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Developer Tools</span>
-              <span class="read-time">5 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
             </div>
             <h3>10 Essential Developer Tools for Faster Workflows</h3>
-            <p>Essential utilities, JSON formatters, regex debuggers, and local code accelerators to supercharge development efficiency.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Essential utilities, JSON formatters, regex debuggers, and local code accelerators to supercharge development efficiency.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/developer-tools.html" class="read-link">Read article →</a>
+            <a href="blogs/developer-tools.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="productivity" data-title="10 Systems and Micro-Tools to Master Deep Work" data-desc="Conquer distractions, optimize daily focus blocks, and streamline tasks using minimal habit systems and time-box utils." data-price="Article" style="--pc: var(--c-health);">
-          <div class="blog-thumb" aria-hidden="true">⚡</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Productivity</span>
-              <span class="read-time">5 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
             </div>
             <h3>10 Systems and Micro-Tools to Master Deep Work</h3>
-            <p>Conquer distractions, optimize daily focus blocks, and streamline tasks using minimal habit systems and time-box utils.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Conquer distractions, optimize daily focus blocks, and streamline tasks using minimal habit systems and time-box utils.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/productivity.html" class="read-link">Read article →</a>
+            <a href="blogs/productivity.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="network-security" data-title="10 Essential Security Defenses for Digital Privacy" data-desc="Protect user identity, audit network pipelines, and enforce zero-trust policies against modern cybersecurity vulnerabilities." data-price="Article" style="--pc: var(--c-weather);">
-          <div class="blog-thumb" aria-hidden="true">🛡️</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Network &amp; Security</span>
-              <span class="read-time">6 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
             </div>
             <h3>10 Essential Security Defenses for Digital Privacy</h3>
-            <p>Protect user identity, audit network pipelines, and enforce zero-trust policies against modern cybersecurity vulnerabilities.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Protect user identity, audit network pipelines, and enforce zero-trust policies against modern cybersecurity vulnerabilities.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/network-security.html" class="read-link">Read article →</a>
+            <a href="blogs/network-security.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="business" data-title="Local Payment Rails Are the New Table Stakes" data-desc="EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay." data-price="Article" style="--pc: var(--c-business);">
-          <div class="blog-thumb" aria-hidden="true">💳</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Business</span>
-              <span class="read-time">5 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
             </div>
             <h3>Local Payment Rails Are the New Table Stakes for Apps</h3>
-            <p>EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">EasyPaisa, JazzCash, and Raast aren’t optional add-ons anymore — they’re how most of your users expect to pay.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/business.html" class="read-link">Read article →</a>
+            <a href="blogs/business.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="education" data-title="What EdTech Gets Wrong About Modern Classrooms" data-desc="Most education apps are built for a device, connection, and curriculum that doesn’t match the average classroom." data-price="Article" style="--pc: var(--c-education);">
-          <div class="blog-thumb" aria-hidden="true">🎓</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Education</span>
-              <span class="read-time">7 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">7 min read</span>
             </div>
             <h3>What EdTech Gets Wrong About Modern Classrooms</h3>
-            <p>Most education apps are built for a device, connection, and curriculum that doesn’t match the average classroom.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Most education apps are built for a device, connection, and curriculum that doesn’t match the average classroom.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/education.html" class="read-link">Read article →</a>
+            <a href="blogs/education.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="health" data-title="Building Habit Apps That Don’t Guilt-Trip Users" data-desc="Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency." data-price="Article" style="--pc: var(--c-health);">
-          <div class="blog-thumb" aria-hidden="true">💚</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Health</span>
-              <span class="read-time">4 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">4 min read</span>
             </div>
             <h3>Building Habit Apps That Don’t Guilt-Trip Users</h3>
-            <p>Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Streaks and shame notifications drive short-term engagement and long-term uninstalls. There’s a better way to design for consistency.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/health.html" class="read-link">Read article →</a>
+            <a href="blogs/health.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="fashion" data-title="Designing for Small Screens: Lessons from Fashion E-Commerce" data-desc="What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout." data-price="Article" style="--pc: var(--c-fashion);">
-          <div class="blog-thumb" aria-hidden="true">👗</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Fashion</span>
-              <span class="read-time">5 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
             </div>
             <h3>Designing for Small Screens: Lessons from Fashion E-Commerce</h3>
-            <p>What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">What clothing marketplaces get right about product photography, sizing charts, and thumb-friendly checkout.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/fashion.html" class="read-link">Read article →</a>
+            <a href="blogs/fashion.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="weather" data-title="Why Weather Apps Feel Unreliable in South Asia" data-desc="Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize." data-price="Article" style="--pc: var(--c-weather);">
-          <div class="blog-thumb" aria-hidden="true">🌦️</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Weather</span>
-              <span class="read-time">6 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
             </div>
             <h3>Why Weather Apps Feel Unreliable in South Asia</h3>
-            <p>Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Sparse ground stations and coarse forecast models mean most weather apps are guessing more than users realize.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/weather.html" class="read-link">Read article →</a>
+            <a href="blogs/weather.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="sports" data-title="Local Sports Fan Engagement on Budget Handsets" data-desc="How lightweight tracking engines keep users connected during live matches without draining battery or data." data-price="Article" style="--pc: var(--c-sports);">
-          <div class="blog-thumb" aria-hidden="true">⚽</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Sports</span>
-              <span class="read-time">5 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">5 min read</span>
             </div>
             <h3>Local Sports Fan Engagement on Budget Handsets</h3>
-            <p>How lightweight tracking engines keep users connected during live matches without draining battery or data.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">How lightweight tracking engines keep users connected during live matches without draining battery or data.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/sports.html" class="read-link">Read article →</a>
+            <a href="blogs/sports.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="news" data-title="Delivering Low-Bandwidth News Feeds Effectively" data-desc="Optimizing payload sizes for intermittent regional internet coverage and seamless offline reading." data-price="Article" style="--pc: var(--c-news);">
-          <div class="blog-thumb" aria-hidden="true">📰</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">News</span>
-              <span class="read-time">4 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">4 min read</span>
             </div>
             <h3>Delivering Low-Bandwidth News Feeds Effectively</h3>
-            <p>Optimizing payload sizes for intermittent regional internet coverage and seamless offline reading.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Optimizing payload sizes for intermittent regional internet coverage and seamless offline reading.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/news.html" class="read-link">Read article →</a>
+            <a href="blogs/news.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
         <article class="blog-card article-card-style" data-category="travel" data-title="Building Tourism Guides for Northern Pakistan" data-desc="Offline map caches and localized trail references for remote mountain areas with limited connectivity." data-price="Article" style="--pc: var(--c-travel);">
-          <div class="blog-thumb" aria-hidden="true">✈️</div>
           <div class="blog-body">
-            <div class="blog-meta">
+            <div class="blog-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
               <span class="tag-pill">Travel</span>
-              <span class="read-time">6 min read</span>
+              <span class="read-time" style="font-size: 0.75rem; color: var(--text-muted);">6 min read</span>
             </div>
             <h3>Building Tourism Guides for Northern Pakistan</h3>
-            <p>Offline map caches and localized trail references for remote mountain areas with limited connectivity.</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; flex: 1;">Offline map caches and localized trail references for remote mountain areas with limited connectivity.</p>
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.2rem 0;">
-            <a href="blogs/travel.html" class="read-link">Read article →</a>
+            <a href="blogs/travel.html" class="read-link" style="color: #2563eb; font-weight: 600; text-decoration: none;">Read article →</a>
           </div>
         </article>
 
@@ -461,6 +486,7 @@
 
       <div class="footer-col">
         <h4>Studio &amp; Legal</h4>
+        <a href="signin.html">Account Access</a>
         <a href="privacy-policy.html">Privacy Policy</a>
         <a href="terms.html">Terms of Service</a>
         <a href="about.html">About Studio</a>
@@ -475,26 +501,8 @@
     </div>
   </footer>
 
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-box">
-      <button class="modal-close" id="modalCloseBtn" aria-label="Close Modal">✕</button>
-      <div class="app-icon" id="modalIcon" aria-hidden="true">✨</div>
-      <h3 id="modalTitle">Modal Title</h3>
-      <p id="modalDesc">Modal description goes here...</p>
-      
-      <div class="modal-pricing-box">
-        <span>Access Tier / Version</span>
-        <span class="price-tag" id="modalPrice">Free</span>
-      </div>
-
-      <div class="modal-actions">
-        <button id="modalPrimaryBtn" class="btn-action">Access Now</button>
-        <button id="modalCloseAction" class="btn-ghost-action">Close</button>
-      </div>
-    </div>
-  </div>
-
   <script src="script.js"></script>
+  <!-- AskLama AI Agent script pinned to bottom-left -->
   <script src="ask-lama.js"></script>
 </body>
 </html>

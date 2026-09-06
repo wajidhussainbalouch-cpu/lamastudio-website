@@ -15,11 +15,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt content is missing.' });
   }
 
-  // 2. Fallback cascade model order in case of high traffic
+  // 2. Updated fallback cascade model order using current Flash models
   const modelsToTry = [
+    'gemini-3.8-flash',
     'gemini-3.7-flash',
-    'gemini-3.6-flash',
-    'gemini-2.5-flash'
+    'gemini-3.6-flash'
   ];
 
   let lastError = '';

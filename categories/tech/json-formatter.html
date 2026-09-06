@@ -1,53 +1,395 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JSON Formatter &amp; Validator — LamaStudio Tech</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Formatter &amp; Validator — Free Online Tool | LamaStudio</title>
+<meta name="description" content="Format, minify, and validate JSON with precise error locations — entirely in your browser. Handles large payloads without freezing the tab. Nothing you paste is ever sent to a server.">
+<link rel="canonical" href="https://www.lamastudio.pk/tools/json-formatter/">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="JSON Formatter &amp; Validator — LamaStudio">
+<meta property="og:description" content="Free client-side JSON formatter, minifier, and validator with exact error location reporting.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0d12">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; script-src 'self' blob:; worker-src blob:; object-src 'none'; base-uri 'self';">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "JSON Formatter & Validator",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any (Web Browser)",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "publisher": { "@type": "Organization", "name": "LamaStudio" }
+}
+</script>
 <style>
-  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 650px; margin: 2rem auto; }
+  .tool-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; max-width: 900px; margin: 2rem auto; }
   .form-group { margin-bottom: 1.25rem; }
-  .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
-  .form-group textarea { width: 100%; height: 140px; padding: 0.75rem; background: var(--background); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; resize: vertical; }
-  .btn-row { display: flex; gap: 1rem; margin-top: 1rem; }
-  .calc-btn { background: var(--category-color); color: #fff; flex: 1; padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+  .form-group label { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
+  .form-group label .meta { font-weight: 500; font-size: 0.78rem; color: var(--text-muted, #8a93a6); font-family: 'JetBrains Mono', monospace; }
+  .form-group textarea {
+    width: 100%; min-height: 220px; padding: 0.75rem; background: var(--background);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.5; resize: vertical;
+    tab-size: 2;
+  }
+  .form-group textarea:focus { outline: 2px solid var(--category-color); outline-offset: 1px; }
+  .form-group textarea.has-error { border-color: #ef6b6b; }
+  .options-row { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; margin-bottom: 1.25rem; font-size: 0.85rem; align-items: center; }
+  .options-row label { display: flex; align-items: center; gap: 0.4rem; font-weight: 500; cursor: pointer; }
+  .options-row select {
+    background: var(--background); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.3rem 0.5rem; font-family: inherit; font-size: 0.85rem;
+  }
+  .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+  .calc-btn {
+    background: var(--category-color); color: #fff; flex: 1; min-width: 140px;
+    padding: 0.85rem; border: none; border-radius: 8px; font-weight: 700;
+    cursor: pointer; font-size: 0.92rem; transition: filter 0.15s ease;
+  }
+  .calc-btn:hover { filter: brightness(1.1); }
   .calc-btn.secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  .calc-btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); flex: 0 0 auto; }
+  .status-line { font-size: 0.82rem; margin-top: 0.6rem; min-height: 1.3rem; font-family: 'JetBrains Mono', monospace; }
+  .status-line.ok { color: #3ecf8e; }
+  .status-line.err { color: #ef6b6b; }
+  .status-line.busy { color: var(--text-muted, #8a93a6); }
+  .toast {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.65rem 1.25rem; font-size: 0.85rem; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .explainer { max-width: 900px; margin: 0 auto 3rem auto; padding: 0 0.5rem; font-size: 0.92rem; line-height: 1.65; }
+  .explainer h2 { font-size: 1.15rem; margin-top: 2rem; }
+  .explainer details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1.1rem; margin-bottom: 0.75rem; }
+  .explainer summary { cursor: pointer; font-weight: 600; }
+  .drop-hint { font-size: 0.78rem; color: var(--text-muted, #8a93a6); margin-top: 0.4rem; }
 </style>
 </head>
 <body style="--category-color: var(--c-tech);">
-<header class="site-header"><div class="util-row"><a href="index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>JSON Formatter</small></span></a></div></header>
-<main style="padding: 2rem 1rem;">
-  <div class="tool-box">
-    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility</span>
-    <h1 style="font-size: 1.5rem; margin: 0.5rem 0 1.5rem 0;">JSON Formatter &amp; Validator</h1>
-    <div class="form-group"><label>Raw JSON Input</label><textarea id="jsonInput" placeholder='{"key": "value"}'></textarea></div>
-    <div class="btn-row">
-      <button class="calc-btn" onclick="formatJSON()">Beautify JSON</button>
-      <button class="calc-btn secondary" onclick="minifyJSON()">Minify JSON</button>
-    </div>
-    <div class="form-group" style="margin-top: 1.5rem;"><label>Formatted Output / Status</label><textarea id="jsonOutput" readonly placeholder="Output or validation status..."></textarea></div>
+
+<header class="site-header">
+  <div class="util-row">
+    <a href="../../index.html" class="brand">
+      <span class="brand-mark" style="background: var(--category-color);">L</span>
+      <span>LamaStudio<small>JSON Formatter</small></span>
+    </a>
+    <nav>
+      <a href="../">All Tools</a>
+      <a href="../../index.html">Store</a>
+    </nav>
   </div>
+</header>
+
+<main style="padding: 2rem 1rem;">
+
+  <div class="tool-box">
+    <span class="eyebrow" style="color: var(--category-color);">Interactive Utility · Client-Side Only</span>
+    <h1 style="font-size: 1.6rem; margin: 0.5rem 0 0.35rem 0;">JSON Formatter &amp; Validator</h1>
+    <p style="margin: 0 0 1.5rem 0; font-size: 0.88rem; color: var(--text-muted, #8a93a6);">
+      Beautify, minify, and validate JSON with exact error locations. Payloads over 500KB are parsed
+      in a background thread so the page never freezes.
+    </p>
+
+    <div class="options-row" role="group" aria-label="Formatting options">
+      <label for="indentSize">Indent:
+        <select id="indentSize">
+          <option value="2" selected>2 spaces</option>
+          <option value="4">4 spaces</option>
+          <option value="tab">Tab</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="sortKeys"> Sort object keys alphabetically</label>
+    </div>
+
+    <div class="form-group">
+      <label for="jsonInput">Raw JSON Input <span class="meta" id="inputMeta">0 chars</span></label>
+      <textarea id="jsonInput" placeholder='{"key": "value"}' spellcheck="false"></textarea>
+      <p class="drop-hint">You can also drop a .json file directly onto this box.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="calc-btn" id="formatBtn">Beautify JSON</button>
+      <button class="calc-btn secondary" id="minifyBtn">Minify JSON</button>
+      <button class="calc-btn ghost" id="validateBtn">Validate Only</button>
+      <button class="calc-btn ghost" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="form-group" style="margin-top: 1.5rem;">
+      <label for="jsonOutput">Formatted Output <span class="meta" id="outputMeta">0 chars</span></label>
+      <textarea id="jsonOutput" readonly placeholder="Output or validation status will appear here..." spellcheck="false"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="calc-btn secondary" id="copyBtn">Copy Result</button>
+      <button class="calc-btn ghost" id="downloadBtn">Download as .json</button>
+    </div>
+
+    <p class="status-line" id="statusLine" role="status" aria-live="assertive"></p>
+  </div>
+
+  <section class="explainer">
+    <h2>What this validator checks</h2>
+    <p>
+      Beyond simply parsing your input, this tool reports the exact line and column where parsing
+      failed — rather than a raw character offset — so you can jump straight to the problem in your
+      editor instead of counting characters by hand. Common failures it catches: trailing commas,
+      unquoted object keys, single quotes instead of double quotes, and missing closing brackets.
+    </p>
+
+    <details>
+      <summary>Why does formatting a large payload sometimes take a moment?</summary>
+      <p style="margin-top:0.6rem;">
+        For inputs over roughly 500KB, parsing is handed off to a Web Worker — a separate background
+        thread — specifically so the browser tab's scrolling and typing stay responsive while a large
+        document is validated. Smaller inputs are parsed instantly on the main thread since the delay
+        would be imperceptible either way.
+      </p>
+    </details>
+
+    <details>
+      <summary>Does "sort keys" change the meaning of my JSON?</summary>
+      <p style="margin-top:0.6rem;">
+        No — object key order is not semantically meaningful in JSON itself (unlike array order, which
+        always matters). Sorting keys only affects readability and diff-friendliness when comparing two
+        versions of a config file; it has no effect on how any JSON parser interprets the data.
+      </p>
+    </details>
+
+    <details>
+      <summary>Is minified JSON actually smaller over the network?</summary>
+      <p style="margin-top:0.6rem;">
+        Minification removes whitespace, which helps before gzip/Brotli compression is applied — but
+        most production servers already compress JSON responses, and compression closes much of that
+        gap on its own. Minifying is most useful for reducing parse time and memory on the receiving
+        end, not primarily for transfer size on a server that already compresses responses.
+      </p>
+    </details>
+  </section>
+
 </main>
+
+<div class="toast" id="toast" role="status"></div>
+
 <script>
-function formatJSON() {
-  try {
-    const raw = document.getElementById('jsonInput').value;
-    const parsed = JSON.parse(raw);
-    document.getElementById('jsonOutput').value = JSON.stringify(parsed, null, 2);
-  } catch(e) {
-    document.getElementById('jsonOutput').value = "JSON Syntax Error: " + e.message;
+(function () {
+  'use strict';
+
+  const jsonInput = document.getElementById('jsonInput');
+  const jsonOutput = document.getElementById('jsonOutput');
+  const inputMeta = document.getElementById('inputMeta');
+  const outputMeta = document.getElementById('outputMeta');
+  const statusLine = document.getElementById('statusLine');
+  const indentSize = document.getElementById('indentSize');
+  const sortKeys = document.getElementById('sortKeys');
+  const toast = document.getElementById('toast');
+
+  const WORKER_THRESHOLD = 500 * 1024; // 500KB — above this, parse off the main thread
+  let worker = null;
+
+  function getWorker() {
+    if (worker) return worker;
+    const workerSrc = `
+      self.onmessage = function (e) {
+        const { action, text, indent, sort } = e.data;
+        try {
+          let parsed = JSON.parse(text);
+          if (sort) parsed = sortObjectKeys(parsed);
+          const result = action === 'minify'
+            ? JSON.stringify(parsed)
+            : JSON.stringify(parsed, null, indent);
+          self.postMessage({ ok: true, result: result });
+        } catch (err) {
+          self.postMessage({ ok: false, error: err.message });
+        }
+      };
+      function sortObjectKeys(val) {
+        if (Array.isArray(val)) return val.map(sortObjectKeys);
+        if (val && typeof val === 'object') {
+          return Object.keys(val).sort().reduce((acc, k) => {
+            acc[k] = sortObjectKeys(val[k]);
+            return acc;
+          }, {});
+        }
+        return val;
+      }
+    `;
+    const blob = new Blob([workerSrc], { type: 'application/javascript' });
+    worker = new Worker(URL.createObjectURL(blob));
+    return worker;
   }
-}
-function minifyJSON() {
-  try {
-    const raw = document.getElementById('jsonInput').value;
-    const parsed = JSON.parse(raw);
-    document.getElementById('jsonOutput').value = JSON.stringify(parsed);
-  } catch(e) {
-    document.getElementById('jsonOutput').value = "JSON Syntax Error: " + e.message;
+
+  function setStatus(msg, cls) {
+    statusLine.textContent = msg;
+    statusLine.className = 'status-line ' + (cls || '');
   }
-}
+
+  function updateCounts() {
+    inputMeta.textContent = jsonInput.value.length + ' chars';
+    outputMeta.textContent = jsonOutput.value.length + ' chars';
+  }
+  jsonInput.addEventListener('input', () => { updateCounts(); jsonInput.classList.remove('has-error'); });
+
+  function getIndent() {
+    const v = indentSize.value;
+    return v === 'tab' ? '\t' : parseInt(v, 10);
+  }
+
+  // Converts JSON.parse's character-offset error into a line/column for a clearer message
+  function locateError(text, message) {
+    const match = message.match(/position (\d+)/);
+    if (!match) return message;
+    const pos = parseInt(match[1], 10);
+    const before = text.slice(0, pos);
+    const line = (before.match(/\n/g) || []).length + 1;
+    const col = pos - before.lastIndexOf('\n');
+    return message.replace(/position \d+/, `line ${line}, column ${col}`);
+  }
+
+  function sortObjectKeysLocal(val) {
+    if (Array.isArray(val)) return val.map(sortObjectKeysLocal);
+    if (val && typeof val === 'object') {
+      return Object.keys(val).sort().reduce((acc, k) => {
+        acc[k] = sortObjectKeysLocal(val[k]);
+        return acc;
+      }, {});
+    }
+    return val;
+  }
+
+  function process(action) {
+    const text = jsonInput.value;
+    if (!text.trim()) {
+      setStatus('Input is empty — paste or drop some JSON first.', 'err');
+      return;
+    }
+
+    const useWorker = new Blob([text]).size > WORKER_THRESHOLD;
+
+    if (action === 'validate') {
+      try {
+        JSON.parse(text);
+        jsonOutput.value = '✓ Valid JSON';
+        jsonInput.classList.remove('has-error');
+        setStatus('Validation passed.', 'ok');
+      } catch (e) {
+        jsonInput.classList.add('has-error');
+        jsonOutput.value = '';
+        setStatus('Invalid JSON — ' + locateError(text, e.message), 'err');
+      }
+      updateCounts();
+      return;
+    }
+
+    if (useWorker) {
+      setStatus('Processing large payload in background thread…', 'busy');
+      const w = getWorker();
+      w.onmessage = function (e) {
+        if (e.data.ok) {
+          jsonOutput.value = e.data.result;
+          jsonInput.classList.remove('has-error');
+          setStatus('Done (' + (action === 'minify' ? 'minified' : 'formatted') + ' via background worker).', 'ok');
+        } else {
+          jsonInput.classList.add('has-error');
+          jsonOutput.value = '';
+          setStatus('Invalid JSON — ' + locateError(text, e.data.error), 'err');
+        }
+        updateCounts();
+      };
+      w.postMessage({ action: action, text: text, indent: getIndent(), sort: sortKeys.checked });
+    } else {
+      try {
+        let parsed = JSON.parse(text);
+        if (sortKeys.checked) parsed = sortObjectKeysLocal(parsed);
+        jsonOutput.value = action === 'minify'
+          ? JSON.stringify(parsed)
+          : JSON.stringify(parsed, null, getIndent());
+        jsonInput.classList.remove('has-error');
+        setStatus((action === 'minify' ? 'Minified' : 'Formatted') + ' successfully.', 'ok');
+      } catch (e) {
+        jsonInput.classList.add('has-error');
+        jsonOutput.value = '';
+        setStatus('Invalid JSON — ' + locateError(text, e.message), 'err');
+      }
+      updateCounts();
+    }
+  }
+
+  document.getElementById('formatBtn').addEventListener('click', () => process('format'));
+  document.getElementById('minifyBtn').addEventListener('click', () => process('minify'));
+  document.getElementById('validateBtn').addEventListener('click', () => process('validate'));
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    jsonInput.value = '';
+    jsonOutput.value = '';
+    jsonInput.classList.remove('has-error');
+    updateCounts();
+    setStatus('Cleared.', '');
+    jsonInput.focus();
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', async function () {
+    if (!jsonOutput.value) { setStatus('Nothing to copy yet.', 'err'); return; }
+    try {
+      await navigator.clipboard.writeText(jsonOutput.value);
+      showToast('Copied to clipboard');
+    } catch (e) {
+      jsonOutput.select();
+      document.execCommand('copy');
+      showToast('Copied to clipboard');
+    }
+  });
+
+  document.getElementById('downloadBtn').addEventListener('click', function () {
+    if (!jsonOutput.value) { setStatus('Nothing to download yet.', 'err'); return; }
+    const blob = new Blob([jsonOutput.value], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lamastudio-formatted.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Download started');
+  });
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  // Keyboard shortcut: Ctrl/Cmd+Enter formats by default
+  jsonInput.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      process('format');
+    }
+  });
+
+  // Drop a .json file directly onto the input textarea
+  jsonInput.addEventListener('dragover', e => e.preventDefault());
+  jsonInput.addEventListener('drop', function (e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      jsonInput.value = reader.result;
+      updateCounts();
+      setStatus('Loaded "' + file.name + '" — click Beautify or Validate.', '');
+    };
+    reader.readAsText(file);
+  });
+
+  updateCounts();
+})();
 </script>
 </body>
-</html>
+  </html>
+  

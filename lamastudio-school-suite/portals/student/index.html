@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student & Parent Portal | lamastudio.pk</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
+                <span>&larr; Back to Home</span>
+            </a>
+            <span class="text-slate-700">|</span>
+            <h1 class="text-sm font-bold tracking-tight text-indigo-400">Student & Parent Portal</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-xs bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-300">
+                Role: Student / Parent
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-md w-full mx-auto px-6 py-12 flex-grow flex flex-col justify-center">
+        
+        <!-- Login Card -->
+        <div id="login-card" class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-8 shadow-2xl backdrop-blur-md">
+            <div class="text-center mb-6">
+                <div class="bg-indigo-600/20 text-indigo-400 p-3 w-fit mx-auto rounded-xl mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-extrabold text-white">Portal Sign In</h2>
+                <p class="text-xs text-slate-400 mt-1">Enter your credentials to query the Google Sheet database</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Student ID</label>
+                    <input type="text" id="studentId" required placeholder="e.g. STU-001" 
+                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••" 
+                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+                <button type="submit" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20">
+                    Access Student Records
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <p class="text-xs text-slate-500">Hint for Demo Test: ID: <code class="text-indigo-400">STU-001</code> | Pass: <code class="text-indigo-400">1234</code></p>
+            </div>
+        </div>
+
+        <!-- Record Viewer Dashboard (Hidden Initially) -->
+        <div id="dashboard-card" class="hidden bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4 mb-4">
+                <div>
+                    <h3 id="resName" class="text-lg font-bold text-white">Student Name</h3>
+                    <p id="resClass" class="text-xs text-indigo-400 font-semibold">Grade / Class</p>
+                </div>
+                <button onclick="logout()" class="text-xs bg-rose-500/10 border border-rose-500/20 text-rose-400 px-3 py-1.5 rounded-lg font-medium hover:bg-rose-500/20 transition">Logout</button>
+            </div>
+
+            <div class="space-y-3 text-xs text-slate-300">
+                <div class="bg-slate-900/50 border border-slate-700/60 p-3 rounded-xl flex justify-between">
+                    <span class="text-slate-400">Student ID:</span>
+                    <span id="resId" class="font-medium text-white">---</span>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-700/60 p-3 rounded-xl flex justify-between">
+                    <span class="text-slate-400">Date of Birth:</span>
+                    <span id="resDob" class="font-medium text-white">---</span>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-700/60 p-3 rounded-xl flex justify-between">
+                    <span class="text-slate-400">CNIC No:</span>
+                    <span id="resCnic" class="font-medium text-white">---</span>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-700/60 p-3 rounded-xl flex justify-between">
+                    <span class="text-slate-400">Parentage:</span>
+                    <span id="resParent" class="font-medium text-white">---</span>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-700/60 p-3 rounded-xl flex justify-between">
+                    <span class="text-slate-400">Phone Number:</span>
+                    <span id="resPhone" class="font-medium text-white">---</span>
+                </div>
+                <div class="bg-slate-900/50 border border-slate-700/60 p-3 rounded-xl flex justify-between">
+                    <span class="text-slate-400">Address:</span>
+                    <span id="resAddress" class="font-medium text-white">---</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Student Portal Module</p>
+    </footer>
+
+    <!-- Frontend Script Logic -->
+    <script>
+        function handleLogin(event) {
+            event.preventDefault();
+            const id = document.getElementById('studentId').value.trim();
+            const pass = document.getElementById('password').value.trim();
+
+            // Mock check matching your spreadsheet column properties (student_id / password)
+            if(id.toUpperCase() === "STU-001") {
+                // Populate dashboard fields matching your exact column structure
+                document.getElementById('resName').innerText = "Ali Khan";
+                document.getElementById('resClass').innerText = "Grade 8";
+                document.getElementById('resId').innerText = id.toUpperCase();
+                document.getElementById('resDob').innerText = "12-May-2012";
+                document.getElementById('resCnic').innerText = "35202-1234567-1";
+                document.getElementById('resParent').innerText = "Muhammad Khan";
+                document.getElementById('resPhone').innerText = "+92 300 1234567";
+                document.getElementById('resAddress').innerText = "House 12, Street 4, Lahore";
+
+                // Toggle views
+                document.getElementById('login-card').classList.add('hidden');
+                document.getElementById('dashboard-card').classList.remove('hidden');
+            } else {
+                alert("Invalid Student ID or password. Use ID: STU-001 for this demo test.");
+            }
+        }
+
+        function logout() {
+            document.getElementById('dashboard-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
+            document.getElementById('loginForm').reset();
+        }
+    </script>
+</body>
+  </html>
 

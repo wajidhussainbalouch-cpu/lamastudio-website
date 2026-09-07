@@ -3,110 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Dashboard | lamastudio.pk</title>
+    <title>School Command Dashboard | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { darkMode: 'class' }
+        tailwind.config = {
+            darkMode: 'class',
+        }
     </script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between transition-colors duration-300">
 
-    <!-- Top Bar -->
-    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/85 backdrop-blur-md py-4 px-6 md:px-12 flex justify-between items-center">
+    <!-- Top Navbar -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/85 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center">
         <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">&larr; Back to Home</a>
+            <div class="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-500/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+            </div>
+            <div>
+                <h1 id="navSchoolName" class="text-sm font-bold tracking-tight text-slate-900 dark:text-white">Loading School...</h1>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Admin Portal: <span id="navAdminUser" class="font-semibold text-indigo-600 dark:text-indigo-400"></span></p>
+            </div>
         </div>
-        <span class="text-xs bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-semibold">
-            Active Institution Suite
-        </span>
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition text-xs">
+                <span id="themeIcon">☀️</span>
+            </button>
+            <a href="index.html" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3 py-2 rounded-lg text-xs font-semibold transition">Logout</a>
+        </div>
     </header>
 
-    <!-- Main Dashboard Card -->
-    <main class="max-w-4xl mx-auto px-6 py-12 flex-grow w-full flex flex-col items-center">
+    <!-- Main Dashboard Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8 flex-grow space-y-6">
         
-        <div class="w-full bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-8 shadow-xl text-center md:text-left flex flex-col md:flex-row items-center gap-6">
-            
-            <!-- School Logo / Initial Icon -->
-            <div id="schoolLogoBox" class="w-20 h-20 rounded-2xl bg-indigo-600 text-white font-bold text-3xl flex items-center justify-center shadow-lg shadow-indigo-600/30 flex-shrink-0">
-                🏫
+        <!-- Welcome Banner & Tier Badge -->
+        <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <span id="displayTierBadge" class="bg-white/20 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">Professional Tier</span>
+                <h2 id="bannerSchoolName" class="text-2xl font-extrabold mt-2">Welcome to Institution Dashboard</h2>
+                <p id="bannerLocation" class="text-xs text-indigo-100 mt-1">Location & Profile successfully synchronized.</p>
             </div>
-
-            <!-- School Info Details -->
-            <div class="flex-grow">
-                <div class="inline-block bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold px-3 py-1 rounded-full mb-2">
-                    Status: Initialized & Verified
-                </div>
-                <h1 id="displaySchoolName" class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white">Loading School...</h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap gap-4 justify-center md:justify-start">
-                    <span>📍 City: <strong id="displayCity" class="text-slate-700 dark:text-slate-200">--</strong></span>
-                    <span>📦 Package Level: <strong id="displayPackage" class="text-slate-700 dark:text-slate-200">--</strong></span>
-                </p>
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-xl text-xs space-y-1">
+                <p><span class="text-indigo-200">Principal:</span> <span id="displayPrincipal" class="font-semibold">--</span></p>
+                <p><span class="text-indigo-200">Contact:</span> <span id="displayPhone" class="font-semibold">--</span></p>
             </div>
         </div>
 
-        <!-- Portals Grid -->
-        <div class="w-full mt-10">
-            <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4 text-center md:text-left">Available Campus Portals</h3>
+        <!-- Metric Grid Recommendation Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Student Portal -->
-                <div onclick="openPortal('student')" class="bg-white dark:bg-slate-800/60 hover:border-indigo-500 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm cursor-pointer transition group">
-                    <div class="text-3xl mb-3">👨‍🎓</div>
-                    <h4 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Student Portal</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">View attendance records, report cards, and fee status.</p>
+            <!-- Total Students -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-5 rounded-2xl shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Enrollment</span>
+                    <span class="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl text-xs">🎓</span>
                 </div>
+                <h3 id="statTotalStudents" class="text-2xl font-bold text-slate-900 dark:text-white">0</h3>
+                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">↑ Active Registered Base</p>
+            </div>
 
-                <!-- Teacher Workspace -->
-                <div onclick="openPortal('teacher')" class="bg-white dark:bg-slate-800/60 hover:border-emerald-500 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm cursor-pointer transition group">
-                    <div class="text-3xl mb-3">👩‍🏫</div>
-                    <h4 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">Teacher Workspace</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Manage gradebooks, mark daily attendance, and use AI planner.</p>
+            <!-- Today Attendance -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-5 rounded-2xl shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Today's Attendance</span>
+                    <span class="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs">📋</span>
                 </div>
+                <h3 class="text-2xl font-bold text-slate-900 dark:text-white">94.2%</h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Live biometric/manual sync</p>
+            </div>
 
-                <!-- Admin Command -->
-                <div onclick="openPortal('admin')" class="bg-white dark:bg-slate-800/60 hover:border-amber-500 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm cursor-pointer transition group">
-                    <div class="text-3xl mb-3">⚙️</div>
-                    <h4 class="text-base font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">Admin Command</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Master metrics, database synchronization, and security logs.</p>
+            <!-- Male & Female Ratio -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-5 rounded-2xl shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Gender Breakdown</span>
+                    <span class="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-xl text-xs">👥</span>
+                </div>
+                <div class="flex justify-between items-baseline mt-1">
+                    <div>
+                        <span class="text-lg font-bold text-slate-900 dark:text-white" id="statMaleCount">--</span>
+                        <p class="text-[10px] text-slate-500">Boys</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-lg font-bold text-slate-900 dark:text-white" id="statFemaleCount">--</span>
+                        <p class="text-[10px] text-slate-500">Girls</p>
+                    </div>
                 </div>
             </div>
+
+            <!-- Term Result Performance -->
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-5 rounded-2xl shadow-sm">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Mid-Term Pass Rate</span>
+                    <span class="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl text-xs">📊</span>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 dark:text-white">88.7%</h3>
+                <p class="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Overall Term Result</p>
+            </div>
+
+        </div>
+
+        <!-- Secondary Section: Quick Management Panels -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+            
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-6 rounded-2xl">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3">Institution Metadata</h3>
+                <div class="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <p class="flex justify-between border-b border-slate-100 dark:border-slate-700/50 pb-2"><span>School Level:</span> <span id="metaLevel" class="font-semibold text-slate-900 dark:text-white">--</span></p>
+                    <p class="flex justify-between border-b border-slate-100 dark:border-slate-700/50 pb-2"><span>Gender Type:</span> <span id="metaGender" class="font-semibold text-slate-900 dark:text-white">--</span></p>
+                    <p class="flex justify-between border-b border-slate-100 dark:border-slate-700/50 pb-2"><span>Admin Email:</span> <span id="metaEmail" class="font-semibold text-slate-900 dark:text-white">--</span></p>
+                    <p class="flex justify-between pt-1"><span>Active Subscription Tier:</span> <span id="metaTier" class="font-bold text-indigo-600 dark:text-indigo-400">--</span></p>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/70 p-6 rounded-2xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-2">Quick Administrative Controls</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Manage academic records, fee invoicing, and teacher timetables directly from your command center.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="alert('Opening Student Admissions Register...')" class="bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 text-indigo-600 dark:text-indigo-400 font-semibold p-2.5 rounded-xl text-xs transition">Manage Admissions</button>
+                    <button onclick="alert('Generating Term Result Reports...')" class="bg-slate-100 dark:bg-slate-700/60 hover:bg-slate-200 text-slate-800 dark:text-slate-200 font-semibold p-2.5 rounded-xl text-xs transition">View Term Reports</button>
+                </div>
+            </div>
+
         </div>
 
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • Institution Portal Hub</p>
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Secure Institution Management Dashboard</p>
     </footer>
 
-    <!-- Script to Load Saved Data -->
+    <!-- Dashboard Data Loader Script -->
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const schoolName = localStorage.getItem('lamastudio_registered_school') || 'Demo Model School';
-            const schoolCity = localStorage.getItem('lamastudio_school_city') || 'DG Khan';
-            const schoolPkg = localStorage.getItem('lamastudio_school_package') || 'Professional Tier';
-
-            // Populate text elements
-            document.getElementById('displaySchoolName').textContent = schoolName;
-            document.getElementById('displayCity').textContent = schoolCity;
-            document.getElementById('displayPackage').textContent = schoolPkg;
-
-            // Generate initial logo letter
-            const firstLetter = schoolName.charAt(0).toUpperCase();
-            document.getElementById('schoolLogoBox').textContent = firstLetter;
-        });
-
-        function openPortal(type) {
-            if(type === 'student') {
-                window.location.href = './portals/student/index.html';
-            } else if(type === 'teacher') {
-                window.location.href = './portals/teacher/index.html';
-            } else if(type === 'admin') {
-                window.location.href = './portals/admin/index.html';
+        function toggleTheme() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                localStorage.setItem('lamastudio_theme', 'light');
+                themeIcon.textContent = '☀️';
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                localStorage.setItem('lamastudio_theme', 'dark');
+                themeIcon.textContent = '🌙';
             }
         }
+
+        (function() {
+            const savedTheme = localStorage.getItem('lamastudio_theme') || 'light';
+            document.documentElement.classList.add(savedTheme);
+            document.getElementById('themeIcon').textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+            // Retrieve registered details from localStorage
+            const schoolName = localStorage.getItem('lamastudio_registered_school') || 'Al-Madina Model School';
+            const adminUser = localStorage.getItem('lamastudio_admin_username') || 'admin';
+            const principal = localStorage.getItem('lamastudio_principal') || 'Prof. Ahmed Ali';
+            const phone = localStorage.getItem('lamastudio_phone') || '0300-1234567';
+            const email = localStorage.getItem('lamastudio_admin_email') || 'admin@school.pk';
+            const level = localStorage.getItem('lamastudio_school_level') || 'Higher Secondary';
+            const genderType = localStorage.getItem('lamastudio_school_gender') || 'Combined';
+            const enrollment = parseInt(localStorage.getItem('lamastudio_enrollment') || '450');
+            const fullPackage = localStorage.getItem('lamastudio_school_package') || 'Professional Tier (PKR 12,000/mo)';
+            const city = localStorage.getItem('lamastudio_school_city') || 'DG Khan';
+
+            // Extract ONLY the tier name (strip out the price parenthesis if present)
+            let tierNameOnly = fullPackage.split('(')[0].trim();
+
+            // Populate dashboard fields
+            document.getElementById('navSchoolName').textContent = schoolName;
+            document.getElementById('navAdminUser').textContent = adminUser;
+            document.getElementById('bannerSchoolName').textContent = schoolName;
+            document.getElementById('bannerLocation').textContent = `Located in ${city} • Synchronized Profile`;
+            document.getElementById('displayPrincipal').textContent = principal;
+            document.getElementById('displayPhone').textContent = phone;
+            
+            document.getElementById('displayTierBadge').textContent = tierNameOnly;
+            document.getElementById('metaTier').textContent = tierNameOnly;
+
+            document.getElementById('statTotalStudents').textContent = enrollment;
+            document.getElementById('metaLevel').textContent = level;
+            document.getElementById('metaGender').textContent = genderType;
+            document.getElementById('metaEmail').textContent = email;
+
+            // Approximate male/female distribution for dashboard metrics based on enrollment count
+            let maleEst = Math.round(enrollment * 0.55);
+            let femaleEst = enrollment - maleEst;
+            if(genderType === 'Male') { maleEst = enrollment; femaleEst = 0; }
+            if(genderType === 'Female') { maleEst = 0; femaleEst = enrollment; }
+
+            document.getElementById('statMaleCount').textContent = maleEst;
+            document.getElementById('statFemaleCount').textContent = femaleEst;
+        })();
     </script>
 </body>
-                      </html>
-                      
+    </html>
+    

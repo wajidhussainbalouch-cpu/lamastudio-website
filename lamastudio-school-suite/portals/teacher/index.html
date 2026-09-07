@@ -3,120 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Workspace | lamastudio.pk</title>
+    <title>Teacher Command Workspace | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cyber-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(6, 78, 59, 0.25) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 30px -10px rgba(16, 185, 129, 0.15);
+        }
+        .glow-text-emerald {
+            text-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+    </style>
 </head>
-<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-900">
+<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
+
+    <!-- SECURE LOGIN GATEWAY MODAL (Appears if not authenticated) -->
+    <div id="loginModal" class="fixed inset-0 z-50 bg-[#0b0f19]/95 backdrop-blur-2xl flex items-center justify-center p-4">
+        <div class="cyber-card max-w-md w-full rounded-3xl p-8 border border-emerald-500/30 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3 text-emerald-400 text-xl font-black">👩‍🏫</div>
+                <h2 class="text-xl font-black text-white">Teacher Portal Authentication</h2>
+                <p class="text-xs text-slate-400 mt-1">Enter your assigned instructor credentials to access the class command workspace.</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Teacher ID / Email</label>
+                    <input type="text" id="teacherUser" required placeholder="e.g. teacher@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Secure Access Passcode</label>
+                    <input type="password" id="teacherPass" required placeholder="••••••••" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2">
+                    Authorize Workspace Access
+                </button>
+            </form>
+            <div class="mt-4 text-center">
+                <a href="../../index.html" class="text-[11px] text-slate-400 hover:text-emerald-400 transition">&larr; Return to Main Dashboard</a>
+            </div>
+        </div>
+    </div>
 
     <!-- Top Navbar -->
-    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center">
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-40 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
             <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
-                <span>&larr; Back to Home</span>
+                <span>&larr; Dashboard</span>
             </a>
             <span class="text-slate-700">|</span>
-            <h1 class="text-sm font-bold tracking-tight text-emerald-400">Teacher Workspace</h1>
+            <h1 class="text-xs font-black tracking-wider text-emerald-400 glow-text-emerald">TEACHER WORKSPACE</h1>
         </div>
         <div class="flex items-center space-x-3">
-            <span class="text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300">
-                Role: Teacher / Instructor
+            <span id="teacherBadge" class="text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300 font-bold">
+                Class In-Charge: Grade 8-A (Prof. Sarah)
             </span>
+            <button onclick="logoutTeacher()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold">
+                Lock Portal
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Grid -->
-    <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full">
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-grow w-full space-y-6">
         
-        <!-- Welcome Banner -->
-        <div class="bg-gradient-to-r from-slate-800 to-slate-800/60 border border-slate-700/80 rounded-2xl p-6 md:p-8 mb-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <!-- Welcome Banner & Quick Summary -->
+        <div class="cyber-card rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-                <h2 class="text-2xl font-extrabold text-white">Classroom & Attendance Dashboard</h2>
-                <p class="text-xs text-slate-400 mt-1">Manage roll-call sheets, update gradebook entries, and push daily data directly to the cloud.</p>
-            </div>
-            <div class="flex space-x-3">
-                <span class="text-xs bg-slate-900 border border-slate-700 px-3 py-2 rounded-xl text-slate-300">
-                    Active Class: <strong class="text-emerald-400">Grade 8</strong>
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20">
+                    Active Roster Command Node
                 </span>
+                <h2 class="text-2xl md:text-3xl font-black text-white mt-2">Classroom & Section Telemetry</h2>
+                <p class="text-xs text-slate-300 mt-1">Monitor daily attendance, flag fee defaulters instantly shared with admin, assign daily diary work, and push grades.</p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Section Strength</p>
+                    <p class="text-lg font-black text-emerald-400 mt-0.5">32 Students</p>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Fee Defaulters</p>
+                    <p id="defaulterCountBadge" class="text-lg font-black text-rose-400 mt-0.5">3 Flagged</p>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center col-span-2 sm:col-span-1">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Today Attendance</p>
+                    <p class="text-lg font-black text-sky-400 mt-0.5">91% Present</p>
+                </div>
             </div>
         </div>
 
-        <!-- Portal Core Sections -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Grid Layout for Modules -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Quick Roll-Call Attendance Section -->
-            <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
-                    <span>Digital Roll-Call</span>
-                    <span class="text-xs text-emerald-400 font-normal bg-emerald-500/10 px-2.5 py-0.5 rounded-full">Live Sync</span>
-                </h3>
-                <p class="text-xs text-slate-400 mb-6">Mark student attendance for today. Records will push directly to your linked Google Sheet attendance tab.</p>
+            <!-- COLUMN 1 & 2: Student Master Roster, Photos, Attendance & Defaulter Alerts -->
+            <div class="lg:col-span-2 space-y-6">
                 
-                <div class="space-y-3">
-                    <!-- Sample Student Row -->
-                    <div class="bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl flex justify-between items-center">
+                <!-- Complete Student Roster with Photos & Status -->
+                <div class="cyber-card rounded-3xl p-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                         <div>
-                            <h4 class="text-sm font-semibold text-white">Ali Khan <span class="text-xs text-slate-400 font-normal">(STU-001)</span></h4>
-                            <p class="text-xs text-slate-500">Grade 8 • Section A</p>
+                            <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400">🎓 Class 8-A Master Roster & Status</h3>
+                            <p class="text-[11px] text-slate-400">Live synchronization with Admin database and parent notifications.</p>
                         </div>
-                        <div class="flex space-x-2">
-                            <button onclick="this.className='bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition'" class="bg-slate-800 hover:bg-emerald-600/50 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition">Present</button>
-                            <button onclick="this.className='bg-rose-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition'" class="bg-slate-800 hover:bg-rose-600/50 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition">Absent</button>
-                        </div>
+                        <span class="text-[10px] bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-slate-300">Section A</span>
                     </div>
 
-                    <!-- Additional Mock Row -->
-                    <div class="bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl flex justify-between items-center">
-                        <div>
-                            <h4 class="text-sm font-semibold text-white">Sara Ahmed <span class="text-xs text-slate-400 font-normal">(STU-002)</span></h4>
-                            <p class="text-xs text-slate-500">Grade 8 • Section A</p>
+                    <div class="space-y-3" id="studentRosterContainer">
+                        
+                        <!-- Student 1 -->
+                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👦</div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="text-xs font-bold text-white">Ali Khan <span class="text-[10px] text-slate-400">(STU-001)</span></h4>
+                                        <span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">Grade: A (85%)</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">Fee Status: <strong class="text-emerald-400">Cleared</strong> • Attendance: <span class="text-emerald-400">96%</span></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                                <button onclick="markAttendance(this, 'Ali Khan', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition">Present</button>
+                                <button onclick="markAttendance(this, 'Ali Khan', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition">Absent</button>
+                                <button onclick="openParentMessageModal('Ali Khan')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-500/30 transition">💬 Message</button>
+                            </div>
                         </div>
-                        <div class="flex space-x-2">
-                            <button onclick="this.className='bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition'" class="bg-slate-800 hover:bg-emerald-600/50 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition">Present</button>
-                            <button onclick="this.className='bg-rose-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition'" class="bg-slate-800 hover:bg-rose-600/50 text-slate-300 text-xs px-3 py-1.5 rounded-lg transition">Absent</button>
+
+                        <!-- Student 2 (Fee Defaulter Flagged) -->
+                        <div class="bg-slate-900/60 border border-rose-500/30 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👧</div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="text-xs font-bold text-white">Sara Ahmed <span class="text-[10px] text-slate-400">(STU-002)</span></h4>
+                                        <span class="text-[9px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-bold">⚠️ Fee Defaulter</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">Grade: B (72%) • Admin Flag: <strong class="text-rose-400">Dues Pending</strong></p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition">Present</button>
+                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition">Absent</button>
+                                <button onclick="openParentMessageModal('Sara Ahmed')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-500/30 transition">💬 Message</button>
+                            </div>
                         </div>
+
+                        <!-- Student 3 -->
+                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👦</div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <h4 class="text-xs font-bold text-white">Usman Tariq <span class="text-[10px] text-slate-400">(STU-003)</span></h4>
+                                        <span class="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-bold">⚠️ Low Grade (52%)</span>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">Fee Status: <strong class="text-emerald-400">Cleared</strong> • Needs Remedial Care</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                                <button onclick="markAttendance(this, 'Usman Tariq', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition">Present</button>
+                                <button onclick="markAttendance(this, 'Usman Tariq', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition">Absent</button>
+                                <button onclick="openParentMessageModal('Usman Tariq')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-500/30 transition">💬 Message</button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <button onclick="alert('Attendance batch submitted successfully to Google Sheet!')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/20">
-                        Submit Attendance Batch
-                    </button>
-                </div>
             </div>
 
-            <!-- Gradebook & Homework Management -->
-            <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6 shadow-lg">
-                <h3 class="text-lg font-bold text-white mb-4 flex items-center justify-between">
-                    <span>Gradebook & Homework</span>
-                    <span class="text-xs text-slate-400 font-normal">Cloud Storage</span>
-                </h3>
-                <p class="text-xs text-slate-400 mb-6">Assign tasks and record exam metrics for students. Parents can view these directly from their portal view.</p>
+            <!-- COLUMN 3: Diary Work, Syllabus Breakups, Schedules & Exams -->
+            <div class="space-y-6">
                 
-                <div class="space-y-4">
-                    <div class="bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl">
-                        <h4 class="text-sm font-semibold text-white mb-2">Publish Daily Homework</h4>
-                        <input type="text" placeholder="e.g. Mathematics Chapter 4 Exercise 2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 mb-3">
-                        <button onclick="alert('Homework assignment published!')" class="bg-slate-700 hover:bg-slate-600 text-white text-xs px-4 py-2 rounded-lg transition">Broadcast Homework</button>
-                    </div>
+                <!-- Publish Diary Work & Homework -->
+                <div class="cyber-card rounded-3xl p-6">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400 mb-3">📓 Publish Daily Diary & Homework</h3>
+                    <p class="text-[11px] text-slate-400 mb-4">Broadcast homework tasks instantly to student and parent portal feeds.</p>
+                    <form onsubmit="publishDiary(event)" class="space-y-3">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Subject Name</label>
+                            <input type="text" id="diarySubject" required placeholder="e.g. Mathematics" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Diary Task Details</label>
+                            <textarea id="diaryTask" rows="3" required placeholder="Chapter 5 exercise 3 problems 1 to 10..." class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl text-xs transition shadow-lg shadow-emerald-600/20">
+                            Broadcast Diary
+                        </button>
+                    </form>
+                </div>
 
-                    <div class="bg-slate-900/50 border border-slate-700/60 p-4 rounded-xl">
-                        <h4 class="text-sm font-semibold text-white mb-2">Record Subject Scores</h4>
-                        <p class="text-xs text-slate-400 mb-3">Push term assessments to spreadsheet database.</p>
-                        <button onclick="alert('Opening grade entry sheet modal...')" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-600/30 text-xs px-4 py-2 rounded-lg transition font-medium">Open Gradebook Editor</button>
+                <!-- Syllabus Breakups & Date Sheets Control -->
+                <div class="cyber-card rounded-3xl p-6 space-y-4">
+                    <div>
+                        <h3 class="text-xs font-black uppercase tracking-wider text-cyan-400 mb-3">📚 Syllabus & Date Sheets</h3>
+                        <p class="text-[11px] text-slate-400 mb-3">Upload term outlines and examination schedules for Grade 8-A.</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                        <p class="text-xs font-bold text-white">Mid-Term Date Sheet 2026</p>
+                        <p class="text-[10px] text-slate-400">Status: Published & Verified for April Exams</p>
+                        <button onclick="alert('Date sheet downloaded/updated successfully.')" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold py-1.5 rounded-lg transition">View / Edit Schedule</button>
+                    </div>
+                    <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                        <p class="text-xs font-bold text-white">Term 1 Syllabus Breakup</p>
+                        <p class="text-[10px] text-slate-400">Status: Active Curriculum Guideline</p>
+                        <button onclick="alert('Syllabus breakup editor opened.')" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold py-1.5 rounded-lg transition">Manage Syllabus Units</button>
                     </div>
                 </div>
+
             </div>
 
         </div>
 
     </main>
 
+    <!-- PARENT MESSAGE MODAL -->
+    <div id="messageModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="cyber-card max-w-md w-full rounded-3xl p-6 border border-indigo-500/30 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-xs font-black uppercase tracking-wider text-indigo-400">💬 Direct Parent Dispatch</h3>
+                <button onclick="closeParentMessageModal()" class="text-slate-400 hover:text-white font-bold">&times;</button>
+            </div>
+            <div>
+                <p id="targetStudentName" class="text-xs font-bold text-white mb-2">Sending message regarding: Student</p>
+                <textarea id="parentMsgText" rows="4" placeholder="Type notification regarding attendance, behavior, or low grades..." class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+            </div>
+            <button onclick="sendParentMessage()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20">
+                Dispatch Notification to Parent Portal
+            </button>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="border-t border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • Teacher Workspace Module</p>
+    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Teacher Workspace & Cloud Telemetry</p>
     </footer>
 
-</body>
-  </html>
+    <!-- Scripts for Authentication, Attendance, and Notifications -->
+    <script>
+        // Check Login Status on Load
+        window.onload = function() {
+            const isTeacherLoggedIn = localStorage.getItem('teacherLoggedIn');
+            if (isTeacherLoggedIn === 'true') {
+                document.getElementById('loginModal').style.display = 'none';
+            }
+        };
 
+        function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById('teacherUser').value;
+            const pass = document.getElementById('teacherPass').value;
+
+            // Simple demo credential check
+            if (user && pass.length >= 4) {
+                localStorage.setItem('teacherLoggedIn', 'true');
+                document.getElementById('loginModal').style.display = 'none';
+                alert('Teacher authentication successful! Welcome to Grade 8-A Command Workspace.')

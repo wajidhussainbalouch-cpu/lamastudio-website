@@ -21,29 +21,29 @@
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
-    <!-- SECURE LOGIN GATEWAY MODAL (Appears if not authenticated) -->
+    <!-- SECURE LOGIN GATEWAY MODAL -->
     <div id="loginModal" class="fixed inset-0 z-50 bg-[#0b0f19]/95 backdrop-blur-2xl flex items-center justify-center p-4">
         <div class="cyber-card max-w-md w-full rounded-3xl p-8 border border-emerald-500/30 shadow-2xl">
             <div class="text-center mb-6">
                 <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3 text-emerald-400 text-xl font-black">👩‍🏫</div>
                 <h2 class="text-xl font-black text-white">Teacher Portal Authentication</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your assigned instructor credentials to access the class command workspace.</p>
+                <p class="text-xs text-slate-400 mt-1">Credentials pre-filled for instant testing. Simply click below.</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="text-[10px] uppercase font-bold text-slate-400">Teacher ID / Email</label>
-                    <input type="text" id="teacherUser" required placeholder="e.g. teacher@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    <input type="text" id="teacherUser" required value="teacher@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
                     <label class="text-[10px] uppercase font-bold text-slate-400">Secure Access Passcode</label>
-                    <input type="password" id="teacherPass" required placeholder="••••••••" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    <input type="password" id="teacherPass" required value="12345" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
                 <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2">
                     Authorize Workspace Access
                 </button>
             </form>
             <div class="mt-4 text-center">
-                <a href="../../index.html" class="text-[11px] text-slate-400 hover:text-emerald-400 transition">&larr; Return to Main Dashboard</a>
+                <a href="/index.html" class="text-[11px] text-slate-400 hover:text-emerald-400 transition">&larr; Return to Main Dashboard</a>
             </div>
         </div>
     </div>
@@ -51,14 +51,14 @@
     <!-- Top Navbar -->
     <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-40 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
+            <a href="/index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
                 <span>&larr; Dashboard</span>
             </a>
             <span class="text-slate-700">|</span>
             <h1 class="text-xs font-black tracking-wider text-emerald-400 glow-text-emerald">TEACHER WORKSPACE</h1>
         </div>
         <div class="flex items-center space-x-3">
-            <span id="teacherBadge" class="text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300 font-bold">
+            <span id="teacherBadge" class="text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300 font-bold hidden sm:inline-block">
                 Class In-Charge: Grade 8-A (Prof. Sarah)
             </span>
             <button onclick="logoutTeacher()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold">
@@ -245,7 +245,6 @@
 
     <!-- Scripts for Authentication, Attendance, and Notifications -->
     <script>
-        // Check Login Status on Load
         window.onload = function() {
             const isTeacherLoggedIn = localStorage.getItem('teacherLoggedIn');
             if (isTeacherLoggedIn === 'true') {
@@ -258,8 +257,13 @@
             const user = document.getElementById('teacherUser').value;
             const pass = document.getElementById('teacherPass').value;
 
-            // Simple demo credential check
             if (user && pass.length >= 4) {
                 localStorage.setItem('teacherLoggedIn', 'true');
                 document.getElementById('loginModal').style.display = 'none';
-                alert('Teacher authentication successful! Welcome to Grade 8-A Command Workspace.')
+                alert('Teacher authentication successful! Welcome to Grade 8-A Command Workspace.');
+            } else {
+                alert('Invalid credentials. Please try again.');
+            }
+        }
+
+        function logoutTe

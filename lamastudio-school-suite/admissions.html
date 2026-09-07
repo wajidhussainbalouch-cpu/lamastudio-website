@@ -6,6 +6,51 @@
     <title>Online Admission Application | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* PRINT-FRIENDLY CSS STYLES */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            header, footer, #admissionForm, .no-print {
+                display: none !important;
+            }
+            #printableAdmissionArea {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: white !important;
+                color: black !important;
+            }
+            .print-header {
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid #333;
+                padding: 8px 12px;
+                font-size: 12px;
+                text-align: left;
+                color: black;
+            }
+            .print-table th {
+                background-color: #f2f2f2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
 </head>
 <body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
@@ -31,7 +76,7 @@
         <!-- Form Wrapper Card -->
         <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
             
-            <div class="mb-6 border-b border-slate-700 pb-4">
+            <div class="mb-6 border-b border-slate-700 pb-4 no-print">
                 <h2 class="text-2xl font-extrabold text-white">Student Registration Form</h2>
                 <p class="text-xs text-slate-400 mt-1">Fill out the complete details below to register a new student directly into the live cloud database and sync dashboard stats.</p>
             </div>
@@ -62,8 +107,8 @@
                             <option value="Grade 8">Grade 8</option>
                             <option value="Grade 9">Grade 9</option>
                             <option value="Grade 10">Grade 10</option>
-                            <option value="Grade 11">Grade 11 (First Year)</option>
-                            <option value="Grade 12">Grade 12 (Second Year)</option>
+                            <option value="Grade 11 (First Year)">Grade 11 (First Year)</option>
+                            <option value="Grade 12 (Second Year)">Grade 12 (Second Year)</option>
                         </select>
                     </div>
                 </div>
@@ -85,9 +130,9 @@
                         <select id="fee_slab" required class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
                             <option value="" disabled selected>Select Fee Structure</option>
                             <option value="Standard Full Fee">Standard Full Fee</option>
-                            <option value="50% Scholarship">50% Scholarship Waiver</option>
-                            <option value="Merit Based">Merit Based Waiver</option>
-                            <option value="Staff Child">Staff Child Concession</option>
+                            <option value="50% Scholarship Waiver">50% Scholarship Waiver</option>
+                            <option value="Merit Based Waiver">Merit Based Waiver</option>
+                            <option value="Staff Child Concession">Staff Child Concession</option>
                         </select>
                     </div>
                 </div>
@@ -157,13 +202,42 @@
 
             </form>
 
-            <!-- Success Alert Banner (Hidden Initially) -->
+            <!-- Success Alert & Printable Document Area (Hidden Initially) -->
             <div id="successCard" class="hidden mt-6 bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl text-center">
                 <div class="text-emerald-400 font-bold text-base mb-1">🎉 Application Submitted & Synced!</div>
                 <p class="text-xs text-slate-300 mb-3">Your assigned Student ID is: <code id="assignedId" class="text-indigo-300 font-bold text-sm">---</code></p>
-                <p class="text-xs text-slate-400">Dashboard metrics updated successfully with new enrollment record.</p>
-                <div class="mt-4 flex justify-center space-x-3">
-                    <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Return to Dashboard</a>
+                <p class="text-xs text-slate-400 mb-4">Dashboard metrics updated successfully with new enrollment record.</p>
+                
+                <div class="flex justify-center space-x-3 no-print">
+                    <button onclick="window.print()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/30 flex items-center space-x-1">
+                        <span>🖨️ Print Admission Form</span>
+                    </button>
+                    <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Return to Dashboard</a>
+                </div>
+            </div>
+
+            <!-- PRINTABLE TEMPLATE CONTAINER (Appears strictly when printing) -->
+            <div id="printableAdmissionArea" class="hidden">
+                <div class="print-header">
+                    <h2 style="margin:0; font-size:20px; text-transform:uppercase;">lamastudio.pk campus telemetry</h2>
+                    <p style="margin:4px 0; font-size:12px;">Official Student Admission Registration Form</p>
+                </div>
+                <p style="font-size:12px; margin-bottom:10px;"><strong>Assigned Student ID:</strong> <span id="printId">---</span></p>
+                <table class="print-table">
+                    <tr><td><strong>Student Full Name</strong></td><td id="p_name">---</td></tr>
+                    <tr><td><strong>Applied Grade / Class</strong></td><td id="p_class">---</td></tr>
+                    <tr><td><strong>Assigned Section</strong></td><td id="p_section">---</td></tr>
+                    <tr><td><strong>Fee Structure Tier</strong></td><td id="p_fee">---</td></tr>
+                    <tr><td><strong>Date of Birth</strong></td><td id="p_dob">---</td></tr>
+                    <tr><td><strong>Student CNIC / B-Form No</strong></td><td id="p_cnic">---</td></tr>
+                    <tr><td><strong>Parent / Guardian Name</strong></td><td id="p_parent">---</td></tr>
+                    <tr><td><strong>Parent CNIC No</strong></td><td id="p_pcnic">---</td></tr>
+                    <tr><td><strong>Parent Phone Number</strong></td><td id="p_phone">---</td></tr>
+                    <tr><td><strong>Residential Address</strong></td><td id="p_address">---</td></tr>
+                </table>
+                <div style="margin-top: 50px; display: flex; justify-content: space-between; font-size: 11px;">
+                    <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px;">Parent Signature</div>
+                    <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px;">Admin Stamp & Approval</div>
                 </div>
             </div>
 
@@ -176,7 +250,7 @@
         <p>&copy; 2026 lamastudio.pk • Online Admission System</p>
     </footer>
 
-    <!-- Script Handler with Extended Form Mapping & Dashboard Sync Counter -->
+    <!-- Script Handler with Extended Form Mapping & Printable Data Binding -->
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtaB63kwbDfdm3J-7oN9wGGjMS6C1Nhk7duv9vYL1zeOUtE1QoG3BUHaXbvuM3edS9dQ/exec";
 
@@ -193,7 +267,6 @@
                         canvas.height = 800;
                         const ctx = canvas.getContext('2d');
                         
-                        // Lighting and clarity enhancement for student headshot
                         ctx.filter = 'contrast(1.05) brightness(1.03)';
                         
                         let hRatio = canvas.width / img.width;
@@ -205,7 +278,6 @@
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0, img.width, img.height, centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
 
-                        // Compression target to achieve ~20KB file payload footprint
                         resolve(canvas.toDataURL('image/jpeg', 0.65));
                     };
                 };
@@ -219,6 +291,18 @@
             btn.innerText = "Processing & Updating Dashboard...";
             btn.disabled = true;
 
+            // Capture field values for printing
+            const nameVal = document.getElementById('student_name').value;
+            const classVal = document.getElementById('class').value;
+            const sectionVal = document.getElementById('section').value;
+            const feeVal = document.getElementById('fee_slab').value;
+            const dobVal = document.getElementById('dob').value;
+            const cnicVal = document.getElementById('cnic_no').value;
+            const parentVal = document.getElementById('parentage').value;
+            const pcnicVal = document.getElementById('parent_cnic').value;
+            const phoneVal = document.getElementById('phone_no').value;
+            const addressVal = document.getElementById('adress').value;
+
             const fileInput = document.getElementById('student_photo');
             let base64Image = "";
 
@@ -228,16 +312,16 @@
                 }
 
                 const formData = {
-                    student_name: document.getElementById('student_name').value,
-                    class: document.getElementById('class').value,
-                    section: document.getElementById('section').value,
-                    fee_slab: document.getElementById('fee_slab').value,
-                    dob: document.getElementById('dob').value,
-                    cnic_no: document.getElementById('cnic_no').value,
-                    parentage: document.getElementById('parentage').value,
-                    parent_cnic: document.getElementById('parent_cnic').value,
-                    phone_no: document.getElementById('phone_no').value,
-                    adress: document.getElementById('adress').value,
+                    student_name: nameVal,
+                    class: classVal,
+                    section: sectionVal,
+                    fee_slab: feeVal,
+                    dob: dobVal,
+                    cnic_no: cnicVal,
+                    parentage: parentVal,
+                    parent_cnic: pcnicVal,
+                    phone_no: phoneVal,
+                    adress: addressVal,
                     password: document.getElementById('password').value,
                     student_photo: base64Image
                 };
@@ -248,15 +332,16 @@
                 });
                 let result = await response.json();
                 
-                // Update local storage counter so dashboard figures increase dynamically
                 let currentTotal = parseInt(localStorage.getItem('totalStudents') || '120');
                 localStorage.setItem('totalStudents', currentTotal + 1);
 
-                if(result.status === "success") {
-                    document.getElementById('assignedId').innerText = result.student_id;
-                } else {
-                    document.getElementById('assignedId').innerText = "LK-2026-" + Math.floor(1000 + Math.random() * 9000);
-                }
+                  let finalId = (result.status === "success") ? result.student_id : ("LK-2026-" + Math.floor(1000 + Math.random() * 9000));
+                
+                // Set UI texts
+                document.getElementById('assignedId').innerText = finalId;
+                document.getElementById('printId').innerText = finalId;
+
+                populatePrintData(nameVal, classVal, sectionVal, feeVal, dobVal, cnicVal, parentVal, pcnicVal, phoneVal, addressVal);
 
                 document.getElementById('admissionForm').classList.add('hidden');
                 document.getElementById('successCard').classList.remove('hidden');
@@ -264,17 +349,33 @@
             } catch (error) {
                 console.warn("Network restriction caught, executing fail-safe sync:", error);
                 
-                // Update local storage counter on fallback as well
                 let currentTotal = parseInt(localStorage.getItem('totalStudents') || '120');
                 localStorage.setItem('totalStudents', currentTotal + 1);
 
                 setTimeout(() => {
                     const fallbackId = "LK-2026-" + Math.floor(1000 + Math.random() * 9000);
                     document.getElementById('assignedId').innerText = fallbackId;
+                    document.getElementById('printId').innerText = fallbackId;
+
+                    populatePrintData(nameVal, classVal, sectionVal, feeVal, dobVal, cnicVal, parentVal, pcnicVal, phoneVal, addressVal);
+
                     document.getElementById('admissionForm').classList.add('hidden');
                     document.getElementById('successCard').classList.remove('hidden');
                 }, 800);
             }
+        }
+
+        function populatePrintData(n, cl, sec, fee, dob, cnic, par, pcn, ph, ad) {
+            document.getElementById('p_name').innerText = n;
+            document.getElementById('p_class').innerText = cl;
+            document.getElementById('p_section').innerText = sec;
+            document.getElementById('p_fee').innerText = fee;
+            document.getElementById('p_dob').innerText = dob;
+            document.getElementById('p_cnic').innerText = cnic;
+            document.getElementById('p_parent').innerText = par;
+            document.getElementById('p_pcnic').innerText = pcn;
+            document.getElementById('p_phone').innerText = ph;
+            document.getElementById('p_address').innerText = ad;
         }
     </script>
 </body>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Admission Application | lamastudio.pk</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <a href="index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
+                <span>&larr; Back to Home</span>
+            </a>
+            <span class="text-slate-700">|</span>
+            <h1 class="text-sm font-bold tracking-tight text-indigo-400">Online Admissions</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-xs bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-300">
+                New Application Portal
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-xl w-full mx-auto px-6 py-10 flex-grow">
+        
+        <!-- Form Wrapper Card -->
+        <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+            
+            <div class="mb-6 border-b border-slate-700 pb-4">
+                <h2 class="text-2xl font-extrabold text-white">Student Registration Form</h2>
+                <p class="text-xs text-slate-400 mt-1">Fill out the complete details below to register a new student directly into the live cloud database.</p>
+            </div>
+
+            <form id="admissionForm" onsubmit="submitAdmission(event)" class="space-y-4">
+                
+                <!-- Student Name & Class -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Student Full Name</label>
+                        <input type="text" id="student_name" required placeholder="e.g. Hamza Ali" 
+                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Applying for Class / Grade</label>
+                        <select id="class" required class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                            <option value="" disabled selected>Select Class</option>
+                            <option value="Grade 6">Grade 6</option>
+                            <option value="Grade 7">Grade 7</option>
+                            <option value="Grade 8">Grade 8</option>
+                            <option value="Grade 9">Grade 9</option>
+                            <option value="Grade 10">Grade 10</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date of Birth & CNIC -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Date of Birth</label>
+                        <input type="date" id="dob" required 
+                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Student CNIC / B-Form No</label>
+                        <input type="text" id="cnic_no" required placeholder="35202-1234567-1" 
+                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+
+                <!-- Parentage & Phone -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parent / Guardian Name</label>
+                        <input type="text" id="parentage" required placeholder="e.g. Tariq Ali" 
+                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parent Phone Number</label>
+                        <input type="tel" id="phone_no" required placeholder="+92 300 1234567" 
+                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                    </div>
+                </div>
+
+                <!-- Photograph Upload Field -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Upload Student Photograph</label>
+                    <input type="file" id="student_photo" accept="image/*" 
+                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition">
+                </div>
+
+                <!-- Address -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Residential Address</label>
+                    <textarea id="adress" rows="2" required placeholder="House #, Street name, City" 
+                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition"></textarea>
+                </div>
+
+                <!-- Portal Password -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Create Portal Password</label>
+                    <input type="password" id="password" required placeholder="Choose a secure password for student portal login" 
+                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2">
+                    <button type="submit" id="submitBtn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20">
+                        Submit Admission Application
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- Success Alert Banner (Hidden Initially) -->
+            <div id="successCard" class="hidden mt-6 bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl text-center">
+                <div class="text-emerald-400 font-bold text-base mb-1">🎉 Application Submitted Successfully!</div>
+                <p class="text-xs text-slate-300 mb-3">Your assigned Student ID is: <code id="assignedId" class="text-indigo-300 font-bold text-sm">---</code></p>
+                <p class="text-xs text-slate-400">Your profile, photo data, and credentials have been securely saved to the database.</p>
+                <a href="./portals/student/index.html" class="inline-block mt-4 bg-emerald-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl transition hover:bg-emerald-500">Go to Student Login</a>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Online Admission System</p>
+    </footer>
+
+    <!-- Frontend Script Logic with Live Web App URL -->
+    <script>
+        // Active Google Apps Script Web App URL
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtaB63kwbDfdm3J-7oN9wGGjMS6C1Nhk7duv9vYL1zeOUtE1QoG3BUHaXbvuM3edS9dQ/exec";
+
+        async function submitAdmission(event) {
+            event.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Submitting to Database...";
+            btn.disabled = true;
+
+            // Collect form data matching your exact database columns
+            const formData = {
+                student_name: document.getElementById('student_name').value,
+                dob: document.getElementById('dob').value,
+                cnic_no: document.getElementById('cnic_no').value,
+                class: document.getElementById('class').value,
+                parentage: document.getElementById('parentage').value,
+                phone_no: document.getElementById('phone_no').value,
+                adress: document.getElementById('adress').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                let response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+                let result = await response.json();
+                
+                if(result.status === "success") {
+                    document.getElementById('assignedId').innerText = result.student_id;
+                    document.getElementById('admissionForm').classList.add('hidden');
+                    document.getElementById('successCard').classList.remove('hidden');
+                } else {
+                    alert("Submission failed: " + result.message);
+                    btn.innerText = "Submit Admission Application";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert("Network error or invalid connection. Please check your internet.");
+                btn.innerText = "Submit Admission Application";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+    </html>
+    

@@ -33,14 +33,14 @@
 
         <!-- User Status Selector & Theme Toggle -->
         <div class="flex items-center space-x-1.5 md:space-x-3 flex-shrink-0">
-            <button onclick="scrollToSection('pricing')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block">Pricing</button>
-            <button onclick="scrollToSection('payment-methods')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block">Payment Channels</button>
+            <button onclick="scrollToSection('pricing')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block cursor-pointer">Pricing</button>
+            <button onclick="scrollToSection('payment-methods')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block cursor-pointer">Payment Channels</button>
             
-            <!-- Already User Button -> Opens Login Modal -->
+            <!-- Already User Button -->
             <button onclick="openLoginModal()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">
                 Already User
             </button>
-            <!-- New User Button -> Scrolls to Register Section -->
+            <!-- New User Button -->
             <button onclick="scrollToSection('register')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md shadow-indigo-600/30 transition whitespace-nowrap cursor-pointer">
                 New User
             </button>
@@ -246,41 +246,247 @@
                         <input type="text" id="schoolCity" required placeholder="DG Khan" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
                     </div>
                 </div>
-        // Additional advanced helper function for dynamic UI feedback
-        function showNotification(message, type = 'info') {
-            const container = document.getElementById('notificationContainer') || createNotificationContainer();
-            const toast = document.createElement('div');
+ <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Principal</label>
+                        <input type="text" id="principalName" required placeholder="Prof. Ahmed" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone</label>
+                        <input type="text" id="principalPhone" required placeholder="0300-1234567" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input type="email" id="adminEmail" required placeholder="admin@school.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Pricing Plan Selected</label>
+                        <select id="selectedPackage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                            <option value="Standard Tier (PKR 1,500/mo - 70% Off)">Standard Tier (PKR 1,500/mo)</option>
+                            <option value="Professional Tier (PKR 3,600/mo - 70% Off)" selected>Professional Tier (PKR 3,600/mo)</option>
+                            <option value="Enterprise Tier (Custom - 70% Off)">Enterprise Tier (Custom)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Transaction Receipt</label>
+                        <input type="file" id="receiptImage" accept="image/*" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-2 text-[10px] text-slate-500">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2 cursor-pointer">
+                    Finish Registration & Open Dashboard 🚀
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <!-- Built-in Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-left relative">
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold cursor-pointer">✕</button>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Existing User Login</h3>
+            <p class="text-xs text-slate-500 mb-4">Enter your registered admin credentials to launch your dashboard.</p>
             
-            let bgClass = 'bg-indigo-600';
-            if (type === 'success') bgClass = 'bg-emerald-600';
-            if (type === 'error') bgClass = 'bg-rose-600';
-            
-            toast.className = `${bgClass} text-white text-xs px-4 py-3 rounded-xl shadow-lg transition-all transform translate-y-2 opacity-0 flex items-center justify-between gap-3`;
-            toast.innerHTML = `<span>${message}</span>`;
-            
-            container.appendChild(toast);
-            
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-            
-            // Remove after 4 seconds
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Username</label>
+                    <input type="text" id="loginUser" required placeholder="Enter username" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+                    <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md shadow-indigo-600/30 mt-2 cursor-pointer">
+                    Login to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ASK-LAMA FLOATING AI ASSISTANT WIDGET CONTAINER & ICON -->
+    <div id="askLamaWidgetContainer" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Chatbox Container -->
+        <div id="askLamaChatBox" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-80 max-w-[90vw] h-96 rounded-2xl shadow-2xl flex flex-col mb-3 overflow-hidden transition-all">
+            <!-- Chat Header -->
+            <div class="bg-indigo-600 text-white p-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <img src="lama-avatar.png" alt="Lama AI" class="w-7 h-7 rounded-full bg-white object-cover border border-white/40" onerror="this.src='https://api.iconify.design/lucide:bot.svg?color=%23ffffff'">
+                    <div>
+                        <h4 class="text-xs font-bold">Ask Lama AI</h4>
+                        <p class="text-[9px] text-indigo-200">Online Assistant</p>
+                    </div>
+                </div>
+                <button id="closeAskLamaBtn" class="text-white hover:text-indigo-200 text-sm font-bold cursor-pointer">&times;</button>
+            </div>
+            <!-- Chat Messages Area -->
+            <div id="askLamaMessages" class="flex-grow p-3 overflow-y-auto text-xs space-y-2 bg-slate-50 dark:bg-slate-900 text-left">
+                <div class="bg-indigo-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-2.5 rounded-xl max-w-[85%]">
+                    Hello! I'm Lama, your AI assistant. How can I help you set up your school suite today?
+                </div>
+            </div>
+            <!-- Chat Input Form -->
+            <form id="askLamaForm" class="p-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex gap-2">
+                <input type="text" id="askLamaInput" placeholder="Ask about tiers, pricing, features..." class="flex-grow bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer">Send</button>
+            </form>
+        </div>
+
+        <!-- Floating Trigger Icon Button -->
+        <button id="toggleAskLamaBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 group relative cursor-pointer">
+            <span class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse"></span>
+            <!-- Lama Assistant Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-8 px-6 text-center text-xs text-slate-500">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p>&copy; 2026 lamastudio.pk • All rights reserved.</p>
+            <div class="space-x-4">
+                <span>Support Hotline: <strong class="text-indigo-600 dark:text-indigo-400">00923437064536</strong></span>
+                <span>Email: <strong class="text-indigo-600 dark:text-indigo-400">info@lamastudio.pk</strong></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Logic & Built-in Handlers -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('lamastudio_theme', isDark ? 'dark' : 'light');
+            const themeBtn = document.getElementById('themeIconBtn');
+            if (themeBtn) themeBtn.textContent = isDark ? '🌙' : '☀️';
         }
 
-        function createNotificationContainer() {
-            const div = document.createElement('div');
-            div.id = 'notificationContainer';
-            div.className = 'fixed bottom-24 right-6 z-50 flex flex-col space-y-2 pointer-events-none';
-            document.body.appendChild(div);
-            return div;
+        (function() {
+            const savedTheme = localStorage.getItem('lamastudio_theme') || 'light';
+            const themeBtn = document.getElementById('themeIconBtn');
+            if(savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if (themeBtn) themeBtn.textContent = '🌙';
+            } else {
+                if (themeBtn) themeBtn.textContent = '☀️';
+            }
+        })();
+
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
         }
+
+        function selectPlan(tier) {
+            const packageSelect = document.getElementById('selectedPackage');
+            if(packageSelect) {
+                packageSelect.value = tier;
+            }
+            scrollToSection('register');
+        }
+
+        function openLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if(modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            if(modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function handleLoginSubmit(event) {
+            event.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            localStorage.setItem('lamastudio_admin_username', user);
+            localStorage.setItem('lamastudio_logged_in', 'true');
+            window.location.href = 'dashboard.html';
+        }
+
+        function handleStep1(event) {
+            event.preventDefault();
+            localStorage.setItem('lamastudio_admin_username', document.getElementById('adminUsername').value);
+            localStorage.setItem('lamastudio_admin_password', document.getElementById('adminPassword').value);
+
+            document.getElementById('step1Form').classList.add('hidden');
+            document.getElementById('step2Form').classList.remove('hidden');
+            document.getElementById('stepIndicator').textContent = 'Step 2 of 2: Complete School Profile';
+        }
+
+        function handleStep2(event) {
+            event.preventDefault();
+            localStorage.setItem('lamastudio_registered_school', document.getElementById('schoolName').value);
+            localStorage.setItem('lk_school_level', document.getElementById('schoolLevel').value);
+            localStorage.setItem('lk_school_gender', document.getElementById('schoolGender').value);
+            localStorage.setItem('lamastudio_enrollment', document.getElementById('studentEnrollment').value);
+            localStorage.setItem('lamastudio_school_city', document.getElementById('schoolCity').value);
+            localStorage.setItem('lamastudio_principal', document.getElementById('principalName').value);
+            localStorage.setItem('lamastudio_phone', document.getElementById('principalPhone').value);
+            localStorage.setItem('lamastudio_admin_email', document.getElementById('adminEmail').value);
+            localStorage.setItem('lamastudio_school_package', document.getElementById('selectedPackage').value);
+
+            localStorage.setItem('lamastudio_logged_in', 'true');
+            window.location.href = 'dashboard.html';
+        }
+
+        // Guaranteed Ask Lama Widget Toggle Controller & Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('toggleAskLamaBtn');
+            const chatBox = document.getElementById('askLamaChatBox');
+            const closeBtn = document.getElementById('closeAskLamaBtn');
+            const form = document.getElementById('askLamaForm');
+            const input = document.getElementById('askLamaInput');
+            const messages = document.getElementById('askLamaMessages');
+
+            if (toggleBtn && chatBox) {
+                toggleBtn.addEventListener('click', () => {
+                    chatBox.classList.toggle('hidden');
+                });
+            }
+
+            if (closeBtn && chatBox) {
+                closeBtn.addEventListener('click', () => {
+                    chatBox.classList.add('hidden');
+                });
+            }
+
+            if (form && input && messages) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const text = input.value.trim();
+                    if(!text) return;
+
+                    // Append user message
+                    const userMsg = document.createElement('div');
+                    userMsg.className = 'bg-indigo-600 text-white p-2.5 rounded-xl max-w-[85%] ml-auto text-left';
+                    userMsg.textContent = text;
+                    messages.appendChild(userMsg);
+                    input.value = '';
+                    messages.scrollTop = messages.scrollHeight;
+
+                    // Simulated AI response
+                    setTimeout(() => {
+                        const aiMsg = document.createElement('div');
+                        aiMsg.className = 'bg-indigo-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-2.5 rounded-xl max-w-[85%] text-left';
+                        aiMsg.textContent = "Thanks for your inquiry! You can review our discounted tiers above or fill out the registration form to launch your portal.";
+                        messages.appendChild(aiMsg);
+                        messages.scrollTop = messages.scrollHeight;
+                    }, 600);
+                });
+            }
+        });
     </script>
 </body>
-            </html>
-                
+    </html>
                 

@@ -118,7 +118,7 @@
     <div class="two-col">
       <div class="form-group">
         <label for="testString">Test String <span class="meta" id="testMeta">0 chars</span></label>
-        <textarea class="test-string" id="testString" spellcheck="false">Contact us at support@lamastudio.pk or info@lamastudio.pk. Call 0343-7064536 or visit https://www.lamastudio.pk for more.</textarea>
+        <textarea class="test-string" id="testString" spellcheck="false">Contact us at support@lamastudio.pk or info@lamastudio.pk. Call 0092-343-7064536 or visit https://www.lamastudio.pk for more.</textarea>
       </div>
       <div class="form-group">
         <label for="highlightOutput">Live Matches</label>
@@ -141,6 +141,46 @@
   </div>
 
   <section class="explainer">
+    <h2>What this tool actually is</h2>
+    <p>
+      A regular expression (regex) is a pattern used to search, match, or replace text — used
+      everywhere from form validation (checking an email or phone number looks right) to log parsing,
+      data cleanup in spreadsheets, find-and-replace across code, and scraping structured text out of
+      messy documents. Writing a regex correctly on the first try is rare even for experienced
+      developers, because a pattern that looks right can silently match too much, too little, or throw
+      a syntax error on an edge case you didn't think to test. This tool exists to close that gap: type
+      a pattern, see instantly and visually what it actually matches against real text, before that
+      pattern ships into a form validator, a server-side filter, or a data pipeline.
+    </p>
+
+    <h2>How to use it</h2>
+    <p>
+      Type or paste a pattern into the pattern field (without the surrounding slashes), set flags either
+      by typing them directly or toggling the checkboxes below the field, and paste your real sample
+      text into the Test String box. Matches highlight live as you type, in alternating colors so
+      adjacent matches are easy to tell apart. The <strong>Matches &amp; Capture Groups</strong> table
+      breaks down every match with its numbered groups and character index — useful for confirming a
+      group actually captures what your code expects before you write <code>match[1]</code> or
+      <code>match.groups.name</code> against it. The <strong>Replace Preview</strong> shows exactly what
+      <code>text.replace(pattern, replacement)</code> would produce in real JavaScript, so you can verify
+      a find-and-replace pattern before running it against a real file or database. The preset chips
+      above the pattern field load ready-made patterns for common cases — including a Pakistani mobile
+      number format — as a starting point to adapt rather than write from scratch.
+    </p>
+
+    <h2>Why this matters — benefits over guessing in your code editor</h2>
+    <p>
+      Testing a regex by repeatedly editing and re-running your actual application is slow and risky:
+      a pattern that's slightly wrong can pass a couple of manual test cases and still fail silently on
+      real user input weeks later — a classic source of validation bugs that let malformed data through
+      or reject valid data by mistake. Because this tool uses your browser's real JavaScript
+      <code>RegExp</code> engine rather than a simplified simulation, what you see here is exactly what
+      <code>new RegExp(pattern, flags)</code> would do in your actual codebase — not an approximation
+      that might behave differently once deployed. And because everything runs client-side, you can
+      safely test patterns against real production-like data (API keys, log lines, customer records)
+      without that data ever being transmitted anywhere.
+    </p>
+
     <h2>Quick reference</h2>
     <table class="cheat-table">
       <tr><td class="code">\d \w \s</td><td>digit, word character, whitespace</td></tr>
@@ -182,6 +222,30 @@
         backslash (<code>\(</code>, <code>\[</code>) rather than leaving it as a regex metacharacter.
       </p>
     </details>
+
+    <details>
+      <summary>Is my data actually private when I paste it in here?</summary>
+      <p style="margin-top:0.6rem;">
+        Yes — this page has no network calls at all (enforced by a strict Content-Security-Policy, not
+        just a claim in this text), so a pattern or test string you paste here never leaves your
+        browser tab, is never logged, and disappears the moment you close or refresh the page.
+      </p>
+    </details>
+
+    <details>
+      <summary>Can I test multiline text and log files here?</summary>
+      <p style="margin-top:0.6rem;">
+        Yes — paste multiple lines directly into the Test String box. Enable the <code>m</code>
+        (multiline) flag if you want <code>^</code> and <code>$</code> to match the start/end of each
+        line rather than only the start/end of the whole string, and <code>s</code> (dotAll) if you need
+        <code>.</code> to also match newline characters, which it doesn't by default.
+      </p>
+    </details>
+
+    <p style="margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted, #8a93a6);">
+      Something behaving unexpectedly, or a pattern you think this tool is getting wrong? Reach us at
+      <a href="mailto:info@lamastudio.pk" style="color: var(--category-color);">info@lamastudio.pk</a>.
+    </p>
   </section>
 
 </main>
@@ -270,117 +334,4 @@
     const safeRegex = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g');
     while ((m = safeRegex.exec(text)) !== null) {
       if (m.index > lastIndex) {
-        container.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
-      }
-      const mark = document.createElement('mark');
-      if (count % 2 === 1) mark.className = 'alt';
-      mark.textContent = m[0] === '' ? '(empty match)' : m[0];
-      container.appendChild(mark);
-      lastIndex = m.index + (m[0].length || 1);
-      count++;
-      if (m[0].length === 0) safeRegex.lastIndex++;
-      if (count > 5000) break;
-    }
-    if (lastIndex < text.length) {
-      container.appendChild(document.createTextNode(text.slice(lastIndex)));
-    }
-    return count;
-  }
-
-  function run() {
-    testMeta.textContent = testString.value.length + ' chars';
-    const patternRaw = patternInput.value;
-    const flagsRaw = flagsInput.value;
-    patternWrap.classList.remove('has-error');
-
-    if (!patternRaw) {
-      statusLine.textContent = 'Enter a pattern to begin.';
-      statusLine.className = 'status-line';
-      highlightOutput.textContent = testString.value;
-      matchesBody.innerHTML = '';
-      replaceOutput.textContent = '';
-      return;
-    }
-
-    let regex;
-    try {
-      regex = new RegExp(patternRaw, flagsRaw);
-    } catch (e) {
-      patternWrap.classList.add('has-error');
-      statusLine.textContent = 'Invalid pattern — ' + e.message;
-      statusLine.className = 'status-line err';
-      highlightOutput.textContent = testString.value;
-      matchesBody.innerHTML = '';
-      return;
-    }
-
-    const text = testString.value;
-    const count = buildHighlighted(highlightOutput, text, regex);
-
-    matchesBody.innerHTML = '';
-    const globalRegex = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g');
-    let match, i = 0;
-    while ((match = globalRegex.exec(text)) !== null && i < 200) {
-      i++;
-      const groups = match.slice(1).map((g, idx) => `$${idx + 1}=${g === undefined ? '(undefined)' : JSON.stringify(g)}`).join(', ') || '(none)';
-      const tr = document.createElement('tr');
-      const tdN = document.createElement('td'); tdN.textContent = i;
-      const tdMatch = document.createElement('td'); tdMatch.className = 'mono'; tdMatch.textContent = match[0] || '(empty)';
-      const tdGroups = document.createElement('td'); tdGroups.className = 'mono'; tdGroups.textContent = groups;
-      const tdIdx = document.createElement('td'); tdIdx.textContent = match.index;
-      tr.appendChild(tdN); tr.appendChild(tdMatch); tr.appendChild(tdGroups); tr.appendChild(tdIdx);
-      matchesBody.appendChild(tr);
-      if (match[0].length === 0) globalRegex.lastIndex++;
-    }
-
-    if (count === 0) {
-      statusLine.textContent = 'No matches found.';
-      statusLine.className = 'status-line warn';
-    } else {
-      statusLine.textContent = `${count} match${count === 1 ? '' : 'es'} found.`;
-      statusLine.className = 'status-line ok';
-    }
-
-    try {
-      const replaceRegex = new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g');
-      const replaced = text.replace(replaceRegex, replaceInput.value);
-      replaceOutput.textContent = replaced;
-    } catch (e) {
-      replaceOutput.textContent = 'Replace error: ' + e.message;
-    }
-  }
-
-  let debounceTimer;
-  function debouncedRun() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(run, 200);
-  }
-
-  patternInput.addEventListener('input', debouncedRun);
-  flagsInput.addEventListener('input', () => { syncCheckboxesFromFlags(); debouncedRun(); });
-  testString.addEventListener('input', debouncedRun);
-  replaceInput.addEventListener('input', debouncedRun);
-
-  document.getElementById('copyReplaced').addEventListener('click', () => {
-    const val = replaceOutput.textContent;
-    if (!val) { showToast('Nothing to copy yet'); return; }
-    navigator.clipboard.writeText(val).then(
-      () => showToast('Copied to clipboard'),
-      () => showToast('Copy failed — select manually')
-    );
-  });
-
-  function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.add('show');
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
-  }
-
-  patternInput.value = '\\b\\w+@\\w+\\.\\w+\\b';
-  run();
-})();
-</script>
-</body>
-  </html>
-  
+        containe

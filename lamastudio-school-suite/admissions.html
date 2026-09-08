@@ -231,7 +231,7 @@
                     </div>
                 </div>
 
-                <!-- SECTION 3: SCHOOL, ACADEMIC & FEE TIERS SECTION (Dynamically Filtered) -->
+                <!-- SECTION 3: SCHOOL, ACADEMIC & FEE TIERS SECTION -->
                 <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
                     <h4 class="text-[10px] font-black uppercase tracking-wider text-emerald-700 border-b border-emerald-200 pb-1">3. School Academic, Fee Tiers & Evaluation Section</h4>
                     
@@ -239,7 +239,7 @@
                         <div>
                             <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Applying Class:</label>
                             <select id="applyingClassSelect" class="w-full">
-                                <!-- Populated dynamically by script based on Primary vs High School -->
+                                <!-- Populated dynamically based on Sector & Level -->
                             </select>
                         </div>
                         <div>
@@ -330,14 +330,14 @@
         </button>
     </div>
 
-    <!-- Dynamic Script for Configuration Rules & AskLama -->
+    <!-- Dynamic Script for Pakistan Govt/Private School Rules & AskLama -->
     <script>
         // 1. Load active configuration from localStorage
         const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
         const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || "SHANNEN KID'S & LAMASTUDIO ACADEMY";
         const shortCode = activeConfig.shortCode || "SK-LS-904";
         const schoolType = (activeConfig.type || localStorage.getItem('lamastudio_school_type') || 'Private').toLowerCase();
-        const schoolLevel = (activeConfig.level || localStorage.getItem('lamastudio_school_level') || 'High School').toLowerCase();
+        const schoolLevel = (activeConfig.level || localStorage.getItem('lamastudio_school_level') || 'High').toLowerCase();
 
         // 2. Inject School Headers
         document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
@@ -346,36 +346,80 @@
         document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
         document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
 
-        // 3. Conditional Class Dropdown (Primary = ECCE to 5, High = ECCE to 10)
+        // 3. Pakistan Sector-Based Class Nomenclature Engine
         const classSelect = document.getElementById('applyingClassSelect');
-        if (schoolLevel.includes('primary')) {
-            classSelect.innerHTML = `
-                <option>Playgroup / Katchi (ECCE)</option>
-                <option>Grade 1</option>
-                <option>Grade 2</option>
-                <option>Grade 3</option>
-                <option>Grade 4</option>
-                <option selected>Grade 5</option>
-            `;
+        const isGovt = schoolType.includes('govt') || schoolType.includes('government');
+
+        let gradeOptionsHTML = '';
+
+        if (isGovt) {
+            // Government School Naming: ECCE, Katchi, 1-5 / 1-8 / 1-10 / 1-12
+            if (schoolLevel.includes('primary')) {
+                gradeOptionsHTML = `
+                    <option>ECCE</option>
+                    <option>Katchi</option>
+                    <option>Grade 1</option>
+                    <option>Grade 2</option>
+                    <option>Grade 3</option>
+                    <option>Grade 4</option>
+                    <option selected>Grade 5</option>
+                `;
+            } else if (schoolLevel.includes('middle')) {
+                gradeOptionsHTML = `
+                    <option>ECCE</option>
+                    <option>Katchi</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
+                    <option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>
+                `;
+            } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
+                gradeOptionsHTML = `
+                    <option>ECCE</option><option>Katchi</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
+                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option>
+                    <option>1st Year (Grade 11)</option><option selected>2nd Year (Grade 12)</option>
+                `;
+            } else { // Default High School
+                gradeOptionsHTML = `
+                    <option>ECCE</option><option>Katchi</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
+                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>
+                `;
+            }
         } else {
-            classSelect.innerHTML = `
-                <option>Playgroup / Katchi (ECCE)</option>
-                <option>Grade 1</option>
-                <option>Grade 2</option>
-                <option>Grade 3</option>
-                <option>Grade 4</option>
-                <option selected>Grade 5</option>
-                <option>Grade 6</option>
-                <option>Grade 7</option>
-                <option>Grade 8</option>
-                <option>Grade 9</option>
-                <option>Grade 10</option>
-            `;
+            // Private School Naming: ECCE/PG, KG, Prep, 1-5 / 1-8 / 1-10 / 1-12
+            if (schoolLevel.includes('primary')) {
+                gradeOptionsHTML = `
+                    <option>ECCE / PG</option>
+                    <option>KG</option>
+                    <option>Prep</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>
+                `;
+            } else if (schoolLevel.includes('middle')) {
+                gradeOptionsHTML = `
+                    <option>ECCE / PG</option><option>KG</option><option>Prep</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
+                    <option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>
+                `;
+            } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
+                gradeOptionsHTML = `
+                    <option>ECCE / PG</option><option>KG</option><option>Prep</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
+                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option>
+                    <option>First Year (11th)</option><option selected>Second Year (12th)</option>
+                `;
+            } else { // Default High School
+                gradeOptionsHTML = `
+                    <option>ECCE / PG</option><option>KG</option><option>Prep</option>
+                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
+                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>
+                `;
+            }
         }
+        classSelect.innerHTML = gradeOptionsHTML;
 
         // 4. Conditional Fee Structure Dropdown (Govt = No Fee, Private = Fee Tiers)
         const feeTierSelect = document.getElementById('feeTierSelect');
-        if (schoolType.includes('govt') || schoolType.includes('government')) {
+        if (isGovt) {
             feeTierSelect.innerHTML = `
                 <option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>
             `;
@@ -414,7 +458,6 @@
 
             // Append user message
             container.innerHTML += `<div class="bg-purple-600/30 text-white p-2.5 rounded-xl text-right">${input.value}</div>`;
-            const userMsg = input.value;
             input.value = '';
             container.scrollTop = container.scrollHeight;
 

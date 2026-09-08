@@ -232,6 +232,10 @@
     <script>
         // 1. Multi-Account & School Configuration Handler
         let schoolsList = JSON.parse(localStorage.getItem('lamastudio_school_accounts')) || [];
+        const allSchoolsStorage = JSON.parse(localStorage.getItem('lamastudio_all_schools')) || [];
+        if (schoolsList.length === 0 && allSchoolsStorage.length > 0) {
+            schoolsList = allSchoolsStorage;
+        }
         let activeSchoolId = localStorage.getItem('activeSchoolId');
 
         // Populate switcher if multiple schools exist
@@ -258,6 +262,11 @@
                 localStorage.setItem('activeSchoolConfig', JSON.stringify(targetSchool));
                 localStorage.setItem('activeSchoolId', schoolIdentifier);
                 localStorage.setItem('lamastudio_registered_school', targetSchool.name);
+                if (targetSchool.address) localStorage.setItem('lamastudio_address', targetSchool.address);
+                if (targetSchool.uan || targetSchool.phone) localStorage.setItem('lamastudio_uan', targetSchool.uan || targetSchool.phone);
+                if (targetSchool.principal) localStorage.setItem('lamastudio_principal', targetSchool.principal);
+                if (targetSchool.enrollment) localStorage.setItem('lamastudio_enrollment', targetSchool.enrollment);
+                if (targetSchool.logo) localStorage.setItem('lamastudio_logo', targetSchool.logo);
                 location.reload();
             }
         }

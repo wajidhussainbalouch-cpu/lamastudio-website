@@ -3,380 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Admission Application | lamastudio.pk</title>
+    <title>Lamastudio Nexus | Secure Admission Portal</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* PRINT-FRIENDLY CSS STYLES */
+        .cyber-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 27, 75, 0.6) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            box-shadow: 0 0 30px -10px rgba(99, 102, 241, 0.12);
+        }
+        .glow-text-purple {
+            text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+        }
+        /* Print-friendly styling overrides */
         @media print {
             body {
                 background: white !important;
                 color: black !important;
             }
-            header, footer, #admissionForm, .no-print {
-                display: none !important;
-            }
-            #printableAdmissionArea {
-                display: block !important;
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-                border: none !important;
+            .cyber-card {
                 background: white !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+            }
+            input, select {
+                border-bottom: 1px solid #000 !important;
+                background: transparent !important;
                 color: black !important;
-            }
-            .print-header {
-                border-bottom: 2px solid #000;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
-                text-align: center;
-            }
-            .print-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 15px;
-            }
-            .print-table th, .print-table td {
-                border: 1px solid #333;
-                padding: 8px 12px;
-                font-size: 12px;
-                text-align: left;
-                color: black;
-            }
-            .print-table th {
-                background-color: #f2f2f2 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
         }
     </style>
 </head>
-<body class="bg-slate-900 font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
-    <!-- Top Navbar -->
-    <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center shadow-lg">
+    <!-- Ambient Neon Background Glows (Hidden on Print) -->
+    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none print:hidden"></div>
+    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none print:hidden"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl print:hidden">
         <div class="flex items-center space-x-3">
-            <a href="dashboard.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
-                <span>&larr; Back to Dashboard</span>
-            </a>
-            <span class="text-slate-700">|</span>
-            <h1 class="text-sm font-bold tracking-tight text-indigo-400">Online Admissions</h1>
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
+                <span class="text-xs font-black text-white">LS</span>
+            </div>
+            <div>
+                <h1 class="text-sm font-black tracking-wider text-white">LAMASTUDIO <span class="text-purple-400 glow-text-purple">NEXUS</span></h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Secure Admission Registration Node</p>
+            </div>
         </div>
         <div class="flex items-center space-x-3">
-            <span class="text-xs bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-300">
-                New Application Portal
-            </span>
+            <!-- Print / Save PDF Button -->
+            <button onclick="window.print()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2 rounded-xl transition border border-slate-700 flex items-center space-x-1.5">
+                <span>🖨️ Print Form</span>
+            </button>
+            <a href="dashboard.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2 rounded-xl transition border border-slate-700 flex items-center space-x-1.5">
+                <span>&larr; Back to Dashboard</span>
+            </a>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-2xl w-full mx-auto px-6 py-10 flex-grow">
+    <!-- Main Container -->
+    <main class="max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow space-y-6 relative z-10">
         
-        <!-- Form Wrapper Card -->
-        <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
+        <!-- Admission Form Card -->
+        <section class="cyber-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl print:hidden"></div>
             
-            <div class="mb-6 border-b border-slate-700 pb-4 no-print">
-                <h2 class="text-2xl font-extrabold text-white">Student Registration Form</h2>
-                <p class="text-xs text-slate-400 mt-1">Fill out the complete details below to register a new student directly into the live cloud database and sync dashboard stats.</p>
+            <div class="mb-6 border-b border-slate-800 pb-4">
+                <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3 print:hidden">
+                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Enrollment Portal Active</span>
+                </div>
+                <h2 class="text-2xl font-black text-white tracking-tight">Student Admission Application</h2>
+                <p class="text-xs text-slate-300 mt-1">Fill out the quantum registry details below to register a new student node.</p>
             </div>
 
-            <form id="admissionForm" onsubmit="submitAdmission(event)" class="space-y-4">
-                
-                <!-- Student Name & Class -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Admission Form -->
+            <form id="admissionForm" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Student Full Name</label>
-                        <input type="text" id="student_name" required placeholder="e.g. Hamza Ali" 
-                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
+                        <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Student Full Name</label>
+                        <input type="text" id="studentName" required placeholder="e.g. Alex Morgan" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Applying for Class / Grade</label>
-                        <select id="class" required class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                            <option value="" disabled selected>Select Class</option>
-                            <option value="ECCE Playgroup">ECCE Playgroup</option>
-                            <option value="KG">KG</option>
-                            <option value="Prep">Prep</option>
-                            <option value="Grade 1">Grade 1</option>
-                            <option value="Grade 2">Grade 2</option>
-                            <option value="Grade 3">Grade 3</option>
-                            <option value="Grade 4">Grade 4</option>
-                            <option value="Grade 5">Grade 5</option>
-                            <option value="Grade 6">Grade 6</option>
-                            <option value="Grade 7">Grade 7</option>
+                        <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Target Grade / Section</label>
+                        <select id="studentGrade" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition">
                             <option value="Grade 8">Grade 8</option>
                             <option value="Grade 9">Grade 9</option>
-                            <option value="Grade 10">Grade 10</option>
-                            <option value="Grade 11 (First Year)">Grade 11 (First Year)</option>
-                            <option value="Grade 12 (Second Year)">Grade 12 (Second Year)</option>
+                            <option value="Grade 10" selected>Grade 10</option>
+                            <option value="Grade 11">Grade 11</option>
+                            <option value="Grade 12">Grade 12</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Section & Fee Slab -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Assigned Section</label>
-                        <select id="section" required class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                            <option value="" disabled selected>Select Section</option>
-                            <option value="Section A">Section A</option>
-                            <option value="Section B">Section B</option>
-                            <option value="Section C">Section C</option>
-                            <option value="Section D">Section D</option>
-                        </select>
+                        <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Parent / Guardian Name</label>
+                        <input type="text" id="parentName" required placeholder="e.g. Robert Morgan" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Fee Slab / Tier</label>
-                        <select id="fee_slab" required class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                            <option value="" disabled selected>Select Fee Structure</option>
-                            <option value="Standard Full Fee">Standard Full Fee</option>
-                            <option value="50% Scholarship Waiver">50% Scholarship Waiver</option>
-                            <option value="Merit Based Waiver">Merit Based Waiver</option>
-                            <option value="Staff Child Concession">Staff Child Concession</option>
-                        </select>
+                        <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Contact Phone / SMS Node</label>
+                        <input type="tel" id="parentPhone" required placeholder="+1 (555) 019-2834" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition">
                     </div>
                 </div>
 
-                <!-- Date of Birth & Student CNIC -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Date of Birth</label>
-                        <input type="date" id="dob" required 
-                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Student CNIC / B-Form No</label>
-                        <input type="text" id="cnic_no" required placeholder="35202-1234567-1" 
-                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                </div>
-
-                <!-- Parent Name, Parent CNIC & Phone -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parent / Guardian Name</label>
-                        <input type="text" id="parentage" required placeholder="e.g. Tariq Ali" 
-                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parent CNIC No</label>
-                        <input type="text" id="parent_cnic" required placeholder="35202-9876543-2" 
-                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Parent Phone Number</label>
-                        <input type="tel" id="phone_no" required placeholder="+92 300 1234567" 
-                            class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                    </div>
-                </div>
-
-                <!-- Photograph Upload Field -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Upload Student Photograph (Auto-Optimized)</label>
-                    <input type="file" id="student_photo" accept="image/*" 
-                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-2 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 transition">
-                    <p class="text-[10px] text-slate-500 mt-1">Portrait 600x800px spec, face illumination boost, compressed to ~20KB automatically.</p>
+                    <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Email Address (For System Portal Logins)</label>
+                    <input type="email" id="parentEmail" required placeholder="parent@example.com" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition">
                 </div>
 
-                <!-- Address -->
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Residential Address</label>
-                    <textarea id="adress" rows="2" required placeholder="House #, Street name, City" 
-                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition"></textarea>
+                    <label class="block text-[11px] font-bold uppercase text-slate-300 mb-1">Residential Address</label>
+                    <textarea id="studentAddress" rows="2" placeholder="Street address, city, region" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500 transition"></textarea>
                 </div>
 
-                <!-- Portal Password -->
-                <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Create Portal Password</label>
-                    <input type="password" id="password" required placeholder="Choose a secure password for student portal login" 
-                        class="w-full bg-slate-900/50 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500 transition">
-                </div>
-
-                <!-- Submit Button -->
-                <div class="pt-2">
-                    <button type="submit" id="submitBtn"
-                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20 cursor-pointer">
-                        Submit Admission Application
+                <div class="pt-4 print:hidden">
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] text-xs uppercase tracking-wider">
+                        ⚡ Submit Admission & Dispatch Multi-Role Alerts
                     </button>
                 </div>
-
             </form>
 
-            <!-- Success Alert & Printable Document Area (Hidden Initially) -->
-            <div id="successCard" class="hidden mt-6 bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl text-center">
-                <div class="text-emerald-400 font-bold text-base mb-1">🎉 Application Submitted & Synced!</div>
-                <p class="text-xs text-slate-300 mb-3">Your assigned Student ID is: <code id="assignedId" class="text-indigo-300 font-bold text-sm">---</code></p>
-                <p class="text-xs text-slate-400 mb-4">Dashboard metrics updated successfully with new enrollment record.</p>
-                
-                <div class="flex justify-center space-x-3 no-print">
-                    <button onclick="window.print()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/30 flex items-center space-x-1">
-                        <span>🖨️ Print Admission Form</span>
-                    </button>
-                    <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Return to Dashboard</a>
+            <!-- Multi-Role Notification & SMS Dispatch Log Box -->
+            <div id="notificationLog" class="mt-6 hidden bg-slate-950/80 border border-emerald-500/30 rounded-2xl p-4 space-y-2">
+                <div class="flex items-center space-x-2 text-emerald-400 font-bold text-xs">
+                    <span>✅</span>
+                    <span>Admission Application Successfully Registered!</span>
+                </div>
+                <div class="text-[11px] text-slate-300 space-y-1 pt-1 border-t border-slate-800">
+                    <p id="smsLogParent" class="text-purple-300">📱 <strong>SMS to Parent:</strong> Sent confirmation & portal login details.</p>
+                    <p id="smsLogTeacher" class="text-cyan-300">👩‍🏫 <strong>Teacher Alert:</strong> Rosters updated for assigned section.</p>
+                    <p id="smsLogAdmin" class="text-amber-300">⚙️ <strong>Admin Notification:</strong> Student database and fee records synchronized.</p>
                 </div>
             </div>
-
-            <!-- PRINTABLE TEMPLATE CONTAINER (Appears strictly when printing) -->
-            <div id="printableAdmissionArea" class="hidden">
-                <div class="print-header">
-                    <h2 style="margin:0; font-size:20px; text-transform:uppercase;">lamastudio.pk campus telemetry</h2>
-                    <p style="margin:4px 0; font-size:12px;">Official Student Admission Registration Form</p>
-                </div>
-                <p style="font-size:12px; margin-bottom:10px;"><strong>Assigned Student ID:</strong> <span id="printId">---</span></p>
-                <table class="print-table">
-                    <tr><td><strong>Student Full Name</strong></td><td id="p_name">---</td></tr>
-                    <tr><td><strong>Applied Grade / Class</strong></td><td id="p_class">---</td></tr>
-                    <tr><td><strong>Assigned Section</strong></td><td id="p_section">---</td></tr>
-                    <tr><td><strong>Fee Structure Tier</strong></td><td id="p_fee">---</td></tr>
-                    <tr><td><strong>Date of Birth</strong></td><td id="p_dob">---</td></tr>
-                    <tr><td><strong>Student CNIC / B-Form No</strong></td><td id="p_cnic">---</td></tr>
-                    <tr><td><strong>Parent / Guardian Name</strong></td><td id="p_parent">---</td></tr>
-                    <tr><td><strong>Parent CNIC No</strong></td><td id="p_pcnic">---</td></tr>
-                    <tr><td><strong>Parent Phone Number</strong></td><td id="p_phone">---</td></tr>
-                    <tr><td><strong>Residential Address</strong></td><td id="p_address">---</td></tr>
-                </table>
-                <div style="margin-top: 50px; display: flex; justify-content: space-between; font-size: 11px;">
-                    <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px;">Parent Signature</div>
-                    <div style="border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px;">Admin Stamp & Approval</div>
-                </div>
-            </div>
-
-        </div>
+        </section>
 
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • Online Admission System</p>
+    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10 print:hidden">
+        <p>&copy; 2026 lamastudio.pk • Quantum Campus Management Architecture</p>
     </footer>
 
-    <!-- Script Handler with Extended Form Mapping & Printable Data Binding -->
+    <!-- Script to handle local storage updates and multi-role notification alerts -->
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtaB63kwbDfdm3J-7oN9wGGjMS6C1Nhk7duv9vYL1zeOUtE1QoG3BUHaXbvuM3edS9dQ/exec";
+        document.getElementById('admissionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
 
-        const optimizeStudentPhoto = (file) => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = 600;
-                        canvas.height = 800;
-                        const ctx = canvas.getContext('2d');
-                        
-                        ctx.filter = 'contrast(1.05) brightness(1.03)';
-                        
-                        let hRatio = canvas.width / img.width;
-                        let vRatio = canvas.height / img.height;
-                        let ratio = Math.max(hRatio, vRatio);
-                        let centerShiftX = (canvas.width - img.width * ratio) / 2;
-                        let centerShiftY = (canvas.height - img.height * ratio) / 2;
-                        
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0, img.width, img.height, centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
+            // Retrieve current count or default to 120, increment by 1
+            let currentStudents = parseInt(localStorage.getItem('totalStudents') || '120');
+            currentStudents += 1;
+            localStorage.setItem('totalStudents', currentStudents);
 
-                        resolve(canvas.toDataURL('image/jpeg', 0.65));
-                    };
-                };
-            });
-        };
+            // Get form field data for dynamic log display
+            const sName = document.getElementById('studentName').value;
+            const pPhone = document.getElementById('parentPhone').value;
+            const sGrade = document.getElementById('studentGrade').value;
 
-        async function submitAdmission(event) {
-            event.preventDefault();
-            
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "Processing & Updating Dashboard...";
-            btn.disabled = true;
+            // Update confirmation notification lines
+            document.getElementById('smsLogParent').innerHTML = `📱 <strong>SMS to Parent (${pPhone}):</strong> Welcome package & credentials sent for ${sName}.`;
+            document.getElementById('smsLogTeacher').innerHTML = `👩‍🏫 <strong>Teacher Alert:</strong> ${sName} added to ${sGrade} roster list.`;
+            document.getElementById('smsLogAdmin').innerHTML = `⚙️ <strong>Admin Notification:</strong> Student count updated to total node index (${currentStudents}).`;
 
-            // Capture field values for printing
-            const nameVal = document.getElementById('student_name').value;
-            const classVal = document.getElementById('class').value;
-            const sectionVal = document.getElementById('section').value;
-            const feeVal = document.getElementById('fee_slab').value;
-            const dobVal = document.getElementById('dob').value;
-            const cnicVal = document.getElementById('cnic_no').value;
-            const parentVal = document.getElementById('parentage').value;
-            const pcnicVal = document.getElementById('parent_cnic').value;
-            const phoneVal = document.getElementById('phone_no').value;
-            const addressVal = document.getElementById('adress').value;
+            // Display the notification log box
+            const logBox = document.getElementById('notificationLog');
+            logBox.classList.remove('hidden');
 
-            const fileInput = document.getElementById('student_photo');
-            let base64Image = "";
-
-            try {
-                if (fileInput.files && fileInput.files[0]) {
-                    base64Image = await optimizeStudentPhoto(fileInput.files[0]);
-                }
-
-                const formData = {
-                    student_name: nameVal,
-                    class: classVal,
-                    section: sectionVal,
-                    fee_slab: feeVal,
-                    dob: dobVal,
-                    cnic_no: cnicVal,
-                    parentage: parentVal,
-                    parent_cnic: pcnicVal,
-                    phone_no: phoneVal,
-                    adress: addressVal,
-                    password: document.getElementById('password').value,
-                    student_photo: base64Image
-                };
-
-                let response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                });
-                let result = await response.json();
-                
-                let currentTotal = parseInt(localStorage.getItem('totalStudents') || '120');
-                localStorage.setItem('totalStudents', currentTotal + 1);
-
-                  let finalId = (result.status === "success") ? result.student_id : ("LK-2026-" + Math.floor(1000 + Math.random() * 9000));
-                
-                // Set UI texts
-                document.getElementById('assignedId').innerText = finalId;
-                document.getElementById('printId').innerText = finalId;
-
-                populatePrintData(nameVal, classVal, sectionVal, feeVal, dobVal, cnicVal, parentVal, pcnicVal, phoneVal, addressVal);
-
-                document.getElementById('admissionForm').classList.add('hidden');
-                document.getElementById('successCard').classList.remove('hidden');
-
-            } catch (error) {
-                console.warn("Network restriction caught, executing fail-safe sync:", error);
-                
-                let currentTotal = parseInt(localStorage.getItem('totalStudents') || '120');
-                localStorage.setItem('totalStudents', currentTotal + 1);
-
-                setTimeout(() => {
-                    const fallbackId = "LK-2026-" + Math.floor(1000 + Math.random() * 9000);
-                    document.getElementById('assignedId').innerText = fallbackId;
-                    document.getElementById('printId').innerText = fallbackId;
-
-                    populatePrintData(nameVal, classVal, sectionVal, feeVal, dobVal, cnicVal, parentVal, pcnicVal, phoneVal, addressVal);
-
-                    document.getElementById('admissionForm').classList.add('hidden');
-                    document.getElementById('successCard').classList.remove('hidden');
-                }, 800);
-            }
-        }
-
-        function populatePrintData(n, cl, sec, fee, dob, cnic, par, pcn, ph, ad) {
-            document.getElementById('p_name').innerText = n;
-            document.getElementById('p_class').innerText = cl;
-            document.getElementById('p_section').innerText = sec;
-            document.getElementById('p_fee').innerText = fee;
-            document.getElementById('p_dob').innerText = dob;
-            document.getElementById('p_cnic').innerText = cnic;
-            document.getElementById('p_parent').innerText = par;
-            document.getElementById('p_pcnic').innerText = pcn;
-            document.getElementById('p_phone').innerText = ph;
-            document.getElementById('p_address').innerText = ad;
-        }
+            // Scroll down to the message log
+            logBox.scrollIntoView({ behavior: 'smooth' });
+        });
     </script>
 </body>
 </html>

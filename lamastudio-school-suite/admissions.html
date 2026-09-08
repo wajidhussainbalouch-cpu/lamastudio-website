@@ -110,11 +110,18 @@
     <div class="print-sheet max-w-3xl w-full p-8 rounded-2xl space-y-4">
         
         <div class="space-y-4">
-            <!-- CENTER ALIGNED SCHOOL HEADER, NAME & ADDRESS -->
+            <!-- CENTER ALIGNED SCHOOL HEADER, NAME, LOGO & ADDRESS -->
             <div class="text-center border-b-2 border-indigo-600 pb-3 mb-3">
-                <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 id="headerSchoolName" class="text-lg font-black text-slate-900 tracking-wide uppercase mt-0.5">Allama Iqbal Medical School</h1>
-                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-0.5">Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: AIM</p>
+                <div class="flex items-center justify-center space-x-3 mb-1">
+                    <div id="schoolLogoContainer" class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black uppercase shadow-sm">
+                        AIM
+                    </div>
+                    <div>
+                        <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600 text-left">Official Student Enrolment & Registration Dossier</p>
+                        <h1 id="headerSchoolName" class="text-lg font-black text-slate-900 tracking-wide uppercase mt-0.5 text-left">Allama Iqbal Medical School</h1>
+                    </div>
+                </div>
+                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1">Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: AIM</p>
             </div>
 
             <!-- TOP ID, DATE OF ADMISSION & CENTERED PICTURE BOX -->
@@ -330,19 +337,31 @@
         </button>
     </div>
 
-    <!-- Dynamic Script for Pakistan Govt/Private School Rules, Auto Age Calculation & AskLama -->
+    <!-- Dynamic Script for Hub Integration & Calculations -->
     <script>
-        // 1. Load active configuration from localStorage
+        // 1. Load active configuration from localStorage hub
         const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
         const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || "Allama Iqbal Medical School";
         const shortCode = activeConfig.shortCode || "AIM";
+        const schoolAddress = activeConfig.address || localStorage.getItem('lamastudio_school_address') || "Main Campus: Elite Knowledge Park, Sector 4";
+        const schoolPhone = activeConfig.phone || localStorage.getItem('lamastudio_school_phone') || "+92 300 0000000";
+        const schoolLogo = activeConfig.logo || localStorage.getItem('lamastudio_school_logo') || "";
         const schoolType = (activeConfig.type || localStorage.getItem('lamastudio_school_type') || 'Private').toLowerCase();
         const schoolLevel = (activeConfig.level || localStorage.getItem('lamastudio_school_level') || 'High').toLowerCase();
 
-        // 2. Inject School Headers
+        // 2. Inject Dynamic School Details (Name, Address, Phone, Logo, Code)
         document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
         document.getElementById('headerSchoolName').innerText = schoolName;
-        document.getElementById('headerSchoolMeta').innerText = `Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: ${shortCode}`;
+        document.getElementById('headerSchoolMeta').innerText = `${schoolAddress} • UAN: ${schoolPhone} • EMIS/Reg Code: ${shortCode}`;
+        
+        // Inject Logo if available, otherwise show short code initials
+        const logoContainer = document.getElementById('schoolLogoContainer');
+        if (schoolLogo) {
+            logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
+        } else {
+            logoContainer.innerText = shortCode.slice(0, 3).toUpperCase();
+        }
+
         document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
         document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
 
@@ -387,83 +406,34 @@
         let gradeOptionsHTML = '';
 
         if (isGovt) {
-            // Government School Naming: ECCE, Katchi, 1-5 / 1-8 / 1-10 / 1-12
             if (schoolLevel.includes('primary')) {
-                gradeOptionsHTML = `
-                    <option>ECCE</option>
-                    <option>Katchi</option>
-                    <option>Grade 1</option>
-                    <option>Grade 2</option>
-                    <option>Grade 3</option>
-                    <option>Grade 4</option>
-                    <option selected>Grade 5</option>
-                `;
+                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
             } else if (schoolLevel.includes('middle')) {
-                gradeOptionsHTML = `
-                    <option>ECCE</option>
-                    <option>Katchi</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
-                    <option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>
-                `;
+                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
             } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
-                gradeOptionsHTML = `
-                    <option>ECCE</option><option>Katchi</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
-                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option>
-                    <option>1st Year (Grade 11)</option><option selected>2nd Year (Grade 12)</option>
-                `;
-            } else { // Default High School
-                gradeOptionsHTML = `
-                    <option>ECCE</option><option>Katchi</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
-                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>
-                `;
+                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>1st Year (Grade 11)</option><option selected>2nd Year (Grade 12)</option>`;
+            } else {
+                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
             }
         } else {
-            // Private School Naming: ECCE/PG, KG, Prep, 1-5 / 1-8 / 1-10 / 1-12
             if (schoolLevel.includes('primary')) {
-                gradeOptionsHTML = `
-                    <option>ECCE / PG</option>
-                    <option>KG</option>
-                    <option>Prep</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>
-                `;
+                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
             } else if (schoolLevel.includes('middle')) {
-                gradeOptionsHTML = `
-                    <option>ECCE / PG</option><option>KG</option><option>Prep</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
-                    <option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>
-                `;
+                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
             } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
-                gradeOptionsHTML = `
-                    <option>ECCE / PG</option><option>KG</option><option>Prep</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
-                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option>
-                    <option>First Year (11th)</option><option selected>Second Year (12th)</option>
-                `;
-            } else { // Default High School
-                gradeOptionsHTML = `
-                    <option>ECCE / PG</option><option>KG</option><option>Prep</option>
-                    <option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option>
-                    <option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>
-                `;
+                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>First Year (11th)</option><option selected>Second Year (12th)</option>`;
+            } else {
+                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
             }
         }
         classSelect.innerHTML = gradeOptionsHTML;
 
-        // 5. Conditional Fee Structure Dropdown (Govt = No Fee, Private = Fee Tiers)
+        // 5. Conditional Fee Structure Dropdown
         const feeTierSelect = document.getElementById('feeTierSelect');
         if (isGovt) {
-            feeTierSelect.innerHTML = `
-                <option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>
-            `;
+            feeTierSelect.innerHTML = `<option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>`;
         } else {
-            feeTierSelect.innerHTML = `
-                <option value="Standard" selected>Standard Tuition Plan</option>
-                <option value="Scholarship">Merit Scholarship Grant</option>
-                <option value="Sibling">Sibling Concession Plan</option>
-                <option value="Exempt">Fully Exempt / Free Tier</option>
-            `;
+            feeTierSelect.innerHTML = `<option value="Standard" selected>Standard Tuition Plan</option><option value="Scholarship">Merit Scholarship Grant</option><option value="Sibling">Sibling Concession Plan</option><option value="Exempt">Fully Exempt / Free Tier</option>`;
         }
 
         // 6. Image preview handler
@@ -490,21 +460,17 @@
             const query = input.value.trim().toLowerCase();
             if (!query) return;
 
-            // Append user message
             container.innerHTML += `<div class="bg-purple-600/30 text-white p-2.5 rounded-xl text-right">${input.value}</div>`;
             input.value = '';
             container.scrollTop = container.scrollHeight;
 
-            // Generate smart automated response based on context
             setTimeout(() => {
                 let reply = "Thanks for your inquiry! You can review our discounted tiers above or fill out the registration form to launch your portal.";
                 
                 if (query.includes('payment') || query.includes('method') || query.includes('bank') || query.includes('hbl') || query.includes('easypaisa') || query.includes('raast')) {
-                    reply = "You can send your subscription fee to our HBL account (PK67HABB18987900294403) or Easypaisa/Raast under Wajid Hussain, then upload the receipt in Step 2.";
-                } else if (query.includes('lost') || query.includes('receipt') || query.includes('slip')) {
-                    reply = "If you lost your payment receipt, please provide your transaction ID or contact admin directly so we can manually verify your ledger transaction log.";
+                    reply = `You can send your subscription fee to our HBL account or Easypaisa/Raast under our registered institution details. Contact us at ${schoolPhone} for confirmation.`;
                 } else if (query.includes('contact') || query.includes('admin') || query.includes('phone') || query.includes('support')) {
-                    reply = "You can reach our lead system administrator via WhatsApp / UAN at +92 300 0000000 or email support@lamastudio.edu.pk.";
+                    reply = `You can reach our lead system administrator via UAN at ${schoolPhone} or visit us at ${schoolAddress}.`;
                 } else if (query.includes('hello') || query.includes('hi') || query.includes('hey')) {
                     reply = `Hello! I'm Lama, your AI assistant for ${schoolName}. How can I help you with this admission dossier today?`;
                 }

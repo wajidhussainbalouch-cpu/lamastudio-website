@@ -357,7 +357,7 @@
         </div>
     </footer>
 
-    <!-- App Logic & Built-in Handlers -->
+    <!-- App Logic & Built-in Handlers with Validation Checks -->
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -410,7 +410,8 @@
 
         function handleLoginSubmit(event) {
             event.preventDefault();
-            const user = document.getElementById('loginUser').value;
+            const user = document.getElementById('loginUser').value.trim();
+            if(!user) return;
             localStorage.setItem('lamastudio_admin_username', user);
             localStorage.setItem('lamastudio_logged_in', 'true');
             window.location.href = 'dashboard.html';
@@ -418,8 +419,20 @@
 
         function handleStep1(event) {
             event.preventDefault();
-            localStorage.setItem('lamastudio_admin_username', document.getElementById('adminUsername').value);
-            localStorage.setItem('lamastudio_admin_password', document.getElementById('adminPassword').value);
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
+
+            if (username.length < 3) {
+                alert('Admin username must be at least 3 characters long.');
+                return;
+            }
+            if (password.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+
+            localStorage.setItem('lamastudio_admin_username', username);
+            localStorage.setItem('lamastudio_admin_password', password);
 
             document.getElementById('step1Form').classList.add('hidden');
             document.getElementById('step2Form').classList.remove('hidden');
@@ -428,19 +441,31 @@
 
         function handleStep2(event) {
             event.preventDefault();
-            const schoolName = document.getElementById('schoolName').value;
-            
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const email = document.getElementById('adminEmail').value.trim();
+            const phone = document.getElementById('principalPhone').value.trim();
+            const enrollment = document.getElementById('studentEnrollment').value;
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+            if (enrollment <= 0) {
+                alert('Please enter a valid student enrollment count.');
+                return;
+            }
+
             localStorage.setItem('lamastudio_registered_school', schoolName);
             localStorage.setItem('lk_school_level', document.getElementById('schoolLevel').value);
             localStorage.setItem('lk_school_gender', document.getElementById('schoolGender').value);
-            localStorage.setItem('lamastudio_enrollment', document.getElementById('studentEnrollment').value);
+            localStorage.setItem('lamastudio_enrollment', enrollment);
             localStorage.setItem('lamastudio_school_city', document.getElementById('schoolCity').value);
             localStorage.setItem('lamastudio_principal', document.getElementById('principalName').value);
-            localStorage.setItem('lamastudio_phone', document.getElementById('principalPhone').value);
-            localStorage.setItem('lamastudio_admin_email', document.getElementById('adminEmail').value);
+            localStorage.setItem('lamastudio_phone', phone);
+            localStorage.setItem('lamastudio_admin_email', email);
             localStorage.setItem('lamastudio_school_package', document.getElementById('selectedPackage').value);
 
-            // Set active school config object so downstream portal pages sync instantly
             localStorage.setItem('activeSchoolConfig', JSON.stringify({
                 name: schoolName,
                 shortCode: schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,3),
@@ -452,7 +477,7 @@
             window.location.href = 'dashboard.html';
         }
 
-        // Guaranteed Ask Lama Widget Toggle Controller & Initialization
+        // Ask Lama Widget Controller & Initialization
         document.addEventListener('DOMContentLoaded', () => {
             const toggleBtn = document.getElementById('toggleAskLamaBtn');
             const chatBox = document.getElementById('askLamaChatBox');
@@ -479,7 +504,6 @@
                     const text = input.value.trim();
                     if(!text) return;
 
-                    // Append user message
                     const userMsg = document.createElement('div');
                     userMsg.className = 'bg-indigo-600 text-white p-2.5 rounded-xl max-w-[85%] ml-auto text-left';
                     userMsg.textContent = text;
@@ -487,7 +511,6 @@
                     input.value = '';
                     messages.scrollTop = messages.scrollHeight;
 
-                    // Simulated intelligent AI response based on keywords
                     setTimeout(() => {
                         let reply = "Thanks for your inquiry! You can review our discounted tiers above or fill out the registration form to launch your portal.";
                         const lowerQ = text.toLowerCase();

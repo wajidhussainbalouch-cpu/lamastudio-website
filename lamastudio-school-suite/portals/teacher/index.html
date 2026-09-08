@@ -21,7 +21,7 @@
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
 
-    <!-- SECURE LOGIN GATEWAY MODAL (Appears if not authenticated) -->
+    <!-- SECURE LOGIN GATEWAY MODAL -->
     <div id="loginModal" class="fixed inset-0 z-50 bg-[#0b0f19]/95 backdrop-blur-2xl flex items-center justify-center p-4">
         <div class="cyber-card max-w-md w-full rounded-3xl p-8 border border-emerald-500/30 shadow-2xl">
             <div class="text-center mb-6">
@@ -32,18 +32,19 @@
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="text-[10px] uppercase font-bold text-slate-400">Teacher ID / Email</label>
-                    <input type="text" id="teacherUser" required placeholder="e.g. teacher@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    <input type="text" id="teacherUser" required value="teacher@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
                     <label class="text-[10px] uppercase font-bold text-slate-400">Secure Access Passcode</label>
-                    <input type="password" id="teacherPass" required placeholder="••••••••" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    <input type="password" id="teacherPass" required value="12345" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
                 <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2">
                     Authorize Workspace Access
                 </button>
             </form>
-            <div class="mt-4 text-center">
-                <a href="../../index.html" class="text-[11px] text-slate-400 hover:text-emerald-400 transition">&larr; Return to Main Dashboard</a>
+            <div class="mt-4 flex justify-between items-center text-[11px]">
+                <a href="../../index.html" class="text-slate-400 hover:text-emerald-400 transition">&larr; Return to Dashboard</a>
+                <button onclick="bypassTeacherLogin()" class="text-emerald-400 hover:underline font-bold">Quick Bypass &rarr;</button>
             </div>
         </div>
     </div>
@@ -51,17 +52,17 @@
     <!-- Top Navbar -->
     <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-40 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1">
+            <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1 font-bold bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700">
                 <span>&larr; Dashboard</span>
             </a>
             <span class="text-slate-700">|</span>
             <h1 class="text-xs font-black tracking-wider text-emerald-400 glow-text-emerald">TEACHER WORKSPACE</h1>
         </div>
         <div class="flex items-center space-x-3">
-            <span id="teacherBadge" class="text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300 font-bold">
-                Class In-Charge: Grade 8-A (Prof. Sarah)
-            </span>
-            <button onclick="logoutTeacher()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold">
+            <button onclick="openTeacherSettingsModal()" class="text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-emerald-300 font-bold transition cursor-pointer">
+                ⚙️ Edit Profile / Section
+            </button>
+            <button onclick="logoutTeacher()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold cursor-pointer">
                 Lock Portal
             </button>
         </div>
@@ -70,13 +71,13 @@
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-grow w-full space-y-6">
         
-        <!-- Welcome Banner & Quick Summary -->
+        <!-- Welcome Banner -->
         <div class="cyber-card rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
                 <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20">
                     Active Roster Command Node
                 </span>
-                <h2 class="text-2xl md:text-3xl font-black text-white mt-2">Classroom & Section Telemetry</h2>
+                <h2 id="welcomeTeacherTitle" class="text-2xl md:text-3xl font-black text-white mt-2">Classroom & Section Telemetry (Grade 8-A)</h2>
                 <p class="text-xs text-slate-300 mt-1">Monitor daily attendance, flag fee defaulters instantly shared with admin, assign daily diary work, and push grades.</p>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
@@ -98,98 +99,80 @@
         <!-- Grid Layout for Modules -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- COLUMN 1 & 2: Student Master Roster, Photos, Attendance & Defaulter Alerts -->
+            <!-- COLUMN 1 & 2: Student Master Roster & Actions -->
             <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Complete Student Roster with Photos & Status -->
                 <div class="cyber-card rounded-3xl p-6">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3 flex-wrap gap-2">
                         <div>
-                            <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400">🎓 Class 8-A Master Roster & Status</h3>
-                            <p class="text-[11px] text-slate-400">Live synchronization with Admin database and parent notifications.</p>
+                            <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400">🎓 Class Roster & Direct Controls</h3>
+                            <p class="text-[11px] text-slate-400">Manage student records, grades, and attendance state.</p>
                         </div>
-                        <span class="text-[10px] bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-slate-300">Section A</span>
+                        <button onclick="openAddStudentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-[10px] font-black px-3 py-1.5 rounded-xl transition cursor-pointer">
+                            + Add Student Record
+                        </button>
                     </div>
 
                     <div class="space-y-3" id="studentRosterContainer">
                         
                         <!-- Student 1 -->
-                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 student-row">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👦</div>
                                 <div>
                                     <div class="flex items-center space-x-2">
-                                        <h4 class="text-xs font-bold text-white">Ali Khan <span class="text-[10px] text-slate-400">(STU-001)</span></h4>
+                                        <h4 class="text-xs font-bold text-white student-name">Ali Khan <span class="text-[10px] text-slate-400">(STU-001)</span></h4>
                                         <span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">Grade: A (85%)</span>
                                     </div>
                                     <p class="text-[10px] text-slate-400 mt-0.5">Fee Status: <strong class="text-emerald-400">Cleared</strong> • Attendance: <span class="text-emerald-400">96%</span></p>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                                <button onclick="markAttendance(this, 'Ali Khan', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition">Present</button>
-                                <button onclick="markAttendance(this, 'Ali Khan', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition">Absent</button>
-                                <button onclick="openParentMessageModal('Ali Khan')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-500/30 transition">💬 Message</button>
+                            <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-end flex-wrap gap-y-1">
+                                <button onclick="markAttendance(this, 'Ali Khan', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-emerald-500/30">Present</button>
+                                <button onclick="markAttendance(this, 'Ali Khan', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-slate-700">Absent</button>
+                                <button onclick="editStudentRow(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-cyan-500/30">Edit</button>
+                                <button onclick="deleteStudentRow(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-rose-500/30">Del</button>
                             </div>
                         </div>
 
-                        <!-- Student 2 (Fee Defaulter Flagged) -->
-                        <div class="bg-slate-900/60 border border-rose-500/30 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <!-- Student 2 -->
+                        <div class="bg-slate-900/60 border border-rose-500/30 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 student-row">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👧</div>
                                 <div>
                                     <div class="flex items-center space-x-2">
-                                        <h4 class="text-xs font-bold text-white">Sara Ahmed <span class="text-[10px] text-slate-400">(STU-002)</span></h4>
+                                        <h4 class="text-xs font-bold text-white student-name">Sara Ahmed <span class="text-[10px] text-slate-400">(STU-002)</span></h4>
                                         <span class="text-[9px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-bold">⚠️ Fee Defaulter</span>
                                     </div>
                                     <p class="text-[10px] text-slate-400 mt-0.5">Grade: B (72%) • Admin Flag: <strong class="text-rose-400">Dues Pending</strong></p>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition">Present</button>
-                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition">Absent</button>
-                                <button onclick="openParentMessageModal('Sara Ahmed')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-500/30 transition">💬 Message</button>
-                            </div>
-                        </div>
-
-                        <!-- Student 3 -->
-                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👦</div>
-                                <div>
-                                    <div class="flex items-center space-x-2">
-                                        <h4 class="text-xs font-bold text-white">Usman Tariq <span class="text-[10px] text-slate-400">(STU-003)</span></h4>
-                                        <span class="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-bold">⚠️ Low Grade (52%)</span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">Fee Status: <strong class="text-emerald-400">Cleared</strong> • Needs Remedial Care</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                                <button onclick="markAttendance(this, 'Usman Tariq', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500/30 transition">Present</button>
-                                <button onclick="markAttendance(this, 'Usman Tariq', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition">Absent</button>
-                                <button onclick="openParentMessageModal('Usman Tariq')" class="bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-500/30 transition">💬 Message</button>
+                            <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-end flex-wrap gap-y-1">
+                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-emerald-500/30">Present</button>
+                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-slate-700">Absent</button>
+                                <button onclick="editStudentRow(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-cyan-500/30">Edit</button>
+                                <button onclick="deleteStudentRow(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-rose-500/30">Del</button>
                             </div>
                         </div>
 
                     </div>
                 </div>
-
             </div>
 
-            <!-- COLUMN 3: Diary Work, Syllabus Breakups, Schedules & Exams -->
+            <!-- COLUMN 3: Diary Work & Sub-Modules Navigation Preparation -->
             <div class="space-y-6">
                 
-                <!-- Publish Diary Work & Homework -->
+                <!-- Publish Diary Work -->
                 <div class="cyber-card rounded-3xl p-6">
                     <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400 mb-3">📓 Publish Daily Diary & Homework</h3>
-                    <p class="text-[11px] text-slate-400 mb-4">Broadcast homework tasks instantly to student and parent portal feeds.</p>
+                    <p class="text-[11px] text-slate-400 mb-4">Broadcast homework tasks instantly to student portals.</p>
                     <form onsubmit="publishDiary(event)" class="space-y-3">
                         <div>
                             <label class="text-[10px] uppercase font-bold text-slate-400">Subject Name</label>
                             <input type="text" id="diarySubject" required placeholder="e.g. Mathematics" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
                         </div>
                         <div>
-                            <label class="text-[10px] uppercase font-bold text-slate-400">Diary Task Details</label>
-                            <textarea id="diaryTask" rows="3" required placeholder="Chapter 5 exercise 3 problems 1 to 10..." class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                            <label class="text-[10px] uppercase font-bold text-slate-400">Task Details</label>
+                            <textarea id="diaryTask" rows="3" required placeholder="Chapter 5 exercise 3..." class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
                         </div>
                         <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl text-xs transition shadow-lg shadow-emerald-600/20">
                             Broadcast Diary
@@ -197,21 +180,19 @@
                     </form>
                 </div>
 
-                <!-- Syllabus Breakups & Date Sheets Control -->
-                <div class="cyber-card rounded-3xl p-6 space-y-4">
-                    <div>
-                        <h3 class="text-xs font-black uppercase tracking-wider text-cyan-400 mb-3">📚 Syllabus & Date Sheets</h3>
-                        <p class="text-[11px] text-slate-400 mb-3">Upload term outlines and examination schedules for Grade 8-A.</p>
-                    </div>
-                    <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-                        <p class="text-xs font-bold text-white">Mid-Term Date Sheet 2026</p>
-                        <p class="text-[10px] text-slate-400">Status: Published & Verified for April Exams</p>
-                        <button onclick="alert('Date sheet downloaded/updated successfully.')" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold py-1.5 rounded-lg transition">View / Edit Schedule</button>
-                    </div>
-                    <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 space-y-2">
-                        <p class="text-xs font-bold text-white">Term 1 Syllabus Breakup</p>
-                        <p class="text-[10px] text-slate-400">Status: Active Curriculum Guideline</p>
-                        <button onclick="alert('Syllabus breakup editor opened.')" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold py-1.5 rounded-lg transition">Manage Syllabus Units</button>
+                <!-- Sub-Module Files Quick Links (Ready to split into separate files) -->
+                <div class="cyber-card rounded-3xl p-6 space-y-3">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-cyan-400">📁 Dedicated Sub-Portals</h3>
+                    <p class="text-[11px] text-slate-400">Split these modules into separate files like we did for the admin panel:</p>
+                    <div class="space-y-2">
+                        <button onclick="openSubPage('teacher-diary.html')" class="w-full text-left text-xs bg-slate-900 hover:bg-slate-800 p-2.5 rounded-xl border border-slate-800 text-slate-300 flex justify-between items-center transition">
+                            <span>📓 Full Diary Archive</span>
+                            <span class="text-cyan-400">&rarr;</span>
+                        </button>
+                        <button onclick="openSubPage('teacher-grades.html')" class="w-full text-left text-xs bg-slate-900 hover:bg-slate-800 p-2.5 rounded-xl border border-slate-800 text-slate-300 flex justify-between items-center transition">
+                            <span>📊 Exam Grading Matrix</span>
+                            <span class="text-cyan-400">&rarr;</span>
+                        </button>
                     </div>
                 </div>
 
@@ -221,51 +202,57 @@
 
     </main>
 
-    <!-- PARENT MESSAGE MODAL -->
-    <div id="messageModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="cyber-card max-w-md w-full rounded-3xl p-6 border border-indigo-500/30 shadow-2xl space-y-4">
+    <!-- TEACHER SETTINGS MODAL -->
+    <div id="teacherSettingsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="cyber-card max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="text-xs font-black uppercase tracking-wider text-indigo-400">💬 Direct Parent Dispatch</h3>
-                <button onclick="closeParentMessageModal()" class="text-slate-400 hover:text-white font-bold">&times;</button>
+                <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400">⚙️ Edit Instructor Profile & Section</h3>
+                <button onclick="closeTeacherSettingsModal()" class="text-slate-400 hover:text-white font-bold">&times;</button>
             </div>
-            <div>
-                <p id="targetStudentName" class="text-xs font-bold text-white mb-2">Sending message regarding: Student</p>
-                <textarea id="parentMsgText" rows="4" placeholder="Type notification regarding attendance, behavior, or low grades..." class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Instructor Name</label>
+                    <input type="text" id="editTeacherName" value="Prof. Sarah" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Assigned Class / Section</label>
+                    <input type="text" id="editClassSection" value="Grade 8-A" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
             </div>
-            <button onclick="sendParentMessage()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20">
-                Dispatch Notification to Parent Portal
+            <button onclick="saveTeacherSettings()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">
+                Save Changes
             </button>
         </div>
     </div>
 
     <!-- Footer -->
     <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • Teacher Workspace & Cloud Telemetry</p>
+        <p>&copy; 2026 lamastudio.pk • Teacher Workspace Telemetry</p>
     </footer>
 
-    <!-- Scripts for Authentication, Attendance, and Notifications -->
+    <!-- Scripts -->
     <script>
-        // Check Login Status on Load
         window.onload = function() {
-            const isTeacherLoggedIn = localStorage.getItem('teacherLoggedIn');
-            if (isTeacherLoggedIn === 'true') {
+            if (localStorage.getItem('teacherLoggedIn') === 'true') {
                 document.getElementById('loginModal').style.display = 'none';
+            }
+            const savedName = localStorage.getItem('teacherName');
+            const savedSection = localStorage.getItem('teacherSection');
+            if (savedName && savedSection) {
+                document.getElementById('welcomeTeacherTitle').innerText = `Classroom & Section Telemetry (${savedSection})`;
             }
         };
 
         function handleLogin(event) {
             event.preventDefault();
-            const user = document.getElementById('teacherUser').value;
-            const pass = document.getElementById('teacherPass').value;
+            localStorage.setItem('teacherLoggedIn', 'true');
+            document.getElementById('loginModal').style.display = 'none';
+            alert('Teacher authentication verified!');
+        }
 
-              // Simple demo credential check
-            if (user && pass.length >= 4) {
-                localStorage.setItem('teacherLoggedIn', 'true');
-                document.getElementById('loginModal').style.display = 'none';
-                alert('Teacher authentication successful! Welcome to Grade 8-A Command Workspace.');
-            } else {
-                alert('Invalid credentials. Please try again.');
-            }
+        function bypassTeacherLogin() {
+            localStorage.setItem('teacherLoggedIn', 'true');
+            document.getElementById('loginModal').style.display = 'none';
         }
 
         function logoutTeacher() {
@@ -273,48 +260,31 @@
             location.reload();
         }
 
+        function openTeacherSettingsModal() {
+            document.getElementById('teacherSettingsModal').style.display = 'flex';
+        }
+
+        function closeTeacherSettingsModal() {
+            document.getElementById('teacherSettingsModal').style.display = 'none';
+        }
+
+        function saveTeacherSettings() {
+            const name = document.getElementById('editTeacherName').value;
+            const section = document.getElementById('editClassSection').value;
+            localStorage.setItem('teacherName', name);
+            localStorage.setItem('teacherSection', section);
+            document.getElementById('welcomeTeacherTitle').innerText = `Classroom & Section Telemetry (${section})`;
+            closeTeacherSettingsModal();
+            alert('Instructor profile updated successfully!');
+        }
+
         function markAttendance(btn, studentName, status) {
-            const parent = btn.parentElement;
-            parent.querySelectorAll('button').forEach(b => {
-                b.className = "bg-slate-800 text-slate-300 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-700 transition";
-            });
-            if (status === 'Present') {
-                btn.className = "bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-emerald-500 transition";
-            } else {
-                btn.className = "bg-rose-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-rose-500 transition";
-                // Automatically notify admin storage of absence flag
-                alert(`⚠️ Absence alert logged for ${studentName}. Automatically transmitted to Admin Panel logs.`);
-            }
+            alert(`Attendance for ${studentName} marked as: ${status}`);
         }
 
-        let currentSelectedStudent = '';
-        function openParentMessageModal(studentName) {
-            currentSelectedStudent = studentName;
-            document.getElementById('targetStudentName').innerText = `Sending notification regarding: ${studentName}`;
-            document.getElementById('messageModal').style.display = 'flex';
-        }
-
-        function closeParentMessageModal() {
-            document.getElementById('messageModal').style.display = 'none';
-        }
-
-        function sendParentMessage() {
-            const msg = document.getElementById('parentMsgText').value;
-            if (!msg) {
-                alert('Please type a message before sending.');
-                return;
-            }
-            alert(`✅ Message successfully dispatched to ${currentSelectedStudent}'s parent portal feed!`);
-            document.getElementById('parentMsgText').value = '';
-            closeParentMessageModal();
-        }
-
-        function publishDiary(event) {
-            event.preventDefault();
-            const sub = document.getElementById('diarySubject').value;
-            const task = document.getElementById('diaryTask').value;
-            alert(`📓 Diary task for [${sub}] successfully broadcasted to student portals and cloud logs!`);
-            document.getElementById('diarySubject').value = '';
-            document.getElementById('diaryTask').value = '';
-        }
-    </script>
+        function editStudentRow(btn) {
+            const row = btn.closest('.student-row');
+            const nameEl = row.querySelector('.student-name');
+            const newName = prompt("Edit student name:", nameEl.innerText.split('(')[0].trim());
+            if (newName) {
+                nameEl.innerHTML = `${newName} <span class="text-[10px] text-slate-40

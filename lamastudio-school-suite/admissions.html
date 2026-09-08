@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lamastudio Nexus | Advanced Clinical & Academic Admission Portal</title>
+    <title>Lamastudio Nexus | Single-Page Print Admission Portal</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -17,12 +17,49 @@
         .glow-text-purple {
             text-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
         }
+        /* Strict Single Page Print Rules */
         @media print {
-            body { background: white !important; color: black !important; font-size: 11px; }
-            .cyber-card { background: white !important; border: 1px solid #94a3b8 !important; box-shadow: none !important; padding: 1rem !important; }
-            .print-hidden { display: none !important; }
-            .print-show { display: block !important; }
-            input, select, textarea { border-bottom: 1px solid #000 !important; background: transparent !important; color: black !important; border-radius: 0 !important; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 9.5px !important;
+                line-height: 1.15 !important;
+                margin: 0 !important;
+                padding: 10px !important;
+            }
+            .cyber-card {
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            .print-hidden {
+                display: none !important;
+            }
+            .print-show {
+                display: block !important;
+            }
+            input, select, textarea {
+                border-bottom: 1px solid #333 !important;
+                background: transparent !important;
+                color: black !important;
+                border-radius: 0 !important;
+                padding: 2px !important;
+                font-size: 9.5px !important;
+            }
+            /* Force single page bounding */
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+            .print-container {
+                max-height: 275mm;
+                overflow: hidden;
+            }
         }
         .print-show { display: none; }
     </style>
@@ -32,58 +69,59 @@
     <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none print-hidden"></div>
     
     <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl print-hidden">
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3 px-6 flex justify-between items-center shadow-2xl print-hidden">
         <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center">
                 <span class="text-xs font-black text-white">LS</span>
             </div>
             <div>
-                <h1 class="text-sm font-black tracking-wider text-white">LAMASTUDIO <span class="text-purple-400 glow-text-purple">NEXUS</span></h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Clinical & Academic Admission Node</p>
+                <h1 class="text-xs font-black tracking-wider text-white">LAMASTUDIO <span class="text-purple-400">NEXUS</span></h1>
+                <p class="text-[8px] uppercase tracking-widest text-slate-400 font-bold">Single-Page Print Layout</p>
             </div>
         </div>
         <div class="flex items-center space-x-3">
             <button onclick="window.print()" class="text-xs bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-xl transition shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                🖨️ Print Form
+                🖨️ Print Form (1 Page)
             </button>
-            <a href="dashboard.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2 rounded-xl transition border border-slate-700">
+            <a href="dashboard.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-2 rounded-xl border border-slate-700">
                 &larr; Dashboard
             </a>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow space-y-6 relative z-10">
+    <main class="max-w-3xl w-full mx-auto px-4 py-6 flex-grow relative z-10">
         
-        <section class="cyber-card rounded-3xl p-6 md:p-8 relative">
+        <section class="cyber-card rounded-3xl p-6 md:p-8 relative print-container">
             
-            <!-- PRINT HEADER -->
-            <div class="print-show mb-6 pb-4 border-b-2 border-slate-900 flex justify-between items-start">
+            <!-- PRINT HEADER WITH DYNAMIC PHOTO BOX -->
+            <div class="print-show mb-3 pb-2 border-b-2 border-black flex justify-between items-start">
                 <div>
-                    <h1 class="text-xl font-black text-black">SHANNEN KID'S / LAMASTUDIO ACADEMY</h1>
-                    <p class="text-[10px] uppercase font-bold text-slate-600">OFFICIAL ADMISSION & MEDICAL FITNESS RECORD</p>
+                    <h1 class="text-base font-black text-black tracking-tight">SHANNEN KID'S / LAMASTUDIO ACADEMY</h1>
+                    <p class="text-[9px] uppercase font-bold text-slate-700">OFFICIAL ADMISSION & MEDICAL FITNESS RECORD</p>
+                    <p class="text-[8px] text-slate-600">Form ID: LS-2026-X | Verified Registry Node</p>
                 </div>
-                <div class="border border-black p-2 text-right w-36 h-28 flex flex-col justify-between">
-                    <p class="text-[9px] font-bold">Form ID: LS-2026-X</p>
-                    <p class="text-[8px] text-slate-500">600x800 Photo Box</p>
+                <!-- Dynamic Image Container for Print -->
+                <div id="printPhotoContainer" class="border border-black w-24 h-28 flex items-center justify-center bg-slate-100 overflow-hidden text-center text-[7px] text-slate-500">
+                    <span>No Photo Uploaded</span>
                 </div>
             </div>
 
-            <div class="mb-6 border-b border-slate-800 pb-4 print-hidden">
-                <h2 class="text-2xl font-black text-white tracking-tight">Comprehensive Student Registration Form</h2>
-                <p class="text-xs text-slate-300 mt-1">Complete admission parameters, auto BMI calculations, and biometric health profiles.</p>
+            <div class="mb-4 border-b border-slate-800 pb-3 print-hidden">
+                <h2 class="text-xl font-black text-white tracking-tight">Student Registration Form</h2>
+                <p class="text-xs text-slate-300">Complete application, automated health index, and single-page print engine.</p>
             </div>
 
-            <form id="admissionForm" class="space-y-6">
+            <form id="admissionForm" class="space-y-3">
                 
                 <!-- SECTION 1: SCHOOL & CLASS SPECTRUM -->
-                <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-indigo-400 border-b border-slate-800 pb-2">🏫 School & Academic Section</h3>
+                <div class="bg-slate-900/50 print:bg-white p-3 rounded-xl border border-slate-800 print:border-slate-400 space-y-2">
+                    <h3 class="text-[10px] font-black uppercase tracking-wider text-indigo-400 print:text-indigo-900 border-b border-slate-800 print:border-slate-300 pb-1">🏫 School & Academic Section</h3>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Applying for Class</label>
-                            <select id="studentGrade" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Applying Class</label>
+                            <select id="studentGrade" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                                 <option value="ECCE">ECCE</option>
                                 <option value="Playgroup (PG)">Playgroup (PG)</option>
                                 <option value="Kindergarten (KG)">Kindergarten (KG)</option>
@@ -104,158 +142,165 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Assigned Section</label>
-                            <select id="studentSection" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Section</label>
+                            <select id="studentSection" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                                 <option value="Section Alpha">Section Alpha</option>
                                 <option value="Section Beta">Section Beta</option>
                                 <option value="Section Gamma">Section Gamma</option>
-                                <option value="Section Delta">Section Delta</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Fee Structure Tier</label>
-                            <select id="feeSlab" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Fee Tier</label>
+                            <select id="feeSlab" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                                 <option value="Standard Fee Plan">Standard Fee Plan</option>
-                                <option value="Merit Scholar (50%)">Merit Scholar (50%)</option>
+                                <option value="Merit Scholar">Merit Scholar</option>
                                 <option value="Staff Concession">Staff Concession</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION 2: STUDENT DETAILS & PHOTO SPEC (600x800, 15KB-25KB) -->
-                <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-purple-400 border-b border-slate-800 pb-2">🎓 Student Personal Section</h3>
+                <!-- SECTION 2: STUDENT DETAILS -->
+                <div class="bg-slate-900/50 print:bg-white p-3 rounded-xl border border-slate-800 print:border-slate-400 space-y-2">
+                    <h3 class="text-[10px] font-black uppercase tracking-wider text-purple-400 print:text-purple-900 border-b border-slate-800 print:border-slate-300 pb-1">🎓 Student Personal Section</h3>
                     
-                    <div>
-                        <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Student Full Name</label>
-                        <input type="text" id="studentName" required placeholder="e.g. Hamza Ali" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Date of Birth</label>
-                            <input type="date" id="studentDOB" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-1">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Student Full Name</label>
+                            <input type="text" id="studentName" required placeholder="Hamza Ali" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Student B-Form / CNIC No</label>
-                            <input type="text" id="studentBForm" required placeholder="35202-1234567-1" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Date of Birth</label>
+                            <input type="date" id="studentDOB" required class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
+                        </div>
+                        <div>
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">B-Form / CNIC</label>
+                            <input type="text" id="studentBForm" required placeholder="35202-1234567-1" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Upload Photograph (<span class="text-purple-400">600x800px spec • Auto-compressed to 15KB-25KB</span>)</label>
-                        <input type="file" id="studentPhoto" accept="image/*" onchange="validatePhotoSize(this)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white">
-                        <p id="photoStatus" class="text-[10px] text-slate-400 mt-1">Status: Awaiting optimization...</p>
+                    <div class="print-hidden">
+                        <label class="block text-[8px] font-bold uppercase text-slate-300 mb-0.5">Upload Photograph (600x800px, 15KB-25KB)</label>
+                        <input type="file" id="studentPhoto" accept="image/*" onchange="handlePhotoUpload(this)" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-[10px] text-slate-400 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:text-[9px] file:bg-purple-600 file:text-white">
                     </div>
                 </div>
 
-                <!-- SECTION 3: MEDICAL FITNESS & AUTOMATIC BMI CHECKER -->
-                <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400 border-b border-slate-800 pb-2">🩺 Medical Fitness & Biometric Checker</h3>
+                <!-- SECTION 3: MEDICAL FITNESS & BMI -->
+                <div class="bg-slate-900/50 print:bg-white p-3 rounded-xl border border-slate-800 print:border-slate-400 space-y-2">
+                    <h3 class="text-[10px] font-black uppercase tracking-wider text-emerald-400 print:text-emerald-900 border-b border-slate-800 print:border-slate-300 pb-1">🩺 Medical Fitness & Biometric Checker</h3>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Height (cm)</label>
-                            <input type="number" id="medHeight" placeholder="e.g. 140" oninput="calculateBMI()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Height (cm)</label>
+                            <input type="number" id="medHeight" placeholder="140" oninput="calculateBMI()" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Weight (kg)</label>
-                            <input type="number" id="medWeight" placeholder="e.g. 35" oninput="calculateBMI()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Weight (kg)</label>
+                            <input type="number" id="medWeight" placeholder="35" oninput="calculateBMI()" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Computed BMI Status</label>
-                            <input type="text" id="medBMI" readonly placeholder="Auto-calculated" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Computed BMI</label>
+                            <input type="text" id="medBMI" readonly placeholder="Auto" class="w-full bg-slate-950 print:bg-slate-100 border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-emerald-400 print:text-black font-bold">
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Eyesight Rating</label>
-                            <select id="medEyesight" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Eyesight Rating</label>
+                            <select id="medEyesight" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                                 <option value="20/20 Perfect">20/20 Perfect</option>
-                                <option value="Mild Corrective Lenses">Mild Corrective Lenses</option>
-                                <option value="Requires Specialist Review">Requires Specialist Review</option>
+                                <option value="Corrective Lenses">Corrective Lenses</option>
+                                <option value="Specialist Review">Specialist Review</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Physical Condition</label>
-                            <select id="medCondition" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Condition</label>
+                            <select id="medCondition" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                                 <option value="Normal / Healthy">Normal / Healthy</option>
-                                <option value="Abnormal Findings Noted">Abnormal Findings Noted</option>
+                                <option value="Abnormal Noted">Abnormal Noted</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Overall Fitness Clearance</label>
-                            <select id="medFitness" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-bold">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Fitness Clearance</label>
+                            <select id="medFitness" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-emerald-400 print:text-black font-bold">
                                 <option value="Fit for Admission">Fit for Admission</option>
-                                <option value="Conditional Fitness">Conditional Fitness</option>
+                                <option value="Conditional">Conditional</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
                 <!-- SECTION 4: PARENT / GUARDIAN SECTION -->
-                <div class="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 space-y-4">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-cyan-400 border-b border-slate-800 pb-2">👪 Parent / Guardian Section</h3>
+                <div class="bg-slate-900/50 print:bg-white p-3 rounded-xl border border-slate-800 print:border-slate-400 space-y-2">
+                    <h3 class="text-[10px] font-black uppercase tracking-wider text-cyan-400 print:text-cyan-900 border-b border-slate-800 print:border-slate-300 pb-1">👪 Parent / Guardian Section</h3>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Parent / Guardian Full Name</label>
-                            <input type="text" id="parentName" required placeholder="e.g. Tariq Ali" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Parent Full Name</label>
+                            <input type="text" id="parentName" required placeholder="Tariq Ali" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Parent CNIC Number</label>
-                            <input type="text" id="parentCNIC" required placeholder="35202-9876543-2" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Parent Phone Number (SMS Gateway)</label>
-                            <input type="tel" id="parentPhone" required placeholder="+92 300 1234567" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Portal Security Password</label>
-                            <input type="password" id="portalPass" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white">
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Parent CNIC</label>
+                            <input type="text" id="parentCNIC" required placeholder="35202-9876543-2" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Phone Number (SMS)</label>
+                            <input type="tel" id="parentPhone" required placeholder="+92 300 1234567" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
+                        </div>
+                        <div>
+                            <label class="block text-[8px] font-bold uppercase text-slate-300 print:text-black mb-0.5">Portal Password</label>
+                            <input type="password" id="portalPass" required placeholder="••••••••" class="w-full bg-slate-900 print:bg-white border border-slate-800 print:border-black rounded-lg px-2 py-1 text-[10px] text-white print:text-black">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SIGNATURES & STAMP AREA (PRINT ONLY FOOTER) -->
+                <div class="print-show pt-4 mt-2 border-t border-black flex justify-between items-center text-center">
                     <div>
-                        <label class="block text-[10px] font-bold uppercase text-slate-300 mb-1">Residential Address</label>
-                        <textarea id="studentAddress" rows="2" placeholder="House #, Street name, City" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white"></textarea>
+                        <div class="w-32 border-b border-black mb-1"></div>
+                        <p class="text-[8px] font-bold uppercase">Class In-Charge Signature</p>
+                    </div>
+                    <div>
+                        <div class="w-20 h-10 border border-dashed border-slate-400 mx-auto mb-1 flex items-center justify-center text-[7px] text-slate-400">School Stamp</div>
+                    </div>
+                    <div>
+                        <div class="w-32 border-b border-black mb-1"></div>
+                        <p class="text-[8px] font-bold uppercase">Principal Signature</p>
                     </div>
                 </div>
 
                 <!-- SUBMIT BUTTON -->
-                <div class="pt-2 print-hidden">
-                    <button type="submit" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] text-xs uppercase tracking-wider">
-                        ⚡ Submit Admission & Enable Role Notification Nodes
+                <div class="pt-1 print-hidden">
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black py-2.5 rounded-xl transition text-[10px] uppercase tracking-wider">
+                        ⚡ Submit Admission & Enable Dispatch Triggers
                     </button>
                 </div>
             </form>
 
-            <!-- WORKING NOTIFICATION BUTTONS BOX -->
-            <div id="notificationLog" class="mt-6 hidden bg-slate-950/90 border border-emerald-500/40 rounded-2xl p-4 space-y-3 print-hidden">
-                <div class="flex items-center space-x-2 text-emerald-400 font-bold text-xs border-b border-slate-800 pb-2">
+               <!-- WORKING NOTIFICATION BUTTONS BOX -->
+            <div id="notificationLog" class="mt-4 hidden bg-slate-950/90 border border-emerald-500/40 rounded-xl p-3 space-y-2 print-hidden">
+                <div class="flex items-center space-x-2 text-emerald-400 font-bold text-[10px] border-b border-slate-800 pb-1">
                     <span>✅</span>
-                    <span>Application Saved & Clinical Metrics Processed Successfully!</span>
+                    <span>Application Saved & Multi-Role Dispatch Active!</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                    <button type="button" onclick="triggerNotification('parent')" class="bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/40 text-purple-300 p-2.5 rounded-xl text-left transition">
-                        <p class="text-[10px] font-bold uppercase">📱 Parent SMS</p>
-                        <p id="statusParent" class="text-[9px] text-slate-300 mt-0.5">Click to resend SMS alert</p>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="triggerNotification('parent')" class="bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/40 text-purple-300 p-2 rounded-lg text-left">
+                        <p class="text-[9px] font-bold uppercase">📱 Parent SMS</p>
+                        <p id="statusParent" class="text-[8px] text-slate-300">Click to resend</p>
                     </button>
 
-                    <button type="button" onclick="triggerNotification('teacher')" class="bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/40 text-cyan-300 p-2.5 rounded-xl text-left transition">
-                        <p class="text-[10px] font-bold uppercase">👩‍🏫 Class Teacher Alert</p>
-                        <p id="statusTeacher" class="text-[9px] text-slate-300 mt-0.5">Click to update roster</p>
+                    <button type="button" onclick="triggerNotification('teacher')" class="bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/40 text-cyan-300 p-2 rounded-lg text-left">
+                        <p class="text-[9px] font-bold uppercase">👩‍🏫 Teacher Alert</p>
+                        <p id="statusTeacher" class="text-[8px] text-slate-300">Click to sync</p>
                     </button>
 
-                    <button type="button" onclick="triggerNotification('admin')" class="bg-amber-600/20 hover:bg-amber-600/40 border border-amber-500/40 text-amber-300 p-2.5 rounded-xl text-left transition">
-                        <p class="text-[10px] font-bold uppercase">⚙️ Admin Sync</p>
-                        <p id="statusAdmin" class="text-[9px] text-slate-300 mt-0.5">Click to verify database</p>
+                    <button type="button" onclick="triggerNotification('admin')" class="bg-amber-600/20 hover:bg-amber-600/40 border border-amber-500/40 text-amber-300 p-2 rounded-lg text-left">
+                        <p class="text-[9px] font-bold uppercase">⚙️ Admin Sync</p>
+                        <p id="statusAdmin" class="text-[8px] text-slate-300">Click to verify</p>
                     </button>
                 </div>
             </div>
@@ -263,24 +308,27 @@
 
     </main>
 
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10 print-hidden">
-        <p>&copy; 2026 lamastudio.pk • Medical & Academic Admissions System</p>
+    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-3 px-6 text-center text-[10px] text-slate-500 relative z-10 print-hidden">
+        <p>&copy; 2026 lamastudio.pk • Single Page Print & Admission System</p>
     </footer>
 
-    <!-- Comprehensive Script Handlers -->
+    <!-- Script Handlers -->
     <script>
         let studentDataCache = {};
 
-        // Photo constraint checker (600x800 dimensions & 15KB - 25KB simulation)
-        function validatePhotoSize(input) {
-            const statusEl = document.getElementById('photoStatus');
+        // Handles photo display in the print layout box
+        function handlePhotoUpload(input) {
+            const printBox = document.getElementById('printPhotoContainer');
             if (input.files && input.files[0]) {
-                const fileSizeKB = input.files[0].size / 1024;
-                statusEl.innerText = `Uploaded: ${fileSizeKB.toFixed(1)} KB (Target: 15KB - 25KB, 600x800px)`;
-                statusEl.className = fileSizeKB <= 30 ? "text-[10px] text-emerald-400 mt-1" : "text-[10px] text-amber-400 mt-1";
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    printBox.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                }
+                reader.readAsDataURL(input.files[0]);
             }
         }
- // Automatic BMI Calculator
+
+        // Automatic BMI Calculator
         function calculateBMI() {
             const h = parseFloat(document.getElementById('medHeight').value);
             const w = parseFloat(document.getElementById('medWeight').value);
@@ -295,7 +343,7 @@
                 
                 bmiField.value = `${bmi} (${status})`;
             } else {
-                bmiField.value = "Awaiting valid inputs";
+                bmiField.value = "Awaiting inputs";
             }
         }
 
@@ -323,22 +371,21 @@
             logBox.scrollIntoView({ behavior: 'smooth' });
         });
 
-        // Working Interactive Triggers
+        // Working Notification Triggers
         function triggerNotification(role) {
             const name = studentDataCache.name || 'New Candidate';
             const phone = studentDataCache.phone || '+92 300 0000000';
             const grade = studentDataCache.grade || 'Grade 10';
-            const fitness = studentDataCache.fitness || 'Fit';
 
             if (role === 'parent') {
-                document.getElementById('statusParent').innerText = `SMS sent to ${phone}`;
-                alert(`[PARENT SMS GATEWAY]\nSuccessfully dispatched welcome text & secure student portal login tokens to: ${phone}`);
+                document.getElementById('statusParent').innerText = `Sent to ${phone}`;
+                alert(`[PARENT SMS GATEWAY]\nSuccessfully dispatched admission verification text to: ${phone}`);
             } else if (role === 'teacher') {
-                document.getElementById('statusTeacher').innerText = `Roster updated for ${grade}`;
-                alert(`[CLASS TEACHER ALERT]\nSent notification to section faculty: ${name} added to ${grade} register. Medical Fitness: ${fitness}.`);
+                document.getElementById('statusTeacher').innerText = `Roster updated`;
+                alert(`[CLASS TEACHER ALERT]\nSent alert to faculty: ${name} added to ${grade} register.`);
             } else if (role === 'admin') {
-                document.getElementById('statusAdmin').innerText = `Synced to cloud database`;
-                alert(`[ADMINISTRATIVE PANEL SYNC]\nCloud registry updated. Fee structure and biometric clearance profile locked.`);
+                document.getElementById('statusAdmin').innerText = `Database locked`;
+                alert(`[ADMINISTRATIVE PANEL SYNC]\nCloud registry updated successfully. File ready for single-page printing.`);
             }
         }
     </script>

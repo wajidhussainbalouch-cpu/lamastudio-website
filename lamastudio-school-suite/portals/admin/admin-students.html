@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Roster Command | lamastudio.pk</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .cyber-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 58, 138, 0.25) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 30px -10px rgba(59, 130, 246, 0.15);
+        }
+        .glow-text-blue {
+            text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .cyber-card { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+
+    <!-- Top Navbar -->
+    <header class="no-print border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
+        <div class="flex items-center space-x-3">
+            <a href="admin.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1 font-bold bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700">
+                <span>&larr; Admin Dashboard</span>
+            </a>
+            <span class="text-slate-700">|</span>
+            <h1 class="text-xs font-black tracking-wider text-blue-400 glow-text-blue">STUDENT ROSTER & COMMAND CENTER</h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="openNotificationModal()" class="text-[10px] bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-3 py-1.5 rounded-xl text-blue-300 font-bold transition cursor-pointer">
+                🔔 Broadcast Notification
+            </button>
+            <button onclick="window.print()" class="text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-emerald-300 font-bold transition cursor-pointer">
+                🖨️ Print Roster File
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-grow w-full space-y-6">
+        
+        <!-- Filter Controls Bar -->
+        <div class="cyber-card rounded-3xl p-6 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+            <div class="w-full md:w-auto">
+                <h2 class="text-lg font-black text-white">Student Directory & Telemetry</h2>
+                <p class="text-xs text-slate-400">Filter students by class, section, fee standing, or academic performance tier.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                <select id="filterClass" onchange="filterStudents()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <option value="">All Classes</option>
+                    <option value="Grade 8">Grade 8</option>
+                    <option value="Grade 9">Grade 9</option>
+                    <option value="Grade 10">Grade 10</option>
+                </select>
+                <select id="filterSection" onchange="filterStudents()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <option value="">All Sections</option>
+                    <option value="Section A">Section A</option>
+                    <option value="Section B">Section B</option>
+                </select>
+                <select id="filterFee" onchange="filterStudents()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Fee: All Status</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid (Defaulter)</option>
+                </select>
+                <select id="filterTier" onchange="filterStudents()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Academic Tier: All</option>
+                    <option value="Intelligent">Intelligent (80%+)</option>
+                    <option value="Less Grade">Less Grade (&lt;60%)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Students Roster Grid / Table -->
+        <div class="cyber-card rounded-3xl p-6 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="p-3">Picture</th>
+                            <th class="p-3">Student & ID</th>
+                            <th class="p-3">Class / Section</th>
+                            <th class="p-3">Fee Standing</th>
+                            <th class="p-3">Academic Tier</th>
+                            <th class="p-3">Contact</th>
+                            <th class="p-3 text-right no-print">Direct Controls</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-slate-800/60">
+                        
+                        <!-- Row 1 -->
+                        <tr class="student-row" data-class="Grade 8" data-section="Section A" data-fee="Paid" data-tier="Intelligent">
+                            <td class="p-3">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="Student">
+                            </td>
+                            <td class="p-3 font-bold text-white">Ali Khan <br><span class="text-[10px] text-slate-400 font-normal">ID: STU-001</span></td>
+                            <td class="p-3">Grade 8 <span class="text-blue-400 font-bold">(Sec A)</span></td>
+                            <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">Paid</span></td>
+                            <td class="p-3"><span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-bold">Intelligent (85%)</span></td>
+                            <td class="p-3 text-slate-400">+92 300 1234567</td>
+                            <td class="p-3 text-right space-x-1 no-print">
+                                <button onclick="editStudent(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white px-2.5 py-1 rounded-lg border border-cyan-500/30 font-bold">Edit</button>
+                                <button onclick="deleteStudent(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded-lg border border-rose-500/30 font-bold">Del</button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2 -->
+                        <tr class="student-row" data-class="Grade 8" data-section="Section A" data-fee="Unpaid" data-tier="Less Grade">
+                            <td class="p-3">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="Student">
+                            </td>
+                            <td class="p-3 font-bold text-white">Sara Ahmed <br><span class="text-[10px] text-slate-400 font-normal">ID: STU-002</span></td>
+                            <td class="p-3">Grade 8 <span class="text-blue-400 font-bold">(Sec A)</span></td>
+                            <td class="p-3"><span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-bold">Unpaid</span></td>
+                            <td class="p-3"><span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-bold">Less Grade (52%)</span></td>
+                            <td class="p-3 text-slate-400">+92 321 7654321</td>
+                            <td class="p-3 text-right space-x-1 no-print">
+                                <button onclick="editStudent(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white px-2.5 py-1 rounded-lg border border-cyan-500/30 font-bold">Edit</button>
+                                <button onclick="deleteStudent(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded-lg border border-rose-500/30 font-bold">Del</button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 3 -->
+                        <tr class="student-row" data-class="Grade 9" data-section="Section B" data-fee="Paid" data-tier="Intelligent">
+                            <td class="p-3">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="Student">
+                            </td>
+                            <td class="p-3 font-bold text-white">Usman Tariq <br><span class="text-[10px] text-slate-400 font-normal">ID: STU-003</span></td>
+                            <td class="p-3">Grade 9 <span class="text-blue-400 font-bold">(Sec B)</span></td>
+                            <td class="p-3"><span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">Paid</span></td>
+                            <td class="p-3"><span class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-bold">Intelligent (91%)</span></td>
+                            <td class="p-3 text-slate-400">+92 333 9876543</td>
+                            <td class="p-3 text-right space-x-1 no-print">
+                                <button onclick="editStudent(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white px-2.5 py-1 rounded-lg border border-cyan-500/30 font-bold">Edit</button>
+                                <button onclick="deleteStudent(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded-lg border border-rose-500/30 font-bold">Del</button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- NOTIFICATION BROADCAST MODAL -->
+    <div id="notificationModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="cyber-card max-w-md w-full rounded-3xl p-6 border border-blue-500/30 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-xs font-black uppercase tracking-wider text-blue-400">🔔 Broadcast Global Notification</h3>
+                <button onclick="closeNotificationModal()" class="text-slate-400 hover:text-white font-bold">&times;</button>
+            </div>
+            <form onsubmit="sendBroadcast(event)" class="space-y-3">
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Target Audience</label>
+                    <select id="broadcastTarget" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <option value="All">All Students & Parents (Global)</option>
+                        <option value="Unpaid">Fee Defaulters Only</option>
+                        <option value="Grade 8">Grade 8 Section Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-slate-400">Notification Message</label>
+                    <textarea id="broadcastMsg" rows="4" required placeholder="Type important announcement here..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500 resize-none"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-blue-600/20 cursor-pointer">
+                    Broadcast Notification Now
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="no-print border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Student Command Roster</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        function filterStudents() {
+            const classVal = document.getElementById('filterClass').value;
+            const sectionVal = document.getElementById('filterSection').value;
+            const feeVal = document.getElementById('filterFee').value;
+            const tierVal = document.getElementById('filterTier').value;
+
+            const rows = document.querySelectorAll('.student-row');
+
+            rows.forEach(row => {
+                const rClass = row.getAttribute('data-class');
+                const rSection = row.getAttribute('data-section');
+                const rFee = row.getAttribute('data-fee');
+                const rTier = row.getAttribute('data-tier');
+
+                let match = true;
+                if (classVal && rClass !== classVal) match = false;
+                if (sectionVal && !rSection.includes(sectionVal.replace('Section ', 'Sec '))) match = false;
+                if (feeVal && rFee !== feeVal) match = false;
+                if (tierVal && !rTier.includes(tierVal)) match = false;
+
+                if (match) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function editStudent(btn) {
+            const row = btn.closest('.student-row');
+            const nameCell = row.cells[1];
+            const newName = prompt("Edit student name:", nameCell.innerText.split('\n')[0]);
+            if (newName) {
+                const idText = nameCell.innerText.split('\n')[1] || "ID: STU-00X";
+                nameCell.innerHTML = `${newName} <br><span class="text-[10px] text-slate-400 font-normal">${idText}</span>`;
+                alert("Student record successfully updated!");
+            }
+        }
+
+        function deleteStudent(btn) {
+            if (confirm("Are you sure you want to permanently delete this student record from the database?")) {
+                btn.closest('.student-row').remove();
+                alert("Student record deleted.");
+            }
+        }
+
+        function openNotificationModal() {
+            document.getElementById('notificationModal').style.display = 'flex';
+        }
+
+        function closeNotificationModal() {
+            document.getElementById('notificationModal').style.display = 'none';
+        }
+
+        function sendBroadcast(event) {
+            event.preventDefault();
+            const target = document.getElementById('broadcastTarget').value;
+            const msg = document.getElementById('broadcastMsg').value;
+            alert(`Notification successfully broadcasted to [${target}]:\n\n"${msg}"`);
+            closeNotificationModal();
+            event.target.reset();
+        }
+    </script>
+</body>
+                                                                                                                                  </html>
+                                                                                                                                  

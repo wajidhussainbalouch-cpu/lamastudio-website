@@ -1,101 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Registration & SaaS Provisioning | lamastudio.pk</title>
+    <title>School Registration & Provisioning | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .cyber-card {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 58, 138, 0.25) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            box-shadow: 0 0 30px -10px rgba(59, 130, 246, 0.15);
-        }
-        .glow-text-blue {
-            text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-        }
-    </style>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="assets/css/config.css">
 </head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
-    <!-- Top Navbar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center shadow-2xl">
-        <div class="flex items-center space-x-3">
-            <a href="index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1 font-bold bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700">
-                <span>&larr; Home</span>
-            </a>
-            <span class="text-slate-700">|</span>
-            <h1 class="text-xs font-black tracking-wider text-blue-400 glow-text-blue">SAAS SCHOOL ONBOARDING</h1>
+    <!-- Top Navigation -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <a href="index.html" class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold">&larr; Home</a>
+            <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">SAAS MULTI-TENANT ONBOARDING</h1>
         </div>
-        <div>
-            <span class="text-[10px] bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full text-blue-300 font-bold">
-                Registration & Provisioning Portal
-            </span>
-        </div>
+        <span class="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-bold">
+            Secure Provisioning Portal
+        </span>
     </header>
 
     <!-- Main Form Container -->
     <main class="max-w-xl w-full mx-auto px-4 py-12 flex-grow flex flex-col justify-center">
-        <div class="cyber-card rounded-3xl p-8 border border-blue-500/30 shadow-2xl space-y-6">
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 shadow-2xl space-y-6">
             
-            <div class="text-center">
-                <div class="bg-blue-600/20 text-blue-400 p-3 w-fit mx-auto rounded-2xl mb-3 border border-blue-500/30">
-                    🏫
+            <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Register New Institution</h3>
+                    <p id="stepIndicator" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Step 1 of 2: Create Administrator Credentials</p>
                 </div>
-                <h2 class="text-2xl font-black text-white">Register Your School Suite</h2>
-                <p class="text-xs text-slate-400 mt-1">Complete registration and payment to provision your isolated digital campus database.</p>
+                <span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-2.5 py-1 rounded-lg">70% Off Active</span>
             </div>
 
-            <form id="schoolRegForm" onsubmit="provisionSchool(event)" class="space-y-4">
+            <!-- STEP 1 Form -->
+            <form id="step1Form" onsubmit="handleStep1(event)" class="space-y-4">
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Official School Name</label>
-                    <input type="text" id="regSchoolName" required placeholder="e.g. Lahore City Grammar School" 
-                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username</label>
+                    <input type="text" id="adminUsername" required placeholder="e.g., aims_admin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Principal / Admin Name</label>
-                        <input type="text" id="regAdminName" required placeholder="e.g. Dr. Arshad Malik" 
-                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Admin Email (Login ID)</label>
-                        <input type="email" id="regEmail" required placeholder="principal@lcgs.edu.pk" 
-                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password <span class="text-slate-400 font-normal">(Min 6 chars: 1 upper, 1 lower, 1 number, 1 special)</span></label>
+                    <div class="relative">
+                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white pr-10">
                     </div>
                 </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
+                    Create Credentials & Continue &rarr;
+                </button>
+            </form>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- STEP 2 Form (Hidden Initially) -->
+            <form id="step2Form" onsubmit="handleStep2(event)" class="space-y-4 hidden">
+                <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs">
+                    ✓ Credentials created! Now enter your official institution profile details.
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Official School Name</label>
+                    <input type="text" id="schoolName" required placeholder="e.g., Lahore Grammar School" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Full Address</label>
+                    <input type="text" id="schoolAddress" required placeholder="e.g., Main Gulberg Boulevard, Lahore" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Secure Admin Password</label>
-                        <input type="password" id="regPassword" required placeholder="••••••••" 
-                            class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Principal / Admin Email</label>
+                        <input type="email" id="adminEmail" required placeholder="principal@lgs.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
                     </div>
                     <div>
-                        <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Registration Package</label>
-                        <select id="regPackage" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-blue-500">
-                            <option value="Standard">Standard Tier (PKR 15,000 / yr)</option>
-                            <option value="Enterprise">Enterprise Multi-Campus (PKR 35,000 / yr)</option>
-                        </select>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Phone</label>
+                        <input type="text" id="principalPhone" required placeholder="03001234567" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
                     </div>
                 </div>
 
-                <!-- Payment Simulator Box -->
-                <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl space-y-2">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-400">Subscription Fee Status:</span>
-                        <span class="text-emerald-400 font-bold">Verified & Paid (Instant Activation)</span>
-                    </div>
-                    <p class="text-[10px] text-slate-500">By clicking register, your unique isolated database schema and admin credentials will be generated instantly.</p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Subscription Package Tier</label>
+                    <select id="selectedPackage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                        <option value="Standard Tier (PKR 1,500/mo - 70% Off)">Standard Tier (PKR 1,500/mo)</option>
+                        <option value="Professional Tier (PKR 3,600/mo - 70% Off)" selected>Professional Tier (PKR 3,600/mo)</option>
+                        <option value="Enterprise Tier (Custom - 70% Off)">Enterprise Tier (Custom)</option>
+                    </select>
                 </div>
 
-                <button type="submit" 
-                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-xs transition shadow-lg shadow-blue-600/30 cursor-pointer">
-                    Initialize & Provision My School Portal 🚀
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2 cursor-pointer">
+                    Finish Registration & Open Isolated Portal 🚀
                 </button>
             </form>
 
@@ -103,42 +98,59 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • SaaS Multi-Tenant Provisioning Engine</p>
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-5 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Multi-Tenant SaaS Provisioning Engine</p>
     </footer>
 
+    <!-- Script Integration -->
+    <script src="js/school-store.js"></script>
     <script>
-        function provisionSchool(event) {
+        function handleStep1(event) {
             event.preventDefault();
-            const schoolName = document.getElementById('regSchoolName').value.trim();
-            const adminEmail = document.getElementById('regEmail').value.trim();
-            const password = document.getElementById('regPassword').value.trim();
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
 
-            // Generate a unique tenant ID for this school
-            const uniqueSchoolId = 'sch_' + Math.random().toString(36).substr(2, 9);
+            if (username.length < 3) {
+                alert('Admin username must be at least 3 characters long.');
+                return;
+            }
 
-            // Save school metadata
-            const schoolProfile = {
-                schoolId: uniqueSchoolId,
+            const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+            if (!passRegex.test(password)) {
+                alert('Password must be at least 6 characters long and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.');
+                return;
+            }
+
+            localStorage.setItem('temp_admin_username', username);
+            localStorage.setItem('temp_admin_password', password);
+
+            document.getElementById('step1Form').classList.add('hidden');
+            document.getElementById('step2Form').classList.remove('hidden');
+            document.getElementById('stepIndicatortextContent') = 'Step 2 of 2: Institution Profile Details';
+        }
+
+        function handleStep2(event) {
+            event.preventDefault();
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const address = document.getElementById('schoolAddress').value.trim();
+            const email = document.getElementById('adminEmail').value.trim();
+            const phone = document.getElementById('principalPhone').value.trim();
+            const tier = document.getElementById('selectedPackage').value;
+
+            // Use SchoolStore to provision the unique tenant schema
+            const newSchool = SchoolStore.upsert({
                 name: schoolName,
-                email: adminEmail,
-                password: password,
-                registeredDate: new Date().toISOString()
-            };
+                address: address,
+                email: email,
+                phone: phone,
+                package: tier,
+                adminUsername: localStorage.getItem('temp_admin_username'),
+                registeredAt: new Date().toISOString()
+            });
 
-            // Store in global master list of schools
-            let registeredSchools = JSON.parse(localStorage.getItem('lamastudio_registered_schools') || '[]');
-            registeredSchools.push(schoolProfile);
-            localStorage.setItem('lamastudio_registered_schools', JSON.stringify(registeredSchools));
+            localStorage.setItem('lamastudio_logged_in', 'true');
+            alert(`Success! "${newSchool.name}" has been successfully provisioned with ID: ${newSchool.id}.\nRedirecting to your isolated Admin Command Center...`);
 
-            // Automatically log them in as the active tenant session
-            localStorage.setItem('activeSchoolId', uniqueSchoolId);
-            localStorage.setItem('activeSchoolName', schoolName);
-            localStorage.setItem('adminLoggedIn', 'true');
-
-            alert(`Success! "${schoolName}" has been successfully provisioned.\nRedirecting to your isolated Admin Command Center...`);
-
-            // Redirect to admin panel
             window.location.href = 'portals/admin/index.html';
         }
     </script>

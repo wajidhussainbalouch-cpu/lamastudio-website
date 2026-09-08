@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Academic Admission & Registration Portal</title>
+    <title id="pageTitle">Universal Academic Admission & Registration Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -97,6 +97,9 @@
             <p class="text-[10px] text-slate-400">Optimized Full-Page A4 Admission Form</p>
         </div>
         <div class="flex space-x-3">
+            <a href="../dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">
+                &larr; Back to Hub
+            </a>
             <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">
                 🖨️ Print Full Page A4
             </button>
@@ -107,11 +110,11 @@
     <div class="print-sheet max-w-3xl w-full p-8 rounded-2xl space-y-4">
         
         <div class="space-y-4">
-            <!-- CENTER ALIGNED SCHOOL HEADER, NAME & ADDRESS -->
+            <!-- CENTER ALIGNED SCHOOL HEADER, NAME & ADDRESS (Dynamic Binding) -->
             <div class="text-center border-b-2 border-indigo-600 pb-3 mb-3">
                 <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 class="text-lg font-black text-slate-900 tracking-wide uppercase mt-0.5">SHANNEN KID'S & LAMASTUDIO ACADEMY</h1>
-                <p class="text-[9px] font-semibold text-slate-600 mt-0.5">Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: SK-LS-904</p>
+                <h1 id="headerSchoolName" class="text-lg font-black text-slate-900 tracking-wide uppercase mt-0.5">SHANNEN KID'S & LAMASTUDIO ACADEMY</h1>
+                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-0.5">Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: SK-LS-904</p>
             </div>
 
             <!-- TOP ID, DATE OF ADMISSION & CENTERED PICTURE BOX -->
@@ -119,7 +122,7 @@
                 <div class="space-y-2 text-[11px] font-bold text-slate-800 pt-2">
                     <div class="flex items-center space-x-3">
                         <span class="uppercase text-slate-500 text-[10px]">ADMISSION NO:</span>
-                        <input type="text" value="SK-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
+                        <input type="text" id="admissionNoInput" value="SK-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
                     </div>
                     <div class="flex items-center space-x-3">
                         <span class="uppercase text-slate-500 text-[10px]">DATE OF ISSUE:</span>
@@ -291,7 +294,7 @@
             </form>
         </div>
 
-        <!-- FOOTER SIGNATURES & STAMP AREA (Pinned precisely to bottom of full page) -->
+        <!-- FOOTER SIGNATURES & STAMP AREA -->
         <div class="pt-6 mt-4 border-t-2 border-indigo-900 flex justify-between items-center text-center">
             <div>
                 <div class="w-40 border-b border-slate-800 mb-1.5"></div>
@@ -308,9 +311,22 @@
 
     </div>
 
-    <!-- Script for image loader -->
+    <!-- Script for Dynamic Sync & Image Loader -->
     <script>
+        // 1. Sync active school configuration from localStorage
+        const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
+        const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || "SHANNEN KID'S & LAMASTUDIO ACADEMY";
+        const shortCode = activeConfig.shortCode || "SK-LS-904";
+
+        document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
+        document.getElementById('headerSchoolName').innerText = schoolName;
+        document.getElementById('headerSchoolMeta').innerText = `Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: ${shortCode}`;
+        document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
+
+        // 2. Set current date
         document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
+
+        // 3. Image preview handler
         function previewImage(input) {
             const box = document.getElementById('photoContainer');
             if (input.files && input.files[0]) {

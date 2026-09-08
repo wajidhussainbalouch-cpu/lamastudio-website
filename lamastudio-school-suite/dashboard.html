@@ -21,7 +21,7 @@
     <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
             <div id="schoolShortCodeBadge" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)] overflow-hidden border border-purple-400/30">
-                <span id="navShortCode" class="text-xs font-black text-white">AIM</span>
+                <span id="navShortCode" class="text-xs font-black text-white">GSS</span>
                 <img id="navLogoImg" src="" alt="Logo" class="w-full h-full object-cover hidden">
             </div>
             <div>
@@ -46,18 +46,25 @@
         <!-- Hero Command Node Card -->
         <section class="cyber-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
             <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
-                        <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                        <span id="campusAddressBadge" class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Main Campus: Elite Knowledge Park, Sector 4</span>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <!-- Eyecatching School Logo + Name Layout -->
+                <div class="flex items-center space-x-4">
+                    <div id="heroLogoContainer" class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-[0_0_25px_rgba(168,85,247,0.5)] overflow-hidden border-2 border-purple-400/40 shrink-0">
+                        <span id="heroShortCode" class="text-sm font-black text-white">GSS</span>
+                        <img id="heroLogoImg" src="" alt="School Logo" class="w-full h-full object-cover hidden">
                     </div>
-                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Campus Command Hub</h2>
-                    <p id="heroContactDetails" class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                        UAN: +92 300 0000000 • EMIS/Reg Code: AIM • Verified telemetry and gateway access nodes.
-                    </p>
+                    <div>
+                        <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-2">
+                            <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                            <span id="campusAddressBadge" class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Shah Sadar Din</span>
+                        </div>
+                        <h2 id="heroSchoolName" class="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-purple-300 tracking-tight drop-shadow-md">GPS Shah Sadar Din</h2>
+                        <p id="heroContactDetails" class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                            UAN: 03437064536 • EMIS/Reg Code: <span class="text-purple-400 font-bold">GSS</span> • Verified telemetry nodes active.
+                        </p>
+                    </div>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
+                <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto shrink-0">
                     <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller</p>
                     <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">Principal / Admin</p>
                     <p class="text-[10px] text-slate-400 mt-1">Sync Status: <span class="text-emerald-400 font-bold">99.8% Optimal</span></p>
@@ -234,12 +241,10 @@
         let schoolsList = JSON.parse(localStorage.getItem('lamastudio_school_accounts')) || [];
         const allSchoolsStorage = JSON.parse(localStorage.getItem('lamastudio_all_schools')) || [];
         
-        // Sync arrays if needed and ensure current school is registered as an account
         if (schoolsList.length === 0 && allSchoolsStorage.length > 0) {
             schoolsList = allSchoolsStorage;
         }
 
-        // Check if currently registered single school exists and isn't in the list yet
         const currentRegisteredSchool = localStorage.getItem('lamastudio_registered_school');
         if (currentRegisteredSchool) {
             const exists = schoolsList.some(s => s.name === currentRegisteredSchool);
@@ -304,11 +309,11 @@
         // 2. Load active school profile data from localStorage
         const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
         const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || 'Campus Command Hub';
-        const shortCode = activeConfig.shortCode || localStorage.getItem('lamastudio_emis_code') || schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'AIM';
+        const shortCode = activeConfig.shortCode || localStorage.getItem('lamastudio_emis_code') || schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'GSS';
         const totalCount = localStorage.getItem('lamastudio_enrollment') || localStorage.getItem('totalStudents') || '120';
         const principalName = localStorage.getItem('lamastudio_principal') || 'Principal / Admin';
-        const schoolAddress = activeConfig.address || localStorage.getItem('lamastudio_school_address') || localStorage.getItem('lamastudio_address') || 'Main Campus: Elite Knowledge Park, Sector 4';
-        const schoolUAN = activeConfig.uan || localStorage.getItem('lamastudio_phone') || localStorage.getItem('lamastudio_uan') || '+92 300 0000000';
+        const schoolAddress = activeConfig.address || localStorage.getItem('lamastudio_school_address') || localStorage.getItem('lamastudio_address') || 'Shah Sadar Din';
+        const schoolUAN = activeConfig.uan || localStorage.getItem('lamastudio_phone') || localStorage.getItem('lamastudio_uan') || '03437064536';
         const schoolLogo = activeConfig.logo || localStorage.getItem('lamastudio_logo');
 
         // Teacher Database Counter Lookup
@@ -328,15 +333,24 @@
         document.getElementById('heroContactDetails').innerHTML = `UAN: ${schoolUAN} • EMIS/Reg Code: <span class="text-purple-400 font-bold">${shortCode}</span> • Verified telemetry nodes active.`;
         document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} • ${schoolAddress} • UAN: ${schoolUAN}`;
 
-        // Handle Logo Image if uploaded
+        // Handle Logo Image if uploaded (Navbar & Hero Card)
         if (schoolLogo) {
             const logoImg = document.getElementById('navLogoImg');
             logoImg.src = schoolLogo;
             logoImg.classList.remove('hidden');
             document.getElementById('navShortCode').classList.add('hidden');
+
+            const heroLogoImg = document.getElementById('heroLogoImg');
+            heroLogoImg.src = schoolLogo;
+            heroLogoImg.classList.remove('hidden');
+            document.getElementById('heroShortCode').classList.add('hidden');
+        } else {
+            // Show ShortCode if no logo exists
+            document.getElementById('heroShortCode').innerText = shortCode;
+            document.getElementById('navShortCode').innerText = shortCode;
         }
 
-        // 4. Standardized Student ID Generator Format Handler (`AIM-ADM-2026-000`)
+        // 4. Standardized Student ID Generator Format Handler (`GSS-ADM-2026-000`)
         function generateNewStudentId() {
             let serialNum = parseInt(localStorage.getItem('lamastudio_last_serial') || '685') + 1;
             localStorage.setItem('lamastudio_last_serial', serialNum);

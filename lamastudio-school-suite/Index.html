@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lamastudio School Management Suite | Registration & Portals</title>
+    <title>Lamastudio School Management Suite | Multi-Tenant SaaS Platform</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -43,9 +43,9 @@
                 <button onclick="openLoginModal()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">
                     Already User
                 </button>
-                <button onclick="scrollToSection('register')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md shadow-indigo-600/30 transition whitespace-nowrap cursor-pointer">
-                    New User
-                </button>
+                <a href="register.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md shadow-indigo-600/30 transition whitespace-nowrap">
+                    New User (Register)
+                </a>
             </div>
 
             <!-- Theme Switcher Button -->
@@ -66,8 +66,15 @@
         </h2>
         
         <p class="text-slate-600 dark:text-slate-400 mt-4 max-w-xl text-sm md:text-base leading-relaxed">
-            Take advantage of our 2026 70% discount offer! Create your credentials, pick a tier, deposit via secure bank channels, and launch your custom portal instantly.
+            Take advantage of our 2026 70% discount offer! Create your credentials, pick a tier, deposit via secure bank channels, and launch your isolated custom portal instantly.
         </p>
+
+        <!-- CTA Direct to Register -->
+        <div class="mt-8">
+            <a href="register.html" class="inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-3.5 rounded-2xl text-xs transition shadow-xl shadow-indigo-600/30">
+                Launch Onboarding & Register School 🚀
+            </a>
+        </div>
 
         <!-- Pricing Plans Section -->
         <section id="pricing" class="w-full mt-20 text-left scroll-mt-24">
@@ -94,7 +101,7 @@
                             <li>✓ Term Examination Result Ledger</li>
                         </ul>
                     </div>
-                    <button onclick="selectPlan('Standard Tier (PKR 1,500/mo - 70% Off)')" class="mt-8 w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer">Select Standard</button>
+                    <a href="register.html?tier=Standard" class="mt-8 block text-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl text-xs transition">Select Standard</a>
                 </div>
 
                 <!-- Professional Plan -->
@@ -115,7 +122,7 @@
                             <li>✓ SMS Notification Broadcast Integration</li>
                         </ul>
                     </div>
-                    <button onclick="selectPlan('Professional Tier (PKR 3,600/mo - 70% Off)')" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 cursor-pointer">Select Professional</button>
+                    <a href="register.html?tier=Professional" class="mt-8 block text-center bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30">Select Professional</a>
                 </div>
 
                 <!-- Enterprise Plan -->
@@ -134,7 +141,7 @@
                             <li>✓ On-site Staff Training Workshops</li>
                         </ul>
                     </div>
-                    <button onclick="selectPlan('Enterprise Tier (Custom - 70% Off)')" class="mt-8 w-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl text-xs transition cursor-pointer">Contact for Enterprise</button>
+                    <a href="register.html?tier=Enterprise" class="mt-8 block text-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold py-2.5 rounded-xl text-xs transition">Contact for Enterprise</a>
                 </div>
             </div>
         </section>
@@ -182,169 +189,25 @@
                 </details>
             </div>
         </section>
-
-        <!-- Registration Container -->
-        <section id="register" class="w-full mt-20 max-w-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 text-left shadow-2xl scroll-mt-24">
-            <div class="mb-6 flex justify-between items-center">
-                <div>
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">New User Registration</h3>
-                    <p id="stepIndicator" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Step 1 of 2: Create Administrator Credentials</p>
-                </div>
-                <span class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-2.5 py-1 rounded-lg">70% Off Active</span>
-            </div>
-
-            <!-- STEP 1 Form -->
-            <form id="step1Form" onsubmit="handleStep1(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username <span class="text-slate-400 font-normal">(Defaults to School abbreviation)</span></label>
-                    <input type="text" id="adminUsername" required placeholder="e.g., aims_admin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password <span class="text-slate-400 font-normal">(Min 6 chars: 1 upper, 1 lower, 1 number, 1 special)</span></label>
-                    <div class="relative">
-                        <input type="password" id="adminPassword" required placeholder="e.g., Sch@ool1" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white pr-10">
-                        <button type="button" onclick="togglePasswordVisibility('adminPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs cursor-pointer font-semibold">👁️</button>
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
-                    Create Credentials & Continue &rarr;
-                </button>
-            </form>
-
-            <!-- STEP 2 Form (Hidden Initially) -->
-            <form id="step2Form" onsubmit="handleStep2(event)" class="space-y-4 hidden">
-                <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs mb-4">
-                    ✓ Credentials created! Now enter your official institution profile details.
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Name</label>
-                    <input type="text" id="schoolName" required oninput="autoGenerateSchoolIDFormat(this.value)" placeholder="e.g., Allama Iqbal Model School" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Full Address</label>
-                    <input type="text" id="schoolAddress" required placeholder="e.g., Main University Road, Block-B, DG Khan" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Sector</label>
-                        <select id="schoolSector" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
-                            <option value="Private" selected>Private</option>
-                            <option value="Govt">Govt (State Funded)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Level</label>
-                        <select id="schoolLevel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
-                            <option value="Primary">Primary</option>
-                            <option value="Middle">Middle</option>
-                            <option value="High">High</option>
-                            <option value="Higher Secondary" selected>Higher Secondary</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Gender Type</label>
-                        <select id="schoolGender" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
-                            <option value="Combined" selected>Combined</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Optional Codes & Student ID Format -->
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">EMIS Code <span class="text-slate-400 font-normal">(Opt)</span></label>
-                        <input type="text" id="emisCode" placeholder="e.g., 32301011" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Registration Code <span class="text-slate-400 font-normal">(Opt)</span></label>
-                        <input type="text" id="regCode" placeholder="e.g., RB-9821" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Student ID Pattern</label>
-                        <input type="text" id="studentIdPattern" value="AIMS-2026-234" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-[11px] font-mono text-slate-900 dark:text-white">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Students Enrollment</label>
-                        <input type="number" id="studentEnrollment" required placeholder="450" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">City / Location</label>
-                        <input type="text" id="schoolCity" required placeholder="DG Khan" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Principal</label>
-                        <input type="text" id="principalName" required placeholder="Prof. Ahmed" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone (UAN)</label>
-                        <input type="text" id="principalPhone" required placeholder="0300-0000000" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                        <input type="email" id="adminEmail" required placeholder="admin@school.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
-                </div>
-
-                <!-- Package & Logo Upload -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Pricing Plan Selected</label>
-                        <select id="selectedPackage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                            <option value="Standard Tier (PKR 1,500/mo - 70% Off)">Standard Tier (PKR 1,500/mo)</option>
-                            <option value="Professional Tier (PKR 3,600/mo - 70% Off)" selected>Professional Tier (PKR 3,600/mo)</option>
-                            <option value="Enterprise Tier (Custom - 70% Off)">Enterprise Tier (Custom)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Logo <span class="text-red-500 font-normal">(&lt; 50 KB)</span></label>
-                        <input type="file" id="schoolLogo" accept="image/*" onchange="validateLogoFileSize(this)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-2 text-[10px] text-slate-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Transaction Receipt (Fee Proof)</label>
-                    <input type="file" id="receiptImage" accept="image/*" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2 py-2 text-[10px] text-slate-500">
-                </div>
-
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2 cursor-pointer">
-                    Finish Registration & Open Dashboard 🚀
-                </button>
-            </form>
-        </section>
     </main>
 
-    <!-- Built-in Login Modal with Forgot Password -->
+    <!-- Built-in Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-left relative">
             <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold cursor-pointer">✕</button>
-            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Existing User Login</h3>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Existing School Login</h3>
             <p class="text-xs text-slate-500 mb-4">Enter your registered admin credentials to launch your dashboard.</p>
             
             <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
                 <div>
-                    <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Username</label>
+                    <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Username / Email</label>
                     <input type="text" id="loginUser" required placeholder="Enter username" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
                 </div>
                 <div>
                     <label class="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Password</label>
-                    <div class="relative">
-                        <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white pr-9">
-                        <button type="button" onclick="togglePasswordVisibility('loginPass', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer">👁️</button>
-                    </div>
+                    <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
                 </div>
                 
-                <!-- Forgot Password Link -->
                 <div class="flex justify-end pt-1">
                     <button type="button" onclick="handleForgotPassword()" class="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer">Forgot Password?</button>
                 </div>
@@ -354,37 +217,6 @@
                 </button>
             </form>
         </div>
-    </div>
-    <!-- ASK-LAMA FLOATING AI ASSISTANT WIDGET CONTAINER & ICON -->
-    <div id="askLamaWidgetContainer" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        <div id="askLamaChatBox" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-80 max-w-[90vw] h-96 rounded-2xl shadow-2xl flex flex-col mb-3 overflow-hidden transition-all">
-            <div class="bg-indigo-600 text-white p-3 flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <img src="assets/images/ask-lama-3d.png" alt="Lama AI" class="w-7 h-7 rounded-full bg-white object-cover border border-white/40" onerror="this.src='https://api.iconify.design/lucide:bot.svg?color=%23ffffff'">
-                    <div>
-                        <h4 class="text-xs font-bold">Ask Lama AI</h4>
-                        <p class="text-[9px] text-indigo-200">Online Assistant</p>
-                    </div>
-                </div>
-                <button id="closeAskLamaBtn" class="text-white hover:text-indigo-200 text-sm font-bold cursor-pointer">&times;</button>
-            </div>
-            <div id="askLamaMessages" class="flex-grow p-3 overflow-y-auto text-xs space-y-2 bg-slate-50 dark:bg-slate-900 text-left">
-                <div class="bg-indigo-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-2.5 rounded-xl max-w-[85%]">
-                    Hello! I'm Lama, your AI assistant. How can I help you register your institution today?
-                </div>
-            </div>
-            <form id="askLamaForm" class="p-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex gap-2">
-                <input type="text" id="askLamaInput" placeholder="Ask about EMIS, logo, pricing..." class="flex-grow bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white outline-none">
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer">Send</button>
-            </form>
-        </div>
-
-        <button id="toggleAskLamaBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 group relative cursor-pointer">
-            <span class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse"></span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-        </button>
     </div>
 
     <!-- Footer -->
@@ -398,7 +230,8 @@
         </div>
     </footer>
 
-    <!-- App Logic & Built-in Handlers -->
+    <!-- App Logic & Handlers -->
+    <script src="js/school-store.js"></script>
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -415,25 +248,9 @@
             if(savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
                 if (themeBtn) themeBtn.textContent = '🌙';
-            } else {
-                if (themeBtn) themeBtn.textContent = '☀️';
             }
         })();
 
-        // Toggle Password Visibility Eye Handler
-        function togglePasswordVisibility(fieldId, btn) {
-            const inputField = document.getElementById(fieldId);
-            if (!inputField) return;
-            if (inputField.type === 'password') {
-                inputField.type = 'text';
-                btn.textContent = '🔒';
-            } else {
-                inputField.type = 'password';
-                btn.textContent = '👁️';
-            }
-        }
-
-        // Check Login State on load to update Header Actions & Show Logged-in School Name
         document.addEventListener('DOMContentLoaded', () => {
             updateHeaderAuthUI();
         });
@@ -441,255 +258,20 @@
         function updateHeaderAuthUI() {
             const isLoggedIn = localStorage.getItem('lamastudio_logged_in') === 'true';
             const container = document.getElementById('headerAuthActions');
-            const schoolName = localStorage.getItem('lamastudio_registered_school') || localStorage.getItem('lamastudio_admin_username') || 'Dashboard';
+            const activeSchool = SchoolStore.getActive();
             if (!container) return;
 
-            if (isLoggedIn) {
+            if (isLoggedIn && activeSchool) {
                 container.innerHTML = `
                     <div class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                         <span>🏫</span>
-                        <span class="truncate max-w-[140px]">${schoolName}</span>
+                        <span class="truncate max-w-[140px]">${activeSchool.name}</span>
                     </div>
-                    <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md transition whitespace-nowrap">Dashboard</a>
+                    <a href="portals/admin/index.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md transition whitespace-nowrap">Dashboard</a>
                     <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">Logout</button>
                 `;
             }
         }
 
         function handleLogout() {
-            localStorage.removeItem('lamastudio_logged_in');
-            localStorage.removeItem('lamastudio_admin_username');
-            window.location.reload();
-        }
-
-        function handleForgotPassword() {
-            alert('To reset your password, please contact Lamastudio Support at 00923437064536 or email info@lamastudio.pk with your registered school credentials.');
-        }
-
-        function scrollToSection(id) {
-            const el = document.getElementById(id);
-            if(el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-            }
-        }
-
-        function selectPlan(tier) {
-            const packageSelect = document.getElementById('selectedPackage');
-            if(packageSelect) {
-                packageSelect.value = tier;
-            }
-            scrollToSection('register');
-        }
-
-        function openLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if(modal) {
-                modal.classList.remove('hidden');
-            }
-        }
-
-        function closeLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if(modal) {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function handleLoginSubmit(event) {
-            event.preventDefault();
-            const user = document.getElementById('loginUser').value.trim();
-            if(!user) return;
-            localStorage.setItem('lamastudio_admin_username', user);
-            localStorage.setItem('lamastudio_logged_in', 'true');
-            window.location.href = 'dashboard.html';
-        }
-
-        // Validate School Logo Size < 50 KB
-        function validateLogoFileSize(input) {
-            if (input.files && input.files[0]) {
-                const fileSizeKB = input.files[0].size / 1024;
-                if (fileSizeKB > 50) {
-                    alert(`Logo file size is ${fileSizeKB.toFixed(1)} KB. Please upload an image under 50 KB for document branding optimization.`);
-                    input.value = '';
-                }
-            }
-        }
-
-        // Auto Generate School ID Abbreviation format (e.g. Allama Iqbal Model School -> AIMS-2026-234)
-        function autoGenerateSchoolIDFormat(schoolName) {
-            if(!schoolName) return;
-            const words = schoolName.trim().split(/\s+/);
-            let abbr = words.map(w => w[0] || '').join('').toUpperCase().slice(0, 4);
-            if(abbr.length < 2) abbr = 'SCH';
-            const patternInput = document.getElementById('studentIdPattern');
-            if(patternInput) {
-                patternInput.value = `${abbr}-2026-234`;
-            }
-            const userField = document.getElementById('adminUsername');
-            if(userField && (!userField.value || userField.value.includes('_admin'))) {
-                userField.value = `${abbr.toLowerCase()}_admin`;
-            }
-        }
-
-        function handleStep1(event) {
-            event.preventDefault();
-            const username = document.getElementById('adminUsername').value.trim();
-            const password = document.getElementById('adminPassword').value;
-
-            if (username.length < 3) {
-                alert('Admin username must be at least 3 characters long.');
-                return;
-            }
-
-            // Password Validation: Min 6 chars, 1 Upper, 1 Lower, 1 Number, 1 Special
-            const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-            if (!passRegex.test(password)) {
-                alert('Password must be at least 6 characters long and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.');
-                return;
-            }
-
-            localStorage.setItem('lamastudio_admin_username', username);
-            localStorage.setItem('lamastudio_admin_password', password);
-
-            document.getElementById('step1Form').classList.add('hidden');
-            document.getElementById('step2Form').classList.remove('hidden');
-            document.getElementById('stepIndicator').textContent = 'Step 2 of 2: Institution Profile & Branding';
-        }
-
-        function handleStep2(event) {
-            event.preventDefault();
-            const schoolName = document.getElementById('schoolName').value.trim();
-            const address = document.getElementById('schoolAddress').value.trim();
-            const email = document.getElementById('adminEmail').value.trim();
-            const phone = document.getElementById('principalPhone').value.trim();
-            const enrollment = document.getElementById('studentEnrollment').value;
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-            if (enrollment <= 0) {
-                alert('Please enter a valid student enrollment count.');
-                return;
-            }
-
-            // Multi-account storage architecture: push new school entry into list
-            const newSchoolObj = {
-                name: schoolName,
-                address: address,
-                sector: document.getElementById('schoolSector').value,
-                level: document.getElementById('schoolLevel').value,
-                gender: document.getElementById('schoolGender').value,
-                emis: document.getElementById('emisCode').value.trim(),
-                regCode: document.getElementById('regCode').value.trim(),
-                enrollment: enrollment,
-                city: document.getElementById('schoolCity').value,
-                principal: document.getElementById('principalName').value,
-                phone: phone,
-                email: email,
-                studentIdFormat: document.getElementById('studentIdPattern').value,
-                package: document.getElementById('selectedPackage').value,
-                registeredAt: new Date().toISOString()
-            };
-
-            let allSchools = JSON.parse(localStorage.getItem('lamastudio_all_schools') || '[]');
-            allSchools.push(newSchoolObj);
-            localStorage.setItem('lamastudio_all_schools', JSON.stringify(allSchools));
-
-            // Save active legacy configuration variables for seamless fallback compatibility
-            localStorage.setItem('lamastudio_registered_school', schoolName);
-            localStorage.setItem('lamastudio_school_address', address);
-            localStorage.setItem('lk_school_sector', document.getElementById('schoolSector').value);
-            localStorage.setItem('lk_school_level', document.getElementById('schoolLevel').value);
-            localStorage.setItem('lk_school_gender', document.getElementById('schoolGender').value);
-            localStorage.setItem('lamastudio_emis_code', document.getElementById('emisCode').value.trim());
-            localStorage.setItem('lamastudio_reg_code', document.getElementById('regCode').value.trim());
-            localStorage.setItem('lamastudio_enrollment', enrollment);
-            localStorage.setItem('lamastudio_school_city', document.getElementById('schoolCity').value);
-            localStorage.setItem('lamastudio_principal', document.getElementById('principalName').value);
-            localStorage.setItem('lamastudio_phone', phone);
-            localStorage.setItem('lamastudio_admin_email', email);
-            localStorage.setItem('lamastudio_student_id_format', document.getElementById('studentIdPattern').value);
-            localStorage.setItem('lamastudio_school_package', document.getElementById('selectedPackage').value);
-
-            // Handle Logo base64 storage if uploaded
-            const logoInput = document.getElementById('schoolLogo');
-            if (logoInput.files && logoInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    localStorage.setItem('lamastudio_school_logo', e.target.result);
-                };
-                reader.readAsDataURL(logoInput.files[0]);
-            }
-
-            localStorage.setItem('activeSchoolConfig', JSON.stringify({
-                name: schoolName,
-                address: address,
-                shortCode: schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,3),
-                type: document.getElementById('schoolSector').value.toLowerCase(),
-                level: document.getElementById('schoolLevel').value.toLowerCase()
-            }));
-
-            localStorage.setItem('lamastudio_logged_in', 'true');
-            window.location.href = 'dashboard.html';
-        }
-
-        // Ask Lama Widget Controller
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleBtn = document.getElementById('toggleAskLamaBtn');
-            const chatBox = document.getElementById('askLamaChatBox');
-            const closeBtn = document.getElementById('closeAskLamaBtn');
-            const form = document.getElementById('askLamaForm');
-            const input = document.getElementById('askLamaInput');
-            const messages = document.getElementById('askLamaMessages');
-
-            if (toggleBtn && chatBox) {
-                toggleBtn.addEventListener('click', () => {
-                    chatBox.classList.toggle('hidden');
-                });
-            }
-
-            if (closeBtn && chatBox) {
-                closeBtn.addEventListener('click', () => {
-                    chatBox.classList.add('hidden');
-                });
-            }
-
-            if (form && input && messages) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const text = input.value.trim();
-                    if(!text) return;
-
-                    const userMsg = document.createElement('div');
-                    userMsg.className = 'bg-indigo-600 text-white p-2.5 rounded-xl max-w-[85%] ml-auto text-left';
-                    userMsg.textContent = text;
-                    messages.appendChild(userMsg);
-                    input.value = '';
-                    messages.scrollTop = messages.scrollHeight;
-
-                    setTimeout(() => {
-                        let reply = "Thanks for your inquiry! Fill out your school name, address, and upload your logo to instantly generate your custom school portal.";
-                        const lowerQ = text.toLowerCase();
-
-                        if (lowerQ.includes('logo') || lowerQ.includes('kb') || lowerQ.includes('size')) {
-                            reply = "School logos must be under 50 KB so they load efficiently on student report cards, ID cards, and fee vouchers.";
-                        } else if (lowerQ.includes('emis') || lowerQ.includes('code') || lowerQ.includes('address')) {
-                            reply = "You can optionally provide your EMIS and Registration codes in Step 2; they will appear on all your school documents.";
-                        } else if (lowerQ.includes('password') || lowerQ.includes('eye')) {
-                            reply = "You can click the eye icon next to the password input field anytime to reveal or hide your password characters.";
-                        }
-
-                        const aiMsg = document.createElement('div');
-                        aiMsg.className = 'bg-indigo-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-2.5 rounded-xl max-w-[85%] text-left';
-                        aiMsg.textContent = reply;
-                        messages.appendChild(aiMsg);
-                        messages.scrollTop = messages.scrollHeight;
-                    }, 600);
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+            localStorage.removeItem('l

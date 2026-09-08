@@ -6,6 +6,8 @@
     <title id="pageTitle">Universal Academic Admission & Registration Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Shared Multi-School Storage Engine -->
+    <script src="school-store.js"></script>
     <style>
         body {
             font-family: 'Outfit', sans-serif;
@@ -96,8 +98,9 @@
             <h2 class="text-xs font-black uppercase tracking-wider text-indigo-400">Universal Academic Portal</h2>
             <p class="text-[10px] text-slate-400">Optimized Full-Page A4 Admission Form</p>
         </div>
-        <div class="flex space-x-3">
-            <a href="../dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">
+        <div class="flex items-center space-x-3">
+            <div id="schoolSwitcherContainer"></div>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">
                 &larr; Back to Hub
             </a>
             <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">
@@ -337,33 +340,45 @@
 
     <!-- Dynamic Script for Hub Integration & Calculations -->
     <script>
-        // 1. Load active configuration from localStorage hub
-        const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
-        const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || "Allama Iqbal Medical School";
-        const shortCode = activeConfig.shortCode || "AIM";
-        const schoolAddress = activeConfig.address || localStorage.getItem('lamastudio_school_address') || "Main Campus: Elite Knowledge Park, Sector 4";
-        const schoolPhone = activeConfig.phone || localStorage.getItem('lamastudio_school_phone') || "+92 300 0000000";
-        const schoolLogo = activeConfig.logo || localStorage.getItem('lamastudio_school_logo') || "";
-        const schoolType = (activeConfig.type || localStorage.getItem('lamastudio_school_type') || 'Private').toLowerCase();
-        const schoolLevel = (activeConfig.level || localStorage.getItem('lamastudio_school_level') || 'High').toLowerCase();
+        // School-specific state, populated by renderAdmissionsForm() below and
+        // read by the class-nomenclature / fee-tier / chat logic further down.
+        let schoolName = "Allama Iqbal Medical School";
+        let schoolAddress = "Main Campus: Elite Knowledge Park, Sector 4";
+        let schoolPhone = "+92 300 0000000";
+        let schoolType = "private";
+        let schoolLevel = "high";
 
-        // 2. Inject Dynamic School Details (Name, Address, Phone, Logo, Code)
-        document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
-        document.getElementById('headerSchoolName').innerText = schoolName;
-        document.getElementById('headerSchoolMeta').innerText = `${schoolAddress} • UAN: ${schoolPhone} • EMIS/Reg Code: ${shortCode}`;
-        
-        // Inject Logo if available, otherwise show short code initials
-        const logoContainer = document.getElementById('schoolLogoContainer');
-        if (schoolLogo) {
-            logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
-        } else {
-            logoContainer.innerText = shortCode.slice(0, 3).toUpperCase();
+        // 1. Load active school (via shared SchoolStore) and inject details into the form
+        function renderAdmissionsForm() {
+            const school = SchoolStore.getActive() || {};
+            schoolName = school.name || "Allama Iqbal Medical School";
+            const shortCode = school.shortCode || SchoolStore.deriveShortCode(schoolName);
+            schoolAddress = school.address || "Main Campus: Elite Knowledge Park, Sector 4";
+            schoolPhone = school.phone || "+92 300 0000000";
+            const schoolLogo = school.logo || "";
+            schoolType = (school.type || 'Private').toLowerCase();
+            schoolLevel = (school.level || 'High').toLowerCase();
+
+            document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
+            document.getElementById('headerSchoolName').innerText = schoolName;
+            document.getElementById('headerSchoolMeta').innerText = `${schoolAddress} • UAN: ${schoolPhone} • EMIS/Reg Code: ${shortCode}`;
+
+            // Inject Logo if available, otherwise show short code initials
+            const logoContainer = document.getElementById('schoolLogoContainer');
+            if (schoolLogo) {
+                logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                logoContainer.innerText = shortCode.slice(0, 3).toUpperCase();
+            }
+
+            document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
+            document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
+
+            populateClassOptions();
+            populateFeeTierOptions();
         }
 
-        document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
-        document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
-
-        // 3. Automatic Age Calculator Engine
+        // 2. Automatic Age Calculator Engine
         function calculateAge() {
             const dobVal = document.getElementById('dobInput').value;
             const ageField = document.getElementById('ageInput');
@@ -398,40 +413,44 @@
         }
 
         // 4. Pakistan Sector-Based Class Nomenclature Engine
-        const classSelect = document.getElementById('applyingClassSelect');
-        const isGovt = schoolType.includes('govt') || schoolType.includes('government');
+        function populateClassOptions() {
+            const classSelect = document.getElementById('applyingClassSelect');
+            const isGovt = schoolType.includes('govt') || schoolType.includes('government');
+            let gradeOptionsHTML = '';
 
-        let gradeOptionsHTML = '';
-
-        if (isGovt) {
-            if (schoolLevel.includes('primary')) {
-                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
-            } else if (schoolLevel.includes('middle')) {
-                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
-            } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
-                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>1st Year (Grade 11)</option><option selected>2nd Year (Grade 12)</option>`;
+            if (isGovt) {
+                if (schoolLevel.includes('primary')) {
+                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
+                } else if (schoolLevel.includes('middle')) {
+                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
+                } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
+                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>1st Year (Grade 11)</option><option selected>2nd Year (Grade 12)</option>`;
+                } else {
+                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
+                }
             } else {
-                gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
+                if (schoolLevel.includes('primary')) {
+                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
+                } else if (schoolLevel.includes('middle')) {
+                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
+                } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
+                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>First Year (11th)</option><option selected>Second Year (12th)</option>`;
+                } else {
+                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
+                }
             }
-        } else {
-            if (schoolLevel.includes('primary')) {
-                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
-            } else if (schoolLevel.includes('middle')) {
-                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
-            } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
-                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>First Year (11th)</option><option selected>Second Year (12th)</option>`;
-            } else {
-                gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
-            }
+            classSelect.innerHTML = gradeOptionsHTML;
         }
-        classSelect.innerHTML = gradeOptionsHTML;
 
         // 5. Conditional Fee Structure Dropdown
-        const feeTierSelect = document.getElementById('feeTierSelect');
-        if (isGovt) {
-            feeTierSelect.innerHTML = `<option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>`;
-        } else {
-            feeTierSelect.innerHTML = `<option value="Standard" selected>Standard Tuition Plan</option><option value="Scholarship">Merit Scholarship Grant</option><option value="Sibling">Sibling Concession Plan</option><option value="Exempt">Fully Exempt / Free Tier</option>`;
+        function populateFeeTierOptions() {
+            const feeTierSelect = document.getElementById('feeTierSelect');
+            const isGovt = schoolType.includes('govt') || schoolType.includes('government');
+            if (isGovt) {
+                feeTierSelect.innerHTML = `<option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>`;
+            } else {
+                feeTierSelect.innerHTML = `<option value="Standard" selected>Standard Tuition Plan</option><option value="Scholarship">Merit Scholarship Grant</option><option value="Sibling">Sibling Concession Plan</option><option value="Exempt">Fully Exempt / Free Tier</option>`;
+            }
         }
 
         // 6. Image preview handler
@@ -477,6 +496,10 @@
                 container.scrollTop = container.scrollHeight;
             }, 400);
         }
+
+        // Initial render + school switcher wiring
+        renderAdmissionsForm();
+        SchoolStore.renderSwitcher(document.getElementById('schoolSwitcherContainer'), () => renderAdmissionsForm());
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Govt Primary School Shah Sadar Din | Campus Command Hub</title>
+    <title id="pageTitle">Campus Command Hub</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for Quantum Telemetry Wave Chart -->
@@ -20,11 +20,11 @@
     <!-- Top Navigation Bar -->
     <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
-                <span class="text-xs font-black text-white">GPS</span>
+            <div id="schoolShortCodeBadge" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
+                <span id="navShortCode" class="text-xs font-black text-white">GPS</span>
             </div>
             <div>
-                <h1 class="text-sm font-black tracking-wider text-white">GOVT PRIMARY SCHOOL <span class="text-purple-400 glow-text-purple">SHAH SADAR DIN</span></h1>
+                <h1 class="text-sm font-black tracking-wider text-white uppercase"><span id="navSchoolName">Campus Command Hub</span></h1>
                 <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Multi-Role Portal • Campus Command</p>
             </div>
         </div>
@@ -47,14 +47,14 @@
                         <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
                         <span class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Campus Node Active</span>
                     </div>
-                    <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight">Govt Primary School Shah Sadar Din</h2>
+                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Campus Command Hub</h2>
                     <p class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
                         Central telemetry, verified schedules, and gateway access nodes for students, parents, faculty, and administrators.
                     </p>
                 </div>
                 <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
                     <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller</p>
-                    <p class="text-xs font-bold text-cyan-400 mt-0.5">Head Master / Principal</p>
+                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">Principal / Admin</p>
                     <p class="text-[10px] text-slate-400 mt-1">Sync Status: <span class="text-emerald-400 font-bold">99.8% Optimal</span></p>
                 </div>
             </div>
@@ -150,7 +150,6 @@
 
         <!-- Community Hub: News, Schedules, Exams & Events -->
         <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
             <!-- Announcements / News -->
             <div class="cyber-card rounded-2xl p-5 flex flex-col justify-between">
                 <div>
@@ -216,24 +215,33 @@
                     </div>
                 </div>
             </div>
-
         </section>
-
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
-        <p>&copy; 2026 Govt Primary School Shah Sadar Din • Campus Management Architecture</p>
+        <p id="footerText">&copy; 2026 Campus Management Architecture</p>
     </footer>
 
-    <!-- Scripts: LocalStorage Counter & Glowing Wave Chart -->
+    <!-- Dynamic Initialization Script -->
     <script>
-        const totalCount = localStorage.getItem('totalStudents') || '120';
-        const counterElement = document.getElementById('totalStudentsCount');
-        if (counterElement) {
-            counterElement.innerText = totalCount;
-        }
+        // 1. Load active school configuration from localStorage
+        const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
+        const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || 'Campus Command Hub';
+        const shortCode = activeConfig.shortCode || schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'SCH';
+        const totalCount = localStorage.getItem('lamastudio_enrollment') || localStorage.getItem('totalStudents') || '150';
+        const principalName = localStorage.getItem('lamastudio_principal') || 'Principal / Admin';
 
+        // 2. Inject dynamic text into HTML elements
+        document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
+        document.getElementById('navSchoolName').innerText = schoolName;
+        document.getElementById('navShortCode').innerText = shortCode;
+        document.getElementById('heroSchoolName').innerText = schoolName;
+        document.getElementById('principalDisplay').innerText = principalName;
+        document.getElementById('totalStudentsCount').innerText = totalCount;
+        document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} • Campus Management Architecture`;
+
+        // 3. Render Chart with dynamic enrollment data
         const ctx = document.getElementById('telemetryChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
@@ -242,7 +250,7 @@
                 datasets: [
                     {
                         label: 'Enrollment Growth',
-                        data: [310, 350, 390, 420, parseInt(totalCount)],
+                        data: [Math.max(50, parseInt(totalCount) - 40), Math.max(60, parseInt(totalCount) - 30), Math.max(70, parseInt(totalCount) - 20), Math.max(80, parseInt(totalCount) - 10), parseInt(totalCount)],
                         borderColor: '#a855f7',
                         backgroundColor: 'rgba(168, 85, 247, 0.1)',
                         borderWidth: 2,

@@ -10,13 +10,19 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <link rel="stylesheet" href="assets/css/config.css">
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printableArea, #printableArea *, #printableReportArea, #printableReportArea * { visibility: visible; }
+            #printableArea, #printableReportArea { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
     <!-- Top Navigation -->
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center">
         <div class="flex items-center space-x-3">
-            <!-- Dynamic School Logo or Fallback Initials -->
             <div id="headerLogoContainer" class="bg-indigo-600 text-white font-bold p-2 rounded-xl h-10 w-10 flex items-center justify-center overflow-hidden shadow-md flex-shrink-0">
                 <span id="headerLogoInitials" class="text-xs">AIM</span>
             </div>
@@ -25,14 +31,14 @@
                     <h1 id="navSchoolName" class="text-sm md:text-base font-bold tracking-tight text-slate-900 dark:text-white">Allama Iqbal Medical School</h1>
                     <span id="navSchoolSectorBadge" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded">Private</span>
                 </div>
-                <p id="navSchoolAddress" class="text-[11px] text-slate-500 truncate max-w-xs md:max-w-md">Main Campus: Loading address...</p>
+                <p id="navSchoolAddress" class="text-[11px] text-slate-500 truncate max-w-xs md:max-w-md">Main Campus: Elite Knowledge Park, Sector 4</p>
             </div>
         </div>
 
         <div class="flex items-center space-x-3">
             <div class="hidden sm:block text-right">
                 <p class="text-xs font-semibold text-slate-800 dark:text-slate-200" id="headerNodeController">Wajid Hussain</p>
-                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">● Node Active</p>
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">● Campus Node Active</p>
             </div>
             <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
                 Logout
@@ -42,46 +48,64 @@
     </header>
 
     <!-- Main Dashboard Body -->
-    <main class="max-w-7xl mx-auto px-4 md:px-8 py-8 flex-grow w-full space-y-8">
+    <main class="max-w-6xl mx-auto px-6 py-12 flex-grow w-full space-y-12 text-left">
         
         <!-- School Banner & Telemetry Header -->
-        <section class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div class="space-y-1">
-                <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 text-xs font-semibold mb-2">
-                    <span>⚡ Campus Command Center</span>
-                    <span>•</span>
-                    <span id="bannerStudentPattern">ID Format: AIMS-2026-000</span>
+        <section class="space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div>
+                    <span id="bannerShortAbbr" class="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-950 px-2.5 py-1 rounded-md">AIM</span>
+                    <h2 id="bannerSchoolName" class="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mt-2">Allama Iqbal Medical School</h2>
+                    <p id="bannerSubtext" class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">Multi-Role Portal • Campus Command &bull; ID Format: <span id="bannerStudentPattern" class="font-mono text-indigo-600">AIMS-2026-000</span></p>
                 </div>
-                <h2 id="bannerSchoolName" class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white">Allama Iqbal Medical School</h2>
-                <p id="bannerFullDetails" class="text-xs md:text-sm text-slate-500 dark:text-slate-400">
-                    Central telemetry, verified schedules, and gateway access nodes for students, parents, faculty, and administrators.
-                </p>
+                <!-- Document Generation Quick Action Buttons -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="openVoucherModal()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer shadow-sm">
+                        🖨️ Fee Voucher
+                    </button>
+                    <button onclick="openReportCardModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-md shadow-indigo-600/30 cursor-pointer">
+                        📊 Report Card
+                    </button>
+                </div>
             </div>
-            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-left min-w-[240px]">
-                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Node Metadata</p>
-                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1">Controller: <span id="metaController" class="font-normal text-slate-500">Wajid Hussain</span></p>
-                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">EMIS / Reg Code: <span id="metaCodes" class="font-mono font-normal text-indigo-600">AIM</span></p>
-                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Sync Status: <span class="text-emerald-500 font-mono">99.8% Optimal</span></p>
+            
+            <p id="bannerFullDetails" class="text-slate-600 dark:text-slate-400 text-xs md:text-sm leading-relaxed">
+                Central telemetry, verified schedules, and gateway access nodes for students, parents, faculty, and administrators.
+            </p>
+            
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex flex-wrap justify-between items-center gap-4 text-xs">
+                <div>
+                    <span class="text-slate-400 uppercase tracking-wider text-[10px] block font-bold">Node Controller</span>
+                    <span id="metaController" class="font-bold text-slate-800 dark:text-slate-200">Wajid Hussain</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 uppercase tracking-wider text-[10px] block font-bold">Sync Status</span>
+                    <span class="text-emerald-500 font-mono font-bold">99.8% Optimal</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 uppercase tracking-wider text-[10px] block font-bold">EMIS & Reg Codes</span>
+                    <span id="metaCodes" class="font-mono font-bold text-indigo-600">AIM</span>
+                </div>
             </div>
         </section>
 
         <!-- Quick Telemetry Stats Grid -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl shadow-sm">
                 <p class="text-xs text-slate-500">Total Students</p>
                 <p id="statEnrollment" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">140</p>
             </div>
-            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl shadow-sm">
                 <p class="text-xs text-slate-500">Attendance Index</p>
-                <p class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">94.2%</p>
+                <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">94.2%</p>
             </div>
-            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl shadow-sm">
                 <p class="text-xs text-slate-500">Active Faculty</p>
                 <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">24</p>
             </div>
-            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-5 rounded-2xl shadow-sm">
                 <p class="text-xs text-slate-500">Mid-Term Pass Rate</p>
-                <p class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">88.7%</p>
+                <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">88.7%</p>
             </div>
         </div>
 
@@ -94,7 +118,7 @@
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Student Portal</h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Access attendance logs, individual results, profiles, and subject materials.</p>
                 </div>
-                <button onclick="alert('Student Portal Module Loaded for ' + localStorage.getItem('lamastudio_registered_school'))" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Launch Portal &rarr;</button>
+                <button onclick="openReportCardModal()" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Launch Portal &rarr;</button>
             </div>
 
             <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
@@ -104,7 +128,7 @@
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Teacher Portal</h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Manage class rosters, update grade books, and log daily section reports.</p>
                 </div>
-                <button onclick="alert('Teacher Portal Module Loaded')" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Launch Portal &rarr;</button>
+                <button onclick="alert('Teacher Portal Module Active')" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Launch Portal &rarr;</button>
             </div>
 
             <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
@@ -114,13 +138,13 @@
                     <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Admin Panel</h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Manage fee structures, fee clearance records, and master student databases.</p>
                 </div>
-                <button onclick="alert('Admin Panel Secured Session Active')" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Secure Access &rarr;</button>
+                <button onclick="openVoucherModal()" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Secure Access &rarr;</button>
             </div>
         </div>
 
-        <!-- Announcements & Schedule Section -->
+        <!-- Announcements & Schedules -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm text-left">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm">
                 <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
                     <span>📢 Announcements</span>
                     <span class="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 px-2 py-0.5 rounded">Live</span>
@@ -129,12 +153,12 @@
                     <div class="border-l-2 border-indigo-500 pl-3">
                         <p class="text-slate-400 text-[10px]">March 15, 2026</p>
                         <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">Admissions Open (Katchi - Class 12)</p>
-                        <p class="text-slate-500 mt-1">Online registration link is active for new applicants under pattern <span id="announcementPattern" class="font-mono text-indigo-600">AIMS-2026-000</span>.</p>
+                        <p class="text-slate-500 mt-1">Online registration link is active for new applicants under ID format <span id="announcementPattern" class="font-mono text-indigo-600">AIMS-2026-000</span>.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm text-left">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm">
                 <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
                     <span>📅 Schedule & Exams</span>
                     <span class="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-600 px-2 py-0.5 rounded">Important</span>
@@ -150,8 +174,173 @@
         </div>
     </main>
 
+    <!-- FEE VOUCHER GENERATOR MODAL -->
+    <div id="voucherModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl p-6 shadow-2xl text-left relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeVoucherModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold cursor-pointer">✕</button>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Fee Voucher Challan Generator</h3>
+            <p class="text-xs text-slate-500 mb-4">Official monthly fee challan stamped with your institution branding.</p>
+
+            <!-- Printable Voucher Area -->
+            <div id="printableArea" class="bg-white border-2 border-slate-300 rounded-xl p-6 text-slate-900 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <div id="voucherModalLogo" class="w-12 h-12 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center overflow-hidden">
+                            AIM
+                        </div>
+                        <div>
+                            <h4 id="vSchoolName" class="text-base font-extrabold uppercase">Allama Iqbal Medical School</h4>
+                            <p id="vSchoolAddress" class="text-[10px] text-slate-600">Main Campus: DG Khan</p>
+                            <p id="vSchoolCodes" class="text-[10px] text-indigo-600 font-mono font-semibold">EMIS: 32301011 | Reg: RB-9821</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase">Monthly Challan</span>
+                        <p class="text-[10px] text-slate-500 mt-1">Due Date: 20th March 2026</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg">
+                    <div>
+                        <p><strong>Student Name:</strong> Abdullah Wajid</p>
+                        <p><strong>Student ID:</strong> <span id="vStudentId" class="font-mono text-indigo-600 font-semibold">AIM-2026-685</span></p>
+                    </div>
+                    <div>
+                        <p><strong>Class / Section:</strong> 10th Grade</p>
+                        <p><strong>Billing Month:</strong> March 2026</p>
+                    </div>
+                </div>
+
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-300 text-left">
+                            <th class="p-2">Particulars / Fee Head</th>
+                            <th class="p-2 text-right">Amount (PKR)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr>
+                            <td class="p-2">Tuition Fee</td>
+                            <td class="p-2 text-right font-mono">3,500</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2">Digital Portal & Library Fund</td>
+                            <td class="p-2 text-right font-mono">500</td>
+                        </tr>
+                        <tr class="font-bold bg-slate-50">
+                            <td class="p-2">Total Payable Amount</td>
+                            <td class="p-2 text-right font-mono text-indigo-600">PKR 4,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="flex justify-between items-end pt-4 border-t border-slate-200 text-[10px] text-slate-600">
+                    <div>
+                        <p><strong>Bank Channels:</strong> HBL / Easypaisa / Raast</p>
+                        <p>Please attach bank receipt to accounts office.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="h-8 border-b border-dashed border-slate-400 w-32 mb-1"></div>
+                        <p class="font-semibold">Authorized Signature</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeVoucherModal()" class="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer">Close</button>
+                <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow transition cursor-pointer">🖨️ Print / Save Voucher</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT CARD GENERATOR MODAL -->
+    <div id="reportCardModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-full max-w-2xl rounded-2xl p-6 shadow-2xl text-left relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeReportCardModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white text-base font-bold cursor-pointer">✕</button>
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Student Term Exam Report Card</h3>
+            <p class="text-xs text-slate-500 mb-4">Official transcript generated with custom institution branding and ID pattern.</p>
+
+            <!-- Printable Report Card Area -->
+            <div id="printableReportArea" class="bg-white border-2 border-slate-300 rounded-xl p-6 text-slate-900 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+                    <div class="flex items-center space-x-3">
+                        <div id="rcModalLogo" class="w-12 h-12 bg-indigo-600 text-white font-bold rounded-xl flex items-center justify-center overflow-hidden">
+                            AIM
+                        </div>
+                        <div>
+                            <h4 id="rcSchoolName" class="text-base font-extrabold uppercase">Allama Iqbal Medical School</h4>
+                            <p id="rcSchoolAddress" class="text-[10px] text-slate-600">Main Campus: DG Khan</p>
+                            <p id="rcSchoolCodes" class="text-[10px] text-indigo-600 font-mono font-semibold">EMIS: 32301011 | Reg: RB-9821</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase">Mid-Term Transcript</span>
+                        <p class="text-[10px] text-slate-500 mt-1">Session: 2025-2026</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg">
+                    <div>
+                        <p><strong>Student Name:</strong> Fatima Wajid</p>
+                        <p><strong>Student ID:</strong> <span id="rcStudentId" class="font-mono text-indigo-600 font-semibold">AIM-2026-685</span></p>
+                    </div>
+                    <div>
+                        <p><strong>Class:</strong> 9th Grade</p>
+                        <p><strong>Attendance:</strong> 96% (Optimal)</p>
+                    </div>
+                </div>
+
+                <table class="w-full text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-300 text-left">
+                            <th class="p-2">Subject Name</th>
+                            <th class="p-2 text-center">Total</th>
+                            <th class="p-2 text-center">Obtained</th>
+                            <th class="p-2 text-right">Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr>
+                            <td class="p-2">Mathematics</td>
+                            <td class="p-2 text-center">100</td>
+                            <td class="p-2 text-center font-mono">92</td>
+                            <td class="p-2 text-right font-bold text-emerald-600">A+</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2">Physics</td>
+                            <td class="p-2 text-center">75</td>
+                            <td class="p-2 text-center font-mono">68</td>
+                            <td class="p-2 text-right font-bold text-emerald-600">A+</td>
+                        </tr>
+                        <tr class="font-bold bg-slate-50">
+                            <td class="p-2">Aggregate Result</td>
+                            <td class="p-2 text-center">175</td>
+                            <td class="p-2 text-center font-mono">160 (91%)</td>
+                            <td class="p-2 text-right text-indigo-600">Passed (A+)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="flex justify-between items-end pt-4 border-t border-slate-200 text-[10px] text-slate-600">
+                    <div>
+                        <p><strong>Principal Remarks:</strong> Outstanding academic performance.</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="h-8 border-b border-dashed border-slate-400 w-32 mb-1"></div>
+                        <p class="font-semibold">Principal Signature</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeReportCardModal()" class="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer">Close</button>
+                <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-bold shadow transition cursor-pointer">🖨️ Print / Save Report Card</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-8 px-6 text-center text-xs text-slate-500">
         <p id="footerText">&copy; 2026 Allama Iqbal Medical School • Campus Management Architecture</p>
     </footer>
 
@@ -177,47 +366,75 @@
             }
         })();
 
-        // Populate Dashboard with Actual Registered School Data from localStorage
+        function openVoucherModal() { document.getElementById('voucherModal').classList.remove('hidden'); }
+        function closeVoucherModal() { document.getElementById('voucherModal').classList.add('hidden'); }
+        function openReportCardModal() { document.getElementById('reportCardModal').classList.remove('hidden'); }
+        function closeReportCardModal() { document.getElementById('reportCardModal').classList.add('hidden'); }
+
+        // Populate Dashboard & Document Templates with Actual Registered School Data from localStorage
         document.addEventListener('DOMContentLoaded', () => {
             const schoolName = localStorage.getItem('lamastudio_registered_school') || localStorage.getItem('lamastudio_admin_username') || 'Allama Iqbal Medical School';
-            const schoolAddress = localStorage.getItem('lamastudio_school_address') || 'Main Campus: Registered Institution Address';
+            const schoolAddress = localStorage.getItem('lamastudio_school_address') || 'Main Campus: Elite Knowledge Park, Sector 4';
             const schoolCity = localStorage.getItem('lamastudio_school_city') || 'DG Khan';
             const sector = localStorage.getItem('lk_school_sector') || 'Private';
             const principal = localStorage.getItem('lamastudio_principal') || 'Wajid Hussain';
             const emis = localStorage.getItem('lamastudio_emis_code') || '';
             const reg = localStorage.getItem('lamastudio_reg_code') || '';
             const enrollment = localStorage.getItem('lamastudio_enrollment') || '140';
-            const studentPattern = localStorage.getItem('lamastudio_student_id_format') || 'AIMS-2026-685';
+            const studentPattern = localStorage.getItem('lamastudio_student_id_format') || 'AIM-2026-685';
             const logoBase64 = localStorage.getItem('lamastudio_school_logo');
+
+            // Generate short abbreviation (e.g. AIM)
+            const words = schoolName.trim().split(/\s+/);
+            let abbr = words.map(w => w[0] || '').join('').toUpperCase().slice(0, 4);
+            if(abbr.length < 2) abbr = 'AIM';
 
             // Set Page Titles & Headings
             document.getElementById('pageTitle').textContent = `${schoolName} | Campus Command`;
             document.getElementById('navSchoolName').textContent = schoolName;
             document.getElementById('navSchoolSectorBadge').textContent = sector;
-            document.getElementById('navSchoolAddress').textContent = `${schoolAddress}, ${schoolCity}`;
+            document.getElementById('navSchoolAddress').textContent = `${schoolAddress}`;
+            document.getElementById('bannerShortAbbr').textContent = abbr;
             document.getElementById('bannerSchoolName').textContent = schoolName;
-            document.getElementById('bannerFullDetails').textContent = `Central telemetry, verified schedules, and gateway access nodes for ${schoolName}. Located at ${schoolAddress}.`;
-            document.getElementById('bannerStudentPattern').textContent = `ID Format: ${studentPattern}`;
+            document.getElementById('bannerStudentPattern').textContent = studentPattern;
+            document.getElementById('bannerFullDetails').textContent = `Central telemetry, verified schedules, and gateway access nodes for ${schoolName}. Located at ${schoolAddress}, ${schoolCity}.`;
             document.getElementById('headerNodeController').textContent = principal;
             document.getElementById('metaController').textContent = principal;
 
             // Format EMIS / Reg Codes display
             let codeDisplay = emis ? `EMIS: ${emis}` : '';
             if (reg) codeDisplay += codeDisplay ? ` | Reg: ${reg}` : `Reg: ${reg}`;
-            if (!codeDisplay) codeDisplay = 'Standard Registration Node';
+            if (!codeDisplay) codeDisplay = `${abbr} Registration Node`;
             document.getElementById('metaCodes').textContent = codeDisplay;
 
             document.getElementById('statEnrollment').textContent = enrollment;
             document.getElementById('announcementPattern').textContent = studentPattern;
             document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} • Campus Management Architecture`;
 
-            // Render Logo Image if uploaded in Step 2 (< 50kb)
+            // Update Fee Voucher & Report Card Document Fields dynamically
+            document.getElementById('vSchoolName').textContent = schoolName;
+            document.getElementById('vSchoolAddress').textContent = `${schoolAddress}, ${schoolCity}`;
+            document.getElementById('vSchoolCodes').textContent = codeDisplay;
+            document.getElementById('vStudentId').textContent = studentPattern;
+
+            document.getElementById('rcSchoolName').textContent = schoolName;
+            document.getElementById('rcSchoolAddress').textContent = `${schoolAddress}, ${schoolCity}`;
+            document.getElementById('rcSchoolCodes').textContent = codeDisplay;
+            document.getElementById('rcStudentId').textContent = studentPattern;
+
+            // Render Logo Image if uploaded in Step 2 (< 50kb) across all headers & modals
             const logoContainer = document.getElementById('headerLogoContainer');
-            if (logoBase64 && logoContainer) {
-                logoContainer.innerHTML = `<img src="${logoBase64}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
-            } else if (logoContainer) {
-                const initials = schoolName.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 3);
-                document.getElementById('headerLogoInitials').textContent = initials || 'AIM';
+            const vLogo = document.getElementById('voucherModalLogo');
+            const rcLogo = document.getElementById('rcModalLogo');
+
+            if (logoBase64) {
+                if (logoContainer) logoContainer.innerHTML = `<img src="${logoBase64}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
+                if (vLogo) vLogo.innerHTML = `<img src="${logoBase64}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
+                if (rcLogo) rcLogo.innerHTML = `<img src="${logoBase64}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                if (logoContainer) document.getElementById('headerLogoInitials').textContent = abbr;
+                if (vLogo) vLogo.textContent = abbr;
+                if (rcLogo) rcLogo.textContent = abbr;
             }
         });
 

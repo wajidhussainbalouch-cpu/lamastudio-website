@@ -233,9 +233,32 @@
         // 1. Multi-Account & School Configuration Handler
         let schoolsList = JSON.parse(localStorage.getItem('lamastudio_school_accounts')) || [];
         const allSchoolsStorage = JSON.parse(localStorage.getItem('lamastudio_all_schools')) || [];
+        
+        // Sync arrays if needed and ensure current school is registered as an account
         if (schoolsList.length === 0 && allSchoolsStorage.length > 0) {
             schoolsList = allSchoolsStorage;
         }
+
+        // Check if currently registered single school exists and isn't in the list yet
+        const currentRegisteredSchool = localStorage.getItem('lamastudio_registered_school');
+        if (currentRegisteredSchool) {
+            const exists = schoolsList.some(s => s.name === currentRegisteredSchool);
+            if (!exists) {
+                const currentObj = {
+                    id: 'school_' + Date.now(),
+                    name: currentRegisteredSchool,
+                    address: localStorage.getItem('lamastudio_school_address') || localStorage.getItem('lamastudio_address'),
+                    uan: localStorage.getItem('lamastudio_phone') || localStorage.getItem('lamastudio_uan'),
+                    shortCode: localStorage.getItem('lamastudio_emis_code') || currentRegisteredSchool.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3),
+                    principal: localStorage.getItem('lamastudio_principal'),
+                    enrollment: localStorage.getItem('lamastudio_enrollment'),
+                    logo: localStorage.getItem('lamastudio_logo')
+                };
+                schoolsList.push(currentObj);
+                localStorage.setItem('lamastudio_school_accounts', JSON.stringify(schoolsList));
+            }
+        }
+
         let activeSchoolId = localStorage.getItem('activeSchoolId');
 
         // Populate switcher if multiple schools exist
@@ -262,11 +285,18 @@
                 localStorage.setItem('activeSchoolConfig', JSON.stringify(targetSchool));
                 localStorage.setItem('activeSchoolId', schoolIdentifier);
                 localStorage.setItem('lamastudio_registered_school', targetSchool.name);
-                if (targetSchool.address) localStorage.setItem('lamastudio_address', targetSchool.address);
-                if (targetSchool.uan || targetSchool.phone) localStorage.setItem('lamastudio_uan', targetSchool.uan || targetSchool.phone);
+                if (targetSchool.address) {
+                    localStorage.setItem('lamastudio_address', targetSchool.address);
+                    localStorage.setItem('lamastudio_school_address', targetSchool.address);
+                }
+                if (targetSchool.uan || targetSchool.phone) {
+                    localStorage.setItem('lamastudio_uan', targetSchool.uan || targetSchool.phone);
+                    localStorage.setItem('lamastudio_phone', targetSchool.uan || targetSchool.phone);
+                }
                 if (targetSchool.principal) localStorage.setItem('lamastudio_principal', targetSchool.principal);
                 if (targetSchool.enrollment) localStorage.setItem('lamastudio_enrollment', targetSchool.enrollment);
                 if (targetSchool.logo) localStorage.setItem('lamastudio_logo', targetSchool.logo);
+                if (targetSchool.shortCode) localStorage.setItem('lamastudio_emis_code', targetSchool.shortCode);
                 location.reload();
             }
         }
@@ -274,11 +304,11 @@
         // 2. Load active school profile data from localStorage
         const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
         const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || 'Campus Command Hub';
-        const shortCode = activeConfig.shortCode || schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'AIM';
+        const shortCode = activeConfig.shortCode || localStorage.getItem('lamastudio_emis_code') || schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'AIM';
         const totalCount = localStorage.getItem('lamastudio_enrollment') || localStorage.getItem('totalStudents') || '120';
         const principalName = localStorage.getItem('lamastudio_principal') || 'Principal / Admin';
-        const schoolAddress = activeConfig.address || localStorage.getItem('lamastudio_address') || 'Main Campus: Elite Knowledge Park, Sector 4';
-        const schoolUAN = activeConfig.uan || localStorage.getItem('lamastudio_uan') || '+92 300 0000000';
+        const schoolAddress = activeConfig.address || localStorage.getItem('lamastudio_school_address') || localStorage.getItem('lamastudio_address') || 'Main Campus: Elite Knowledge Park, Sector 4';
+        const schoolUAN = activeConfig.uan || localStorage.getItem('lamastudio_phone') || localStorage.getItem('lamastudio_uan') || '+92 300 0000000';
         const schoolLogo = activeConfig.logo || localStorage.getItem('lamastudio_logo');
 
         // Teacher Database Counter Lookup
@@ -313,7 +343,6 @@
             const currentYear = new Date().getFullYear();
             return `${shortCode}-ADM-${currentYear}-${serialNum}`;
         }
-        // Expose helper globally for admission form integration
         window.generateNewStudentId = generateNewStudentId;
 
         // 5. Render Chart with dynamic enrollment data

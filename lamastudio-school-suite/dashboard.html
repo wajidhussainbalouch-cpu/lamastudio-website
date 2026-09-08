@@ -1,292 +1,231 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Campus Command Hub</title>
+    <title id="pageTitle">Campus Command | School Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js for Quantum Telemetry Wave Chart -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- External Custom Style Architecture -->
-    <link rel="stylesheet" href="config.css">
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="stylesheet" href="assets/css/config.css">
 </head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
-    <!-- Ambient Neon Background Glows -->
-    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-
-    <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
+    <!-- Top Navigation -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center">
         <div class="flex items-center space-x-3">
-            <div id="schoolShortCodeBadge" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
-                <span id="navShortCode" class="text-xs font-black text-white">GPS</span>
+            <!-- Dynamic School Logo or Fallback Initials -->
+            <div id="headerLogoContainer" class="bg-indigo-600 text-white font-bold p-2 rounded-xl h-10 w-10 flex items-center justify-center overflow-hidden shadow-md flex-shrink-0">
+                <span id="headerLogoInitials" class="text-xs">AIM</span>
             </div>
             <div>
-                <h1 class="text-sm font-black tracking-wider text-white uppercase"><span id="navSchoolName">Campus Command Hub</span></h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Multi-Role Portal • Campus Command</p>
+                <div class="flex items-center space-x-2">
+                    <h1 id="navSchoolName" class="text-sm md:text-base font-bold tracking-tight text-slate-900 dark:text-white">Allama Iqbal Medical School</h1>
+                    <span id="navSchoolSectorBadge" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-2 py-0.5 rounded">Private</span>
+                </div>
+                <p id="navSchoolAddress" class="text-[11px] text-slate-500 truncate max-w-xs md:max-w-md">Main Campus: Loading address...</p>
             </div>
         </div>
+
         <div class="flex items-center space-x-3">
-            <a href="admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
-                <span>⚡ New Admission</span>
-            </a>
+            <div class="hidden sm:block text-right">
+                <p class="text-xs font-semibold text-slate-800 dark:text-slate-200" id="headerNodeController">Wajid Hussain</p>
+                <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">● Node Active</p>
+            </div>
+            <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer">
+                Logout
+            </button>
+            <button onclick="toggleTheme()" id="themeIconBtn" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-yellow-400 text-xs cursor-pointer">☀️</button>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex-grow space-y-6 relative z-10">
+    <!-- Main Dashboard Body -->
+    <main class="max-w-7xl mx-auto px-4 md:px-8 py-8 flex-grow w-full space-y-8">
         
-        <!-- Hero Command Node Card -->
-        <section class="cyber-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
-            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
-                        <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Campus Node Active</span>
-                    </div>
-                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Campus Command Hub</h2>
-                    <p class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                        Central telemetry, verified schedules, and gateway access nodes for students, parents, faculty, and administrators.
-                    </p>
+        <!-- School Banner & Telemetry Header -->
+        <section class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div class="space-y-1">
+                <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 text-xs font-semibold mb-2">
+                    <span>⚡ Campus Command Center</span>
+                    <span>•</span>
+                    <span id="bannerStudentPattern">ID Format: AIMS-2026-000</span>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller</p>
-                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">Principal / Admin</p>
-                    <p class="text-[10px] text-slate-400 mt-1">Sync Status: <span class="text-emerald-400 font-bold">99.8% Optimal</span></p>
-                </div>
+                <h2 id="bannerSchoolName" class="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white">Allama Iqbal Medical School</h2>
+                <p id="bannerFullDetails" class="text-xs md:text-sm text-slate-500 dark:text-slate-400">
+                    Central telemetry, verified schedules, and gateway access nodes for students, parents, faculty, and administrators.
+                </p>
             </div>
-
-            <!-- Quick Metrics Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800">
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Total Students</p>
-                    <p id="totalStudentsCount" class="text-xl font-black text-purple-400 glow-text-purple mt-0.5">120</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Attendance Index</p>
-                    <p class="text-xl font-black text-emerald-400 mt-0.5">94.2%</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Active Faculty</p>
-                    <p class="text-xl font-black text-cyan-400 glow-text-cyan mt-0.5">24</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Mid-Term Pass Rate</p>
-                    <p class="text-xl font-black text-amber-400 mt-0.5">88.7%</p>
-                </div>
+            <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-left min-w-[240px]">
+                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Node Metadata</p>
+                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1">Controller: <span id="metaController" class="font-normal text-slate-500">Wajid Hussain</span></p>
+                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">EMIS / Reg Code: <span id="metaCodes" class="font-mono font-normal text-indigo-600">AIM</span></p>
+                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Sync Status: <span class="text-emerald-500 font-mono">99.8% Optimal</span></p>
             </div>
         </section>
 
-        <!-- Gateway Portals Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Student Portal -->
-            <a href="portals/student/index.html" class="cyber-card rounded-2xl p-5 hover:border-purple-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">🎓</span>
-                        <span class="text-[9px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">Gateway</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-purple-300 transition">Student Portal</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Access attendance logs, individual results, profiles, and subject materials.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-purple-400">
-                    <span>Launch Portal</span>
-                    <span class="group-hover:translate-x-1 transition">&rarr;</span>
-                </div>
-            </a>
-
-            <!-- Teacher Portal -->
-            <a href="portals/teacher/index.html" class="cyber-card-emerald rounded-2xl p-5 hover:border-emerald-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">👩‍🏫</span>
-                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">Gateway</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-emerald-300 transition">Teacher Portal</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Manage class rosters, update grade books, and log daily section reports.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-emerald-400">
-                    <span>Launch Portal</span>
-                    <span class="group-hover:translate-x-1 transition">&rarr;</span>
-                </div>
-            </a>
-
-            <!-- Admin Panel -->
-            <a href="portals/admin/index.html" class="cyber-card-amber rounded-2xl p-5 hover:border-amber-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">⚙️</span>
-                        <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Restricted</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-amber-300 transition">Admin Panel</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Manage fee structures, fee clearance records, and master student databases.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-amber-400">
-                    <span>Secure Access</span>
-                    <span class="group-hover:translate-x-1 transition">&rarr;</span>
-                </div>
-            </a>
-        </section>
-
-        <!-- Institutional Telemetry Wave Chart -->
-        <section class="cyber-card rounded-3xl p-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-slate-800 pb-3 gap-2">
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-purple-400">📈 Institutional Growth Telemetry</h3>
-                    <p class="text-[11px] text-slate-400">Enrollment trajectory versus academic performance index.</p>
-                </div>
-                <div class="flex space-x-2 text-[10px]">
-                    <span class="bg-purple-500/10 text-purple-300 px-2.5 py-1 rounded border border-purple-500/20">● Enrollment</span>
-                    <span class="bg-cyan-500/10 text-cyan-300 px-2.5 py-1 rounded border border-cyan-500/20">● Pass Rate</span>
-                </div>
+        <!-- Quick Telemetry Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+                <p class="text-xs text-slate-500">Total Students</p>
+                <p id="statEnrollment" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">140</p>
             </div>
-            <div class="relative h-56 w-full bg-slate-950/40 rounded-2xl p-3 border border-slate-800/80">
-                <canvas id="telemetryChart"></canvas>
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+                <p class="text-xs text-slate-500">Attendance Index</p>
+                <p class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">94.2%</p>
             </div>
-        </section>
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+                <p class="text-xs text-slate-500">Active Faculty</p>
+                <p class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">24</p>
+            </div>
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-xl shadow-sm">
+                <p class="text-xs text-slate-500">Mid-Term Pass Rate</p>
+                <p class="text-2xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">88.7%</p>
+            </div>
+        </div>
 
-        <!-- Community Hub: News, Schedules, Exams & Events -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Announcements / News -->
-            <div class="cyber-card rounded-2xl p-5 flex flex-col justify-between">
+        <!-- Portal Gateways Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400">📢 Announcements</h4>
-                        <span class="text-[9px] bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded">Live</span>
-                    </div>
-                    <div class="space-y-2.5 text-xs">
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-slate-400 font-semibold">March 15, 2026</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">Admissions Open (Katchi - Class 5)</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Online registration link is active for new applicants.</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-slate-400 font-semibold">March 10, 2026</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">Parent-Teacher Meeting</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Saturday from 9:00 AM to 1:00 PM across all sections.</p>
-                        </div>
+                    <span class="text-2xl">🎓</span>
+                    <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mt-3">Gateway</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Student Portal</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Access attendance logs, individual results, profiles, and subject materials.</p>
+                </div>
+                <button onclick="alert('Student Portal Module Loaded for ' + localStorage.getItem('lamastudio_registered_school'))" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Launch Portal &rarr;</button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+                <div>
+                    <span class="text-2xl">👩‍🏫</span>
+                    <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mt-3">Gateway</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Teacher Portal</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Manage class rosters, update grade books, and log daily section reports.</p>
+                </div>
+                <button onclick="alert('Teacher Portal Module Loaded')" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Launch Portal &rarr;</button>
+            </div>
+
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm flex flex-col justify-between">
+                <div>
+                    <span class="text-2xl">⚙️</span>
+                    <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider block mt-3">Restricted</span>
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-1">Admin Panel</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Manage fee structures, fee clearance records, and master student databases.</p>
+                </div>
+                <button onclick="alert('Admin Panel Secured Session Active')" class="mt-6 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline text-left cursor-pointer">Secure Access &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Announcements & Schedule Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm text-left">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                    <span>📢 Announcements</span>
+                    <span class="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 px-2 py-0.5 rounded">Live</span>
+                </h4>
+                <div class="space-y-4 text-xs">
+                    <div class="border-l-2 border-indigo-500 pl-3">
+                        <p class="text-slate-400 text-[10px]">March 15, 2026</p>
+                        <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">Admissions Open (Katchi - Class 12)</p>
+                        <p class="text-slate-500 mt-1">Online registration link is active for new applicants under pattern <span id="announcementPattern" class="font-mono text-indigo-600">AIMS-2026-000</span>.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Schedule & Exam Dates -->
-            <div class="cyber-card-emerald rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-emerald-400">📅 Schedule & Exams</h4>
-                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded">Important</span>
-                    </div>
-                    <div class="space-y-2.5 text-xs">
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-emerald-400 font-semibold">Mid-Term Examination</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">April 05 - April 18, 2026</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Date sheets posted on student individual profiles.</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-sky-400 font-semibold">Result Announcement</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">April 30, 2026</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Digital report cards available via portal log.</p>
-                        </div>
+            <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm text-left">
+                <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                    <span>📅 Schedule & Exams</span>
+                    <span class="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-600 px-2 py-0.5 rounded">Important</span>
+                </h4>
+                <div class="space-y-4 text-xs">
+                    <div class="border-l-2 border-amber-500 pl-3">
+                        <p class="text-slate-400 text-[10px]">April 05 - April 18, 2026</p>
+                        <p class="font-bold text-slate-800 dark:text-slate-200 mt-0.5">Mid-Term Examination</p>
+                        <p class="text-slate-500 mt-1">Date sheets posted on student individual profiles.</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Sports Week & Events -->
-            <div class="cyber-card-amber rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-amber-400">🏆 Campus Events</h4>
-                        <span class="text-[9px] bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded">Upcoming</span>
-                    </div>
-                    <div class="space-y-2.5 text-xs">
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-amber-400 font-semibold">Annual Sports Week</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">May 10 - May 15, 2026</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Football, races, and athletics competitions.</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-purple-400 font-semibold">Activity Day</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">May 25, 2026</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Student artwork showcases open for parents and community.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
-        <p id="footerText">&copy; 2026 Campus Management Architecture</p>
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 px-6 text-center text-xs text-slate-500">
+        <p id="footerText">&copy; 2026 Allama Iqbal Medical School • Campus Management Architecture</p>
     </footer>
 
-    <!-- Dynamic Initialization Script -->
+    <!-- Dashboard Logic Script -->
     <script>
-        // 1. Load active school configuration from localStorage
-        const activeConfig = JSON.parse(localStorage.getItem('activeSchoolConfig')) || {};
-        const schoolName = activeConfig.name || localStorage.getItem('lamastudio_registered_school') || 'Campus Command Hub';
-        const shortCode = activeConfig.shortCode || schoolName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'SCH';
-        const totalCount = localStorage.getItem('lamastudio_enrollment') || localStorage.getItem('totalStudents') || '150';
-        const principalName = localStorage.getItem('lamastudio_principal') || 'Principal / Admin';
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('lamastudio_theme', isDark ? 'dark' : 'light');
+            const themeBtn = document.getElementById('themeIconBtn');
+            if (themeBtn) themeBtn.textContent = isDark ? '🌙' : '☀️';
+        }
 
-        // 2. Inject dynamic text into HTML elements
-        document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
-        document.getElementById('navSchoolName').innerText = schoolName;
-        document.getElementById('navShortCode').innerText = shortCode;
-        document.getElementById('heroSchoolName').innerText = schoolName;
-        document.getElementById('principalDisplay').innerText = principalName;
-        document.getElementById('totalStudentsCount').innerText = totalCount;
-        document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} • Campus Management Architecture`;
+        (function() {
+            const savedTheme = localStorage.getItem('lamastudio_theme') || 'light';
+            const themeBtn = document.getElementById('themeIconBtn');
+            if(savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if (themeBtn) themeBtn.textContent = '🌙';
+            } else {
+                if (themeBtn) themeBtn.textContent = '☀️';
+            }
+        })();
 
-        // 3. Render Chart with dynamic enrollment data
-        const ctx = document.getElementById('telemetryChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb (Live)'],
-                datasets: [
-                    {
-                        label: 'Enrollment Growth',
-                        data: [Math.max(50, parseInt(totalCount) - 40), Math.max(60, parseInt(totalCount) - 30), Math.max(70, parseInt(totalCount) - 20), Math.max(80, parseInt(totalCount) - 10), parseInt(totalCount)],
-                        borderColor: '#a855f7',
-                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#a855f7'
-                    },
-                    {
-                        label: 'Pass Rate %',
-                        data: [82, 84, 85, 87, 88.7],
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointBackgroundColor: '#06b6d4'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#94a3b8', font: { size: 10 } },
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' }
-                    },
-                    y: {
-                        ticks: { color: '#94a3b8', font: { size: 10 } },
-                        grid: { color: 'rgba(255, 255, 255, 0.03)' }
-                    }
-                }
+        // Populate Dashboard with Actual Registered School Data from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const schoolName = localStorage.getItem('lamastudio_registered_school') || localStorage.getItem('lamastudio_admin_username') || 'Allama Iqbal Medical School';
+            const schoolAddress = localStorage.getItem('lamastudio_school_address') || 'Main Campus: Registered Institution Address';
+            const schoolCity = localStorage.getItem('lamastudio_school_city') || 'DG Khan';
+            const sector = localStorage.getItem('lk_school_sector') || 'Private';
+            const principal = localStorage.getItem('lamastudio_principal') || 'Wajid Hussain';
+            const emis = localStorage.getItem('lamastudio_emis_code') || '';
+            const reg = localStorage.getItem('lamastudio_reg_code') || '';
+            const enrollment = localStorage.getItem('lamastudio_enrollment') || '140';
+            const studentPattern = localStorage.getItem('lamastudio_student_id_format') || 'AIMS-2026-685';
+            const logoBase64 = localStorage.getItem('lamastudio_school_logo');
+
+            // Set Page Titles & Headings
+            document.getElementById('pageTitle').textContent = `${schoolName} | Campus Command`;
+            document.getElementById('navSchoolName').textContent = schoolName;
+            document.getElementById('navSchoolSectorBadge').textContent = sector;
+            document.getElementById('navSchoolAddress').textContent = `${schoolAddress}, ${schoolCity}`;
+            document.getElementById('bannerSchoolName').textContent = schoolName;
+            document.getElementById('bannerFullDetails').textContent = `Central telemetry, verified schedules, and gateway access nodes for ${schoolName}. Located at ${schoolAddress}.`;
+            document.getElementById('bannerStudentPattern').textContent = `ID Format: ${studentPattern}`;
+            document.getElementById('headerNodeController').textContent = principal;
+            document.getElementById('metaController').textContent = principal;
+
+            // Format EMIS / Reg Codes display
+            let codeDisplay = emis ? `EMIS: ${emis}` : '';
+            if (reg) codeDisplay += codeDisplay ? ` | Reg: ${reg}` : `Reg: ${reg}`;
+            if (!codeDisplay) codeDisplay = 'Standard Registration Node';
+            document.getElementById('metaCodes').textContent = codeDisplay;
+
+            document.getElementById('statEnrollment').textContent = enrollment;
+            document.getElementById('announcementPattern').textContent = studentPattern;
+            document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} • Campus Management Architecture`;
+
+            // Render Logo Image if uploaded in Step 2 (< 50kb)
+            const logoContainer = document.getElementById('headerLogoContainer');
+            if (logoBase64 && logoContainer) {
+                logoContainer.innerHTML = `<img src="${logoBase64}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
+            } else if (logoContainer) {
+                const initials = schoolName.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 3);
+                document.getElementById('headerLogoInitials').textContent = initials || 'AIM';
             }
         });
+
+        function handleLogout() {
+            localStorage.removeItem('lamastudio_logged_in');
+            localStorage.removeItem('lamastudio_admin_username');
+            window.location.href = 'index.html';
+        }
     </script>
 </body>
 </html>

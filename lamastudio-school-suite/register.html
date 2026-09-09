@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Registration & Provisioning | lamastudio.pk</title>
+    <title>Comprehensive School Registration & Provisioning | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,8 +25,8 @@
     </header>
 
     <!-- Main Form Container -->
-    <main class="max-w-xl w-full mx-auto px-4 py-12 flex-grow flex flex-col justify-center">
-        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-8 shadow-2xl space-y-6">
+    <main class="max-w-2xl w-full mx-auto px-4 py-12 flex-grow flex flex-col justify-center">
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
             
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
                 <div>
@@ -44,40 +44,103 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password <span class="text-slate-400 font-normal">(Min 6 chars: 1 upper, 1 lower, 1 number, 1 special)</span></label>
-                    <div class="relative">
-                        <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white pr-10">
-                    </div>
+                    <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
                     Create Credentials & Continue &rarr;
                 </button>
             </form>
 
-            <!-- STEP 2 Form (Hidden Initially) -->
+            <!-- STEP 2 Form (Comprehensive Institution Profile) -->
             <form id="step2Form" onsubmit="handleStep2(event)" class="space-y-4 hidden">
                 <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs">
-                    ✓ Credentials created! Now enter your official institution profile details.
+                    ✓ Credentials created! Provide your complete school specification below.
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Official School Name</label>
+                        <input type="text" id="schoolName" required placeholder="e.g., Lahore Grammar School" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Logo (Auto-compressed 15-30KB)</label>
+                        <input type="file" id="schoolLogo" accept="image/*" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Full Address</label>
+                        <input type="text" id="schoolAddress" required placeholder="Main Boulevard, Gulberg" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">District</label>
+                        <input type="text" id="schoolDistrict" required placeholder="e.g., Lahore" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Official School Name</label>
-                    <input type="text" id="schoolName" required placeholder="e.g., Lahore Grammar School" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Map Location (Pin Location Link / GPS Coords)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="mapLocation" placeholder="Paste Google Maps pin link or coordinates" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                        <button type="button" onclick="openMapPinHelper()" class="bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap cursor-pointer hover:bg-slate-300">Open Map 🗺️</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Level</label>
+                        <select id="schoolLevel" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                            <option value="Primary">Primary (1-5)</option>
+                            <option value="Middle">Middle (6-8)</option>
+                            <option value="High" selected>High (9-10)</option>
+                            <option value="Higher Secondary">Higher Secondary (11-12)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Gender</label>
+                        <select id="schoolGender" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                            <option value="Combined">Combined / Co-Ed</option>
+                            <option value="Boys Only">Boys Only</option>
+                            <option value="Girls Only">Girls Only</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Custom School ID Pattern</label>
+                        <input type="text" id="idPattern" placeholder="e.g., LGS-2026-###" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Strength (Students)</label>
+                        <input type="number" id="totalStrength" required placeholder="e.g., 450" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Total Staff Members</label>
+                        <input type="number" id="totalStaff" required placeholder="e.g., 35" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Principal Name</label>
+                        <input type="text" id="principalName" required placeholder="Mr. Ahmed Khan" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+                        <input type="text" id="principalPhone" required placeholder="03001234567" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                        <input type="email" id="adminEmail" required placeholder="principal@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Full Address</label>
-                    <input type="text" id="schoolAddress" required placeholder="e.g., Main Gulberg Boulevard, Lahore" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Principal / Admin Email</label>
-                        <input type="email" id="adminEmail" required placeholder="principal@lgs.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Phone</label>
-                        <input type="text" id="principalPhone" required placeholder="03001234567" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                    </div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Upload Fee Transaction Receipt (Pic)</label>
+                    <input type="file" id="receiptPic" accept="image/*" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700">
+                    <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Verification needed: Admin will verify your transaction receipt within 2 hours of submission.</p>
                 </div>
 
                 <div>
@@ -98,13 +161,22 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-5 px-6 text-center text-xs text-slate-500">
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-5 px-6 text-center text-xs text-slate-500 space-y-1">
         <p>&copy; 2026 lamastudio.pk • Multi-Tenant SaaS Provisioning Engine</p>
+        <p>If you need help then email <a href="mailto:admin@lamastudio.pk" class="text-indigo-600 dark:text-indigo-400 font-bold underline">admin@lamastudio.pk</a></p>
     </footer>
 
     <!-- Script Integration -->
     <script src="js/school-store.js"></script>
     <script>
+        function openMapPinHelper() {
+            window.open('https://maps.google.com', '_blank');
+            const pin = prompt('Paste your Google Maps location pin link or coordinates here:');
+            if (pin) {
+                document.getElementById('mapLocation').value = pin;
+            }
+        }
+
         function handleStep1(event) {
             event.preventDefault();
             const username = document.getElementById('adminUsername').value.trim();
@@ -126,30 +198,48 @@
 
             document.getElementById('step1Form').classList.add('hidden');
             document.getElementById('step2Form').classList.remove('hidden');
-            document.getElementById('stepIndicator').textContent = 'Step 2 of 2: Institution Profile Details';
+            document.getElementById('stepIndicator').textContent = 'Step 2 of 2: Comprehensive Institution Profile';
         }
 
         function handleStep2(event) {
             event.preventDefault();
+            
             const schoolName = document.getElementById('schoolName').value.trim();
             const address = document.getElementById('schoolAddress').value.trim();
-            const email = document.getElementById('adminEmail').value.trim();
+            const district = document.getElementById('schoolDistrict').value.trim();
+            const mapLocation = document.getElementById('mapLocation').value.trim();
+            const level = document.getElementById('schoolLevel').value;
+            const gender = document.getElementById('schoolGender').value;
+            const idPattern = document.getElementById('idPattern').value.trim() || 'SCH-2026-###';
+            const strength = document.getElementById('totalStrength').value;
+            const staff = document.getElementById('totalStaff').value;
+            const principal = document.getElementById('principalName').value.trim();
             const phone = document.getElementById('principalPhone').value.trim();
+            const email = document.getElementById('adminEmail').value.trim();
             const tier = document.getElementById('selectedPackage').value;
 
             // Use SchoolStore to provision the unique tenant schema
             const newSchool = SchoolStore.upsert({
                 name: schoolName,
                 address: address,
-                email: email,
+                district: district,
+                mapLocation: mapLocation,
+                level: level,
+                gender: gender,
+                idPattern: idPattern,
+                totalStrength: strength,
+                totalStaff: staff,
+                principalName: principal,
                 phone: phone,
+                email: email,
                 package: tier,
                 adminUsername: localStorage.getItem('temp_admin_username'),
+                verificationStatus: 'Pending Admin Verification',
                 registeredAt: new Date().toISOString()
             });
 
             localStorage.setItem('lamastudio_logged_in', 'true');
-            alert(`Success! "${newSchool.name}" has been successfully provisioned with ID: ${newSchool.id}.\nRedirecting to your isolated Admin Command Center...`);
+            alert(`Success! "${newSchool.name}" has been successfully provisioned.\nYour fee receipt is under verification by admin@lamastudio.pk.\nRedirecting to your Admin Command Center...`);
 
             window.location.href = 'portals/admin/index.html';
         }

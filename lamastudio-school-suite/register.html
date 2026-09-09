@@ -153,7 +153,7 @@
                 </div>
 
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2 cursor-pointer">
-                    Finish Registration & Open Isolated Portal 🚀
+                    Finish Registration & Open Hub 🚀
                 </button>
             </form>
 
@@ -175,21 +175,17 @@
             const pin = prompt('Paste your Google Maps location pin link or coordinates here:');
             if (pin) {
                 let finalValue = pin.trim();
-                
                 const coordRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
                 const match = pin.match(coordRegex);
                 
                 if (match) {
-                    const lat = match[1];
-                    const lng = match[2];
-                    finalValue = `${pin.trim()} [Lat: ${lat}, Lng: ${lng}]`;
+                    finalValue = `${pin.trim()} [Lat: ${match[1]}, Lng: ${match[2]}]`;
                 } else {
                     const simpleCoords = pin.match(/^(-?\d+\.\d+),\s*(-?\d+\.\d+)$/);
                     if (simpleCoords) {
                         finalValue = `Lat: ${simpleCoords[1]}, Lng: ${simpleCoords[2]}`;
                     }
                 }
-                
                 document.getElementById('mapLocation').value = finalValue;
             }
         }
@@ -303,9 +299,10 @@
                     localStorage.setItem('lamastudio_logged_in', 'true');
                     localStorage.setItem('active_tenant_id', newSchool.id || schoolName);
 
-                    alert(`Success! "${newSchool.name}" has been provisioned and auto-verified for development access.\nRedirecting to your Admin Command Center...`);
+                    alert(`Success! "${newSchool.name}" has been provisioned.\nRedirecting to your Campus Command Hub...`);
 
-                    window.location.href = 'portals/admin/index.html';
+                    // Clean redirection to the main dashboard hub
+                    window.location.href = 'dashboard.html';
                 });
             });
         }

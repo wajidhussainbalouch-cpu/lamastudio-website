@@ -1,9 +1,11 @@
 /**
  * Lamastudio.pk - School Storage & Session Engine
- * Manages active tenant sessions and syncs with cloud backend
+ * Manages active tenant sessions and array-based multi-tenant storage
  */
 
 const SchoolStore = {
+    STORAGE_KEY: 'lamastudio_registered_schools',
+
     // Get the currently active logged-in school session
     getActive() {
         const stored = localStorage.getItem('active_school_session');
@@ -22,25 +24,55 @@ const SchoolStore = {
         localStorage.removeItem('active_tenant_id');
     },
 
-    // Register a new school via cloud API
-    async upsert(schoolData) {
-        const result = await ApiClient.register(schoolData);
-        if (result.status === "success") {
-            schoolData.id = result.schoolId;
-            this.setActive(schoolData);
-            return { success: true, school: schoolData };
+    // Get all registered schools (prevents overwrites by maintaining an array list)
+    getAll() {
+        try {
+            const data = localStorage.getItem(this.STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            return [];
         }
-        return { success: false, message: result.message || "Registration failed." };
     },
 
-    // Authenticate existing school via cloud API
-    async authenticate(username, password) {
-        const result = await ApiClient.login(username, password);
-        if (result.status === "success") {
-            this.setActive(result.school);
+    // Register or update a school in the local multi-tenant store
+    upsert(schoolData) {
+        const schools = this.getAll();
+        
+        // Generate a unique ID if it doesn't exist
+        if (!schoolData.id) {
+            schoolData.id = 'SCH-' + Date.now();
+        }
+
+        // Check if school already exists by admin username to prevent duplicates
+        const existingIndex = schools.findIndex(s => s.adminUsername === schoolData.adminUsername);
+
+        if (existingIndex > -1) {
+            // Update existing record
+            schools[existingIndex] = { ...schools[existingIndex], ...schoolData };
+        } else {
+            // Append new school to array (safely keeps previous schools)
+            schools.push(schoolData);
+        }
+
+        // Save back to LocalStorage array
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(schools));
+        
+        // Set as active session
+        this.setActive(schoolData);
+        
+        return schoolData;
+    },
+
+    // Authenticate existing school locally
+    authenticate(username, password) {
+        const schools = this.getAll();
+        const school = schools.find(s => s.adminUsername === username);
+        
+        if (school) {
+            this.setActive(school);
             return { success: true };
         }
-        return { success: false, message: result.message || "Invalid credentials." };
+        return { success: false, message: "Invalid credentials or school not found." };
     },
 
     // Automatically derive a 3-4 letter short code from school name

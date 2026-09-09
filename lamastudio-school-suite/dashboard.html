@@ -10,8 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- External Custom Style Architecture -->
     <link rel="stylesheet" href="assets/css/config.css">
-    <!-- Shared Multi-School Storage Engine -->
-    <script src="js/school-store.js"></script>
+    <!-- Shared Multi-School Storage Engine (Corrected path) -->
+    <script src="school-store.js"></script>
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
@@ -20,7 +20,7 @@
     <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
     <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-2xl">
         <div class="flex items-center space-x-3">
             <div id="schoolLogoContainer" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(139,92,246,0.4)]">
                 <span id="navShortCode" class="text-xs font-black text-white">GPS</span>
@@ -29,12 +29,17 @@
                 <h1 class="text-sm font-black tracking-wider text-white uppercase"><span id="navSchoolName">Campus Command Hub</span></h1>
             </div>
         </div>
+
+        <!-- Multi-Tenant School Switcher & Quick Actions -->
         <div class="flex items-center space-x-3">
-            <a href="index.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2 rounded-xl transition">
-                ← Main Portal
-            </a>
+            <div class="flex items-center space-x-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-xl">
+                <span class="text-[10px] text-slate-400 font-bold uppercase">Active School:</span>
+                <select id="schoolSwitcher" onchange="switchActiveSchool(this.value)" class="bg-transparent text-xs font-bold text-cyan-400 focus:outline-none cursor-pointer">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
             <a href="register.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
-                <span>⚡ New Admission Form</span>
+                <span>⚡ Register New</span>
             </a>
         </div>
     </header>
@@ -49,7 +54,7 @@
                 <div>
                     <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
                         <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Campus Node Active</span>
+                        <span id="badgeSector" class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Private Sector Node</span>
                     </div>
                     <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Campus Command Hub</h2>
                     <p class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
@@ -87,52 +92,40 @@
         <!-- Gateway Portals Grid -->
         <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <!-- Student Portal -->
-            <a href="portals/student/index.html" class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 hover:border-purple-500/50 transition-all duration-300 group flex flex-col justify-between">
+            <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-2xl">🎓</span>
                         <span class="text-[9px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">Gateway</span>
                     </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-purple-300 transition">Student Portal</h3>
+                    <h3 class="text-sm font-black text-white">Student Portal</h3>
                     <p class="text-[11px] text-slate-400 mt-1">Access personal attendance logs, profiles, and designated subject materials.</p>
                 </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-purple-400">
-                    <span>Launch Portal</span>
-                    <span class="group-hover:translate-x-1 transition">&rarr;</span>
-                </div>
-            </a>
+            </div>
 
             <!-- Teacher Portal -->
-            <a href="portals/teacher/index.html" class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 hover:border-emerald-500/50 transition-all duration-300 group flex flex-col justify-between">
+            <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-2xl">👩‍🏫</span>
                         <span class="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">Gateway</span>
                     </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-emerald-300 transition">Teacher Portal</h3>
+                    <h3 class="text-sm font-black text-white">Teacher Portal</h3>
                     <p class="text-[11px] text-slate-400 mt-1">Manage class rosters, update grade books, and log daily section reports.</p>
                 </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-emerald-400">
-                    <span>Launch Portal</span>
-                    <span class="group-hover:translate-x-1 transition">&rarr;</span>
-                </div>
-            </a>
+            </div>
 
             <!-- Admin Panel -->
-            <a href="portals/admin/index.html" class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 hover:border-amber-500/50 transition-all duration-300 group flex flex-col justify-between">
+            <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between">
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-2xl">⚙️</span>
                         <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Restricted Admin</span>
                     </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-amber-300 transition">Admin Panel</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Central command for generating <b>Fee Cards</b>, issuing official <b>Report Cards</b>, and admissions oversight.</p>
+                    <h3 class="text-sm font-black text-white">Admin Panel</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Central command for generating <b>Fee Cards</b> and admissions oversight.</p>
                 </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-amber-400">
-                    <span>Secure Access</span>
-                    <span class="group-hover:translate-x-1 transition">&rarr;</span>
-                </div>
-            </a>
+            </div>
         </section>
 
         <!-- Institutional Telemetry Wave Chart -->
@@ -142,67 +135,9 @@
                     <h3 class="text-xs font-black uppercase tracking-wider text-purple-400">📈 Institutional Growth Telemetry</h3>
                     <p class="text-[11px] text-slate-400">Enrollment trajectory versus academic performance index.</p>
                 </div>
-                <div class="flex space-x-2 text-[10px]">
-                    <span class="bg-purple-500/10 text-purple-300 px-2.5 py-1 rounded border border-purple-500/20">● Enrollment</span>
-                    <span class="bg-cyan-500/10 text-cyan-300 px-2.5 py-1 rounded border border-cyan-500/20">● Pass Rate</span>
-                </div>
             </div>
             <div class="relative h-56 w-full bg-slate-950/40 rounded-2xl p-3 border border-slate-800/80">
                 <canvas id="telemetryChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Community Hub: News, Schedules, Exams & Events -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Announcements / News -->
-            <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400">📢 Announcements</h4>
-                        <span class="text-[9px] bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded">Live</span>
-                    </div>
-                    <div class="space-y-2.5 text-xs">
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-slate-400 font-semibold">March 15, 2026</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">Admissions Open</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Online registration link is active for new applicants.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Schedule & Exam Dates -->
-            <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-emerald-400">📅 Schedule & Exams</h4>
-                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded">Important</span>
-                    </div>
-                    <div class="space-y-2.5 text-xs">
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-emerald-400 font-semibold">Mid-Term Examination</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">April 05 - April 18, 2026</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Date sheets posted on student individual profiles.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sports Week & Events -->
-            <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-amber-400">🏆 Campus Events</h4>
-                        <span class="text-[9px] bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded">Upcoming</span>
-                    </div>
-                    <div class="space-y-2.5 text-xs">
-                        <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                            <p class="text-[9px] text-amber-400 font-semibold">Annual Sports Week</p>
-                            <p class="font-bold text-white text-[11px] mt-0.5">May 10 - May 15, 2026</p>
-                            <p class="text-[10px] text-slate-300 mt-1">Football, races, and athletics competitions.</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </section>
     </main>
@@ -217,7 +152,6 @@
         let telemetryChart = null;
 
         function renderDashboard() {
-            // Retrieve active school session or default safely
             const school = (typeof SchoolStore !== 'undefined' && SchoolStore.getActive) ? SchoolStore.getActive() || {} : {};
             const schoolName = school.name || 'Campus Command Hub';
             const shortCode = school.shortCode || (typeof SchoolStore !== 'undefined' ? SchoolStore.deriveShortCode(schoolName) : 'GPS');
@@ -225,6 +159,7 @@
             const staffCount = parseInt(school.totalStaff, 10) || 28;
             const principalName = school.principal || 'Principal / Admin';
             const logoBase64 = school.logo;
+            const sector = school.sector || 'Private';
 
             // Inject dynamic text into HTML elements
             document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
@@ -233,7 +168,11 @@
             document.getElementById('principalDisplay').innerText = principalName;
             document.getElementById('totalStudentsCount').innerText = totalCount;
             document.getElementById('totalStaffCount').innerText = staffCount;
+            document.getElementById('badgeSector').innerText = `${sector} Sector Node`;
             document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Campus Management Architecture`;
+
+            // Populate School Switcher Dropdown
+            populateSwitcher(school.id);
 
             // Render school logo if uploaded during registration
             const logoContainer = document.getElementById('schoolLogoContainer');
@@ -244,6 +183,37 @@
             }
 
             renderTelemetryChart(totalCount);
+        }
+
+        function populateSwitcher(activeId) {
+            const switcher = document.getElementById('schoolSwitcher');
+            if (!switcher || typeof SchoolStore === 'undefined') return;
+            
+            const schools = SchoolStore.getAll();
+            switcher.innerHTML = '';
+
+            if (schools.length === 0) {
+                switcher.innerHTML = `<option value="">No Schools Registered</option>`;
+                return;
+            }
+
+            schools.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (s.id === activeId) opt.selected = true;
+                switcher.appendChild(opt);
+            });
+        }
+
+        function switchActiveSchool(schoolId) {
+            if (typeof SchoolStore === 'undefined') return;
+            const schools = SchoolStore.getAll();
+            const target = schools.find(s => s.id === schoolId);
+            if (target) {
+                SchoolStore.setActive(target);
+                renderDashboard();
+            }
         }
 
         function renderTelemetryChart(totalCount) {

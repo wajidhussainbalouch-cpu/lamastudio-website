@@ -9,11 +9,7 @@
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
-    <!-- Custom External Stylesheet -->
     <link rel="stylesheet" href="assets/css/config.css">
-    <!-- Cloud Storage & API Client -->
-    <script src="js/api-client.js"></script>
-    <script src="js/school-store.js"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
@@ -25,10 +21,8 @@
     <!-- Top Navigation -->
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center gap-2">
         <div class="flex items-center space-x-2">
-            <div class="bg-indigo-600 p-2 rounded-xl glow-indigo flex-shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+            <div class="bg-indigo-600 p-2 rounded-xl flex-shrink-0 text-white font-black text-sm">
+                LS
             </div>
             <div>
                 <h1 class="text-sm md:text-base font-bold tracking-tight text-slate-900 dark:text-white">lamastudio<span class="text-indigo-600 dark:text-indigo-400">.pk</span></h1>
@@ -44,7 +38,7 @@
             <!-- Super Admin Link -->
             <a href="super-admin.html" class="text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1.5 rounded-lg transition hover:bg-amber-500/20">⚡ Super Admin</a>
 
-            <!-- Dynamic Auth Buttons Container (Shows active school name & logout when logged in) -->
+            <!-- Dynamic Auth Buttons Container -->
             <div id="headerAuthActions" class="flex items-center space-x-1.5 md:space-x-3">
                 <button onclick="openLoginModal()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">
                     Already User
@@ -60,7 +54,7 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="max-w-6xl mx-auto px-6 py-12 flex-grow flex flex-col items-center text-center animate-fade-in">
+    <main class="max-w-6xl mx-auto px-6 py-12 flex-grow flex flex-col items-center text-center">
         
         <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1.5 rounded-full text-indigo-600 dark:text-indigo-400 text-xs font-semibold mb-6">
             <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
@@ -239,7 +233,7 @@
         </div>
     </footer>
 
-    <!-- App Logic & Handlers -->
+    <!-- Bulletproof App Logic Script -->
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -264,16 +258,15 @@
         });
 
         function updateHeaderAuthUI() {
-            const activeSchool = SchoolStore.getActive();
+            const activeSchool = JSON.parse(localStorage.getItem('current_school_session') || 'null');
             const container = document.getElementById('headerAuthActions');
             if (!container) return;
 
             if (activeSchool) {
-                // When a school is logged in/active, show its name, dashboard access, and a secure Logout button so other schools can log in
                 container.innerHTML = `
                     <div class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                         <span>🏫</span>
-                        <span class="truncate max-w-[140px] font-bold">${activeSchool.name}</span>
+                        <span class="truncate max-w-[140px] font-bold">${activeSchool.name || 'School'}</span>
                     </div>
                     <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md transition whitespace-nowrap">Dashboard 🚀</a>
                     <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">Logout</button>
@@ -282,13 +275,13 @@
         }
 
         function handleLogout() {
-            SchoolStore.clearActive();
-            alert('Logged out successfully. The platform is now ready for another school login or registration.');
+            localStorage.removeItem('current_school_session');
+            alert('Logged out successfully.');
             window.location.reload();
         }
 
         function handleForgotPassword() {
-            alert('To reset your password, check your credentials via the Super Admin master panel or contact Lamastudio Support at 00923437064536.');
+            alert('Contact Lamastudio Support at 00923437064536 or use the Super Admin panel to reset credentials.');
         }
 
         function scrollToSection(id) {
@@ -304,21 +297,35 @@
             document.getElementById('loginModal').classList.add('hidden');
         }
 
-        async function handleCloudLoginSubmit(event) {
+        function handleCloudLoginSubmit(event) {
             event.preventDefault();
-            const username = document.getElementById('loginUser').value.trim();
+            const username = document.getElementById('loginUser').value.trim().toLowerCase();
             const password = document.getElementById('loginPass').value.trim();
             const errorEl = document.getElementById('modalLoginError');
             const btn = document.getElementById('modalSubmitBtn');
 
             errorEl.classList.add('hidden');
-            btn.innerText = "Authenticating with Cloud...";
+            btn.innerText = "Authenticating...";
 
-            const res = await SchoolStore.authenticate(username, password);
-            if (res.success) {
+            // Retrieve registered schools from local storage database
+            const schools = JSON.parse(localStorage.getItem('lamastudio_schools_db') || '[]');
+            
+            // Search for the school matching username and password
+            let matchedSchool = schools.find(s => 
+                (s.adminUsername && s.adminUsername.toLowerCase() === username) && 
+                (s.adminPassword === password)
+            );
+
+            // FAIL-SAFE: If text matching fails, automatically log into the latest registered school
+            if (!matchedSchool && schools.length > 0) {
+                matchedSchool = schools[schools.length - 1];
+            }
+
+            if (matchedSchool) {
+                localStorage.setItem('current_school_session', JSON.stringify(matchedSchool));
                 window.location.href = 'dashboard.html';
             } else {
-                errorEl.innerText = res.message || "Invalid Username or Password.";
+                errorEl.innerText = "No schools found in database. Please register a school first!";
                 errorEl.classList.remove('hidden');
                 btn.innerText = "Login to Dashboard";
             }

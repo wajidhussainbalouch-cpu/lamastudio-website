@@ -20,7 +20,7 @@
             <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">SAAS MULTI-TENANT ONBOARDING</h1>
         </div>
         <span class="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-bold">
-            Secure Provisioning Portal
+            Secure Cloud Provisioning Portal
         </span>
     </header>
 
@@ -36,28 +36,29 @@
                 <span id="badgeIndicator" class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-2.5 py-1 rounded-lg">70% Off Active</span>
             </div>
 
-            <!-- STEP 1 Form -->
-            <form id="step1Form" onsubmit="handleStep1(event)" class="space-y-4">
+            <!-- STEP 1 Form (Firebase Auth Creation) -->
+            <form id="step1Form" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username</label>
-                    <input type="text" id="adminUsername" required placeholder="e.g., aims_admin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Email (Used for Login)</label>
+                    <input type="email" id="adminEmailInput" required placeholder="admin@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password <span class="text-slate-400 font-normal">(Min 6 chars: 1 upper, 1 lower, 1 number, 1 special)</span></label>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password <span class="text-slate-400 font-normal">(Min 6 characters)</span></label>
                     <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+                <div id="step1Error" class="text-xs text-rose-500 font-bold hidden"></div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
                     Create Credentials & Continue &rarr;
                 </button>
             </form>
 
             <!-- STEP 2 Form (Comprehensive Institution Profile) -->
-            <form id="step2Form" onsubmit="handleStep2(event)" class="space-y-4 hidden">
+            <form id="step2Form" class="space-y-4 hidden">
                 <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs">
-                    ✓ Credentials created! Provide your complete school specification below.
+                    ✓ Cloud credentials verified! Complete your institution specification below.
                 </div>
 
-                <!-- NEW: Government or Private Sector Switcher -->
+                <!-- Government or Private Sector Switcher -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Institution Sector</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -77,8 +78,8 @@
                         <input type="text" id="schoolName" required placeholder="e.g., Lahore Grammar School" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Logo (Auto-compressed)</label>
-                        <input type="file" id="schoolLogo" accept="image/*" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School ID / Code Prefix</label>
+                        <input type="text" id="schoolCodeId" required placeholder="e.g., lgs_gulberg" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
                     </div>
                 </div>
 
@@ -136,7 +137,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Principal Name</label>
                         <input type="text" id="principalName" required placeholder="Mr. Ahmed Khan" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
@@ -145,18 +146,14 @@
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
                         <input type="text" id="principalPhone" required placeholder="03001234567" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                        <input type="email" id="adminEmail" required placeholder="principal@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white">
-                    </div>
                 </div>
 
                 <!-- Dynamic Fee Section / Govt ID Section -->
                 <div id="dynamicVerificationBlock">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Upload Fee Transaction Receipt (Pic)</label>
-                        <input type="file" id="receiptPic" accept="image/*" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700">
-                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Verification needed: Admin will verify your transaction receipt within 2 hours of submission.</p>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fee Transaction Note / Reference Code</label>
+                        <input type="text" id="receiptNote" placeholder="e.g., EasyPaisa/JazzCash Trx ID" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Verification note: Admin will cross-check your fee reference within 2 hours.</p>
                     </div>
 
                     <div class="mt-4">
@@ -169,6 +166,7 @@
                     </div>
                 </div>
 
+                <div id="step2Error" class="text-xs text-rose-500 font-bold hidden"></div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2 cursor-pointer">
                     Finish Registration & Open Hub 🚀
                 </button>
@@ -183,11 +181,17 @@
         <p>If you need help then email <a href="mailto:admin@lamastudio.pk" class="text-indigo-600 dark:text-indigo-400 font-bold underline">admin@lamastudio.pk</a></p>
     </footer>
 
-    <!-- Script Integration -->
-    <script src="school-store.js"></script>
-    <script>
+    <!-- Firebase Integration Logic -->
+    <script type="module">
+        import { auth, db } from "./config.js";
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        let registeredUserUid = null;
+        let registeredEmail = "";
+
         // Sector Toggle Logic (Private vs Government)
-        function setSector(sector) {
+        window.setSector = function(sector) {
             document.getElementById('schoolSector').value = sector;
             const btnPrivate = document.getElementById('btnPrivate');
             const btnGovt = document.getElementById('btnGovt');
@@ -201,9 +205,9 @@
                 
                 dynamicBlock.innerHTML = `
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Upload Fee Transaction Receipt (Pic)</label>
-                        <input type="file" id="receiptPic" accept="image/*" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700">
-                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Verification needed: Admin will verify your transaction receipt within 2 hours of submission.</p>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fee Transaction Note / Reference Code</label>
+                        <input type="text" id="receiptNote" placeholder="e.g., EasyPaisa/JazzCash Trx ID" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                        <p class="text-[10px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Verification note: Admin will cross-check your fee reference within 2 hours.</p>
                     </div>
                     <div class="mt-4">
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Subscription Package Tier</label>
@@ -233,7 +237,7 @@
         }
 
         // Automatic Lat/Lng extraction from map links or coords
-        function openMapPinHelper() {
+        window.openMapPinHelper = function() {
             window.open('https://maps.google.com', '_blank');
             const pin = prompt('Paste your Google Maps location pin link or coordinates here:');
             if (pin) {
@@ -253,127 +257,8 @@
             }
         }
 
-        // Helper to compress/resize uploaded images target 15KB - 30KB
-        function compressImage(file, callback) {
-            if (!file) {
-                callback(null);
-                return;
-            }
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = function(event) {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 300; 
-                    if (width > height) {
-                        if (width > maxDim) { height *= maxDim / width; width = maxDim; }
-                    } else {
-                        if (height > maxDim) { width *= maxDim / height; height = maxDim; }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    
-                    let quality = 0.5;
-                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    callback(dataUrl);
-                };
-            };
-        }
-
-        function handleStep1(event) {
-            event.preventDefault();
-            const username = document.getElementById('adminUsername').value.trim();
-            const password = document.getElementById('adminPassword').value;
-
-            if (username.length < 3) {
-                alert('Admin username must be at least 3 characters long.');
-                return;
-            }
-
-            const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-            if (!passRegex.test(password)) {
-                alert('Password must be at least 6 characters long and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.');
-                return;
-            }
-
-            localStorage.setItem('temp_admin_username', username);
-            localStorage.setItem('temp_admin_password', password);
-
-            document.getElementById('step1Form').classList.add('hidden');
-            document.getElementById('step2Form').classList.remove('hidden');
-            document.getElementById('stepIndicator').textContent = 'Step 2 of 2: Comprehensive Institution Profile';
-        }
-
-        function handleStep2(event) {
-            event.preventDefault();
-            
-            const sector = document.getElementById('schoolSector').value;
-            const schoolName = document.getElementById('schoolName').value.trim();
-            const address = document.getElementById('schoolAddress').value.trim();
-            const district = document.getElementById('schoolDistrict').value.trim();
-            const mapLocation = document.getElementById('mapLocation').value.trim();
-            const level = document.getElementById('schoolLevel').value;
-            const gender = document.getElementById('schoolGender').value;
-            const idPattern = document.getElementById('idPattern').value.trim() || 'SCH-2026-###';
-            const strength = document.getElementById('totalStrength').value;
-            const staff = document.getElementById('totalStaff').value;
-            const principal = document.getElementById('principalName').value.trim();
-            const phone = document.getElementById('principalPhone').value.trim();
-            const email = document.getElementById('adminEmail').value.trim();
-            const tier = document.getElementById('selectedPackage').value;
-            const emisCode = sector === 'Government' ? (document.getElementById('emisCode')?.value || '') : '';
-
-            const logoFile = document.getElementById('schoolLogo').files[0];
-            const receiptInput = document.getElementById('receiptPic');
-            const receiptFile = receiptInput ? receiptInput.files[0] : null;
-
-            compressImage(logoFile, function(logoBase64) {
-                compressImage(receiptFile, function(receiptBase64) {
-                    
-                    if (typeof SchoolStore === 'undefined') {
-                        alert('Error: SchoolStore module not loaded. Verify script source path.');
-                        return;
-                    }
-
-                    const newSchool = SchoolStore.upsert({
-                        sector: sector,
-                        name: schoolName,
-                        address: address,
-                        district: district,
-                        mapLocation: mapLocation,
-                        level: level,
-                        gender: gender,
-                        idPattern: idPattern,
-                        enrollment: strength,
-                        totalStaff: staff,
-                        principal: principal,
-                        phone: phone,
-                        email: email,
-                        package: tier,
-                        emisCode: emisCode,
-                        logo: logoBase64 || '',
-                        receiptPic: receiptBase64 || '',
-                        adminUsername: localStorage.getItem('temp_admin_username'),
-                        verificationStatus: 'Verified', 
-                        registeredAt: new Date().toISOString()
-                    });
-
-                    localStorage.setItem('lamastudio_logged_in', 'true');
-                    localStorage.setItem('active_tenant_id', newSchool.id || schoolName);
-
-                    alert(`Success! "${newSchool.name}" (${sector} Sector) has been provisioned.\nRedirecting to your Campus Command Hub...`);
-
-                    // Clean redirection to the main dashboard hub
-                    window.location.href = 'dashboard.html';
-                });
-            });
-        }
-    </script>
-</body>
-</html>
+        // Handle Step 1: Firebase Auth Credentials Creation
+        document.getElementById('step1Form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmailInput').value.trim();
+            const password = document.ge

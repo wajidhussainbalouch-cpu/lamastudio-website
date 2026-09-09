@@ -35,7 +35,8 @@
             <div id="activeSessionBadge" class="hidden items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-bold">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span id="loggedInSchoolLabel">Active Session</span>
-                <button onclick="handleLogout()" class="ml-2 text-[10px] bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded-lg transition">Logout</button>
+                <a href="dashboard.html" class="ml-2 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-0.5 rounded-lg transition">Dashboard 🚀</a>
+                <button onclick="handleLogout()" class="ml-1 text-[10px] bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded-lg transition cursor-pointer">Logout</button>
             </div>
             <a href="register.html" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">New School? Register</a>
         </div>
@@ -64,7 +65,7 @@
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password</label>
                     <div class="relative">
                         <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 pr-10">
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs font-bold focus:outline-none">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs font-bold focus:outline-none cursor-pointer">
                             👁️
                         </button>
                     </div>
@@ -76,7 +77,7 @@
                         <input type="checkbox" id="rememberMeCheckbox" class="rounded text-indigo-600 focus:ring-indigo-500">
                         <span>Remember Password</span>
                     </label>
-                    <button type="button" onclick="openForgotPasswordModal()" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">Forgot Password?</button>
+                    <button type="button" onclick="openForgotPasswordModal()" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer">Forgot Password?</button>
                 </div>
 
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
@@ -145,6 +146,20 @@
                 document.getElementById('loginPassword').value = rememberedPass;
                 document.getElementById('rememberMeCheckbox').checked = true;
             }
+
+            // Check if a school session is already active
+            if (typeof SchoolStore !== 'undefined') {
+                const activeSchool = SchoolStore.getActive();
+                if (activeSchool) {
+                    const badge = document.getElementById('activeSessionBadge');
+                    const label = document.getElementById('loggedInSchoolLabel');
+                    if (badge && label) {
+                        label.innerHTML = `Active: <strong class="underline">${activeSchool.name}</strong>`;
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                    }
+                }
+            }
         });
 
         function togglePasswordVisibility() {
@@ -192,7 +207,7 @@
 
         function handleLogout() {
             if (typeof SchoolStore !== 'undefined') {
-                SchoolStore.logout();
+                SchoolStore.clearActive();
             }
             window.location.reload();
         }

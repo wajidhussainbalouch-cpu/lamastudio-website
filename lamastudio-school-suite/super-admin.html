@@ -1,256 +1,117 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lamastudio | Super Admin Master Command</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- External Custom Style Architecture -->
-    <link rel="stylesheet" href="config.css">
-    <!-- Cloud Storage & API Client -->
-    <script src="js/api-client.js"></script>
-    <script src="js/school-store.js"></script>
-</head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+<script>
+    // Handle Master Super Admin Login Locally
+    function handleSuperLogin(event) {
+        event.preventDefault();
+        const username = document.getElementById('masterUser').value.trim();
+        const password = document.getElementById('masterPass').value.trim();
+        const errorEl = document.getElementById('loginError');
 
-    <!-- Ambient Neon Glows -->
-    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+        errorEl.classList.add('hidden');
 
-    <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
-        <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-purple-600 flex items-center justify-center font-black text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]">
-                SA
-            </div>
-            <div>
-                <h1 class="text-sm font-black tracking-wider text-white uppercase">Lamastudio <span class="text-rose-400">Super Admin</span></h1>
-                <p class="text-[10px] text-slate-400">Master Cloud Telemetry & Tenant Control</p>
-            </div>
-        </div>
-        <div id="loggedOutNav" class="flex items-center space-x-2">
-            <span class="text-xs text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">Restricted Access</span>
-        </div>
-        <div id="loggedInNav" class="hidden items-center space-x-3">
-            <span id="adminSessionUser" class="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">● Master Active</span>
-            <button onclick="handleLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl transition border border-slate-700">Lock Panel</button>
-        </div>
-    </header>
+        // Use SchoolStore for super authentication
+        const auth = SchoolStore.authenticateSuper(username, password);
+        if (auth.success) {
+            localStorage.setItem('lamastudio_super_logged', 'true');
+            showDashboard();
+        } else {
+            errorEl.innerText = auth.message || "Invalid master credentials.";
+            errorEl.classList.remove('hidden');
+        }
+    }
 
-    <!-- Main Container -->
-    <main class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow space-y-6 relative z-10">
+    function showDashboard() {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('loggedOutNav').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('loggedInNav').classList.remove('hidden');
+        loadSchoolsData();
+    }
 
-        <!-- LOGIN GATEWAY SECTION -->
-        <section id="loginSection" class="max-w-md mx-auto cyber-card rounded-3xl p-8 mt-12 shadow-2xl border border-slate-800">
-            <div class="text-center mb-6">
-                <span class="text-3xl">🔐</span>
-                <h2 class="text-xl font-black text-white mt-2">Master Authentication</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your super admin credentials to access all school records.</p>
-            </div>
-            <form id="superLoginForm" onsubmit="handleSuperLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Username</label>
-                    <input type="text" id="masterUser" required placeholder="Enter username" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Password</label>
-                    <input type="password" id="masterPass" required placeholder="••••••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
-                </div>
-                <div id="loginError" class="text-xs text-rose-400 text-center font-bold hidden"></div>
-                <button type="submit" class="w-full bg-gradient-to-r from-rose-600 to-purple-600 hover:opacity-90 text-white font-black py-3 rounded-xl transition shadow-[0_0_20px_rgba(225,29,72,0.3)] text-xs uppercase tracking-wider">
-                    Authorize Master Session
-                </button>
-            </form>
-        </section>
+    function handleLogout() {
+        SchoolStore.clearSuperSession();
+        localStorage.removeItem('lamastudio_super_logged');
+        location.reload();
+    }
 
-        <!-- DASHBOARD MANAGEMENT SECTION (Hidden until login) -->
-        <section id="dashboardSection" class="hidden space-y-6">
-            
-            <!-- Quick Metrics Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="cyber-card rounded-2xl p-5 border border-slate-800">
-                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Registered Schools</p>
-                    <p id="statTotalSchools" class="text-3xl font-black text-purple-400 mt-1">0</p>
-                </div>
-                <div class="cyber-card rounded-2xl p-5 border border-slate-800">
-                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Student Strength</p>
-                    <p id="statTotalStudents" class="text-3xl font-black text-cyan-400 mt-1">0</p>
-                </div>
-                <div class="cyber-card rounded-2xl p-5 border border-slate-800">
-                    <p class="text-[10px] uppercase font-bold text-slate-400">Cloud Sync Engine</p>
-                    <p class="text-3xl font-black text-emerald-400 mt-1">Active ⚡</p>
-                </div>
-            </div>
+    // Load Schools Data directly from local SchoolStore
+    function loadSchoolsData() {
+        const tbody = document.getElementById('schoolsTableBody');
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">Loading local cloud records...</td></tr>`;
 
-            <!-- Schools Registry Table Card -->
-            <div class="cyber-card rounded-3xl p-6 border border-slate-800 overflow-hidden">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-800 gap-3">
-                    <div>
-                        <h3 class="text-sm font-black uppercase tracking-wider text-white">🏫 Registered Schools Database</h3>
-                        <p class="text-xs text-slate-400">Manage credentials, view sign-up dates, and track school records.</p>
-                    </div>
-                    <button onclick="loadSchoolsData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold px-4 py-2 rounded-xl transition border border-slate-700">
-                        🔄 Refresh Data
+        const schools = SchoolStore.getAll();
+        
+        document.getElementById('statTotalSchools').innerText = schools.length;
+        
+        let totalStudents = 0;
+        schools.forEach(s => totalStudents += parseInt(s.enrollment || 0, 10));
+        document.getElementById('statTotalStudents').innerText = totalStudents;
+
+        if (schools.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No schools registered yet.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = schools.map(s => `
+            <tr class="hover:bg-slate-900/50 transition">
+                <td class="py-3 px-3">
+                    <span class="font-bold text-white block">${s.name}</span>
+                    <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
+                </td>
+                <td class="py-3 px-3">
+                    <span class="font-bold text-slate-300 block">${s.principal || 'N/A'}</span>
+                    <span class="text-[10px] text-slate-500">${s.district || 'General'}</span>
+                </td>
+                <td class="py-3 px-3 font-mono text-cyan-300">${s.adminUsername}</td>
+                <td class="py-3 px-3 font-mono text-amber-400">${s.adminPassword}</td>
+                <td class="py-3 px-3 font-bold text-emerald-400">${s.enrollment || 0} students</td>
+                <td class="py-3 px-3 text-right">
+                    <button onclick="openPasswordModal('${s.id}', '${s.name}')" class="bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer">
+                        Reset Pass
                     </button>
-                </div>
+                </td>
+            </tr>
+        `).join('');
+    }
 
-                <div class="overflow-x-auto mt-4">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-400">
-                                <th class="py-3 px-3">ID & Name</th>
-                                <th class="py-3 px-3">Principal / District</th>
-                                <th class="py-3 px-3">Admin Login</th>
-                                <th class="py-3 px-3">Password</th>
-                                <th class="py-3 px-3">Strength</th>
-                                <th class="py-3 px-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="schoolsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-                            <!-- Populated Dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    function openPasswordModal(schoolId, schoolName) {
+        document.getElementById('modalSchoolId').value = schoolId;
+        document.getElementById('modalSchoolName').innerText = schoolName;
+        document.getElementById('newAdminPasswordInput').value = '';
+        document.getElementById('passwordModal').classList.remove('hidden');
+    }
 
-        </section>
-    </main>
+    function closePasswordModal() {
+        document.getElementById('passwordModal').classList.add('hidden');
+    }
 
-    <!-- Password Reset Modal -->
-    <div id="passwordModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="cyber-card max-w-sm w-full rounded-3xl p-6 border border-slate-800 relative">
-            <h3 class="text-sm font-black text-white uppercase mb-2">Reset School Password</h3>
-            <p id="modalSchoolName" class="text-xs text-purple-400 font-bold mb-4">School Name</p>
-            <input type="hidden" id="modalSchoolId">
-            <div class="mb-4">
-                <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">New Admin Password</label>
-                <input type="text" id="newAdminPasswordInput" placeholder="Enter new password" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-purple-500">
-            </div>
-            <div class="flex space-x-2">
-                <button onclick="submitPasswordReset()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs transition">Update</button>
-                <button onclick="closePasswordModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition border border-slate-700">Cancel</button>
-            </div>
-        </div>
-    </div>
+    // Reset password locally in SchoolStore
+    function submitPasswordReset() {
+        const schoolId = document.getElementById('modalSchoolId').value;
+        const newPassword = document.getElementById('newAdminPasswordInput').value.trim();
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
-        <p>&copy; 2026 lamastudio.pk &bull; Master Super Admin Gateway</p>
-    </footer>
-
-    <!-- Logic Script -->
-    <script>
-        async function handleSuperLogin(event) {
-            event.preventDefault();
-            const username = document.getElementById('masterUser').value;
-            const password = document.getElementById('masterPass').value;
-            const errorEl = document.getElementById('loginError');
-
-            errorEl.classList.add('hidden');
-
-            const res = await ApiClient.superAdminLogin(username, password);
-            if (res.status === "success") {
-                localStorage.setItem('lamastudio_super_logged', 'true');
-                showDashboard();
-            } else {
-                errorEl.innerText = res.message || "Invalid master credentials.";
-                errorEl.classList.remove('hidden');
-            }
+        if (!newPassword) {
+            alert("Please enter a new password.");
+            return;
         }
 
-        function showDashboard() {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('loggedOutNav').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            document.getElementById('loggedInNav').classList.remove('hidden');
+        const schools = SchoolStore.getAll();
+        const schoolIndex = schools.findIndex(s => s.id === schoolId);
+
+        if (schoolIndex > -1) {
+            schools[schoolIndex].adminPassword = newPassword;
+            localStorage.setItem(SchoolStore.STORAGE_KEY, JSON.stringify(schools));
+            alert("Password updated successfully!");
+            closePasswordModal();
             loadSchoolsData();
+        } else {
+            alert("Error: School not found.");
         }
+    }
 
-        function handleLogout() {
-            localStorage.removeItem('lamastudio_super_logged');
-            location.reload();
+    // Check active session on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('lamastudio_super_logged') === 'true' || SchoolStore.isSuperLoggedIn()) {
+            showDashboard();
         }
-
-        async function loadSchoolsData() {
-            const tbody = document.getElementById('schoolsTableBody');
-            tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">Fetching live database records...</td></tr>`;
-
-            const res = await ApiClient.getAllSchools();
-            if (res.status === "success" && res.schools) {
-                const schools = res.schools;
-                document.getElementById('statTotalSchools').innerText = schools.length;
-                
-                let totalStudents = 0;
-                schools.forEach(s => totalStudents += parseInt(s.enrollment || 0, 10));
-                document.getElementById('statTotalStudents').innerText = totalStudents;
-
-                if (schools.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No schools registered yet.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = schools.map(s => `
-                    <tr class="hover:bg-slate-900/50 transition">
-                        <td class="py-3 px-3">
-                            <span class="font-bold text-white block">${s.name}</span>
-                            <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
-                        </td>
-                        <td class="py-3 px-3">
-                            <span class="font-bold text-slate-300 block">${s.principal || 'N/A'}</span>
-                            <span class="text-[10px] text-slate-500">${s.district || 'General'}</span>
-                        </td>
-                        <td class="py-3 px-3 font-mono text-cyan-300">${s.adminUsername}</td>
-                        <td class="py-3 px-3 font-mono text-amber-400">${s.adminPassword}</td>
-                        <td class="py-3 px-3 font-bold text-emerald-400">${s.enrollment || 0} students</td>
-                        <td class="py-3 px-3 text-right">
-                            <button onclick="openPasswordModal('${s.id}', '${s.name}')" class="bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition">
-                                Reset Pass
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } else {
-                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-rose-400">Failed to load school data. Check network connection.</td></tr>`;
-            }
-        }
-
-        function openPasswordModal(schoolId, schoolName) {
-            document.getElementById('modalSchoolId').value = schoolId;
-            document.getElementById('modalSchoolName').innerText = schoolName;
-            document.getElementById('newAdminPasswordInput').value = '';
-            document.getElementById('passwordModal').classList.remove('hidden');
-        }
-
-        function closePasswordModal() {
-            document.getElementById('passwordModal').classList.add('hidden');
-        }
-
-        async function submitPasswordReset() {
-            const schoolId = document.getElementById('modalSchoolId').value;
-            const newPassword = document.getElementById('newAdminPasswordInput').value;
-
-            if (!newPassword) {
-                alert("Please enter a new password.");
-                return;
-            }
-
-            const res = await ApiClient.resetSchoolPassword(schoolId, newPassword);
-            if (res.status === "success") {
-                alert("Password updated successfully!");
-                closePasswordModal();
-                loadSchoolsData();
-            } else {
-                alert("Error: " + (res.message || "Could not update password."));
-            }
-        }
-
-        // Check active session on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('lamastudio_super_logged') === 'true') {
-                showDashboard();
-            }
-        });
-    </script>
-</body>
-</html>
+    });
+</script>

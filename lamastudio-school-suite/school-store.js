@@ -218,10 +218,10 @@ function handleStep2(event) {
             localStorage.setItem('lamastudio_logged_in', 'true');
             localStorage.setItem('active_tenant_id', newSchool.id);
 
-            alert(`Success! School ID "${newSchool.id}" has been registered.\nRedirecting to your Admin Command Center...`);
+            alert(`Success! School ID "${newSchool.id}" has been registered.\nRedirecting to your Campus Command Hub...`);
 
-            // Use explicit relative path notation to ensure safe routing
-            window.location.href = './portals/admin/index.html';
+            // Updated redirection to open the main dashboard file directly instead of admin portal
+            window.location.href = 'dashboard.html'; 
         });
     });
 }

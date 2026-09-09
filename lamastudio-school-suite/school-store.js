@@ -1,205 +1,168 @@
-/**
- * LamaStudio School Suite — Shared Multi-School Storage Module
- * -------------------------------------------------------------
- * Single source of truth for reading/writing school data in LocalStorage.
- * Include this file BEFORE any page-specific <script> that needs school data:
- *
- *   <script src="school-store.js"></script>
- *
- * Storage shape:
- *   lamastudio_school_accounts  -> Array<School>   (master list, never overwritten wholesale)
- *   activeSchoolId              -> string           (id of the currently selected school)
- *   activeSchoolConfig          -> School            (denormalized copy of the active school,
- *                                                      kept in sync automatically — safe to read
- *                                                      directly for fast page loads)
- *
- * A School object can hold any fields you need (name, shortCode, address, phone,
- * logo, type, level, principal, enrollment, ...). Only `id` and `name` are required.
- */
-const SchoolStore = (function () {
-    const KEY_SCHOOLS = 'lamastudio_school_accounts';
-    const KEY_ACTIVE_ID = 'activeSchoolId';
-    const KEY_ACTIVE_CONFIG = 'activeSchoolConfig';
+<script>
+        // Foolproof SchoolStore module allowing custom or auto IDs without overwriting
+        const SchoolStore = {
+            storageKey: 'lamastudio_schools_db',
+            getAll() {
+                const data = localStorage.getItem(this.storageKey);
+                return data ? JSON.parse(data) : [];
+            },
+            saveAll(schools) {
+                localStorage.setItem(this.storageKey, JSON.stringify(schools));
+            },
+            upsert(schoolData, customIdInput) {
+                const schools = this.getAll();
+                
+                // Use user-provided custom ID if given, otherwise generate a unique one
+                const finalId = customIdInput && customIdInput.trim() !== '' 
+                    ? customIdInput.trim() 
+                    : 'SCH-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+                
+                schoolData.id = finalId;
+                
+                // Check if this ID already exists to prevent duplication collisions, otherwise push new
+                const existingIndex = schools.findIndex(s => s.id === finalId);
+                if (existingIndex >= 0) {
+                    schools[existingIndex] = { ...schools[existingIndex], ...schoolData };
+                } else {
+                    schools.push(schoolData);
+                }
+                
+                this.saveAll(schools);
+                return schoolData;
+            }
+        };
 
-    // Legacy single-school keys this app used before the multi-school array existed.
-    // Read once to migrate old data — never written to again.
-    const LEGACY_KEYS = {
-        name: 'lamastudio_registered_school',
-        address: 'lamastudio_school_address',
-        phone: 'lamastudio_school_phone',
-        logo: 'lamastudio_school_logo',
-        type: 'lamastudio_school_type',
-        level: 'lamastudio_school_level',
-        principal: 'lamastudio_principal',
-        enrollment: 'lamastudio_enrollment'
-    };
-
-    function safeParse(raw, fallback) {
-        if (!raw) return fallback;
-        try {
-            const parsed = JSON.parse(raw);
-            return parsed === null || parsed === undefined ? fallback : parsed;
-        } catch (e) {
-            console.warn('SchoolStore: corrupt JSON in storage, resetting.', e);
-            return fallback;
-        }
-    }
-
-    function getAll() {
-        const schools = safeParse(localStorage.getItem(KEY_SCHOOLS), []);
-        return Array.isArray(schools) ? schools : [];
-    }
-
-    function saveAll(schools) {
-        localStorage.setItem(KEY_SCHOOLS, JSON.stringify(schools));
-    }
-
-    function slugify(name) {
-        return String(name || 'school')
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '') || 'school';
-    }
-
-    function generateId(name) {
-        return `sch_${slugify(name)}_${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`;
-    }
-
-    function deriveShortCode(name) {
-        return String(name || 'SCH')
-            .split(/\s+/)
-            .map(w => w[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 3) || 'SCH';
-    }
-
-    /**
-     * Add a new school OR update an existing one in place.
-     * Matching priority: explicit `id` first, then case-insensitive `name`.
-     * Never erases other entries in the array.
-     */
-    function upsert(schoolData) {
-        if (!schoolData || !schoolData.name || !schoolData.name.trim()) {
-            throw new Error('SchoolStore.upsert: a school "name" is required.');
-        }
-        const schools = getAll();
-        let idx = -1;
-
-        if (schoolData.id) {
-            idx = schools.findIndex(s => s.id === schoolData.id);
-        }
-        if (idx === -1) {
-            const nameLower = schoolData.name.trim().toLowerCase();
-            idx = schools.findIndex(s => (s.name || '').trim().toLowerCase() === nameLower);
-        }
-
-        let school;
-        if (idx > -1) {
-            // Existing school -> merge/update in place, keep its original id.
-            school = Object.assign({}, schools[idx], schoolData, { id: schools[idx].id });
-            schools[idx] = school;
-        } else {
-            // New school -> append as a distinct entry.
-            school = Object.assign(
-                { id: generateId(schoolData.name), shortCode: deriveShortCode(schoolData.name) },
-                schoolData
-            );
-            schools.push(school);
-        }
-
-        saveAll(schools);
-        setActive(school.id);
-        return school;
-    }
-
-    /** Switch the active school and refresh the denormalized activeSchoolConfig cache. */
-    function setActive(id) {
-        const school = getAll().find(s => s.id === id);
-        if (!school) return null;
-        localStorage.setItem(KEY_ACTIVE_ID, id);
-        localStorage.setItem(KEY_ACTIVE_CONFIG, JSON.stringify(school));
-        return school;
-    }
-
-    /** One-time import of pre-multi-school data, run automatically by getActive(). */
-    function migrateLegacyIfNeeded() {
-        if (getAll().length > 0) return null;
-        const legacyName = localStorage.getItem(LEGACY_KEYS.name);
-        if (!legacyName) return null;
-
-        const legacy = { name: legacyName };
-        Object.keys(LEGACY_KEYS).forEach(field => {
-            if (field === 'name') return;
-            const val = localStorage.getItem(LEGACY_KEYS[field]);
-            if (val) legacy[field] = val;
-        });
-        return upsert(legacy);
-    }
-
-    /** Get the currently active school, migrating legacy data or falling back to the first school. */
-    function getActive() {
-        const activeId = localStorage.getItem(KEY_ACTIVE_ID);
-        const schools = getAll();
-
-        if (activeId) {
-            const match = schools.find(s => s.id === activeId);
-            if (match) return match;
-        }
-
-        if (schools.length > 0) {
-            return setActive(schools[0].id);
-        }
-
-        return migrateLegacyIfNeeded();
-    }
-
-    function remove(id) {
-        const remaining = getAll().filter(s => s.id !== id);
-        saveAll(remaining);
-        if (localStorage.getItem(KEY_ACTIVE_ID) === id) {
-            if (remaining.length > 0) {
-                setActive(remaining[0].id);
-            } else {
-                localStorage.removeItem(KEY_ACTIVE_ID);
-                localStorage.removeItem(KEY_ACTIVE_CONFIG);
+        // Automatic Lat/Lng extraction from map links or coords
+        function openMapPinHelper() {
+            window.open('https://maps.google.com', '_blank');
+            const pin = prompt('Paste your Google Maps location pin link or coordinates here:');
+            if (pin) {
+                let finalValue = pin.trim();
+                const coordRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+                const match = pin.match(coordRegex);
+                
+                if (match) {
+                    finalValue = `${pin.trim()} [Lat: ${match[1]}, Lng: ${match[2]}]`;
+                } else {
+                    const simpleCoords = pin.match(/^(-?\d+\.\d+),\s*(-?\d+\.\d+)$/);
+                    if (simpleCoords) {
+                        finalValue = `Lat: ${simpleCoords[1]}, Lng: ${simpleCoords[2]}`;
+                    }
+                }
+                document.getElementById('mapLocation').value = finalValue;
             }
         }
-    }
 
-    /**
-     * Renders a compact dropdown switcher into the given container element.
-     * Calling code should reload/re-render the page (or just relevant widgets)
-     * inside onSwitch.
-     */
-    function renderSwitcher(containerEl, onSwitch) {
-        if (!containerEl) return;
-        const schools = getAll();
-        const active = getActive();
-
-        if (schools.length === 0) {
-            containerEl.innerHTML = '';
-            return;
+        // Helper to compress/resize uploaded images target 15KB - 30KB
+        function compressImage(file, callback) {
+            if (!file) {
+                callback(null);
+                return;
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 300; 
+                    if (width > height) {
+                        if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+                    } else {
+                        if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    let quality = 0.5;
+                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    callback(dataUrl);
+                };
+            };
         }
 
-        const options = schools
-            .map(s => `<option value="${s.id}" ${active && s.id === active.id ? 'selected' : ''}>${(s.shortCode || deriveShortCode(s.name))} — ${s.name}</option>`)
-            .join('');
+        function handleStep1(event) {
+            event.preventDefault();
+            const username = document.getElementById('adminUsername').value.trim();
+            const password = document.getElementById('adminPassword').value;
 
-        containerEl.innerHTML = `
-            <select id="schoolSwitcherSelect" aria-label="Switch active school"
-                class="bg-slate-900 border border-slate-700 text-white text-xs font-bold rounded-xl px-3 py-2 outline-none focus:border-purple-500 cursor-pointer">
-                ${options}
-            </select>
-        `;
+            if (username.length < 3) {
+                alert('Admin username must be at least 3 characters long.');
+                return;
+            }
 
-        const select = containerEl.querySelector('#schoolSwitcherSelect');
-        select.addEventListener('change', (e) => {
-            const school = setActive(e.target.value);
-            if (typeof onSwitch === 'function') onSwitch(school);
-        });
-    }
+            const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+            if (!passRegex.test(password)) {
+                alert('Password must be at least 6 characters long and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.');
+                return;
+            }
 
-    return { getAll, upsert, setActive, getActive, remove, renderSwitcher, deriveShortCode };
-})();
+            localStorage.setItem('temp_admin_username', username);
+            localStorage.setItem('temp_admin_password', password);
+
+            document.getElementById('step1Form').classList.add('hidden');
+            document.getElementById('step2Form').classList.remove('hidden');
+            document.getElementById('stepIndicator').textContent = 'Step 2 of 2: Comprehensive Institution Profile';
+        }
+
+        function handleStep2(event) {
+            event.preventDefault();
+            
+            const schoolName = document.getElementById('schoolName').value.trim();
+            const address = document.getElementById('schoolAddress').value.trim();
+            const district = document.getElementById('schoolDistrict').value.trim();
+            const mapLocation = document.getElementById('mapLocation').value.trim();
+            const level = document.getElementById('schoolLevel').value;
+            const gender = document.getElementById('schoolGender').value;
+            const customIdInput = document.getElementById('customSchoolId').value; // Get custom input value
+            const idPattern = document.getElementById('idPattern').value.trim() || 'SCH-2026-###';
+            const strength = document.getElementById('totalStrength').value;
+            const staff = document.getElementById('totalStaff').value;
+            const principal = document.getElementById('principalName').value.trim();
+            const phone = document.getElementById('principalPhone').value.trim();
+            const email = document.getElementById('adminEmail').value.trim();
+            const tier = document.getElementById('selectedPackage').value;
+
+            const logoFile = document.getElementById('schoolLogo').files[0];
+            const receiptFile = document.getElementById('receiptPic').files[0];
+
+            compressImage(logoFile, function(logoBase64) {
+                compressImage(receiptFile, function(receiptBase64) {
+                    
+                    // Pass the custom ID input to upsert method
+                    const newSchool = SchoolStore.upsert({
+                        name: schoolName,
+                        address: address,
+                        district: district,
+                        mapLocation: mapLocation,
+                        level: level,
+                        gender: gender,
+                        idPattern: idPattern,
+                        enrollment: strength,
+                        totalStaff: staff,
+                        principal: principal,
+                        phone: phone,
+                        email: email,
+                        package: tier,
+                        logo: logoBase64 || '',
+                        receiptPic: receiptBase64 || '',
+                        adminUsername: localStorage.getItem('temp_admin_username'),
+                        verificationStatus: 'Verified', 
+                        registeredAt: new Date().toISOString()
+                    }, customIdInput);
+
+                    localStorage.setItem('lamastudio_logged_in', 'true');
+                    localStorage.setItem('active_tenant_id', newSchool.id);
+
+                    alert(`Success! School ID "${newSchool.id}" has been registered.\nRedirecting to your Admin Command Center...`);
+
+                    window.location.href = 'portals/admin/index.html';
+                });
+            });
+        }
+    </script>

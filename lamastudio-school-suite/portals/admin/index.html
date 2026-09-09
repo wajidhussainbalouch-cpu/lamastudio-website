@@ -56,12 +56,12 @@
                 <span>&larr; Home</span>
             </button>
             <span class="text-slate-700">|</span>
-            <h1 class="text-xs font-black tracking-wider text-amber-400 glow-text-amber">ADMIN MASTER COMMAND</h1>
+            <h1 class="text-xs font-black tracking-wider text-amber-400 glow-text-amber" id="navSchoolTitle">ADMIN MASTER COMMAND</h1>
         </div>
         <div class="flex items-center space-x-3">
-            <span class="text-[10px] bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-300 font-bold hidden sm:inline-block">
-                Clearance: Level 5 Supreme
-            </span>
+            <!-- Multi-School Switcher Slot -->
+            <div id="schoolSwitcherContainer"></div>
+            
             <button onclick="logoutAdmin()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold cursor-pointer">
                 Lock Panel
             </button>
@@ -71,29 +71,53 @@
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-grow w-full space-y-6">
         
-        <!-- Welcome Banner -->
-        <div class="cyber-card rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 px-3 py-1 rounded-full border border-amber-500/20">
-                    Full Institutional Audit Node
-                </span>
-                <h2 class="text-2xl md:text-3xl font-black text-white mt-2">Campus Telemetry & Student Command</h2>
-                <p class="text-xs text-slate-300 mt-1">Manage student profiles, edit records, filter fee statuses/academic tiers, monitor faculty audits, and send notifications.</p>
+        <!-- Welcome Banner with Dynamic Institution Telemetry -->
+        <div class="cyber-card rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div class="flex items-start space-x-4">
+                <div id="schoolLogoContainer" class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center overflow-hidden shrink-0">
+                    <span class="text-2xl">🏫</span>
+                </div>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="activeSchoolBadge" class="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 px-3 py-1 rounded-full border border-amber-500/20">
+                            Loading Tenant...
+                        </span>
+                        <span id="verificationBadge" class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20">
+                            Verified
+                        </span>
+                    </div>
+                    <h2 id="displaySchoolName" class="text-2xl md:text-3xl font-black text-white mt-2">Campus Telemetry Command</h2>
+                    <p id="displaySchoolMeta" class="text-xs text-slate-300 mt-1">District: Lahore • Principal: Mr. Ahmed Khan • Level: High (9-10)</p>
+                </div>
             </div>
             
-            <!-- Quick Stat Cards (Clicking Total Enrolled leads to Student Roster) -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+            <!-- Quick Stat Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto shrink-0">
                 <a href="admin-students.html" class="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 p-3 rounded-2xl text-center transition block group">
                     <p class="text-[9px] uppercase font-bold text-slate-400 group-hover:text-amber-400">Total Enrolled</p>
                     <p id="adminTotalStudents" class="text-lg font-black text-amber-400 mt-0.5">120 &rarr;</p>
                 </a>
                 <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Fee Clearance</p>
-                    <p class="text-lg font-black text-emerald-400 mt-0.5">PKR 1.42M</p>
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Package Tier</p>
+                    <p id="displayPackageTier" class="text-xs font-black text-emerald-400 mt-1 truncate">Professional</p>
                 </div>
                 <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center col-span-2 sm:col-span-1">
                     <p class="text-[9px] uppercase font-bold text-slate-400">Absentee SMS System</p>
-                    <p class="text-lg font-black text-cyan-400 mt-0.5">Active (Auto)</p>
+                    <p class="text-lg font-black text-cyan-400 mt-0.5">Active</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEE RECEIPT VERIFICATION ALERT WIDGET -->
+        <div id="receiptVerificationBox" class="cyber-card rounded-3xl p-6 border-amber-500/40 hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-sm font-black text-amber-400 uppercase tracking-wider">⚠️ Fee Transaction Receipt Pending Admin Verification</h3>
+                    <p class="text-xs text-slate-300 mt-1">The registered institution submitted a subscription payment slip. Verify the transaction to lift restriction flags.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="viewReceiptModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-4 py-2 rounded-xl border border-amber-500/30 transition cursor-pointer">View Receipt Image 🖼️</button>
+                    <button onclick="approveVerification()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition shadow-lg shadow-emerald-600/30 cursor-pointer">Verify & Approve ✓</button>
                 </div>
             </div>
         </div>
@@ -101,22 +125,21 @@
         <!-- MODULES GRID -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <!-- SECTION 1: Student Roster & Record Command (Direct Access Card) -->
+            <!-- SECTION 1: Student Roster -->
             <div class="cyber-card rounded-3xl p-6 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-amber-400">🎓 Student Directory & Roster Command</h3>
-                        <p class="text-[11px] text-slate-400">View, edit, delete, print files, and filter students with pictures & fee statuses.</p>
+                        <p class="text-[11px] text-slate-400">View, edit, delete, print files, and filter students.</p>
                     </div>
                     <a href="admin-students.html" class="text-[10px] bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-black px-3 py-1.5 rounded-xl border border-amber-500/30 transition shrink-0">
                         Open Roster &rarr;
                     </a>
                 </div>
-
                 <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="text-xs font-bold text-white">Full Student Management Hub</h4>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Filter by Class/Section, Fee Paid vs Unpaid, Intelligent vs Less Grade tiers.</p>
+                        <p id="idPatternDisplay" class="text-[10px] text-slate-400 mt-0.5">ID Pattern: SCH-2026-###</p>
                     </div>
                     <a href="admin-students.html" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-[11px] px-4 py-2 rounded-xl transition shadow-lg shadow-amber-600/20">
                         Launch Manager
@@ -124,80 +147,56 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: Teacher Performance & Attendance Audit -->
+            <!-- SECTION 2: Teacher Audit -->
             <div class="cyber-card rounded-3xl p-6 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-amber-400">👩‍🏫 Faculty Compliance & Activity Audit</h3>
-                        <p class="text-[11px] text-slate-400">Monitor whether instructors are submitting attendance and diary work on time.</p>
+                        <p class="text-[11px] text-slate-400">Monitor whether instructors submit attendance and diaries on time.</p>
                     </div>
-                    <button onclick="openSubModule('teachers-audit.html')" class="text-[10px] bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-black px-3 py-1.5 rounded-xl border border-amber-500/30 transition shrink-0 cursor-pointer">
-                        View / Edit All &rarr;
+                    <button onclick="alert('Navigating to faculty audit module...')" class="text-[10px] bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-black px-3 py-1.5 rounded-xl border border-amber-500/30 transition shrink-0 cursor-pointer">
+                        View All &rarr;
                     </button>
                 </div>
-
                 <div class="space-y-3">
                     <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex justify-between items-center">
                         <div>
-                            <h4 class="text-xs font-bold text-white">Prof. Sarah (Grade 8-A In-Charge)</h4>
-                            <p class="text-[10px] text-slate-400 mt-0.5">Attendance Logged: <span class="text-emerald-400 font-bold">On Time (8:15 AM)</span> • Diary: <span class="text-emerald-400">Updated</span></p>
+                            <h4 class="text-xs font-bold text-white">Faculty Lead In-Charge</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Attendance Logged: <span class="text-emerald-400 font-bold">On Time</span></p>
                         </div>
                         <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded border border-emerald-500/30">Verified</span>
-                    </div>
-
-                    <div class="bg-slate-900/60 border border-rose-500/30 p-3.5 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <h4 class="text-xs font-bold text-white">Ms. Hina (Grade 6 Arts)</h4>
-                            <p class="text-[10px] text-slate-400 mt-0.5">Attendance Logged: <span class="text-rose-400 font-bold">Delayed / Pending</span> • Diary: <span class="text-slate-400">Pending</span></p>
-                        </div>
-                        <button onclick="alert('System automated warning ping sent to Ms. Hina!')" class="text-[10px] bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded border border-rose-500/30 transition font-bold cursor-pointer">Send Ping</button>
                     </div>
                 </div>
             </div>
 
-            <!-- SECTION 3: Automated Absentee Call / SMS System Logs -->
+            <!-- SECTION 3: Absentee Logs -->
             <div class="cyber-card rounded-3xl p-6 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-cyan-400">📱 Automated Absentee SMS & Call Logs</h3>
                         <p class="text-[11px] text-slate-400">Real-time alerts sent to parents when students are marked absent.</p>
                     </div>
-                    <button onclick="openSubModule('absentee-logs.html')" class="text-[10px] bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 font-black px-3 py-1.5 rounded-xl border border-cyan-500/30 transition shrink-0 cursor-pointer">
-                        View / Edit All &rarr;
-                    </button>
                 </div>
-
-                <div class="space-y-3">
-                    <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl">
-                        <div class="flex justify-between items-center">
-                            <p class="text-xs font-bold text-white">Sara Ahmed (STU-002)</p>
-                            <span class="text-[10px] text-rose-400 font-bold">Marked Absent at 8:32 AM</span>
-                        </div>
-                        <p class="text-[10px] text-slate-400 mt-1">Automated SMS dispatched to father's mobile (+92 300 1234567): <span class="text-slate-300 italic">"Dear Parent, your child was marked absent today."</span></p>
-                    </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl">
+                    <p class="text-xs font-bold text-white">SMS Gateway Status</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Automated dispatch is fully active for your tenant code.</p>
                 </div>
             </div>
 
-            <!-- SECTION 4: Term, Annual Reports & Fee Manager -->
+            <!-- SECTION 4: Fee Slabs -->
             <div class="cyber-card rounded-3xl p-6 space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400">📊 Reports & Fee Slabs Control</h3>
-                        <p class="text-[11px] text-slate-400">Control class-wise fee structures and publish term reports.</p>
+                        <p class="text-[11px] text-slate-400">Control class-wise fee structures and publish reports.</p>
                     </div>
-                    <button onclick="openSubModule('fee-manager.html')" class="text-[10px] bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 font-black px-3 py-1.5 rounded-xl border border-emerald-500/30 transition shrink-0 cursor-pointer">
-                        View / Edit All &rarr;
-                    </button>
                 </div>
-
-                <div class="space-y-3">
-                    <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <p class="text-xs font-bold text-white">Grade 8 Fee Slab: PKR 8,500 / month</p>
-                            <p class="text-[10px] text-slate-400">Status: 28 Paid | 3 Defaulters Flagged</p>
-                        </div>
-                        <button onclick="alert('Opening fee slab settings...')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-emerald-500/30 transition cursor-pointer">Edit</button>
+                <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-white" id="displayActivePackage">Subscription Tier Active</p>
+                        <p class="text-[10px] text-slate-400">Full multi-tenant database isolated.</p>
                     </div>
+                    <span class="text-xs text-emerald-400 font-bold">Operational</span>
                 </div>
             </div>
 
@@ -210,14 +209,87 @@
         <p>&copy; 2026 lamastudio.pk • Admin Master Telemetry Command</p>
     </footer>
 
-    <!-- Scripts -->
+    <!-- Scripts Integration -->
+    <script src="../../js/school-store.js"></script>
     <script>
         window.onload = function() {
             const isAdminLoggedIn = localStorage.getItem('adminLoggedIn');
             if (isAdminLoggedIn === 'true') {
                 document.getElementById('adminLoginModal').style.display = 'none';
             }
+            loadActiveSchoolData();
         };
+
+        function loadActiveSchoolData() {
+            if (typeof SchoolStore === 'undefined') return;
+            
+            const activeSchool = SchoolStore.getActive();
+            if (!activeSchool) return;
+
+            // Render Multi-School Switcher into Top Navbar
+            SchoolStore.renderSwitcher(document.getElementById('schoolSwitcherContainer'), function(switchedSchool) {
+                loadActiveSchoolData(); // Refresh page data on switch
+            });
+
+            // Populate Top Title & Badge
+            document.getElementById('navSchoolTitle').textContent = `ADMIN COMMAND — ${activeSchool.name.toUpperCase()}`;
+            document.getElementById('activeSchoolBadge').textContent = activeSchool.district ? `District: ${activeSchool.district}` : 'Active Tenant';
+            document.getElementById('displaySchoolName').textContent = activeSchool.name;
+            
+            // Populate Metadata line
+            const district = activeSchool.district || 'Not Specified';
+            const principal = activeSchool.principal || activeSchool.principalName || 'Admin';
+            const level = activeSchool.level || 'High';
+            document.getElementById('displaySchoolMeta').textContent = `District: ${district} • Principal: ${principal} • Level: ${level}`;
+
+            // Populate Quick Stats
+            if (activeSchool.enrollment || activeSchool.totalStrength) {
+                document.getElementById('adminTotalStudents').textContent = `${activeSchool.enrollment || activeSchool.totalStrength} ➔`;
+            }
+            if (activeSchool.package) {
+                document.getElementById('displayPackageTier').textContent = activeSchool.package.split('(')[0];
+                document.getElementById('displayActivePackage').textContent = activeSchool.package;
+            }
+            if (activeSchool.idPattern) {
+                document.getElementById('idPatternDisplay').textContent = `ID Pattern: ${activeSchool.idPattern}`;
+            }
+
+            // Render Logo if present
+            if (activeSchool.logo) {
+                document.getElementById('schoolLogoContainer').innerHTML = `<img src="${activeSchool.logo}" alt="Logo" class="w-full h-full object-cover rounded-2xl">`;
+            }
+
+            // Check Verification Status
+            if (activeSchool.verificationStatus && activeSchool.verificationStatus.includes('Pending')) {
+                document.getElementById('receiptVerificationBox').classList.remove('hidden');
+                document.getElementById('verificationBadge').textContent = 'Pending Fee Verification';
+                document.getElementById('verificationBadge').className = 'text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 px-3 py-1 rounded-full border border-amber-500/20';
+            } else {
+                document.getElementById('receiptVerificationBox').classList.add('hidden');
+                document.getElementById('verificationBadge').textContent = 'Verified Active';
+                document.getElementById('verificationBadge').className = 'text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20';
+            }
+        }
+
+        function viewReceiptModal() {
+            const activeSchool = SchoolStore.getActive();
+            if (activeSchool && activeSchool.receiptPic) {
+                const win = window.open();
+                win.document.write(`<iframe src="${activeSchool.receiptPic}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+            } else {
+                alert('No receipt image found in active school store.');
+            }
+        }
+
+        function approveVerification() {
+            const activeSchool = SchoolStore.getActive();
+            if (activeSchool) {
+                activeSchool.verificationStatus = 'Verified & Approved';
+                SchoolStore.upsert(activeSchool);
+                alert(`Fee transaction for "${activeSchool.name}" successfully verified!`);
+                loadActiveSchoolData();
+            }
+        }
 
         function handleAdminLogin(event) {
             event.preventDefault();
@@ -238,10 +310,6 @@
 
         function goToDashboard() {
             window.location.href = '../../index.html';
-        }
-
-        function openSubModule(fileName) {
-            window.location.href = fileName;
         }
     </script>
 </body>

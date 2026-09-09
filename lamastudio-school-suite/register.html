@@ -166,7 +166,7 @@
         <p>If you need help then email <a href="mailto:admin@lamastudio.pk" class="text-indigo-600 dark:text-indigo-400 font-bold underline">admin@lamastudio.pk</a></p>
     </footer>
 
-    <!-- Script Integration -->
+    <!-- Script Integration (Make sure path matches your directory structure) -->
     <script src="js/school-store.js"></script>
     <script>
         function openMapPinHelper() {
@@ -175,6 +175,40 @@
             if (pin) {
                 document.getElementById('mapLocation').value = pin;
             }
+        }
+
+        // Helper to compress/resize uploaded images target 15KB - 30KB
+        function compressImage(file, callback) {
+            if (!file) {
+                callback(null);
+                return;
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 300; // Resize to small dimensions for lightweight storage
+                    if (width > height) {
+                        if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+                    } else {
+                        if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress quality iteratively to target lightweight range
+                    let quality = 0.5;
+                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    callback(dataUrl);
+                };
+            };
         }
 
         function handleStep1(event) {
@@ -218,30 +252,45 @@
             const email = document.getElementById('adminEmail').value.trim();
             const tier = document.getElementById('selectedPackage').value;
 
-            // Use SchoolStore to provision the unique tenant schema
-            const newSchool = SchoolStore.upsert({
-                name: schoolName,
-                address: address,
-                district: district,
-                mapLocation: mapLocation,
-                level: level,
-                gender: gender,
-                idPattern: idPattern,
-                totalStrength: strength,
-                totalStaff: staff,
-                principalName: principal,
-                phone: phone,
-                email: email,
-                package: tier,
-                adminUsername: localStorage.getItem('temp_admin_username'),
-                verificationStatus: 'Pending Admin Verification',
-                registeredAt: new Date().toISOString()
+            const logoFile = document.getElementById('schoolLogo').files[0];
+            const receiptFile = document.getElementById('receiptPic').files[0];
+
+            compressImage(logoFile, function(logoBase64) {
+                compressImage(receiptFile, function(receiptBase64) {
+                    
+                    if (typeof SchoolStore === 'undefined') {
+                        alert('Error: SchoolStore module not loaded. Verify script source path.');
+                        return;
+                    }
+
+                    // Use your custom robust SchoolStore upsert method
+                    const newSchool = SchoolStore.upsert({
+                        name: schoolName,
+                        address: address,
+                        district: district,
+                        mapLocation: mapLocation,
+                        level: level,
+                        gender: gender,
+                        idPattern: idPattern,
+                        enrollment: strength,
+                        totalStaff: staff,
+                        principal: principal,
+                        phone: phone,
+                        email: email,
+                        package: tier,
+                        logo: logoBase64 || '',
+                        receiptPic: receiptBase64 || '',
+                        adminUsername: localStorage.getItem('temp_admin_username'),
+                        verificationStatus: 'Pending Admin Verification',
+                        registeredAt: new Date().toISOString()
+                    });
+
+                    localStorage.setItem('lamastudio_logged_in', 'true');
+                    alert(`Success! "${newSchool.name}" has been successfully provisioned.\nYour fee receipt is under verification by admin@lamastudio.pk.\nRedirecting to your Admin Command Center...`);
+
+                    window.location.href = 'portals/admin/index.html';
+                });
             });
-
-            localStorage.setItem('lamastudio_logged_in', 'true');
-            alert(`Success! "${newSchool.name}" has been successfully provisioned.\nYour fee receipt is under verification by admin@lamastudio.pk.\nRedirecting to your Admin Command Center...`);
-
-            window.location.href = 'portals/admin/index.html';
         }
     </script>
 </body>

@@ -7,8 +7,6 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- Cloud Storage Engine (Adjust path if it's in the same folder) -->
-    <script src="school-store.js"></script>
     <style>
         body { font-family: 'Outfit', sans-serif; }
         .cyber-card { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); }
@@ -35,7 +33,7 @@
             <span class="text-xs text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">Restricted Access</span>
         </div>
         <div id="loggedInNav" class="hidden items-center space-x-3">
-            <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">● Master Active</span>
+            <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">● Master Cloud Active</span>
             <button onclick="handleLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl transition border border-slate-700 cursor-pointer">Lock Panel</button>
         </div>
     </header>
@@ -48,12 +46,12 @@
             <div class="text-center mb-6">
                 <span class="text-3xl">🔐</span>
                 <h2 class="text-xl font-black text-white mt-2">Master Authentication</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your super admin credentials to access all school records.</p>
+                <p class="text-xs text-slate-400 mt-1">Sign in with your Super Admin cloud credentials.</p>
             </div>
-            <form onsubmit="handleSuperLogin(event)" class="space-y-4">
+            <form id="masterLoginForm" class="space-y-4">
                 <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Username</label>
-                    <input type="text" id="masterUser" required placeholder="Enter username" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Email</label>
+                    <input type="email" id="masterUser" required placeholder="admin@lamastudio.pk" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
                 </div>
                 <div>
                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Password</label>
@@ -74,12 +72,12 @@
                     <p id="statTotalSchools" class="text-3xl font-black text-purple-400 mt-1">0</p>
                 </div>
                 <div class="cyber-card rounded-2xl p-5 border border-slate-800">
-                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Student Strength</p>
-                    <p id="statTotalStudents" class="text-3xl font-black text-cyan-400 mt-1">0</p>
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Tenant Nodes</p>
+                    <p id="statTotalStudents" class="text-3xl font-black text-cyan-400 mt-1">Cloud Sync</p>
                 </div>
                 <div class="cyber-card rounded-2xl p-5 border border-slate-800">
                     <p class="text-[10px] uppercase font-bold text-slate-400">Cloud Sync Engine</p>
-                    <p class="text-3xl font-black text-emerald-400 mt-1">Local Storage ⚡</p>
+                    <p class="text-3xl font-black text-emerald-400 mt-1">Firebase ⚡</p>
                 </div>
             </div>
 
@@ -87,18 +85,18 @@
                 <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-white">🏫 Registered Schools Database</h3>
-                        <p class="text-xs text-slate-400">Manage credentials and track school records.</p>
+                        <p class="text-xs text-slate-400">Live multi-tenant telemetry fetched securely from Firebase.</p>
                     </div>
-                    <button onclick="loadSchoolsData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold px-4 py-2 rounded-xl transition border border-slate-700 cursor-pointer">🔄 Refresh Data</button>
+                    <button onclick="loadSchoolsData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold px-4 py-2 rounded-xl transition border border-slate-700 cursor-pointer">🔄 Refresh Live Data</button>
                 </div>
                 <div class="overflow-x-auto mt-4">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-400">
-                                <th class="py-3 px-3">School Name & ID</th>
-                                <th class="py-3 px-3">Admin Username</th>
-                                <th class="py-3 px-3">Password</th>
-                                <th class="py-3 px-3 text-right">Actions</th>
+                                <th class="py-3 px-3">School Name</th>
+                                <th class="py-3 px-3">Admin Email</th>
+                                <th class="py-3 px-3">Type</th>
+                                <th class="py-3 px-3 text-right">Registered On</th>
                             </tr>
                         </thead>
                         <tbody id="schoolsTableBody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
@@ -112,24 +110,39 @@
         <p>&copy; 2026 lamastudio.pk &bull; Master Super Admin Gateway</p>
     </footer>
 
-    <!-- Logic Script -->
-    <script>
-        function handleSuperLogin(event) {
-            event.preventDefault();
-            const username = document.getElementById('masterUser').value.trim();
-            const password = document.getElementById('masterPass').value.trim();
-            const errorEl = document.getElementById('loginError');
+    <!-- Firebase Logic Integration Script -->
+    <script type="module">
+        import { auth, db } from "./config.js";
+        import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        const loginForm = document.getElementById('masterLoginForm');
+        const errorEl = document.getElementById('loginError');
+
+        // Handle Admin Cloud Login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             errorEl.classList.add('hidden');
+            const email = document.getElementById('masterUser').value.trim();
+            const pass = document.getElementById('masterPass').value.trim();
 
-            const auth = SchoolStore.authenticateSuper(username, password);
-            if (auth.success) {
-                showDashboard();
-            } else {
-                errorEl.innerText = auth.message || "Invalid master credentials.";
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                // Auth state listener handles the UI toggle automatically
+            } catch (err) {
+                errorEl.innerText = "Authentication Failed: " + err.message;
                 errorEl.classList.remove('hidden');
             }
-        }
+        });
+
+        // Watch Session State
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                showDashboard();
+            } else {
+                showLogin();
+            }
+        });
 
         function showDashboard() {
             document.getElementById('loginSection').classList.add('hidden');
@@ -139,58 +152,55 @@
             loadSchoolsData();
         }
 
-        function handleLogout() {
-            SchoolStore.clearSuperSession();
-            location.reload();
+        function showLogin() {
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('loggedOutNav').classList.remove('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loggedInNav').classList.add('hidden');
         }
 
-        function loadSchoolsData() {
+        window.handleLogout = function() {
+            signOut(auth).then(() => {
+                location.reload();
+            });
+        }
+
+        // Fetch Real-time Cloud Schools Data
+        window.loadSchoolsData = async function() {
             const tbody = document.getElementById('schoolsTableBody');
-            const schools = SchoolStore.getAll();
-            
-            document.getElementById('statTotalSchools').innerText = schools.length;
-            let totalStudents = schools.reduce((acc, s) => acc + parseInt(s.enrollment || 0, 10), 0);
-            document.getElementById('statTotalStudents').innerText = totalStudents;
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Fetching live cloud database...</td></tr>`;
 
-            if (schools.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">No schools registered yet.</td></tr>`;
-                return;
-            }
+            try {
+                const querySnapshot = await getDocs(collection(db, "schools"));
+                let schools = [];
+                querySnapshot.forEach((doc) => {
+                    schools.push({ id: doc.id, ...doc.data() });
+                });
 
-            tbody.innerHTML = schools.map(s => `
-                <tr class="hover:bg-slate-900/50 transition">
-                    <td class="py-3 px-3">
-                        <span class="font-bold text-white block">${s.name}</span>
-                        <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
-                    </td>
-                    <td class="py-3 px-3 font-mono text-cyan-300">${s.adminUsername}</td>
-                    <td class="py-3 px-3 font-mono text-amber-400">${s.adminPassword}</td>
-                    <td class="py-3 px-3 text-right">
-                        <button onclick="promptReset('${s.id}')" class="bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer">Reset Pass</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+                document.getElementById('statTotalSchools').innerText = schools.length;
 
-        function promptReset(id) {
-            const newPass = prompt("Enter new password for this school:");
-            if (newPass) {
-                let schools = SchoolStore.getAll();
-                const idx = schools.findIndex(s => s.id === id);
-                if (idx > -1) {
-                    schools[idx].adminPassword = newPass.trim();
-                    localStorage.setItem(SchoolStore.STORAGE_KEY, JSON.stringify(schools));
-                    alert("Password updated successfully!");
-                    loadSchoolsData();
+                if (schools.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">No schools registered in the cloud yet.</td></tr>`;
+                    return;
                 }
+
+                tbody.innerHTML = schools.map(s => `
+                    <tr class="hover:bg-slate-900/50 transition">
+                        <td class="py-3 px-3">
+                            <span class="font-bold text-white block">${s.schoolName || 'Unnamed School'}</span>
+                            <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
+                        </td>
+                        <td class="py-3 px-3 font-mono text-cyan-300">${s.adminEmail}</td>
+                        <td class="py-3 px-3"><span class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px]">${s.schoolType || 'Private'}</span></td>
+                        <td class="py-3 px-3 text-right text-slate-400 font-mono text-[10px]">${s.registeredAt ? new Date(s.registeredAt).toLocaleDateString() : 'N/A'}</td>
+                    </tr>
+                `).join('');
+
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-rose-400">Error loading cloud data: ${err.message}</td></tr>`;
             }
         }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            if (SchoolStore.isSuperLoggedIn()) {
-                showDashboard();
-            }
-        });
     </script>
 </body>
-</html>
+    </html>
+    

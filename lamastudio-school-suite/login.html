@@ -10,6 +10,8 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Shared Multi-School Storage Engine -->
+    <script src="school-store.js"></script>
     <style>
         body { font-family: 'Outfit', sans-serif; }
     </style>
@@ -35,7 +37,7 @@
                 <span id="loggedInSchoolLabel">Active Session</span>
                 <button onclick="handleLogout()" class="ml-2 text-[10px] bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded-lg transition">Logout</button>
             </div>
-            <a href="index.html" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">New School? Register</a>
+            <a href="register.html" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">New School? Register</a>
         </div>
     </header>
 
@@ -44,7 +46,7 @@
         <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 shadow-2xl">
             <div class="mb-6">
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white">Welcome Back</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your admin credentials to access your dashboard.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your registered admin credentials to access your dashboard.</p>
             </div>
 
             <!-- Login Error Alert -->
@@ -56,7 +58,7 @@
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username</label>
-                    <input type="text" id="loginUsername" required placeholder="e.g., principal_almadina" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="loginUsername" required placeholder="e.g., admin_school" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password</label>
@@ -77,7 +79,7 @@
                     <button type="button" onclick="openForgotPasswordModal()" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">Forgot Password?</button>
                 </div>
 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
                     Login to Dashboard 🚀
                 </button>
             </form>
@@ -94,8 +96,8 @@
                 <p>💬 AskLama Support: Available 24/7</p>
             </div>
             <div class="flex space-x-3 pt-2">
-                <button onclick="closeForgotPasswordModal()" class="w-full bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs font-bold transition">Close</button>
-                <button onclick="closeForgotPasswordModal(); toggleLamaChat();" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-xl text-xs font-bold transition">AskLama Now</button>
+                <button onclick="closeForgotPasswordModal()" class="w-full bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs font-bold transition cursor-pointer">Close</button>
+                <button onclick="closeForgotPasswordModal(); toggleLamaChat();" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-xl text-xs font-bold transition cursor-pointer">AskLama Now</button>
             </div>
         </div>
     </div>
@@ -113,19 +115,19 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     <span class="text-xs font-black uppercase tracking-wider">AskLama AI Assistant</span>
                 </div>
-                <button onclick="toggleLamaChat()" class="text-white hover:text-slate-200 text-sm font-bold">&times;</button>
+                <button onclick="toggleLamaChat()" class="text-white hover:text-slate-200 text-sm font-bold cursor-pointer">&times;</button>
             </div>
             <div id="lamaChatMessages" class="p-3 h-56 overflow-y-auto space-y-2 text-[11px] text-slate-200 bg-slate-950/60">
                 <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-                    Hello! I'm Lama, your AI assistant. Stuck in registration or need help with fees, HBL/Easypaisa payment methods, or receipts? Ask me anytime!
+                    Hello! I'm Lama, your AI assistant. Need help with login credentials or school switching? Ask me anytime!
                 </div>
             </div>
             <div class="p-2.5 border-t border-slate-800 bg-slate-900 flex space-x-2">
-                <input type="text" id="lamaUserInput" placeholder="Ask about registration, payments, login..." class="w-full text-[11px] bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-1.5 focus:border-purple-500 outline-none" onkeydown="if(event.key==='Enter') sendLamaMessage()">
-                <button onclick="sendLamaMessage()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Send</button>
+                <input type="text" id="lamaUserInput" placeholder="Ask about login, payments..." class="w-full text-[11px] bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-1.5 focus:border-purple-500 outline-none" onkeydown="if(event.key==='Enter') sendLamaMessage()">
+                <button onclick="sendLamaMessage()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">Send</button>
             </div>
         </div>
-        <button onclick="toggleLamaChat()" class="bg-gradient-to-tr from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] transition flex items-center justify-center space-x-2 text-xs font-black">
+        <button onclick="toggleLamaChat()" class="bg-gradient-to-tr from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] transition flex items-center justify-center space-x-2 text-xs font-black cursor-pointer">
             <span>💬 AskLama AI</span>
         </button>
     </div>
@@ -134,18 +136,9 @@
     <script>
         if(localStorage.getItem('lamastudio_theme') === 'dark') document.documentElement.classList.add('dark');
 
-        // Check if user has active session or remembered credentials
         window.addEventListener('DOMContentLoaded', () => {
-            const isLoggedIn = localStorage.getItem('lamastudio_logged_in') === 'true';
             const rememberedUser = localStorage.getItem('lamastudio_remembered_username');
             const rememberedPass = localStorage.getItem('lamastudio_remembered_password');
-            const schoolName = localStorage.getItem('lamastudio_registered_school') || "Active School";
-
-            if (isLoggedIn) {
-                document.getElementById('activeSessionBadge').classList.remove('hidden');
-                document.getElementById('activeSessionBadge').classList.add('flex');
-                document.getElementById('loggedInSchoolLabel').innerText = schoolName;
-            }
 
             if (rememberedUser && rememberedPass) {
                 document.getElementById('loginUsername').value = rememberedUser;
@@ -154,13 +147,11 @@
             }
         });
 
-        // Show/Hide password toggle
         function togglePasswordVisibility() {
             const passInput = document.getElementById('loginPassword');
             passInput.type = passInput.type === 'password' ? 'text' : 'password';
         }
 
-        // Forgot password modal handlers
         function openForgotPasswordModal() {
             document.getElementById('forgotPasswordModal').classList.remove('hidden');
         }
@@ -168,43 +159,45 @@
             document.getElementById('forgotPasswordModal').classList.add('hidden');
         }
 
-        // Login handler with Remember Password logic
+        // Multi-Tenant Authentication Handler
         function handleLogin(event) {
             event.preventDefault();
             const inputUser = document.getElementById('loginUsername').value.trim();
             const inputPass = document.getElementById('loginPassword').value.trim();
             const rememberMe = document.getElementById('rememberMeCheckbox').checked;
 
-            const savedUser = localStorage.getItem('lamastudio_admin_username');
-            const savedPass = localStorage.getItem('lamastudio_admin_password');
-
-            const targetUser = savedUser ? savedUser : 'admin';
-            const targetPass = savedPass ? savedPass : 'password';
-
-            if (inputUser === targetUser && inputPass === targetPass) {
-                localStorage.setItem('lamastudio_logged_in', 'true');
-                
-                if (rememberMe) {
-                    localStorage.setItem('lamastudio_remembered_username', inputUser);
-                    localStorage.setItem('lamastudio_remembered_password', inputPass);
-                } else {
-                    localStorage.removeItem('lamastudio_remembered_username');
-                    localStorage.removeItem('lamastudio_remembered_password');
+            if (typeof SchoolStore !== 'undefined') {
+                const authResult = SchoolStore.authenticate(inputUser, inputPass);
+                if (authResult.success) {
+                    if (rememberMe) {
+                        localStorage.setItem('lamastudio_remembered_username', inputUser);
+                        localStorage.setItem('lamastudio_remembered_password', inputPass);
+                    } else {
+                        localStorage.removeItem('lamastudio_remembered_username');
+                        localStorage.removeItem('lamastudio_remembered_password');
+                    }
+                    window.location.href = 'dashboard.html';
+                    return;
                 }
-
-                window.location.href = 'dashboard.html';
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
             }
+
+            // Fallback for default hardcoded credentials if no schools registered yet
+            if (inputUser === 'admin' && inputPass === 'password') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            document.getElementById('loginError').classList.remove('hidden');
         }
 
-        // Logout function
         function handleLogout() {
-            localStorage.removeItem('lamastudio_logged_in');
+            if (typeof SchoolStore !== 'undefined') {
+                SchoolStore.logout();
+            }
             window.location.reload();
         }
 
-        // AskLama Chatbot Integration Logic
+        // AskLama Chatbot Integration
         function toggleLamaChat() {
             const win = document.getElementById('lamaChatWindow');
             win.classList.toggle('hidden');
@@ -221,16 +214,11 @@
             container.scrollTop = container.scrollHeight;
 
             setTimeout(() => {
-                let reply = "Thanks for your inquiry! You can review our discounted tiers on the registration page or fill out the form to launch your portal.";
-                
-                if (query.includes('payment') || query.includes('method') || query.includes('bank') || query.includes('hbl') || query.includes('easypaisa') || query.includes('raast')) {
-                    reply = "You can send your subscription fee to our HBL account (PK67HABB18987900294403) or Easypaisa/Raast under Wajid Hussain, then upload your receipt.";
-                } else if (query.includes('lost') || query.includes('receipt') || query.includes('slip')) {
-                    reply = "If you lost your receipt, please share your transaction ID or call our admin at +92 300 0000000 so we can manually verify your payment log.";
-                } else if (query.includes('stuck') || query.includes('register') || query.includes('signup')) {
-                    reply = "If you got stuck during registration, make sure all required fields (school name, sector, level) are selected, then proceed to payment step.";
+                let reply = "Thanks for your inquiry! You can enter your registered username and password to access your dashboard.";
+                if (query.includes('payment') || query.includes('bank') || query.includes('easypaisa')) {
+                    reply = "Subscription fees can be transferred to our HBL account or via Easypaisa/Raast under Wajid Hussain.";
                 } else if (query.includes('forgot') || query.includes('password') || query.includes('username')) {
-                    reply = "Your default login username/password upon registration is set by you. If lost, contact admin support or check your browser saved credentials.";
+                    reply = "Your credentials were set during your initial school registration. Check your registered records or saved browser data.";
                 }
 
                 container.innerHTML += `<div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">${reply}</div>`;

@@ -10,8 +10,6 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- Shared Multi-School Storage Engine -->
-    <script src="school-store.js"></script>
     <style>
         body { font-family: 'Outfit', sans-serif; }
     </style>
@@ -47,19 +45,17 @@
         <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 shadow-2xl">
             <div class="mb-6">
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white">Welcome Back</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your registered admin credentials to access your dashboard.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your registered cloud credentials to access your dashboard.</p>
             </div>
 
             <!-- Login Error Alert -->
-            <div id="loginError" class="hidden bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs mb-4">
-                Invalid Username or Password. Please try again or use AskLama if stuck.
-            </div>
+            <div id="loginError" class="hidden bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs mb-4"></div>
 
             <!-- Login Form -->
-            <form onsubmit="handleLogin(event)" class="space-y-4">
+            <form id="loginForm" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username</label>
-                    <input type="text" id="loginUsername" required placeholder="e.g., admin_school" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Email</label>
+                    <input type="email" id="loginEmail" required placeholder="admin@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password</label>
@@ -133,85 +129,87 @@
         </button>
     </div>
 
-    <!-- Script Logic -->
-    <script>
+    <!-- Firebase Authentication Script Integration -->
+    <script type="module">
+        import { auth } from "./config.js";
+        import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
         if(localStorage.getItem('lamastudio_theme') === 'dark') document.documentElement.classList.add('dark');
 
         window.addEventListener('DOMContentLoaded', () => {
-            const rememberedUser = localStorage.getItem('lamastudio_remembered_username');
+            const rememberedEmail = localStorage.getItem('lamastudio_remembered_email');
             const rememberedPass = localStorage.getItem('lamastudio_remembered_password');
 
-            if (rememberedUser && rememberedPass) {
-                document.getElementById('loginUsername').value = rememberedUser;
+            if (rememberedEmail && rememberedPass) {
+                document.getElementById('loginEmail').value = rememberedEmail;
                 document.getElementById('loginPassword').value = rememberedPass;
                 document.getElementById('rememberMeCheckbox').checked = true;
             }
+        });
 
-            // Check if a school session is already active
-            if (typeof SchoolStore !== 'undefined') {
-                const activeSchool = SchoolStore.getActive();
-                if (activeSchool) {
-                    const badge = document.getElementById('activeSessionBadge');
-                    const label = document.getElementById('loggedInSchoolLabel');
-                    if (badge && label) {
-                        label.innerHTML = `Active: <strong class="underline">${activeSchool.name}</strong>`;
-                        badge.classList.remove('hidden');
-                        badge.classList.add('flex');
-                    }
+        // Track active auth state UI badge
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const badge = document.getElementById('activeSessionBadge');
+                const label = document.getElementById('loggedInSchoolLabel');
+                if (badge && label) {
+                    label.innerHTML = `Active: <strong class="underline">${user.email}</strong>`;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
                 }
             }
         });
 
-        function togglePasswordVisibility() {
+        window.togglePasswordVisibility = function() {
             const passInput = document.getElementById('loginPassword');
             passInput.type = passInput.type === 'password' ? 'text' : 'password';
         }
 
-        function openForgotPasswordModal() {
+        window.openForgotPasswordModal = function() {
             document.getElementById('forgotPasswordModal').classList.remove('hidden');
         }
-        function closeForgotPasswordModal() {
+        window.closeForgotPasswordModal = function() {
             document.getElementById('forgotPasswordModal').classList.add('hidden');
         }
 
-        // Multi-Tenant Authentication Handler
-        function handleLogin(event) {
-            event.preventDefault();
-            const inputUser = document.getElementById('loginUsername').value.trim();
-            const inputPass = document.getElementById('loginPassword').value.trim();
+        // Firebase Multi-Tenant Authentication Handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
             const rememberMe = document.getElementById('rememberMeCheckbox').checked;
+            const errorEl = document.getElementById('loginError');
+            errorEl.classList.add('hidden');
 
-            if (typeof SchoolStore !== 'undefined') {
-                const authResult = SchoolStore.authenticate(inputUser, inputPass);
-                if (authResult.success) {
-                    if (rememberMe) {
-                        localStorage.setItem('lamastudio_remembered_username', inputUser);
-                        localStorage.setItem('lamastudio_remembered_password', inputPass);
-                    } else {
-                        localStorage.removeItem('lamastudio_remembered_username');
-                        localStorage.removeItem('lamastudio_remembered_password');
-                    }
-                    window.location.href = 'dashboard.html';
-                    return;
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                
+                // Store active school session UID locally for downstream dashboard requests
+                localStorage.setItem("active_school_uid", userCredential.user.uid);
+
+                if (rememberMe) {
+                    localStorage.setItem('lamastudio_remembered_email', email);
+                    localStorage.setItem('lamastudio_remembered_password', password);
+                } else {
+                    localStorage.removeItem('lamastudio_remembered_email');
+                    localStorage.removeItem('lamastudio_remembered_password');
                 }
-            }
 
-            // Fallback for default hardcoded credentials if no schools registered yet
-            if (inputUser === 'admin' && inputPass === 'password') {
                 window.location.href = 'dashboard.html';
-                return;
+            } catch (err) {
+                errorEl.innerText = "Login Failed: " + err.message;
+                errorEl.classList.remove('hidden');
             }
+        });
 
-            document.getElementById('loginError').classList.remove('hidden');
+        window.handleLogout = function() {
+            signOut(auth).then(() => {
+                localStorage.removeItem("active_school_uid");
+                window.location.reload();
+            });
         }
-
-        function handleLogout() {
-            if (typeof SchoolStore !== 'undefined') {
-                SchoolStore.clearActive();
-            }
-            window.location.reload();
-        }
-
+    </script>
+    <script>
         // AskLama Chatbot Integration
         function toggleLamaChat() {
             const win = document.getElementById('lamaChatWindow');
@@ -229,11 +227,11 @@
             container.scrollTop = container.scrollHeight;
 
             setTimeout(() => {
-                let reply = "Thanks for your inquiry! You can enter your registered username and password to access your dashboard.";
+                let reply = "Thanks for your inquiry! You can enter your registered cloud email and password to access your dashboard.";
                 if (query.includes('payment') || query.includes('bank') || query.includes('easypaisa')) {
                     reply = "Subscription fees can be transferred to our HBL account or via Easypaisa/Raast under Wajid Hussain.";
-                } else if (query.includes('forgot') || query.includes('password') || query.includes('username')) {
-                    reply = "Your credentials were set during your initial school registration. Check your registered records or saved browser data.";
+                } else if (query.includes('forgot') || query.includes('password') || query.includes('email')) {
+                    reply = "Your credentials were set during your initial school cloud provisioning registration. Check your saved records or contact admin@lamastudio.pk.";
                 }
 
                 container.innerHTML += `<div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">${reply}</div>`;

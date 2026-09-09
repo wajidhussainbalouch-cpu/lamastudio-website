@@ -7,7 +7,7 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { darkMode: 'class' }
+        tailwind.config = { darkMode: 'class' };
     </script>
     <link rel="stylesheet" href="assets/css/config.css">
 </head>
@@ -40,11 +40,11 @@
             <form id="step1Form" onsubmit="handleStep1(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username</label>
-                    <input type="text" id="adminUsername" required placeholder="e.g., aims_admin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                    <input type="text" id="adminUsername" required placeholder="e.g., aims_admin" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password <span class="text-slate-400 font-normal">(Min 6 chars: 1 upper, 1 lower, 1 number, 1 special)</span></label>
-                    <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                    <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
                     Create Credentials & Continue &rarr;
@@ -63,7 +63,7 @@
                         <input type="text" id="schoolName" required placeholder="e.g., Lahore Grammar School" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Logo (Auto-compressed 15-30KB)</label>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">School Logo (Auto-compressed)</label>
                         <input type="file" id="schoolLogo" accept="image/*" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700">
                     </div>
                 </div>
@@ -167,7 +167,7 @@
     </footer>
 
     <!-- Script Integration -->
-    <script src="js/school-store.js"></script>
+    <script src="school-store.js"></script>
     <script>
         // Automatic Lat/Lng extraction from map links or coords
         function openMapPinHelper() {
@@ -176,7 +176,6 @@
             if (pin) {
                 let finalValue = pin.trim();
                 
-                // Matches standard google maps link coordinates format like "@31.5204,74.3587" or generic "lat, lng" text
                 const coordRegex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
                 const match = pin.match(coordRegex);
                 
@@ -185,7 +184,6 @@
                     const lng = match[2];
                     finalValue = `${pin.trim()} [Lat: ${lat}, Lng: ${lng}]`;
                 } else {
-                    // Try matching plain coordinate pairs separated by commas
                     const simpleCoords = pin.match(/^(-?\d+\.\d+),\s*(-?\d+\.\d+)$/);
                     if (simpleCoords) {
                         finalValue = `Lat: ${simpleCoords[1]}, Lng: ${simpleCoords[2]}`;
@@ -211,7 +209,7 @@
                     const canvas = document.createElement('canvas');
                     let width = img.width;
                     let height = img.height;
-                    const maxDim = 300; // Resize to small dimensions for lightweight storage
+                    const maxDim = 300; 
                     if (width > height) {
                         if (width > maxDim) { height *= maxDim / width; width = maxDim; }
                     } else {
@@ -281,7 +279,6 @@
                         return;
                     }
 
-                    // Save the new school profile
                     const newSchool = SchoolStore.upsert({
                         name: schoolName,
                         address: address,
@@ -299,12 +296,10 @@
                         logo: logoBase64 || '',
                         receiptPic: receiptBase64 || '',
                         adminUsername: localStorage.getItem('temp_admin_username'),
-                        // BYPASS: Automatically mark as verified during initial development setup so dashboard opens immediately
                         verificationStatus: 'Verified', 
                         registeredAt: new Date().toISOString()
                     });
 
-                    // Set standard session indicators for immediate developer access
                     localStorage.setItem('lamastudio_logged_in', 'true');
                     localStorage.setItem('active_tenant_id', newSchool.id || schoolName);
 

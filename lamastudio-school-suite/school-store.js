@@ -176,7 +176,10 @@ function handleStep2(event) {
     const mapLocation = document.getElementById('mapLocation').value.trim();
     const level = document.getElementById('schoolLevel').value;
     const gender = document.getElementById('schoolGender').value;
-    const customIdInput = document.getElementById('customSchoolId').value;
+    
+    const customIdElem = document.getElementById('customSchoolId');
+    const customIdInput = customIdElem ? customIdElem.value : null;
+    
     const idPattern = document.getElementById('idPattern').value.trim() || 'SCH-2026-###';
     const strength = document.getElementById('totalStrength').value;
     const staff = document.getElementById('totalStaff').value;

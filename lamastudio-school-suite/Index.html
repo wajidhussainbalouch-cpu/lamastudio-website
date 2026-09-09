@@ -41,7 +41,10 @@
             <button onclick="scrollToSection('pricing')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block cursor-pointer">Pricing</button>
             <button onclick="scrollToSection('payment-methods')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block cursor-pointer">Payment Channels</button>
             
-            <!-- Dynamic Auth Buttons Container -->
+            <!-- Super Admin Link -->
+            <a href="super-admin.html" class="text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1.5 rounded-lg transition hover:bg-amber-500/20">⚡ Super Admin</a>
+
+            <!-- Dynamic Auth Buttons Container (Shows active school name & logout when logged in) -->
             <div id="headerAuthActions" class="flex items-center space-x-1.5 md:space-x-3">
                 <button onclick="openLoginModal()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">
                     Already User
@@ -266,12 +269,13 @@
             if (!container) return;
 
             if (activeSchool) {
+                // When a school is logged in/active, show its name, dashboard access, and a secure Logout button so other schools can log in
                 container.innerHTML = `
                     <div class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                         <span>🏫</span>
-                        <span class="truncate max-w-[140px]">${activeSchool.name}</span>
+                        <span class="truncate max-w-[140px] font-bold">${activeSchool.name}</span>
                     </div>
-                    <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md transition whitespace-nowrap">Dashboard</a>
+                    <a href="dashboard.html" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold shadow-md transition whitespace-nowrap">Dashboard 🚀</a>
                     <button onclick="handleLogout()" class="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-lg text-[11px] md:text-xs font-semibold transition whitespace-nowrap cursor-pointer">Logout</button>
                 `;
             }
@@ -279,6 +283,7 @@
 
         function handleLogout() {
             SchoolStore.clearActive();
+            alert('Logged out successfully. The platform is now ready for another school login or registration.');
             window.location.reload();
         }
 

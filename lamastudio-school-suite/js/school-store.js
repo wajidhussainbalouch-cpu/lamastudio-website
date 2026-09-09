@@ -63,16 +63,16 @@ const SchoolStore = {
         return schoolData;
     },
 
-    // Authenticate existing school locally
+    // Authenticate existing school locally (with secure password check)
     authenticate(username, password) {
         const schools = this.getAll();
-        const school = schools.find(s => s.adminUsername === username);
+        const school = schools.find(s => s.adminUsername === username && s.adminPassword === password);
         
         if (school) {
             this.setActive(school);
-            return { success: true };
+            return { success: true, school };
         }
-        return { success: false, message: "Invalid credentials or school not found." };
+        return { success: false, message: "Invalid username or password, or school not found." };
     },
 
     // Automatically derive a 3-4 letter short code from school name

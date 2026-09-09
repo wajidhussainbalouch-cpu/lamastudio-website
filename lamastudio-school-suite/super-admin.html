@@ -1,117 +1,196 @@
-<script>
-    // Handle Master Super Admin Login Locally
-    function handleSuperLogin(event) {
-        event.preventDefault();
-        const username = document.getElementById('masterUser').value.trim();
-        const password = document.getElementById('masterPass').value.trim();
-        const errorEl = document.getElementById('loginError');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lamastudio | Super Admin Master Command</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Cloud Storage Engine (Adjust path if it's in the same folder) -->
+    <script src="school-store.js"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .cyber-card { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); }
+    </style>
+</head>
+<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
-        errorEl.classList.add('hidden');
+    <!-- Ambient Neon Glows -->
+    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-        // Use SchoolStore for super authentication
-        const auth = SchoolStore.authenticateSuper(username, password);
-        if (auth.success) {
-            localStorage.setItem('lamastudio_super_logged', 'true');
-            showDashboard();
-        } else {
-            errorEl.innerText = auth.message || "Invalid master credentials.";
-            errorEl.classList.remove('hidden');
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-purple-600 flex items-center justify-center font-black text-white shadow-[0_0_15px_rgba(225,29,72,0.4)]">
+                SA
+            </div>
+            <div>
+                <h1 class="text-sm font-black tracking-wider text-white uppercase">Lamastudio <span class="text-rose-400">Super Admin</span></h1>
+                <p class="text-[10px] text-slate-400">Master Cloud Telemetry & Tenant Control</p>
+            </div>
+        </div>
+        <div id="loggedOutNav" class="flex items-center space-x-2">
+            <span class="text-xs text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">Restricted Access</span>
+        </div>
+        <div id="loggedInNav" class="hidden items-center space-x-3">
+            <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">● Master Active</span>
+            <button onclick="handleLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl transition border border-slate-700 cursor-pointer">Lock Panel</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 flex-grow space-y-6 relative z-10">
+
+        <!-- LOGIN GATEWAY SECTION -->
+        <section id="loginSection" class="max-w-md mx-auto cyber-card rounded-3xl p-8 mt-12 shadow-2xl border border-slate-800">
+            <div class="text-center mb-6">
+                <span class="text-3xl">🔐</span>
+                <h2 class="text-xl font-black text-white mt-2">Master Authentication</h2>
+                <p class="text-xs text-slate-400 mt-1">Enter your super admin credentials to access all school records.</p>
+            </div>
+            <form onsubmit="handleSuperLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Username</label>
+                    <input type="text" id="masterUser" required placeholder="Enter username" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Password</label>
+                    <input type="password" id="masterPass" required placeholder="••••••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
+                </div>
+                <div id="loginError" class="text-xs text-rose-400 text-center font-bold hidden"></div>
+                <button type="submit" class="w-full bg-gradient-to-r from-rose-600 to-purple-600 hover:opacity-90 text-white font-black py-3 rounded-xl transition shadow-[0_0_20px_rgba(225,29,72,0.3)] text-xs uppercase tracking-wider cursor-pointer">
+                    Authorize Master Session
+                </button>
+            </form>
+        </section>
+
+        <!-- DASHBOARD SECTION -->
+        <section id="dashboardSection" class="hidden space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="cyber-card rounded-2xl p-5 border border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Registered Schools</p>
+                    <p id="statTotalSchools" class="text-3xl font-black text-purple-400 mt-1">0</p>
+                </div>
+                <div class="cyber-card rounded-2xl p-5 border border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Total Student Strength</p>
+                    <p id="statTotalStudents" class="text-3xl font-black text-cyan-400 mt-1">0</p>
+                </div>
+                <div class="cyber-card rounded-2xl p-5 border border-slate-800">
+                    <p class="text-[10px] uppercase font-bold text-slate-400">Cloud Sync Engine</p>
+                    <p class="text-3xl font-black text-emerald-400 mt-1">Local Storage ⚡</p>
+                </div>
+            </div>
+
+            <div class="cyber-card rounded-3xl p-6 border border-slate-800 overflow-hidden">
+                <div class="flex justify-between items-center pb-4 border-b border-slate-800">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-white">🏫 Registered Schools Database</h3>
+                        <p class="text-xs text-slate-400">Manage credentials and track school records.</p>
+                    </div>
+                    <button onclick="loadSchoolsData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold px-4 py-2 rounded-xl transition border border-slate-700 cursor-pointer">🔄 Refresh Data</button>
+                </div>
+                <div class="overflow-x-auto mt-4">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-400">
+                                <th class="py-3 px-3">School Name & ID</th>
+                                <th class="py-3 px-3">Admin Username</th>
+                                <th class="py-3 px-3">Password</th>
+                                <th class="py-3 px-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schoolsTableBody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
+        <p>&copy; 2026 lamastudio.pk &bull; Master Super Admin Gateway</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        function handleSuperLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('masterUser').value.trim();
+            const password = document.getElementById('masterPass').value.trim();
+            const errorEl = document.getElementById('loginError');
+
+            errorEl.classList.add('hidden');
+
+            const auth = SchoolStore.authenticateSuper(username, password);
+            if (auth.success) {
+                showDashboard();
+            } else {
+                errorEl.innerText = auth.message || "Invalid master credentials.";
+                errorEl.classList.remove('hidden');
+            }
         }
-    }
 
-    function showDashboard() {
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('loggedOutNav').classList.add('hidden');
-        document.getElementById('dashboardSection').classList.remove('hidden');
-        document.getElementById('loggedInNav').classList.remove('hidden');
-        loadSchoolsData();
-    }
-
-    function handleLogout() {
-        SchoolStore.clearSuperSession();
-        localStorage.removeItem('lamastudio_super_logged');
-        location.reload();
-    }
-
-    // Load Schools Data directly from local SchoolStore
-    function loadSchoolsData() {
-        const tbody = document.getElementById('schoolsTableBody');
-        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">Loading local cloud records...</td></tr>`;
-
-        const schools = SchoolStore.getAll();
-        
-        document.getElementById('statTotalSchools').innerText = schools.length;
-        
-        let totalStudents = 0;
-        schools.forEach(s => totalStudents += parseInt(s.enrollment || 0, 10));
-        document.getElementById('statTotalStudents').innerText = totalStudents;
-
-        if (schools.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500">No schools registered yet.</td></tr>`;
-            return;
-        }
-
-        tbody.innerHTML = schools.map(s => `
-            <tr class="hover:bg-slate-900/50 transition">
-                <td class="py-3 px-3">
-                    <span class="font-bold text-white block">${s.name}</span>
-                    <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
-                </td>
-                <td class="py-3 px-3">
-                    <span class="font-bold text-slate-300 block">${s.principal || 'N/A'}</span>
-                    <span class="text-[10px] text-slate-500">${s.district || 'General'}</span>
-                </td>
-                <td class="py-3 px-3 font-mono text-cyan-300">${s.adminUsername}</td>
-                <td class="py-3 px-3 font-mono text-amber-400">${s.adminPassword}</td>
-                <td class="py-3 px-3 font-bold text-emerald-400">${s.enrollment || 0} students</td>
-                <td class="py-3 px-3 text-right">
-                    <button onclick="openPasswordModal('${s.id}', '${s.name}')" class="bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer">
-                        Reset Pass
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function openPasswordModal(schoolId, schoolName) {
-        document.getElementById('modalSchoolId').value = schoolId;
-        document.getElementById('modalSchoolName').innerText = schoolName;
-        document.getElementById('newAdminPasswordInput').value = '';
-        document.getElementById('passwordModal').classList.remove('hidden');
-    }
-
-    function closePasswordModal() {
-        document.getElementById('passwordModal').classList.add('hidden');
-    }
-
-    // Reset password locally in SchoolStore
-    function submitPasswordReset() {
-        const schoolId = document.getElementById('modalSchoolId').value;
-        const newPassword = document.getElementById('newAdminPasswordInput').value.trim();
-
-        if (!newPassword) {
-            alert("Please enter a new password.");
-            return;
-        }
-
-        const schools = SchoolStore.getAll();
-        const schoolIndex = schools.findIndex(s => s.id === schoolId);
-
-        if (schoolIndex > -1) {
-            schools[schoolIndex].adminPassword = newPassword;
-            localStorage.setItem(SchoolStore.STORAGE_KEY, JSON.stringify(schools));
-            alert("Password updated successfully!");
-            closePasswordModal();
+        function showDashboard() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('loggedOutNav').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('loggedInNav').classList.remove('hidden');
             loadSchoolsData();
-        } else {
-            alert("Error: School not found.");
         }
-    }
 
-    // Check active session on page load
-    window.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('lamastudio_super_logged') === 'true' || SchoolStore.isSuperLoggedIn()) {
-            showDashboard();
+        function handleLogout() {
+            SchoolStore.clearSuperSession();
+            location.reload();
         }
-    });
-</script>
+
+        function loadSchoolsData() {
+            const tbody = document.getElementById('schoolsTableBody');
+            const schools = SchoolStore.getAll();
+            
+            document.getElementById('statTotalSchools').innerText = schools.length;
+            let totalStudents = schools.reduce((acc, s) => acc + parseInt(s.enrollment || 0, 10), 0);
+            document.getElementById('statTotalStudents').innerText = totalStudents;
+
+            if (schools.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">No schools registered yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = schools.map(s => `
+                <tr class="hover:bg-slate-900/50 transition">
+                    <td class="py-3 px-3">
+                        <span class="font-bold text-white block">${s.name}</span>
+                        <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
+                    </td>
+                    <td class="py-3 px-3 font-mono text-cyan-300">${s.adminUsername}</td>
+                    <td class="py-3 px-3 font-mono text-amber-400">${s.adminPassword}</td>
+                    <td class="py-3 px-3 text-right">
+                        <button onclick="promptReset('${s.id}')" class="bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer">Reset Pass</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function promptReset(id) {
+            const newPass = prompt("Enter new password for this school:");
+            if (newPass) {
+                let schools = SchoolStore.getAll();
+                const idx = schools.findIndex(s => s.id === id);
+                if (idx > -1) {
+                    schools[idx].adminPassword = newPass.trim();
+                    localStorage.setItem(SchoolStore.STORAGE_KEY, JSON.stringify(schools));
+                    alert("Password updated successfully!");
+                    loadSchoolsData();
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (SchoolStore.isSuperLoggedIn()) {
+                showDashboard();
+            }
+        });
+    </script>
+</body>
+</html>

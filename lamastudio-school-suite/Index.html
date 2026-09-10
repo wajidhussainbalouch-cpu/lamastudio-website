@@ -10,6 +10,10 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <link rel="stylesheet" href="assets/css/config.css">
+
+    <!-- Lamastudio Storage & API Layer -->
+    <script src="assets/js/api-client.js"></script>
+    <script src="assets/js/school-store.js"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
@@ -233,10 +237,8 @@
         </div>
     </footer>
 
-    <!-- Google Sheets SaaS Sync Engine Script -->
+    <!-- Main Controller Script -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT6qTm0WvZtn1qV3IciH3Xb9TTyLYBQLlO__Ql0F-NgTPJ7JMO3ZpgxdCKK34aEbpfyQ/exec";
-
         function toggleTheme() {
             const html = document.documentElement;
             html.classList.toggle('dark');
@@ -299,7 +301,7 @@
             document.getElementById('loginModal').classList.add('hidden');
         }
 
-        // Live Cloud Authentication via Google Sheets API
+        // Live Cloud Authentication via SchoolStore Layer
         async function handleCloudLoginSubmit(event) {
             event.preventDefault();
             const emailInput = document.getElementById('loginUser').value.trim().toLowerCase();
@@ -312,8 +314,7 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`);
-                const schools = await response.json();
+                const schools = await SchoolStore.getAll();
 
                 // Match against Google Sheet column header fields ("Admin Email" and "Password")
                 const matchedSchool = schools.find(s => 

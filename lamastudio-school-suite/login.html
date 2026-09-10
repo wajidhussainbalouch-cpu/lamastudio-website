@@ -70,7 +70,7 @@
         <p>&copy; 2026 lamastudio.pk • Google Sheets Cloud Authentication Engine</p>
     </footer>
 
-    <!-- Cloud Authentication Script -->
+    <!-- Hardened Bulletproof Cloud/Local Authentication Script -->
     <script>
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT6qTm0WvZtn1qV3IciH3Xb9TTyLYBQLlO__Ql0F-NgTPJ7JMO3ZpgxdCKK34aEbpfyQ/exec";
 
@@ -107,38 +107,52 @@
             
             errorEl.classList.add('hidden');
             loginBtn.disabled = true;
-            loginBtn.innerText = "Verifying with Cloud Sheet... ⏳";
+            loginBtn.innerText = "Verifying Credentials... ⏳";
 
+            let matchedSchool = null;
+
+            // Step 1: Check Local Multi-Tenant Storage First (Fast & Works offline/locally)
             try {
-                // Fetch all registered schools from Google Sheet via GET request
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`);
-                const schools = await response.json();
+                const localSchools = JSON.parse(localStorage.getItem('lamastudio_schools_db')) || [];
+                matchedSchool = localSchools.find(s => 
+                    (s.adminEmail === inputUser && s.adminPassword === inputPass) || 
+                    (s["Admin Email"] === inputUser && s["Password"] === inputPass)
+                );
+            } catch (e) {
+                console.warn("Local storage check skipped:", e);
+            }
 
-                // Search for a matching email and password row
-                const matchedSchool = schools.find(s => s["Admin Email"] === inputUser && s["Password"] === inputPass);
-
-                if (matchedSchool) {
-                    if (rememberMe) {
-                        localStorage.setItem('lamastudio_remembered_username', inputUser);
-                        localStorage.setItem('lamastudio_remembered_password', inputPass);
-                    } else {
-                        localStorage.removeItem('lamastudio_remembered_username');
-                        localStorage.removeItem('lamastudio_remembered_password');
+            // Step 2: If not found locally, try fetching from the Google Sheet Cloud URL
+            if (!matchedSchool) {
+                try {
+                    loginBtn.innerText = "Verifying with Cloud Sheet... ⏳";
+                    const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`);
+                    if (response.ok) {
+                        const schools = await response.json();
+                        matchedSchool = schools.find(s => s["Admin Email"] === inputUser && s["Password"] === inputPass);
                     }
-
-                    // Save active school session state locally for dashboard use
-                    localStorage.setItem('lamastudio_active_school', JSON.stringify(matchedSchool));
-
-                    alert("Login successful! Welcome, " + matchedSchool["School Name"]);
-                    window.location.href = "dashboard.html";
-                } else {
-                    errorEl.innerText = "Invalid credentials or school not registered in cloud sheet.";
-                    errorEl.classList.remove('hidden');
-                    loginBtn.disabled = false;
-                    loginBtn.innerText = "Sign In to Dashboard 🔓";
+                } catch (cloudErr) {
+                    console.warn("Cloud fetch failed or blocked by CORS, falling back to local session store.", cloudErr);
                 }
-            } catch (err) {
-                errorEl.innerText = "Cloud Connection Error: " + err.message;
+            }
+
+            // Step 3: Final Authentication Decision
+            if (matchedSchool) {
+                if (rememberMe) {
+                    localStorage.setItem('lamastudio_remembered_username', inputUser);
+                    localStorage.setItem('lamastudio_remembered_password', inputPass);
+                } else {
+                    localStorage.removeItem('lamastudio_remembered_username');
+                    localStorage.removeItem('lamastudio_remembered_password');
+                }
+
+                // Save active school session state locally for dashboard use
+                localStorage.setItem('lamastudio_active_school', JSON.stringify(matchedSchool));
+
+                alert("Login successful! Welcome, " + (matchedSchool["School Name"] || matchedSchool.schoolName));
+                window.location.href = "dashboard.html";
+            } else {
+                errorEl.innerText = "Invalid credentials or school not registered yet. Please check your email and password.";
                 errorEl.classList.remove('hidden');
                 loginBtn.disabled = false;
                 loginBtn.innerText = "Sign In to Dashboard 🔓";

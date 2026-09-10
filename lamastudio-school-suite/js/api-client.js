@@ -3,7 +3,7 @@
  * Connects frontend storage engines to Google Apps Script Backend
  */
 
-const LAMASTUDIO_API_URL = "https://script.google.com/macros/s/AKfycbwA2f1aw--ltFn-mQRCYrP2WGbQIGtsDYvW-ynEq--gFdP3oyKtzTsxXmdHrh0eXHas0g/exec";
+const LAMASTUDIO_API_URL = "https://script.google.com/macros/s/AKfycbwhqJ1W0GOTl2-FTF9XgTYXuAeG0uINR0995_d6SOl1TtloACKcKcugVaayYT18Xw_Teg/exec";
 
 const ApiClient = {
     // --- School Registration ---
@@ -11,7 +11,7 @@ const ApiClient = {
         try {
             const response = await fetch(LAMASTUDIO_API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "register", data: schoolData })
+                body: JSON.stringify(schoolData)
             });
             return await response.json();
         } catch (e) {
@@ -62,29 +62,26 @@ const ApiClient = {
 
     // --- Super Admin Authentication ---
     async superAdminLogin(username, password) {
-        try {
-            const response = await fetch(LAMASTUDIO_API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "superAdminLogin", credentials: { username, password } })
-            });
-            return await response.json();
-        } catch (e) {
-            console.error("Super Admin login failed:", e);
-            return { status: "error", message: e.toString() };
+        // Client-side validation handled in admin panel, but kept for interface completeness
+        if (username === "admin@lamastudio.pk" && password === "master123") {
+            return { status: "success" };
         }
+        return { status: "error", message: "Invalid credentials" };
     },
 
     // --- Super Admin: Fetch All Registered Schools ---
     async getAllSchools() {
         try {
-            const response = await fetch(LAMASTUDIO_API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getAllSchools" })
+            const response = await fetch(`${LAMASTUDIO_API_URL}?action=getSchools`, {
+                method: "GET",
+                mode: "cors",
+                redirect: "follow"
             });
-            return await response.json();
+            const data = await response.json();
+            return Array.isArray(data) ? data : [];
         } catch (e) {
             console.error("Failed to fetch schools list:", e);
-            return { status: "error", schools: [] };
+            return [];
         }
     },
 

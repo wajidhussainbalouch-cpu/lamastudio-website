@@ -150,7 +150,7 @@
             </div>
 
             <!-- FORM SECTIONS -->
-            <form class="space-y-3.5">
+            <form class="space-y-3.5" onsubmit="event.preventDefault();">
                 
                 <!-- SECTION 1: STUDENT PERSONAL INFORMATION -->
                 <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
@@ -322,9 +322,11 @@
         let schoolLevel = "Primary";
 
         function renderAdmissionsForm() {
-            const school = SchoolStore.getActive() || {};
+            // Safe fallback check if SchoolStore is loaded properly from dashboard
+            const school = (typeof SchoolStore !== 'undefined' && SchoolStore.getActive) ? (SchoolStore.getActive() || {}) : {};
+            
             schoolName = school.name || "GPS Shah Sadar Din";
-            const shortCode = school.shortCode || school.emis || SchoolStore.deriveShortCode(schoolName);
+            const shortCode = school.shortCode || school.emis || (typeof SchoolStore !== 'undefined' ? SchoolStore.deriveShortCode(schoolName) : "GSSD");
             schoolAddress = school.address || "Shah Sadar Din";
             schoolPhone = school.phone || "03437064536";
             const schoolLogo = school.logo || "";
@@ -437,8 +439,8 @@
             }
         }
 
-        // Initialize form with active registered tenant data
-        renderAdmissionsForm();
+        // Initialize form with active registered tenant data on load
+        window.addEventListener('DOMContentLoaded', renderAdmissionsForm);
     </script>
 </body>
 </html>

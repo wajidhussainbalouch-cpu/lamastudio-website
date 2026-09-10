@@ -1,28 +1,10 @@
 /**
- * Lamastudio.pk - School Storage & Session Engine (v2.6)
- * Manages multi-tenant cloud storage, tenant isolation, and Master Super Admin telemetry.
+ * Lamastudio.pk - School Storage & Session Engine (v2.7 Cloud Edition)
+ * Manages multi-tenant cloud synchronization, tenant isolation, and Master Super Admin telemetry via Google Sheets.
  */
 
 const SchoolStore = {
-    STORAGE_KEY: 'lamastudio_registered_schools',
     SUPER_SESSION_KEY: 'lamastudio_super_logged_in',
-
-    // Initialize default master credentials if they don't exist yet
-    init() {
-        if (!localStorage.getItem(this.STORAGE_KEY)) {
-            // Seed a default demo tenant to prevent empty arrays on fresh install
-            const defaultSchool = {
-                id: 'SCH-DEMO-01',
-                name: 'Aims National Model School',
-                shortCode: 'AIMS',
-                adminUsername: 'aims_admin',
-                adminPassword: 'password123',
-                email: 'admin@aims.edu.pk',
-                createdAt: new Date().toISOString()
-            };
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify([defaultSchool]));
-        }
-    },
 
     // --- TENANT SESSION MANAGEMENT ---
 
@@ -35,7 +17,7 @@ const SchoolStore = {
     // Set the active school session locally
     setActive(schoolObj) {
         localStorage.setItem('active_school_session', JSON.stringify(schoolObj));
-        localStorage.setItem('active_tenant_id', schoolObj.id);
+        localStorage.setItem('active_tenant_id', schoolObj.id || schoolObj["School Code / ID"] || '');
     },
 
     // Clear active session on logout
@@ -47,12 +29,12 @@ const SchoolStore = {
     // --- SUPER ADMIN SESSION MANAGEMENT ---
 
     isSuperLoggedIn() {
-        return localStorage.getItem(this.SUPER_SESSION_KEY) === 'true';
+        return localStorage.getItem('super_admin_session') === 'true' || localStorage.getItem(this.SUPER_SESSION_KEY) === 'true';
     },
 
     authenticateSuper(username, password) {
-        // Master hardcoded fallback credentials for Super Admin Gateway
-        if (username === 'admin' && password === 'password') {
+        if (username === 'admin@lamastudio.pk' && password === 'master123') {
+            localStorage.setItem('super_admin_session', 'true');
             localStorage.setItem(this.SUPER_SESSION_KEY, 'true');
             return { success: true };
         }
@@ -60,80 +42,63 @@ const SchoolStore = {
     },
 
     clearSuperSession() {
+        localStorage.removeItem('super_admin_session');
         localStorage.removeItem(this.SUPER_SESSION_KEY);
     },
 
-    // --- MULTI-TENANT DATABASE ACTIONS ---
+    // --- MULTI-TENANT CLOUD DATABASE ACTIONS ---
 
-    // Get all registered schools safely
-    getAll() {
-        this.init();
+    // Get all registered schools from Google Sheets via ApiClient
+    async getAll() {
         try {
-            const data = localStorage.getItem(this.STORAGE_KEY);
-            return data ? JSON.parse(data) : [];
+            return await ApiClient.getAllSchools();
         } catch (e) {
-            console.error("Error reading SchoolStore data:", e);
+            console.error("Error fetching schools from cloud:", e);
             return [];
         }
     },
 
-    // Register or update a school in the local multi-tenant store
-    upsert(schoolData) {
-        const schools = this.getAll();
-        
-        // Generate a unique ID if it doesn't exist
-        if (!schoolData.id) {
-            schoolData.id = 'SCH-' + Date.now();
+    // Register a new school directly to Google Sheets Cloud
+    async upsert(schoolData) {
+        try {
+            // Generate ID/Code if missing
+            if (!schoolData.schoolCodeId) {
+                schoolData.schoolCodeId = 'SCH-' + Date.now();
+            }
+
+            const response = await ApiClient.register(schoolData);
+            
+            if (response && response.status === "success") {
+                this.setActive(schoolData);
+                return { success: true, school: schoolData };
+            } else {
+                return { success: false, message: response.message || "Cloud registration failed." };
+            }
+        } catch (e) {
+            console.error("Upsert failed:", e);
+            return { success: false, message: e.toString() };
         }
-
-        if (!schoolData.createdAt) {
-            schoolData.createdAt = new Date().toISOString();
-        }
-
-        // Check if school already exists by admin username or short code
-        const existingIndex = schools.findIndex(s => s.adminUsername === schoolData.adminUsername);
-
-        if (existingIndex > -1) {
-            // Update existing record safely
-            schools[existingIndex] = { ...schools[existingIndex], ...schoolData };
-        } else {
-            // Append new school to array
-            schools.push(schoolData);
-        }
-
-        // Save back to LocalStorage array
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(schools));
-        
-        // Set as active session automatically
-        this.setActive(schoolData);
-        
-        return schoolData;
     },
 
-    // Delete a school tenant (Super Admin feature)
-    deleteTenant(tenantId) {
-        let schools = this.getAll();
-        schools = schools.filter(s => s.id !== tenantId);
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(schools));
-        
-        // If the active session was this deleted tenant, clear session
-        const active = this.getActive();
-        if (active && active.id === tenantId) {
-            this.clearActive();
+    // Authenticate existing school against cloud records
+    async authenticate(username, password) {
+        try {
+            const schools = await this.getAll();
+            // Match against Admin Email & Password columns
+            const school = schools.find(s => 
+                (s["Admin Email"] === username || s.adminUsername === username) && 
+                (s["Password"] === password || s.adminPassword === password)
+            );
+            
+            if (school) {
+                this.setActive(school);
+                return { success: true, school };
+            }
+            return { success: false, message: "Invalid username or password, or school not found." };
+        } catch (e) {
+            console.error("Authentication error:", e);
+            return { success: false, message: e.toString() };
         }
-        return true;
-    },
-
-    // Authenticate existing school locally
-    authenticate(username, password) {
-        const schools = this.getAll();
-        const school = schools.find(s => s.adminUsername === username && s.adminPassword === password);
-        
-        if (school) {
-            this.setActive(school);
-            return { success: true, school };
-        }
-        return { success: false, message: "Invalid username or password, or school not found." };
     },
 
     // Automatically derive a 3-4 letter short code from school name
@@ -147,6 +112,3 @@ const SchoolStore = {
             .substring(0, 4);
     }
 };
-
-// Run auto-initialization on load
-SchoolStore.init();

@@ -11,6 +11,10 @@
         body { font-family: 'Outfit', sans-serif; }
         .cyber-card { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); }
     </style>
+    
+    <!-- Lamastudio Storage & API Layer -->
+    <script src="assets/js/api-client.js"></script>
+    <script src="assets/js/school-store.js"></script>
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
@@ -110,10 +114,8 @@
         <p>&copy; 2026 lamastudio.pk &bull; Master Super Admin Gateway</p>
     </footer>
 
-    <!-- Google Sheets Engine Integration Script -->
+    <!-- Master Controller Script -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT6qTm0WvZtn1qV3IciH3Xb9TTyLYBQLlO__Ql0F-NgTPJ7JMO3ZpgxdCKK34aEbpfyQ/exec";
-
         document.addEventListener('DOMContentLoaded', () => {
             checkSession();
         });
@@ -165,20 +167,14 @@
             location.reload();
         }
 
-        // Fetch Real-time Cloud Schools Data from Google Sheets
+        // Fetch Real-time Cloud Schools Data via SchoolStore/ApiClient Layer
         async function loadSchoolsData() {
             const tbody = document.getElementById('schoolsTableBody');
             tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Fetching live Google Sheets cloud database...</td></tr>`;
 
             try {
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`, {
-                    method: 'GET',
-                    mode: 'cors',
-                    redirect: 'follow'
-                });
-                const schools = await response.json();
-
-                document.getElementById('statTotalSchools').innerText = schools.length;
+                const schools = await SchoolStore.getAll();
+                document.getElementById('statTotalSchools').innerText = schools ? schools.length : 0;
 
                 if (!schools || schools.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">No schools registered in the cloud yet.</td></tr>`;

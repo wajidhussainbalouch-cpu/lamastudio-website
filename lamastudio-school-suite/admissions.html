@@ -6,7 +6,9 @@
     <title id="pageTitle">Universal Academic Admission & Registration Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="api-client.js"></script>
+    <!-- Lamastudio Cloud API Client & School Store Suite -->
+    <script src="lamastudio-school-suite/js/api-client.js"></script>
+    <script src="lamastudio-school-suite/js/school-store.js"></script>
     <style>
         body {
             font-family: 'Outfit', sans-serif;
@@ -113,8 +115,8 @@
                     </div>
                 </div>
                 <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">GPS Shah Sadar Din</h1>
-                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Shah Sadar Din • EMIS/Reg Code: GPS</p>
+                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">Loading School...</h1>
+                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Fetching cloud telemetry...</p>
             </div>
 
             <!-- ID and Photo Section -->
@@ -122,7 +124,7 @@
                 <div class="space-y-2 text-[11px] font-bold text-slate-800 pt-2">
                     <div class="flex items-center space-x-3">
                         <span class="uppercase text-slate-500 text-[10px]">ADMISSION NO:</span>
-                        <input type="text" id="admissionNoInput" value="GPS-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
+                        <input type="text" id="admissionNoInput" class="w-36 font-mono font-bold text-indigo-900">
                     </div>
                     <div class="flex items-center space-x-3">
                         <span class="uppercase text-slate-500 text-[10px]">DATE OF ISSUE:</span>
@@ -240,59 +242,70 @@
         </div>
     </div>
 
-    <!-- Script Layer -->
+    <!-- Script Layer using SchoolStore & ApiClient -->
     <script>
         let schoolType = "government";
         let schoolLevel = "high";
         let schoolPhone = "";
 
         async function renderAdmissionsForm() {
-            // Unified storage lookup prioritizing direct keys
-            const savedReg = JSON.parse(
-                localStorage.getItem('schoolRegistration') || 
-                localStorage.getItem('activeSchool') || 
-                '{}'
-            );
+            try {
+                // 1. Fetch live active tenant session from SchoolStore
+                let school = null;
+                if (typeof SchoolStore !== 'undefined' && typeof SchoolStore.getActive === 'function') {
+                    school = SchoolStore.getActive();
+                }
 
-            const schoolName = savedReg.name || savedReg.schoolName || "GPS Shah Sadar Din";
-            const shortCode = savedReg.shortCode || savedReg.emisCode || savedReg.emis || "GPS";
-            const schoolAddress = savedReg.address || savedReg.location || "Shah Sadar Din";
-            schoolPhone = savedReg.phone || savedReg.contactNo || savedReg.uan || "";
-            const schoolLogo = savedReg.logo || savedReg.logoUrl || savedReg.schoolLogo || "";
-            
-            schoolType = (savedReg.type || savedReg.schoolType || 'government').toLowerCase();
-            schoolLevel = (savedReg.level || savedReg.schoolLevel || 'high').toLowerCase();
+                // 2. Fallback check for session data if needed
+                if (!school) {
+                    const storedSession = localStorage.getItem('active_school_session');
+                    school = storedSession ? JSON.parse(storedSession) : {};
+                }
 
-            // Set Title and School Name
-            document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
-            document.getElementById('headerSchoolName').innerText = schoolName;
+                // Map multi-tenant Google Sheets / local storage property variants safely
+                const schoolName = school.name || school.schoolName || school["School Name"] || "GPS Shah Sadar Din";
+                const shortCode = school.shortCode || school.emisCode || school.emis || school["School Code / ID"] || school["EMIS Code"] || "GPS";
+                const schoolAddress = school.address || school.location || school["Address / Location"] || "Shah Sadar Din";
+                schoolPhone = school.phone || school.contactNo || school.uan || school["Contact Phone / UAN"] || "";
+                const schoolLogo = school.logo || school.logoUrl || school.schoolLogo || school["Logo URL"] || "";
+                
+                schoolType = (school.type || school.schoolType || school["Sector Type"] || 'government').toLowerCase();
+                schoolLevel = (school.level || school.schoolLevel || school["School Level"] || 'high').toLowerCase();
 
-            // Dynamically build metadata text line (omits UAN segment cleanly if empty)
-            let metaText = schoolAddress;
-            if (schoolPhone && schoolPhone.trim() !== "") {
-                metaText += ` • UAN: ${schoolPhone}`;
+                // Set Title and School Name
+                document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
+                document.getElementById('headerSchoolName').innerText = schoolName;
+
+                // Dynamically build metadata line (cleanly omitting UAN separator segment if left blank)
+                let metaText = schoolAddress;
+                if (schoolPhone && schoolPhone.trim() !== "") {
+                    metaText += ` • UAN: ${schoolPhone}`;
+                }
+                metaText += ` • EMIS/Reg Code: ${shortCode}`;
+                document.getElementById('headerSchoolMeta').innerText = metaText;
+
+                // Handle Logo Render (Fallback to initials if no image is uploaded)
+                const logoContainer = document.getElementById('schoolLogoContainer');
+                if (schoolLogo && schoolLogo.trim() !== "") {
+                    logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
+                } else {
+                    logoContainer.innerText = shortCode.slice(0, 4).toUpperCase();
+                }
+
+                document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
+                document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
+
+                populateClassOptions();
+                populateFeeTierOptions();
+
+            } catch (error) {
+                console.error("SchoolStore synchronization error:", error);
             }
-            metaText += ` • EMIS/Reg Code: ${shortCode}`;
-            document.getElementById('headerSchoolMeta').innerText = metaText;
-
-            // Handle Logo Render
-            const logoContainer = document.getElementById('schoolLogoContainer');
-            if (schoolLogo) {
-                logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
-            } else {
-                logoContainer.innerText = shortCode.slice(0, 3).toUpperCase();
-            }
-
-            document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
-            document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
-
-            populateClassOptions();
-            populateFeeTierOptions();
         }
 
         function handleLogout() {
-            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.logout === 'function') {
-                LamaAPI.logout();
+            if (typeof SchoolStore !== 'undefined' && typeof SchoolStore.clearActive === 'function') {
+                SchoolStore.clearActive();
             }
             localStorage.clear();
             window.location.href = 'login.html';
@@ -352,10 +365,8 @@
             }
         }
 
-        // Initialize on load with security check fallback
-        if (typeof LamaAPI === 'undefined' || LamaAPI.requireLogin !== false) {
-            renderAdmissionsForm();
-        }
+        // Initialize form data on page load
+        renderAdmissionsForm();
     </script>
 </body>
 </html>

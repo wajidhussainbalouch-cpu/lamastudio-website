@@ -3,444 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Universal Academic Admission & Registration Portal</title>
+    <title id="pageTitle">Campus Command Hub | lamastudio.pk</title>
+    <!-- Tailwind CSS & Chart.js -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- Shared Multi-School Storage Engine -->
-    <script src="../js/school-store.js"></script>
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-
-        /* PERFECT FULL-PAGE A4 PRINT ENGINE */
-        @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            body {
-                background: #ffffff !important;
-                color: #0f172a !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .print-sheet {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 10mm 12mm !important;
-                border: none !important;
-                box-shadow: none !important;
-                background: #ffffff !important;
-                min-height: 277mm !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-            }
-            input, select {
-                border-bottom: 1px solid #4338ca !important;
-                border-top: none !important;
-                border-left: none !important;
-                border-right: none !important;
-                background: #f8fafc !important;
-                border-radius: 0 !important;
-                padding: 3px 5px !important;
-                font-size: 9.5px !important;
-                color: #0f172a !important;
-            }
-            .print-card-bg {
-                background: #f8fafc !important;
-                border: 1px solid #c7d2fe !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 5mm;
-            }
-        }
-
-        /* Screen Styles */
-        .print-sheet {
-            background: #ffffff;
-            color: #0f172a;
-            border: 1px solid #334155;
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
-        }
-        input, select {
-            border-bottom: 1.5px solid #cbd5e1;
-            background: #f8fafc;
-            border-radius: 4px;
-            padding: 5px 8px;
-            font-size: 11px;
-            color: #0f172a;
-            outline: none;
-        }
-        input:focus, select:focus {
-            border-color: #4f46e5;
-            background: #ffffff;
-        }
-        .print-card-bg {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="assets/css/config.css">
 </head>
-<body class="py-8 px-4 flex flex-col items-center min-h-screen relative">
+<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
-    <!-- Screen Control Bar (Hidden on Print) -->
-    <div class="max-w-3xl w-full mb-4 flex justify-between items-center bg-slate-900 border border-slate-800 text-white px-6 py-3.5 rounded-2xl shadow-xl no-print">
-        <div>
-            <h2 class="text-xs font-black uppercase tracking-wider text-indigo-400">Institutional Admission Portal</h2>
-            <p class="text-[10px] text-slate-400">Optimized Full-Page A4 Tenant Dossier</p>
-        </div>
+    <!-- Ambient Neon Background Glows -->
+    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
-            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">
-                &larr; Back to Dashboard
-            </a>
-            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30 cursor-pointer">
-                🖨️ Print Full Page A4
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(139,92,246,0.4)]">
+                <span id="navShortCode" class="text-xs font-black text-white">GPS</span>
+            </div>
+            <div>
+                <h1 class="text-sm font-black tracking-wider text-white uppercase"><span id="navSchoolName">Campus Command Hub</span></h1>
+                <p id="navDistrict" class="text-[10px] text-slate-400">District: --</p>
+            </div>
+        </div>
+
+        <!-- Quick Actions & Logout -->
+        <div class="flex items-center space-x-3">
+            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+                Logout 🚪
             </button>
+            <a href="admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
+                <span>⚡ Register New</span>
+            </a>
         </div>
-    </div>
+    </header>
 
-    <!-- UNIVERSAL A4 PRINT SHEET CONTAINER -->
-    <div class="print-sheet max-w-3xl w-full p-8 rounded-2xl space-y-4">
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex-grow space-y-6 relative z-10">
         
-        <div class="space-y-4">
-            <!-- CENTER ALIGNED SCHOOL HEADER, NAME, LOGO & ADDRESS -->
-            <div class="text-center border-b-2 border-indigo-600 pb-3 mb-3">
-                <div class="flex items-center justify-center space-x-3 mb-1">
-                    <div id="schoolLogoContainer" class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black uppercase shadow-sm overflow-hidden">
-                        GPS
+        <!-- Hero Command Node Card -->
+        <section class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-xl">
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
+                        <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+                        <span id="badgeSector" class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Private Sector Node</span>
                     </div>
+                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Loading Institution...</h2>
+                    <p id="schoolAddressDisplay" class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">Fetching cloud telemetry...</p>
                 </div>
-                <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">GPS Shah Sadar Din</h1>
-                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Shah Sadar Din • UAN: 03437064536 • EMIS/Reg Code: 32110452</p>
-            </div>
-
-            <!-- TOP ID, DATE OF ADMISSION & CENTERED PICTURE BOX -->
-            <div class="flex justify-between items-start mb-3 border-b border-slate-200 pb-3">
-                <div class="space-y-2 text-[11px] font-bold text-slate-800 pt-2">
-                    <div class="flex items-center space-x-3">
-                        <span class="uppercase text-slate-500 text-[10px]">ADMISSION NO:</span>
-                        <input type="text" id="admissionNoInput" value="GSSD-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="uppercase text-slate-500 text-[10px]">DATE OF ISSUE:</span>
-                        <input type="date" id="issueDate" class="w-36 text-slate-800">
-                    </div>
-                </div>
-
-                <!-- Center-Aligned Passport Size Picture Box -->
-                <div class="text-center flex flex-col items-center">
-                    <div id="photoContainer" class="border-2 border-dashed border-indigo-400 rounded-lg w-24 h-28 flex flex-col items-center justify-center bg-indigo-50/50 text-indigo-700 text-[8px] font-bold text-center p-1 shadow-sm overflow-hidden">
-                        <span>Affix Passport Size</span>
-                        <span>Picture Here</span>
-                    </div>
-                    <div class="no-print mt-1.5">
-                        <input type="file" accept="image/*" onchange="previewImage(this)" class="text-[8px] w-28 file:py-1 file:px-2 file:rounded file:border-0 file:text-[8px] file:bg-indigo-600 file:text-white cursor-pointer">
-                    </div>
+                <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller / Principal</p>
+                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">-</p>
+                    <p id="phoneDisplay" class="text-[10px] text-slate-400 mt-0.5">Phone: --</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Sync Status: <span class="text-emerald-400 font-bold">Optimal</span></p>
                 </div>
             </div>
 
-            <!-- FORM SECTIONS -->
-            <form class="space-y-3.5" onsubmit="event.preventDefault();">
-                
-                <!-- SECTION 1: STUDENT PERSONAL INFORMATION -->
-                <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-indigo-700 border-b border-indigo-200 pb-1">1. Student Personal Information Section</h4>
-                    
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-2">
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Candidate Full Name:</label>
-                            <input type="text" placeholder="Muhammad Hamza Ali" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">B-Form / CNIC No:</label>
-                            <input type="text" placeholder="32102-1234567-1" class="w-full font-mono">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-4 gap-2.5">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Date of Birth:</label>
-                            <input type="date" id="dobInput" onchange="calculateAge()" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Age:</label>
-                            <input type="text" id="ageInput" placeholder="Auto calculated" class="w-full font-semibold text-indigo-900">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Gender:</label>
-                            <select class="w-full">
-                                <option>Male</option>
-                                <option>Female</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Religion:</label>
-                            <input type="text" value="Islam" class="w-full">
-                        </div>
-                    </div>
-
-                    <div class="flex flex-wrap gap-4 text-[8.5px] pt-1 text-slate-800 font-semibold">
-                        <span class="text-indigo-900">Student Category:</span>
-                        <label class="flex items-center space-x-1.5"><input type="checkbox" class="rounded text-indigo-600"> <span>Regular</span></label>
-                        <label class="flex items-center space-x-1.5"><input type="checkbox" class="rounded text-indigo-600"> <span>Orphan / Financial Aid</span></label>
-                        <label class="flex items-center space-x-1.5"><input type="checkbox" class="rounded text-indigo-600"> <span>Staff Child</span></label>
-                        <label class="flex items-center space-x-1.5"><input type="checkbox" class="rounded text-indigo-600"> <span>Special Needs</span></label>
-                    </div>
+            <!-- Quick Metrics Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800">
+                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Total Students</p>
+                    <p id="totalStudentsCount" class="text-xl font-black text-purple-400 mt-0.5">0</p>
                 </div>
-
-                <!-- SECTION 2: PARENTAGE & GUARDIAN INFORMATION -->
-                <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-purple-700 border-b border-purple-200 pb-1">2. Parentage & Guardian Information Section</h4>
-                    
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Father's Name:</label>
-                            <input type="text" placeholder="Tariq Ali" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Father's CNIC No:</label>
-                            <input type="text" placeholder="32102-9876543-2" class="w-full font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Contact Cell No:</label>
-                            <input type="text" placeholder="+92 343 0000000" class="w-full font-mono">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Caste / Tribe:</label>
-                            <input type="text" placeholder="Baloch" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Profession:</label>
-                            <input type="text" placeholder="Farmer / Business" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Monthly Income:</label>
-                            <input type="text" placeholder="30,000 PKR" class="w-full font-mono">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Residential Address:</label>
-                        <input type="text" placeholder="House # 45, Shah Sadar Din" class="w-full">
-                    </div>
+                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Attendance Index</p>
+                    <p class="text-xl font-black text-emerald-400 mt-0.5">94.2%</p>
                 </div>
-
-                <!-- SECTION 3: SCHOOL, ACADEMIC & FEE TIERS SECTION -->
-                <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-emerald-700 border-b border-emerald-200 pb-1">3. School Academic, Fee Tiers & Evaluation Section</h4>
-                    
-                    <div class="grid grid-cols-4 gap-2.5">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Applying Class:</label>
-                            <select id="applyingClassSelect" class="w-full">
-                                <!-- Populated dynamically based on School Level -->
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Assigned Section:</label>
-                            <select class="w-full">
-                                <option selected>Section Alpha</option>
-                                <option>Section Beta</option>
-                                <option>Section Gamma</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Fee Tier / Structure:</label>
-                            <select id="feeTierSelect" class="w-full font-semibold text-indigo-900">
-                                <!-- Populated dynamically based on Sector -->
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Academic Session:</label>
-                            <input type="text" value="2026-2027" class="w-full font-mono font-bold">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 pt-1 border-t border-slate-200">
-                        <div class="flex items-center space-x-3 text-[8.5px] font-semibold text-slate-800 pt-1">
-                            <span class="uppercase text-slate-600">Basic Aptitude:</span>
-                            <label class="flex items-center space-x-1"><input type="checkbox" checked class="rounded"> <span>Writing</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" checked class="rounded"> <span>Reading</span></label>
-                            <label class="flex items-center space-x-1"><input type="checkbox" class="rounded"> <span>Numeracy</span></label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[7.5px] font-bold uppercase text-indigo-900">Admission Test Marks:</label>
-                                <input type="text" placeholder="48 / 50" class="w-full font-mono">
-                            </div>
-                            <div>
-                                <label class="block text-[7.5px] font-bold uppercase text-indigo-900">Interview Marks:</label>
-                                <input type="text" placeholder="19 / 20" class="w-full font-mono">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Official Remarks / Comments:</label>
-                        <input type="text" placeholder="Candidate demonstrated excellent cognitive skills and behavioural readiness." class="w-full">
-                    </div>
+                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Active Faculty</p>
+                    <p id="totalStaffCount" class="text-xl font-black text-cyan-400 mt-0.5">0</p>
                 </div>
-            </form>
-        </div>
-
-        <!-- FOOTER SIGNATURES & STAMP AREA -->
-        <div class="pt-6 mt-4 border-t-2 border-indigo-900 flex justify-between items-center text-center">
-            <div>
-                <div class="w-40 border-b border-slate-800 mb-1.5"></div>
-                <p class="text-[8.5px] font-black uppercase text-slate-900">Signature of Parent / Guardian</p>
+                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Mid-Term Pass Rate</p>
+                    <p class="text-xl font-black text-amber-400 mt-0.5">88.7%</p>
+                </div>
             </div>
-            <div>
-                <div class="w-24 h-10 border border-dashed border-indigo-500 rounded-lg mx-auto mb-1 flex items-center justify-center text-[7.5px] text-indigo-700 font-bold bg-indigo-50/50">Official Stamp</div>
-            </div>
-            <div>
-                <div class="w-40 border-b border-slate-800 mb-1.5"></div>
-                <p class="text-[8.5px] font-black uppercase text-slate-900">Signature of Principal / Head</p>
-            </div>
-        </div>
+        </section>
 
-    </div>
+        <!-- Gateway Portals Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="student-portal.html" class="bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-purple-500/50 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition cursor-pointer group">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-2xl group-hover:scale-110 transition">🎓</span>
+                        <span class="text-[9px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">Gateway</span>
+                    </div>
+                    <h3 class="text-sm font-black text-white group-hover:text-purple-300 transition">Student Portal &rarr;</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Access attendance logs, profiles, and subject materials.</p>
+                </div>
+            </a>
 
-    <!-- Dynamic Script for Tenant Data Injection & Calculations -->
+            <a href="teacher-portal.html" class="bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-emerald-500/50 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition cursor-pointer group">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-2xl group-hover:scale-110 transition">👩‍🏫</span>
+                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">Gateway</span>
+                    </div>
+                    <h3 class="text-sm font-black text-white group-hover:text-emerald-300 transition">Teacher Portal &rarr;</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Manage class rosters, grade books, and daily reports.</p>
+                </div>
+            </a>
+
+            <a href="admin-panel.html" class="bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-amber-500/50 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition cursor-pointer group">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-2xl group-hover:scale-110 transition">⚙️</span>
+                        <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Restricted Admin</span>
+                    </div>
+                    <h3 class="text-sm font-black text-white group-hover:text-amber-300 transition">Admin Panel &rarr;</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">Central command for fees and admissions oversight.</p>
+                </div>
+            </a>
+        </section>
+
+        <!-- Institutional Telemetry Chart -->
+        <section class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 shadow-xl">
+            <div class="mb-4 border-b border-slate-800 pb-3">
+                <h3 class="text-xs font-black uppercase tracking-wider text-purple-400">📈 Institutional Growth Telemetry</h3>
+                <p class="text-[11px] text-slate-400">Enrollment trajectory versus academic performance index.</p>
+            </div>
+            <div class="relative h-56 w-full bg-slate-950/40 rounded-2xl p-3 border border-slate-800/80">
+                <canvas id="telemetryChart"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
+        <p id="footerText">&copy; 2026 Campus Management Architecture</p>
+    </footer>
+
+    <!-- Dashboard Script -->
     <script>
-        let schoolName = "GPS Shah Sadar Din";
-        let schoolAddress = "Shah Sadar Din";
-        let schoolPhone = "03437064536";
-        let schoolType = "Govt";
-        let schoolLevel = "Primary";
+        let telemetryChart = null;
 
-        function renderAdmissionsForm() {
-            // Safe fallback check if SchoolStore is loaded properly from dashboard
-            const school = (typeof SchoolStore !== 'undefined' && SchoolStore.getActive) ? (SchoolStore.getActive() || {}) : {};
+        window.addEventListener('DOMContentLoaded', () => {
+            const sessionData = localStorage.getItem('lamastudio_active_school') || localStorage.getItem('current_school_session');
             
-            schoolName = school.name || "GPS Shah Sadar Din";
-            const shortCode = school.shortCode || school.emis || (typeof SchoolStore !== 'undefined' ? SchoolStore.deriveShortCode(schoolName) : "GSSD");
-            schoolAddress = school.address || "Shah Sadar Din";
-            schoolPhone = school.phone || "03437064536";
-            const schoolLogo = school.logo || "";
-            schoolType = (school.sector || school.type || 'Govt').toLowerCase();
-            schoolLevel = (school.level || 'Primary').toLowerCase();
-
-            document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
-            document.getElementById('headerSchoolName').innerText = schoolName;
-            document.getElementById('headerSchoolMeta').innerText = `${schoolAddress} • UAN: ${schoolPhone} • EMIS/Reg Code: ${shortCode}`;
-
-            // Inject Logo if available, otherwise show initials
-            const logoContainer = document.getElementById('schoolLogoContainer');
-            if (schoolLogo) {
-                logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
-            } else {
-                logoContainer.innerText = shortCode.slice(0, 3).toUpperCase();
-            }
-
-            document.getElementById('admissionNoInput').value = `${shortCode}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
-            document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
-
-            populateClassOptions();
-            populateFeeTierOptions();
-        }
-
-        // Automatic Age Calculator Engine
-        function calculateAge() {
-            const dobVal = document.getElementById('dobInput').value;
-            const ageField = document.getElementById('ageInput');
-            if (!dobVal) {
-                ageField.value = '';
+            if (!sessionData) {
+                alert("Unauthorized session. Please log in first.");
+                window.location.href = "login.html";
                 return;
             }
-            const dob = new Date(dobVal);
-            const today = new Date();
-            
-            let years = today.getFullYear() - dob.getFullYear();
-            let months = today.getMonth() - dob.getMonth();
-            let days = today.getDate() - dob.getDate();
 
-            if (days < 0) {
-                months--;
-                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                days += prevMonth.getDate();
-            }
-            if (months < 0) {
-                years--;
-                months += 12;
-            }
+            const school = JSON.parse(sessionData);
 
-            if (years > 0) {
-                ageField.value = `${years} Years${months > 0 ? `, ${months} Mos` : ''}`;
-            } else if (months > 0) {
-                ageField.value = `${months} Months`;
-            } else {
-                ageField.value = `${days} Days`;
-            }
-        }
+            // Extract attributes cleanly
+            const name = school["School Name"] || school["schoolName"] || 'Campus Command Hub';
+            const code = school["School ID / Code Prefix"] || school["schoolCode"] || 'GPS';
+            const students = school["Total Strength (Students)"] || school["totalStudents"] || '0';
+            const staff = school["Total Staff Members"] || school["totalStaff"] || '0';
+            const principal = school["Principal Name"] || school["principal"] || 'Admin';
+            const phone = school["Phone Number"] || school["principalPhone"] || 'N/A';
+            const sector = school["School Sector"] || school["sector"] || 'Private';
+            const address = school["School Full Address"] || school["address"] || 'Cloud Connected Node';
+            const district = school["District"] || school["district"] || 'Lahore';
 
-        // Pakistan Sector-Based Class Nomenclature Engine (ECCE/PG, KG, Prep, 1-12)
-        function populateClassOptions() {
-            const classSelect = document.getElementById('applyingClassSelect');
-            const isGovt = schoolType.includes('govt') || schoolType.includes('government');
-            let gradeOptionsHTML = '';
+            // Populate UI Elements
+            document.getElementById('pageTitle').innerText = `${name} | Campus Command Hub`;
+            document.getElementById('navSchoolName').innerText = name;
+            document.getElementById('navDistrict').innerText = `District: ${district} • Code: ${code}`;
+            document.getElementById('heroSchoolName').innerText = name;
+            document.getElementById('schoolAddressDisplay').innerText = `${address}, ${district}`;
+            document.getElementById('principalDisplay').innerText = principal;
+            document.getElementById('phoneDisplay').innerText = `Phone: ${phone}`;
+            document.getElementById('totalStudentsCount').innerText = students;
+            document.getElementById('totalStaffCount').innerText = staff;
+            document.getElementById('badgeSector').innerText = `${sector} Sector Node`;
+            document.getElementById('navShortCode').innerText = code.substring(0, 3).toUpperCase();
+            document.getElementById('footerText').innerHTML = `&copy; 2026 ${name} &bull; Google Sheets Cloud Architecture`;
 
-            if (isGovt) {
-                if (schoolLevel.includes('primary')) {
-                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
-                } else if (schoolLevel.includes('middle')) {
-                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
-                } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
-                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>1st Year (Grade 11)</option><option selected>2nd Year (Grade 12)</option>`;
-                } else {
-                    gradeOptionsHTML = `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
+            renderChart(parseInt(students, 10) || 240);
+        });
+
+        window.handleLogout = function() {
+            localStorage.removeItem('lamastudio_active_school');
+            localStorage.removeItem('current_school_session');
+            window.location.href = "login.html";
+        };
+
+        function renderChart(totalCount) {
+            const ctx = document.getElementById('telemetryChart').getContext('2d');
+            const data = {
+                labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb (Live)'],
+                datasets: [
+                    {
+                        label: 'Enrollment Growth',
+                        data: [Math.max(10, totalCount - 40), Math.max(20, totalCount - 30), Math.max(30, totalCount - 20), Math.max(40, totalCount - 10), totalCount],
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#a855f7'
+                    },
+                    {
+                        label: 'Pass Rate %',
+                        data: [82, 84, 85, 87, 88.7],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointBackgroundColor: '#06b6d4'
+                    }
+                ]
+            };
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } },
+                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } }
                 }
+            };
+
+            if (telemetryChart) {
+                telemetryChart.data = data;
+                telemetryChart.update();
             } else {
-                if (schoolLevel.includes('primary')) {
-                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
-                } else if (schoolLevel.includes('middle')) {
-                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option selected>Grade 8</option>`;
-                } else if (schoolLevel.includes('higher') || schoolLevel.includes('secondary')) {
-                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option>Grade 10</option><option>First Year (11th)</option><option selected>Second Year (12th)</option>`;
-                } else {
-                    gradeOptionsHTML = `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option><option>Grade 9</option><option selected>Grade 10</option>`;
-                }
-            }
-            classSelect.innerHTML = gradeOptionsHTML;
-        }
-
-        // Conditional Fee Structure Dropdown
-        function populateFeeTierOptions() {
-            const feeTierSelect = document.getElementById('feeTierSelect');
-            const isGovt = schoolType.includes('govt') || schoolType.includes('government');
-            if (isGovt) {
-                feeTierSelect.innerHTML = `<option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>`;
-            } else {
-                feeTierSelect.innerHTML = `<option value="Standard" selected>Standard Tuition Plan</option><option value="Scholarship">Merit Scholarship Grant</option><option value="Sibling">Sibling Concession Plan</option><option value="Exempt">Fully Exempt / Free Tier</option>`;
+                telemetryChart = new Chart(ctx, { type: 'line', data, options });
             }
         }
-
-        // Image preview handler
-        function previewImage(input) {
-            const box = document.getElementById('photoContainer');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    box.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-lg">`;
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        // Initialize form with active registered tenant data on load
-        window.addEventListener('DOMContentLoaded', renderAdmissionsForm);
     </script>
 </body>
 </html>

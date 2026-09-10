@@ -20,7 +20,7 @@
             <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">GOOGLE SHEETS SAAS ONBOARDING</h1>
         </div>
         <span class="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-bold">
-            Cloud Provisioning Portal
+            70% Off Active Discount
         </span>
     </header>
 
@@ -31,12 +31,11 @@
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
                 <div>
                     <h3 class="text-xl font-bold text-slate-900 dark:text-white">Register New Institution</h3>
-                    <p id="stepIndicator" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Complete your institution specification below</p>
+                    <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Complete your institution specification below</p>
                 </div>
-                <span id="badgeIndicator" class="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-2.5 py-1 rounded-lg">70% Off Active</span>
             </div>
 
-            <!-- Unified Registration Form (Directly Syncs to Google Sheet) -->
+            <!-- Unified Registration Form -->
             <form id="registrationForm" class="space-y-4">
                 
                 <!-- Admin Credentials Section -->
@@ -141,18 +140,27 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Fee Section -->
-                <div id="dynamicVerificationBlock">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fee Transaction Note / Reference Code</label>
-                        <input type="text" id="receiptNote" placeholder="e.g., EasyPaisa/JazzCash Trx ID" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                <!-- Dynamic Sector Block (Both pay fee, but Govt has EMIS Code, Private can toggle between EMIS Code or Registration Number) -->
+                <div id="dynamicVerificationBlock" class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 space-y-3">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300" id="privateCodeLabel">Private Registration / License Number</label>
+                        <div id="privateToggleContainer" class="flex space-x-1">
+                            <button type="button" onclick="setPrivateCodeType('RegNum')" id="btnRegNum" class="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-lg font-bold transition">Reg Number</button>
+                            <button type="button" onclick="setPrivateCodeType('EMIS')" id="btnPrivateEMIS" class="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-lg font-bold transition">EMIS Code</button>
+                        </div>
                     </div>
-                    <div class="mt-4">
+                    <input type="hidden" id="privateCodeMode" value="RegNum">
+                    <input type="text" id="institutionCodeInput" required placeholder="e.g., REG-LHR-2026-99" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 mt-2">Fee Transaction Note / Reference Code (EasyPaisa/JazzCash/Bank)</label>
+                        <input type="text" id="receiptNote" required placeholder="e.g., TrxID: 839201928" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Subscription Package Tier</label>
-                        <select id="selectedPackage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
-                            <option value="Standard Tier (PKR 1,500/mo - 70% Off)">Standard Tier (PKR 1,500/mo)</option>
-                            <option value="Professional Tier (PKR 3,600/mo - 70% Off)" selected>Professional Tier (PKR 3,600/mo)</option>
-                            <option value="Enterprise Tier (Custom - 70% Off)">Enterprise Tier (Custom)</option>
+                        <select id="selectedPackage" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                            <option value="Standard Tier (PKR 1,500/mo)">Standard Tier (PKR 1,500/mo)</option>
+                            <option value="Professional Tier (PKR 3,600/mo)" selected>Professional Tier (PKR 3,600/mo)</option>
                         </select>
                     </div>
                 </div>
@@ -173,7 +181,6 @@
 
     <!-- Google Sheets Sync Script -->
     <script>
-        // REPLACE THIS URL with your deployed Google Apps Script Web App URL
         const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
         window.setSector = function(sector) {
@@ -181,20 +188,29 @@
             const btnPrivate = document.getElementById('btnPrivate');
             const btnGovt = document.getElementById('btnGovt');
             const dynamicBlock = document.getElementById('dynamicVerificationBlock');
-            const badgeIndicator = document.getElementById('badgeIndicator');
 
             if (sector === 'Private') {
                 btnPrivate.className = "py-2.5 px-4 rounded-xl text-xs font-bold border transition bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer";
                 btnGovt.className = "py-2.5 px-4 rounded-xl text-xs font-bold border transition bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 cursor-pointer";
-                badgeIndicator.textContent = "70% Off Active";
+                
                 dynamicBlock.innerHTML = `
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Fee Transaction Note / Reference Code</label>
-                        <input type="text" id="receiptNote" placeholder="e.g., EasyPaisa/JazzCash Trx ID" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300" id="privateCodeLabel">Private Registration / License Number</label>
+                        <div id="privateToggleContainer" class="flex space-x-1">
+                            <button type="button" onclick="setPrivateCodeType('RegNum')" id="btnRegNum" class="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-lg font-bold transition">Reg Number</button>
+                            <button type="button" onclick="setPrivateCodeType('EMIS')" id="btnPrivateEMIS" class="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-lg font-bold transition">EMIS Code</button>
+                        </div>
                     </div>
-                    <div class="mt-4">
+                    <input type="hidden" id="privateCodeMode" value="RegNum">
+                    <input type="text" id="institutionCodeInput" required placeholder="e.g., REG-LHR-2026-99" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 mt-2">Fee Transaction Note / Reference Code (EasyPaisa/JazzCash/Bank)</label>
+                        <input type="text" id="receiptNote" required placeholder="e.g., TrxID: 839201928" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Subscription Package Tier</label>
-                        <select id="selectedPackage" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                        <select id="selectedPackage" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
                             <option value="Standard Tier (PKR 1,500/mo)">Standard Tier (PKR 1,500/mo)</option>
                             <option value="Professional Tier (PKR 3,600/mo)" selected>Professional Tier (PKR 3,600/mo)</option>
                         </select>
@@ -203,64 +219,22 @@
             } else {
                 btnGovt.className = "py-2.5 px-4 rounded-xl text-xs font-bold border transition bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer";
                 btnPrivate.className = "py-2.5 px-4 rounded-xl text-xs font-bold border transition bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700 cursor-pointer";
-                badgeIndicator.textContent = "State Sponsored";
+
                 dynamicBlock.innerHTML = `
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Govt Establishment / EMIS Code</label>
-                        <input type="text" id="emisCode" required placeholder="e.g., EMIS-PK-55201" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Government School EMIS Code</label>
+                        <input type="text" id="institutionCodeInput" required placeholder="e.g., EMIS-PK-55201" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
                     </div>
-                    <div class="mt-4 hidden"><input type="text" id="selectedPackage" value="Govt State Sponsored"></div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 mt-2">Fee Transaction Note / Reference Code (EasyPaisa/JazzCash/Bank)</label>
+                        <input type="text" id="receiptNote" required placeholder="e.g., Govt Fund TrxID: 442910" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Subscription Package Tier</label>
+                        <select id="selectedPackage" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white">
+                            <option value="Standard Tier (PKR 1,500/mo)">Standard Tier (PKR 1,500/mo)</option>
+                            <option value="Professional Tier (PKR 3,600/mo)" selected>Professional Tier (PKR 3,600/mo)</option>
+                        </select>
+                    </div>
                 `;
-            }
-        }
-
-        window.openMapPinHelper = function() {
-            window.open('https://maps.google.com', '_blank');
-            const pin = prompt('Paste your Google Maps location pin link or coordinates here:');
-            if (pin) document.getElementById('mapLocation').value = pin.trim();
-        }
-
-        document.getElementById('registrationForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const errEl = document.getElementById('formError');
-            const submitBtn = document.getElementById('submitBtn');
-            errEl.classList.add('hidden');
-
-            const payload = {
-                action: "register",
-                adminEmail: document.getElementById('adminEmail').value.trim(),
-                adminPassword: document.getElementById('adminPassword').value.trim(),
-                schoolSector: document.getElementById('schoolSector').value,
-                schoolName: document.getElementById('schoolName').value.trim(),
-                schoolCodeId: document.getElementById('schoolCodeId').value.trim(),
-                schoolAddress: document.getElementById('schoolAddress').value.trim(),
-                schoolDistrict: document.getElementById('schoolDistrict').value.trim(),
-                mapLocation: document.getElementById('mapLocation').value.trim(),
-                schoolLevel: document.getElementById('schoolLevel').value,
-                schoolGender: document.getElementById('schoolGender').value,
-                idPattern: document.getElementById('idPattern').value.trim(),
-                totalStrength: document.getElementById('totalStrength').value,
-                totalStaff: document.getElementById('totalStaff').value,
-                principalName: document.getElementById('principalName').value.trim(),
-                principalPhone: document.getElementById('principalPhone').value.trim(),
-                packageTier: document.getElementById('selectedPackage') ? document.getElementById('selectedPackage').value : 'Govt State Sponsored',
-                extraCode: document.getElementById('emisCode') ? document.getElementById('emisCode').value.trim() : (document.getElementById('receiptNote') ? document.getElementById('receiptNote').value.trim() : '')
-            };
-
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Syncing to Google Sheets... ⏳";
-
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // standard mode for Google Apps Script web apps
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                alert("School registered and synced to Google Sheets successfully! You can now log in from any mobile phone or PC.");
-                window.location.href = "login.html";
-            } catch (err) {
-                errEl.innerText = "Sync Error: " + err.message;
-                errEl.classList.remove('hidden');
-          
+       

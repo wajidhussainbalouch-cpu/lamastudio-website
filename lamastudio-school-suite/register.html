@@ -10,6 +10,10 @@
         tailwind.config = { darkMode: 'class' };
     </script>
     <link rel="stylesheet" href="assets/css/config.css">
+    
+    <!-- Lamastudio Storage & API Layer -->
+    <script src="assets/js/api-client.js"></script>
+    <script src="assets/js/school-store.js"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
@@ -186,8 +190,6 @@
 
     <!-- Google Sheets Sync Script -->
     <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT6qTm0WvZtn1qV3IciH3Xb9TTyLYBQLlO__Ql0F-NgTPJ7JMO3ZpgxdCKK34aEbpfyQ/exec";
-
         window.togglePasswordVisibility = function() {
             const passwordInput = document.getElementById('adminPassword');
             const eyeIcon = document.getElementById('eyeIcon');
@@ -315,15 +317,14 @@
             };
 
             try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                const result = await SchoolStore.upsert(payload);
 
-                alert("Registration synced successfully to Google Sheets!");
-                window.location.href = "login.html";
+                if (result.success) {
+                    alert("Registration synced successfully to Google Sheets!");
+                    window.location.href = "login.html";
+                } else {
+                    throw new Error(result.message || "Cloud registration server rejected payload.");
+                }
             } catch (err) {
                 errorEl.innerText = "Sync Error: " + err.message;
                 errorEl.classList.remove('hidden');

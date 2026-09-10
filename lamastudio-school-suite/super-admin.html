@@ -26,14 +26,14 @@
             </div>
             <div>
                 <h1 class="text-sm font-black tracking-wider text-white uppercase">Lamastudio <span class="text-rose-400">Super Admin</span></h1>
-                <p class="text-[10px] text-slate-400">Master Cloud Telemetry & Tenant Control</p>
+                <p class="text-[10px] text-slate-400">Master Google Sheets Cloud & Tenant Control</p>
             </div>
         </div>
         <div id="loggedOutNav" class="flex items-center space-x-2">
             <span class="text-xs text-rose-400 font-bold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl">Restricted Access</span>
         </div>
         <div id="loggedInNav" class="hidden items-center space-x-3">
-            <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">● Master Cloud Active</span>
+            <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl">● Google Cloud Active</span>
             <button onclick="handleLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl transition border border-slate-700 cursor-pointer">Lock Panel</button>
         </div>
     </header>
@@ -48,7 +48,7 @@
                 <h2 class="text-xl font-black text-white mt-2">Master Authentication</h2>
                 <p class="text-xs text-slate-400 mt-1">Sign in with your Super Admin cloud credentials.</p>
             </div>
-            <form id="masterLoginForm" class="space-y-4">
+            <form onsubmit="handleMasterLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Master Email</label>
                     <input type="email" id="masterUser" required placeholder="admin@lamastudio.pk" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
@@ -58,7 +58,7 @@
                     <input type="password" id="masterPass" required placeholder="••••••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-rose-500 transition">
                 </div>
                 <div id="loginError" class="text-xs text-rose-400 text-center font-bold hidden"></div>
-                <button type="submit" class="w-full bg-gradient-to-r from-rose-600 to-purple-600 hover:opacity-90 text-white font-black py-3 rounded-xl transition shadow-[0_0_20px_rgba(225,29,72,0.3)] text-xs uppercase tracking-wider cursor-pointer">
+                <button type="submit" id="masterLoginBtn" class="w-full bg-gradient-to-r from-rose-600 to-purple-600 hover:opacity-90 text-white font-black py-3 rounded-xl transition shadow-[0_0_20px_rgba(225,29,72,0.3)] text-xs uppercase tracking-wider cursor-pointer">
                     Authorize Master Session
                 </button>
             </form>
@@ -73,11 +73,11 @@
                 </div>
                 <div class="cyber-card rounded-2xl p-5 border border-slate-800">
                     <p class="text-[10px] uppercase font-bold text-slate-400">Total Tenant Nodes</p>
-                    <p id="statTotalStudents" class="text-3xl font-black text-cyan-400 mt-1">Cloud Sync</p>
+                    <p id="statTotalStudents" class="text-3xl font-black text-cyan-400 mt-1">Sheets API</p>
                 </div>
                 <div class="cyber-card rounded-2xl p-5 border border-slate-800">
                     <p class="text-[10px] uppercase font-bold text-slate-400">Cloud Sync Engine</p>
-                    <p class="text-3xl font-black text-emerald-400 mt-1">Firebase ⚡</p>
+                    <p class="text-3xl font-black text-emerald-400 mt-1">Google Sheets ⚡</p>
                 </div>
             </div>
 
@@ -85,7 +85,7 @@
                 <div class="flex justify-between items-center pb-4 border-b border-slate-800">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-wider text-white">🏫 Registered Schools Database</h3>
-                        <p class="text-xs text-slate-400">Live multi-tenant telemetry fetched securely from Firebase.</p>
+                        <p class="text-xs text-slate-400">Live multi-tenant telemetry fetched securely from Google Sheets API.</p>
                     </div>
                     <button onclick="loadSchoolsData()" class="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold px-4 py-2 rounded-xl transition border border-slate-700 cursor-pointer">🔄 Refresh Live Data</button>
                 </div>
@@ -95,8 +95,8 @@
                             <tr class="border-b border-slate-800 text-[10px] uppercase text-slate-400">
                                 <th class="py-3 px-3">School Name</th>
                                 <th class="py-3 px-3">Admin Email</th>
-                                <th class="py-3 px-3">Type</th>
-                                <th class="py-3 px-3 text-right">Registered On</th>
+                                <th class="py-3 px-3">Sector</th>
+                                <th class="py-3 px-3 text-right">Timestamp</th>
                             </tr>
                         </thead>
                         <tbody id="schoolsTableBody" class="divide-y divide-slate-800/60 text-slate-300"></tbody>
@@ -110,39 +110,40 @@
         <p>&copy; 2026 lamastudio.pk &bull; Master Super Admin Gateway</p>
     </footer>
 
-    <!-- Firebase Logic Integration Script -->
-    <script type="module">
-        import { auth, db } from "./config.js";
-        import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- Google Sheets Engine Integration Script -->
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT6qTm0WvZtn1qV3IciH3Xb9TTyLYBQLlO__Ql0F-NgTPJ7JMO3ZpgxdCKK34aEbpfyQ/exec";
 
-        const loginForm = document.getElementById('masterLoginForm');
-        const errorEl = document.getElementById('loginError');
-
-        // Handle Admin Cloud Login
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorEl.classList.add('hidden');
-            const email = document.getElementById('masterUser').value.trim();
-            const pass = document.getElementById('masterPass').value.trim();
-
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                // Auth state listener handles the UI toggle automatically
-            } catch (err) {
-                errorEl.innerText = "Authentication Failed: " + err.message;
-                errorEl.classList.remove('hidden');
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
         });
 
-        // Watch Session State
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
+        function checkSession() {
+            const isSuperAdmin = localStorage.getItem('super_admin_session');
+            if (isSuperAdmin === 'true') {
                 showDashboard();
             } else {
                 showLogin();
             }
-        });
+        }
+
+        function handleMasterLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('masterUser').value.trim();
+            const pass = document.getElementById('masterPass').value.trim();
+            const errorEl = document.getElementById('loginError');
+
+            errorEl.classList.add('hidden');
+
+            // Super Admin Master Credentials
+            if (email === "admin@lamastudio.pk" && pass === "master123") {
+                localStorage.setItem('super_admin_session', 'true');
+                showDashboard();
+            } else {
+                errorEl.innerText = "Invalid Master Credentials. Access Denied.";
+                errorEl.classList.remove('hidden');
+            }
+        }
 
         function showDashboard() {
             document.getElementById('loginSection').classList.add('hidden');
@@ -159,27 +160,27 @@
             document.getElementById('loggedInNav').classList.add('hidden');
         }
 
-        window.handleLogout = function() {
-            signOut(auth).then(() => {
-                location.reload();
-            });
+        function handleLogout() {
+            localStorage.removeItem('super_admin_session');
+            location.reload();
         }
 
-        // Fetch Real-time Cloud Schools Data
-        window.loadSchoolsData = async function() {
+        // Fetch Real-time Cloud Schools Data from Google Sheets
+        async function loadSchoolsData() {
             const tbody = document.getElementById('schoolsTableBody');
-            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Fetching live cloud database...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400">Fetching live Google Sheets cloud database...</td></tr>`;
 
             try {
-                const querySnapshot = await getDocs(collection(db, "schools"));
-                let schools = [];
-                querySnapshot.forEach((doc) => {
-                    schools.push({ id: doc.id, ...doc.data() });
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    redirect: 'follow'
                 });
+                const schools = await response.json();
 
                 document.getElementById('statTotalSchools').innerText = schools.length;
 
-                if (schools.length === 0) {
+                if (!schools || schools.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-500">No schools registered in the cloud yet.</td></tr>`;
                     return;
                 }
@@ -187,12 +188,12 @@
                 tbody.innerHTML = schools.map(s => `
                     <tr class="hover:bg-slate-900/50 transition">
                         <td class="py-3 px-3">
-                            <span class="font-bold text-white block">${s.schoolName || 'Unnamed School'}</span>
-                            <span class="text-[10px] text-purple-400 font-mono">${s.id}</span>
+                            <span class="font-bold text-white block">${s["School Name"] || 'Unnamed School'}</span>
+                            <span class="text-[10px] text-purple-400 font-mono">${s["School Code / ID"] || 'ID-N/A'}</span>
                         </td>
-                        <td class="py-3 px-3 font-mono text-cyan-300">${s.adminEmail}</td>
-                        <td class="py-3 px-3"><span class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px]">${s.schoolType || 'Private'}</span></td>
-                        <td class="py-3 px-3 text-right text-slate-400 font-mono text-[10px]">${s.registeredAt ? new Date(s.registeredAt).toLocaleDateString() : 'N/A'}</td>
+                        <td class="py-3 px-3 font-mono text-cyan-300">${s["Admin Email"] || 'N/A'}</td>
+                        <td class="py-3 px-3"><span class="px-2 py-1 bg-slate-800 text-slate-300 rounded text-[10px]">${s["School Sector"] || 'Private'}</span></td>
+                        <td class="py-3 px-3 text-right text-slate-400 font-mono text-[10px]">${s["Timestamp"] ? new Date(s["Timestamp"]).toLocaleDateString() : 'N/A'}</td>
                     </tr>
                 `).join('');
 
@@ -202,5 +203,4 @@
         }
     </script>
 </body>
-    </html>
-    
+</html>

@@ -117,12 +117,12 @@
             <div class="text-center border-b-2 border-indigo-600 pb-3 mb-3">
                 <div class="flex items-center justify-center space-x-3 mb-1">
                     <div id="schoolLogoContainer" class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black uppercase shadow-sm">
-                        AIM
+                        GPS
                     </div>
                 </div>
                 <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">Allama Iqbal Medical School</h1>
-                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Main Campus: Elite Knowledge Park, Sector 4 • UAN: +92 300 0000000 • EMIS/Reg Code: AIM</p>
+                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">GPS Shah Sadar Din</h1>
+                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Shah Sadar Din • UAN: +92 300 0000000 • EMIS/Reg Code: GPS</p>
             </div>
 
             <!-- TOP ID, DATE OF ADMISSION & CENTERED PICTURE BOX -->
@@ -130,7 +130,7 @@
                 <div class="space-y-2 text-[11px] font-bold text-slate-800 pt-2">
                     <div class="flex items-center space-x-3">
                         <span class="uppercase text-slate-500 text-[10px]">ADMISSION NO:</span>
-                        <input type="text" id="admissionNoInput" value="AIM-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
+                        <input type="text" id="admissionNoInput" value="GPS-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
                     </div>
                     <div class="flex items-center space-x-3">
                         <span class="uppercase text-slate-500 text-[10px]">DATE OF ISSUE:</span>
@@ -340,33 +340,39 @@
 
     <!-- Dynamic Script for Hub Integration & Calculations -->
     <script>
-        // School-specific state, populated from registration file via LamaAPI
-        let schoolName = "Allama Iqbal Medical School";
-        let schoolAddress = "Main Campus: Elite Knowledge Park, Sector 4";
+        // School-specific state, populated from registration file via LamaAPI or local storage fallback
+        let schoolName = "GPS Shah Sadar Din";
+        let schoolAddress = "Shah Sadar Din";
         let schoolPhone = "+92 300 0000000";
-        let schoolType = "private";
+        let schoolType = "government";
         let schoolLevel = "high";
 
-        // 1. Load active school/registration data (live, via LamaAPI or local registration record)
+        // 1. Load active school/registration data
         async function renderAdmissionsForm() {
-            // Fetch registration record from backend API or local configuration fallback
             const school = (typeof LamaAPI.getSchoolRegistration === 'function' ? await LamaAPI.getSchoolRegistration() : null) 
-                           || await LamaAPI.getActiveSchool() 
-                           || {};
+                           || (typeof LamaAPI.getActiveSchool === 'function' ? await LamaAPI.getActiveSchool() : null)
+                           || JSON.parse(localStorage.getItem('activeSchool'))
+                           || {
+                               name: "GPS Shah Sadar Din",
+                               shortCode: "GPS",
+                               address: "Shah Sadar Din",
+                               phone: "+92 300 0000000",
+                               type: "government",
+                               level: "high"
+                           };
 
-            schoolName = school.name || school.schoolName || "Allama Iqbal Medical School";
-            const shortCode = school.shortCode || school.emisCode || LamaAPI.deriveShortCode(schoolName);
-            schoolAddress = school.address || school.location || "Main Campus: Elite Knowledge Park, Sector 4";
+            schoolName = school.name || school.schoolName || "GPS Shah Sadar Din";
+            const shortCode = school.shortCode || school.emisCode || "GPS";
+            schoolAddress = school.address || school.location || "Shah Sadar Din";
             schoolPhone = school.phone || school.contactNo || "+92 300 0000000";
             const schoolLogo = school.logo || school.logoUrl || "";
-            schoolType = (school.type || school.schoolType || 'Private').toLowerCase();
-            schoolLevel = (school.level || school.schoolLevel || 'High').toLowerCase();
+            schoolType = (school.type || school.schoolType || 'government').toLowerCase();
+            schoolLevel = (school.level || school.schoolLevel || 'high').toLowerCase();
 
             document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
             document.getElementById('headerSchoolName').innerText = schoolName;
             document.getElementById('headerSchoolMeta').innerText = `${schoolAddress} • UAN: ${schoolPhone} • EMIS/Reg Code: ${shortCode}`;
 
-            // Inject Logo if available, otherwise show short code initials
             const logoContainer = document.getElementById('schoolLogoContainer');
             if (schoolLogo) {
                 logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;

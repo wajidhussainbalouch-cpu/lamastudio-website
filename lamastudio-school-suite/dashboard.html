@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Campus Command Hub</title>
+    <title id="pageTitle">Campus Command Hub | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js for Quantum Telemetry Wave Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- External Custom Style Architecture -->
     <link rel="stylesheet" href="assets/css/config.css">
-    <!-- Shared Multi-School Storage Engine -->
-    <script src="school-store.js"></script>
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
 
@@ -30,14 +28,11 @@
             </div>
         </div>
 
-        <!-- Multi-Tenant School Switcher & Quick Actions -->
+        <!-- Quick Actions & Logout -->
         <div class="flex items-center space-x-3">
-            <div class="flex items-center space-x-1.5 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-xl">
-                <span class="text-[10px] text-slate-400 font-bold uppercase">Active School:</span>
-                <select id="schoolSwitcher" onchange="switchActiveSchool(this.value)" class="bg-transparent text-xs font-bold text-cyan-400 focus:outline-none cursor-pointer">
-                    <!-- Populated dynamically -->
-                </select>
-            </div>
+            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
+                Logout 🚪
+            </button>
             <a href="register.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
                 <span>⚡ Register New</span>
             </a>
@@ -56,14 +51,14 @@
                         <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
                         <span id="badgeSector" class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Private Sector Node</span>
                     </div>
-                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Campus Command Hub</h2>
-                    <p class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                        Central telemetry, verified schedules, and gateway access nodes for students, parents, faculty, and administrators.
+                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Loading Institution...</h2>
+                    <p id="schoolAddressDisplay" class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
+                        Fetching cloud telemetry and verified node parameters...
                     </p>
                 </div>
                 <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
                     <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller</p>
-                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">Principal / Admin</p>
+                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">-</p>
                     <p class="text-[10px] text-slate-400 mt-1">Sync Status: <span class="text-emerald-400 font-bold">99.8% Optimal</span></p>
                 </div>
             </div>
@@ -115,7 +110,7 @@
                 </div>
             </div>
 
-            <!-- Admin Panel (Live Admission Link) -->
+            <!-- Admin Panel -->
             <div class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition hover:border-purple-500/50">
                 <div>
                     <div class="flex justify-between items-center mb-3">
@@ -123,12 +118,7 @@
                         <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Restricted Admin</span>
                     </div>
                     <h3 class="text-sm font-black text-white">Admin Panel</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Central command for generating <b>Fee Cards</b> and admissions oversight.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-800/80">
-                    <a href="admission.html" class="w-full text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 shadow-lg shadow-indigo-600/30">
-                        <span>📝 Open Admission Portal</span>
-                    </a>
+                    <p class="text-[11px] text-slate-400 mt-1">Central command for generating fee records and admissions oversight.</p>
                 </div>
             </div>
         </section>
@@ -152,74 +142,49 @@
         <p id="footerText">&copy; 2026 Campus Management Architecture</p>
     </footer>
 
-    <!-- Dynamic Initialization Script -->
+    <!-- Clean Cloud Session Script -->
     <script>
         let telemetryChart = null;
 
-        function renderDashboard() {
-            const school = (typeof SchoolStore !== 'undefined' && SchoolStore.getActive) ? SchoolStore.getActive() || {} : {};
-            const schoolName = school.name || 'Campus Command Hub';
-            const shortCode = school.shortCode || (typeof SchoolStore !== 'undefined' ? SchoolStore.deriveShortCode(schoolName) : 'GPS');
-            const totalCount = parseInt(school.enrollment, 10) || 240;
-            const staffCount = parseInt(school.totalStaff, 10) || 28;
-            const principalName = school.principal || 'Principal / Admin';
-            const logoBase64 = school.logo;
-            const sector = school.sector || 'Private';
-
-            // Inject dynamic text into HTML elements
-            document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
-            document.getElementById('navSchoolName').innerText = schoolName;
-            document.getElementById('heroSchoolName').innerText = schoolName;
-            document.getElementById('principalDisplay').innerText = principalName;
-            document.getElementById('totalStudentsCount').innerText = totalCount;
-            document.getElementById('totalStaffCount').innerText = staffCount;
-            document.getElementById('badgeSector').innerText = `${sector} Sector Node`;
-            document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Campus Management Architecture`;
-
-            // Populate School Switcher Dropdown
-            populateSwitcher(school.id);
-
-            // Render school logo if uploaded during registration
-            const logoContainer = document.getElementById('schoolLogoContainer');
-            if (logoBase64) {
-                logoContainer.innerHTML = `<img src="${logoBase64}" alt="Logo" class="w-full h-full object-cover rounded-xl">`;
-            } else {
-                document.getElementById('navShortCode').innerText = shortCode;
-            }
-
-            renderTelemetryChart(totalCount);
-        }
-
-        function populateSwitcher(activeId) {
-            const switcher = document.getElementById('schoolSwitcher');
-            if (!switcher || typeof SchoolStore === 'undefined') return;
+        window.addEventListener('DOMContentLoaded', () => {
+            const activeSchoolJson = localStorage.getItem('lamastudio_active_school');
             
-            const schools = SchoolStore.getAll();
-            switcher.innerHTML = '';
-
-            if (schools.length === 0) {
-                switcher.innerHTML = `<option value="">No Schools Registered</option>`;
+            if (!activeSchoolJson) {
+                alert("Unauthorized access. Please log in first.");
+                window.location.href = "login.html";
                 return;
             }
 
-            schools.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = s.id;
-                opt.textContent = s.name;
-                if (s.id === activeId) opt.selected = true;
-                switcher.appendChild(opt);
-            });
-        }
+            const school = JSON.parse(activeSchoolJson);
 
-        function switchActiveSchool(schoolId) {
-            if (typeof SchoolStore === 'undefined') return;
-            const schools = SchoolStore.getAll();
-            const target = schools.find(s => s.id === schoolId);
-            if (target) {
-                SchoolStore.setActive(target);
-                renderDashboard();
-            }
-        }
+            // Extract attributes from Google Sheet payload
+            const schoolName = school["School Name"] || 'Campus Command Hub';
+            const shortCode = school["School ID/Code"] ? school["School ID/Code"].substring(0, 3).toUpperCase() : 'GPS';
+            const totalStudents = school["Total Strength"] || '0';
+            const totalStaff = school["Total Staff"] || '0';
+            const principalName = school["Principal Name"] || 'Principal / Admin';
+            const schoolSector = school["School Sector"] || 'Private';
+            const schoolAddress = school["School Address"] || 'Cloud Connected Node';
+
+            // Populate UI elements
+            document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
+            document.getElementById('navSchoolName').innerText = schoolName;
+            document.getElementById('heroSchoolName').innerText = schoolName;
+            document.getElementById('schoolAddressDisplay').innerText = schoolAddress;
+            document.getElementById('principalDisplay').innerText = principalName;
+            document.getElementById('totalStudentsCount').innerText = totalStudents;
+            document.getElementById('totalStaffCount').innerText = totalStaff;
+            document.getElementById('badgeSector').innerText = `${schoolSector} Sector Node`;
+            document.getElementById('navShortCode').innerText = shortCode;
+            document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Google Sheets Cloud Architecture`;
+
+            renderTelemetryChart(parseInt(totalStudents, 10) || 240);
+        });
+
+        window.handleLogout = function() {
+            localStorage.removeItem('lamastudio_active_school');
+            window.location.href = "login.html";
+        };
 
         function renderTelemetryChart(totalCount) {
             const ctx = document.getElementById('telemetryChart').getContext('2d');
@@ -270,11 +235,6 @@
                 telemetryChart = new Chart(ctx, { type: 'line', data, options });
             }
         }
-
-        // Initial render on load
-        document.addEventListener('DOMContentLoaded', () => {
-            renderDashboard();
-        });
     </script>
 </body>
 </html>

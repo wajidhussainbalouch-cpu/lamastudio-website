@@ -3,240 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Login | lamastudio.pk</title>
+    <title>School Portal Login | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { darkMode: 'class' }
+        tailwind.config = { darkMode: 'class' };
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Outfit', sans-serif; }
-    </style>
+    <link rel="stylesheet" href="assets/css/config.css">
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between relative">
+<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
 
-    <!-- Top Navigation Header -->
-    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/85 backdrop-blur-md py-4 px-6 md:px-12 flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-500/30">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">lamastudio<span class="text-indigo-600 dark:text-indigo-400">.pk</span></h1>
-                <p class="text-xs text-slate-500">School Portal Login & Account Suite</p>
-            </div>
+    <!-- Top Navigation -->
+    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <a href="index.html" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">&larr; Home</a>
+            <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">GOOGLE SHEETS CLOUD LOGIN</h1>
         </div>
-        <div class="flex items-center space-x-4">
-            <div id="activeSessionBadge" class="hidden items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-xs font-bold">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span id="loggedInSchoolLabel">Active Session</span>
-                <a href="dashboard.html" class="ml-2 text-[10px] bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-0.5 rounded-lg transition">Dashboard 🚀</a>
-                <button onclick="handleLogout()" class="ml-1 text-[10px] bg-red-600 hover:bg-red-500 text-white px-2 py-0.5 rounded-lg transition cursor-pointer">Logout</button>
-            </div>
-            <a href="register.html" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">New School? Register</a>
-        </div>
+        <a href="register.html" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-indigo-500 transition">Register School</a>
     </header>
 
-    <!-- Main Login Container -->
-    <main class="max-w-md mx-auto px-6 py-12 flex-grow flex flex-col justify-center w-full">
-        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-8 shadow-2xl">
-            <div class="mb-6">
+    <!-- Login Form Container -->
+    <main class="max-w-md w-full mx-auto px-4 py-12 flex-grow flex flex-col justify-center">
+        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
+            
+            <div class="text-center space-y-1">
                 <h3 class="text-xl font-bold text-slate-900 dark:text-white">Welcome Back</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter your registered cloud credentials to access your dashboard.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Access your cloud-synced school dashboard</p>
             </div>
 
-            <!-- Login Error Alert -->
-            <div id="loginError" class="hidden bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs mb-4"></div>
-
             <!-- Login Form -->
-            <form id="loginForm" class="space-y-4">
+            <form id="loginForm" class="space-y-4" onsubmit="handleCloudLogin(event)">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Email</label>
-                    <input type="email" id="loginEmail" required placeholder="admin@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username / Email</label>
+                    <input type="email" id="loginEmail" required placeholder="admin@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password</label>
-                    <div class="relative">
-                        <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 pr-10">
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-200 text-xs font-bold focus:outline-none cursor-pointer">
-                            👁️
-                        </button>
-                    </div>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
 
-                <!-- Remember Password & Forgot Password row -->
-                <div class="flex items-center justify-between text-xs pt-1">
-                    <label class="flex items-center space-x-2 text-slate-600 dark:text-slate-400 cursor-pointer">
-                        <input type="checkbox" id="rememberMeCheckbox" class="rounded text-indigo-600 focus:ring-indigo-500">
-                        <span>Remember Password</span>
+                <div class="flex items-center justify-between text-xs">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="rememberMeCheckbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-slate-600 dark:text-slate-400">Remember credentials</span>
                     </label>
-                    <button type="button" onclick="openForgotPasswordModal()" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer">Forgot Password?</button>
                 </div>
 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 mt-2 cursor-pointer">
-                    Login to Dashboard 🚀
+                <div id="loginError" class="text-xs text-rose-500 font-bold hidden"></div>
+
+                <button type="submit" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 cursor-pointer">
+                    Sign In to Dashboard 🔓
                 </button>
             </form>
+
         </div>
     </main>
 
-    <!-- Forgot Password Modal Popup -->
-    <div id="forgotPasswordModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-white space-y-4 shadow-2xl">
-            <h4 class="text-sm font-black uppercase tracking-wider text-indigo-400">Password Recovery & Support</h4>
-            <p class="text-xs text-slate-300">If you forgot your password or got stuck during registration, AskLama can help you recover your credentials or contact system administration.</p>
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1 text-slate-400 font-mono">
-                <p>📞 Admin UAN: +92 300 0000000</p>
-                <p>💬 AskLama Support: Available 24/7</p>
-            </div>
-            <div class="flex space-x-3 pt-2">
-                <button onclick="closeForgotPasswordModal()" class="w-full bg-slate-800 hover:bg-slate-700 py-2 rounded-xl text-xs font-bold transition cursor-pointer">Close</button>
-                <button onclick="closeForgotPasswordModal(); toggleLamaChat();" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded-xl text-xs font-bold transition cursor-pointer">AskLama Now</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • All Rights Reserved</p>
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-5 px-6 text-center text-xs text-slate-500 space-y-1">
+        <p>&copy; 2026 lamastudio.pk • Google Sheets Cloud Authentication Engine</p>
     </footer>
 
-    <!-- ASK LAMA FLOATING ASSISTANT WIDGET -->
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-        <div id="lamaChatWindow" class="hidden w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl mb-3 overflow-hidden flex flex-col">
-            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 p-3 flex justify-between items-center text-white">
-                <div class="flex items-center space-x-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="text-xs font-black uppercase tracking-wider">AskLama AI Assistant</span>
-                </div>
-                <button onclick="toggleLamaChat()" class="text-white hover:text-slate-200 text-sm font-bold cursor-pointer">&times;</button>
-            </div>
-            <div id="lamaChatMessages" class="p-3 h-56 overflow-y-auto space-y-2 text-[11px] text-slate-200 bg-slate-950/60">
-                <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
-                    Hello! I'm Lama, your AI assistant. Need help with login credentials or school switching? Ask me anytime!
-                </div>
-            </div>
-            <div class="p-2.5 border-t border-slate-800 bg-slate-900 flex space-x-2">
-                <input type="text" id="lamaUserInput" placeholder="Ask about login, payments..." class="w-full text-[11px] bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-1.5 focus:border-purple-500 outline-none" onkeydown="if(event.key==='Enter') sendLamaMessage()">
-                <button onclick="sendLamaMessage()" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">Send</button>
-            </div>
-        </div>
-        <button onclick="toggleLamaChat()" class="bg-gradient-to-tr from-purple-600 to-indigo-600 hover:scale-105 text-white p-3.5 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.4)] transition flex items-center justify-center space-x-2 text-xs font-black cursor-pointer">
-            <span>💬 AskLama AI</span>
-        </button>
-    </div>
-
-    <!-- Firebase Authentication Script Integration -->
-    <script type="module">
-        import { auth } from "./config.js";
-        import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        if(localStorage.getItem('lamastudio_theme') === 'dark') document.documentElement.classList.add('dark');
+    <!-- Cloud Authentication Script -->
+    <script>
+        // REPLACE THIS URL with your deployed Google Apps Script Web App URL
+        const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
         window.addEventListener('DOMContentLoaded', () => {
-            const rememberedEmail = localStorage.getItem('lamastudio_remembered_email');
+            const rememberedUser = localStorage.getItem('lamastudio_remembered_username');
             const rememberedPass = localStorage.getItem('lamastudio_remembered_password');
 
-            if (rememberedEmail && rememberedPass) {
-                document.getElementById('loginEmail').value = rememberedEmail;
+            if (rememberedUser && rememberedPass) {
+                document.getElementById('loginEmail').value = rememberedUser;
                 document.getElementById('loginPassword').value = rememberedPass;
                 document.getElementById('rememberMeCheckbox').checked = true;
             }
         });
 
-        // Track active auth state UI badge
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const badge = document.getElementById('activeSessionBadge');
-                const label = document.getElementById('loggedInSchoolLabel');
-                if (badge && label) {
-                    label.innerHTML = `Active: <strong class="underline">${user.email}</strong>`;
-                    badge.classList.remove('hidden');
-                    badge.classList.add('flex');
-                }
-            }
-        });
-
-        window.togglePasswordVisibility = function() {
-            const passInput = document.getElementById('loginPassword');
-            passInput.type = passInput.type === 'password' ? 'text' : 'password';
-        }
-
-        window.openForgotPasswordModal = function() {
-            document.getElementById('forgotPasswordModal').classList.remove('hidden');
-        }
-        window.closeForgotPasswordModal = function() {
-            document.getElementById('forgotPasswordModal').classList.add('hidden');
-        }
-
-        // Firebase Multi-Tenant Authentication Handler
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
+        async function handleCloudLogin(event) {
+            event.preventDefault();
+            const inputUser = document.getElementById('loginEmail').value.trim();
+            const inputPass = document.getElementById('loginPassword').value.trim();
             const rememberMe = document.getElementById('rememberMeCheckbox').checked;
             const errorEl = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+            
             errorEl.classList.add('hidden');
+            loginBtn.disabled = true;
+            loginBtn.innerText = "Verifying with Cloud Sheet... ⏳";
 
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                
-                // Store active school session UID locally for downstream dashboard requests
-                localStorage.setItem("active_school_uid", userCredential.user.uid);
+                // Fetch all registered schools from Google Sheet via GET request
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`);
+                const schools = await response.json();
 
-                if (rememberMe) {
-                    localStorage.setItem('lamastudio_remembered_email', email);
-                    localStorage.setItem('lamastudio_remembered_password', password);
+                // Search for a matching email and password row
+                const matchedSchool = schools.find(s => s["Admin Email"] === inputUser && s["Password"] === inputPass);
+
+                if (matchedSchool) {
+                    if (rememberMe) {
+                        localStorage.setItem('lamastudio_remembered_username', inputUser);
+                        localStorage.setItem('lamastudio_remembered_password', inputPass);
+                    } else {
+                        localStorage.removeItem('lamastudio_remembered_username');
+                        localStorage.removeItem('lamastudio_remembered_password');
+                    }
+
+                    // Save active school session state locally for dashboard use
+                    localStorage.setItem('lamastudio_active_school', JSON.stringify(matchedSchool));
+
+                    alert("Login successful! Welcome, " + matchedSchool["School Name"]);
+                    window.location.href = "dashboard.html";
                 } else {
-                    localStorage.removeItem('lamastudio_remembered_email');
-                    localStorage.removeItem('lamastudio_remembered_password');
+                    errorEl.innerText = "Invalid credentials or school not registered in cloud sheet.";
+                    errorEl.classList.remove('hidden');
+                    loginBtn.disabled = false;
+                    loginBtn.innerText = "Sign In to Dashboard 🔓";
                 }
-
-                window.location.href = 'dashboard.html';
             } catch (err) {
-                errorEl.innerText = "Login Failed: " + err.message;
+                errorEl.innerText = "Cloud Connection Error: " + err.message;
                 errorEl.classList.remove('hidden');
+                loginBtn.disabled = false;
+                loginBtn.innerText = "Sign In to Dashboard 🔓";
             }
-        });
-
-        window.handleLogout = function() {
-            signOut(auth).then(() => {
-                localStorage.removeItem("active_school_uid");
-                window.location.reload();
-            });
-        }
-    </script>
-    <script>
-        // AskLama Chatbot Integration
-        function toggleLamaChat() {
-            const win = document.getElementById('lamaChatWindow');
-            win.classList.toggle('hidden');
-        }
-
-        function sendLamaMessage() {
-            const input = document.getElementById('lamaUserInput');
-            const container = document.getElementById('lamaChatMessages');
-            const query = input.value.trim().toLowerCase();
-            if (!query) return;
-
-            container.innerHTML += `<div class="bg-purple-600/30 text-white p-2.5 rounded-xl text-right">${input.value}</div>`;
-            input.value = '';
-            container.scrollTop = container.scrollHeight;
-
-            setTimeout(() => {
-                let reply = "Thanks for your inquiry! You can enter your registered cloud email and password to access your dashboard.";
-                if (query.includes('payment') || query.includes('bank') || query.includes('easypaisa')) {
-                    reply = "Subscription fees can be transferred to our HBL account or via Easypaisa/Raast under Wajid Hussain.";
-                } else if (query.includes('forgot') || query.includes('password') || query.includes('email')) {
-                    reply = "Your credentials were set during your initial school cloud provisioning registration. Check your saved records or contact admin@lamastudio.pk.";
-                }
-
-                container.innerHTML += `<div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">${reply}</div>`;
-                container.scrollTop = container.scrollHeight;
-            }, 400);
         }
     </script>
 </body>

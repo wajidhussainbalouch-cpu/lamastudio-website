@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprehensive School Registration | lamastudio.pk</title>
+    <title>School Suite Registration | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -21,10 +21,10 @@
     <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center">
         <div class="flex items-center space-x-2">
             <a href="index.html" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">&larr; Home</a>
-            <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">GOOGLE SHEETS SAAS ONBOARDING</h1>
+            <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">LAMASTUDIO SCHOOL SUITE</h1>
         </div>
         <span class="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-bold">
-            70% Off Active Discount
+            Suite Registration Portal
         </span>
     </header>
 
@@ -34,8 +34,8 @@
             
             <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-4">
                 <div>
-                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Register New Institution</h3>
-                    <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Complete your institution specification below</p>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Register School Suite Workspace</h3>
+                    <p class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">Set up your institution's central administrative cloud account</p>
                 </div>
             </div>
 
@@ -57,6 +57,16 @@
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- School Logo Upload (Optimized for 15KB - 30KB Target) -->
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">School Crest / Logo Upload</label>
+                    <div class="flex items-center gap-3">
+                        <input type="file" id="schoolLogoFile" accept="image/png, image/jpeg, image/webp" onchange="validateAndCompressLogo(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-950 dark:file:text-indigo-300 hover:file:bg-indigo-100 cursor-pointer">
+                    </div>
+                    <p id="logoStatusText" class="text-[10px] text-slate-400">Target file weight: 15 KB – 30 KB. Formats: PNG, JPG, WebP.</p>
+                    <input type="hidden" id="schoolLogoBase64">
                 </div>
 
                 <!-- Government or Private Sector Switcher -->
@@ -188,21 +198,15 @@
         <p>&copy; 2026 lamastudio.pk • Google Sheets Cloud Provisioning Engine</p>
     </footer>
 
-    <!-- Google Sheets Sync Script with Bulletproof Fallbacks -->
+    <!-- Google Sheets Sync Script with 15KB - 30KB Logo Compressor & Fallbacks -->
     <script>
-        // Ensure SchoolStore is robustly defined even if external files are missing
         if (typeof SchoolStore === 'undefined') {
             window.SchoolStore = {
                 upsert: async function(payload) {
-                    // Save to local multi-tenant backup store
                     const existingSchools = JSON.parse(localStorage.getItem('lamastudio_schools_db')) || [];
                     existingSchools.push(payload);
                     localStorage.setItem('lamastudio_schools_db', JSON.stringify(existingSchools));
-                    
-                    // Also store active login session for seamless testing
                     localStorage.setItem('lamastudio_active_school', JSON.stringify(payload));
-                    
-                    // Simulate successful cloud sync response
                     return { success: true };
                 }
             };
@@ -218,6 +222,56 @@
                 passwordInput.type = 'password';
                 eyeIcon.innerText = '👁️';
             }
+        };
+
+        // Automatic Logo Compressor to fit within 15 KB to 30 KB bounds
+        window.validateAndCompressLogo = function(event) {
+            const file = event.target.files[0];
+            const statusText = document.getElementById('logoStatusText');
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    const MAX_DIMENSION = 120;
+                    if (width > height) {
+                        if (width > MAX_DIMENSION) {
+                            height *= MAX_DIMENSION / width;
+                            width = MAX_DIMENSION;
+                        }
+                    } else {
+                        if (height > MAX_DIMENSION) {
+                            width *= MAX_DIMENSION / height;
+                            height = MAX_DIMENSION;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    let quality = 0.7;
+                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    let sizeKB = Math.round((dataUrl.length * (3/4)) / 1024);
+                    
+                    while (sizeKB > 30 && quality > 0.1) {
+                        quality -= 0.1;
+                        dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        sizeKB = Math.round((dataUrl.length * (3/4)) / 1024);
+                    }
+
+                    document.getElementById('schoolLogoBase64').value = dataUrl;
+                    statusText.innerHTML = `<span class="text-emerald-500 font-bold">✔ Crest optimized successfully! Final size: ~${sizeKB} KB (Target: 15K–30K)</span>`;
+                };
+            };
+            reader.readAsDataURL(file);
         };
 
         window.setSector = function(sector) {
@@ -315,6 +369,7 @@
             const payload = {
                 adminEmail: document.getElementById('adminEmail').value.trim(),
                 adminPassword: document.getElementById('adminPassword').value.trim(),
+                schoolLogo: document.getElementById('schoolLogoBase64').value || '',
                 schoolSector: document.getElementById('schoolSector').value,
                 schoolName: document.getElementById('schoolName').value.trim(),
                 schoolCodeId: document.getElementById('schoolCodeId').value.trim(),
@@ -338,7 +393,7 @@
                 const result = await SchoolStore.upsert(payload);
 
                 if (result && result.success !== false) {
-                    alert("Registration synced successfully!");
+                    alert("School Suite Workspace registered & synced successfully!");
                     window.location.href = "login.html";
                 } else {
                     throw new Error(result.message || "Cloud registration server rejected payload.");

@@ -167,6 +167,9 @@
             const principalName = school["Principal Name"] || school["principal"] || 'Principal / Admin';
             const schoolSector = school["School Sector"] || school["sector"] || 'Private';
             const schoolAddress = school["School Address"] || school["address"] || 'Cloud Connected Node';
+            
+            // Extract Logo URL (checks multiple key naming conventions)
+            const schoolLogoUrl = school["School Logo"] || school["logo"] || school["logoUrl"] || '';
 
             // Populate UI Elements
             document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
@@ -177,8 +180,15 @@
             document.getElementById('totalStudentsCount').innerText = totalStudents;
             document.getElementById('totalStaffCount').innerText = totalStaff;
             document.getElementById('badgeSector').innerText = `${schoolSector} Sector Node`;
-            document.getElementById('navShortCode').innerText = shortCode;
             document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Google Sheets Cloud Architecture`;
+
+            // Handle Dynamic Logo Rendering
+            const logoContainer = document.getElementById('schoolLogoContainer');
+            if (schoolLogoUrl && schoolLogoUrl.trim() !== '') {
+                logoContainer.innerHTML = `<img src="${schoolLogoUrl}" alt="${schoolName} Logo" class="w-full h-full object-cover">`;
+            } else {
+                logoContainer.innerHTML = `<span id="navShortCode" class="text-xs font-black text-white">${shortCode}</span>`;
+            }
 
             renderTelemetryChart(parseInt(totalStudents, 10) || 240);
         });

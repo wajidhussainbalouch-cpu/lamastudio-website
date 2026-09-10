@@ -19,7 +19,7 @@
             <a href="index.html" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">&larr; Home</a>
             <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">GOOGLE SHEETS CLOUD LOGIN</h1>
         </div>
-        <a href="register.html" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-indigo-500 transition">Register School</a>
+        <a href="lamastudio-school-suite/admissions.html" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-indigo-500 transition">Register School</a>
     </header>
 
     <!-- Login Form Container -->
@@ -111,12 +111,18 @@
 
             let matchedSchool = null;
 
-            // Step 1: Check Local Multi-Tenant Storage First (Fast & Works offline/locally)
+            // Step 1: Check Local Multi-Tenant Storage First (supports lamastudio_schools, lamastudio_schools_db, and SchoolStore)
             try {
-                const localSchools = JSON.parse(localStorage.getItem('lamastudio_schools_db')) || [];
+                const localSchools = JSON.parse(
+                    localStorage.getItem('lamastudio_schools') || 
+                    localStorage.getItem('lamastudio_schools_db') || 
+                    localStorage.getItem('SchoolStore') || '[]'
+                );
+
                 matchedSchool = localSchools.find(s => 
                     (s.adminEmail === inputUser && s.adminPassword === inputPass) || 
-                    (s["Admin Email"] === inputUser && s["Password"] === inputPass)
+                    (s["Admin Email"] === inputUser && s["Password"] === inputPass) ||
+                    (s.email === inputUser && s.password === inputPass)
                 );
             } catch (e) {
                 console.warn("Local storage check skipped:", e);
@@ -129,7 +135,10 @@
                     const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`);
                     if (response.ok) {
                         const schools = await response.json();
-                        matchedSchool = schools.find(s => s["Admin Email"] === inputUser && s["Password"] === inputPass);
+                        matchedSchool = schools.find(s => 
+                            (s["Admin Email"] === inputUser && s["Password"] === inputPass) ||
+                            (s.adminEmail === inputUser && s.adminPassword === inputPass)
+                        );
                     }
                 } catch (cloudErr) {
                     console.warn("Cloud fetch failed or blocked by CORS, falling back to local session store.", cloudErr);
@@ -148,8 +157,8 @@
 
                 // Save active school session state locally for dashboard use
                 localStorage.setItem('lamastudio_active_school', JSON.stringify(matchedSchool));
+                localStorage.setItem('current_school_session', JSON.stringify(matchedSchool));
 
-                alert("Login successful! Welcome, " + (matchedSchool["School Name"] || matchedSchool.schoolName));
                 window.location.href = "dashboard.html";
             } else {
                 errorEl.innerText = "Invalid credentials or school not registered yet. Please check your email and password.";

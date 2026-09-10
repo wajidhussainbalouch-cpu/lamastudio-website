@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Campus Command Hub | lamastudio.pk</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.10/tailwindcss.js"></script>
     <!-- Chart.js for Quantum Telemetry Wave Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- External Custom Style Architecture -->
@@ -33,7 +33,7 @@
             <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
                 Logout 🚪
             </button>
-            <a href="admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
+            <a href="./admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
                 <span>⚡ New Admission</span>
             </a>
         </div>
@@ -149,7 +149,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             let activeSchoolJson = localStorage.getItem('lamastudio_active_school') || localStorage.getItem('current_school_session');
             
-            // Fallback: If session points to wrong school or missing, auto-select GPS Shah Sadar Din from accounts DB
             if (!activeSchoolJson || activeSchoolJson.includes("Allama Iqbal")) {
                 const schools = JSON.parse(localStorage.getItem('lamastudio_school_accounts') || '[]');
                 const gss = schools.find(s => s.name === "GPS Shah Sadar Din") || {
@@ -170,7 +169,6 @@
 
             const school = JSON.parse(activeSchoolJson);
 
-            // Extract attributes supporting both standard DB fields and legacy fields
             const schoolName = school.name || school["School Name"] || school["schoolName"] || 'Campus Command Hub';
             const schoolCodeRaw = school.shortCode || school["School ID/Code"] || school["schoolCode"] || 'GPS';
             const shortCode = schoolCodeRaw.substring(0, 3).toUpperCase();
@@ -181,7 +179,6 @@
             const schoolAddress = school.address || school["School Address"] || school["schoolAddress"] || 'Shah Sadar Din';
             const schoolLogoUrl = school.logo || school["School Logo"] || school["logoUrl"] || '';
 
-            // Populate UI Elements
             document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
             document.getElementById('navSchoolName').innerText = schoolName;
             document.getElementById('heroSchoolName').innerText = schoolName;
@@ -192,7 +189,6 @@
             document.getElementById('badgeSector').innerText = `${schoolSector} Sector Node`;
             document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Google Sheets Cloud Architecture`;
 
-            // Handle Dynamic Logo Rendering
             const logoContainer = document.getElementById('schoolLogoContainer');
             if (schoolLogoUrl && schoolLogoUrl.trim() !== '') {
                 logoContainer.innerHTML = `<img src="${schoolLogoUrl}" alt="${schoolName} Logo" class="w-full h-full object-cover">`;

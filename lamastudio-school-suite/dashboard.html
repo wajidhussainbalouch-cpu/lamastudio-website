@@ -142,32 +142,47 @@
         <p id="footerText">&copy; 2026 Campus Management Architecture</p>
     </footer>
 
-    <!-- Clean Cloud Session Script -->
+    <!-- Google Sheet Live Cloud Sync Script -->
     <script>
         let telemetryChart = null;
+        const GOOGLE_SHEET_CSV_URL = 'YOUR_GOOGLE_SHEET_CSV_URL'; // Replace with your published CSV link or Apps Script web endpoint
 
-        window.addEventListener('DOMContentLoaded', () => {
-            let activeSchoolJson = localStorage.getItem('lamastudio_active_school') || localStorage.getItem('current_school_session');
-            
-            if (!activeSchoolJson || activeSchoolJson.includes("Allama Iqbal")) {
-                const schools = JSON.parse(localStorage.getItem('lamastudio_school_accounts') || '[]');
-                const gss = schools.find(s => s.name === "GPS Shah Sadar Din") || {
-                    "id": "sch_gps-shah-sadar-din_mtu33xlx719",
+        window.addEventListener('DOMContentLoaded', async () => {
+            let school = null;
+
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                const csvText = await response.text();
+                const schools = parseCSV(csvText);
+
+                // Check URL parameter for specific school ID (e.g. ?id=sch_...)
+                const urlParams = new URLSearchParams(window.location.search);
+                const requestedId = urlParams.get('id');
+
+                if (requestedId) {
+                    school = schools.find(s => s.id === requestedId || s.shortCode === requestedId);
+                }
+
+                // Fallback to default institution if not found
+                if (!school) {
+                    school = schools.find(s => s.name === "GPS Shah Sadar Din") || schools[0];
+                }
+            } catch (error) {
+                console.error("Cloud fetch failed, using fallback configuration:", error);
+            }
+
+            // Absolute fallback default if sheet fetch fails completely
+            if (!school) {
+                school = {
                     "shortCode": "GSS",
                     "sector": "Government",
                     "name": "GPS Shah Sadar Din",
                     "address": "Shah Sadar Din",
-                    "district": "Dera Ghazi Khan",
                     "enrollment": "300",
                     "totalStaff": "10",
                     "principal": "Wajid Hussain"
                 };
-                localStorage.setItem('lamastudio_active_school', JSON.stringify(gss));
-                localStorage.setItem('current_school_session', JSON.stringify(gss));
-                activeSchoolJson = JSON.stringify(gss);
             }
-
-            const school = JSON.parse(activeSchoolJson);
 
             const schoolName = school.name || school["School Name"] || school["schoolName"] || 'Campus Command Hub';
             const schoolCodeRaw = school.shortCode || school["School ID/Code"] || school["schoolCode"] || 'GPS';
@@ -199,9 +214,22 @@
             renderTelemetryChart(parseInt(totalStudents, 10) || 300);
         });
 
+        // Lightweight CSV Parser for Google Sheet Export
+        function parseCSV(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+            
+            return lines.slice(1).map(line => {
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^["']|["']$/g, ''));
+                let obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = values[index] || '';
+                });
+                return obj;
+            });
+        }
+
         window.handleLogout = function() {
-            localStorage.removeItem('lamastudio_active_school');
-            localStorage.removeItem('current_school_session');
             window.location.href = "login.html";
         };
 

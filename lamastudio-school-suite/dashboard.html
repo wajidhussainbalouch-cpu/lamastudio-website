@@ -147,7 +147,8 @@
         let telemetryChart = null;
 
         window.addEventListener('DOMContentLoaded', () => {
-            const activeSchoolJson = localStorage.getItem('lamastudio_active_school');
+            // Check both potential storage keys for session safety
+            const activeSchoolJson = localStorage.getItem('lamastudio_active_school') || localStorage.getItem('current_school_session');
             
             if (!activeSchoolJson) {
                 alert("Unauthorized access. Please log in first.");
@@ -157,16 +158,17 @@
 
             const school = JSON.parse(activeSchoolJson);
 
-            // Extract attributes from Google Sheet payload
-            const schoolName = school["School Name"] || 'Campus Command Hub';
-            const shortCode = school["School ID/Code"] ? school["School ID/Code"].substring(0, 3).toUpperCase() : 'GPS';
-            const totalStudents = school["Total Strength"] || '0';
-            const totalStaff = school["Total Staff"] || '0';
-            const principalName = school["Principal Name"] || 'Principal / Admin';
-            const schoolSector = school["School Sector"] || 'Private';
-            const schoolAddress = school["School Address"] || 'Cloud Connected Node';
+            // Extract attributes from payload securely with fallback options
+            const schoolName = school["School Name"] || school["schoolName"] || 'Campus Command Hub';
+            const schoolCodeRaw = school["School ID/Code"] || school["schoolCode"] || 'GPS';
+            const shortCode = schoolCodeRaw.substring(0, 3).toUpperCase();
+            const totalStudents = school["Total Strength"] || school["totalStudents"] || '0';
+            const totalStaff = school["Total Staff"] || school["totalStaff"] || '0';
+            const principalName = school["Principal Name"] || school["principal"] || 'Principal / Admin';
+            const schoolSector = school["School Sector"] || school["sector"] || 'Private';
+            const schoolAddress = school["School Address"] || school["address"] || 'Cloud Connected Node';
 
-            // Populate UI elements
+            // Populate UI Elements
             document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
             document.getElementById('navSchoolName').innerText = schoolName;
             document.getElementById('heroSchoolName').innerText = schoolName;
@@ -183,6 +185,7 @@
 
         window.handleLogout = function() {
             localStorage.removeItem('lamastudio_active_school');
+            localStorage.removeItem('current_school_session');
             window.location.href = "login.html";
         };
 

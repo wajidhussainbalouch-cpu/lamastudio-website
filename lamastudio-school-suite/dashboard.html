@@ -1,287 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Campus Command Hub | lamastudio.pk</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.10/tailwindcss.js"></script>
-    <!-- Chart.js for Telemetry Wave Chart -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- External Custom Style Architecture -->
-    <link rel="stylesheet" href="assets/css/config.css">
-</head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+<script>
+    let telemetryChart = null;
 
-    <!-- Ambient Neon Background Glows -->
-    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+    window.addEventListener('DOMContentLoaded', () => {
+        let school = null;
 
-    <!-- Top Navigation Bar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex flex-col sm:flex-row justify-between items-center gap-3 shadow-2xl">
-        <div class="flex items-center space-x-3">
-            <div id="schoolLogoContainer" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(139,92,246,0.4)]">
-                <span id="navShortCode" class="text-xs font-black text-white">GPS</span>
-            </div>
-            <div>
-                <h1 class="text-sm font-black tracking-wider text-white uppercase"><span id="navSchoolName">Campus Command Hub</span></h1>
-            </div>
-        </div>
-
-        <!-- Quick Actions & Logout -->
-        <div class="flex items-center space-x-3">
-            <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">
-                Logout 🚪
-            </button>
-            <a href="/lamastudio-school-suite/admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
-                <span>⚡ New Admission</span>
-            </a>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <main class="max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 flex-grow space-y-6 relative z-10">
-        
-        <!-- Hero Command Node Card -->
-        <section class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 relative overflow-hidden shadow-xl">
-            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
-                        <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                        <span id="badgeSector" class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Government Sector Node</span>
-                    </div>
-                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Loading Institution...</h2>
-                    <p id="schoolAddressDisplay" class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-                        Fetching cloud telemetry and verified node parameters...
-                    </p>
-                </div>
-                <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller</p>
-                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">-</p>
-                    <p class="text-[10px] text-slate-400 mt-1">Sync Status: <span class="text-emerald-400 font-bold">99.8% Optimal</span></p>
-                </div>
-            </div>
-
-            <!-- Quick Metrics Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800">
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Total Students</p>
-                    <p id="totalStudentsCount" class="text-xl font-black text-purple-400 mt-0.5">0</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Attendance Index</p>
-                    <p class="text-xl font-black text-emerald-400 mt-0.5">94.2%</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Active Faculty</p>
-                    <p id="totalStaffCount" class="text-xl font-black text-cyan-400 mt-0.5">0</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Mid-Term Pass Rate</p>
-                    <p class="text-xl font-black text-amber-400 mt-0.5">88.7%</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Gateway Portals Grid -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Student Portal -->
-            <a href="portals/student/index.html" class="bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-purple-500/50 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition cursor-pointer group">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl group-hover:scale-110 transition">🎓</span>
-                        <span class="text-[9px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">Gateway</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-purple-300 transition">Student Portal &rarr;</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Access personal attendance logs, profiles, and designated subject materials.</p>
-                </div>
-            </a>
-
-            <!-- Teacher Portal -->
-            <a href="portals/teacher/index.html" class="bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-emerald-500/50 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition cursor-pointer group">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl group-hover:scale-110 transition">👩‍🏫</span>
-                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">Gateway</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-emerald-300 transition">Teacher Portal &rarr;</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Manage class rosters, update grade books, and log daily section reports.</p>
-                </div>
-            </a>
-
-            <!-- Admin Panel -->
-            <a href="portals/admin/index.html" class="bg-slate-900/40 hover:bg-slate-900/80 border border-slate-800/80 hover:border-amber-500/50 backdrop-blur-xl rounded-2xl p-5 flex flex-col justify-between transition cursor-pointer group">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl group-hover:scale-110 transition">⚙️</span>
-                        <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Restricted Admin</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-amber-300 transition">Admin Panel &rarr;</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Central command for generating fee records and admissions oversight.</p>
-                </div>
-            </a>
-        </section>
-
-        <!-- Institutional Telemetry Wave Chart -->
-        <section class="bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl rounded-3xl p-6 shadow-xl">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-slate-800 pb-3 gap-2">
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-purple-400">📈 Institutional Growth Telemetry</h3>
-                    <p class="text-[11px] text-slate-400">Enrollment trajectory versus academic performance index.</p>
-                </div>
-            </div>
-            <div class="relative h-56 w-full bg-slate-950/40 rounded-2xl p-3 border border-slate-800/80">
-                <canvas id="telemetryChart"></canvas>
-            </div>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
-        <p id="footerText">&copy; 2026 Campus Management Architecture</p>
-    </footer>
-
-    <!-- Google Sheet Live Cloud Sync Script -->
-    <script>
-        let telemetryChart = null;
-        const GOOGLE_SHEET_CSV_URL = 'YOUR_GOOGLE_SHEET_CSV_URL'; // Replace with your published CSV link or Apps Script web endpoint
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            let school = null;
-
-            try {
-                const response = await fetch(GOOGLE_SHEET_CSV_URL);
-                const csvText = await response.text();
-                const schools = parseCSV(csvText);
-
-                // Check URL parameter for specific school ID (e.g. ?id=sch_...)
-                const urlParams = new URLSearchParams(window.location.search);
-                const requestedId = urlParams.get('id');
-
-                if (requestedId) {
-                    school = schools.find(s => s.id === requestedId || s.shortCode === requestedId);
-                }
-
-                // Fallback to default institution if not found
-                if (!school) {
-                    school = schools.find(s => s.name === "GPS Shah Sadar Din") || schools[0];
-                }
-            } catch (error) {
-                console.error("Cloud fetch failed, using fallback configuration:", error);
+        // Step 1: Read the active school session saved during login.html
+        try {
+            const activeSession = localStorage.getItem('lamastudio_active_school') || 
+                                  localStorage.getItem('current_school_session');
+            if (activeSession) {
+                school = JSON.parse(activeSession);
             }
-
-            // Absolute fallback default if sheet fetch fails completely
-            if (!school) {
-                school = {
-                    "shortCode": "GSS",
-                    "sector": "Government",
-                    "name": "GPS Shah Sadar Din",
-                    "address": "Shah Sadar Din",
-                    "enrollment": "300",
-                    "totalStaff": "10",
-                    "principal": "Wajid Hussain"
-                };
-            }
-
-            const schoolName = school.name || school["School Name"] || school["schoolName"] || 'Campus Command Hub';
-            const schoolCodeRaw = school.shortCode || school["School ID/Code"] || school["schoolCode"] || 'GPS';
-            const shortCode = schoolCodeRaw.substring(0, 3).toUpperCase();
-            const totalStudents = school.enrollment || school["Total Strength"] || school["totalStudents"] || school["totalStrength"] || '300';
-            const totalStaff = school.totalStaff || school["Total Staff"] || '10';
-            const principalName = school.principal || school["Principal Name"] || school["principalName"] || 'Wajid Hussain';
-            const schoolSector = school.sector || school["School Sector"] || school["schoolSector"] || 'Government';
-            const schoolAddress = school.address || school["School Address"] || school["schoolAddress"] || 'Shah Sadar Din';
-            const schoolLogoUrl = school.logo || school["School Logo"] || school["logoUrl"] || '';
-
-            document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
-            document.getElementById('navSchoolName').innerText = schoolName;
-            document.getElementById('heroSchoolName').innerText = schoolName;
-            document.getElementById('schoolAddressDisplay').innerText = schoolAddress;
-            document.getElementById('principalDisplay').innerText = principalName;
-            document.getElementById('totalStudentsCount').innerText = totalStudents;
-            document.getElementById('totalStaffCount').innerText = totalStaff;
-            document.getElementById('badgeSector').innerText = `${schoolSector} Sector Node`;
-            document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Google Sheets Cloud Architecture`;
-
-            const logoContainer = document.getElementById('schoolLogoContainer');
-            if (schoolLogoUrl && schoolLogoUrl.trim() !== '') {
-                logoContainer.innerHTML = `<img src="${schoolLogoUrl}" alt="${schoolName} Logo" class="w-full h-full object-cover">`;
-            } else {
-                logoContainer.innerHTML = `<span id="navShortCode" class="text-xs font-black text-white">${shortCode}</span>`;
-            }
-
-            renderTelemetryChart(parseInt(totalStudents, 10) || 300);
-        });
-
-        // Lightweight CSV Parser for Google Sheet Export
-        function parseCSV(text) {
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
-            
-            return lines.slice(1).map(line => {
-                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^["']|["']$/g, ''));
-                let obj = {};
-                headers.forEach((header, index) => {
-                    obj[header] = values[index] || '';
-                });
-                return obj;
-            });
+        } catch (e) {
+            console.warn("Failed to read active school session from localStorage:", e);
         }
 
-        window.handleLogout = function() {
-            window.location.href = "login.html";
+        // Step 2: Fallback default if no session is active
+        if (!school) {
+            school = {
+                "schoolName": "GPS Shah Sadar Din",
+                "schoolCodeId": "GSS",
+                "schoolSector": "Government",
+                "schoolDistrict": "Shah Sadar Din",
+                "principalName": "Wajid Hussain",
+                "enrollment": "300",
+                "totalStaff": "10"
+            };
+        }
+
+        // Map properties matching your Code.gs backend keys
+        const schoolName = school.schoolName || school.name || 'Campus Command Hub';
+        const schoolCodeRaw = school.schoolCodeId || school.shortCode || 'GPS';
+        const shortCode = schoolCodeRaw.substring(0, 3).toUpperCase();
+        const totalStudents = school.enrollment || school.totalStudents || '300';
+        const totalStaff = school.totalStaff || '10';
+        const principalName = school.principalName || school.principal || 'Wajid Hussain';
+        const schoolSector = school.schoolSector || school.sector || 'Government';
+        const schoolDistrict = school.schoolDistrict || school.address || 'Shah Sadar Din';
+        const schoolLogoUrl = school.logoUrl || '';
+
+        // Populate DOM elements
+        document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
+        document.getElementById('navSchoolName').innerText = schoolName;
+        document.getElementById('heroSchoolName').innerText = schoolName;
+        document.getElementById('schoolAddressDisplay').innerText = `District / Location: ${schoolDistrict}`;
+        document.getElementById('principalDisplay').innerText = principalName;
+        document.getElementById('totalStudentsCount').innerText = totalStudents;
+        document.getElementById('totalStaffCount').innerText = totalStaff;
+        document.getElementById('badgeSector').innerText = `${schoolSector} Sector Node`;
+        document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Google Sheets Cloud Architecture`;
+
+        const logoContainer = document.getElementById('schoolLogoContainer');
+        if (schoolLogoUrl && schoolLogoUrl.trim() !== '') {
+            logoContainer.innerHTML = `<img src="${schoolLogoUrl}" alt="${schoolName} Logo" class="w-full h-full object-cover">`;
+        } else {
+            logoContainer.innerHTML = `<span class="text-xs font-black text-white">${shortCode}</span>`;
+        }
+
+        renderTelemetryChart(parseInt(totalStudents, 10) || 300);
+    });
+
+    window.handleLogout = function() {
+        localStorage.removeItem('lamastudio_active_school');
+        localStorage.removeItem('current_school_session');
+        window.location.href = "login.html";
+    };
+
+    function renderTelemetryChart(totalCount) {
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        const data = {
+            labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb (Live)'],
+            datasets: [
+                {
+                    label: 'Enrollment Growth',
+                    data: [
+                        Math.max(10, totalCount - 40),
+                        Math.max(20, totalCount - 30),
+                        Math.max(30, totalCount - 20),
+                        Math.max(40, totalCount - 10),
+                        totalCount
+                    ],
+                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#a855f7'
+                },
+                {
+                    label: 'Pass Rate %',
+                    data: [82, 84, 85, 87, 88.7],
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointBackgroundColor: '#06b6d4'
+                }
+            ]
+        };
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } },
+                y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } }
+            }
         };
 
-        function renderTelemetryChart(totalCount) {
-            const ctx = document.getElementById('telemetryChart').getContext('2d');
-            const data = {
-                labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb (Live)'],
-                datasets: [
-                    {
-                        label: 'Enrollment Growth',
-                        data: [
-                            Math.max(10, totalCount - 40),
-                            Math.max(20, totalCount - 30),
-                            Math.max(30, totalCount - 20),
-                            Math.max(40, totalCount - 10),
-                            totalCount
-                        ],
-                        borderColor: '#a855f7',
-                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#a855f7'
-                    },
-                    {
-                        label: 'Pass Rate %',
-                        data: [82, 84, 85, 87, 88.7],
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointBackgroundColor: '#06b6d4'
-                    }
-                ]
-            };
-            const options = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } },
-                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } }
-                }
-            };
-
-            if (telemetryChart) {
-                telemetryChart.data = data;
-                telemetryChart.update();
-            } else {
-                telemetryChart = new Chart(ctx, { type: 'line', data, options });
-            }
+        if (telemetryChart) {
+            telemetryChart.data = data;
+            telemetryChart.update();
+        } else {
+            telemetryChart = new Chart(ctx, { type: 'line', data, options });
         }
-    </script>
-</body>
-</html>
+    }
+</script>

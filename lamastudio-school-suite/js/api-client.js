@@ -1,11 +1,11 @@
 /**
  * Lamastudio Cloud API Client for School Suite
- * Enhanced with safety fallbacks to prevent sign-in lockouts.
+ * Configured with live backend endpoint and safety fallbacks.
  */
 
 const ApiClient = (() => {
-    // ⚠️ REPLACE THIS WITH YOUR ACTUAL DEPLOYED GOOGLE APPS SCRIPT WEB APP URL
-    const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+    // Active deployed Google Apps Script Web App URL
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwhqJ1W0GOTl2-FTF9XgTYXuAeG0uINR0995_d6SOl1TtloACKcKcugVaayYT18Xw_Teg/exec";
 
     async function getData(id) {
         try {
@@ -14,9 +14,9 @@ const ApiClient = (() => {
                 return null;
             }
 
-            // Add a timeout controller so sign-in doesn't hang indefinitely if internet is slow
+            // Timeout controller to prevent hanging if the network is slow
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
 
             const response = await fetch(`${WEB_APP_URL}?action=get&id=${encodeURIComponent(id)}`, {
                 method: "GET",
@@ -34,7 +34,7 @@ const ApiClient = (() => {
             return result;
         } catch (error) {
             console.warn("ApiClient getData warning (falling back to local):", error.message);
-            return null; // Gracefully fallback instead of crashing the app
+            return null;
         }
     }
 

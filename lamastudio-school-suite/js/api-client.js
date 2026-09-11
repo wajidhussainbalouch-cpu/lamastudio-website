@@ -5,7 +5,7 @@
 
 const ApiClient = (() => {
     // Active deployed Google Apps Script Web App URL
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwhqJ1W0GOTl2-FTF9XgTYXuAeG0uINR0995_d6SOl1TtloACKcKcugVaayYT18Xw_Teg/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec";
 
     async function getData(id) {
         try {

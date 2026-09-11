@@ -63,9 +63,9 @@
         </div>
     </div>
 
-    <!-- Scripts with fallback checks -->
+    <!-- Scripts -->
     <script>
-        // Visual crash catcher so you never get a blank white screen again
+        // Visual crash catcher
         window.onerror = function(msg, url, line) {
             const errBox = document.getElementById('errorMsg');
             if (errBox) {
@@ -76,7 +76,6 @@
         };
     </script>
     
-    <!-- Adjust path if your api script is in assets/js/api.js or js/api.js -->
     <script src="js/api.js" onerror="handleScriptError()"></script>
     <script>
         function handleScriptError() {
@@ -117,18 +116,37 @@
                     throw new Error("ApiClient is not loaded. Check if js/api.js is correctly linked.");
                 }
 
-                // Fetch directly from the cloud spreadsheet API
-                const schools = await ApiClient.getAll();
+                // Fetch directly from cloud spreadsheet API
+                let response = await ApiClient.getAll();
                 
-                if (!Array.isArray(schools)) {
-                    throw new Error("Invalid response format received from cloud database.");
+                let schools = response;
+                if (response && !Array.isArray(response)) {
+                    schools = response.data || response.schools || response.result || [];
                 }
-                
-                // Match credential against cloud records with flexible key lookups
+
+                if (!Array.isArray(schools) || schools.length === 0) {
+                    throw new Error("Cloud database returned 0 records. Check your Google Sheet connection.");
+                }
+
+                // Match credentials against cloud records with maximum key flexibility
                 const matchedSchool = schools.find(school => {
-                    const email = (school.adminEmail || school.adminemail || school.AdminEmail || "").toLowerCase();
-                    const code = (school.schoolCodeId || school.schoolcodeid || school.SchoolCodeId || school.schoolId || "").toLowerCase();
-                    const pass = school.adminPassword || school.adminpassword || school.AdminPassword || "";
+                    if (!school) return false;
+
+                    const email = (
+                        school.adminEmail || school.adminemail || school.AdminEmail || 
+                        school.email || school.Email || ""
+                    ).trim().toLowerCase();
+
+                    const code = (
+                        school.schoolCodeId || school.schoolcodeid || school.SchoolCodeId || 
+                        school.schoolId || school.schoolCode || ""
+                    ).trim().toLowerCase();
+
+                    const pass = (
+                        school.adminPassword || school.adminpassword || school.AdminPassword || 
+                        school.password || school.Password || ""
+                    ).trim();
+
                     const accountStatus = school.status || school.Status || "Active";
 
                     const isValidIdentifier = (email === identifier || code === identifier);
@@ -139,14 +157,15 @@
                 });
 
                 if (!matchedSchool) {
-                    throw new Error("Invalid email/school code or password. Please try again.");
+                    const foundEmails = schools.map(s => s.adminEmail || s.email || "No Email").join(", ");
+                    throw new Error(`Login failed. Found ${schools.length} record(s). Sheet Emails: [${foundEmails}].`);
                 }
 
                 if (matchedSchool._resolvedStatus && matchedSchool._resolvedStatus !== "Active") {
                     throw new Error("Account is inactive or pending approval. Contact system administrator.");
                 }
 
-                // Cache active tenant session locally strictly for dashboard session handling
+                // Cache active tenant session locally
                 localStorage.setItem('activeSchool', JSON.stringify(matchedSchool));
                 
                 // Success State & Redirect

@@ -17,7 +17,7 @@ const SchoolStore = {
     // Set the active school session locally
     setActive(schoolObj) {
         localStorage.setItem('active_school_session', JSON.stringify(schoolObj));
-        localStorage.setItem('active_tenant_id', schoolObj.id || schoolObj["School Code / ID"] || '');
+        localStorage.setItem('active_tenant_id', schoolObj.schoolCodeId || schoolObj["School Code / ID"] || '');
     },
 
     // Clear active session on logout
@@ -51,7 +51,7 @@ const SchoolStore = {
     // Get all registered schools from Google Sheets via ApiClient
     async getAll() {
         try {
-            return await ApiClient.getAllSchools();
+            return await ApiClient.getAll();
         } catch (e) {
             console.error("Error fetching schools from cloud:", e);
             return [];
@@ -66,7 +66,7 @@ const SchoolStore = {
                 schoolData.schoolCodeId = 'SCH-' + Date.now();
             }
 
-            const response = await ApiClient.register(schoolData);
+            const response = await ApiClient.saveData(schoolData);
             
             if (response && response.status === "success") {
                 this.setActive(schoolData);
@@ -84,17 +84,27 @@ const SchoolStore = {
     async authenticate(username, password) {
         try {
             const schools = await this.getAll();
-            // Match against Admin Email & Password columns
-            const school = schools.find(s => 
-                (s["Admin Email"] === username || s.adminUsername === username) && 
-                (s["Password"] === password || s.adminPassword === password)
-            );
+            
+            // Match against both camelCase keys and sheet headers for robust compatibility
+            const school = schools.find(s => {
+                const mail = s.adminEmail || s["Admin Email"] || "";
+                const code = s.schoolCodeId || s["schoolCodeId"] || "";
+                const pwd = s.adminPassword || s["Password"] || s["adminPassword"] || "";
+
+                const matchesUser = (mail.toLowerCase() === username.toLowerCase() || code.toLowerCase() === username.toLowerCase());
+                const matchesPass = (pwd === password);
+
+                return matchesUser && matchesPass;
+            });
             
             if (school) {
+                if (school.status && school.status !== "Active") {
+                    return { success: false, message: "Account is inactive or pending approval." };
+                }
                 this.setActive(school);
                 return { success: true, school };
             }
-            return { success: false, message: "Invalid username or password, or school not found." };
+            return { success: false, message: "Invalid email/school code or password." };
         } catch (e) {
             console.error("Authentication error:", e);
             return { success: false, message: e.toString() };

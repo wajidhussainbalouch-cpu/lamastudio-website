@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Admin Portal - lamastudio.pk</title>
-    <!-- Tailwind CSS CDN for modern styling -->
+    <title>Admin Portal - lamastudio.pk Cloud ERP</title>
+    <!-- Tailwind CSS v4 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -41,87 +41,96 @@
                     placeholder="••••••••">
             </div>
 
-            <!-- Error message container -->
+            <!-- Error Feedback Box -->
             <div id="errorMsg" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 text-center"></div>
 
+            <!-- Submit Button -->
             <button type="submit" id="submitBtn"
                 class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-colors shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer">
                 <span>Access ERP Dashboard</span>
             </button>
         </form>
 
-        <!-- Footer link back to registration -->
+        <!-- Footer Link -->
         <div class="text-center text-xs text-slate-500">
             Don't have an active school account? 
             <a href="register.html" class="text-indigo-400 hover:underline">Register your school</a>
         </div>
     </div>
 
-    <!-- Load your ApiClient script (Ensure api.js is in the same directory or pasted here) -->
-    <script src="api.js"></script>
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const identifier = document.getElementById('identifier').value.trim();
+            const identifier = document.getElementById('identifier').value.trim().toLowerCase();
             const password = document.getElementById('password').value.trim();
             const submitBtn = document.getElementById('submitBtn');
             const errorMsg = document.getElementById('errorMsg');
 
-            // Reset error state
+            // Reset UI States
             errorMsg.classList.add('hidden');
             errorMsg.textContent = '';
             
-            // Loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Authenticating with Cloud...</span>
-            `;
+            // Set Loading State
+            setLoadingState(submitBtn, true);
 
             try {
-                // Fetch all schools from Google Sheets via ApiClient
                 const schools = await ApiClient.getAll();
                 
-                // Find matching record by Email or School Code ID and check password
-                const matchedSchool = schools.find(school => 
-                    (school.adminEmail.toLowerCase() === identifier.toLowerCase() || 
-                     school.schoolCodeId.toLowerCase() === identifier.toLowerCase()) && 
-                    school.adminPassword === password
-                );
+                // Match credential against cloud records
+                const matchedSchool = schools.find(school => {
+                    const email = (school.adminEmail || "").toLowerCase();
+                    const code = (school.schoolCodeId || "").toLowerCase();
+                    const pass = school.adminPassword || "";
 
-                if (matchedSchool) {
-                    if (matchedSchool.status !== "Active") {
-                        throw new Error("Account is inactive or pending approval. Contact system administrator.");
-                    }
+                    const isValidIdentifier = (email === identifier || code === identifier);
+                    const isValidPassword = (pass === password);
 
-                    // Save session data locally so the dashboard knows who is logged in
-                    localStorage.setItem('activeSchool', JSON.stringify(matchedSchool));
-                    
-                    // Success feedback & redirect
-                    submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
-                    submitBtn.classList.add('bg-emerald-600');
-                    submitBtn.textContent = 'Success! Redirecting...';
+                    return isValidIdentifier && isValidPassword;
+                });
 
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html'; // Change to your target dashboard page
-                    }, 1000);
-
-                } else {
+                if (!matchedSchool) {
                     throw new Error("Invalid email/school code or password. Please try again.");
                 }
+
+                if (matchedSchool.status && matchedSchool.status !== "Active") {
+                    throw new Error("Account is inactive or pending approval. Contact system administrator.");
+                }
+
+                // Save active tenant session locally
+                localStorage.setItem('activeSchool', JSON.stringify(matchedSchool));
+                
+                // Success State & Redirect
+                submitBtn.className = "w-full bg-emerald-600 text-white font-medium py-2.5 rounded-lg shadow-lg flex items-center justify-center gap-2";
+                submitBtn.textContent = 'Success! Redirecting...';
+
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 800);
 
             } catch (err) {
                 errorMsg.textContent = err.message || "Failed to connect to authentication server.";
                 errorMsg.classList.remove('hidden');
-                
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<span>Access ERP Dashboard</span>`;
+                setLoadingState(submitBtn, false);
             }
         });
+
+        function setLoadingState(button, isLoading) {
+            button.disabled = isLoading;
+            if (isLoading) {
+                button.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Authenticating with Cloud...</span>
+                `;
+            } else {
+                button.innerHTML = `<span>Access ERP Dashboard</span>`;
+            }
+        }
     </script>
 </body>
 </html>

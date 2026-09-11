@@ -14,8 +14,10 @@ function doPost(e) {
       sheet = ss.insertSheet(SHEET_NAME);
       sheet.appendRow([
         "Timestamp", "schoolName", "schoolCodeId", "adminEmail", 
-        "adminPassword", "schoolSector", "schoolDistrict", "packageTier", 
-        "principalName", "principalPhone", "status"
+        "adminPassword", "schoolSector", "schoolDistrict", "schoolAddress", 
+        "schoolLevel", "schoolGender", "totalStrength", "totalStaff", 
+        "principalName", "principalPhone", "institutionCode", "receiptNote", 
+        "packageTier", "status"
       ]);
     }
     
@@ -29,9 +31,16 @@ function doPost(e) {
       data.adminPassword || "",
       data.schoolSector || "Private",
       data.schoolDistrict || "",
-      data.packageTier || "",
+      data.schoolAddress || "",
+      data.schoolLevel || "",
+      data.schoolGender || "",
+      data.totalStrength || "",
+      data.totalStaff || "",
       data.principalName || "",
       data.principalPhone || "",
+      data.institutionCode || "",
+      data.receiptNote || "",
+      data.packageTier || "",
       "Active"
     ]);
     
@@ -48,7 +57,8 @@ function doPost(e) {
 
 function doGet(e) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAME);
     
     if (!sheet) {
       return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
@@ -59,7 +69,9 @@ function doGet(e) {
       return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
     }
     
+    const headers = rows[0];
     const schoolList = [];
+    
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       schoolList.push({
@@ -70,13 +82,32 @@ function doGet(e) {
         "adminPassword": row[4],
         "schoolSector": row[5],
         "schoolDistrict": row[6],
-        "packageTier": row[7],
-        "principalName": row[8],
-        "principalPhone": row[9],
-        "status": row[10]
+        "schoolAddress": row[7],
+        "schoolLevel": row[8],
+        "schoolGender": row[9],
+        "totalStrength": row[10],
+        "totalStaff": row[11],
+        "principalName": row[12],
+        "principalPhone": row[13],
+        "institutionCode": row[14],
+        "receiptNote": row[15],
+        "packageTier": row[16],
+        "status": row[17]
       });
     }
     
+    // Check if a specific ID lookup was requested (e.g., ?action=get&id=...)
+    const action = e && e.parameter && e.parameter.action;
+    const targetId = e && e.parameter && e.parameter.id;
+    
+    if (action === "get" && targetId) {
+      const found = schoolList.find(s => s.schoolCodeId === targetId || s.adminEmail === targetId);
+      return ContentService
+        .createTextOutput(JSON.stringify(found || null))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // Default action: Return all schools
     return ContentService
       .createTextOutput(JSON.stringify(schoolList))
       .setMimeType(ContentService.MimeType.JSON);

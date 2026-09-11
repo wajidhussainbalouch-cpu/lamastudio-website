@@ -1,371 +1,100 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Universal Academic Admission & Registration Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- Lamastudio Cloud API Client -->
-    <script src="lamastudio-school-suite/js/api-client.js"></script>
-    <style>
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
+/**
+ * Lamastudio Cloud API Client for School Suite
+ * Connects frontend views to the Google Apps Script backend Web App.
+ */
 
-        @media print {
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            body {
-                background: #ffffff !important;
-                color: #0f172a !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .print-sheet {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 10mm 12mm !important;
-                border: none !important;
-                box-shadow: none !important;
-                background: #ffffff !important;
-                min-height: 277mm !important;
-                display: flex !important;
-                flex-direction: column !important;
-                justify-content: space-between !important;
-            }
-            input, select {
-                border-bottom: 1px solid #4338ca !important;
-                border-top: none !important;
-                border-left: none !important;
-                border-right: none !important;
-                background: #f8fafc !important;
-                border-radius: 0 !important;
-                padding: 3px 5px !important;
-                font-size: 9.5px !important;
-                color: #0f172a !important;
-            }
-            .print-card-bg {
-                background: #f8fafc !important;
-                border: 1px solid #c7d2fe !important;
-            }
-            @page {
-                size: A4 portrait;
-                margin: 5mm;
-            }
-        }
+const ApiClient = (() => {
+    // Replace this placeholder with your actual deployed Google Apps Script Web App URL
+    const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-        .print-sheet {
-            background: #ffffff;
-            color: #0f172a;
-            border: 1px solid #334155;
-            box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5);
-        }
-        input, select {
-            border-bottom: 1.5px solid #cbd5e1;
-            background: #f8fafc;
-            border-radius: 4px;
-            padding: 5px 8px;
-            font-size: 11px;
-            color: #0f172a;
-            outline: none;
-        }
-        input:focus, select:focus {
-            border-color: #4f46e5;
-            background: #ffffff;
-        }
-        .print-card-bg {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-    </style>
-</head>
-<body class="py-8 px-4 flex flex-col items-center min-h-screen relative">
-
-    <!-- Screen Control Bar -->
-    <div class="max-w-3xl w-full mb-4 flex justify-between items-center bg-slate-900 border border-slate-800 text-white px-6 py-3.5 rounded-2xl shadow-xl no-print">
-        <div>
-            <h2 class="text-xs font-black uppercase tracking-wider text-indigo-400">Universal Academic Portal</h2>
-            <p class="text-[10px] text-slate-400">Optimized Full-Page A4 Admission Form</p>
-        </div>
-        <div class="flex items-center space-x-3">
-            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">Logout</button>
-            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">&larr; Back to Hub</a>
-            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">🖨️ Print Full Page A4</button>
-        </div>
-    </div>
-
-    <!-- A4 Print Sheet Container -->
-    <div class="print-sheet max-w-3xl w-full p-8 rounded-2xl space-y-4">
-        <div class="space-y-4">
-            <!-- Header Section -->
-            <div class="text-center border-b-2 border-indigo-600 pb-3 mb-3">
-                <div class="flex items-center justify-center space-x-3 mb-1">
-                    <div id="schoolLogoContainer" class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black uppercase shadow-sm">
-                        GPS
-                    </div>
-                </div>
-                <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">Loading School...</h1>
-                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Fetching cloud telemetry...</p>
-            </div>
-
-            <!-- ID and Photo Section -->
-            <div class="flex justify-between items-start mb-3 border-b border-slate-200 pb-3">
-                <div class="space-y-2 text-[11px] font-bold text-slate-800 pt-2">
-                    <div class="flex items-center space-x-3">
-                        <span class="uppercase text-slate-500 text-[10px]">ADMISSION NO:</span>
-                        <input type="text" id="admissionNoInput" value="GPS-ADM-2026-904" class="w-36 font-mono font-bold text-indigo-900">
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="uppercase text-slate-500 text-[10px]">DATE OF ISSUE:</span>
-                        <input type="date" id="issueDate" class="w-36 text-slate-800">
-                    </div>
-                </div>
-
-                <div class="text-center flex flex-col items-center">
-                    <div id="photoContainer" class="border-2 border-dashed border-indigo-400 rounded-lg w-24 h-28 flex flex-col items-center justify-center bg-indigo-50/50 text-indigo-700 text-[8px] font-bold text-center p-1 shadow-sm">
-                        <span>Affix Passport Size</span>
-                        <span>Picture Here</span>
-                    </div>
-                    <div class="no-print mt-1.5">
-                        <input type="file" accept="image/*" onchange="previewImage(this)" class="text-[8px] w-28 file:py-1 file:px-2 file:rounded file:border-0 file:text-[8px] file:bg-indigo-600 file:text-white cursor-pointer">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Form Body Sections -->
-            <form class="space-y-3.5">
-                <!-- Section 1 -->
-                <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-indigo-700 border-b border-indigo-200 pb-1">1. Student Personal Information Section</h4>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-2">
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Candidate Full Name:</label>
-                            <input type="text" placeholder="Muhammad Hamza Ali" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">B-Form / CNIC No:</label>
-                            <input type="text" placeholder="35202-1234567-1" class="w-full font-mono">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2.5">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Date of Birth:</label>
-                            <input type="date" id="dobInput" onchange="calculateAge()" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Age:</label>
-                            <input type="text" id="ageInput" placeholder="Auto calculated" class="w-full font-semibold text-indigo-900">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Gender:</label>
-                            <select class="w-full"><option>Male</option><option>Female</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Religion:</label>
-                            <input type="text" value="Islam" class="w-full">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 2 -->
-                <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-purple-700 border-b border-purple-200 pb-1">2. Parentage & Guardian Information Section</h4>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Father's Name:</label>
-                            <input type="text" placeholder="Tariq Ali" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Father's CNIC No:</label>
-                            <input type="text" placeholder="35202-9876543-2" class="w-full font-mono">
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Contact Cell No:</label>
-                            <input type="text" placeholder="+92 300 1234567" class="w-full font-mono">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Residential Address:</label>
-                        <input type="text" placeholder="House # 45, Main Boulevard" class="w-full">
-                    </div>
-                </div>
-
-                <!-- Section 3 -->
-                <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
-                    <h4 class="text-[10px] font-black uppercase tracking-wider text-emerald-700 border-b border-emerald-200 pb-1">3. School Academic, Fee Tiers & Evaluation Section</h4>
-                    <div class="grid grid-cols-4 gap-2.5">
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Applying Class:</label>
-                            <select id="applyingClassSelect" class="w-full"></select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Assigned Section:</label>
-                            <select class="w-full"><option selected>Section Alpha</option><option>Section Beta</option></select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Fee Tier / Structure:</label>
-                            <select id="feeTierSelect" class="w-full font-semibold text-indigo-900"></select>
-                        </div>
-                        <div>
-                            <label class="block text-[8px] font-bold uppercase text-slate-600 mb-0.5">Academic Session:</label>
-                            <input type="text" value="2026-2027" class="w-full font-mono font-bold">
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <!-- Signatures & Stamp -->
-        <div class="pt-6 mt-4 border-t-2 border-indigo-900 flex justify-between items-center text-center">
-            <div>
-                <div class="w-40 border-b border-slate-800 mb-1.5"></div>
-                <p class="text-[8.5px] font-black uppercase text-slate-900">Signature of Parent / Guardian</p>
-            </div>
-            <div>
-                <div class="w-24 h-10 border border-dashed border-indigo-500 rounded-lg mx-auto mb-1 flex items-center justify-center text-[7.5px] text-indigo-700 font-bold bg-indigo-50/50">Official Stamp</div>
-            </div>
-            <div>
-                <div class="w-40 border-b border-slate-800 mb-1.5"></div>
-                <p class="text-[8.5px] font-black uppercase text-slate-900">Signature of Principal / Head</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Script Layer using ApiClient -->
-    <script>
-        let schoolType = "government";
-        let schoolLevel = "high";
-        let schoolPhone = "";
-
-        async function renderAdmissionsForm() {
-            try {
-                // 1. Fetch live school data from Google Sheets backend via ApiClient
-                const currentSchoolId = localStorage.getItem('currentSchoolId') || localStorage.getItem('schoolId');
-                let school = null;
-
-                if (currentSchoolId && typeof ApiClient !== 'undefined' && ApiClient.getData) {
-                    const response = await ApiClient.getData(currentSchoolId);
-                    if (response && response.status !== "error") {
-                        school = response.data || response;
-                    }
-                }
-
-                // Fallback to active school object only if cloud payload is missing
-                if (!school) {
-                    school = JSON.parse(localStorage.getItem('activeSchool') || '{}');
-                }
-
-                const schoolName = school.name || school.schoolName || "GPS Shah Sadar Din";
-                const shortCode = school.shortCode || school.emisCode || school.emis || "GPS";
-                const schoolAddress = school.address || school.location || "Shah Sadar Din";
-                schoolPhone = school.phone || school.contactNo || school.uan || "";
-                const schoolLogo = school.logo || school.logoUrl || school.schoolLogo || "";
-                
-                schoolType = (school.type || school.schoolType || 'government').toLowerCase();
-                schoolLevel = (school.level || school.schoolLevel || 'high').toLowerCase();
-
-                // Set Title and School Name
-                document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
-                document.getElementById('headerSchoolName').innerText = schoolName;
-
-                // Dynamically build metadata line (omitting UAN cleanly if blank)
-                let metaText = schoolAddress;
-                if (schoolPhone && schoolPhone.trim() !== "") {
-                    metaText += ` • UAN: ${schoolPhone}`;
-                }
-                metaText += ` • EMIS/Reg Code: ${shortCode}`;
-                document.getElementById('headerSchoolMeta').innerText = metaText;
-
-                // Handle Logo Render
-                const logoContainer = document.getElementById('schoolLogoContainer');
-                if (schoolLogo) {
-                    logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
-                } else {
-                    logoContainer.innerText = shortCode.slice(0, 3).toUpperCase();
-                }
-
-                document.getElementById('admissionNoInput').value = `${shortCode.split('-')[0]}-ADM-2026-${Math.floor(100 + Math.random() * 900)}`;
-                document.getElementById('issueDate').value = new Date().toISOString().split('T')[0];
-
-                populateClassOptions();
-                populateFeeTierOptions();
-
-            } catch (error) {
-                console.error("Cloud synchronization error:", error);
-            }
-        }
-
-        function handleLogout() {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
-
-        function calculateAge() {
-            const dobVal = document.getElementById('dobInput').value;
-            const ageField = document.getElementById('ageInput');
-            if (!dobVal) {
-                ageField.value = '';
-                return;
-            }
-            const dob = new Date(dobVal);
-            const today = new Date();
-            
-            let years = today.getFullYear() - dob.getFullYear();
-            let months = today.getMonth() - dob.getMonth();
-            let days = today.getDate() - dob.getDate();
-
-            if (days < 0) {
-                months--;
-                const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                days += prevMonth.getDate();
-            }
-            if (months < 0) {
-                years--;
-                months += 12;
+    /**
+     * Fetch a specific school or record by ID/Email
+     * @param {string} id - The school code, ID, or admin email
+     */
+    async function getData(id) {
+        try {
+            if (!WEB_APP_URL || WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+                console.warn("ApiClient: WEB_APP_URL is not configured. Falling back to local cache.");
+                return null;
             }
 
-            ageField.value = years > 0 ? `${years} Years${months > 0 ? `, ${months} Mos` : ''}` : `${months} Months`;
-        }
+            const response = await fetch(`${WEB_APP_URL}?action=get&id=${encodeURIComponent(id)}`, {
+                method: "GET",
+                mode: "cors"
+            });
 
-        function populateClassOptions() {
-            const classSelect = document.getElementById('applyingClassSelect');
-            const isGovt = schoolType.includes('govt') || schoolType.includes('government');
-            
-            classSelect.innerHTML = isGovt 
-                ? `<option>ECCE</option><option>Katchi</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`
-                : `<option>ECCE / PG</option><option>KG</option><option>Prep</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option selected>Grade 5</option>`;
-        }
-
-        function populateFeeTierOptions() {
-            const feeTierSelect = document.getElementById('feeTierSelect');
-            const isGovt = schoolType.includes('govt') || schoolType.includes('government');
-            
-            feeTierSelect.innerHTML = isGovt 
-                ? `<option value="GovtFree" selected>Govt Financed / Fully Exempt (Zero Fee)</option>`
-                : `<option value="Standard" selected>Standard Tuition Plan</option><option value="Scholarship">Merit Scholarship Grant</option>`;
-        }
-
-        function previewImage(input) {
-            const box = document.getElementById('photoContainer');
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => box.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-lg">`;
-                reader.readAsDataURL(input.files[0]);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        }
 
-        // Initialize form data on page load
-        renderAdmissionsForm();
-    </script>
-</body>
-</html>
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error("ApiClient getData error:", error);
+            return null;
+        }
+    }
+
+    /**
+     * Fetch all school records from the Google Sheet database
+     */
+    async function getAll() {
+        try {
+            if (!WEB_APP_URL || WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+                console.warn("ApiClient: WEB_APP_URL is not configured. Falling back to local cache.");
+                return [];
+            }
+
+            const response = await fetch(`${WEB_APP_URL}?action=getAll`, {
+                method: "GET",
+                mode: "cors"
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            // Handle if data is wrapped inside a data property or returned as a raw array
+            return Array.isArray(result) ? result : (result.data || []);
+        } catch (error) {
+            console.error("ApiClient getAll error:", error);
+            return [];
+        }
+    }
+
+    /**
+     * Save or update school/student data back to the Google Sheet
+     * @param {Object} payload - The data object to save
+     */
+    async function saveData(payload) {
+        try {
+            if (!WEB_APP_URL || WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+                console.warn("ApiClient: WEB_APP_URL is not configured.");
+                return { status: "error", message: "API URL not configured" };
+            }
+
+            const response = await fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8" // Avoids CORS preflight issues with Google Apps Script
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error("ApiClient saveData error:", error);
+            return { status: "error", message: error.message };
+        }
+    }
+
+    // Public API Methods
+    return {
+        getData,
+        getAll,
+        saveData
+    };
+})();

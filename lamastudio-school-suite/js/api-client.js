@@ -1,76 +1,73 @@
 /**
  * Lamastudio Cloud API Client for School Suite
- * Connects frontend views to the Google Apps Script backend Web App.
+ * Enhanced with safety fallbacks to prevent sign-in lockouts.
  */
 
 const ApiClient = (() => {
-    // Replace this placeholder with your actual deployed Google Apps Script Web App URL
+    // ⚠️ REPLACE THIS WITH YOUR ACTUAL DEPLOYED GOOGLE APPS SCRIPT WEB APP URL
     const WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-    /**
-     * Fetch a specific school or record by ID/Email
-     * @param {string} id - The school code, ID, or admin email
-     */
     async function getData(id) {
         try {
             if (!WEB_APP_URL || WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-                console.warn("ApiClient: WEB_APP_URL is not configured. Falling back to local cache.");
+                console.warn("ApiClient: URL not configured. Using local session data.");
                 return null;
             }
 
+            // Add a timeout controller so sign-in doesn't hang indefinitely if internet is slow
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
             const response = await fetch(`${WEB_APP_URL}?action=get&id=${encodeURIComponent(id)}`, {
                 method: "GET",
-                mode: "cors"
+                mode: "cors",
+                signal: controller.signal
             });
 
+            clearTimeout(timeoutId);
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Server returned status ${response.status}`);
             }
 
             const result = await response.json();
             return result;
         } catch (error) {
-            console.error("ApiClient getData error:", error);
-            return null;
+            console.warn("ApiClient getData warning (falling back to local):", error.message);
+            return null; // Gracefully fallback instead of crashing the app
         }
     }
 
-    /**
-     * Fetch all school records from the Google Sheet database
-     */
     async function getAll() {
         try {
             if (!WEB_APP_URL || WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-                console.warn("ApiClient: WEB_APP_URL is not configured. Falling back to local cache.");
                 return [];
             }
 
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+
             const response = await fetch(`${WEB_APP_URL}?action=getAll`, {
                 method: "GET",
-                mode: "cors"
+                mode: "cors",
+                signal: controller.signal
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
             const result = await response.json();
-            // Handle if data is wrapped inside a data property or returned as a raw array
             return Array.isArray(result) ? result : (result.data || []);
         } catch (error) {
-            console.error("ApiClient getAll error:", error);
+            console.warn("ApiClient getAll warning:", error.message);
             return [];
         }
     }
 
-    /**
-     * Save or update school/student data back to the Google Sheet
-     * @param {Object} payload - The data object to save
-     */
     async function saveData(payload) {
         try {
             if (!WEB_APP_URL || WEB_APP_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
-                console.warn("ApiClient: WEB_APP_URL is not configured.");
                 return { status: "error", message: "API URL not configured" };
             }
 
@@ -78,20 +75,18 @@ const ApiClient = (() => {
                 method: "POST",
                 mode: "cors",
                 headers: {
-                    "Content-Type": "text/plain;charset=utf-8" // Avoids CORS preflight issues with Google Apps Script
+                    "Content-Type": "text/plain;charset=utf-8"
                 },
                 body: JSON.stringify(payload)
             });
 
-            const result = await response.json();
-            return result;
+            return await response.json();
         } catch (error) {
             console.error("ApiClient saveData error:", error);
             return { status: "error", message: error.message };
         }
     }
 
-    // Public API Methods
     return {
         getData,
         getAll,

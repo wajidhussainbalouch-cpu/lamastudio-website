@@ -1,69 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal - lamastudio.pk Cloud ERP</title>
-    <!-- Tailwind CSS v4 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
-
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800/80 rounded-2xl shadow-2xl p-8 space-y-6">
-        
-        <!-- Header -->
-        <div class="text-center space-y-2">
-            <span class="inline-block px-3 py-1 text-xs font-semibold bg-indigo-500/10 text-indigo-400 rounded-full border border-indigo-500/20">
-                lamastudio.pk Cloud ERP
-            </span>
-            <h1 class="text-2xl font-bold tracking-tight text-white">Admin Portal Login</h1>
-            <p class="text-xs text-slate-400">Enter your credentials or School ID to access your ERP</p>
-        </div>
-
-        <!-- Login Form -->
-        <form id="loginForm" class="space-y-4">
-            
-            <div class="space-y-1.5">
-                <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider">Admin Email or School Code ID</label>
-                <input type="text" id="identifier" required 
-                    class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-600"
-                    placeholder="e.g. admin@school.com or SCH-001">
-            </div>
-
-            <div class="space-y-1.5">
-                <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider">Password</label>
-                <div class="relative">
-                    <input type="password" id="password" required 
-                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-600 pr-10"
-                        placeholder="••••••••">
-                    <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 cursor-pointer text-xs">
-                        <span id="eyeIcon">👁️</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Error Feedback Box -->
-            <div id="errorMsg" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 text-center"></div>
-
-            <!-- Submit Button -->
-            <button type="submit" id="submitBtn"
-                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 cursor-pointer text-xs tracking-wide">
-                <span>Access ERP Dashboard</span>
-            </button>
-        </form>
-
-        <!-- Footer Link -->
-        <div class="text-center text-xs text-slate-500 border-t border-slate-800/60 pt-4">
-            Don't have an active school account? 
-            <a href="register.html" class="text-indigo-400 hover:underline font-medium">Register your school</a>
-        </div>
-    </div>
-
-    <!-- Scripts -->
+<!-- Scripts -->
     <script src="js/api.js"></script>
     <script>
         window.togglePasswordVisibility = function() {
@@ -97,14 +32,23 @@
                 // Fetch directly from the cloud spreadsheet API
                 const schools = await ApiClient.getAll();
                 
-                // Match credential against cloud records
+                if (!Array.isArray(schools)) {
+                    throw new Error("Invalid response format received from cloud database.");
+                }
+                
+                // Match credential against cloud records with flexible key lookups
                 const matchedSchool = schools.find(school => {
-                    const email = (school.adminEmail || "").toLowerCase();
-                    const code = (school.schoolCodeId || "").toLowerCase();
-                    const pass = school.adminPassword || "";
+                    // Handle various possible key formats returned by Google Sheets Apps Script
+                    const email = (school.adminEmail || school.adminemail || school.AdminEmail || "").toLowerCase();
+                    const code = (school.schoolCodeId || school.schoolcodeid || school.SchoolCodeId || school.schoolId || "").toLowerCase();
+                    const pass = school.adminPassword || school.adminpassword || school.AdminPassword || "";
+                    const accountStatus = school.status || school.Status || "Active";
 
                     const isValidIdentifier = (email === identifier || code === identifier);
                     const isValidPassword = (pass === password);
+
+                    // Store status temporarily for validation check below
+                    school._resolvedStatus = accountStatus;
 
                     return isValidIdentifier && isValidPassword;
                 });
@@ -113,7 +57,7 @@
                     throw new Error("Invalid email/school code or password. Please try again.");
                 }
 
-                if (matchedSchool.status && matchedSchool.status !== "Active") {
+                if (matchedSchool._resolvedStatus && matchedSchool._resolvedStatus !== "Active") {
                     throw new Error("Account is inactive or pending approval. Contact system administrator.");
                 }
 
@@ -150,5 +94,3 @@
             }
         }
     </script>
-</body>
-</html>

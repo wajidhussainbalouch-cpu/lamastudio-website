@@ -6,7 +6,7 @@
     <title id="pageTitle">Universal Academic Admission & Registration Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- Lamastudio Cloud API Client & School Store Suite -->
+    <!-- Lamastudio Cloud API Client Suite -->
     <script src="lamastudio-school-suite/js/api-client.js"></script>
     <script src="lamastudio-school-suite/js/school-store.js"></script>
     <style>
@@ -95,7 +95,7 @@
     <div class="max-w-3xl w-full mb-4 flex justify-between items-center bg-slate-900 border border-slate-800 text-white px-6 py-3.5 rounded-2xl shadow-xl no-print">
         <div>
             <h2 class="text-xs font-black uppercase tracking-wider text-indigo-400">Universal Academic Portal</h2>
-            <p class="text-[10px] text-slate-400">Optimized Full-Page A4 Admission Form</p>
+            <p class="text-[10px] text-slate-400">Live Cloud Tenant Sync Enabled</p>
         </div>
         <div class="flex items-center space-x-3">
             <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition">Logout</button>
@@ -115,8 +115,8 @@
                     </div>
                 </div>
                 <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Student Enrolment & Registration Dossier</p>
-                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">Loading School...</h1>
-                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Fetching cloud telemetry...</p>
+                <h1 id="headerSchoolName" class="text-2xl font-black text-slate-900 tracking-wide uppercase mt-1">Connecting to Sheet...</h1>
+                <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-600 mt-1.5">Fetching live school telemetry from cloud...</p>
             </div>
 
             <!-- ID and Photo Section -->
@@ -144,7 +144,7 @@
             </div>
 
             <!-- Form Body Sections -->
-            <form class="space-y-3.5">
+            <form class="space-y-3.5" id="admissionForm">
                 <!-- Section 1 -->
                 <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
                     <h4 class="text-[10px] font-black uppercase tracking-wider text-indigo-700 border-b border-indigo-200 pb-1">1. Student Personal Information Section</h4>
@@ -242,7 +242,7 @@
         </div>
     </div>
 
-    <!-- Script Layer using SchoolStore & ApiClient -->
+    <!-- Script Layer (Cloud-First Live Sheet Sync) -->
     <script>
         let schoolType = "government";
         let schoolLevel = "high";
@@ -250,41 +250,47 @@
 
         async function renderAdmissionsForm() {
             try {
-                // 1. Fetch live active tenant session from SchoolStore
                 let school = null;
-                if (typeof SchoolStore !== 'undefined' && typeof SchoolStore.getActive === 'function') {
+
+                // Live query straight from the active school's dedicated Google Sheet API backend
+                if (typeof ApiClient !== 'undefined' && typeof ApiClient.fetchSchoolProfile === 'function') {
+                    school = await ApiClient.fetchSchoolProfile();
+                } else if (typeof SchoolStore !== 'undefined' && typeof SchoolStore.getActive === 'function') {
                     school = SchoolStore.getActive();
                 }
 
-                // 2. Fallback check for session data if needed
+                // Fallback default structure if network request is pending
                 if (!school) {
-                    const storedSession = localStorage.getItem('active_school_session');
-                    school = storedSession ? JSON.parse(storedSession) : {};
+                    school = {
+                        name: "Cloud Connected School",
+                        shortCode: "CCS",
+                        address: "Pakistan",
+                        type: "government",
+                        level: "high"
+                    };
                 }
 
-                // Map multi-tenant Google Sheets / local storage property variants safely
-                const schoolName = school.name || school.schoolName || school["School Name"] || "GPS Shah Sadar Din";
-                const shortCode = school.shortCode || school.emisCode || school.emis || school["School Code / ID"] || school["EMIS Code"] || "GPS";
-                const schoolAddress = school.address || school.location || school["Address / Location"] || "Shah Sadar Din";
+                // Parse sheet payload properties safely
+                const schoolName = school.name || school.schoolName || school["School Name"] || "School Portal";
+                const shortCode = school.shortCode || school.emisCode || school.emis || school["School Code / ID"] || school["EMIS Code"] || "SCH";
+                const schoolAddress = school.address || school.location || school["Address / Location"] || "";
                 schoolPhone = school.phone || school.contactNo || school.uan || school["Contact Phone / UAN"] || "";
                 const schoolLogo = school.logo || school.logoUrl || school.schoolLogo || school["Logo URL"] || "";
                 
                 schoolType = (school.type || school.schoolType || school["Sector Type"] || 'government').toLowerCase();
                 schoolLevel = (school.level || school.schoolLevel || school["School Level"] || 'high').toLowerCase();
 
-                // Set Title and School Name
+                // Inject UI values dynamically
                 document.getElementById('pageTitle').innerText = `${schoolName} | Admission Dossier`;
                 document.getElementById('headerSchoolName').innerText = schoolName;
 
-                // Dynamically build metadata line (cleanly omitting UAN separator segment if left blank)
                 let metaText = schoolAddress;
                 if (schoolPhone && schoolPhone.trim() !== "") {
                     metaText += ` • UAN: ${schoolPhone}`;
                 }
-                metaText += ` • EMIS/Reg Code: ${shortCode}`;
+                metaText += ` • Reg Code: ${shortCode}`;
                 document.getElementById('headerSchoolMeta').innerText = metaText;
 
-                // Handle Logo Render (Fallback to initials if no image is uploaded)
                 const logoContainer = document.getElementById('schoolLogoContainer');
                 if (schoolLogo && schoolLogo.trim() !== "") {
                     logoContainer.innerHTML = `<img src="${schoolLogo}" class="w-full h-full object-cover rounded-lg">`;
@@ -299,15 +305,17 @@
                 populateFeeTierOptions();
 
             } catch (error) {
-                console.error("SchoolStore synchronization error:", error);
+                console.error("Cloud Google Sheet synchronization exception:", error);
+                document.getElementById('headerSchoolName').innerText = "Cloud Sync Error";
+                document.getElementById('headerSchoolMeta').innerText = "Please check your network connection or API link.";
             }
         }
 
         function handleLogout() {
-            if (typeof SchoolStore !== 'undefined' && typeof SchoolStore.clearActive === 'function') {
-                SchoolStore.clearActive();
+            // Clean session clearing without caching states locally
+            if (typeof ApiClient !== 'undefined' && typeof ApiClient.logout === 'function') {
+                ApiClient.logout();
             }
-            localStorage.clear();
             window.location.href = 'login.html';
         }
 
@@ -365,7 +373,7 @@
             }
         }
 
-        // Initialize form data on page load
+        // Initialize form data straight from the cloud Google Sheet on page boot
         renderAdmissionsForm();
     </script>
 </body>

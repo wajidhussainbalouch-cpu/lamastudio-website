@@ -1,172 +1,89 @@
-<!DOCTYPE html>
-<html lang="en" class="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Portal Login | lamastudio.pk</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' };
-    </script>
-    <link rel="stylesheet" href="assets/css/config.css">
-</head>
-<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+/**
+ * lamastudio.pk - Clean Multi-Tenant Cloud ERP Backend API Bridge
+ * Target Master Sheet: "SchoolsMaster"
+ */
 
-    <!-- Top Navigation -->
-    <header class="border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-40 py-3 px-4 md:px-8 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <a href="index.html" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer">&larr; Home</a>
-            <h1 class="text-xs font-black tracking-wider text-indigo-600 dark:text-indigo-400">GOOGLE SHEETS CLOUD LOGIN</h1>
-        </div>
-        <a href="register.html" class="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-xl font-bold hover:bg-indigo-500 transition">Register School</a>
-    </header>
+const SHEET_NAME = "SchoolsMaster";
 
-    <!-- Login Form Container -->
-    <main class="max-w-md w-full mx-auto px-4 py-12 flex-grow flex flex-col justify-center">
-        <div class="bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
-            
-            <div class="text-center space-y-1">
-                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Welcome Back</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Access your cloud-synced school dashboard</p>
-            </div>
+function doPost(e) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.appendRow([
+        "Timestamp", "schoolName", "schoolCodeId", "adminEmail", 
+        "adminPassword", "schoolSector", "schoolDistrict", "packageTier", 
+        "principalName", "principalPhone", "status"
+      ]);
+    }
+    
+    const data = JSON.parse(e.postData.contents);
+    
+    sheet.appendRow([
+      new Date().toISOString(),
+      data.schoolName || "",
+      data.schoolCodeId || "",
+      data.adminEmail || "",
+      data.adminPassword || "",
+      data.schoolSector || "Private",
+      data.schoolDistrict || "",
+      data.packageTier || "",
+      data.principalName || "",
+      data.principalPhone || "",
+      "Active"
+    ]);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
 
-            <!-- Login Form -->
-            <form id="loginForm" class="space-y-4" onsubmit="handleCloudLogin(event)">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Username / Email</label>
-                    <input type="email" id="loginEmail" required placeholder="admin@school.edu.pk" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Admin Password</label>
-                    <div class="relative">
-                        <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10">
-                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xs">
-                            <span id="eyeIcon">👁️</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between text-xs">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="rememberMeCheckbox" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                        <span class="text-slate-600 dark:text-slate-400">Remember credentials</span>
-                    </label>
-                </div>
-
-                <div id="loginError" class="text-xs text-rose-500 font-bold hidden"></div>
-
-                <button type="submit" id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 cursor-pointer">
-                    Sign In to Dashboard 🔓
-                </button>
-            </form>
-
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800 py-5 px-6 text-center text-xs text-slate-500 space-y-1">
-        <p>&copy; 2026 lamastudio.pk • Google Sheets Cloud Authentication Engine</p>
-    </footer>
-
-    <!-- Hardened Bulletproof Cloud/Local Authentication Script -->
-    <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzT6qTm0WvZtn1qV3IciH3Xb9TTyLYBQLlO__Ql0F-NgTPJ7JMO3ZpgxdCKK34aEbpfyQ/exec";
-
-        window.togglePasswordVisibility = function() {
-            const passwordInput = document.getElementById('loginPassword');
-            const eyeIcon = document.getElementById('eyeIcon');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerText = '🙈';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerText = '👁️';
-            }
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const rememberedUser = localStorage.getItem('lamastudio_remembered_username');
-            const rememberedPass = localStorage.getItem('lamastudio_remembered_password');
-
-            if (rememberedUser && rememberedPass) {
-                document.getElementById('loginEmail').value = rememberedUser;
-                document.getElementById('loginPassword').value = rememberedPass;
-                document.getElementById('rememberMeCheckbox').checked = true;
-            }
-        });
-
-        async function handleCloudLogin(event) {
-            event.preventDefault();
-            const inputUser = document.getElementById('loginEmail').value.trim();
-            const inputPass = document.getElementById('loginPassword').value.trim();
-            const rememberMe = document.getElementById('rememberMeCheckbox').checked;
-            const errorEl = document.getElementById('loginError');
-            const loginBtn = document.getElementById('loginBtn');
-            
-            errorEl.classList.add('hidden');
-            loginBtn.disabled = true;
-            loginBtn.innerText = "Verifying Credentials... ⏳";
-
-            let matchedSchool = null;
-
-            // Step 1: Check Local Multi-Tenant Storage First
-            try {
-                const localSchools = JSON.parse(
-                    localStorage.getItem('lamastudio_schools') || 
-                    localStorage.getItem('lamastudio_schools_db') || 
-                    localStorage.getItem('SchoolStore') || '[]'
-                );
-
-                matchedSchool = localSchools.find(s => 
-                    (s.adminEmail === inputUser && s.adminPassword === inputPass) || 
-                    (s["Admin Email"] === inputUser && s["Password"] === inputPass) ||
-                    (s.email === inputUser && s.password === inputPass)
-                );
-            } catch (e) {
-                console.warn("Local storage check skipped:", e);
-            }
-
-            // Step 2: If not found locally, try fetching from the Google Sheet Cloud URL
-            if (!matchedSchool) {
-                try {
-                    loginBtn.innerText = "Verifying with Cloud Sheet... ⏳";
-                    const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getSchools`);
-                    if (response.ok) {
-                        const schools = await response.json();
-                        matchedSchool = schools.find(s => 
-                            (s["Admin Email"] === inputUser && s["Password"] === inputPass) ||
-                            (s.adminEmail === inputUser && s.adminPassword === inputPass)
-                        );
-                    }
-                } catch (cloudErr) {
-                    console.warn("Cloud fetch failed or blocked by CORS, falling back to local session store.", cloudErr);
-                }
-            }
-
-            // Step 3: Final Authentication Decision
-            if (matchedSchool) {
-                if (rememberMe) {
-                    localStorage.setItem('lamastudio_remembered_username', inputUser);
-                    localStorage.setItem('lamastudio_remembered_password', inputPass);
-                } else {
-                    localStorage.removeItem('lamastudio_remembered_username');
-                    localStorage.removeItem('lamastudio_remembered_password');
-                }
-
-                // Save active school session state locally for dashboard use
-                localStorage.setItem('lamastudio_active_school', JSON.stringify(matchedSchool));
-                localStorage.setItem('current_school_session', JSON.stringify(matchedSchool));
-
-                window.location.href = "dashboard.html";
-            } else {
-                errorEl.innerText = "Invalid credentials or school not registered yet. Please check your email and password.";
-                errorEl.classList.remove('hidden');
-                loginBtn.disabled = false;
-                loginBtn.innerText = "Sign In to Dashboard 🔓";
-            }
-        }
-    </script>
-</body>
-</html>
+function doGet(e) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+    
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const rows = sheet.getDataRange().getValues();
+    if (rows.length <= 1) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    const schoolList = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      schoolList.push({
+        "Timestamp": row[0],
+        "schoolName": row[1],
+        "schoolCodeId": row[2],
+        "adminEmail": row[3],
+        "adminPassword": row[4],
+        "schoolSector": row[5],
+        "schoolDistrict": row[6],
+        "packageTier": row[7],
+        "principalName": row[8],
+        "principalPhone": row[9],
+        "status": row[10]
+      });
+    }
+    
+    return ContentService
+      .createTextOutput(JSON.stringify(schoolList))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: "error", message: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}

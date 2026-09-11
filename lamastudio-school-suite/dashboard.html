@@ -29,7 +29,7 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+                <button onclick="handleLogout()" class="bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
                     Logout
                 </button>
             </div>
@@ -56,7 +56,6 @@
 
         <!-- Comprehensive Details Grid (All Master Fields) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
             <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-1">
                 <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">School Code ID</span>
                 <p id="schoolCodeDisplay" class="text-lg font-bold text-indigo-400">-</p>
@@ -76,7 +75,6 @@
                 <span class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Level & Gender</span>
                 <p id="levelGenderDisplay" class="text-sm font-bold text-slate-200 mt-1">-</p>
             </div>
-
         </div>
 
         <!-- Operational Strength Stats -->
@@ -136,6 +134,8 @@
 
         window.addEventListener('DOMContentLoaded', async () => {
             const tenantId = localStorage.getItem('active_tenant_id') || 
+                             localStorage.getItem('lamastudio_active_school') || 
+                             localStorage.getItem('current_school_session') ||
                              JSON.parse(localStorage.getItem('activeSchool') || '{}').schoolCodeId ||
                              JSON.parse(localStorage.getItem('activeSchool') || '{}').adminEmail;
 
@@ -149,10 +149,14 @@
             // Fetch live data directly from Google Sheets for cross-device sync (PC <-> Mobile)
             try {
                 const allSchools = await ApiClient.getAll();
-                school = allSchools.find(s => 
-                    (s.schoolCodeId && s.schoolCodeId.toLowerCase() === tenantId.toLowerCase()) ||
-                    (s.adminEmail && s.adminEmail.toLowerCase() === tenantId.toLowerCase())
-                );
+                school = allSchools.find(s => {
+                    const codeId = s.schoolCodeId || s['School Code / ID'] || s['School Code'] || '';
+                    const email = s.adminEmail || s['Admin Email'] || s['Email'] || '';
+                    const cleanTenant = tenantId.toString().trim().toLowerCase();
+
+                    return (codeId && codeId.toString().trim().toLowerCase() === cleanTenant) ||
+                           (email && email.toString().trim().toLowerCase() === cleanTenant);
+                });
 
                 if (school) {
                     localStorage.setItem('activeSchool', JSON.stringify(school));
@@ -162,8 +166,12 @@
             }
 
             if (!school) {
-                const cached = localStorage.getItem('activeSchool');
-                if (cached) school = JSON.parse(cached);
+                const cached = localStorage.getItem('activeSchool') || 
+                               localStorage.getItem('lamastudio_active_school') || 
+                               localStorage.getItem('current_school_session');
+                if (cached) {
+                    try { school = JSON.parse(cached); } catch(err) {}
+                }
             }
 
             if (!school) {
@@ -186,25 +194,25 @@
                 };
             }
 
-            // Mapping all fields from your 18-column SchoolsMaster schema
-            const schoolName = school.schoolName || 'Campus Command Hub';
-            const schoolCodeRaw = school.schoolCodeId || tenantId;
-            const shortCode = schoolCodeRaw.substring(0, 3).toUpperCase();
+            // Flexible property mapping (handles both camelCase and Google Sheet space headers)
+            const schoolName = school.schoolName || school['School Name'] || school.name || 'Campus Command Hub';
+            const schoolCodeRaw = school.schoolCodeId || school['School Code / ID'] || school['School Code'] || tenantId;
+            const shortCode = typeof schoolCodeRaw === 'string' ? schoolCodeRaw.substring(0, 3).toUpperCase() : 'SCH';
             
-            const totalStudents = school.totalStrength || school.enrollment || '500';
-            const totalStaff = school.totalStaff || '30';
-            const principalName = school.principalName || 'Wajid Hussain';
-            const schoolSector = school.schoolSector || 'Private';
-            const schoolDistrict = school.schoolDistrict || 'Lahore';
-            const schoolAddress = school.schoolAddress || '';
-            const schoolLevel = school.schoolLevel || 'High';
-            const schoolGender = school.schoolGender || 'Co-Education';
-            const principalPhone = school.principalPhone || 'N/A';
-            const adminEmail = school.adminEmail || 'N/A';
-            const institutionCode = school.institutionCode || 'N/A';
-            const receiptNote = school.receiptNote || 'N/A';
-            const packageTier = school.packageTier || 'Standard';
-            const schoolLogoUrl = school.logoUrl || '';
+            const totalStudents = school.totalStrength || school['Total Strength'] || school.enrollment || '500';
+            const totalStaff = school.totalStaff || school['Total Staff'] || '30';
+            const principalName = school.principalName || school['Principal Name'] || school.principal || 'Wajid Hussain';
+            const schoolSector = school.schoolSector || school['School Sector'] || school.sector || 'Private';
+            const schoolDistrict = school.schoolDistrict || school['School District'] || school.district || 'Lahore';
+            const schoolAddress = school.schoolAddress || school['School Address'] || '';
+            const schoolLevel = school.schoolLevel || school['School Level'] || 'High';
+            const schoolGender = school.schoolGender || school['School Gender'] || 'Co-Education';
+            const principalPhone = school.principalPhone || school['Principal Phone'] || 'N/A';
+            const adminEmail = school.adminEmail || school['Admin Email'] || 'N/A';
+            const institutionCode = school.institutionCode || school['Institution Code'] || 'N/A';
+            const receiptNote = school.receiptNote || school['Receipt Note'] || 'N/A';
+            const packageTier = school.packageTier || school['Package Tier'] || 'Standard';
+            const schoolLogoUrl = school.logoUrl || school['Logo URL'] || '';
 
             // Populate all DOM elements safely
             const safeSetText = (id, text) => {
@@ -215,7 +223,7 @@
             safeSetText('pageTitle', `${schoolName} | Campus Command Hub`);
             safeSetText('navSchoolName', schoolName);
             safeSetText('heroSchoolName', schoolName);
-            safeSetText('schoolAddressDisplay', `Address / District: ${schoolAddress}, ${schoolDistrict} (${schoolSector})`);
+            safeSetText('schoolAddressDisplay', `Address / District: ${schoolAddress ? schoolAddress + ', ' : ''}${schoolDistrict} (${schoolSector})`);
             safeSetText('principalDisplay', principalName);
             safeSetText('schoolCodeDisplay', schoolCodeRaw);
             safeSetText('instCodeDisplay', institutionCode);
@@ -252,6 +260,8 @@
         window.handleLogout = function() {
             localStorage.removeItem('activeSchool');
             localStorage.removeItem('active_tenant_id');
+            localStorage.removeItem('lamastudio_active_school');
+            localStorage.removeItem('current_school_session');
             window.location.href = "login.html";
         };
 

@@ -173,12 +173,12 @@
       <svg viewBox="0 0 1000 200" width="100%" xmlns="http://www.w3.org/2000/svg">
         <line x1="50" y1="100" x2="950" y2="100" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
         <!-- Left Team (Blue) -->
-        <g id="leftTeamGroup" transform="translate(200, 30)">
+        <g id="leftTeamGroup" transform="translate(150, 30)">
           <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--blue)"/>
           <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
         </g>
         <!-- Right Team (Red) -->
-        <g id="rightTeamGroup" transform="translate(680, 30)">
+        <g id="rightTeamGroup" transform="translate(750, 30)">
           <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--red)"/>
           <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
         </g>
@@ -209,7 +209,7 @@
     currentTurn: 1, // 1 for Blue, 2 for Red
     scoreBlue: 0,
     scoreRed: 0,
-    pullOffset: 0,  // Positive moves toward Red side, Negative moves toward Blue side
+    tugPosition: 0, // 0 is center. Positive = Blue pulling right, Negative = Red pulling left.
     difficulty: 'medium',
     currentAnswer: 0,
     usedQuestions: new Set()
@@ -261,44 +261,44 @@
     if (userVal === gameState.currentAnswer) {
       if (gameState.currentTurn === 1) {
         gameState.scoreBlue++;
-        gameState.pullOffset += 35; // Blue scores -> shifts everything right
+        gameState.tugPosition += 35; // Blue pulls right toward Red
       } else {
         gameState.scoreRed++;
-        gameState.pullOffset -= 35; // Red scores -> shifts everything left
+        gameState.tugPosition -= 35; // Red pulls left toward Blue
       }
       updateVisuals();
-      checkWin();
+      if (checkWin()) return;
     }
 
     // Switch turn
     gameState.currentTurn = gameState.currentTurn === 1 ? 2 : 1;
-    if (!isGameOver()) {
-      nextQuestion();
-    }
+    nextQuestion();
   }
 
   function updateVisuals() {
     document.getElementById('scoreBlueText').innerText = gameState.scoreBlue;
     document.getElementById('scoreRedText').innerText = gameState.scoreRed;
     
-    // Base X: Blue = 200, Red = 680. Both shift together based on pullOffset.
-    document.getElementById('leftTeamGroup').style.transform = `translate(${200 + gameState.pullOffset}px, 30px)`;
-    document.getElementById('rightTeamGroup').style.transform = `translate(${680 + gameState.pullOffset}px, 30px)`;
-  }
-
-  function isGameOver() {
-    return Math.abs(gameState.pullOffset) >= 220;
+    // Base positions: Blue starts at 150, Red starts at 750. 
+    // Both move together by tugPosition so they visibly pull toward each other's territory.
+    let baseBlue = 150;
+    let baseRed = 750;
+    
+    document.getElementById('leftTeamGroup').style.transform = `translate(${baseBlue + gameState.tugPosition}px, 30px)`;
+    document.getElementById('rightTeamGroup').style.transform = `translate(${baseRed + gameState.tugPosition}px, 30px)`;
   }
 
   function checkWin() {
-    if (isGameOver()) {
+    // If tugPosition goes too far right (+250) or too far left (-250), someone wins
+    if (gameState.tugPosition >= 250 || gameState.tugPosition <= -250) {
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('winScreen').classList.add('active');
-      let winner = gameState.pullOffset > 0 ? gameState.teamBlueName : gameState.teamRedName;
+      let winner = gameState.tugPosition > 0 ? gameState.teamBlueName : gameState.teamRedName;
       document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
+      return true;
     }
+    return false;
   }
 </script>
 </body>
-                                                  </html>
-                                                  
+</html>

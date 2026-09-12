@@ -50,20 +50,22 @@
   /* Navigation Tabs for Activities */
   .mode-tabs {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 15px;
     width: 100%;
     max-width: 950px;
+    flex-wrap: wrap;
   }
 
   .tab-btn {
     flex: 1;
+    min-width: 120px;
     background: #e2e8f0;
     border: none;
-    padding: 12px;
+    padding: 10px;
     font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
@@ -114,7 +116,7 @@
 
   .stage-preview {
     flex: 1;
-    height: 200px;
+    height: 180px;
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -125,7 +127,7 @@
   }
 
   .color-name-display {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: #ffffff;
     text-shadow: 0 2px 8px rgba(0,0,0,0.3);
@@ -134,7 +136,7 @@
 
   .prompt-text {
     flex: 1;
-    font-size: 2rem;
+    font-size: 1.7rem;
     font-weight: 700;
     color: #334155;
     line-height: 1.3;
@@ -142,20 +144,23 @@
 
   .color-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1rem;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 5px;
   }
 
   .color-btn {
     background: #ffffff;
     border: 3px solid #cbd5e1;
     border-radius: 16px;
-    padding: 1rem;
+    padding: 0.8rem;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     transition: all 0.2s ease;
   }
 
@@ -166,12 +171,12 @@
 
   .color-swatch {
     width: 100%;
-    height: 70px;
+    height: 60px;
     border-radius: 10px;
   }
 
   .color-label {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #475569;
   }
@@ -190,14 +195,14 @@
     border-radius: 16px;
     cursor: crosshair;
     touch-action: none;
-    min-height: 350px;
+    min-height: 320px;
   }
 
   .palette-sidebar {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     background: #f8fafc;
     padding: 15px;
     border-radius: 16px;
@@ -232,16 +237,18 @@
   .match-column {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
     flex: 1;
+    max-height: 350px;
+    overflow-y: auto;
   }
 
   .match-item {
-    padding: 20px;
+    padding: 15px;
     background: #f1f5f9;
     border: 3px solid #cbd5e1;
-    border-radius: 14px;
-    font-size: 1.2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
     font-weight: 700;
     text-align: center;
     cursor: pointer;
@@ -251,7 +258,7 @@
   .match-item.selected {
     border-color: #2563eb;
     background: #dbeafe;
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
 
   .match-item.matched {
@@ -261,12 +268,54 @@
     cursor: default;
   }
 
+  /* 4. Quiz Game Mode */
+  .quiz-box {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .quiz-target-box {
+    width: 140px;
+    height: 140px;
+    border-radius: 24px;
+    border: 4px solid #cbd5e1;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    margin: 0 auto;
+  }
+
+  .quiz-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .quiz-btn {
+    padding: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-radius: 14px;
+    border: 3px solid #cbd5e1;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quiz-btn:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+
   .feedback-msg {
     text-align: center;
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #2563eb;
-    min-height: 30px;
+    min-height: 25px;
   }
 
   @media(max-width: 768px) {
@@ -280,7 +329,7 @@
 
 <header>
   <div class="logo">🌟 LamaStudio Kids</div>
-  <div style="font-weight: 700; color: #64748b;">Student Practice Hub</div>
+  <div style="font-weight: 700; color: #64748b;">Colors Practice Arena</div>
 </header>
 
 <!-- Activity Switcher Tabs -->
@@ -288,6 +337,7 @@
   <button class="tab-btn active" onclick="switchTab('learn')">🎨 Explore</button>
   <button class="tab-btn" onclick="switchTab('draw')">🖌️ Draw & Fill</button>
   <button class="tab-btn" onclick="switchTab('match')">🧩 Match Game</button>
+  <button class="tab-btn" onclick="switchTab('quiz')">⭐ Find Quiz</button>
 </div>
 
 <div class="game-container">
@@ -299,7 +349,7 @@
         <h1 class="color-name-display" id="colorTitle">Red</h1>
       </div>
       <div class="prompt-text" id="colorDesc">
-        Like strawberries and fire engines! Tap options below to explore.
+        Like strawberries and fire engines! Click colors below to explore.
       </div>
     </div>
     <div class="color-grid" id="colorGrid"></div>
@@ -309,12 +359,12 @@
   <div id="drawTab" class="activity-section">
     <div style="font-weight: 700; font-size: 1.2rem;">Free Drawing & Color Board</div>
     <div class="drawing-layout">
-      <canvas id="drawCanvas" width="550" height="350"></canvas>
+      <canvas id="drawCanvas" width="550" height="320"></canvas>
       <div class="palette-sidebar">
-        <label style="font-weight: 700;">Pick Brush Color:</label>
-        <div class="color-grid" style="grid-template-columns: repeat(2, 1fr);" id="drawPalette"></div>
-        <div class="brush-row" style="margin-top: 10px;">
-          <label style="font-weight: 700;">Size:</label>
+        <label style="font-weight: 700; font-size: 0.9rem;">Pick Color:</label>
+        <div class="color-grid" style="grid-template-columns: repeat(2, 1fr); max-height: 150px;" id="drawPalette"></div>
+        <div class="brush-row" style="margin-top: 5px;">
+          <label style="font-weight: 700; font-size: 0.9rem;">Size:</label>
           <input type="range" id="brushSize" min="2" max="25" value="8">
         </div>
         <button class="tool-btn" onclick="clearCanvas()">Clear Canvas</button>
@@ -324,11 +374,21 @@
 
   <!-- TAB 3: MATCHING GAME -->
   <div id="matchTab" class="activity-section">
-    <div style="font-weight: 700; font-size: 1.2rem; text-align: center;">Match the Color Name to its Correct Color Swatch!</div>
+    <div style="font-weight: 700; font-size: 1.2rem; text-align: center;">Match Color Names to their Color Blocks!</div>
     <div class="feedback-msg" id="matchFeedback">Click a color name, then click its matching swatch block.</div>
     <div class="match-container">
       <div class="match-column" id="nameColumn"></div>
       <div class="match-column" id="swatchColumn"></div>
+    </div>
+  </div>
+
+  <!-- TAB 4: FIND QUIZ GAME -->
+  <div id="quizTab" class="activity-section">
+    <div class="quiz-box">
+      <div style="font-weight: 700; font-size: 1.3rem;">Can you find this color?</div>
+      <div class="quiz-target-box" id="quizTarget"></div>
+      <div class="feedback-msg" id="quizFeedback">Tap the right button below!</div>
+      <div class="quiz-options" id="quizOptionsGrid"></div>
     </div>
   </div>
 
@@ -341,10 +401,16 @@
     {name: "Green", hex: "#22c55e", desc: "Like grass, trees, and frogs!"},
     {name: "Yellow", hex: "#eab308", desc: "Like the warm sun and bananas!"},
     {name: "Orange", hex: "#f97316", desc: "Like juicy oranges and basketballs!"},
-    {name: "Purple", hex: "#a855f7", desc: "Like grapes and eggplants!"}
+    {name: "Purple", hex: "#a855f7", desc: "Like grapes and eggplants!"},
+    {name: "Pink", hex: "#ec4899", desc: "Like flamingos and cotton candy!"},
+    {name: "Brown", hex: "#78350f", desc: "Like chocolate and friendly bears!"},
+    {name: "Teal", hex: "#14b8a6", desc: "Like deep ocean waves and peacock feathers!"},
+    {name: "Gold", hex: "#eab308", desc: "Like shiny treasure and crowns!"},
+    {name: "Indigo", hex: "#6366f1", desc: "Like a deep twilight evening sky!"},
+    {name: "Coral", hex: "#fb7185", desc: "Like tropical coral reefs and seashells!"}
   ];
 
-  // Tab Switching Function
+  // Tab Switching Handler
   function switchTab(tabID) {
     document.querySelectorAll('.activity-section').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -359,6 +425,10 @@
       document.getElementById('matchTab').classList.add('active');
       event.currentTarget.classList.add('active');
       initMatchGame();
+    } else if(tabID === 'quiz') {
+      document.getElementById('quizTab').classList.add('active');
+      event.currentTarget.classList.add('active');
+      nextQuizQuestion();
     }
   }
 
@@ -423,12 +493,12 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   }
 
-  // Build drawing palette buttons
+  // Populate Drawing Palette sidebar
   let drawPalette = document.getElementById('drawPalette');
   colors.forEach(c => {
     let pBtn = document.createElement('div');
     pBtn.style.backgroundColor = c.hex;
-    pBtn.style.height = "35px";
+    pBtn.style.height = "32px";
     pBtn.style.borderRadius = "8px";
     pBtn.style.cursor = "pointer";
     pBtn.onclick = () => { currentBrushColor = c.hex; };
@@ -447,8 +517,10 @@
     matchedCount = 0;
     document.getElementById('matchFeedback').innerText = "Click a color name, then click its matching swatch block.";
 
-    let shuffledNames = [...colors].sort(() => Math.random() - 0.5);
-    let shuffledSwatches = [...colors].sort(() => Math.random() - 0.5);
+    // Take subset of 5 random colors per round to make matching fun and quick
+    let roundColors = [...colors].sort(() => Math.random() - 0.5).slice(0, 5);
+    let shuffledNames = [...roundColors].sort(() => Math.random() - 0.5);
+    let shuffledSwatches = [...roundColors].sort(() => Math.random() - 0.5);
 
     shuffledNames.forEach(c => {
       let item = document.createElement('div');
@@ -463,9 +535,9 @@
       let item = document.createElement('div');
       item.className = 'match-item';
       item.style.backgroundColor = c.hex;
-      item.style.height = "30px";
+      item.style.height = "25px";
       item.dataset.color = c.name;
-      item.onclick = () => selectMatchSwatch(item, c.name);
+      item.onclick = () => selectMatchSwatch(item, c.name, roundColors.length);
       swatchCol.appendChild(item);
     });
   }
@@ -477,32 +549,70 @@
     selectedNameNode = { node, colorName };
   }
 
-  function selectMatchSwatch(swatchNode, swatchColor) {
+  function selectMatchSwatch(swatchNode, swatchColor, totalCount) {
     if (!selectedNameNode || swatchNode.classList.contains('matched')) return;
 
     if (selectedNameNode.colorName === swatchColor) {
       selectedNameNode.node.classList.add('matched');
       selectedNameNode.node.classList.remove('selected');
       swatchNode.classList.add('matched');
-      swatchNode.style.backgroundColor = colors.find(c => c.name === swatchColor).hex; // retain color
+      swatchNode.style.backgroundColor = colors.find(c => c.name === swatchColor).hex;
       swatchNode.innerText = "✓ " + swatchColor;
       
       matchedCount++;
-      document.getElementById('matchFeedback').innerText = "Awesome job! Keep going!";
+      document.getElementById('matchFeedback').innerText = "Great job! Keep going!";
       selectedNameNode = null;
 
-      if (matchedCount === colors.length) {
-        document.getElementById('matchFeedback').innerText = "🎉 Congratulations! You matched all colors successfully!";
+      if (matchedCount === totalCount) {
+        document.getElementById('matchFeedback').innerText = "🎉 Amazing! You completed all matches!";
+        setTimeout(initMatchGame, 2000); // Reset for another round
       }
     } else {
-      document.getElementById('matchFeedback').innerText = "❌ Oops! That's not a match. Try again!";
+      document.getElementById('matchFeedback').innerText = "❌ Try again! That's not it.";
       selectedNameNode.node.classList.remove('selected');
       selectedNameNode = null;
+    }
+  }
+
+  // 4. Quiz Game Setup
+  let currentCorrectColor = null;
+
+  function nextQuizQuestion() {
+    document.getElementById('quizFeedback').innerText = "Tap the matching button for this color!";
+    let grid = document.getElementById('quizOptionsGrid');
+    grid.innerHTML = '';
+
+    // Pick 4 options
+    let options = [...colors].sort(() => Math.random() - 0.5).slice(0, 4);
+    currentCorrectColor = options[Math.floor(Math.random() * options.length)];
+
+    // Set target box color
+    document.getElementById('quizTarget').style.backgroundColor = currentCorrectColor.hex;
+
+    // Render option buttons
+    options.forEach(opt => {
+      let btn = document.createElement('button');
+      btn.className = 'quiz-btn';
+      btn.innerText = opt.name;
+      btn.onclick = () => checkQuizAnswer(opt);
+      grid.appendChild(btn);
+    });
+  }
+
+  function checkQuizAnswer(selected) {
+    if (selected.name === currentCorrectColor.name) {
+      document.getElementById('quizFeedback').innerText = "🎉 Correct! Awesome job!";
+      if ('speechSynthesis' in window) {
+        let utterance = new SpeechSynthesisUtterance("Correct!");
+        window.speechSynthesis.speak(utterance);
+      }
+      setTimeout(nextQuizQuestion, 1500);
+    } else {
+      document.getElementById('quizFeedback').innerText = "❌ Oops! Try another one.";
     }
   }
 
   initColors();
 </script>
 </body>
-    </html>
-  
+</html>

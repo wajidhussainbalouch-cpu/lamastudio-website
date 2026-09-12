@@ -127,6 +127,22 @@
   .avatar-group {
     transition: transform 0.4s ease-out;
   }
+
+  /* Glowing Turn Animations */
+  @keyframes blueGlow {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--blue)); }
+    50% { filter: drop-shadow(0 0 18px var(--blue)); }
+  }
+  @keyframes redGlow {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--red)); }
+    50% { filter: drop-shadow(0 0 18px var(--red)); }
+  }
+  .glow-blue {
+    animation: blueGlow 1.2s infinite ease-in-out;
+  }
+  .glow-red {
+    animation: redGlow 1.2s infinite ease-in-out;
+  }
 </style>
 </head>
 <body>
@@ -174,13 +190,13 @@
         <!-- FIXED Center Line -->
         <line x1="500" y1="20" x2="500" y2="140" stroke="#fbbf24" stroke-width="4"/>
 
-        <!-- Blue Team Avatar (Starts at X=150. When Red scores, Blue is pulled RIGHT toward the center) -->
+        <!-- Blue Team Avatar -->
         <g id="blueAvatar" transform="translate(150, 30)" class="avatar-group">
           <rect x="0" y="0" width="50" height="80" rx="8" fill="var(--blue)"/>
           <circle cx="25" cy="-12" r="18" fill="#e2a37e"/>
         </g>
 
-        <!-- Red Team Avatar (Starts at X=800. When Blue scores, Red is pulled LEFT toward the center) -->
+        <!-- Red Team Avatar -->
         <g id="redAvatar" transform="translate(800, 30)" class="avatar-group">
           <rect x="0" y="0" width="50" height="80" rx="8" fill="var(--red)"/>
           <circle cx="25" cy="-12" r="18" fill="#e2a37e"/>
@@ -254,9 +270,23 @@
     gameState.currentAnswer = ans;
 
     document.getElementById('mathProblem').innerText = `${num1} + ${num2} = ?`;
+    
     let turnName = gameState.currentTurn === 1 ? gameState.teamBlueName : gameState.teamRedName;
-    document.getElementById('turnIndicator').innerText = turnName;
-    document.getElementById('turnIndicator').style.color = gameState.currentTurn === 1 ? 'var(--blue)' : 'var(--red)';
+    let turnIndicator = document.getElementById('turnIndicator');
+    turnIndicator.innerText = turnName;
+    turnIndicator.style.color = gameState.currentTurn === 1 ? 'var(--blue)' : 'var(--red)';
+
+    // Update active glowing turns on avatars
+    let blueAv = document.getElementById('blueAvatar');
+    let redAv = document.getElementById('redAvatar');
+    if (gameState.currentTurn === 1) {
+      blueAv.classList.add('glow-blue');
+      redAv.classList.remove('glow-red');
+    } else {
+      redAv.classList.add('glow-red');
+      blueAv.classList.remove('glow-blue');
+    }
+
     document.getElementById('userAnswer').value = '';
     document.getElementById('userAnswer').focus();
   }
@@ -267,12 +297,10 @@
 
     if (userVal === gameState.currentAnswer) {
       if (gameState.currentTurn === 1) {
-        // Blue scores -> Blue pulls Red left toward the center, Blue leans further left back
         gameState.scoreBlue++;
         gameState.redX -= 50;
         gameState.blueX -= 15;
       } else {
-        // Red scores -> Red pulls Blue right toward the center, Red leans further right back
         gameState.scoreRed++;
         gameState.blueX += 50;
         gameState.redX += 15;
@@ -295,8 +323,6 @@
   }
 
   function checkWin() {
-    // If Blue gets pulled all the way and touches/crosses center (500), Red wins!
-    // If Red gets pulled all the way and touches/crosses center (500), Blue wins!
     if (gameState.blueX >= 450) {
       endGame(gameState.teamRedName);
       return true;

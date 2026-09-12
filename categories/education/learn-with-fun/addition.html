@@ -4,568 +4,295 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Addition Tug of War — Learn With Fun — LamaStudio</title>
-<meta name="description" content="Play the 2-player Addition Tug of War math game with custom SVG artwork, live score tracking, timer, and certificate generator.">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://lamastudio.pk/categories/education/learn-with-fun/addition.html">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../../style.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+    --blue: #168be5;
+    --red: #d9235b;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 { margin-bottom: 5px; font-size: 2rem; text-align: center; }
   .game-container {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 2rem;
-    max-width: 950px;
-    margin: 0 auto 3rem auto;
-    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 20px;
   }
-  .setup-screen, .game-screen, .win-screen {
-    display: none;
-  }
-  .setup-screen.active, .game-screen.active, .win-screen.active {
-    display: block;
-  }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  
   .team-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    margin: 1.5rem 0;
-  }
-  @media(max-width: 768px) {
-    .team-grid { grid-template-columns: 1fr; }
+    margin-bottom: 1.5rem;
   }
   .team-card {
-    background: var(--background);
+    background: var(--bg);
     border: 2px solid var(--border);
     border-radius: 12px;
     padding: 1.5rem;
     text-align: center;
   }
-  .team-blue { border-color: #168be5; }
-  .team-red { border-color: #d9235b; }
-  
-  .tug-arena {
-    background: linear-gradient(180deg, #090d16 0%, #1e293b 100%);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1rem;
-    margin: 1.5rem 0;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .rope-svg-container {
+  .team-blue { border-color: var(--blue); }
+  .team-red { border-color: var(--red); }
+
+  input, select {
     width: 100%;
-    height: auto;
-  }
-
-  /* SVG Artwork Animation Styles */
-  .left-team {
-    animation: leftPull 2s ease-in-out infinite;
-    transform-origin: center;
-  }
-  .right-team {
-    animation: rightPull 2s ease-in-out infinite;
-    transform-origin: center;
-  }
-  .rope-group {
-    animation: ropePull 2s ease-in-out infinite;
-  }
-  @keyframes leftPull {
-    0%,100% { transform: translateX(0) rotate(0deg); }
-    50% { transform: translateX(18px) rotate(-1deg); }
-  }
-  @keyframes rightPull {
-    0%,100% { transform: translateX(0) rotate(0deg); }
-    50% { transform: translateX(-18px) rotate(1deg); }
-  }
-  @keyframes ropePull {
-    0%,100% { transform: translateX(0); }
-    50% { transform: translateX(8px); }
-  }
-
-  .hud-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--background);
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    margin-bottom: 1.5rem;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .question-box {
-    background: var(--background);
-    border: 2px solid var(--category-color);
-    border-radius: 14px;
-    padding: 2rem;
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
-  .math-problem {
-    font-size: 3rem;
-    font-weight: 800;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text);
-    margin-bottom: 1rem;
-  }
-  .answer-input {
-    font-size: 2rem;
-    padding: 0.5rem 1rem;
-    width: 200px;
-    text-align: center;
+    padding: 0.75rem;
+    font-size: 1rem;
     border-radius: 8px;
     border: 2px solid var(--border);
     background: var(--surface);
     color: var(--text);
     font-family: 'JetBrains Mono', monospace;
+    box-sizing: border-box;
+    margin-top: 0.5rem;
   }
-  .answer-input:focus {
-    outline: none;
-    border-color: var(--category-color);
-  }
+  input:focus, select:focus { outline: none; border-color: var(--text); }
 
-  .btn-action {
-    background: var(--category-color);
-    color: #fff;
+  .btn {
+    background: #4f46e5;
+    color: white;
     border: none;
-    padding: 0.75rem 2rem;
+    padding: 1rem 2rem;
     border-radius: 8px;
     font-weight: 700;
+    font-size: 1.1rem;
     cursor: pointer;
-    font-size: 1rem;
+    width: 100%;
     transition: opacity 0.2s;
   }
-  .btn-action:hover { opacity: 0.85; }
+  .btn:hover { opacity: 0.9; }
 
-  /* Certificate Box */
-  .certificate-card {
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    border: 4px double #fbbf24;
-    border-radius: 16px;
-    padding: 2.5rem;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    background: var(--bg);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
   }
-  .cert-title { font-size: 2rem; color: #fbbf24; font-family: 'Space Grotesk', sans-serif; margin-bottom: 0.5rem; }
-  .cert-winner { font-size: 2.5rem; font-weight: 800; margin: 1rem 0; text-transform: uppercase; }
-  .cert-winner.blue { color: #168be5; }
-  .cert-winner.red { color: #d9235b; }
+
+  .tug-arena {
+    background: linear-gradient(180deg, #090d16 0%, #1e293b 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .question-box {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem;
+    text-align: center;
+  }
+  .math-problem {
+    font-size: 3rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 1rem 0;
+  }
+  .answer-input {
+    font-size: 2rem;
+    width: 220px;
+    text-align: center;
+  }
+  
+  #leftTeamGroup, #rightTeamGroup, #ropeGroup {
+    transition: transform 0.4s ease-out;
+  }
 </style>
 </head>
-<body style="--category-color: var(--c-education);">
+<body>
 
-<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+<h1>⚔️ Addition Tug of War</h1>
 
-<header class="site-header">
-  <div class="util-row">
-    <div style="display: flex; align-items: center; gap: 1rem;">
-      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
-      <a href="../../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
+<div class="game-container">
+  
+  <!-- SETUP SCREEN -->
+  <div id="setupScreen" class="screen active">
+    <h3>Setup Competition</h3>
+    <div class="team-grid">
+      <div class="team-card team-blue">
+        <h4 style="color: var(--blue); margin-top:0;">Team Blue Name</h4>
+        <input type="text" id="nameBlue" value="Team Blue">
+      </div>
+      <div class="team-card team-red">
+        <h4 style="color: var(--red); margin-top:0;">Team Red Name</h4>
+        <input type="text" id="nameRed" value="Team Red">
+      </div>
     </div>
-  </div>
-</header>
-
-<main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
-  <div style="margin-bottom: 2rem;">
-    <a href="index.html" style="font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Learn With Fun Hub</a>
-    <span class="eyebrow" style="color: var(--category-color); display: block; margin-top: 1rem;">2-Player Battle Arena</span>
-    <h1 style="font-size: 2.2rem; margin-top: 0.3rem;">⚔️ Addition Tug of War</h1>
-    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Team Blue vs Team Red! Answer math questions correctly to pull your opponents across the center line.</p>
-  </div>
-
-  <div class="game-container">
     
-    <!-- SETUP SCREEN -->
-    <div id="setupScreen" class="setup-screen active">
-      <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Configure Battle Match</h3>
-      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Enter player names and select difficulty to start.</p>
-      
-      <div class="team-grid">
-        <div class="team-card team-blue">
-          <h4 style="color: #168be5; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue</h4>
-          <input type="text" id="playerBlue" value="Team Blue" class="answer-input" style="width: 100%; font-size: 1rem;">
-        </div>
-        <div class="team-card team-red">
-          <h4 style="color: #d9235b; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red</h4>
-          <input type="text" id="playerRed" value="Team Red" class="answer-input" style="width: 100%; font-size: 1rem;">
-        </div>
-      </div>
+    <label style="font-weight: 600;">Difficulty:</label>
+    <select id="difficulty" style="margin-bottom: 1.5rem;">
+      <option value="easy">Easy (Numbers 1 - 20)</option>
+      <option value="medium" selected>Medium (Numbers 10 - 100)</option>
+      <option value="hard">Hard (Numbers 50 - 500)</option>
+    </select>
 
-      <div style="margin: 1.5rem 0;">
-        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Select Difficulty Level:</label>
-        <select id="diffLevel" class="answer-input" style="width: 100%; font-size: 1rem;">
-          <option value="easy">Easy (Numbers 1 - 20)</option>
-          <option value="medium" selected>Medium (Numbers 10 - 100)</option>
-          <option value="hard">Hard (Numbers 50 - 500)</option>
-        </select>
-      </div>
-
-      <button class="btn-action" onclick="startGame()" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">🚀 Start Tug of War Battle</button>
-    </div>
-
-    <!-- GAME SCREEN -->
-    <div id="gameScreen" class="game-screen">
-      <div class="hud-row">
-        <div>⏳ Time Left: <span id="timerDisplay" style="color: #fbbf24; font-weight: 700;">60</span>s</div>
-        <div>Turn: <span id="turnIndicator" style="font-weight: 700;">Team Blue</span></div>
-        <div>Score: <span style="color:#168be5;">Blue</span> <span id="scoreBlue">0</span> - <span id="scoreRed">0</span> <span style="color:#d9235b;">Red</span></div>
-      </div>
-
-      <div class="tug-arena">
-        <!-- Center Ground Marker Line -->
-        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 5; box-shadow: 0 0 12px #fbbf24;"></div>
-        
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #94a3b8; position: relative; z-index: 6; padding: 0 1rem;">
-          <span style="color: #168be5;" id="labelBlue">Team Blue Side</span>
-          <span style="color: #d9235b;" id="labelRed">Team Red Side</span>
-        </div>
-
-        <!-- EMBEDDED CUSTOM SVG TUG OF WAR ARTWORK -->
-        <div class="rope-svg-container">
-          <svg viewBox="0 0 1000 500" width="100%" xmlns="http://www.w3.org/2000/svg">
-            
-            <!-- ROPE GROUP -->
-            <g id="ropeMasterGroup" class="rope-group">
-              <path d="M55 285 C180 285 290 285 390 285 C430 285 465 285 500 285 C535 285 570 285 610 285 C710 285 820 285 945 285" fill="none" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
-              <g>
-                <path d="M492 275 L500 290 L508 275" fill="none" stroke="#e52b63" stroke-width="7" stroke-linecap="round"/>
-                <path d="M500 289 L500 315" stroke="#e52b63" stroke-width="5" stroke-linecap="round"/>
-              </g>
-            </g>
-
-            <!-- LEFT TEAM GROUP -->
-            <g id="leftTeamMasterGroup" class="left-team">
-              <!-- LEFT PLAYER 1 -->
-              <g transform="translate(100,40)">
-                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#168be5"/>
-                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
-                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#e2a37e" stroke="#8d604b" stroke-width="2"/>
-                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
-                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
-                <path d="M73 73 Q105 52 137 73" fill="none" stroke="#777" stroke-width="3"/>
-                <ellipse cx="89" cy="104" rx="5" ry="7" fill="#fff"/>
-                <ellipse cx="121" cy="104" rx="5" ry="7" fill="#fff"/>
-                <circle cx="90" cy="105" r="3" fill="#222"/>
-                <circle cx="120" cy="105" r="3" fill="#222"/>
-                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
-                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
-                <rect x="98" y="174" width="18" height="14" rx="3" fill="#e33b35"/>
-                <path d="M55 170 Q35 205 70 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
-                <ellipse cx="72" cy="245" rx="14" ry="11" fill="#e2a37e" transform="rotate(-25 72 245)"/>
-                <path d="M135 170 Q165 205 190 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
-                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#e2a37e" transform="rotate(-20 190 245)"/>
-                <path d="M177 245 L204 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
-                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
-                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
-                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#168be5"/>
-                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#168be5"/>
-              </g>
-
-              <!-- LEFT PLAYER 2 -->
-              <g transform="translate(270,45) scale(.92)">
-                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#168be5"/>
-                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
-                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#dfa07a" stroke="#8d604b" stroke-width="2"/>
-                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
-                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
-                <ellipse cx="89" cy="104" rx="5" ry="7" fill="white"/>
-                <ellipse cx="121" cy="104" rx="5" ry="7" fill="white"/>
-                <circle cx="90" cy="105" r="3" fill="#222"/>
-                <circle cx="120" cy="105" r="3" fill="#222"/>
-                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
-                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
-                <path d="M55 170 Q40 205 65 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
-                <path d="M135 170 Q165 205 190 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
-                <ellipse cx="67" cy="245" rx="14" ry="11" fill="#dfa07a" transform="rotate(-25 67 245)"/>
-                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#dfa07a" transform="rotate(-20 190 245)"/>
-                <path d="M176 245 L204 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
-                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
-                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
-                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#168be5"/>
-                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#168be5"/>
-              </g>
-            </g>
-
-            <!-- RIGHT TEAM GROUP -->
-            <g id="rightTeamMasterGroup" class="right-team">
-              <!-- RIGHT PLAYER 1 -->
-              <g transform="translate(555,40)">
-                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#d9235b"/>
-                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
-                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#e0a07b" stroke="#8d604b" stroke-width="2"/>
-                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
-                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
-                <ellipse cx="89" cy="104" rx="5" ry="7" fill="white"/>
-                <ellipse cx="121" cy="104" rx="5" ry="7" fill="white"/>
-                <circle cx="90" cy="105" r="3" fill="#222"/>
-                <circle cx="120" cy="105" r="3" fill="#222"/>
-                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
-                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
-                <path d="M73 170 Q48 205 20 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
-                <path d="M145 170 Q165 205 190 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
-                <ellipse cx="20" cy="245" rx="15" ry="11" fill="#e0a07b" transform="rotate(20 20 245)"/>
-                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#e0a07b" transform="rotate(20 190 245)"/>
-                <path d="M5 245 L35 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
-                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
-                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
-                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#e91e63"/>
-                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#e91e63"/>
-              </g>
-
-              <!-- RIGHT PLAYER 2 -->
-              <g transform="translate(730,45) scale(.92)">
-                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#d9235b"/>
-                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
-                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#e1a27c" stroke="#8d604b" stroke-width="2"/>
-                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
-                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
-                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
-                <ellipse cx="89" cy="104" rx="5" ry="7" fill="white"/>
-                <ellipse cx="121" cy="104" rx="5" ry="7" fill="white"/>
-                <circle cx="90" cy="105" r="3" fill="#222"/>
-                <circle cx="120" cy="105" r="3" fill="#222"/>
-                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
-                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
-                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
-                <path d="M73 170 Q48 205 20 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
-                <path d="M145 170 Q165 205 190 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
-                <ellipse cx="20" cy="245" rx="15" ry="11" fill="#e1a27c" transform="rotate(20 20 245)"/>
-                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#e1a27c" transform="rotate(20 190 245)"/>
-                <path d="M5 245 L35 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
-                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
-                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
-                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#e91e63"/>
-                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#e91e63"/>
-              </g>
-            </g>
-
-            <!-- ROPE HAND OVERLAY -->
-            <g stroke="#292929" stroke-width="7" stroke-linecap="round">
-              <line x1="172" y1="285" x2="205" y2="285"/>
-              <line x1="320" y1="285" x2="350" y2="285"/>
-              <line x1="650" y1="285" x2="680" y2="285"/>
-              <line x1="795" y1="285" x2="828" y2="285"/>
-            </g>
-
-          </svg>
-        </div>
-      </div>
-
-      <div class="question-box">
-        <span id="activeTeamPrompt" style="display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: #168be5;">Team Blue's Turn</span>
-        <div class="math-problem" id="mathProblem">15 + 24 = ?</div>
-        <form id="answerForm" onsubmit="submitAnswer(event)">
-          <input type="number" id="userAnswer" class="answer-input" placeholder="Answer" autofocus autocomplete="off" required>
-          <button type="submit" class="btn-action" style="margin-left: 0.5rem;">Submit</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- WIN SCREEN / CERTIFICATE -->
-    <div id="winScreen" class="win-screen">
-      <div class="certificate-card">
-        <div class="cert-title">🏆 Certificate of Victory 🏆</div>
-        <p style="color: var(--text-muted); font-size: 0.95rem;">This official certificate is proudly presented to</p>
-        <div class="cert-winner" id="winnerTitle">Team Blue</div>
-        <p style="color: var(--text); font-size: 1rem; margin-bottom: 1.5rem;">For displaying brilliant mental math calculation and winning the interactive Tug of War battle!</p>
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fbbf24; margin-bottom: 2rem;">
-          Final Score: <span id="finalScoreText">Blue (5) - Red (2)</span>
-        </div>
-        <div>
-          <button class="btn-action" onclick="resetGame()" style="margin-right: 1rem;">🔄 Play Again</button>
-          <button class="btn-action" onclick="window.print()" style="background: #334155;">🖨️ Print Certificate</button>
-        </div>
-      </div>
-    </div>
-
+    <button class="btn" onclick="startGame()">Start Battle 🚀</button>
   </div>
-</main>
 
-<footer class="site-footer" style="margin-top: 4rem;">
-  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
-</footer>
+  <!-- GAME SCREEN -->
+  <div id="gameScreen" class="screen">
+    <div class="hud">
+      <div>Turn: <span id="turnIndicator" style="font-weight: 700;">Team Blue</span></div>
+      <div>Score: <span style="color:var(--blue);" id="scoreBlueText">0</span> - <span style="color:var(--red);" id="scoreRedText">0</span></div>
+    </div>
+
+    <div class="tug-arena">
+      <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 5;"></div>
+      
+      <svg viewBox="0 0 1000 300" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <path id="ropeGroup" d="M50 150 L950 150" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+        <g id="leftTeamGroup" transform="translate(150, 50)">
+          <rect x="0" y="0" width="80" height="140" rx="10" fill="var(--blue)"/>
+          <circle cx="40" cy="-20" r="30" fill="#e2a37e"/>
+        </g>
+        <g id="rightTeamGroup" transform="translate(770, 50)">
+          <rect x="0" y="0" width="80" height="140" rx="10" fill="var(--red)"/>
+          <circle cx="40" cy="-20" r="30" fill="#e2a37e"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="question-box">
+      <div class="math-problem" id="mathProblem">5 + 3 = ?</div>
+      <form id="answerForm" onsubmit="submitAnswer(event)">
+        <input type="number" id="userAnswer" class="answer-input" placeholder="?" autofocus autocomplete="off" required>
+        <button type="submit" style="display:none;"></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- WIN SCREEN -->
+  <div id="winScreen" class="screen" style="text-align: center;">
+    <h2 id="winnerText" style="font-size: 2.5rem; margin-bottom: 1rem;">🎉 Team Wins! 🎉</h2>
+    <button class="btn" onclick="location.reload()">Play Again</button>
+  </div>
+
+</div>
 
 <script>
-  let blueName = "Team Blue";
-  let redName = "Team Red";
-  let difficulty = "medium";
-  let currentTurn = "blue";
-  let scoreBlue = 0;
-  let scoreRed = 0;
-  let pullOffset = 0; // Negative values pull left, positive values pull right (-150 to +150)
-  let timeLeft = 60;
-  let timerInterval = null;
-  let currentNum1 = 0;
-  let currentNum2 = 0;
+  let gameState = {
+    teamBlueName: 'Team Blue',
+    teamRedName: 'Team Red',
+    currentTurn: 1,
+    scoreBlue: 0,
+    scoreRed: 0,
+    ropeOffset: 0,
+    difficulty: 'medium',
+    currentAnswer: 0,
+    usedQuestions: new Set()
+  };
 
   function startGame() {
-    blueName = document.getElementById('playerBlue').value.trim() || "Team Blue";
-    redName = document.getElementById('playerRed').value.trim() || "Team Red";
-    difficulty = document.getElementById('diffLevel').value;
-
-    document.getElementById('labelBlue').innerText = blueName + " Side";
-    document.getElementById('labelRed').innerText = redName + " Side";
-
-    scoreBlue = 0;
-    scoreRed = 0;
-    pullOffset = 0;
-    timeLeft = 60;
-    currentTurn = "blue";
-
-    document.getElementById('scoreBlue').innerText = scoreBlue;
-    document.getElementById('scoreRed').innerText = scoreRed;
-    document.getElementById('timerDisplay').innerText = timeLeft;
-
+    gameState.teamBlueName = document.getElementById('nameBlue').value || 'Team Blue';
+    gameState.teamRedName = document.getElementById('nameRed').value || 'Team Red';
+    gameState.difficulty = document.getElementById('difficulty').value;
+    
     document.getElementById('setupScreen').classList.remove('active');
-    document.getElementById('winScreen').classList.remove('active');
     document.getElementById('gameScreen').classList.add('active');
-
-    updateTugAnimation();
-    generateQuestion();
-
-    if(timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timeLeft--;
-      document.getElementById('timerDisplay').innerText = timeLeft;
-      if(timeLeft <= 0) {
-        clearInterval(timerInterval);
-        endGameByTime();
-      }
-    }, 1000);
+    nextQuestion();
   }
 
-  function generateQuestion() {
-    let min = 1, max = 20;
-    if(difficulty === 'medium') { min = 10; max = 100; }
-    if(difficulty === 'hard') { min = 50; max = 500; }
-
-    currentNum1 = Math.floor(Math.random() * (max - min + 1)) + min;
-    currentNum2 = Math.floor(Math.random() * (max - min + 1)) + min;
-
-    document.getElementById('mathProblem').innerText = `${currentNum1} + ${currentNum2} = ?`;
+  function nextQuestion() {
+    let num1, num2, ans, qKey;
     
-    let promptEl = document.getElementById('activeTeamPrompt');
-    if(currentTurn === 'blue') {
-      promptEl.innerText = `${blueName}'s Turn`;
-      promptEl.style.color = '#168be5';
-      document.getElementById('turnIndicator').innerText = blueName;
-      document.getElementById('turnIndicator').style.color = '#168be5';
-    } else {
-      promptEl.innerText = `${redName}'s Turn`;
-      promptEl.style.color = '#d9235b';
-      document.getElementById('turnIndicator').innerText = redName;
-      document.getElementById('turnIndicator').style.color = '#d9235b';
-    }
+    do {
+      if (gameState.difficulty === 'easy') {
+        num1 = Math.floor(Math.random() * 20) + 1;
+        num2 = Math.floor(Math.random() * 20) + 1;
+      } else if (gameState.difficulty === 'medium') {
+        num1 = Math.floor(Math.random() * 90) + 10;
+        num2 = Math.floor(Math.random() * 90) + 10;
+      } else {
+        num1 = Math.floor(Math.random() * 450) + 50;
+        num2 = Math.floor(Math.random() * 450) + 50;
+      }
+      ans = num1 + num2;
+      qKey = `${num1}+${num2}`;
+    } while (gameState.usedQuestions.has(qKey));
 
-    const input = document.getElementById('userAnswer');
-    input.value = '';
-    input.focus();
+    gameState.usedQuestions.add(qKey);
+    gameState.currentAnswer = ans;
+
+    document.getElementById('mathProblem').innerText = `${num1} + ${num2} = ?`;
+    let turnName = gameState.currentTurn === 1 ? gameState.teamBlueName : gameState.teamRedName;
+    document.getElementById('turnIndicator').innerText = turnName;
+    document.getElementById('turnIndicator').style.color = gameState.currentTurn === 1 ? 'var(--blue)' : 'var(--red)';
+    document.getElementById('userAnswer').value = '';
+    document.getElementById('userAnswer').focus();
   }
 
   function submitAnswer(e) {
     e.preventDefault();
-    const userAns = parseInt(document.getElementById('userAnswer').value);
-    const correctAns = currentNum1 + currentNum2;
+    let userVal = parseInt(document.getElementById('userAnswer').value);
 
-    if(userAns === correctAns) {
-      if(currentTurn === 'blue') {
-        scoreBlue++;
-        pullOffset += 25; // Pulls right (towards Blue victory)
-        document.getElementById('scoreBlue').innerText = scoreBlue;
+    if (userVal === gameState.currentAnswer) {
+      if (gameState.currentTurn === 1) {
+        gameState.scoreBlue++;
+        gameState.ropeOffset += 35;
       } else {
-        scoreRed++;
-        pullOffset -= 25; // Pulls left (towards Red victory)
-        document.getElementById('scoreRed').innerText = scoreRed;
+        gameState.scoreRed++;
+        gameState.ropeOffset -= 35;
       }
-    } else {
-      if(currentTurn === 'blue') {
-        pullOffset -= 12;
-      } else {
-        pullOffset += 12;
-      }
+      updateVisuals();
+      checkWin();
     }
 
-    currentTurn = (currentTurn === 'blue') ? 'red' : 'blue';
-
-    if(pullOffset >= 180) {
-      pullOffset = 180;
-      updateTugAnimation();
-      endGame(blueName, 'blue');
-      return;
+    gameState.currentTurn = gameState.currentTurn === 1 ? 2 : 1;
+    if (!isGameOver()) {
+      nextQuestion();
     }
-    if(pullOffset <= -180) {
-      pullOffset = -180;
-      updateTugAnimation();
-      endGame(redName, 'red');
-      return;
+  }
+
+  function updateVisuals() {
+    document.getElementById('scoreBlueText').innerText = gameState.scoreBlue;
+    document.getElementById('scoreRedText').innerText = gameState.scoreRed;
+    
+    document.getElementById('leftTeamGroup').style.transform = `translate(${150 + gameState.ropeOffset}px, 50px)`;
+    document.getElementById('rightTeamGroup').style.transform = `translate(${770 + gameState.ropeOffset}px, 50px)`;
+  }
+
+  function isGameOver() {
+    return Math.abs(gameState.ropeOffset) >= 250;
+  }
+
+  function checkWin() {
+    if (Math.abs(gameState.ropeOffset) >= 250) {
+      document.getElementById('gameScreen').classList.remove('active');
+      document.getElementById('winScreen').classList.add('active');
+      let winner = gameState.ropeOffset > 0 ? gameState.teamBlueName : gameState.teamRedName;
+      document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
     }
-
-    updateTugAnimation();
-    generateQuestion();
-  }
-
-  function updateTugAnimation() {
-    document.getElementById('leftTeamMasterGroup').setAttribute('transform', `translate(${pullOffset}, 0)`);
-    document.getElementById('rightTeamMasterGroup').setAttribute('transform', `translate(${pullOffset}, 0)`);
-    document.getElementById('ropeMasterGroup').setAttribute('transform', `translate(${pullOffset}, 0)`);
-  }
-
-  function endGameByTime() {
-    clearInterval(timerInterval);
-    let winner = "";
-    let colorClass = "";
-    if(pullOffset > 0) {
-      winner = blueName;
-      colorClass = "blue";
-    } else if(pullOffset < 0) {
-      winner = redName;
-      colorClass = "red";
-    } else {
-      winner = "It's a Tie!";
-      colorClass = "";
-    }
-    showWinScreen(winner, colorClass);
-  }
-
-  function endGame(winnerName, colorClass) {
-    clearInterval(timerInterval);
-    showWinScreen(winnerName, colorClass);
-  }
-
-  function showWinScreen(winnerName, colorClass) {
-    document.getElementById('gameScreen').classList.remove('active');
-    document.getElementById('winScreen').classList.add('active');
-
-    const winnerEl = document.getElementById('winnerTitle');
-    winnerEl.innerText = winnerName;
-    winnerEl.className = "cert-winner " + colorClass;
-
-    document.getElementById('finalScoreText').innerText = `${blueName} (${scoreBlue}) - ${redName} (${scoreRed})`;
-  }
-
-  function resetGame() {
-    document.getElementById('winScreen').classList.remove('active');
-    document.getElementById('setupScreen').classList.add('active');
   }
 </script>
-<script src="../../../script.js"></script>
 </body>
 </html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fruits Explorer — Learn With Fun — LamaStudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 { margin-bottom: 5px; font-size: 2rem; text-align: center; }
+  .game-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 20px;
+    text-align: center;
+  }
+  .card-box {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 3rem;
+    margin-bottom: 2rem;
+  }
+  .fruit-emoji { font-size: 6rem; margin-bottom: 1rem; }
+  .fruit-name { font-size: 2.5rem; font-weight: 800; color: #fbbf24; margin-bottom: 0.5rem; }
+  .fruit-desc { font-size: 1.1rem; color: #94a3b8; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1rem;
+  }
+  .fruit-btn {
+    background: #334155;
+    color: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .fruit-btn:hover { background: #eab308; color: #0f172a; transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<h1>🍎 Fruits Explorer</h1>
+
+<div class="game-container">
+  <div class="card-box">
+    <div class="fruit-emoji" id="fruitEmoji">🍎</div>
+    <div class="fruit-name" id="fruitName">Apple</div>
+    <div class="fruit-desc" id="fruitDesc">Crisp, sweet, and keeps the doctor away!</div>
+  </div>
+
+  <div class="grid" id="fruitGrid"></div>
+</div>
+
+<script>
+  const fruits = [
+    {name: "Apple", emoji: "🍎", desc: "Crisp, sweet, and keeps the doctor away!"},
+    {name: "Banana", emoji: "🍌", desc: "Yellow fruit packed with natural energy."},
+    {name: "Grapes", emoji: "🍇", desc: "Juicy clusters that grow on vines."},
+    {name: "Strawberry", emoji: "🍓", desc: "Sweet red berries with tiny seeds on top."},
+    {name: "Orange", emoji: "🍊", desc: "Citrus fruit full of healthy Vitamin C."},
+    {name: "Watermelon", emoji: "🍉", desc: "Big refreshing green fruit with sweet red inside."}
+  ];
+
+  function initFruits() {
+    let grid = document.getElementById('fruitGrid');
+    fruits.forEach(f => {
+      let btn = document.createElement('button');
+      btn.className = 'fruit-btn';
+      btn.innerText = `${f.emoji} ${f.name}`;
+      btn.onclick = () => selectFruit(f);
+      grid.appendChild(btn);
+    });
+    selectFruit(fruits[0]);
+  }
+
+  function selectFruit(f) {
+    document.getElementById('fruitEmoji').innerText = f.emoji;
+    document.getElementById('fruitName').innerText = f.name;
+    document.getElementById('fruitDesc').innerText = f.desc;
+
+    if ('speechSynthesis' in window) {
+      let utterance = new SpeechSynthesisUtterance(`${f.name}. ${f.desc}`);
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  initFruits();
+</script>
+</body>
+</html>

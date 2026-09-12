@@ -128,7 +128,6 @@
     transition: transform 0.4s ease-out;
   }
 
-  /* Glowing Turn Animations */
   @keyframes blueGlow {
     0%, 100% { filter: drop-shadow(0 0 4px var(--blue)); }
     50% { filter: drop-shadow(0 0 18px var(--blue)); }
@@ -235,6 +234,53 @@
     usedQuestions: new Set()
   };
 
+  // Web Audio Background Music Synth
+  let audioCtx = null;
+  let musicInterval = null;
+
+  function startBackgroundMusic() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    // Upbeat Arcade Bassline Notes (Frequencies in Hz)
+    const notes = [130.81, 146.83, 164.81, 196.00, 220.00, 196.00, 164.81, 146.83];
+    let step = 0;
+
+    if (musicInterval) clearInterval(musicInterval);
+
+    musicInterval = setInterval(() => {
+      if (!audioCtx || document.hidden) return;
+      
+      let osc = audioCtx.createOscillator();
+      let gain = audioCtx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(notes[step], audioCtx.currentTime);
+      
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.28);
+
+      step = (step + 1) % notes.length;
+    }, 250); // Fast arcade tempo loop
+  }
+
+  function stopBackgroundMusic() {
+    if (musicInterval) {
+      clearInterval(musicInterval);
+      musicInterval = null;
+    }
+  }
+
   function startGame() {
     gameState.teamBlueName = document.getElementById('nameBlue').value || 'Team Blue';
     gameState.teamRedName = document.getElementById('nameRed').value || 'Team Red';
@@ -245,6 +291,9 @@
 
     document.getElementById('setupScreen').classList.remove('active');
     document.getElementById('gameScreen').classList.add('active');
+    
+    // Start the background music loop!
+    startBackgroundMusic();
     nextQuestion();
   }
 
@@ -276,7 +325,6 @@
     turnIndicator.innerText = turnName;
     turnIndicator.style.color = gameState.currentTurn === 1 ? 'var(--blue)' : 'var(--red)';
 
-    // Update active glowing turns on avatars
     let blueAv = document.getElementById('blueAvatar');
     let redAv = document.getElementById('redAvatar');
     if (gameState.currentTurn === 1) {
@@ -323,22 +371,17 @@
   }
 
   function checkWin() {
-    if (gameState.blueX >= 450) {
-      endGame(gameState.teamRedName);
-      return true;
-    }
-    if (gameState.redX <= 450) {
-      endGame(gameState.teamBlueName);
+    if (gameState.blueX >= 450 || gameState.redX <= 450) {
+      stopBackgroundMusic(); // Stop music on win
+      let winner = gameState.blueX >= 450 ? gameState.teamRedName : gameState.teamBlueName;
+      document.getElementById('gameScreen').classList.remove('active');
+      document.getElementById('winScreen').classList.add('active');
+      document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
       return true;
     }
     return false;
   }
-
-  function endGame(winnerName) {
-    document.getElementById('gameScreen').classList.remove('active');
-    document.getElementById('winScreen').classList.add('active');
-    document.getElementById('winnerText').innerText = `🎉 ${winnerName} Wins the Competition! 🎉`;
-  }
 </script>
 </body>
-</html>
+  </html>
+  

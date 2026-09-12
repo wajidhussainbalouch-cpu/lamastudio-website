@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -124,7 +124,7 @@
     text-align: center;
   }
   
-  #blueTeamGroup, #redTeamGroup {
+  #ropeKnot {
     transition: transform 0.4s ease-out;
   }
 </style>
@@ -140,11 +140,11 @@
     <h3>Setup Competition</h3>
     <div class="team-grid">
       <div class="team-card team-blue">
-        <h4 style="color: var(--blue); margin-top:0;">Team Blue Name</h4>
+        <h4 style="color: var(--blue); margin-top:0;" id="blueTitle">Team Blue</h4>
         <input type="text" id="nameBlue" value="Team Blue">
       </div>
       <div class="team-card team-red">
-        <h4 style="color: var(--red); margin-top:0;">Team Red Name</h4>
+        <h4 style="color: var(--red); margin-top:0;" id="redTitle">Team Red</h4>
         <input type="text" id="nameRed" value="Team Red">
       </div>
     </div>
@@ -163,26 +163,32 @@
   <div id="gameScreen" class="screen">
     <div class="hud">
       <div>Turn: <span id="turnIndicator" style="font-weight: 700;">Team Blue</span></div>
-      <div>Score: <span style="color:var(--blue);" id="scoreBlueText">0</span> - <span style="color:var(--red);" id="scoreRedText">0</span></div>
+      <div>Score: <span style="color:var(--blue);" id="scoreBlueText">0</span> &nbsp;-&nbsp; <span style="color:var(--red);" id="scoreRedText">0</span></div>
     </div>
 
     <div class="tug-arena">
-      <!-- Absolute Center Marker Line at X = 500 -->
-      <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 5;"></div>
-      
-      <svg viewBox="0 0 1000 200" width="100%" xmlns="http://www.w3.org/2000/svg">
-        <line x1="50" y1="100" x2="950" y2="100" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+      <svg viewBox="0 0 1000 160" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background Rope Line -->
+        <line x1="100" y1="80" x2="900" y2="80" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
         
-        <!-- Blue Team (Starts at X=150, moves RIGHT towards center as score increases) -->
-        <g id="blueTeamGroup" transform="translate(150, 30)">
-          <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--blue)"/>
-          <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
+        <!-- Center Marker Line -->
+        <line x1="500" y1="30" x2="500" y2="130" stroke="#fbbf24" stroke-width="4" stroke-dasharray="4"/>
+
+        <!-- Blue Team Avatar (Fixed on Left) -->
+        <g transform="translate(100, 30)">
+          <rect x="0" y="0" width="50" height="80" rx="8" fill="var(--blue)"/>
+          <circle cx="25" cy="-12" r="18" fill="#e2a37e"/>
         </g>
-        
-        <!-- Red Team (Starts at X=750, moves LEFT towards center as score increases) -->
-        <g id="redTeamGroup" transform="translate(750, 30)">
-          <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--red)"/>
-          <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
+
+        <!-- Red Team Avatar (Fixed on Right) -->
+        <g transform="translate(850, 30)">
+          <rect x="0" y="0" width="50" height="80" rx="8" fill="var(--red)"/>
+          <circle cx="25" cy="-12" r="18" fill="#e2a37e"/>
+        </g>
+
+        <!-- Moving Center Knot / Flag (Starts at X=500) -->
+        <g id="ropeKnot" transform="translate(500, 80)">
+          <circle cx="0" cy="0" r="14" fill="#fbbf24" stroke="#0f172a" stroke-width="3"/>
         </g>
       </svg>
     </div>
@@ -211,6 +217,7 @@
     currentTurn: 1, // 1 for Blue, 2 for Red
     scoreBlue: 0,
     scoreRed: 0,
+    knotPosition: 500, // Center is 500. Blue pulls left (decreases), Red pulls right (increases).
     difficulty: 'medium',
     currentAnswer: 0,
     usedQuestions: new Set()
@@ -221,6 +228,9 @@
     gameState.teamRedName = document.getElementById('nameRed').value || 'Team Red';
     gameState.difficulty = document.getElementById('difficulty').value;
     
+    document.getElementById('blueTitle').innerText = gameState.teamBlueName;
+    document.getElementById('redTitle').innerText = gameState.teamRedName;
+
     document.getElementById('setupScreen').classList.remove('active');
     document.getElementById('gameScreen').classList.add('active');
     nextQuestion();
@@ -262,8 +272,10 @@
     if (userVal === gameState.currentAnswer) {
       if (gameState.currentTurn === 1) {
         gameState.scoreBlue++;
+        gameState.knotPosition -= 40; // Blue pulls left toward their side
       } else {
         gameState.scoreRed++;
+        gameState.knotPosition += 40; // Red pulls right toward their side
       }
       updateVisuals();
       if (checkWin()) return;
@@ -278,24 +290,16 @@
     document.getElementById('scoreBlueText').innerText = gameState.scoreBlue;
     document.getElementById('scoreRedText').innerText = gameState.scoreRed;
     
-    // Base positions: Blue starts at X=150, Red starts at X=750.
-    // Each score adds 35px of movement towards the center (Blue moves right, Red moves left).
-    let blueX = 150 + (gameState.scoreBlue * 35);
-    let redX = 750 - (gameState.scoreRed * 35);
-    
-    document.getElementById('blueTeamGroup').style.transform = `translate(${blueX}px, 30px)`;
-    document.getElementById('redTeamGroup').style.transform = `translate(${redX}px, 30px)`;
+    // Move only the center knot/flag element based on knotPosition
+    document.getElementById('ropeKnot').style.transform = `translate(${gameState.knotPosition}px, 80px)`;
   }
 
   function checkWin() {
-    // Win if Blue passes the center line (X >= 500) or Red passes the center line (X <= 440)
-    let blueX = 150 + (gameState.scoreBlue * 35);
-    let redX = 750 - (gameState.scoreRed * 35);
-
-    if (blueX >= 470 || redX <= 430) {
+    // If knot goes too far left (Blue wins at <= 200) or too far right (Red wins at >= 800)
+    if (gameState.knotPosition <= 200 || gameState.knotPosition >= 800) {
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('winScreen').classList.add('active');
-      let winner = blueX >= 470 ? gameState.teamBlueName : gameState.teamRedName;
+      let winner = gameState.knotPosition <= 200 ? gameState.teamBlueName : gameState.teamRedName;
       document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
       return true;
     }

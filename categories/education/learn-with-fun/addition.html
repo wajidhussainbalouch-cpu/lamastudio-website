@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Addition Tug of War — Learn With Fun — LamaStudio</title>
-<meta name="description" content="Play the 2-player Addition Tug of War math game with animated pullers, live score tracking, timer, and certificate generator.">
+<meta name="description" content="Play the 2-player Addition Tug of War math game with vector pulling characters, live score tracking, timer, and certificate generator.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://lamastudio.pk/categories/education/learn-with-fun/addition.html">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 2rem;
-    max-width: 900px;
+    max-width: 950px;
     margin: 0 auto 3rem auto;
     box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
   }
@@ -45,66 +45,28 @@
   .team-red { border-color: #f87171; }
   
   .tug-arena {
-    background: var(--background);
+    background: #1e293b;
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1.5rem;
     margin: 1.5rem 0;
-  }
-  .rope-track {
     position: relative;
-    height: 50px;
-    background: #1e293b;
-    border-radius: 25px;
-    margin: 1.5rem 0 1rem 0;
     overflow: hidden;
-    border: 1px solid var(--border);
+    height: 160px;
     display: flex;
-    align-items: center;
-  }
-  .rope-line {
-    position: absolute;
-    width: 100%;
-    height: 6px;
-    background: #d97706;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
-  }
-  .center-marker {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: #fbbf24;
-    transform: translateX(-50%);
-    z-index: 2;
-  }
-  /* Tug of War Pullers */
-  .puller-avatar {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.8rem;
-    z-index: 4;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-  }
-  .flag-knot {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    background: #ffffff;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 3;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    flex-direction: column;
+    justify-content: flex-end;
   }
   
+  .rope-svg-container {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
   .hud-row {
     display: flex;
     justify-content: space-between;
@@ -195,7 +157,7 @@
     <a href="index.html" style="font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Learn With Fun Hub</a>
     <span class="eyebrow" style="color: var(--category-color); display: block; margin-top: 1rem;">2-Player Battle Arena</span>
     <h1 style="font-size: 2.2rem; margin-top: 0.3rem;">⚔️ Addition Tug of War</h1>
-    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Team Blue vs Team Red! Correct addition answers make your player pull the rope across the center line.</p>
+    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Team Blue vs Team Red! Answer math questions accurately to pull the opposing team across the center marker.</p>
   </div>
 
   <div class="game-container">
@@ -207,22 +169,12 @@
       
       <div class="team-grid">
         <div class="team-card team-blue">
-          <h4 style="color: #38bdf8; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue (Puller)</h4>
-          <input type="text" id="playerBlue" value="Team Blue" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
-          <select id="avatarBlue" class="answer-input" style="width: 100%; font-size: 1.2rem; margin-top: 0.5rem;">
-            <option value="👦">👦 Boy</option>
-            <option value="👨" selected>👨 Man</option>
-            <option value="🧑">🧑 Competitor</option>
-          </select>
+          <h4 style="color: #38bdf8; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue</h4>
+          <input type="text" id="playerBlue" value="Team Blue" class="answer-input" style="width: 100%; font-size: 1rem;">
         </div>
         <div class="team-card team-red">
-          <h4 style="color: #f87171; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red (Puller)</h4>
-          <input type="text" id="playerRed" value="Team Red" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
-          <select id="avatarRed" class="answer-input" style="width: 100%; font-size: 1.2rem; margin-top: 0.5rem;">
-            <option value="👦">👦 Boy</option>
-            <option value="👨" selected>👨 Man</option>
-            <option value="🧑">🧑 Competitor</option>
-          </select>
+          <h4 style="color: #f87171; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red</h4>
+          <input type="text" id="playerRed" value="Team Red" class="answer-input" style="width: 100%; font-size: 1rem;">
         </div>
       </div>
 
@@ -247,16 +199,51 @@
       </div>
 
       <div class="tug-arena">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
+        <!-- Center Marker Line -->
+        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 1;"></div>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #94a3b8; position: relative; z-index: 2;">
           <span style="color: #38bdf8;" id="labelBlue">Team Blue Side</span>
           <span style="color: #f87171;" id="labelRed">Team Red Side</span>
         </div>
-        <div class="rope-track">
-          <div class="rope-line"></div>
-          <div class="center-marker"></div>
-          <div class="flag-knot" id="flagKnot"></div>
-          <div class="puller-avatar" id="pullerBlue" style="left: 20%;">👨</div>
-          <div class="puller-avatar" id="pullerRed" style="left: 75%;">👨</div>
+
+        <!-- SVG Arena Characters & Rope -->
+        <div class="rope-svg-container">
+          <svg viewBox="0 0 800 100" width="100%" height="90">
+            <!-- Rope -->
+            <line x1="50" y1="50" x2="750" y2="50" stroke="#d97706" stroke-width="6" stroke-linecap="round"/>
+            
+            <!-- Center Flag Knot -->
+            <circle id="ropeFlag" cx="400" cy="50" r="8" fill="#ffffff" stroke="#b45309" stroke-width="2"/>
+
+            <!-- TEAM BLUE CHARACTERS (Group moving together) -->
+            <g id="teamBlueGroup" transform="translate(150, 20)">
+              <!-- Puller 1 -->
+              <g transform="scale(0.7)">
+                <circle cx="30" cy="15" r="10" fill="#38bdf8"/>
+                <path d="M30 25 L35 55 L25 75 M35 55 L45 75 M25 35 L48 45" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <!-- Puller 2 -->
+              <g transform="scale(0.7) translate(40, 0)">
+                <circle cx="30" cy="15" r="10" fill="#38bdf8"/>
+                <path d="M30 25 L35 55 L25 75 M35 55 L45 75 M25 35 L48 45" stroke="#38bdf8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+            </g>
+
+            <!-- TEAM RED CHARACTERS (Group moving together) -->
+            <g id="teamRedGroup" transform="translate(530, 20)">
+              <!-- Puller 1 -->
+              <g transform="scale(0.7) scale(-1, 1) translate(-60, 0)">
+                <circle cx="30" cy="15" r="10" fill="#f87171"/>
+                <path d="M30 25 L35 55 L25 75 M35 55 L45 75 M25 35 L48 45" stroke="#f87171" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+              <!-- Puller 2 -->
+              <g transform="scale(0.7) scale(-1, 1) translate(-100, 0)">
+                <circle cx="30" cy="15" r="10" fill="#f87171"/>
+                <path d="M30 25 L35 55 L25 75 M35 55 L45 75 M25 35 L48 45" stroke="#f87171" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+            </g>
+          </svg>
         </div>
       </div>
 
@@ -276,7 +263,7 @@
         <div class="cert-title">🏆 Certificate of Victory 🏆</div>
         <p style="color: var(--text-muted); font-size: 0.95rem;">This official certificate is proudly presented to</p>
         <div class="cert-winner" id="winnerTitle">Team Blue</div>
-        <p style="color: var(--text); font-size: 1rem; margin-bottom: 1.5rem;">For displaying exceptional mental math speed, physical rope pulling mastery, and winning the Addition Tug of War challenge!</p>
+        <p style="color: var(--text); font-size: 1rem; margin-bottom: 1.5rem;">For displaying brilliant mental math calculation and winning the interactive Tug of War battle!</p>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fbbf24; margin-bottom: 2rem;">
           Final Score: <span id="finalScoreText">Blue (5) - Red (2)</span>
         </div>
@@ -297,13 +284,11 @@
 <script>
   let blueName = "Team Blue";
   let redName = "Team Red";
-  let blueAvatarIcon = "👨";
-  let redAvatarIcon = "👨";
   let difficulty = "medium";
   let currentTurn = "blue";
   let scoreBlue = 0;
   let scoreRed = 0;
-  let ropePosition = 50; // 0 (Red wins) to 100 (Blue wins)
+  let ropePosition = 50; // 0 to 100 scale
   let timeLeft = 60;
   let timerInterval = null;
   let currentNum1 = 0;
@@ -312,14 +297,10 @@
   function startGame() {
     blueName = document.getElementById('playerBlue').value.trim() || "Team Blue";
     redName = document.getElementById('playerRed').value.trim() || "Team Red";
-    blueAvatarIcon = document.getElementById('avatarBlue').value;
-    redAvatarIcon = document.getElementById('avatarRed').value;
     difficulty = document.getElementById('diffLevel').value;
 
     document.getElementById('labelBlue').innerText = blueName + " Side";
     document.getElementById('labelRed').innerText = redName + " Side";
-    document.getElementById('pullerBlue').innerText = blueAvatarIcon;
-    document.getElementById('pullerRed').innerText = redAvatarIcon;
 
     scoreBlue = 0;
     scoreRed = 0;
@@ -335,7 +316,7 @@
     document.getElementById('winScreen').classList.remove('active');
     document.getElementById('gameScreen').classList.add('active');
 
-    updateRopePosition();
+    updateTugAnimation();
     generateQuestion();
 
     if(timerInterval) clearInterval(timerInterval);
@@ -404,32 +385,32 @@
 
     if(ropePosition >= 100) {
       ropePosition = 100;
-      updateRopePosition();
+      updateTugAnimation();
       endGame(blueName, 'blue');
       return;
     }
     if(ropePosition <= 0) {
       ropePosition = 0;
-      updateRopePosition();
+      updateTugAnimation();
       endGame(redName, 'red');
       return;
     }
 
-    updateRopePosition();
+    updateTugAnimation();
     generateQuestion();
   }
 
-  function updateRopePosition() {
-    // Knot moves based on ropePosition (0 to 100)
-    document.getElementById('flagKnot').style.left = ropePosition + '%';
-    
-    // Animate characters pulling relative to the knot center
-    // Blue puller is on the left side, Red puller is on the right side
-    let bluePos = Math.max(5, ropePosition - 28);
-    let redPos = Math.min(88, ropePosition + 12);
-    
-    document.getElementById('pullerBlue').style.left = bluePos + '%';
-    document.getElementById('pullerRed').style.left = redPos + '%';
+  function updateTugAnimation() {
+    // Map ropePosition (0 to 100) to SVG coordinates (250px to 550px for center flag)
+    let flagX = 250 + (ropePosition / 100) * 300;
+    document.getElementById('ropeFlag').setAttribute('cx', flagX);
+
+    // Shift team characters smoothly alongside the rope tension
+    let blueGroupX = 50 + (ropePosition * 1.5);
+    let redGroupX = 430 + (ropePosition * 1.5);
+
+    document.getElementById('teamBlueGroup').setAttribute('transform', `translate(${blueGroupX}, 20)`);
+    document.getElementById('teamRedGroup').setAttribute('transform', `translate(${redGroupX}, 20)`);
   }
 
   function endGameByTime() {

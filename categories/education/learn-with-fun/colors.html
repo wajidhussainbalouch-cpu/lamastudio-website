@@ -47,7 +47,7 @@
     border: 2px solid #bae6fd;
   }
 
-  /* Navigation Tabs for Activities */
+  /* Navigation Tabs */
   .mode-tabs {
     display: flex;
     gap: 6px;
@@ -102,7 +102,7 @@
     gap: 1.2rem;
   }
 
-  /* 1. Learn & Explore Mode */
+  /* 1. Explore Tab */
   .question-box {
     display: flex;
     align-items: center;
@@ -181,7 +181,7 @@
     color: #475569;
   }
 
-  /* 2. Mobile-Friendly Draw & Fill Board */
+  /* 2. Drawing Tab */
   .drawing-layout {
     display: flex;
     gap: 15px;
@@ -239,7 +239,7 @@
     background: #2563eb;
   }
 
-  /* 3. Matching Game Mode */
+  /* 3. Matching Tab */
   .match-container {
     display: flex;
     justify-content: space-around;
@@ -281,7 +281,7 @@
     cursor: default;
   }
 
-  /* 4. Quiz Game Mode */
+  /* 4. Quiz Tab */
   .quiz-box {
     text-align: center;
     display: flex;
@@ -323,7 +323,7 @@
     background: #eff6ff;
   }
 
-  /* 5. Balloon Pop Game Mode */
+  /* 5. Balloon Tab */
   .balloon-arena {
     position: relative;
     height: 320px;
@@ -360,7 +360,7 @@
     100% { bottom: 340px; transform: scale(1.1); }
   }
 
-  /* 6. Memory Match Game Mode */
+  /* 6. Memory Tab */
   .memory-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -414,19 +414,18 @@
   <div style="font-weight: 700; color: #64748b; font-size: 0.9rem;">Colors Practice Arena</div>
 </header>
 
-<!-- Activity Switcher Tabs -->
 <div class="mode-tabs">
-  <button class="tab-btn active" onclick="switchTab('learn')">🎨 Explore</button>
-  <button class="tab-btn" onclick="switchTab('draw')">🖌️ Draw & Fill</button>
-  <button class="tab-btn" onclick="switchTab('match')">🧩 Match</button>
-  <button class="tab-btn" onclick="switchTab('quiz')">⭐ Quiz</button>
-  <button class="tab-btn" onclick="switchTab('balloon')">🎈 Pop Pop</button>
-  <button class="tab-btn" onclick="switchTab('memory')">🧠 Memory</button>
+  <button class="tab-btn active" onclick="switchTab('learn', event)">🎨 Explore</button>
+  <button class="tab-btn" onclick="switchTab('draw', event)">🖌️ Draw & Fill</button>
+  <button class="tab-btn" onclick="switchTab('match', event)">🧩 Match</button>
+  <button class="tab-btn" onclick="switchTab('quiz', event)">⭐ Quiz</button>
+  <button class="tab-btn" onclick="switchTab('balloon', event)">🎈 Pop Pop</button>
+  <button class="tab-btn" onclick="switchTab('memory', event)">🧠 Memory</button>
 </div>
 
 <div class="game-container">
   
-  <!-- TAB 1: LEARN & EXPLORE -->
+  <!-- EXPLORE -->
   <div id="learnTab" class="activity-section active">
     <div class="question-box">
       <div class="stage-preview" id="stage">
@@ -439,7 +438,7 @@
     <div class="color-grid" id="colorGrid"></div>
   </div>
 
-  <!-- TAB 2: MOBILE-FRIENDLY DRAW & FILL BOARD -->
+  <!-- DRAW & FILL -->
   <div id="drawTab" class="activity-section">
     <div style="font-weight: 700; font-size: 1.1rem;">Free Drawing & Background Fill Board</div>
     <div class="drawing-layout">
@@ -459,7 +458,7 @@
     </div>
   </div>
 
-  <!-- TAB 3: MATCHING GAME -->
+  <!-- MATCH -->
   <div id="matchTab" class="activity-section">
     <div style="font-weight: 700; font-size: 1.1rem; text-align: center;">Match Color Names to their Color Blocks!</div>
     <div class="feedback-msg" id="matchFeedback">Click a color name, then click its matching swatch block.</div>
@@ -469,7 +468,7 @@
     </div>
   </div>
 
-  <!-- TAB 4: FIND QUIZ GAME -->
+  <!-- QUIZ -->
   <div id="quizTab" class="activity-section">
     <div class="quiz-box">
       <div style="font-weight: 700; font-size: 1.2rem;">Can you find this color?</div>
@@ -479,15 +478,15 @@
     </div>
   </div>
 
-  <!-- TAB 5: BALLOON POP GAME -->
+  <!-- BALLOON -->
   <div id="balloonTab" class="activity-section">
     <div style="font-weight: 700; font-size: 1.1rem; text-align: center;" id="balloonInstruction">Pop the balloon that is: <b>Red</b></div>
     <div class="balloon-arena" id="balloonArena"></div>
   </div>
 
-  <!-- TAB 6: MEMORY MATCH GAME -->
+  <!-- MEMORY -->
   <div id="memoryTab" class="activity-section">
-    <div style="font-weight: 700; font-size: 1.1rem; text-align: center;" id="memoryScore">Flip cards to find matching pairs!</div>
+    <div style="font-weight: 700; font-size: 1.1rem; text-align: center;" id="memoryScore">Flip cards to find matching color pairs!</div>
     <div class="memory-grid" id="memoryGrid"></div>
   </div>
 
@@ -507,13 +506,13 @@
     {name: "Gold", hex: "#ca8a04", desc: "Like shiny treasure and crowns!"}
   ];
 
-  function switchTab(tabID) {
+  function switchTab(tabID, evt) {
     document.querySelectorAll('.activity-section').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
     const targetTab = document.getElementById(tabID + 'Tab');
     if (targetTab) targetTab.classList.add('active');
-    event.currentTarget.classList.add('active');
+    if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
 
     if(tabID === 'match') initMatchGame();
     if(tabID === 'quiz') nextQuizQuestion();
@@ -522,404 +521,6 @@
   }
 
   // 1. Explore Setup
-  function initColors() {
-    let grid = document.getElementById('colorGrid');
-    colors.forEach(c => {
-      let btn = document.createElement('div');
-      btn.className = 'color-btn';
-      btn.innerHTML = `<div class="color-swatch" style="background-color: ${c.hex}"></div><span class="color-label">${c.name}</span>`;
-      btn.onclick = () => selectColor(c);
-      grid.appendChild(btn);
-    });
-    selectColor(colors[0]);
-  }
-
-  function selectColor(c) {
-    let stage = document.getElementById('stage');
-    stage.style.backgroundColor = c.hex;
-    document.getElementById('colorTitle').innerText = c.name;
-    document.getElementById('colorDesc').innerText = c.desc;
-
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      let utterance = new SpeechSynthesisUtterance(`This is the color ${c.name}`);
-      window.speechSynthesis.speak(utterance);
-    }
-  }
-
-  // 2. Mobile-Friendly Drawing Board Setup
-  const canvas = document.getElementById('drawCanvas');
-  const ctx = canvas.getContext('2d');
-  let currentBrushColor = "#ef4444";
-
-  function resizeCanvas() {
-    let rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = 300;
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-
-  let painting = false;
-
-  function getMousePos(e) {
-    let rect = canvas.getBoundingClientRect();
-    let clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    let clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    return {
-      x: clientX - rect.left,
-      y: clientY - rect.top
-    };
-  }
-
-  function startPosition(e) {
-    e.preventDefault();
-    painting = true;
-    let pos = getMousePos(e);
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-  }
-
-  function endPosition(e) {
-    e.preventDefault();
-    painting = false;
-  }
-
-  function draw(e) {
-    if (!painting) return;
-    e.preventDefault();
-    let pos = getMousePos(e);
-    ctx.lineWidth = document.getElementById('brushSize').value;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = currentBrushColor;
-
-    ctx.lineTo(pos.x, pos.y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
-  }
-
-  canvas.addEventListener('mousedown', startPosition);
-  canvas.addEventListener('mouseup', endPosition);
-  canvas.addEventListener('mousemove', draw);
-
-  canvas.addEventListener('touchstart', startPosition, { passive: false });
-  canvas.addEventListener('touchend', endPosition, { passive: false });
-  canvas.addEventListener('touchmove', draw, { passive: false });
-
-  function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  function fillCanvasBg() {
-    ctx.fillStyle = currentBrushColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  let drawPalette = document.getElementById('drawPalette');
-  colors.forEach(c => {
-    let pBtn = document.createElement('div');
-    pBtn.style.backgroundColor = c.hex;
-    pBtn.style.height = "32px";
-    pBtn.style.borderRadius = "8px";
-    pBtn.style.cursor = "pointer";
-    pBtn.onclick = () => { currentBrushColor = c.hex; };
-    drawPalette.appendChild(pBtn);
-  });
-
-  // 3. Matching Game Setup
-  let selectedNameNode = null;
-  let matchedCount = 0;
-
-  function initMatchGame() {
-    let nameCol = document.getElementById('nameColumn');
-    let swatchCol = document.getElementById('swatchColumn');
-    nameCol.innerHTML = '';
-    swatchCol.innerHTML = '';
-    matchedCount = 0;
-    document.getElementById('matchFeedback').innerText = "Click a color name, then click its matching swatch block.";
-
-    let roundColors = [...colors].sort(() => Math.random() - 0.5).slice(0, 4);
-    let shuffledNames = [...roundColors].sort(() => Math.random() - 0.5);
-    let shuffledSwatches = [...roundColors].sort(() => Math.random() - 0.5);
-
-    shuffledNames.forEach(c => {
-      let item = document.createElement('div');
-      item.className = 'match-item';
-      item.innerText = c.name;
-      item.onclick = () => selectMatchName(item, c.name);
-      nameCol.appendChild(item);
-    });
-
-    shuffledSwatches.forEach(c => {
-      let item = document.createElement('div');
-      item.className = 'match-item';
-      item.style.backgroundColor = c.hex;
-      item.style.height = "24px";
-      item.onclick = () => selectMatchSwatch(item, c.name, roundColors.length);
-      swatchCol.appendChild(item);
-    });
-  }
-
-  function selectMatchName(node, colorName) {
-    if (node.classList.contains('matched')) return;
-    document.querySelectorAll('#nameColumn .match-item').forEach(el => el.classList.remove('selected'));
-    node.classList.add('selected');
-    selectedNameNode = { node, colorName };
-  }
-
-  function selectMatchSwatch(swatchNode, swatchColor, totalCount) {
-    if (!selectedNameNode || swatchNode.classList.contains('matched')) return;
-
-    if (selectedNameNode.colorName === swatchColor) {
-      selectedNameNode.node.classList.add('matched');
-      selectedNameNode.node.classList.remove('selected');
-      swatchNode.classList.add('matched');
-      swatchNode.style.backgroundColor = colors.find(c => c.name === swatchColor).hex;
-      swatchNode.innerText = "✓ " + swatchColor;
-      
-      matchedCount++;
-      document.getElementById('matchFeedback').innerText = "Great job! Keep going!";
-      selectedNameNode = null;
-
-      if (matchedCount === totalCount) {
-        document.getElementById('matchFeedback').innerText = "🎉 Amazing! Round completed!";
-        setTimeout(initMatchGame, 1800);
-      }
-    } else {
-      document.getElementById('matchFeedback').innerText = "❌ Try again!";
-      selectedNameNode.node.classList.remove('selected');
-      selectedNameNode = null;
-    }
-  }
-
-  // 4. Quiz Game Setup
-  let currentCorrectColor = null;
-
-  function nextQuizQuestion() {
-    document.getElementById('quizFeedback').innerText = "Tap the matching button for this color!";
-    let grid = document.getElementById('quizOptionsGrid');
-    grid.innerHTML = '';
-
-    let options = [...colors].sort(() => Math.random() - 0.5).slice(0, 4);
-    currentCorrectColor = options[Math.floor(Math.random() * options.length)];
-    document.getElementById('quizTarget').style.backgroundColor = currentCorrectColor.hex;
-
-    options.forEach(opt => {
-      let btn = document.createElement('button');
-      btn.className = 'quiz-btn';
-      btn.innerText = opt.name;
-      btn.onclick = () => checkQuizAnswer(opt);
-      grid.appendChild(btn);
-    });
-  }
-
-  function checkQuizAnswer(selected) {
-    if (selected.name === currentCorrectColor.name) {
-      document.getElementById('quizFeedback').innerText = "🎉 Correct!";
-      setTimeout(nextQuizQuestion, 1200);
-    } else {
-      document.getElementById('quizFeedback').innerText = "❌ Try another one!";
-    }
-  }
- /* 5. Balloon Pop Game Mode */
-  .balloon-arena {
-    position: relative;
-    height: 320px;
-    background: #e0f2fe;
-    border: 3px solid #bae6fd;
-    border-radius: 16px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    padding-bottom: 15px;
-  }
-
-  .balloon {
-    position: absolute;
-    width: 60px;
-    height: 75px;
-    border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 800;
-    font-size: 0.8rem;
-    cursor: pointer;
-    box-shadow: inset -6px -6px 0px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.1);
-    animation: floatUp 4s linear infinite;
-    text-align: center;
-  }
-
-  @keyframes floatUp {
-    0% { bottom: -80px; transform: scale(0.9); }
-    100% { bottom: 340px; transform: scale(1.1); }
-  }
-
-  /* 6. Memory Match Game Mode */
-  .memory-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    max-width: 450px;
-    margin: 0 auto;
-  }
-
-  .memory-card {
-    height: 75px;
-    background: #3b82f6;
-    border-radius: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 800;
-    font-size: 1.5rem;
-    transition: transform 0.3s;
-  }
-
-  .memory-card.flipped {
-    background: #ffffff;
-    border: 3px solid #cbd5e1;
-  }
-
-  .feedback-msg {
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #2563eb;
-    min-height: 24px;
-  }
-
-  @media(max-width: 768px) {
-    .question-box {
-      flex-direction: column;
-      text-align: center;
-    }
-    .memory-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo">🌟 LamaStudio Kids</div>
-  <div style="font-weight: 700; color: #64748b; font-size: 0.9rem;">Colors Practice Arena</div>
-</header>
-
-<!-- Activity Switcher Tabs -->
-<div class="mode-tabs">
-  <button class="tab-btn active" onclick="switchTab('learn')">🎨 Explore</button>
-  <button class="tab-btn" onclick="switchTab('draw')">🖌️ Draw & Fill</button>
-  <button class="tab-btn" onclick="switchTab('match')">🧩 Match</button>
-  <button class="tab-btn" onclick="switchTab('quiz')">⭐ Quiz</button>
-  <button class="tab-btn" onclick="switchTab('balloon')">🎈 Pop Pop</button>
-  <button class="tab-btn" onclick="switchTab('memory')">🧠 Memory</button>
-</div>
-
-<div class="game-container">
-  
-  <!-- TAB 1: LEARN & EXPLORE -->
-  <div id="learnTab" class="activity-section active">
-    <div class="question-box">
-      <div class="stage-preview" id="stage">
-        <h1 class="color-name-display" id="colorTitle">Red</h1>
-      </div>
-      <div class="prompt-text" id="colorDesc">
-        Like strawberries and fire engines! Click colors below to explore.
-      </div>
-    </div>
-    <div class="color-grid" id="colorGrid"></div>
-  </div>
-
-  <!-- TAB 2: MOBILE-FRIENDLY DRAW & FILL BOARD -->
-  <div id="drawTab" class="activity-section">
-    <div style="font-weight: 700; font-size: 1.1rem;">Free Drawing & Background Fill Board</div>
-    <div class="drawing-layout">
-      <canvas id="drawCanvas"></canvas>
-      <div class="palette-sidebar">
-        <label style="font-weight: 700; font-size: 0.9rem;">Pick Color:</label>
-        <div class="color-grid" style="grid-template-columns: repeat(3, 1fr); max-height: 140px;" id="drawPalette"></div>
-        <div class="brush-row" style="margin-top: 5px;">
-          <label style="font-weight: 700; font-size: 0.9rem;">Size:</label>
-          <input type="range" id="brushSize" min="2" max="25" value="8" style="width: 100px;">
-        </div>
-        <div style="display: flex; gap: 8px; margin-top: 5px;">
-          <button class="tool-btn fill-bg" onclick="fillCanvasBg()" style="flex:1;">Fill Background</button>
-          <button class="tool-btn" onclick="clearCanvas()" style="flex:1;">Clear</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TAB 3: MATCHING GAME -->
-  <div id="matchTab" class="activity-section">
-    <div style="font-weight: 700; font-size: 1.1rem; text-align: center;">Match Color Names to their Color Blocks!</div>
-    <div class="feedback-msg" id="matchFeedback">Click a color name, then click its matching swatch block.</div>
-    <div class="match-container">
-      <div class="match-column" id="nameColumn"></div>
-      <div class="match-column" id="swatchColumn"></div>
-    </div>
-  </div>
-
-  <!-- TAB 4: FIND QUIZ GAME -->
-  <div id="quizTab" class="activity-section">
-    <div class="quiz-box">
-      <div style="font-weight: 700; font-size: 1.2rem;">Can you find this color?</div>
-      <div class="quiz-target-box" id="quizTarget"></div>
-      <div class="feedback-msg" id="quizFeedback">Tap the right button below!</div>
-      <div class="quiz-options" id="quizOptionsGrid"></div>
-    </div>
-  </div>
-
-  <!-- TAB 5: BALLOON POP GAME -->
-  <div id="balloonTab" class="activity-section">
-    <div style="font-weight: 700; font-size: 1.1rem; text-align: center;" id="balloonInstruction">Pop the balloon that is: <b>Red</b></div>
-    <div class="balloon-arena" id="balloonArena"></div>
-  </div>
-
-  <!-- TAB 6: MEMORY MATCH GAME -->
-  <div id="memoryTab" class="activity-section">
-    <div style="font-weight: 700; font-size: 1.1rem; text-align: center;" id="memoryScore">Flip cards to find matching pairs!</div>
-    <div class="memory-grid" id="memoryGrid"></div>
-  </div>
-
-</div>
-
-<script>
-  const colors = [
-    {name: "Red", hex: "#ef4444", desc: "Like strawberries and fire engines!"},
-    {name: "Blue", hex: "#3b82f6", desc: "Like the ocean and the clear sky!"},
-    {name: "Green", hex: "#22c55e", desc: "Like grass, trees, and frogs!"},
-    {name: "Yellow", hex: "#eab308", desc: "Like the warm sun and bananas!"},
-    {name: "Orange", hex: "#f97316", desc: "Like juicy oranges and basketballs!"},
-    {name: "Purple", hex: "#a855f7", desc: "Like grapes and eggplants!"},
-    {name: "Pink", hex: "#ec4899", desc: "Like flamingos and cotton candy!"},
-    {name: "Brown", hex: "#78350f", desc: "Like chocolate and friendly bears!"},
-    {name: "Teal", hex: "#14b8a6", desc: "Like deep ocean waves and peacock feathers!"},
-    {name: "Gold", hex: "#ca8a04", desc: "Like shiny treasure and crowns!"}
-  ];
-
-  function switchTab(tabID) {
-    document.querySelectorAll('.activity-section').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-
-    const targetTab = document.getElementById(tabID + 'Tab');
-    if (targetTab) targetTab.classList.add('active');
-    event.currentTarget.classList.add('active');
-
-    if(tabID === 'match') initMatchGame();
-    if(tabID === 'quiz') nextQuizQuestion();
-    if(tabID === 'balloon') initBalloonGame();
-    if(tabID === 'memory') initMemoryGame();
-  }
-   // 1. Explore Setup
   function initColors() {
     let grid = document.getElementById('colorGrid');
     colors.forEach(c => {
@@ -1129,102 +730,3 @@
     let arena = document.getElementById('balloonArena');
     arena.innerHTML = '';
     clearInterval(balloonInterval);
-
-    let roundColors = [...colors].sort(() => Math.random() - 0.5).slice(0, 4);
-    balloonTarget = roundColors[Math.floor(Math.random() * roundColors.length)];
-    document.getElementById('balloonInstruction').innerHTML = `Pop the balloon that is: <b style="color:${balloonTarget.hex}; font-size: 1.2rem;">${balloonTarget.name}</b>`;
-
-    balloonInterval = setInterval(() => {
-      if(document.getElementById('balloonTab').classList.contains('active')) {
-        spawnBalloon(roundColors);
-      }
-    }, 1200);
-  }
-
-  function spawnBalloon(roundColors) {
-    let arena = document.getElementById('balloonArena');
-    if (!arena || !document.getElementById('balloonTab').classList.contains('active')) return;
-
-    let c = roundColors[Math.floor(Math.random() * roundColors.length)];
-    let b = document.createElement('div');
-    b.className = 'balloon';
-    b.style.backgroundColor = c.hex;
-    b.style.left = Math.floor(Math.random() * 75) + "%";
-    b.innerText = c.name;
-
-    b.onclick = () => {
-      if (c.name === balloonTarget.name) {
-        document.getElementById('balloonInstruction').innerHTML = `🎉 Correct! Popped a <b>${c.name}</b> balloon!`;
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.speak(new SpeechSynthesisUtterance("Pop!"));
-        }
-        b.remove();
-        setTimeout(initBalloonGame, 1500);
-      } else {
-        b.style.transform = "scale(0)";
-        setTimeout(() => b.remove(), 200);
-      }
-    };
-
-    arena.appendChild(b);
-    setTimeout(() => { if(b) b.remove(); }, 4000);
-  }
-
-  // 6. Memory Match Game Setup
-  function initMemoryGame() {
-    let grid = document.getElementById('memoryGrid');
-    grid.innerHTML = '';
-    document.getElementById('memoryScore').innerText = "Flip cards to find matching color pairs!";
-
-    let subset = [...colors].sort(() => Math.random() - 0.5).slice(0, 4);
-    let cardPairs = [...subset, ...subset].sort(() => Math.random() - 0.5);
-
-    let firstCard = null;
-    let lockBoard = false;
-    let matchesFound = 0;
-
-    cardPairs.forEach(c => {
-      let card = document.createElement('div');
-      card.className = 'memory-card';
-      card.dataset.color = c.name;
-      card.innerText = "?";
-
-      card.onclick = () => {
-        if (lockBoard || card === firstCard || card.classList.contains('flipped')) return;
-
-        card.classList.add('flipped');
-        card.style.backgroundColor = c.hex;
-        card.innerText = c.name;
-
-        if (!firstCard) {
-          firstCard = card;
-        } else {
-          if (firstCard.dataset.color === card.dataset.color) {
-            firstCard = null;
-            matchesFound++;
-            if (matchesFound === subset.length) {
-              document.getElementById('memoryScore').innerText = "🏆 Yay! You matched all pairs!";
-            }
-          } else {
-            lockBoard = true;
-            setTimeout(() => {
-              firstCard.classList.remove('flipped');
-              firstCard.style.backgroundColor = "#3b82f6";
-              firstCard.innerText = "?";
-              card.classList.remove('flipped');
-              card.style.backgroundColor = "#3b82f6";
-              card.innerText = "?";
-              firstCard = null;
-              lockBoard = false;
-            }, 1000);
-          }
-        }
-      };
-      grid.appendChild(card);
-    });
-  }
-
-  initColors();
-</script>
-</body>
-</html>

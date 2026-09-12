@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn With Fun (Tug-of-War Arena) — LamaStudio Education Hub</title>
+<meta name="description" content="Play the interactive Math Tug-of-War game. Engage students in fast-paced arithmetic challenges, solve equations, and pull your team to victory!">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.com/categories/education/learn-with-fun.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../style.css">
+<style>
+  .game-arena-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
+  }
+
+  .rope-track {
+    position: relative;
+    height: 16px;
+    background: var(--background);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .rope-center-marker {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--text-muted);
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+
+  .tug-flag {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    background: var(--category-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    box-shadow: 0 0 10px var(--category-color);
+  }
+
+  .game-scoreboard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .team-score {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--background);
+  }
+  .team-blue { color: #38bdf8; }
+  .team-red { color: #f87171; }
+
+  .game-question-box {
+    text-align: center;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .math-problem {
+    font-size: 2.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+
+  .answer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .answer-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 1rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .answer-btn:hover {
+    background: var(--category-color);
+    color: #fff;
+    border-color: var(--category-color);
+  }
+
+  .game-controls {
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+
+  .portal-btn {
+    background: var(--category-color);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: opacity 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  .portal-btn:hover { opacity: 0.85; }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body style="--category-color: var(--c-education);">
+
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="category-strip">
+    <div class="category-track" role="tablist">
+      <a href="../tech/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Tech & Code</a>
+      <a href="../developer-tools/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Developer Tools</a>
+      <a href="../productivity/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Productivity</a>
+      <a href="../network-security/" class="cat-pill" style="--pc:var(--c-tech)"><span class="dot"></span>Network & Security</a>
+      <a href="../business/" class="cat-pill" style="--pc:var(--c-business)"><span class="dot"></span>Business</a>
+      <a href="../sports/" class="cat-pill" style="--pc:var(--c-sports)"><span class="dot"></span>Sports Hub</a>
+      <a href="../travel/" class="cat-pill" style="--pc:var(--c-travel)"><span class="dot"></span>Travel & Tourism</a>
+      <a href="../news/" class="cat-pill" style="--pc:var(--c-news)"><span class="dot"></span>Global News</a>
+      <a href="../fashion/" class="cat-pill" style="--pc:var(--c-fashion)"><span class="dot"></span>Fashion & Style</a>
+      <a href="../education/" class="cat-pill active" style="--pc:var(--c-education)"><span class="dot"></span>Education</a>
+      <a href="../weather/" class="cat-pill" style="--pc:var(--c-weather)"><span class="dot"></span>Weather Forecast</a>
+      <a href="../health/" class="cat-pill" style="--pc:var(--c-health)"><span class="dot"></span>Health & Wellness</a>
+    </div>
+  </div>
+</header>
+
+<main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+  
+  <!-- Breadcrumb & Header -->
+  <div style="margin-bottom: 2rem;">
+    <a href="index.html" style="font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Education Hub</a>
+    <span class="eyebrow" style="color: var(--category-color); display: block; margin-top: 1rem;">Interactive Learning Module</span>
+    <h1 style="font-size: 2.2rem; margin-top: 0.3rem;">🎮 Learn With Fun: Math Tug-of-War Arena</h1>
+    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Transform arithmetic practice into an exciting team showdown. Solve rapid-fire math questions correctly to pull the rope toward your side and claim victory!</p>
+  </div>
+
+  <!-- Interactive Game Arena -->
+  <section class="game-arena-container">
+    <div class="game-scoreboard">
+      <div class="team-score team-blue">Blue Team Score: <span id="blueScore">0</span></div>
+      <div style="font-weight: 700; color: var(--text);" id="gameStatus">Round in Progress</div>
+      <div class="team-score team-red">Red Team Score: <span id="redScore">0</span></div>
+    </div>
+
+    <!-- Rope Visualizer -->
+    <div class="rope-track">
+      <div class="rope-center-marker"></div>
+      <div class="tug-flag" id="tugFlag" style="left: 50%;"></div>
+    </div>
+
+    <!-- Question Box -->
+    <div class="game-question-box">
+      <div id="activeTeamIndicator" style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5rem; color: #38bdf8;">Your Turn: Blue Team</div>
+      <div class="math-problem" id="mathProblem">Loading...</div>
+      <div class="answer-grid" id="answerGrid">
+        <!-- Buttons injected by JS -->
+      </div>
+    </div>
+
+    <div class="game-controls">
+      <button class="portal-btn" id="resetGameBtn" onclick="resetGame()">Restart Match</button>
+    </div>
+  </section>
+
+  <!-- Feature Highlights -->
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow" style="color: var(--category-color);">Key Features</span>
+        <h2>Why Students &amp; Teachers Love It</h2>
+      </div>
+    </div>
+    
+    <div class="features-grid">
+      <article style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 2rem; display:inline-block; margin-bottom: 0.75rem;">⚡</span>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Fast-Paced Engagement</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Combines timed arithmetic drills with physical game mechanics to keep students fully focused.</p>
+      </article>
+
+      <article style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 2rem; display:inline-block; margin-bottom: 0.75rem;">👥</span>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Classroom Multiplayer</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Designed for two teams to compete on a single screen or smart board during school hours.</p>
+      </article>
+
+      <article style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+        <span style="font-size: 2rem; display:inline-block; margin-bottom: 0.75rem;">📈</span>
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Adaptive Difficulty</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">Adjusts number ranges automatically from basic addition to multi-step multiplication.</p>
+      </article>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer" style="margin-top: 4rem;">
+  <div class="footer-grid">
+    <div class="footer-brand"><a href="../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio</span></a><p>Independent Android app studio in DG Khan, Pakistan.</p></div>
+    <div class="footer-col"><h4>Store</h4><a href="../../apps/lamavpnpro/">LamaVPN Pro</a></div>
+    <div class="footer-col"><h4>Company</h4><a href="../../about.html">About</a></div>
+  </div>
+  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script src="../../script.js"></script>
+<script>
+  let ropePosition = 50; // percentage from 0 (red win) to 100 (blue win), 50 is center
+  let currentTurn = 'blue'; // 'blue' or 'red'
+  let blueScore = 0;
+  let redScore = 0;
+  let correctAnswer = 0;
+
+  function generateQuestion() {
+    const ops = ['+', '-', '*'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let num1, num2;
+
+    if (op === '+') {
+      num1 = Math.floor(Math.random() * 50) + 10;
+      num2 = Math.floor(Math.random() * 50) + 10;
+      correctAnswer = num1 + num2;
+    } else if (op === '-') {
+      num1 = Math.floor(Math.random() * 50) + 20;
+      num2 = Math.floor(Math.random() * num1) + 1; // ensure positive
+      correctAnswer = num1 - num2;
+    } else {
+      num1 = Math.floor(Math.random() * 12) + 2;
+      num2 = Math.floor(Math.random() * 12) + 2;
+      correctAnswer = num1 * num2;
+    }
+
+    document.getElementById('mathProblem').innerText = `${num1} ${op === '*' ? '×' : op} ${num2} = ?`;
+
+    // Generate options
+    let options = [correctAnswer];
+    while(options.length < 4) {
+      let offset = (Math.floor(Math.random() * 10) + 1) * (Math.random() < 0.5 ? 1 : -1);
+      let wrongAns = correctAnswer + offset;
+      if (wrongAns >= 0 && !options.includes(wrongAns)) {
+        options.push(wrongAns);
+      }
+    }
+
+    // Shuffle options
+    options.sort(() => Math.random() - 0.5);
+
+    const grid = document.getElementById('answerGrid');
+    grid.innerHTML = '';
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkAnswer(opt);
+      grid.appendChild(btn);
+    });
+  }
+
+  function checkAnswer(selected) {
+    if (selected === correctAnswer) {
+      if (currentTurn === 'blue') {
+        ropePosition += 6;
+        blueScore++;
+      } else {
+        ropePosition -= 6;
+        redScore++;
+      }
+    } else {
+      // Penalty / pull back
+      if (currentTurn === 'blue') {
+        ropePosition -= 4;
+      } else {
+        ropePosition += 4;
+      }
+    }
+
+    updateUI();
+
+    // Check win condition
+    if (ropePosition >= 90) {
+      endGame('Blue Team Wins the Tug-of-War! 🎉');
+      return;
+    } else if (ropePosition <= 10) {
+      endGame('Red Team Wins the Tug-of-War! 🎉');
+      return;
+    }
+
+    // Switch turn
+    currentTurn = currentTurn === 'blue' ? 'red' : 'blue';
+    const indicator = document.getElementById('activeTeamIndicator');
+    if (currentTurn === 'blue') {
+      indicator.innerText = 'Your Turn: Blue Team';
+      indicator.style.color = '#38bdf8';
+    } else {
+      indicator.innerText = 'Your Turn: Red Team';
+      indicator.style.color = '#f87171';
+    }
+
+    generateQuestion();
+  }
+
+  function updateUI() {
+    document.getElementById('tugFlag').style.left = ropePosition + '%';
+    document.getElementById('blueScore').innerText = blueScore;
+    document.getElementById('redScore').innerText = redScore;
+  }
+
+  function endGame(message) {
+    document.getElementById('gameStatus').innerText = message;
+    document.getElementById('mathProblem').innerText = 'Game Over!';
+    document.getElementById('answerGrid').innerHTML = `<button class="portal-btn" style="grid-column: span 2;" onclick="resetGame()">Play Again</button>`;
+  }
+
+  function resetGame() {
+    ropePosition = 50;
+    currentTurn = 'blue';
+    blueScore = 0;
+    redScore = 0;
+    document.getElementById('gameStatus').innerText = 'Round in Progress';
+    const indicator = document.getElementById('activeTeamIndicator');
+    indicator.innerText = 'Your Turn: Blue Team';
+    indicator.style.color = '#38bdf8';
+    updateUI();
+    generateQuestion();
+  }
+
+  // Initialize on load
+  generateQuestion();
+</script>
+</body>
+</html>

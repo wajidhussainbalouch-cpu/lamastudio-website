@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Colors Practice — Learn With Fun — LamaStudio</title>
+<title>Colors Practice Arena — LamaStudio</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -47,6 +47,35 @@
     border: 2px solid #bae6fd;
   }
 
+  /* Navigation Tabs for Activities */
+  .mode-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+    max-width: 950px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    background: #e2e8f0;
+    border: none;
+    padding: 12px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #475569;
+  }
+
+  .tab-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+
   .game-container {
     background: var(--card-bg);
     border: 4px solid #e2e8f0;
@@ -57,25 +86,21 @@
     box-shadow: 0 15px 35px rgba(0,0,0,0.08);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
+    box-sizing: border-box;
   }
 
-  /* Top Prompt Screen layout inspired by the reference screen */
-  .screen-header {
+  .activity-section {
+    display: none;
+  }
+
+  .activity-section.active {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid #f1f5f9;
-    padding-bottom: 1rem;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
-  .prompt-title {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0;
-  }
-
+  /* 1. Learn & Explore Mode */
   .question-box {
     display: flex;
     align-items: center;
@@ -89,7 +114,7 @@
 
   .stage-preview {
     flex: 1;
-    height: 220px;
+    height: 200px;
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -97,10 +122,6 @@
     box-shadow: inset 0 4px 10px rgba(0,0,0,0.06);
     border: 3px solid rgba(0,0,0,0.05);
     transition: background-color 0.4s ease;
-  }
-
-  .stage-content {
-    text-align: center;
   }
 
   .color-name-display {
@@ -113,17 +134,16 @@
 
   .prompt-text {
     flex: 1;
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #334155;
     line-height: 1.3;
   }
 
-  /* Options Grid */
   .color-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
   }
 
   .color-btn {
@@ -135,37 +155,123 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
   }
 
   .color-btn:hover {
     transform: translateY(-4px);
     border-color: #3b82f6;
-    box-shadow: 0 8px 15px rgba(59, 130, 246, 0.15);
   }
 
   .color-swatch {
     width: 100%;
-    height: 90px;
+    height: 70px;
     border-radius: 10px;
-    border: 2px solid rgba(0,0,0,0.08);
   }
 
   .color-label {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #475569;
   }
 
+  /* 2. Drawing & Fill Board Mode */
+  .drawing-layout {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  canvas {
+    flex: 2;
+    background: #ffffff;
+    border: 3px dashed #cbd5e1;
+    border-radius: 16px;
+    cursor: crosshair;
+    touch-action: none;
+    min-height: 350px;
+  }
+
+  .palette-sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 16px;
+    border: 2px solid #e2e8f0;
+  }
+
+  .brush-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .tool-btn {
+    padding: 10px 16px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* 3. Matching Game Mode */
+  .match-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .match-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+  }
+
+  .match-item {
+    padding: 20px;
+    background: #f1f5f9;
+    border: 3px solid #cbd5e1;
+    border-radius: 14px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .match-item.selected {
+    border-color: #2563eb;
+    background: #dbeafe;
+    transform: scale(1.03);
+  }
+
+  .match-item.matched {
+    background: #dcfce7;
+    border-color: #22c55e;
+    color: #166534;
+    cursor: default;
+  }
+
+  .feedback-msg {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2563eb;
+    min-height: 30px;
+  }
+
   @media(max-width: 768px) {
-    .question-box {
+    .question-box, .drawing-layout {
       flex-direction: column;
-    }
-    .prompt-text {
-      font-size: 1.6rem;
-      text-align: center;
     }
   }
 </style>
@@ -174,27 +280,58 @@
 
 <header>
   <div class="logo">🌟 LamaStudio Kids</div>
-  <div style="font-weight: 700; color: #64748b;">Colors Practice Arena</div>
+  <div style="font-weight: 700; color: #64748b;">Student Practice Hub</div>
 </header>
 
-<div class="game-container">
-  <div class="screen-header">
-    <h2 class="prompt-title">🎨 Interactive Learning</h2>
-    <div style="background: #e2e8f0; padding: 6px 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem;">Level 1</div>
-  </div>
+<!-- Activity Switcher Tabs -->
+<div class="mode-tabs">
+  <button class="tab-btn active" onclick="switchTab('learn')">🎨 Explore</button>
+  <button class="tab-btn" onclick="switchTab('draw')">🖌️ Draw & Fill</button>
+  <button class="tab-btn" onclick="switchTab('match')">🧩 Match Game</button>
+</div>
 
-  <div class="question-box">
-    <div class="stage-preview" id="stage">
-      <div class="stage-content">
+<div class="game-container">
+  
+  <!-- TAB 1: LEARN & EXPLORE -->
+  <div id="learnTab" class="activity-section active">
+    <div class="question-box">
+      <div class="stage-preview" id="stage">
         <h1 class="color-name-display" id="colorTitle">Red</h1>
       </div>
+      <div class="prompt-text" id="colorDesc">
+        Like strawberries and fire engines! Tap options below to explore.
+      </div>
     </div>
-    <div class="prompt-text" id="colorDesc">
-      Like strawberries and fire engines! Tap the matching card below.
+    <div class="color-grid" id="colorGrid"></div>
+  </div>
+
+  <!-- TAB 2: DRAW & FILL BOARD -->
+  <div id="drawTab" class="activity-section">
+    <div style="font-weight: 700; font-size: 1.2rem;">Free Drawing & Color Board</div>
+    <div class="drawing-layout">
+      <canvas id="drawCanvas" width="550" height="350"></canvas>
+      <div class="palette-sidebar">
+        <label style="font-weight: 700;">Pick Brush Color:</label>
+        <div class="color-grid" style="grid-template-columns: repeat(2, 1fr);" id="drawPalette"></div>
+        <div class="brush-row" style="margin-top: 10px;">
+          <label style="font-weight: 700;">Size:</label>
+          <input type="range" id="brushSize" min="2" max="25" value="8">
+        </div>
+        <button class="tool-btn" onclick="clearCanvas()">Clear Canvas</button>
+      </div>
     </div>
   </div>
 
-  <div class="color-grid" id="colorGrid"></div>
+  <!-- TAB 3: MATCHING GAME -->
+  <div id="matchTab" class="activity-section">
+    <div style="font-weight: 700; font-size: 1.2rem; text-align: center;">Match the Color Name to its Correct Color Swatch!</div>
+    <div class="feedback-msg" id="matchFeedback">Click a color name, then click its matching swatch block.</div>
+    <div class="match-container">
+      <div class="match-column" id="nameColumn"></div>
+      <div class="match-column" id="swatchColumn"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -204,28 +341,34 @@
     {name: "Green", hex: "#22c55e", desc: "Like grass, trees, and frogs!"},
     {name: "Yellow", hex: "#eab308", desc: "Like the warm sun and bananas!"},
     {name: "Orange", hex: "#f97316", desc: "Like juicy oranges and basketballs!"},
-    {name: "Purple", hex: "#a855f7", desc: "Like grapes and eggplants!"},
-    {name: "Pink", hex: "#ec4899", desc: "Like flamingos and cotton candy!"},
-    {name: "Brown", hex: "#78350f", desc: "Like chocolate and friendly bears!"}
+    {name: "Purple", hex: "#a855f7", desc: "Like grapes and eggplants!"}
   ];
 
+  // Tab Switching Function
+  function switchTab(tabID) {
+    document.querySelectorAll('.activity-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+    if(tabID === 'learn') {
+      document.getElementById('learnTab').classList.add('active');
+      event.currentTarget.classList.add('active');
+    } else if(tabID === 'draw') {
+      document.getElementById('drawTab').classList.add('active');
+      event.currentTarget.classList.add('active');
+    } else if(tabID === 'match') {
+      document.getElementById('matchTab').classList.add('active');
+      event.currentTarget.classList.add('active');
+      initMatchGame();
+    }
+  }
+
+  // 1. Explore Setup
   function initColors() {
     let grid = document.getElementById('colorGrid');
     colors.forEach(c => {
       let btn = document.createElement('div');
       btn.className = 'color-btn';
-      
-      let swatch = document.createElement('div');
-      swatch.className = 'color-swatch';
-      swatch.style.backgroundColor = c.hex;
-
-      let label = document.createElement('span');
-      label.className = 'color-label';
-      label.innerText = c.name;
-
-      btn.appendChild(swatch);
-      btn.appendChild(label);
-      
+      btn.innerHTML = `<div class="color-swatch" style="background-color: ${c.hex}"></div><span class="color-label">${c.name}</span>`;
       btn.onclick = () => selectColor(c);
       grid.appendChild(btn);
     });
@@ -236,7 +379,7 @@
     let stage = document.getElementById('stage');
     stage.style.backgroundColor = c.hex;
     document.getElementById('colorTitle').innerText = c.name;
-    document.getElementById('colorDesc').innerText = `${c.desc}`;
+    document.getElementById('colorDesc').innerText = c.desc;
 
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -245,7 +388,121 @@
     }
   }
 
+  // 2. Drawing Board Setup
+  const canvas = document.getElementById('drawCanvas');
+  const ctx = canvas.getContext('2d');
+  let painting = false;
+  let currentBrushColor = "#ef4444";
+
+  function startPosition(e) { painting = true; draw(e); }
+  function endPosition() { painting = false; ctx.beginPath(); }
+  function draw(e) {
+    if (!painting) return;
+    ctx.lineWidth = document.getElementById('brushSize').value;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = currentBrushColor;
+
+    let rect = canvas.getBoundingClientRect();
+    let x = (e.clientX || e.touches[0].clientX) - rect.left;
+    let y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }
+
+  canvas.addEventListener('mousedown', startPosition);
+  canvas.addEventListener('mouseup', endPosition);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('touchstart', startPosition);
+  canvas.addEventListener('touchend', endPosition);
+  canvas.addEventListener('touchmove', draw);
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Build drawing palette buttons
+  let drawPalette = document.getElementById('drawPalette');
+  colors.forEach(c => {
+    let pBtn = document.createElement('div');
+    pBtn.style.backgroundColor = c.hex;
+    pBtn.style.height = "35px";
+    pBtn.style.borderRadius = "8px";
+    pBtn.style.cursor = "pointer";
+    pBtn.onclick = () => { currentBrushColor = c.hex; };
+    drawPalette.appendChild(pBtn);
+  });
+
+  // 3. Matching Game Setup
+  let selectedNameNode = null;
+  let matchedCount = 0;
+
+  function initMatchGame() {
+    let nameCol = document.getElementById('nameColumn');
+    let swatchCol = document.getElementById('swatchColumn');
+    nameCol.innerHTML = '';
+    swatchCol.innerHTML = '';
+    matchedCount = 0;
+    document.getElementById('matchFeedback').innerText = "Click a color name, then click its matching swatch block.";
+
+    let shuffledNames = [...colors].sort(() => Math.random() - 0.5);
+    let shuffledSwatches = [...colors].sort(() => Math.random() - 0.5);
+
+    shuffledNames.forEach(c => {
+      let item = document.createElement('div');
+      item.className = 'match-item';
+      item.innerText = c.name;
+      item.dataset.color = c.name;
+      item.onclick = () => selectMatchName(item, c.name);
+      nameCol.appendChild(item);
+    });
+
+    shuffledSwatches.forEach(c => {
+      let item = document.createElement('div');
+      item.className = 'match-item';
+      item.style.backgroundColor = c.hex;
+      item.style.height = "30px";
+      item.dataset.color = c.name;
+      item.onclick = () => selectMatchSwatch(item, c.name);
+      swatchCol.appendChild(item);
+    });
+  }
+
+  function selectMatchName(node, colorName) {
+    if (node.classList.contains('matched')) return;
+    document.querySelectorAll('#nameColumn .match-item').forEach(el => el.classList.remove('selected'));
+    node.classList.add('selected');
+    selectedNameNode = { node, colorName };
+  }
+
+  function selectMatchSwatch(swatchNode, swatchColor) {
+    if (!selectedNameNode || swatchNode.classList.contains('matched')) return;
+
+    if (selectedNameNode.colorName === swatchColor) {
+      selectedNameNode.node.classList.add('matched');
+      selectedNameNode.node.classList.remove('selected');
+      swatchNode.classList.add('matched');
+      swatchNode.style.backgroundColor = colors.find(c => c.name === swatchColor).hex; // retain color
+      swatchNode.innerText = "✓ " + swatchColor;
+      
+      matchedCount++;
+      document.getElementById('matchFeedback').innerText = "Awesome job! Keep going!";
+      selectedNameNode = null;
+
+      if (matchedCount === colors.length) {
+        document.getElementById('matchFeedback').innerText = "🎉 Congratulations! You matched all colors successfully!";
+      }
+    } else {
+      document.getElementById('matchFeedback').innerText = "❌ Oops! That's not a match. Try again!";
+      selectedNameNode.node.classList.remove('selected');
+      selectedNameNode = null;
+    }
+  }
+
   initColors();
 </script>
 </body>
-</html>
+    </html>
+  

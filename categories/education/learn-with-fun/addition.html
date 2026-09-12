@@ -124,7 +124,7 @@
     text-align: center;
   }
   
-  #leftTeamGroup, #rightTeamGroup, #ropeGroup {
+  #leftTeamGroup, #rightTeamGroup {
     transition: transform 0.4s ease-out;
   }
 </style>
@@ -140,11 +140,11 @@
     <h3>Setup Competition</h3>
     <div class="team-grid">
       <div class="team-card team-blue">
-        <h4 style="color: var(--blue); margin-top:0;">Team Blue Name</h4>
+        <h4 style="color: var(--blue); margin-top:0;" id="labelBlueName">Team Blue</h4>
         <input type="text" id="nameBlue" value="Team Blue">
       </div>
       <div class="team-card team-red">
-        <h4 style="color: var(--red); margin-top:0;">Team Red Name</h4>
+        <h4 style="color: var(--red); margin-top:0;" id="labelRedName">Team Red</h4>
         <input type="text" id="nameRed" value="Team Red">
       </div>
     </div>
@@ -167,17 +167,20 @@
     </div>
 
     <div class="tug-arena">
+      <!-- Center Marker Line -->
       <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 5;"></div>
       
-      <svg viewBox="0 0 1000 300" width="100%" xmlns="http://www.w3.org/2000/svg">
-        <path id="ropeGroup" d="M50 150 L950 150" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
-        <g id="leftTeamGroup" transform="translate(150, 50)">
-          <rect x="0" y="0" width="80" height="140" rx="10" fill="var(--blue)"/>
-          <circle cx="40" cy="-20" r="30" fill="#e2a37e"/>
+      <svg viewBox="0 0 1000 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+        <line x1="50" y1="100" x2="950" y2="100" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+        <!-- Left Team (Blue) -->
+        <g id="leftTeamGroup" transform="translate(250, 30)">
+          <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--blue)"/>
+          <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
         </g>
-        <g id="rightTeamGroup" transform="translate(470, 50)">
-          <rect x="0" y="0" width="80" height="140" rx="10" fill="var(--red)"/>
-          <circle cx="40" cy="-20" r="30" fill="#e2a37e"/>
+        <!-- Right Team (Red) -->
+        <g id="rightTeamGroup" transform="translate(650, 30)">
+          <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--red)"/>
+          <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
         </g>
       </svg>
     </div>
@@ -203,10 +206,11 @@
   let gameState = {
     teamBlueName: 'Team Blue',
     teamRedName: 'Team Red',
-    currentTurn: 1,
+    currentTurn: 1, // 1 for Blue, 2 for Red
     scoreBlue: 0,
     scoreRed: 0,
-    ropeOffset: 0,
+    bluePos: 250,  // Initial X position for Blue
+    redPos: 650,   // Initial X position for Red
     difficulty: 'medium',
     currentAnswer: 0,
     usedQuestions: new Set()
@@ -258,15 +262,20 @@
     if (userVal === gameState.currentAnswer) {
       if (gameState.currentTurn === 1) {
         gameState.scoreBlue++;
-        gameState.ropeOffset += 30; // Blue pulls right (toward center/winning)
+        // Blue moves right toward the center/opponent side
+        gameState.bluePos += 30;
+        gameState.redPos += 30;
       } else {
         gameState.scoreRed++;
-        gameState.ropeOffset -= 30; // Red pulls left (toward center/winning)
+        // Red moves left toward the center/opponent side
+        gameState.bluePos -= 30;
+        gameState.redPos -= 30;
       }
       updateVisuals();
       checkWin();
     }
 
+    // Switch turn
     gameState.currentTurn = gameState.currentTurn === 1 ? 2 : 1;
     if (!isGameOver()) {
       nextQuestion();
@@ -277,22 +286,20 @@
     document.getElementById('scoreBlueText').innerText = gameState.scoreBlue;
     document.getElementById('scoreRedText').innerText = gameState.scoreRed;
     
-    // Base positions: Blue starts left (150), Red starts right (470). 
-    // Positive offset moves both towards the right side.
-    document.getElementById('leftTeamGroup').style.transform = `translate(${150 + gameState.ropeOffset}px, 50px)`;
-    document.getElementById('rightTeamGroup').style.transform = `translate(${470 + gameState.ropeOffset}px, 50px)`;
+    document.getElementById('leftTeamGroup').style.transform = `translate(${gameState.bluePos}px, 30px)`;
+    document.getElementById('rightTeamGroup').style.transform = `translate(${gameState.redPos}px, 30px)`;
   }
 
   function isGameOver() {
-    return Math.abs(gameState.ropeOffset) >= 200;
+    // If Blue crosses past Red's starting point or vice-versa
+    return gameState.bluePos >= 550 || gameState.redPos <= 350;
   }
 
   function checkWin() {
-    if (Math.abs(gameState.ropeOffset) >= 200) {
+    if (isGameOver()) {
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('winScreen').classList.add('active');
-      // If offset is positive, Blue pulled further right. If negative, Red pulled further left.
-      let winner = gameState.ropeOffset > 0 ? gameState.teamBlueName : gameState.teamRedName;
+      let winner = gameState.bluePos >= 550 ? gameState.teamBlueName : gameState.teamRedName;
       document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
     }
   }

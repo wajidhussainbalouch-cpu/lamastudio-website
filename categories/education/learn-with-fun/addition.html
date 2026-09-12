@@ -124,7 +124,7 @@
     text-align: center;
   }
   
-  #leftTeamGroup, #rightTeamGroup {
+  #blueTeamGroup, #redTeamGroup {
     transition: transform 0.4s ease-out;
   }
 </style>
@@ -167,18 +167,20 @@
     </div>
 
     <div class="tug-arena">
-      <!-- Center Marker Line -->
+      <!-- Absolute Center Marker Line at X = 500 -->
       <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 5;"></div>
       
       <svg viewBox="0 0 1000 200" width="100%" xmlns="http://www.w3.org/2000/svg">
         <line x1="50" y1="100" x2="950" y2="100" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
-        <!-- Left Team (Blue) -->
-        <g id="leftTeamGroup" transform="translate(150, 30)">
+        
+        <!-- Blue Team (Starts at X=150, moves RIGHT towards center as score increases) -->
+        <g id="blueTeamGroup" transform="translate(150, 30)">
           <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--blue)"/>
           <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
         </g>
-        <!-- Right Team (Red) -->
-        <g id="rightTeamGroup" transform="translate(750, 30)">
+        
+        <!-- Red Team (Starts at X=750, moves LEFT towards center as score increases) -->
+        <g id="redTeamGroup" transform="translate(750, 30)">
           <rect x="0" y="0" width="60" height="100" rx="10" fill="var(--red)"/>
           <circle cx="30" cy="-15" r="22" fill="#e2a37e"/>
         </g>
@@ -209,7 +211,6 @@
     currentTurn: 1, // 1 for Blue, 2 for Red
     scoreBlue: 0,
     scoreRed: 0,
-    tugPosition: 0, // 0 is center. Positive = Blue pulling right, Negative = Red pulling left.
     difficulty: 'medium',
     currentAnswer: 0,
     usedQuestions: new Set()
@@ -261,10 +262,8 @@
     if (userVal === gameState.currentAnswer) {
       if (gameState.currentTurn === 1) {
         gameState.scoreBlue++;
-        gameState.tugPosition += 35; // Blue pulls right toward Red
       } else {
         gameState.scoreRed++;
-        gameState.tugPosition -= 35; // Red pulls left toward Blue
       }
       updateVisuals();
       if (checkWin()) return;
@@ -279,21 +278,24 @@
     document.getElementById('scoreBlueText').innerText = gameState.scoreBlue;
     document.getElementById('scoreRedText').innerText = gameState.scoreRed;
     
-    // Base positions: Blue starts at 150, Red starts at 750. 
-    // Both move together by tugPosition so they visibly pull toward each other's territory.
-    let baseBlue = 150;
-    let baseRed = 750;
+    // Base positions: Blue starts at X=150, Red starts at X=750.
+    // Each score adds 35px of movement towards the center (Blue moves right, Red moves left).
+    let blueX = 150 + (gameState.scoreBlue * 35);
+    let redX = 750 - (gameState.scoreRed * 35);
     
-    document.getElementById('leftTeamGroup').style.transform = `translate(${baseBlue + gameState.tugPosition}px, 30px)`;
-    document.getElementById('rightTeamGroup').style.transform = `translate(${baseRed + gameState.tugPosition}px, 30px)`;
+    document.getElementById('blueTeamGroup').style.transform = `translate(${blueX}px, 30px)`;
+    document.getElementById('redTeamGroup').style.transform = `translate(${redX}px, 30px)`;
   }
 
   function checkWin() {
-    // If tugPosition goes too far right (+250) or too far left (-250), someone wins
-    if (gameState.tugPosition >= 250 || gameState.tugPosition <= -250) {
+    // Win if Blue passes the center line (X >= 500) or Red passes the center line (X <= 440)
+    let blueX = 150 + (gameState.scoreBlue * 35);
+    let redX = 750 - (gameState.scoreRed * 35);
+
+    if (blueX >= 470 || redX <= 430) {
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('winScreen').classList.add('active');
-      let winner = gameState.tugPosition > 0 ? gameState.teamBlueName : gameState.teamRedName;
+      let winner = blueX >= 470 ? gameState.teamBlueName : gameState.teamRedName;
       document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
       return true;
     }

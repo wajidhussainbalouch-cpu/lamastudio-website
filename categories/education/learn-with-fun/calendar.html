@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Days & Months — Learn With Fun — LamaStudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 { margin-bottom: 5px; font-size: 2rem; text-align: center; }
+  .game-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 20px;
+  }
+  .section-title { font-size: 1.3rem; margin-bottom: 1rem; color: #38bdf8; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+  .card-btn {
+    background: #334155;
+    color: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 0.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .card-btn:hover { background: #4f46e5; border-color: #818cf8; transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<h1>📅 Days of the Week &amp; Months of the Year</h1>
+
+<div class="game-container">
+  <div class="section-title">📆 Days of the Week</div>
+  <div class="grid" id="daysGrid"></div>
+
+  <div class="section-title">🗓️ Months of the Year</div>
+  <div class="grid" id="monthsGrid"></div>
+</div>
+
+<script>
+  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+  function initCalendar() {
+    let dGrid = document.getElementById('daysGrid');
+    days.forEach(d => {
+      let btn = document.createElement('button');
+      btn.className = 'card-btn';
+      btn.innerText = d;
+      btn.onclick = () => speakText(d);
+      dGrid.appendChild(btn);
+    });
+
+    let mGrid = document.getElementById('monthsGrid');
+    months.forEach(m => {
+      let btn = document.createElement('button');
+      btn.className = 'card-btn';
+      btn.innerText = m;
+      btn.onclick = () => speakText(m);
+      mGrid.appendChild(btn);
+    });
+  }
+
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      let utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  initCalendar();
+</script>
+</body>
+</html>

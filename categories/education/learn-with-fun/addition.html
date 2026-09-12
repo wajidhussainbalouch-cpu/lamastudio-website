@@ -175,7 +175,7 @@
           <rect x="0" y="0" width="80" height="140" rx="10" fill="var(--blue)"/>
           <circle cx="40" cy="-20" r="30" fill="#e2a37e"/>
         </g>
-        <g id="rightTeamGroup" transform="translate(770, 50)">
+        <g id="rightTeamGroup" transform="translate(470, 50)">
           <rect x="0" y="0" width="80" height="140" rx="10" fill="var(--red)"/>
           <circle cx="40" cy="-20" r="30" fill="#e2a37e"/>
         </g>
@@ -258,10 +258,10 @@
     if (userVal === gameState.currentAnswer) {
       if (gameState.currentTurn === 1) {
         gameState.scoreBlue++;
-        gameState.ropeOffset += 35;
+        gameState.ropeOffset += 30; // Blue pulls right (toward center/winning)
       } else {
         gameState.scoreRed++;
-        gameState.ropeOffset -= 35;
+        gameState.ropeOffset -= 30; // Red pulls left (toward center/winning)
       }
       updateVisuals();
       checkWin();
@@ -277,18 +277,21 @@
     document.getElementById('scoreBlueText').innerText = gameState.scoreBlue;
     document.getElementById('scoreRedText').innerText = gameState.scoreRed;
     
+    // Base positions: Blue starts left (150), Red starts right (470). 
+    // Positive offset moves both towards the right side.
     document.getElementById('leftTeamGroup').style.transform = `translate(${150 + gameState.ropeOffset}px, 50px)`;
-    document.getElementById('rightTeamGroup').style.transform = `translate(${770 + gameState.ropeOffset}px, 50px)`;
+    document.getElementById('rightTeamGroup').style.transform = `translate(${470 + gameState.ropeOffset}px, 50px)`;
   }
 
   function isGameOver() {
-    return Math.abs(gameState.ropeOffset) >= 250;
+    return Math.abs(gameState.ropeOffset) >= 200;
   }
 
   function checkWin() {
-    if (Math.abs(gameState.ropeOffset) >= 250) {
+    if (Math.abs(gameState.ropeOffset) >= 200) {
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('winScreen').classList.add('active');
+      // If offset is positive, Blue pulled further right. If negative, Red pulled further left.
       let winner = gameState.ropeOffset > 0 ? gameState.teamBlueName : gameState.teamRedName;
       document.getElementById('winnerText').innerText = `🎉 ${winner} Wins the Competition! 🎉`;
     }

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABC Alphabet Explorer — Learn With Fun — LamaStudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+    --accent: #168be5;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 { margin-bottom: 5px; font-size: 2rem; text-align: center; }
+  .game-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 20px;
+    text-align: center;
+  }
+  .display-box {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 3rem;
+    margin-bottom: 2rem;
+  }
+  .letter-giant {
+    font-size: 7rem;
+    font-weight: 800;
+    color: #38bdf8;
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .word-display {
+    font-size: 2rem;
+    margin: 1rem 0;
+    color: #fbbf24;
+  }
+  .emoji-display {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+  .btn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+    gap: 0.5rem;
+  }
+  .letter-btn {
+    background: #334155;
+    color: white;
+    border: none;
+    padding: 0.75rem 0;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .letter-btn:hover { background: var(--accent); transform: scale(1.05); }
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+  }
+  .action-btn {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .action-btn:hover { opacity: 0.9; }
+</style>
+</head>
+<body>
+
+<h1>🔤 ABC Alphabet Explorer</h1>
+
+<div class="game-container">
+  <div class="display-box">
+    <div class="emoji-display" id="itemEmoji">🍎</div>
+    <div class="letter-giant" id="letterDisplay">A a</div>
+    <div class="word-display" id="wordDisplay">A is for Apple</div>
+    <button class="action-btn" onclick="speakLetter()" style="margin-top: 1rem;">🔊 Listen</button>
+  </div>
+
+  <div class="btn-grid" id="alphabetGrid"></div>
+
+  <div class="nav-row">
+    <button class="action-btn" onclick="changeLetter(-1)">◀ Previous</button>
+    <button class="action-btn" onclick="randomLetter()">🎲 Random</button>
+    <button class="action-btn" onclick="changeLetter(1)">Next ▶</button>
+  </div>
+</div>
+
+<script>
+  const alphabetData = [
+    {l: "A", w: "Apple", e: "🍎"},
+    {l: "B", w: "Ball", e: "⚽"},
+    {l: "C", w: "Cat", e: "🐱"},
+    {l: "D", w: "Dog", e: "🐶"},
+    {l: "E", w: "Elephant", e: "🐘"},
+    {l: "F", w: "Fish", e: "🐟"},
+    {l: "G", w: "Grape", e: "🍇"},
+    {l: "H", w: "House", e: "🏠"},
+    {l: "I", w: "Ice Cream", e: "🍦"},
+    {l: "J", w: "Jug", e: "🏺"},
+    {l: "K", w: "Kite", e: "🪁"},
+    {l: "L", w: "Lion", e: "🦁"},
+    {l: "M", w: "Monkey", e: "🐵"},
+    {l: "N", w: "Nest", e: "🪺"},
+    {l: "O", w: "Orange", e: "🍊"},
+    {l: "P", w: "Pencil", e: "✏️"},
+    {l: "Q", w: "Queen", e: "👑"},
+    {l: "R", w: "Rabbit", e: "🐰"},
+    {l: "S", w: "Sun", e: "☀️"},
+    {l: "T", w: "Train", e: "🚂"},
+    {l: "U", w: "Umbrella", e: "☂️"},
+    {l: "V", w: "Violin", e: "🎻"},
+    {l: "W", w: "Watch", e: "⌚"},
+    {l: "X", w: "Xylophone", e: "🎼"},
+    {l: "Y", w: "Yoyo", e: "🪀"},
+    {l: "Z", w: "Zebra", e: "🦓"}
+  ];
+
+  let currentIndex = 0;
+
+  function initGrid() {
+    const grid = document.getElementById('alphabetGrid');
+    alphabetData.forEach((item, idx) => {
+      let btn = document.createElement('button');
+      btn.className = 'letter-btn';
+      btn.innerText = item.l;
+      btn.onclick = () => selectLetter(idx);
+      grid.appendChild(btn);
+    });
+  }
+
+  function selectLetter(idx) {
+    currentIndex = idx;
+    let data = alphabetData[currentIndex];
+    document.getElementById('letterDisplay').innerText = `${data.l} ${data.l.toLowerCase()}`;
+    document.getElementById('wordDisplay').innerText = `${data.l} is for ${data.w}`;
+    document.getElementById('itemEmoji').innerText = data.e;
+    speakLetter();
+  }
+
+  function changeLetter(dir) {
+    currentIndex = (currentIndex + dir + alphabetData.length) % alphabetData.length;
+    selectLetter(currentIndex);
+  }
+
+  function randomLetter() {
+    currentIndex = Math.floor(Math.random() * alphabetData.length);
+    selectLetter(currentIndex);
+  }
+
+  function speakLetter() {
+    if ('speechSynthesis' in window) {
+      let data = alphabetData[currentIndex];
+      let text = `${data.l}. ${data.l} is for ${data.w}.`;
+      let utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  initGrid();
+</script>
+</body>
+</html>

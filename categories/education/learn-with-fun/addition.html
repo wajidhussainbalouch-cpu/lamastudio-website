@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Addition Tug of War — Learn With Fun — LamaStudio</title>
-<meta name="description" content="Play the 2-player Addition Tug of War math game with realistic blue and red pulling characters, live score tracking, timer, and certificate generator.">
+<meta name="description" content="Play the 2-player Addition Tug of War math game with custom SVG artwork, live score tracking, timer, and certificate generator.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://lamastudio.pk/categories/education/learn-with-fun/addition.html">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -41,30 +41,47 @@
     padding: 1.5rem;
     text-align: center;
   }
-  .team-blue { border-color: #38bdf8; }
-  .team-red { border-color: #f87171; }
+  .team-blue { border-color: #168be5; }
+  .team-red { border-color: #d9235b; }
   
   .tug-arena {
     background: linear-gradient(180deg, #090d16 0%, #1e293b 100%);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 1.5rem;
+    padding: 1rem;
     margin: 1.5rem 0;
     position: relative;
     overflow: hidden;
-    height: 200px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
   }
   
   .rope-svg-container {
-    position: absolute;
-    top: 45%;
-    left: 0;
     width: 100%;
-    transform: translateY(-50%);
-    pointer-events: none;
+    height: auto;
+  }
+
+  /* SVG Artwork Animation Styles */
+  .left-team {
+    animation: leftPull 2s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .right-team {
+    animation: rightPull 2s ease-in-out infinite;
+    transform-origin: center;
+  }
+  .rope-group {
+    animation: ropePull 2s ease-in-out infinite;
+  }
+  @keyframes leftPull {
+    0%,100% { transform: translateX(0) rotate(0deg); }
+    50% { transform: translateX(18px) rotate(-1deg); }
+  }
+  @keyframes rightPull {
+    0%,100% { transform: translateX(0) rotate(0deg); }
+    50% { transform: translateX(-18px) rotate(1deg); }
+  }
+  @keyframes ropePull {
+    0%,100% { transform: translateX(0); }
+    50% { transform: translateX(8px); }
   }
 
   .hud-row {
@@ -135,8 +152,8 @@
   }
   .cert-title { font-size: 2rem; color: #fbbf24; font-family: 'Space Grotesk', sans-serif; margin-bottom: 0.5rem; }
   .cert-winner { font-size: 2.5rem; font-weight: 800; margin: 1rem 0; text-transform: uppercase; }
-  .cert-winner.blue { color: #38bdf8; }
-  .cert-winner.red { color: #f87171; }
+  .cert-winner.blue { color: #168be5; }
+  .cert-winner.red { color: #d9235b; }
 </style>
 </head>
 <body style="--category-color: var(--c-education);">
@@ -169,11 +186,11 @@
       
       <div class="team-grid">
         <div class="team-card team-blue">
-          <h4 style="color: #38bdf8; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue</h4>
+          <h4 style="color: #168be5; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue</h4>
           <input type="text" id="playerBlue" value="Team Blue" class="answer-input" style="width: 100%; font-size: 1rem;">
         </div>
         <div class="team-card team-red">
-          <h4 style="color: #f87171; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red</h4>
+          <h4 style="color: #d9235b; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red</h4>
           <input type="text" id="playerRed" value="Team Red" class="answer-input" style="width: 100%; font-size: 1rem;">
         </div>
       </div>
@@ -195,105 +212,157 @@
       <div class="hud-row">
         <div>⏳ Time Left: <span id="timerDisplay" style="color: #fbbf24; font-weight: 700;">60</span>s</div>
         <div>Turn: <span id="turnIndicator" style="font-weight: 700;">Team Blue</span></div>
-        <div>Score: <span style="color:#38bdf8;">Blue</span> <span id="scoreBlue">0</span> - <span id="scoreRed">0</span> <span style="color:#f87171;">Red</span></div>
+        <div>Score: <span style="color:#168be5;">Blue</span> <span id="scoreBlue">0</span> - <span id="scoreRed">0</span> <span style="color:#d9235b;">Red</span></div>
       </div>
 
       <div class="tug-arena">
         <!-- Center Ground Marker Line -->
-        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 1; box-shadow: 0 0 12px #fbbf24;"></div>
+        <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; background: #fbbf24; transform: translateX(-50%); z-index: 5; box-shadow: 0 0 12px #fbbf24;"></div>
         
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #94a3b8; position: relative; z-index: 2;">
-          <span style="color: #38bdf8;" id="labelBlue">Team Blue Side</span>
-          <span style="color: #f87171;" id="labelRed">Team Red Side</span>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #94a3b8; position: relative; z-index: 6; padding: 0 1rem;">
+          <span style="color: #168be5;" id="labelBlue">Team Blue Side</span>
+          <span style="color: #d9235b;" id="labelRed">Team Red Side</span>
         </div>
 
-        <!-- Realistic Professional Vector Graphics (Characters + Textured Rope) -->
+        <!-- EMBEDDED CUSTOM SVG TUG OF WAR ARTWORK -->
         <div class="rope-svg-container">
-          <svg viewBox="0 0 800 140" width="100%" height="130">
-            <defs>
-              <!-- Realistic Braided Rope Gradient -->
-              <linearGradient id="ropeTexture" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#92400e"/>
-                <stop offset="50%" stop-color="#d97706"/>
-                <stop offset="100%" stop-color="#b45309"/>
-              </linearGradient>
-              <!-- Drop Shadow for Depth -->
-              <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-                <feDropShadow dx="0" dy="4" stdDeviation="3" flood-opacity="0.4"/>
-              </filter>
-            </defs>
-
-            <!-- Ground Floor Shadow -->
-            <ellipse cx="400" cy="125" rx="380" ry="6" fill="#020617" opacity="0.7"/>
-
-            <!-- REALISTIC THICK TEXTURED ROPE WITH TWIST PATTERN -->
-            <g filter="url(#shadow)">
-              <line x1="20" y1="75" x2="780" y2="75" stroke="url(#ropeTexture)" stroke-width="10" stroke-linecap="round"/>
-              <!-- Diagonal Twist Lines for Texture -->
-              <line x1="30" y1="70" x2="40" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="70" y1="70" x2="80" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="110" y1="70" x2="120" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="150" y1="70" x2="160" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="190" y1="70" x2="200" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="230" y1="70" x2="240" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="270" y1="70" x2="280" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="310" y1="70" x2="320" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="350" y1="70" x2="360" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="430" y1="70" x2="440" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="470" y1="70" x2="480" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="510" y1="70" x2="520" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="550" y1="70" x2="560" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="590" y1="70" x2="600" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="630" y1="70" x2="640" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="670" y1="70" x2="680" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="710" y1="70" x2="720" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-              <line x1="750" y1="70" x2="760" y2="80" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
-            </g>
-
-            <!-- Center Flag Knot Marker -->
-            <g id="ropeFlag" filter="url(#shadow)">
-              <polygon points="390,62 410,62 400,95" fill="#facc15" stroke="#b45309" stroke-width="2"/>
-              <circle cx="400" cy="65" r="7" fill="#ef4444"/>
-            </g>
-
-            <!-- ================= TEAM BLUE CHARACTERS (Realistic Pullers) ================= -->
-            <g id="teamBlueGroup" transform="translate(120, 10)">
-              <!-- Blue Player 2 (Back Anchor) -->
-              <g transform="translate(0, 5)">
-                <circle cx="22" cy="18" r="11" fill="#fcd34d"/>
-                <path d="M12 14 Q22 8 32 14" fill="#0369a1"/>
-                <path d="M22 29 L44 60" stroke="#0369a1" stroke-width="15" stroke-linecap="round"/>
-                <path d="M42 50 L68 62" stroke="#fcd34d" stroke-width="7" stroke-linecap="round"/>
-                <path d="M34 60 L14 110 M34 60 L56 110" stroke="#0284c7" stroke-width="9" stroke-linecap="round"/>
-              </g>
-              <!-- Blue Player 1 (Front Puller) -->
-              <g transform="translate(48, 0)">
-                <circle cx="22" cy="18" r="11" fill="#fcd34d"/>
-                <path d="M12 14 Q22 8 32 14" fill="#0284c7"/>
-                <path d="M22 29 L44 60" stroke="#0284c7" stroke-width="15" stroke-linecap="round"/>
-                <path d="M42 50 L65 62" stroke="#fcd34d" stroke-width="7" stroke-linecap="round"/>
-                <path d="M34 60 L12 110 M34 60 L58 110" stroke="#0369a1" stroke-width="9" stroke-linecap="round"/>
+          <svg viewBox="0 0 1000 500" width="100%" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- ROPE GROUP -->
+            <g id="ropeMasterGroup" class="rope-group">
+              <path d="M55 285 C180 285 290 285 390 285 C430 285 465 285 500 285 C535 285 570 285 610 285 C710 285 820 285 945 285" fill="none" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
+              <g>
+                <path d="M492 275 L500 290 L508 275" fill="none" stroke="#e52b63" stroke-width="7" stroke-linecap="round"/>
+                <path d="M500 289 L500 315" stroke="#e52b63" stroke-width="5" stroke-linecap="round"/>
               </g>
             </g>
 
-            <!-- ================= TEAM RED CHARACTERS (Realistic Pullers) ================= -->
-            <g id="teamRedGroup" transform="translate(480, 10)">
-              <!-- Red Player 1 (Front Puller) -->
-              <g transform="translate(0, 0)">
-                <circle cx="22" cy="18" r="11" fill="#fcd34d"/>
-                <path d="M12 14 Q22 8 32 14" fill="#dc2626"/>
-                <path d="M22 29 L0 60" stroke="#dc2626" stroke-width="15" stroke-linecap="round"/>
-                <path d="M2 50 L-22 62" stroke="#fcd34d" stroke-width="7" stroke-linecap="round"/>
-                <path d="M10 60 L-12 110 M10 60 L34 110" stroke="#b91c1c" stroke-width="9" stroke-linecap="round"/>
+            <!-- LEFT TEAM GROUP -->
+            <g id="leftTeamMasterGroup" class="left-team">
+              <!-- LEFT PLAYER 1 -->
+              <g transform="translate(100,40)">
+                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#168be5"/>
+                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
+                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#e2a37e" stroke="#8d604b" stroke-width="2"/>
+                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
+                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
+                <path d="M73 73 Q105 52 137 73" fill="none" stroke="#777" stroke-width="3"/>
+                <ellipse cx="89" cy="104" rx="5" ry="7" fill="#fff"/>
+                <ellipse cx="121" cy="104" rx="5" ry="7" fill="#fff"/>
+                <circle cx="90" cy="105" r="3" fill="#222"/>
+                <circle cx="120" cy="105" r="3" fill="#222"/>
+                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
+                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
+                <rect x="98" y="174" width="18" height="14" rx="3" fill="#e33b35"/>
+                <path d="M55 170 Q35 205 70 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
+                <ellipse cx="72" cy="245" rx="14" ry="11" fill="#e2a37e" transform="rotate(-25 72 245)"/>
+                <path d="M135 170 Q165 205 190 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
+                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#e2a37e" transform="rotate(-20 190 245)"/>
+                <path d="M177 245 L204 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
+                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
+                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
+                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#168be5"/>
+                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#168be5"/>
               </g>
-              <!-- Red Player 2 (Back Anchor) -->
-              <g transform="translate(48, 5)">
-                <circle cx="22" cy="18" r="11" fill="#fcd34d"/>
-                <path d="M12 14 Q22 8 32 14" fill="#b91c1c"/>
-                <path d="M22 29 L0 60" stroke="#b91c1c" stroke-width="15" stroke-linecap="round"/>
-                <path d="M2 50 L-25 62" stroke="#fcd34d" stroke-width="7" stroke-linecap="round"/>
-                <path d="M10 60 L-10 110 M10 60 L32 110" stroke="#dc2626" stroke-width="9" stroke-linecap="round"/>
+
+              <!-- LEFT PLAYER 2 -->
+              <g transform="translate(270,45) scale(.92)">
+                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#168be5"/>
+                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
+                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#dfa07a" stroke="#8d604b" stroke-width="2"/>
+                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
+                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
+                <ellipse cx="89" cy="104" rx="5" ry="7" fill="white"/>
+                <ellipse cx="121" cy="104" rx="5" ry="7" fill="white"/>
+                <circle cx="90" cy="105" r="3" fill="#222"/>
+                <circle cx="120" cy="105" r="3" fill="#222"/>
+                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
+                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
+                <path d="M55 170 Q40 205 65 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
+                <path d="M135 170 Q165 205 190 245" fill="none" stroke="#168be5" stroke-width="30" stroke-linecap="round"/>
+                <ellipse cx="67" cy="245" rx="14" ry="11" fill="#dfa07a" transform="rotate(-25 67 245)"/>
+                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#dfa07a" transform="rotate(-20 190 245)"/>
+                <path d="M176 245 L204 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
+                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
+                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
+                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#168be5"/>
+                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#168be5"/>
               </g>
+            </g>
+
+            <!-- RIGHT TEAM GROUP -->
+            <g id="rightTeamMasterGroup" class="right-team">
+              <!-- RIGHT PLAYER 1 -->
+              <g transform="translate(555,40)">
+                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#d9235b"/>
+                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
+                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#e0a07b" stroke="#8d604b" stroke-width="2"/>
+                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
+                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
+                <ellipse cx="89" cy="104" rx="5" ry="7" fill="white"/>
+                <ellipse cx="121" cy="104" rx="5" ry="7" fill="white"/>
+                <circle cx="90" cy="105" r="3" fill="#222"/>
+                <circle cx="120" cy="105" r="3" fill="#222"/>
+                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
+                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
+                <path d="M73 170 Q48 205 20 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
+                <path d="M145 170 Q165 205 190 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
+                <ellipse cx="20" cy="245" rx="15" ry="11" fill="#e0a07b" transform="rotate(20 20 245)"/>
+                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#e0a07b" transform="rotate(20 190 245)"/>
+                <path d="M5 245 L35 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
+                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
+                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
+                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#e91e63"/>
+                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#e91e63"/>
+              </g>
+
+              <!-- RIGHT PLAYER 2 -->
+              <g transform="translate(730,45) scale(.92)">
+                <path d="M75 160 Q105 145 135 160 L150 255 L115 270 L85 220 L60 270 L25 255 L45 160Z" fill="#d9235b"/>
+                <rect x="91" y="130" width="27" height="35" rx="10" fill="#d99a76"/>
+                <ellipse cx="105" cy="105" rx="43" ry="50" fill="#e1a27c" stroke="#8d604b" stroke-width="2"/>
+                <ellipse cx="63" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <ellipse cx="147" cy="108" rx="9" ry="14" fill="#d99a76"/>
+                <path d="M66 90 Q75 45 105 48 Q138 47 145 91 Q128 72 105 72 Q82 72 66 90Z" fill="#252525"/>
+                <path d="M62 78 Q105 35 148 78 L143 94 Q105 78 67 94Z" fill="#f4f1df" stroke="#555" stroke-width="3"/>
+                <ellipse cx="89" cy="104" rx="5" ry="7" fill="white"/>
+                <ellipse cx="121" cy="104" rx="5" ry="7" fill="white"/>
+                <circle cx="90" cy="105" r="3" fill="#222"/>
+                <circle cx="120" cy="105" r="3" fill="#222"/>
+                <path d="M82 94 Q90 89 97 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M113 94 Q121 89 128 94" fill="none" stroke="#593b2c" stroke-width="4"/>
+                <path d="M105 106 L101 121 Q105 125 110 121" fill="none" stroke="#a86f55" stroke-width="3"/>
+                <path d="M91 130 Q105 140 119 130" fill="none" stroke="#7b302d" stroke-width="4" stroke-linecap="round"/>
+                <path d="M73 170 Q48 205 20 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
+                <path d="M145 170 Q165 205 190 245" fill="none" stroke="#d9235b" stroke-width="30" stroke-linecap="round"/>
+                <ellipse cx="20" cy="245" rx="15" ry="11" fill="#e1a27c" transform="rotate(20 20 245)"/>
+                <ellipse cx="190" cy="245" rx="15" ry="11" fill="#e1a27c" transform="rotate(20 190 245)"/>
+                <path d="M5 245 L35 245" stroke="#292929" stroke-width="7" stroke-linecap="round"/>
+                <path d="M62 245 L105 250 L90 350 L48 342Z" fill="#242b3a"/>
+                <path d="M105 250 L145 245 L175 335 L135 348Z" fill="#242b3a"/>
+                <path d="M45 337 Q25 342 22 357 Q43 368 70 352Z" fill="#e91e63"/>
+                <path d="M135 342 Q165 335 180 350 L175 365 L137 360Z" fill="#e91e63"/>
+              </g>
+            </g>
+
+            <!-- ROPE HAND OVERLAY -->
+            <g stroke="#292929" stroke-width="7" stroke-linecap="round">
+              <line x1="172" y1="285" x2="205" y2="285"/>
+              <line x1="320" y1="285" x2="350" y2="285"/>
+              <line x1="650" y1="285" x2="680" y2="285"/>
+              <line x1="795" y1="285" x2="828" y2="285"/>
             </g>
 
           </svg>
@@ -301,7 +370,7 @@
       </div>
 
       <div class="question-box">
-        <span id="activeTeamPrompt" style="display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: #38bdf8;">Team Blue's Turn</span>
+        <span id="activeTeamPrompt" style="display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: #168be5;">Team Blue's Turn</span>
         <div class="math-problem" id="mathProblem">15 + 24 = ?</div>
         <form id="answerForm" onsubmit="submitAnswer(event)">
           <input type="number" id="userAnswer" class="answer-input" placeholder="Answer" autofocus autocomplete="off" required>
@@ -341,7 +410,7 @@
   let currentTurn = "blue";
   let scoreBlue = 0;
   let scoreRed = 0;
-  let ropePosition = 50; // 0 to 100 scale
+  let pullOffset = 0; // Negative values pull left, positive values pull right (-150 to +150)
   let timeLeft = 60;
   let timerInterval = null;
   let currentNum1 = 0;
@@ -357,7 +426,7 @@
 
     scoreBlue = 0;
     scoreRed = 0;
-    ropePosition = 50;
+    pullOffset = 0;
     timeLeft = 60;
     currentTurn = "blue";
 
@@ -396,14 +465,14 @@
     let promptEl = document.getElementById('activeTeamPrompt');
     if(currentTurn === 'blue') {
       promptEl.innerText = `${blueName}'s Turn`;
-      promptEl.style.color = '#38bdf8';
+      promptEl.style.color = '#168be5';
       document.getElementById('turnIndicator').innerText = blueName;
-      document.getElementById('turnIndicator').style.color = '#38bdf8';
+      document.getElementById('turnIndicator').style.color = '#168be5';
     } else {
       promptEl.innerText = `${redName}'s Turn`;
-      promptEl.style.color = '#f87171';
+      promptEl.style.color = '#d9235b';
       document.getElementById('turnIndicator').innerText = redName;
-      document.getElementById('turnIndicator').style.color = '#f87171';
+      document.getElementById('turnIndicator').style.color = '#d9235b';
     }
 
     const input = document.getElementById('userAnswer');
@@ -419,31 +488,31 @@
     if(userAns === correctAns) {
       if(currentTurn === 'blue') {
         scoreBlue++;
-        ropePosition += 8;
+        pullOffset += 25; // Pulls right (towards Blue victory)
         document.getElementById('scoreBlue').innerText = scoreBlue;
       } else {
         scoreRed++;
-        ropePosition -= 8;
+        pullOffset -= 25; // Pulls left (towards Red victory)
         document.getElementById('scoreRed').innerText = scoreRed;
       }
     } else {
       if(currentTurn === 'blue') {
-        ropePosition -= 4;
+        pullOffset -= 12;
       } else {
-        ropePosition += 4;
+        pullOffset += 12;
       }
     }
 
     currentTurn = (currentTurn === 'blue') ? 'red' : 'blue';
 
-    if(ropePosition >= 100) {
-      ropePosition = 100;
+    if(pullOffset >= 180) {
+      pullOffset = 180;
       updateTugAnimation();
       endGame(blueName, 'blue');
       return;
     }
-    if(ropePosition <= 0) {
-      ropePosition = 0;
+    if(pullOffset <= -180) {
+      pullOffset = -180;
       updateTugAnimation();
       endGame(redName, 'red');
       return;
@@ -454,24 +523,19 @@
   }
 
   function updateTugAnimation() {
-    let flagX = 250 + (ropePosition / 100) * 300;
-    document.getElementById('ropeFlag').setAttribute('transform', `translate(${flagX - 400}, 0)`);
-
-    let blueGroupX = 20 + (ropePosition * 1.5);
-    let redGroupX = 380 + (ropePosition * 1.5);
-
-    document.getElementById('teamBlueGroup').setAttribute('transform', `translate(${blueGroupX}, 10)`);
-    document.getElementById('teamRedGroup').setAttribute('transform', `translate(${redGroupX}, 10)`);
+    document.getElementById('leftTeamMasterGroup').setAttribute('transform', `translate(${pullOffset}, 0)`);
+    document.getElementById('rightTeamMasterGroup').setAttribute('transform', `translate(${pullOffset}, 0)`);
+    document.getElementById('ropeMasterGroup').setAttribute('transform', `translate(${pullOffset}, 0)`);
   }
 
   function endGameByTime() {
     clearInterval(timerInterval);
     let winner = "";
     let colorClass = "";
-    if(ropePosition > 50) {
+    if(pullOffset > 0) {
       winner = blueName;
       colorClass = "blue";
-    } else if(ropePosition < 50) {
+    } else if(pullOffset < 0) {
       winner = redName;
       colorClass = "red";
     } else {

@@ -234,11 +234,11 @@
     usedQuestions: new Set()
   };
 
-  // Web Audio Background Music Synth
   let audioCtx = null;
   let musicInterval = null;
 
   function startBackgroundMusic() {
+    // Initialize or unlock audio context directly inside user gesture
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -246,14 +246,13 @@
       audioCtx.resume();
     }
 
-    // Upbeat Arcade Bassline Notes (Frequencies in Hz)
     const notes = [130.81, 146.83, 164.81, 196.00, 220.00, 196.00, 164.81, 146.83];
     let step = 0;
 
     if (musicInterval) clearInterval(musicInterval);
 
     musicInterval = setInterval(() => {
-      if (!audioCtx || document.hidden) return;
+      if (!audioCtx) return;
       
       let osc = audioCtx.createOscillator();
       let gain = audioCtx.createGain();
@@ -271,7 +270,7 @@
       osc.stop(audioCtx.currentTime + 0.28);
 
       step = (step + 1) % notes.length;
-    }, 250); // Fast arcade tempo loop
+    }, 250);
   }
 
   function stopBackgroundMusic() {
@@ -282,6 +281,9 @@
   }
 
   function startGame() {
+    // Immediately trigger music context on button click to bypass browser blocks
+    startBackgroundMusic();
+
     gameState.teamBlueName = document.getElementById('nameBlue').value || 'Team Blue';
     gameState.teamRedName = document.getElementById('nameRed').value || 'Team Red';
     gameState.difficulty = document.getElementById('difficulty').value;
@@ -292,8 +294,6 @@
     document.getElementById('setupScreen').classList.remove('active');
     document.getElementById('gameScreen').classList.add('active');
     
-    // Start the background music loop!
-    startBackgroundMusic();
     nextQuestion();
   }
 
@@ -372,7 +372,7 @@
 
   function checkWin() {
     if (gameState.blueX >= 450 || gameState.redX <= 450) {
-      stopBackgroundMusic(); // Stop music on win
+      stopBackgroundMusic();
       let winner = gameState.blueX >= 450 ? gameState.teamRedName : gameState.teamBlueName;
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('winScreen').classList.add('active');
@@ -383,5 +383,5 @@
   }
 </script>
 </body>
-  </html>
+          </html>
   

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parts of the Body — Learn With Fun — LamaStudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+  }
+  h1 { margin-bottom: 5px; font-size: 2rem; text-align: center; }
+  .game-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 20px;
+    text-align: center;
+  }
+  .card-box {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 3rem;
+    margin-bottom: 2rem;
+  }
+  .part-emoji { font-size: 5rem; margin-bottom: 1rem; }
+  .part-name { font-size: 2.5rem; font-weight: 800; color: #38bdf8; margin-bottom: 0.5rem; }
+  .part-desc { font-size: 1.1rem; color: #94a3b8; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+  .part-btn {
+    background: #334155;
+    color: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .part-btn:hover { background: #168be5; border-color: #38bdf8; transform: translateY(-2px); }
+</style>
+</head>
+<body>
+
+<h1>👁️ Parts of the Body Explorer</h1>
+
+<div class="game-container">
+  <div class="card-box">
+    <div class="part-emoji" id="partEmoji">👀</div>
+    <div class="part-name" id="partName">Eyes</div>
+    <div class="part-desc" id="partDesc">We use our two eyes to see the colorful world around us!</div>
+  </div>
+
+  <div class="grid" id="partGrid"></div>
+</div>
+
+<script>
+  const bodyParts = [
+    {name: "Eyes", emoji: "👀", desc: "We use our two eyes to see the colorful world around us!"},
+    {name: "Ears", emoji: "👂", desc: "We use our ears to listen to music and sounds."},
+    {name: "Nose", emoji: "👃", desc: "We use our nose to smell delicious food and flowers."},
+    {name: "Mouth", emoji: "👄", desc: "We use our mouth to speak, smile, and eat healthy meals."},
+    {name: "Hands", emoji: "🤲", desc: "We use our hands to write, clap, and build things."},
+    {name: "Feet", emoji: "👣", desc: "We use our feet to walk, run, and jump high!"}
+  ];
+
+  function initParts() {
+    let grid = document.getElementById('partGrid');
+    bodyParts.forEach(p => {
+      let btn = document.createElement('button');
+      btn.className = 'part-btn';
+      btn.innerText = `${p.emoji} ${p.name}`;
+      btn.onclick = () => selectPart(p);
+      grid.appendChild(btn);
+    });
+    selectPart(bodyParts[0]);
+  }
+
+  function selectPart(p) {
+    document.getElementById('partEmoji').innerText = p.emoji;
+    document.getElementById('partName').innerText = p.name;
+    document.getElementById('partDesc').innerText = p.desc;
+
+    if ('speechSynthesis' in window) {
+      let utterance = new SpeechSynthesisUtterance(`${p.name}. ${p.desc}`);
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  initParts();
+</script>
+</body>
+</html>

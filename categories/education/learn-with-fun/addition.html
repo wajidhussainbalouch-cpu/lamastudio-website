@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Addition Tug of War — Learn With Fun — LamaStudio</title>
-<meta name="description" content="Play the 2-player Addition Tug of War math game. Compete with Team Blue and Team Red, track points, and win a certificate!">
+<meta name="description" content="Play the 2-player Addition Tug of War math game with animated pullers, live score tracking, timer, and certificate generator.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://lamastudio.pk/categories/education/learn-with-fun/addition.html">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -53,12 +53,23 @@
   }
   .rope-track {
     position: relative;
-    height: 36px;
+    height: 50px;
     background: #1e293b;
-    border-radius: 18px;
-    margin: 1rem 0 2rem 0;
+    border-radius: 25px;
+    margin: 1.5rem 0 1rem 0;
     overflow: hidden;
     border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+  }
+  .rope-line {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: #d97706;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
   }
   .center-marker {
     position: absolute;
@@ -70,12 +81,22 @@
     transform: translateX(-50%);
     z-index: 2;
   }
+  /* Tug of War Pullers */
+  .puller-avatar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.8rem;
+    z-index: 4;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
   .flag-knot {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     background: #ffffff;
     border-radius: 50%;
     transform: translate(-50%, -50%);
@@ -174,7 +195,7 @@
     <a href="index.html" style="font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Learn With Fun Hub</a>
     <span class="eyebrow" style="color: var(--category-color); display: block; margin-top: 1rem;">2-Player Battle Arena</span>
     <h1 style="font-size: 2.2rem; margin-top: 0.3rem;">⚔️ Addition Tug of War</h1>
-    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Team Blue vs Team Red! Answer addition questions correctly to pull the rope to your side before time runs out.</p>
+    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Team Blue vs Team Red! Correct addition answers make your player pull the rope across the center line.</p>
   </div>
 
   <div class="game-container">
@@ -186,12 +207,22 @@
       
       <div class="team-grid">
         <div class="team-card team-blue">
-          <h4 style="color: #38bdf8; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue</h4>
-          <input type="text" id="playerBlue" value="Player Blue" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
+          <h4 style="color: #38bdf8; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue (Puller)</h4>
+          <input type="text" id="playerBlue" value="Team Blue" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
+          <select id="avatarBlue" class="answer-input" style="width: 100%; font-size: 1.2rem; margin-top: 0.5rem;">
+            <option value="👦">👦 Boy</option>
+            <option value="👨" selected>👨 Man</option>
+            <option value="🧑">🧑 Competitor</option>
+          </select>
         </div>
         <div class="team-card team-red">
-          <h4 style="color: #f87171; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red</h4>
-          <input type="text" id="playerRed" value="Player Red" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
+          <h4 style="color: #f87171; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red (Puller)</h4>
+          <input type="text" id="playerRed" value="Team Red" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
+          <select id="avatarRed" class="answer-input" style="width: 100%; font-size: 1.2rem; margin-top: 0.5rem;">
+            <option value="👦">👦 Boy</option>
+            <option value="👨" selected>👨 Man</option>
+            <option value="🧑">🧑 Competitor</option>
+          </select>
         </div>
       </div>
 
@@ -216,13 +247,16 @@
       </div>
 
       <div class="tug-arena">
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;">
           <span style="color: #38bdf8;" id="labelBlue">Team Blue Side</span>
           <span style="color: #f87171;" id="labelRed">Team Red Side</span>
         </div>
         <div class="rope-track">
+          <div class="rope-line"></div>
           <div class="center-marker"></div>
-          <div class="flag-knot" id="flagKnot" style="left: 50%;"></div>
+          <div class="flag-knot" id="flagKnot"></div>
+          <div class="puller-avatar" id="pullerBlue" style="left: 20%;">👨</div>
+          <div class="puller-avatar" id="pullerRed" style="left: 75%;">👨</div>
         </div>
       </div>
 
@@ -242,7 +276,7 @@
         <div class="cert-title">🏆 Certificate of Victory 🏆</div>
         <p style="color: var(--text-muted); font-size: 0.95rem;">This official certificate is proudly presented to</p>
         <div class="cert-winner" id="winnerTitle">Team Blue</div>
-        <p style="color: var(--text); font-size: 1rem; margin-bottom: 1.5rem;">For displaying exceptional mental math speed, tactical endurance, and winning the Addition Tug of War challenge!</p>
+        <p style="color: var(--text); font-size: 1rem; margin-bottom: 1.5rem;">For displaying exceptional mental math speed, physical rope pulling mastery, and winning the Addition Tug of War challenge!</p>
         <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fbbf24; margin-bottom: 2rem;">
           Final Score: <span id="finalScoreText">Blue (5) - Red (2)</span>
         </div>
@@ -263,11 +297,13 @@
 <script>
   let blueName = "Team Blue";
   let redName = "Team Red";
+  let blueAvatarIcon = "👨";
+  let redAvatarIcon = "👨";
   let difficulty = "medium";
-  let currentTurn = "blue"; // 'blue' or 'red'
+  let currentTurn = "blue";
   let scoreBlue = 0;
   let scoreRed = 0;
-  let ropePosition = 50; // 0 (Red wins) to 100 (Blue wins), 50 is center
+  let ropePosition = 50; // 0 (Red wins) to 100 (Blue wins)
   let timeLeft = 60;
   let timerInterval = null;
   let currentNum1 = 0;
@@ -276,10 +312,14 @@
   function startGame() {
     blueName = document.getElementById('playerBlue').value.trim() || "Team Blue";
     redName = document.getElementById('playerRed').value.trim() || "Team Red";
+    blueAvatarIcon = document.getElementById('avatarBlue').value;
+    redAvatarIcon = document.getElementById('avatarRed').value;
     difficulty = document.getElementById('diffLevel').value;
 
     document.getElementById('labelBlue').innerText = blueName + " Side";
     document.getElementById('labelRed').innerText = redName + " Side";
+    document.getElementById('pullerBlue').innerText = blueAvatarIcon;
+    document.getElementById('pullerRed').innerText = redAvatarIcon;
 
     scoreBlue = 0;
     scoreRed = 0;
@@ -345,72 +385,21 @@
     if(userAns === correctAns) {
       if(currentTurn === 'blue') {
         scoreBlue++;
-        ropePosition += 8; // Pull towards blue
+        ropePosition += 8;
         document.getElementById('scoreBlue').innerText = scoreBlue;
-        currentTurn = 'switch_to_red'; // Alternate turns or give continuous? Alternating makes it fair local 2-player!
       } else {
         scoreRed++;
-        ropePosition -= 8; // Pull towards red
+        ropePosition -= 8;
         document.getElementById('scoreRed').innerText = scoreRed;
-        currentTurn = 'blue';
       }
     } else {
-      // Wrong answer penalty: pulls rope slightly towards opponent
       if(currentTurn === 'blue') {
         ropePosition -= 4;
-        currentTurn = 'red';
       } else {
         ropePosition += 4;
-        currentTurn = 'blue';
       }
     }
 
-    // Boundary checks
-    if(ropePosition >= 100) {
-      ropePosition = 100;
-      updateRopePosition();
-      endGame(blueName, 'blue');
-      return;
-    }
-    if(ropePosition <= 0) {
-      ropePosition = 0;
-      updateRopePosition();
-      endGame(redName, 'red');
-      return;
-    }
-
-    updateRopePosition();
-    generateQuestion();
-  }
-
-  // Allow alternating turns properly
-  // In submitAnswer above, let's refine turn switching so it alternates correctly:
-  // If correct or incorrect, switch turn to the other player so both get equal chances.
-  function submitAnswer(e) {
-    e.preventDefault();
-    const userAns = parseInt(document.getElementById('userAnswer').value);
-    const correctAns = currentNum1 + currentNum2;
-
-    if(userAns === correctAns) {
-      if(currentTurn === 'blue') {
-        scoreBlue++;
-        ropePosition += 10;
-        document.getElementById('scoreBlue').innerText = scoreBlue;
-      } else {
-        scoreRed++;
-        ropePosition -= 10;
-        document.getElementById('scoreRed').innerText = scoreRed;
-      }
-    } else {
-      // Penalty feedback
-      if(currentTurn === 'blue') {
-        ropePosition -= 5;
-      } else {
-        ropePosition += 5;
-      }
-    }
-
-    // Toggle turn
     currentTurn = (currentTurn === 'blue') ? 'red' : 'blue';
 
     if(ropePosition >= 100) {
@@ -431,7 +420,16 @@
   }
 
   function updateRopePosition() {
+    // Knot moves based on ropePosition (0 to 100)
     document.getElementById('flagKnot').style.left = ropePosition + '%';
+    
+    // Animate characters pulling relative to the knot center
+    // Blue puller is on the left side, Red puller is on the right side
+    let bluePos = Math.max(5, ropePosition - 28);
+    let redPos = Math.min(88, ropePosition + 12);
+    
+    document.getElementById('pullerBlue').style.left = bluePos + '%';
+    document.getElementById('pullerRed').style.left = redPos + '%';
   }
 
   function endGameByTime() {

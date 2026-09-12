@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addition Tug of War — Learn With Fun — LamaStudio</title>
+<meta name="description" content="Play the 2-player Addition Tug of War math game. Compete with Team Blue and Team Red, track points, and win a certificate!">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://lamastudio.pk/categories/education/learn-with-fun/addition.html">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../style.css">
+<style>
+  .game-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto 3rem auto;
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
+  }
+  .setup-screen, .game-screen, .win-screen {
+    display: none;
+  }
+  .setup-screen.active, .game-screen.active, .win-screen.active {
+    display: block;
+  }
+  .team-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  @media(max-width: 768px) {
+    .team-grid { grid-template-columns: 1fr; }
+  }
+  .team-card {
+    background: var(--background);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .team-blue { border-color: #38bdf8; }
+  .team-red { border-color: #f87171; }
+  
+  .tug-arena {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .rope-track {
+    position: relative;
+    height: 36px;
+    background: #1e293b;
+    border-radius: 18px;
+    margin: 1rem 0 2rem 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .center-marker {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #fbbf24;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+  .flag-knot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    background: #ffffff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 3;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  
+  .hud-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--background);
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .question-box {
+    background: var(--background);
+    border: 2px solid var(--category-color);
+    border-radius: 14px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .math-problem {
+    font-size: 3rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .answer-input {
+    font-size: 2rem;
+    padding: 0.5rem 1rem;
+    width: 200px;
+    text-align: center;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .answer-input:focus {
+    outline: none;
+    border-color: var(--category-color);
+  }
+
+  .btn-action {
+    background: var(--category-color);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: opacity 0.2s;
+  }
+  .btn-action:hover { opacity: 0.85; }
+
+  /* Certificate Box */
+  .certificate-card {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    border: 4px double #fbbf24;
+    border-radius: 16px;
+    padding: 2.5rem;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .cert-title { font-size: 2rem; color: #fbbf24; font-family: 'Space Grotesk', sans-serif; margin-bottom: 0.5rem; }
+  .cert-winner { font-size: 2.5rem; font-weight: 800; margin: 1rem 0; text-transform: uppercase; }
+  .cert-winner.blue { color: #38bdf8; }
+  .cert-winner.red { color: #f87171; }
+</style>
+</head>
+<body style="--category-color: var(--c-education);">
+
+<div class="ind-banner"><span>14 August</span> Happy Independence Day of Pakistan! Proudly building for the nation.</div>
+
+<header class="site-header">
+  <div class="util-row">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu"><span></span><span></span><span></span></button>
+      <a href="../../../index.html" class="brand"><span class="brand-mark" style="background: var(--category-color);">L</span><span>LamaStudio<small>Education</small></span></a>
+    </div>
+  </div>
+</header>
+
+<main style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+  <div style="margin-bottom: 2rem;">
+    <a href="index.html" style="font-size: 0.85rem; font-weight: 600; color: var(--category-color); text-decoration: none;">← Back to Learn With Fun Hub</a>
+    <span class="eyebrow" style="color: var(--category-color); display: block; margin-top: 1rem;">2-Player Battle Arena</span>
+    <h1 style="font-size: 2.2rem; margin-top: 0.3rem;">⚔️ Addition Tug of War</h1>
+    <p class="lede" style="margin-top: 0.5rem; color: var(--text-muted);">Team Blue vs Team Red! Answer addition questions correctly to pull the rope to your side before time runs out.</p>
+  </div>
+
+  <div class="game-container">
+    
+    <!-- SETUP SCREEN -->
+    <div id="setupScreen" class="setup-screen active">
+      <h3 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Configure Battle Match</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Enter player names and select difficulty to start.</p>
+      
+      <div class="team-grid">
+        <div class="team-card team-blue">
+          <h4 style="color: #38bdf8; font-size: 1.2rem; margin-bottom: 1rem;">🔵 Team Blue</h4>
+          <input type="text" id="playerBlue" value="Player Blue" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
+        </div>
+        <div class="team-card team-red">
+          <h4 style="color: #f87171; font-size: 1.2rem; margin-bottom: 1rem;">🔴 Team Red</h4>
+          <input type="text" id="playerRed" value="Player Red" class="answer-input" style="width: 100%; font-size: 1rem; margin-bottom: 0.5rem;">
+        </div>
+      </div>
+
+      <div style="margin: 1.5rem 0;">
+        <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Select Difficulty Level:</label>
+        <select id="diffLevel" class="answer-input" style="width: 100%; font-size: 1rem;">
+          <option value="easy">Easy (Numbers 1 - 20)</option>
+          <option value="medium" selected>Medium (Numbers 10 - 100)</option>
+          <option value="hard">Hard (Numbers 50 - 500)</option>
+        </select>
+      </div>
+
+      <button class="btn-action" onclick="startGame()" style="width: 100%; padding: 1rem; font-size: 1.1rem; margin-top: 1rem;">🚀 Start Tug of War Battle</button>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="gameScreen" class="game-screen">
+      <div class="hud-row">
+        <div>⏳ Time Left: <span id="timerDisplay" style="color: #fbbf24; font-weight: 700;">60</span>s</div>
+        <div>Turn: <span id="turnIndicator" style="font-weight: 700;">Team Blue</span></div>
+        <div>Score: <span style="color:#38bdf8;">Blue</span> <span id="scoreBlue">0</span> - <span id="scoreRed">0</span> <span style="color:#f87171;">Red</span></div>
+      </div>
+
+      <div class="tug-arena">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">
+          <span style="color: #38bdf8;" id="labelBlue">Team Blue Side</span>
+          <span style="color: #f87171;" id="labelRed">Team Red Side</span>
+        </div>
+        <div class="rope-track">
+          <div class="center-marker"></div>
+          <div class="flag-knot" id="flagKnot" style="left: 50%;"></div>
+        </div>
+      </div>
+
+      <div class="question-box">
+        <span id="activeTeamPrompt" style="display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: #38bdf8;">Team Blue's Turn</span>
+        <div class="math-problem" id="mathProblem">15 + 24 = ?</div>
+        <form id="answerForm" onsubmit="submitAnswer(event)">
+          <input type="number" id="userAnswer" class="answer-input" placeholder="Answer" autofocus autocomplete="off" required>
+          <button type="submit" class="btn-action" style="margin-left: 0.5rem;">Submit</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- WIN SCREEN / CERTIFICATE -->
+    <div id="winScreen" class="win-screen">
+      <div class="certificate-card">
+        <div class="cert-title">🏆 Certificate of Victory 🏆</div>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">This official certificate is proudly presented to</p>
+        <div class="cert-winner" id="winnerTitle">Team Blue</div>
+        <p style="color: var(--text); font-size: 1rem; margin-bottom: 1.5rem;">For displaying exceptional mental math speed, tactical endurance, and winning the Addition Tug of War challenge!</p>
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #fbbf24; margin-bottom: 2rem;">
+          Final Score: <span id="finalScoreText">Blue (5) - Red (2)</span>
+        </div>
+        <div>
+          <button class="btn-action" onclick="resetGame()" style="margin-right: 1rem;">🔄 Play Again</button>
+          <button class="btn-action" onclick="window.print()" style="background: #334155;">🖨️ Print Certificate</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer" style="margin-top: 4rem;">
+  <div class="footer-bottom"><span>© 2026 LamaStudio. All rights reserved.</span></div>
+</footer>
+
+<script>
+  let blueName = "Team Blue";
+  let redName = "Team Red";
+  let difficulty = "medium";
+  let currentTurn = "blue"; // 'blue' or 'red'
+  let scoreBlue = 0;
+  let scoreRed = 0;
+  let ropePosition = 50; // 0 (Red wins) to 100 (Blue wins), 50 is center
+  let timeLeft = 60;
+  let timerInterval = null;
+  let currentNum1 = 0;
+  let currentNum2 = 0;
+
+  function startGame() {
+    blueName = document.getElementById('playerBlue').value.trim() || "Team Blue";
+    redName = document.getElementById('playerRed').value.trim() || "Team Red";
+    difficulty = document.getElementById('diffLevel').value;
+
+    document.getElementById('labelBlue').innerText = blueName + " Side";
+    document.getElementById('labelRed').innerText = redName + " Side";
+
+    scoreBlue = 0;
+    scoreRed = 0;
+    ropePosition = 50;
+    timeLeft = 60;
+    currentTurn = "blue";
+
+    document.getElementById('scoreBlue').innerText = scoreBlue;
+    document.getElementById('scoreRed').innerText = scoreRed;
+    document.getElementById('timerDisplay').innerText = timeLeft;
+
+    document.getElementById('setupScreen').classList.remove('active');
+    document.getElementById('winScreen').classList.remove('active');
+    document.getElementById('gameScreen').classList.add('active');
+
+    updateRopePosition();
+    generateQuestion();
+
+    if(timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      document.getElementById('timerDisplay').innerText = timeLeft;
+      if(timeLeft <= 0) {
+        clearInterval(timerInterval);
+        endGameByTime();
+      }
+    }, 1000);
+  }
+
+  function generateQuestion() {
+    let min = 1, max = 20;
+    if(difficulty === 'medium') { min = 10; max = 100; }
+    if(difficulty === 'hard') { min = 50; max = 500; }
+
+    currentNum1 = Math.floor(Math.random() * (max - min + 1)) + min;
+    currentNum2 = Math.floor(Math.random() * (max - min + 1)) + min;
+
+    document.getElementById('mathProblem').innerText = `${currentNum1} + ${currentNum2} = ?`;
+    
+    let promptEl = document.getElementById('activeTeamPrompt');
+    if(currentTurn === 'blue') {
+      promptEl.innerText = `${blueName}'s Turn`;
+      promptEl.style.color = '#38bdf8';
+      document.getElementById('turnIndicator').innerText = blueName;
+      document.getElementById('turnIndicator').style.color = '#38bdf8';
+    } else {
+      promptEl.innerText = `${redName}'s Turn`;
+      promptEl.style.color = '#f87171';
+      document.getElementById('turnIndicator').innerText = redName;
+      document.getElementById('turnIndicator').style.color = '#f87171';
+    }
+
+    const input = document.getElementById('userAnswer');
+    input.value = '';
+    input.focus();
+  }
+
+  function submitAnswer(e) {
+    e.preventDefault();
+    const userAns = parseInt(document.getElementById('userAnswer').value);
+    const correctAns = currentNum1 + currentNum2;
+
+    if(userAns === correctAns) {
+      if(currentTurn === 'blue') {
+        scoreBlue++;
+        ropePosition += 8; // Pull towards blue
+        document.getElementById('scoreBlue').innerText = scoreBlue;
+        currentTurn = 'switch_to_red'; // Alternate turns or give continuous? Alternating makes it fair local 2-player!
+      } else {
+        scoreRed++;
+        ropePosition -= 8; // Pull towards red
+        document.getElementById('scoreRed').innerText = scoreRed;
+        currentTurn = 'blue';
+      }
+    } else {
+      // Wrong answer penalty: pulls rope slightly towards opponent
+      if(currentTurn === 'blue') {
+        ropePosition -= 4;
+        currentTurn = 'red';
+      } else {
+        ropePosition += 4;
+        currentTurn = 'blue';
+      }
+    }
+
+    // Boundary checks
+    if(ropePosition >= 100) {
+      ropePosition = 100;
+      updateRopePosition();
+      endGame(blueName, 'blue');
+      return;
+    }
+    if(ropePosition <= 0) {
+      ropePosition = 0;
+      updateRopePosition();
+      endGame(redName, 'red');
+      return;
+    }
+
+    updateRopePosition();
+    generateQuestion();
+  }
+
+  // Allow alternating turns properly
+  // In submitAnswer above, let's refine turn switching so it alternates correctly:
+  // If correct or incorrect, switch turn to the other player so both get equal chances.
+  function submitAnswer(e) {
+    e.preventDefault();
+    const userAns = parseInt(document.getElementById('userAnswer').value);
+    const correctAns = currentNum1 + currentNum2;
+
+    if(userAns === correctAns) {
+      if(currentTurn === 'blue') {
+        scoreBlue++;
+        ropePosition += 10;
+        document.getElementById('scoreBlue').innerText = scoreBlue;
+      } else {
+        scoreRed++;
+        ropePosition -= 10;
+        document.getElementById('scoreRed').innerText = scoreRed;
+      }
+    } else {
+      // Penalty feedback
+      if(currentTurn === 'blue') {
+        ropePosition -= 5;
+      } else {
+        ropePosition += 5;
+      }
+    }
+
+    // Toggle turn
+    currentTurn = (currentTurn === 'blue') ? 'red' : 'blue';
+
+    if(ropePosition >= 100) {
+      ropePosition = 100;
+      updateRopePosition();
+      endGame(blueName, 'blue');
+      return;
+    }
+    if(ropePosition <= 0) {
+      ropePosition = 0;
+      updateRopePosition();
+      endGame(redName, 'red');
+      return;
+    }
+
+    updateRopePosition();
+    generateQuestion();
+  }
+
+  function updateRopePosition() {
+    document.getElementById('flagKnot').style.left = ropePosition + '%';
+  }
+
+  function endGameByTime() {
+    clearInterval(timerInterval);
+    let winner = "";
+    let colorClass = "";
+    if(ropePosition > 50) {
+      winner = blueName;
+      colorClass = "blue";
+    } else if(ropePosition < 50) {
+      winner = redName;
+      colorClass = "red";
+    } else {
+      winner = "It's a Tie!";
+      colorClass = "";
+    }
+    showWinScreen(winner, colorClass);
+  }
+
+  function endGame(winnerName, colorClass) {
+    clearInterval(timerInterval);
+    showWinScreen(winnerName, colorClass);
+  }
+
+  function showWinScreen(winnerName, colorClass) {
+    document.getElementById('gameScreen').classList.remove('active');
+    document.getElementById('winScreen').classList.add('active');
+
+    const winnerEl = document.getElementById('winnerTitle');
+    winnerEl.innerText = winnerName;
+    winnerEl.className = "cert-winner " + colorClass;
+
+    document.getElementById('finalScoreText').innerText = `${blueName} (${scoreBlue}) - ${redName} (${scoreRed})`;
+  }
+
+  function resetGame() {
+    document.getElementById('winScreen').classList.remove('active');
+    document.getElementById('setupScreen').classList.add('active');
+  }
+</script>
+<script src="../../../script.js"></script>
+</body>
+</html>

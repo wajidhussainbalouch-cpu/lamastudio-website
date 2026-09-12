@@ -4,17 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Colors Practice — Learn With Fun — LamaStudio</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --border: #334155;
-    --text: #f8fafc;
+    --bg-primary: #f0f4f8;
+    --card-bg: #ffffff;
+    --border-color: #cbd5e1;
+    --text-main: #1e293b;
+    --accent-blue: #3b82f6;
   }
+  
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--bg-primary);
+    color: var(--text-main);
     font-family: 'Space Grotesk', sans-serif;
     margin: 0;
     padding: 20px;
@@ -22,63 +24,174 @@
     flex-direction: column;
     align-items: center;
     user-select: none;
+    min-height: 100vh;
+    box-sizing: border-box;
   }
-  h1 { margin-bottom: 5px; font-size: 2rem; text-align: center; }
+
+  header {
+    width: 100%;
+    max-width: 950px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .logo {
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #2563eb;
+    background: #e0f2fe;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 2px solid #bae6fd;
+  }
+
   .game-container {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
+    background: var(--card-bg);
+    border: 4px solid #e2e8f0;
+    border-radius: 24px;
     padding: 2rem;
     width: 100%;
-    max-width: 900px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    margin-top: 20px;
+    max-width: 950px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Top Prompt Screen layout inspired by the reference screen */
+  .screen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 1rem;
+  }
+
+  .prompt-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .question-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 3px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 2rem;
+    gap: 2rem;
+  }
+
+  .stage-preview {
+    flex: 1;
+    height: 220px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 4px 10px rgba(0,0,0,0.06);
+    border: 3px solid rgba(0,0,0,0.05);
+    transition: background-color 0.4s ease;
+  }
+
+  .stage-content {
     text-align: center;
   }
-  .color-card-stage {
-    height: 250px;
-    border-radius: 14px;
+
+  .color-name-display {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    margin: 0;
+  }
+
+  .prompt-text {
+    flex: 1;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #334155;
+    line-height: 1.3;
+  }
+
+  /* Options Grid */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .color-btn {
+    background: #ffffff;
+    border: 3px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 1rem;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 2rem;
-    transition: background-color 0.4s ease;
-    border: 2px solid var(--border);
+    gap: 10px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
   }
-  .color-name {
-    font-size: 3rem;
-    font-weight: 800;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    margin-bottom: 0.5rem;
+
+  .color-btn:hover {
+    transform: translateY(-4px);
+    border-color: #3b82f6;
+    box-shadow: 0 8px 15px rgba(59, 130, 246, 0.15);
   }
-  .color-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-  }
-  .color-btn {
-    border: 2px solid var(--border);
+
+  .color-swatch {
+    width: 100%;
+    height: 90px;
     border-radius: 10px;
-    padding: 1.2rem;
-    font-weight: 700;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #fff;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    transition: transform 0.2s;
+    border: 2px solid rgba(0,0,0,0.08);
   }
-  .color-btn:hover { transform: scale(1.05); }
+
+  .color-label {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  @media(max-width: 768px) {
+    .question-box {
+      flex-direction: column;
+    }
+    .prompt-text {
+      font-size: 1.6rem;
+      text-align: center;
+    }
+  }
 </style>
 </head>
 <body>
 
-<h1>🎨 Colors Practice Arena</h1>
+<header>
+  <div class="logo">🌟 LamaStudio Kids</div>
+  <div style="font-weight: 700; color: #64748b;">Colors Practice Arena</div>
+</header>
 
 <div class="game-container">
-  <div class="color-card-stage" id="stage" style="background-color: #ef4444;">
-    <div class="color-name" id="colorTitle">Red</div>
-    <div style="font-size: 1.1rem; opacity: 0.9;" id="colorDesc">Like strawberries and fire engines!</div>
+  <div class="screen-header">
+    <h2 class="prompt-title">🎨 Interactive Learning</h2>
+    <div style="background: #e2e8f0; padding: 6px 12px; border-radius: 12px; font-weight: 700; font-size: 0.9rem;">Level 1</div>
+  </div>
+
+  <div class="question-box">
+    <div class="stage-preview" id="stage">
+      <div class="stage-content">
+        <h1 class="color-name-display" id="colorTitle">Red</h1>
+      </div>
+    </div>
+    <div class="prompt-text" id="colorDesc">
+      Like strawberries and fire engines! Tap the matching card below.
+    </div>
   </div>
 
   <div class="color-grid" id="colorGrid"></div>
@@ -99,10 +212,20 @@
   function initColors() {
     let grid = document.getElementById('colorGrid');
     colors.forEach(c => {
-      let btn = document.createElement('button');
+      let btn = document.createElement('div');
       btn.className = 'color-btn';
-      btn.style.backgroundColor = c.hex;
-      btn.innerText = c.name;
+      
+      let swatch = document.createElement('div');
+      swatch.className = 'color-swatch';
+      swatch.style.backgroundColor = c.hex;
+
+      let label = document.createElement('span');
+      label.className = 'color-label';
+      label.innerText = c.name;
+
+      btn.appendChild(swatch);
+      btn.appendChild(label);
+      
       btn.onclick = () => selectColor(c);
       grid.appendChild(btn);
     });
@@ -113,9 +236,10 @@
     let stage = document.getElementById('stage');
     stage.style.backgroundColor = c.hex;
     document.getElementById('colorTitle').innerText = c.name;
-    document.getElementById('colorDesc').innerText = c.desc;
+    document.getElementById('colorDesc').innerText = `${c.desc}`;
 
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       let utterance = new SpeechSynthesisUtterance(`This is the color ${c.name}`);
       window.speechSynthesis.speak(utterance);
     }

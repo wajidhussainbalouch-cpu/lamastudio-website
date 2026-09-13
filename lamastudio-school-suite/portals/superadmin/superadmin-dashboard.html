@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="config.css">
+<script src="api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-6xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-orange-500 flex items-center justify-center text-xs font-black text-white">SA</div>
+            <div>
+                <h1 class="text-sm font-black uppercase tracking-wider text-white">Super Admin</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">LamaStudio Platform Control</p>
+            </div>
+        </div>
+        <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Platform Stats -->
+        <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="cyber-card rounded-xl p-4 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Total Schools</p><p id="statSchools" class="text-2xl font-black text-indigo-400 mt-1">0</p></div>
+            <div class="cyber-card rounded-xl p-4 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Active Schools</p><p id="statActive" class="text-2xl font-black text-emerald-400 mt-1">0</p></div>
+            <div class="cyber-card rounded-xl p-4 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Total Students</p><p id="statStudents" class="text-2xl font-black text-cyan-400 mt-1">0</p></div>
+            <div class="cyber-card rounded-xl p-4 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Total Teachers</p><p id="statTeachers" class="text-2xl font-black text-amber-400 mt-1">0</p></div>
+        </section>
+
+        <!-- Filter -->
+        <div class="flex gap-2 flex-wrap">
+            <input id="searchBox" oninput="renderSchools()" placeholder="Search schools by name or email..." class="flex-grow bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-indigo-500 min-w-[220px]">
+            <select id="statusFilter" onchange="renderSchools()" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5">
+                <option value="All">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Blocked">Blocked</option>
+            </select>
+        </div>
+
+        <!-- Schools Table -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3 overflow-x-auto">
+            <h2 class="text-xs font-black uppercase text-slate-300">Registered Schools</h2>
+            <table class="w-full text-[11px] border-collapse min-w-[640px]">
+                <thead>
+                    <tr class="text-left text-[9px] uppercase text-slate-500 border-b border-slate-800">
+                        <th class="py-1.5">School</th><th>Type / Level</th><th>Students</th><th>Teachers</th><th>Plan</th><th>Status</th><th>Registered</th><th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="schoolsBody"></tbody>
+            </table>
+            <p id="schoolsEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No schools match your search.</p>
+        </section>
+    </main>
+
+    <!-- Reset Password Result Modal -->
+    <div id="resetModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-3 text-center">
+            <h3 class="text-sm font-black uppercase text-emerald-400">Password Reset</h3>
+            <p class="text-xs text-slate-400">New password for <span id="resetSchoolName" class="font-bold text-white"></span>:</p>
+            <p id="resetPasswordText" class="text-lg font-mono font-black text-cyan-400 bg-slate-950 border border-slate-700 rounded-lg py-2"></p>
+            <p class="text-[10px] text-slate-500">Also emailed to their registered admin address (if email delivery succeeded). Share this with them directly as a backup.</p>
+            <button onclick="document.getElementById('resetModal').classList.add('hidden')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let allSchools = [];
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'superadmin-login.html';
+        }
+
+        async function loadStats() {
+            allSchools = await LamaAPI.adminListSchools();
+            const active = allSchools.filter(s => s.status === 'Active').length;
+            const totalStudents = allSchools.reduce((sum, s) => sum + (s.studentCount || 0), 0);
+            const totalTeachers = allSchools.reduce((sum, s) => sum + (s.teacherCount || 0), 0);
+            document.getElementById('statSchools').innerText = allSchools.length;
+            document.getElementById('statActive').innerText = active;
+            document.getElementById('statStudents').innerText = totalStudents;
+            document.getElementById('statTeachers').innerText = totalTeachers;
+        }
+
+        function renderSchools() {
+            const search = document.getElementById('searchBox').value.trim().toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            let filtered = allSchools;
+            if (search) {
+                filtered = filtered.filter(s => (s.name || '').toLowerCase().includes(search) || (s.adminEmail || '').toLowerCase().includes(search));
+            }
+            if (statusFilter !== 'All') {
+                filtered = filtered.filter(s => s.status === statusFilter);
+            }
+            document.getElementById('schoolsEmpty').classList.toggle('hidden', filtered.length > 0);
+
+            document.getElementById('schoolsBody').innerHTML = filtered.map(s => `
+                <tr class="border-b border-slate-900">
+                    <td class="py-2">
+                        <p class="font-bold">${s.name}</p>
+                        <p class="text-[9px] text-slate-500">${s.adminEmail}</p>
+                    </td>
+                    <td>${s.type || '-'} / ${s.level || '-'}</td>
+                    <td class="text-center">${s.studentCount}</td>
+                    <td class="text-center">${s.teacherCount}</td>
+                    <td>${s.plan || 'Free'}</td>
+                    <td><span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded ${s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'}">${s.status}</span></td>
+                    <td class="text-[10px] text-slate-500">${(s.createdAt || '').slice(0, 10)}</td>
+                    <td class="text-right space-x-1 whitespace-nowrap">
+                        <button onclick="toggleStatus('${s.schoolId}', '${s.status}')" class="text-[10px] font-bold px-2 py-1 rounded ${s.status === 'Active' ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'} text-white">
+                            ${s.status === 'Active' ? 'Block' : 'Unblock'}
+                        </button>
+                        <button onclick="resetPassword('${s.schoolId}', '${s.name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white">Reset Pwd</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function toggleStatus(schoolId, currentStatus) {
+            const newStatus = currentStatus === 'Active' ? 'Blocked' : 'Active';
+            if (!confirm(`${newStatus === 'Blocked' ? 'Block' : 'Unblock'} this school?`)) return;
+            await LamaAPI.adminSetStatus(schoolId, newStatus);
+            await loadStats();
+            renderSchools();
+        }
+
+        async function resetPassword(schoolId, schoolName) {
+            if (!confirm(`Generate a new password for ${schoolName}?`)) return;
+            const result = await LamaAPI.adminResetPassword(schoolId);
+            document.getElementById('resetSchoolName').innerText = schoolName;
+            document.getElementById('resetPasswordText').innerText = result.newPassword;
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        async function init() {
+            await loadStats();
+            renderSchools();
+        }
+
+        if (LamaAPI.requireLogin('admin', 'superadmin-login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

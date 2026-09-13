@@ -1,415 +1,129 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Suite Registration | lamastudio.pk</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' };
-    </script>
-    <link rel="stylesheet" href="assets/css/config.css">
-    
-    <!-- Lamastudio Storage & API Layer -->
-    <script src="assets/js/api-client.js"></script>
-    <script src="assets/js/school-store.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Your School | LamaStudio School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="config.css">
+<script src="api-client.js"></script>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
 
-    <!-- Top Navigation -->
-    <header class="border-b border-slate-200 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-40 px-6 py-4 flex justify-between items-center transition-colors">
-        <div class="flex items-center space-x-3">
-            <a href="index.html" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5">
-                <span>&larr;</span> Home
-            </a>
-            <h1 class="text-xs font-bold tracking-wider text-indigo-600 dark:text-indigo-400 uppercase">Lamastudio School Suite</h1>
+    <div class="cyber-card max-w-lg w-full rounded-2xl p-8 space-y-5">
+        <div class="text-center space-y-1">
+            <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-lg">LS</div>
+            <h1 class="text-lg font-black uppercase tracking-wide glow-text-purple">Register Your School</h1>
+            <p class="text-[11px] text-slate-400">Free digital records for private &amp; government schools — powered by lamastudio.pk</p>
         </div>
-        <span class="text-xs bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200/60 dark:border-indigo-800/50 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 font-medium shadow-2xs">
-            Suite Registration Portal
-        </span>
-    </header>
 
-    <!-- Main Form Container -->
-    <main class="max-w-2xl w-full mx-auto px-4 py-10 flex-grow flex flex-col justify-center">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 md:p-10 shadow-xl dark:shadow-2xl shadow-slate-200/50 dark:shadow-none space-y-8">
-            
-            <div class="border-b border-slate-200 dark:border-slate-800 pb-5">
-                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Register School Suite Workspace</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Set up your institution's central administrative cloud account securely.</p>
+        <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl px-4 py-2.5"></div>
+
+        <form id="registerForm" class="space-y-3 text-xs">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">School Name *</label>
+                <input required id="inName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="e.g. Govt Primary School Shah Sadar Din">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">School Type *</label>
+                    <select id="inType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
+                        <option value="Government">Government</option>
+                        <option value="Private">Private</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Level *</label>
+                    <select id="inLevel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
+                        <option value="Primary">Primary</option>
+                        <option value="Middle">Middle</option>
+                        <option value="High">High / Secondary</option>
+                        <option value="Higher Secondary">Higher Secondary</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Address</label>
+                <input id="inAddress" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Village / Tehsil / District">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Contact / UAN Number</label>
+                <input id="inPhone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="+92 300 0000000">
+            </div>
+            <div class="border-t border-slate-800 pt-3">
+                <label class="block text-[10px] text-slate-400 mb-1">Admin Email * <span class="text-slate-600">(used to log in)</span></label>
+                <input required type="email" id="inEmail" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="principal@school.edu.pk">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Password * <span class="text-slate-600">(min 6 chars)</span></label>
+                    <input required type="password" minlength="6" id="inPassword" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Confirm Password *</label>
+                    <input required type="password" minlength="6" id="inPasswordConfirm" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                </div>
             </div>
 
-            <!-- Unified Registration Form -->
-            <form id="registrationForm" class="space-y-6" onsubmit="handleRegistration(event)">
-                
-                <!-- Admin Credentials Section -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/50 dark:bg-indigo-950/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/40">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Admin Username / Email</label>
-                        <input type="email" id="adminEmail" required placeholder="admin@school.edu.pk" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Admin Password</label>
-                        <div class="relative">
-                            <input type="password" id="adminPassword" required placeholder="••••••••" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 pr-10 transition">
-                            <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer text-xs">
-                                <span id="eyeIcon">👁️</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black text-xs px-4 py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] mt-2">
+                Create My School's Account
+            </button>
+        </form>
 
-                <!-- School Logo Upload -->
-                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-2">
-                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">School Crest / Logo Upload</label>
-                    <input type="file" id="schoolLogoFile" accept="image/png, image/jpeg, image/webp" onchange="validateAndCompressLogo(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 dark:file:bg-indigo-950 dark:file:text-indigo-300 hover:file:bg-indigo-100 cursor-pointer transition">
-                    <p id="logoStatusText" class="text-[11px] text-slate-400">Target file weight: 15 KB – 30 KB. Formats: PNG, JPG, WebP.</p>
-                    <input type="hidden" id="schoolLogoBase64">
-                </div>
+        <p class="text-center text-[11px] text-slate-400">
+            Already registered? <a href="login.html" class="text-purple-400 font-bold hover:underline">Log in here</a>
+        </p>
+    </div>
 
-                <!-- Institution Sector Switcher -->
-                <div>
-                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Institution Sector</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button type="button" id="btnPrivate" onclick="setSector('Private')" class="py-2.5 px-4 rounded-xl text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer flex items-center justify-center gap-2">
-                            <span>🏫</span> Private Institution
-                        </button>
-                        <button type="button" id="btnGovt" onclick="setSector('Government')" class="py-2.5 px-4 rounded-xl text-xs font-semibold border transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-pointer flex items-center justify-center gap-2">
-                            <span>🏛️</span> Government School
-                        </button>
-                    </div>
-                    <input type="hidden" id="schoolSector" value="Private">
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Official School Name</label>
-                        <input type="text" id="schoolName" required placeholder="e.g., Lahore Grammar School" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">School ID / Code Prefix</label>
-                        <input type="text" id="schoolCodeId" required placeholder="e.g., lgs_gulberg" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">School Full Address</label>
-                        <input type="text" id="schoolAddress" required placeholder="Main Boulevard, Gulberg" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">District</label>
-                        <input type="text" id="schoolDistrict" required placeholder="e.g., Lahore" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Map Location Link / GPS Coords</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="mapLocation" placeholder="Paste Google Maps pin link or coordinates" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                        <button type="button" onclick="openMapPinHelper()" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3.5 py-2.5 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer transition border border-slate-300 dark:border-slate-700">Open Map 🗺️</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">School Level</label>
-                        <select id="schoolLevel" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                            <option value="Primary">Primary (1-5)</option>
-                            <option value="Middle">Middle (6-8)</option>
-                            <option value="High" selected>High (9-10)</option>
-                            <option value="Higher Secondary">Higher Secondary (11-12)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Gender</label>
-                        <select id="schoolGender" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                            <option value="Combined">Combined / Co-Ed</option>
-                            <option value="Boys Only">Boys Only</option>
-                            <option value="Girls Only">Girls Only</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Custom School ID Pattern</label>
-                        <input type="text" id="idPattern" placeholder="e.g., LGS-2026-###" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Strength (Students)</label>
-                        <input type="number" id="totalStrength" required placeholder="e.g., 450" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Total Staff Members</label>
-                        <input type="number" id="totalStaff" required placeholder="e.g., 35" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Principal Name</label>
-                        <input type="text" id="principalName" required placeholder="Mr. Ahmed Khan" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
-                        <input type="text" id="principalPhone" required placeholder="03001234567" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                </div>
-
-                <!-- Dynamic Sector Block -->
-                <div id="dynamicVerificationBlock" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-3">
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" id="privateCodeLabel">Private Registration / License Number</label>
-                        <div id="privateToggleContainer" class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg">
-                            <button type="button" onclick="setPrivateCodeType('RegNum')" id="btnRegNum" class="text-[10px] bg-indigo-600 text-white px-2.5 py-1 rounded-md font-semibold transition shadow-2xs">Reg Number</button>
-                            <button type="button" onclick="setPrivateCodeType('EMIS')" id="btnPrivateEMIS" class="text-[10px] text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-md font-semibold transition">EMIS Code</button>
-                        </div>
-                    </div>
-                    <input type="hidden" id="privateCodeMode" value="RegNum">
-                    <input type="text" id="institutionCodeInput" required placeholder="e.g., REG-LHR-2026-99" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 mt-3">Fee Transaction Note / Reference Code (EasyPaisa/JazzCash/Bank)</label>
-                        <input type="text" id="receiptNote" required placeholder="e.g., TrxID: 839201928" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Subscription Package Tier</label>
-                        <select id="selectedPackage" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                            <option value="Standard Tier (PKR 1,500/mo)">Standard Tier (PKR 1,500/mo)</option>
-                            <option value="Professional Tier (PKR 3,600/mo)" selected>Professional Tier (PKR 3,600/mo)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="formError" class="text-xs text-rose-500 font-medium hidden"></div>
-                
-                <button type="submit" id="submitBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl text-xs transition shadow-md shadow-emerald-600/20 mt-4 cursor-pointer">
-                    Sync to Google Sheet & Complete Registration 🚀
-                </button>
-            </form>
-
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 dark:border-slate-800/80 py-6 px-6 text-center text-xs text-slate-400 dark:text-slate-500 transition-colors">
-        <p>&copy; 2026 lamastudio.pk &bull; Google Sheets Cloud Provisioning Engine</p>
-    </footer>
-
-    <!-- App Logic Scripts -->
     <script>
-        // Fallback Store if school-store.js is missing
-        if (typeof SchoolStore === 'undefined') {
-            window.SchoolStore = {
-                upsert: async function(payload) {
-                    const existingSchools = JSON.parse(localStorage.getItem('lamastudio_schools_db')) || [];
-                    existingSchools.push(payload);
-                    localStorage.setItem('lamastudio_schools_db', JSON.stringify(existingSchools));
-                    localStorage.setItem('lamastudio_active_school', JSON.stringify(payload));
-                    localStorage.setItem('currentSchoolId', payload.adminEmail);
-                    return { success: true };
-                }
-            };
+        const form = document.getElementById('registerForm');
+        const errorBanner = document.getElementById('errorBanner');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function showError(message) {
+            errorBanner.textContent = message;
+            errorBanner.classList.remove('hidden');
         }
 
-        window.togglePasswordVisibility = function() {
-            const passwordInput = document.getElementById('adminPassword');
-            const eyeIcon = document.getElementById('eyeIcon');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerText = '🙈';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerText = '👁️';
+        function hideError() {
+            errorBanner.classList.add('hidden');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const password = document.getElementById('inPassword').value;
+            const passwordConfirm = document.getElementById('inPasswordConfirm').value;
+            if (password !== passwordConfirm) {
+                showError('Passwords do not match.');
+                return;
             }
-        };
 
-        // Logo Compressor (15 KB - 30 KB bounds)
-        window.validateAndCompressLogo = function(event) {
-            const file = event.target.files[0];
-            const statusText = document.getElementById('logoStatusText');
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-                    
-                    const MAX_DIMENSION = 120;
-                    if (width > height) {
-                        if (width > MAX_DIMENSION) {
-                            height *= MAX_DIMENSION / width;
-                            width = MAX_DIMENSION;
-                        }
-                    } else {
-                        if (height > MAX_DIMENSION) {
-                            width *= MAX_DIMENSION / height;
-                            height = MAX_DIMENSION;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    let quality = 0.7;
-                    let dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    let sizeKB = Math.round((dataUrl.length * (3/4)) / 1024);
-                    
-                    while (sizeKB > 30 && quality > 0.1) {
-                        quality -= 0.1;
-                        dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        sizeKB = Math.round((dataUrl.length * (3/4)) / 1024);
-                    }
-
-                    document.getElementById('schoolLogoBase64').value = dataUrl;
-                    statusText.innerHTML = `<span class="text-emerald-500 font-semibold">✔ Crest optimized successfully! Final size: ~${sizeKB} KB (Target: 15K–30K)</span>`;
-                };
-            };
-            reader.readAsDataURL(file);
-        };
-
-        window.setSector = function(sector) {
-            document.getElementById('schoolSector').value = sector;
-            const btnPrivate = document.getElementById('btnPrivate');
-            const btnGovt = document.getElementById('btnGovt');
-            const dynamicBlock = document.getElementById('dynamicVerificationBlock');
-
-            if (sector === 'Private') {
-                btnPrivate.className = "py-2.5 px-4 rounded-xl text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer flex items-center justify-center gap-2";
-                btnGovt.className = "py-2.5 px-4 rounded-xl text-xs font-semibold border transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-pointer flex items-center justify-center gap-2";
-                
-                dynamicBlock.innerHTML = `
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300" id="privateCodeLabel">Private Registration / License Number</label>
-                        <div id="privateToggleContainer" class="flex space-x-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg">
-                            <button type="button" onclick="setPrivateCodeType('RegNum')" id="btnRegNum" class="text-[10px] bg-indigo-600 text-white px-2.5 py-1 rounded-md font-semibold transition shadow-2xs">Reg Number</button>
-                            <button type="button" onclick="setPrivateCodeType('EMIS')" id="btnPrivateEMIS" class="text-[10px] text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-md font-semibold transition">EMIS Code</button>
-                        </div>
-                    </div>
-                    <input type="hidden" id="privateCodeMode" value="RegNum">
-                    <input type="text" id="institutionCodeInput" required placeholder="e.g., REG-LHR-2026-99" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 mt-3">Fee Transaction Note / Reference Code (EasyPaisa/JazzCash/Bank)</label>
-                        <input type="text" id="receiptNote" required placeholder="e.g., TrxID: 839201928" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Subscription Package Tier</label>
-                        <select id="selectedPackage" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                            <option value="Standard Tier (PKR 1,500/mo)">Standard Tier (PKR 1,500/mo)</option>
-                            <option value="Professional Tier (PKR 3,600/mo)" selected>Professional Tier (PKR 3,600/mo)</option>
-                        </select>
-                    </div>
-                `;
-            } else {
-                btnGovt.className = "py-2.5 px-4 rounded-xl text-xs font-semibold border transition bg-indigo-600 text-white border-indigo-600 shadow-sm cursor-pointer flex items-center justify-center gap-2";
-                btnPrivate.className = "py-2.5 px-4 rounded-xl text-xs font-semibold border transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 cursor-pointer flex items-center justify-center gap-2";
-
-                dynamicBlock.innerHTML = `
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Government School EMIS Code</label>
-                        <input type="text" id="institutionCodeInput" required placeholder="e.g., EMIS-PK-55201" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 mt-3">Fee Transaction Note / Reference Code (EasyPaisa/JazzCash/Bank)</label>
-                        <input type="text" id="receiptNote" required placeholder="e.g., Govt Fund TrxID: 442910" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Subscription Package Tier</label>
-                        <select id="selectedPackage" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                            <option value="Standard Tier (PKR 1,500/mo)">Standard Tier (PKR 1,500/mo)</option>
-                            <option value="Professional Tier (PKR 3,600/mo)" selected>Professional Tier (PKR 3,600/mo)</option>
-                        </select>
-                    </div>
-                `;
-            }
-        };
-
-        window.setPrivateCodeType = function(type) {
-            document.getElementById('privateCodeMode').value = type;
-            const btnRegNum = document.getElementById('btnRegNum');
-            const btnPrivateEMIS = document.getElementById('btnPrivateEMIS');
-            const label = document.getElementById('privateCodeLabel');
-            const input = document.getElementById('institutionCodeInput');
-
-            if (type === 'RegNum') {
-                btnRegNum.className = "text-[10px] bg-indigo-600 text-white px-2.5 py-1 rounded-md font-semibold transition shadow-2xs";
-                btnPrivateEMIS.className = "text-[10px] text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-md font-semibold transition";
-                label.innerText = "Private Registration / License Number";
-                input.placeholder = "e.g., REG-LHR-2026-99";
-            } else {
-                btnPrivateEMIS.className = "text-[10px] bg-indigo-600 text-white px-2.5 py-1 rounded-md font-semibold transition shadow-2xs";
-                btnRegNum.className = "text-[10px] text-slate-600 dark:text-slate-400 px-2.5 py-1 rounded-md font-semibold transition";
-                label.innerText = "Private School EMIS Code";
-                input.placeholder = "e.g., EMIS-PRV-9921";
-            }
-        };
-
-        window.openMapPinHelper = function() {
-            const query = prompt("Enter location name to search on Google Maps:", "Lahore");
-            if (query) {
-                window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}`, '_blank');
-            }
-        };
-
-        async function handleRegistration(event) {
-            event.preventDefault();
-            const submitBtn = document.getElementById('submitBtn');
-            const errorEl = document.getElementById('formError');
-            errorEl.classList.add('hidden');
             submitBtn.disabled = true;
-            submitBtn.innerText = "Syncing with Google Sheet... ⏳";
-
-            const payload = {
-                adminEmail: document.getElementById('adminEmail').value.trim(),
-                adminPassword: document.getElementById('adminPassword').value.trim(),
-                schoolLogo: document.getElementById('schoolLogoBase64').value || '',
-                schoolSector: document.getElementById('schoolSector').value,
-                schoolName: document.getElementById('schoolName').value.trim(),
-                schoolCodeId: document.getElementById('schoolCodeId').value.trim(),
-                schoolAddress: document.getElementById('schoolAddress').value.trim(),
-                schoolDistrict: document.getElementById('schoolDistrict').value.trim(),
-                mapLocation: document.getElementById('mapLocation').value.trim(),
-                schoolLevel: document.getElementById('schoolLevel').value,
-                schoolGender: document.getElementById('schoolGender').value,
-                idPattern: document.getElementById('idPattern').value.trim(),
-                totalStrength: document.getElementById('totalStrength').value.trim(),
-                totalStaff: document.getElementById('totalStaff').value.trim(),
-                principalName: document.getElementById('principalName').value.trim(),
-                principalPhone: document.getElementById('principalPhone').value.trim(),
-                verificationCodeType: document.getElementById('privateCodeMode') ? document.getElementById('privateCodeMode').value : 'EMIS',
-                institutionCode: document.getElementById('institutionCodeInput').value.trim(),
-                receiptNote: document.getElementById('receiptNote').value.trim(),
-                packageTier: document.getElementById('selectedPackage').value
-            };
+            submitBtn.textContent = 'Creating your school\'s account...';
 
             try {
-                let result;
-                if (typeof ApiClient !== 'undefined' && ApiClient.saveData) {
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Cloud timeout")), 4000));
-                    result = await Promise.race([ApiClient.saveData(payload), timeoutPromise]).catch(() => SchoolStore.upsert(payload));
-                } else {
-                    result = await SchoolStore.upsert(payload);
-                }
-
-                if (result && result.success !== false && result.status !== "error") {
-                    alert("School Suite Workspace registered & synced successfully!");
-                    window.location.href = "login.html";
-                } else {
-                    await SchoolStore.upsert(payload);
-                    window.location.href = "login.html";
-                }
+                await LamaAPI.register({
+                    name: document.getElementById('inName').value.trim(),
+                    type: document.getElementById('inType').value,
+                    level: document.getElementById('inLevel').value,
+                    address: document.getElementById('inAddress').value.trim(),
+                    phone: document.getElementById('inPhone').value.trim(),
+                    adminEmail: document.getElementById('inEmail').value.trim(),
+                    password: password
+                });
+                window.location.href = 'dashboard.html';
             } catch (err) {
-                await SchoolStore.upsert(payload);
-                window.location.href = "login.html";
+                showError(err.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create My School's Account";
             }
+        });
+
+        // If already logged in, skip straight to the dashboard.
+        if (LamaAPI.isLoggedIn()) {
+            window.location.href = 'dashboard.html';
         }
     </script>
 </body>

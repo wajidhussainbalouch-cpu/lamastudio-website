@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Login | LamaStudio School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="config.css">
+<script src="api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="cyber-card w-full max-w-sm rounded-2xl p-7 space-y-5">
+        <div class="text-center">
+            <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-lg font-black text-white mb-2">P</div>
+            <h1 class="text-lg font-black uppercase tracking-wider text-white">Portal Login</h1>
+            <p class="text-[10px] text-slate-400 mt-1">For teachers and students</p>
+        </div>
+
+        <!-- Role Toggle -->
+        <div class="grid grid-cols-2 gap-2 bg-slate-950 border border-slate-800 rounded-xl p-1">
+            <button id="roleTeacherBtn" onclick="setRole('teacher')" class="text-xs font-bold uppercase py-2 rounded-lg transition">Teacher</button>
+            <button id="roleStudentBtn" onclick="setRole('student')" class="text-xs font-bold uppercase py-2 rounded-lg transition">Student</button>
+        </div>
+
+        <div id="errorBox" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-lg px-3 py-2"></div>
+
+        <form id="loginForm" class="space-y-3" onsubmit="handleSubmit(event)">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">School ID / Login Code</label>
+                <input id="inSchoolId" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500" placeholder="Ask your school admin for this">
+            </div>
+            <div>
+                <label id="identifierLabel" class="block text-[10px] text-slate-400 mb-1">Email</label>
+                <input id="inIdentifier" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Password</label>
+                <input type="password" id="inPassword" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500">
+            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-cyan-600 to-indigo-600 hover:opacity-90 text-white font-black text-sm py-2.5 rounded-xl transition">Log In</button>
+        </form>
+
+        <p class="text-center text-[10px] text-slate-500">
+            School staff? <a href="login.html" class="text-indigo-400 font-bold">School Admin login</a>
+        </p>
+    </div>
+
+    <script>
+        let currentRole = 'teacher';
+
+        function setRole(role) {
+            currentRole = role;
+            document.getElementById('roleTeacherBtn').className = `text-xs font-bold uppercase py-2 rounded-lg transition ${role === 'teacher' ? 'bg-cyan-600 text-white' : 'text-slate-400'}`;
+            document.getElementById('roleStudentBtn').className = `text-xs font-bold uppercase py-2 rounded-lg transition ${role === 'student' ? 'bg-cyan-600 text-white' : 'text-slate-400'}`;
+            const label = document.getElementById('identifierLabel');
+            const input = document.getElementById('inIdentifier');
+            if (role === 'teacher') {
+                label.innerText = 'Email';
+                input.type = 'email';
+                input.placeholder = 'your@email.com';
+            } else {
+                label.innerText = 'Enrollment No';
+                input.type = 'text';
+                input.placeholder = 'e.g. 1877';
+            }
+        }
+
+        function showError(msg) {
+            const box = document.getElementById('errorBox');
+            box.innerText = msg;
+            box.classList.remove('hidden');
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            document.getElementById('errorBox').classList.add('hidden');
+            const schoolId = document.getElementById('inSchoolId').value.trim();
+            const identifier = document.getElementById('inIdentifier').value.trim();
+            const password = document.getElementById('inPassword').value;
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = 'Logging in...';
+            try {
+                if (currentRole === 'teacher') {
+                    await LamaAPI.teacherLogin(schoolId, identifier, password);
+                    window.location.href = 'teacher-dashboard.html';
+                } else {
+                    await LamaAPI.studentLogin(schoolId, identifier, password);
+                    window.location.href = 'student-portal.html';
+                }
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+                btn.innerText = 'Log In';
+            }
+        }
+
+        setRole('teacher');
+    </script>
+</body>
+</html>

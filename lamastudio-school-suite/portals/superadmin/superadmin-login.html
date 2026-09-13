@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="config.css">
+<script src="api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="cyber-card w-full max-w-sm rounded-2xl p-7 space-y-5">
+        <div class="text-center">
+            <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-red-600 to-orange-500 flex items-center justify-center text-lg font-black text-white mb-2">SA</div>
+            <h1 class="text-lg font-black uppercase tracking-wider text-white">Super Admin</h1>
+            <p class="text-[10px] text-slate-400 mt-1">LamaStudio platform control</p>
+        </div>
+        <div id="errorBox" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-lg px-3 py-2"></div>
+        <form onsubmit="handleSubmit(event)" class="space-y-3">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Password</label>
+                <input type="password" id="inPassword" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white outline-none focus:border-red-500">
+            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:opacity-90 text-white font-black text-sm py-2.5 rounded-xl transition">Log In</button>
+        </form>
+    </div>
+
+    <script>
+        async function handleSubmit(e) {
+            e.preventDefault();
+            document.getElementById('errorBox').classList.add('hidden');
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = 'Logging in...';
+            try {
+                await LamaAPI.adminLogin(document.getElementById('inPassword').value);
+                window.location.href = 'superadmin-dashboard.html';
+            } catch (err) {
+                const box = document.getElementById('errorBox');
+                box.innerText = err.message;
+                box.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = 'Log In';
+            }
+        }
+    </script>
+</body>
+</html>

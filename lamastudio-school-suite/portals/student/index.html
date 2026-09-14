@@ -1,209 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student & Parent Portal | lamastudio.pk</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .cyber-card {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(49, 46, 129, 0.25) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            box-shadow: 0 0 30px -10px rgba(99, 102, 241, 0.15);
-        }
-        .glow-text-indigo {
-            text-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Student Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../../assets/css/config.css">
+<script src="../../js/api-client.js"></script>
 </head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
-    <!-- Top Navbar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-4 px-6 md:px-12 flex justify-between items-center shadow-2xl">
-        <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1 font-bold bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700">
-                <span>&larr; Back to Home</span>
-            </a>
-            <span class="text-slate-700">|</span>
-            <h1 class="text-xs font-black tracking-wider text-indigo-400 glow-text-indigo">STUDENT & PARENT PORTAL</h1>
+    <!-- Header -->
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Student Portal — <span id="studentClassLabel">Class</span></p>
+            </div>
         </div>
-        <div class="flex items-center space-x-3">
-            <span class="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-300 font-bold">
-                Role: Student / Parent
-            </span>
+        <div class="flex items-center gap-2">
+            <span id="studentNameLabel" class="text-xs font-bold text-slate-300 hidden sm:inline">Student</span>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-4xl w-full mx-auto px-4 md:px-6 py-10 flex-grow flex flex-col justify-center">
-        
-        <!-- Login Card -->
-        <div id="login-card" class="cyber-card max-w-md w-full mx-auto rounded-3xl p-8 border border-indigo-500/30 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="bg-indigo-600/20 text-indigo-400 p-3 w-fit mx-auto rounded-2xl mb-3 border border-indigo-500/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                </div>
-                <h2 class="text-xl font-black text-white">Portal Sign In</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your credentials to query student profile database</p>
+    <!-- Tab Bar -->
+    <nav class="max-w-4xl mx-auto px-4 mt-5 flex gap-2 flex-wrap">
+        <button class="tab-btn" data-tab="result" onclick="switchTab('result')">🎓 My Result</button>
+        <button class="tab-btn" data-tab="homework" onclick="switchTab('homework')">📝 Homework</button>
+        <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance')">📋 Attendance</button>
+        <button class="tab-btn" data-tab="notices" onclick="switchTab('notices')">📢 Notices</button>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- RESULT TAB -->
+        <section id="tab-result" class="tab-panel cyber-card rounded-2xl p-5 space-y-4">
+            <h2 class="text-xs font-black uppercase text-purple-400">My Latest Result</h2>
+            <table class="w-full text-[11px] border-collapse">
+                <thead>
+                    <tr class="bg-purple-600 text-white text-[10px] uppercase">
+                        <th class="text-left p-2">Subject</th><th class="p-2">Obtained</th><th class="p-2">Total</th><th class="p-2">%</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody"></tbody>
+            </table>
+            <div class="grid grid-cols-3 gap-3 text-center pt-2">
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Overall %</p><p id="rPercent" class="text-lg font-black text-purple-400">0%</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Position</p><p id="rPosition" class="text-lg font-black text-amber-400">-</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Remarks</p><p id="rRemarks" class="text-xs font-bold mt-1">-</p></div>
             </div>
+        </section>
 
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Student ID</label>
-                    <input type="text" id="studentId" required placeholder="e.g. STU-001" 
-                        class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Password</label>
-                    <input type="password" id="password" required placeholder="••••••••" 
-                        class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
-                </div>
-                <button type="submit" 
-                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20 cursor-pointer">
-                    Access Student Records
-                </button>
-            </form>
-            <div class="mt-4 text-center">
-                <p class="text-[11px] text-slate-400">Demo Test Credentials — ID: <code class="text-indigo-400 font-bold">STU-001</code> | Pass: <code class="text-indigo-400 font-bold">1234</code></p>
+        <!-- HOMEWORK TAB -->
+        <section id="tab-homework" class="tab-panel cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Homework & Assignments</h2>
+            <div id="homeworkList" class="space-y-2"></div>
+            <p id="homeworkEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No homework posted yet.</p>
+        </section>
+
+        <!-- ATTENDANCE TAB -->
+        <section id="tab-attendance" class="tab-panel cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-cyan-400">My Attendance</h2>
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Present</p><p id="aPresent" class="text-lg font-black text-emerald-400">0</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Absent</p><p id="aAbsent" class="text-lg font-black text-red-400">0</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Ratio</p><p id="aRatio" class="text-lg font-black text-cyan-400">-</p></div>
             </div>
-        </div>
+            <div id="attendanceHistory" class="space-y-1.5 pt-2"></div>
+        </section>
 
-        <!-- Record Viewer & Telemetry Dashboard (Hidden Initially) -->
-        <div id="dashboard-card" class="hidden space-y-6">
-            
-            <!-- Student Header Banner -->
-            <div class="cyber-card rounded-3xl p-6 md:p-8 flex justify-between items-center flex-wrap gap-4 border border-indigo-500/30">
-                <div class="flex items-center space-x-4">
-                    <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-2xl">👦</div>
-                    <div>
-                        <h3 id="resName" class="text-xl font-black text-white">Student Name</h3>
-                        <p id="resClass" class="text-xs text-indigo-400 font-bold">Grade / Class</p>
-                    </div>
-                </div>
-                <button onclick="logout()" class="text-xs bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-2 rounded-xl font-bold hover:bg-rose-500/20 transition cursor-pointer">
-                    Lock Session / Logout
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                <!-- Left Column: Personal Records -->
-                <div class="cyber-card rounded-3xl p-6 space-y-3 border border-indigo-500/20">
-                    <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400 mb-2">📋 Bio & Identification Records</h4>
-                    <div class="space-y-2.5 text-xs text-slate-300">
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between">
-                            <span class="text-slate-400">Student ID:</span>
-                            <span id="resId" class="font-bold text-white">---</span>
-                        </div>
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between">
-                            <span class="text-slate-400">Date of Birth:</span>
-                            <span id="resDob" class="font-bold text-white">---</span>
-                        </div>
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between">
-                            <span class="text-slate-400">CNIC No:</span>
-                            <span id="resCnic" class="font-bold text-white">---</span>
-                        </div>
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between">
-                            <span class="text-slate-400">Parentage:</span>
-                            <span id="resParent" class="font-bold text-white">---</span>
-                        </div>
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between">
-                            <span class="text-slate-400">Phone Number:</span>
-                            <span id="resPhone" class="font-bold text-white">---</span>
-                        </div>
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between">
-                            <span class="text-slate-400">Address:</span>
-                            <span id="resAddress" class="font-bold text-white">---</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Academic & Homework Feed -->
-                <div class="space-y-6">
-                    
-                    <!-- Term Grades Summary -->
-                    <div class="cyber-card rounded-3xl p-6 space-y-3 border border-indigo-500/20">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400 mb-2">📊 Term Exam Metrics</h4>
-                        <div class="space-y-2 text-xs text-slate-300">
-                            <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center">
-                                <span>Mathematics</span>
-                                <span class="text-emerald-400 font-bold">88 / 100</span>
-                            </div>
-                            <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center">
-                                <span>General Science</span>
-                                <span class="text-emerald-400 font-bold">85 / 100</span>
-                            </div>
-                            <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl flex justify-between items-center">
-                                <span>English Literature</span>
-                                <span class="text-emerald-400 font-bold">82 / 100</span>
-                            </div>
-                            <div class="p-2 text-center bg-indigo-600/10 border border-indigo-500/30 rounded-xl text-indigo-300 font-black">
-                                Cumulative Percentage: 85% (Grade A)
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Daily Diary / Homework Feed -->
-                    <div class="cyber-card rounded-3xl p-6 space-y-3 border border-indigo-500/20">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400 mb-2">📓 Today's Homework Diary</h4>
-                        <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl space-y-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[11px] font-bold text-emerald-400">Mathematics</span>
-                                <span class="text-[9px] text-slate-400">Today</span>
-                            </div>
-                            <p class="text-[11px] text-slate-300">Chapter 5 Exercise 3: Complete problems 1 through 10 in notebooks.</p>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
+        <!-- NOTICES TAB -->
+        <section id="tab-notices" class="tab-panel cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Notices</h2>
+            <div id="noticesList" class="space-y-2"></div>
+        </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • Student Portal Module</p>
-    </footer>
+    <style>
+        .tab-btn { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 8px 14px; border-radius: 10px; background: #1e293b; color: #94a3b8; transition: all .15s; }
+        .tab-btn.active { background: #7c3aed; color: white; }
+    </style>
 
-    <!-- Frontend Script Logic -->
     <script>
-        function handleLogin(event) {
-            event.preventDefault();
-            const id = document.getElementById('studentId').value.trim();
-            const pass = document.getElementById('password').value.trim();
+        const HOMEWORK = 'homework', ATTENDANCE = 'attendance', NOTIFICATIONS = 'notifications';
 
-            // Mock check matching your spreadsheet column properties
-            if(id.toUpperCase() === "STU-001" && pass === "1234") {
-                // Populate dashboard fields
-                document.getElementById('resName').innerText = "Ali Khan";
-                document.getElementById('resClass').innerText = "Grade 8-A Section";
-                document.getElementById('resId').innerText = id.toUpperCase();
-                document.getElementById('resDob').innerText = "12-May-2012";
-                document.getElementById('resCnic').innerText = "35202-1234567-1";
-                document.getElementById('resParent').innerText = "Muhammad Khan";
-                document.getElementById('resPhone').innerText = "+92 300 1234567";
-                document.getElementById('resAddress').innerText = "House 12, Street 4, Lahore";
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        }
 
-                // Toggle views
-                document.getElementById('login-card').classList.add('hidden');
-                document.getElementById('dashboard-card').classList.remove('hidden');
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = '../../portal-login.html';
+        }
+
+        function gradeFromPercentage(pct) {
+            if (pct >= 90) return 'A+'; if (pct >= 80) return 'A'; if (pct >= 70) return 'B';
+            if (pct >= 60) return 'C'; if (pct >= 50) return 'D'; return 'F';
+        }
+
+        async function renderHeader() {
+            const session = LamaAPI.getSession();
+            document.getElementById('pageTitle').innerText = `${session.schoolName || 'School'} | Student Portal`;
+            document.getElementById('headerSchoolName').innerText = session.schoolName || 'School';
+            document.getElementById('studentClassLabel').innerText = `Class ${session.class || '-'}`;
+            document.getElementById('studentNameLabel').innerText = session.name || 'Student';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (session.schoolLogo) {
+                logoBox.innerHTML = `<img src="${session.schoolLogo}" class="w-full h-full object-cover rounded-xl">`;
             } else {
-                alert("Invalid Student ID or password. Use ID: STU-001 and Pass: 1234 for this demo test.");
+                logoBox.innerText = LamaAPI.deriveShortCode(session.schoolName || 'SCH');
             }
         }
 
-        function logout() {
-            document.getElementById('dashboard-card').classList.add('hidden');
-            document.getElementById('login-card').classList.remove('hidden');
-            document.getElementById('loginForm').reset();
+        async function renderResult() {
+            const session = LamaAPI.getSession();
+            const student = await LamaAPI.get('students', session.studentId);
+            if (!student) return;
+            const subs = student.subjects || [];
+            const totalObtained = subs.reduce((s, x) => s + (Number(x.obtained) || 0), 0);
+            const totalMarks = subs.reduce((s, x) => s + (Number(x.total) || 0), 0);
+            const pct = totalMarks > 0 ? (totalObtained / totalMarks) * 100 : 0;
+
+            document.getElementById('resultBody').innerHTML = subs.map(s => {
+                const obtained = Number(s.obtained) || 0, total = Number(s.total) || 0;
+                const spct = total > 0 ? (obtained / total) * 100 : 0;
+                return `<tr class="border-b border-slate-800"><td class="p-2">${s.name}</td><td class="p-2 text-center">${obtained}</td><td class="p-2 text-center">${total}</td><td class="p-2 text-center">${spct.toFixed(0)}%</td></tr>`;
+            }).join('');
+            document.getElementById('rPercent').innerText = `${pct.toFixed(1)}%`;
+            document.getElementById('rPosition').innerText = student.position || '-';
+            document.getElementById('rRemarks').innerText = student.remarks || (pct >= 33 ? gradeFromPercentage(pct) + ' Grade' : 'Work Harder');
+        }
+
+        async function renderHomework() {
+            const items = (await LamaAPI.list(HOMEWORK)).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            document.getElementById('homeworkEmpty').classList.toggle('hidden', items.length > 0);
+            document.getElementById('homeworkList').innerHTML = items.map(h => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <p class="text-xs font-bold">${h.subject} — ${h.title}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${h.description || ''}</p>
+                    <p class="text-[9px] text-amber-400 mt-1">Due: ${h.dueDate || 'N/A'}</p>
+                </div>
+            `).join('');
+        }
+
+        async function renderAttendance() {
+            const session = LamaAPI.getSession();
+            const all = await LamaAPI.list(ATTENDANCE);
+            const mine = all.filter(a => a.studentId === session.studentId).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            const present = mine.filter(a => a.status === 'Present').length;
+            const absent = mine.filter(a => a.status === 'Absent').length;
+            const marked = present + absent;
+            document.getElementById('aPresent').innerText = present;
+            document.getElementById('aAbsent').innerText = absent;
+            document.getElementById('aRatio').innerText = marked > 0 ? `${Math.round((present / marked) * 100)}%` : '-';
+            document.getElementById('attendanceHistory').innerHTML = mine.slice(0, 20).map(a => `
+                <div class="flex justify-between text-[11px] bg-slate-950/50 rounded-lg px-3 py-1.5">
+                    <span>${a.date}</span>
+                    <span class="font-bold ${a.status === 'Present' ? 'text-emerald-400' : a.status === 'Absent' ? 'text-red-400' : 'text-amber-400'}">${a.status}</span>
+                </div>
+            `).join('');
+        }
+
+        async function renderNotices() {
+            const items = (await LamaAPI.list(NOTIFICATIONS)).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            document.getElementById('noticesList').innerHTML = items.slice(0, 15).map(n => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <p class="text-xs font-bold">${n.title}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${n.message}</p>
+                </div>
+            `).join('');
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderResult();
+            await renderHomework();
+            await renderAttendance();
+            await renderNotices();
+            switchTab('result');
+        }
+
+        if (LamaAPI.requireLogin('student', '../../portal-login.html')) {
+            init();
         }
     </script>
 </body>

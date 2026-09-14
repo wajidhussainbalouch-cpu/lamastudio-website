@@ -12,8 +12,7 @@
     <link rel="stylesheet" href="assets/css/config.css">
 
     <!-- Lamastudio Storage & API Layer -->
-    <script src="assets/js/api-client.js"></script>
-    <script src="assets/js/school-store.js"></script>
+    <script src="js/api-client.js"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
@@ -38,9 +37,9 @@
         <div class="flex items-center space-x-1.5 md:space-x-3 flex-shrink-0">
             <button onclick="scrollToSection('pricing')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block cursor-pointer">Pricing</button>
             <button onclick="scrollToSection('payment-methods')" class="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-indigo-600 hidden lg:inline-block cursor-pointer">Payment Channels</button>
-            
-            <!-- Super Admin Link Connected -->
-            <a href="super-admin.html" class="text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1.5 rounded-lg transition hover:bg-amber-500/20">⚡ Super Admin</a>
+
+            <!-- Super Admin Link — points to your real portal, one level deep -->
+            <a href="portals/superadmin/superadmin-login.html" class="text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-1.5 rounded-lg transition hover:bg-amber-500/20">⚡ Super Admin</a>
 
             <!-- Dynamic Auth Buttons Container -->
             <div id="headerAuthActions" class="flex items-center space-x-1.5 md:space-x-3">
@@ -261,17 +260,15 @@
             updateHeaderAuthUI();
         });
 
+        // Reads the REAL LamaAPI session (set by login.html / register.html),
+        // not a separate ad-hoc localStorage key.
         function updateHeaderAuthUI() {
-            const activeSchool = JSON.parse(
-                localStorage.getItem('lamastudio_active_school') || 
-                localStorage.getItem('current_school_session') || 
-                'null'
-            );
+            const session = LamaAPI.getSession();
             const container = document.getElementById('headerAuthActions');
             if (!container) return;
 
-            if (activeSchool) {
-                const displayName = activeSchool.schoolName || activeSchool["School Name"] || 'School';
+            if (session && session.role === 'school') {
+                const displayName = session.name || 'School';
                 container.innerHTML = `
                     <div class="hidden md:flex items-center space-x-1.5 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 dark:text-indigo-300">
                         <span>🏫</span>
@@ -284,14 +281,13 @@
         }
 
         function handleLogout() {
-            localStorage.removeItem('current_school_session');
-            localStorage.removeItem('lamastudio_active_school');
+            LamaAPI.logout();
             alert('Logged out successfully.');
             window.location.reload();
         }
 
         function handleForgotPassword() {
-            alert('Contact Lamastudio Support at 00923437064536 or use the Super Admin panel to reset credentials.');
+            alert('Contact Lamastudio Support at 00923437064536, or ask a Super Admin to reset your password from the Super Admin panel.');
         }
 
         function scrollToSection(id) {
@@ -307,11 +303,12 @@
             document.getElementById('loginModal').classList.add('hidden');
         }
 
-        // Live Cloud Authentication via SchoolStore Layer
+        // Live Cloud Authentication — calls your real Apps Script backend via LamaAPI,
+        // the same login() every school account already uses on login.html.
         async function handleCloudLoginSubmit(event) {
             event.preventDefault();
-            const emailInput = document.getElementById('loginUser').value.trim().toLowerCase();
-            const passwordInput = document.getElementById('loginPass').value.trim();
+            const email = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
             const errorEl = document.getElementById('modalLoginError');
             const btn = document.getElementById('modalSubmitBtn');
 
@@ -320,27 +317,10 @@
             btn.disabled = true;
 
             try {
-                const schools = await SchoolStore.getAll();
-
-                // Match against Google Sheet column header fields ("Admin Email" and "Password")
-                const matchedSchool = schools.find(s => 
-                    (s["Admin Email"] && s["Admin Email"].toLowerCase() === emailInput && s["Password"] === passwordInput) ||
-                    (s.adminEmail && s.adminEmail.toLowerCase() === emailInput && s.password === passwordInput)
-                );
-
-                if (matchedSchool) {
-                    // Set both keys to prevent any dashboard mismatch errors
-                    localStorage.setItem('current_school_session', JSON.stringify(matchedSchool));
-                    localStorage.setItem('lamastudio_active_school', JSON.stringify(matchedSchool));
-                    window.location.href = 'dashboard.html';
-                } else {
-                    errorEl.innerText = "Invalid credentials or school not found in the live cloud sheet.";
-                    errorEl.classList.remove('hidden');
-                    btn.innerText = "Login to Dashboard";
-                    btn.disabled = false;
-                }
+                await LamaAPI.login(email, password);
+                window.location.href = 'dashboard.html';
             } catch (err) {
-                errorEl.innerText = "Cloud connection error: " + err.message;
+                errorEl.innerText = err.message;
                 errorEl.classList.remove('hidden');
                 btn.innerText = "Login to Dashboard";
                 btn.disabled = false;

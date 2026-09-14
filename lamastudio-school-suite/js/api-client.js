@@ -6,15 +6,12 @@
  * or browser someone logs in from.
  *
  * FOUR roles share this one client, distinguished by session.role:
- *   'school'  — School Admin (unchanged from before)
- *   'teacher' — a teacher account, scoped to one class
- *   'student' — a student portal login, scoped to their own record/class
- *   'admin'   — the Super Admin (you)
- *
- * SETUP: paste your deployed Apps Script Web App URL below (it ends in
- * /exec). That is the ONLY thing you need to configure in this file.
+ *    'school'  — School Admin (unchanged from before)
+ *    'teacher' — a teacher account, scoped to one class
+ *    'student' — a student portal login, scoped to their own record/class
+ *    'admin'   — the Super Admin (you)
  */
-const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
 
 const LamaAPI = (function () {
     const SESSION_KEY = 'lamastudio_session';
@@ -208,8 +205,6 @@ const LamaAPI = (function () {
     }
 
     // ---- Generic role-aware collection CRUD ----
-    // (students / teachers / attendance / homework / fees / datesheet / tests / notifications —
-    //  the backend scopes what each role may see or touch automatically.)
 
     async function list(collection) {
         const data = await callApi('list', { collection }, 'GET');

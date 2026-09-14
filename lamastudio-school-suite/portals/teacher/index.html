@@ -1,290 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Command Workspace | lamastudio.pk</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .cyber-card {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(6, 78, 59, 0.25) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            box-shadow: 0 0 30px -10px rgba(16, 185, 129, 0.15);
-        }
-        .glow-text-emerald {
-            text-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Teacher Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../../assets/css/config.css">
+<script src="../../js/api-client.js"></script>
 </head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
-    <!-- SECURE LOGIN GATEWAY MODAL -->
-    <div id="loginModal" class="fixed inset-0 z-50 bg-[#0b0f19]/95 backdrop-blur-2xl flex items-center justify-center p-4">
-        <div class="cyber-card max-w-md w-full rounded-3xl p-8 border border-emerald-500/30 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-3 text-emerald-400 text-xl font-black">👩‍🏫</div>
-                <h2 class="text-xl font-black text-white">Teacher Portal Authentication</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your assigned instructor credentials to access the class command workspace.</p>
-            </div>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-slate-400">Teacher ID / Email</label>
-                    <input type="text" id="teacherUser" required value="teacher@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-slate-400">Secure Access Passcode</label>
-                    <input type="password" id="teacherPass" required value="12345" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 mt-2">
-                    Authorize Workspace Access
-                </button>
-            </form>
-            <div class="mt-4 flex justify-between items-center text-[11px]">
-                <a href="../../index.html" class="text-slate-400 hover:text-emerald-400 transition">&larr; Return to Dashboard</a>
-                <button onclick="bypassTeacherLogin()" class="text-emerald-400 hover:underline font-bold">Quick Bypass &rarr;</button>
+    <!-- Header -->
+    <header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Teacher Portal — <span id="teacherClassLabel">Class</span></p>
             </div>
         </div>
-    </div>
-
-    <!-- Top Navbar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-40 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
-        <div class="flex items-center space-x-3">
-            <a href="../../index.html" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1 font-bold bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-700">
-                <span>&larr; Dashboard</span>
-            </a>
-            <span class="text-slate-700">|</span>
-            <h1 class="text-xs font-black tracking-wider text-emerald-400 glow-text-emerald">TEACHER WORKSPACE</h1>
-        </div>
-        <div class="flex items-center space-x-3">
-            <button onclick="openTeacherSettingsModal()" class="text-[10px] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-emerald-300 font-bold transition cursor-pointer">
-                ⚙️ Edit Profile / Section
-            </button>
-            <button onclick="logoutTeacher()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold cursor-pointer">
-                Lock Portal
-            </button>
+        <div class="flex items-center gap-2">
+            <span id="teacherNameLabel" class="text-xs font-bold text-slate-300 hidden sm:inline">Teacher</span>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-grow w-full space-y-6">
-        
-        <!-- Welcome Banner -->
-        <div class="cyber-card rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-                <span class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20">
-                    Active Roster Command Node
-                </span>
-                <h2 id="welcomeTeacherTitle" class="text-2xl md:text-3xl font-black text-white mt-2">Classroom & Section Telemetry (Grade 8-A)</h2>
-                <p class="text-xs text-slate-300 mt-1">Monitor daily attendance, flag fee defaulters instantly shared with admin, assign daily diary work, and push grades.</p>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Section Strength</p>
-                    <p class="text-lg font-black text-emerald-400 mt-0.5">32 Students</p>
-                </div>
-                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Fee Defaulters</p>
-                    <p id="defaulterCountBadge" class="text-lg font-black text-rose-400 mt-0.5">3 Flagged</p>
-                </div>
-                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center col-span-2 sm:col-span-1">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Today Attendance</p>
-                    <p class="text-lg font-black text-sky-400 mt-0.5">91% Present</p>
+    <!-- Tab Bar -->
+    <nav class="max-w-5xl mx-auto px-4 mt-5 flex gap-2 flex-wrap">
+        <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance')">📋 Attendance</button>
+        <button class="tab-btn" data-tab="homework" onclick="switchTab('homework')">📝 Homework</button>
+        <button class="tab-btn" data-tab="marks" onclick="switchTab('marks')">🎯 Marks</button>
+        <button class="tab-btn" data-tab="notices" onclick="switchTab('notices')">📢 Notices</button>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- ATTENDANCE TAB -->
+        <section id="tab-attendance" class="tab-panel cyber-card rounded-2xl p-5 space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <h2 class="text-xs font-black uppercase text-cyan-400">Mark Attendance</h2>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="attDate" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2">
+                    <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
                 </div>
             </div>
-        </div>
+            <div id="attendanceList" class="space-y-2"></div>
+            <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
+        </section>
 
-        <!-- Grid Layout for Modules -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- COLUMN 1 & 2: Student Master Roster & Actions -->
-            <div class="lg:col-span-2 space-y-6">
-                <div class="cyber-card rounded-3xl p-6">
-                    <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3 flex-wrap gap-2">
-                        <div>
-                            <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400">🎓 Class Roster & Direct Controls</h3>
-                            <p class="text-[11px] text-slate-400">Manage student records, grades, and attendance state.</p>
-                        </div>
-                        <button onclick="openAddStudentModal()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-[10px] font-black px-3 py-1.5 rounded-xl transition cursor-pointer">
-                            + Add Student Record
-                        </button>
-                    </div>
-
-                    <div class="space-y-3" id="studentRosterContainer">
-                        
-                        <!-- Student 1 -->
-                        <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 student-row">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👦</div>
-                                <div>
-                                    <div class="flex items-center space-x-2">
-                                        <h4 class="text-xs font-bold text-white student-name">Ali Khan <span class="text-[10px] text-slate-400">(STU-001)</span></h4>
-                                        <span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">Grade: A (85%)</span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">Fee Status: <strong class="text-emerald-400">Cleared</strong> • Attendance: <span class="text-emerald-400">96%</span></p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-end flex-wrap gap-y-1">
-                                <button onclick="markAttendance(this, 'Ali Khan', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-emerald-500/30">Present</button>
-                                <button onclick="markAttendance(this, 'Ali Khan', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-slate-700">Absent</button>
-                                <button onclick="editStudentRow(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-cyan-500/30">Edit</button>
-                                <button onclick="deleteStudentRow(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-rose-500/30">Del</button>
-                            </div>
-                        </div>
-
-                        <!-- Student 2 -->
-                        <div class="bg-slate-900/60 border border-rose-500/30 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 student-row">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-lg">👧</div>
-                                <div>
-                                    <div class="flex items-center space-x-2">
-                                        <h4 class="text-xs font-bold text-white student-name">Sara Ahmed <span class="text-[10px] text-slate-400">(STU-002)</span></h4>
-                                        <span class="text-[9px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded font-bold">⚠️ Fee Defaulter</span>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">Grade: B (72%) • Admin Flag: <strong class="text-rose-400">Dues Pending</strong></p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-1.5 w-full sm:w-auto justify-end flex-wrap gap-y-1">
-                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Present')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-emerald-500/30">Present</button>
-                                <button onclick="markAttendance(this, 'Sara Ahmed', 'Absent')" class="bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-slate-700">Absent</button>
-                                <button onclick="editStudentRow(this)" class="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-cyan-500/30">Edit</button>
-                                <button onclick="deleteStudentRow(this)" class="bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white text-[10px] font-bold px-2 py-1 rounded border border-rose-500/30">Del</button>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
+        <!-- HOMEWORK TAB -->
+        <section id="tab-homework" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Assign Homework</h2>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <input id="hwSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input type="date" id="hwDueDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="hwTitle" placeholder="Title" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <textarea id="hwDescription" rows="2" placeholder="Description / instructions" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
             </div>
+            <button onclick="postHomework()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">+ Post Homework</button>
+            <div class="border-t border-slate-800 pt-3 space-y-2" id="homeworkList"></div>
+        </section>
 
-            <!-- COLUMN 3: Diary Work & Sub-Modules Navigation Preparation -->
-            <div class="space-y-6">
-                
-                <!-- Publish Diary Work -->
-                <div class="cyber-card rounded-3xl p-6">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400 mb-3">📓 Publish Daily Diary & Homework</h3>
-                    <p class="text-[11px] text-slate-400 mb-4">Broadcast homework tasks instantly to student portals.</p>
-                    <form onsubmit="publishDiary(event)" class="space-y-3">
-                        <div>
-                            <label class="text-[10px] uppercase font-bold text-slate-400">Subject Name</label>
-                            <input type="text" id="diarySubject" required placeholder="e.g. Mathematics" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="text-[10px] uppercase font-bold text-slate-400">Task Details</label>
-                            <textarea id="diaryTask" rows="3" required placeholder="Chapter 5 exercise 3..." class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
-                        </div>
-                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl text-xs transition shadow-lg shadow-emerald-600/20">
-                            Broadcast Diary
-                        </button>
-                    </form>
-                </div>
+        <!-- MARKS TAB -->
+        <section id="tab-marks" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-purple-400">Enter Marks</h2>
+            <select id="marksStudentSelect" class="w-full bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5"></select>
+            <div id="marksGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]"></div>
+            <button onclick="saveMarks()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save Marks</button>
+        </section>
 
-                <!-- Sub-Module Files Quick Links (Ready to split into separate files) -->
-                <div class="cyber-card rounded-3xl p-6 space-y-3">
-                    <h3 class="text-xs font-black uppercase tracking-wider text-cyan-400">📁 Dedicated Sub-Portals</h3>
-                    <p class="text-[11px] text-slate-400">Split these modules into separate files like we did for the admin panel:</p>
-                    <div class="space-y-2">
-                        <button onclick="openSubPage('teacher-diary.html')" class="w-full text-left text-xs bg-slate-900 hover:bg-slate-800 p-2.5 rounded-xl border border-slate-800 text-slate-300 flex justify-between items-center transition">
-                            <span>📓 Full Diary Archive</span>
-                            <span class="text-cyan-400">&rarr;</span>
-                        </button>
-                        <button onclick="openSubPage('teacher-grades.html')" class="w-full text-left text-xs bg-slate-900 hover:bg-slate-800 p-2.5 rounded-xl border border-slate-800 text-slate-300 flex justify-between items-center transition">
-                            <span>📊 Exam Grading Matrix</span>
-                            <span class="text-cyan-400">&rarr;</span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
+        <!-- NOTICES TAB -->
+        <section id="tab-notices" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Send Notice to Your Class</h2>
+            <input id="noticeTitle" placeholder="Title" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+            <textarea id="noticeMessage" rows="3" placeholder="Message to parents / students..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+            <button onclick="sendNotice()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">📢 Send</button>
+            <div class="border-t border-slate-800 pt-3 space-y-2" id="noticesList"></div>
+        </section>
     </main>
 
-    <!-- TEACHER SETTINGS MODAL -->
-    <div id="teacherSettingsModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="cyber-card max-w-md w-full rounded-3xl p-6 border border-emerald-500/30 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="text-xs font-black uppercase tracking-wider text-emerald-400">⚙️ Edit Instructor Profile & Section</h3>
-                <button onclick="closeTeacherSettingsModal()" class="text-slate-400 hover:text-white font-bold">&times;</button>
-            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-slate-400">Instructor Name</label>
-                    <input type="text" id="editTeacherName" value="Prof. Sarah" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-slate-400">Assigned Class / Section</label>
-                    <input type="text" id="editClassSection" value="Grade 8-A" class="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                </div>
-            </div>
-            <button onclick="saveTeacherSettings()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">
-                Save Changes
-            </button>
-        </div>
-    </div>
+    <style>
+        .tab-btn { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 8px 14px; border-radius: 10px; background: #1e293b; color: #94a3b8; transition: all .15s; }
+        .tab-btn.active { background: #4f46e5; color: white; }
+    </style>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
-        <p>&copy; 2026 lamastudio.pk • Teacher Workspace Telemetry</p>
-    </footer>
-
-    <!-- Scripts -->
     <script>
-        window.onload = function() {
-            if (localStorage.getItem('teacherLoggedIn') === 'true') {
-                document.getElementById('loginModal').style.display = 'none';
+        const STUDENTS = 'students', ATTENDANCE = 'attendance', HOMEWORK = 'homework', NOTIFICATIONS = 'notifications';
+        const DEFAULT_SUBJECTS = ['English', 'Urdu', 'Math', 'Islamiat', 'Nazra', 'Science/GK', 'SSt'];
+        let myStudents = [];
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        }
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = '../../portal-login.html';
+        }
+
+        async function renderHeader() {
+            const session = LamaAPI.getSession();
+            document.getElementById('pageTitle').innerText = `${session.schoolName || 'School'} | Teacher Portal`;
+            document.getElementById('headerSchoolName').innerText = session.schoolName || 'School';
+            document.getElementById('teacherClassLabel').innerText = `Class ${session.assignedClass || '-'} • ${session.subject || ''}`;
+            document.getElementById('teacherNameLabel').innerText = session.name || 'Teacher';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (session.schoolLogo) {
+                logoBox.innerHTML = `<img src="${session.schoolLogo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = LamaAPI.deriveShortCode(session.schoolName || 'SCH');
             }
-            const savedName = localStorage.getItem('teacherName');
-            const savedSection = localStorage.getItem('teacherSection');
-            if (savedName && savedSection) {
-                document.getElementById('welcomeTeacherTitle').innerText = `Classroom & Section Telemetry (${savedSection})`;
+        }
+
+        // ---- Attendance ----
+        async function loadAttendanceList() {
+            const date = document.getElementById('attDate').value;
+            const existing = (await LamaAPI.list(ATTENDANCE)).filter(a => a.date === date);
+            const list = document.getElementById('attendanceList');
+            document.getElementById('attendanceEmpty').classList.toggle('hidden', myStudents.length > 0);
+
+            list.innerHTML = myStudents.map(s => {
+                const existingRecord = existing.find(a => a.studentId === s.id);
+                const currentStatus = existingRecord ? existingRecord.status : 'Present';
+                return `
+                <div class="flex items-center justify-between bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2" data-student-id="${s.id}" data-existing-id="${existingRecord ? existingRecord.id : ''}">
+                    <span class="text-xs font-semibold">${s.name} <span class="text-slate-500">(${s.enrlNo || '-'})</span></span>
+                    <div class="flex gap-1">
+                        <button class="att-btn ${currentStatus === 'Present' ? 'att-active-present' : ''}" data-status="Present" onclick="setAttStatus(this, 'Present')">Present</button>
+                        <button class="att-btn ${currentStatus === 'Absent' ? 'att-active-absent' : ''}" data-status="Absent" onclick="setAttStatus(this, 'Absent')">Absent</button>
+                        <button class="att-btn ${currentStatus === 'Leave' ? 'att-active-leave' : ''}" data-status="Leave" onclick="setAttStatus(this, 'Leave')">Leave</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function setAttStatus(btn, status) {
+            const row = btn.closest('[data-student-id]');
+            row.querySelectorAll('.att-btn').forEach(b => b.className = 'att-btn');
+            btn.className = `att-btn att-active-${status.toLowerCase()}`;
+            row.dataset.status = status;
+        }
+
+        async function saveAttendance() {
+            const date = document.getElementById('attDate').value;
+            if (!date) { alert('Pick a date first.'); return; }
+            const rows = document.querySelectorAll('#attendanceList [data-student-id]');
+            for (const row of rows) {
+                const studentId = row.dataset.studentId;
+                const existingId = row.dataset.existingId;
+                const activeBtn = row.querySelector('.att-btn[class*="att-active"]');
+                const status = activeBtn ? activeBtn.dataset.status : 'Present';
+                const student = myStudents.find(s => s.id === studentId);
+                if (existingId) {
+                    await LamaAPI.update(ATTENDANCE, existingId, { status });
+                } else {
+                    await LamaAPI.add(ATTENDANCE, { studentId, studentName: student.name, date, status });
+                }
             }
-        };
-
-        function handleLogin(event) {
-            event.preventDefault();
-            localStorage.setItem('teacherLoggedIn', 'true');
-            document.getElementById('loginModal').style.display = 'none';
-            alert('Teacher authentication verified!');
+            alert('Attendance saved.');
+            loadAttendanceList();
         }
 
-        function bypassTeacherLogin() {
-            localStorage.setItem('teacherLoggedIn', 'true');
-            document.getElementById('loginModal').style.display = 'none';
+        // ---- Homework ----
+        async function loadHomework() {
+            const items = (await LamaAPI.list(HOMEWORK)).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            document.getElementById('homeworkList').innerHTML = items.map(h => `
+                <div class="flex justify-between items-start bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <div>
+                        <p class="text-xs font-bold">${h.subject} — ${h.title}</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${h.description || ''}</p>
+                        <p class="text-[9px] text-amber-400 mt-1">Due: ${h.dueDate || 'N/A'}</p>
+                    </div>
+                    <button onclick="deleteHomework('${h.id}')" class="text-red-500 hover:text-red-400 text-xs font-bold">✕</button>
+                </div>
+            `).join('');
         }
 
-        function logoutTeacher() {
-            localStorage.removeItem('teacherLoggedIn');
-            location.reload();
+        async function postHomework() {
+            const subject = document.getElementById('hwSubject').value.trim();
+            const title = document.getElementById('hwTitle').value.trim();
+            if (!subject || !title) { alert('Subject and title are required.'); return; }
+            await LamaAPI.add(HOMEWORK, {
+                subject, title,
+                description: document.getElementById('hwDescription').value.trim(),
+                dueDate: document.getElementById('hwDueDate').value
+            });
+            document.getElementById('hwSubject').value = '';
+            document.getElementById('hwTitle').value = '';
+            document.getElementById('hwDescription').value = '';
+            document.getElementById('hwDueDate').value = '';
+            loadHomework();
         }
 
-        function openTeacherSettingsModal() {
-            document.getElementById('teacherSettingsModal').style.display = 'flex';
+        async function deleteHomework(id) {
+            await LamaAPI.remove(HOMEWORK, id);
+            loadHomework();
         }
 
-        function closeTeacherSettingsModal() {
-            document.getElementById('teacherSettingsModal').style.display = 'none';
+        // ---- Marks ----
+        function populateMarksStudentSelect() {
+            const select = document.getElementById('marksStudentSelect');
+            select.innerHTML = myStudents.map(s => `<option value="${s.id}">${s.name} (${s.enrlNo || 'N/A'})</option>`).join('');
         }
 
-        function saveTeacherSettings() {
-            const name = document.getElementById('editTeacherName').value;
-            const section = document.getElementById('editClassSection').value;
-            localStorage.setItem('teacherName', name);
-            localStorage.setItem('teacherSection', section);
-            document.getElementById('welcomeTeacherTitle').innerText = `Classroom & Section Telemetry (${section})`;
-            closeTeacherSettingsModal();
-            alert('Instructor profile updated successfully!');
+        function buildMarksGrid(student) {
+            const subs = student.subjects && student.subjects.length ? student.subjects : DEFAULT_SUBJECTS.map(name => ({ name, obtained: 0, total: 100 }));
+            document.getElementById('marksGrid').innerHTML = subs.map(s => `
+                <div class="space-y-1">
+                    <label class="block text-slate-400 uppercase font-bold">${s.name}</label>
+                    <div class="flex gap-1">
+                        <input type="number" class="mark-obtained w-1/2 bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-white" data-name="${s.name}" value="${s.obtained}">
+                        <input type="number" class="mark-total w-1/2 bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-white" data-name="${s.name}" value="${s.total}">
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function markAttendance(btn, studentName, status) {
-            alert(`Attendance for ${studentName} marked as: ${status}`);
+        async function onMarksStudentChange() {
+            const id = document.getElementById('marksStudentSelect').value;
+            const student = myStudents.find(s => s.id === id);
+            if (student) buildMarksGrid(student);
         }
 
-        function editStudentRow(btn) {
-            const row = btn.closest('.student-row');
-            const nameEl = row.querySelector('.student-name');
-            const newName = prompt("Edit student name:", nameEl.innerText.split('(')[0].trim());
-            if (newName) {
-                nameEl.innerHTML = `${newName} <span class="text-[10px] text-slate-40
+        async function saveMarks() {
+            const id = document.getElementById('marksStudentSelect').value;
+            if (!id) return;
+            const obtainedInputs = document.querySelectorAll('.mark-obtained');
+            const totalInputs = document.querySelectorAll('.mark-total');
+            const subjects = Array.from(obtainedInputs).map((el, i) => ({
+                name: el.dataset.name, obtained: Number(el.value) || 0, total: Number(totalInputs[i].value) || 0
+            }));
+            await LamaAPI.update(STUDENTS, id, { subjects });
+            alert('Marks saved.');
+        }
+
+        // ---- Notices ----
+        async function loadNotices() {
+            const items = (await LamaAPI.list(NOTIFICATIONS)).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            document.getElementById('noticesList').innerHTML = items.slice(0, 10).map(n => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <p class="text-xs font-bold">${n.title}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${n.message}</p>
+                </div>
+            `).join('');
+        }
+
+        async function sendNotice() {
+            const title = document.getElementById('noticeTitle').value.trim();
+            const message = document.getElementById('noticeMessage').value.trim();
+            if (!title || !message) { alert('Title and message are required.'); return; }
+            const session = LamaAPI.getSession();
+            await LamaAPI.add(NOTIFICATIONS, {
+                title, message, audience: `Class ${session.assignedClass}`, channel: 'Portal', status: 'Sent'
+            });
+            document.getElementById('noticeTitle').value = '';
+            document.getElementById('noticeMessage').value = '';
+            loadNotices();
+        }
+
+        // ---- Init ----
+        async function init() {
+            await renderHeader();
+            myStudents = await LamaAPI.list(STUDENTS);
+            document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
+            populateMarksStudentSelect();
+            if (myStudents.length) buildMarksGrid(myStudents[0]);
+            document.getElementById('marksStudentSelect').addEventListener('change', onMarksStudentChange);
+            document.getElementById('attDate').addEventListener('change', loadAttendanceList);
+            await loadAttendanceList();
+            await loadHomework();
+            await loadNotices();
+            switchTab('attendance');
+        }
+
+        if (LamaAPI.requireLogin('teacher', '../../portal-login.html')) {
+            init();
+        }
+    </script>
+    <style>
+        .att-btn { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: #1e293b; color: #94a3b8; }
+        .att-active-present { background: #059669; color: white; }
+        .att-active-absent { background: #dc2626; color: white; }
+        .att-active-leave { background: #d97706; color: white; }
+    </style>
+</body>
+</html>

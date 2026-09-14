@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">School Settings</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <header class="max-w-lg w-full mb-4 flex justify-between items-center">
+        <h1 class="text-sm font-black uppercase tracking-wider glow-text-purple">School Settings</h1>
+        <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Hub</a>
+    </header>
+
+    <div class="cyber-card max-w-lg w-full rounded-2xl p-6 space-y-4">
+
+        <div id="successBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl px-4 py-2.5"></div>
+        <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl px-4 py-2.5"></div>
+
+        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+            <div id="logoPreview" class="w-14 h-14 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm flex-shrink-0">SCH</div>
+            <div class="flex-grow">
+                <label class="block text-[10px] text-slate-400 mb-1">School Logo <span class="text-slate-600">(small image, e.g. under 100KB)</span></label>
+                <input type="file" accept="image/*" id="inLogo" onchange="previewLogo(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+            </div>
+        </div>
+
+        <form id="settingsForm" class="space-y-3 text-xs">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">School Name</label>
+                <input required id="inName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">School Type</label>
+                    <select id="inType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
+                        <option value="Government">Government</option>
+                        <option value="Private">Private</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Level</label>
+                    <select id="inLevel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
+                        <option value="Primary">Primary</option>
+                        <option value="Middle">Middle</option>
+                        <option value="High">High / Secondary</option>
+                        <option value="Higher Secondary">Higher Secondary</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Address</label>
+                <input id="inAddress" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Contact / UAN Number</label>
+                    <input id="inPhone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Principal / Head Name</label>
+                    <input id="inPrincipal" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black text-xs px-4 py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] mt-2">
+                Save Changes
+            </button>
+        </form>
+    </div>
+
+    <script>
+        let pendingLogo = null;
+
+        function previewLogo(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    pendingLogo = e.target.result;
+                    document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-xl">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function showMessage(bannerId, text) {
+            ['successBanner', 'errorBanner'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            const banner = document.getElementById(bannerId);
+            banner.textContent = text;
+            banner.classList.remove('hidden');
+        }
+
+        async function loadSettings() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
+            document.getElementById('inName').value = school.name || '';
+            document.getElementById('inType').value = school.type || 'Private';
+            document.getElementById('inLevel').value = school.level || 'High';
+            document.getElementById('inAddress').value = school.address || '';
+            document.getElementById('inPhone').value = school.phone || '';
+            document.getElementById('inPrincipal').value = school.principal || '';
+            const preview = document.getElementById('logoPreview');
+            if (school.logo) {
+                preview.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                preview.innerText = school.shortCode || 'SCH';
+            }
+        }
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            const patch = {
+                name: document.getElementById('inName').value.trim(),
+                type: document.getElementById('inType').value,
+                level: document.getElementById('inLevel').value,
+                address: document.getElementById('inAddress').value.trim(),
+                phone: document.getElementById('inPhone').value.trim(),
+                principal: document.getElementById('inPrincipal').value.trim()
+            };
+            if (pendingLogo) patch.logo = pendingLogo;
+
+            try {
+                await LamaAPI.updateSchoolConfig(patch);
+                showMessage('successBanner', 'Settings saved.');
+            } catch (err) {
+                showMessage('errorBanner', err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Changes';
+            }
+        });
+
+        if (LamaAPI.requireLogin('school')) {
+            loadSettings();
+        }
+    </script>
+</body>
+</html>

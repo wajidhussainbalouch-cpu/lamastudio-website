@@ -6,12 +6,15 @@
  * or browser someone logs in from.
  *
  * FOUR roles share this one client, distinguished by session.role:
- *    'school'  — School Admin (unchanged from before)
- *    'teacher' — a teacher account, scoped to one class
- *    'student' — a student portal login, scoped to their own record/class
- *    'admin'   — the Super Admin (you)
+ *   'school'  — School Admin (unchanged from before)
+ *   'teacher' — a teacher account, scoped to one class
+ *   'student' — a student portal login, scoped to their own record/class
+ *   'admin'   — the Super Admin (you)
+ *
+ * SETUP: paste your deployed Apps Script Web App URL below (it ends in
+ * /exec). That is the ONLY thing you need to configure in this file.
  */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
 const LamaAPI = (function () {
     const SESSION_KEY = 'lamastudio_session';
@@ -176,6 +179,30 @@ const LamaAPI = (function () {
         return data.stats;
     }
 
+    async function getStudentFeeSummary(studentId) {
+        const data = await callApi('getStudentFeeSummary', { studentId }, 'GET');
+        return data.summary;
+    }
+
+    // ---- Shared Main Dashboard (school / teacher / student — no fees or HR data) ----
+
+    async function getMainDashboardData() {
+        const data = await callApi('getMainDashboardData', {}, 'GET');
+        return data.data;
+    }
+
+    // ---- Teacher attendance pings (role: school sends, role: teacher acknowledges) ----
+
+    async function pingTeacher(teacherId, message) {
+        const data = await callApi('pingTeacher', { teacherId, message }, 'POST');
+        return data.ping;
+    }
+
+    async function acknowledgePing(pingId) {
+        const data = await callApi('acknowledgePing', { pingId }, 'POST');
+        return data.ping;
+    }
+
     function deriveShortCode(name) {
         return String(name || 'SCH').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'SCH';
     }
@@ -205,6 +232,8 @@ const LamaAPI = (function () {
     }
 
     // ---- Generic role-aware collection CRUD ----
+    // (students / teachers / attendance / homework / fees / datesheet / tests / notifications —
+    //  the backend scopes what each role may see or touch automatically.)
 
     async function list(collection) {
         const data = await callApi('list', { collection }, 'GET');
@@ -233,7 +262,8 @@ const LamaAPI = (function () {
     return {
         register, login, teacherLogin, studentLogin, adminLogin,
         logout, isLoggedIn, requireLogin, getSession,
-        getActiveSchool, updateSchoolConfig, getDashboardStats, deriveShortCode, addTeacher,
+        getActiveSchool, updateSchoolConfig, getDashboardStats, getStudentFeeSummary, deriveShortCode, addTeacher,
+        getMainDashboardData, pingTeacher, acknowledgePing,
         adminListSchools, adminSetStatus, adminResetPassword,
         list, get, add, update, remove
     };

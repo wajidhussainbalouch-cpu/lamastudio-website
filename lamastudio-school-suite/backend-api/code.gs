@@ -58,14 +58,26 @@ const SUPER_ADMIN_PASSWORD_PLAINTEXT = 'change-this-password'; // edit, then run
 const COLLECTIONS = {
     students: {
         tab: 'Students',
-        headers: ['id', 'enrlNo', 'name', 'gender', 'dob', 'fatherGuardian', 'contact', 'class',
+        headers: ['id', 'enrlNo', 'name', 'gender', 'dob', 'fatherGuardian', 'contact', 'whatsapp', 'class', 'section',
                   'subjectsJson', 'position', 'photo', 'behavioralJson', 'attendance',
                   'teacherRemarks', 'principalRemarks', 'remarks', 'password', 'apiKey', 'createdAt']
     },
     teachers: {
         tab: 'Teachers',
-        headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass',
+        headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt']
+    },
+    activities: {
+        tab: 'Activities',
+        headers: ['id', 'type', 'title', 'description', 'date', 'photo', 'createdAt']
+    },
+    teacherAttendance: {
+        tab: 'TeacherAttendance',
+        headers: ['id', 'teacherId', 'teacherName', 'date', 'status', 'markedBy', 'createdAt']
+    },
+    teacherPings: {
+        tab: 'TeacherPings',
+        headers: ['id', 'teacherId', 'message', 'acknowledged', 'createdAt']
     },
     attendance: {
         tab: 'Attendance',
@@ -536,8 +548,8 @@ function resolveContext(p) {
 }
 
 const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework', 'notifications'];
-const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests'];
-const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications'];
+const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings'];
+const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities'];
 
 function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
@@ -558,7 +570,15 @@ function checkPermission(ctx, action, collection) {
 function getCollectionSheet(ctx, collection) {
     const cfg = COLLECTIONS[collection];
     if (!cfg) throw new Error('Unknown collection: ' + collection);
-    return { sheet: ctx.ss.getSheetByName(cfg.tab), headers: cfg.headers };
+    let sheet = ctx.ss.getSheetByName(cfg.tab);
+    if (!sheet) {
+        // Self-heal: schools registered before this collection existed won't have this
+        // tab yet. Create it on first access instead of throwing.
+        sheet = ctx.ss.insertSheet(cfg.tab);
+        sheet.appendRow(cfg.headers);
+        sheet.setFrozenRows(1);
+    }
+    return { sheet, headers: cfg.headers };
 }
 
 function listRecords(ctx, collection) {
@@ -572,6 +592,9 @@ function listRecords(ctx, collection) {
     }
     if (ctx.role === 'teacher' && (collection === 'attendance' || collection === 'homework' || collection === 'students')) {
         records = records.filter(r => String(r.class) === String(ctx.teacher.assignedClass));
+    }
+    if (ctx.role === 'teacher' && collection === 'teacherPings') {
+        records = records.filter(r => r.teacherId === ctx.teacher.id);
     }
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests')) {
         records = records.filter(r => String(r.class) === String(ctx.student.class));
@@ -639,6 +662,117 @@ function removeRecord(ctx, collection, id) {
     return false;
 }
 
+/** Admin sends a one-tap reminder to a teacher who hasn't marked attendance yet. */
+function pingTeacher(schoolId, apiKey, teacherId, message) {
+    const match = authorizeSchool(schoolId, apiKey);
+    const ss = SpreadsheetApp.openById(match.obj.sheetId);
+    const ctx = { role: 'school', ss };
+    return addRecord(ctx, 'teacherPings', {
+        teacherId,
+        message: message || 'Please mark today\'s student attendance.',
+        acknowledged: false
+    });
+}
+
+/** Teacher dismisses their own ping after seeing it. */
+function acknowledgePing(schoolId, teacherId, apiKey, pingId) {
+    const ctx = authorizeTeacher(schoolId, teacherId, apiKey);
+    const teacherCtx = { role: 'teacher', ss: ctx.ss, teacher: ctx.teacher };
+    const { sheet, headers } = getCollectionSheet(teacherCtx, 'teacherPings');
+    const data = sheet.getDataRange().getValues();
+    const idCol = headers.indexOf('id');
+    const teacherIdCol = headers.indexOf('teacherId');
+    for (let i = 1; i < data.length; i++) {
+        if (data[i][idCol] === pingId) {
+            if (data[i][teacherIdCol] !== ctx.teacher.id) throw new Error('This ping does not belong to you.');
+            const updated = Object.assign({}, rowToRecord(headers, data[i]), { acknowledged: true });
+            sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
+            return updated;
+        }
+    }
+    throw new Error('Ping not found.');
+}
+
+// ============================================================================
+// SHARED MAIN DASHBOARD  (school / teacher / student — never fees or HR data)
+// ============================================================================
+
+/** The same safe, non-financial overview shown to School Admin, Teacher, and Student/Parent alike. */
+function getMainDashboardData(params) {
+    const ctx = resolveContext(params);
+    const ss = ctx.ss;
+
+    let schoolName = '', logo = '', address = '';
+    if (ctx.role === 'school') {
+        const match = authorizeSchool(params.schoolId, params.apiKey);
+        schoolName = match.obj.name; logo = match.obj.logo; address = match.obj.address;
+    } else {
+        const registry = getRegistrySheet();
+        const schoolMatch = findSchoolRow(registry, r => r.schoolId === params.schoolId);
+        if (schoolMatch) { schoolName = schoolMatch.obj.name; logo = schoolMatch.obj.logo; address = schoolMatch.obj.address; }
+    }
+
+    const notifRows = getCollectionSheet(ctx, 'notifications').sheet.getDataRange().getValues();
+    const notifHeaders = COLLECTIONS.notifications.headers;
+    const notifications = [];
+    for (let i = 1; i < notifRows.length; i++) {
+        const r = rowToRecord(notifHeaders, notifRows[i]);
+        if (r.id) notifications.push(r);
+    }
+    notifications.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+    const actRows = getCollectionSheet(ctx, 'activities').sheet.getDataRange().getValues();
+    const actHeaders = COLLECTIONS.activities.headers;
+    const activities = [];
+    for (let i = 1; i < actRows.length; i++) {
+        const r = rowToRecord(actHeaders, actRows[i]);
+        if (r.id) activities.push(r);
+    }
+    activities.sort((a, b) => String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt)));
+
+    const dsRows = getCollectionSheet(ctx, 'datesheet').sheet.getDataRange().getValues();
+    const dsHeaders = COLLECTIONS.datesheet.headers;
+    const todayStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    const upcomingExams = [];
+    for (let i = 1; i < dsRows.length; i++) {
+        const r = rowToRecord(dsHeaders, dsRows[i]);
+        if (r.id && r.date && String(r.date) >= todayStr) upcomingExams.push(r);
+    }
+    upcomingExams.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+    // Class sections — names and assigned teacher only, no student-level detail here.
+    const studentRows = getCollectionSheet(ctx, 'students').sheet.getDataRange().getValues();
+    const studentHeaders = COLLECTIONS.students.headers;
+    const teacherRows = getCollectionSheet(ctx, 'teachers').sheet.getDataRange().getValues();
+    const teacherHeaders = COLLECTIONS.teachers.headers;
+    const sectionMap = {};
+    for (let i = 1; i < studentRows.length; i++) {
+        const r = rowToRecord(studentHeaders, studentRows[i]);
+        if (!r.id) continue;
+        const key = String(r.class) + '|' + String(r.section || '');
+        if (!sectionMap[key]) sectionMap[key] = { class: r.class, section: r.section || '', studentCount: 0, teacherName: '' };
+        sectionMap[key].studentCount++;
+    }
+    for (let i = 1; i < teacherRows.length; i++) {
+        const r = rowToRecord(teacherHeaders, teacherRows[i]);
+        if (!r.id) continue;
+        Object.keys(sectionMap).forEach(key => {
+            if (String(sectionMap[key].class) === String(r.assignedClass) &&
+                (!r.assignedSection || String(sectionMap[key].section) === String(r.assignedSection))) {
+                sectionMap[key].teacherName = r.name;
+            }
+        });
+    }
+
+    return {
+        schoolName, logo, address,
+        recentNotifications: notifications.slice(0, 5),
+        recentActivities: activities.slice(0, 5),
+        upcomingExams: upcomingExams.slice(0, 5),
+        classSections: Object.keys(sectionMap).map(k => sectionMap[k])
+    };
+}
+
 // ============================================================================
 // SCHOOL ADMIN DASHBOARD STATS
 // ============================================================================
@@ -651,8 +785,17 @@ function getDashboardStats(schoolId, apiKey) {
 
     const studentsSheet = ss.getSheetByName(COLLECTIONS.students.tab);
     const studentRows = studentsSheet.getDataRange().getValues();
+    const studentHeaders = COLLECTIONS.students.headers;
     let totalStudents = 0;
-    for (let i = 1; i < studentRows.length; i++) { if (studentRows[i][0]) totalStudents++; }
+    let maleCount = 0, femaleCount = 0;
+    for (let i = 1; i < studentRows.length; i++) {
+        if (!studentRows[i][0]) continue;
+        totalStudents++;
+        const r = rowToRecord(studentHeaders, studentRows[i]);
+        if (String(r.gender).toUpperCase() === 'M') maleCount++;
+        else if (String(r.gender).toUpperCase() === 'F') femaleCount++;
+    }
+    const genderBreakdown = { male: maleCount, female: femaleCount, other: totalStudents - maleCount - femaleCount };
 
     const attSheet = ss.getSheetByName(COLLECTIONS.attendance.tab);
     const attRows = attSheet.getDataRange().getValues();
@@ -669,18 +812,56 @@ function getDashboardStats(schoolId, apiKey) {
     const markedToday = presentToday + absentToday;
     const attendanceRatio = markedToday > 0 ? Math.round((presentToday / markedToday) * 100) : null;
 
+    // Which classes have not had their attendance marked today, and by whom.
+    const classesMarkedToday = {};
+    for (let i = 1; i < attRows.length; i++) {
+        const r = rowToRecord(attHeaders, attRows[i]);
+        if (r.id && String(r.date) === todayStr) classesMarkedToday[String(r.class)] = true;
+    }
+
+    const teachersSheet = ss.getSheetByName(COLLECTIONS.teachers.tab);
+    const teacherRows = teachersSheet.getDataRange().getValues();
+    const teacherHeaders = COLLECTIONS.teachers.headers;
+    const allTeachers = [];
+    for (let i = 1; i < teacherRows.length; i++) {
+        const r = rowToRecord(teacherHeaders, teacherRows[i]);
+        if (r.id) allTeachers.push(r);
+    }
+    const totalTeachers = allTeachers.length;
+    const teachersNotMarked = allTeachers
+        .filter(t => t.assignedClass && !classesMarkedToday[String(t.assignedClass)])
+        .map(t => ({ id: t.id, name: t.name, assignedClass: t.assignedClass }));
+
+    const tAttSheet = ss.getSheetByName(COLLECTIONS.teacherAttendance.tab) ||
+        ss.insertSheet(COLLECTIONS.teacherAttendance.tab);
+    if (tAttSheet.getLastRow() === 0) { tAttSheet.appendRow(COLLECTIONS.teacherAttendance.headers); tAttSheet.setFrozenRows(1); }
+    const tAttRows = tAttSheet.getDataRange().getValues();
+    const tAttHeaders = COLLECTIONS.teacherAttendance.headers;
+    let teachersPresentToday = 0, teachersAbsentToday = 0;
+    for (let i = 1; i < tAttRows.length; i++) {
+        const r = rowToRecord(tAttHeaders, tAttRows[i]);
+        if (!r.id || String(r.date) !== todayStr) continue;
+        if (r.status === 'Present') teachersPresentToday++;
+        else if (r.status === 'Absent') teachersAbsentToday++;
+    }
+
     const feesSheet = ss.getSheetByName(COLLECTIONS.fees.tab);
     const feeRows = feesSheet.getDataRange().getValues();
     const feeHeaders = feeRows[0];
-    let todayCollection = 0;
+    let todayCollection = 0, overallTotal = 0, monthTotal = 0, yearTotal = 0;
     const monthTotals = {};
+    const currentMonthKey = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM');
+    const currentYearKey = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy');
     for (let i = 1; i < feeRows.length; i++) {
         const r = rowToRecord(feeHeaders, feeRows[i]);
         if (!r.id || r.status !== 'Paid') continue;
         const amt = Number(r.amount) || 0;
+        overallTotal += amt;
         if (String(r.date) === todayStr) todayCollection += amt;
         const month = String(r.date || '').slice(0, 7);
         if (month) monthTotals[month] = (monthTotals[month] || 0) + amt;
+        if (month === currentMonthKey) monthTotal += amt;
+        if (String(r.date || '').slice(0, 4) === currentYearKey) yearTotal += amt;
     }
     const incomeSeries = [];
     for (let i = 11; i >= 0; i--) {
@@ -699,10 +880,58 @@ function getDashboardStats(schoolId, apiKey) {
     }
     notifications.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
+    const actSheet = ss.getSheetByName(COLLECTIONS.activities.tab) || ss.insertSheet(COLLECTIONS.activities.tab);
+    if (actSheet.getLastRow() === 0) { actSheet.appendRow(COLLECTIONS.activities.headers); actSheet.setFrozenRows(1); }
+    const actRows = actSheet.getDataRange().getValues();
+    const actHeaders = COLLECTIONS.activities.headers;
+    const activities = [];
+    for (let i = 1; i < actRows.length; i++) {
+        const r = rowToRecord(actHeaders, actRows[i]);
+        if (r.id) activities.push(r);
+    }
+    activities.sort((a, b) => String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt)));
+
+    // Class + section breakdown, each with its own student count.
+    const sectionMap = {};
+    for (let i = 1; i < studentRows.length; i++) {
+        if (!studentRows[i][0]) continue;
+        const r = rowToRecord(studentHeaders, studentRows[i]);
+        const key = String(r.class) + '|' + String(r.section || '');
+        if (!sectionMap[key]) sectionMap[key] = { class: r.class, section: r.section || '', studentCount: 0 };
+        sectionMap[key].studentCount++;
+    }
+
     return {
-        totalStudents, presentToday, absentToday, attendanceRatio,
-        todayCollection, incomeSeries, recentNotifications: notifications.slice(0, 5)
+        totalStudents, presentToday, absentToday, attendanceRatio, genderBreakdown,
+        totalTeachers, teachersPresentToday, teachersAbsentToday, teachersNotMarked,
+        todayCollection, monthTotal, yearTotal, overallTotal, incomeSeries,
+        recentNotifications: notifications.slice(0, 5),
+        recentActivities: activities.slice(0, 5),
+        classSections: Object.keys(sectionMap).map(k => sectionMap[k])
     };
+}
+
+/** Per-student fee history and running total — used by the admin fee drill-down view. */
+function getStudentFeeSummary(schoolId, apiKey, studentId) {
+    const match = authorizeSchool(schoolId, apiKey);
+    const ss = SpreadsheetApp.openById(match.obj.sheetId);
+    const feesSheet = ss.getSheetByName(COLLECTIONS.fees.tab) || ss.insertSheet(COLLECTIONS.fees.tab);
+    if (feesSheet.getLastRow() === 0) { feesSheet.appendRow(COLLECTIONS.fees.headers); feesSheet.setFrozenRows(1); }
+    const rows = feesSheet.getDataRange().getValues();
+    const headers = COLLECTIONS.fees.headers;
+    const records = [];
+    let totalPaid = 0, totalPending = 0, totalOverdue = 0;
+    for (let i = 1; i < rows.length; i++) {
+        const r = rowToRecord(headers, rows[i]);
+        if (!r.id || r.studentId !== studentId) continue;
+        records.push(r);
+        const amt = Number(r.amount) || 0;
+        if (r.status === 'Paid') totalPaid += amt;
+        else if (r.status === 'Overdue') totalOverdue += amt;
+        else totalPending += amt;
+    }
+    records.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    return { records, totalPaid, totalPending, totalOverdue };
 }
 
 // ============================================================================
@@ -727,6 +956,14 @@ function handleRequest(params) {
                 return { status: 'success', school: updateSchoolConfig(params.schoolId, params.apiKey, params.patch || {}) };
             case 'getDashboardStats':
                 return { status: 'success', stats: getDashboardStats(params.schoolId, params.apiKey) };
+            case 'getMainDashboardData':
+                return { status: 'success', data: getMainDashboardData(params) };
+            case 'getStudentFeeSummary':
+                return { status: 'success', summary: getStudentFeeSummary(params.schoolId, params.apiKey, params.studentId) };
+            case 'pingTeacher':
+                return { status: 'success', ping: pingTeacher(params.schoolId, params.apiKey, params.teacherId, params.message) };
+            case 'acknowledgePing':
+                return { status: 'success', ping: acknowledgePing(params.schoolId, params.teacherId, params.apiKey, params.pingId) };
 
             case 'addTeacher':
                 return { status: 'success', teacher: addTeacher(params.schoolId, params.apiKey, params.teacher || {}) };

@@ -50,7 +50,7 @@
  */
 
 const REGISTRY_SHEET_NAME = 'Schools';
-const SUPER_ADMIN_PASSWORD_PLAINTEXT = 'change-this-password'; // edit, then run setupSuperAdmin() once
+const SUPER_ADMIN_PASSWORD_PLAINTEXT = 'W@jid12345'; // edit, then run setupSuperAdmin() once
 
 // Every collection listed here automatically gets full CRUD via the generic
 // list/get/add/update/remove functions further down. Field names ending in

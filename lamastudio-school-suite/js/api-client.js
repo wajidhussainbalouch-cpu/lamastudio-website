@@ -6,14 +6,14 @@
  * or browser someone logs in from.
  *
  * FOUR roles share this one client, distinguished by session.role:
- *   'school'  — School Admin
- *   'teacher' — A teacher account, scoped to one class
- *   'student' — A student portal login, scoped to their own record/class
- *   'admin'   — The Super Admin
+ *   'school'  — School Admin (unchanged from before)
+ *   'teacher' — a teacher account, scoped to one class
+ *   'student' — a student portal login, scoped to their own record/class
+ *   'admin'   — the Super Admin (you)
  *
- * SETUP: Your deployed Apps Script Web App URL has been populated below.
+ * SETUP: your deployed Apps Script Web App URL has been populated below.
  */
-const API_URL = 'https://script.google.com/macros/library/d/1jk4d1ze1Na6Y15elj5yYXiQwQ4NBTTDRAYJz6DGVrgv6EqcLjZA1oNN7/9';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
 
 const LamaAPI = (function () {
     const SESSION_KEY = 'lamastudio_session';
@@ -50,16 +50,21 @@ const LamaAPI = (function () {
         if (session.role === 'admin') {
             return { role: 'admin', adminApiKey: session.adminApiKey };
         }
+        // 'school' (or legacy sessions saved before role existed)
         return { role: 'school', schoolId: session.schoolId, apiKey: session.apiKey };
     }
 
     /**
-     * Core request function. GET requests go as a query string.
-     * Everything else POSTs as text/plain to avoid CORS preflight issues.
+     * Core request function. GETs (list/get/getSchoolConfig/...) go as a query
+     * string. Everything else POSTs as text/plain — NOT application/json —
+     * on purpose: a JSON content-type would trigger a CORS preflight
+     * (an OPTIONS request), which Apps Script Web Apps cannot answer, and
+     * the whole call would fail. Sending text/plain sidesteps that; the
+     * backend still parses the body as JSON either way.
      */
     async function callApi(action, payload, method) {
         if (!API_URL || API_URL.trim() === '') {
-            throw new Error('The API URL is not configured in api-client.js.');
+            throw new Error('The API is not configured yet — paste your Apps Script Web App URL into api-client.js.');
         }
         method = method || 'POST';
         const authFields = authFieldsFor(getSession());
@@ -87,7 +92,8 @@ const LamaAPI = (function () {
         return data;
     }
 
-    // ---- School Admin: Registration & Login ----
+    // ---- School Admin: registration, login ----
+
     async function register(schoolData) {
         const data = await callApi('register', schoolData, 'POST');
         setSession(Object.assign({}, data.school, { role: 'school' }));
@@ -100,32 +106,42 @@ const LamaAPI = (function () {
         return data.school;
     }
 
-    // ---- Teacher: Login ----
+    // ---- Teacher: login (accounts are created by the School Admin, not self-registered) ----
+
     async function teacherLogin(schoolId, email, password) {
         const data = await callApi('teacherLogin', { schoolId, email, password }, 'POST');
         setSession(Object.assign({}, data.teacher, { role: 'teacher' }));
         return data.teacher;
     }
 
-    // ---- Student: Login ----
+    // ---- Student: login ----
+
     async function studentLogin(schoolId, enrlNo, password) {
         const data = await callApi('studentLogin', { schoolId, enrlNo, password }, 'POST');
         setSession(Object.assign({}, data.student, { role: 'student' }));
         return data.student;
     }
 
-    // ---- Super Admin: Login ----
+    // ---- Super Admin: login ----
+
     async function adminLogin(password) {
         const data = await callApi('adminLogin', { password }, 'POST');
         setSession(Object.assign({}, data.admin, { role: 'admin' }));
         return data.admin;
     }
 
-    // ---- Session & Route Guarding ----
+    // ---- Session / route guarding ----
+
     function logout() {
         clearSession();
     }
 
+    /**
+     * Redirects to the right login page if no one is logged in, or if the
+     * wrong kind of account is logged in for this page (e.g. a student
+     * session trying to open the teacher dashboard). Call at the top of
+     * every protected page.
+     */
     function requireLogin(expectedRole, loginPage) {
         const session = getSession();
         if (!session || session.role !== expectedRole) {
@@ -135,7 +151,8 @@ const LamaAPI = (function () {
         return true;
     }
 
-    // ---- School Profile & Dashboard Data ----
+    // ---- School profile (role: school) ----
+
     async function getActiveSchool() {
         const session = getSession();
         if (!session) return null;
@@ -166,12 +183,15 @@ const LamaAPI = (function () {
         return data.summary;
     }
 
+    // ---- Shared Main Dashboard (school / teacher / student — no fees or HR data) ----
+
     async function getMainDashboardData() {
         const data = await callApi('getMainDashboardData', {}, 'GET');
         return data.data;
     }
 
-    // ---- Teacher Attendance Pings ----
+    // ---- Teacher attendance pings (role: school sends, role: teacher acknowledges) ----
+
     async function pingTeacher(teacherId, message) {
         const data = await callApi('pingTeacher', { teacherId, message }, 'POST');
         return data.ping;
@@ -186,12 +206,15 @@ const LamaAPI = (function () {
         return String(name || 'SCH').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'SCH';
     }
 
+    // ---- Staff management (role: school) ----
+
     async function addTeacher(teacherData) {
         const data = await callApi('addTeacher', { teacher: teacherData }, 'POST');
         return data.teacher;
     }
 
-    // ---- Super Admin Actions ----
+    // ---- Super Admin actions (role: admin) ----
+
     async function adminListSchools() {
         const data = await callApi('adminListSchools', {}, 'GET');
         return data.schools;
@@ -207,7 +230,10 @@ const LamaAPI = (function () {
         return data.result;
     }
 
-    // ---- Generic Collection CRUD ----
+    // ---- Generic role-aware collection CRUD ----
+    // (students / teachers / attendance / homework / fees / datesheet / tests / notifications —
+    //  the backend scopes what each role may see or touch automatically.)
+
     async function list(collection) {
         const data = await callApi('list', { collection }, 'GET');
         return data.records;

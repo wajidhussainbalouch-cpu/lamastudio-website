@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Manage Teachers</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Manage Teachers</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Add Teacher Form -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <input id="inName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inEmail" type="email" placeholder="Email (used to log in)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inSubject" placeholder="Subject (e.g. Math)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inClass" placeholder="Assigned Class (e.g. 5)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inSection" placeholder="Assigned Section (e.g. A)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inPassword" type="text" placeholder="Password (min 6 chars)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+            </div>
+            <button onclick="createTeacher()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Create Teacher Account</button>
+            <p class="text-[10px] text-slate-500">Share the <b>School ID / Login Code</b> below, plus this email and password, with the teacher — they'll log in at <code>portal-login.html</code>.</p>
+        </section>
+
+        <!-- Edit Teacher (hidden until "Edit" is clicked) -->
+        <section id="editSection" class="cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Edit Teacher</h2>
+            <input type="hidden" id="editId">
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <input id="editName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editSection" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="editStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                </select>
+            </div>
+            <p class="text-[10px] text-slate-500">Note: password can't be changed from here yet — the teacher's email/password stay as set at creation.</p>
+            <div class="flex gap-2">
+                <button onclick="saveTeacherEdit()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Save Changes</button>
+                <button onclick="closeEdit()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Cancel</button>
+            </div>
+        </section>
+
+        <!-- School Login Code -->
+        <section class="cyber-card rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+                <p class="text-[9px] uppercase font-bold text-slate-500">Your School ID / Login Code</p>
+                <p id="schoolIdDisplay" class="text-sm font-mono font-bold text-cyan-400 mt-0.5">-</p>
+            </div>
+            <button onclick="copySchoolId()" class="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold px-3 py-2 rounded-lg">Copy</button>
+        </section>
+
+        <!-- Teachers List -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-slate-300">Your Teachers</h2>
+            <div id="teachersList" class="space-y-2"></div>
+            <p id="teachersEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No teachers added yet.</p>
+        </section>
+    </main>
+
+    <script>
+        let allTeachers = [];
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+
+        function copySchoolId() {
+            const text = document.getElementById('schoolIdDisplay').innerText;
+            navigator.clipboard.writeText(text).then(() => alert('School ID copied.'));
+        }
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Manage Teachers`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            document.getElementById('schoolIdDisplay').innerText = school.schoolId || '-';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        async function renderTeachers() {
+            const teachers = await LamaAPI.list('teachers');
+            allTeachers = teachers;
+            document.getElementById('teachersEmpty').classList.toggle('hidden', teachers.length > 0);
+            document.getElementById('teachersList').innerHTML = teachers.map(t => `
+                <div class="flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5">
+                    <div>
+                        <p class="text-xs font-bold">${t.name} <span class="text-slate-500 font-normal">— ${t.email}</span></p>
+                        <p class="text-[10px] text-slate-400">${t.subject || 'No subject'} • Class ${t.assignedClass || '-'}${t.assignedSection ? '-' + t.assignedSection : ''} • ${t.contact || 'No contact'}</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${t.status === 'Active' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-700 text-slate-400'}">${t.status}</span>
+                        <button onclick="openEdit('${t.id}')" class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white">Edit</button>
+                        <button onclick="deleteTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openEdit(teacherId) {
+            const t = allTeachers.find(x => x.id === teacherId);
+            if (!t) return;
+            document.getElementById('editId').value = t.id;
+            document.getElementById('editName').value = t.name || '';
+            document.getElementById('editSubject').value = t.subject || '';
+            document.getElementById('editClass').value = t.assignedClass || '';
+            document.getElementById('editSection').value = t.assignedSection || '';
+            document.getElementById('editContact').value = t.contact || '';
+            document.getElementById('editStatus').value = t.status || 'Active';
+            document.getElementById('editSection').closest('section').classList.remove('hidden');
+            document.getElementById('editId').closest('section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeEdit() {
+            document.getElementById('editSection').classList.add('hidden');
+        }
+
+        async function saveTeacherEdit() {
+            const id = document.getElementById('editId').value;
+            try {
+                await LamaAPI.update('teachers', id, {
+                    name: document.getElementById('editName').value.trim(),
+                    subject: document.getElementById('editSubject').value.trim(),
+                    assignedClass: document.getElementById('editClass').value.trim(),
+                    assignedSection: document.getElementById('editSection').value.trim(),
+                    contact: document.getElementById('editContact').value.trim(),
+                    status: document.getElementById('editStatus').value
+                });
+                closeEdit();
+                renderTeachers();
+            } catch (e) {
+                alert('Could not save changes: ' + e.message);
+            }
+        }
+
+        async function deleteTeacher(id, name) {
+            if (!confirm(`Delete ${name}'s teacher account? This cannot be undone.`)) return;
+            try {
+                await LamaAPI.remove('teachers', id);
+                renderTeachers();
+            } catch (e) {
+                alert('Could not delete this teacher: ' + e.message);
+            }
+        }
+
+        async function createTeacher() {
+            const name = document.getElementById('inName').value.trim();
+            const email = document.getElementById('inEmail').value.trim();
+            const password = document.getElementById('inPassword').value;
+            if (!name || !email || !password || password.length < 6) {
+                alert('Name, email, and a password of at least 6 characters are required.');
+                return;
+            }
+            try {
+                await LamaAPI.addTeacher({
+                    name, email, password,
+                    subject: document.getElementById('inSubject').value.trim(),
+                    assignedClass: document.getElementById('inClass').value.trim(),
+                    assignedSection: document.getElementById('inSection').value.trim(),
+                    contact: document.getElementById('inContact').value.trim()
+                });
+                ['inName', 'inEmail', 'inSubject', 'inClass', 'inSection', 'inContact', 'inPassword'].forEach(id => document.getElementById(id).value = '');
+                renderTeachers();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderTeachers();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

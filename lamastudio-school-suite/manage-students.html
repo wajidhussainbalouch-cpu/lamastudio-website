@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Manage Students</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Manage Students</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openStudentModal()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">+ Add Student</button>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-5 space-y-4">
+
+        <!-- Filter Bar -->
+        <div class="flex flex-wrap gap-2">
+            <input id="searchBox" oninput="renderList()" placeholder="Search by name or enrollment no..." class="flex-grow bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-purple-500 min-w-[200px]">
+            <select id="classFilter" onchange="renderList()" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5">
+                <option value="All">All Classes</option>
+            </select>
+        </div>
+
+        <!-- Roster Table -->
+        <section class="cyber-card rounded-2xl p-5 overflow-x-auto">
+            <table class="w-full text-[11px] border-collapse min-w-[560px]">
+                <thead>
+                    <tr class="text-left text-[9px] uppercase text-slate-500 border-b border-slate-800">
+                        <th class="py-1.5">Name</th><th>Enrl No</th><th>Class</th><th>Father/Guardian</th><th>Contact</th><th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="rosterBody"></tbody>
+            </table>
+            <p id="rosterEmpty" class="text-center text-sm text-slate-400 py-8 hidden">No students match.</p>
+        </section>
+    </main>
+
+    <!-- ADD / EDIT STUDENT MODAL -->
+    <div id="studentModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-black uppercase text-purple-400">Add / Edit Student</h3>
+                <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div><label class="block text-[10px] text-slate-400 mb-1">Enrollment No</label><input id="inEnrl" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Class</label><input id="inClass" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Section</label><input id="inSection" placeholder="e.g. A" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Gender</label>
+                    <select id="inGender" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                        <option value="M">Male</option><option value="F">Female</option>
+                    </select>
+                </div>
+                <div class="col-span-2"><label class="block text-[10px] text-slate-400 mb-1">Student Name</label><input id="inName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Date of Birth</label><input type="date" id="inDob" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Father / Guardian</label><input id="inFather" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Contact No</label><input id="inContact" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">WhatsApp No (for alerts)</label><input id="inWhatsapp" placeholder="92300..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div class="col-span-2"><label class="block text-[10px] text-slate-400 mb-1">Login Password (student/parent portal)</label><input id="inPassword" placeholder="Defaults to enrollment no if left blank" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeStudentModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Cancel</button>
+                <button onclick="saveStudent()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl">Save Student</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STUDENTS = 'students';
+        let allStudents = [];
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Manage Students`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        async function loadStudents() {
+            try {
+                allStudents = await LamaAPI.list(STUDENTS);
+            } catch (e) {
+                alert('Could not load students: ' + e.message);
+                return;
+            }
+            const classes = Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).sort();
+            document.getElementById('classFilter').innerHTML = '<option value="All">All Classes</option>' +
+                classes.map(c => `<option value="${c}">Class ${c}</option>`).join('');
+            renderList();
+        }
+
+        function renderList() {
+            const search = document.getElementById('searchBox').value.trim().toLowerCase();
+            const classFilter = document.getElementById('classFilter').value;
+            let filtered = allStudents;
+            if (search) {
+                filtered = filtered.filter(s => (s.name || '').toLowerCase().includes(search) || String(s.enrlNo || '').toLowerCase().includes(search));
+            }
+            if (classFilter !== 'All') {
+                filtered = filtered.filter(s => String(s.class) === classFilter);
+            }
+            document.getElementById('rosterEmpty').classList.toggle('hidden', filtered.length > 0);
+            document.getElementById('rosterBody').innerHTML = filtered.map(s => `
+                <tr class="border-b border-slate-900">
+                    <td class="py-1.5 font-semibold">${s.name}</td>
+                    <td>${s.enrlNo || '-'}</td>
+                    <td>${s.class || '-'}${s.section ? '-' + s.section : ''}</td>
+                    <td>${s.fatherGuardian || '-'}</td>
+                    <td>${s.contact || '-'}</td>
+                    <td class="text-right space-x-1 whitespace-nowrap">
+                        <button onclick="openStudentModal('${s.id}')" class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white">Edit</button>
+                        <button onclick="deleteStudent('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openStudentModal(studentId) {
+            const student = studentId ? allStudents.find(s => s.id === studentId) : null;
+            document.getElementById('editId').value = studentId || '';
+            document.getElementById('inEnrl').value = student ? (student.enrlNo || '') : '';
+            document.getElementById('inClass').value = student ? (student.class || '') : '';
+            document.getElementById('inSection').value = student ? (student.section || '') : '';
+            document.getElementById('inGender').value = student ? (student.gender || 'M') : 'M';
+            document.getElementById('inName').value = student ? (student.name || '') : '';
+            document.getElementById('inDob').value = student ? (student.dob || '') : '';
+            document.getElementById('inFather').value = student ? (student.fatherGuardian || '') : '';
+            document.getElementById('inContact').value = student ? (student.contact || '') : '';
+            document.getElementById('inWhatsapp').value = student ? (student.whatsapp || '') : '';
+            document.getElementById('inPassword').value = '';
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function closeStudentModal() {
+            document.getElementById('studentModal').classList.add('hidden');
+        }
+
+        async function saveStudent() {
+            const name = document.getElementById('inName').value.trim();
+            if (!name) { alert('Student name is required.'); return; }
+
+            const record = {
+                enrlNo: document.getElementById('inEnrl').value.trim(),
+                class: document.getElementById('inClass').value.trim(),
+                section: document.getElementById('inSection').value.trim(),
+                gender: document.getElementById('inGender').value,
+                name,
+                dob: document.getElementById('inDob').value,
+                fatherGuardian: document.getElementById('inFather').value.trim(),
+                contact: document.getElementById('inContact').value.trim(),
+                whatsapp: document.getElementById('inWhatsapp').value.trim()
+            };
+            const password = document.getElementById('inPassword').value.trim();
+            if (password) record.password = password;
+
+            const editId = document.getElementById('editId').value;
+            try {
+                if (editId) {
+                    await LamaAPI.update(STUDENTS, editId, record);
+                } else {
+                    await LamaAPI.add(STUDENTS, record);
+                }
+                closeStudentModal();
+                await loadStudents();
+            } catch (e) {
+                alert('Could not save this student: ' + e.message);
+            }
+        }
+
+        async function deleteStudent(id, name) {
+            if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+            try {
+                await LamaAPI.remove(STUDENTS, id);
+                await loadStudents();
+            } catch (e) {
+                alert('Could not delete this student: ' + e.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            await loadStudents();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

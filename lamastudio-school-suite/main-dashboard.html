@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">School Board</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">School Board</p>
+            </div>
+        </div>
+        <a id="backLink" href="#" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Back</a>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+
+        <!-- Upcoming Exams strip -->
+        <section id="examsStrip" class="cyber-card rounded-2xl p-4 hidden">
+            <h2 class="text-[10px] font-black uppercase text-cyan-400 mb-2">📅 Upcoming Exams</h2>
+            <div id="examsList" class="flex gap-2 flex-wrap"></div>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Notices -->
+            <section class="cyber-card rounded-2xl p-5">
+                <h2 class="text-xs font-black uppercase text-indigo-400 mb-3 border-b border-slate-800 pb-2">📢 Notices</h2>
+                <div id="noticesList" class="space-y-2.5 text-xs"></div>
+                <p id="noticesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No notices yet.</p>
+            </section>
+
+            <!-- Activities: Sports / Extracurricular / Plantation -->
+            <section class="cyber-card-emerald rounded-2xl p-5">
+                <h2 class="text-xs font-black uppercase text-emerald-400 mb-3 border-b border-slate-800 pb-2">🌱 Activities & Events</h2>
+                <div id="activitiesList" class="space-y-2.5 text-xs"></div>
+                <p id="activitiesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">Nothing posted yet.</p>
+            </section>
+        </div>
+
+        <!-- Class Sections -->
+        <section class="cyber-card-amber rounded-2xl p-5">
+            <h2 class="text-xs font-black uppercase text-amber-400 mb-3 border-b border-slate-800 pb-2">🏫 Classes & Sections</h2>
+            <div id="sectionsGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+        </section>
+    </main>
+
+    <script>
+        const ACTIVITY_ICONS = { Sports: '⚽', Extracurricular: '🎨', Plantation: '🌳', Other: '📌' };
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d)) return String(iso);
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function backLinkFor(role) {
+            if (role === 'teacher') return 'portals/teacher/index.html';
+            if (role === 'student') return 'portals/student/index.html';
+            return 'dashboard.html';
+        }
+
+        async function render() {
+            const session = LamaAPI.getSession();
+            document.getElementById('backLink').href = backLinkFor(session.role);
+
+            let data;
+            try {
+                data = await LamaAPI.getMainDashboardData();
+            } catch (e) {
+                alert('Could not load the school board: ' + e.message);
+                return;
+            }
+
+            document.getElementById('pageTitle').innerText = `${data.schoolName || 'School'} | School Board`;
+            document.getElementById('headerSchoolName').innerText = data.schoolName || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (data.logo) {
+                logoBox.innerHTML = `<img src="${data.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = LamaAPI.deriveShortCode(data.schoolName || 'SCH');
+            }
+
+            // Notices
+            const notices = data.recentNotifications || [];
+            document.getElementById('noticesEmpty').classList.toggle('hidden', notices.length > 0);
+            document.getElementById('noticesList').innerHTML = notices.map(n => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <p class="font-bold text-white">${n.title}</p>
+                    <p class="text-slate-400 mt-0.5">${n.message}</p>
+                </div>
+            `).join('');
+
+            // Activities
+            const activities = data.recentActivities || [];
+            document.getElementById('activitiesEmpty').classList.toggle('hidden', activities.length > 0);
+            document.getElementById('activitiesList').innerHTML = activities.map(a => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 flex gap-2">
+                    <span class="text-base">${ACTIVITY_ICONS[a.type] || '📌'}</span>
+                    <div>
+                        <p class="font-bold text-white">${a.title}</p>
+                        <p class="text-slate-400 mt-0.5">${a.description || ''}</p>
+                        <p class="text-[10px] text-emerald-400 mt-1">${formatDate(a.date)}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Upcoming exams
+            const exams = data.upcomingExams || [];
+            document.getElementById('examsStrip').classList.toggle('hidden', exams.length === 0);
+            document.getElementById('examsList').innerHTML = exams.map(e => `
+                <span class="bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px]">
+                    <b>${e.examTitle || 'Exam'}</b> — Class ${e.class} ${e.subject || ''} • ${formatDate(e.date)}
+                </span>
+            `).join('');
+
+            // Class sections
+            const sections = data.classSections || [];
+            document.getElementById('sectionsGrid').innerHTML = sections.map(s => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-sm font-black text-white">Class ${s.class}${s.section ? ' - ' + s.section : ''}</p>
+                    <p class="text-[10px] text-slate-400 mt-1">${s.teacherName ? 'Teacher: ' + s.teacherName : 'No teacher assigned'}</p>
+                    <p class="text-[10px] text-amber-400 mt-1">${s.studentCount} student${s.studentCount === 1 ? '' : 's'}</p>
+                </div>
+            `).join('') || '<p class="col-span-full text-center text-xs text-slate-500 py-4">No classes set up yet.</p>';
+        }
+
+        const session = LamaAPI.getSession();
+        if (!session || !['school', 'teacher', 'student'].includes(session.role)) {
+            window.location.href = 'login.html';
+        } else {
+            render();
+        }
+    </script>
+</body>
+</html>

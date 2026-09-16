@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Activities & Events</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Activities & Events</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="main-dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">👀 Preview on Board</a>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Add Activity -->
+        <section class="cyber-card-emerald rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-emerald-400">+ Post Activity</h2>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <select id="inType" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option>Sports</option><option>Extracurricular</option><option>Plantation</option><option>Other</option>
+                </select>
+                <input type="date" id="inDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inTitle" placeholder="Title (e.g. Annual Sports Day)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <textarea id="inDescription" rows="2" placeholder="Short description" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+            </div>
+            <button onclick="addActivity()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Post to School Board</button>
+        </section>
+
+        <!-- List -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-slate-300">Posted Activities</h2>
+            <div id="activitiesList" class="space-y-2"></div>
+            <p id="activitiesEmpty" class="text-center text-sm text-slate-400 py-6 hidden">Nothing posted yet.</p>
+        </section>
+    </main>
+
+    <script>
+        const ACTIVITIES = 'activities';
+        const ACTIVITY_ICONS = { Sports: '⚽', Extracurricular: '🎨', Plantation: '🌳', Other: '📌' };
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Activities`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '-';
+            const d = new Date(iso);
+            if (isNaN(d)) return String(iso);
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        async function renderActivities() {
+            let items;
+            try {
+                items = await LamaAPI.list(ACTIVITIES);
+            } catch (e) {
+                alert('Could not load activities: ' + e.message);
+                return;
+            }
+            items = items.sort((a, b) => String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt)));
+            document.getElementById('activitiesEmpty').classList.toggle('hidden', items.length > 0);
+            document.getElementById('activitiesList').innerHTML = items.map(a => `
+                <div class="flex justify-between items-start bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5">
+                    <div class="flex gap-2">
+                        <span class="text-lg">${ACTIVITY_ICONS[a.type] || '📌'}</span>
+                        <div>
+                            <p class="text-xs font-bold">${a.title} <span class="text-slate-500 font-normal">— ${a.type}</span></p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${a.description || ''}</p>
+                            <p class="text-[9px] text-emerald-400 mt-1">${formatDate(a.date)}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteActivity('${a.id}')" class="text-red-500 hover:text-red-400 font-bold flex-shrink-0">✕</button>
+                </div>
+            `).join('');
+        }
+
+        async function addActivity() {
+            const title = document.getElementById('inTitle').value.trim();
+            if (!title) { alert('A title is required.'); return; }
+            try {
+                await LamaAPI.add(ACTIVITIES, {
+                    type: document.getElementById('inType').value,
+                    title,
+                    description: document.getElementById('inDescription').value.trim(),
+                    date: document.getElementById('inDate').value || new Date().toISOString().split('T')[0]
+                });
+                document.getElementById('inTitle').value = '';
+                document.getElementById('inDescription').value = '';
+                renderActivities();
+            } catch (e) {
+                alert('Could not post this activity: ' + e.message);
+            }
+        }
+
+        async function deleteActivity(id) {
+            try {
+                await LamaAPI.remove(ACTIVITIES, id);
+                renderActivities();
+            } catch (e) {
+                alert('Could not delete this activity: ' + e.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderActivities();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Student & Parent Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../../assets/css/config.css">
+<script src="../../js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Student & Parent Portal — <span id="studentClassLabel">Class</span></p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="studentNameLabel" class="text-xs font-bold text-slate-300 hidden sm:inline">Student</span>
+            <a href="../../main-dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">🏫 Board</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+        </div>
+    </header>
+
+    <!-- Tab Bar -->
+    <nav class="max-w-4xl mx-auto px-4 mt-5 flex gap-2 flex-wrap">
+        <button class="tab-btn" data-tab="result" onclick="switchTab('result')">🎓 My Result</button>
+        <button class="tab-btn" data-tab="homework" onclick="switchTab('homework')">📝 Homework</button>
+        <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance')">📋 Attendance</button>
+        <button class="tab-btn" data-tab="notices" onclick="switchTab('notices')">📢 Notices</button>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- RESULT TAB -->
+        <section id="tab-result" class="tab-panel cyber-card rounded-2xl p-5 space-y-4">
+            <h2 class="text-xs font-black uppercase text-purple-400">My Latest Result</h2>
+            <table class="w-full text-[11px] border-collapse">
+                <thead>
+                    <tr class="bg-purple-600 text-white text-[10px] uppercase">
+                        <th class="text-left p-2">Subject</th><th class="p-2">Obtained</th><th class="p-2">Total</th><th class="p-2">%</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody"></tbody>
+            </table>
+            <div class="grid grid-cols-3 gap-3 text-center pt-2">
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Overall %</p><p id="rPercent" class="text-lg font-black text-purple-400">0%</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Position</p><p id="rPosition" class="text-lg font-black text-amber-400">-</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Remarks</p><p id="rRemarks" class="text-xs font-bold mt-1">-</p></div>
+            </div>
+        </section>
+
+        <!-- HOMEWORK TAB -->
+        <section id="tab-homework" class="tab-panel cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Homework & Assignments</h2>
+            <div id="homeworkList" class="space-y-2"></div>
+            <p id="homeworkEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No homework posted yet.</p>
+        </section>
+
+        <!-- ATTENDANCE TAB -->
+        <section id="tab-attendance" class="tab-panel cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-cyan-400">My Attendance</h2>
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Present</p><p id="aPresent" class="text-lg font-black text-emerald-400">0</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Absent</p><p id="aAbsent" class="text-lg font-black text-red-400">0</p></div>
+                <div class="border border-slate-800 rounded-xl p-2.5"><p class="text-[8px] uppercase text-slate-500 font-bold">Ratio</p><p id="aRatio" class="text-lg font-black text-cyan-400">-</p></div>
+            </div>
+            <div id="attendanceHistory" class="space-y-1.5 pt-2"></div>
+        </section>
+
+        <!-- NOTICES TAB -->
+        <section id="tab-notices" class="tab-panel cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Notices</h2>
+            <div id="noticesList" class="space-y-2"></div>
+        </section>
+    </main>
+
+    <style>
+        .tab-btn { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 8px 14px; border-radius: 10px; background: #1e293b; color: #94a3b8; transition: all .15s; }
+        .tab-btn.active { background: #7c3aed; color: white; }
+    </style>
+
+    <script>
+        const HOMEWORK = 'homework', ATTENDANCE = 'attendance', NOTIFICATIONS = 'notifications';
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+        }
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = '../../portal-login.html';
+        }
+
+        function gradeFromPercentage(pct) {
+            if (pct >= 90) return 'A+'; if (pct >= 80) return 'A'; if (pct >= 70) return 'B';
+            if (pct >= 60) return 'C'; if (pct >= 50) return 'D'; return 'F';
+        }
+
+        async function renderHeader() {
+            const session = LamaAPI.getSession();
+            document.getElementById('pageTitle').innerText = `${session.schoolName || 'School'} | Student & Parent Portal`;
+            document.getElementById('headerSchoolName').innerText = session.schoolName || 'School';
+            document.getElementById('studentClassLabel').innerText = `Class ${session.class || '-'}`;
+            document.getElementById('studentNameLabel').innerText = session.name || 'Student';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (session.schoolLogo) {
+                logoBox.innerHTML = `<img src="${session.schoolLogo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = LamaAPI.deriveShortCode(session.schoolName || 'SCH');
+            }
+        }
+
+        async function renderResult() {
+            const session = LamaAPI.getSession();
+            const student = await LamaAPI.get('students', session.studentId);
+            if (!student) return;
+            const subs = student.subjects || [];
+            const totalObtained = subs.reduce((s, x) => s + (Number(x.obtained) || 0), 0);
+            const totalMarks = subs.reduce((s, x) => s + (Number(x.total) || 0), 0);
+            const pct = totalMarks > 0 ? (totalObtained / totalMarks) * 100 : 0;
+
+            document.getElementById('resultBody').innerHTML = subs.map(s => {
+                const obtained = Number(s.obtained) || 0, total = Number(s.total) || 0;
+                const spct = total > 0 ? (obtained / total) * 100 : 0;
+                return `<tr class="border-b border-slate-800"><td class="p-2">${s.name}</td><td class="p-2 text-center">${obtained}</td><td class="p-2 text-center">${total}</td><td class="p-2 text-center">${spct.toFixed(0)}%</td></tr>`;
+            }).join('');
+            document.getElementById('rPercent').innerText = `${pct.toFixed(1)}%`;
+            document.getElementById('rPosition').innerText = student.position || '-';
+            document.getElementById('rRemarks').innerText = student.remarks || (pct >= 33 ? gradeFromPercentage(pct) + ' Grade' : 'Work Harder');
+        }
+
+        async function renderHomework() {
+            const items = (await LamaAPI.list(HOMEWORK)).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            document.getElementById('homeworkEmpty').classList.toggle('hidden', items.length > 0);
+            document.getElementById('homeworkList').innerHTML = items.map(h => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <p class="text-xs font-bold">${h.subject} — ${h.title}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${h.description || ''}</p>
+                    <p class="text-[9px] text-amber-400 mt-1">Due: ${h.dueDate || 'N/A'}</p>
+                </div>
+            `).join('');
+        }
+
+        async function renderAttendance() {
+            const session = LamaAPI.getSession();
+            const all = await LamaAPI.list(ATTENDANCE);
+            const mine = all.filter(a => a.studentId === session.studentId).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            const present = mine.filter(a => a.status === 'Present').length;
+            const absent = mine.filter(a => a.status === 'Absent').length;
+            const marked = present + absent;
+            document.getElementById('aPresent').innerText = present;
+            document.getElementById('aAbsent').innerText = absent;
+            document.getElementById('aRatio').innerText = marked > 0 ? `${Math.round((present / marked) * 100)}%` : '-';
+            document.getElementById('attendanceHistory').innerHTML = mine.slice(0, 20).map(a => `
+                <div class="flex justify-between text-[11px] bg-slate-950/50 rounded-lg px-3 py-1.5">
+                    <span>${a.date}</span>
+                    <span class="font-bold ${a.status === 'Present' ? 'text-emerald-400' : a.status === 'Absent' ? 'text-red-400' : 'text-amber-400'}">${a.status}</span>
+                </div>
+            `).join('');
+        }
+
+        async function renderNotices() {
+            const items = (await LamaAPI.list(NOTIFICATIONS)).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            document.getElementById('noticesList').innerHTML = items.slice(0, 15).map(n => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                    <p class="text-xs font-bold">${n.title}</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">${n.message}</p>
+                </div>
+            `).join('');
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderResult();
+            await renderHomework();
+            await renderAttendance();
+            await renderNotices();
+            switchTab('result');
+        }
+
+        if (LamaAPI.requireLogin('student', '../../portal-login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

@@ -38,6 +38,13 @@
 
         <!-- RESULT TAB -->
         <section id="tab-result" class="tab-panel cyber-card rounded-2xl p-5 space-y-4">
+            <div class="flex items-center gap-3">
+                <div id="myPhotoBox" class="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-lg font-black text-slate-400 flex-shrink-0">?</div>
+                <div>
+                    <p id="myName" class="text-sm font-black text-white">-</p>
+                    <p id="myMeta" class="text-[10px] text-slate-400">-</p>
+                </div>
+            </div>
             <h2 class="text-xs font-black uppercase text-purple-400">My Latest Result</h2>
             <table class="w-full text-[11px] border-collapse">
                 <thead>
@@ -121,6 +128,16 @@
             const session = LamaAPI.getSession();
             const student = await LamaAPI.get('students', session.studentId);
             if (!student) return;
+
+            const photoBox = document.getElementById('myPhotoBox');
+            if (student.photo) {
+                photoBox.innerHTML = `<img src="${student.photo}" class="w-full h-full object-cover rounded-full">`;
+            } else {
+                photoBox.innerText = (student.name || '?').charAt(0).toUpperCase();
+            }
+            document.getElementById('myName').innerText = student.name || '-';
+            document.getElementById('myMeta').innerText = `Enrl No: ${student.enrlNo || '-'} • Class ${student.class || '-'}${student.section ? '-' + student.section : ''}`;
+
             const subs = student.subjects || [];
             const totalObtained = subs.reduce((s, x) => s + (Number(x.obtained) || 0), 0);
             const totalMarks = subs.reduce((s, x) => s + (Number(x.total) || 0), 0);

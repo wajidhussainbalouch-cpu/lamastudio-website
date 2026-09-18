@@ -12,16 +12,47 @@
 
     <header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
         <div class="flex items-center gap-3">
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div id="schoolLogoBox" class="w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
             <div>
                 <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">School Board</p>
+                <p id="headerSchoolMeta" class="text-[10px] text-slate-400 mt-0.5">Address • Level</p>
             </div>
         </div>
         <a id="backLink" href="#" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Back</a>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+
+        <!-- Three Portals Directory -->
+        <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a id="adminPortalLink" href="login.html" class="cyber-card rounded-2xl p-4 text-center hover:border-indigo-500/50 transition">
+                <span class="text-2xl">🏛️</span>
+                <p class="text-xs font-black text-white mt-1">Admin Portal</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">School administration</p>
+            </a>
+            <a id="teacherPortalLink" href="portal-login.html" class="cyber-card-emerald rounded-2xl p-4 text-center hover:border-emerald-500/50 transition">
+                <span class="text-2xl">👩‍🏫</span>
+                <p class="text-xs font-black text-white mt-1">Teacher Portal</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Attendance, marks, homework</p>
+            </a>
+            <a id="studentPortalLink" href="portal-login.html" class="cyber-card-amber rounded-2xl p-4 text-center hover:border-amber-500/50 transition">
+                <span class="text-2xl">🎓</span>
+                <p class="text-xs font-black text-white mt-1">Student & Parent Portal</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">Results, homework, attendance</p>
+            </a>
+        </section>
+
+        <!-- Positive Highlights -->
+        <section class="grid grid-cols-2 gap-3">
+            <div class="cyber-card rounded-2xl p-4 text-center">
+                <p class="text-[9px] uppercase font-bold text-slate-400">Average Result</p>
+                <p id="avgResultDisplay" class="text-2xl font-black text-emerald-400 mt-1">-</p>
+            </div>
+            <div class="cyber-card rounded-2xl p-4 text-center">
+                <p class="text-[9px] uppercase font-bold text-slate-400">Today's Attendance</p>
+                <p id="attRateDisplay" class="text-2xl font-black text-cyan-400 mt-1">-</p>
+            </div>
+        </section>
 
         <!-- Upcoming Exams strip -->
         <section id="examsStrip" class="cyber-card rounded-2xl p-4 hidden">
@@ -68,9 +99,16 @@
             return 'dashboard.html';
         }
 
+        function wirePortalLinks(role) {
+            document.getElementById('adminPortalLink').href = role === 'school' ? 'dashboard.html' : 'login.html';
+            document.getElementById('teacherPortalLink').href = role === 'teacher' ? 'portals/teacher/index.html' : 'portal-login.html';
+            document.getElementById('studentPortalLink').href = role === 'student' ? 'portals/student/index.html' : 'portal-login.html';
+        }
+
         async function render() {
             const session = LamaAPI.getSession();
             document.getElementById('backLink').href = backLinkFor(session.role);
+            wirePortalLinks(session.role);
 
             let data;
             try {
@@ -82,12 +120,18 @@
 
             document.getElementById('pageTitle').innerText = `${data.schoolName || 'School'} | School Board`;
             document.getElementById('headerSchoolName').innerText = data.schoolName || 'School';
+            document.getElementById('headerSchoolMeta').innerText = [data.address, data.level].filter(Boolean).join(' • ') || 'School Board';
             const logoBox = document.getElementById('schoolLogoBox');
             if (data.logo) {
                 logoBox.innerHTML = `<img src="${data.logo}" class="w-full h-full object-cover rounded-xl">`;
             } else {
                 logoBox.innerText = LamaAPI.deriveShortCode(data.schoolName || 'SCH');
             }
+
+            document.getElementById('avgResultDisplay').innerText = data.averageResultPercentage !== null && data.averageResultPercentage !== undefined
+                ? `${data.averageResultPercentage}%` : 'No results yet';
+            document.getElementById('attRateDisplay').innerText = data.attendanceRateToday !== null && data.attendanceRateToday !== undefined
+                ? `${data.attendanceRateToday}%` : 'Not marked yet';
 
             // Notices
             const notices = data.recentNotifications || [];

@@ -23,15 +23,15 @@
         <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
             <div id="logoPreview" class="w-14 h-14 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm flex-shrink-0 overflow-hidden">SCH</div>
             <div class="flex-grow">
-                <label class="block text-[10px] text-slate-400 mb-1">School Logo <span class="text-slate-600">(Auto-optimized under 30KB)</span></label>
-                <input type="file" accept="image/*" id="inLogo" onchange="processLogoFile(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+                <label class="block text-[10px] text-slate-400 mb-1">School Logo <span class="text-slate-600">(Optimized &lt;30KB)</span></label>
+                <input type="file" accept="image/*" id="inLogo" onchange="handleImageUpload(event, 'logo')" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
             </div>
         </div>
 
         <div class="border-b border-slate-800 pb-4 space-y-2">
             <div id="coverPreview" class="w-full h-28 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold overflow-hidden">No cover photo set</div>
-            <label class="block text-[10px] text-slate-400">School Board Cover Photo <span class="text-slate-600">(Auto-optimized under 1MB banner)</span></label>
-            <input type="file" accept="image/*" id="inCover" onchange="processCoverFile(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+            <label class="block text-[10px] text-slate-400">School Board Cover Photo <span class="text-slate-600">(Optimized &lt;1MB)</span></label>
+            <input type="file" accept="image/*" id="inCover" onchange="handleImageUpload(event, 'cover')" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
         </div>
 
         <form id="settingsForm" class="space-y-3 text-xs">
@@ -82,72 +82,65 @@
         let pendingLogo = null;
         let pendingCover = null;
 
-        // Image compression helper to constrain size and preserve quality
-        function compressImage(file, maxWidth, maxHeight, targetMaxBytes) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.onload = function() {
-                        let width = img.width;
-                        let height = img.height;
+        const readFileAsDataURL = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
 
-                        if (width > maxWidth || height > maxHeight) {
-                            if (width > height) {
-                                height = Math.round((height * maxWidth) / width);
-                                width = maxWidth;
-                            } else {
-                                width = Math.round((width * maxHeight) / height);
-                                height = maxHeight;
-                            }
-                        }
+        const loadImage = (src) => new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = src;
+        });
 
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
+        async function compressImage(file, maxDim, targetBytes) {
+            const dataUrl = await readFileAsDataURL(file);
+            const img = await loadImage(dataUrl);
 
-                        let quality = 0.90;
-                        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-
-                        // Iteratively reduce quality if file size exceeds the target maximum bytes
-                        while (dataUrl.length * 0.75 > targetMaxBytes && quality > 0.1) {
-                            quality -= 0.10;
-                            dataUrl = canvas.toDataURL('image/jpeg', quality);
-                        }
-
-                        resolve(dataUrl);
-                    };
-                    img.onerror = reject;
-                    img.src = event.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        async function processLogoFile(input) {
-            if (input.files && input.files[0]) {
-                try {
-                    // Compress logo to max 200px width/height and target under 30KB (30000 bytes)
-                    pendingLogo = await compressImage(input.files[0], 200, 200, 30000);
-                    document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-xl">`;
-                } catch (err) {
-                    showMessage('errorBanner', 'Failed to process logo image.');
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
                 }
             }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let quality = 0.85;
+            let resultUrl = canvas.toDataURL('image/jpeg', quality);
+
+            while (resultUrl.length * 0.75 > targetBytes && quality > 0.1) {
+                quality -= 0.1;
+                resultUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            return resultUrl;
         }
 
-        async function processCoverFile(input) {
-            if (input.files && input.files[0]) {
-                try {
-                    // Compress cover photo to max 1200px width/height and target under 1MB (1000000 bytes)
-                    pendingCover = await compressImage(input.files[0], 1200, 800, 1000000);
+        async function handleImageUpload(event, type) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            try {
+                if (type === 'logo') {
+                    pendingLogo = await compressImage(file, 200, 30000);
+                    document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-xl">`;
+                } else if (type === 'cover') {
+                    pendingCover = await compressImage(file, 1200, 1000000);
                     document.getElementById('coverPreview').innerHTML = `<img src="${pendingCover}" class="w-full h-full object-cover">`;
-                } catch (err) {
-                    showMessage('errorBanner', 'Failed to process cover photo.');
                 }
+            } catch (err) {
+                showMessage('errorBanner', 'Could not process image file.');
             }
         }
 
@@ -167,12 +160,14 @@
             document.getElementById('inAddress').value = school.address || '';
             document.getElementById('inPhone').value = school.phone || '';
             document.getElementById('inPrincipal').value = school.principal || '';
+            
             const preview = document.getElementById('logoPreview');
             if (school.logo) {
                 preview.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
             } else {
                 preview.innerText = school.shortCode || 'SCH';
             }
+
             const coverPreview = document.getElementById('coverPreview');
             if (school.coverPhoto) {
                 coverPreview.innerHTML = `<img src="${school.coverPhoto}" class="w-full h-full object-cover">`;
@@ -200,7 +195,7 @@
 
             try {
                 await LamaAPI.updateSchoolConfig(patch);
-                showMessage('successBanner', 'Settings saved successfully with optimized images.');
+                showMessage('successBanner', 'Settings saved successfully!');
             } catch (err) {
                 showMessage('errorBanner', err.message);
             } finally {

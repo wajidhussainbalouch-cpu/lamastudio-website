@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">School Board Resources</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">School Board Resources</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="main-dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">👀 Preview on Board</a>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Add Resource -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Resource</h2>
+            <p class="text-[10px] text-slate-500">Type any category you like — Syllabus, Books, Uniform, Exam Preparation Links, Notes, or a brand new one. New categories appear automatically on the School Board.</p>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                    <input id="inCategory" list="categorySuggestions" placeholder="Category (e.g. Syllabus)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <datalist id="categorySuggestions"></datalist>
+                </div>
+                <input id="inTitle" placeholder="Title (e.g. Class 5 Math Syllabus)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inLink" placeholder="Link (optional — PDF, website, etc.)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <textarea id="inDescription" rows="2" placeholder="Description (optional)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+            </div>
+            <button onclick="addResource()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Post to School Board</button>
+        </section>
+
+        <!-- List, grouped by category -->
+        <section id="groupsContainer" class="space-y-4"></section>
+        <p id="resourcesEmpty" class="text-center text-sm text-slate-400 py-8 hidden">Nothing posted yet.</p>
+    </main>
+
+    <script>
+        const RESOURCES = 'resources';
+        let allResources = [];
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Resources`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        function groupByCategory(items) {
+            const groups = {};
+            items.forEach(r => {
+                const cat = r.category || 'Other';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(r);
+            });
+            return groups;
+        }
+
+        async function renderResources() {
+            try {
+                allResources = await LamaAPI.list(RESOURCES);
+            } catch (e) {
+                alert('Could not load resources: ' + e.message);
+                return;
+            }
+            document.getElementById('resourcesEmpty').classList.toggle('hidden', allResources.length > 0);
+
+            const categories = Array.from(new Set(allResources.map(r => r.category).filter(Boolean))).sort();
+            document.getElementById('categorySuggestions').innerHTML = categories.map(c => `<option value="${c}">`).join('');
+
+            const groups = groupByCategory(allResources);
+            document.getElementById('groupsContainer').innerHTML = Object.keys(groups).sort().map(cat => `
+                <div class="cyber-card rounded-2xl p-5">
+                    <h3 class="text-xs font-black uppercase text-amber-400 mb-3 border-b border-slate-800 pb-2">${cat}</h3>
+                    <div class="space-y-2">
+                        ${groups[cat].map(r => `
+                            <div class="flex justify-between items-start bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+                                <div>
+                                    <p class="text-xs font-bold">${r.title}</p>
+                                    ${r.description ? `<p class="text-[10px] text-slate-400 mt-0.5">${r.description}</p>` : ''}
+                                    ${r.link ? `<a href="${r.link}" target="_blank" class="text-[10px] text-cyan-400 underline mt-1 inline-block">${r.link}</a>` : ''}
+                                </div>
+                                <button onclick="deleteResource('${r.id}')" class="text-red-500 hover:text-red-400 font-bold flex-shrink-0">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function addResource() {
+            const category = document.getElementById('inCategory').value.trim();
+            const title = document.getElementById('inTitle').value.trim();
+            if (!category || !title) { alert('Category and title are required.'); return; }
+            try {
+                await LamaAPI.add(RESOURCES, {
+                    category, title,
+                    description: document.getElementById('inDescription').value.trim(),
+                    link: document.getElementById('inLink').value.trim()
+                });
+                document.getElementById('inTitle').value = '';
+                document.getElementById('inLink').value = '';
+                document.getElementById('inDescription').value = '';
+                renderResources();
+            } catch (e) {
+                alert('Could not post this resource: ' + e.message);
+            }
+        }
+
+        async function deleteResource(id) {
+            try {
+                await LamaAPI.remove(RESOURCES, id);
+                renderResources();
+            } catch (e) {
+                alert('Could not delete this resource: ' + e.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderResources();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

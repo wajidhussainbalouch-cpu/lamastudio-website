@@ -1,4 +1,4 @@
-// ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Enhanced AI Matching)
+// ask-lama.js — Multilingual AskLama AI Assistant & Mascot Controller
 (function() {
   // Inject required styling for right-side floating popup with high z-index stacking
   const style = document.createElement('style');
@@ -7,7 +7,7 @@
       position: fixed;
       bottom: 25px;
       right: 25px;
-      z-index: 2147483647; /* Maximum z-index so it overlays text completely */
+      z-index: 2147483647;
       font-family: 'Inter', sans-serif;
       display: flex;
       flex-direction: column;
@@ -145,20 +145,19 @@
         <button class="asklama-close" id="askLamaCloseBtn">&times;</button>
       </div>
       <div class="asklama-messages" id="askLamaMessages">
-        <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, your personal guide to LamaStudio. How can I help you navigate our ecosystem today?</div>
+        <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, your guide. Ask me anything in English, Urdu, or Roman Urdu! / آپ مجھ سے کسی بھی زبان میں پوچھ سکتے ہیں!</div>
       </div>
       <div class="asklama-input-area">
-        <input type="text" id="askLamaInput" placeholder="Ask about students, teachers, fees, or apps...">
+        <input type="text" id="askLamaInput" placeholder="Type a question / سوال یہاں لکھیں...">
         <button id="askLamaSendBtn">Send</button>
       </div>
     </div>
-    <button class="asklama-mascot-btn" id="askLamaMascotBtn" title="Chat withAskLama">
+    <button class="asklama-mascot-btn" id="askLamaMascotBtn" title="Chat with AskLama">
       <img src="ask-lama-3d.png" alt="AskLama Mascot" id="askLamaImage" onerror="this.src='https://via.placeholder.com/75?text=Lama';">
     </button>
   `;
   document.body.appendChild(widgetContainer);
 
-  // Element references
   const mascotBtn = document.getElementById('askLamaMascotBtn');
   const mascotImg = document.getElementById('askLamaImage');
   const sidebarMascotImg = document.getElementById('sidebarAskLamaImage');
@@ -169,9 +168,8 @@
   const messagesContainer = document.getElementById('askLamaMessages');
 
   let isOpen = false;
-  let lastTopic = null; // Remembers what the user was asking about
+  let lastTopic = null;
 
-  // Global toggle function referenced by external trigger buttons
   window.toggleLamaChat = function() {
     isOpen = !isOpen;
     if (isOpen) {
@@ -189,7 +187,6 @@
   mascotBtn.addEventListener('click', window.toggleLamaChat);
   closeBtn.addEventListener('click', window.toggleLamaChat);
 
-  // Handle message dispatch and smart responses with context awareness
   async function handleUserMessage() {
     const text = inputField.value.trim();
     if (!text) return;
@@ -201,70 +198,58 @@
     inputField.value = '';
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    // Typing placeholder
     const botMsg = document.createElement('div');
     botMsg.className = 'asklama-msg bot';
-    botMsg.innerText = 'Thinking...';
+    botMsg.innerText = 'Thinking... / سوچ رہا ہوں...';
     messagesContainer.appendChild(botMsg);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     try {
-      const query = text.toLowerCase();
+      const q = text.toLowerCase();
       let responseText = '';
 
-      // Check if LamaAPI is available for live queries (when logged in)
+      // Live Backend Database Queries (English + Urdu/Roman Urdu keywords)
       if (typeof LamaAPI !== 'undefined' && LamaAPI.isLoggedIn()) {
-        if (query.includes('student') || query.includes('pupil') || query.includes('kids')) {
+        if (q.includes('student') || q.includes('bachay') || q.includes('talib') || q.includes('pupil') || q.includes('kids')) {
           lastTopic = 'students';
           const students = await LamaAPI.list('students');
-          responseText = `You currently have ${students.length} student records registered in the system.`;
-        } else if (query.includes('teacher') || query.includes('staff') || query.includes('faculty')) {
+          responseText = `You currently have ${students.length} student records registered. / آپ کے پاس اس وقت ${students.length} طلباء رجسٹرڈ ہیں۔`;
+        } else if (q.includes('teacher') || q.includes('ustad') || q.includes('staff') || q.includes('faculty')) {
           lastTopic = 'teachers';
           const teachers = await LamaAPI.list('teachers');
-          responseText = `There are ${teachers.length} teachers registered in your school directory.`;
-        } else if (query.includes('fee') || query.includes('payment') || query.includes('due')) {
+          responseText = `There are ${teachers.length} teachers in your school directory. / سکول ڈائریکٹری میں ${teachers.length} اساتذہ موجود ہیں۔`;
+        } else if (q.includes('fee') || q.includes('payment') || q.includes('due') || q.includes('pisa') || q.includes('amount')) {
           lastTopic = 'fees';
-          responseText = 'You can check individual student fee summaries directly through the main dashboard fee panels.';
-        } else if (query.includes('school') || query.includes('config') || query.includes('settings')) {
+          responseText = 'You can check individual student fee summaries directly through the dashboard fee panels. / آپ ڈیش بورڈ سے فیس کی تفصیلات چیک کر سکتے ہیں۔';
+        } else if (q.includes('school') || q.includes('config') || q.includes('settings')) {
           lastTopic = 'school';
           const school = await LamaAPI.getActiveSchool();
           responseText = school ? `Current School: ${school.schoolName} (ID: ${school.schoolId})` : 'No active school session found.';
         }
       }
 
-      // Fallback / general questions & follow-up conversation context handler
+      // General Ecosystem & App Queries (Multilingual support)
       if (!responseText) {
-        if (query.includes('vpn') || query.includes('lama vpn') || (lastTopic === 'vpn' && (query.includes('free') || query.includes('cost') || query.includes('price')))) {
+        if (q.includes('vpn') || q.includes('lama vpn') || (lastTopic === 'vpn' && (q.includes('free') || q.includes('cost') || q.includes('price') || q.includes('muft')))) {
           lastTopic = 'vpn';
-          responseText = 'Yes! <b>LamaVPN Pro</b> offers free core features, while advanced routing options are part of our extended developer tier.';
-        } else if (query.includes('weather') || query.includes('sky') || query.includes('prayer')) {
+          responseText = 'Yes! <b>LamaVPN Pro</b> offers free core features for secure browsing right from the apps section. / جی ہاں، یہ بالکل مفت دستیاب ہے!';
+        } else if (q.includes('weather') || q.includes('sky') || q.includes('prayer') || q.includes('mausam')) {
           lastTopic = 'weather';
-          responseText = 'Looking for local weather and prayer scheduling? Try out <a href="apps/lamasky/" style="color:#60a5fa;">LamaSky</a>!';
-        } else if (query.includes('contact') || query.includes('email') || query.includes('support') || query.includes('help')) {
-          responseText = 'You can reach the team directly at contact@lamastudio.pk or through our community footer links.';
-        } else if (query.includes('free') || query.includes('pricing') || query.includes('cost') || query.includes('charge')) {
-          if (lastTopic === 'vpn') {
-            responseText = 'Yes, LamaVPN Pro includes free options to get you started securely right from the apps section!';
-          } else {
-            responseText = 'Most core web utilities, developer tools, and basic modules on LamaStudio are completely free to use!';
-          }
-        } else if (query.includes('hi') || query.includes('hello') || query.includes('hey')) {
-          responseText = 'Hello again! 👋 How can I help you further with LamaStudio today?';
-        } else if (query.includes('no') || query.includes('tell me') || query.includes('what') || query.includes('how')) {
-          // Contextual fallback if user says "no tell me now"
-          if (lastTopic === 'vpn') {
-            responseText = 'LamaVPN Pro is designed for fast, secure browsing. You can open it anytime from your apps list to test it out!';
-          } else {
-            responseText = 'Could you specify a bit more? You can ask me about students, teachers, fees, LamaVPN Pro, or LamaSky!';
-          }
+          responseText = 'Looking for local weather and prayer schedules? Check out <a href="apps/lamasky/" style="color:#60a5fa;">LamaSky</a>! / موسم اور نماز کے اوقات کے لیے LamaSky استعمال کریں۔';
+        } else if (q.includes('contact') || q.includes('email') || q.includes('support') || q.includes('help') || q.includes('rabta')) {
+          responseText = 'You can reach the team at contact@lamastudio.pk. / آپ ہم سے اس ای میل پر رابطہ کر سکتے ہیں: contact@lamastudio.pk';
+        } else if (q.includes('free') || q.includes('pricing') || q.includes('cost') || q.includes('muft') || q.includes('pese')) {
+          responseText = 'Most core web utilities and tools on LamaStudio are completely free to use! / زیادہ تر ٹولز بالکل مفت ہیں!';
+        } else if (q.includes('hi') || q.includes('hello') || q.includes('salam')) {
+          responseText = 'Hello! 👋 How can I help you today? / السلام علیکم! میں آپ کی کیا مدد کر سکتا ہوں؟';
         } else {
-          responseText = 'I can help you navigate LamaStudio, check your school records, or find specific tools. Try asking about "students", "teachers", "fees", or "LamaVPN Pro"!';
+          responseText = 'I can help you navigate LamaStudio or check school records. Try asking about "students", "teachers", "fees", or "LamaVPN"! / آپ مجھ سے طلباء، اساتذہ یا فیس کے بارے میں پوچھ سکتے ہیں۔';
         }
       }
 
       botMsg.innerHTML = responseText;
     } catch (err) {
-      botMsg.innerText = 'Sorry, I encountered an error fetching that information from the server.';
+      botMsg.innerText = 'Sorry, I encountered an error. / معذرت، سرور سے رابطہ کرنے میں مسئلہ پیش آیا۔';
     }
 
     messagesContainer.scrollTop = messagesContainer.scrollHeight;

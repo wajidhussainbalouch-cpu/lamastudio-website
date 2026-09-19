@@ -1,4 +1,4 @@
-// ask-lama.js — Functional AskLama AI Assistant & Mascot Controller
+// ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Live API Integrated)
 (function() {
   // Inject required styling for right-side floating popup with high z-index stacking
   const style = document.createElement('style');
@@ -148,7 +148,7 @@
         <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, your personal guide to LamaStudio. How can I help you navigate our ecosystem today?</div>
       </div>
       <div class="asklama-input-area">
-        <input type="text" id="askLamaInput" placeholder="Ask about tools, apps, or links...">
+        <input type="text" id="askLamaInput" placeholder="Ask about students, teachers, fees, or apps...">
         <button id="askLamaSendBtn">Send</button>
       </div>
     </div>
@@ -188,8 +188,8 @@
   mascotBtn.addEventListener('click', window.toggleLamaChat);
   closeBtn.addEventListener('click', window.toggleLamaChat);
 
-  // Handle message dispatch and smart responses
-  function handleUserMessage() {
+  // Handle message dispatch and smart responses with backend awareness
+  async function handleUserMessage() {
     const text = inputField.value.trim();
     if (!text) return;
 
@@ -200,26 +200,54 @@
     inputField.value = '';
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    setTimeout(() => {
-      const botMsg = document.createElement('div');
-      botMsg.className = 'asklama-msg bot';
-      
+    // Typing placeholder
+    const botMsg = document.createElement('div');
+    botMsg.className = 'asklama-msg bot';
+    botMsg.innerText = 'Thinking...';
+    messagesContainer.appendChild(botMsg);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    try {
       const query = text.toLowerCase();
-      if (query.includes('vpn') || query.includes('app') || query.includes('security')) {
-        botMsg.innerHTML = 'You can check out our flagship utility <a href="apps/lamavpnpro/" style="color:#60a5fa;">LamaVPN Pro</a> right from the apps ecosystem section!';
-      } else if (query.includes('contact') || query.includes('email') || query.includes('support')) {
-        botMsg.innerText = 'You can reach the team directly at contact@lamastudio.pk or through our community footer links.';
-      } else if (query.includes('free') || query.includes('pricing')) {
-        botMsg.innerText = 'Yes! Most core web utilities and developer research generators on LamaStudio are completely free to use.';
-      } else if (query.includes('weather') || query.includes('sky')) {
-        botMsg.innerHTML = 'Looking for local weather and prayer scheduling? Try out <a href="apps/lamasky/" style="color:#60a5fa;">LamaSky</a>!';
-      } else {
-        botMsg.innerText = 'I can help you locate apps, answer FAQs, or navigate documentation across LamaStudio. Feel free to ask specifics!';
+      let responseText = '';
+
+      // Check if LamaAPI is available for live queries
+      if (typeof LamaAPI !== 'undefined' && LamaAPI.isLoggedIn()) {
+        if (query.includes('student') || query.includes('pupil')) {
+          const students = await LamaAPI.list('students');
+          responseText = `You currently have ${students.length} student records registered in the system.`;
+        } else if (query.includes('teacher') || query.includes('staff')) {
+          const teachers = await LamaAPI.list('teachers');
+          responseText = `There are ${teachers.length} teachers registered in your school directory.`;
+        } else if (query.includes('fee') || query.includes('payment')) {
+          responseText = 'You can check individual student fee summaries directly through the main dashboard fee panels.';
+        } else if (query.includes('school') || query.includes('config')) {
+          const school = await LamaAPI.getActiveSchool();
+          responseText = school ? `Current School: ${school.schoolName} (ID: ${school.schoolId})` : 'No active school session found.';
+        }
       }
 
-      messagesContainer.appendChild(botMsg);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 600);
+      // Fallback or general questions if no specific API match or not logged in
+      if (!responseText) {
+        if (query.includes('vpn') || query.includes('app') || query.includes('security')) {
+          responseText = 'You can check out our flagship utility <a href="apps/lamavpnpro/" style="color:#60a5fa;">LamaVPN Pro</a> right from the apps ecosystem section!';
+        } else if (query.includes('contact') || query.includes('email') || query.includes('support')) {
+          responseText = 'You can reach the team directly at contact@lamastudio.pk or through our community footer links.';
+        } else if (query.includes('free') || query.includes('pricing')) {
+          responseText = 'Yes! Most core web utilities and developer research generators on LamaStudio are completely free to use.';
+        } else if (query.includes('weather') || query.includes('sky')) {
+          responseText = 'Looking for local weather and prayer scheduling? Try out <a href="apps/lamasky/" style="color:#60a5fa;">LamaSky</a>!';
+        } else {
+          responseText = 'I can help you navigate LamaStudio, check your school records, or find specific tools. Try asking about "students", "teachers", or "fees"!';
+        }
+      }
+
+      botMsg.innerHTML = responseText;
+    } catch (err) {
+      botMsg.innerText = 'Sorry, I encountered an error fetching that information from the server.';
+    }
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 
   sendBtn.addEventListener('click', handleUserMessage);

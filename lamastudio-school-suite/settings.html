@@ -28,6 +28,12 @@
             </div>
         </div>
 
+        <div class="border-b border-slate-800 pb-4 space-y-2">
+            <div id="coverPreview" class="w-full h-28 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold overflow-hidden">No cover photo set</div>
+            <label class="block text-[10px] text-slate-400">School Board Cover Photo <span class="text-slate-600">(shown as a banner on the shared School Board — under ~300KB)</span></label>
+            <input type="file" accept="image/*" id="inCover" onchange="previewCover(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+        </div>
+
         <form id="settingsForm" class="space-y-3 text-xs">
             <div>
                 <label class="block text-[10px] text-slate-400 mb-1">School Name</label>
@@ -74,6 +80,7 @@
 
     <script>
         let pendingLogo = null;
+        let pendingCover = null;
 
         function previewLogo(input) {
             if (input.files && input.files[0]) {
@@ -81,6 +88,17 @@
                 reader.onload = e => {
                     pendingLogo = e.target.result;
                     document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-xl">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewCover(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    pendingCover = e.target.result;
+                    document.getElementById('coverPreview').innerHTML = `<img src="${pendingCover}" class="w-full h-full object-cover">`;
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -108,6 +126,12 @@
             } else {
                 preview.innerText = school.shortCode || 'SCH';
             }
+            const coverPreview = document.getElementById('coverPreview');
+            if (school.coverPhoto) {
+                coverPreview.innerHTML = `<img src="${school.coverPhoto}" class="w-full h-full object-cover">`;
+            } else {
+                coverPreview.innerText = 'No cover photo set';
+            }
         }
 
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
@@ -125,6 +149,7 @@
                 principal: document.getElementById('inPrincipal').value.trim()
             };
             if (pendingLogo) patch.logo = pendingLogo;
+            if (pendingCover) patch.coverPhoto = pendingCover;
 
             try {
                 await LamaAPI.updateSchoolConfig(patch);

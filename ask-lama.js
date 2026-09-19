@@ -83,6 +83,7 @@
       gap: 10px;
       font-size: 0.85rem;
       background: var(--surface, #1e1e1e);
+      scroll-behavior: smooth;
     }
     .asklama-msg {
       padding: 10px 14px;
@@ -131,6 +132,10 @@
       padding: 0 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: background 0.2s;
+    }
+    .asklama-input-area button:hover {
+      background: #1d4ed8;
     }
   `;
   document.head.appendChild(style);
@@ -206,7 +211,7 @@
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     try {
-      // NOTE: Replace '/api/ask-lama' with your actual serverless function route or backend URL
+      // NOTE: Ensure this points to your deployed backend function route
       const response = await fetch('/api/ask-lama', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

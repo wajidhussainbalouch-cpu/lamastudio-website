@@ -1,6 +1,5 @@
-// ask-lama.js — Gemini-Powered AskLama AI Assistant & Mascot Controller
+// ask-lama.js — Connected to Google Apps Script & Gemini Backend
 (function() {
-  // Inject required styling for right-side floating popup with high z-index stacking
   const style = document.createElement('style');
   style.innerHTML = `
     .asklama-widget-container {
@@ -132,15 +131,10 @@
       padding: 0 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
-    }
-    .asklama-input-area button:hover {
-      background: #1d4ed8;
     }
   `;
   document.head.appendChild(style);
 
-  // Construct widget DOM structure anchored to the bottom right
   const widgetContainer = document.createElement('div');
   widgetContainer.className = 'asklama-widget-container';
   widgetContainer.innerHTML = `
@@ -150,10 +144,10 @@
         <button class="asklama-close" id="askLamaCloseBtn">&times;</button>
       </div>
       <div class="asklama-messages" id="askLamaMessages">
-        <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, your personal guide to LamaStudio. Ask me anything in any language!</div>
+        <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, powered by Gemini. Ask me anything in any language!</div>
       </div>
       <div class="asklama-input-area">
-        <input type="text" id="askLamaInput" placeholder="Ask about tools, school software, pricing...">
+        <input type="text" id="askLamaInput" placeholder="Ask anything...">
         <button id="askLamaSendBtn">Send</button>
       </div>
     </div>
@@ -164,8 +158,6 @@
   document.body.appendChild(widgetContainer);
 
   const mascotBtn = document.getElementById('askLamaMascotBtn');
-  const mascotImg = document.getElementById('askLamaImage');
-  const sidebarMascotImg = document.getElementById('sidebarAskLamaImage');
   const chatBox = document.getElementById('askLamaChatBox');
   const closeBtn = document.getElementById('askLamaCloseBtn');
   const sendBtn = document.getElementById('askLamaSendBtn');
@@ -178,20 +170,15 @@
     isOpen = !isOpen;
     if (isOpen) {
       chatBox.classList.add('active');
-      if (mascotImg) mascotImg.src = 'walking-lama.gif';
-      if (sidebarMascotImg) sidebarMascotImg.src = 'walking-lama.gif';
       inputField.focus();
     } else {
       chatBox.classList.remove('active');
-      if (mascotImg) mascotImg.src = 'ask-lama-3d.png';
-      if (sidebarMascotImg) sidebarMascotImg.src = 'ask-lama-3d.png';
     }
   };
 
   mascotBtn.addEventListener('click', window.toggleLamaChat);
   closeBtn.addEventListener('click', window.toggleLamaChat);
 
-  // Send user message directly to your Gemini backend endpoint
   async function handleUserMessage() {
     const text = inputField.value.trim();
     if (!text) return;
@@ -203,7 +190,6 @@
     inputField.value = '';
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    // Show loading state while waiting for Gemini
     const botMsg = document.createElement('div');
     botMsg.className = 'asklama-msg bot';
     botMsg.innerText = 'Thinking...';
@@ -211,22 +197,23 @@
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     try {
-      // NOTE: Ensure this points to your deployed backend function route
-      const response = await fetch('/api/ask-lama', {
+      // Direct call to your active Google Apps Script Web App URL
+      const scriptUrl = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
+      
+      const response = await fetch(scriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: text })
       });
 
       const data = await response.json();
 
-      if (response.ok && data.text) {
+      if (data && data.text) {
         botMsg.innerText = data.text;
       } else {
-        botMsg.innerText = data.error || 'Sorry, I am having trouble connecting to the AI server right now.';
+        botMsg.innerText = data.error || 'Sorry, I encountered an issue generating a response.';
       }
     } catch (err) {
-      botMsg.innerText = 'Network error. Please check your connection and try again.';
+      botMsg.innerText = 'Network connection error. Please try again.';
     }
 
     messagesContainer.scrollTop = messagesContainer.scrollHeight;

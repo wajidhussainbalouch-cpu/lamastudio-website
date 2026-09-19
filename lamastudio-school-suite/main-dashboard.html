@@ -13,7 +13,6 @@
     <!-- Cover Photo Banner -->
     <div id="coverBanner" class="w-full h-40 sm:h-56 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 bg-cover bg-center relative">
         <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f19] via-[#0b0f19]/40 to-transparent"></div>
-        <a href="#" id="backLink" class="absolute top-4 right-4 bg-slate-900/80 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition backdrop-blur">&larr; Back</a>
     </div>
 
     <!-- School Identity -->
@@ -80,12 +79,6 @@
             return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
-        function backLinkFor(role) {
-            if (role === 'teacher') return 'portals/teacher/index.html';
-            if (role === 'student') return 'portals/student/index.html';
-            return 'dashboard.html';
-        }
-
         function wirePortalLinks(role) {
             document.getElementById('adminPortalLink').href = role === 'school' ? 'dashboard.html' : 'login.html';
             document.getElementById('teacherPortalLink').href = role === 'teacher' ? 'portals/teacher/index.html' : 'portal-login.html';
@@ -104,7 +97,6 @@
 
         async function render() {
             const session = LamaAPI.getSession();
-            document.getElementById('backLink').href = backLinkFor(session.role);
             wirePortalLinks(session.role);
 
             let data;
@@ -180,8 +172,7 @@
                     <div class="space-y-2 text-xs">
                         ${groups[cat].map(r => `
                             <div class="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
-                                <p class="font-bold text-white">${r.title}</p>
-                                ${r.description ? `<p class="text-slate-400 mt-0.5">${r.description}</p>` : ''}
+                                <p class="font-bold text-white">${r.title}</p>${r.description ? `<p class="text-slate-400 mt-0.5">${r.description}</p>` : ''}
                                 ${r.link ? `<a href="${r.link}" target="_blank" class="text-cyan-400 underline mt-1 inline-block">Open link &rarr;</a>` : ''}
                             </div>
                         `).join('')}

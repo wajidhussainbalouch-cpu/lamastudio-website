@@ -1,4 +1,4 @@
-// ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Live API Integrated)
+// ask-lama.js — Functional AskLama AI Assistant & Mascot Controller (Enhanced AI Matching)
 (function() {
   // Inject required styling for right-side floating popup with high z-index stacking
   const style = document.createElement('style');
@@ -152,7 +152,7 @@
         <button id="askLamaSendBtn">Send</button>
       </div>
     </div>
-    <button class="asklama-mascot-btn" id="askLamaMascotBtn" title="Chat with AskLama">
+    <button class="asklama-mascot-btn" id="askLamaMascotBtn" title="Chat withAskLama">
       <img src="ask-lama-3d.png" alt="AskLama Mascot" id="askLamaImage" onerror="this.src='https://via.placeholder.com/75?text=Lama';">
     </button>
   `;
@@ -169,6 +169,7 @@
   const messagesContainer = document.getElementById('askLamaMessages');
 
   let isOpen = false;
+  let lastTopic = null; // Remembers what the user was asking about
 
   // Global toggle function referenced by external trigger buttons
   window.toggleLamaChat = function() {
@@ -188,7 +189,7 @@
   mascotBtn.addEventListener('click', window.toggleLamaChat);
   closeBtn.addEventListener('click', window.toggleLamaChat);
 
-  // Handle message dispatch and smart responses with backend awareness
+  // Handle message dispatch and smart responses with context awareness
   async function handleUserMessage() {
     const text = inputField.value.trim();
     if (!text) return;
@@ -211,34 +212,53 @@
       const query = text.toLowerCase();
       let responseText = '';
 
-      // Check if LamaAPI is available for live queries
+      // Check if LamaAPI is available for live queries (when logged in)
       if (typeof LamaAPI !== 'undefined' && LamaAPI.isLoggedIn()) {
-        if (query.includes('student') || query.includes('pupil')) {
+        if (query.includes('student') || query.includes('pupil') || query.includes('kids')) {
+          lastTopic = 'students';
           const students = await LamaAPI.list('students');
           responseText = `You currently have ${students.length} student records registered in the system.`;
-        } else if (query.includes('teacher') || query.includes('staff')) {
+        } else if (query.includes('teacher') || query.includes('staff') || query.includes('faculty')) {
+          lastTopic = 'teachers';
           const teachers = await LamaAPI.list('teachers');
           responseText = `There are ${teachers.length} teachers registered in your school directory.`;
-        } else if (query.includes('fee') || query.includes('payment')) {
+        } else if (query.includes('fee') || query.includes('payment') || query.includes('due')) {
+          lastTopic = 'fees';
           responseText = 'You can check individual student fee summaries directly through the main dashboard fee panels.';
-        } else if (query.includes('school') || query.includes('config')) {
+        } else if (query.includes('school') || query.includes('config') || query.includes('settings')) {
+          lastTopic = 'school';
           const school = await LamaAPI.getActiveSchool();
           responseText = school ? `Current School: ${school.schoolName} (ID: ${school.schoolId})` : 'No active school session found.';
         }
       }
 
-      // Fallback or general questions if no specific API match or not logged in
+      // Fallback / general questions & follow-up conversation context handler
       if (!responseText) {
-        if (query.includes('vpn') || query.includes('app') || query.includes('security')) {
-          responseText = 'You can check out our flagship utility <a href="apps/lamavpnpro/" style="color:#60a5fa;">LamaVPN Pro</a> right from the apps ecosystem section!';
-        } else if (query.includes('contact') || query.includes('email') || query.includes('support')) {
-          responseText = 'You can reach the team directly at contact@lamastudio.pk or through our community footer links.';
-        } else if (query.includes('free') || query.includes('pricing')) {
-          responseText = 'Yes! Most core web utilities and developer research generators on LamaStudio are completely free to use.';
-        } else if (query.includes('weather') || query.includes('sky')) {
+        if (query.includes('vpn') || query.includes('lama vpn') || (lastTopic === 'vpn' && (query.includes('free') || query.includes('cost') || query.includes('price')))) {
+          lastTopic = 'vpn';
+          responseText = 'Yes! <b>LamaVPN Pro</b> offers free core features, while advanced routing options are part of our extended developer tier.';
+        } else if (query.includes('weather') || query.includes('sky') || query.includes('prayer')) {
+          lastTopic = 'weather';
           responseText = 'Looking for local weather and prayer scheduling? Try out <a href="apps/lamasky/" style="color:#60a5fa;">LamaSky</a>!';
+        } else if (query.includes('contact') || query.includes('email') || query.includes('support') || query.includes('help')) {
+          responseText = 'You can reach the team directly at contact@lamastudio.pk or through our community footer links.';
+        } else if (query.includes('free') || query.includes('pricing') || query.includes('cost') || query.includes('charge')) {
+          if (lastTopic === 'vpn') {
+            responseText = 'Yes, LamaVPN Pro includes free options to get you started securely right from the apps section!';
+          } else {
+            responseText = 'Most core web utilities, developer tools, and basic modules on LamaStudio are completely free to use!';
+          }
+        } else if (query.includes('hi') || query.includes('hello') || query.includes('hey')) {
+          responseText = 'Hello again! 👋 How can I help you further with LamaStudio today?';
+        } else if (query.includes('no') || query.includes('tell me') || query.includes('what') || query.includes('how')) {
+          // Contextual fallback if user says "no tell me now"
+          if (lastTopic === 'vpn') {
+            responseText = 'LamaVPN Pro is designed for fast, secure browsing. You can open it anytime from your apps list to test it out!';
+          } else {
+            responseText = 'Could you specify a bit more? You can ask me about students, teachers, fees, LamaVPN Pro, or LamaSky!';
+          }
         } else {
-          responseText = 'I can help you navigate LamaStudio, check your school records, or find specific tools. Try asking about "students", "teachers", or "fees"!';
+          responseText = 'I can help you navigate LamaStudio, check your school records, or find specific tools. Try asking about "students", "teachers", "fees", or "LamaVPN Pro"!';
         }
       }
 

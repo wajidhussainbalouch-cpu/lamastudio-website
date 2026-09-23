@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Bulk Import Students</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="manage-students.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Manage Students</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Step 1: Upload -->
+        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-3">
+            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>
+            <p class="text-[11px] text-slate-400">Accepts .xlsx, .xls, .csv — any layout — or a standard Punjab EMIS/SIS student-list PDF, straight from your SIS portal download. You'll match its columns to the right fields next. Anything you don't map is simply left blank, editable later from Manage Students.</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.pdf" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
+            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
+            <div id="sheetPicker" class="hidden">
+                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
+                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
+            </div>
+        </section>
+
+        <!-- Step 2: Map columns -->
+        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns to Fields</h2>
+            <p class="text-[11px] text-slate-400">We've guessed a starting match based on your headers — check and adjust before importing.</p>
+            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
+
+            <div class="border-t border-slate-800 pt-3">
+                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview (first 5 rows, as they'll be imported)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[10px] border-collapse min-w-[500px]">
+                        <thead><tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800"></tr></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
+                🚀 Import All <span id="rowCountLabel"></span> Students
+            </button>
+        </section>
+
+        <!-- Step 3: Progress / Results -->
+        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Importing...</h2>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <p id="progressLabel" class="text-xs text-slate-400">Starting...</p>
+        </section>
+
+        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Import Complete</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Imported</p>
+                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
+                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>
+                </div>
+            </div>
+            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
+            <a href="manage-students.html" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students &rarr;</a>
+        </section>
+    </main>
+
+    <script>
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const TARGET_FIELDS = [
+            { key: '', label: '-- Skip this column --' },
+            { key: 'name', label: 'Student Name' },
+            { key: 'enrlNo', label: 'Enrollment No' },
+            { key: 'admissionNo', label: 'Admission No' },
+            { key: 'gender', label: 'Gender (M/F)' },
+            { key: 'dob', label: 'Date of Birth' },
+            { key: 'class', label: 'Class' },
+            { key: 'section', label: 'Section' },
+            { key: 'fatherGuardian', label: "Father / Guardian Name" },
+            { key: 'fatherCnic', label: "Father's CNIC" },
+            { key: 'cnic', label: "Student CNIC / B-Form" },
+            { key: 'contact', label: 'Contact Number' },
+            { key: 'whatsapp', label: 'WhatsApp Number' },
+            { key: 'address', label: 'Address' },
+            { key: 'religion', label: 'Religion' },
+            { key: 'caste', label: 'Caste / Tribe' },
+            { key: 'profession', label: "Father's Profession" },
+            { key: 'monthlyIncome', label: 'Monthly Income' },
+            { key: 'academicSession', label: 'Academic Session' },
+            { key: 'admissionDate', label: 'Admission Date' },
+            { key: 'photo', label: 'Photo (URL or image data)' },
+            { key: 'admissionRemarks', label: 'Remarks' }
+        ];
+
+        // Fuzzy auto-guess: lowercase, strip non-letters, then match against these hints.
+        const AUTO_GUESS = {
+            name: ['name', 'studentname', 'candidatename'],
+            enrlNo: ['enrlno', 'enrollmentno', 'enrollno', 'srno', 'sno'],
+            admissionNo: ['admissionno', 'admno'],
+            gender: ['gender', 'fm', 'sex'],
+            dob: ['dob', 'dateofbirth', 'birthdate'],
+            class: ['class', 'grade'],
+            section: ['section', 'sec'],
+            fatherGuardian: ['fatherguardian', 'father', 'guardian', 'fathername', 'guardianname'],
+            fatherCnic: ['fathercnic', 'guardiancnic'],
+            cnic: ['cnic', 'formb', 'bform', 'studentcnic'],
+            contact: ['contact', 'contacts', 'phone', 'mobile', 'cellno'],
+            whatsapp: ['whatsapp', 'whatsappno'],
+            address: ['address', 'residentialaddress'],
+            religion: ['religion'],
+            caste: ['caste', 'tribe', 'castetribe'],
+            profession: ['profession', 'occupation'],
+            monthlyIncome: ['monthlyincome', 'income'],
+            academicSession: ['session', 'academicsession'],
+            admissionDate: ['admissiondate', 'admdate', 'admissiondt'],
+            photo: ['photo', 'photos', 'picture', 'pictures', 'image'],
+            admissionRemarks: ['remarks', 'comments']
+        };
+
+        let workbook = null;
+        let sourceHeaders = [];
+        let sourceRows = [];
+        let mapping = {};
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        function handleFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (file.name.toLowerCase().endsWith('.pdf')) {
+                handlePdfFile(file);
+            } else {
+                handleSpreadsheetFile(file);
+            }
+        }
+
+        function handleSpreadsheetFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                workbook = XLSX.read(e.target.result, { type: 'array' });
+                const sheetNames = workbook.SheetNames;
+                if (sheetNames.length > 1) {
+                    document.getElementById('sheetPicker').classList.remove('hidden');
+                    document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                } else {
+                    document.getElementById('sheetPicker').classList.add('hidden');
+                }
+                loadSheet(sheetNames[0]);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ---- PDF import: parses the standard Punjab EMIS/SIS student-list PDF export ----
+        // Format per row: SrNo [EnrlNo] NAME GENDER DOB AGE ADM_DATE (F) FATHER/GUARDIAN [FORM-B] CLASS
+        // EnrlNo and Form-B/CNIC are sometimes absent in the source data — both are optional here too.
+        const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
+        const PDF_ROW_PATTERN = /^(\d+)\s+(\d+)?\s*(.+?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(\d{9,13}|0)?\s*(ECE|NURSERY|\d+)\s*$/;
+
+        function pdfConvDate(d) {
+            const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
+            if (!m) return '';
+            const [, day, mon, yy] = m;
+            const monNum = PDF_MONTHS[mon];
+            if (!monNum) return '';
+            return `20${yy}-${String(monNum).padStart(2, '0')}-${String(parseInt(day, 10)).padStart(2, '0')}`;
+        }
+
+        function isPdfNoiseLine(line) {
+            const t = line.trim();
+            if (!t) return true;
+            if (/^Downloaded by/i.test(t)) return true;
+            if (/STUDENTS ALREADY EXIST/i.test(t)) return true;
+            if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;
+            if (/^All students of EMIS/i.test(t)) return true;
+            if (t === '!') return true;
+            return false;
+        }
+
+        async function extractPdfLines(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let allLines = [];
+            for (let p = 1; p <= pdf.numPages; p++) {
+                const page = await pdf.getPage(p);
+                const content = await page.getTextContent();
+                let lines = [];
+                let currentLine = '';
+                let lastY = null;
+                content.items.forEach(item => {
+                    const y = item.transform[5];
+                    if (lastY !== null && Math.abs(y - lastY) > 2) {
+                        if (currentLine.trim()) lines.push(currentLine.trim());
+                        currentLine = item.str;
+                    } else {
+                        currentLine += (currentLine && !currentLine.endsWith(' ') && !item.str.startsWith(' ') ? ' ' : '') + item.str;
+                    }
+                    lastY = y;
+                });
+                if (currentLine.trim()) lines.push(currentLine.trim());
+                allLines = allLines.concat(lines);
+            }
+            return allLines;
+        }
+
+        function parsePdfLines(lines) {
+            const rows = [];
+            const skipped = [];
+            let buffer = [];
+            lines.forEach(line => {
+                if (isPdfNoiseLine(line)) return;
+                buffer.push(line);
+                const joined = buffer.join(' ').replace(/\s+/g, ' ').trim();
+                const m = joined.match(PDF_ROW_PATTERN);
+                if (m) {
+                    const [, , enrl, name, gender, dob, , admdate, father, formb, klass] = m;
+                    rows.push([
+                        enrl || '', name.trim(), gender, pdfConvDate(dob), klass,
+                        father.trim(), (!formb || formb === '0') ? '' : formb, pdfConvDate(admdate)
+                    ]);
+                    buffer = [];
+                } else if (buffer.length >= 4) {
+                    skipped.push(buffer.join(' '));
+                    buffer = [];
+                }
+            });
+            if (buffer.length) skipped.push(buffer.join(' '));
+            return { rows, skipped };
+        }
+
+        async function handlePdfFile(file) {
+            const status = document.getElementById('pdfStatus');
+            status.classList.remove('hidden');
+            status.innerText = 'Reading PDF...';
+            try {
+                const lines = await extractPdfLines(file);
+                status.innerText = 'Detecting student rows...';
+                const { rows, skipped } = parsePdfLines(lines);
+
+                if (rows.length === 0) {
+                    status.innerText = "Couldn't detect the standard EMIS row format in this PDF. Try exporting as Excel/CSV instead, or check the file isn't scanned/image-based (this reads text, not scanned pages).";
+                    return;
+                }
+
+                sourceHeaders = ['Enrollment No', 'Name', 'Gender', 'DOB', 'Class', "Father / Guardian", 'CNIC / Form-B', 'Admission Date'];
+                sourceRows = rows;
+                mapping = { 0: 'enrlNo', 1: 'name', 2: 'gender', 3: 'dob', 4: 'class', 5: 'fatherGuardian', 6: 'cnic', 7: 'admissionDate' };
+
+                renderMappingGrid();
+                renderPreview();
+                document.getElementById('mapSection').classList.remove('hidden');
+                document.getElementById('rowCountLabel').innerText = sourceRows.length;
+
+                status.innerText = `✓ Detected ${rows.length} student${rows.length === 1 ? '' : 's'} from the PDF.` +
+                    (skipped.length ? ` ${skipped.length} line${skipped.length === 1 ? '' : 's'} couldn't be matched and were skipped — check the mapping/preview below before importing.` : '');
+            } catch (e) {
+                status.innerText = 'Could not read this PDF: ' + e.message;
+            }
+        }
+
+        function normalizeKey(s) {
+            return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function guessMapping(header) {
+            const norm = normalizeKey(header);
+            for (const [target, hints] of Object.entries(AUTO_GUESS)) {
+                if (hints.some(h => norm.includes(h) || h.includes(norm))) return target;
+            }
+            return '';
+        }
+
+        function loadSheet(sheetName) {
+            const ws = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            if (json.length === 0) { alert('This sheet appears to be empty.'); return; }
+            sourceHeaders = json[0].map(h => String(h).trim());
+            sourceRows = json.slice(1).filter(row => row.some(cell => String(cell).trim() !== ''));
+
+            mapping = {};
+            sourceHeaders.forEach((h, i) => { mapping[i] = guessMapping(h); });
+
+            renderMappingGrid();
+            renderPreview();
+            document.getElementById('mapSection').classList.remove('hidden');
+            document.getElementById('rowCountLabel').innerText = sourceRows.length;
+        }
+
+        function renderMappingGrid() {
+            document.getElementById('mappingGrid').innerHTML = sourceHeaders.map((h, i) => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                    <span class="font-bold text-white truncate" title="${h}">${h || '(blank column)'}</span>
+                    <select onchange="setMapping(${i}, this.value)" class="bg-slate-900 border border-slate-700 text-white text-[10px] rounded-lg px-2 py-1.5 flex-shrink-0">
+                        ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${mapping[i] === f.key ? 'selected' : ''}>${f.label}</option>`).join('')}
+                    </select>
+                </div>
+            `).join('');
+        }
+
+        function setMapping(colIndex, target) {
+            mapping[colIndex] = target;
+            renderPreview();
+        }
+
+        function buildRecordFromRow(row) {
+            const record = {};
+            Object.entries(mapping).forEach(([colIndex, target]) => {
+                if (!target) return;
+                const val = row[colIndex];
+                if (val !== undefined && val !== null && String(val).trim() !== '') {
+                    record[target] = String(val).trim();
+                }
+            });
+            return record;
+        }
+
+        function renderPreview() {
+            const mappedTargets = Object.values(mapping).filter(Boolean);
+            document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {
+                const f = TARGET_FIELDS.find(x => x.key === t);
+                return `<th class="py-1 pr-3">${f ? f.label : t}</th>`;
+            }).join('');
+
+            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map(row => {
+                const record = buildRecordFromRow(row);
+                return `<tr class="border-b border-slate-900">${mappedTargets.map(t => `<td class="py-1 pr-3 text-slate-300">${record[t] || '-'}</td>`).join('')}</tr>`;
+            }).join('');
+        }
+
+        // Compress a photo (URL or data URI) down toward a 15-25KB target using canvas re-encoding.
+        // Cross-origin URLs without permissive CORS headers will fail silently — the student
+        // still imports, just without a photo, addable later from Manage Students.
+        function compressImage(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let width = img.width, height = img.height, quality = 0.85, attempts = 0;
+
+                    function attempt() {
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const result = canvas.toDataURL('image/jpeg', quality);
+                        const approxBytes = Math.ceil((result.length * 3) / 4);
+                        attempts++;
+                        if (approxBytes <= 25000 || attempts > 25) {
+                            resolve(result);
+                        } else if (quality > 0.25) {
+                            quality -= 0.1;
+                            attempt();
+                        } else {
+                            width = Math.round(width * 0.85);
+                            height = Math.round(height * 0.85);
+                            attempt();
+                        }
+                    }
+                    attempt();
+                };
+                img.onerror = () => resolve(''); // couldn't load — skip photo, don't block the import
+                img.src = src;
+            });
+        }
+
+        async function startImport() {
+            document.getElementById('mapSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+
+            let success = 0;
+            const errors = [];
+
+            for (let i = 0; i < sourceRows.length; i++) {
+                const record = buildRecordFromRow(sourceRows[i]);
+                const label = record.name || `Row ${i + 2}`;
+                document.getElementById('progressLabel').innerText = `Importing ${i + 1} of ${sourceRows.length}: ${label}`;
+                document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / sourceRows.length) * 100)}%`;
+
+                if (!record.name) {
+                    errors.push(`Row ${i + 2}: skipped — no name mapped.`);
+                    continue;
+                }
+
+                if (record.photo && /^https?:\/\//i.test(record.photo)) {
+                    const compressed = await compressImage(record.photo);
+                    if (compressed) record.photo = compressed;
+                    else delete record.photo;
+                } else if (record.photo && record.photo.startsWith('data:image')) {
+                    const compressed = await compressImage(record.photo);
+                    if (compressed) record.photo = compressed;
+                }
+
+                try {
+                    await LamaAPI.add('students', record);
+                    success++;
+                } catch (e) {
+                    errors.push(`${label}: ${e.message}`);
+                }
+            }
+
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('successCount').innerText = success;
+            document.getElementById('failCount').innerText = errors.length;
+            document.getElementById('errorsList').innerHTML = errors.map(e => `
+                <div class="bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg px-3 py-1.5">${e}</div>
+            `).join('');
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            renderHeader();
+        }
+    </script>
+</body>
+</html>

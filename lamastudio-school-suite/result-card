@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Official Student Result Card</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<!-- Live API Client (talks to your Google Sheets backend) -->
+<script src="js/api-client.js"></script>
+<style>
+    body { background-color: #0b0f19; }
+    @media print {
+        body { background: #ffffff !important; }
+        .no-print { display: none !important; }
+        .print-sheet {
+            width: 100% !important; max-width: none !important; margin: 0 !important;
+            padding: 10mm 12mm !important; border: none !important; box-shadow: none !important;
+            background: #ffffff !important; color: #0f172a !important;
+        }
+        .rc-table th, .rc-table td { color: #0f172a !important; border-color: #cbd5e1 !important; }
+        @page { size: A4 portrait; margin: 6mm; }
+    }
+    .print-sheet { background: #ffffff; color: #0f172a; }
+    .rc-table th, .rc-table td { border: 1px solid #334155; padding: 6px 8px; }
+</style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Control Bar -->
+    <div class="no-print max-w-4xl w-full mb-4 flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center bg-slate-900 border border-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl">
+        <div>
+            <h2 class="text-xs font-black uppercase tracking-wider text-purple-400">Official Result Card</h2>
+            <p class="text-[10px] text-slate-400" id="scopeLabel">Showing records for the active school</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+            <select id="studentSelect" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-purple-500 min-w-[220px]"></select>
+            <button onclick="openStudentModal()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Add / Edit Student</button>
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">🖨️ Print</button>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">&larr; Hub</a>
+        </div>
+    </div>
+
+    <!-- RESULT CARD PRINT SHEET -->
+    <div id="resultSheet" class="print-sheet cyber-card max-w-4xl w-full p-8 rounded-2xl space-y-5">
+
+        <!-- Header -->
+        <div class="text-center border-b-2 border-indigo-600 pb-3">
+            <div id="schoolLogoBox" class="w-12 h-12 mx-auto rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black uppercase mb-1">SCH</div>
+            <p class="text-[9px] uppercase tracking-widest font-extrabold text-indigo-600">Official Academic Result Card</p>
+            <h1 id="headerSchoolName" class="text-2xl font-black tracking-wide uppercase mt-1">School Name</h1>
+            <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-500 mt-1">Address • UAN • EMIS/Reg Code</p>
+        </div>
+
+        <!-- No student selected state -->
+        <div id="emptyState" class="text-center py-16 text-sm text-slate-400 hidden">
+            No students found for this school yet. Click <b>+ Add / Edit Student</b> above to create the first result card.
+        </div>
+
+        <div id="cardBody" class="space-y-5">
+            <!-- Student Info -->
+            <div class="flex justify-between items-start gap-4">
+                <div class="grid grid-cols-2 gap-x-6 gap-y-1.5 text-[11px] font-semibold">
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Enrollment No</span><span id="fEnrl">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Class</span><span id="fClass">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Student Name</span><span id="fName">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Gender</span><span id="fGender">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Father / Guardian</span><span id="fFather">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Date of Birth</span><span id="fDob">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Contact No</span><span id="fContact">-</span></p>
+                    <p><span class="text-slate-500 uppercase text-[9px] block">Session</span><span id="fSession">2026-2027</span></p>
+                </div>
+                <div id="photoBox" class="border-2 border-dashed border-indigo-400 rounded-lg w-20 h-24 flex-shrink-0 flex items-center justify-center bg-indigo-50/40 text-indigo-700 text-[7px] font-bold text-center p-1">
+                    Student Photo
+                </div>
+            </div>
+
+            <!-- Subjects Table -->
+            <table class="rc-table w-full text-[11px] border-collapse">
+                <thead>
+                    <tr class="bg-indigo-600 text-white text-[10px] uppercase">
+                        <th class="text-left">Subject</th>
+                        <th>Obtained</th>
+                        <th>Total</th>
+                        <th>%</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody id="subjectsBody"></tbody>
+                <tfoot>
+                    <tr class="font-black bg-slate-100">
+                        <td>Total</td>
+                        <td id="tObtained" class="text-center">0</td>
+                        <td id="tTotal" class="text-center">0</td>
+                        <td id="tPercent" class="text-center">0%</td>
+                        <td id="tGrade" class="text-center">-</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- Result Summary -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div class="border rounded-xl p-2.5">
+                    <p class="text-[8px] uppercase text-slate-500 font-bold">Overall %</p>
+                    <p id="sPercent" class="text-lg font-black text-indigo-700">0%</p>
+                </div>
+                <div class="border rounded-xl p-2.5">
+                    <p class="text-[8px] uppercase text-slate-500 font-bold">Grade</p>
+                    <p id="sGrade" class="text-lg font-black text-emerald-600">-</p>
+                </div>
+                <div class="border rounded-xl p-2.5">
+                    <p class="text-[8px] uppercase text-slate-500 font-bold">Position</p>
+                    <p id="sPosition" class="text-lg font-black text-amber-600">-</p>
+                </div>
+                <div class="border rounded-xl p-2.5">
+                    <p class="text-[8px] uppercase text-slate-500 font-bold">Result</p>
+                    <p id="sResult" class="text-lg font-black">-</p>
+                </div>
+            </div>
+
+            <div class="text-[11px]"><span class="font-bold uppercase text-slate-500 text-[9px] block">Remarks</span><span id="sRemarks">-</span></div>
+
+            <!-- QR + Signatures -->
+            <div class="flex justify-between items-end pt-4 border-t-2 border-indigo-900">
+                <div class="text-center">
+                    <div class="w-36 border-b border-slate-800 mb-1.5"></div>
+                    <p class="text-[8.5px] font-black uppercase">Class Teacher</p>
+                </div>
+                <img id="qrImg" src="" alt="Result QR" class="w-16 h-16">
+                <div class="text-center">
+                    <div class="w-36 border-b border-slate-800 mb-1.5"></div>
+                    <p class="text-[8.5px] font-black uppercase">Principal / Head</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD / EDIT STUDENT MODAL -->
+    <div id="studentModal" class="no-print hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-black uppercase text-purple-400">Add / Edit Student Result</h3>
+                <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div><label class="block text-[10px] text-slate-400 mb-1">Enrollment No</label><input id="inEnrl" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" placeholder="e.g. 1877"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Class</label><input id="inClass" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" placeholder="e.g. 5"></div>
+                <div class="col-span-2"><label class="block text-[10px] text-slate-400 mb-1">Student Name</label><input id="inName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" placeholder="Full Name"></div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Gender</label>
+                    <select id="inGender" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                        <option value="M">Male</option><option value="F">Female</option>
+                    </select>
+                </div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Date of Birth</label><input type="date" id="inDob" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Father / Guardian</label><input id="inFather" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Contact No</label><input id="inContact" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Position (class rank)</label><input type="number" id="inPosition" min="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Photo</label><input type="file" accept="image/*" id="inPhoto" onchange="previewPhoto(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1"></div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-3">
+                <p class="text-[10px] font-black uppercase text-slate-400 mb-2">Subject Marks <span class="text-slate-600 normal-case font-normal">(defaults: 100 each — edit totals to match your school's exam policy)</span></p>
+                <div id="subjectsInputGrid" class="grid grid-cols-4 gap-2 text-[10px]"></div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeStudentModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Cancel</button>
+                <button onclick="saveStudent()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl">Save Result</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STUDENTS = 'students';
+        const DEFAULT_SUBJECTS = ['English', 'Urdu', 'Math', 'Islamiat', 'Nazra', 'Science/GK', 'SSt'];
+        let currentPhotoData = '';
+
+        function gradeFromPercentage(pct) {
+            if (pct >= 90) return 'A+';
+            if (pct >= 80) return 'A';
+            if (pct >= 70) return 'B';
+            if (pct >= 60) return 'C';
+            if (pct >= 50) return 'D';
+            return 'F';
+        }
+
+        function remarkFor(pct, isPass) {
+            if (!isPass) return 'Work Harder';
+            if (pct >= 90) return 'Outstanding Performance';
+            if (pct >= 80) return 'Excellent Performance';
+            if (pct >= 70) return 'Very Good';
+            if (pct >= 60) return 'Good';
+            return 'Satisfactory';
+        }
+
+        function computeTotals(student) {
+            const subs = student.subjects || [];
+            const totalObtained = subs.reduce((sum, s) => sum + (Number(s.obtained) || 0), 0);
+            const totalMarks = subs.reduce((sum, s) => sum + (Number(s.total) || 0), 0);
+            const percentage = totalMarks > 0 ? (totalObtained / totalMarks) * 100 : 0;
+            const passFail = percentage >= 33 ? 'Pass' : 'Fail';
+            return { totalObtained, totalMarks, percentage, passFail };
+        }
+
+        async function renderHeader() {
+            const school = (await LamaAPI.getActiveSchool()) || {};
+            const schoolName = school.name || 'School Name';
+            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
+            const address = school.address || '';
+            const phone = school.phone || '';
+            document.getElementById('pageTitle').innerText = `${schoolName} | Result Card`;
+            document.getElementById('headerSchoolName').innerText = schoolName;
+            document.getElementById('headerSchoolMeta').innerText = [address, phone ? `UAN: ${phone}` : '', `Reg Code: ${shortCode}`].filter(Boolean).join(' • ');
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
+            }
+            return { schoolName, shortCode };
+        }
+
+        let cachedStudents = [];
+
+        async function populateStudentSelect() {
+            const select = document.getElementById('studentSelect');
+            select.innerHTML = `<option value="">Loading students...</option>`;
+            let students = [];
+            try {
+                students = await LamaAPI.list(STUDENTS);
+            } catch (e) {
+                alert('Could not load students: ' + e.message);
+            }
+            cachedStudents = students;
+
+            if (students.length === 0) {
+                select.innerHTML = `<option value="">No students yet</option>`;
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('cardBody').classList.add('hidden');
+                return null;
+            }
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('cardBody').classList.remove('hidden');
+            select.innerHTML = students
+                .map(s => `<option value="${s.id}">${s.name} — Class ${s.class} (${s.enrlNo || 'N/A'})</option>`)
+                .join('');
+            return students;
+        }
+
+        async function renderResultCard(studentId) {
+            let student = cachedStudents.find(s => s.id === studentId);
+            if (!student) {
+                try {
+                    student = await LamaAPI.get(STUDENTS, studentId);
+                } catch (e) {
+                    alert('Could not load this student: ' + e.message);
+                    return;
+                }
+            }
+            if (!student) return;
+            const { schoolName } = await renderHeader();
+
+            document.getElementById('fEnrl').innerText = student.enrlNo || '-';
+            document.getElementById('fClass').innerText = student.class || '-';
+            document.getElementById('fName').innerText = student.name || '-';
+            document.getElementById('fGender').innerText = student.gender === 'F' ? 'Female' : 'Male';
+            document.getElementById('fFather').innerText = student.fatherGuardian || '-';
+            document.getElementById('fDob').innerText = student.dob || '-';
+            document.getElementById('fContact').innerText = student.contact || '-';
+
+            const photoBox = document.getElementById('photoBox');
+            photoBox.innerHTML = student.photo
+                ? `<img src="${student.photo}" class="w-full h-full object-cover rounded-lg">`
+                : 'Student Photo';
+
+            const subs = student.subjects && student.subjects.length ? student.subjects : DEFAULT_SUBJECTS.map(name => ({ name, obtained: 0, total: 100 }));
+            const tbody = document.getElementById('subjectsBody');
+            tbody.innerHTML = subs.map(s => {
+                const obtained = Number(s.obtained) || 0;
+                const total = Number(s.total) || 0;
+                const pct = total > 0 ? (obtained / total) * 100 : 0;
+                return `<tr><td>${s.name}</td><td class="text-center">${obtained}</td><td class="text-center">${total}</td><td class="text-center">${pct.toFixed(0)}%</td><td class="text-center">${gradeFromPercentage(pct)}</td></tr>`;
+            }).join('');
+
+            const { totalObtained, totalMarks, percentage, passFail } = computeTotals(student);
+            document.getElementById('tObtained').innerText = totalObtained;
+            document.getElementById('tTotal').innerText = totalMarks;
+            document.getElementById('tPercent').innerText = `${percentage.toFixed(1)}%`;
+            document.getElementById('tGrade').innerText = gradeFromPercentage(percentage);
+
+            document.getElementById('sPercent').innerText = `${percentage.toFixed(1)}%`;
+            document.getElementById('sGrade').innerText = gradeFromPercentage(percentage);
+            document.getElementById('sPosition').innerText = student.position || '-';
+            const resultEl = document.getElementById('sResult');
+            resultEl.innerText = passFail;
+            resultEl.className = `text-lg font-black ${passFail === 'Pass' ? 'text-emerald-600' : 'text-red-600'}`;
+            document.getElementById('sRemarks').innerText = student.remarks || remarkFor(percentage, passFail === 'Pass');
+
+            const schoolSlug = schoolName.trim().toUpperCase().replace(/\s+/g, '-');
+            const qrData = `${schoolSlug}-Class-${student.class}-Name-${student.name}-Marks-${totalObtained}/${totalMarks}-Result-${passFail}-Pos-${student.position || 'NA'}`;
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+        }
+
+        function buildSubjectInputs(existingSubjects) {
+            const subs = existingSubjects && existingSubjects.length ? existingSubjects : DEFAULT_SUBJECTS.map(name => ({ name, obtained: 0, total: 100 }));
+            const grid = document.getElementById('subjectsInputGrid');
+            grid.innerHTML = subs.map((s) => `
+                <div class="col-span-4 sm:col-span-2 lg:col-span-1 space-y-1">
+                    <label class="block text-slate-400 uppercase font-bold">${s.name}</label>
+                    <div class="flex gap-1">
+                        <input type="number" class="subj-obtained w-1/2 bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-white" data-name="${s.name}" value="${s.obtained}" placeholder="Obt.">
+                        <input type="number" class="subj-total w-1/2 bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-white" data-name="${s.name}" value="${s.total}" placeholder="Total">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function previewPhoto(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => { currentPhotoData = e.target.result; };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openStudentModal(studentId) {
+            const student = studentId ? cachedStudents.find(s => s.id === studentId) : null;
+            document.getElementById('editId').value = studentId || '';
+            document.getElementById('inEnrl').value = student ? (student.enrlNo || '') : '';
+            document.getElementById('inClass').value = student ? (student.class || '') : '';
+            document.getElementById('inName').value = student ? (student.name || '') : '';
+            document.getElementById('inGender').value = student ? (student.gender || 'M') : 'M';
+            document.getElementById('inDob').value = student ? (student.dob || '') : '';
+            document.getElementById('inFather').value = student ? (student.fatherGuardian || '') : '';
+            document.getElementById('inContact').value = student ? (student.contact || '') : '';
+            document.getElementById('inPosition').value = student ? (student.position || '') : '';
+            currentPhotoData = student ? (student.photo || '') : '';
+            buildSubjectInputs(student ? student.subjects : null);
+            document.getElementById('studentModal').classList.remove('hidden');
+        }
+
+        function closeStudentModal() {
+            document.getElementById('studentModal').classList.add('hidden');
+        }
+
+        async function saveStudent() {
+            const name = document.getElementById('inName').value.trim();
+            if (!name) { alert('Student name is required.'); return; }
+
+            const obtainedInputs = document.querySelectorAll('.subj-obtained');
+            const totalInputs = document.querySelectorAll('.subj-total');
+            const subjects = Array.from(obtainedInputs).map((el, i) => ({
+                name: el.dataset.name,
+                obtained: Number(el.value) || 0,
+                total: Number(totalInputs[i].value) || 0
+            }));
+
+            const record = {
+                enrlNo: document.getElementById('inEnrl').value.trim(),
+                class: document.getElementById('inClass').value.trim(),
+                name,
+                gender: document.getElementById('inGender').value,
+                dob: document.getElementById('inDob').value,
+                fatherGuardian: document.getElementById('inFather').value.trim(),
+                contact: document.getElementById('inContact').value.trim(),
+                position: document.getElementById('inPosition').value.trim(),
+                photo: currentPhotoData,
+                subjects
+            };
+
+            const saveBtn = event.target;
+            const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const editId = document.getElementById('editId').value;
+                let saved;
+                if (editId) {
+                    saved = await LamaAPI.update(STUDENTS, editId, record);
+                } else {
+                    saved = await LamaAPI.add(STUDENTS, record);
+                }
+
+                closeStudentModal();
+                await populateStudentSelect();
+                document.getElementById('studentSelect').value = saved.id;
+                await renderResultCard(saved.id);
+            } catch (e) {
+                alert('Could not save this student: ' + e.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalText;
+            }
+        }
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+
+        async function init() {
+            await renderHeader();
+            const students = await populateStudentSelect();
+            if (students && students.length) {
+                await renderResultCard(students[0].id);
+            }
+            document.getElementById('studentSelect').addEventListener('change', (e) => {
+                if (e.target.value) renderResultCard(e.target.value);
+            });
+        }
+
+        // Every protected page starts with this: no session -> straight to login.
+        if (LamaAPI.requireLogin('school')) {
+            init();
+        }
+    </script>
+</body>
+</html>

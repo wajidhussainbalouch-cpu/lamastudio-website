@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Class Tests & Quizzes Schedule</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+<style>
+    body { background-color: #0b0f19; }
+    @media print {
+        body { background: #ffffff !important; }
+        .no-print { display: none !important; }
+        .print-sheet {
+            width: 100% !important; max-width: none !important; margin: 0 !important;
+            padding: 10mm 12mm !important; border: none !important; box-shadow: none !important;
+            background: #ffffff !important; color: #0f172a !important;
+        }
+        .tst-table th, .tst-table td { color: #0f172a !important; border-color: #cbd5e1 !important; }
+        @page { size: A4 landscape; margin: 8mm; }
+    }
+    .print-sheet { background: #ffffff; color: #0f172a; }
+    .tst-table th, .tst-table td { border: 1px solid #334155; padding: 6px 8px; }
+</style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Control Bar -->
+    <div class="no-print max-w-5xl w-full mb-4 flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center bg-slate-900 border border-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl">
+        <div>
+            <h2 class="text-xs font-black uppercase tracking-wider text-amber-400">Class Tests & Quizzes Schedule</h2>
+            <p class="text-[10px] text-slate-400">Showing the schedule for the active school</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+            <button onclick="addRow()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Add Test</button>
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">🖨️ Print</button>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">&larr; Hub</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Logout</button>
+        </div>
+    </div>
+
+    <!-- TESTS SHEET -->
+    <div class="print-sheet cyber-card-amber max-w-5xl w-full p-8 rounded-2xl space-y-5">
+
+        <!-- Header -->
+        <div class="text-center border-b-2 border-amber-600 pb-3">
+            <div id="schoolLogoBox" class="w-12 h-12 mx-auto rounded-lg bg-amber-600 text-white flex items-center justify-center text-xs font-black uppercase mb-1">SCH</div>
+            <h1 id="headerSchoolName" class="text-2xl font-black tracking-wide uppercase mt-1">School Name</h1>
+            <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-500 mt-1">Address • UAN</p>
+            <p class="text-[10px] uppercase tracking-widest font-extrabold text-amber-600 mt-2">Class Tests & Quizzes Schedule</p>
+        </div>
+
+        <table class="tst-table w-full text-[11px] border-collapse">
+            <thead>
+                <tr class="bg-amber-600 text-white text-[10px] uppercase">
+                    <th class="text-left">Class</th>
+                    <th class="text-left">Subject</th>
+                    <th class="text-left">Type</th>
+                    <th>Date</th>
+                    <th>Total Marks</th>
+                    <th class="text-left">Topics / Syllabus</th>
+                    <th class="no-print"></th>
+                </tr>
+            </thead>
+            <tbody id="rowsBody"></tbody>
+        </table>
+
+        <div id="emptyState" class="text-center py-8 text-sm text-slate-400 hidden">
+            No tests or quizzes scheduled yet. Click <b>+ Add Test</b> above to build the schedule.
+        </div>
+    </div>
+
+    <script>
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+        const TESTS = 'tests';
+        const TEST_TYPES = ['Class Test', 'Quiz', 'Monthly Test', 'Surprise Test'];
+
+        async function renderHeader() {
+            const school = (await LamaAPI.getActiveSchool()) || {};
+            const schoolName = school.name || 'School Name';
+            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
+            document.getElementById('pageTitle').innerText = `${schoolName} | Tests & Quizzes`;
+            document.getElementById('headerSchoolName').innerText = schoolName;
+            document.getElementById('headerSchoolMeta').innerText = [school.address, school.phone ? `UAN: ${school.phone}` : ''].filter(Boolean).join(' • ');
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
+            }
+        }
+
+        function typeOptionsHTML(selected) {
+            return TEST_TYPES.map(t => `<option value="${t}" ${t === selected ? 'selected' : ''}>${t}</option>`).join('');
+        }
+
+        async function renderRows() {
+            let rows;
+            try {
+                rows = await LamaAPI.list(TESTS);
+            } catch (e) {
+                alert('Could not load tests: ' + e.message);
+                return;
+            }
+            rows = rows.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            const tbody = document.getElementById('rowsBody');
+            document.getElementById('emptyState').classList.toggle('hidden', rows.length > 0);
+
+            tbody.innerHTML = rows.map(row => `
+                <tr>
+                    <td><input class="row-input w-full bg-transparent" data-id="${row.id}" data-field="class" value="${row.class || ''}" placeholder="e.g. 5"></td>
+                    <td><input class="row-input w-full bg-transparent" data-id="${row.id}" data-field="subject" value="${row.subject || ''}" placeholder="e.g. Science"></td>
+                    <td><select class="row-input w-full bg-transparent no-print-select" data-id="${row.id}" data-field="type">${typeOptionsHTML(row.type)}</select><span class="hidden print:inline">${row.type || '-'}</span></td>
+                    <td><input type="date" class="row-input w-full bg-transparent" data-id="${row.id}" data-field="date" value="${row.date || ''}"></td>
+                    <td><input type="number" class="row-input w-full bg-transparent text-center" data-id="${row.id}" data-field="totalMarks" value="${row.totalMarks || ''}" placeholder="20"></td>
+                    <td><input class="row-input w-full bg-transparent" data-id="${row.id}" data-field="topics" value="${row.topics || ''}" placeholder="e.g. Chapter 3-4"></td>
+                    <td class="no-print text-center"><button onclick="deleteRow('${row.id}')" class="text-red-500 hover:text-red-400 font-bold">✕</button></td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.row-input').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const { id, field } = e.target.dataset;
+                    try {
+                        await LamaAPI.update(TESTS, id, { [field]: e.target.value });
+                    } catch (err) {
+                        alert('Could not save that change: ' + err.message);
+                    }
+                    renderRows();
+                });
+            });
+        }
+
+        async function addRow() {
+            try {
+                await LamaAPI.add(TESTS, { class: '', subject: '', type: 'Class Test', date: '', totalMarks: '', topics: '' });
+                renderRows();
+            } catch (e) {
+                alert('Could not add a test: ' + e.message);
+            }
+        }
+
+        async function deleteRow(id) {
+            try {
+                await LamaAPI.remove(TESTS, id);
+                renderRows();
+            } catch (e) {
+                alert('Could not delete this test: ' + e.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderRows();
+        }
+
+        if (LamaAPI.requireLogin('school')) {
+            init();
+        }
+    </script>
+</body>
+</html>

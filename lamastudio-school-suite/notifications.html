@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Parent Circulars & Broadcast Log</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Header -->
+    <header class="max-w-3xl w-full mb-4 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl px-6 py-4 flex items-center gap-3">
+        <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white flex-shrink-0">SCH</div>
+        <div class="flex-grow">
+            <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Parent Circulars & Broadcast Log</p>
+        </div>
+        <button onclick="openCircularModal()" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black text-xs px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex-shrink-0">
+            + New Circular
+        </button>
+        <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition flex-shrink-0">Hub</a>
+        <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition flex-shrink-0">Logout</button>
+    </header>
+
+    <!-- Filter Bar -->
+    <div class="max-w-3xl w-full mb-4 flex flex-wrap gap-2">
+        <button class="filter-btn active-filter bg-purple-600 text-white text-[10px] font-bold uppercase px-3 py-1.5 rounded-full" data-filter="All">All</button>
+        <button class="filter-btn bg-slate-800 text-slate-300 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full" data-filter="Sent">Sent</button>
+        <button class="filter-btn bg-slate-800 text-slate-300 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full" data-filter="Scheduled">Scheduled</button>
+        <button class="filter-btn bg-slate-800 text-slate-300 text-[10px] font-bold uppercase px-3 py-1.5 rounded-full" data-filter="Draft">Draft</button>
+    </div>
+
+    <!-- Broadcast Feed -->
+    <main class="max-w-3xl w-full space-y-3" id="feedContainer"></main>
+
+    <div id="emptyState" class="max-w-3xl w-full text-center py-16 text-sm text-slate-400 hidden">
+        No circulars yet. Click <b>+ New Circular</b> above to send your first parent broadcast.
+    </div>
+
+    <!-- New Circular Modal -->
+    <div id="circularModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-black uppercase text-purple-400">New Circular</h3>
+                <button onclick="closeCircularModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div><label class="block text-[10px] text-slate-400 mb-1">Title</label><input id="inTitle" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" placeholder="e.g. Mid-Term Exam Schedule Released"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Audience</label>
+                        <select id="inAudience" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                            <option>All Classes</option>
+                            <option>Class 1-5 (Primary)</option>
+                            <option>Class 6-8 (Middle)</option>
+                            <option>Class 9-10 (Secondary)</option>
+                            <option>Class 11-12 (Higher Secondary)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Channel</label>
+                        <select id="inChannel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                            <option>WhatsApp</option>
+                            <option>SMS</option>
+                            <option>Printed Notice</option>
+                            <option>App Notification</option>
+                        </select>
+                    </div>
+                </div>
+                <div><label class="block text-[10px] text-slate-400 mb-1">Message</label><textarea id="inMessage" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" placeholder="Write the circular message..."></textarea></div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Status</label>
+                    <select id="inStatus" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                        <option>Sent</option>
+                        <option>Scheduled</option>
+                        <option>Draft</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeCircularModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Cancel</button>
+                <button onclick="saveCircular()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl">Save Circular</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+        const NOTIFICATIONS = 'notifications';
+        let activeFilter = 'All';
+
+        const STATUS_STYLES = {
+            'Sent': 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+            'Scheduled': 'bg-cyan-500/10 text-cyan-300 border-cyan-500/20',
+            'Draft': 'bg-slate-500/10 text-slate-300 border-slate-500/20'
+        };
+
+        async function renderHeader() {
+            const school = (await LamaAPI.getActiveSchool()) || {};
+            const schoolName = school.name || 'School Name';
+            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
+            document.getElementById('pageTitle').innerText = `${schoolName} | Notifications`;
+            document.getElementById('headerSchoolName').innerText = schoolName;
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
+            }
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        async function renderFeed() {
+            let items;
+            try {
+                items = await LamaAPI.list(NOTIFICATIONS);
+            } catch (e) {
+                alert('Could not load circulars: ' + e.message);
+                return;
+            }
+            items = items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+            if (activeFilter !== 'All') {
+                items = items.filter(i => i.status === activeFilter);
+            }
+
+            const container = document.getElementById('feedContainer');
+            document.getElementById('emptyState').classList.toggle('hidden', items.length > 0);
+
+            container.innerHTML = items.map(item => `
+                <div class="cyber-card rounded-2xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <h4 class="text-sm font-black text-white">${item.title}</h4>
+                            <p class="text-[9px] text-slate-400 mt-0.5">${formatDate(item.createdAt)} • ${item.audience} • ${item.channel}</p>
+                        </div>
+                        <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded border ${STATUS_STYLES[item.status] || STATUS_STYLES['Draft']}">${item.status}</span>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">${item.message}</p>
+                    <div class="flex justify-end gap-3 pt-1 border-t border-slate-800 mt-1">
+                        <button onclick="deleteCircular('${item.id}')" class="text-[10px] font-bold text-red-400 hover:text-red-300">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCircularModal() {
+            document.getElementById('inTitle').value = '';
+            document.getElementById('inAudience').value = 'All Classes';
+            document.getElementById('inChannel').value = 'WhatsApp';
+            document.getElementById('inMessage').value = '';
+            document.getElementById('inStatus').value = 'Sent';
+            document.getElementById('circularModal').classList.remove('hidden');
+        }
+
+        function closeCircularModal() {
+            document.getElementById('circularModal').classList.add('hidden');
+        }
+
+        async function saveCircular() {
+            const title = document.getElementById('inTitle').value.trim();
+            const message = document.getElementById('inMessage').value.trim();
+            if (!title || !message) { alert('Title and message are required.'); return; }
+
+            try {
+                await LamaAPI.add(NOTIFICATIONS, {
+                    title,
+                    audience: document.getElementById('inAudience').value,
+                    channel: document.getElementById('inChannel').value,
+                    message,
+                    status: document.getElementById('inStatus').value,
+                    createdAt: new Date().toISOString()
+                });
+                closeCircularModal();
+                renderFeed();
+            } catch (e) {
+                alert('Could not save this circular: ' + e.message);
+            }
+        }
+
+        async function deleteCircular(id) {
+            try {
+                await LamaAPI.remove(NOTIFICATIONS, id);
+                renderFeed();
+            } catch (e) {
+                alert('Could not delete this circular: ' + e.message);
+            }
+        }
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                activeFilter = btn.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('bg-purple-600', 'text-white');
+                    b.classList.add('bg-slate-800', 'text-slate-300');
+                });
+                btn.classList.remove('bg-slate-800', 'text-slate-300');
+                btn.classList.add('bg-purple-600', 'text-white');
+                renderFeed();
+            });
+        });
+
+        async function init() {
+            await renderHeader();
+            await renderFeed();
+        }
+
+        if (LamaAPI.requireLogin('school')) {
+            init();
+        }
+    </script>
+</body>
+</html>

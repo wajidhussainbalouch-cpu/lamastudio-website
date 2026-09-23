@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Examination Date Sheet</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+<style>
+    body { background-color: #0b0f19; }
+    @media print {
+        body { background: #ffffff !important; }
+        .no-print { display: none !important; }
+        .print-sheet {
+            width: 100% !important; max-width: none !important; margin: 0 !important;
+            padding: 10mm 12mm !important; border: none !important; box-shadow: none !important;
+            background: #ffffff !important; color: #0f172a !important;
+        }
+        .ds-table th, .ds-table td { color: #0f172a !important; border-color: #cbd5e1 !important; }
+        @page { size: A4 landscape; margin: 8mm; }
+    }
+    .print-sheet { background: #ffffff; color: #0f172a; }
+    .ds-table th, .ds-table td { border: 1px solid #334155; padding: 6px 8px; }
+</style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Control Bar -->
+    <div class="no-print max-w-5xl w-full mb-4 flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center bg-slate-900 border border-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl">
+        <div>
+            <h2 class="text-xs font-black uppercase tracking-wider text-cyan-400">Examination Date Sheet</h2>
+            <p class="text-[10px] text-slate-400">Showing the schedule for the active school</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+            <select id="examTitleSelect" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-cyan-500">
+                <option value="Mid-Term Examination">Mid-Term Examination</option>
+                <option value="Final / Annual Examination">Final / Annual Examination</option>
+                <option value="Monthly Test Series">Monthly Test Series</option>
+            </select>
+            <button onclick="addRow()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Add Row</button>
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">🖨️ Print</button>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">&larr; Hub</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Logout</button>
+        </div>
+    </div>
+
+    <!-- DATE SHEET -->
+    <div class="print-sheet cyber-card max-w-5xl w-full p-8 rounded-2xl space-y-5">
+
+        <!-- Header -->
+        <div class="text-center border-b-2 border-cyan-600 pb-3">
+            <div id="schoolLogoBox" class="w-12 h-12 mx-auto rounded-lg bg-cyan-600 text-white flex items-center justify-center text-xs font-black uppercase mb-1">SCH</div>
+            <h1 id="headerSchoolName" class="text-2xl font-black tracking-wide uppercase mt-1">School Name</h1>
+            <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-500 mt-1">Address • UAN</p>
+            <p id="examTitleDisplay" class="text-[10px] uppercase tracking-widest font-extrabold text-cyan-600 mt-2">Mid-Term Examination — Session 2026-2027</p>
+        </div>
+
+        <table class="ds-table w-full text-[11px] border-collapse">
+            <thead>
+                <tr class="bg-cyan-600 text-white text-[10px] uppercase">
+                    <th class="text-left">Class</th>
+                    <th class="text-left">Subject</th>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th>Time</th>
+                    <th class="text-left">Invigilator</th>
+                    <th class="no-print"></th>
+                </tr>
+            </thead>
+            <tbody id="rowsBody"></tbody>
+        </table>
+
+        <div id="emptyState" class="text-center py-8 text-sm text-slate-400 hidden">
+            No exam schedule entries yet. Click <b>+ Add Row</b> above to build the date sheet.
+        </div>
+    </div>
+
+    <script>
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+        const DATESHEET = 'datesheet';
+        let cachedRows = [];
+
+        async function renderHeader() {
+            const school = (await LamaAPI.getActiveSchool()) || {};
+            const schoolName = school.name || 'School Name';
+            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
+            document.getElementById('pageTitle').innerText = `${schoolName} | Date Sheet`;
+            document.getElementById('headerSchoolName').innerText = schoolName;
+            document.getElementById('headerSchoolMeta').innerText = [school.address, school.phone ? `UAN: ${school.phone}` : ''].filter(Boolean).join(' • ');
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
+            }
+        }
+
+        function dayFromDate(dateStr) {
+            if (!dateStr) return '-';
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            return days[new Date(dateStr).getDay()];
+        }
+
+        async function renderRows() {
+            try {
+                cachedRows = await LamaAPI.list(DATESHEET);
+            } catch (e) {
+                alert('Could not load the date sheet: ' + e.message);
+                return;
+            }
+            const rows = [...cachedRows].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            const tbody = document.getElementById('rowsBody');
+            document.getElementById('emptyState').classList.toggle('hidden', rows.length > 0);
+
+            tbody.innerHTML = rows.map(row => `
+                <tr>
+                    <td><input class="row-input w-full bg-transparent" data-id="${row.id}" data-field="class" value="${row.class || ''}" placeholder="e.g. 5"></td>
+                    <td><input class="row-input w-full bg-transparent" data-id="${row.id}" data-field="subject" value="${row.subject || ''}" placeholder="e.g. Math"></td>
+                    <td><input type="date" class="row-input w-full bg-transparent" data-id="${row.id}" data-field="date" value="${row.date || ''}"></td>
+                    <td class="text-center">${dayFromDate(row.date)}</td>
+                    <td><input class="row-input w-full bg-transparent text-center" data-id="${row.id}" data-field="time" value="${row.time || ''}" placeholder="9:00 AM"></td>
+                    <td><input class="row-input w-full bg-transparent" data-id="${row.id}" data-field="invigilator" value="${row.invigilator || ''}" placeholder="Teacher name"></td>
+                    <td class="no-print text-center"><button onclick="deleteRow('${row.id}')" class="text-red-500 hover:text-red-400 font-bold">✕</button></td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.row-input').forEach(input => {
+                input.addEventListener('change', async (e) => {
+                    const { id, field } = e.target.dataset;
+                    try {
+                        await LamaAPI.update(DATESHEET, id, { [field]: e.target.value });
+                    } catch (err) {
+                        alert('Could not save that change: ' + err.message);
+                    }
+                    renderRows();
+                });
+            });
+        }
+
+        async function addRow() {
+            try {
+                await LamaAPI.add(DATESHEET, { class: '', subject: '', date: '', time: '', invigilator: '' });
+                renderRows();
+            } catch (e) {
+                alert('Could not add a row: ' + e.message);
+            }
+        }
+
+        async function deleteRow(id) {
+            try {
+                await LamaAPI.remove(DATESHEET, id);
+                renderRows();
+            } catch (e) {
+                alert('Could not delete this row: ' + e.message);
+            }
+        }
+
+        document.getElementById('examTitleSelect').addEventListener('change', (e) => {
+            document.getElementById('examTitleDisplay').innerText = `${e.target.value} — Session 2026-2027`;
+        });
+
+        async function init() {
+            await renderHeader();
+            await renderRows();
+        }
+
+        if (LamaAPI.requireLogin('school')) {
+            init();
+        }
+    </script>
+</body>
+</html>

@@ -55,7 +55,7 @@
 
         <!-- Edit Teacher (hidden until "Edit" is clicked) -->
         <section id="editSection" class="cyber-card rounded-2xl p-5 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Edit Teacher</h2>
+            <h2 class="text-xs font-black uppercase text-amber-400">Edit Teacher & Security</h2>
             <input type="hidden" id="editId">
             <div class="grid sm:grid-cols-2 gap-3 text-xs">
                 <input id="editName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -74,13 +74,22 @@
                 <input type="date" id="editJoiningDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editAddress" placeholder="Residential Address" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <select id="editStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="editStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white sm:col-span-2">
                     <option value="Active">Active</option>
                     <option value="Suspended">Suspended</option>
                 </select>
             </div>
-            <p class="text-[10px] text-slate-500">Note: password can't be changed from here yet — the teacher's email/password stay as set at creation.</p>
-            <div class="flex gap-2">
+
+            <!-- Password Reset Sub-section -->
+            <div class="border-t border-slate-800 pt-3 mt-3 space-y-2">
+                <label class="block text-[10px] font-black uppercase text-cyan-400">Reset Teacher Password</label>
+                <div class="flex gap-2">
+                    <input id="editNewPassword" type="text" placeholder="New Password (min 6 chars)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white flex-1">
+                    <button onclick="resetTeacherPassword()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-lg transition">Update Password</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
                 <button onclick="saveTeacherEdit()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Save Changes</button>
                 <button onclick="closeEdit()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Cancel</button>
             </div>
@@ -166,6 +175,7 @@
             document.getElementById('editEmergencyContact').value = t.emergencyContact || '';
             document.getElementById('editAddress').value = t.address || '';
             document.getElementById('editStatus').value = t.status || 'Active';
+            document.getElementById('editNewPassword').value = ''; // clear password field
             document.getElementById('editSection').classList.remove('hidden');
             document.getElementById('editSection').scrollIntoView({ behavior: 'smooth' });
         }
@@ -196,6 +206,27 @@
                 renderTeachers();
             } catch (e) {
                 alert('Could not save changes: ' + e.message);
+            }
+        }
+
+        async function resetTeacherPassword() {
+            const id = document.getElementById('editId').value;
+            const newPassword = document.getElementById('editNewPassword').value;
+            if (!newPassword || newPassword.length < 6) {
+                alert('Password must be at least 6 characters long.');
+                return;
+            }
+            try {
+                // Assuming LamaAPI has a password update method or supports updating credentials
+                if (typeof LamaAPI.resetTeacherPassword === 'function') {
+                    await LamaAPI.resetTeacherPassword(id, newPassword);
+                } else {
+                    await LamaAPI.update('teachers', id, { password: newPassword });
+                }
+                alert('Teacher password updated successfully.');
+                document.getElementById('editNewPassword').value = '';
+            } catch (e) {
+                alert('Could not reset password: ' + e.message);
             }
         }
 

@@ -36,7 +36,18 @@
                 <input id="inClass" placeholder="Assigned Class (e.g. 5)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inSection" placeholder="Assigned Section (e.g. A)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="inPassword" type="text" placeholder="Password (min 6 chars)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inCnic" placeholder="CNIC No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
+                <input type="date" id="inDob" placeholder="Date of Birth" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="inGender" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="">Gender</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+                <input id="inQualification" placeholder="Qualification (e.g. M.Ed, MSc)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input type="date" id="inJoiningDate" placeholder="Joining Date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inAddress" placeholder="Residential Address" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inPassword" type="text" placeholder="Password (min 6 chars)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
             </div>
             <button onclick="createTeacher()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Create Teacher Account</button>
             <p class="text-[10px] text-slate-500">Share the <b>School ID / Login Code</b> below, plus this email and password, with the teacher — they'll log in at <code>portal-login.html</code>.</p>
@@ -50,8 +61,19 @@
                 <input id="editName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="editSection" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editSectionInput" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editCnic" placeholder="CNIC No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
+                <input type="date" id="editDob" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="editGender" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="">Gender</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+                <input id="editQualification" placeholder="Qualification" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input type="date" id="editJoiningDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editAddress" placeholder="Residential Address" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <select id="editStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                     <option value="Active">Active</option>
                     <option value="Suspended">Suspended</option>
@@ -116,6 +138,7 @@
                     <div>
                         <p class="text-xs font-bold">${t.name} <span class="text-slate-500 font-normal">— ${t.email}</span></p>
                         <p class="text-[10px] text-slate-400">${t.subject || 'No subject'} • Class ${t.assignedClass || '-'}${t.assignedSection ? '-' + t.assignedSection : ''} • ${t.contact || 'No contact'}</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">${t.qualification || 'No qualification on file'}${t.joiningDate ? ' • Joined ' + t.joiningDate : ''}${t.cnic ? ' • CNIC ' + t.cnic : ''}</p>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
                         <span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${t.status === 'Active' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-700 text-slate-400'}">${t.status}</span>
@@ -133,11 +156,18 @@
             document.getElementById('editName').value = t.name || '';
             document.getElementById('editSubject').value = t.subject || '';
             document.getElementById('editClass').value = t.assignedClass || '';
-            document.getElementById('editSection').value = t.assignedSection || '';
+            document.getElementById('editSectionInput').value = t.assignedSection || '';
             document.getElementById('editContact').value = t.contact || '';
+            document.getElementById('editCnic').value = t.cnic || '';
+            document.getElementById('editDob').value = t.dob || '';
+            document.getElementById('editGender').value = t.gender || '';
+            document.getElementById('editQualification').value = t.qualification || '';
+            document.getElementById('editJoiningDate').value = t.joiningDate || '';
+            document.getElementById('editEmergencyContact').value = t.emergencyContact || '';
+            document.getElementById('editAddress').value = t.address || '';
             document.getElementById('editStatus').value = t.status || 'Active';
-            document.getElementById('editSection').closest('section').classList.remove('hidden');
-            document.getElementById('editId').closest('section').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('editSection').classList.remove('hidden');
+            document.getElementById('editSection').scrollIntoView({ behavior: 'smooth' });
         }
 
         function closeEdit() {
@@ -151,8 +181,15 @@
                     name: document.getElementById('editName').value.trim(),
                     subject: document.getElementById('editSubject').value.trim(),
                     assignedClass: document.getElementById('editClass').value.trim(),
-                    assignedSection: document.getElementById('editSection').value.trim(),
+                    assignedSection: document.getElementById('editSectionInput').value.trim(),
                     contact: document.getElementById('editContact').value.trim(),
+                    cnic: document.getElementById('editCnic').value.trim(),
+                    dob: document.getElementById('editDob').value,
+                    gender: document.getElementById('editGender').value,
+                    qualification: document.getElementById('editQualification').value.trim(),
+                    joiningDate: document.getElementById('editJoiningDate').value,
+                    emergencyContact: document.getElementById('editEmergencyContact').value.trim(),
+                    address: document.getElementById('editAddress').value.trim(),
                     status: document.getElementById('editStatus').value
                 });
                 closeEdit();
@@ -186,9 +223,18 @@
                     subject: document.getElementById('inSubject').value.trim(),
                     assignedClass: document.getElementById('inClass').value.trim(),
                     assignedSection: document.getElementById('inSection').value.trim(),
-                    contact: document.getElementById('inContact').value.trim()
+                    contact: document.getElementById('inContact').value.trim(),
+                    cnic: document.getElementById('inCnic').value.trim(),
+                    dob: document.getElementById('inDob').value,
+                    gender: document.getElementById('inGender').value,
+                    qualification: document.getElementById('inQualification').value.trim(),
+                    joiningDate: document.getElementById('inJoiningDate').value,
+                    emergencyContact: document.getElementById('inEmergencyContact').value.trim(),
+                    address: document.getElementById('inAddress').value.trim()
                 });
-                ['inName', 'inEmail', 'inSubject', 'inClass', 'inSection', 'inContact', 'inPassword'].forEach(id => document.getElementById(id).value = '');
+                ['inName', 'inEmail', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
+                 'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword']
+                    .forEach(id => document.getElementById(id).value = '');
                 renderTeachers();
             } catch (err) {
                 alert(err.message);

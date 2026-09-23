@@ -50,6 +50,10 @@
  */
 
 const REGISTRY_SHEET_NAME = 'Schools';
+const REGISTRY_HEADERS = [
+    'schoolId', 'name', 'address', 'phone', 'principal', 'type', 'level', 'adminEmail',
+    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt'
+];
 const SUPER_ADMIN_PASSWORD_PLAINTEXT = 'change-this-password'; // edit, then run setupSuperAdmin() once
 
 // Every collection listed here automatically gets full CRUD via the generic
@@ -60,12 +64,16 @@ const COLLECTIONS = {
         tab: 'Students',
         headers: ['id', 'enrlNo', 'name', 'gender', 'dob', 'fatherGuardian', 'contact', 'whatsapp', 'class', 'section',
                   'subjectsJson', 'position', 'photo', 'behavioralJson', 'attendance',
-                  'teacherRemarks', 'principalRemarks', 'remarks', 'password', 'apiKey', 'createdAt']
+                  'teacherRemarks', 'principalRemarks', 'remarks', 'password', 'apiKey', 'createdAt',
+                  'cnic', 'religion', 'category', 'fatherCnic', 'caste', 'profession', 'monthlyIncome',
+                  'admissionNo', 'academicSession', 'admissionTestMarks', 'interviewMarks', 'admissionRemarks', 'address',
+                  'admissionDate']
     },
     teachers: {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
-                  'contact', 'status', 'createdAt']
+                  'contact', 'status', 'createdAt',
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact']
     },
     activities: {
         tab: 'Activities',
@@ -102,6 +110,10 @@ const COLLECTIONS = {
     notifications: {
         tab: 'Notifications',
         headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'createdAt']
+    },
+    resources: {
+        tab: 'Resources',
+        headers: ['id', 'category', 'title', 'description', 'link', 'createdAt']
     }
 };
 
@@ -118,10 +130,7 @@ function setup() {
     const ss = SpreadsheetApp.create('LamaStudio Master Registry');
     const sheet = ss.getActiveSheet();
     sheet.setName(REGISTRY_SHEET_NAME);
-    sheet.appendRow([
-        'schoolId', 'name', 'address', 'phone', 'principal', 'type', 'level', 'adminEmail',
-        'passwordHash', 'apiKey', 'sheetId', 'logo', 'shortCode', 'plan', 'status', 'createdAt'
-    ]);
+    sheet.appendRow(REGISTRY_HEADERS);
     props.setProperty('MASTER_SHEET_ID', ss.getId());
     Logger.log('Setup complete. Master Registry: ' + ss.getUrl());
 }
@@ -141,7 +150,21 @@ function getRegistrySheet() {
         setup();
         id = props.getProperty('MASTER_SHEET_ID');
     }
-    return SpreadsheetApp.openById(id).getSheetByName(REGISTRY_SHEET_NAME);
+    const sheet = SpreadsheetApp.openById(id).getSheetByName(REGISTRY_SHEET_NAME);
+    ensureSheetHeaders(sheet, REGISTRY_HEADERS);
+    return sheet;
+}
+
+/** Self-heal: adds any header a sheet is missing, appended at the end. Never reorders
+ *  or removes existing columns, so already-registered schools never lose data —
+ *  their old rows just show blank cells under the newly added header names. */
+function ensureSheetHeaders(sheet, requiredHeaders) {
+    const lastCol = sheet.getLastColumn();
+    const existing = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+    const missing = requiredHeaders.filter(h => existing.indexOf(h) === -1);
+    if (missing.length > 0) {
+        sheet.getRange(1, existing.length + 1, 1, missing.length).setValues([missing]);
+    }
 }
 
 // ============================================================================
@@ -237,7 +260,7 @@ function registerSchool(p) {
     return {
         schoolId, apiKey, name: p.name.trim(), address: p.address || '', phone: p.phone || '',
         principal: p.principal || '', type: p.type || 'Private', level: p.level || 'High',
-        logo: p.logo || '', shortCode
+        logo: p.logo || '', coverPhoto: '', shortCode
     };
 }
 
@@ -252,7 +275,8 @@ function loginSchool(email, password) {
     return {
         schoolId: match.obj.schoolId, apiKey: match.obj.apiKey, name: match.obj.name,
         address: match.obj.address, phone: match.obj.phone, principal: match.obj.principal,
-        type: match.obj.type, level: match.obj.level, logo: match.obj.logo, shortCode: match.obj.shortCode
+        type: match.obj.type, level: match.obj.level, logo: match.obj.logo,
+        coverPhoto: match.obj.coverPhoto || '', shortCode: match.obj.shortCode
     };
 }
 
@@ -270,7 +294,7 @@ function getSchoolConfig(schoolId, apiKey) {
     const o = authorizeSchool(schoolId, apiKey).obj;
     return {
         schoolId: o.schoolId, name: o.name, address: o.address, phone: o.phone, principal: o.principal,
-        type: o.type, level: o.level, logo: o.logo, shortCode: o.shortCode
+        type: o.type, level: o.level, logo: o.logo, coverPhoto: o.coverPhoto || '', shortCode: o.shortCode
     };
 }
 
@@ -381,10 +405,12 @@ function addTeacher(schoolId, apiKey, p) {
     }
     const match = authorizeSchool(schoolId, apiKey);
     const ss = SpreadsheetApp.openById(match.obj.sheetId);
-    const sheet = ss.getSheetByName(COLLECTIONS.teachers.tab);
+    const ctx = { role: 'school', ss };
+    const { sheet, headers } = getCollectionSheet(ctx, 'teachers');
     const existing = sheet.getDataRange().getValues();
+    const emailCol = headers.indexOf('email');
     for (let i = 1; i < existing.length; i++) {
-        if (String(existing[i][2]).toLowerCase() === p.email.toLowerCase()) {
+        if (String(existing[i][emailCol]).toLowerCase() === p.email.toLowerCase()) {
             throw new Error('A teacher with this email already exists at this school.');
         }
     }
@@ -393,10 +419,12 @@ function addTeacher(schoolId, apiKey, p) {
     const record = {
         id, name: p.name.trim(), email: p.email.trim().toLowerCase(),
         passwordHash: hashPassword(p.password, id), apiKey: teacherApiKey,
-        subject: p.subject || '', assignedClass: p.assignedClass || '',
-        contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString()
+        subject: p.subject || '', assignedClass: p.assignedClass || '', assignedSection: p.assignedSection || '',
+        contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString(),
+        cnic: p.cnic || '', dob: p.dob || '', gender: p.gender || '', qualification: p.qualification || '',
+        joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || ''
     };
-    sheet.appendRow(recordToRow(COLLECTIONS.teachers.headers, record));
+    sheet.appendRow(recordToRow(headers, record));
     const safe = Object.assign({}, record); delete safe.passwordHash;
     return safe;
 }
@@ -548,8 +576,8 @@ function resolveContext(p) {
 }
 
 const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework', 'notifications'];
-const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings'];
-const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities'];
+const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings', 'resources'];
+const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources'];
 
 function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
@@ -577,6 +605,10 @@ function getCollectionSheet(ctx, collection) {
         sheet = ctx.ss.insertSheet(cfg.tab);
         sheet.appendRow(cfg.headers);
         sheet.setFrozenRows(1);
+    } else {
+        // Self-heal: schools registered before newer fields existed get those
+        // columns added automatically, so nothing new is ever silently dropped.
+        ensureSheetHeaders(sheet, cfg.headers);
     }
     return { sheet, headers: cfg.headers };
 }
@@ -702,14 +734,18 @@ function getMainDashboardData(params) {
     const ctx = resolveContext(params);
     const ss = ctx.ss;
 
-    let schoolName = '', logo = '', address = '';
+    let schoolName = '', logo = '', coverPhoto = '', address = '', level = '', type = '';
     if (ctx.role === 'school') {
         const match = authorizeSchool(params.schoolId, params.apiKey);
-        schoolName = match.obj.name; logo = match.obj.logo; address = match.obj.address;
+        schoolName = match.obj.name; logo = match.obj.logo; coverPhoto = match.obj.coverPhoto || '';
+        address = match.obj.address; level = match.obj.level; type = match.obj.type;
     } else {
         const registry = getRegistrySheet();
         const schoolMatch = findSchoolRow(registry, r => r.schoolId === params.schoolId);
-        if (schoolMatch) { schoolName = schoolMatch.obj.name; logo = schoolMatch.obj.logo; address = schoolMatch.obj.address; }
+        if (schoolMatch) {
+            schoolName = schoolMatch.obj.name; logo = schoolMatch.obj.logo; coverPhoto = schoolMatch.obj.coverPhoto || '';
+            address = schoolMatch.obj.address; level = schoolMatch.obj.level; type = schoolMatch.obj.type;
+        }
     }
 
     const notifRows = getCollectionSheet(ctx, 'notifications').sheet.getDataRange().getValues();
@@ -740,36 +776,31 @@ function getMainDashboardData(params) {
     }
     upcomingExams.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
-    // Class sections — names and assigned teacher only, no student-level detail here.
-    const studentRows = getCollectionSheet(ctx, 'students').sheet.getDataRange().getValues();
-    const studentHeaders = COLLECTIONS.students.headers;
-    const teacherRows = getCollectionSheet(ctx, 'teachers').sheet.getDataRange().getValues();
-    const teacherHeaders = COLLECTIONS.teachers.headers;
-    const sectionMap = {};
-    for (let i = 1; i < studentRows.length; i++) {
-        const r = rowToRecord(studentHeaders, studentRows[i]);
-        if (!r.id) continue;
-        const key = String(r.class) + '|' + String(r.section || '');
-        if (!sectionMap[key]) sectionMap[key] = { class: r.class, section: r.section || '', studentCount: 0, teacherName: '' };
-        sectionMap[key].studentCount++;
+    const testRows = getCollectionSheet(ctx, 'tests').sheet.getDataRange().getValues();
+    const testHeaders = COLLECTIONS.tests.headers;
+    const upcomingTests = [];
+    for (let i = 1; i < testRows.length; i++) {
+        const r = rowToRecord(testHeaders, testRows[i]);
+        if (r.id && r.date && String(r.date) >= todayStr) upcomingTests.push(r);
     }
-    for (let i = 1; i < teacherRows.length; i++) {
-        const r = rowToRecord(teacherHeaders, teacherRows[i]);
-        if (!r.id) continue;
-        Object.keys(sectionMap).forEach(key => {
-            if (String(sectionMap[key].class) === String(r.assignedClass) &&
-                (!r.assignedSection || String(sectionMap[key].section) === String(r.assignedSection))) {
-                sectionMap[key].teacherName = r.name;
-            }
-        });
+    upcomingTests.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+    const resRows = getCollectionSheet(ctx, 'resources').sheet.getDataRange().getValues();
+    const resHeaders = COLLECTIONS.resources.headers;
+    const resources = [];
+    for (let i = 1; i < resRows.length; i++) {
+        const r = rowToRecord(resHeaders, resRows[i]);
+        if (r.id) resources.push(r);
     }
+    resources.sort((a, b) => String(a.category).localeCompare(String(b.category)));
 
     return {
-        schoolName, logo, address,
+        schoolName, logo, coverPhoto, address, level, type,
         recentNotifications: notifications.slice(0, 5),
         recentActivities: activities.slice(0, 5),
         upcomingExams: upcomingExams.slice(0, 5),
-        classSections: Object.keys(sectionMap).map(k => sectionMap[k])
+        upcomingTests: upcomingTests.slice(0, 5),
+        resources
     };
 }
 

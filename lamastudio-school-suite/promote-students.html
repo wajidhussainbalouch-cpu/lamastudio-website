@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Promote Students</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Promote Students</p>
+            </div>
+        </div>
+        <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Setup -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-emerald-400">1. Choose Class & Promotion Details</h2>
+            <div class="grid sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Promoting From Class</label>
+                    <select id="fromClassSelect" onchange="loadClassRoster()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Promote To Class</label>
+                    <input id="toClass" placeholder="e.g. 4" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">New Academic Session</label>
+                    <input id="newSession" placeholder="e.g. 2027-2028" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                </div>
+            </div>
+            <label class="flex items-center gap-2 text-[11px] text-slate-400">
+                <input type="checkbox" id="clearMarks" checked class="rounded">
+                Clear previous subject marks for promoted students (recommended — they'll start fresh in the new class)
+            </label>
+        </section>
+
+        <!-- Roster -->
+        <section id="rosterSection" class="cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <div class="flex justify-between items-center flex-wrap gap-2">
+                <h2 class="text-xs font-black uppercase text-purple-400">2. Review & Select Students</h2>
+                <div class="flex gap-2">
+                    <button onclick="selectAllPass()" class="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">✓ Select All Passing</button>
+                    <button onclick="selectNone()" class="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">Clear Selection</button>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-500">Students below the 33% pass mark are unchecked and flagged by default — check the box yourself if you want to promote one anyway.</p>
+            <div id="rosterList" class="space-y-1.5"></div>
+            <p id="rosterEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in this class.</p>
+
+            <button onclick="startPromotion()" id="promoteBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
+                🎓 Promote Selected (<span id="selectedCount">0</span>)
+            </button>
+        </section>
+
+        <!-- Progress / Results -->
+        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Promoting...</h2>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+            <p id="progressLabel" class="text-xs text-slate-400">Starting...</p>
+        </section>
+
+        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Done</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Promoted</p>
+                    <p id="promotedCount" class="text-2xl font-black text-emerald-400">0</p>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed to Update</p>
+                    <p id="errorCount" class="text-2xl font-black text-red-400">0</p>
+                </div>
+            </div>
+            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
+            <a href="manage-students.html" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students &rarr;</a>
+        </section>
+    </main>
+
+    <script>
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+        const STUDENTS = 'students';
+        let allStudents = [];
+        let classRoster = [];
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Promote Students`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        function computeResult(student) {
+            const subs = student.subjects || [];
+            const totalObtained = subs.reduce((s, x) => s + (Number(x.obtained) || 0), 0);
+            const totalMarks = subs.reduce((s, x) => s + (Number(x.total) || 0), 0);
+            const percentage = totalMarks > 0 ? (totalObtained / totalMarks) * 100 : null;
+            const passed = percentage === null ? null : percentage >= 33;
+            return { percentage, passed };
+        }
+
+        async function loadClasses() {
+            allStudents = await LamaAPI.list(STUDENTS);
+            const classes = Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).sort();
+            document.getElementById('fromClassSelect').innerHTML = classes.map(c => `<option value="${c}">Class ${c}</option>`).join('') || '<option value="">No classes yet</option>';
+            if (classes.length) loadClassRoster();
+        }
+
+        function loadClassRoster() {
+            const cls = document.getElementById('fromClassSelect').value;
+            classRoster = allStudents.filter(s => String(s.class) === String(cls));
+            document.getElementById('rosterSection').classList.remove('hidden');
+            document.getElementById('rosterEmpty').classList.toggle('hidden', classRoster.length > 0);
+
+            document.getElementById('rosterList').innerHTML = classRoster.map(s => {
+                const { percentage, passed } = computeResult(s);
+                const label = percentage === null ? 'No result yet' : `${percentage.toFixed(0)}% — ${passed ? 'Pass' : 'Fail'}`;
+                const badgeClass = passed === false ? 'bg-red-500/10 text-red-300' : passed === true ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-700 text-slate-400';
+                const checked = passed !== false; // default checked unless a known Fail
+                return `
+                <label class="flex items-center justify-between gap-2 bg-slate-950/60 border ${passed === false ? 'border-red-500/30' : 'border-slate-800'} rounded-xl px-3 py-2 cursor-pointer">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <input type="checkbox" class="promote-check rounded flex-shrink-0" data-id="${s.id}" ${checked ? 'checked' : ''} onchange="updateSelectedCount()">
+                        <span class="text-xs font-semibold truncate">${s.name} <span class="text-slate-500">(${s.enrlNo || '-'})</span></span>
+                    </div>
+                    <span class="text-[9px] font-bold uppercase px-2 py-1 rounded flex-shrink-0 ${badgeClass}">${label}</span>
+                </label>`;
+            }).join('');
+            updateSelectedCount();
+        }
+
+        function selectAllPass() {
+            document.querySelectorAll('.promote-check').forEach(cb => {
+                const student = classRoster.find(s => s.id === cb.dataset.id);
+                const { passed } = computeResult(student);
+                cb.checked = passed !== false;
+            });
+            updateSelectedCount();
+        }
+
+        function selectNone() {
+            document.querySelectorAll('.promote-check').forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.promote-check:checked').length;
+            document.getElementById('selectedCount').innerText = count;
+        }
+
+        async function startPromotion() {
+            const toClass = document.getElementById('toClass').value.trim();
+            const newSession = document.getElementById('newSession').value.trim();
+            const clearMarks = document.getElementById('clearMarks').checked;
+            const selectedIds = Array.from(document.querySelectorAll('.promote-check:checked')).map(cb => cb.dataset.id);
+
+            if (!toClass) { alert('Enter the class these students are being promoted to.'); return; }
+            if (selectedIds.length === 0) { alert('Select at least one student to promote.'); return; }
+            if (!confirm(`Promote ${selectedIds.length} student(s) from Class ${document.getElementById('fromClassSelect').value} to Class ${toClass}?`)) return;
+
+            document.getElementById('rosterSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+
+            let success = 0;
+            const errors = [];
+
+            for (let i = 0; i < selectedIds.length; i++) {
+                const id = selectedIds[i];
+                const student = classRoster.find(s => s.id === id);
+                document.getElementById('progressLabel').innerText = `Promoting ${i + 1} of ${selectedIds.length}: ${student.name}`;
+                document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / selectedIds.length) * 100)}%`;
+
+                const patch = { class: toClass, position: '', remarks: '' };
+                if (newSession) patch.academicSession = newSession;
+                if (clearMarks) patch.subjects = [];
+
+                try {
+                    await LamaAPI.update(STUDENTS, id, patch);
+                    success++;
+                } catch (e) {
+                    errors.push(`${student.name}: ${e.message}`);
+                }
+            }
+
+            // Students left un-selected in this class just get the new session stamped, if provided —
+            // they're repeating, so their class stays the same.
+            if (newSession) {
+                const staying = classRoster.filter(s => !selectedIds.includes(s.id));
+                for (const s of staying) {
+                    try { await LamaAPI.update(STUDENTS, s.id, { academicSession: newSession }); }
+                    catch (e) { /* non-critical, don't block the summary on this */ }
+                }
+            }
+
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('promotedCount').innerText = success;
+            document.getElementById('errorCount').innerText = errors.length;
+            document.getElementById('errorsList').innerHTML = errors.map(e => `
+                <div class="bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg px-3 py-1.5">${e}</div>
+            `).join('');
+        }
+
+        async function init() {
+            await renderHeader();
+            await loadClasses();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

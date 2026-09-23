@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Fee Collection</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Fee Collection</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- Add Fee Entry -->
+        <section class="cyber-card-emerald rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-emerald-400">+ New Fee Entry</h2>
+            <div class="grid sm:grid-cols-3 gap-3 text-xs">
+                <select id="inStudent" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></select>
+                <input type="number" id="inAmount" placeholder="Amount (Rs.)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="inStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Overdue">Overdue</option>
+                </select>
+                <input type="date" id="inDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="inMethod" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option>Cash</option><option>EasyPaisa</option><option>JazzCash</option><option>Bank Transfer</option><option>Cheque</option>
+                </select>
+            </div>
+            <button onclick="addFee()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Add Entry</button>
+        </section>
+
+        <!-- Summary -->
+        <section class="grid grid-cols-3 gap-3">
+            <div class="cyber-card rounded-xl p-3 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Collected (Paid)</p><p id="sumPaid" class="text-lg font-black text-emerald-400">Rs. 0</p></div>
+            <div class="cyber-card rounded-xl p-3 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Pending</p><p id="sumPending" class="text-lg font-black text-amber-400">Rs. 0</p></div>
+            <div class="cyber-card rounded-xl p-3 text-center"><p class="text-[8px] uppercase text-slate-500 font-bold">Overdue</p><p id="sumOverdue" class="text-lg font-black text-red-400">Rs. 0</p></div>
+        </section>
+
+        <!-- Fee Records Table -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-slate-300">Fee Records</h2>
+            <table class="w-full text-[11px] border-collapse">
+                <thead>
+                    <tr class="text-left text-[9px] uppercase text-slate-500 border-b border-slate-800">
+                        <th class="py-1.5">Student</th><th>Class</th><th>Amount</th><th>Date</th><th>Method</th><th>Status</th><th></th>
+                    </tr>
+                </thead>
+                <tbody id="feesBody"></tbody>
+            </table>
+            <p id="feesEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No fee records yet.</p>
+        </section>
+    </main>
+
+    <script>
+        const FEES = 'fees', STUDENTS = 'students';
+        let allStudents = [];
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Fee Collection`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        async function populateStudentSelect() {
+            allStudents = await LamaAPI.list(STUDENTS);
+            document.getElementById('inStudent').innerHTML = allStudents
+                .map(s => `<option value="${s.id}">${s.name} — Class ${s.class} (${s.enrlNo || 'N/A'})</option>`)
+                .join('') || '<option value="">No students yet</option>';
+        }
+
+        function statusClass(status) {
+            if (status === 'Paid') return 'bg-emerald-500/10 text-emerald-300';
+            if (status === 'Overdue') return 'bg-red-500/10 text-red-300';
+            return 'bg-amber-500/10 text-amber-300';
+        }
+
+        async function renderFees() {
+            const fees = (await LamaAPI.list(FEES)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            document.getElementById('feesEmpty').classList.toggle('hidden', fees.length > 0);
+
+            let paid = 0, pending = 0, overdue = 0;
+            fees.forEach(f => {
+                const amt = Number(f.amount) || 0;
+                if (f.status === 'Paid') paid += amt;
+                else if (f.status === 'Overdue') overdue += amt;
+                else pending += amt;
+            });
+            document.getElementById('sumPaid').innerText = `Rs. ${paid.toLocaleString()}`;
+            document.getElementById('sumPending').innerText = `Rs. ${pending.toLocaleString()}`;
+            document.getElementById('sumOverdue').innerText = `Rs. ${overdue.toLocaleString()}`;
+
+            document.getElementById('feesBody').innerHTML = fees.map(f => `
+                <tr class="border-b border-slate-900">
+                    <td class="py-1.5">${f.studentName}</td>
+                    <td>${f.class || '-'}</td>
+                    <td>Rs. ${Number(f.amount || 0).toLocaleString()}</td>
+                    <td>${f.date || '-'}</td>
+                    <td>${f.method || '-'}</td>
+                    <td><span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded ${statusClass(f.status)}">${f.status}</span></td>
+                    <td class="text-center"><button onclick="deleteFee('${f.id}')" class="text-red-500 hover:text-red-400 font-bold">✕</button></td>
+                </tr>
+            `).join('');
+        }
+
+        async function addFee() {
+            const studentId = document.getElementById('inStudent').value;
+            const amount = document.getElementById('inAmount').value;
+            if (!studentId || !amount) { alert('Select a student and enter an amount.'); return; }
+            const student = allStudents.find(s => s.id === studentId);
+            await LamaAPI.add(FEES, {
+                studentId, studentName: student ? student.name : '', class: student ? student.class : '',
+                amount: Number(amount), date: document.getElementById('inDate').value || new Date().toISOString().split('T')[0],
+                status: document.getElementById('inStatus').value, method: document.getElementById('inMethod').value
+            });
+            document.getElementById('inAmount').value = '';
+            renderFees();
+        }
+
+        async function deleteFee(id) {
+            await LamaAPI.remove(FEES, id);
+            renderFees();
+        }
+
+        async function init() {
+            await renderHeader();
+            await populateStudentSelect();
+            await renderFees();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Behavioral & Teacher Evaluation Report Card</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+<style>
+    body { background-color: #0b0f19; }
+    @media print {
+        body { background: #ffffff !important; }
+        .no-print { display: none !important; }
+        .print-sheet {
+            width: 100% !important; max-width: none !important; margin: 0 !important;
+            padding: 10mm 12mm !important; border: none !important; box-shadow: none !important;
+            background: #ffffff !important; color: #0f172a !important;
+        }
+        .ev-table th, .ev-table td { color: #0f172a !important; border-color: #cbd5e1 !important; }
+        @page { size: A4 portrait; margin: 6mm; }
+    }
+    .print-sheet { background: #ffffff; color: #0f172a; }
+    .ev-table th, .ev-table td { border: 1px solid #334155; padding: 6px 8px; }
+    .star { cursor: pointer; font-size: 16px; color: #cbd5e1; }
+    .star.filled { color: #f59e0b; }
+</style>
+</head>
+<body class="text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+
+    <!-- Control Bar -->
+    <div class="no-print max-w-4xl w-full mb-4 flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center bg-slate-900 border border-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl">
+        <div>
+            <h2 class="text-xs font-black uppercase tracking-wider text-emerald-400">Behavioral & Evaluation Report</h2>
+            <p class="text-[10px] text-slate-400">Showing records for the active school</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+            <select id="studentSelect" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-emerald-500 min-w-[220px]"></select>
+            <button onclick="saveEvaluation()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">💾 Save Evaluation</button>
+            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">🖨️ Print</button>
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">&larr; Hub</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Logout</button>
+        </div>
+    </div>
+
+    <!-- REPORT SHEET -->
+    <div class="print-sheet cyber-card-emerald max-w-4xl w-full p-8 rounded-2xl space-y-5">
+
+        <!-- Header -->
+        <div class="text-center border-b-2 border-emerald-600 pb-3">
+            <div id="schoolLogoBox" class="w-12 h-12 mx-auto rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-black uppercase mb-1">SCH</div>
+            <p class="text-[9px] uppercase tracking-widest font-extrabold text-emerald-600">Behavioral & Teacher Evaluation Report</p>
+            <h1 id="headerSchoolName" class="text-2xl font-black tracking-wide uppercase mt-1">School Name</h1>
+            <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-500 mt-1">Address • UAN</p>
+        </div>
+
+        <div id="emptyState" class="text-center py-16 text-sm text-slate-400 hidden">
+            No students found yet. Add students first from the <b>Result Card</b> page, then come back here to evaluate them.
+        </div>
+
+        <div id="reportBody" class="space-y-5">
+            <!-- Student Info -->
+            <div class="grid grid-cols-3 gap-3 text-[11px] font-semibold">
+                <p><span class="text-slate-500 uppercase text-[9px] block">Student Name</span><span id="fName">-</span></p>
+                <p><span class="text-slate-500 uppercase text-[9px] block">Class</span><span id="fClass">-</span></p>
+                <p><span class="text-slate-500 uppercase text-[9px] block">Enrollment No</span><span id="fEnrl">-</span></p>
+            </div>
+
+            <!-- Behavioral Ratings -->
+            <table class="ev-table w-full text-[11px] border-collapse">
+                <thead>
+                    <tr class="bg-emerald-600 text-white text-[10px] uppercase">
+                        <th class="text-left">Evaluation Area</th>
+                        <th>Rating (out of 5)</th>
+                    </tr>
+                </thead>
+                <tbody id="ratingsBody"></tbody>
+            </table>
+
+            <!-- Attendance -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="border rounded-xl p-3 no-print">
+                    <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Attendance %</label>
+                    <input type="number" id="inAttendance" min="0" max="100" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm">
+                </div>
+                <div class="border rounded-xl p-3 hidden print:block">
+                    <p class="text-[9px] uppercase font-bold text-slate-500">Attendance %</p>
+                    <p id="printAttendance" class="text-lg font-black">-</p>
+                </div>
+            </div>
+
+            <!-- Teacher & Principal Remarks -->
+            <div class="space-y-2">
+                <label class="block text-[9px] uppercase font-bold text-slate-500">Class Teacher's Remarks</label>
+                <textarea id="inTeacherRemarks" rows="2" class="no-print w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs"></textarea>
+                <p id="printTeacherRemarks" class="hidden print:block text-[11px]"></p>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-[9px] uppercase font-bold text-slate-500">Principal's Remarks</label>
+                <textarea id="inPrincipalRemarks" rows="2" class="no-print w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs"></textarea>
+                <p id="printPrincipalRemarks" class="hidden print:block text-[11px]"></p>
+            </div>
+
+            <!-- Signatures -->
+            <div class="flex justify-between items-end pt-4 border-t-2 border-emerald-900">
+                <div class="text-center">
+                    <div class="w-36 border-b border-slate-800 mb-1.5"></div>
+                    <p class="text-[8.5px] font-black uppercase">Class Teacher</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-36 border-b border-slate-800 mb-1.5"></div>
+                    <p class="text-[8.5px] font-black uppercase">Principal / Head</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+        const STUDENTS = 'students';
+        const EVAL_AREAS = ['Punctuality', 'Discipline', 'Class Participation', 'Homework Completion', 'Conduct & Behavior'];
+        let currentEvaluation = {};
+        let currentStudentId = null;
+        let cachedStudents = [];
+
+        async function renderHeader() {
+            const school = (await LamaAPI.getActiveSchool()) || {};
+            const schoolName = school.name || 'School Name';
+            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
+            document.getElementById('pageTitle').innerText = `${schoolName} | Evaluation Report`;
+            document.getElementById('headerSchoolName').innerText = schoolName;
+            document.getElementById('headerSchoolMeta').innerText = [school.address, school.phone ? `UAN: ${school.phone}` : ''].filter(Boolean).join(' • ');
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
+            }
+        }
+
+        async function populateStudentSelect() {
+            const select = document.getElementById('studentSelect');
+            select.innerHTML = `<option value="">Loading students...</option>`;
+            let students = [];
+            try {
+                students = await LamaAPI.list(STUDENTS);
+            } catch (e) {
+                alert('Could not load students: ' + e.message);
+            }
+            cachedStudents = students;
+
+            if (students.length === 0) {
+                select.innerHTML = `<option value="">No students yet</option>`;
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('reportBody').classList.add('hidden');
+                return null;
+            }
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('reportBody').classList.remove('hidden');
+            select.innerHTML = students
+                .map(s => `<option value="${s.id}">${s.name} — Class ${s.class} (${s.enrlNo || 'N/A'})</option>`)
+                .join('');
+            return students;
+        }
+
+        function renderStars(area, value) {
+            let html = `<div class="flex gap-1 justify-center" data-area="${area}">`;
+            for (let i = 1; i <= 5; i++) {
+                html += `<span class="star ${i <= value ? 'filled' : ''}" onclick="setStar('${area}', ${i})">★</span>`;
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        function setStar(area, value) {
+            const container = document.querySelector(`[data-area="${CSS.escape(area)}"]`);
+            container.querySelectorAll('.star').forEach((el, i) => {
+                el.classList.toggle('filled', i < value);
+            });
+            currentEvaluation[area] = value;
+        }
+
+        async function renderReport(studentId) {
+            let student = cachedStudents.find(s => s.id === studentId);
+            if (!student) {
+                try {
+                    student = await LamaAPI.get(STUDENTS, studentId);
+                } catch (e) {
+                    alert('Could not load this student: ' + e.message);
+                    return;
+                }
+            }
+            if (!student) return;
+            currentStudentId = studentId;
+            await renderHeader();
+
+            document.getElementById('fName').innerText = student.name || '-';
+            document.getElementById('fClass').innerText = student.class || '-';
+            document.getElementById('fEnrl').innerText = student.enrlNo || '-';
+
+            const behavioral = student.behavioral || {};
+            currentEvaluation = {};
+            const tbody = document.getElementById('ratingsBody');
+            tbody.innerHTML = EVAL_AREAS.map(area => {
+                const value = Number(behavioral[area]) || 3;
+                currentEvaluation[area] = value;
+                return `<tr><td>${area}</td><td class="text-center">${renderStars(area, value)}</td></tr>`;
+            }).join('');
+
+            document.getElementById('inAttendance').value = student.attendance || '';
+            document.getElementById('printAttendance').innerText = student.attendance ? `${student.attendance}%` : '-';
+            document.getElementById('inTeacherRemarks').value = student.teacherRemarks || '';
+            document.getElementById('printTeacherRemarks').innerText = student.teacherRemarks || '-';
+            document.getElementById('inPrincipalRemarks').value = student.principalRemarks || '';
+            document.getElementById('printPrincipalRemarks').innerText = student.principalRemarks || '-';
+        }
+
+        async function saveEvaluation() {
+            if (!currentStudentId) return;
+            try {
+                await LamaAPI.update(STUDENTS, currentStudentId, {
+                    behavioral: currentEvaluation,
+                    attendance: document.getElementById('inAttendance').value,
+                    teacherRemarks: document.getElementById('inTeacherRemarks').value,
+                    principalRemarks: document.getElementById('inPrincipalRemarks').value
+                });
+                document.getElementById('printAttendance').innerText = document.getElementById('inAttendance').value ? `${document.getElementById('inAttendance').value}%` : '-';
+                document.getElementById('printTeacherRemarks').innerText = document.getElementById('inTeacherRemarks').value || '-';
+                document.getElementById('printPrincipalRemarks').innerText = document.getElementById('inPrincipalRemarks').value || '-';
+                alert('Evaluation saved.');
+            } catch (e) {
+                alert('Could not save evaluation: ' + e.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            const students = await populateStudentSelect();
+            if (students && students.length) {
+                await renderReport(students[0].id);
+            }
+            document.getElementById('studentSelect').addEventListener('change', (e) => {
+                if (e.target.value) renderReport(e.target.value);
+            });
+        }
+
+        if (LamaAPI.requireLogin('school')) {
+            init();
+        }
+    </script>
+</body>
+</html>

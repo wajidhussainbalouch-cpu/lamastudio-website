@@ -11,9 +11,10 @@
  *   'student' — a student portal login, scoped to their own record/class
  *   'admin'   — the Super Admin (you)
  *
- * SETUP: your deployed Apps Script Web App URL has been populated below.
+ * SETUP: paste your deployed Apps Script Web App URL below (it ends in
+ * /exec). That is the ONLY thing you need to configure in this file.
  */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
 
 const LamaAPI = (function () {
     const SESSION_KEY = 'lamastudio_session';
@@ -63,7 +64,7 @@ const LamaAPI = (function () {
      * backend still parses the body as JSON either way.
      */
     async function callApi(action, payload, method) {
-        if (!API_URL || API_URL.trim() === '') {
+        if (API_URL.indexOf('PASTE_YOUR') === 0) {
             throw new Error('The API is not configured yet — paste your Apps Script Web App URL into api-client.js.');
         }
         method = method || 'POST';
@@ -145,6 +146,16 @@ const LamaAPI = (function () {
     function requireLogin(expectedRole, loginPage) {
         const session = getSession();
         if (!session || session.role !== expectedRole) {
+            window.location.href = loginPage || 'login.html';
+            return false;
+        }
+        return true;
+    }
+
+    /** Same idea as requireLogin, but for pages shared by more than one role (e.g. the Main Dashboard). */
+    function requireAnyLogin(expectedRoles, loginPage) {
+        const session = getSession();
+        if (!session || expectedRoles.indexOf(session.role) === -1) {
             window.location.href = loginPage || 'login.html';
             return false;
         }

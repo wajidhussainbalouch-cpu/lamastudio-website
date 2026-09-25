@@ -16,9 +16,31 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4212196297960637" crossorigin="anonymous"></script>
 
   <style>
-    /* Strictly Dark Theme, High-Contrast Vivid Typography & Centered Layout */
+    /* Theme Variables Configuration */
     :root {
+      --bg-main: #090a0f;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --header-bg: rgba(15, 23, 42, 0.9);
+      --card-bg: rgba(24, 27, 45, 0.8);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(96, 165, 250, 0.4);
+      --header-box-bg: rgba(18, 20, 32, 0.85);
+      --accent-color: #60a5fa;
       color-scheme: dark;
+    }
+
+    [data-theme="light"] {
+      --bg-main: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --header-bg: rgba(255, 255, 255, 0.9);
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --card-border-hover: rgba(37, 99, 235, 0.4);
+      --header-box-bg: rgba(255, 255, 255, 0.95);
+      --accent-color: #2563eb;
+      color-scheme: light;
     }
 
     body {
@@ -27,13 +49,14 @@
       min-height: 100vh;
       margin: 0;
       overflow-x: hidden;
-      background-color: #090a0f !important;
-      color: #f8fafc !important;
+      background-color: var(--bg-main) !important;
+      color: var(--text-main) !important;
       font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     h1, h2, h3, .brand, .eyebrow {
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
 
     .site-main {
@@ -49,16 +72,17 @@
 
     .policy-header {
       width: 100%;
-      background: rgba(18, 20, 32, 0.85);
-      border: 1px solid rgba(96, 165, 250, 0.25);
+      background: var(--header-box-bg);
+      border: 1px solid var(--card-border);
       border-radius: 24px;
       padding: 2.5rem 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       backdrop-filter: blur(12px);
       margin-bottom: 2rem;
       display: flex;
       align-items: center;
       gap: 20px;
+      transition: background 0.3s ease, border-color 0.3s ease;
     }
 
     .app-official-icon {
@@ -83,29 +107,29 @@
     .policy-title-area h1 {
       font-size: 2.2rem;
       font-weight: 800;
-      color: #ffffff;
+      color: var(--text-main);
       margin: 8px 0 0 0;
       letter-spacing: -0.02em;
     }
 
     .policy-card {
       width: 100%;
-      background: rgba(24, 27, 45, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 2rem;
       margin-bottom: 1.5rem;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.05);
       backdrop-filter: blur(10px);
-      transition: border-color 0.3s ease, transform 0.3s ease;
+      transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
     }
 
     .policy-card:hover {
-      border-color: rgba(96, 165, 250, 0.4);
+      border-color: var(--card-border-hover);
     }
 
     .policy-card h2 {
-      color: #ffffff;
+      color: var(--text-main);
       font-weight: 700;
       font-size: 1.25rem;
       margin-top: 0;
@@ -116,7 +140,7 @@
     }
 
     .policy-card p, .policy-card li {
-      color: #cbd5e1;
+      color: var(--text-muted);
       font-weight: 500;
       line-height: 1.7;
       margin-bottom: 10px;
@@ -151,7 +175,7 @@
   <div id="webgl-container" aria-hidden="true" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></div>
 
   <!-- Modern Sticky Header -->
-  <header class="site-header" style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);">
+  <header class="site-header" style="width: 100%; box-sizing: border-box; background: var(--header-bg); backdrop-filter: blur(10px); transition: background 0.3s ease;">
     <div class="util-row" style="max-width: 1100px; margin: 0 auto; width: 100%; display: flex; justify-content: space-between; align-items: center;">
       <a href="../../index.html" class="brand">
         <div class="brand-mark" aria-hidden="true">L</div>
@@ -166,9 +190,10 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
         </a>
 
-        <!-- Fixed Dark Theme Toggle (Locked to Dark Theme) -->
-        <button class="icon-btn theme-toggle" id="themeToggleBtn" aria-label="Dark Theme Active" title="Dark Theme Active" style="cursor: default;">
+        <!-- Interactive Dark/Light Theme Toggle Button -->
+        <button class="icon-btn theme-toggle" id="themeToggleBtn" aria-label="Toggle Theme" title="Toggle Theme">
           <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
 
         <button class="icon-btn menu-toggle" id="menuToggleBtn" aria-label="Open Navigation Menu">
@@ -228,9 +253,9 @@
         </svg>
       </div>
       <div class="policy-title-area">
-        <span class="eyebrow" style="color: #60a5fa; font-weight: 700; letter-spacing: 0.08em;">• LEGAL &amp; SECURITY DOCUMENTATION</span>
+        <span class="eyebrow" style="color: var(--accent-color); font-weight: 700; letter-spacing: 0.08em;">• LEGAL &amp; SECURITY DOCUMENTATION</span>
         <h1>Privacy Policy for LamaMultiCalendar</h1>
-        <p style="color: #94a3b8; font-size: 0.9rem; font-weight: 500; margin-top: 6px;">Last updated: July 2026</p>
+        <p style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin-top: 6px;">Last updated: July 2026</p>
       </div>
     </div>
 
@@ -279,7 +304,7 @@
   </main>
 
   <!-- Modern Site Footer -->
-  <footer class="site-footer" style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.9);">
+  <footer class="site-footer" style="width: 100%; box-sizing: border-box; background: var(--header-bg); transition: background 0.3s ease;">
     <div class="footer-grid" style="max-width: 1100px; margin: 0 auto; width: 100%;">
       <div class="footer-brand">
         <div class="brand">
@@ -289,33 +314,33 @@
             <small>Digital Ecosystem</small>
           </div>
         </div>
-        <p style="color: #94a3b8; font-size: 0.88rem; font-weight: 500; margin-top: 0.7rem;">Independent software studio building resilient tools for modern digital lifestyles.</p>
-        <p class="footer-address" style="color: #cbd5e1;">📍 Dera Ghazi Khan, Punjab, Pakistan</p>
+        <p style="color: var(--text-muted); font-size: 0.88rem; font-weight: 500; margin-top: 0.7rem;">Independent software studio building resilient tools for modern digital lifestyles.</p>
+        <p class="footer-address" style="color: var(--text-main);">📍 Dera Ghazi Khan, Punjab, Pakistan</p>
       </div>
       
       <div class="footer-col">
-        <h4 style="color: #ffffff;">Ecosystem Apps</h4>
+        <h4 style="color: var(--text-main);">Ecosystem Apps</h4>
         <a href="../lamavpnpro/">LamaVPN Pro</a>
         <a href="../lamamulticalendar/">LamaMultiCalendar</a>
         <a href="../lamaiqmaster/">LamaIQMaster</a>
       </div>
 
       <div class="footer-col">
-        <h4 style="color: #ffffff;">Utilities</h4>
+        <h4 style="color: var(--text-main);">Utilities</h4>
         <a href="../lamaphotoresizer/">LamaPhotoResizer</a>
         <a href="../lamapixelstudio/">LamaPixelStudio</a>
         <a href="../lamasky/">LamaSky</a>
       </div>
 
       <div class="footer-col">
-        <h4 style="color: #ffffff;">Studio &amp; Legal</h4>
+        <h4 style="color: var(--text-main);">Studio &amp; Legal</h4>
         <a href="privacy.html">MultiCalendar Privacy</a>
         <a href="../../privacy-policy.html">Studio Privacy Policy</a>
         <a href="../../terms.html">Terms of Service</a>
       </div>
     </div>
     
-    <div class="footer-bottom" style="max-width: 1100px; margin: 0 auto; width: 100%; box-sizing: border-box; color: #94a3b8; font-weight: 500;">
+    <div class="footer-bottom" style="max-width: 1100px; margin: 0 auto; width: 100%; box-sizing: border-box; color: var(--text-muted); font-weight: 500;">
       <span>&copy; 2026 LamaStudio. All rights reserved.</span>
       <span>Engineered in DG Khan</span>
     </div>
@@ -327,6 +352,35 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
   <script src="../../script.js"></script>
+
+  <!-- Script for Theme Switching Logic -->
+  <script>
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const iconMoon = themeToggleBtn.querySelector('.icon-moon');
+    const iconSun = themeToggleBtn.querySelector('.icon-sun');
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('lamastudio_theme', theme);
+      if (theme === 'light') {
+        iconMoon.style.display = 'none';
+        iconSun.style.display = 'block';
+      } else {
+        iconMoon.style.display = 'block';
+        iconSun.style.display = 'none';
+      }
+    }
+
+    // Initialize from storage or default to dark
+    const savedTheme = localStorage.getItem('lamastudio_theme') || 'dark';
+    setTheme(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      setTheme(newTheme);
+    });
+  </script>
 
   <!-- Three.js Background Ecosystem Simulation -->
   <script>

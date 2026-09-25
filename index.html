@@ -188,7 +188,6 @@
           <p class="desc">A full WireGuard VPN client with on-device key generation, Android Keystore-backed encrypted storage, and built-in DNS-leak protection.</p>
           <div class="card-actions">
             <a href="lamavpnpro/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
           </div>
         </article>
 
@@ -200,7 +199,6 @@
           <p class="desc">Gregorian, Hijri (with Ruet-e-Hilal offset), and Nanakshahi dates side by side, with home-screen widgets.</p>
           <div class="card-actions">
             <a href="lamamulticalendar/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
           </div>
         </article>
 
@@ -212,7 +210,6 @@
           <p class="desc">Adaptive cognitive training with a grade-based, bilingual question bank and server-hosted premium content.</p>
           <div class="card-actions">
             <a href="lamaiqmaster/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
           </div>
         </article>
 
@@ -224,7 +221,6 @@
           <p class="desc">Quick client-side image compression and batch scaling utility for web optimization.</p>
           <div class="card-actions">
             <a href="lamaphotoresizer/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
           </div>
         </article>
 
@@ -236,7 +232,6 @@
           <p class="desc">Lightweight browser-based pixel art editor and color-picker toolbox.</p>
           <div class="card-actions">
             <a href="lamapixelstudio/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
           </div>
         </article>
 
@@ -248,7 +243,6 @@
           <p class="desc">Real-time weather data and atmospheric tracking utility built for regional reporting.</p>
           <div class="card-actions">
             <a href="lamasky/" class="btn-action">View App</a>
-            <button class="btn-ghost open-modal-btn">Quick View</button>
           </div>
         </article>
 
@@ -389,8 +383,39 @@
   <script src="script.js"></script>
   <script src="ask-lama.js"></script>
 
-  <!-- Interactive Ecosystem 3D Background Script -->
+  <!-- Interactive Ecosystem 3D Background & 3D Container Tilt Script -->
   <script>
+      // 1. Interactive 3D Card Tilt Engine for Ecosystem Containers
+      document.addEventListener('DOMContentLoaded', () => {
+        const tiltContainers = document.querySelectorAll('.app-card, .blog-card, .hero-panel, .widget');
+
+        tiltContainers.forEach(card => {
+          card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(8px)`;
+          });
+
+          card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+            card.style.transition = 'transform 0.5s ease-out, box-shadow 0.3s ease';
+          });
+
+          card.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+          });
+        });
+      });
+
+      // 2. Three.js Background Ecosystem Simulation
       const container = document.getElementById('webgl-container');
       const scene = new THREE.Scene();
       
@@ -412,7 +437,6 @@
       const ecosystemGroup = new THREE.Group();
       scene.add(ecosystemGroup);
 
-      // Unique 3D Geometries representing the 6 Studio Apps
       const appGeometries = [
           new THREE.BoxGeometry(0.9, 0.9, 0.9),       // LamaVPN Pro
           new THREE.SphereGeometry(0.6, 16, 16),      // LamaMultiCalendar
@@ -484,7 +508,6 @@
           duration: 2
       }, "-=2");
 
-      const clock = new THREE.Clock();
       function animate() {
           requestAnimationFrame(animate);
           

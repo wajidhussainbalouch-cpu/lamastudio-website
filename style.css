@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LamaStudio — Unified & Aligned Stylesheet v2.1 (Complete Ecosystem Edition)
+   LamaStudio — Unified & Aligned Stylesheet v2.2 (3D Container Edition)
    ========================================================================== */
 
 :root {
@@ -432,6 +432,7 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   gap: 2rem;
   align-items: start;
   margin: 1.5rem auto 3rem auto;
+  perspective: 1200px;
 }
 
 @media(max-width: 960px) {
@@ -446,6 +447,8 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   border-radius: var(--radius-xl);
   padding: clamp(2rem, 4vw, 3rem);
   box-shadow: var(--shadow-panel);
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .eyebrow {
@@ -455,12 +458,14 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  transform: translateZ(35px);
 }
 
 .hero-panel h1 {
   font-size: clamp(2rem, 3.5vw, 2.8rem);
   line-height: 1.15;
   margin: 0.7rem 0 1rem;
+  transform: translateZ(25px);
 }
 
 .hero-panel h1 em {
@@ -473,12 +478,14 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   font-size: 1.05rem;
   margin-bottom: 2rem;
   max-width: 44ch;
+  transform: translateZ(15px);
 }
 
 .hero-cta {
   display: flex;
   gap: 0.8rem;
   flex-wrap: wrap;
+  transform: translateZ(30px);
 }
 
 /* Side Widgets */
@@ -494,6 +501,8 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   border-radius: var(--radius-lg);
   padding: 1.25rem;
   box-shadow: var(--shadow-card);
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .widget-head {
@@ -624,7 +633,7 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   background: #1d4ed8;
 }
 
-/* Sections & Grids */
+/* Sections & Grids with 3D Perspective */
 .section {
   margin: 3.5rem auto;
 }
@@ -638,13 +647,14 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   margin-top: 0.3rem;
 }
 
-.app-grid {
+.app-grid, .blog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.25rem;
+  perspective: 1200px;
 }
 
-.app-card {
+.app-card, .blog-card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -653,17 +663,21 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: transform 0.2s, border-color 0.2s;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
 
-.app-card:hover {
-  transform: translateY(-3px);
+.app-card:hover, .blog-card:hover {
   border-color: var(--brand-2);
+  box-shadow: 0 22px 40px -15px rgba(0, 0, 0, 0.5), 
+              0 0 20px 2px color-mix(in srgb, var(--brand-2) 25%, transparent);
 }
 
-.app-card .app-icon {
+.app-card .app-icon, .blog-card .blog-thumb {
   font-size: 2rem;
   margin-bottom: 0.8rem;
+  transform: translateZ(35px);
 }
 
 .app-card .tag-pill {
@@ -676,74 +690,43 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   border-radius: 999px;
   margin-bottom: 0.6rem;
   width: fit-content;
+  transform: translateZ(25px);
 }
 
-.app-card h3 {
+.app-card h3, .blog-card h3 {
   font-size: 1.2rem;
   margin-bottom: 0.4rem;
+  transform: translateZ(25px);
 }
 
-.app-card .desc {
+.app-card .desc, .blog-card p {
   color: var(--text-muted);
   font-size: 0.9rem;
   flex: 1;
   margin-bottom: 1.2rem;
+  transform: translateZ(15px);
 }
 
 .card-actions {
   display: flex;
   gap: 0.6rem;
   margin-top: auto;
+  transform: translateZ(30px);
 }
 
 .blog-grid {
-  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
 }
 
 .blog-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   padding: 1.25rem;
-  box-shadow: var(--shadow-card);
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s, border-color 0.2s;
-}
-
-.blog-card.article-card-style {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: clamp(2rem, 4vw, 3.5rem);
-  box-shadow: var(--shadow-panel);
-  margin: 2rem auto;
-  max-width: 840px;
-}
-
-.blog-card.article-card-style:hover {
-  transform: none;
-  border-color: var(--border-strong);
 }
 
 .card-header-banner {
   padding: 32px 20px;
   text-align: center;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
-}
-
-.card-banner-icon {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  margin: 0 auto;
-}
-
-.blog-thumb {
-  font-size: 1.8rem;
-  margin-bottom: 0.8rem;
+  transform: translateZ(20px);
 }
 
 .blog-meta {
@@ -751,6 +734,7 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+  transform: translateZ(20px);
 }
 
 .read-time {
@@ -759,23 +743,12 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   color: var(--text-faint);
 }
 
-.blog-card h3 {
-  font-size: 1.05rem;
-  margin-bottom: 0.4rem;
-}
-
-.blog-card p {
-  color: var(--text-muted);
-  font-size: 0.87rem;
-  margin-bottom: 1rem;
-  flex: 1;
-}
-
 .read-link {
   color: var(--brand-2);
   font-weight: 600;
   font-size: 0.9rem;
   margin-top: auto;
+  transform: translateZ(25px);
 }
 
 /* Buttons */
@@ -812,22 +785,6 @@ html[data-theme="light"] .theme-toggle .icon-moon {
 .btn-ghost:hover {
   background: var(--surface-strong);
   border-color: var(--brand-2);
-}
-
-.disabled-badge {
-  color: var(--text-faint);
-  background: var(--surface);
-  cursor: default;
-}
-
-/* Ads Containers */
-.ad-container {
-  margin: 2rem auto;
-  text-align: center;
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  padding: 1rem;
-  border: 1px solid var(--border);
 }
 
 /* Footer */
@@ -894,87 +851,4 @@ html[data-theme="light"] .theme-toggle .icon-moon {
   color: var(--text-faint);
   flex-wrap: wrap;
   gap: 1rem;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--overlay);
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.modal-overlay.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.modal-box {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 400px;
-  padding: 1.75rem;
-  position: relative;
-  box-shadow: var(--shadow-panel);
-}
-
-.modal-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  cursor: pointer;
-}
-
-.modal-pricing-box {
-  display: flex;
-  justify-content: space-between;
-  background: var(--surface);
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-sm);
-  margin: 1rem 0;
-  font-size: 0.9rem;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 0.7rem;
-}
-
-.modal-actions > * {
-  flex: 1;
-}
-
-/* Article Styles */
-.article-card-style h1 {
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-  margin-bottom: 0.8rem;
-}
-
-.article-card-style .subtitle {
-  color: var(--text-muted);
-  font-size: 1.05rem;
-  margin-bottom: 1.5rem;
-}
-
-.article-card-style .article-body {
-  color: var(--text);
-  font-size: 1rem;
-  line-height: 1.7;
-}
-
-.article-card-style .article-body p {
-  margin-bottom: 1.2rem;
 }

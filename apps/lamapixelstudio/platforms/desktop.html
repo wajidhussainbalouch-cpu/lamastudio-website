@@ -1,63 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Desktop App Installer — lamaPixelStudio</title>
-<meta name="description" content="Download the offline desktop app for Windows, macOS, and Linux." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Desktop App Installer — lamaPixelStudio</title>
+  <meta name="description" content="Download the offline desktop app for Windows, macOS, and Linux." />  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"] {
+      --bg-main: #1C0A33;
+      --surface: rgba(76, 29, 149, 0.22);
+      --surface-hover: rgba(182, 252, 212, 0.12);
+      --line: rgba(182, 252, 212, 0.2);
+      --text-main: #F8FAFC;
+      --ink-soft: #CBD5E1;
+      --c-accent: #B6FCD4;
+      --c-secondary: #4C1D95;
+      --card-shadow: 0 16px 32px rgba(10, 3, 20, 0.5);
+    }
+    :root[data-theme="light"] {
+      --bg-main: #F4F7FB;
+      --surface: #FFFFFF;
+      --surface-hover: rgba(76, 29, 149, 0.05);
+      --line: #E2E8F0;
+      --text-main: #231145;
+      --ink-soft: #64748B;
+      --c-accent: #4C1D95;
+      --c-secondary: #B6FCD4;
+      --card-shadow: 0 10px 25px rgba(76, 29, 149, 0.08);
+    }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css" />
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-main);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-seal {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #4C1D95, #B6FCD4);
+      border: 1px solid rgba(182, 252, 212, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      color: #B6FCD4;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    :root[data-theme="light"] .brand-seal { color: #F8FAFC; }
+    .brand-text { display: flex; flex-direction: column; }
+    .brand-name { font-weight: 700; font-size: 0.95rem; }
+    .brand-name em { font-style: normal; color: var(--c-accent); }
+    .brand-sub { font-size: 0.68rem; color: var(--ink-soft); }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      min-height: 40px;
+    }
+    .btn:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+      color: var(--c-accent);
+    }
+    .btn-accent {
+      background: #B6FCD4;
+      color: #231145;
+      border: none;
+    }
+    :root[data-theme="light"] .btn-accent {
+      background: #4C1D95;
+      color: #F8FAFC;
+    }
+    .btn-accent:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; }
+    .btn-block { width: 100%; display: flex; }
+
+    .main {
+      max-width: 800px;
+      width: calc(100% - 2rem);
+      margin: 2.5rem auto;
+      padding: 0 1rem;
+    }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 2rem;
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+    p {
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 2rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(12px);
+    }
+    .card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.2rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="app-shell">
-  <header class="topbar">
-    <div class="brand">
-      <a href="../index.html" class="brand-seal" style="text-decoration:none; color:inherit;">
-        <svg viewBox="0 0 48 48" width="34" height="34">
-          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <circle cx="24" cy="24" r="15.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2.2 3.2"/>
-          <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
-        </svg>
-      </a>
-      <div class="brand-text">
-        <span class="brand-name"><a href="../index.html" style="text-decoration:none; color:inherit;">lama<em>PixelStudio</em></a></span>
-        <span class="brand-sub">Desktop Installer</span>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../index.html" class="brand-seal" style="text-decoration:none; color:inherit;">
+          <svg viewBox="0 0 48 48" width="28" height="28">
+            <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
+            <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
+          </svg>
+        </a>
+        <div class="brand-text">
+          <span class="brand-name"><a href="../index.html" style="text-decoration:none; color:inherit;">lama<em>PixelStudio</em></a></span>
+          <span class="brand-sub">Desktop Installer</span>
+        </div>
       </div>
-    </div>
-    <div class="topbar-actions">
-      <a href="../index.html" class="btn btn-small btn-ghost">← Back to Hub</a>
-    </div>
-  </header>
+      <div class="topbar-actions">
+        <a href="../index.html" class="btn btn-small btn-ghost">← Back to Hub</a>
+      </div>
+    </header>
 
-  <main class="main" style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
-    <div style="text-align: center; margin-bottom: 40px;">
-      <h1 style="font-family: var(--font-display); font-size: 32px; margin-bottom: 12px;">lamaPixelStudio for Desktop</h1>
-      <p style="color: var(--ink-soft); font-size: 16px;">Lightning-fast native performance with complete offline capabilities for Windows, macOS, and Linux.</p>
-    </div>
+    <main class="main">
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h1>lamaPixelStudio for Desktop</h1>
+        <p>Lightning-fast native performance with complete offline capabilities for Windows, macOS, and Linux.</p>
+      </div>
 
-    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 40px;">
-      <div class="card" style="padding: 24px; text-align: center;">
-        <h3 style="font-size: 18px; margin-bottom: 8px;">Windows</h3>
-        <p style="color: var(--ink-soft); font-size: 13px; margin-bottom: 16px;">Windows 10/11 (64-bit)</p>
-        <a href="#" class="btn btn-accent btn-block">Download .exe</a>
+      <div class="grid">
+        <div class="card">
+          <h3>Windows</h3>
+          <p style="color: var(--ink-soft); font-size: 13px; margin-bottom: 16px;">Windows 10/11 (64-bit)</p>
+          <a href="#" class="btn btn-accent btn-block">Download .exe</a>
+        </div>
+        <div class="card">
+          <h3>macOS</h3>
+          <p style="color: var(--ink-soft); font-size: 13px; margin-bottom: 16px;">Apple Silicon &amp; Intel</p>
+          <a href="#" class="btn btn-accent btn-block">Download .dmg</a>
+        </div>
+        <div class="card">
+          <h3>Linux</h3>
+          <p style="color: var(--ink-soft); font-size: 13px; margin-bottom: 16px;">AppImage / .deb</p>
+          <a href="#" class="btn btn-accent btn-block">Download Linux</a>
+        </div>
       </div>
-      <div class="card" style="padding: 24px; text-align: center;">
-        <h3 style="font-size: 18px; margin-bottom: 8px;">macOS</h3>
-        <p style="color: var(--ink-soft); font-size: 13px; margin-bottom: 16px;">Apple Silicon &amp; Intel</p>
-        <a href="#" class="btn btn-accent btn-block">Download .dmg</a>
-      </div>
-      <div class="card" style="padding: 24px; text-align: center;">
-        <h3 style="font-size: 18px; margin-bottom: 8px;">Linux</h3>
-        <p style="color: var(--ink-soft); font-size: 13px; margin-bottom: 16px;">AppImage / .deb</p>
-        <a href="#" class="btn btn-accent btn-block">Download Linux</a>
-      </div>
-    </div>
-  </main>
-</div>
+    </main>
+  </div>
 
 </body>
 </html>

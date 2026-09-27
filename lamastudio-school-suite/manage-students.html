@@ -14,7 +14,7 @@
         <div class="flex items-center gap-3">
             <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
             <div>
-                <h1 id="headerSchoolName" class="text-sm font-black uppercase tracking-wider text-white">School Name</h1>
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
                 <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Manage Students</p>
             </div>
         </div>
@@ -58,6 +58,17 @@
                 <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
             </div>
             <input type="hidden" id="editId">
+            <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
+                <div id="photoPreviewBox" class="w-16 h-20 rounded-lg bg-slate-950 border-2 border-dashed border-slate-700 flex items-center justify-center text-[8px] text-slate-500 text-center flex-shrink-0">No Photo</div>
+                <div class="flex-grow space-y-1">
+                    <label class="block text-[10px] text-slate-400">Student Photo <span class="text-slate-600">(auto-resized to 800×600, ~15-25KB)</span></label>
+                    <div class="flex gap-1.5">
+                        <input type="file" accept="image/*" onchange="previewStudentPhoto(this)" class="text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+                        <input type="file" accept="image/*" capture="environment" onchange="previewStudentPhoto(this)" class="text-[10px] text-slate-300 file:bg-emerald-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+                    </div>
+                    <p id="photoSizeNote" class="text-[9px] text-slate-500"></p>
+                </div>
+            </div>
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <div><label class="block text-[10px] text-slate-400 mb-1">Enrollment No</label><input id="inEnrl" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
                 <div><label class="block text-[10px] text-slate-400 mb-1">Class</label><input id="inClass" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
@@ -142,6 +153,57 @@
             `).join('');
         }
 
+        let pendingPhoto = null;
+
+        function compressStudentPhoto(dataUrl) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = 800;
+                    canvas.height = 600;
+                    const scale = Math.max(800 / img.width, 600 / img.height);
+                    const drawW = img.width * scale, drawH = img.height * scale;
+                    ctx.drawImage(img, (800 - drawW) / 2, (600 - drawH) / 2, drawW, drawH);
+
+                    let quality = 0.8, attempts = 0, result = '';
+                    function attempt() {
+                        result = canvas.toDataURL('image/jpeg', quality);
+                        const approxBytes = Math.ceil((result.length * 3) / 4);
+                        attempts++;
+                        if (approxBytes <= 25000 || quality <= 0.15 || attempts > 20) {
+                            resolve(result);
+                        } else {
+                            quality -= 0.07;
+                            attempt();
+                        }
+                    }
+                    attempt();
+                };
+                img.onerror = () => resolve('');
+                img.src = dataUrl;
+            });
+        }
+
+        function previewStudentPhoto(input) {
+            const box = document.getElementById('photoPreviewBox');
+            const note = document.getElementById('photoSizeNote');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    box.innerHTML = 'Compressing...';
+                    const compressed = await compressStudentPhoto(e.target.result);
+                    if (!compressed) { box.innerHTML = 'Could not read image'; return; }
+                    pendingPhoto = compressed;
+                    box.innerHTML = `<img src="${compressed}" class="w-full h-full object-cover rounded-lg">`;
+                    const kb = Math.round((compressed.length * 3) / 4 / 1024);
+                    note.innerText = `800×600, ~${kb}KB`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         function openStudentModal(studentId) {
             const student = studentId ? allStudents.find(s => s.id === studentId) : null;
             document.getElementById('editId').value = studentId || '';
@@ -155,6 +217,15 @@
             document.getElementById('inContact').value = student ? (student.contact || '') : '';
             document.getElementById('inWhatsapp').value = student ? (student.whatsapp || '') : '';
             document.getElementById('inPassword').value = '';
+            pendingPhoto = null;
+            const photoBox = document.getElementById('photoPreviewBox');
+            const photoNote = document.getElementById('photoSizeNote');
+            photoNote.innerText = '';
+            if (student && student.photo) {
+                photoBox.innerHTML = `<img src="${student.photo}" class="w-full h-full object-cover rounded-lg">`;
+            } else {
+                photoBox.innerHTML = 'No Photo';
+            }
             document.getElementById('studentModal').classList.remove('hidden');
         }
 
@@ -177,6 +248,7 @@
                 contact: document.getElementById('inContact').value.trim(),
                 whatsapp: document.getElementById('inWhatsapp').value.trim()
             };
+            if (pendingPhoto) record.photo = pendingPhoto;
             const password = document.getElementById('inPassword').value.trim();
             if (password) record.password = password;
 

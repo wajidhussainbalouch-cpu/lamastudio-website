@@ -3,11 +3,13 @@
 <head> 
     <meta charset="UTF-8"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title id="pageTitle">Bulk Import Students</title> 
+    <title id="pageTitle">Bulk Import & Merge Students</title> 
     <script src="https://cdn.tailwindcss.com"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script> 
     <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
         // Self-contained fallback LamaAPI client for robust standalone execution
         window.LamaAPI = window.LamaAPI || {
             getActiveSchool: async () => ({ name: "Apex Model School", shortCode: "AMS", logo: "" }),
@@ -48,10 +50,10 @@
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">      
     <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">         
         <div class="flex items-center gap-3">             
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>             
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white overflow-hidden shadow-lg">SCH</div>             
             <div>                 
                 <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>                 
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import & Cleanup</p>             
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Historical Data Matching & Merge</p>             
             </div>         
         </div>         
         <div class="flex items-center gap-2">             
@@ -61,16 +63,15 @@
     </header>      
 
     <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">          
-        <!-- Database Cleanup Card -->
         <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
             <div class="flex items-center justify-between flex-wrap gap-2">
-                <h2 class="text-xs font-black uppercase text-amber-400">🧹 Remove Existing Database Duplicates</h2>
+                <h2 class="text-xs font-black uppercase text-amber-400">🧹 Database Cleanup & Duplicate Removal</h2>
                 <span id="dbStudentCountBadge" class="bg-amber-950/80 border border-amber-500/30 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Scanning Database...</span>
             </div>
-            <p class="text-[11px] text-slate-400">If your student list currently has duplicate rows (e.g. same student imported twice), click below to instantly scan and purge all duplicate records while keeping one unique entry per student.</p>
+            <p class="text-[11px] text-slate-400">Scan your stored student records to automatically merge or purge duplicates before matching historical academic records.</p>
             <div class="flex items-center gap-3 pt-2">
                 <button onclick="scanAndCleanDuplicates()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2">
-                    🔍 Scan & Remove Duplicates Now
+                    🔍 Scan & Clean Database
                 </button>
                 <span id="cleanupStatus" class="text-xs text-slate-300 font-medium"></span>
             </div>
@@ -78,15 +79,15 @@
 
         <section id="uploadSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">             
             <div class="flex items-center justify-between flex-wrap gap-2">
-                <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>             
+                <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Historical File (Marks, Pictures, Contacts)</h2>             
                 <div class="flex items-center gap-2">
-                    <span id="fileRecordCountBadge" class="hidden bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">0 Students in File</span>
+                    <span id="fileRecordCountBadge" class="hidden bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">0 Records in File</span>
                 </div>
             </div>
-            <p class="text-[11px] text-slate-400">Accepts .xlsx, .xls, .csv — any layout — or a standard Punjab EMIS/SIS student-list PDF. Records with matching Enrollment/Admission numbers will be automatically updated.</p>             
+            <p class="text-[11px] text-slate-400">Upload last year's Excel/CSV file containing marks, contact numbers, and picture URLs/paths. The system will intelligently match them with your current students by Enrollment No or Student Name.</p>             
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.pdf" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold file:cursor-pointer hover:file:bg-purple-500">             
-                <button onclick="downloadSampleTemplate()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] px-3.5 py-2.5 rounded-xl transition flex-shrink-0">⬇ Download Sample Template</button>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold file:cursor-pointer hover:file:bg-purple-500">             
+                <button onclick="downloadSampleTemplate()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] px-3.5 py-2.5 rounded-xl transition flex-shrink-0">⬇ Download Historical Template</button>
             </div>
             
             <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>             
@@ -99,8 +100,8 @@
         <section id="mapSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hidden shadow-xl">             
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Review Import Rules</h2>             
-                    <p class="text-[11px] text-slate-400">We've automatically guessed column matches based on your headers.</p>             
+                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Map Historical Fields (Marks, Pictures & Contacts)</h2>             
+                    <p class="text-[11px] text-slate-400">Match the columns from your historical file to update existing student profiles.</p>             
                 </div>
             </div>
 
@@ -121,13 +122,13 @@
                 </div>             
             </div>              
 
-            <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">                 
-                🚀 Import & Update <span id="rowCountLabel"></span> Students             
+            <button onclick="startImportAndMerge()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">                 
+                🚀 Match & Merge Data for <span id="rowCountLabel"></span> Records             
             </button>         
         </section>          
 
         <section id="progressSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 hidden shadow-xl">             
-            <h2 class="text-xs font-black uppercase text-amber-400">Importing & Updating Roster...</h2>             
+            <h2 class="text-xs font-black uppercase text-amber-400">Matching & Merging Student Records...</h2>             
             <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">                 
                 <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>             
             </div>             
@@ -136,36 +137,36 @@
 
         <section id="resultsSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hidden shadow-xl">             
             <div class="flex items-center justify-between flex-wrap gap-2">
-                <h2 class="text-xs font-black uppercase text-emerald-400">Import Complete</h2>             
+                <h2 class="text-xs font-black uppercase text-emerald-400">Merge & Match Complete</h2>             
                 <div class="flex items-center gap-2">
-                    <button onclick="exportImportErrorReport()" id="exportErrBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] px-3 py-1.5 rounded-lg transition">📥 Export Failed Rows CSV</button>
+                    <button onclick="exportImportErrorReport()" id="exportErrBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] px-3 py-1.5 rounded-lg transition">📥 Export Unmatched Rows CSV</button>
                     <a href="manage-students.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">View Students &rarr;</a>         
                 </div>
             </div>
 
             <div class="grid grid-cols-3 gap-3">                 
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Newly Added</p>                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Successfully Merged</p>                     
                     <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>                 
                 </div>                 
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Existing Updated</p>                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">New Profiles Added</p>                     
                     <p id="updatedCount" class="text-2xl font-black text-cyan-400">0</p>                 
                 </div>                 
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed / Errors</p>                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Unmatched / Errors</p>                     
                     <p id="failCount" class="text-2xl font-black text-red-400">0</p>                 
                 </div>             
             </div>             
 
             <div id="errorsContainer" class="hidden space-y-2">
-                <h3 class="text-[10px] font-black uppercase text-red-400">Error Details</h3>
+                <h3 class="text-[10px] font-black uppercase text-red-400">Unmatched / Missing Records</h3>
                 <div class="max-h-60 overflow-y-auto border border-red-500/20 rounded-xl">
                     <table class="w-full text-[10px] border-collapse text-left">
                         <thead class="bg-slate-950 sticky top-0 text-slate-400 border-b border-red-500/20">
                             <tr>
                                 <th class="p-2.5">Row / Identifier</th>
-                                <th class="p-2.5">Error Description</th>
+                                <th class="p-2.5">Reason</th>
                             </tr>
                         </thead>
                         <tbody id="errorsTableBody" class="divide-y divide-slate-900 bg-slate-950/40"></tbody>
@@ -175,7 +176,7 @@
 
             <div class="space-y-2 pt-2 border-t border-slate-800">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Imported / Updated Students Preview</h3>
+                    <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Updated Students Preview</h3>
                     <span id="importedTotalBadge" class="text-[10px] bg-purple-950/80 border border-purple-500/30 text-purple-300 px-2 py-0.5 rounded-md font-bold"></span>
                 </div>
                 <div id="importedStudentsPreviewGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1"></div>
@@ -184,7 +185,191 @@
     </main>      
 
     <script>          
-// ... existing code ... -->
+        let workbookData = null;
+        let sourceRows = [];
+        let sourceHeaders = [];
+        let mapping = {};
+        let successfullyImportedRecords = [];
+        let failedImportRowsForExport = [];
+
+        const TARGET_FIELDS = [
+            { key: 'name', label: 'Student Name *', required: true },
+            { key: 'enrlNo', label: 'Enrollment / Admission No', required: false },
+            { key: 'class', label: 'Class / Grade', required: false },
+            { key: 'fatherName', label: "Father's Name", required: false },
+            { key: 'contact', label: 'Contact Number', required: false },
+            { key: 'marks', label: 'Marks / Percentage / Grade', required: false },
+            { key: 'photo', label: 'Picture URL / Path', required: false }
+        ];
+
+        async function renderHeader() {
+            try {
+                const school = await LamaAPI.getActiveSchool();
+                if (school) {
+                    if (school.name) {
+                        document.getElementById('headerSchoolName').innerText = school.name;
+                        document.getElementById('pageTitle').innerText = `${school.name} - Historical Merge`;
+                    }
+                    if (school.logo) {
+                        document.getElementById('schoolLogoBox').innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover">`;
+                    } else if (school.name) {
+                        const words = school.name.split(' ');
+                        const sc = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : school.name.slice(0, 3).toUpperCase();
+                        document.getElementById('schoolLogoBox').innerText = sc;
+                    }
+                }
+            } catch(e) { console.error("Header render error:", e); }
+            updateDbStudentCountBadge();
+        }
+
+        async function updateDbStudentCountBadge() {
+            try {
+                const students = await LamaAPI.list('students');
+                const badge = document.getElementById('dbStudentCountBadge');
+                if (badge) {
+                    badge.innerText = `Total Students in DB: ${students.length}`;
+                }
+            } catch(e) {
+                const badge = document.getElementById('dbStudentCountBadge');
+                if (badge) badge.innerText = `Total Students in DB: 0`;
+            }
+        }
+
+        async function scanAndCleanDuplicates() {
+            const statusEl = document.getElementById('cleanupStatus');
+            statusEl.innerText = "Scanning database for duplicates...";
+            try {
+                let students = await LamaAPI.list('students');
+                const initialCount = students.length;
+                const seen = new Set();
+                const uniqueStudents = [];
+
+                for (const stu of students) {
+                    const enrlKey = stu.enrlNo ? String(stu.enrlNo).trim().toLowerCase() : '';
+                    const nameKey = (stu.name || '').trim().toLowerCase() + '|' + (stu.fatherName || '').trim().toLowerCase();
+                    
+                    let isDuplicate = false;
+                    if (enrlKey && enrlKey !== '-' && enrlKey !== '') {
+                        if (seen.has('enrl_' + enrlKey)) isDuplicate = true;
+                        else seen.add('enrl_' + enrlKey);
+                    }
+                    if (!isDuplicate && nameKey !== '|') {
+                        if (seen.has('name_' + nameKey)) isDuplicate = true;
+                        else seen.add('name_' + nameKey);
+                    }
+
+                    if (!isDuplicate) {
+                        uniqueStudents.push(stu);
+                    }
+                }
+
+                await LamaAPI.saveAll('students', uniqueStudents);
+                const removedCount = initialCount - uniqueStudents.length;
+                statusEl.innerText = `Cleanup complete! Removed ${removedCount} duplicate(s). Total unique students: ${uniqueStudents.length}`;
+                updateDbStudentCountBadge();
+            } catch(e) {
+                statusEl.innerText = "Error cleaning duplicates: " + e.message;
+            }
+        }
+
+        async function handleFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const fileBadge = document.getElementById('fileRecordCountBadge');
+            fileBadge.classList.add('hidden');
+
+            parseSpreadsheetFile(file);
+        }
+
+        function parseSpreadsheetFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbookData = XLSX.read(data, { type: 'array' });
+                    const sheetNames = workbookData.SheetNames;
+                    
+                    if (sheetNames.length > 1) {
+                        const picker = document.getElementById('sheetPicker');
+                        const select = document.getElementById('sheetSelect');
+                        select.innerHTML = sheetNames.map(s => `<option value="${s}">${s}</option>`).join('');
+                        picker.classList.remove('hidden');
+                    }
+                    loadSheet(sheetNames[0]);
+                } catch(err) {
+                    alert("Could not parse file: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function loadSheet(sheetName) {
+            const worksheet = workbookData.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (json.length === 0) {
+                alert("The selected sheet is empty.");
+                return;
+            }
+
+            sourceHeaders = json[0].map(h => String(h || '').trim());
+            sourceRows = json.slice(1).filter(row => row.some(cell => cell !== undefined && String(cell).trim() !== ''));
+
+            const fileBadge = document.getElementById('fileRecordCountBadge');
+            fileBadge.innerText = `${sourceRows.length} Records in File`;
+            fileBadge.classList.remove('hidden');
+
+            setupMapping();
+        }
+
+        function setupMapping() {
+            mapping = {};
+            TARGET_FIELDS.forEach(target => {
+                const foundIndex = sourceHeaders.findIndex(h => {
+                    const cleanH = h.toLowerCase().replace(/[^a-z]/g, '');
+                    const cleanT = target.key.toLowerCase();
+                    const cleanLbl = target.label.toLowerCase().replace(/[^a-z]/g, '');
+                    return cleanH.includes(cleanT) || cleanLbl.includes(cleanH) || cleanH === cleanT;
+                });
+                mapping[target.key] = foundIndex !== -1 ? sourceHeaders[foundIndex] : '';
+            });
+
+            const grid = document.getElementById('mappingGrid');
+            grid.innerHTML = TARGET_FIELDS.map(target => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+                    <span class="font-bold text-slate-300 text-xs">${target.label}</span>
+                    <select onchange="updateMapping('${target.key}', this.value)" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 w-44">
+                        <option value="">-- Select Column --</option>
+                        ${sourceHeaders.map(h => `<option value="${h}" ${mapping[target.key] === h ? 'selected' : ''}>${h}</option>`).join('')}
+                    </select>
+                </div>
+            `).join('');
+
+            document.getElementById('rowCountLabel').innerText = sourceRows.length;
+            document.getElementById('mapSection').classList.remove('hidden');
+            renderPreview();
+        }
+
+        function updateMapping(targetKey, sourceHeader) {
+            mapping[targetKey] = sourceHeader;
+            renderPreview();
+        }
+
+        function buildRecordFromRow(row) {
+            const record = {};
+            TARGET_FIELDS.forEach(target => {
+                const header = mapping[target.key];
+                if (header) {
+                    const headerIdx = sourceHeaders.indexOf(header);
+                    if (headerIdx !== -1 && row[headerIdx] !== undefined) {
+                        record[target.key] = String(row[headerIdx]).trim();
+                    }
+                }
+            });
+            return record;
+        }
+
         function renderPreview() {             
             const mappedTargets = Object.values(mapping).filter(Boolean);             
             document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {                 
@@ -197,11 +382,140 @@
                     <td class="py-1 pr-3 text-slate-500 font-bold">${idx + 1}</td>
                     <td><div class="flex gap-3">${mappedTargets.map(t => `<div class="py-1 pr-3 text-slate-300 truncate">${record[t] || '-'}</div>`).join('')}</div></td>
                 </tr>`;             }).join('');         
-        }          
-// ... existing code ... -->
+        }
+
+        async function startImportAndMerge() {
+            if (!mapping.name) {
+                alert("Please map the 'Student Name' column before matching.");
+                return;
+            }
+
+            document.getElementById('mapSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+
+            const progressBar = document.getElementById('progressBar');
+            const progressLabel = document.getElementById('progressLabel');
+
+            let existingStudents = [];
+            try {
+                existingStudents = await LamaAPI.list('students');
+            } catch(e) {}
+
+            let mergedCount = 0;
+            let newAddedCount = 0;
+            let failCount = 0;
+            successfullyImportedRecords = [];
+            failedImportRowsForExport = [];
+            const errorsTableBody = document.getElementById('errorsTableBody');
+            errorsTableBody.innerHTML = '';
+
+            const total = sourceRows.length;
+            for (let i = 0; i < total; i++) {
+                const row = sourceRows[i];
+                const record = buildRecordFromRow(row);
+                
+                const pct = Math.round(((i + 1) / total) * 100);
+                progressBar.style.width = pct + '%';
+                progressLabel.innerText = `Matching row ${i + 1} of ${total}...`;
+
+                if (!record.name) {
+                    failCount++;
+                    failedImportRowsForExport.push({ row: i + 1, identifier: 'Row ' + (i + 1), reason: 'Missing Student Name' });
+                    continue;
+                }
+
+                try {
+                    const matchEnrl = record.enrlNo ? String(record.enrlNo).trim().toLowerCase() : '';
+                    const matchName = record.name.trim().toLowerCase();
+                    const matchFather = (record.fatherName || '').trim().toLowerCase();
+
+                    let existingIndex = -1;
+                    if (matchEnrl && matchEnrl !== '-' && matchEnrl !== '') {
+                        existingIndex = existingStudents.findIndex(s => s.enrlNo && String(s.enrlNo).trim().toLowerCase() === matchEnrl);
+                    }
+                    if (existingIndex === -1) {
+                        existingIndex = existingStudents.findIndex(s => (s.name || '').trim().toLowerCase() === matchName && (s.fatherName || '').trim().toLowerCase() === matchFather);
+                    }
+
+                    if (existingIndex !== -1) {
+                        const existingId = existingStudents[existingIndex].id;
+                        // Merge historical data fields while keeping existing properties
+                        const updatedData = {
+                            ...existingStudents[existingIndex],
+                            ...record,
+                            // Ensure marks/photos are properly populated if present in historical record
+                            marks: record.marks || existingStudents[existingIndex].marks || '',
+                            photo: record.photo || existingStudents[existingIndex].photo || '',
+                            contact: record.contact || existingStudents[existingIndex].contact || ''
+                        };
+                        await LamaAPI.update('students', existingId, updatedData);
+                        existingStudents[existingIndex] = updatedData;
+                        successfullyImportedRecords.push(updatedData);
+                        mergedCount++;
+                    } else {
+                        const newRecord = {
+                            id: 'stu_' + Math.random().toString(36).substr(2, 9),
+                            ...record,
+                            createdAt: new Date().toISOString()
+                        };
+                        await LamaAPI.add('students', newRecord);
+                        existingStudents.push(newRecord);
+                        successfullyImportedRecords.push(newRecord);
+                        newAddedCount++;
+                    }
+                } catch(err) {
+                    failCount++;
+                    failedImportRowsForExport.push({ row: i + 1, identifier: record.name, reason: err.message });
+                }
+
+                if (i % 15 === 0) {
+                    await new Promise(r => setTimeout(r, 4));
+                }
+            }
+
+            // Automatic deduplication sweep after merge
+            try {
+                const finalStudents = await LamaAPI.list('students');
+                const seen = new Set();
+                const uniqueStudents = [];
+                for (const stu of finalStudents) {
+                    const enrlKey = stu.enrlNo ? String(stu.enrlNo).trim().toLowerCase() : '';
+                    const nameKey = (stu.name || '').trim().toLowerCase() + '|' + (stu.fatherName || '').trim().toLowerCase();
+                    let isDup = false;
+                    if (enrlKey && enrlKey !== '-' && enrlKey !== '') {
+                        if (seen.has('enrl_' + enrlKey)) isDup = true;
+                        else seen.add('enrl_' + enrlKey);
+                    }
+                    if (!isDup && nameKey !== '|') {
+                        if (seen.has('name_' + nameKey)) isDup = true;
+                        else seen.add('name_' + nameKey);
+                    }
+                    if (!isDup) uniqueStudents.push(stu);
+                }
+                await LamaAPI.saveAll('students', uniqueStudents);
+            } catch(e) {}
+
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            document.getElementById('successCount').innerText = mergedCount;
+            document.getElementById('updatedCount').innerText = newAddedCount;
+            document.getElementById('failCount').innerText = failCount;
+
+            if (failCount > 0) {
+                document.getElementById('exportErrBtn').classList.remove('hidden');
+                document.getElementById('errorsContainer').classList.remove('hidden');
+                errorsTableBody.innerHTML = failedImportRowsForExport.map(err => `
+                    <tr>
+                        <td class="p-2.5 font-bold text-slate-300">Row ${err.row} (${err.identifier})</td>
+                        <td class="p-2.5 text-red-300">${err.reason}</td>
+                    </tr>
+                `).join('');
+            }
+
             const previewGrid = document.getElementById('importedStudentsPreviewGrid');
             const totalBadge = document.getElementById('importedTotalBadge');
-            totalBadge.innerText = `Total: ${successfullyImportedRecords.length} Students`;
+            totalBadge.innerText = `Total Merged: ${successfullyImportedRecords.length} Students`;
 
             if (successfullyImportedRecords.length > 0) {
                 previewGrid.innerHTML = successfullyImportedRecords.slice(0, 12).map((stu, idx) => `
@@ -212,15 +526,15 @@
                         </div>
                         <div class="min-w-0 flex-1 pr-5">
                             <p class="text-xs font-bold text-white truncate">${stu.name}</p>
-                            <p class="text-[9px] text-slate-400 truncate">Class: ${stu.class || '-'} | Enrl: ${stu.enrlNo || '-'}</p>
+                            <p class="text-[9px] text-slate-400 truncate">Marks: ${stu.marks || '-'} | Enrl: ${stu.enrlNo || '-'}</p>
                         </div>
                     </div>
-                `).join('') + (successfullyImportedRecords.length > 12 ? `<div class="col-span-full text-center text-[10px] text-slate-500 pt-1">+ ${successfullyImportedRecords.length - 12} more students processed successfully.</div>` : '');
+                `).join('') + (successfullyImportedRecords.length > 12 ? `<div class="col-span-full text-center text-[10px] text-slate-500 pt-1">+ ${successfullyImportedRecords.length - 12} more students merged successfully.</div>` : '');
             } else {
                 previewGrid.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No students were processed.</p>`;
             }
             updateDbStudentCountBadge();
-        }          
+        }
 
         function exportImportErrorReport() {
             if (!failedImportRowsForExport || failedImportRowsForExport.length === 0) return;
@@ -229,7 +543,18 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "import_errors_report.csv");
+            link.setAttribute("download", "unmatched_records_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadSampleTemplate() {
+            const csvContent = "data:text/csv;charset=utf-8,Student Name,Enrollment No,Class,Father Name,Contact,Marks,Picture URL\nJohn Doe,101,1,Richard Doe,03001234567,85%,https://placehold.co/100x100/png\nJane Smith,102,2,Robert Smith,03007654321,92%,https://placehold.co/100x100/png";
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "historical_merge_template.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

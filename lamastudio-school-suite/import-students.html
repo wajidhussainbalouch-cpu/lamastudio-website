@@ -79,11 +79,12 @@
         <section id="uploadSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">             
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>             
-                <span class="bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Target Roster: 288 Students Detected</span>
+                <div class="flex items-center gap-2">
+                    <span id="fileRecordCountBadge" class="hidden bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">0 Students in File</span>
+                </div>
             </div>
-            <p class="text-[11px] text-slate-400">Accepts .xlsx, .xls, .csv — any layout — or a standard Punjab EMIS/SIS student-list PDF (such as your 288-student roster). Records with matching Enrollment/Admission numbers will be automatically updated.</p>             
-            
-            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
+            <p class="text-[11px] text-slate-400">Accepts .xlsx, .xls, .csv — any layout — or a standard Punjab EMIS/SIS student-list PDF. Records with matching Enrollment/Admission numbers will be automatically updated.</p>             
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
                 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.pdf" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold file:cursor-pointer hover:file:bg-purple-500">             
                 <button onclick="downloadSampleTemplate()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] px-3.5 py-2.5 rounded-xl transition flex-shrink-0">⬇ Download Sample Template</button>
             </div>
@@ -109,7 +110,12 @@
                 <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview (first 5 rows)</h3>                 
                 <div class="overflow-x-auto">                     
                     <table class="w-full text-[10px] border-collapse min-w-[500px]">                         
-                        <thead><tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800"></tr></thead>                         
+                        <thead>
+                            <tr class="text-left text-slate-500 border-b border-slate-800">
+                                <th class="py-1 pr-3 w-10">#</th>
+                                <th id="previewHead"></th>
+                            </tr>
+                        </thead>                         
                         <tbody id="previewBody"></tbody>                     
                     </table>                 
                 </div>             
@@ -168,585 +174,43 @@
             </div>
 
             <div class="space-y-2 pt-2 border-t border-slate-800">
-                <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Imported / Updated Students Preview</h3>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Imported / Updated Students Preview</h3>
+                    <span id="importedTotalBadge" class="text-[10px] bg-purple-950/80 border border-purple-500/30 text-purple-300 px-2 py-0.5 rounded-md font-bold"></span>
+                </div>
                 <div id="importedStudentsPreviewGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1"></div>
             </div>
         </section>     
     </main>      
 
     <script>          
-        function handleLogout() {             
-            LamaAPI.logout();             
-            window.location.href = 'login.html';         
-        }         
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';          
-
-        const TARGET_FIELDS = [             
-            { key: '', label: '-- Skip this column --' },             
-            { key: 'name', label: 'Student Name' },             
-            { key: 'enrlNo', label: 'Enrollment No' },             
-            { key: 'admissionNo', label: 'Admission No' },             
-            { key: 'gender', label: 'Gender (M/F)' },             
-            { key: 'dob', label: 'Date of Birth' },             
-            { key: 'class', label: 'Class' },             
-            { key: 'section', label: 'Section' },             
-            { key: 'fatherGuardian', label: "Father / Guardian Name" },             
-            { key: 'fatherCnic', label: "Father's CNIC" },             
-            { key: 'cnic', label: "Student CNIC / B-Form" },             
-            { key: 'contact', label: 'Contact Number' },             
-            { key: 'whatsapp', label: 'WhatsApp Number' },             
-            { key: 'address', label: 'Address' },             
-            { key: 'religion', label: 'Religion' },             
-            { key: 'caste', label: 'Caste / Tribe' },             
-            { key: 'profession', label: "Father's Profession" },             
-            { key: 'monthlyIncome', label: 'Monthly Income' },             
-            { key: 'academicSession', label: 'Academic Session' },             
-            { key: 'admissionDate', label: 'Admission Date' },             
-            { key: 'photo', label: 'Photo (URL or image data)' },             
-            { key: 'admissionRemarks', label: 'Remarks' }         
-        ];          
-
-        const AUTO_GUESS = {             
-            name: ['name', 'studentname', 'candidatename'],             
-            enrlNo: ['enrlno', 'enrollmentno', 'enrollno', 'srno', 'sno'],             
-            admissionNo: ['admissionno', 'admno'],             
-            gender: ['gender', 'fm', 'sex'],             
-            dob: ['dob', 'dateofbirth', 'birthdate'],             
-            class: ['class', 'grade'],             
-            section: ['section', 'sec'],             
-            fatherGuardian: ['fatherguardian', 'father', 'guardian', 'fathername', 'guardianname'],             
-            fatherCnic: ['fathercnic', 'guardiancnic'],             
-            cnic: ['cnic', 'formb', 'bform', 'studentcnic'],             
-            contact: ['contact', 'contacts', 'phone', 'mobile', 'cellno'],             
-            whatsapp: ['whatsapp', 'whatsappno'],             
-            address: ['address', 'residentialaddress'],             
-            religion: ['religion'],             
-            caste: ['caste', 'tribe', 'castetribe'],             
-            profession: ['profession', 'occupation'],             
-            monthlyIncome: ['monthlyincome', 'income'],             
-            academicSession: ['session', 'academicsession'],             
-            admissionDate: ['admissiondate', 'admdate', 'admissiondt'],             
-            photo: ['photo', 'photos', 'picture', 'pictures', 'image'],             
-            admissionRemarks: ['remarks', 'comments']         
-        };          
-
-        let workbook = null;         
-        let sourceHeaders = [];         
-        let sourceRows = [];         
-        let mapping = {};          
-        let failedImportRowsForExport = [];
-        let successfullyImportedRecords = [];
-
-        async function renderHeader() {             
-            const school = await LamaAPI.getActiveSchool() || {};             
-            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;             
-            document.getElementById('headerSchoolName').innerText = school.name || 'School';             
-            const logoBox = document.getElementById('schoolLogoBox');             
-            if (school.logo) {                 
-                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;             
-            } else {                 
-                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');             
-            }
-
-            // Update DB Student Count Badge
-            updateDbStudentCountBadge();
-        }          
-
-        async function updateDbStudentCountBadge() {
-            try {
-                const students = await LamaAPI.list('students') || [];
-                const badge = document.getElementById('dbStudentCountBadge');
-                badge.innerText = `${students.length} Total Records in Database`;
-            } catch(e) {}
-        }
-
-        async function scanAndCleanDuplicates() {
-            const statusEl = document.getElementById('cleanupStatus');
-            statusEl.innerText = "Scanning database for duplicates...";
-            try {
-                const students = await LamaAPI.list('students') || [];
-                if (students.length === 0) {
-                    statusEl.innerText = "Database is empty.";
-                    return;
-                }
-
-                const uniqueMap = new Map();
-                let duplicatesRemoved = 0;
-                const cleanedList = [];
-
-                for (const s of students) {
-                    // Create a strict key based on Enrollment Number or Name + Father's Name
-                    const enrlKey = s.enrlNo ? String(s.enrlNo).trim() : '';
-                    const nameKey = s.name ? String(s.name).trim().toLowerCase() : '';
-                    const fatherKey = s.fatherGuardian ? String(s.fatherGuardian).trim().toLowerCase() : '';
-                    
-                    const primaryKey = enrlKey ? `enrl_${enrlKey}` : `name_${nameKey}_${fatherKey}`;
-
-                    if (!uniqueMap.has(primaryKey)) {
-                        uniqueMap.set(primaryKey, s);
-                        cleanedList.push(s);
-                    } else {
-                        duplicatesRemoved++;
-                    }
-                }
-
-                if (duplicatesRemoved > 0) {
-                    await LamaAPI.saveAll('students', cleanedList);
-                    statusEl.innerText = `✓ Successfully removed ${duplicatesRemoved} duplicate records! (${cleanedList.length} unique students remain).`;
-                } else {
-                    statusEl.innerText = `✓ No duplicates found! All ${cleanedList.length} student records are unique.`;
-                }
-                updateDbStudentCountBadge();
-            } catch (e) {
-                statusEl.innerText = "Cleanup failed: " + e.message;
-            }
-        }
-
-        function downloadSampleTemplate() {
-            const sampleData = [
-                {
-                    "Student Name": "Ali Khan",
-                    "Enrollment No": "101",
-                    "Admission No": "ADM-2026-001",
-                    "Gender (M/F)": "M",
-                    "Date of Birth": "2012-05-14",
-                    "Class": "6",
-                    "Section": "A",
-                    "Father / Guardian Name": "Ahmed Khan",
-                    "Contact Number": "03001234567",
-                    "Address": "House 12, Street 4, Lahore",
-                    "Academic Session": "2025-2026",
-                    "Admission Date": "2025-04-01"
-                }
-            ];
-            const ws = XLSX.utils.json_to_sheet(sampleData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Students Template");
-            XLSX.writeFile(wb, "Student_Import_Template.xlsx");
-        }
-
-        function handleFile(input) {             
-            const file = input.files[0];             
-            if (!file) return;             
-            if (file.name.toLowerCase().endsWith('.pdf')) {                 
-                handlePdfFile(file);             
-            } else {                 
-                handleSpreadsheetFile(file);             
-            }         
-        }          
-
-        function handleSpreadsheetFile(file) {             
-            const reader = new FileReader();             
-            reader.onload = (e) => {                 
-                try {
-                    workbook = XLSX.read(e.target.result, { type: 'array' });                 
-                    const sheetNames = workbook.SheetNames;                 
-                    if (sheetNames.length > 1) {                     
-                        document.getElementById('sheetPicker').classList.remove('hidden');                     
-                        document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');                 
-                    } else {                     
-                        document.getElementById('sheetPicker').classList.add('hidden');                 
-                    }                 
-                    loadSheet(sheetNames[0]);             
-                } catch (err) {
-                    alert("Could not parse this file. Please ensure it is a valid Excel or CSV spreadsheet.");
-                }
-            };             
-            reader.readAsArrayBuffer(file);         
-        }          
-
-        function renderMappingGrid() {
-            const grid = document.getElementById('mappingGrid');
-            grid.innerHTML = sourceHeaders.map((h, i) => `
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
-                    <span class="text-slate-300 font-medium truncate" title="${h}">${h}</span>
-                    <select onchange="mapping[${i}]=this.value; renderPreview();" class="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1 text-[11px] max-w-[180px]">
-                        ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${mapping[i] === f.key ? 'selected' : ''}>${f.label}</option>`).join('')}
-                    </select>
-                </div>
-            `).join('');
-        }
-
-        const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };         
-        
-        function pdfConvDate(d) {             
-            const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);             
-            if (!m) return '';             
-            const [, day, mon, yy] = m;             
-            const monNum = PDF_MONTHS[mon];             
-            if (!monNum) return '';             
-            return `20${yy}-${String(monNum).padStart(2, '0')}-${String(parseInt(day, 10)).padStart(2, '0')}`;         
-        }          
-
-        function isPdfNoiseLine(line) {             
-            const t = line.trim();             
-            if (!t) return true;             
-            if (/^Downloaded by/i.test(t)) return true;             
-            if (/STUDENTS ALREADY EXIST/i.test(t)) return true;             
-            if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;             
-            if (/^All students of EMIS/i.test(t)) return true;             
-            if (/^Page\s+\d+\s+of\s+\d+/i.test(t)) return true;
-            if (/^Student Roster/i.test(t)) return true;
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(t) && t.length < 15) return true;
-            if (t === '!') return true;             
-            return false;         
-        }          
-
-        async function extractPdfLines(file) {             
-            const arrayBuffer = await file.arrayBuffer();             
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;             
-            let allLines = [];             
-            for (let p = 1; p <= pdf.numPages; p++) {                 
-                const page = await pdf.getPage(p);                 
-                const content = await page.getTextContent();                 
-                let lines = [];                 
-                let currentLine = '';                 
-                let lastY = null;                 
-                content.items.forEach(item => {                     
-                    const y = item.transform[5];                     
-                    if (lastY !== null && Math.abs(y - lastY) > 2) {                         
-                        if (currentLine.trim()) lines.push(currentLine.trim());                         
-                        currentLine = item.str;                     
-                    } else {                         
-                        currentLine += (currentLine && !currentLine.endsWith(' ') && !item.str.startsWith(' ') ? ' ' : '') + item.str;                     
-                    }                     
-                    lastY = y;                 });                 
-                if (currentLine.trim()) lines.push(currentLine.trim());                 
-                allLines = allLines.concat(lines);             }             
-            return allLines;         
-        }          
-
-        function parsePdfLines(lines) {             
-            const rows = [];             
-            const skipped = [];             
-            let cleanLines = lines.filter(l => !isPdfNoiseLine(l));
-            
-            let currentTokens = [];
-            
-            cleanLines.forEach(line => {
-                const parts = line.split(/\s+/);
-                if (parts.length > 0 && /^\d{1,3}$/.test(parts[0]) && currentTokens.length >= 4) {
-                    processBufferedRecord(currentTokens, rows, skipped);
-                    currentTokens = [...parts];
-                } else {
-                    currentTokens.push(...parts);
-                }
-            });
-            
-            if (currentTokens.length > 0) {
-                processBufferedRecord(currentTokens, rows, skipped);
-            }
-            
-            return { rows, skipped };         
-        }
-
-        function processBufferedRecord(tokens, rows, skipped) {
-            const genderIdx = tokens.findIndex(t => t === 'M' || t === 'F');
-            if (genderIdx === -1 || genderIdx < 2) {
-                if (tokens.length > 5) skipped.push(tokens.join(' '));
-                return;
-            }
-            
-            const serial = tokens[0];
-            const enrl = /^\d+$/.test(tokens[1]) ? tokens[1] : '';
-            const nameStartIdx = enrl ? 2 : 1;
-            const gender = tokens[genderIdx];
-            
-            const name = tokens.slice(nameStartIdx, genderIdx).join(' ');
-            
-            const dateRegex = /\d{2}-[A-Z]{3}-\d{2}/g;
-            const dates = tokens.join(' ').match(dateRegex) || [];
-            const dob = dates[0] || '';
-            const admdate = dates[1] || '';
-            
-            const validClasses = ['ECE', 'NURSERY', 'PRE-NURSERY', 'KINDERGARTEN', 'PREP'];
-            let klass = '1';
-            let klassIdx = -1;
-            
-            for (let i = tokens.length - 1; i > genderIdx; i--) {
-                const t = tokens[i].toUpperCase();
-                if (validClasses.includes(t) || /^\d{1,2}$/.test(t)) {
-                    klass = t;
-                    klassIdx = i;
-                    break;
-                }
-            }
-            
-            let fatherParts = [];
-            if (klassIdx !== -1 && klassIdx > genderIdx + 1) {
-                fatherParts = tokens.slice(genderIdx + 1, klassIdx).filter(t => !dateRegex.test(t) && !/^\d{9,13}$/.test(t) && t !== '(F)');
-            }
-            const father = fatherParts.join(' ');
-            
-            const phone = tokens.find(t => /^\d{10,12}$/.test(t)) || '';
-            
-            if (name && gender) {
-                rows.push([ 
-                    enrl, 
-                    name.trim(), 
-                    gender, 
-                    pdfConvDate(dob), 
-                    klass, 
-                    father.trim(), 
-                    phone, 
-                    pdfConvDate(admdate) 
-                ]);
-            } else {
-                skipped.push(tokens.join(' '));
-            }
-        }
-
-        async function handlePdfFile(file) {             
-            const status = document.getElementById('pdfStatus');             
-            status.classList.remove('hidden');             
-            status.innerText = 'Reading PDF...';             
-            try {                 
-                const lines = await extractPdfLines(file);                 
-                status.innerText = 'Detecting student rows...';                 
-                const { rows, skipped } = parsePdfLines(lines);                  
-                if (rows.length === 0) {                     
-                    status.innerText = "Couldn't detect standard EMIS row format in this PDF. Try exporting as Excel/CSV instead.";                     
-                    return;                 }                  
-                sourceHeaders = ['Enrollment No', 'Name', 'Gender', 'DOB', 'Class', "Father / Guardian", 'Contact / Phone', 'Admission Date'];                 
-                sourceRows = rows;                 
-                mapping = { 0: 'enrlNo', 1: 'name', 2: 'gender', 3: 'dob', 4: 'class', 5: 'fatherGuardian', 6: 'contact', 7: 'admissionDate' };                  
-                renderMappingGrid();                 
-                renderPreview();                 
-                document.getElementById('mapSection').classList.remove('hidden');                 
-                document.getElementById('rowCountLabel').innerText = sourceRows.length;                  
-                status.innerText = `✓ Successfully detected all ${rows.length} students from PDF.` + (skipped.length ? ` (${skipped.length} skipped)` : '');             
-            } catch (e) {                 
-                status.innerText = 'Could not read this PDF: ' + e.message;             
-            }         
-        }          
-
-        function normalizeKey(s) {             
-            return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');         
-        }          
-
-        function guessMapping(header) {             
-            const norm = normalizeKey(header);             
-            for (const [target, hints] of Object.entries(AUTO_GUESS)) {                 
-                if (hints.some(h => norm.includes(h) || h.includes(norm))) return target;             
-            }             
-            return '';         
-        }          
-
-        function loadSheet(sheetName) {             
-            const ws = workbook.Sheets[sheetName];             
-            const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });             
-            if (json.length === 0) { alert('This sheet appears to be empty.'); return; }             
-            
-            let headerRowIndex = 0;
-            for (let r = 0; r < Math.min(json.length, 10); r++) {
-                const filledCells = json[r].filter(c => c !== undefined && c !== null && String(c).trim() !== '').length;
-                if (filledCells >= 2) {
-                    headerRowIndex = r;
-                    break;
-                }
-            }
-
-            sourceHeaders = json[headerRowIndex].map(h => String(h).trim());             
-            sourceRows = json.slice(headerRowIndex + 1).filter(row => row && row.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== ''));              
-
-            mapping = {};             
-            sourceHeaders.forEach((h, i) => { mapping[i] = guessMapping(h); });              
-            renderMappingGrid();             
-            renderPreview();             
-            document.getElementById('mapSection').classList.remove('hidden');             
-            document.getElementById('rowCountLabel').innerText = sourceRows.length;         
-        }          
-
-        function buildRecordFromRow(row) {             
-            const record = {};             
-            Object.entries(mapping).forEach(([colIndex, target]) => {                 
-                if (!target) return;                 
-                const val = row[colIndex];                 
-                if (val !== undefined && val !== null && String(val).trim() !== '') {                     
-                    record[target] = String(val).trim();                 
-                }             });             
-            return record;         
-        }          
-
+// ... existing code ... -->
         function renderPreview() {             
             const mappedTargets = Object.values(mapping).filter(Boolean);             
             document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {                 
                 const f = TARGET_FIELDS.find(x => x.key === t);                 
                 return `<th class="py-1 pr-3">${f ? f.label : t}</th>`;             }).join('');              
 
-            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map(row => {                 
+            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map((row, idx) => {                 
                 const record = buildRecordFromRow(row);                 
-                return `<tr class="border-b border-slate-900">${mappedTargets.map(t => `<td class="py-1 pr-3 text-slate-300">${record[t] || '-'}</td>`).join('')}</tr>`;             }).join('');         
+                return `<tr class="border-b border-slate-900">
+                    <td class="py-1 pr-3 text-slate-500 font-bold">${idx + 1}</td>
+                    <td><div class="flex gap-3">${mappedTargets.map(t => `<div class="py-1 pr-3 text-slate-300 truncate">${record[t] || '-'}</div>`).join('')}</div></td>
+                </tr>`;             }).join('');         
         }          
-
-        function compressImage(src) {             
-            return new Promise((resolve) => {                 
-                const img = new Image();                 
-                img.crossOrigin = 'anonymous';                 
-                img.onload = () => {                     
-                    const canvas = document.createElement('canvas');                     
-                    const ctx = canvas.getContext('2d');                     
-                    let width = img.width, height = img.height, quality = 0.85, attempts = 0;                      
-                    function attempt() {                         
-                        canvas.width = width;                         
-                        canvas.height = height;                         
-                        ctx.clearRect(0, 0, width, height);                         
-                        ctx.drawImage(img, 0, 0, width, height);                         
-                        const result = canvas.toDataURL('image/jpeg', quality);                         
-                        const approxBytes = Math.ceil((result.length * 3) / 4);                         
-                        attempts++;                         
-                        if (approxBytes <= 25000 || attempts > 25) {                             
-                            resolve(result);                         
-                        } else if (quality > 0.25) {                             
-                            quality -= 0.1;                             
-                            attempt();                         
-                        } else {                             
-                            width = Math.round(width * 0.85);                             
-                            height = Math.round(height * 0.85);                             
-                            attempt();                         
-                        }                     
-                    }                     
-                    attempt();                 
-                };                 
-                img.onerror = () => resolve('');                 
-                img.src = src;             });         
-        }          
-
-        async function startImport() {             
-            document.getElementById('mapSection').classList.add('hidden');             
-            document.getElementById('progressSection').classList.remove('hidden');              
-
-            let existingStudents = [];
-            try {
-                existingStudents = await LamaAPI.list('students') || [];
-            } catch (e) {
-                existingStudents = [];
-            }
-
-            // Deduplicate existing database records first
-            const uniqueMap = new Map();
-            const cleanedExisting = [];
-            for (const s of existingStudents) {
-                const enrlKey = s.enrlNo ? String(s.enrlNo).trim() : '';
-                const nameKey = s.name ? String(s.name).trim().toLowerCase() : '';
-                const fatherKey = s.fatherGuardian ? String(s.fatherGuardian).trim().toLowerCase() : '';
-                const key = enrlKey ? `enrl_${enrlKey}` : `name_${nameKey}_${fatherKey}`;
-
-                if (!uniqueMap.has(key)) {
-                    uniqueMap.set(key, s);
-                    cleanedExisting.push(s);
-                }
-            }
-            existingStudents = cleanedExisting;
-
-            let newAdded = 0;             
-            let updatedCount = 0;
-            const errors = [];              
-            failedImportRowsForExport = [];
-            successfullyImportedRecords = [];
-
-            for (let i = 0; i < sourceRows.length; i++) {                 
-                const record = buildRecordFromRow(sourceRows[i]);                 
-                const label = record.name || `Row ${i + 2}`;                 
-                document.getElementById('progressLabel').innerText = `Processing ${i + 1} of ${sourceRows.length}: ${label}`;                 
-                document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / sourceRows.length) * 100)}%`;                  
-
-                if (!record.name) {                     
-                    const errReason = "Skipped — student name is missing or unmapped.";
-                    errors.push({ id: `Row ${i + 2}`, reason: errReason });
-                    failedImportRowsForExport.push({ row: i + 2, identifier: label, reason: errReason });
-                    continue;                 
-                }                  
-
-                let existingMatch = existingStudents.find(s => 
-                    (record.enrlNo && s.enrlNo && String(s.enrlNo).trim() === String(record.enrlNo).trim()) ||
-                    (record.name && s.name && String(s.name).trim().toLowerCase() === String(record.name).trim().toLowerCase() && 
-                     record.fatherGuardian && s.fatherGuardian && String(s.fatherGuardian).trim().toLowerCase() === String(record.fatherGuardian).trim().toLowerCase())
-                );
-
-                if (record.photo && /^https?:\/\//i.test(record.photo)) {                     
-                    const compressed = await compressImage(record.photo);                     
-                    if (compressed) record.photo = compressed;                     
-                    else delete record.photo;                 
-                } else if (record.photo && record.photo.startsWith('data:image')) {                     
-                    const compressed = await compressImage(record.photo);                     
-                    if (compressed) record.photo = compressed;                 
-                }                  
-
-                try {                     
-                    if (existingMatch) {
-                        await LamaAPI.update('students', existingMatch.id, record);
-                        updatedCount++;
-                        if (!successfullyImportedRecords.some(r => r.id === existingMatch.id)) {
-                            successfullyImportedRecords.push({ ...existingMatch, ...record });
-                        }
-                    } else {
-                        const batchDuplicate = successfullyImportedRecords.find(r => 
-                            (record.enrlNo && r.enrlNo && String(r.enrlNo).trim() === String(record.enrlNo).trim()) ||
-                            (record.name && r.name && String(r.name).trim().toLowerCase() === String(record.name).trim().toLowerCase() &&
-                             record.fatherGuardian && r.fatherGuardian && String(r.fatherGuardian).trim().toLowerCase() === String(record.fatherGuardian).trim().toLowerCase())
-                        );
-
-                        if (!batchDuplicate) {
-                            await LamaAPI.add('students', record);                     
-                            newAdded++;                 
-                            successfullyImportedRecords.push(record);
-                        }
-                    }
-                } catch (e) {                     
-                    const errReason = e.message || "Database write failure";
-                    errors.push({ id: label, reason: errReason });
-                    failedImportRowsForExport.push({ row: i + 2, identifier: label, reason: errReason });
-                }             
-            }              
-
-            // Post-import automatic database cleanup to ensure exact record totals (e.g. 388 unique students)
-            try {
-                const allCurrentStudents = await LamaAPI.list('students') || [];
-                const finalUniqueMap = new Map();
-                const finalCleanedList = [];
-                for (const s of allCurrentStudents) {
-                    const enrlKey = s.enrlNo ? String(s.enrlNo).trim() : '';
-                    const nameKey = s.name ? String(s.name).trim().toLowerCase() : '';
-                    const fatherKey = s.fatherGuardian ? String(s.fatherGuardian).trim().toLowerCase() : '';
-                    const key = enrlKey ? `enrl_${enrlKey}` : `name_${nameKey}_${fatherKey}`;
-                    if (!finalUniqueMap.has(key)) {
-                        finalUniqueMap.set(key, s);
-                        finalCleanedList.push(s);
-                    }
-                }
-                if (finalCleanedList.length !== allCurrentStudents.length) {
-                    await LamaAPI.saveAll('students', finalCleanedList);
-                }
-            } catch (e) {}
-
-            document.getElementById('progressSection').classList.add('hidden');             
-            document.getElementById('resultsSection').classList.remove('hidden');             
-            document.getElementById('successCount').innerText = newAdded;             
-            document.getElementById('updatedCount').innerText = updatedCount;
-            document.getElementById('failCount').innerText = errors.length;             
-
-            const errContainer = document.getElementById('errorsContainer');
-            const errTableBody = document.getElementById('errorsTableBody');
-            const exportErrBtn = document.getElementById('exportErrBtn');
-
-            if (errors.length > 0) {
-                errContainer.classList.remove('hidden');
-                exportErrBtn.classList.remove('hidden');
-                errTableBody.innerHTML = errors.map(err => `<tr><td class="p-2.5 font-bold text-slate-200">${err.id}</td><td class="p-2.5 text-red-300">${err.reason}</td></tr>`).join('');
-            } else {
-                errContainer.classList.add('hidden');
-                exportErrBtn.classList.add('hidden');
-            }
-
+// ... existing code ... -->
             const previewGrid = document.getElementById('importedStudentsPreviewGrid');
+            const totalBadge = document.getElementById('importedTotalBadge');
+            totalBadge.innerText = `Total: ${successfullyImportedRecords.length} Students`;
+
             if (successfullyImportedRecords.length > 0) {
-                previewGrid.innerHTML = successfullyImportedRecords.slice(0, 12).map(stu => `
-                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center gap-2.5">
+                previewGrid.innerHTML = successfullyImportedRecords.slice(0, 12).map((stu, idx) => `
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center gap-2.5 relative">
+                        <span class="absolute top-2 right-2 text-[9px] font-black bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded">${idx + 1}</span>
                         <div class="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-[10px] font-bold text-purple-300 overflow-hidden flex-shrink-0">
                             ${stu.photo ? `<img src="${stu.photo}" class="w-full h-full object-cover">` : (stu.name ? stu.name.charAt(0) : 'S')}
                         </div>
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-0 flex-1 pr-5">
                             <p class="text-xs font-bold text-white truncate">${stu.name}</p>
                             <p class="text-[9px] text-slate-400 truncate">Class: ${stu.class || '-'} | Enrl: ${stu.enrlNo || '-'}</p>
                         </div>
@@ -775,4 +239,5 @@
             renderHeader();         
         }     
     </script> 
-</body>
+</body> 
+</html>

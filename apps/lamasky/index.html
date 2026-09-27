@@ -571,328 +571,118 @@
     .sidebar-nav-group a:hover, .sidebar-nav-group a.active {
       background: rgba(59, 130, 246, 0.1); color: var(--accent-color);
     }
-
-    /* Modal dialog styling */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(6px);
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0; visibility: hidden;
-      transition: all 0.25s ease;
-      padding: 1rem;
-    }
-    .modal-overlay.is-open { opacity: 1; visibility: visible; }
-    .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 600px;
-      max-height: 85vh;
-      overflow-y: auto;
-      padding: 2rem;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-      transform: translateY(20px);
-      transition: transform 0.25s ease;
-    }
-    .modal-overlay.is-open .modal-card { transform: translateY(0); }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 0.75rem;
-    }
-    .modal-header h3 { font-size: 1.25rem; color: var(--text-main); }
-    .modal-close {
-      background: var(--sub-card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700;
-    }
-    .modal-body {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.7;
-    }
-    .modal-body p { margin-bottom: 12px; }
   </style>
 </head>
-<body data-app="lamasky">
+<body>
 
-  <div id="webgl-container" aria-hidden="true" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;"></div>
+  <!-- Sidebar Navigation Drawer -->
+  <div class="sidebar-overlay" id="sidebarOverlay">
+    <nav class="sidebar-drawer">
+      <div class="sidebar-header">
+        <span style="font-weight: 800; font-size: 1rem;">Navigation</span>
+        <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+      </div>
+      <div class="sidebar-nav-group">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="apps/lamasky/privacy.html">Privacy Policy</a></li>
+          <li><a href="#" onclick="returnToStore(event)">Back to Store Hub</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
 
   <header class="site-header">
     <div class="header-content">
-      <a href="#" class="brand" onclick="returnToStore(event)">
-        <div class="brand-logo-badge">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-        </div>
+      <a href="#" class="brand">
+        <div class="brand-logo-badge">LS</div>
         <div>
           LamaSky
-          <small>Climate Intelligence</small>
+          <small>Weather & Climate Intelligence</small>
         </div>
       </a>
-            
       <div class="header-actions">
-        <a href="#" class="icon-btn" id="loginBtn" aria-label="User Account" title="User Account">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </a>
-
-        <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle Theme" title="Switch Theme">
-          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-        </button>
-
-        <button class="icon-btn" id="menuToggleBtn" aria-label="Open Navigation Menu" title="Menu">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+        <button class="icon-btn" onclick="toggleSidebar()" title="Menu">☰</button>
       </div>
     </div>
   </header>
 
-  <div class="sidebar-overlay" id="sidebarOverlay">
-    <div class="sidebar-drawer" id="sidebarDrawer" role="dialog" aria-modal="true" aria-label="Sidebar Menu">
-      <div class="sidebar-header">
-        <span class="brand" style="font-size: 0.95rem;">
-          <div class="brand-logo-badge" style="width:28px;height:28px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-          </div>
-          <span>LamaStudio Suite</span>
-        </span>
-        <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">✕</button>
-      </div>
-            
-      <div class="sidebar-nav-group">
-        <h5>App Store</h5>
-        <ul>
-          <li><a href="#" class="active">🌤️ LamaSky Weather</a></li>
-          <li><a href="#" onclick="openStoreApp('LamaVPN Pro')">🛡️ LamaVPN Pro</a></li>
-          <li><a href="#" onclick="openStoreApp('LamaPixelStudio')">🖼️ LamaPixelStudio</a></li>
-          <li><a href="#" onclick="openStoreApp('LamaIQMaster')">🧠 LamaIQMaster</a></li>
-          <li><a href="#" onclick="openStoreApp('LamaMultiCalendar')">📅 LamaMultiCalendar</a></li>
-        </ul>
-      </div>
-
-      <div class="sidebar-nav-group">
-        <h5>Quick Links</h5>
-        <ul>
-          <li><a href="#" onclick="openPrivacyModal()">Privacy Policy</a></li>
-          <li><a href="#" onclick="returnToStore(event)">Back to Store Hub</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <main id="main-content" class="site-main">
+  <main class="site-main">
     <div class="dashboard">
-      <div class="hero-panel">
-        <span style="color: var(--accent-color); font-weight: 800; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase;">• UNIVERSAL METEOROLOGICAL PLATFORM</span>
-        <h1>Universal Weather &amp; Climate <span>Platform</span></h1>
-        <p class="lede">Instant hyper-local climate forecasting, air quality indexing, and atmospheric radar simulations worldwide.</p>
-
+      <section class="hero-panel">
+        <h1>Global Weather & <span>Climate Intelligence</span></h1>
+        <p class="lede">Get accurate real-time forecasts, live weather metrics, and atmospheric radar simulations.</p>
+        
         <div class="search-box">
-          <input type="text" id="cityInput" placeholder="Search any city worldwide (e.g. London, Tokyo, Lahore)..." value="">
+          <input type="text" id="cityInput" placeholder="Enter city name..." />
           <button onclick="updateWeather()">Search</button>
         </div>
-
-        <div class="hero-cta">
-          <a href="https://play.google.com/store/apps/details?id=pk.lamastudio.lamasky" target="_blank" rel="noopener noreferrer" class="btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a1.272 1.272 0 0 1-.61-.95V2.764a1.272 1.272 0 0 1 .61-.95zM15.207 13.414l2.086 2.086-10.871 6.275a1.27 1.27 0 0 1-1.272 0l10.057-8.361zm0-2.828L5.15 2.225a1.27 1.27 0 0 1 1.272 0l10.871 6.275-2.086 2.086zm1.758 1.758l3.414 1.971a1.272 1.272 0 0 1 0 2.207l-3.414 1.971-2.086-2.086 2.086-2.063z"/></svg>
-            <span>Install on Google Play</span>
-          </a>
-          <button class="btn-ghost" onclick="openPrivacyModal()">Privacy Policy</button>
-          <button class="btn-ghost" onclick="returnToStore(event)">Back to Store</button>
-        </div>
-      </div>
+      </section>
     </div>
 
-    <div style="width: 100%; max-width: 820px; margin: 0 auto 1rem auto;">
-      <div class="ad-banner-container" aria-label="Advertisement">
-        <div class="ad-banner-label">Sponsored Advertisement</div>
-        <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px" data-ad-client="ca-pub-4212196297960637" data-ad-slot="1234567890"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-      </div>
-    </div>
-
+    <!-- Live Weather Box -->
     <div class="live-weather-box">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <div id="cityName" style="font-size: 0.85rem; font-weight: 800; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.08em;">Dera Ghazi Khan Station</div>
-        <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Live Climate Telemetry</div>
-      </div>
       <div class="current-weather-grid">
         <div>
-          <div id="tempDisplay" class="temp-display">32°C</div>
-          <p id="weatherDesc" style="color: var(--text-muted); font-size: 1rem; font-weight: 500;">Warm Sunshine &amp; Clear Skies</p>
+          <h2 id="cityName" style="font-size: 1.5rem; margin-bottom: 6px;">Dera Ghazi Khan Station</h2>
+          <div class="temp-display" id="tempDisplay">28°C</div>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Live Atmospheric Conditions</p>
         </div>
         <div class="weather-stat-grid">
           <div class="stat-box">
             <span>Humidity</span>
-            <strong id="statHum">38%</strong>
+            <strong id="statHum">55%</strong>
           </div>
           <div class="stat-box">
             <span>Wind Speed</span>
-            <strong id="statWind">14 km/h</strong>
+            <strong id="statWind">12 km/h</strong>
           </div>
           <div class="stat-box">
             <span>Air Quality</span>
-            <strong id="statAqi" style="color: #10b981;">Good (32)</strong>
+            <strong id="statAqi">Good (35)</strong>
           </div>
           <div class="stat-box">
-            <span>Pressure</span>
-            <strong id="statPres">1010 hPa</strong>
+            <span>Condition</span>
+            <strong id="statCond">Clear</strong>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Maps Cards -->
+    <div class="map-container-card">
+      <div class="map-header">
+        <h3 id="mapTitle">🗺️ Live Windy Radar & Weather Map (Dera Ghazi Khan)</h3>
+      </div>
+      <div class="windy-embed-wrapper">
+        <iframe id="windyFrame" src=""></iframe>
       </div>
     </div>
 
     <div class="map-container-card">
       <div class="map-header">
         <h3 id="cityMapTitle">🗺️ City Map: Dera Ghazi Khan</h3>
-        <span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 700;">OpenStreetMap</span>
       </div>
       <div class="city-map-wrapper">
-        <iframe id="cityMapFrame" src="https://www.openstreetmap.org/export/embed.html?bbox=70.54,29.94,70.74,30.14&layer=mapnik&marker=30.0456,70.6417" title="Searched City Map"></iframe>
+        <iframe id="cityMapFrame" src=""></iframe>
       </div>
     </div>
-
-    <div class="map-container-card">
-      <div class="map-header">
-        <h3 id="mapTitle">🗺️ Live Windy Radar & Weather Map (Dera Ghazi Khan)</h3>
-        <span style="font-size: 0.78rem; color: var(--accent-color); font-weight: 700;">Windy.com</span>
-      </div>
-      <div class="windy-embed-wrapper">
-        <iframe id="windyFrame" src="https://embed.windy.com/embed2.html?lat=30.0456&lon=70.6417&zoom=11&level=surface&overlay=wind&menu=&message=&marker=30.0456,70.6417&calendar=now&pressure=true&type=map&location=coordinates&detail=true&metricWind=default&metricTemp=default&radarRange=-1" title="Windy.com Radar Simulation"></iframe>
-      </div>
-    </div>
-
-    <div class="forecast-grid" id="forecastGrid">
-      <div class="forecast-day-card">
-        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">SATURDAY</div>
-        <div style="font-size: 1.8rem; margin-bottom: 6px;">☀️</div>
-        <div style="font-weight: 800; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">34°C</div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Sunny & Warm</div>
-      </div>
-      <div class="forecast-day-card">
-        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">SUNDAY</div>
-        <div style="font-size: 1.8rem; margin-bottom: 6px;">☀️</div>
-        <div style="font-weight: 800; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">33°C</div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Clear Skies</div>
-      </div>
-      <div class="forecast-day-card">
-        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">MONDAY</div>
-        <div style="font-size: 1.8rem; margin-bottom: 6px;">🌤️</div>
-        <div style="font-weight: 800; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">31°C</div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Partly Cloudy</div>
-      </div>
-      <div class="forecast-day-card">
-        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">TUESDAY</div>
-        <div style="font-size: 1.8rem; margin-bottom: 6px;">☀️</div>
-        <div style="font-weight: 800; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">33°C</div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Sunny</div>
-      </div>
-      <div class="forecast-day-card">
-        <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">WEDNESDAY</div>
-        <div style="font-size: 1.8rem; margin-bottom: 6px;">🌤️</div>
-        <div style="font-weight: 800; font-size: 1.1rem; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px;">32°C</div>
-        <div style="font-size: 0.78rem; color: var(--text-muted);">Pleasant</div>
-      </div>
-    </div>
-
-    <section class="section" id="features">
-      <div class="section-head">
-        <span style="color: var(--accent-color); font-weight: 800; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase;">ARCHITECTURE</span>
-        <h2>Under the hood</h2>
-      </div>
-            
-      <div class="app-grid">
-        <article class="app-card">
-          <div aria-hidden="true" style="font-size: 2rem; margin-bottom: 12px;">🛰️</div>
-          <h3>Global Radar Sync</h3>
-          <p class="desc">Seamlessly view live Windy.com telemetry and OpenStreetMap coordinates instantly worldwide.</p>
-        </article>
-
-        <article class="app-card">
-          <div aria-hidden="true" style="font-size: 2rem; margin-bottom: 12px;">📱</div>
-          <h3>Widgets &amp; Alerts</h3>
-          <p class="desc">Get quick glances at upcoming climate conditions using lightweight, low battery consumption widgets.</p>
-        </article>
-
-        <article class="app-card">
-          <div aria-hidden="true" style="font-size: 2rem; margin-bottom: 12px;">🔒</div>
-          <h3>Offline Privacy</h3>
-          <p class="desc">Your searched locations and preferences stay securely on your device with local storage encryption.</p>
-        </article>
-      </div>
-    </section>
   </main>
 
   <footer class="site-footer">
     <div class="footer-grid">
       <div class="footer-col">
-        <div class="brand" style="margin-bottom: 1rem;">
-          <div class="brand-logo-badge" style="width:28px;height:28px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-          </div>
-          <div>
-            LamaStudio
-            <small>Digital Ecosystem</small>
-          </div>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.88rem; font-weight: 500; line-height: 1.5;">Independent software studio building resilient tools for modern digital lifestyles.</p>
-      </div>
-            
-      <div class="footer-col">
-        <h4>Ecosystem Apps</h4>
-        <a onclick="openStoreApp('LamaVPN Pro')">LamaVPN Pro</a>
-        <a onclick="openStoreApp('LamaMultiCalendar')">LamaMultiCalendar</a>
-        <a onclick="openStoreApp('LamaIQMaster')">LamaIQMaster</a>
-      </div>
-
-      <div class="footer-col">
-        <h4>Utilities</h4>
-        <a onclick="openStoreApp('LamaPhotoResizer')">LamaPhotoResizer</a>
-        <a onclick="openStoreApp('LamaPixelStudio')">LamaPixelStudio</a>
-        <a onclick="openStoreApp('LamaSky')">LamaSky</a>
-      </div>
-
-      <div class="footer-col">
-        <h4>Studio &amp; Legal</h4>
-        <a onclick="openPrivacyModal()">Privacy Policy</a>
-        <a onclick="returnToStore(event)">Back to Store</a>
+        <h4>Studio & Legal</h4>
+        <a href="apps/lamasky/privacy.html">Privacy Policy</a>
+        <a href="#" onclick="returnToStore(event)">Back to Store</a>
       </div>
     </div>
-          
     <div class="footer-bottom">
-      <span>&copy; 2026 LamaStudio. All rights reserved.</span>
-      <span>Engineered in Pakistan</span>
+      <p>&copy; 2026 LamaStudio. All rights reserved.</p>
+      <p>Engineered in Pakistan</p>
     </div>
   </footer>
-
-  <div class="modal-overlay" id="privacyModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>🛡️ LamaSky Privacy Policy</h3>
-        <button class="modal-close" onclick="closePrivacyModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <p><strong>1. Data &amp; Location Privacy:</strong> LamaSky processes your city searches and location coordinates locally within your session. We do not sell or harvest personal telemetry or weather habits.</p>
-        <p><strong>2. Secure Connections:</strong> All API lookups and radar frames are encrypted via modern Transport Layer Security (TLS).</p>
-        <p><strong>3. Analytics:</strong> Anonymous error reporting is utilized solely to maintain high-performance rendering across devices.</p>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -904,6 +694,7 @@
       const sidebarOverlay = document.getElementById('sidebarOverlay');
       const sidebarClose = document.getElementById('sidebarClose');
       const loginBtn = document.getElementById('loginBtn');
+      const cityInput = document.getElementById('cityInput');
 
       const savedTheme = localStorage.getItem('lamastudio_theme') || 'dark';
       setTheme(savedTheme);
@@ -930,6 +721,15 @@
         loginBtn.addEventListener('click', (e) => {
           e.preventDefault();
           showMsg('User Login Portal: Please connect your LamaStudio passkey.');
+        });
+      }
+
+      // Allow pressing 'Enter' in the search box
+      if (cityInput) {
+        cityInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            updateWeather();
+          }
         });
       }
 
@@ -969,6 +769,23 @@
       });
     });
 
+    // Privacy Modal Controller Functions
+    function openPrivacyModal() {
+      const modal = document.getElementById('privacyModal');
+      if (modal) {
+        modal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closePrivacyModal() {
+      const modal = document.getElementById('privacyModal');
+      if (modal) {
+        modal.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+    }
+
     const cityCoordinates = {
       'dera ghazi khan': { lat: 30.0456, lon: 70.6417, temp: 32, hum: 38, wind: 14, aqi: 'Good (32)' },
       'dg khan': { lat: 30.0456, lon: 70.6417, temp: 32, hum: 38, wind: 14, aqi: 'Good (32)' },
@@ -983,7 +800,7 @@
       'sydney': { lat: -33.8688, lon: 151.2093, temp: 23, hum: 58, wind: 19, aqi: 'Good (25)' }
     };
 
-function updateWeather() {
+    function updateWeather() {
       var rawQuery = document.getElementById('cityInput').value.trim();
       if (!rawQuery) {
         rawQuery = 'Dera Ghazi Khan';

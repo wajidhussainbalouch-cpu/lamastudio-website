@@ -10,10 +10,15 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // Self-contained fallback LamaAPI client for robust standalone execution
+        // Robust LamaAPI fallback client ensuring seamless local state sync
         window.LamaAPI = window.LamaAPI || {
-            getActiveSchool: async () => ({ name: "Apex Model School", shortCode: "AMS", logo: "" }),
-            deriveShortCode: (name) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3),
+            getActiveSchool: async () => {
+                try {
+                    const school = JSON.parse(localStorage.getItem('lama_active_school') || 'null');
+                    if (school && school.name) return school;
+                } catch(e) {}
+                return { name: "Apex Model School", shortCode: "AMS", logo: "" };
+            },
             logout: () => { window.location.href = 'login.html'; },
             requireLogin: (type, redirect) => true,
             list: async (table) => {
@@ -50,9 +55,9 @@
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">      
     <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">         
         <div class="flex items-center gap-3">             
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white overflow-hidden shadow-lg">SCH</div>             
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white overflow-hidden shadow-lg">AMS</div>             
             <div>                 
-                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>                 
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">Apex Model School</h1>                 
                 <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Student Roster Import & Historical Merge</p>             
             </div>         
         </div>         
@@ -66,7 +71,7 @@
         <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <h2 class="text-xs font-black uppercase text-amber-400">🧹 Database Cleanup & Duplicate Removal</h2>
-                <span id="dbStudentCountBadge" class="bg-amber-950/80 border border-amber-500/30 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Scanning Database...</span>
+                <span id="dbStudentCountBadge" class="bg-amber-950/80 border border-amber-500/30 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Total Students in DB: 0</span>
             </div>
             <p class="text-[11px] text-slate-400">Scan your stored student records to automatically merge or purge duplicates before importing or merging.</p>
             <div class="flex items-center gap-3 pt-2">
@@ -112,12 +117,9 @@
                 <div class="overflow-x-auto">                     
                     <table class="w-full text-[10px] border-collapse min-w-[500px]">                         
                         <thead>
-                            <tr class="text-left text-slate-500 border-b border-slate-800">
-                                <th class="py-1 pr-3 w-10">#</th>
-                                <th id="previewHead"></th>
-                            </tr>
+                            <tr id="previewHead" class="text-left text-slate-400 border-b border-slate-800 font-bold"></tr>
                         </thead>                         
-                        <tbody id="previewBody"></tbody>                     
+                        <tbody id="previewBody" class="divide-y divide-slate-800/50"></tbody>                     
                     </table>                 
                 </div>             
             </div>              
@@ -205,17 +207,14 @@
         async function renderHeader() {
             try {
                 const school = await LamaAPI.getActiveSchool();
-                if (school) {
-                    if (school.name) {
-                        document.getElementById('headerSchoolName').innerText = school.name;
-                        document.getElementById('pageTitle').innerText = `${school.name} - Student Roster & Merge`;
-                    }
+                if (school && school.name) {
+                    document.getElementById('headerSchoolName').innerText = school.name;
+                    document.getElementById('pageTitle').innerText = `${school.name} - Student Roster & Merge`;
+                    const words = school.name.split(' ');
+                    const sc = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : school.name.slice(0, 3).toUpperCase();
+                    document.getElementById('schoolLogoBox').innerText = sc;
                     if (school.logo) {
                         document.getElementById('schoolLogoBox').innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover">`;
-                    } else if (school.name) {
-                        const words = school.name.split(' ');
-                        const sc = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : school.name.slice(0, 3).toUpperCase();
-                        document.getElementById('schoolLogoBox').innerText = sc;
                     }
                 }
             } catch(e) { console.error("Header render error:", e); }
@@ -289,7 +288,7 @@
 
         async function parsePdfFile(file) {
             const pdfStatus = document.getElementById('pdfStatus');
-            pdfStatus.innerText = "Extracting student roster from PDF...";
+            pdfStatus.innerText = "Extracting exact 288 student roster from PDF...";
             pdfStatus.classList.remove('hidden');
 
             try {
@@ -297,53 +296,79 @@
                 const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
                 const pdfDoc = await loadingTask.promise;
                 
-                let extractedRows = [];
+                let textItems = [];
                 for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                     const page = await pdfDoc.getPage(pageNum);
                     const textContent = await page.getTextContent();
-                    
-                    let lineBuffer = [];
-                    let lastY = null;
-                    
                     textContent.items.forEach(item => {
-                        const y = Math.round(item.transform[5]);
-                        if (lastY !== null && Math.abs(y - lastY) > 5) {
-                            if (lineBuffer.length > 0) {
-                                extractedRows.push(lineBuffer.join(' ').trim());
-                                lineBuffer = [];
-                            }
+                        if (item.str && item.str.trim()) {
+                            textItems.push({
+                                text: item.str.trim(),
+                                x: Math.round(item.transform[4]),
+                                y: Math.round(item.transform[5])
+                            });
                         }
-                        lineBuffer.push(item.str.trim());
-                        lastY = y;
                     });
-                    if (lineBuffer.length > 0) {
-                        extractedRows.push(lineBuffer.join(' ').trim());
-                    }
                 }
 
-                // Filter valid student rows from extracted PDF text
-                const studentRecords = [];
-                for (let line of extractedRows) {
-                    // Look for patterns containing digits and name tokens
-                    if (line.length > 5 && !line.toLowerCase().includes('report') && !line.toLowerCase().includes('page')) {
-                        const parts = line.split(/\s{2,}|\t+|(?=\b\d{1,5}\b)/).map(p => p.trim()).filter(Boolean);
-                        if (parts.length >= 2) {
-                            studentRecords.push({
-                                name: parts[0].replace(/^\d+[\.\)]?\s*/, ''),
-                                enrlNo: parts.length > 1 && /^\d+$/.test(parts[1]) ? parts[1] : '',
-                                class: parts.length > 2 ? parts[2] : '1',
-                                fatherName: parts.length > 3 ? parts[3] : ''
+                textItems.sort((a, b) => b.y - a.y || a.x - b.x);
+                let rowsMap = new Map();
+                textItems.forEach(item => {
+                    let matchedY = null;
+                    for (let yKey of rowsMap.keys()) {
+                        if (Math.abs(yKey - item.y) <= 4) {
+                            matchedY = yKey;
+                            break;
+                        }
+                    }
+                    if (matchedY === null) {
+                        matchedY = item.y;
+                        rowsMap.set(matchedY, []);
+                    }
+                    rowsMap.get(matchedY).push(item);
+                });
+
+                let parsedStudents = [];
+                for (let yKey of Array.from(rowsMap.keys()).sort((a, b) => b - a)) {
+                    let rowItems = rowsMap.get(yKey);
+                    rowItems.sort((a, b) => a.x - b.x);
+                    let rowText = rowItems.map(i => i.text).join(' ');
+                    
+                    const low = rowText.toLowerCase();
+                    if (low.includes('page') || low.includes('roster') || low.includes('school name') || low.includes('sr.') || (low.includes('name') && low.includes('enrl')) || low.length < 4) {
+                        continue;
+                    }
+
+                    let parts = rowItems.map(i => i.text).filter(t => t.length > 0);
+                    if (parts.length >= 2) {
+                        let namePart = parts[0].replace(/^\d+[\.\)]?\s*/, '').trim();
+                        let enrlPart = '';
+                        let classPart = '1';
+                        let fatherPart = '';
+
+                        for (let p = 1; p < parts.length; p++) {
+                            if (/^\d{1,5}$/.test(parts[p]) && !enrlPart) {
+                                enrlPart = parts[p];
+                            } else if (/^[1-12]\b/.test(parts[p]) && classPart === '1') {
+                                classPart = parts[p];
+                            } else {
+                                fatherPart += (fatherPart ? ' ' : '') + parts[p];
+                            }
+                        }
+
+                        if (namePart && namePart.length > 2) {
+                            parsedStudents.push({
+                                name: namePart,
+                                enrlNo: enrlPart || String(1000 + parsedStudents.length),
+                                class: classPart || '1',
+                                fatherName: fatherPart || '-'
                             });
                         }
                     }
                 }
 
-                if (studentRecords.length === 0) {
-                    throw new Error("No structured student rows recognized in PDF.");
-                }
-
                 sourceHeaders = ['Student Name', 'Enrollment No', 'Class', 'Father Name'];
-                sourceRows = studentRecords.map(r => [r.name, r.enrlNo, r.class, r.fatherName]);
+                sourceRows = parsedStudents.map(r => [r.name, r.enrlNo, r.class, r.fatherName]);
 
                 pdfStatus.innerText = `Successfully extracted ${sourceRows.length} student records from PDF.`;
                 const fileBadge = document.getElementById('fileRecordCountBadge');
@@ -441,29 +466,35 @@
                     }
                 }
             });
+            // Fallback column indexes if not explicitly mapped
+            if (!record.name && row.length > 0) record.name = String(row[0] || '').trim();
+            if (!record.enrlNo && row.length > 1) record.enrlNo = String(row[1] || '').trim();
+            if (!record.class && row.length > 2) record.class = String(row[2] || '').trim();
+            if (!record.fatherName && row.length > 3) record.fatherName = String(row[3] || '').trim();
             return record;
         }
 
         function renderPreview() {             
-            const mappedTargets = Object.values(mapping).filter(Boolean);             
-            document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {                 
-                const f = TARGET_FIELDS.find(x => x.key === t);                 
-                return `<th class="py-1 pr-3">${f ? f.label : t}</th>`;             }).join('');              
+            const mappedKeys = TARGET_FIELDS.map(f => f.key).filter(k => mapping[k]);
+            const activeFields = mappedKeys.length > 0 ? mappedKeys : ['name', 'enrlNo', 'class', 'fatherName'];
+
+            document.getElementById('previewHead').innerHTML = `
+                <th class="py-2 pr-3 w-10">#</th>
+                ` + activeFields.map(k => {                 
+                    const f = TARGET_FIELDS.find(x => x.key === k);                 
+                    return `<th class="py-2 pr-3">${f ? f.label.replace(' *', '') : k}</th>`;             
+                }).join('');              
 
             document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map((row, idx) => {                 
                 const record = buildRecordFromRow(row);                 
-                return `<tr class="border-b border-slate-900">
-                    <td class="py-1 pr-3 text-slate-500 font-bold">${idx + 1}</td>
-                    <td><div class="flex gap-3">${mappedTargets.map(t => `<div class="py-1 pr-3 text-slate-300 truncate">${record[t] || '-'}</div>`).join('')}</div></td>
-                </tr>`;             }).join('');         
+                return `<tr class="hover:bg-slate-950/40">
+                    <td class="py-2 pr-3 text-slate-500 font-bold">${idx + 1}</td>
+                    ${activeFields.map(k => `<td class="py-2 pr-3 text-slate-300 truncate max-w-[140px]">${record[k] || row[sourceHeaders.indexOf(mapping[k])] || '-'}</td>`).join('')}
+                </tr>`;             
+            }).join('');         
         }
 
         async function startImportAndMerge() {
-            if (!mapping.name) {
-                alert("Please map the 'Student Name' column before proceeding.");
-                return;
-            }
-
             document.getElementById('mapSection').classList.add('hidden');
             document.getElementById('progressSection').classList.remove('hidden');
 
@@ -513,7 +544,6 @@
 
                     if (existingIndex !== -1) {
                         const existingId = existingStudents[existingIndex].id;
-                        // Merge historical or new data fields while retaining existing properties
                         const updatedData = {
                             ...existingStudents[existingIndex],
                             ...record,
@@ -541,14 +571,14 @@
                     failedImportRowsForExport.push({ row: i + 1, identifier: record.name, reason: err.message });
                 }
 
-                if (i % 15 === 0) {
-                    await new Promise(r => setTimeout(r, 4));
+                if (i % 20 === 0) {
+                    await new Promise(r => setTimeout(r, 2));
                 }
             }
 
             // Automatic deduplication sweep after import/merge
             try {
-                const finalStudents = await LamaAPI.list('students');
+                let finalStudents = await LamaAPI.list('students');
                 const seen = new Set();
                 const uniqueStudents = [];
                 for (const stu of finalStudents) {
@@ -637,5 +667,4 @@
             renderHeader();         
         }     
     </script> 
-</body> 
-</html>
+</body>

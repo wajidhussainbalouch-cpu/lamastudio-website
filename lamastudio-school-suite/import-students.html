@@ -53,7 +53,7 @@
             <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white overflow-hidden shadow-lg">SCH</div>             
             <div>                 
                 <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>                 
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Historical Data Matching & Merge</p>             
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Student Roster Import & Historical Merge</p>             
             </div>         
         </div>         
         <div class="flex items-center gap-2">             
@@ -68,7 +68,7 @@
                 <h2 class="text-xs font-black uppercase text-amber-400">🧹 Database Cleanup & Duplicate Removal</h2>
                 <span id="dbStudentCountBadge" class="bg-amber-950/80 border border-amber-500/30 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Scanning Database...</span>
             </div>
-            <p class="text-[11px] text-slate-400">Scan your stored student records to automatically merge or purge duplicates before matching historical academic records.</p>
+            <p class="text-[11px] text-slate-400">Scan your stored student records to automatically merge or purge duplicates before importing or merging.</p>
             <div class="flex items-center gap-3 pt-2">
                 <button onclick="scanAndCleanDuplicates()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2">
                     🔍 Scan & Clean Database
@@ -79,14 +79,14 @@
 
         <section id="uploadSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">             
             <div class="flex items-center justify-between flex-wrap gap-2">
-                <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Historical File (Marks, Pictures, Contacts)</h2>             
+                <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Student File (PDF Roster OR Excel/CSV/Macro Data)</h2>             
                 <div class="flex items-center gap-2">
                     <span id="fileRecordCountBadge" class="hidden bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">0 Records in File</span>
                 </div>
             </div>
-            <p class="text-[11px] text-slate-400">Upload last year's Excel/CSV file containing marks, contact numbers, and picture URLs/paths. The system will intelligently match them with your current students by Enrollment No or Student Name.</p>             
+            <p class="text-[11px] text-slate-400">Upload a <strong>PDF</strong> file to import your student roster (Name, Enrollment No, Class, Father Name), or upload an <strong>Excel/Macro/CSV</strong> file to merge historical marks, contacts, and pictures.</p>             
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold file:cursor-pointer hover:file:bg-purple-500">             
+                <input type="file" id="fileInput" accept=".pdf,.xlsx,.xls,.xlsm,.csv" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold file:cursor-pointer hover:file:bg-purple-500">             
                 <button onclick="downloadSampleTemplate()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] px-3.5 py-2.5 rounded-xl transition flex-shrink-0">⬇ Download Historical Template</button>
             </div>
             
@@ -100,8 +100,8 @@
         <section id="mapSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hidden shadow-xl">             
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Map Historical Fields (Marks, Pictures & Contacts)</h2>             
-                    <p class="text-[11px] text-slate-400">Match the columns from your historical file to update existing student profiles.</p>             
+                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Map File Fields (Roster or Historical Data)</h2>             
+                    <p class="text-[11px] text-slate-400">Match the columns from your uploaded file to import or merge student profiles.</p>             
                 </div>
             </div>
 
@@ -123,12 +123,12 @@
             </div>              
 
             <button onclick="startImportAndMerge()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">                 
-                🚀 Match & Merge Data for <span id="rowCountLabel"></span> Records             
+                🚀 Process & Import/Merge <span id="rowCountLabel"></span> Records             
             </button>         
         </section>          
 
         <section id="progressSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 hidden shadow-xl">             
-            <h2 class="text-xs font-black uppercase text-amber-400">Matching & Merging Student Records...</h2>             
+            <h2 class="text-xs font-black uppercase text-amber-400">Processing & Merging Student Records...</h2>             
             <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">                 
                 <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>             
             </div>             
@@ -137,7 +137,7 @@
 
         <section id="resultsSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hidden shadow-xl">             
             <div class="flex items-center justify-between flex-wrap gap-2">
-                <h2 class="text-xs font-black uppercase text-emerald-400">Merge & Match Complete</h2>             
+                <h2 class="text-xs font-black uppercase text-emerald-400">Import & Merge Complete</h2>             
                 <div class="flex items-center gap-2">
                     <button onclick="exportImportErrorReport()" id="exportErrBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] px-3 py-1.5 rounded-lg transition">📥 Export Unmatched Rows CSV</button>
                     <a href="manage-students.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">View Students &rarr;</a>         
@@ -146,7 +146,7 @@
 
             <div class="grid grid-cols-3 gap-3">                 
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Successfully Merged</p>                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Successfully Updated / Merged</p>                     
                     <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>                 
                 </div>                 
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
@@ -176,7 +176,7 @@
 
             <div class="space-y-2 pt-2 border-t border-slate-800">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Updated Students Preview</h3>
+                    <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Processed Students Preview</h3>
                     <span id="importedTotalBadge" class="text-[10px] bg-purple-950/80 border border-purple-500/30 text-purple-300 px-2 py-0.5 rounded-md font-bold"></span>
                 </div>
                 <div id="importedStudentsPreviewGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1"></div>
@@ -208,7 +208,7 @@
                 if (school) {
                     if (school.name) {
                         document.getElementById('headerSchoolName').innerText = school.name;
-                        document.getElementById('pageTitle').innerText = `${school.name} - Historical Merge`;
+                        document.getElementById('pageTitle').innerText = `${school.name} - Student Roster & Merge`;
                     }
                     if (school.logo) {
                         document.getElementById('schoolLogoBox').innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover">`;
@@ -279,7 +279,81 @@
             const fileBadge = document.getElementById('fileRecordCountBadge');
             fileBadge.classList.add('hidden');
 
-            parseSpreadsheetFile(file);
+            const fileName = file.name.toLowerCase();
+            if (fileName.endsWith('.pdf')) {
+                parsePdfFile(file);
+            } else {
+                parseSpreadsheetFile(file);
+            }
+        }
+
+        async function parsePdfFile(file) {
+            const pdfStatus = document.getElementById('pdfStatus');
+            pdfStatus.innerText = "Extracting student roster from PDF...";
+            pdfStatus.classList.remove('hidden');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdfDoc = await loadingTask.promise;
+                
+                let extractedRows = [];
+                for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                    const page = await pdfDoc.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    
+                    let lineBuffer = [];
+                    let lastY = null;
+                    
+                    textContent.items.forEach(item => {
+                        const y = Math.round(item.transform[5]);
+                        if (lastY !== null && Math.abs(y - lastY) > 5) {
+                            if (lineBuffer.length > 0) {
+                                extractedRows.push(lineBuffer.join(' ').trim());
+                                lineBuffer = [];
+                            }
+                        }
+                        lineBuffer.push(item.str.trim());
+                        lastY = y;
+                    });
+                    if (lineBuffer.length > 0) {
+                        extractedRows.push(lineBuffer.join(' ').trim());
+                    }
+                }
+
+                // Filter valid student rows from extracted PDF text
+                const studentRecords = [];
+                for (let line of extractedRows) {
+                    // Look for patterns containing digits and name tokens
+                    if (line.length > 5 && !line.toLowerCase().includes('report') && !line.toLowerCase().includes('page')) {
+                        const parts = line.split(/\s{2,}|\t+|(?=\b\d{1,5}\b)/).map(p => p.trim()).filter(Boolean);
+                        if (parts.length >= 2) {
+                            studentRecords.push({
+                                name: parts[0].replace(/^\d+[\.\)]?\s*/, ''),
+                                enrlNo: parts.length > 1 && /^\d+$/.test(parts[1]) ? parts[1] : '',
+                                class: parts.length > 2 ? parts[2] : '1',
+                                fatherName: parts.length > 3 ? parts[3] : ''
+                            });
+                        }
+                    }
+                }
+
+                if (studentRecords.length === 0) {
+                    throw new Error("No structured student rows recognized in PDF.");
+                }
+
+                sourceHeaders = ['Student Name', 'Enrollment No', 'Class', 'Father Name'];
+                sourceRows = studentRecords.map(r => [r.name, r.enrlNo, r.class, r.fatherName]);
+
+                pdfStatus.innerText = `Successfully extracted ${sourceRows.length} student records from PDF.`;
+                const fileBadge = document.getElementById('fileRecordCountBadge');
+                fileBadge.innerText = `${sourceRows.length} Records in PDF`;
+                fileBadge.classList.remove('hidden');
+
+                setupMapping();
+            } catch(err) {
+                pdfStatus.innerText = "Error parsing PDF: " + err.message;
+            }
         }
 
         function parseSpreadsheetFile(file) {
@@ -386,7 +460,7 @@
 
         async function startImportAndMerge() {
             if (!mapping.name) {
-                alert("Please map the 'Student Name' column before matching.");
+                alert("Please map the 'Student Name' column before proceeding.");
                 return;
             }
 
@@ -416,7 +490,7 @@
                 
                 const pct = Math.round(((i + 1) / total) * 100);
                 progressBar.style.width = pct + '%';
-                progressLabel.innerText = `Matching row ${i + 1} of ${total}...`;
+                progressLabel.innerText = `Processing row ${i + 1} of ${total}...`;
 
                 if (!record.name) {
                     failCount++;
@@ -439,11 +513,10 @@
 
                     if (existingIndex !== -1) {
                         const existingId = existingStudents[existingIndex].id;
-                        // Merge historical data fields while keeping existing properties
+                        // Merge historical or new data fields while retaining existing properties
                         const updatedData = {
                             ...existingStudents[existingIndex],
                             ...record,
-                            // Ensure marks/photos are properly populated if present in historical record
                             marks: record.marks || existingStudents[existingIndex].marks || '',
                             photo: record.photo || existingStudents[existingIndex].photo || '',
                             contact: record.contact || existingStudents[existingIndex].contact || ''
@@ -473,7 +546,7 @@
                 }
             }
 
-            // Automatic deduplication sweep after merge
+            // Automatic deduplication sweep after import/merge
             try {
                 const finalStudents = await LamaAPI.list('students');
                 const seen = new Set();
@@ -515,7 +588,7 @@
 
             const previewGrid = document.getElementById('importedStudentsPreviewGrid');
             const totalBadge = document.getElementById('importedTotalBadge');
-            totalBadge.innerText = `Total Merged: ${successfullyImportedRecords.length} Students`;
+            totalBadge.innerText = `Total Processed: ${successfullyImportedRecords.length} Students`;
 
             if (successfullyImportedRecords.length > 0) {
                 previewGrid.innerHTML = successfullyImportedRecords.slice(0, 12).map((stu, idx) => `
@@ -529,7 +602,7 @@
                             <p class="text-[9px] text-slate-400 truncate">Marks: ${stu.marks || '-'} | Enrl: ${stu.enrlNo || '-'}</p>
                         </div>
                     </div>
-                `).join('') + (successfullyImportedRecords.length > 12 ? `<div class="col-span-full text-center text-[10px] text-slate-500 pt-1">+ ${successfullyImportedRecords.length - 12} more students merged successfully.</div>` : '');
+                `).join('') + (successfullyImportedRecords.length > 12 ? `<div class="col-span-full text-center text-[10px] text-slate-500 pt-1">+ ${successfullyImportedRecords.length - 12} more students processed successfully.</div>` : '');
             } else {
                 previewGrid.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No students were processed.</p>`;
             }

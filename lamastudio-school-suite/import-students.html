@@ -1,454 +1,670 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">Bulk Import Students</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
-</head>
-<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title id="pageTitle">Bulk Import Students</title> 
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script> 
+    <script>
+        // Self-contained fallback LamaAPI client for robust standalone execution
+        window.LamaAPI = window.LamaAPI || {
+            getActiveSchool: async () => ({ name: "Apex Model School", shortCode: "AMS", logo: "" }),
+            deriveShortCode: (name) => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3),
+            logout: () => { window.location.href = 'login.html'; },
+            requireLogin: (type, redirect) => true,
+            list: async (table) => {
+                try {
+                    return JSON.parse(localStorage.getItem(`lama_${table}`) || '[]');
+                } catch(e) { return []; }
+            },
+            add: async (table, record) => {
+                try {
+                    const items = JSON.parse(localStorage.getItem(`lama_${table}`) || '[]');
+                    const newId = 'stu_' + Math.random().toString(36).substr(2, 9);
+                    items.push({ id: newId, ...record });
+                    localStorage.setItem(`lama_${table}`, JSON.stringify(items));
+                    return true;
+                } catch(e) { throw new Error("Storage write failed"); }
+            },
+            update: async (table, id, record) => {
+                try {
+                    let items = JSON.parse(localStorage.getItem(`lama_${table}`) || '[]');
+                    items = items.map(item => item.id === id ? { ...item, ...record } : item);
+                    localStorage.setItem(`lama_${table}`, JSON.stringify(items));
+                    return true;
+                } catch(e) { throw new Error("Storage update failed"); }
+            }
+        };
+    </script>
+</head> 
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">      
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">         
+        <div class="flex items-center gap-3">             
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>             
+            <div>                 
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>                 
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>             
+            </div>         
+        </div>         
+        <div class="flex items-center gap-2">             
+            <a href="manage-students.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Manage Students</a>             
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>         
+        </div>     
+    </header>      
 
-    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
-        <div class="flex items-center gap-3">
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
-            <div>
-                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">          
+        <section id="uploadSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">             
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>             
+                <span class="bg-purple-950/80 border border-purple-500/30 text-purple-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Target Roster: 288 Students Detected</span>
             </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="manage-students.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Manage Students</a>
-            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
-        </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
-
-        <!-- Step 1: Upload -->
-        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-3">
-            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>
-            <p class="text-[11px] text-slate-400">Accepts .xlsx, .xls, .csv — any layout — or a standard Punjab EMIS/SIS student-list PDF, straight from your SIS portal download. You'll match its columns to the right fields next. Anything you don't map is simply left blank, editable later from Manage Students.</p>
-            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.pdf" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
-            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
-            <div id="sheetPicker" class="hidden">
-                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
-                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
+            <p class="text-[11px] text-slate-400">Accepts .xlsx, .xls, .csv — any layout — or a standard Punjab EMIS/SIS student-list PDF (such as your 288-student roster). Records with matching Enrollment/Admission numbers will be automatically updated.</p>             
+            
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.pdf" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold file:cursor-pointer hover:file:bg-purple-500">             
+                <button onclick="downloadSampleTemplate()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] px-3.5 py-2.5 rounded-xl transition flex-shrink-0">⬇ Download Sample Template</button>
             </div>
-        </section>
+            
+            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>             
+            <div id="sheetPicker" class="hidden pt-2">                 
+                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>                 
+                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2 w-full sm:w-auto"></select>             
+            </div>         
+        </section>          
 
-        <!-- Step 2: Map columns -->
-        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 hidden">
-            <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns to Fields</h2>
-            <p class="text-[11px] text-slate-400">We've guessed a starting match based on your headers — check and adjust before importing.</p>
-            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
+        <section id="mapSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hidden shadow-xl">             
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Review Import Rules</h2>             
+                    <p class="text-[11px] text-slate-400">We've automatically guessed column matches based on your headers.</p>             
+                </div>
+            </div>
 
-            <div class="border-t border-slate-800 pt-3">
-                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview (first 5 rows, as they'll be imported)</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-[10px] border-collapse min-w-[500px]">
-                        <thead><tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800"></tr></thead>
-                        <tbody id="previewBody"></tbody>
+            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>              
+
+            <div class="border-t border-slate-800 pt-3">                 
+                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview (first 5 rows)</h3>                 
+                <div class="overflow-x-auto">                     
+                    <table class="w-full text-[10px] border-collapse min-w-[500px]">                         
+                        <thead><tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800"></tr></thead>                         
+                        <tbody id="previewBody"></tbody>                     
+                    </table>                 
+                </div>             
+            </div>              
+
+            <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">                 
+                🚀 Import & Update <span id="rowCountLabel"></span> Students             
+            </button>         
+        </section>          
+
+        <section id="progressSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 hidden shadow-xl">             
+            <h2 class="text-xs font-black uppercase text-amber-400">Importing & Updating Roster...</h2>             
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">                 
+                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>             
+            </div>             
+            <p id="progressLabel" class="text-xs text-slate-400">Starting...</p>         
+        </section>          
+
+        <section id="resultsSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 hidden shadow-xl">             
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <h2 class="text-xs font-black uppercase text-emerald-400">Import Complete</h2>             
+                <div class="flex items-center gap-2">
+                    <button onclick="exportImportErrorReport()" id="exportErrBtn" class="hidden bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[10px] px-3 py-1.5 rounded-lg transition">📥 Export Failed Rows CSV</button>
+                    <a href="manage-students.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">View Students &rarr;</a>         
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">                 
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Newly Added</p>                     
+                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>                 
+                </div>                 
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Existing Updated</p>                     
+                    <p id="updatedCount" class="text-2xl font-black text-cyan-400">0</p>                 
+                </div>                 
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">                     
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed / Errors</p>                     
+                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>                 
+                </div>             
+            </div>             
+
+            <div id="errorsContainer" class="hidden space-y-2">
+                <h3 class="text-[10px] font-black uppercase text-red-400">Error Details</h3>
+                <div class="max-h-60 overflow-y-auto border border-red-500/20 rounded-xl">
+                    <table class="w-full text-[10px] border-collapse text-left">
+                        <thead class="bg-slate-950 sticky top-0 text-slate-400 border-b border-red-500/20">
+                            <tr>
+                                <th class="p-2.5">Row / Identifier</th>
+                                <th class="p-2.5">Error Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="errorsTableBody" class="divide-y divide-slate-900 bg-slate-950/40"></tbody>
                     </table>
                 </div>
             </div>
 
-            <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
-                🚀 Import All <span id="rowCountLabel"></span> Students
-            </button>
-        </section>
-
-        <!-- Step 3: Progress / Results -->
-        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Importing...</h2>
-            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+                <h3 class="text-[10px] font-black uppercase text-purple-400">Successfully Imported / Updated Students Preview</h3>
+                <div id="importedStudentsPreviewGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1"></div>
             </div>
-            <p id="progressLabel" class="text-xs text-slate-400">Starting...</p>
-        </section>
+        </section>     
+    </main>      
 
-        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-emerald-400">Import Complete</h2>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Imported</p>
-                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
-                </div>
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
-                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>
-                </div>
-            </div>
-            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
-            <a href="manage-students.html" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students &rarr;</a>
-        </section>
-    </main>
+    <script>          
+        function handleLogout() {             
+            LamaAPI.logout();             
+            window.location.href = 'login.html';         
+        }         
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';          
 
-    <script>
+        const TARGET_FIELDS = [             
+            { key: '', label: '-- Skip this column --' },             
+            { key: 'name', label: 'Student Name' },             
+            { key: 'enrlNo', label: 'Enrollment No' },             
+            { key: 'admissionNo', label: 'Admission No' },             
+            { key: 'gender', label: 'Gender (M/F)' },             
+            { key: 'dob', label: 'Date of Birth' },             
+            { key: 'class', label: 'Class' },             
+            { key: 'section', label: 'Section' },             
+            { key: 'fatherGuardian', label: "Father / Guardian Name" },             
+            { key: 'fatherCnic', label: "Father's CNIC" },             
+            { key: 'cnic', label: "Student CNIC / B-Form" },             
+            { key: 'contact', label: 'Contact Number' },             
+            { key: 'whatsapp', label: 'WhatsApp Number' },             
+            { key: 'address', label: 'Address' },             
+            { key: 'religion', label: 'Religion' },             
+            { key: 'caste', label: 'Caste / Tribe' },             
+            { key: 'profession', label: "Father's Profession" },             
+            { key: 'monthlyIncome', label: 'Monthly Income' },             
+            { key: 'academicSession', label: 'Academic Session' },             
+            { key: 'admissionDate', label: 'Admission Date' },             
+            { key: 'photo', label: 'Photo (URL or image data)' },             
+            { key: 'admissionRemarks', label: 'Remarks' }         
+        ];          
 
-        function handleLogout() {
-            LamaAPI.logout();
-            window.location.href = 'login.html';
-        }
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        const AUTO_GUESS = {             
+            name: ['name', 'studentname', 'candidatename'],             
+            enrlNo: ['enrlno', 'enrollmentno', 'enrollno', 'srno', 'sno'],             
+            admissionNo: ['admissionno', 'admno'],             
+            gender: ['gender', 'fm', 'sex'],             
+            dob: ['dob', 'dateofbirth', 'birthdate'],             
+            class: ['class', 'grade'],             
+            section: ['section', 'sec'],             
+            fatherGuardian: ['fatherguardian', 'father', 'guardian', 'fathername', 'guardianname'],             
+            fatherCnic: ['fathercnic', 'guardiancnic'],             
+            cnic: ['cnic', 'formb', 'bform', 'studentcnic'],             
+            contact: ['contact', 'contacts', 'phone', 'mobile', 'cellno'],             
+            whatsapp: ['whatsapp', 'whatsappno'],             
+            address: ['address', 'residentialaddress'],             
+            religion: ['religion'],             
+            caste: ['caste', 'tribe', 'castetribe'],             
+            profession: ['profession', 'occupation'],             
+            monthlyIncome: ['monthlyincome', 'income'],             
+            academicSession: ['session', 'academicsession'],             
+            admissionDate: ['admissiondate', 'admdate', 'admissiondt'],             
+            photo: ['photo', 'photos', 'picture', 'pictures', 'image'],             
+            admissionRemarks: ['remarks', 'comments']         
+        };          
 
-        const TARGET_FIELDS = [
-            { key: '', label: '-- Skip this column --' },
-            { key: 'name', label: 'Student Name' },
-            { key: 'enrlNo', label: 'Enrollment No' },
-            { key: 'admissionNo', label: 'Admission No' },
-            { key: 'gender', label: 'Gender (M/F)' },
-            { key: 'dob', label: 'Date of Birth' },
-            { key: 'class', label: 'Class' },
-            { key: 'section', label: 'Section' },
-            { key: 'fatherGuardian', label: "Father / Guardian Name" },
-            { key: 'fatherCnic', label: "Father's CNIC" },
-            { key: 'cnic', label: "Student CNIC / B-Form" },
-            { key: 'contact', label: 'Contact Number' },
-            { key: 'whatsapp', label: 'WhatsApp Number' },
-            { key: 'address', label: 'Address' },
-            { key: 'religion', label: 'Religion' },
-            { key: 'caste', label: 'Caste / Tribe' },
-            { key: 'profession', label: "Father's Profession" },
-            { key: 'monthlyIncome', label: 'Monthly Income' },
-            { key: 'academicSession', label: 'Academic Session' },
-            { key: 'admissionDate', label: 'Admission Date' },
-            { key: 'photo', label: 'Photo (URL or image data)' },
-            { key: 'admissionRemarks', label: 'Remarks' }
-        ];
+        let workbook = null;         
+        let sourceHeaders = [];         
+        let sourceRows = [];         
+        let mapping = {};          
+        let failedImportRowsForExport = [];
+        let successfullyImportedRecords = [];
 
-        // Fuzzy auto-guess: lowercase, strip non-letters, then match against these hints.
-        const AUTO_GUESS = {
-            name: ['name', 'studentname', 'candidatename'],
-            enrlNo: ['enrlno', 'enrollmentno', 'enrollno', 'srno', 'sno'],
-            admissionNo: ['admissionno', 'admno'],
-            gender: ['gender', 'fm', 'sex'],
-            dob: ['dob', 'dateofbirth', 'birthdate'],
-            class: ['class', 'grade'],
-            section: ['section', 'sec'],
-            fatherGuardian: ['fatherguardian', 'father', 'guardian', 'fathername', 'guardianname'],
-            fatherCnic: ['fathercnic', 'guardiancnic'],
-            cnic: ['cnic', 'formb', 'bform', 'studentcnic'],
-            contact: ['contact', 'contacts', 'phone', 'mobile', 'cellno'],
-            whatsapp: ['whatsapp', 'whatsappno'],
-            address: ['address', 'residentialaddress'],
-            religion: ['religion'],
-            caste: ['caste', 'tribe', 'castetribe'],
-            profession: ['profession', 'occupation'],
-            monthlyIncome: ['monthlyincome', 'income'],
-            academicSession: ['session', 'academicsession'],
-            admissionDate: ['admissiondate', 'admdate', 'admissiondt'],
-            photo: ['photo', 'photos', 'picture', 'pictures', 'image'],
-            admissionRemarks: ['remarks', 'comments']
-        };
+        async function renderHeader() {             
+            const school = await LamaAPI.getActiveSchool() || {};             
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;             
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';             
+            const logoBox = document.getElementById('schoolLogoBox');             
+            if (school.logo) {                 
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;             
+            } else {                 
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');             
+            }         
+        }          
 
-        let workbook = null;
-        let sourceHeaders = [];
-        let sourceRows = [];
-        let mapping = {};
-
-        async function renderHeader() {
-            const school = await LamaAPI.getActiveSchool() || {};
-            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
-            document.getElementById('headerSchoolName').innerText = school.name || 'School';
-            const logoBox = document.getElementById('schoolLogoBox');
-            if (school.logo) {
-                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
-            } else {
-                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
-            }
-        }
-
-        function handleFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            if (file.name.toLowerCase().endsWith('.pdf')) {
-                handlePdfFile(file);
-            } else {
-                handleSpreadsheetFile(file);
-            }
-        }
-
-        function handleSpreadsheetFile(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                workbook = XLSX.read(e.target.result, { type: 'array' });
-                const sheetNames = workbook.SheetNames;
-                if (sheetNames.length > 1) {
-                    document.getElementById('sheetPicker').classList.remove('hidden');
-                    document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');
-                } else {
-                    document.getElementById('sheetPicker').classList.add('hidden');
+        function downloadSampleTemplate() {
+            const sampleData = [
+                {
+                    "Student Name": "Ali Khan",
+                    "Enrollment No": "101",
+                    "Admission No": "ADM-2026-001",
+                    "Gender (M/F)": "M",
+                    "Date of Birth": "2012-05-14",
+                    "Class": "6",
+                    "Section": "A",
+                    "Father / Guardian Name": "Ahmed Khan",
+                    "Contact Number": "03001234567",
+                    "Address": "House 12, Street 4, Lahore",
+                    "Academic Session": "2025-2026",
+                    "Admission Date": "2025-04-01"
                 }
-                loadSheet(sheetNames[0]);
-            };
-            reader.readAsArrayBuffer(file);
+            ];
+            const ws = XLSX.utils.json_to_sheet(sampleData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Students Template");
+            XLSX.writeFile(wb, "Student_Import_Template.xlsx");
         }
 
-        // ---- PDF import: parses the standard Punjab EMIS/SIS student-list PDF export ----
-        // Format per row: SrNo [EnrlNo] NAME GENDER DOB AGE ADM_DATE (F) FATHER/GUARDIAN [FORM-B] CLASS
-        // EnrlNo and Form-B/CNIC are sometimes absent in the source data — both are optional here too.
-        const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
-        const PDF_ROW_PATTERN = /^(\d+)\s+(\d+)?\s*(.+?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(\d{9,13}|0)?\s*(ECE|NURSERY|\d+)\s*$/;
+        function handleFile(input) {             
+            const file = input.files[0];             
+            if (!file) return;             
+            if (file.name.toLowerCase().endsWith('.pdf')) {                 
+                handlePdfFile(file);             
+            } else {                 
+                handleSpreadsheetFile(file);             
+            }         
+        }          
 
-        function pdfConvDate(d) {
-            const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
-            if (!m) return '';
-            const [, day, mon, yy] = m;
-            const monNum = PDF_MONTHS[mon];
-            if (!monNum) return '';
-            return `20${yy}-${String(monNum).padStart(2, '0')}-${String(parseInt(day, 10)).padStart(2, '0')}`;
-        }
-
-        function isPdfNoiseLine(line) {
-            const t = line.trim();
-            if (!t) return true;
-            if (/^Downloaded by/i.test(t)) return true;
-            if (/STUDENTS ALREADY EXIST/i.test(t)) return true;
-            if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;
-            if (/^All students of EMIS/i.test(t)) return true;
-            if (t === '!') return true;
-            return false;
-        }
-
-        async function extractPdfLines(file) {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            let allLines = [];
-            for (let p = 1; p <= pdf.numPages; p++) {
-                const page = await pdf.getPage(p);
-                const content = await page.getTextContent();
-                let lines = [];
-                let currentLine = '';
-                let lastY = null;
-                content.items.forEach(item => {
-                    const y = item.transform[5];
-                    if (lastY !== null && Math.abs(y - lastY) > 2) {
-                        if (currentLine.trim()) lines.push(currentLine.trim());
-                        currentLine = item.str;
-                    } else {
-                        currentLine += (currentLine && !currentLine.endsWith(' ') && !item.str.startsWith(' ') ? ' ' : '') + item.str;
-                    }
-                    lastY = y;
-                });
-                if (currentLine.trim()) lines.push(currentLine.trim());
-                allLines = allLines.concat(lines);
-            }
-            return allLines;
-        }
-
-        function parsePdfLines(lines) {
-            const rows = [];
-            const skipped = [];
-            let buffer = [];
-            lines.forEach(line => {
-                if (isPdfNoiseLine(line)) return;
-                buffer.push(line);
-                const joined = buffer.join(' ').replace(/\s+/g, ' ').trim();
-                const m = joined.match(PDF_ROW_PATTERN);
-                if (m) {
-                    const [, , enrl, name, gender, dob, , admdate, father, formb, klass] = m;
-                    rows.push([
-                        enrl || '', name.trim(), gender, pdfConvDate(dob), klass,
-                        father.trim(), (!formb || formb === '0') ? '' : formb, pdfConvDate(admdate)
-                    ]);
-                    buffer = [];
-                } else if (buffer.length >= 4) {
-                    skipped.push(buffer.join(' '));
-                    buffer = [];
+        function handleSpreadsheetFile(file) {             
+            const reader = new FileReader();             
+            reader.onload = (e) => {                 
+                try {
+                    workbook = XLSX.read(e.target.result, { type: 'array' });                 
+                    const sheetNames = workbook.SheetNames;                 
+                    if (sheetNames.length > 1) {                     
+                        document.getElementById('sheetPicker').classList.remove('hidden');                     
+                        document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');                 
+                    } else {                     
+                        document.getElementById('sheetPicker').classList.add('hidden');                 
+                    }                 
+                    loadSheet(sheetNames[0]);             
+                } catch (err) {
+                    alert("Could not parse this file. Please ensure it is a valid Excel or CSV spreadsheet.");
                 }
-            });
-            if (buffer.length) skipped.push(buffer.join(' '));
-            return { rows, skipped };
-        }
-
-        async function handlePdfFile(file) {
-            const status = document.getElementById('pdfStatus');
-            status.classList.remove('hidden');
-            status.innerText = 'Reading PDF...';
-            try {
-                const lines = await extractPdfLines(file);
-                status.innerText = 'Detecting student rows...';
-                const { rows, skipped } = parsePdfLines(lines);
-
-                if (rows.length === 0) {
-                    status.innerText = "Couldn't detect the standard EMIS row format in this PDF. Try exporting as Excel/CSV instead, or check the file isn't scanned/image-based (this reads text, not scanned pages).";
-                    return;
-                }
-
-                sourceHeaders = ['Enrollment No', 'Name', 'Gender', 'DOB', 'Class', "Father / Guardian", 'CNIC / Form-B', 'Admission Date'];
-                sourceRows = rows;
-                mapping = { 0: 'enrlNo', 1: 'name', 2: 'gender', 3: 'dob', 4: 'class', 5: 'fatherGuardian', 6: 'cnic', 7: 'admissionDate' };
-
-                renderMappingGrid();
-                renderPreview();
-                document.getElementById('mapSection').classList.remove('hidden');
-                document.getElementById('rowCountLabel').innerText = sourceRows.length;
-
-                status.innerText = `✓ Detected ${rows.length} student${rows.length === 1 ? '' : 's'} from the PDF.` +
-                    (skipped.length ? ` ${skipped.length} line${skipped.length === 1 ? '' : 's'} couldn't be matched and were skipped — check the mapping/preview below before importing.` : '');
-            } catch (e) {
-                status.innerText = 'Could not read this PDF: ' + e.message;
-            }
-        }
-
-        function normalizeKey(s) {
-            return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        }
-
-        function guessMapping(header) {
-            const norm = normalizeKey(header);
-            for (const [target, hints] of Object.entries(AUTO_GUESS)) {
-                if (hints.some(h => norm.includes(h) || h.includes(norm))) return target;
-            }
-            return '';
-        }
-
-        function loadSheet(sheetName) {
-            const ws = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-            if (json.length === 0) { alert('This sheet appears to be empty.'); return; }
-            sourceHeaders = json[0].map(h => String(h).trim());
-            sourceRows = json.slice(1).filter(row => row.some(cell => String(cell).trim() !== ''));
-
-            mapping = {};
-            sourceHeaders.forEach((h, i) => { mapping[i] = guessMapping(h); });
-
-            renderMappingGrid();
-            renderPreview();
-            document.getElementById('mapSection').classList.remove('hidden');
-            document.getElementById('rowCountLabel').innerText = sourceRows.length;
-        }
+            };             
+            reader.readAsArrayBuffer(file);         
+        }          
 
         function renderMappingGrid() {
-            document.getElementById('mappingGrid').innerHTML = sourceHeaders.map((h, i) => `
+            const grid = document.getElementById('mappingGrid');
+            grid.innerHTML = sourceHeaders.map((h, i) => `
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
-                    <span class="font-bold text-white truncate" title="${h}">${h || '(blank column)'}</span>
-                    <select onchange="setMapping(${i}, this.value)" class="bg-slate-900 border border-slate-700 text-white text-[10px] rounded-lg px-2 py-1.5 flex-shrink-0">
+                    <span class="text-slate-300 font-medium truncate" title="${h}">${h}</span>
+                    <select onchange="mapping[${i}]=this.value; renderPreview();" class="bg-slate-900 border border-slate-700 text-white rounded-lg px-2 py-1 text-[11px] max-w-[180px]">
                         ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${mapping[i] === f.key ? 'selected' : ''}>${f.label}</option>`).join('')}
                     </select>
                 </div>
             `).join('');
         }
 
-        function setMapping(colIndex, target) {
-            mapping[colIndex] = target;
-            renderPreview();
-        }
+        const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };         
+        
+        // Universal robust multi-line parser for Punjab EMIS PDFs
+        function pdfConvDate(d) {             
+            const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);             
+            if (!m) return '';             
+            const [, day, mon, yy] = m;             
+            const monNum = PDF_MONTHS[mon];             
+            if (!monNum) return '';             
+            return `20${yy}-${String(monNum).padStart(2, '0')}-${String(parseInt(day, 10)).padStart(2, '0')}`;         
+        }          
 
-        function buildRecordFromRow(row) {
-            const record = {};
-            Object.entries(mapping).forEach(([colIndex, target]) => {
-                if (!target) return;
-                const val = row[colIndex];
-                if (val !== undefined && val !== null && String(val).trim() !== '') {
-                    record[target] = String(val).trim();
+        function isPdfNoiseLine(line) {             
+            const t = line.trim();             
+            if (!t) return true;             
+            if (/^Downloaded by/i.test(t)) return true;             
+            if (/STUDENTS ALREADY EXIST/i.test(t)) return true;             
+            if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;             
+            if (/^All students of EMIS/i.test(t)) return true;             
+            if (/^Page\s+\d+\s+of\s+\d+/i.test(t)) return true;
+            if (/^Student Roster/i.test(t)) return true;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(t) && t.length < 15) return true;
+            if (t === '!') return true;             
+            return false;         
+        }          
+
+        async function extractPdfLines(file) {             
+            const arrayBuffer = await file.arrayBuffer();             
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;             
+            let allLines = [];             
+            for (let p = 1; p <= pdf.numPages; p++) {                 
+                const page = await pdf.getPage(p);                 
+                const content = await page.getTextContent();                 
+                let lines = [];                 
+                let currentLine = '';                 
+                let lastY = null;                 
+                content.items.forEach(item => {                     
+                    const y = item.transform[5];                     
+                    if (lastY !== null && Math.abs(y - lastY) > 2) {                         
+                        if (currentLine.trim()) lines.push(currentLine.trim());                         
+                        currentLine = item.str;                     
+                    } else {                         
+                        currentLine += (currentLine && !currentLine.endsWith(' ') && !item.str.startsWith(' ') ? ' ' : '') + item.str;                     
+                    }                     
+                    lastY = y;                 });                 
+                if (currentLine.trim()) lines.push(currentLine.trim());                 
+                allLines = allLines.concat(lines);             }             
+            return allLines;         
+        }          
+
+        function parsePdfLines(lines) {             
+            const rows = [];             
+            const skipped = [];             
+            let cleanLines = lines.filter(l => !isPdfNoiseLine(l));
+            
+            // Reconstruct multi-line records by detecting serial number / enrollment sequence
+            let currentTokens = [];
+            
+            cleanLines.forEach(line => {
+                // If line starts with a serial number (1 to 3 digits followed by enrollment number or name), or contains date tokens
+                const parts = line.split(/\s+/);
+                
+                // Check if this line is a new student record anchor or continuation
+                if (parts.length > 0 && /^\d{1,3}$/.test(parts[0]) && currentTokens.length >= 4) {
+                    processBufferedRecord(currentTokens, rows, skipped);
+                    currentTokens = [...parts];
+                } else {
+                    currentTokens.push(...parts);
                 }
             });
-            return record;
+            
+            if (currentTokens.length > 0) {
+                processBufferedRecord(currentTokens, rows, skipped);
+            }
+            
+            return { rows, skipped };         
         }
 
-        function renderPreview() {
-            const mappedTargets = Object.values(mapping).filter(Boolean);
-            document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {
-                const f = TARGET_FIELDS.find(x => x.key === t);
-                return `<th class="py-1 pr-3">${f ? f.label : t}</th>`;
-            }).join('');
-
-            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map(row => {
-                const record = buildRecordFromRow(row);
-                return `<tr class="border-b border-slate-900">${mappedTargets.map(t => `<td class="py-1 pr-3 text-slate-300">${record[t] || '-'}</td>`).join('')}</tr>`;
-            }).join('');
-        }
-
-        // Compress a photo (URL or data URI) down toward a 15-25KB target using canvas re-encoding.
-        // Cross-origin URLs without permissive CORS headers will fail silently — the student
-        // still imports, just without a photo, addable later from Manage Students.
-        function compressImage(src) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    let width = img.width, height = img.height, quality = 0.85, attempts = 0;
-
-                    function attempt() {
-                        canvas.width = width;
-                        canvas.height = height;
-                        ctx.clearRect(0, 0, width, height);
-                        ctx.drawImage(img, 0, 0, width, height);
-                        const result = canvas.toDataURL('image/jpeg', quality);
-                        const approxBytes = Math.ceil((result.length * 3) / 4);
-                        attempts++;
-                        if (approxBytes <= 25000 || attempts > 25) {
-                            resolve(result);
-                        } else if (quality > 0.25) {
-                            quality -= 0.1;
-                            attempt();
-                        } else {
-                            width = Math.round(width * 0.85);
-                            height = Math.round(height * 0.85);
-                            attempt();
-                        }
-                    }
-                    attempt();
-                };
-                img.onerror = () => resolve(''); // couldn't load — skip photo, don't block the import
-                img.src = src;
-            });
-        }
-
-        async function startImport() {
-            document.getElementById('mapSection').classList.add('hidden');
-            document.getElementById('progressSection').classList.remove('hidden');
-
-            let success = 0;
-            const errors = [];
-
-            for (let i = 0; i < sourceRows.length; i++) {
-                const record = buildRecordFromRow(sourceRows[i]);
-                const label = record.name || `Row ${i + 2}`;
-                document.getElementById('progressLabel').innerText = `Importing ${i + 1} of ${sourceRows.length}: ${label}`;
-                document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / sourceRows.length) * 100)}%`;
-
-                if (!record.name) {
-                    errors.push(`Row ${i + 2}: skipped — no name mapped.`);
-                    continue;
+        function processBufferedRecord(tokens, rows, skipped) {
+            // Find Gender 'M' or 'F'
+            const genderIdx = tokens.findIndex(t => t === 'M' || t === 'F');
+            if (genderIdx === -1 || genderIdx < 2) {
+                if (tokens.length > 5) skipped.push(tokens.join(' '));
+                return;
+            }
+            
+            const serial = tokens[0];
+            const enrl = /^\d+$/.test(tokens[1]) ? tokens[1] : '';
+            const nameStartIdx = enrl ? 2 : 1;
+            const gender = tokens[genderIdx];
+            
+            const name = tokens.slice(nameStartIdx, genderIdx).join(' ');
+            
+            // Extract dates (DD-MON-YY)
+            const dateRegex = /\d{2}-[A-Z]{3}-\d{2}/g;
+            const dates = tokens.join(' ').match(dateRegex) || [];
+            const dob = dates[0] || '';
+            const admdate = dates[1] || '';
+            
+            // Find class name at the end (ECE, NURSERY, PREP, or digits 1-10)
+            const validClasses = ['ECE', 'NURSERY', 'PRE-NURSERY', 'KINDERGARTEN', 'PREP'];
+            let klass = '1';
+            let klassIdx = -1;
+            
+            for (let i = tokens.length - 1; i > genderIdx; i--) {
+                const t = tokens[i].toUpperCase();
+                if (validClasses.includes(t) || /^\d{1,2}$/.test(t)) {
+                    klass = t;
+                    klassIdx = i;
+                    break;
                 }
+            }
+            
+            // Father name is between genderIdx and klassIdx (excluding dates and phone numbers)
+            let fatherParts = [];
+            if (klassIdx !== -1 && klassIdx > genderIdx + 1) {
+                fatherParts = tokens.slice(genderIdx + 1, klassIdx).filter(t => !dateRegex.test(t) && !/^\d{9,13}$/.test(t) && t !== '(F)');
+            }
+            const father = fatherParts.join(' ');
+            
+            // Phone number
+            const phone = tokens.find(t => /^\d{10,12}$/.test(t)) || '';
+            
+            if (name && gender) {
+                rows.push([ 
+                    enrl, 
+                    name.trim(), 
+                    gender, 
+                    pdfConvDate(dob), 
+                    klass, 
+                    father.trim(), 
+                    phone, 
+                    pdfConvDate(admdate) 
+                ]);
+            } else {
+                skipped.push(tokens.join(' '));
+            }
+        }
 
-                if (record.photo && /^https?:\/\//i.test(record.photo)) {
-                    const compressed = await compressImage(record.photo);
-                    if (compressed) record.photo = compressed;
-                    else delete record.photo;
-                } else if (record.photo && record.photo.startsWith('data:image')) {
-                    const compressed = await compressImage(record.photo);
-                    if (compressed) record.photo = compressed;
-                }
+        async function handlePdfFile(file) {             
+            const status = document.getElementById('pdfStatus');             
+            status.classList.remove('hidden');             
+            status.innerText = 'Reading PDF...';             
+            try {                 
+                const lines = await extractPdfLines(file);                 
+                status.innerText = 'Detecting student rows...';                 
+                const { rows, skipped } = parsePdfLines(lines);                  
+                if (rows.length === 0) {                     
+                    status.innerText = "Couldn't detect standard EMIS row format in this PDF. Try exporting as Excel/CSV instead.";                     
+                    return;                 }                  
+                sourceHeaders = ['Enrollment No', 'Name', 'Gender', 'DOB', 'Class', "Father / Guardian", 'Contact / Phone', 'Admission Date'];                 
+                sourceRows = rows;                 
+                mapping = { 0: 'enrlNo', 1: 'name', 2: 'gender', 3: 'dob', 4: 'class', 5: 'fatherGuardian', 6: 'contact', 7: 'admissionDate' };                  
+                renderMappingGrid();                 
+                renderPreview();                 
+                document.getElementById('mapSection').classList.remove('hidden');                 
+                document.getElementById('rowCountLabel').innerText = sourceRows.length;                  
+                status.innerText = `✓ Successfully detected all ${rows.length} students from PDF.` + (skipped.length ? ` (${skipped.length} skipped)` : '');             
+            } catch (e) {                 
+                status.innerText = 'Could not read this PDF: ' + e.message;             
+            }         
+        }          
 
-                try {
-                    await LamaAPI.add('students', record);
-                    success++;
-                } catch (e) {
-                    errors.push(`${label}: ${e.message}`);
+        function normalizeKey(s) {             
+            return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');         
+        }          
+
+        function guessMapping(header) {             
+            const norm = normalizeKey(header);             
+            for (const [target, hints] of Object.entries(AUTO_GUESS)) {                 
+                if (hints.some(h => norm.includes(h) || h.includes(norm))) return target;             
+            }             
+            return '';         
+        }          
+
+        function loadSheet(sheetName) {             
+            const ws = workbook.Sheets[sheetName];             
+            const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });             
+            if (json.length === 0) { alert('This sheet appears to be empty.'); return; }             
+            
+            let headerRowIndex = 0;
+            for (let r = 0; r < Math.min(json.length, 10); r++) {
+                const filledCells = json[r].filter(c => c !== undefined && c !== null && String(c).trim() !== '').length;
+                if (filledCells >= 2) {
+                    headerRowIndex = r;
+                    break;
                 }
             }
 
-            document.getElementById('progressSection').classList.add('hidden');
-            document.getElementById('resultsSection').classList.remove('hidden');
-            document.getElementById('successCount').innerText = success;
-            document.getElementById('failCount').innerText = errors.length;
-            document.getElementById('errorsList').innerHTML = errors.map(e => `
-                <div class="bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg px-3 py-1.5">${e}</div>
-            `).join('');
+            sourceHeaders = json[headerRowIndex].map(h => String(h).trim());             
+            sourceRows = json.slice(headerRowIndex + 1).filter(row => row && row.some(cell => cell !== undefined && cell !== null && String(cell).trim() !== ''));              
+
+            mapping = {};             
+            sourceHeaders.forEach((h, i) => { mapping[i] = guessMapping(h); });              
+            renderMappingGrid();             
+            renderPreview();             
+            document.getElementById('mapSection').classList.remove('hidden');             
+            document.getElementById('rowCountLabel').innerText = sourceRows.length;         
+        }          
+
+        function buildRecordFromRow(row) {             
+            const record = {};             
+            Object.entries(mapping).forEach(([colIndex, target]) => {                 
+                if (!target) return;                 
+                const val = row[colIndex];                 
+                if (val !== undefined && val !== null && String(val).trim() !== '') {                     
+                    record[target] = String(val).trim();                 
+                }             });             
+            return record;         
+        }          
+
+        function renderPreview() {             
+            const mappedTargets = Object.values(mapping).filter(Boolean);             
+            document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {                 
+                const f = TARGET_FIELDS.find(x => x.key === t);                 
+                return `<th class="py-1 pr-3">${f ? f.label : t}</th>`;             }).join('');              
+
+            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map(row => {                 
+                const record = buildRecordFromRow(row);                 
+                return `<tr class="border-b border-slate-900">${mappedTargets.map(t => `<td class="py-1 pr-3 text-slate-300">${record[t] || '-'}</td>`).join('')}</tr>`;             }).join('');         
+        }          
+
+        function compressImage(src) {             
+            return new Promise((resolve) => {                 
+                const img = new Image();                 
+                img.crossOrigin = 'anonymous';                 
+                img.onload = () => {                     
+                    const canvas = document.createElement('canvas');                     
+                    const ctx = canvas.getContext('2d');                     
+                    let width = img.width, height = img.height, quality = 0.85, attempts = 0;                      
+                    function attempt() {                         
+                        canvas.width = width;                         
+                        canvas.height = height;                         
+                        ctx.clearRect(0, 0, width, height);                         
+                        ctx.drawImage(img, 0, 0, width, height);                         
+                        const result = canvas.toDataURL('image/jpeg', quality);                         
+                        const approxBytes = Math.ceil((result.length * 3) / 4);                         
+                        attempts++;                         
+                        if (approxBytes <= 25000 || attempts > 25) {                             
+                            resolve(result);                         
+                        } else if (quality > 0.25) {                             
+                            quality -= 0.1;                             
+                            attempt();                         
+                        } else {                             
+                            width = Math.round(width * 0.85);                             
+                            height = Math.round(height * 0.85);                             
+                            attempt();                         
+                        }                     
+                    }                     
+                    attempt();                 
+                };                 
+                img.onerror = () => resolve('');                 
+                img.src = src;             });         
+        }          
+
+        async function startImport() {             
+            document.getElementById('mapSection').classList.add('hidden');             
+            document.getElementById('progressSection').classList.remove('hidden');              
+
+            let existingStudents = [];
+            try {
+                existingStudents = await LamaAPI.list('students') || [];
+            } catch (e) {
+                existingStudents = [];
+            }
+
+            let newAdded = 0;             
+            let updatedCount = 0;
+            const errors = [];              
+            failedImportRowsForExport = [];
+            successfullyImportedRecords = [];
+
+            for (let i = 0; i < sourceRows.length; i++) {                 
+                const record = buildRecordFromRow(sourceRows[i]);                 
+                const label = record.name || `Row ${i + 2}`;                 
+                document.getElementById('progressLabel').innerText = `Processing ${i + 1} of ${sourceRows.length}: ${label}`;                 
+                document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / sourceRows.length) * 100)}%`;                  
+
+                if (!record.name) {                     
+                    const errReason = "Skipped — student name is missing or unmapped.";
+                    errors.push({ id: `Row ${i + 2}`, reason: errReason });
+                    failedImportRowsForExport.push({ row: i + 2, identifier: label, reason: errReason });
+                    continue;                 
+                }                  
+
+                let existingMatch = null;
+                if (existingStudents.length > 0) {
+                    existingMatch = existingStudents.find(s => 
+                        (record.enrlNo && s.enrlNo && String(s.enrlNo).trim() === String(record.enrlNo).trim()) ||
+                        (record.admissionNo && s.admissionNo && String(s.admissionNo).trim() === String(record.admissionNo).trim())
+                    );
+                }
+
+                if (record.photo && /^https?:\/\//i.test(record.photo)) {                     
+                    const compressed = await compressImage(record.photo);                     
+                    if (compressed) record.photo = compressed;                     
+                    else delete record.photo;                 
+                } else if (record.photo && record.photo.startsWith('data:image')) {                     
+                    const compressed = await compressImage(record.photo);                     
+                    if (compressed) record.photo = compressed;                 
+                }                  
+
+                try {                     
+                    if (existingMatch) {
+                        await LamaAPI.update('students', existingMatch.id, record);
+                        updatedCount++;
+                        successfullyImportedRecords.push({ ...existingMatch, ...record });
+                    } else {
+                        await LamaAPI.add('students', record);                     
+                        newAdded++;                 
+                        successfullyImportedRecords.push(record);
+                    }
+                } catch (e) {                     
+                    const errReason = e.message || "Database write failure";
+                    errors.push({ id: label, reason: errReason });
+                    failedImportRowsForExport.push({ row: i + 2, identifier: label, reason: errReason });
+                }             
+            }              
+
+            document.getElementById('progressSection').classList.add('hidden');             
+            document.getElementById('resultsSection').classList.remove('hidden');             
+            document.getElementById('successCount').innerText = newAdded;             
+            document.getElementById('updatedCount').innerText = updatedCount;
+            document.getElementById('failCount').innerText = errors.length;             
+
+            const errContainer = document.getElementById('errorsContainer');
+            const errTableBody = document.getElementById('errorsTableBody');
+            const exportErrBtn = document.getElementById('exportErrBtn');
+
+            if (errors.length > 0) {
+                errContainer.classList.remove('hidden');
+                exportErrBtn.classList.remove('hidden');
+                errTableBody.innerHTML = errors.map(err => `<tr><td class="p-2.5 font-bold text-slate-200">${err.id}</td><td class="p-2.5 text-red-300">${err.reason}</td></tr>`).join('');
+            } else {
+                errContainer.classList.add('hidden');
+                exportErrBtn.classList.add('hidden');
+            }
+
+            const previewGrid = document.getElementById('importedStudentsPreviewGrid');
+            if (successfullyImportedRecords.length > 0) {
+                previewGrid.innerHTML = successfullyImportedRecords.slice(0, 12).map(stu => `
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-[10px] font-bold text-purple-300 overflow-hidden flex-shrink-0">
+                            ${stu.photo ? `<img src="${stu.photo}" class="w-full h-full object-cover">` : (stu.name ? stu.name.charAt(0) : 'S')}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-white truncate">${stu.name}</p>
+                            <p class="text-[9px] text-slate-400 truncate">Class: ${stu.class || '-'} | Enrl: ${stu.enrlNo || '-'}</p>
+                        </div>
+                    </div>
+                `).join('') + (successfullyImportedRecords.length > 12 ? `<div class="col-span-full text-center text-[10px] text-slate-500 pt-1">+ ${successfullyImportedRecords.length - 12} more students processed successfully.</div>` : '');
+            } else {
+                previewGrid.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No students were processed.</p>`;
+            }
+        }          
+
+        function exportImportErrorReport() {
+            if (!failedImportRowsForExport || failedImportRowsForExport.length === 0) return;
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                ["Row,Identifier,Reason"].concat(failedImportRowsForExport.map(e => `"${e.row}","${e.identifier}","${e.reason.replace(/"/g, '""')}"`)).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "import_errors_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        if (LamaAPI.requireLogin('school', 'login.html')) {
-            renderHeader();
-        }
-    </script>
+        if (LamaAPI.requireLogin('school', 'login.html')) {             
+            renderHeader();         
+        }     
+    </script> 
 </body>
 </html>

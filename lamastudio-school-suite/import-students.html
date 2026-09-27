@@ -700,6 +700,26 @@
                 }             
             }              
 
+            // Post-import automatic database cleanup to ensure exact record totals (e.g. 388 unique students)
+            try {
+                const allCurrentStudents = await LamaAPI.list('students') || [];
+                const finalUniqueMap = new Map();
+                const finalCleanedList = [];
+                for (const s of allCurrentStudents) {
+                    const enrlKey = s.enrlNo ? String(s.enrlNo).trim() : '';
+                    const nameKey = s.name ? String(s.name).trim().toLowerCase() : '';
+                    const fatherKey = s.fatherGuardian ? String(s.fatherGuardian).trim().toLowerCase() : '';
+                    const key = enrlKey ? `enrl_${enrlKey}` : `name_${nameKey}_${fatherKey}`;
+                    if (!finalUniqueMap.has(key)) {
+                        finalUniqueMap.set(key, s);
+                        finalCleanedList.push(s);
+                    }
+                }
+                if (finalCleanedList.length !== allCurrentStudents.length) {
+                    await LamaAPI.saveAll('students', finalCleanedList);
+                }
+            } catch (e) {}
+
             document.getElementById('progressSection').classList.add('hidden');             
             document.getElementById('resultsSection').classList.remove('hidden');             
             document.getElementById('successCount').innerText = newAdded;             

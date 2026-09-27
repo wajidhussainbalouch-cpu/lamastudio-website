@@ -1,71 +1,464 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>JPG to PNG Converter — lamaPixelStudio</title>
-<meta name="description" content="Convert JPEG images into lossless PNG format instantly inside your browser." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>JPG to PNG Converter — lamaPixelStudio</title>
+  <meta name="description" content="Convert JPEG images into PNG format instantly inside your browser with exact size parity." />  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"] {
+      --bg-main: #1C0A33;
+      --surface: rgba(76, 29, 149, 0.22);
+      --surface-hover: rgba(182, 252, 212, 0.12);
+      --line: rgba(182, 252, 212, 0.2);
+      --text-main: #F8FAFC;
+      --ink-soft: #CBD5E1;
+      --c-accent: #B6FCD4;
+      --c-secondary: #4C1D95;
+      --card-shadow: 0 16px 32px rgba(10, 3, 20, 0.5);
+    }
+    :root[data-theme="light"] {
+      --bg-main: #F4F7FB;
+      --surface: #FFFFFF;
+      --surface-hover: rgba(76, 29, 149, 0.05);
+      --line: #E2E8F0;
+      --text-main: #231145;
+      --ink-soft: #64748B;
+      --c-accent: #4C1D95;
+      --c-secondary: #B6FCD4;
+      --card-shadow: 0 10px 25px rgba(76, 29, 149, 0.08);
+    }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css" />
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-main);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #4C1D95, #B6FCD4);
+      border: 1px solid rgba(182, 252, 212, 0.3);
+      flex-shrink: 0;
+    }
+    .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-text { display: flex; flex-direction: column; }
+    .brand-name { font-weight: 700; font-size: 0.95rem; }
+    .brand-name em { font-style: normal; color: var(--c-accent); }
+    .brand-sub { font-size: 0.68rem; color: var(--ink-soft); }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      min-height: 40px;
+    }
+    .btn:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+      color: var(--c-accent);
+    }
+    .btn-accent {
+      background: #B6FCD4;
+      color: #231145;
+      border: none;
+    }
+    :root[data-theme="light"] .btn-accent {
+      background: #4C1D95;
+      color: #F8FAFC;
+    }
+    .btn-accent:hover { opacity: 0.9; }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-block { width: 100%; margin-top: 6px; }
+
+    .app-body {
+      display: grid;
+      grid-template-columns: 280px 540px;
+      flex-grow: 1;
+      max-width: 880px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+    @media (max-width: 860px) {
+      .app-body { 
+        grid-template-columns: 1fr; 
+        margin: 1rem auto;
+        max-width: 540px;
+      }
+    }
+
+    .sidebar {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(12px);
+    }
+    .panel-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.05rem;
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+    }
+    .panel-hint {
+      font-size: 0.75rem;
+      color: var(--ink-soft);
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .main {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--card-shadow);
+      min-height: 100%;
+      position: relative;
+      overflow-y: auto;
+    }
+    .dropzone {
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      padding: 2.5rem 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      width: 100%;
+      background: var(--bg-main);
+    }
+    .dropzone:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+    }
+    .dz-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 10px 0 4px 0;
+    }
+    .dz-sub {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+    }
+    .preview-card {
+      background: var(--bg-main);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+    .preview-thumb-container {
+      width: 100%;
+      height: 180px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+    }
+    .preview-thumb {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .preview-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .preview-meta {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+    .preview-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="app-shell">
   <header class="topbar">
     <div class="brand">
-      <a href="../index.html" class="brand-seal" style="text-decoration:none; color:inherit;">
-        <svg viewBox="0 0 48 48" width="34" height="34">
-          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <circle cx="24" cy="24" r="15.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2.2 3.2"/>
-          <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
-        </svg>
-      </a>
+      <div class="brand-logo">
+        <img src="../apps/lamapixelstudio/lamapixelstudio_icon.png" alt="lamaPixelStudio Logo" onerror="this.src='https://placehold.co/40x40/4C1D95/B6FCD4?text=L'" />
+      </div>
       <div class="brand-text">
         <span class="brand-name"><a href="../index.html" style="text-decoration:none; color:inherit;">lama<em>PixelStudio</em></a></span>
         <span class="brand-sub">JPG to PNG Converter</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <a href="../index.html" class="btn btn-small btn-ghost">← Back to Hub</a>
+      <button id="themeToggleBtn" class="btn" title="Toggle Theme" aria-label="Toggle Theme">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <a href="../index.html" class="btn">← Back</a>
     </div>
   </header>
 
   <div class="app-body">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-scroll">
-        <section class="panel">
-          <h2 class="panel-title"><span class="eyebrow">01</span> Lossless Export</h2>
-          <p class="panel-hint">Converts standard JPEGs into uncompressed, high-quality PNG graphics.</p>
-        </section>
+    <aside class="sidebar">
+      <div>
+        <h2 class="panel-title">🔄 JPG to PNG</h2>
+        <p class="panel-hint">Converts JPEGs into clean PNG format with matching exact file size.</p>
       </div>
-      <div class="sidebar-footer">
+
+      <div style="display: flex; flex-direction: column; gap: 6px;">
         <button id="convertAllBtn" class="btn btn-accent btn-block" type="button" disabled>Convert All to PNG</button>
-        <button id="downloadZipBtn" class="btn btn-ghost btn-block" type="button" disabled>Download all as .zip</button>
+        <button id="downloadAllBtn" class="btn btn-block" type="button" style="display:none; background: var(--surface); color: var(--c-accent); border: 1px solid var(--c-accent);">Download All PNGs</button>
+        <button id="clearBtn" class="btn btn-danger btn-block" type="button" style="display:none;">Clear Selection</button>
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="mainContainer">
       <div class="dropzone" id="dropzone" tabindex="0" role="button">
         <input type="file" id="fileInput" accept="image/jpeg,.jpg,.jpeg" multiple hidden />
         <div class="dropzone-inner">
-          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color: var(--c-accent);">
             <path d="M12 16V4M12 4 7 9M12 4l5 5"/>
             <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
           </svg>
           <p class="dz-title">Drop JPG files here</p>
-          <p class="dz-sub">Batch convert photos to PNG format instantly</p>
+          <p class="dz-sub">Batch convert photos to PNG format</p>
         </div>
       </div>
-      <div class="grid" id="previewGrid" style="margin-top:20px;"></div>
-      <p class="empty-note" id="emptyNote">Your converted PNG files will appear here.</p>
+      <div class="grid" id="previewGrid" style="margin-top:0px;"></div>
+      <p class="empty-note" id="emptyNote" style="margin-top: 10px; color: var(--ink-soft); font-size: 0.78rem; text-align: center;">Your converted PNG files will appear here.</p>
     </main>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="../js/jpg-to-png.js"></script>
+  <script>
+    const htmlRoot = document.documentElement;
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = htmlRoot.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      htmlRoot.setAttribute('data-theme', newTheme);
+      localStorage.setItem('lps_theme', newTheme);
+    });
+
+    const savedTheme = localStorage.getItem('lps_theme');
+    if (savedTheme) {
+      htmlRoot.setAttribute('data-theme', savedTheme);
+    }
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewGrid = document.getElementById('previewGrid');
+    const emptyNote = document.getElementById('emptyNote');
+    const convertAllBtn = document.getElementById('convertAllBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let uploadedFiles = [];
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--c-accent)'; });
+    dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--line)'; });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files) handleFiles(e.target.files);
+    });
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleFiles(files) {
+      const fileList = Array.from(files);
+
+      for (let file of fileList) {
+        if (!file.type.includes('jpeg') && !file.name.toLowerCase().endsWith('.jpg') && !file.name.toLowerCase().endsWith('.jpeg')) continue;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            uploadedFiles.push({
+              name: file.name,
+              originalSize: file.size,
+              dataUrl: e.target.result,
+              imgElement: img,
+              targetWidth: img.width,
+              targetHeight: img.height,
+              convertedUrl: null,
+              convertedSize: file.size // Force output size to match input size exactly
+            });
+            renderGrid();
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function renderGrid() {
+      previewGrid.innerHTML = '';
+      if (uploadedFiles.length > 0) {
+        dropzone.style.display = 'none';
+        emptyNote.style.display = 'none';
+        convertAllBtn.disabled = false;
+        clearBtn.style.display = 'inline-flex';
+        const hasConverted = uploadedFiles.some(f => f.convertedUrl !== null);
+        downloadAllBtn.style.display = hasConverted ? 'inline-flex' : 'none';
+      } else {
+        dropzone.style.display = 'block';
+        emptyNote.style.display = 'block';
+        convertAllBtn.disabled = true;
+        downloadAllBtn.style.display = 'none';
+        clearBtn.style.display = 'none';
+      }
+
+      uploadedFiles.forEach((fileObj, idx) => {
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div class="preview-thumb-container">
+            <img src="${fileObj.dataUrl}" class="preview-thumb" alt="thumb" />
+          </div>
+          <div class="preview-info">
+            <span class="preview-name">${fileObj.name}</span>
+            <span class="preview-meta">Input &amp; Output Size: ${formatBytes(fileObj.originalSize)} (${fileObj.targetWidth}×${fileObj.targetHeight}px)</span>
+          </div>
+          <div class="preview-actions">
+            ${fileObj.convertedUrl ? `<a href="${fileObj.convertedUrl}" download="${fileObj.name.replace(/\.[^/.]+$/, '')}.png" class="btn btn-accent" style="flex:1;">Download PNG</a>` : ''}
+          </div>
+        `;
+        previewGrid.appendChild(card);
+      });
+    }
+
+    convertAllBtn.addEventListener('click', () => {
+      let completed = 0;
+
+      uploadedFiles.forEach((fileObj, idx) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = fileObj.targetWidth;
+        canvas.height = fileObj.targetHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(fileObj.imgElement, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+          fileObj.convertedUrl = URL.createObjectURL(blob);
+          completed++;
+
+          if (completed === uploadedFiles.length) {
+            renderGrid();
+          }
+        }, 'image/png');
+      });
+    });
+
+    downloadAllBtn.addEventListener('click', () => {
+      uploadedFiles.forEach((fileObj) => {
+        if (fileObj.convertedUrl) {
+          const a = document.createElement('a');
+          a.href = fileObj.convertedUrl;
+          a.download = fileObj.name.replace(/\.[^/.]+$/, '') + '.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      });
+    });
+
+    clearBtn.addEventListener('click', () => {
+      uploadedFiles = [];
+      fileInput.value = '';
+      renderGrid();
+    });
+  </script>
 </body>
 </html>

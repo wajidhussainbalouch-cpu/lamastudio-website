@@ -1,35 +1,328 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WebP to JPG Converter — lamaPixelStudio</title>
-<meta name="description" content="Convert modern WebP images into compatible JPEG files instantly inside your browser." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WebP to JPG Converter — lamaPixelStudio</title>
+  <meta name="description" content="Convert modern WebP images into compatible JPEG files instantly inside your browser." />  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"] {
+      --bg-main: #1C0A33;
+      --surface: rgba(76, 29, 149, 0.22);
+      --surface-hover: rgba(182, 252, 212, 0.12);
+      --line: rgba(182, 252, 212, 0.2);
+      --text-main: #F8FAFC;
+      --ink-soft: #CBD5E1;
+      --c-accent: #B6FCD4;
+      --c-secondary: #4C1D95;
+      --card-shadow: 0 16px 32px rgba(10, 3, 20, 0.5);
+    }
+    :root[data-theme="light"] {
+      --bg-main: #F4F7FB;
+      --surface: #FFFFFF;
+      --surface-hover: rgba(76, 29, 149, 0.05);
+      --line: #E2E8F0;
+      --text-main: #231145;
+      --ink-soft: #64748B;
+      --c-accent: #4C1D95;
+      --c-secondary: #B6FCD4;
+      --card-shadow: 0 10px 25px rgba(76, 29, 149, 0.08);
+    }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css" />
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-main);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-seal {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #4C1D95, #B6FCD4);
+      border: 1px solid rgba(182, 252, 212, 0.3);
+      display: flex; align-items: center; justify-content: center;
+      color: #B6FCD4;
+      flex-shrink: 0;
+    }
+    :root[data-theme="light"] .brand-seal { color: #F8FAFC; }
+    .brand-text { display: flex; flex-direction: column; }
+    .brand-name { font-weight: 700; font-size: 0.95rem; }
+    .brand-name em { font-style: normal; color: var(--c-accent); }
+    .brand-sub { font-size: 0.68rem; color: var(--ink-soft); }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      min-height: 40px;
+    }
+    .btn:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+      color: var(--c-accent);
+    }
+    .btn-accent {
+      background: #B6FCD4;
+      color: #231145;
+      border: none;
+    }
+    :root[data-theme="light"] .btn-accent {
+      background: #4C1D95;
+      color: #F8FAFC;
+    }
+    .btn-accent:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; }
+    .btn-block { width: 100%; margin-top: 6px; }
+    .icon-btn {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
+
+    .app-body {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      flex-grow: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+    @media (max-width: 900px) {
+      .app-body { grid-template-columns: 1fr; margin: 1rem auto; }
+    }
+
+    .sidebar {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(12px);
+    }
+    .sidebar-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .panel-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      margin: 0 0 2px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .eyebrow {
+      font-size: 0.65rem;
+      background: var(--surface-hover);
+      color: var(--c-accent);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+    }
+    .panel-hint { font-size: 0.78rem; color: var(--ink-soft); margin: 0; line-height: 1.4; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.8rem;
+    }
+    .field span { font-weight: 600; color: var(--text-main); }
+    .select {
+      background: var(--bg-main);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .select:focus { border-color: var(--c-accent); }
+
+    .main {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--card-shadow);
+      min-height: 100%;
+      position: relative;
+    }
+    .dropzone {
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      width: 100%;
+      background: var(--bg-main);
+    }
+    .dropzone:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+    }
+    .dz-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin: 12px 0 4px 0;
+    }
+    .dz-sub {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+
+    .batch-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: var(--bg-main);
+      border: 1px solid var(--line);
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+    }
+    .link-btn {
+      background: none; border: none; color: #EF4444; font-weight: 600; cursor: pointer; font-size: 0.8rem;
+    }
+    .link-btn:hover { text-decoration: underline; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+    .card {
+      background: var(--bg-main);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card-media {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      height: 130px;
+    }
+    .img-pane {
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--line);
+    }
+    .img-pane img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .pane-tag {
+      position: absolute; bottom: 4px; left: 4px;
+      font-size: 0.6rem; background: rgba(0,0,0,0.6); color: #fff;
+      padding: 2px 5px; border-radius: 4px;
+    }
+    .pane-tag-accent { background: var(--c-accent); color: #231145; font-weight: 700; }
+    .card-name { font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-stats { font-size: 0.72rem; color: var(--ink-soft); display: flex; justify-content: space-between; }
+    .card-actions { display: flex; gap: 6px; }
+    .empty-note { font-size: 0.8rem; color: var(--ink-soft); text-align: center; margin-top: 1rem; }
+  </style>
 </head>
 <body>
 
-<div class="app-shell">
   <header class="topbar">
     <div class="brand">
-      <a href="../index.html" class="brand-seal" style="text-decoration:none; color:inherit;">
-        <svg viewBox="0 0 48 48" width="34" height="34">
+      <div class="brand-seal">
+        <svg viewBox="0 0 48 48" width="28" height="28">
           <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <circle cx="24" cy="24" r="15.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2.2 3.2"/>
           <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
         </svg>
-      </a>
+      </div>
       <div class="brand-text">
         <span class="brand-name"><a href="../index.html" style="text-decoration:none; color:inherit;">lama<em>PixelStudio</em></a></span>
         <span class="brand-sub">WebP to JPG Converter</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <a href="../index.html" class="btn btn-small btn-ghost">← Back to Hub</a>
+      <a href="../index.html" class="btn btn-small">← Hub</a>
+      <button id="themeToggle" class="icon-btn" type="button" aria-label="Toggle theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -37,43 +330,228 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-scroll">
         <section class="panel">
-          <h2 class="panel-title"><span class="eyebrow">01</span> Background Color</h2>
-          <p class="panel-hint">WebP transparency will be flattened with this background color for JPEGs.</p>
-          <div class="swatch-row" id="bgSwatches" role="radiogroup" aria-label="Flatten background">
-            <button type="button" class="swatch" data-color="#ffffff" aria-pressed="true">
-              <span class="swatch-chip" style="background:#ffffff;border:1px solid #d8d8d8"></span> White (Default)
-            </button>
-            <button type="button" class="swatch" data-color="#000000" aria-pressed="false">
-              <span class="swatch-chip" style="background:#000000"></span> Black
-            </button>
-          </div>
+          <h2 class="panel-title"><span class="eyebrow">01</span> Export Options</h2>
+          
+          <label class="field" style="margin-top: 8px;">
+            <span>Target format</span>
+            <select id="outputFormat" class="select">
+              <option value="image/jpeg">JPEG (Standard compatible)</option>
+              <option value="image/png">PNG (Lossless export)</option>
+            </select>
+          </label>
+
+          <label class="field" style="margin-top: 12px;">
+            <span>Scale Multiplier</span>
+            <select id="scaleMultiplier" class="select">
+              <option value="1">1x (Original size)</option>
+              <option value="2" selected>2x (High resolution)</option>
+              <option value="4">4x (Ultra HD export)</option>
+            </select>
+          </label>
         </section>
       </div>
-      <div class="sidebar-footer">
-        <button id="convertAllBtn" class="btn btn-accent btn-block" type="button" disabled>Convert All to JPG</button>
-        <button id="downloadZipBtn" class="btn btn-ghost btn-block" type="button" disabled>Download all as .zip</button>
+
+      <div class="sidebar-footer" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 6px;">
+        <button id="convertAllBtn" class="btn btn-accent btn-block" type="button" disabled>Convert WebPs</button>
+        <button id="downloadAllBtn" class="btn btn-block" type="button" disabled style="background: var(--surface); border: 1px solid var(--c-accent); color: var(--c-accent);">Download All (One Click)</button>
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="mainContainer">
       <div class="dropzone" id="dropzone" tabindex="0" role="button">
         <input type="file" id="fileInput" accept="image/webp,.webp" multiple hidden />
         <div class="dropzone-inner">
-          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color: var(--c-accent);">
             <path d="M12 16V4M12 4 7 9M12 4l5 5"/>
             <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
           </svg>
-          <p class="dz-title">Drop WebP files here</p>
-          <p class="dz-sub">Batch convert modern WebP files into compatible JPEGs</p>
+          <p class="dz-title">Drop WebP files here, or click to browse</p>
+          <p class="dz-sub">Convert modern WebP images into compatible JPEG files instantly</p>
         </div>
       </div>
-      <div class="grid" id="previewGrid" style="margin-top:20px;"></div>
-      <p class="empty-note" id="emptyNote">Your converted JPG files will appear here.</p>
+      <div class="batch-bar" id="batchBar" hidden>
+        <span id="batchCount">0 files</span>
+        <button class="link-btn" id="clearAllBtn" type="button">Clear all</button>
+      </div>
+      <div class="grid" id="previewGrid" style="margin-top:12px;"></div>
+      <p class="empty-note" id="emptyNote">Your converted files will appear here.</p>
     </main>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="../js/webp-to-jpg.js"></script>
+  <script>
+    const htmlRoot = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      const cur = htmlRoot.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      htmlRoot.setAttribute('data-theme', next);
+      localStorage.setItem('lps_theme', next);
+    });
+    const saved = localStorage.getItem('lps_theme');
+    if (saved) htmlRoot.setAttribute('data-theme', saved);
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewGrid = document.getElementById('previewGrid');
+    const emptyNote = document.getElementById('emptyNote');
+    const batchBar = document.getElementById('batchBar');
+    const batchCount = document.getElementById('batchCount');
+    const convertAllBtn = document.getElementById('convertAllBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const outputFormatSelect = document.getElementById('outputFormat');
+    const scaleMultiplierSelect = document.getElementById('scaleMultiplier');
+
+    let filesList = [];
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--c-accent)'; });
+    dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--line)'; });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files) handleFiles(e.target.files);
+    });
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024, sizes = ['Bytes', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const url = e.target.result;
+          const img = new Image();
+          img.onload = () => {
+            filesList.push({
+              name: file.name.replace(/\.[^/.]+$/, ''),
+              originalSize: file.size,
+              sourceUrl: url,
+              imgElement: img,
+              convertedUrl: null,
+              convertedSize: 0,
+              ext: outputFormatSelect.value === 'image/jpeg' ? 'jpg' : 'png'
+            });
+            render();
+          };
+          img.src = url;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function render() {
+      previewGrid.innerHTML = '';
+      let hasConverted = false;
+
+      if (filesList.length > 0) {
+        dropzone.style.display = 'none';
+        emptyNote.style.display = 'none';
+        batchBar.style.display = 'flex';
+        batchCount.textContent = `${filesList.length} file${filesList.length > 1 ? 's' : ''}`;
+        convertAllBtn.disabled = false;
+      } else {
+        dropzone.style.display = 'block';
+        emptyNote.style.display = 'block';
+        batchBar.style.display = 'none';
+        convertAllBtn.disabled = true;
+        downloadAllBtn.disabled = true;
+      }
+
+      filesList.forEach((item, index) => {
+        if (item.convertedUrl) hasConverted = true;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="card-media">
+            <div class="img-pane">
+              <img src="${item.sourceUrl}" alt="Original WebP" />
+              <span class="pane-tag">WEBP</span>
+            </div>
+            <div class="img-pane">
+              <img src="${item.convertedUrl || item.sourceUrl}" alt="Converted Output" ${!item.convertedUrl ? 'hidden' : ''} />
+              <span class="pane-tag pane-tag-accent">${item.ext.toUpperCase()}</span>
+            </div>
+          </div>
+          <div class="card-name" title="${item.name}.${item.ext}">${item.name}.${item.ext}</div>
+          <div class="card-stats">
+            <span>In: ${formatBytes(item.originalSize)}</span>
+            <span>${item.convertedUrl ? 'Out: ' + formatBytes(item.convertedSize) : 'Pending'}</span>
+          </div>
+          <div class="card-actions">
+            ${item.convertedUrl ? `<a href="${item.convertedUrl}" download="${item.name}.${item.ext}" class="btn btn-accent btn-small" style="flex:1;">Download</a>` : '<span style="font-size:0.75rem; color:var(--ink-soft); padding:6px;">Ready to convert</span>'}
+            <button type="button" class="btn btn-small btn-ghost" onclick="removeFile(${index})">Remove</button>
+          </div>
+        `;
+        previewGrid.appendChild(card);
+      });
+
+      downloadAllBtn.disabled = !hasConverted;
+    }
+
+    window.removeFile = function(index) {
+      filesList.splice(index, 1);
+      render();
+    };
+
+    clearAllBtn.addEventListener('click', () => {
+      filesList = [];
+      fileInput.value = '';
+      render();
+    });
+
+    convertAllBtn.addEventListener('click', () => {
+      const format = outputFormatSelect.value;
+      const scale = parseFloat(scaleMultiplierSelect.value) || 1;
+      const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+
+      let done = 0;
+      filesList.forEach(item => {
+        item.ext = ext;
+        const canvas = document.createElement('canvas');
+        const natW = item.imgElement.naturalWidth || item.imgElement.width || 300;
+        const natH = item.imgElement.naturalHeight || item.imgElement.height || 300;
+        
+        canvas.width = natW * scale;
+        canvas.height = natH * scale;
+        const ctx = canvas.getContext('2d');
+
+        if (format === 'image/jpeg') {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        ctx.drawImage(item.imgElement, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+          if (blob) {
+            item.convertedUrl = URL.createObjectURL(blob);
+            item.convertedSize = blob.size;
+          }
+          done++;
+          if (done === filesList.length) render();
+        }, format, 0.95);
+      });
+    });
+
+    downloadAllBtn.addEventListener('click', () => {
+      filesList.forEach((item) => {
+        if (item.convertedUrl) {
+          const a = document.createElement('a');
+          a.href = item.convertedUrl;
+          a.download = `${item.name}.${item.ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

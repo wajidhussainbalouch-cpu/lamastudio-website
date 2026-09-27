@@ -1,85 +1,508 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Image Compressor — lamaPixelStudio</title>
-<meta name="description" content="Shrink image file sizes massively while retaining visual quality directly in your browser." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Image Compressor — lamaPixelStudio</title>
+  <meta name="description" content="Shrink image file sizes massively while retaining visual quality directly in your browser." />  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"] {
+      --bg-main: #1C0A33;
+      --surface: rgba(76, 29, 149, 0.22);
+      --surface-hover: rgba(182, 252, 212, 0.12);
+      --line: rgba(182, 252, 212, 0.2);
+      --text-main: #F8FAFC;
+      --ink-soft: #CBD5E1;
+      --c-accent: #B6FCD4; /* Mint Frost */
+      --c-secondary: #4C1D95; /* Royal Iris */
+      --card-shadow: 0 16px 32px rgba(10, 3, 20, 0.5);
+    }
+    :root[data-theme="light"] {
+      --bg-main: #F4F7FB;
+      --surface: #FFFFFF;
+      --surface-hover: rgba(76, 29, 149, 0.05);
+      --line: #E2E8F0;
+      --text-main: #231145;
+      --ink-soft: #64748B;
+      --c-accent: #4C1D95; /* Royal Iris as primary in light mode */
+      --c-secondary: #B6FCD4;
+      --card-shadow: 0 10px 25px rgba(76, 29, 149, 0.08);
+    }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css" />
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-main);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #4C1D95, #B6FCD4);
+      border: 1px solid rgba(182, 252, 212, 0.3);
+      flex-shrink: 0;
+    }
+    .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-text { display: flex; flex-direction: column; }
+    .brand-name { font-weight: 700; font-size: 0.95rem; }
+    .brand-name em { font-style: normal; color: var(--c-accent); }
+    .brand-sub { font-size: 0.68rem; color: var(--ink-soft); }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      min-height: 40px;
+    }
+    .btn:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+      color: var(--c-accent);
+    }
+    .btn-accent {
+      background: #B6FCD4;
+      color: #231145;
+      border: none;
+    }
+    :root[data-theme="light"] .btn-accent {
+      background: #4C1D95;
+      color: #F8FAFC;
+    }
+    .btn-accent:hover { opacity: 0.9; }
+    
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #F87171;
+    }
+
+    .app-body {
+      display: grid;
+      grid-template-columns: 280px 540px;
+      flex-grow: 1;
+      max-width: 880px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+    @media (max-width: 860px) {
+      .app-body { 
+        grid-template-columns: 1fr; 
+        margin: 1rem auto;
+        max-width: 540px;
+        align-items: start;
+      }
+    }
+
+    .sidebar {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--card-shadow);
+      backdrop-filter: blur(12px);
+    }
+    .panel-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.05rem;
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .panel-hint {
+      font-size: 0.75rem;
+      color: var(--ink-soft);
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 0.85rem;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      font-weight: 500;
+    }
+    .field input[type="range"] {
+      width: 100%;
+      accent-color: var(--c-accent);
+      cursor: pointer;
+    }
+    .select {
+      background: var(--bg-main);
+      border: 1px solid var(--line);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      width: 100%;
+      min-height: 40px;
+    }
+
+    .main {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--card-shadow);
+      min-height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .dropzone {
+      border: 2px dashed var(--line);
+      border-radius: 12px;
+      padding: 2.5rem 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      width: 100%;
+      background: var(--bg-main);
+    }
+    .dropzone:hover {
+      border-color: var(--c-accent);
+      background: var(--surface-hover);
+    }
+    .dz-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin: 10px 0 4px 0;
+    }
+    .dz-sub {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+    }
+    .preview-card {
+      background: var(--bg-main);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+    .preview-thumb-container {
+      width: 100%;
+      max-height: 280px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+    }
+    .preview-thumb {
+      max-width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      display: block;
+    }
+    .preview-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.8rem;
+    }
+    .preview-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+    .preview-info strong { 
+      font-size: 0.88rem; 
+      white-space: nowrap; 
+      overflow: hidden; 
+      text-overflow: ellipsis; 
+      color: var(--text-main);
+    }
+    .preview-meta {
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+    }
+  </style>
 </head>
 <body>
 
-<div class="app-shell">
   <header class="topbar">
     <div class="brand">
-      <a href="../index.html" class="brand-seal" style="text-decoration:none; color:inherit;">
-        <svg viewBox="0 0 48 48" width="34" height="34">
-          <circle cx="24" cy="24" r="21" fill="none" stroke="currentColor" stroke-width="2.4"/>
-          <circle cx="24" cy="24" r="15.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2.2 3.2"/>
-          <text x="24" y="29" text-anchor="middle" font-family="Fraunces, serif" font-size="17" font-weight="700" fill="currentColor">L</text>
-        </svg>
-      </a>
+      <div class="brand-logo">
+        <img src="../apps/lamapixelstudio/lamapixelstudio_icon.png" alt="lamaPixelStudio Logo" onerror="this.src='https://placehold.co/40x40/4C1D95/B6FCD4?text=L'" />
+      </div>
       <div class="brand-text">
         <span class="brand-name"><a href="../index.html" style="text-decoration:none; color:inherit;">lama<em>PixelStudio</em></a></span>
         <span class="brand-sub">Image Compressor</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <a href="../index.html" class="btn btn-small btn-ghost">← Back to Hub</a>
+      <button id="themeToggleBtn" class="btn" title="Toggle Theme" aria-label="Toggle Theme">
+        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <a href="../index.html" class="btn">← Back</a>
     </div>
   </header>
 
   <div class="app-body">
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-scroll">
-        <section class="panel">
-          <h2 class="panel-title"><span class="eyebrow">01</span> Compression Level</h2>
-          <p class="panel-hint">Choose how aggressively you want to compress your images.</p>
-          
-          <div class="field-row">
-            <label class="field">
-              <span>Quality Slider (<span id="qualityVal">80</span>%)</span>
-              <input type="range" id="qualityRange" min="10" max="95" value="80" style="width:100%; accent-color:var(--emerald);" />
-            </label>
-          </div>
+    <aside class="sidebar">
+      <div>
+        <h2 class="panel-title">⚡ Compression Level</h2>
+        <p class="panel-hint">Adjust quality to minimize file size.</p>
+                     
+        <label class="field">
+          <span>Quality Slider (<span id="qualityVal">80</span>%)</span>
+          <input type="range" id="qualityRange" min="10" max="95" value="80" />
+        </label>
 
-          <label class="field">
-            <span>Output format</span>
-            <select id="compressFormat" class="select">
-              <option value="image/jpeg">JPEG</option>
-              <option value="image/webp">WebP (Recommended)</option>
-            </select>
-          </label>
-        </section>
+        <label class="field" style="margin-top: 12px;">
+          <span>Output Format</span>
+          <select id="compressFormat" class="select">
+            <option value="image/png" selected>PNG (Lossless/Crisp)</option>
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/webp">WebP</option>
+          </select>
+        </label>
       </div>
-      <div class="sidebar-footer">
-        <button id="compressAllBtn" class="btn btn-accent btn-block" type="button" disabled>Compress Batch</button>
+      
+      <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 8px;">
+        <button id="downloadAllBtn" class="btn btn-accent" style="width: 100%; display: none;" type="button">Download All</button>
+        <button id="clearBtn" class="btn btn-danger" style="width: 100%; display: none;" type="button">Clear Selection</button>
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="mainContainer">
       <div class="dropzone" id="dropzone" tabindex="0" role="button">
         <input type="file" id="fileInput" accept="image/*" multiple hidden />
         <div class="dropzone-inner">
-          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color: var(--c-accent);">
             <path d="M12 16V4M12 4 7 9M12 4l5 5"/>
             <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>
           </svg>
-          <p class="dz-title">Drop photos to compress here</p>
-          <p class="dz-sub">Supports JPG, PNG, and WebP batches</p>
+          <p class="dz-title">Tap or drop photos</p>
+          <p class="dz-sub">Supports PNG, JPG, and WebP batches</p>
         </div>
       </div>
-      <div class="grid" id="previewGrid" style="margin-top:20px;"></div>
-      <p class="empty-note" id="emptyNote">Your compressed items will show up here.</p>
+      <div class="grid" id="previewGrid" style="margin-top: 14px;" hidden></div>
+      <p class="empty-note" id="emptyNote" style="margin-top: 10px; color: var(--ink-soft); font-size: 0.78rem; text-align: center;">Your compressed items will show up here.</p>
     </main>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="../js/compressor.js"></script>
+  <script>
+    const htmlRoot = document.documentElement;
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = htmlRoot.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      htmlRoot.setAttribute('data-theme', newTheme);
+      localStorage.setItem('lps_theme', newTheme);
+    });
+
+    const savedTheme = localStorage.getItem('lps_theme');
+    if (savedTheme) {
+      htmlRoot.setAttribute('data-theme', savedTheme);
+    }
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewGrid = document.getElementById('previewGrid');
+    const emptyNote = document.getElementById('emptyNote');
+    const qualityRange = document.getElementById('qualityRange');
+    const qualityVal = document.getElementById('qualityVal');
+    const compressFormat = document.getElementById('compressFormat');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    let uploadedFiles = [];
+
+    // Trigger instant re-compression on slider input
+    qualityRange.addEventListener('input', (e) => {
+      qualityVal.innerText = e.target.value;
+      if (uploadedFiles.length > 0) {
+        processAllImages();
+      }
+    });
+
+    compressFormat.addEventListener('change', () => {
+      if (uploadedFiles.length > 0) {
+        processAllImages();
+      }
+    });
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = 'var(--c-accent)'; });
+    dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--line)'; });
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleFiles(e.target.files);
+      }
+    });
+
+    function handleFiles(files) {
+      uploadedFiles = Array.from(files);
+      if (uploadedFiles.length > 0) {
+        dropzone.style.display = 'none';
+        emptyNote.style.display = 'none';
+        previewGrid.hidden = false;
+        renderInitialCards();
+        processAllImages();
+        downloadAllBtn.style.display = 'inline-flex';
+        clearBtn.style.display = 'inline-flex';
+      }
+    }
+
+    function renderInitialCards() {
+      previewGrid.innerHTML = '';
+      uploadedFiles.forEach((file, idx) => {
+        const objectUrl = URL.createObjectURL(file);
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.innerHTML = `
+          <div class="preview-thumb-container">
+            <img src="${objectUrl}" alt="${file.name}" class="preview-thumb" id="thumbImg-${idx}" />
+          </div>
+          <div class="preview-footer">
+            <div class="preview-info">
+              <strong>${file.name}</strong>
+              <span class="preview-meta" id="sizeInfo-${idx}">Original: ${(file.size / 1024).toFixed(1)} KB</span>
+            </div>
+            <a id="downloadLink-${idx}" class="btn btn-accent" style="padding: 6px 12px; font-size: 0.75rem; min-height: 32px;" download="compressed_${file.name}">Download</a>
+          </div>
+        `;
+        previewGrid.appendChild(card);
+      });
+    }
+
+    function processAllImages() {
+      const quality = parseInt(qualityRange.value) / 100;
+      const format = compressFormat.value;
+
+      uploadedFiles.forEach((file, idx) => {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const compressedSizeKB = (blob.size / 1024).toFixed(1);
+              const origSizeKB = (file.size / 1024).toFixed(1);
+              const sizeInfoEl = document.getElementById(`sizeInfo-${idx}`);
+              const thumbImg = document.getElementById(`thumbImg-${idx}`);
+              const downloadLink = document.getElementById(`downloadLink-${idx}`);
+
+              const compressedUrl = URL.createObjectURL(blob);
+              if (thumbImg) {
+                thumbImg.src = compressedUrl;
+              }
+              if (downloadLink) {
+                downloadLink.href = compressedUrl;
+              }
+
+              const diffPct = Math.round((1 - (blob.size / file.size)) * 100);
+              const diffText = diffPct >= 0 ? `${diffPct}% smaller` : `${Math.abs(diffPct)}% larger`;
+
+              if (sizeInfoEl) {
+                sizeInfoEl.innerText = `${origSizeKB} KB → ${compressedSizeKB} KB (${diffText})`;
+              }
+            }
+          }, format, quality);
+        };
+        img.src = objectUrl;
+      });
+    }
+
+    clearBtn.addEventListener('click', () => {
+      uploadedFiles = [];
+      fileInput.value = '';
+      previewGrid.innerHTML = '';
+      previewGrid.hidden = true;
+      dropzone.style.display = 'block';
+      emptyNote.style.display = 'block';
+      downloadAllBtn.style.display = 'none';
+      clearBtn.style.display = 'none';
+    });
+  </script>
 </body>
 </html>

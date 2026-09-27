@@ -35,6 +35,12 @@
                     localStorage.setItem(`lama_${table}`, JSON.stringify(items));
                     return true;
                 } catch(e) { throw new Error("Storage update failed"); }
+            },
+            saveAll: async (table, items) => {
+                try {
+                    localStorage.setItem(`lama_${table}`, JSON.stringify(items));
+                    return true;
+                } catch(e) { throw new Error("Storage save failed"); }
             }
         };
     </script>
@@ -45,7 +51,7 @@
             <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>             
             <div>                 
                 <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>                 
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>             
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import & Cleanup</p>             
             </div>         
         </div>         
         <div class="flex items-center gap-2">             
@@ -55,6 +61,21 @@
     </header>      
 
     <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">          
+        <!-- Database Cleanup Card -->
+        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <h2 class="text-xs font-black uppercase text-amber-400">🧹 Remove Existing Database Duplicates</h2>
+                <span id="dbStudentCountBadge" class="bg-amber-950/80 border border-amber-500/30 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-lg">Scanning Database...</span>
+            </div>
+            <p class="text-[11px] text-slate-400">If your student list currently has duplicate rows (e.g. same student imported twice), click below to instantly scan and purge all duplicate records while keeping one unique entry per student.</p>
+            <div class="flex items-center gap-3 pt-2">
+                <button onclick="scanAndCleanDuplicates()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                    🔍 Scan & Remove Duplicates Now
+                </button>
+                <span id="cleanupStatus" class="text-xs text-slate-300 font-medium"></span>
+            </div>
+        </section>
+
         <section id="uploadSection" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-xl">             
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>             
@@ -225,8 +246,61 @@
                 logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;             
             } else {                 
                 logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');             
-            }         
+            }
+
+            // Update DB Student Count Badge
+            updateDbStudentCountBadge();
         }          
+
+        async function updateDbStudentCountBadge() {
+            try {
+                const students = await LamaAPI.list('students') || [];
+                const badge = document.getElementById('dbStudentCountBadge');
+                badge.innerText = `${students.length} Total Records in Database`;
+            } catch(e) {}
+        }
+
+        async function scanAndCleanDuplicates() {
+            const statusEl = document.getElementById('cleanupStatus');
+            statusEl.innerText = "Scanning database for duplicates...";
+            try {
+                const students = await LamaAPI.list('students') || [];
+                if (students.length === 0) {
+                    statusEl.innerText = "Database is empty.";
+                    return;
+                }
+
+                const uniqueMap = new Map();
+                let duplicatesRemoved = 0;
+                const cleanedList = [];
+
+                for (const s of students) {
+                    // Create a strict key based on Enrollment Number or Name + Father's Name
+                    const enrlKey = s.enrlNo ? String(s.enrlNo).trim() : '';
+                    const nameKey = s.name ? String(s.name).trim().toLowerCase() : '';
+                    const fatherKey = s.fatherGuardian ? String(s.fatherGuardian).trim().toLowerCase() : '';
+                    
+                    const primaryKey = enrlKey ? `enrl_${enrlKey}` : `name_${nameKey}_${fatherKey}`;
+
+                    if (!uniqueMap.has(primaryKey)) {
+                        uniqueMap.set(primaryKey, s);
+                        cleanedList.push(s);
+                    } else {
+                        duplicatesRemoved++;
+                    }
+                }
+
+                if (duplicatesRemoved > 0) {
+                    await LamaAPI.saveAll('students', cleanedList);
+                    statusEl.innerText = `✓ Successfully removed ${duplicatesRemoved} duplicate records! (${cleanedList.length} unique students remain).`;
+                } else {
+                    statusEl.innerText = `✓ No duplicates found! All ${cleanedList.length} student records are unique.`;
+                }
+                updateDbStudentCountBadge();
+            } catch (e) {
+                statusEl.innerText = "Cleanup failed: " + e.message;
+            }
+        }
 
         function downloadSampleTemplate() {
             const sampleData = [
@@ -295,7 +369,6 @@
 
         const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };         
         
-        // Universal robust multi-line parser for Punjab EMIS PDFs
         function pdfConvDate(d) {             
             const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);             
             if (!m) return '';             
@@ -348,14 +421,10 @@
             const skipped = [];             
             let cleanLines = lines.filter(l => !isPdfNoiseLine(l));
             
-            // Reconstruct multi-line records by detecting serial number / enrollment sequence
             let currentTokens = [];
             
             cleanLines.forEach(line => {
-                // If line starts with a serial number (1 to 3 digits followed by enrollment number or name), or contains date tokens
                 const parts = line.split(/\s+/);
-                
-                // Check if this line is a new student record anchor or continuation
                 if (parts.length > 0 && /^\d{1,3}$/.test(parts[0]) && currentTokens.length >= 4) {
                     processBufferedRecord(currentTokens, rows, skipped);
                     currentTokens = [...parts];
@@ -372,7 +441,6 @@
         }
 
         function processBufferedRecord(tokens, rows, skipped) {
-            // Find Gender 'M' or 'F'
             const genderIdx = tokens.findIndex(t => t === 'M' || t === 'F');
             if (genderIdx === -1 || genderIdx < 2) {
                 if (tokens.length > 5) skipped.push(tokens.join(' '));
@@ -386,13 +454,11 @@
             
             const name = tokens.slice(nameStartIdx, genderIdx).join(' ');
             
-            // Extract dates (DD-MON-YY)
             const dateRegex = /\d{2}-[A-Z]{3}-\d{2}/g;
             const dates = tokens.join(' ').match(dateRegex) || [];
             const dob = dates[0] || '';
             const admdate = dates[1] || '';
             
-            // Find class name at the end (ECE, NURSERY, PREP, or digits 1-10)
             const validClasses = ['ECE', 'NURSERY', 'PRE-NURSERY', 'KINDERGARTEN', 'PREP'];
             let klass = '1';
             let klassIdx = -1;
@@ -406,14 +472,12 @@
                 }
             }
             
-            // Father name is between genderIdx and klassIdx (excluding dates and phone numbers)
             let fatherParts = [];
             if (klassIdx !== -1 && klassIdx > genderIdx + 1) {
                 fatherParts = tokens.slice(genderIdx + 1, klassIdx).filter(t => !dateRegex.test(t) && !/^\d{9,13}$/.test(t) && t !== '(F)');
             }
             const father = fatherParts.join(' ');
             
-            // Phone number
             const phone = tokens.find(t => /^\d{10,12}$/.test(t)) || '';
             
             if (name && gender) {
@@ -559,6 +623,22 @@
                 existingStudents = [];
             }
 
+            // Deduplicate existing database records first
+            const uniqueMap = new Map();
+            const cleanedExisting = [];
+            for (const s of existingStudents) {
+                const enrlKey = s.enrlNo ? String(s.enrlNo).trim() : '';
+                const nameKey = s.name ? String(s.name).trim().toLowerCase() : '';
+                const fatherKey = s.fatherGuardian ? String(s.fatherGuardian).trim().toLowerCase() : '';
+                const key = enrlKey ? `enrl_${enrlKey}` : `name_${nameKey}_${fatherKey}`;
+
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, s);
+                    cleanedExisting.push(s);
+                }
+            }
+            existingStudents = cleanedExisting;
+
             let newAdded = 0;             
             let updatedCount = 0;
             const errors = [];              
@@ -578,13 +658,11 @@
                     continue;                 
                 }                  
 
-                let existingMatch = null;
-                if (existingStudents.length > 0) {
-                    existingMatch = existingStudents.find(s => 
-                        (record.enrlNo && s.enrlNo && String(s.enrlNo).trim() === String(record.enrlNo).trim()) ||
-                        (record.admissionNo && s.admissionNo && String(s.admissionNo).trim() === String(record.admissionNo).trim())
-                    );
-                }
+                let existingMatch = existingStudents.find(s => 
+                    (record.enrlNo && s.enrlNo && String(s.enrlNo).trim() === String(record.enrlNo).trim()) ||
+                    (record.name && s.name && String(s.name).trim().toLowerCase() === String(record.name).trim().toLowerCase() && 
+                     record.fatherGuardian && s.fatherGuardian && String(s.fatherGuardian).trim().toLowerCase() === String(record.fatherGuardian).trim().toLowerCase())
+                );
 
                 if (record.photo && /^https?:\/\//i.test(record.photo)) {                     
                     const compressed = await compressImage(record.photo);                     
@@ -599,11 +677,21 @@
                     if (existingMatch) {
                         await LamaAPI.update('students', existingMatch.id, record);
                         updatedCount++;
-                        successfullyImportedRecords.push({ ...existingMatch, ...record });
+                        if (!successfullyImportedRecords.some(r => r.id === existingMatch.id)) {
+                            successfullyImportedRecords.push({ ...existingMatch, ...record });
+                        }
                     } else {
-                        await LamaAPI.add('students', record);                     
-                        newAdded++;                 
-                        successfullyImportedRecords.push(record);
+                        const batchDuplicate = successfullyImportedRecords.find(r => 
+                            (record.enrlNo && r.enrlNo && String(r.enrlNo).trim() === String(record.enrlNo).trim()) ||
+                            (record.name && r.name && String(r.name).trim().toLowerCase() === String(record.name).trim().toLowerCase() &&
+                             record.fatherGuardian && r.fatherGuardian && String(r.fatherGuardian).trim().toLowerCase() === String(record.fatherGuardian).trim().toLowerCase())
+                        );
+
+                        if (!batchDuplicate) {
+                            await LamaAPI.add('students', record);                     
+                            newAdded++;                 
+                            successfullyImportedRecords.push(record);
+                        }
                     }
                 } catch (e) {                     
                     const errReason = e.message || "Database write failure";
@@ -647,6 +735,7 @@
             } else {
                 previewGrid.innerHTML = `<p class="text-xs text-slate-500 col-span-full">No students were processed.</p>`;
             }
+            updateDbStudentCountBadge();
         }          
 
         function exportImportErrorReport() {
@@ -667,4 +756,3 @@
         }     
     </script> 
 </body>
-</html>

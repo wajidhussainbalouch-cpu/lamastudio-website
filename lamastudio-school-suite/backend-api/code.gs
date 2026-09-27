@@ -67,7 +67,9 @@ const COLLECTIONS = {
                   'teacherRemarks', 'principalRemarks', 'remarks', 'password', 'apiKey', 'createdAt',
                   'cnic', 'religion', 'category', 'fatherCnic', 'caste', 'profession', 'monthlyIncome',
                   'admissionNo', 'academicSession', 'admissionTestMarks', 'interviewMarks', 'admissionRemarks', 'address',
-                  'admissionDate']
+                  'admissionDate', 'schoolAdmissionNo', 'emergencyCampaign',
+                  'guardianName', 'guardianCnic', 'guardianCell', 'guardianRelation', 'guardianProfession',
+                  'guardianAddress', 'distanceFromSchool', 'canWrite', 'canRead', 'canCount']
     },
     teachers: {
         tab: 'Teachers',

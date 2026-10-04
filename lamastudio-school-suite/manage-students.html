@@ -65,11 +65,16 @@
     <main class="max-w-5xl mx-auto px-4 py-5 space-y-4">
 
         <!-- Filter Bar -->
-        <div class="flex flex-wrap gap-2">
-            <input id="searchBox" oninput="renderList()" placeholder="Search by name or enrollment no..." class="flex-grow bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-purple-500 min-w-[200px]">
-            <select id="classFilter" onchange="renderList()" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5">
-                <option value="All">All Classes</option>
-            </select>
+        <div class="flex flex-wrap gap-2 items-center justify-between">
+            <div class="flex flex-wrap gap-2 flex-grow">
+                <input id="searchBox" oninput="renderList()" placeholder="Search by name or enrollment no..." class="flex-grow bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-purple-500 min-w-[200px]">
+                <select id="classFilter" onchange="renderList()" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5">
+                    <option value="All">All Classes</option>
+                </select>
+            </div>
+            <button onclick="openClassManagerModal()" class="bg-slate-800 hover:bg-slate-700 text-purple-400 font-bold text-xs px-3.5 py-2.5 rounded-xl transition border border-slate-700 flex items-center gap-1.5">
+                ⚙️ Clean / Manage Classes
+            </button>
         </div>
 
         <!-- Roster Table -->
@@ -113,7 +118,11 @@
             </div>
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <div><label class="block text-[10px] text-slate-400 mb-1">Enrollment No</label><input id="inEnrl" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
-                <div><label class="block text-[10px] text-slate-400 mb-1">Class</label><input id="inClass" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Class Name</label>
+                    <input id="inClass" list="classListOptions" placeholder="e.g. 10th or Primary" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <datalist id="classListOptions"></datalist>
+                </div>
                 <div><label class="block text-[10px] text-slate-400 mb-1">Section</label><input id="inSection" placeholder="e.g. A" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></div>
                 <div>
                     <label class="block text-[10px] text-slate-400 mb-1">Gender</label>
@@ -131,6 +140,33 @@
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="closeStudentModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Cancel</button>
                 <button onclick="saveStudent()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl">Save Student</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLASS CLEANUP / RENAME MODAL -->
+    <div id="classManagerModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-black uppercase text-purple-400">Class Clean-Up & Standardization</h3>
+                <button onclick="closeClassManagerModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <p class="text-[11px] text-slate-300">
+                It looks like guardian names or other text entries were accidentally imported into the <strong>Class</strong> field for many student records. Use the tool below to rename or merge incorrect class names in bulk.
+            </p>
+            <div class="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Select Incorrect / Old Class Name</label>
+                    <select id="oldClassNameSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Replace With Correct Class Name</label>
+                    <input id="newClassNameInput" list="classListOptions" placeholder="e.g. Class 1, Class 2, Nursery..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs">
+                </div>
+                <button onclick="applyClassRename()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl transition text-xs">Update All Students in This Class</button>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeClassManagerModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Close</button>
             </div>
         </div>
     </div>
@@ -199,9 +235,54 @@
                 return;
             }
             const classes = Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).sort();
-            document.getElementById('classFilter').innerHTML = '<option value="All">All Classes</option>' +
-                classes.map(c => `<option value="${c}">Class ${c}</option>`).join('');
+            
+            const classFilterHtml = '<option value="All">All Classes (' + allStudents.length + ')</option>' +
+                classes.map(c => {
+                    const count = allStudents.filter(s => s.class === c).length;
+                    return `<option value="${c}">${c} (${count})</option>`;
+                }).join('');
+            document.getElementById('classFilter').innerHTML = classFilterHtml;
+            document.getElementById('classListOptions').innerHTML = classes.map(c => `<option value="${c}">`).join('');
+            
             renderList();
+        }
+
+        function openClassManagerModal() {
+            const classes = Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).sort();
+            document.getElementById('oldClassNameSelect').innerHTML = classes.map(c => {
+                const count = allStudents.filter(s => s.class === c).length;
+                return `<option value="${c}">${c} — (${count} students)</option>`;
+            }).join('');
+            document.getElementById('newClassNameInput').value = '';
+            document.getElementById('classManagerModal').classList.remove('hidden');
+        }
+
+        function closeClassManagerModal() {
+            document.getElementById('classManagerModal').classList.add('hidden');
+        }
+
+        async function applyClassRename() {
+            const oldName = document.getElementById('oldClassNameSelect').value;
+            const newName = document.getElementById('newClassNameInput').value.trim();
+            if (!oldName) { alertBox('Please select a class to rename.'); return; }
+            if (!newName) { alertBox('Please provide the new class name.'); return; }
+
+            const matching = allStudents.filter(s => s.class === oldName);
+            if (matching.length === 0) { alertBox('No students found in that class.'); return; }
+
+            showConfirmModal(`Update ${matching.length} students from class "${oldName}" to "${newName}"?`, async () => {
+                try {
+                    for (const s of matching) {
+                        s.class = newName;
+                        await LamaAPI.update(STUDENTS, s.id, { class: newName });
+                    }
+                    closeClassManagerModal();
+                    await loadStudents();
+                    alertBox(`Successfully updated ${matching.length} student records.`);
+                } catch (e) {
+                    alertBox('Error updating classes: ' + e.message);
+                }
+            });
         }
 
         function renderList() {

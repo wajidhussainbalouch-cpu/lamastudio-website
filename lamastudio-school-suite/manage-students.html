@@ -7,19 +7,55 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
     window.LamaAPI = window.LamaAPI || {
+        getSettings: () => {
+            try {
+                const s = localStorage.getItem('lama_settings');
+                return s ? JSON.parse(s) : { webhookUrl: '' };
+            } catch(e) { return { webhookUrl: '' }; }
+        },
         getActiveSchool: async () => {
             try {
-                const stored = localStorage.getItem('lama_active_school');
-                if (stored) return JSON.parse(stored);
+                for (const key of ['lama_active_school', 'lama_school_info', 'lama_school', 'school_info']) {
+                    const stored = localStorage.getItem(key);
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        if (parsed && (parsed.name || parsed.schoolName)) {
+                            return {
+                                name: parsed.name || parsed.schoolName,
+                                shortCode: parsed.shortCode || parsed.code || 'LSS',
+                                logo: parsed.logo || parsed.schoolLogo || null
+                            };
+                        }
+                    }
+                }
             } catch(e) {}
             return { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
         },
         list: async (key) => {
             try {
-                const stored = localStorage.getItem('lama_students') || localStorage.getItem('lama_school_students') || localStorage.getItem('lama_all_students');
-                if (stored) return JSON.parse(stored);
+                for (const k of ['lama_students', 'lama_school_students', 'lama_all_students']) {
+                    const stored = localStorage.getItem(k);
+                    if (stored) {
+                        const arr = JSON.parse(stored);
+                        if (Array.isArray(arr) && arr.length > 0) return arr;
+                    }
+                }
             } catch(e) {}
             return [];
+        },
+        saveToCloud: async (action, record) => {
+            const settings = window.LamaAPI.getSettings();
+            if (!settings.webhookUrl || !settings.webhookUrl.trim()) return;
+            try {
+                await fetch(settings.webhookUrl.trim(), {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...record, timestamp: new Date().toISOString() })
+                });
+            } catch (err) {
+                console.error('Google Sheet sync failed:', err);
+            }
         },
         add: async (key, record) => {
             let list = [];
@@ -28,6 +64,7 @@
             localStorage.setItem('lama_students', JSON.stringify(list));
             localStorage.setItem('lama_school_students', JSON.stringify(list));
             localStorage.setItem('lama_all_students', JSON.stringify(list));
+            await window.LamaAPI.saveToCloud('add_student', record);
             return record;
         },
         update: async (key, id, record) => {
@@ -37,15 +74,20 @@
             localStorage.setItem('lama_students', JSON.stringify(list));
             localStorage.setItem('lama_school_students', JSON.stringify(list));
             localStorage.setItem('lama_all_students', JSON.stringify(list));
+            await window.LamaAPI.saveToCloud('update_student', record);
             return record;
         },
         remove: async (key, id) => {
             let list = [];
             try { list = JSON.parse(localStorage.getItem('lama_students') || '[]'); } catch(e){}
+            const target = list.find(s => s.id === id);
             list = list.filter(s => s.id !== id);
             localStorage.setItem('lama_students', JSON.stringify(list));
             localStorage.setItem('lama_school_students', JSON.stringify(list));
             localStorage.setItem('lama_all_students', JSON.stringify(list));
+            if (target) {
+                await window.LamaAPI.saveToCloud('delete_student', { id: target.id, enrlNo: target.enrlNo, name: target.name });
+            }
         },
         logout: () => { localStorage.removeItem('lama_active_school'); }
     };
@@ -71,6 +113,10 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
+                <button onclick="openSettingsModal()" class="bg-white/20 hover:bg-white/30 text-white font-medium text-xs px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm" title="Google Sheets Integration">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    <span class="hidden sm:inline">Sheets Sync</span>
+                </button>
                 <button onclick="openStudentModal()" class="bg-white hover:bg-emerald-50 text-[#107c41] font-semibold text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     <span>Add Student</span>
@@ -95,7 +141,7 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
                         Student Directory & Roster
                     </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">View, filter, edit, or remove students stored in your school database.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">View, filter, edit, or remove students stored in your school database with real-time Google Sheets sync.</p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
                     <input id="searchBox" oninput="renderList()" placeholder="Search by name or enrollment..." class="bg-slate-50 border border-slate-200 text-slate-800 text-xs rounded-xl px-3.5 py-2.5 outline-none focus:border-emerald-600 w-64">
@@ -164,6 +210,24 @@
         </div>
     </div>
 
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Google Sheets Sync Setup</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-700 text-lg font-bold">&times;</button>
+            </div>
+            <p class="text-xs text-slate-600">Enter your Google Apps Script Webhook URL to automatically sync student records to your Google Sheet upon addition, edit, or bulk import.</p>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Apps Script Webhook URL</label>
+                <input id="inWebhookUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button onclick="closeSettingsModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-4 py-2 rounded-xl transition">Cancel</button>
+                <button onclick="saveSettings()" class="bg-[#107c41] hover:bg-[#0b5c2f] text-white text-xs font-semibold px-4 py-2 rounded-xl transition shadow-sm">Save URL</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function handleLogout() {
             try {
@@ -179,8 +243,9 @@
         async function renderHeader() {
             try {
                 const school = await LamaAPI.getActiveSchool() || {};
-                document.getElementById('pageTitle').innerText = `${school.name || 'Lama School Suite'} | Manage Students`;
-                document.getElementById('headerSchoolName').innerText = school.name || 'Lama School Suite';
+                const name = school.name || 'Lama School Suite';
+                document.getElementById('pageTitle').innerText = `${name} | Manage Students`;
+                document.getElementById('headerSchoolName').innerText = name;
                 const logoBox = document.getElementById('schoolLogoBox');
                 if (school.logo) {
                     logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-lg">`;
@@ -192,7 +257,7 @@
             try {
                 allStudents = await LamaAPI.list('students');
                 if (!allStudents || allStudents.length === 0) {
-                    const fallback = localStorage.getItem('lama_students') || localStorage.getItem('lama_school_students');
+                    const fallback = localStorage.getItem('lama_students') || localStorage.getItem('lama_school_students') || localStorage.getItem('lama_all_students');
                     if (fallback) allStudents = JSON.parse(fallback);
                 }
             } catch (e) {
@@ -356,6 +421,28 @@
                     alertBox('Could not delete student: ' + e.message);
                 }
             });
+        }
+
+        function openSettingsModal() {
+            const settings = LamaAPI.getSettings();
+            document.getElementById('inWebhookUrl').value = settings.webhookUrl || '';
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveSettings() {
+            const webhookUrl = document.getElementById('inWebhookUrl').value.trim();
+            try {
+                const settings = { webhookUrl };
+                localStorage.setItem('lama_settings', JSON.stringify(settings));
+                closeSettingsModal();
+                alertBox('Google Sheets Webhook URL saved successfully!');
+            } catch (e) {
+                alertBox('Could not save settings.');
+            }
         }
 
         function alertBox(message) {

@@ -1,679 +1,707 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lama School Suite - Student Management</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Lama School Suite | Bulk Import</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script>
+    // LamaAPI school profile configuration
+    window.LamaAPI = window.LamaAPI || {
+        getActiveSchool: async () => {
+            try {
+                const stored = localStorage.getItem('lama_active_school');
+                if (stored) return JSON.parse(stored);
+            } catch(e) {}
+            return { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
+        },
+        logout: () => { window.location.href = 'index.html'; }
+    };
+</script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
-    <!-- Header -->
-    <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="bg-white/10 p-2.5 rounded-xl border border-white/20">
-                    <i class="fa-solid fa-graduation-cap text-2xl text-emerald-200"></i>
-                </div>
-                <div>
-                    <h1 id="school-name-title" class="text-lg sm:text-xl font-bold tracking-tight">Lama School Suite</h1>
-                    <p class="text-xs text-emerald-100 font-medium">Student Management, Photos & Bulk Import Portal</p>
-                </div>
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">LSS</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">Lama School Suite</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button onclick="switchTab('students')" id="nav-btn-students" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-white/20 hover:bg-white/30 text-white flex items-center gap-2">
-                    <i class="fa-solid fa-users"></i> View Students (<span id="total-badge">0</span>)
-                </button>
-                <button onclick="switchTab('import')" id="nav-btn-import" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-2">
-                    <i class="fa-solid fa-file-arrow-up"></i> Bulk Import
-                </button>
-                <button onclick="logoutPrompt()" class="px-3 py-2 rounded-lg text-sm font-semibold transition bg-rose-600/80 hover:bg-rose-700 text-white flex items-center gap-2" title="Logout">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
 
-        <!-- Notification Banner -->
-        <div id="notification" class="hidden mb-6 p-4 rounded-xl border text-sm flex items-center justify-between transition-all shadow-sm">
-            <span id="notification-text"></span>
-            <button onclick="hideNotification()" class="text-slate-500 hover:text-slate-700 font-bold">&times;</button>
-        </div>
+        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800">
+            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Roster & Photos</h2>
+            <p class="text-[11px] text-slate-400">
+                <strong>Complete List Import:</strong> Every single student record is preserved without filtering, extracting Name, Enrollment No, Gender, DOB (<code class="text-purple-400">DD-MM-YYYY</code>), Class, Father Name, CNIC/Form-B, and Admission Date (<code class="text-purple-400">DD-MM-YYYY</code>).
+            </p>
+            
+            <div class="space-y-1">
+                <label class="block text-[11px] font-bold text-slate-300">Roster File (Excel, CSV, PDF, or Word)</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
+            </div>
+            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
 
-        <!-- VIEW 1: STUDENTS LIST -->
-        <section id="view-students" class="space-y-6">
-            <!-- Controls Bar -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center">
-                <!-- Search -->
-                <div class="relative w-full md:w-96">
-                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </span>
-                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="Search by name, enrollment no, or father name..." 
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition">
+            <div class="border-t border-slate-800 pt-4 space-y-2">
+                <label class="block text-[11px] font-bold text-cyan-300">Where do you put the pictures? (Optional Photo Folder)</label>
+                <p class="text-[11px] text-slate-400">
+                    Select a folder on your computer containing student images named by enrollment number (e.g., <code class="text-purple-400">1678.jpg</code>).
+                </p>
+                <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold">
+                <p id="photoFolderStatus" class="text-[10px] text-cyan-400 font-semibold"></p>
+            </div>
+
+            <div id="sheetPicker" class="hidden pt-2">
+                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
+                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
+            </div>
+        </section>
+
+        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800 hidden">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Confirm Final Roster</h2>
+                    <p class="text-[11px] text-slate-400">Verify column mappings below. Once confirmed, this data is saved permanently as final school records.</p>
                 </div>
-
-                <!-- Filters & Action Buttons -->
-                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                    <select id="class-filter" onchange="handleClassFilter()" class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
-                        <option value="ALL">All Classes (0)</option>
-                        <option value="ECE">ECE</option>
-                        <option value="Class 1">Class 1</option>
-                        <option value="Class 2">Class 2</option>
-                        <option value="Class 3">Class 3</option>
-                        <option value="Class 4">Class 4</option>
-                        <option value="Class 5">Class 5</option>
-                    </select>
-
-                    <button onclick="openAddModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center gap-2">
-                        <i class="fa-solid fa-user-plus"></i> Add Student
-                    </button>
-
-                    <button onclick="confirmResetList()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition flex items-center gap-2" title="Clear Student List">
-                        <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Reset List</span>
-                    </button>
+                <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                    <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-900 border-slate-700 cursor-pointer">
+                    <label for="finalizeLockCheck" class="text-[11px] font-bold text-amber-300 cursor-pointer">I confirm this data is final and ready to commit</label>
                 </div>
             </div>
 
-            <!-- Table Container -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
+
+            <div class="border-t border-slate-800 pt-3">
+                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview before import (first 20 rows - Dates in DD-MM-YYYY)</h3>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-[10px] border-collapse min-w-[500px]">
                         <thead>
-                            <tr class="bg-slate-100/70 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
-                                <th class="py-3.5 px-4">#</th>
-                                <th class="py-3.5 px-4">Photo</th>
-                                <th class="py-3.5 px-4">Student Name</th>
-                                <th class="py-3.5 px-4">Enrl No</th>
-                                <th class="py-3.5 px-4">Class</th>
-                                <th class="py-3.5 px-4">Gender</th>
-                                <th class="py-3.5 px-4">DOB</th>
-                                <th class="py-3.5 px-4">Father / Guardian</th>
-                                <th class="py-3.5 px-4">Contact</th>
-                                <th class="py-3.5 px-4 text-center">Actions</th>
+                            <tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800">
+                                <th class="py-2 pr-3 w-10">#</th>
                             </tr>
                         </thead>
-                        <tbody id="student-table-body" class="divide-y divide-slate-100 text-sm">
-                            <!-- Populated dynamically via JavaScript -->
-                        </tbody>
+                        <tbody id="previewBody"></tbody>
                     </table>
                 </div>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="hidden p-12 text-center">
-                    <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                        <i class="fa-solid fa-user-slash"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-slate-700">No students found</h3>
-                    <p class="text-sm text-slate-500 mt-1">Please import records using the Bulk Import tab or add a student manually.</p>
-                </div>
-
-                <!-- Pagination Footer -->
-                <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-600">
-                    <div id="pagination-info" class="font-medium">
-                        Showing 0 students
-                    </div>
-                    <div class="flex items-center gap-1.5" id="pagination-controls">
-                        <!-- Pagination buttons generated via JS -->
-                    </div>
-                </div>
+                <p id="previewSummary" class="text-[10px] text-slate-400 mt-2"></p>
             </div>
+
+            <button onclick="startImport()" id="importBtn" disabled class="bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+                <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel"></span> <span id="rowCountText">Students</span>
+            </button>
         </section>
 
-        <!-- VIEW 2: BULK IMPORT -->
-        <section id="view-import" class="hidden space-y-6">
-            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto space-y-6">
-                <div class="flex items-center gap-3 pb-6 border-b border-slate-100">
-                    <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl">
-                        <i class="fa-solid fa-file-excel"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">Bulk Import Students & Optional Photo Folder</h2>
-                        <p class="text-sm text-slate-500">Paste CSV data and optionally upload student images named by enrollment number (e.g. 1678.jpg).</p>
-                    </div>
-                </div>
-
-                <!-- Optional Photo Folder Upload -->
-                <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3">
-                    <label class="block text-sm font-semibold text-emerald-900">
-                        <i class="fa-solid fa-images mr-1"></i> Optional Photo Folder (Select Multiple Images)
-                    </label>
-                    <p class="text-xs text-emerald-700">Select image files from your computer named after student enrollment numbers (e.g., <code class="bg-white px-1 py-0.5 rounded border border-emerald-200">1678.jpg</code> or <code class="bg-white px-1 py-0.5 rounded border border-emerald-200">1696.png</code>).</p>
-                    <input type="file" id="bulk-photo-folder" multiple accept="image/*" onchange="handlePhotoFolderSelect(event)" 
-                        class="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
-                    <div id="photo-folder-status" class="text-xs font-medium text-emerald-800"></div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">CSV Data Format Guide</label>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs font-mono text-slate-600">
-                        Name, EnrollmentNo, Class, Gender, DOB(DD-MM-YYYY), FatherName, Contact<br>
-                        Example: ALI KHAN, 2099, ECE, M, 12-05-2020, MUHAMMAD KHAN, 0300-1234567
-                    </div>
-                </div>
-
-                <div>
-                    <label for="csv-input-area" class="block text-sm font-semibold text-slate-700 mb-2">Paste CSV / Tab-Separated Data Here</label>
-                    <textarea id="csv-input-area" rows="6" placeholder="Paste rows copied from Excel or CSV file..." 
-                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"></textarea>
-                </div>
-
-                <div class="flex flex-col sm:flex-row gap-3 justify-end pt-2">
-                    <button onclick="switchTab('students')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">
-                        Cancel
-                    </button>
-                    <button onclick="processBulkImport()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> Import Records & Match Photos
-                    </button>
-                </div>
+        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Processing Finalized Batch Import...</h2>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
             </div>
+            <p id="progressLabel" class="text-xs text-slate-400">Preparing records...</p>
         </section>
 
+        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Final Import Complete</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">New Added</p>
+                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Already Existed</p>
+                    <p id="skippedCount" class="text-2xl font-black text-cyan-400">0</p>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
+                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>
+                </div>
+            </div>
+            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
+            <div class="pt-2 flex gap-3">
+                <a href="index.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Return to Dashboard &rarr;</a>
+                <a href="manage-students.html" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students List &rarr;</a>
+            </div>
+        </section>
     </main>
 
-    <!-- ADD / EDIT STUDENT MODAL -->
-    <div id="student-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden transform transition-all">
-            <div class="px-6 py-4 bg-emerald-700 text-white flex justify-between items-center">
-                <h3 id="modal-title" class="font-bold text-lg">Add New Student</h3>
-                <button onclick="closeModal()" class="text-white/80 hover:text-white text-xl font-bold">&times;</button>
-            </div>
-            <form id="student-form" onsubmit="saveStudent(event)" class="p-6 space-y-4">
-                <input type="hidden" id="edit-index" value="-1">
-                
-                <!-- Photo Upload Field -->
-                <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <div id="modal-photo-preview" class="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden text-slate-400 text-xl font-bold shrink-0">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Picture (Optional)</label>
-                        <input type="file" id="input-photo" accept="image/*" onchange="previewSinglePhoto(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Name *</label>
-                        <input type="text" id="input-name" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Enrollment No *</label>
-                        <input type="text" id="input-enrl" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Class *</label>
-                        <select id="input-class" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <option value="ECE">ECE</option>
-                            <option value="Class 1">Class 1</option>
-                            <option value="Class 2">Class 2</option>
-                            <option value="Class 3">Class 3</option>
-                            <option value="Class 4">Class 4</option>
-                            <option value="Class 5">Class 5</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Gender *</label>
-                        <select id="input-gender" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <option value="M">Male (M)</option>
-                            <option value="F">Female (F)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">DOB *</label>
-                        <input type="text" id="input-dob" placeholder="DD-MM-YYYY" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Father / Guardian *</label>
-                        <input type="text" id="input-father" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Contact Number</label>
-                        <input type="text" id="input-contact" placeholder="e.g. 0300-1234567" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">Cancel</button>
-                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition">Save Student</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- CUSTOM CONFIRMATION MODAL -->
-    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md p-6 text-center space-y-4">
-            <div id="confirm-icon" class="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <h3 id="confirm-title" class="text-lg font-bold text-slate-800">Are you sure?</h3>
-            <p id="confirm-message" class="text-sm text-slate-600">This action cannot be undone.</p>
-            <div class="flex justify-center gap-3 pt-2">
-                <button onclick="closeConfirmModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition w-28">Cancel</button>
-                <button id="confirm-btn-action" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold shadow-sm transition w-28">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
-        <p>&copy; 2026 Lama School Suite. All rights reserved.</p>
-    </footer>
-
-    <!-- JavaScript Application Logic -->
     <script>
-        let students = [];
-        let currentPage = 1;
-        let rowsPerPage = 50;
-        let currentSearchQuery = '';
-        let currentClassFilter = 'ALL';
-        let stagedPhotoMap = {}; // Maps enrollment number (e.g., "1678") to Base64 data URL
+        function handleLogout() {
+            try {
+                if (window.LamaAPI && typeof window.LamaAPI.logout === 'function') {
+                    window.LamaAPI.logout();
+                }
+            } catch (e) {}
+            window.location.href = 'index.html';
+        }
 
-        // Initialize application on load
-        window.onload = function() {
-            loadSchoolName();
-            loadStudentsFromStorage();
-            renderTable();
-            updateCounts();
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        const TARGET_FIELDS = [
+            { key: '', label: '-- Skip this column --' },
+            { key: 'name', label: 'Student Name' },
+            { key: 'enrlNo', label: 'Enrollment No' },
+            { key: 'admissionNo', label: 'Admission No' },
+            { key: 'gender', label: 'Gender (M/F)' },
+            { key: 'dob', label: 'Date of Birth (DD-MM-YYYY)' },
+            { key: 'class', label: 'Class' },
+            { key: 'section', label: 'Section' },
+            { key: 'fatherGuardian', label: "Father / Guardian Name" },
+            { key: 'fatherCnic', label: "Father's CNIC" },
+            { key: 'cnic', label: "Student CNIC / B-Form" },
+            { key: 'contact', label: 'Contact Number' },
+            { key: 'whatsapp', label: 'WhatsApp Number' },
+            { key: 'address', label: 'Address' },
+            { key: 'religion', label: 'Religion' },
+            { key: 'caste', label: 'Caste / Tribe' },
+            { key: 'profession', label: "Father's Profession" },
+            { key: 'monthlyIncome', label: 'Monthly Income' },
+            { key: 'academicSession', label: 'Academic Session' },
+            { key: 'admissionDate', label: 'Admission Date (DD-MM-YYYY)' },
+            { key: 'photo', label: 'Photo (URL or image data)' },
+            { key: 'admissionRemarks', label: 'Remarks' }
+        ];
+
+        const AUTO_GUESS = {
+            name: ['name', 'studentname', 'candidatename'],
+            enrlNo: ['enrlno', 'enrollmentno', 'enrollno', 'srno', 'sno'],
+            admissionNo: ['admissionno', 'admno'],
+            gender: ['gender', 'fm', 'sex'],
+            dob: ['dob', 'dateofbirth', 'birthdate'],
+            class: ['class', 'grade', 'kls'],
+            section: ['section', 'sec'],
+            fatherGuardian: ['fatherguardian', 'father', 'guardian', 'fathername', 'guardianname'],
+            fatherCnic: ['fathercnic', 'guardiancnic'],
+            cnic: ['cnic', 'formb', 'bform', 'studentcnic'],
+            contact: ['contact', 'contacts', 'phone', 'mobile', 'cellno'],
+            whatsapp: ['whatsapp', 'whatsappno'],
+            address: ['address', 'residentialaddress'],
+            religion: ['religion'],
+            caste: ['caste', 'tribe', 'castetribe'],
+            profession: ['profession', 'occupation'],
+            monthlyIncome: ['monthlyincome', 'income'],
+            academicSession: ['session', 'academicsession'],
+            admissionDate: ['admissiondate', 'admdate', 'admissiondt'],
+            photo: ['photo', 'photos', 'picture', 'pictures', 'image'],
+            admissionRemarks: ['remarks', 'comments']
         };
 
-        // Fetch School Name
-        function loadSchoolName() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const customSchool = urlParams.get('school') || localStorage.getItem('lama_school_name');
-            if (customSchool) {
-                document.getElementById('school-name-title').textContent = customSchool;
-            } else {
-                document.getElementById('school-name-title').textContent = "Lama School Suite";
-            }
-        }
+        let workbook = null;
+        let sourceHeaders = [];
+        let sourceRows = [];
+        let mapping = {};
+        let photoFolderMap = {};
 
-        function loadStudentsFromStorage() {
-            const saved = localStorage.getItem('lama_primary_students');
-            if (saved) {
-                try {
-                    students = JSON.parse(saved);
-                } catch(e) {
-                    students = [];
+        async function initSchoolProfile() {
+            try {
+                let school = null;
+                if (window.LamaAPI && typeof window.LamaAPI.getActiveSchool === 'function') {
+                    school = await window.LamaAPI.getActiveSchool();
                 }
-            } else {
-                students = [];
-            }
-        }
-
-        function saveStudentsToStorage() {
-            localStorage.setItem('lama_primary_students', JSON.stringify(students));
-        }
-
-        // Tab Switching
-        function switchTab(tabName) {
-            const studentsView = document.getElementById('view-students');
-            const importView = document.getElementById('view-import');
-            const btnStudents = document.getElementById('nav-btn-students');
-            const btnImport = document.getElementById('nav-btn-import');
-
-            if (tabName === 'students') {
-                studentsView.classList.remove('hidden');
-                importView.classList.add('hidden');
-                btnStudents.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-white/20 hover:bg-white/30 text-white flex items-center gap-2";
-                btnImport.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-2";
-                renderTable();
-            } else {
-                studentsView.classList.add('hidden');
-                importView.classList.remove('hidden');
-                btnImport.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-white/20 hover:bg-white/30 text-white flex items-center gap-2";
-                btnStudents.className = "px-4 py-2 rounded-lg text-sm font-semibold transition bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-2";
-            }
-        }
-
-        // Filter and Search logic
-        function handleSearch() {
-            currentSearchQuery = document.getElementById('search-input').value.trim().toLowerCase();
-            currentPage = 1;
-            renderTable();
-        }
-
-        function handleClassFilter() {
-            currentClassFilter = document.getElementById('class-filter').value;
-            currentPage = 1;
-            renderTable();
-        }
-
-        function getFilteredStudents() {
-            return students.filter(s => {
-                const matchesClass = (currentClassFilter === 'ALL' || s.cls === currentClassFilter);
-                const matchesSearch = !currentSearchQuery || 
-                    s.name.toLowerCase().includes(currentSearchQuery) ||
-                    s.enrl.toLowerCase().includes(currentSearchQuery) ||
-                    s.father.toLowerCase().includes(currentSearchQuery);
-                return matchesClass && matchesSearch;
-            });
-        }
-
-        // Render Table & Pagination
-        function renderTable() {
-            const filtered = getFilteredStudents();
-            const tbody = document.getElementById('student-table-body');
-            const emptyState = document.getElementById('empty-state');
-            const paginationInfo = document.getElementById('pagination-info');
-            const paginationControls = document.getElementById('pagination-controls');
-
-            tbody.innerHTML = '';
-
-            if (filtered.length === 0) {
-                emptyState.classList.remove('hidden');
-                paginationInfo.textContent = `Showing 0 of ${students.length} students`;
-                paginationControls.innerHTML = '';
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-
-            const totalPages = Math.ceil(filtered.length / rowsPerPage);
-            if (currentPage > totalPages) currentPage = Math.max(1, totalPages);
-
-            const startIdx = (currentPage - 1) * rowsPerPage;
-            const endIdx = Math.min(startIdx + rowsPerPage, filtered.length);
-            const paginated = filtered.slice(startIdx, endIdx);
-
-            paginated.forEach((s, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50/80 transition";
+                if (!school) {
+                    school = { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
+                }
                 
-                const photoHtml = s.photo 
-                    ? `<img src="${s.photo}" alt="Photo" class="w-10 h-10 rounded-full object-cover border border-slate-200">`
-                    : `<div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-user"></i></div>`;
-
-                tr.innerHTML = `
-                    <td class="py-3 px-4 text-slate-500 text-xs font-semibold">${startIdx + idx + 1}</td>
-                    <td class="py-3 px-4">${photoHtml}</td>
-                    <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(s.name)}</td>
-                    <td class="py-3 px-4 font-mono text-emerald-700 font-medium">${escapeHtml(s.enrl)}</td>
-                    <td class="py-3 px-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">${escapeHtml(s.cls)}</span></td>
-                    <td class="py-3 px-4 text-slate-600 font-medium">${escapeHtml(s.gender)}</td>
-                    <td class="py-3 px-4 text-slate-600 text-xs">${escapeHtml(s.dob)}</td>
-                    <td class="py-3 px-4 text-slate-700">${escapeHtml(s.father)}</td>
-                    <td class="py-3 px-4 text-slate-600 font-mono text-xs">${escapeHtml(s.contact || '-')}</td>
-                    <td class="py-3 px-4 text-center">
-                        <button onclick="deleteStudent(${s.id})" class="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition" title="Delete Student">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            paginationInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${filtered.length} students (Total Enrollment: ${students.length})`;
-            
-            // Generate Pagination Buttons
-            let pagesHtml = '';
-            pagesHtml += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-xs font-semibold cursor-not-allowed"' : 'class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition"'}>Prev</button>`;
-            
-            for (let p = 1; p <= Math.min(5, totalPages); p++) {
-                pagesHtml += `<button onclick="changePage(${p})" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${p === currentPage ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}">${p}</button>`;
-            }
-            if (totalPages > 5) {
-                pagesHtml += `<span class="px-1 text-slate-400">...</span>`;
-                pagesHtml += `<button onclick="changePage(${totalPages})" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition ${totalPages === currentPage ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}">${totalPages}</button>`;
-            }
-
-            pagesHtml += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages || totalPages === 0 ? 'disabled class="px-3 py-1.5 bg-slate-100 text-slate-400 rounded-lg text-xs font-semibold cursor-not-allowed"' : 'class="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition"'}>Next</button>`;
-            
-            paginationControls.innerHTML = pagesHtml;
-        }
-
-        function changePage(p) {
-            const filtered = getFilteredStudents();
-            const totalPages = Math.ceil(filtered.length / rowsPerPage);
-            if (p >= 1 && p <= totalPages) {
-                currentPage = p;
-                renderTable();
-            }
-        }
-
-        function updateCounts() {
-            document.getElementById('total-badge').textContent = students.length;
-            document.querySelector('#class-filter option[value="ALL"]').textContent = `All Classes (${students.length})`;
-        }
-
-        // Add / Edit Modal Functions
-        function openAddModal() {
-            document.getElementById('modal-title').textContent = 'Add New Student';
-            document.getElementById('edit-index').value = '-1';
-            document.getElementById('student-form').reset();
-            document.getElementById('modal-photo-preview').innerHTML = '<i class="fa-solid fa-user"></i>';
-            document.getElementById('student-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('student-modal').classList.add('hidden');
-        }
-
-        function previewSinglePhoto(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('modal-photo-preview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
-                    document.getElementById('modal-photo-preview').dataset.base64 = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function saveStudent(event) {
-            event.preventDefault();
-            const name = document.getElementById('input-name').value.trim();
-            const enrl = document.getElementById('input-enrl').value.trim();
-            const cls = document.getElementById('input-class').value;
-            const gender = document.getElementById('input-gender').value;
-            const dob = document.getElementById('input-dob').value.trim();
-            const father = document.getElementById('input-father').value.trim();
-            const contact = document.getElementById('input-contact').value.trim() || '-';
-            const photo = document.getElementById('modal-photo-preview').dataset.base64 || '';
-
-            const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-            students.unshift({ id: newId, name, enrl, cls, gender, dob, father, contact, photo });
-
-            saveStudentsToStorage();
-            renderTable();
-            updateCounts();
-            closeModal();
-            showNotification('Student successfully added!', 'success');
-        }
-
-        // Delete Student with Custom Confirmation
-        let pendingDeleteId = null;
-        function deleteStudent(id) {
-            pendingDeleteId = id;
-            showConfirmModal(
-                'Delete Student',
-                'Are you sure you want to delete this student record?',
-                () => {
-                    students = students.filter(s => s.id !== pendingDeleteId);
-                    saveStudentsToStorage();
-                    renderTable();
-                    updateCounts();
-                    showNotification('Student record deleted successfully.', 'error');
+                document.getElementById('pageTitle').innerText = `${school.name || 'Lama School Suite'} | Bulk Import`;
+                document.getElementById('headerSchoolName').innerText = school.name || 'Lama School Suite';
+                const logoBox = document.getElementById('schoolLogoBox');
+                if (school.logo) {
+                    logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+                } else {
+                    logoBox.innerText = school.shortCode || 'LSS';
                 }
-            );
+            } catch (e) {
+                document.getElementById('headerSchoolName').innerText = 'Lama School Suite';
+            }
         }
 
-        function confirmResetList() {
-            showConfirmModal(
-                'Reset Student List',
-                'This will clear all student records.',
-                () => {
-                    students = [];
-                    stagedPhotoMap = {};
-                    saveStudentsToStorage();
-                    renderTable();
-                    updateCounts();
-                    showNotification('Student list cleared successfully.', 'success');
+        function formatDateToDDMMYYYY(dateStr) {
+            if (!dateStr) return '';
+            const clean = String(dateStr).trim();
+            
+            let m = clean.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
+            if (m) {
+                let [, d, mo, y] = m;
+                if (y.length === 2) y = '20' + y;
+                return `${String(d).padStart(2, '0')}-${String(mo).padStart(2, '0')}-${y}`;
+            }
+
+            m = clean.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+            if (m) {
+                let [, y, mo, d] = m;
+                return `${String(d).padStart(2, '0')}-${String(mo).padStart(2, '0')}-${y}`;
+            }
+
+            if (/^\d{5}$/.test(clean)) {
+                const excelDate = new Date((Number(clean) - (25567 + 2)) * 86400 * 1000);
+                if (!isNaN(excelDate.getTime())) {
+                    const d = String(excelDate.getDate()).padStart(2, '0');
+                    const mo = String(excelDate.getMonth() + 1).padStart(2, '0');
+                    const y = excelDate.getFullYear();
+                    return `${d}-${mo}-${y}`;
                 }
-            );
+            }
+
+            const parsed = new Date(clean);
+            if (!isNaN(parsed.getTime())) {
+                const d = String(parsed.getDate()).padStart(2, '0');
+                const mo = String(parsed.getMonth() + 1).padStart(2, '0');
+                const y = parsed.getFullYear();
+                return `${d}-${mo}-${y}`;
+            }
+
+            return clean;
         }
 
-        // Custom Confirmation Dialog Helpers
-        function showConfirmModal(title, message, onConfirmCallback) {
-            document.getElementById('confirm-title').textContent = title;
-            document.getElementById('confirm-message').textContent = message;
-            const actionBtn = document.getElementById('confirm-btn-action');
-            actionBtn.onclick = function() {
-                closeConfirmModal();
-                onConfirmCallback();
+        function handleFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'pdf') {
+                handlePdfFile(file);
+            } else if (ext === 'docx') {
+                handleDocxFile(file);
+            } else {
+                handleSpreadsheetFile(file);
+            }
+        }
+
+        function handleSpreadsheetFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    workbook = XLSX.read(e.target.result, { type: 'array' });
+                    const sheetNames = workbook.SheetNames;
+                    if (sheetNames.length > 1) {
+                        document.getElementById('sheetPicker').classList.remove('hidden');
+                        document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                    } else {
+                        document.getElementById('sheetPicker').classList.add('hidden');
+                    }
+                    loadSheet(sheetNames[0]);
+                } catch(err) {
+                    alertBox("Error reading spreadsheet: " + err.message);
+                }
             };
-            document.getElementById('confirm-modal').classList.remove('hidden');
+            reader.readAsArrayBuffer(file);
         }
 
-        function closeConfirmModal() {
-            document.getElementById('confirm-modal').classList.add('hidden');
+        async function handleDocxFile(file) {
+            const status = document.getElementById('pdfStatus');
+            status.classList.remove('hidden');
+            status.innerText = 'Extracting Word document tables...';
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                const lines = result.value.split('\n').map(l => l.trim()).filter(Boolean);
+                
+                sourceHeaders = ['Sr No', 'Enrollment No', 'Student Name', 'Gender', 'DOB', 'Class', 'Father Name', 'CNIC', 'Contact'];
+                sourceRows = lines.map((l, idx) => [String(idx + 1), '', l, '', '', '', '', '', '']);
+                
+                mapping = { 0: 'enrlNo', 1: 'enrlNo', 2: 'name', 3: 'gender', 4: 'dob', 5: 'class', 6: 'fatherGuardian', 7: 'cnic', 8: 'contact' };
+                renderMappingGrid();
+                renderPreview();
+                document.getElementById('mapSection').classList.remove('hidden');
+                document.getElementById('rowCountLabel').innerText = sourceRows.length;
+                status.innerText = `Successfully loaded ${sourceRows.length} lines from Word document.`;
+            } catch(err) {
+                status.innerText = "Error reading Word document: " + err.message;
+            }
         }
 
-        // Handle Photo Folder Selection in Bulk Import
-        function handlePhotoFolderSelect(event) {
-            const files = event.target.files;
-            stagedPhotoMap = {};
-            let loadedCount = 0;
-
-            if (files.length === 0) return;
-
+        function handlePhotoFolder(input) {
+            const files = input.files;
+            if (!files || files.length === 0) return;
+            photoFolderMap = {};
+            let count = 0;
             for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                // Extract filename without extension (e.g., "1678.jpg" -> "1678")
-                const fileNameFull = file.name;
-                const dotIndex = fileNameFull.lastIndexOf('.');
-                const enrlKey = dotIndex !== -1 ? fileNameFull.substring(0, dotIndex).trim() : fileNameFull.trim();
-
-                const reader = new FileReader();
-                reader.onload = (function(key) {
-                    return function(e) {
-                        stagedPhotoMap[key] = e.target.result;
-                        loadedCount++;
-                        document.getElementById('photo-folder-status').textContent = `Successfully staged ${loadedCount} student photos from folder.`;
+                const f = files[i];
+                const cleanName = f.name.substring(0, f.name.lastIndexOf('.')).trim().toLowerCase();
+                if (cleanName) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        photoFolderMap[cleanName] = e.target.result;
+                        count++;
+                        document.getElementById('photoFolderStatus').innerText = `Loaded ${count} student photo(s) into memory.`;
                     };
-                })(enrlKey);
-                reader.readAsDataURL(file);
+                    reader.readAsDataURL(f);
+                }
             }
         }
 
-        // Bulk Import Processing
-        function processBulkImport() {
-            const rawData = document.getElementById('csv-input-area').value.trim();
-            if (!rawData) {
-                showNotification('Please paste valid CSV or text data to import.', 'error');
-                return;
+        const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
+
+        function pdfConvDate(d) {
+            if (!d) return '';
+            const clean = String(d).trim().toUpperCase();
+            let m = clean.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
+            if (!m) return formatDateToDDMMYYYY(clean);
+            const [, day, mon, yy] = m;
+            const monNum = PDF_MONTHS[mon];
+            if (!monNum) return formatDateToDDMMYYYY(clean);
+            return `${String(day).padStart(2, '0')}-${String(monNum).padStart(2, '0')}-20${yy}`;
+        }
+
+        function isPdfNoiseLine(line) {
+            const t = String(line || '').trim();
+            if (!t) return true;
+            if (/^Downloaded by/i.test(t)) return true;
+            if (/^this data may result in a strict disciplinary action/i.test(t)) return true;
+            if (/^Unauthorized or illegitimate use\/distribution/i.test(t)) return true;
+            if (/STUDENTS ALREADY EXIST/i.test(t)) return true;
+            if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;
+            if (/^All students of EMIS/i.test(t)) return true;
+            if (/^Page\s*\d+\s*of\s*\d+/i.test(t)) return true;
+            if (t === '!') return true;
+            return false;
+        }
+
+        async function extractPdfLines(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let allLines = [];
+            for (let p = 1; p <= pdf.numPages; p++) {
+                const page = await pdf.getPage(p);
+                const content = await page.getTextContent();
+                
+                content.items.sort((a, b) => {
+                    const yDiff = b.transform[5] - a.transform[5];
+                    if (Math.abs(yDiff) > 3) return yDiff;
+                    return a.transform[4] - b.transform[4];
+                });
+
+                let lines = [];
+                let currentLine = '';
+                let lastY = null;
+                content.items.forEach(item => {
+                    const y = item.transform[5];
+                    if (lastY !== null && Math.abs(y - lastY) > 2.5) {
+                        if (currentLine.trim()) lines.push(currentLine.trim());
+                        currentLine = item.str;
+                    } else {
+                        currentLine += (currentLine && !currentLine.endsWith(' ') && !item.str.startsWith(' ') ? ' ' : '') + item.str;
+                    }
+                    lastY = y;
+                });
+                if (currentLine.trim()) lines.push(currentLine.trim());
+                allLines = allLines.concat(lines);
             }
+            return allLines;
+        }
 
-            const lines = rawData.split('\n');
-            let importedCount = 0;
-            let matchedPhotosCount = 0;
+        function parsePdfLines(lines) {
+            const rows = [];
+            for (const rawLine of lines) {
+                const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
+                if (!clean || isPdfNoiseLine(clean)) continue;
 
-            lines.forEach(line => {
-                const parts = line.split(/[\t,]+/).map(p => p.trim());
-                if (parts.length >= 6) {
-                    const enrlVal = parts[1] || '0000';
-                    // Check if photo was staged for this enrollment number
-                    let matchedPhoto = '';
-                    if (stagedPhotoMap[enrlVal]) {
-                        matchedPhoto = stagedPhotoMap[enrlVal];
-                        matchedPhotosCount++;
+                const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i) ||
+                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i);
+
+                if (match) {
+                    let enrl = '', name = '', gender = '', dob = '', remainder = '';
+                    if (match.length === 6) {
+                        enrl = match[2];
+                        name = match[3];
+                        gender = match[4];
+                        dob = match[5];
+                        remainder = clean.substring(match[0].length).trim();
+                    } else if (match.length === 5) {
+                        enrl = match[1];
+                        name = match[2];
+                        gender = match[3];
+                        dob = match[4];
+                        remainder = clean.substring(match[0].length).trim();
                     }
 
-                    const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-                    students.unshift({
-                        id: newId,
-                        name: parts[0] || 'UNKNOWN',
-                        enrl: enrlVal,
-                        cls: ['ECE', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'].includes(parts[2]) ? parts[2] : 'ECE',
-                        gender: parts[3] === 'F' ? 'F' : 'M',
-                        dob: parts[4] || '01-01-2018',
-                        father: parts[5] || 'GUARDIAN',
-                        contact: parts[6] || '-',
-                        photo: matchedPhoto
-                    });
-                    importedCount++;
-                }
-            });
+                    let father = 'Guardian';
+                    let formb = '';
+                    let klass = 'ECE';
+                    let admDate = '';
 
-            if (importedCount > 0) {
-                saveStudentsToStorage();
-                updateCounts();
-                document.getElementById('csv-input-area').value = '';
-                document.getElementById('bulk-photo-folder').value = '';
-                document.getElementById('photo-folder-status').textContent = '';
-                stagedPhotoMap = {};
-                switchTab('students');
-                showNotification(`Successfully imported ${importedCount} students (${matchedPhotosCount} photos matched)! Total Enrollment: ${students.length}`, 'success');
-            } else {
-                showNotification('No valid records recognized. Please check the CSV format.', 'error');
+                    const dateMatches = remainder.match(/(\d{2}-[A-Z]{3}-\d{2})/g);
+                    if (dateMatches && dateMatches.length > 0) {
+                        admDate = pdfConvDate(dateMatches[dateMatches.length - 1].toUpperCase());
+                    }
+
+                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2}/g, '').trim();
+                    const tokens = cleanRem.split(/\s+/).filter(Boolean);
+                    if (tokens.length > 0) {
+                        if (/^\d{1,2}\.\d{1,2}$/.test(tokens[0])) tokens.shift();
+
+                        const cnicIdx = tokens.findIndex(t => /^\d{13}$/.test(t));
+                        if (cnicIdx !== -1) {
+                            formb = tokens[cnicIdx];
+                            tokens.splice(cnicIdx, 1);
+                        } else if (tokens.length > 0 && /^\d{13}$/.test(tokens[tokens.length - 1])) {
+                            formb = tokens[tokens.length - 1];
+                            tokens.pop();
+                        }
+                        
+                        const commonClasses = ['ECE', 'KG', 'NURSERY', 'PREP', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
+                        if (tokens.length >= 2 && (commonClasses.includes(tokens[0].toUpperCase()) || /^[1-12](TH|ST|ND|RD)?$/i.test(tokens[0]))) {
+                            klass = tokens[0].toUpperCase();
+                            tokens.shift();
+                        }
+
+                        while (tokens.length > 0 && commonClasses.includes(tokens[tokens.length - 1].toUpperCase())) {
+                            tokens.pop();
+                        }
+
+                        if (tokens.length > 0) father = tokens.join(' ');
+                    }
+
+                    rows.push([enrl, name.trim(), gender.toUpperCase(), pdfConvDate(dob.toUpperCase()), klass.toUpperCase(), father.trim(), formb, admDate]);
+                }
+            }
+            return { rows };
+        }
+
+        async function handlePdfFile(file) {
+            const status = document.getElementById('pdfStatus');
+            status.classList.remove('hidden');
+            status.innerText = 'Reading PDF roster...';
+            try {
+                const lines = await extractPdfLines(file);
+                status.innerText = 'Parsing all student records...';
+                const { rows } = parsePdfLines(lines);
+
+                if (rows.length === 0) {
+                    status.innerText = "Couldn't detect standard student row format in this PDF.";
+                    return;
+                }
+
+                sourceHeaders = ['Enrollment No', 'Name', 'Gender', 'DOB', 'Class', "Father / Guardian", 'CNIC / Form-B', 'Admission Date'];
+                sourceRows = rows;
+                mapping = { 0: 'enrlNo', 1: 'name', 2: 'gender', 3: 'dob', 4: 'class', 5: 'fatherGuardian', 6: 'cnic', 7: 'admissionDate' };
+
+                renderMappingGrid();
+                renderPreview();
+                document.getElementById('mapSection').classList.remove('hidden');
+                document.getElementById('rowCountLabel').innerText = sourceRows.length;
+                status.innerText = `Successfully parsed all ${sourceRows.length} students from PDF!`;
+            } catch(err) {
+                status.innerText = "Error parsing PDF: " + err.message;
             }
         }
 
-        // Logout Prompt
-        function logoutPrompt() {
-            showConfirmModal(
-                'Logout Portal',
-                'Are you sure you want to log out from the portal?',
-                () => {
-                    showNotification('Logged out successfully. Refreshing session...', 'success');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+        function loadSheet(sheetName) {
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            if (!json.length) return;
+            sourceHeaders = json[0].map(h => String(h || '').trim());
+            sourceRows = json.slice(1).filter(r => r.some(cell => cell !== undefined && String(cell).trim() !== '')).map(row => {
+                return row.map((cell, colIdx) => {
+                    const hLower = (sourceHeaders[colIdx] || '').toLowerCase();
+                    if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) {
+                        return formatDateToDDMMYYYY(cell);
+                    }
+                    return cell;
+                });
+            });
+
+            mapping = {};
+            sourceHeaders.forEach((h, idx) => {
+                const clean = h.toLowerCase().replace(/[^a-z]/g, '');
+                for (const [key, hints] of Object.entries(AUTO_GUESS)) {
+                    if (hints.some(hint => clean === hint || clean.includes(hint))) {
+                        if (clean.includes('father') && key === 'class') continue;
+                        if (clean.includes('guardian') && key === 'class') continue;
+                        mapping[idx] = key;
+                        break;
+                    }
                 }
-            );
+            });
+
+            renderMappingGrid();
+            renderPreview();
+            document.getElementById('mapSection').classList.remove('hidden');
+            document.getElementById('rowCountLabel').innerText = sourceRows.length;
         }
 
-        // Utility Notification
-        function showNotification(message, type = 'success') {
-            const notif = document.getElementById('notification');
-            const text = document.getElementById('notification-text');
-            text.textContent = message;
-            notif.className = `mb-6 p-4 rounded-xl border text-sm flex items-center justify-between transition-all shadow-sm ${type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`;
-            notif.classList.remove('hidden');
-            setTimeout(() => {
-                hideNotification();
-            }, 4000);
+        function renderMappingGrid() {
+            const grid = document.getElementById('mappingGrid');
+            grid.innerHTML = sourceHeaders.map((h, i) => {
+                const mappedKey = Object.keys(mapping).find(k => Number(k) === i);
+                return `
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+                        <span class="font-bold text-slate-300 text-xs truncate">Column: ${h}</span>
+                        <select onchange="updateMapping(${i}, this.value)" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 w-44">
+                            ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${f.key === (mappedKey !== undefined ? mapping[mappedKey] : '') ? 'selected' : ''}>${f.label}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }).join('');
         }
 
-        function hideNotification() {
-            document.getElementById('notification').classList.add('hidden');
+        function updateMapping(colIndex, fieldKey) {
+            if (!fieldKey) delete mapping[colIndex];
+            else mapping[colIndex] = fieldKey;
+            renderPreview();
         }
 
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        function renderPreview() {
+            const head = document.getElementById('previewHead');
+            const body = document.getElementById('previewBody');
+            
+            head.innerHTML = `<th class="py-2 pr-3 w-10">#</th>` + sourceHeaders.map(h => `<th class="py-2 pr-3">${h}</th>`).join('');
+            body.innerHTML = sourceRows.slice(0, 20).map((row, idx) => `
+                <tr class="border-b border-slate-800/60 hover:bg-slate-950/30">
+                    <td class="py-2 pr-3 font-bold text-purple-400">${idx + 1}</td>
+                    ${row.map((cell, cIdx) => {
+                        const hLower = (sourceHeaders[cIdx] || '').toLowerCase();
+                        let val = cell || '-';
+                        if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) val = formatDateToDDMMYYYY(val);
+                        return `<td class="py-2 pr-3 truncate max-w-[120px] text-slate-300">${val}</td>`;
+                    }).join('')}
+                </tr>
+            `).join('');
+
+            document.getElementById('previewSummary').innerText = `Showing first 20 of ${sourceRows.length} total records in file.`;
         }
+
+        function toggleFinalizeLock(checkbox) {
+            const btn = document.getElementById('importBtn');
+            if (checkbox.checked) {
+                btn.disabled = false;
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/30";
+            } else {
+                btn.disabled = true;
+                btn.className = "bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2";
+            }
+        }
+
+        function buildRecordFromRow(row, index) {
+            const student = {};
+            for (const [colIdx, fieldKey] of Object.entries(mapping)) {
+                if (row[colIdx] !== undefined) {
+                    let val = String(row[colIdx]).trim();
+                    if (fieldKey === 'dob' || fieldKey === 'admissionDate') val = formatDateToDDMMYYYY(val);
+                    student[fieldKey] = val;
+                }
+            }
+            if (!student.name) student.name = `Student #${index + 1}`;
+            if (!student.enrlNo && student.admissionNo) student.enrlNo = student.admissionNo;
+            if (!student.enrlNo) {
+                student.enrlNo = 'ENRL-' + String(index + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            }
+            
+            const cleanEnrl = String(student.enrlNo).trim().toLowerCase();
+            if (photoFolderMap[cleanEnrl]) {
+                student.photo = photoFolderMap[cleanEnrl];
+            }
+
+            student.id = 'id_' + Math.random().toString(36).substr(2, 9) + index + Date.now().toString(36);
+            return student;
+        }
+
+        async function startImport() {
+            if (!sourceRows.length) return alertBox('Select a file first.');
+            if (!document.getElementById('finalizeLockCheck').checked) {
+                return alertBox('Please check the confirmation box indicating that this data is final before proceeding.');
+            }
+            
+            showConfirmModal(`Finalize and commit ${sourceRows.length} student records? This will permanently write the data to the school system.`, async () => {
+                document.getElementById('mapSection').classList.add('hidden');
+                document.getElementById('progressSection').classList.remove('hidden');
+                
+                document.getElementById('progressLabel').innerText = 'Preparing student list...';
+                document.getElementById('progressBar').style.width = '30%';
+
+                const batchItems = [];
+                for (let i = 0; i < sourceRows.length; i++) {
+                    const rec = buildRecordFromRow(sourceRows[i], i);
+                    batchItems.push(rec);
+                }
+
+                document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records safely...`;
+                document.getElementById('progressBar').style.width = '70%';
+
+                try {
+                    localStorage.setItem('lama_students', JSON.stringify(batchItems));
+                    localStorage.setItem('lama_school_students', JSON.stringify(batchItems));
+                    localStorage.setItem('lama_school_SSD_students', JSON.stringify(batchItems));
+                    
+                    document.getElementById('progressBar').style.width = '100%';
+                    
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('resultsSection').classList.remove('hidden');
+                    document.getElementById('successCount').innerText = batchItems.length;
+                    document.getElementById('skippedCount').innerText = 0;
+                    document.getElementById('failCount').innerText = 0;
+                    document.getElementById('errorsList').innerHTML =
+                        `<p class="text-slate-300">Successfully locked in and imported <strong>${batchItems.length}</strong> new students!</p>`;
+                } catch (storageErr) {
+                    console.error('Storage save failed:', storageErr);
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('resultsSection').classList.remove('hidden');
+                    document.getElementById('successCount').innerText = 0;
+                    document.getElementById('skippedCount').innerText = 0;
+                    document.getElementById('failCount').innerText = batchItems.length;
+                    document.getElementById('errorsList').innerHTML =
+                        `<p class="text-red-400">Failed due to storage limits: ${storageErr.message}</p>`;
+                }
+            });
+        }
+
+        function alertBox(message) {
+            let box = document.getElementById('customAlertModal');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'customAlertModal';
+                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
+                box.innerHTML = `
+                    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+                        <h3 class="text-sm font-black uppercase text-purple-400">Notice</h3>
+                        <p id="customAlertMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
+                        <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 rounded-xl transition">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(box);
+            }
+            document.getElementById('customAlertMsg').innerText = message;
+            box.classList.remove('hidden');
+        }
+
+        function showConfirmModal(message, onConfirm) {
+            let box = document.getElementById('customConfirmModal');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'customConfirmModal';
+                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
+                box.innerHTML = `
+                    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+                        <h3 class="text-sm font-black uppercase text-cyan-400">Confirm Final Lock</h3>
+                        <p id="customConfirmMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
+                        <div class="flex gap-2 pt-2">
+                            <button id="customConfirmCancelBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">Cancel</button>
+                            <button id="customConfirmOkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition">Proceed & Lock</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(box);
+            }
+            document.getElementById('customConfirmMsg').innerText = message;
+            const okBtn = document.getElementById('customConfirmOkBtn');
+            const cancelBtn = document.getElementById('customConfirmCancelBtn');
+            
+            const close = () => box.classList.add('hidden');
+            okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
+            cancelBtn.onclick = close;
+            box.classList.remove('hidden');
+        }
+
+        initSchoolProfile();
     </script>
 </body>
 </html>

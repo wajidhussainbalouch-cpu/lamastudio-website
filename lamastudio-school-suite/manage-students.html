@@ -72,9 +72,14 @@
                     <option value="All">All Classes</option>
                 </select>
             </div>
-            <button onclick="openClassManagerModal()" class="bg-slate-800 hover:bg-slate-700 text-purple-400 font-bold text-xs px-3.5 py-2.5 rounded-xl transition border border-slate-700 flex items-center gap-1.5">
-                ⚙️ Clean / Manage Classes
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="openSmartFixModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-indigo-900/40">
+                    🪄 Auto-Fix Wrong Classes
+                </button>
+                <button onclick="openClassManagerModal()" class="bg-slate-800 hover:bg-slate-700 text-purple-400 font-bold text-xs px-3.5 py-2.5 rounded-xl transition border border-slate-700 flex items-center gap-1.5">
+                    ⚙️️ Clean / Manage Classes
+                </button>
+            </div>
         </div>
 
         <!-- Roster Table -->
@@ -171,6 +176,37 @@
         </div>
     </div>
 
+    <!-- SMART AUTO-FIX MODAL -->
+    <div id="smartFixModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-black uppercase text-indigo-400">🪄 Smart Fix: Swap / Shift Guardian Names</h3>
+                <button onclick="closeSmartFixModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            <p class="text-[11px] text-slate-300">
+                If your CSV import placed the <strong>Father/Guardian</strong> name into the <strong>Class</strong> field and left the guardian column blank, this tool can automatically move that text into the Guardian column and assign a uniform class name to those students.
+            </p>
+            <div class="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Select the Misplaced Class (currently showing a person's name)</label>
+                    <select id="fixClassSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">What should their <strong>Actual Class</strong> be set to?</label>
+                    <input id="fixNewClassInput" list="classListOptions" placeholder="e.g. 5th Grade, Class 8..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs">
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <input type="checkbox" id="fixMoveToGuardian" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0">
+                    <label for="fixMoveToGuardian" class="text-[11px] text-slate-300">Also copy this misplaced text into the <strong>Father / Guardian</strong> field if it's currently empty</label>
+                </div>
+                <button onclick="applySmartFix()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl transition text-xs mt-2">Apply Smart Fix</button>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button onclick="closeSmartFixModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- CUSTOM ALERT MODAL -->
     <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -259,6 +295,51 @@
 
         function closeClassManagerModal() {
             document.getElementById('classManagerModal').classList.add('hidden');
+        }
+
+        function openSmartFixModal() {
+            const classes = Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).sort();
+            document.getElementById('fixClassSelect').innerHTML = classes.map(c => {
+                const count = allStudents.filter(s => s.class === c).length;
+                return `<option value="${c}">${c} — (${count} students)</option>`;
+            }).join('');
+            document.getElementById('fixNewClassInput').value = '';
+            document.getElementById('smartFixModal').classList.remove('hidden');
+        }
+
+        function closeSmartFixModal() {
+            document.getElementById('smartFixModal').classList.add('hidden');
+        }
+
+        async function applySmartFix() {
+            const misplacedVal = document.getElementById('fixClassSelect').value;
+            const newClassName = document.getElementById('fixNewClassInput').value.trim();
+            const moveToGuardian = document.getElementById('fixMoveToGuardian').checked;
+
+            if (!misplacedVal) { alertBox('Please select the misplaced entry.'); return; }
+            if (!newClassName) { alertBox('Please provide the correct actual class name.'); return; }
+
+            const matching = allStudents.filter(s => s.class === misplacedVal);
+            if (matching.length === 0) { alertBox('No students found with that entry.'); return; }
+
+            showConfirmModal(`Fix ${matching.length} records? This will set their class to "${newClassName}" and move "${misplacedVal}" into their Father/Guardian column.`, async () => {
+                try {
+                    for (const s of matching) {
+                        const updateData = { class: newClassName };
+                        s.class = newClassName;
+                        if (moveToGuardian && (!s.fatherGuardian || s.fatherGuardian.trim() === '')) {
+                            updateData.fatherGuardian = misplacedVal;
+                            s.fatherGuardian = misplacedVal;
+                        }
+                        await LamaAPI.update(STUDENTS, s.id, updateData);
+                    }
+                    closeSmartFixModal();
+                    await loadStudents();
+                    alertBox(`Successfully fixed ${matching.length} student records!`);
+                } catch (e) {
+                    alertBox('Error applying smart fix: ' + e.message);
+                }
+            });
         }
 
         async function applyClassRename() {

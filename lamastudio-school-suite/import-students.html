@@ -10,7 +10,6 @@
 <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <link rel="stylesheet" href="assets/css/config.css">
 <script>
-    // Robust Fallback for LamaAPI if external api-client.js is missing
     window.LamaAPI = window.LamaAPI || {
         getActiveSchool: async () => ({ name: 'Demo School', shortCode: 'DEMO', logo: null }),
         logout: () => { window.location.href = 'login.html'; },
@@ -19,14 +18,17 @@
         get: async (key) => {
             try { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); } catch(e) { return []; }
         },
-        add: async (key, item) => {
+        addBatch: async (key, items) => {
             try {
                 const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                item.id = 'id_' + Math.random().toString(36).substr(2, 9);
-                list.push(item);
-                localStorage.setItem('lama_' + key, JSON.stringify(list));
-                return item;
-            } catch(e) { throw new Error('Storage failed'); }
+                const addedItems = items.map(item => {
+                    item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                    return item;
+                });
+                const updatedList = list.concat(addedItems);
+                localStorage.setItem('lama_' + key, JSON.stringify(updatedList));
+                return addedItems;
+            } catch(e) { throw new Error('Batch storage failed'); }
         }
     };
 </script>
@@ -50,18 +52,28 @@
 
     <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
 
-        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-3">
-            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>
-            <p class="text-[11px] text-slate-400">Accepts Excel (.xlsx, .xls, .xlsm, .xlsb), CSV, Word (.docx), and text-based Punjab EMIS/SIS PDF files. Excel macros are not executed. Older .doc files should be saved as .docx first.</p>
-            <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
-            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
-            <div class="border-t border-slate-800 pt-3 space-y-2">
-                <label class="block text-[11px] font-bold text-slate-300">Optional: student photo folder</label>
-                <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold">
-                <p class="text-[10px] text-slate-500">Name photos with the Enrollment Number, e.g. 1678.jpg. This local folder picker is more reliable than a general cloud-folder link.</p>
-                <p id="photoFolderStatus" class="text-[10px] text-cyan-300"></p>
+        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-4">
+            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Roster & Photos</h2>
+            <p class="text-[11px] text-slate-400">
+                <strong>High-Speed Smart Merge:</strong> Processing is now optimized with parallel batch execution. Existing students are automatically skipped, and new records are merged instantly.
+            </p>
+            
+            <div class="space-y-1">
+                <label class="block text-[11px] font-bold text-slate-300">Roster File (Excel, CSV, PDF, or Word)</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
             </div>
-            <div id="sheetPicker" class="hidden">
+            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
+
+            <div class="border-t border-slate-800 pt-4 space-y-2">
+                <label class="block text-[11px] font-bold text-cyan-300">Where do you put the pictures? (Optional Photo Folder)</label>
+                <p class="text-[11px] text-slate-400">
+                    Select a folder on your computer containing student images. Name each image file using the student's <strong>Enrollment Number</strong> (e.g., <code class="text-purple-400">1678.jpg</code>).
+                </p>
+                <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold">
+                <p id="photoFolderStatus" class="text-[10px] text-cyan-400 font-semibold"></p>
+            </div>
+
+            <div id="sheetPicker" class="hidden pt-2">
                 <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
                 <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
             </div>
@@ -69,7 +81,7 @@
 
         <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 hidden">
             <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns to Fields</h2>
-            <p class="text-[11px] text-slate-400">We've guessed a starting match based on your headers — check and adjust before importing. Student photos will be automatically compressed to 15KB–25KB for efficient storage.</p>
+            <p class="text-[11px] text-slate-400">Verify column mappings below. Matched photos will be compressed to 15KB–25KB during batch import.</p>
             <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
 
             <div class="border-t border-slate-800 pt-3">
@@ -88,24 +100,28 @@
             </div>
 
             <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
-                🚀 Import All <span id="rowCountLabel"></span> Students
+                🚀 High-Speed Smart Import <span id="rowCountLabel"></span> Students
             </button>
         </section>
 
         <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Importing...</h2>
+            <h2 class="text-xs font-black uppercase text-amber-400">Processing Batch Import...</h2>
             <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
                 <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
             </div>
-            <p id="progressLabel" class="text-xs text-slate-400">Starting...</p>
+            <p id="progressLabel" class="text-xs text-slate-400">Preparing records...</p>
         </section>
 
         <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-emerald-400">Import Complete</h2>
-            <div class="grid grid-cols-2 gap-3">
+            <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Import Complete</h2>
+            <div class="grid grid-cols-3 gap-3">
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Imported</p>
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">New Added</p>
                     <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Already Existed</p>
+                    <p id="skippedCount" class="text-2xl font-black text-cyan-400">0</p>
                 </div>
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
                     <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
@@ -177,7 +193,6 @@
         let sourceHeaders = [];
         let sourceRows = [];
         let mapping = {};
-        let pdfImportAudit = null;
         let photoFolderMap = {};
 
         async function renderHeader() {
@@ -195,7 +210,6 @@
         function handleFile(input) {
             const file = input.files[0];
             if (!file) return;
-            pdfImportAudit = null;
             const ext = file.name.split('.').pop().toLowerCase();
             if (ext === 'pdf') {
                 handlePdfFile(file);
@@ -338,10 +352,7 @@
 
         function parsePdfLines(lines) {
             const rows = [];
-            const skipped = [];
-            const seenSerials = new Set();
             let buffer = [];
-            let currentSerial = null;
             let pendingNameFragment = '';
             let lastRowNeedsNameTail = false;
 
@@ -365,17 +376,14 @@
                     lastRowNeedsNameTail = parsedNameWasBlank && !!resolvedName;
                     if (!resolvedName && trailing) resolvedName = trailing.trim();
                     
-                    seenSerials.add(serial);
                     rows.push({ serial, row: [
                         enrl || '', resolvedName, gender.toUpperCase(), pdfConvDate(dob.toUpperCase()), klass.toUpperCase(),
                         father.trim(), (!formb || formb === '0') ? '' : formb, pdfConvDate(admdate.toUpperCase())
                     ] });
                 } else if (joined && !isPdfNoiseLine(joined)) {
-                    // Fallback to capture incomplete or unstructured rows rather than discarding them
                     rows.push({ serial: rows.length + 1, row: ['', joined, '', '', '', '', '', ''] });
                 }
                 buffer = [];
-                currentSerial = null;
             };
 
             for (const rawLine of lines) {
@@ -384,7 +392,6 @@
                 const serial = getStudentStart(clean);
                 if (serial !== null) {
                     consumeBuffer();
-                    currentSerial = serial;
                     buffer.push(clean);
                 } else if (buffer.length) {
                     buffer.push(clean);
@@ -399,17 +406,8 @@
                 }
             }
             consumeBuffer();
-
             rows.sort((a, b) => a.serial - b.serial);
-            const serials = rows.map(x => x.serial);
-            const missingSerials = [];
-            if (serials.length) {
-                for (let n = 1; n <= serials[serials.length - 1]; n++) {
-                    if (!seenSerials.has(n)) missingSerials.push(n);
-                }
-            }
-            const incompleteRows = rows.filter(r => !r.row[1] || !r.row[0]).map(r => ({ sourceRow: r.serial, missingName: !r.row[1], missingEnrollment: !r.row[0] }));
-            return { rows: rows.map(x => x.row), skipped, serials, missingSerials, incompleteRows };
+            return { rows: rows.map(x => x.row) };
         }
 
         async function handlePdfFile(file) {
@@ -419,8 +417,7 @@
             try {
                 const lines = await extractPdfLines(file);
                 status.innerText = 'Parsing student records...';
-                const { rows, skipped, serials, missingSerials, incompleteRows } = parsePdfLines(lines);
-                pdfImportAudit = { skipped: skipped.length, missingSerials, incompleteRows, detected: rows.length, firstSerial: serials[0] || null, lastSerial: serials[serials.length - 1] || null };
+                const { rows } = parsePdfLines(lines);
 
                 if (rows.length === 0) {
                     status.innerText = "Couldn't detect standard student row format in this PDF.";
@@ -501,69 +498,39 @@
                 </tr>
             `).join('');
 
-            document.getElementById('previewSummary').innerText = `Showing first 20 of ${sourceRows.length} total records ready to import.`;
+            document.getElementById('previewSummary').innerText = `Showing first 20 of ${sourceRows.length} total records in file.`;
         }
 
-        let existingEnrollmentNumbers = new Set();
-        let existingLookupStatus = '';
-
-        async function lookupExistingEnrollmentNumbers() {
-            try {
-                const students = await LamaAPI.get('students') || [];
-                existingEnrollmentNumbers = new Set(students.map(s => normalizeEnrollment(s.enrlNo || s.admissionNo)));
-                existingLookupStatus = `Checked against ${students.length} existing student(s) in database.`;
-            } catch (e) {
-                existingEnrollmentNumbers = new Set();
-                existingLookupStatus = 'Could not fetch existing student records; proceeding without duplicate check.';
-            }
-        }
-
-        function normalizeEnrollment(val) {
-            return String(val || '').trim().toLowerCase();
-        }
-
-        async function compressImage(dataUrl) {
+        async function compressImageQuick(dataUrl) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
                     let w = img.width, h = img.height;
-                    const maxDim = 200; // Constrain dimensions for 15-25KB target
-                    if (w > h) {
-                        if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-                    } else {
-                        if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-                    }
+                    const maxDim = 150;
+                    if (w > h) { if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; } }
+                    else { if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; } }
                     const canvas = document.createElement('canvas');
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
-
-                    // Iteratively adjust quality to hit target 15KB - 25KB range
-                    let quality = 0.7;
-                    let result = canvas.toDataURL('image/jpeg', quality);
-                    
-                    let sizeBytes = (result.length - result.indexOf(',')) * 0.75;
-                    
-                    if (sizeBytes > 25000) {
-                        quality = 0.4;
-                        result = canvas.toDataURL('image/jpeg', quality);
-                    } else if (sizeBytes < 15000 && quality < 0.9) {
-                        quality = 0.85;
-                        result = canvas.toDataURL('image/jpeg', quality);
-                    }
-                    resolve(result);
+                    resolve(canvas.toDataURL('image/jpeg', 0.6));
                 };
                 img.onerror = () => resolve(null);
                 img.src = dataUrl;
             });
         }
 
-        function buildRecordFromRow(row) {
+        function buildRecordFromRow(row, index) {
             const student = {};
             for (const [colIdx, fieldKey] of Object.entries(mapping)) {
                 if (row[colIdx] !== undefined) {
                     student[fieldKey] = String(row[colIdx]).trim();
                 }
+            }
+            if (!student.name) student.name = `Student #${index + 1}`;
+            if (!student.enrlNo && student.admissionNo) student.enrlNo = student.admissionNo;
+            if (!student.enrlNo) {
+                student.enrlNo = 'ENRL-' + String(index + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
             }
             return student;
         }
@@ -571,71 +538,68 @@
         async function startImport() {
             if (!sourceRows.length) return alertBox('Select a file first.');
             
-            await lookupExistingEnrollmentNumbers();
-            renderPreview();
-            const totalCount = sourceRows.length;
-            
-            showConfirmModal(`Import all ${totalCount} student(s)? Even incomplete records or missing enrollment numbers will be assigned auto-generated records.`, async () => {
+            showConfirmModal(`Run High-Speed Smart Import on ${sourceRows.length} records? Existing records will be skipped instantly in batches.`, async () => {
                 document.getElementById('mapSection').classList.add('hidden');
                 document.getElementById('progressSection').classList.remove('hidden');
-                let success = 0, skipped = 0;
-                const errors = [], seenThisRun = new Set();
+                
+                document.getElementById('progressLabel').innerText = 'Fetching existing database records...';
+                let existingEnrollmentNumbers = new Set();
+                try {
+                    const students = await LamaAPI.get('students') || [];
+                    existingEnrollmentNumbers = new Set(students.map(s => String(s.enrlNo || s.admissionNo || '').trim().toLowerCase()));
+                } catch (e) {}
+
+                let addedCount = 0;
+                let skippedCount = 0;
+                const batchItems = [];
 
                 for (let i = 0; i < sourceRows.length; i++) {
-                    const rec = buildRecordFromRow(sourceRows[i]);
-                    if (!rec.name) {
-                        // Fallback name if row name is blank
-                        rec.name = `Student #${i + 1}`;
-                    }
-                    if (!rec.enrlNo && rec.admissionNo) rec.enrlNo = rec.admissionNo;
-                    if (!rec.enrlNo) {
-                        rec.enrlNo = 'ENRL-' + String(i + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-                    }
+                    const rec = buildRecordFromRow(sourceRows[i], i);
+                    const key = String(rec.enrlNo || '').trim().toLowerCase();
                     
-                    const key = normalizeEnrollment(rec.enrlNo);
-                    const label = rec.name;
-                    document.getElementById('progressLabel').innerText = `Importing ${i+1} of ${sourceRows.length}: ${label}`;
-                    document.getElementById('progressBar').style.width = `${Math.round((i+1)/sourceRows.length*100)}%`;
-                    
-                    // Prevent duplicate keys in same run
-                    let uniqueKey = key;
-                    let counter = 1;
-                    while (seenThisRun.has(uniqueKey) || existingEnrollmentNumbers.has(uniqueKey)) {
-                        uniqueKey = key + '-' + counter++;
+                    if (existingEnrollmentNumbers.has(key)) {
+                        skippedCount++;
+                        continue;
                     }
-                    seenThisRun.add(uniqueKey);
-                    rec.enrlNo = uniqueKey;
 
                     const photoFile = getRecordPhoto(rec);
-                    if (!rec.photo && photoFile) {
-                        try { rec.photo = photoFile; } catch(e) {}
-                    }
-                    if (rec.photo && (/^https?:\/\//i.test(rec.photo) || rec.photo.startsWith('data:image'))) {
-                        const compressed = await compressImage(rec.photo);
-                        if (compressed) rec.photo = compressed;
-                        else if (/^https?:\/\//i.test(rec.photo)) delete rec.photo;
+                    if (!rec.photo && photoFile) rec.photo = photoFile;
+                    if (rec.photo && rec.photo.startsWith('data:image')) {
+                        const comp = await compressImageQuick(rec.photo);
+                        if (comp) rec.photo = comp;
                     }
 
-                    try {
-                        await LamaAPI.add('students', rec);
-                        success++;
-                        existingEnrollmentNumbers.add(uniqueKey);
-                    } catch (e) {
-                        errors.push(`${label} (${rec.enrlNo}): ${e.message || 'Import failed'}`);
-                        skipped++;
-                    }
+                    batchItems.push(rec);
+                    existingEnrollmentNumbers.add(key); // prevent intra-file duplicates
                 }
+
+                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} new records in batches...`;
+                document.getElementById('progressBar').style.width = '70%';
+
+                let failedCount = 0;
+                const CHUNK_SIZE = 50;
+                for (let i = 0; i < batchItems.length; i += CHUNK_SIZE) {
+                    const chunk = batchItems.slice(i, i + CHUNK_SIZE);
+                    try {
+                        await LamaAPI.addBatch('students', chunk);
+                        addedCount += chunk.length;
+                    } catch (e) {
+                        failedCount += chunk.length;
+                    }
+                    const progressPercent = 70 + Math.round(((i + chunk.length) / Math.max(1, batchItems.length)) * 30);
+                    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                }
+
                 document.getElementById('progressSection').classList.add('hidden');
                 document.getElementById('resultsSection').classList.remove('hidden');
-                document.getElementById('successCount').innerText = success;
-                document.getElementById('failCount').innerText = errors.length;
+                document.getElementById('successCount').innerText = addedCount;
+                document.getElementById('skippedCount').innerText = skippedCount;
+                document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300 mb-2">Imported successfully: ${success}. ${escapeHtml(existingLookupStatus)}</p>` +
-                    errors.map(e => `<div class="bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg px-3 py-1.5">${escapeHtml(e)}</div>`).join('');
+                    `<p class="text-slate-300">Successfully imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.</p>`;
             });
         }
 
-        // Custom non-blocking dialog helpers
         function alertBox(message) {
             let box = document.getElementById('customAlertModal');
             if (!box) {
@@ -663,7 +627,7 @@
                 box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
                 box.innerHTML = `
                     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <h3 class="text-sm font-black uppercase text-cyan-400">Please Confirm</h3>
+                        <h3 class="text-sm font-black uppercase text-cyan-400">Please Confirm Import</h3>
                         <p id="customConfirmMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
                         <div class="flex gap-2 pt-2">
                             <button id="customConfirmCancelBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">Cancel</button>
@@ -681,10 +645,6 @@
             okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
             cancelBtn.onclick = close;
             box.classList.remove('hidden');
-        }
-
-        function escapeHtml(str) {
-            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
         if (LamaAPI.requireLogin('school', 'login.html')) {

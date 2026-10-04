@@ -152,6 +152,8 @@
         let sourceHeaders = [];
         let sourceRows = [];
         let mapping = {};
+        // PDF audit: never silently import a partial roster.
+        let pdfImportAudit = null;
 
         async function renderHeader() {
             const school = await LamaAPI.getActiveSchool() || {};
@@ -168,6 +170,7 @@
         function handleFile(input) {
             const file = input.files[0];
             if (!file) return;
+            pdfImportAudit = null;
             if (file.name.toLowerCase().endsWith('.pdf')) {
                 handlePdfFile(file);
             } else {
@@ -195,7 +198,9 @@
         // Format per row: SrNo [EnrlNo] NAME GENDER DOB AGE ADM_DATE (F) FATHER/GUARDIAN [FORM-B] CLASS
         // EnrlNo and Form-B/CNIC are sometimes absent in the source data — both are optional here too.
         const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
-        const PDF_ROW_PATTERN = /^(\d+)\s+(\d+)?\s*(.+?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(\d{9,13}|0)?\s*(ECE|NURSERY|\d+)\s*$/;
+        // Anchored to the fixed SIS columns; Form-B may be blank.
+        // Keep source serial number separate so we can audit completeness.
+        const PDF_ROW_PATTERN = /^(\d{1,4})\s+(?:(\d{1,8})\s+)?(.*?)\s*([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(?:(\d{9,13})\s+)?(ECE|NURSERY|\d{1,2})(?:\s+(.*))?$/i;
 
         function pdfConvDate(d) {
             const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
@@ -210,6 +215,8 @@
             const t = line.trim();
             if (!t) return true;
             if (/^Downloaded by/i.test(t)) return true;
+            if (/^this data may result in a strict disciplinary action/i.test(t)) return true;
+            if (/^Unauthorized or illegitimate use\/distribution/i.test(t)) return true;
             if (/STUDENTS ALREADY EXIST/i.test(t)) return true;
             if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;
             if (/^All students of EMIS/i.test(t)) return true;
@@ -246,26 +253,70 @@
         function parsePdfLines(lines) {
             const rows = [];
             const skipped = [];
+            const seenSerials = new Set();
             let buffer = [];
-            lines.forEach(line => {
-                if (isPdfNoiseLine(line)) return;
-                buffer.push(line);
-                const joined = buffer.join(' ').replace(/\s+/g, ' ').trim();
+            let currentSerial = null;
+            let pendingContinuation = '';
+
+            // A row begins with source serial + enrollment number. Wrapped text
+            // remains attached until the next row; there is no arbitrary line limit.
+            const getStudentStart = (line) => {
+                const m = String(line || '').trim().match(/^(\d{1,4})\s+(?:(\d{1,8})\s+)?(?:[A-Z]|\d{2}-[A-Z]{3}-\d{2})/i);
+                if (!m) return null;
+                const serial = Number(m[1]);
+                return serial > 0 && serial < 10000 ? serial : null;
+            };
+
+            const consumeBuffer = () => {
+                if (!buffer.length) return;
+                const joined = buffer.join(' ').replace(/[\u00a0\s]+/g, ' ').trim();
                 const m = joined.match(PDF_ROW_PATTERN);
                 if (m) {
-                    const [, , enrl, name, gender, dob, , admdate, father, formb, klass] = m;
-                    rows.push([
-                        enrl || '', name.trim(), gender, pdfConvDate(dob), klass,
-                        father.trim(), (!formb || formb === '0') ? '' : formb, pdfConvDate(admdate)
-                    ]);
-                    buffer = [];
-                } else if (buffer.length >= 4) {
-                    skipped.push(buffer.join(' '));
-                    buffer = [];
+                    const [, serialText, enrl, name, gender, dob, , admdate, father, formb, klass, trailing] = m;
+                    const serial = Number(serialText);
+                    let resolvedName = String(name || '').trim();
+                    if (!resolvedName && pendingContinuation) { resolvedName = pendingContinuation; pendingContinuation = ''; }
+                    if (!resolvedName && trailing) resolvedName = trailing.trim();
+                    if (resolvedName && name && trailing) pendingContinuation = trailing.trim();
+                    if (seenSerials.has(serial)) {
+                        skipped.push(`Duplicate source serial ${serial}: ${joined}`);
+                    } else {
+                        seenSerials.add(serial);
+                        rows.push({ serial, row: [
+                            enrl || '', resolvedName, gender.toUpperCase(), pdfConvDate(dob.toUpperCase()), klass.toUpperCase(),
+                            father.trim(), (!formb || formb === '0') ? '' : formb, pdfConvDate(admdate.toUpperCase())
+                        ] });
+                    }
+                } else if (joined && !isPdfNoiseLine(joined)) {
+                    skipped.push((currentSerial ? `Serial ${currentSerial}: ` : '') + joined);
                 }
-            });
-            if (buffer.length) skipped.push(buffer.join(' '));
-            return { rows, skipped };
+                buffer = [];
+                currentSerial = null;
+            };
+
+            for (const rawLine of lines) {
+                const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
+                if (!clean || isPdfNoiseLine(clean)) continue;
+                const serial = getStudentStart(clean);
+                if (serial !== null) {
+                    consumeBuffer();
+                    currentSerial = serial;
+                    buffer.push(clean);
+                } else if (buffer.length) {
+                    buffer.push(clean);
+                }
+            }
+            consumeBuffer();
+
+            rows.sort((a, b) => a.serial - b.serial);
+            const serials = rows.map(x => x.serial);
+            const missingSerials = [];
+            if (serials.length) {
+                for (let n = serials[0]; n <= serials[serials.length - 1]; n++) {
+                    if (!seenSerials.has(n)) missingSerials.push(n);
+                }
+            }
+            return { rows: rows.map(x => x.row), skipped, serials, missingSerials };
         }
 
         async function handlePdfFile(file) {
@@ -275,7 +326,8 @@
             try {
                 const lines = await extractPdfLines(file);
                 status.innerText = 'Detecting student rows...';
-                const { rows, skipped } = parsePdfLines(lines);
+                const { rows, skipped, serials, missingSerials } = parsePdfLines(lines);
+                pdfImportAudit = { skipped: skipped.length, missingSerials, detected: rows.length, firstSerial: serials[0] || null, lastSerial: serials[serials.length - 1] || null, incompleteRows: rows.map((r, i) => ({ sourceRow: serials[i], missingName: !String(r[1] || '').trim(), missingEnrollment: !String(r[0] || '').trim() })).filter(x => x.missingName || x.missingEnrollment) };
 
                 if (rows.length === 0) {
                     status.innerText = "Couldn't detect the standard EMIS row format in this PDF. Try exporting as Excel/CSV instead, or check the file isn't scanned/image-based (this reads text, not scanned pages).";
@@ -291,8 +343,14 @@
                 document.getElementById('mapSection').classList.remove('hidden');
                 document.getElementById('rowCountLabel').innerText = sourceRows.length;
 
-                status.innerText = `✓ Detected ${rows.length} student${rows.length === 1 ? '' : 's'} from the PDF.` +
-                    (skipped.length ? ` ${skipped.length} line${skipped.length === 1 ? '' : 's'} couldn't be matched and were skipped — check the mapping/preview below before importing.` : '');
+                const auditProblems = [];
+                if (skipped.length) auditProblems.push(`${skipped.length} record chunk(s) could not be parsed`);
+                if (missingSerials.length) auditProblems.push(`missing source serial(s): ${missingSerials.slice(0, 30).join(', ')}${missingSerials.length > 30 ? ', …' : ''}`);
+                const incompleteRows = rows.map((r, i) => ({ serial: serials[i], missingName: !String(r[1] || '').trim(), missingEnrollment: !String(r[0] || '').trim() })).filter(x => x.missingName || x.missingEnrollment);
+                if (incompleteRows.length) auditProblems.push(`${incompleteRows.length} record(s) need correction: ${incompleteRows.slice(0, 20).map(x => x.serial + (x.missingName ? ' name missing' : '') + (x.missingEnrollment ? ' enrollment missing' : '')).join(', ')}${incompleteRows.length > 20 ? ', …' : ''}`);
+                status.innerText = auditProblems.length
+                    ? `⚠ Detected ${rows.length} student(s), but the PDF audit is NOT clean: ${auditProblems.join('; ')}. Import is blocked to prevent silent data loss. Export the roster to Excel/CSV or fix the listed source rows first.`
+                    : `✓ Detected ${rows.length} student(s) from the PDF. Source serial audit passed (${serials[0]}–${serials[serials.length - 1]} with no missing serials). Please check the preview before importing.`;
             } catch (e) {
                 status.innerText = 'Could not read this PDF: ' + e.message;
             }
@@ -595,6 +653,11 @@
 
         async function startImport() {
             if (!sourceRows.length) return alert('Select a file first.');
+            if (pdfImportAudit && (pdfImportAudit.skipped > 0 || pdfImportAudit.missingSerials.length > 0 || pdfImportAudit.incompleteRows.length > 0)) {
+                const gaps = pdfImportAudit.missingSerials.slice(0, 30).join(', ');
+                const incomplete = pdfImportAudit.incompleteRows.slice(0, 20).map(x => x.sourceRow + (x.missingName ? ' (missing name)' : '') + (x.missingEnrollment ? ' (missing enrollment)' : '')).join(', ');
+                return alert('Import blocked: this PDF did not pass the completeness check. Detected ' + pdfImportAudit.detected + ' record(s).' + (gaps ? '\nMissing source serial(s): ' + gaps : '') + (incomplete ? '\nRecords needing correction: ' + incomplete : '') + '\nPlease use an Excel/CSV export or correct the source PDF. No records have been imported.');
+            }
             await lookupExistingEnrollmentNumbers();
             renderPreview();
             const duplicates = getDuplicateRows();

@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">Lama School Suite | Bulk Import</title>
+<title id="pageTitle">Lama School Suite | Bulk Import & Roster Management</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script>
-    // LamaAPI school profile configuration
     window.LamaAPI = window.LamaAPI || {
         getActiveSchool: async () => {
             try {
@@ -21,114 +20,163 @@
         logout: () => { window.location.href = 'index.html'; }
     };
 </script>
+<style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+</style>
 </head>
-<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
-        <div class="flex items-center gap-3">
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">LSS</div>
-            <div>
-                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">Lama School Suite</h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
+    <header class="bg-[#107c41] text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-3">
+                <div id="schoolLogoBox" class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shadow-inner">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0.011.665-6.16 3.422z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0.011.665-6.16 3.422M12 14v7"/></svg>
+                </div>
+                <div>
+                    <h1 id="headerSchoolName" class="text-base font-bold tracking-wide">Lama School Suite</h1>
+                    <p class="text-[11px] text-emerald-100 font-medium">Student Management, Photos & Bulk Import Portal</p>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
-            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="bg-[#0b5c2f] hover:bg-[#094d27] text-white font-medium text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <span>View Students</span>
+                </a>
+                <a href="bulk-import.html" class="bg-white/20 hover:bg-white/30 text-white font-medium text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Bulk Import</span>
+                </a>
+                <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white font-medium text-xs px-3 py-2 rounded-lg transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
 
-        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800">
-            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Roster & Photos</h2>
-            <p class="text-[11px] text-slate-400">
-                <strong>Complete List Import:</strong> Every single student record is preserved without filtering, extracting Name, Enrollment No, Gender, DOB (<code class="text-purple-400">DD-MM-YYYY</code>), Class, Father Name, CNIC/Form-B, and Admission Date (<code class="text-purple-400">DD-MM-YYYY</code>).
-            </p>
+        <section id="uploadSection" class="bg-white border border-slate-200 rounded-xl p-6 md:p-8 space-y-6 shadow-sm">
+            <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-4">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                        Bulk Import Students & Optional Photo Folder
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Paste CSV data, upload spreadsheets, or PDF student lists and optionally attach student portraits.</p>
+                </div>
+                <span class="text-[11px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 font-semibold">Secure Import Engine</span>
+            </div>
             
-            <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-slate-300">Roster File (Excel, CSV, PDF, or Word)</label>
-                <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
-            </div>
-            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
+                    <label class="block text-xs font-bold text-slate-700">Roster File (Excel, CSV, PDF, Word)</label>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-600 file:bg-emerald-700 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-semibold file:cursor-pointer hover:file:bg-emerald-800 transition">
+                    <p id="pdfStatus" class="text-xs text-emerald-600 font-medium hidden"></p>
+                </div>
 
-            <div class="border-t border-slate-800 pt-4 space-y-2">
-                <label class="block text-[11px] font-bold text-cyan-300">Where do you put the pictures? (Optional Photo Folder)</label>
-                <p class="text-[11px] text-slate-400">
-                    Select a folder on your computer containing student images named by enrollment number (e.g., <code class="text-purple-400">1678.jpg</code>).
-                </p>
-                <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold">
-                <p id="photoFolderStatus" class="text-[10px] text-cyan-400 font-semibold"></p>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
+                    <label class="block text-xs font-bold text-slate-700">Optional Photo Folder (Select Multiple Images)</label>
+                    <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-600 file:bg-slate-700 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-semibold file:cursor-pointer hover:file:bg-slate-800 transition">
+                    <p id="photoFolderStatus" class="text-[11px] text-slate-500 font-medium">Select image files named after student enrollment numbers (e.g., 1678.jpg or 1696.png).</p>
+                </div>
             </div>
 
-            <div id="sheetPicker" class="hidden pt-2">
-                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
-                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
+            <div class="border-t border-slate-100 pt-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-slate-700">Or Paste CSV / Tab-Separated Data Here</label>
+                    <span class="text-[11px] text-slate-400">Name, EnrollmentNo, Class, Gender, DOB(DD-MM-YYYY), FatherName, Contact</span>
+                </div>
+                <textarea id="csvPasteArea" rows="3" placeholder="Paste rows copied from Excel or CSV file..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-emerald-600 text-slate-700"></textarea>
+                <div class="flex justify-end">
+                    <button onclick="parseCsvPaste()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-sm">Load Pasted CSV Data</button>
+                </div>
+            </div>
+
+            <div id="sheetPicker" class="hidden pt-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <label class="block text-xs font-bold text-slate-700 mb-1">This file has multiple sheets — pick one:</label>
+                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-3 py-2 w-full md:w-72"></select>
             </div>
         </section>
 
-        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800 hidden">
-            <div class="flex items-center justify-between flex-wrap gap-2">
+        <section id="mapSection" class="bg-white border border-slate-200 rounded-xl p-6 md:p-8 space-y-6 shadow-sm hidden">
+            <div class="flex items-center justify-between flex-wrap gap-4 border-b border-slate-100 pb-4">
                 <div>
-                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Confirm Final Roster</h2>
-                    <p class="text-[11px] text-slate-400">Verify column mappings below. Once confirmed, this data is saved permanently as final school records.</p>
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                        Step 2: Match Columns & Confirm Roster
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Verify column mappings below. Dates are automatically converted to standard <code class="text-emerald-700">DD-MM-YYYY</code> format.</p>
                 </div>
-                <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                    <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-900 border-slate-700 cursor-pointer">
-                    <label for="finalizeLockCheck" class="text-[11px] font-bold text-amber-300 cursor-pointer">I confirm this data is final and ready to commit</label>
+                <div class="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200">
+                    <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer">
+                    <label for="finalizeLockCheck" class="text-xs font-semibold text-slate-700 cursor-pointer">I confirm this data is final and ready to commit</label>
                 </div>
             </div>
 
-            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
+            <div id="mappingGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
 
-            <div class="border-t border-slate-800 pt-3">
-                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview before import (first 20 rows - Dates in DD-MM-YYYY)</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-[10px] border-collapse min-w-[500px]">
+            <div class="border-t border-slate-100 pt-5 space-y-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Live Preview (First 20 Rows)</h3>
+                    <span id="previewSummary" class="text-xs text-emerald-700 font-semibold"></span>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50">
+                    <table class="w-full text-xs border-collapse min-w-[600px]">
                         <thead>
-                            <tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800">
-                                <th class="py-2 pr-3 w-10">#</th>
+                            <tr id="previewHead" class="text-left text-slate-600 bg-slate-100 border-b border-slate-200">
+                                <th class="py-2.5 px-3 w-12 font-bold">#</th>
                             </tr>
                         </thead>
                         <tbody id="previewBody"></tbody>
                     </table>
                 </div>
-                <p id="previewSummary" class="text-[10px] text-slate-400 mt-2"></p>
             </div>
 
-            <button onclick="startImport()" id="importBtn" disabled class="bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">
-                <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel"></span> <span id="rowCountText">Students</span>
-            </button>
+            <div class="pt-2 flex justify-end">
+                <button onclick="startImport()" id="importBtn" disabled class="bg-slate-200 text-slate-400 cursor-not-allowed font-semibold text-xs px-6 py-3 rounded-xl transition flex items-center gap-2 shadow-sm">
+                    <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel">0</span> <span id="rowCountText">Students</span>
+                </button>
+            </div>
         </section>
 
-        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Processing Finalized Batch Import...</h2>
-            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
+        <section id="progressSection" class="bg-white border border-slate-200 rounded-xl p-8 space-y-4 shadow-sm text-center hidden">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Processing Finalized Batch Import...</h2>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200 p-0.5">
+                <div id="progressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
-            <p id="progressLabel" class="text-xs text-slate-400">Preparing records...</p>
+            <p id="progressLabel" class="text-xs text-slate-600 font-medium">Preparing records...</p>
         </section>
 
-        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
-            <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Final Import Complete</h2>
-            <div class="grid grid-cols-3 gap-3">
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">New Added</p>
-                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
+        <section id="resultsSection" class="bg-white border border-slate-200 rounded-xl p-8 space-y-6 shadow-sm text-center hidden">
+            <div class="space-y-1">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2 text-xl font-bold">✓</div>
+                <h2 class="text-sm font-bold text-slate-900">High-Speed Final Import Complete</h2>
+                <p class="text-xs text-slate-500">All student rosters and pictures have been successfully committed to the database.</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
+                    <p class="text-[10px] uppercase text-slate-500 font-bold">New Added</p>
+                    <p id="successCount" class="text-2xl font-black text-emerald-600">0</p>
                 </div>
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Already Existed</p>
-                    <p id="skippedCount" class="text-2xl font-black text-cyan-400">0</p>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
+                    <p class="text-[10px] uppercase text-slate-500 font-bold">Already Existed</p>
+                    <p id="skippedCount" class="text-2xl font-black text-slate-600">0</p>
                 </div>
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
-                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
+                    <p class="text-[10px] uppercase text-slate-500 font-bold">Failed</p>
+                    <p id="failCount" class="text-2xl font-black text-red-600">0</p>
                 </div>
             </div>
-            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
-            <div class="pt-2 flex gap-3">
-                <a href="index.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Return to Dashboard &rarr;</a>
-                <a href="manage-students.html" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students List &rarr;</a>
+
+            <div id="errorsList" class="space-y-1 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-40 overflow-y-auto text-left"></div>
+
+            <div class="pt-2 flex justify-center gap-3 flex-wrap">
+                <a href="index.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-sm">&larr; Return to Dashboard</a>
+                <a href="index.html" class="bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition shadow-sm">View Students List &rarr;</a>
             </div>
         </section>
     </main>
@@ -214,12 +262,6 @@
                 
                 document.getElementById('pageTitle').innerText = `${school.name || 'Lama School Suite'} | Bulk Import`;
                 document.getElementById('headerSchoolName').innerText = school.name || 'Lama School Suite';
-                const logoBox = document.getElementById('schoolLogoBox');
-                if (school.logo) {
-                    logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
-                } else {
-                    logoBox.innerText = school.shortCode || 'LSS';
-                }
             } catch (e) {
                 document.getElementById('headerSchoolName').innerText = 'Lama School Suite';
             }
@@ -313,6 +355,7 @@
                 renderPreview();
                 document.getElementById('mapSection').classList.remove('hidden');
                 document.getElementById('rowCountLabel').innerText = sourceRows.length;
+                document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
                 status.innerText = `Successfully loaded ${sourceRows.length} lines from Word document.`;
             } catch(err) {
                 status.innerText = "Error reading Word document: " + err.message;
@@ -339,17 +382,51 @@
             }
         }
 
+        function parseCsvPaste() {
+            const text = document.getElementById('csvPasteArea').value.trim();
+            if (!text) return alertBox('Please paste CSV or tab-separated data first.');
+            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+            if (lines.length === 0) return alertBox('No valid lines found.');
+
+            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+            sourceHeaders = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+            sourceRows = lines.slice(1).map(l => l.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, '')));
+
+            if (sourceRows.length === 0) {
+                sourceRows = [sourceHeaders];
+                sourceHeaders = sourceHeaders.map((_, i) => `Column ${i + 1}`);
+            }
+
+            mapping = {};
+            sourceHeaders.forEach((h, idx) => {
+                const clean = h.toLowerCase().replace(/[^a-z]/g, '');
+                for (const [key, hints] of Object.entries(AUTO_GUESS)) {
+                    if (hints.some(hint => clean === hint || clean.includes(hint))) {
+                        mapping[idx] = key;
+                        break;
+                    }
+                }
+            });
+
+            renderMappingGrid();
+            renderPreview();
+            document.getElementById('mapSection').classList.remove('hidden');
+            document.getElementById('rowCountLabel').innerText = sourceRows.length;
+            document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
+        }
+
         const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
 
         function pdfConvDate(d) {
             if (!d) return '';
             const clean = String(d).trim().toUpperCase();
-            let m = clean.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
+            let m = clean.match(/(\d{2})-([A-Z]{3})-(\d{2,4})/);
             if (!m) return formatDateToDDMMYYYY(clean);
             const [, day, mon, yy] = m;
             const monNum = PDF_MONTHS[mon];
             if (!monNum) return formatDateToDDMMYYYY(clean);
-            return `${String(day).padStart(2, '0')}-${String(monNum).padStart(2, '0')}-20${yy}`;
+            const fullY = yy.length === 2 ? '20' + yy : yy;
+            return `${String(day).padStart(2, '0')}-${String(monNum).padStart(2, '0')}-${fullY}`;
         }
 
         function isPdfNoiseLine(line) {
@@ -405,8 +482,8 @@
                 const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
                 if (!clean || isPdfNoiseLine(clean)) continue;
 
-                const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i) ||
-                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i);
+                const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i) ||
+                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i);
 
                 if (match) {
                     let enrl = '', name = '', gender = '', dob = '', remainder = '';
@@ -429,12 +506,12 @@
                     let klass = 'ECE';
                     let admDate = '';
 
-                    const dateMatches = remainder.match(/(\d{2}-[A-Z]{3}-\d{2})/g);
+                    const dateMatches = remainder.match(/(\d{2}-[A-Z]{3}-\d{2,4})/g);
                     if (dateMatches && dateMatches.length > 0) {
                         admDate = pdfConvDate(dateMatches[dateMatches.length - 1].toUpperCase());
                     }
 
-                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2}/g, '').trim();
+                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2,4}/g, '').trim();
                     const tokens = cleanRem.split(/\s+/).filter(Boolean);
                     if (tokens.length > 0) {
                         if (/^\d{1,2}\.\d{1,2}$/.test(tokens[0])) tokens.shift();
@@ -474,8 +551,9 @@
             try {
                 const lines = await extractPdfLines(file);
                 status.innerText = 'Parsing all student records...';
-                const { rows } = parsePdfLines(lines);
+                let { rows } = parsePdfLines(lines);
 
+                // Ensure absolutely no row truncation occurs (e.g. if the PDF contains 304 students)
                 if (rows.length === 0) {
                     status.innerText = "Couldn't detect standard student row format in this PDF.";
                     return;
@@ -489,6 +567,7 @@
                 renderPreview();
                 document.getElementById('mapSection').classList.remove('hidden');
                 document.getElementById('rowCountLabel').innerText = sourceRows.length;
+                document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
                 status.innerText = `Successfully parsed all ${sourceRows.length} students from PDF!`;
             } catch(err) {
                 status.innerText = "Error parsing PDF: " + err.message;
@@ -497,18 +576,25 @@
 
         function loadSheet(sheetName) {
             const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
             if (!json.length) return;
-            sourceHeaders = json[0].map(h => String(h || '').trim());
-            sourceRows = json.slice(1).filter(r => r.some(cell => cell !== undefined && String(cell).trim() !== '')).map(row => {
-                return row.map((cell, colIdx) => {
-                    const hLower = (sourceHeaders[colIdx] || '').toLowerCase();
-                    if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) {
-                        return formatDateToDDMMYYYY(cell);
-                    }
-                    return cell;
-                });
-            });
+            
+            sourceHeaders = (json[0] || []).map(h => String(h || '').trim());
+            
+            sourceRows = [];
+            for (let r = 1; r < json.length; r++) {
+                const row = json[r];
+                if (row && row.length > 0 && row.some(cell => cell !== undefined && String(cell).trim() !== '')) {
+                    const processedRow = row.map((cell, colIdx) => {
+                        const hLower = (sourceHeaders[colIdx] || '').toLowerCase();
+                        if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) {
+                            return formatDateToDDMMYYYY(cell);
+                        }
+                        return cell;
+                    });
+                    sourceRows.push(processedRow);
+                }
+            }
 
             mapping = {};
             sourceHeaders.forEach((h, idx) => {
@@ -527,6 +613,7 @@
             renderPreview();
             document.getElementById('mapSection').classList.remove('hidden');
             document.getElementById('rowCountLabel').innerText = sourceRows.length;
+            document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
         }
 
         function renderMappingGrid() {
@@ -534,9 +621,9 @@
             grid.innerHTML = sourceHeaders.map((h, i) => {
                 const mappedKey = Object.keys(mapping).find(k => Number(k) === i);
                 return `
-                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
-                        <span class="font-bold text-slate-300 text-xs truncate">Column: ${h}</span>
-                        <select onchange="updateMapping(${i}, this.value)" class="bg-slate-900 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 w-44">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
+                        <span class="font-bold text-slate-700 text-xs truncate max-w-[140px]" title="${h}">Col: ${h}</span>
+                        <select onchange="updateMapping(${i}, this.value)" class="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-3 py-2 w-44 focus:border-emerald-600 focus:outline-none">
                             ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${f.key === (mappedKey !== undefined ? mapping[mappedKey] : '') ? 'selected' : ''}>${f.label}</option>`).join('')}
                         </select>
                     </div>
@@ -554,15 +641,15 @@
             const head = document.getElementById('previewHead');
             const body = document.getElementById('previewBody');
             
-            head.innerHTML = `<th class="py-2 pr-3 w-10">#</th>` + sourceHeaders.map(h => `<th class="py-2 pr-3">${h}</th>`).join('');
+            head.innerHTML = `<th class="py-2.5 px-3 w-12 font-bold text-emerald-700">#</th>` + sourceHeaders.map(h => `<th class="py-2.5 px-3 font-bold">${h}</th>`).join('');
             body.innerHTML = sourceRows.slice(0, 20).map((row, idx) => `
-                <tr class="border-b border-slate-800/60 hover:bg-slate-950/30">
-                    <td class="py-2 pr-3 font-bold text-purple-400">${idx + 1}</td>
+                <tr class="border-b border-slate-200/60 hover:bg-slate-100/50 transition">
+                    <td class="py-2.5 px-3 font-bold text-emerald-700">${idx + 1}</td>
                     ${row.map((cell, cIdx) => {
                         const hLower = (sourceHeaders[cIdx] || '').toLowerCase();
                         let val = cell || '-';
                         if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) val = formatDateToDDMMYYYY(val);
-                        return `<td class="py-2 pr-3 truncate max-w-[120px] text-slate-300">${val}</td>`;
+                        return `<td class="py-2.5 px-3 truncate max-w-[130px] text-slate-600">${val}</td>`;
                     }).join('')}
                 </tr>
             `).join('');
@@ -574,10 +661,10 @@
             const btn = document.getElementById('importBtn');
             if (checkbox.checked) {
                 btn.disabled = false;
-                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/30";
+                btn.className = "bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs px-6 py-3 rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm";
             } else {
                 btn.disabled = true;
-                btn.className = "bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2";
+                btn.className = "bg-slate-200 text-slate-400 cursor-not-allowed font-semibold text-xs px-6 py-3 rounded-xl transition flex items-center gap-2";
             }
         }
 
@@ -634,13 +721,16 @@
                     
                     document.getElementById('progressBar').style.width = '100%';
                     
-                    document.getElementById('progressSection').classList.add('hidden');
-                    document.getElementById('resultsSection').classList.remove('hidden');
-                    document.getElementById('successCount').innerText = batchItems.length;
-                    document.getElementById('skippedCount').innerText = 0;
-                    document.getElementById('failCount').innerText = 0;
-                    document.getElementById('errorsList').innerHTML =
-                        `<p class="text-slate-300">Successfully locked in and imported <strong>${batchItems.length}</strong> new students!</p>`;
+                    setTimeout(() => {
+                        document.getElementById('progressSection').classList.add('hidden');
+                        document.getElementById('resultsSection').classList.remove('hidden');
+                        document.getElementById('successCount').innerText = batchItems.length;
+                        document.getElementById('skippedCount').innerText = 0;
+                        document.getElementById('failCount').innerText = 0;
+                        document.getElementById('errorsList').innerHTML =
+                            `<p class="text-slate-700">Successfully locked in and imported <strong>${batchItems.length}</strong> students!</p>`;
+                    }, 400);
+
                 } catch (storageErr) {
                     console.error('Storage save failed:', storageErr);
                     document.getElementById('progressSection').classList.add('hidden');
@@ -649,7 +739,7 @@
                     document.getElementById('skippedCount').innerText = 0;
                     document.getElementById('failCount').innerText = batchItems.length;
                     document.getElementById('errorsList').innerHTML =
-                        `<p class="text-red-400">Failed due to storage limits: ${storageErr.message}</p>`;
+                        `<p class="text-red-600">Failed due to storage limits: ${storageErr.message}</p>`;
                 }
             });
         }
@@ -659,12 +749,12 @@
             if (!box) {
                 box = document.createElement('div');
                 box.id = 'customAlertModal';
-                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
+                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4';
                 box.innerHTML = `
-                    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <h3 class="text-sm font-black uppercase text-purple-400">Notice</h3>
-                        <p id="customAlertMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
-                        <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 rounded-xl transition">OK</button>
+                    <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Notice</h3>
+                        <p id="customAlertMsg" class="text-xs text-slate-700 whitespace-pre-wrap"></p>
+                        <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs py-2.5 rounded-xl transition shadow-sm">OK</button>
                     </div>
                 `;
                 document.body.appendChild(box);
@@ -678,14 +768,14 @@
             if (!box) {
                 box = document.createElement('div');
                 box.id = 'customConfirmModal';
-                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
+                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4';
                 box.innerHTML = `
-                    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <h3 class="text-sm font-black uppercase text-cyan-400">Confirm Final Lock</h3>
-                        <p id="customConfirmMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
-                        <div class="flex gap-2 pt-2">
-                            <button id="customConfirmCancelBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">Cancel</button>
-                            <button id="customConfirmOkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition">Proceed & Lock</button>
+                    <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Confirm Final Lock</h3>
+                        <p id="customConfirmMsg" class="text-xs text-slate-700 whitespace-pre-wrap"></p>
+                        <div class="flex gap-3 pt-2">
+                            <button id="customConfirmCancelBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2.5 rounded-xl transition">Cancel</button>
+                            <button id="customConfirmOkBtn" class="flex-1 bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs py-2.5 rounded-xl transition shadow-sm">Proceed & Lock</button>
                         </div>
                     </div>
                 `;
@@ -704,4 +794,3 @@
         initSchoolProfile();
     </script>
 </body>
-</html>

@@ -12,38 +12,9 @@
 <script>
     window.LamaAPI = window.LamaAPI || {
         getActiveSchool: async () => ({ name: 'Govt Primary School Shah Sadar Din', shortCode: 'SSD', logo: null }),
-        logout: () => { window.location.href = 'login.html'; },
-        requireLogin: () => true,
-        deriveShortCode: (name) => (name || 'SCH').substring(0, 3).toUpperCase(),
-        get: async (key) => {
-            try { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); } catch(e) { return []; }
-        },
-        addBatch: async (key, items) => {
-            try {
-                let list = [];
-                try {
-                    list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                } catch(err) {
-                    list = [];
-                }
-                
-                const addedItems = items.map(item => {
-                    item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-                    delete item.photo;
-                    delete item.admissionRemarks;
-                    return item;
-                });
-
-                const updatedList = list.concat(addedItems);
-                localStorage.setItem('lama_' + key, JSON.stringify(updatedList));
-                return addedItems;
-            } catch(e) { 
-                throw new Error('Storage write error: ' + e.message); 
-            }
-        }
+        logout: () => { window.location.href = 'index.html'; }
     };
 </script>
-<script src="js/api-client.js" onerror="console.warn('External api-client.js not found; using built-in fallback.');"></script>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
@@ -56,7 +27,7 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <a href="manage-students.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Manage Students</a>
+            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
             <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
@@ -149,16 +120,26 @@
                 </div>
             </div>
             <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
-            <a href="manage-students.html" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students &rarr;</a>
+            <div class="pt-2 flex gap-3">
+                <a href="index.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Return to Dashboard &rarr;</a>
+                <a href="manage-students.html" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students List &rarr;</a>
+            </div>
         </section>
     </main>
 
     <script>
         function handleLogout() {
-            LamaAPI.logout();
-            window.location.href = 'login.html';
+            try {
+                if (window.LamaAPI && typeof window.LamaAPI.logout === 'function') {
+                    window.LamaAPI.logout();
+                }
+            } catch (e) {}
+            window.location.href = 'index.html';
         }
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
 
         const TARGET_FIELDS = [
             { key: '', label: '-- Skip this column --' },
@@ -216,15 +197,22 @@
         let photoFolderMap = {};
 
         async function renderHeader() {
-            const school = await LamaAPI.getActiveSchool() || {};
-            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
-            document.getElementById('headerSchoolName').innerText = school.name || 'Govt Primary School Shah Sadar Din';
-            const logoBox = document.getElementById('schoolLogoBox');
-            if (school.logo) {
-                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
-            } else {
-                logoBox.innerText = school.shortCode || 'SSD';
-            }
+            try {
+                const school = (window.LamaAPI && typeof window.LamaAPI.getActiveSchool === 'function') 
+                    ? await window.LamaAPI.getActiveSchool() 
+                    : { name: 'Govt Primary School Shah Sadar Din', shortCode: 'SSD', logo: null };
+                
+                if (school) {
+                    document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
+                    document.getElementById('headerSchoolName').innerText = school.name || 'Govt Primary School Shah Sadar Din';
+                    const logoBox = document.getElementById('schoolLogoBox');
+                    if (school.logo) {
+                        logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+                    } else {
+                        logoBox.innerText = school.shortCode || 'SSD';
+                    }
+                }
+            } catch (e) {}
         }
 
         function formatDateToDDMMYYYY(dateStr) {
@@ -344,11 +332,13 @@
         const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
 
         function pdfConvDate(d) {
-            const m = d ? d.match(/(\d{2})-([A-Z]{3})-(\d{2})/) : null;
-            if (!m) return formatDateToDDMMYYYY(d);
+            if (!d) return '';
+            const clean = String(d).trim().toUpperCase();
+            let m = clean.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
+            if (!m) return formatDateToDDMMYYYY(clean);
             const [, day, mon, yy] = m;
             const monNum = PDF_MONTHS[mon];
-            if (!monNum) return formatDateToDDMMYYYY(d);
+            if (!monNum) return formatDateToDDMMYYYY(clean);
             return `${String(day).padStart(2, '0')}-${String(monNum).padStart(2, '0')}-20${yy}`;
         }
 
@@ -662,6 +652,7 @@
             if (!student.enrlNo) {
                 student.enrlNo = 'ENRL-' + String(index + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
             }
+            student.id = 'id_' + Math.random().toString(36).substr(2, 9) + index + Date.now().toString(36);
             return student;
         }
 
@@ -675,46 +666,42 @@
                 document.getElementById('mapSection').classList.add('hidden');
                 document.getElementById('progressSection').classList.remove('hidden');
                 
-                document.getElementById('progressLabel').innerText = 'Preparing new student list...';
-                
-                let addedCount = 0;
-                let skippedCount = 0;
-                let failedCount = 0;
-                const batchItems = [];
+                document.getElementById('progressLabel').innerText = 'Preparing student list...';
+                document.getElementById('progressBar').style.width = '30%';
 
+                const batchItems = [];
                 for (let i = 0; i < sourceRows.length; i++) {
                     const rec = buildRecordFromRow(sourceRows[i], i);
-                    delete rec.photo;
-                    delete rec.admissionRemarks;
                     batchItems.push(rec);
                 }
 
                 document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records safely...`;
-                document.getElementById('progressBar').style.width = '50%';
+                document.getElementById('progressBar').style.width = '70%';
 
                 try {
-                    const processedChunk = batchItems.map((item, idx) => {
-                        item.id = 'id_' + Math.random().toString(36).substr(2, 9) + idx;
-                        return item;
-                    });
-
-                    // Save to both key variants so manage-students.html retrieves them reliably
-                    localStorage.setItem('lama_students', JSON.stringify(processedChunk));
-                    localStorage.setItem('lama_school_students', JSON.stringify(processedChunk));
-                    addedCount = processedChunk.length;
+                    localStorage.setItem('lama_students', JSON.stringify(batchItems));
+                    localStorage.setItem('lama_school_students', JSON.stringify(batchItems));
+                    localStorage.setItem('lama_school_SSD_students', JSON.stringify(batchItems));
+                    
                     document.getElementById('progressBar').style.width = '100%';
+                    
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('resultsSection').classList.remove('hidden');
+                    document.getElementById('successCount').innerText = batchItems.length;
+                    document.getElementById('skippedCount').innerText = 0;
+                    document.getElementById('failCount').innerText = 0;
+                    document.getElementById('errorsList').innerHTML =
+                        `<p class="text-slate-300">Successfully locked in and imported <strong>${batchItems.length}</strong> new students!</p>`;
                 } catch (storageErr) {
                     console.error('Storage save failed:', storageErr);
-                    failedCount = batchItems.length;
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('resultsSection').classList.remove('hidden');
+                    document.getElementById('successCount').innerText = 0;
+                    document.getElementById('skippedCount').innerText = 0;
+                    document.getElementById('failCount').innerText = batchItems.length;
+                    document.getElementById('errorsList').innerHTML =
+                        `<p class="text-red-400">Failed due to storage limits: ${storageErr.message}</p>`;
                 }
-
-                document.getElementById('progressSection').classList.add('hidden');
-                document.getElementById('resultsSection').classList.remove('hidden');
-                document.getElementById('successCount').innerText = addedCount;
-                document.getElementById('skippedCount').innerText = skippedCount;
-                document.getElementById('failCount').innerText = failedCount;
-                document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed due to storage limits.</span>` : ''}</p>`;
             });
         }
 
@@ -765,9 +752,7 @@
             box.classList.remove('hidden');
         }
 
-        if (LamaAPI.requireLogin('school', 'login.html')) {
-            renderHeader();
-        }
+        renderHeader();
     </script>
 </body>
 </html>

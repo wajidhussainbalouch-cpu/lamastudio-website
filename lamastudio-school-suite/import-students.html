@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lama Lama School Suit - Student Management</title>
+    <title>Lama School Suite - Student Management</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -32,13 +32,13 @@
                     <i class="fa-solid fa-graduation-cap text-2xl text-emerald-200"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg sm:text-xl font-bold tracking-tight">Lama Lama School Suit</h1>
-                    <p class="text-xs text-emerald-100 font-medium">Student Management & Bulk Import Portal</p>
+                    <h1 id="school-name-title" class="text-lg sm:text-xl font-bold tracking-tight">Lama School Suite</h1>
+                    <p class="text-xs text-emerald-100 font-medium">Student Management, Photos & Bulk Import Portal</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <button onclick="switchTab('students')" id="nav-btn-students" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-white/20 hover:bg-white/30 text-white flex items-center gap-2">
-                    <i class="fa-solid fa-users"></i> View Students (<span id="total-badge">304</span>)
+                    <i class="fa-solid fa-users"></i> View Students (<span id="total-badge">0</span>)
                 </button>
                 <button onclick="switchTab('import')" id="nav-btn-import" class="px-4 py-2 rounded-lg text-sm font-semibold transition bg-emerald-800 hover:bg-emerald-900 text-white flex items-center gap-2">
                     <i class="fa-solid fa-file-arrow-up"></i> Bulk Import
@@ -75,7 +75,7 @@
                 <!-- Filters & Action Buttons -->
                 <div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
                     <select id="class-filter" onchange="handleClassFilter()" class="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium">
-                        <option value="ALL">All Classes (304)</option>
+                        <option value="ALL">All Classes (0)</option>
                         <option value="ECE">ECE</option>
                         <option value="Class 1">Class 1</option>
                         <option value="Class 2">Class 2</option>
@@ -88,7 +88,7 @@
                         <i class="fa-solid fa-user-plus"></i> Add Student
                     </button>
 
-                    <button onclick="confirmResetList()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition flex items-center gap-2" title="Reset to Initial 304 List">
+                    <button onclick="confirmResetList()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-700 border border-slate-200 rounded-xl text-sm font-semibold transition flex items-center gap-2" title="Clear Student List">
                         <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Reset List</span>
                     </button>
                 </div>
@@ -101,6 +101,7 @@
                         <thead>
                             <tr class="bg-slate-100/70 border-b border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider">
                                 <th class="py-3.5 px-4">#</th>
+                                <th class="py-3.5 px-4">Photo</th>
                                 <th class="py-3.5 px-4">Student Name</th>
                                 <th class="py-3.5 px-4">Enrl No</th>
                                 <th class="py-3.5 px-4">Class</th>
@@ -123,13 +124,13 @@
                         <i class="fa-solid fa-user-slash"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-slate-700">No students found</h3>
-                    <p class="text-sm text-slate-500 mt-1">Try adjusting your search query or class filter.</p>
+                    <p class="text-sm text-slate-500 mt-1">Please import records using the Bulk Import tab or add a student manually.</p>
                 </div>
 
                 <!-- Pagination Footer -->
                 <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-600">
                     <div id="pagination-info" class="font-medium">
-                        Showing 1 to 50 of 304 students
+                        Showing 0 students
                     </div>
                     <div class="flex items-center gap-1.5" id="pagination-controls">
                         <!-- Pagination buttons generated via JS -->
@@ -140,40 +141,49 @@
 
         <!-- VIEW 2: BULK IMPORT -->
         <section id="view-import" class="hidden space-y-6">
-            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto">
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto space-y-6">
                 <div class="flex items-center gap-3 pb-6 border-b border-slate-100">
                     <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl">
                         <i class="fa-solid fa-file-excel"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-slate-800">Bulk Import Students</h2>
-                        <p class="text-sm text-slate-500">Paste CSV data or upload records in bulk to SSD Govt Primary School database.</p>
+                        <h2 class="text-xl font-bold text-slate-800">Bulk Import Students & Optional Photo Folder</h2>
+                        <p class="text-sm text-slate-500">Paste CSV data and optionally upload student images named by enrollment number (e.g. 1678.jpg).</p>
                     </div>
                 </div>
 
-                <div class="mt-6 space-y-5">
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">CSV Data Format Guide</label>
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs font-mono text-slate-600">
-                            Name, EnrollmentNo, Class, Gender, DOB(DD-MM-YYYY), FatherName, Contact<br>
-                            Example: ALI KHAN, 2099, ECE, M, 12-05-2020, MUHAMMAD KHAN, 0300-1234567
-                        </div>
-                    </div>
+                <!-- Optional Photo Folder Upload -->
+                <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3">
+                    <label class="block text-sm font-semibold text-emerald-900">
+                        <i class="fa-solid fa-images mr-1"></i> Optional Photo Folder (Select Multiple Images)
+                    </label>
+                    <p class="text-xs text-emerald-700">Select image files from your computer named after student enrollment numbers (e.g., <code class="bg-white px-1 py-0.5 rounded border border-emerald-200">1678.jpg</code> or <code class="bg-white px-1 py-0.5 rounded border border-emerald-200">1696.png</code>).</p>
+                    <input type="file" id="bulk-photo-folder" multiple accept="image/*" onchange="handlePhotoFolderSelect(event)" 
+                        class="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer">
+                    <div id="photo-folder-status" class="text-xs font-medium text-emerald-800"></div>
+                </div>
 
-                    <div>
-                        <label for="csv-input-area" class="block text-sm font-semibold text-slate-700 mb-2">Paste CSV / Tab-Separated Data Here</label>
-                        <textarea id="csv-input-area" rows="8" placeholder="Paste rows copied from Excel or CSV file..." 
-                            class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"></textarea>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">CSV Data Format Guide</label>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs font-mono text-slate-600">
+                        Name, EnrollmentNo, Class, Gender, DOB(DD-MM-YYYY), FatherName, Contact<br>
+                        Example: ALI KHAN, 2099, ECE, M, 12-05-2020, MUHAMMAD KHAN, 0300-1234567
                     </div>
+                </div>
 
-                    <div class="flex flex-col sm:flex-row gap-3 justify-end pt-2">
-                        <button onclick="switchTab('students')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">
-                            Cancel
-                        </button>
-                        <button onclick="processBulkImport()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Import Records
-                        </button>
-                    </div>
+                <div>
+                    <label for="csv-input-area" class="block text-sm font-semibold text-slate-700 mb-2">Paste CSV / Tab-Separated Data Here</label>
+                    <textarea id="csv-input-area" rows="6" placeholder="Paste rows copied from Excel or CSV file..." 
+                        class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"></textarea>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 justify-end pt-2">
+                    <button onclick="switchTab('students')" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition">
+                        Cancel
+                    </button>
+                    <button onclick="processBulkImport()" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Import Records & Match Photos
+                    </button>
                 </div>
             </div>
         </section>
@@ -189,6 +199,18 @@
             </div>
             <form id="student-form" onsubmit="saveStudent(event)" class="p-6 space-y-4">
                 <input type="hidden" id="edit-index" value="-1">
+                
+                <!-- Photo Upload Field -->
+                <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div id="modal-photo-preview" class="w-14 h-14 bg-slate-200 rounded-full flex items-center justify-center overflow-hidden text-slate-400 text-xl font-bold shrink-0">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Picture (Optional)</label>
+                        <input type="file" id="input-photo" accept="image/*" onchange="previewSinglePhoto(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300">
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Student Name *</label>
@@ -244,7 +266,7 @@
         </div>
     </div>
 
-    <!-- CUSTOM CONFIRMATION MODAL (Replaces confirm()) -->
+    <!-- CUSTOM CONFIRMATION MODAL -->
     <div id="confirm-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md p-6 text-center space-y-4">
             <div id="confirm-icon" class="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto text-2xl">
@@ -261,206 +283,52 @@
 
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
-        <p>&copy; 2026 SSD Govt Primary School Shah Sadar Din. All rights reserved.</p>
+        <p>&copy; 2026 Lama School Suite. All rights reserved.</p>
     </footer>
 
     <!-- JavaScript Application Logic -->
     <script>
-        // Initial dataset of 304 students as provided in prompt
-        const INITIAL_STUDENTS = [
-            { id: 1, name: "MUHAMMAD SAJAWAL", enrl: "1678", cls: "ECE", gender: "M", dob: "14-07-2020", father: "IRSHAD HUSSAIN", contact: "-" },
-            { id: 2, name: "HANIA BIBI", enrl: "1696", cls: "ECE", gender: "F", dob: "21-02-2021", father: "MUHAMMAD RAFIQUE", contact: "-" },
-            { id: 3, name: "ALI RAZA", enrl: "1726", cls: "ECE", gender: "M", dob: "01-01-2020", father: "MUHAMMAD IMRAN", contact: "-" },
-            { id: 4, name: "RUQAYYA BIBI", enrl: "1727", cls: "ECE", gender: "F", dob: "02-06-2018", father: "ABDUL RASHEED", contact: "-" },
-            { id: 5, name: "HUMAIRA ARSHAD", enrl: "1728", cls: "ECE", gender: "F", dob: "11-08-2020", father: "ABDUL RASHEED", contact: "-" },
-            { id: 6, name: "HAFSA BIBI", enrl: "1729", cls: "ECE", gender: "F", dob: "28-09-2020", father: "MUHAMMAD IBRAHIM KHALIL", contact: "-" },
-            { id: 7, name: "KALEEM ULLAH", enrl: "1759", cls: "ECE", gender: "M", dob: "22-01-2021", father: "INAM ULAH", contact: "-" },
-            { id: 8, name: "FATIMA", enrl: "1781", cls: "ECE", gender: "F", dob: "01-06-2021", father: "MUHAMMAD EJAZ", contact: "-" },
-            { id: 9, name: "MUHAMMAD FAIZAN", enrl: "1793", cls: "ECE", gender: "M", dob: "10-02-2020", father: "MUHAMMAD REHAN", contact: "-" },
-            { id: 10, name: "MUKHTAR HUSSAIN", enrl: "1794", cls: "ECE", gender: "M", dob: "03-09-2022", father: "IJAZ HUSSAIN", contact: "-" },
-            { id: 11, name: "AYAT ZAHRA", enrl: "1818", cls: "ECE", gender: "F", dob: "20-06-2021", father: "GHULAM YASEEN", contact: "-" },
-            { id: 12, name: "MUHAMMAD USMAN", enrl: "1839", cls: "ECE", gender: "M", dob: "21-03-2020", father: "MUHAMMAD HANEEF", contact: "-" },
-            { id: 13, name: "MUHAMMAD SULEMAN", enrl: "1840", cls: "ECE", gender: "M", dob: "06-03-2021", father: "MUHAMMAD HANEEF", contact: "-" },
-            { id: 14, name: "AIMAN BIBI", enrl: "1846", cls: "ECE", gender: "F", dob: "10-02-2020", father: "GHULAM FARID", contact: "-" },
-            { id: 15, name: "IQRA BIBI", enrl: "1848", cls: "ECE", gender: "F", dob: "07-06-2022", father: "RABNAWAZ", contact: "-" },
-            { id: 16, name: "NEHA", enrl: "1849", cls: "ECE", gender: "F", dob: "20-02-2022", father: "BASHEER AHMAD SHAH", contact: "-" },
-            { id: 17, name: "UMMY HABIBAH", enrl: "1850", cls: "ECE", gender: "F", dob: "24-05-2023", father: "BASHEER AHMAD SHAH", contact: "-" },
-            { id: 18, name: "MUHAMMAD SALEH", enrl: "1854", cls: "ECE", gender: "M", dob: "04-02-2021", father: "MUHAMMAD SAEED UL ZAMAN", contact: "-" },
-            { id: 19, name: "ABDUL RAFAY", enrl: "1857", cls: "ECE", gender: "M", dob: "17-03-2019", father: "MUHAMMAD YOUNIS", contact: "-" },
-            { id: 20, name: "HIJAB ZAHRA", enrl: "1874", cls: "ECE", gender: "F", dob: "13-03-2022", father: "JAVED HUSSAIN", contact: "-" },
-            { id: 21, name: "REHAN BASHIR", enrl: "1880", cls: "ECE", gender: "M", dob: "08-02-2019", father: "SHAKEEL AMAD", contact: "-" },
-            { id: 22, name: "KOMAL ZAHRA", enrl: "1912", cls: "ECE", gender: "F", dob: "11-07-2023", father: "GHULAM ASGHAR", contact: "-" },
-            { id: 23, name: "ANAS WASEEM", enrl: "1913", cls: "ECE", gender: "M", dob: "10-07-2022", father: "MUHAMMAD WASEEM AKBAR", contact: "-" },
-            { id: 24, name: "ONAZA WASEEM", enrl: "1914", cls: "ECE", gender: "F", dob: "30-04-2021", father: "MUHAMMAD WASEEM AKBAR", contact: "-" },
-            { id: 25, name: "RAHIB RAZA", enrl: "1915", cls: "ECE", gender: "M", dob: "20-09-2019", father: "MUHAMMAD MATLOOB", contact: "-" },
-            { id: 26, name: "MUHAMMAD NAZUK ALI", enrl: "1920", cls: "ECE", gender: "M", dob: "27-03-2019", father: "MUHAMMAD YOUSEF", contact: "-" },
-            { id: 27, name: "HEER ZAHRA", enrl: "1921", cls: "ECE", gender: "F", dob: "12-04-2022", father: "SAJID HUSSAIN", contact: "-" },
-            { id: 28, name: "SHAH ZAIB", enrl: "1922", cls: "ECE", gender: "M", dob: "10-07-2019", father: "KHUDA BAKSH", contact: "-" },
-            { id: 29, name: "MUHAMMAD KHOBIB", enrl: "1934", cls: "ECE", gender: "M", dob: "04-08-2022", father: "ZAFAR IQBAL", contact: "-" },
-            { id: 30, name: "GHAZI ABBAS", enrl: "1935", cls: "ECE", gender: "M", dob: "01-08-2020", father: "GHULAM QASIM", contact: "-" },
-            { id: 31, name: "FATIMA ZAHRA", enrl: "1941", cls: "ECE", gender: "F", dob: "15-12-2020", father: "SAQLAIN ABBAS", contact: "-" },
-            { id: 32, name: "MUHAMMAD ANAS", enrl: "1944", cls: "ECE", gender: "M", dob: "20-05-2018", father: "MUHAMMAD KHALID", contact: "-" },
-            { id: 33, name: "HADIA BATOOL", enrl: "1945", cls: "ECE", gender: "F", dob: "01-12-2019", father: "SAQLAIN ABBAS", contact: "-" },
-            { id: 34, name: "MUHAMMAD AYAN", enrl: "1946", cls: "ECE", gender: "M", dob: "10-08-2020", father: "MUHAMMAD SANAULLAH", contact: "-" },
-            { id: 35, name: "MUHAMMAD JUNAID", enrl: "1947", cls: "ECE", gender: "M", dob: "19-03-2018", father: "MUHAMMAD JAVED", contact: "-" },
-            { id: 36, name: "AYESHA ASHRAF", enrl: "1948", cls: "ECE", gender: "F", dob: "01-08-2019", father: "MUHAMMAD ASHRAF", contact: "-" },
-            { id: 37, name: "MUHAMMAD UZAIR", enrl: "1951", cls: "ECE", gender: "M", dob: "06-06-2021", father: "ABDUL RASHEED", contact: "-" },
-            { id: 38, name: "ALI HAIDER", enrl: "1953", cls: "ECE", gender: "M", dob: "02-02-2022", father: "GHULAM AKBAR", contact: "-" },
-            { id: 39, name: "HANIA ZAHRA", enrl: "1954", cls: "ECE", gender: "F", dob: "01-03-2020", father: "GHULAM AKBAR", contact: "-" },
-            { id: 40, name: "UME HANIA", enrl: "1955", cls: "ECE", gender: "F", dob: "25-02-2022", father: "ZULFIQAR", contact: "-" },
-            { id: 41, name: "HARAM FATIMA", enrl: "1461", cls: "ECE", gender: "F", dob: "09-09-2018", father: "GULAM FAREED", contact: "-" },
-            { id: 42, name: "MUHAMMAD ABU ZAR", enrl: "1666", cls: "ECE", gender: "M", dob: "21-06-2019", father: "NOUMAN MEHBOOB", contact: "-" },
-            { id: 43, name: "MEHKAN", enrl: "1687", cls: "ECE", gender: "F", dob: "16-12-2018", father: "ABDUL RASHEED", contact: "-" },
-            { id: 44, name: "BAKHTAWAR BIBI", enrl: "1691", cls: "ECE", gender: "F", dob: "10-06-2019", father: "MUHAMMAD ARSHAD", contact: "-" },
-            { id: 45, name: "MUHAMMAD YOUSAF", enrl: "1692", cls: "ECE", gender: "M", dob: "03-04-2018", father: "SHAHID RAMZAN", contact: "-" },
-            { id: 46, name: "MUHAMMAD ABDULLAH", enrl: "1694", cls: "ECE", gender: "M", dob: "26-09-2019", father: "ALLAH BAKHSH", contact: "-" },
-            { id: 47, name: "MUHAMMAD ARSLAN", enrl: "1695", cls: "ECE", gender: "M", dob: "10-02-2017", father: "MUHAMMAD RAFIQUE", contact: "-" },
-            { id: 48, name: "MUHAMMAD SUBHABN", enrl: "1697", cls: "ECE", gender: "M", dob: "25-08-2019", father: "MUHAMMAD JAHANGIR", contact: "-" },
-            { id: 49, name: "AYAN MUHAMMAD", enrl: "1698", cls: "ECE", gender: "M", dob: "15-01-2018", father: "MUHAMMAD AKRAM SIDDIQUE", contact: "-" },
-            { id: 50, name: "MAAZ AKBAR", enrl: "1702", cls: "ECE", gender: "M", dob: "16-11-2021", father: "AKBAR ALI", contact: "-" },
-            { id: 51, name: "ROMAN KHAN", enrl: "1711", cls: "ECE", gender: "F", dob: "07-03-2019", father: "MUHAMMAD IMRAN", contact: "-" },
-            { id: 52, name: "RIDA FATIMA", enrl: "1714", cls: "ECE", gender: "F", dob: "19-02-2019", father: "IFTIKHAR", contact: "-" },
-            { id: 53, name: "MUHAMMAD ALI ASGHAR", enrl: "1715", cls: "ECE", gender: "M", dob: "10-08-2021", father: "MUHAMMAD YOUSUF", contact: "-" },
-            { id: 54, name: "ZONAISHA TUL JANNAH", enrl: "1730", cls: "ECE", gender: "F", dob: "25-09-2019", father: "SAJID HUSSAIN", contact: "-" },
-            { id: 55, name: "MUHAMMAD REHAN", enrl: "1755", cls: "ECE", gender: "M", dob: "04-06-2019", father: "SAFDAR ABBAS", contact: "-" },
-            { id: 56, name: "MUHAMMAD ASGHAR", enrl: "1760", cls: "ECE", gender: "M", dob: "16-09-2018", father: "ENAM ULLAH", contact: "-" },
-            { id: 57, name: "MUHAMMAD SHEHZAD KHAN", enrl: "1761", cls: "ECE", gender: "M", dob: "28-10-2018", father: "MUHAMMAD MEHMOOD", contact: "-" },
-            { id: 58, name: "AHMAD", enrl: "1771", cls: "ECE", gender: "M", dob: "01-12-2020", father: "NADIR HUSSAIN", contact: "-" },
-            { id: 59, name: "MUHAMMAD RAHIB", enrl: "1780", cls: "ECE", gender: "M", dob: "15-03-2018", father: "RABNAWAZ", contact: "-" },
-            { id: 60, name: "MUHAMMAD MOHSIN", enrl: "1789", cls: "ECE", gender: "M", dob: "31-08-2018", father: "MUHAMMAD ASLAM", contact: "-" },
-            { id: 61, name: "RAHMAT MAI", enrl: "1790", cls: "ECE", gender: "F", dob: "26-02-2017", father: "SAIF ULLAH", contact: "-" },
-            { id: 62, name: "SAHIRA", enrl: "1791", cls: "ECE", gender: "F", dob: "26-08-2021", father: "SAIF ULLAH", contact: "-" },
-            { id: 63, name: "ZAIN UL ABDIN", enrl: "1802", cls: "ECE", gender: "M", dob: "03-01-2020", father: "MUHAMMAD FIAZ", contact: "-" },
-            { id: 64, name: "MUHAMMAD UMAR FAROOQ", enrl: "1803", cls: "ECE", gender: "M", dob: "04-02-2020", father: "SAJJAD HUSSAIN", contact: "-" },
-            { id: 65, name: "ABRISH BUKHARI", enrl: "1804", cls: "ECE", gender: "F", dob: "19-01-2022", father: "SYED MUHAMMAD UMAR SHAH", contact: "-" },
-            { id: 66, name: "MUHAMMAD NAZEER", enrl: "1807", cls: "ECE", gender: "M", dob: "07-07-2019", father: "ALLAH NAWAZ", contact: "-" },
-            { id: 67, name: "MUHAMMAD JOAN", enrl: "1817", cls: "ECE", gender: "M", dob: "16-12-2018", father: "ABDUL MAJEED", contact: "-" },
-            { id: 68, name: "SHAHWAIZ AHSHAM SAJID", enrl: "1819", cls: "ECE", gender: "M", dob: "20-11-2021", father: "WAJID HUSSAIN", contact: "-" },
-            { id: 69, name: "MUHAMMAD MADNI", enrl: "1841", cls: "ECE", gender: "M", dob: "02-12-2018", father: "MUHAMMAD SAJJAD", contact: "-" },
-            { id: 70, name: "MUHAMMAD SAQIB", enrl: "1842", cls: "ECE", gender: "M", dob: "02-09-2019", father: "MUHAMMAD SAJJAD", contact: "-" },
-            { id: 71, name: "SHER ALI", enrl: "1845", cls: "ECE", gender: "M", dob: "28-11-2019", father: "MUHAMMAD IMRAN", contact: "-" },
-            { id: 72, name: "BURHAN KHAN", enrl: "1847", cls: "ECE", gender: "M", dob: "25-01-2019", father: "GHULAM FARID", contact: "-" },
-            { id: 73, name: "MUHAMMAD AZAN", enrl: "1855", cls: "ECE", gender: "M", dob: "19-10-2017", father: "MUHAMMAD HANIF", contact: "-" },
-            { id: 74, name: "MUHAMMAD ABDULLAH ARIF", enrl: "1873", cls: "ECE", gender: "M", dob: "26-02-2018", father: "MUHAMMAD ARIF", contact: "-" },
-            { id: 75, name: "TOOBA JAVED", enrl: "1875", cls: "ECE", gender: "F", dob: "11-12-2018", father: "JAVED HUSSAIN", contact: "-" },
-            { id: 76, name: "MUHAMMAD ZEESHAN", enrl: "1881", cls: "ECE", gender: "M", dob: "01-01-2020", father: "ABDUL GAFFAR", contact: "-" },
-            { id: 77, name: "DUA BIBI", enrl: "1885", cls: "ECE", gender: "F", dob: "16-02-2019", father: "AZMAT ULLAH", contact: "-" },
-            { id: 78, name: "AFNAN AYOUB", enrl: "1886", cls: "ECE", gender: "M", dob: "26-09-2015", father: "MUHAMMAD AYOUB", contact: "-" },
-            { id: 79, name: "ALI RAZA", enrl: "1888", cls: "ECE", gender: "M", dob: "05-09-2018", father: "MUHAMMAD MATLOOB", contact: "-" },
-            { id: 80, name: "ALI HASSAN", enrl: "1892", cls: "ECE", gender: "M", dob: "08-03-2021", father: "SHOAIB AHMAD", contact: "-" },
-            { id: 81, name: "ASAD ZOHAIB", enrl: "1894", cls: "ECE", gender: "M", dob: "02-11-2021", father: "ZOHAIB AHMAD", contact: "-" },
-            { id: 82, name: "MAHATEER MUHAMMAD", enrl: "1898", cls: "ECE", gender: "M", dob: "06-06-2021", father: "SHAHID IQBAL", contact: "-" },
-            { id: 83, name: "MUDASSIR ALI", enrl: "1899", cls: "ECE", gender: "M", dob: "04-03-2022", father: "MUHAMMAD ARSHAD", contact: "-" },
-            { id: 84, name: "MUHAMMAD", enrl: "1900", cls: "ECE", gender: "M", dob: "08-12-2020", father: "AKHTAR", contact: "-" },
-            { id: 85, name: "MUHAMMAD ZAKIR", enrl: "1902", cls: "ECE", gender: "M", dob: "11-08-2018", father: "MUHAMMAD ARSHAD", contact: "-" },
-            { id: 86, name: "MUBASHIR ALI", enrl: "1904", cls: "ECE", gender: "M", dob: "03-02-2020", father: "MUHAMMAD ARSHAD", contact: "-" },
-            { id: 87, name: "MUHAMMAD ZUBAIR", enrl: "1905", cls: "ECE", gender: "M", dob: "10-12-2016", father: "ABDUL LATIF", contact: "-" },
-            { id: 88, name: "ABDUL HADI", enrl: "1909", cls: "ECE", gender: "M", dob: "15-02-2021", father: "FIDA HUSSAIN", contact: "-" },
-            { id: 89, name: "MUHAMMAD SHER ALI", enrl: "1917", cls: "ECE", gender: "M", dob: "08-01-2016", father: "MUHAMMAD ARSHAD", contact: "-" },
-            { id: 90, name: "MUHAMMAD FAIZAN", enrl: "1918", cls: "ECE", gender: "M", dob: "23-11-2018", father: "MUHAMMAD AYOB", contact: "-" },
-            { id: 91, name: "ROBAB AYOB", enrl: "1919", cls: "ECE", gender: "F", dob: "13-11-2017", father: "MUHAMMAD AYOB", contact: "-" },
-            { id: 92, name: "ZOYA ARIF", enrl: "1927", cls: "ECE", gender: "F", dob: "03-04-2019", father: "MUHAMMAD ARIF", contact: "-" },
-            { id: 93, name: "ALEEZA ARIF", enrl: "1928", cls: "ECE", gender: "M", dob: "01-03-2018", father: "MUHAMMAD ARIF", contact: "-" },
-            { id: 94, name: "MUHAMMAD AYAN", enrl: "1949", cls: "ECE", gender: "M", dob: "11-09-2020", father: "MUHAMMAD NADIR", contact: "-" },
-            { id: 95, name: "MUHAMMAD DILAWAR", enrl: "1976", cls: "ECE", gender: "M", dob: "05-04-2018", father: "AKHTAR HUSSAIN", contact: "-" },
-            { id: 96, name: "MAHAM GUL", enrl: "10910", cls: "ECE", gender: "F", dob: "18-10-2021", father: "MUHAMMAD IMRAN", contact: "-" },
-            { id: 97, name: "MUHAMMAD SAHIL", enrl: "1524", cls: "ECE", gender: "M", dob: "17-10-2017", father: "MUHAMMAD IMRAN 1", contact: "-" },
-            { id: 98, name: "MUHAMMAD DILAWAR", enrl: "1664", cls: "ECE", gender: "M", dob: "20-02-2019", father: "ABDUL WAHEED 1", contact: "-" },
-            { id: 99, name: "ZAQWAN ALI", enrl: "1703", cls: "ECE", gender: "M", dob: "22-04-2019", father: "HAFIZ GHULAM MUJTABA 1", contact: "-" },
-            { id: 100, name: "AIN ABBAS", enrl: "1705", cls: "ECE", gender: "M", dob: "06-08-2019", father: "GHULAM YASEEN 1", contact: "-" },
-            { id: 101, name: "MUHAMMAD NOMAN", enrl: "1706", cls: "ECE", gender: "M", dob: "15-09-2018", father: "MUHAMMAD IMRAN 1", contact: "-" },
-            { id: 102, name: "KINZA FATIMA", enrl: "1716", cls: "ECE", gender: "F", dob: "19-12-2021", father: "SAFDAR HUSSAIN 1", contact: "-" },
-            { id: 103, name: "MUHAMMAD BILAL", enrl: "1717", cls: "ECE", gender: "M", dob: "19-12-2021", father: "SAFDAR HUSSAIN 1", contact: "-" },
-            { id: 104, name: "MUHAMMAD SHAHID", enrl: "1718", cls: "ECE", gender: "M", dob: "01-06-2017", father: "GHULAM HUSSAIN 1", contact: "-" },
-            { id: 105, name: "MAHAD ALI", enrl: "1724", cls: "ECE", gender: "M", dob: "15-11-2019", father: "FIDA HUSSAIN 1", contact: "-" },
-            { id: 106, name: "MUHAMMAD SIKANDAR", enrl: "1732", cls: "ECE", gender: "M", dob: "05-11-2018", father: "SHAH NAWAZ 1", contact: "-" },
-            { id: 107, name: "MUHAMMAD DILSHAD", enrl: "1733", cls: "ECE", gender: "M", dob: "15-12-2016", father: "SHAH NAWAZ 1", contact: "-" },
-            { id: 108, name: "SANA BIBI", enrl: "1738", cls: "ECE", gender: "F", dob: "01-01-2015", father: "ATA MUHAMMAD 1", contact: "-" },
-            { id: 109, name: "MUHAMMAD YOUNUS", enrl: "1739", cls: "ECE", gender: "M", dob: "30-12-2016", father: "MUHAMMNAD YOUSUF 1", contact: "-" },
-            { id: 110, name: "MARYAM BIBI", enrl: "1740", cls: "ECE", gender: "F", dob: "01-01-2017", father: "ABDUL GAFFAR 1", contact: "-" },
-            { id: 111, name: "AYAT SAFDAR", enrl: "1754", cls: "ECE", gender: "F", dob: "06-08-2017", father: "SAFDAR ABBAS 1", contact: "-" },
-            { id: 112, name: "HIJAB BIBI", enrl: "1762", cls: "ECE", gender: "F", dob: "02-01-2019", father: "ABDUL GAFFAR 1", contact: "-" },
-            { id: 113, name: "MUHAMMAD AHMAD", enrl: "1765", cls: "ECE", gender: "M", dob: "10-06-2016", father: "JAVED HUSSAIN 1", contact: "-" },
-            { id: 114, name: "MUHAMMAD ZULFIQAR", enrl: "1775", cls: "ECE", gender: "M", dob: "23-08-2016", father: "MUHAMMAD RAFIQUE 1", contact: "-" },
-            { id: 115, name: "MUHAMMAD MAOZIN", enrl: "1776", cls: "ECE", gender: "M", dob: "10-10-2017", father: "ZAREEANA MAI 1", contact: "-" },
-            { id: 116, name: "MUHAMMAD NAEEM", enrl: "1778", cls: "ECE", gender: "M", dob: "21-02-2020", father: "MUHAMMAD JAMIL 1", contact: "-" },
-            { id: 117, name: "MUHAMMAD WASEEM", enrl: "1779", cls: "ECE", gender: "M", dob: "15-06-2019", father: "MUHAMMAD JAMEEL 1", contact: "-" },
-            { id: 118, name: "ANABIA BUKHARI", enrl: "1805", cls: "ECE", gender: "F", dob: "25-09-2020", father: "SYED MUHAMMAD UMAR SHAH 1", contact: "-" },
-            { id: 119, name: "MUHAMMAD MUNAWAR", enrl: "1809", cls: "ECE", gender: "M", dob: "03-04-2017", father: "AKHTAR HUSSAIN 1", contact: "-" },
-            { id: 120, name: "HANEEN", enrl: "1821", cls: "ECE", gender: "F", dob: "22-10-2019", father: "WAJID HUSSAIN 1", contact: "-" },
-            { id: 121, name: "MUHAMMAD", enrl: "1822", cls: "ECE", gender: "M", dob: "22-10-2021", father: "MUHAMMAD ZAFAR 1", contact: "-" },
-            { id: 122, name: "KHALID HUSSAIN", enrl: "1823", cls: "ECE", gender: "M", dob: "22-10-2020", father: "ABDUL RASHEED 1", contact: "-" },
-            { id: 123, name: "ALIYA BIBI", enrl: "1829", cls: "ECE", gender: "F", dob: "08-11-2018", father: "GHULAM SHABBIR 1", contact: "-" },
-            { id: 124, name: "MUHAMMAD SHAHBAZ", enrl: "1834", cls: "ECE", gender: "M", dob: "12-04-2018", father: "MUHAMMAD AMIR 1", contact: "-" },
-            { id: 125, name: "SYED MEHBOOB ELAHI", enrl: "1838", cls: "ECE", gender: "M", dob: "14-12-2020", father: "BASHEER AHMAD SHAH 1", contact: "-" },
-            { id: 126, name: "MUHAMMAD USAMA", enrl: "1843", cls: "ECE", gender: "M", dob: "28-08-2018", father: "MUHAMMAD ZAFAR IQBAL 1", contact: "-" },
-            { id: 127, name: "AYESHA BIBI", enrl: "1844", cls: "ECE", gender: "F", dob: "02-02-2018", father: "GHULAM FARID 1", contact: "-" },
-            { id: 128, name: "ZULAIKHAN BIBI", enrl: "1882", cls: "ECE", gender: "F", dob: "24-01-2021", father: "MUHAMMAD KHALID 1", contact: "-" },
-            { id: 129, name: "KHADIJA BIBI", enrl: "1883", cls: "ECE", gender: "F", dob: "18-01-2017", father: "MUHAMMAD KHALID 1", contact: "-" },
-            { id: 130, name: "MUHAMMAD KALEEM", enrl: "1884", cls: "ECE", gender: "M", dob: "13-01-2016", father: "MUHAMMAD KHALI 1", contact: "-" },
-            { id: 131, name: "MUHAMMAD FAISAL", enrl: "1887", cls: "ECE", gender: "M", dob: "02-02-2016", father: "MUHAMMAD MATLOOB 1", contact: "-" },
-            { id: 132, name: "MUHAMMAD SHAHID", enrl: "1906", cls: "ECE", gender: "M", dob: "15-07-2015", father: "ABDUL LATIF 1", contact: "-" },
-            { id: 133, name: "HASHIR ALI", enrl: "1929", cls: "ECE", gender: "M", dob: "04-03-2021", father: "MUJAHID HUSSAIN 1", contact: "-" },
-            { id: 134, name: "ANAYA KHAN", enrl: "1931", cls: "ECE", gender: "F", dob: "04-03-2020", father: "MUJAHID HUSSAIN 1", contact: "-" },
-            { id: 135, name: "MUHAMMAD MUDASSIR", enrl: "1932", cls: "ECE", gender: "M", dob: "11-12-2019", father: "ZAFAR IQBAL 1", contact: "-" },
-            { id: 136, name: "ZUNISHA MAI", enrl: "1933", cls: "ECE", gender: "F", dob: "07-06-2017", father: "ZAFAR IQBAL 1", contact: "-" },
-            { id: 137, name: "MUBASHIR", enrl: "1937", cls: "ECE", gender: "M", dob: "20-08-2017", father: "ASHIQ HUSSAIN 1", contact: "-" },
-            { id: 138, name: "AMEER MOAVIA", enrl: "1956", cls: "ECE", gender: "M", dob: "11-03-2020", father: "MUHAMMAD JAVED 1", contact: "-" },
-            { id: 139, name: "MUHAMMAD ZAMAN", enrl: "1957", cls: "ECE", gender: "M", dob: "15-06-2017", father: "MUHAMMAD RAMZAN 1", contact: "-" },
-            { id: 140, name: "AMAL IMTIAZ", enrl: "4771", cls: "ECE", gender: "F", dob: "28-08-2019", father: "MUHAMMAD IMTIAZ 1", contact: "-" },
-            { id: 141, name: "141", enrl: "141", cls: "ECE", gender: "M", dob: "12-12-2017", father: "8.9 (F) MUMTAZ HUSSAIN 2", contact: "-" },
-            { id: 142, name: "MUHAMMAD TAHIR", enrl: "142", cls: "ECE", gender: "M", dob: "20-05-2016", father: "RIAZ HUSSAIN 0 2", contact: "-" },
-            { id: 143, name: "MUHAMMAD SHOAIB", enrl: "143", cls: "ECE", gender: "M", dob: "04-05-2019", father: "ABDUL RASHEED 2", contact: "-" },
-            { id: 144, name: "MUHAMMAD SANWAL", enrl: "144", cls: "ECE", gender: "M", dob: "16-05-2012", father: "MUHAMMAD AKBAR 2", contact: "-" },
-            { id: 145, name: "MUHAMMAD JAVAID", enrl: "145", cls: "ECE", gender: "M", dob: "04-04-2018", father: "ABDUL RASHEED 2", contact: "-" },
-            { id: 146, name: "MUHAMMAD ANAS", enrl: "146", cls: "ECE", gender: "M", dob: "06-12-2018", father: "MUHAMMAD SAEED UL ZAMAN 2", contact: "-" },
-            { id: 147, name: "RAHIB SAJID", enrl: "1119", cls: "ECE", gender: "M", dob: "15-10-2015", father: "SAJID HUSSAIN 2", contact: "-" },
-            { id: 148, name: "RUTBA RANI", enrl: "1416", cls: "ECE", gender: "F", dob: "08-01-2017", father: "MUHAMMNAD NAZIR 2", contact: "-" },
-            { id: 149, name: "AHSAN IQBAL", enrl: "1478", cls: "ECE", gender: "M", dob: "20-08-2016", father: "MUJAHID IQBAL 2", contact: "-" },
-            { id: 150, name: "MUHAMMAD SAMEER", enrl: "1499", cls: "ECE", gender: "M", dob: "16-05-2018", father: "AMAN ULLAH 2", contact: "-" },
-            // Adding representative students for remaining classes up to 304 total for completeness
-            ...Array.from({ length: 154 }, (_, i) => ({
-                id: 151 + i,
-                name: `STUDENT RECORD ${151 + i}`,
-                enrl: `${2000 + i}`,
-                cls: ['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'][i % 5],
-                gender: i % 2 === 0 ? 'M' : 'F',
-                dob: '01-01-2018',
-                father: `GUARDIAN ${151 + i}`,
-                contact: '0300-' + Math.floor(1000000 + Math.random() * 9000000)
-            }))
-        ];
-
-        // State variables
         let students = [];
         let currentPage = 1;
         let rowsPerPage = 50;
         let currentSearchQuery = '';
         let currentClassFilter = 'ALL';
+        let stagedPhotoMap = {}; // Maps enrollment number (e.g., "1678") to Base64 data URL
 
         // Initialize application on load
         window.onload = function() {
+            loadSchoolName();
             loadStudentsFromStorage();
             renderTable();
             updateCounts();
         };
 
+        // Fetch School Name
+        function loadSchoolName() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const customSchool = urlParams.get('school') || localStorage.getItem('lama_school_name');
+            if (customSchool) {
+                document.getElementById('school-name-title').textContent = customSchool;
+            } else {
+                document.getElementById('school-name-title').textContent = "Lama School Suite";
+            }
+        }
+
         function loadStudentsFromStorage() {
-            const saved = localStorage.getItem('ssd_school_students');
+            const saved = localStorage.getItem('lama_primary_students');
             if (saved) {
                 try {
                     students = JSON.parse(saved);
                 } catch(e) {
-                    students = [...INITIAL_STUDENTS];
+                    students = [];
                 }
             } else {
-                students = [...INITIAL_STUDENTS];
-                saveStudentsToStorage();
+                students = [];
             }
         }
 
         function saveStudentsToStorage() {
-            localStorage.setItem('ssd_school_students', JSON.stringify(students));
+            localStorage.setItem('lama_primary_students', JSON.stringify(students));
         }
 
         // Tab Switching
@@ -537,8 +405,14 @@
             paginated.forEach((s, idx) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50/80 transition";
+                
+                const photoHtml = s.photo 
+                    ? `<img src="${s.photo}" alt="Photo" class="w-10 h-10 rounded-full object-cover border border-slate-200">`
+                    : `<div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-user"></i></div>`;
+
                 tr.innerHTML = `
                     <td class="py-3 px-4 text-slate-500 text-xs font-semibold">${startIdx + idx + 1}</td>
+                    <td class="py-3 px-4">${photoHtml}</td>
                     <td class="py-3 px-4 font-semibold text-slate-800">${escapeHtml(s.name)}</td>
                     <td class="py-3 px-4 font-mono text-emerald-700 font-medium">${escapeHtml(s.enrl)}</td>
                     <td class="py-3 px-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold">${escapeHtml(s.cls)}</span></td>
@@ -555,7 +429,7 @@
                 tbody.appendChild(tr);
             });
 
-            paginationInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${filtered.length} students (Filtered from ${students.length} total)`;
+            paginationInfo.textContent = `Showing ${startIdx + 1} to ${endIdx} of ${filtered.length} students (Total Enrollment: ${students.length})`;
             
             // Generate Pagination Buttons
             let pagesHtml = '';
@@ -593,11 +467,24 @@
             document.getElementById('modal-title').textContent = 'Add New Student';
             document.getElementById('edit-index').value = '-1';
             document.getElementById('student-form').reset();
+            document.getElementById('modal-photo-preview').innerHTML = '<i class="fa-solid fa-user"></i>';
             document.getElementById('student-modal').classList.remove('hidden');
         }
 
         function closeModal() {
             document.getElementById('student-modal').classList.add('hidden');
+        }
+
+        function previewSinglePhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('modal-photo-preview').innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    document.getElementById('modal-photo-preview').dataset.base64 = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         function saveStudent(event) {
@@ -609,9 +496,10 @@
             const dob = document.getElementById('input-dob').value.trim();
             const father = document.getElementById('input-father').value.trim();
             const contact = document.getElementById('input-contact').value.trim() || '-';
+            const photo = document.getElementById('modal-photo-preview').dataset.base64 || '';
 
             const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-            students.unshift({ id: newId, name, enrl, cls, gender, dob, father, contact });
+            students.unshift({ id: newId, name, enrl, cls, gender, dob, father, contact, photo });
 
             saveStudentsToStorage();
             renderTable();
@@ -640,13 +528,14 @@
         function confirmResetList() {
             showConfirmModal(
                 'Reset Student List',
-                'This will restore the default list of 304 students. Any custom added students or imports will be overwritten.',
+                'This will clear all student records.',
                 () => {
-                    students = [...INITIAL_STUDENTS];
+                    students = [];
+                    stagedPhotoMap = {};
                     saveStudentsToStorage();
                     renderTable();
                     updateCounts();
-                    showNotification('Student list reset to initial 304 records.', 'success');
+                    showNotification('Student list cleared successfully.', 'success');
                 }
             );
         }
@@ -667,6 +556,33 @@
             document.getElementById('confirm-modal').classList.add('hidden');
         }
 
+        // Handle Photo Folder Selection in Bulk Import
+        function handlePhotoFolderSelect(event) {
+            const files = event.target.files;
+            stagedPhotoMap = {};
+            let loadedCount = 0;
+
+            if (files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                // Extract filename without extension (e.g., "1678.jpg" -> "1678")
+                const fileNameFull = file.name;
+                const dotIndex = fileNameFull.lastIndexOf('.');
+                const enrlKey = dotIndex !== -1 ? fileNameFull.substring(0, dotIndex).trim() : fileNameFull.trim();
+
+                const reader = new FileReader();
+                reader.onload = (function(key) {
+                    return function(e) {
+                        stagedPhotoMap[key] = e.target.result;
+                        loadedCount++;
+                        document.getElementById('photo-folder-status').textContent = `Successfully staged ${loadedCount} student photos from folder.`;
+                    };
+                })(enrlKey);
+                reader.readAsDataURL(file);
+            }
+        }
+
         // Bulk Import Processing
         function processBulkImport() {
             const rawData = document.getElementById('csv-input-area').value.trim();
@@ -677,20 +593,30 @@
 
             const lines = rawData.split('\n');
             let importedCount = 0;
+            let matchedPhotosCount = 0;
 
             lines.forEach(line => {
                 const parts = line.split(/[\t,]+/).map(p => p.trim());
                 if (parts.length >= 6) {
+                    const enrlVal = parts[1] || '0000';
+                    // Check if photo was staged for this enrollment number
+                    let matchedPhoto = '';
+                    if (stagedPhotoMap[enrlVal]) {
+                        matchedPhoto = stagedPhotoMap[enrlVal];
+                        matchedPhotosCount++;
+                    }
+
                     const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
                     students.unshift({
                         id: newId,
                         name: parts[0] || 'UNKNOWN',
-                        enrl: parts[1] || '0000',
+                        enrl: enrlVal,
                         cls: ['ECE', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5'].includes(parts[2]) ? parts[2] : 'ECE',
                         gender: parts[3] === 'F' ? 'F' : 'M',
                         dob: parts[4] || '01-01-2018',
                         father: parts[5] || 'GUARDIAN',
-                        contact: parts[6] || '-'
+                        contact: parts[6] || '-',
+                        photo: matchedPhoto
                     });
                     importedCount++;
                 }
@@ -700,8 +626,11 @@
                 saveStudentsToStorage();
                 updateCounts();
                 document.getElementById('csv-input-area').value = '';
+                document.getElementById('bulk-photo-folder').value = '';
+                document.getElementById('photo-folder-status').textContent = '';
+                stagedPhotoMap = {};
                 switchTab('students');
-                showNotification(`Successfully imported ${importedCount} student records!`, 'success');
+                showNotification(`Successfully imported ${importedCount} students (${matchedPhotosCount} photos matched)! Total Enrollment: ${students.length}`, 'success');
             } else {
                 showNotification('No valid records recognized. Please check the CSV format.', 'error');
             }
@@ -711,7 +640,7 @@
         function logoutPrompt() {
             showConfirmModal(
                 'Logout Portal',
-                'Are you sure you want to log out from SSD Govt Primary School portal?',
+                'Are you sure you want to log out from the portal?',
                 () => {
                     showNotification('Logged out successfully. Refreshing session...', 'success');
                     setTimeout(() => {

@@ -257,6 +257,8 @@
             let buffer = [];
             let currentSerial = null;
             let pendingContinuation = '';
+            let pendingNameFragment = '';
+            let lastRowNeedsNameTail = false;
 
             // A row begins with source serial + enrollment number. Wrapped text
             // remains attached until the next row; there is no arbitrary line limit.
@@ -275,9 +277,14 @@
                     const [, serialText, enrl, name, gender, dob, , admdate, father, formb, klass, trailing] = m;
                     const serial = Number(serialText);
                     let resolvedName = String(name || '').trim();
+                    const parsedNameWasBlank = !resolvedName;
+                    // SIS exports sometimes place the first/last part of a student's name
+                    // on its own text line immediately before/after the numbered row.
+                    // Keep that fragment pending and attach it to the row it belongs to.
+                    if (pendingNameFragment) { resolvedName = `${pendingNameFragment} ${resolvedName}`.trim(); pendingNameFragment = ''; }
+                    lastRowNeedsNameTail = parsedNameWasBlank && !!resolvedName;
                     if (!resolvedName && pendingContinuation) { resolvedName = pendingContinuation; pendingContinuation = ''; }
                     if (!resolvedName && trailing) resolvedName = trailing.trim();
-                    if (resolvedName && name && trailing) pendingContinuation = trailing.trim();
                     if (seenSerials.has(serial)) {
                         skipped.push(`Duplicate source serial ${serial}: ${joined}`);
                     } else {
@@ -304,14 +311,17 @@
                     buffer.push(clean);
                 } else if (buffer.length) {
                     buffer.push(clean);
-                } else if (rows.length && /^[A-Z][A-Z .’'\-]{1,80}$/i.test(clean) && !/\d/.test(clean) && !isPdfNoiseLine(clean)) {
-                    // SIS sometimes emits the tail of a wrapped student name AFTER
-                    // the row's numeric line (e.g. serial 234: "MUSTAFA"). Attach
-                    // that orphaned name fragment to the immediately preceding row
-                    // instead of silently discarding it. Do not attach ordinary
-                    // footer/header text, which is filtered above.
-                    const previous = rows[rows.length - 1];
-                    previous.row[1] = `${String(previous.row[1] || '').trim()} ${clean}`.trim();
+                } else if (/^[A-Z][A-Z .’'\-]{1,80}$/i.test(clean) && !/\d/.test(clean) && !isPdfNoiseLine(clean)) {
+                    // Some names are split on both sides of a numbered row (e.g. 234).
+                    // If the row's name column was blank, attach the following fragment
+                    // to that same record; otherwise hold it for the next row.
+                    if (lastRowNeedsNameTail && rows.length) {
+                        const previous = rows[rows.length - 1];
+                        previous.row[1] = `${String(previous.row[1] || '').trim()} ${clean}`.trim();
+                        lastRowNeedsNameTail = false;
+                    } else {
+                        pendingNameFragment = `${pendingNameFragment} ${clean}`.trim();
+                    }
                 }
             }
             consumeBuffer();
@@ -355,10 +365,12 @@
                 if (skipped.length) auditProblems.push(`${skipped.length} record chunk(s) could not be parsed`);
                 if (missingSerials.length) auditProblems.push(`missing source serial(s): ${missingSerials.slice(0, 30).join(', ')}${missingSerials.length > 30 ? ', …' : ''}`);
                 const incompleteRows = rows.map((r, i) => ({ serial: serials[i], missingName: !String(r[1] || '').trim(), missingEnrollment: !String(r[0] || '').trim() })).filter(x => x.missingName || x.missingEnrollment);
-                if (incompleteRows.length) auditProblems.push(`${incompleteRows.length} record(s) need correction: ${incompleteRows.slice(0, 20).map(x => x.serial + (x.missingName ? ' name missing' : '') + (x.missingEnrollment ? ' enrollment missing' : '')).join(', ')}${incompleteRows.length > 20 ? ', …' : ''}`);
+                const missingNames = incompleteRows.filter(x => x.missingName);
+                const missingEnrollmentCount = incompleteRows.filter(x => x.missingEnrollment).length;
+                if (missingNames.length) auditProblems.push(`${missingNames.length} record(s) have no detected name: ${missingNames.slice(0, 20).map(x => x.serial).join(', ')}${missingNames.length > 20 ? ', …' : ''}`);
                 status.innerText = auditProblems.length
                     ? `⚠ Detected ${rows.length} student(s), but the PDF audit is NOT clean: ${auditProblems.join('; ')}. Import is blocked to prevent silent data loss. Export the roster to Excel/CSV or fix the listed source rows first.`
-                    : `✓ Detected ${rows.length} student(s) from the PDF. Source serial audit passed (${serials[0]}–${serials[serials.length - 1]} with no missing serials). Please check the preview before importing.`;
+                    : `✓ Detected ${rows.length} student(s) from the PDF. Source serial audit passed (${serials[0]}–${serials[serials.length - 1]} with no missing serials). ${missingEnrollmentCount ? `${missingEnrollmentCount} enrollment number(s) are blank and can be added later by the admin. ` : ''}Please check the preview before importing.`;
             } catch (e) {
                 status.innerText = 'Could not read this PDF: ' + e.message;
             }

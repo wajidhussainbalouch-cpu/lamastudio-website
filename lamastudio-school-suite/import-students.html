@@ -3,199 +3,100 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">Lama School Suite | Bulk Import & Roster Management</title>
+<title id="pageTitle">Bulk Import Students</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
-<script>
-    window.LamaAPI = window.LamaAPI || {
-        getActiveSchool: async () => {
-            try {
-                const stored = localStorage.getItem('lama_active_school');
-                if (stored) return JSON.parse(stored);
-            } catch(e) {}
-            return { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
-        },
-        logout: () => { window.location.href = 'manage-students.html'; }
-    };
-</script>
-<style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-</style>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
-    <header class="bg-[#107c41] text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
-            <div class="flex items-center gap-3">
-                <div id="schoolLogoBox" class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shadow-inner">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665-6.16 3.422"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v7"/></svg>
-                </div>
-                <div>
-                    <h1 id="headerSchoolName" class="text-base font-bold tracking-wide">Lama School Suite</h1>
-                    <p class="text-[11px] text-emerald-100 font-medium">Student Management, Photos & Bulk Import Portal</p>
-                </div>
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="manage-students.html" class="bg-[#0b5c2f] hover:bg-[#094d27] text-white font-medium text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                    <span>View Students</span>
-                </a>
-                <a href="bulk-import.html" class="bg-white/20 hover:bg-white/30 text-white font-medium text-xs px-3.5 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    <span>Bulk Import</span>
-                </a>
-                <button onclick="handleLogout()" class="bg-red-600 hover:bg-red-700 text-white font-medium text-xs px-3 py-2 rounded-lg transition shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </button>
-            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="manage-students.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Manage Students</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
 
-        <section id="uploadSection" class="bg-white border border-slate-200 rounded-xl p-6 md:p-8 space-y-6 shadow-sm">
-            <div class="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-4">
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                        Bulk Import Students & Optional Photo Folder
-                    </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Upload PDF student rosters, Excel spreadsheets, or paste CSV data to securely import all records into the administration portal.</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-[11px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 font-semibold">100% Roster Retention</span>
-                </div>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
-                    <label class="block text-xs font-bold text-slate-700">Roster File (PDF, Excel, CSV, Word)</label>
-                    <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-600 file:bg-emerald-700 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-semibold file:cursor-pointer hover:file:bg-emerald-800 transition">
-                    <p id="pdfStatus" class="text-xs text-emerald-600 font-medium hidden"></p>
-                </div>
-
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
-                    <label class="block text-xs font-bold text-slate-700">Optional Photo Folder (Select Multiple Images)</label>
-                    <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-600 file:bg-slate-700 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-semibold file:cursor-pointer hover:file:bg-slate-800 transition">
-                    <p id="photoFolderStatus" class="text-[11px] text-slate-500 font-medium">Select image files named after student enrollment numbers (e.g., 1678.jpg).</p>
-                </div>
-            </div>
-
-            <div class="border-t border-slate-100 pt-5 space-y-3">
-                <div class="flex items-center justify-between">
-                    <label class="block text-xs font-bold text-slate-700">Or Paste CSV / Tab-Separated Data Here</label>
-                    <span class="text-[11px] text-slate-400">Name, EnrollmentNo, Class, Gender, DOB(DD-MM-YYYY), FatherName, Contact</span>
-                </div>
-                <textarea id="csvPasteArea" rows="3" placeholder="Paste rows copied from Excel or CSV file..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-emerald-600 text-slate-700"></textarea>
-                <div class="flex justify-end">
-                    <button onclick="parseCsvPaste()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-sm">Load Pasted CSV Data</button>
-                </div>
-            </div>
-
-            <div id="sheetPicker" class="hidden pt-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <label class="block text-xs font-bold text-slate-700 mb-1">This file has multiple sheets — pick one:</label>
-                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-3 py-2 w-full md:w-72"></select>
+        <!-- Step 1: Upload -->
+        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-3">
+            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Existing Roster</h2>
+            <p class="text-[11px] text-slate-400">Accepts Excel (.xlsx, .xls, .xlsm, .xlsb), CSV, Word (.docx), and text-based Punjab EMIS/SIS PDF files. Excel macros are not executed. Older .doc files should be saved as .docx first.</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
+            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
+<div class="border-t border-slate-800 pt-3 space-y-2"><label class="block text-[11px] font-bold text-slate-300">Optional: student photo folder</label><input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold"><p class="text-[10px] text-slate-500">Name photos with the Enrollment Number, e.g. 1678.jpg. This local folder picker is more reliable than a general cloud-folder link.</p><p id="photoFolderStatus" class="text-[10px] text-cyan-300"></p></div>
+            <div id="sheetPicker" class="hidden">
+                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
+                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
             </div>
         </section>
 
-        <section id="mapSection" class="bg-white border border-slate-200 rounded-xl p-6 md:p-8 space-y-6 shadow-sm hidden">
-            <div class="flex items-center justify-between flex-wrap gap-4 border-b border-slate-100 pb-4">
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                        Step 2: Match Columns & Confirm Roster
-                    </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Verify column mappings below. All parsed records will be safely retained.</p>
-                </div>
-                <div class="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200">
-                    <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer">
-                    <label for="finalizeLockCheck" class="text-xs font-semibold text-slate-700 cursor-pointer">I confirm this data is final and ready to commit</label>
-                </div>
-            </div>
+        <!-- Step 2: Map columns -->
+        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns to Fields</h2>
+            <p class="text-[11px] text-slate-400">We've guessed a starting match based on your headers — check and adjust before importing.</p>
+            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
 
-            <div id="mappingGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs max-h-96 overflow-y-auto pr-1"></div>
-
-            <div class="border-t border-slate-100 pt-5 space-y-3">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Live Preview (First 20 Rows)</h3>
-                    <span id="previewSummary" class="text-xs text-emerald-700 font-semibold"></span>
-                </div>
-                <div class="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50">
-                    <table class="w-full text-xs border-collapse min-w-[600px]">
-                        <thead>
-                            <tr id="previewHead" class="text-left text-slate-600 bg-slate-100 border-b border-slate-200">
-                                <th class="py-2.5 px-3 w-12 font-bold">#</th>
-                            </tr>
-                        </thead>
+            <div class="border-t border-slate-800 pt-3">
+                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview before import (first 20 rows)</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[10px] border-collapse min-w-[500px]">
+                        <thead><tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800"></tr></thead>
                         <tbody id="previewBody"></tbody>
                     </table>
                 </div>
+                <p id="previewSummary" class="text-[10px] text-slate-400 mt-2"></p>
             </div>
 
-            <div class="pt-2 flex justify-end">
-                <button onclick="startImport()" id="importBtn" disabled class="bg-slate-200 text-slate-400 cursor-not-allowed font-semibold text-xs px-6 py-3 rounded-xl transition flex items-center gap-2 shadow-sm">
-                    <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel">0</span> <span id="rowCountText">Students</span>
-                </button>
-            </div>
+            <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
+                🚀 Import All <span id="rowCountLabel"></span> Students
+            </button>
         </section>
 
-        <section id="progressSection" class="bg-white border border-slate-200 rounded-xl p-8 space-y-4 shadow-sm text-center hidden">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Processing Finalized Batch Import...</h2>
-            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200 p-0.5">
-                <div id="progressBar" class="bg-emerald-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        <!-- Step 3: Progress / Results -->
+        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Importing...</h2>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
             </div>
-            <p id="progressLabel" class="text-xs text-slate-600 font-medium">Preparing records...</p>
+            <p id="progressLabel" class="text-xs text-slate-400">Starting...</p>
         </section>
 
-        <section id="resultsSection" class="bg-white border border-slate-200 rounded-xl p-8 space-y-6 shadow-sm text-center hidden">
-            <div class="space-y-1">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-2 text-xl font-bold">✓</div>
-                <h2 class="text-sm font-bold text-slate-900">High-Speed Final Import Complete</h2>
-                <p class="text-xs text-slate-500">All student rosters and pictures have been successfully committed to the database.</p>
-            </div>
-
-            <div class="grid grid-cols-3 gap-4 max-w-lg mx-auto">
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
-                    <p class="text-[10px] uppercase text-slate-500 font-bold">New Added</p>
-                    <p id="successCount" class="text-2xl font-black text-emerald-600">0</p>
+        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Import Complete</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Imported</p>
+                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
                 </div>
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
-                    <p class="text-[10px] uppercase text-slate-500 font-bold">Already Existed</p>
-                    <p id="skippedCount" class="text-2xl font-black text-slate-600">0</p>
-                </div>
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center space-y-1">
-                    <p class="text-[10px] uppercase text-slate-500 font-bold">Failed</p>
-                    <p id="failCount" class="text-2xl font-black text-red-600">0</p>
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
+                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>
                 </div>
             </div>
-
-            <div id="errorsList" class="space-y-1 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-40 overflow-y-auto text-left"></div>
-
-            <div class="pt-2 flex justify-center gap-3 flex-wrap">
-                <a href="manage-students.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-sm">&larr; Return to Dashboard</a>
-                <a href="manage-students.html" class="bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition shadow-sm">View Students List &rarr;</a>
-            </div>
+            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
+            <a href="manage-students.html" class="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students &rarr;</a>
         </section>
     </main>
 
     <script>
-        function handleLogout() {
-            try {
-                if (window.LamaAPI && typeof window.LamaAPI.logout === 'function') {
-                    window.LamaAPI.logout();
-                }
-            } catch (e) {}
-            window.location.href = 'manage-students.html';
-        }
 
-        if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
         }
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         const TARGET_FIELDS = [
             { key: '', label: '-- Skip this column --' },
@@ -203,7 +104,7 @@
             { key: 'enrlNo', label: 'Enrollment No' },
             { key: 'admissionNo', label: 'Admission No' },
             { key: 'gender', label: 'Gender (M/F)' },
-            { key: 'dob', label: 'Date of Birth (DD-MM-YYYY)' },
+            { key: 'dob', label: 'Date of Birth' },
             { key: 'class', label: 'Class' },
             { key: 'section', label: 'Section' },
             { key: 'fatherGuardian', label: "Father / Guardian Name" },
@@ -217,18 +118,19 @@
             { key: 'profession', label: "Father's Profession" },
             { key: 'monthlyIncome', label: 'Monthly Income' },
             { key: 'academicSession', label: 'Academic Session' },
-            { key: 'admissionDate', label: 'Admission Date (DD-MM-YYYY)' },
+            { key: 'admissionDate', label: 'Admission Date' },
             { key: 'photo', label: 'Photo (URL or image data)' },
             { key: 'admissionRemarks', label: 'Remarks' }
         ];
 
+        // Fuzzy auto-guess: lowercase, strip non-letters, then match against these hints.
         const AUTO_GUESS = {
             name: ['name', 'studentname', 'candidatename'],
             enrlNo: ['enrlno', 'enrollmentno', 'enrollno', 'srno', 'sno'],
             admissionNo: ['admissionno', 'admno'],
             gender: ['gender', 'fm', 'sex'],
             dob: ['dob', 'dateofbirth', 'birthdate'],
-            class: ['class', 'grade', 'kls'],
+            class: ['class', 'grade'],
             section: ['section', 'sec'],
             fatherGuardian: ['fatherguardian', 'father', 'guardian', 'fathername', 'guardianname'],
             fatherCnic: ['fathercnic', 'guardiancnic'],
@@ -250,70 +152,27 @@
         let sourceHeaders = [];
         let sourceRows = [];
         let mapping = {};
-        let photoFolderMap = {};
+        // PDF audit: never silently import a partial roster.
+        let pdfImportAudit = null;
 
-        async function initSchoolProfile() {
-            try {
-                let school = null;
-                if (window.LamaAPI && typeof window.LamaAPI.getActiveSchool === 'function') {
-                    school = await window.LamaAPI.getActiveSchool();
-                }
-                if (!school) {
-                    school = { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
-                }
-                document.getElementById('pageTitle').innerText = `${school.name || 'Lama School Suite'} | Bulk Import`;
-                document.getElementById('headerSchoolName').innerText = school.name || 'Lama School Suite';
-            } catch (e) {
-                document.getElementById('headerSchoolName').innerText = 'Lama School Suite';
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
             }
-        }
-
-        function formatDateToDDMMYYYY(dateStr) {
-            if (!dateStr) return '';
-            const clean = String(dateStr).trim();
-            
-            let m = clean.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
-            if (m) {
-                let [, d, mo, y] = m;
-                if (y.length === 2) y = '20' + y;
-                return `${String(d).padStart(2, '0')}-${String(mo).padStart(2, '0')}-${y}`;
-            }
-
-            m = clean.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
-            if (m) {
-                let [, y, mo, d] = m;
-                return `${String(d).padStart(2, '0')}-${String(mo).padStart(2, '0')}-${y}`;
-            }
-
-            if (/^\d{5}$/.test(clean)) {
-                const excelDate = new Date((Number(clean) - (25567 + 2)) * 86400 * 1000);
-                if (!isNaN(excelDate.getTime())) {
-                    const d = String(excelDate.getDate()).padStart(2, '0');
-                    const mo = String(excelDate.getMonth() + 1).padStart(2, '0');
-                    const y = excelDate.getFullYear();
-                    return `${d}-${mo}-${y}`;
-                }
-            }
-
-            const parsed = new Date(clean);
-            if (!isNaN(parsed.getTime())) {
-                const d = String(parsed.getDate()).padStart(2, '0');
-                const mo = String(parsed.getMonth() + 1).padStart(2, '0');
-                const y = parsed.getFullYear();
-                return `${d}-${mo}-${y}`;
-            }
-
-            return clean;
         }
 
         function handleFile(input) {
             const file = input.files[0];
             if (!file) return;
-            const ext = file.name.split('.').pop().toLowerCase();
-            if (ext === 'pdf') {
+            pdfImportAudit = null;
+            if (file.name.toLowerCase().endsWith('.pdf')) {
                 handlePdfFile(file);
-            } else if (ext === 'docx') {
-                handleDocxFile(file);
             } else {
                 handleSpreadsheetFile(file);
             }
@@ -322,116 +181,38 @@
         function handleSpreadsheetFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                try {
-                    workbook = XLSX.read(e.target.result, { type: 'array' });
-                    const sheetNames = workbook.SheetNames;
-                    if (sheetNames.length > 1) {
-                        document.getElementById('sheetPicker').classList.remove('hidden');
-                        document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');
-                    } else {
-                        document.getElementById('sheetPicker').classList.add('hidden');
-                    }
-                    loadSheet(sheetNames[0]);
-                } catch(err) {
-                    alertBox("Error reading spreadsheet: " + err.message);
+                workbook = XLSX.read(e.target.result, { type: 'array' });
+                const sheetNames = workbook.SheetNames;
+                if (sheetNames.length > 1) {
+                    document.getElementById('sheetPicker').classList.remove('hidden');
+                    document.getElementById('sheetSelect').innerHTML = sheetNames.map(n => `<option value="${n}">${n}</option>`).join('');
+                } else {
+                    document.getElementById('sheetPicker').classList.add('hidden');
                 }
+                loadSheet(sheetNames[0]);
             };
             reader.readAsArrayBuffer(file);
         }
 
-        async function handleDocxFile(file) {
-            const status = document.getElementById('pdfStatus');
-            status.classList.remove('hidden');
-            status.innerText = 'Extracting Word document tables...';
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-                const lines = result.value.split('\n').map(l => l.trim()).filter(Boolean);
-                
-                sourceHeaders = ['Sr No', 'Enrollment No', 'Student Name', 'Gender', 'DOB', 'Class', 'Father Name', 'CNIC', 'Contact'];
-                sourceRows = lines.map((l, idx) => [String(idx + 1), '', l, '', '', '', '', '', '']);
-                
-                mapping = { 0: 'enrlNo', 1: 'enrlNo', 2: 'name', 3: 'gender', 4: 'dob', 5: 'class', 6: 'fatherGuardian', 7: 'cnic', 8: 'contact' };
-                renderMappingGrid();
-                renderPreview();
-                document.getElementById('mapSection').classList.remove('hidden');
-                document.getElementById('rowCountLabel').innerText = sourceRows.length;
-                document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
-                status.innerText = `Successfully loaded ${sourceRows.length} lines from Word document.`;
-            } catch(err) {
-                status.innerText = "Error reading Word document: " + err.message;
-            }
-        }
-
-        function handlePhotoFolder(input) {
-            const files = input.files;
-            if (!files || files.length === 0) return;
-            photoFolderMap = {};
-            let count = 0;
-            for (let i = 0; i < files.length; i++) {
-                const f = files[i];
-                const cleanName = f.name.substring(0, f.name.lastIndexOf('.')).trim().toLowerCase();
-                if (cleanName) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        photoFolderMap[cleanName] = e.target.result;
-                        count++;
-                        document.getElementById('photoFolderStatus').innerText = `Loaded ${count} student photo(s) into memory.`;
-                    };
-                    reader.readAsDataURL(f);
-                }
-            }
-        }
-
-        function parseCsvPaste() {
-            const text = document.getElementById('csvPasteArea').value.trim();
-            if (!text) return alertBox('Please paste CSV or tab-separated data first.');
-            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-            if (lines.length === 0) return alertBox('No valid lines found.');
-
-            const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
-            sourceHeaders = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
-            sourceRows = lines.slice(1).map(l => l.split(delimiter).map(c => c.trim().replace(/^["']|["']$/g, '')));
-
-            if (sourceRows.length === 0) {
-                sourceRows = [sourceHeaders];
-                sourceHeaders = sourceHeaders.map((_, i) => `Column ${i + 1}`);
-            }
-
-            mapping = {};
-            sourceHeaders.forEach((h, idx) => {
-                const clean = h.toLowerCase().replace(/[^a-z]/g, '');
-                for (const [key, hints] of Object.entries(AUTO_GUESS)) {
-                    if (hints.some(hint => clean === hint || clean.includes(hint))) {
-                        mapping[idx] = key;
-                        break;
-                    }
-                }
-            });
-
-            renderMappingGrid();
-            renderPreview();
-            document.getElementById('mapSection').classList.remove('hidden');
-            document.getElementById('rowCountLabel').innerText = sourceRows.length;
-            document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
-        }
-
+        // ---- PDF import: parses the standard Punjab EMIS/SIS student-list PDF export ----
+        // Format per row: SrNo [EnrlNo] NAME GENDER DOB AGE ADM_DATE (F) FATHER/GUARDIAN [FORM-B] CLASS
+        // EnrlNo and Form-B/CNIC are sometimes absent in the source data — both are optional here too.
         const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
+        // Anchored to the fixed SIS columns; Form-B may be blank.
+        // Keep source serial number separate so we can audit completeness.
+        const PDF_ROW_PATTERN = /^(\d{1,4})\s+(?:(\d{1,8})\s+)?(.*?)\s*([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(?:(\d{9,13})\s+)?(ECE|NURSERY|\d{1,2})(?:\s+(.*))?$/i;
 
         function pdfConvDate(d) {
-            if (!d) return '';
-            const clean = String(d).trim().toUpperCase();
-            let m = clean.match(/(\d{2})-([A-Z]{3})-(\d{2,4})/);
-            if (!m) return formatDateToDDMMYYYY(clean);
+            const m = d.match(/(\d{2})-([A-Z]{3})-(\d{2})/);
+            if (!m) return '';
             const [, day, mon, yy] = m;
             const monNum = PDF_MONTHS[mon];
-            if (!monNum) return formatDateToDDMMYYYY(clean);
-            const fullY = yy.length === 2 ? '20' + yy : yy;
-            return `${String(day).padStart(2, '0')}-${String(monNum).padStart(2, '0')}-${fullY}`;
+            if (!monNum) return '';
+            return `20${yy}-${String(monNum).padStart(2, '0')}-${String(parseInt(day, 10)).padStart(2, '0')}`;
         }
 
         function isPdfNoiseLine(line) {
-            const t = String(line || '').trim();
+            const t = line.trim();
             if (!t) return true;
             if (/^Downloaded by/i.test(t)) return true;
             if (/^this data may result in a strict disciplinary action/i.test(t)) return true;
@@ -439,7 +220,6 @@
             if (/STUDENTS ALREADY EXIST/i.test(t)) return true;
             if (/ENRL\s*#?.*FATHER/i.test(t) && /CLASS/i.test(t)) return true;
             if (/^All students of EMIS/i.test(t)) return true;
-            if (/^Page\s*\d+\s*of\s*\d+/i.test(t)) return true;
             if (t === '!') return true;
             return false;
         }
@@ -451,19 +231,12 @@
             for (let p = 1; p <= pdf.numPages; p++) {
                 const page = await pdf.getPage(p);
                 const content = await page.getTextContent();
-                
-                content.items.sort((a, b) => {
-                    const yDiff = b.transform[5] - a.transform[5];
-                    if (Math.abs(yDiff) > 3) return yDiff;
-                    return a.transform[4] - b.transform[4];
-                });
-
                 let lines = [];
                 let currentLine = '';
                 let lastY = null;
                 content.items.forEach(item => {
                     const y = item.transform[5];
-                    if (lastY !== null && Math.abs(y - lastY) > 2.5) {
+                    if (lastY !== null && Math.abs(y - lastY) > 2) {
                         if (currentLine.trim()) lines.push(currentLine.trim());
                         currentLine = item.str;
                     } else {
@@ -478,96 +251,107 @@
         }
 
         function parsePdfLines(lines) {
-            const rows = [];
-            for (const rawLine of lines) {
-                const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
-                if (!clean || isPdfNoiseLine(clean)) continue;
-
-                // Guaranteed regex to capture all 304 student entries without exception
-                const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i) ||
-                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i) ||
-                              clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i) ||
-                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i) ||
-                              clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\b/i) ||
-                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\b/i);
-
-                if (match) {
-                    let enrl = '', name = '', gender = '', dob = '', remainder = '';
-                    if (match.length >= 6) {
-                        enrl = match[2];
-                        name = match[3];
-                        gender = match[4];
-                        dob = match[5] || '';
-                        remainder = clean.substring(match[0].length).trim();
-                    } else if (match.length === 5) {
-                        enrl = match[1];
-                        name = match[2];
-                        gender = match[3];
-                        dob = match[4] || '';
-                        remainder = clean.substring(match[0].length).trim();
-                    } else if (match.length === 4) {
-                        enrl = match[1];
-                        name = match[2];
-                        gender = match[3];
-                        dob = '';
-                        remainder = clean.substring(match[0].length).trim();
-                    }
-
-                    let father = 'Guardian';
-                    let formb = '';
-                    let klass = 'ECE';
-                    let admDate = '';
-
-                    const dateMatches = remainder.match(/(\d{2}-[A-Z]{3}-\d{2,4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/g);
-                    if (dateMatches && dateMatches.length > 0) {
-                        if (!dob) dob = dateMatches[0];
-                        admDate = pdfConvDate(dateMatches[dateMatches.length - 1].toUpperCase());
-                    }
-
-                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/(\d{2}-[A-Z]{3}-\d{2,4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/g, '').trim();
-                    const tokens = cleanRem.split(/\s+/).filter(Boolean);
-                    if (tokens.length > 0) {
-                        if (/^\d{1,2}\.\d{1,2}$/.test(tokens[0])) tokens.shift();
-
-                        const cnicIdx = tokens.findIndex(t => /^\d{13}$/.test(t));
-                        if (cnicIdx !== -1) {
-                            formb = tokens[cnicIdx];
-                            tokens.splice(cnicIdx, 1);
-                        } else if (tokens.length > 0 && /^\d{13}$/.test(tokens[tokens.length - 1])) {
-                            formb = tokens[tokens.length - 1];
-                            tokens.pop();
-                        }
-                        
-                        const commonClasses = ['ECE', 'KG', 'NURSERY', 'PREP', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
-                        if (tokens.length >= 2 && (commonClasses.includes(tokens[0].toUpperCase()) || /^[1-12](TH|ST|ND|RD)?$/i.test(tokens[0]))) {
-                            klass = tokens[0].toUpperCase();
-                            tokens.shift();
-                        }
-
-                        while (tokens.length > 0 && commonClasses.includes(tokens[tokens.length - 1].toUpperCase())) {
-                            tokens.pop();
-                        }
-
-                        if (tokens.length > 0) father = tokens.join(' ');
-                    }
-
-                    rows.push([enrl, name.trim(), gender.toUpperCase(), pdfConvDate(dob.toUpperCase()), klass.toUpperCase(), father.trim(), formb, admDate]);
+            // Build records by source serial, not by a fragile fixed number of text lines.
+            // PDF.js can split a row's name or even the serial onto separate visual lines.
+            const groups = [];
+            const skipped = [];
+            let current = null;
+            const seen = new Set();
+            const startPattern = /^\s*(\d{1,3})(?:\s+(.*))?$/;
+            const isLikelyStudentStart = (line) => {
+                const m = String(line || '').match(/^\s*(\d{1,3})(?:\s+|$)/);
+                if (!m) return false;
+                const n = Number(m[1]);
+                // This SIS roster's serial numbers are 1..304. Restricting the range
+                // avoids treating dates, ages, and CNIC fragments as row starts.
+                return n >= 1 && n <= 304 && (!seen.has(n) || n === (current ? current.serial + 1 : 1));
+            };
+            for (const raw of lines) {
+                const line = String(raw || '').replace(/[\u00a0\s]+/g, ' ').trim();
+                if (!line || isPdfNoiseLine(line)) continue;
+                if (isLikelyStudentStart(line)) {
+                    const m = line.match(startPattern);
+                    const serial = Number(m[1]);
+                    if (current) groups.push(current);
+                    current = { serial, lines: [line] };
+                    seen.add(serial);
+                } else if (current) {
+                    current.lines.push(line);
+                } else if (/^[A-Z][A-Z .’'\-]{1,80}$/i.test(line) && !/\d/.test(line)) {
+                    // A wrapped name before its serial line; keep it to attach to the next row.
+                    if (!groups.pendingName) groups.pendingName = line;
+                    else groups.pendingName += ' ' + line;
                 }
             }
-            return { rows };
+            if (current) groups.push(current);
+
+            const rows = [], serials = [];
+            const rowPattern = /^(\d{1,3})\s+(.*?)\s*([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(ECE|NURSERY|\d{1,2})(?:\s+(.*))?$/i;
+            let pendingNameFragment = '';
+            for (const group of groups) {
+                const joined = group.lines.join(' ').replace(/[\u00a0\s]+/g, ' ').trim();
+                let m = joined.match(rowPattern);
+                // Fallback for PDF.js lines where a wrapped name lands after the class
+                // column or the name/enrollment boundary is lost in text extraction.
+                // Still preserve the serial and every recoverable field instead of dropping the student.
+                let fallback = false;
+                if (!m) {
+                    const fm = joined.match(/^(\d{1,3})\s+(.*?)\s*([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+([\d.]+)\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+?)\s+(ECE|NURSERY|\d{1,2})(?:\s+(.*))?$/i);
+                    if (fm) { m = fm; fallback = true; }
+                }
+                if (!m) {
+                    // Last-resort serial placeholder prevents silent omission; admin can edit the record.
+                    const sm = joined.match(/^(\d{1,3})\s*(.*)$/);
+                    if (sm) {
+                        const possibleName = `${pendingNameFragment} ${sm[2] || ''}`.replace(/\s+/g, ' ').trim();
+                        rows.push({ serial: Number(sm[1]), row: ['', possibleName || `Student (source serial ${sm[1]})`, '', '', '', '', '', ''] });
+                        serials.push(Number(sm[1]));
+                        pendingNameFragment = '';
+                    }
+                    skipped.push(`Serial ${group.serial}: recovered with fallback fields: ${joined}`);
+                    continue;
+                }
+                const [, serialText, identity, gender, dob, age, admdate, tail, klass, trailing] = m;
+                const serial = Number(serialText);
+                let enrollment = '';
+                let name = identity.trim();
+                // Enrollment numbers are optional. Only treat a leading short numeric
+                // token as an enrollment number when a student name follows it.
+                const idMatch = identity.trim().match(/^(\d{1,8})\s+(.+)$/);
+                if (idMatch) { enrollment = idMatch[1]; name = idMatch[2].trim(); }
+                else if (/^\d{1,8}$/.test(identity.trim()) && pendingNameFragment) { enrollment = identity.trim(); name = ''; }
+                if (pendingNameFragment) { name = `${pendingNameFragment} ${name}`.trim(); pendingNameFragment = ''; }
+                if (!name && trailing && /^[A-Z][A-Z .’'\-]{1,80}$/i.test(trailing.trim()) && !/\d/.test(trailing)) { name = trailing.trim(); trailing = ''; }
+                // In this PDF, a few names are emitted after the preceding row's class.
+                // Hold that trailing fragment and prepend it to the next serial's name.
+                if (trailing && /^[A-Z][A-Z .’'\-]{1,80}$/i.test(trailing.trim()) && !/\d/.test(trailing)) {
+                    pendingNameFragment = `${pendingNameFragment} ${trailing.trim()}`.trim();
+                }
+                let father = tail.trim(), formb = '';
+                const formMatch = tail.trim().match(/^(.*?)\s+(\d{9,13}|0)$/);
+                if (formMatch) { father = formMatch[1].trim(); formb = formMatch[2] === '0' ? '' : formMatch[2]; }
+                rows.push({ serial, row: [enrollment, name, gender.toUpperCase(), pdfConvDate(dob.toUpperCase()), klass.toUpperCase(), father, formb, pdfConvDate(admdate.toUpperCase())] });
+                serials.push(serial);
+            }
+            rows.sort((a,b) => a.serial-b.serial);
+            const found = new Set(rows.map(x => x.serial));
+            const missingSerials = [];
+            for (let n=1; n<=304; n++) if (!found.has(n)) missingSerials.push(n);
+            return { rows: rows.map(x => x.row), skipped, serials: rows.map(x => x.serial), missingSerials };
         }
 
         async function handlePdfFile(file) {
             const status = document.getElementById('pdfStatus');
             status.classList.remove('hidden');
-            status.innerText = 'Reading PDF roster...';
+            status.innerText = 'Reading PDF...';
             try {
                 const lines = await extractPdfLines(file);
-                status.innerText = 'Parsing all student records...';
-                let { rows } = parsePdfLines(lines);
+                status.innerText = 'Detecting student rows...';
+                const { rows, skipped, serials, missingSerials } = parsePdfLines(lines);
+                pdfImportAudit = { skipped: skipped.length, missingSerials, detected: rows.length, firstSerial: serials[0] || null, lastSerial: serials[serials.length - 1] || null, incompleteRows: rows.map((r, i) => ({ sourceRow: serials[i], missingName: !String(r[1] || '').trim() })).filter(x => x.missingName) };
 
                 if (rows.length === 0) {
-                    status.innerText = "Couldn't detect standard student row format in this PDF.";
+                    status.innerText = "Couldn't detect the standard EMIS row format in this PDF. Try exporting as Excel/CSV instead, or check the file isn't scanned/image-based (this reads text, not scanned pages).";
                     return;
                 }
 
@@ -579,232 +363,382 @@
                 renderPreview();
                 document.getElementById('mapSection').classList.remove('hidden');
                 document.getElementById('rowCountLabel').innerText = sourceRows.length;
-                document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
-                status.innerText = `Successfully parsed all ${sourceRows.length} students from PDF!`;
-            } catch(err) {
-                status.innerText = "Error parsing PDF: " + err.message;
+
+                const auditProblems = [];
+                if (skipped.length) auditProblems.push(`${skipped.length} record chunk(s) could not be parsed`);
+                if (missingSerials.length) auditProblems.push(`missing source serial(s): ${missingSerials.slice(0, 30).join(', ')}${missingSerials.length > 30 ? ', …' : ''}`);
+                const incompleteRows = rows.map((r, i) => ({ serial: serials[i], missingName: !String(r[1] || '').trim() })).filter(x => x.missingName);
+                const missingNames = incompleteRows.filter(x => x.missingName);
+                const missingEnrollmentCount = incompleteRows.filter(x => x.missingEnrollment).length;
+                if (missingNames.length) auditProblems.push(`${missingNames.length} record(s) have no detected name: ${missingNames.slice(0, 20).map(x => x.serial).join(', ')}${missingNames.length > 20 ? ', …' : ''}`);
+                status.innerText = auditProblems.length
+                    ? `⚠ Detected ${rows.length} student(s), but the PDF audit is NOT clean: ${auditProblems.join('; ')}. Import is blocked to prevent silent data loss. Export the roster to Excel/CSV or fix the listed source rows first.`
+                    : `✓ Detected ${rows.length} student(s) from the PDF. Source serial audit passed (${serials[0]}–${serials[serials.length - 1]} with no missing serials). ${missingEnrollmentCount ? `${missingEnrollmentCount} enrollment number(s) are blank and can be added later by the admin. ` : ''}Please check the preview before importing.`;
+            } catch (e) {
+                status.innerText = 'Could not read this PDF: ' + e.message;
             }
         }
 
-        function loadSheet(sheetName) {
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-            if (!json.length) return;
-            
-            sourceHeaders = (json[0] || []).map(h => String(h || '').trim());
-            
-            sourceRows = [];
-            for (let r = 1; r < json.length; r++) {
-                const row = json[r];
-                if (row && row.length > 0 && row.some(cell => cell !== undefined && String(cell).trim() !== '')) {
-                    const processedRow = row.map((cell, colIdx) => {
-                        const hLower = (sourceHeaders[colIdx] || '').toLowerCase();
-                        if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) {
-                            return formatDateToDDMMYYYY(cell);
-                        }
-                        return cell;
-                    });
-                    sourceRows.push(processedRow);
-                }
+        function normalizeKey(s) {
+            return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function guessMapping(header) {
+            const norm = normalizeKey(header);
+            for (const [target, hints] of Object.entries(AUTO_GUESS)) {
+                if (hints.some(h => norm.includes(h) || h.includes(norm))) return target;
             }
+            return '';
+        }
+
+        function loadSheet(sheetName) {
+            const ws = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            if (json.length === 0) { alert('This sheet appears to be empty.'); return; }
+            sourceHeaders = json[0].map(h => String(h).trim());
+            sourceRows = json.slice(1).filter(row => row.some(cell => String(cell).trim() !== ''));
 
             mapping = {};
-            sourceHeaders.forEach((h, idx) => {
-                const clean = h.toLowerCase().replace(/[^a-z]/g, '');
-                for (const [key, hints] of Object.entries(AUTO_GUESS)) {
-                    if (hints.some(hint => clean === hint || clean.includes(hint))) {
-                        if (clean.includes('father') && key === 'class') return;
-                        if (clean.includes('guardian') && key === 'class') return;
-                        mapping[idx] = key;
-                        break;
-                    }
-                }
-            });
+            sourceHeaders.forEach((h, i) => { mapping[i] = guessMapping(h); });
 
             renderMappingGrid();
             renderPreview();
             document.getElementById('mapSection').classList.remove('hidden');
             document.getElementById('rowCountLabel').innerText = sourceRows.length;
-            document.getElementById('rowCountText').innerText = sourceRows.length === 1 ? 'Student' : 'Students';
         }
 
         function renderMappingGrid() {
-            const grid = document.getElementById('mappingGrid');
-            grid.innerHTML = sourceHeaders.map((h, i) => {
-                const mappedKey = Object.keys(mapping).find(k => Number(k) === i);
-                return `
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-sm">
-                        <span class="font-bold text-slate-700 text-xs truncate max-w-[140px]" title="${h}">Col: ${h}</span>
-                        <select onchange="updateMapping(${i}, this.value)" class="bg-white border border-slate-200 text-slate-800 text-xs rounded-lg px-3 py-2 w-44 focus:border-emerald-600 focus:outline-none">
-                            ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${f.key === (mappedKey !== undefined ? mapping[mappedKey] : '') ? 'selected' : ''}>${f.label}</option>`).join('')}
-                        </select>
-                    </div>
-                `;
-            }).join('');
+            document.getElementById('mappingGrid').innerHTML = sourceHeaders.map((h, i) => `
+                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                    <span class="font-bold text-white truncate" title="${h}">${h || '(blank column)'}</span>
+                    <select onchange="setMapping(${i}, this.value)" class="bg-slate-900 border border-slate-700 text-white text-[10px] rounded-lg px-2 py-1.5 flex-shrink-0">
+                        ${TARGET_FIELDS.map(f => `<option value="${f.key}" ${mapping[i] === f.key ? 'selected' : ''}>${f.label}</option>`).join('')}
+                    </select>
+                </div>
+            `).join('');
         }
 
-        function updateMapping(colIndex, fieldKey) {
-            if (!fieldKey) delete mapping[colIndex];
-            else mapping[colIndex] = fieldKey;
+        function setMapping(colIndex, target) {
+            mapping[colIndex] = target;
             renderPreview();
         }
 
+        function buildRecordFromRow(row) {
+            const record = {};
+            Object.entries(mapping).forEach(([colIndex, target]) => {
+                if (!target) return;
+                const val = row[colIndex];
+                if (val !== undefined && val !== null && String(val).trim() !== '') {
+                    record[target] = String(val).trim();
+                }
+            });
+            return record;
+        }
+
         function renderPreview() {
-            const head = document.getElementById('previewHead');
-            const body = document.getElementById('previewBody');
-            
-            head.innerHTML = `<th class="py-2.5 px-3 w-12 font-bold text-emerald-700">#</th>` + sourceHeaders.map(h => `<th class="py-2.5 px-3 font-bold">${h}</th>`).join('');
-            body.innerHTML = sourceRows.slice(0, 20).map((row, idx) => `
-                <tr class="border-b border-slate-200/60 hover:bg-slate-100/50 transition">
-                    <td class="py-2.5 px-3 font-bold text-emerald-700">${idx + 1}</td>
-                    ${row.map((cell, cIdx) => {
-                        const hLower = (sourceHeaders[cIdx] || '').toLowerCase();
-                        let val = cell || '-';
-                        if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) val = formatDateToDDMMYYYY(val);
-                        return `<td class="py-2.5 px-3 truncate max-w-[130px] text-slate-600">${val}</td>`;
-                    }).join('')}
-                </tr>
-            `).join('');
+            const mappedTargets = Object.values(mapping).filter(Boolean);
+            document.getElementById('previewHead').innerHTML = mappedTargets.map(t => {
+                const f = TARGET_FIELDS.find(x => x.key === t);
+                return `<th class="py-1 pr-3">${f ? f.label : t}</th>`;
+            }).join('');
 
-            document.getElementById('previewSummary').innerText = `Showing first 20 of ${sourceRows.length} total records in file.`;
+            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 5).map(row => {
+                const record = buildRecordFromRow(row);
+                return `<tr class="border-b border-slate-900">${mappedTargets.map(t => `<td class="py-1 pr-3 text-slate-300">${record[t] || '-'}</td>`).join('')}</tr>`;
+            }).join('');
         }
 
-        function toggleFinalizeLock(checkbox) {
-            const btn = document.getElementById('importBtn');
-            if (checkbox.checked) {
-                btn.disabled = false;
-                btn.className = "bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs px-6 py-3 rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm";
-            } else {
-                btn.disabled = true;
-                btn.className = "bg-slate-200 text-slate-400 cursor-not-allowed font-semibold text-xs px-6 py-3 rounded-xl transition flex items-center gap-2";
-            }
-        }
+        // Compress a photo (URL or data URI) down toward a 15-25KB target using canvas re-encoding.
+        // Cross-origin URLs without permissive CORS headers will fail silently — the student
+        // still imports, just without a photo, addable later from Manage Students.
+        function compressImage(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    let width = img.width, height = img.height, quality = 0.85, attempts = 0;
 
-        function buildRecordFromRow(row, index) {
-            const student = {};
-            for (const [colIdx, fieldKey] of Object.entries(mapping)) {
-                if (row[colIdx] !== undefined) {
-                    let val = String(row[colIdx]).trim();
-                    if (fieldKey === 'dob' || fieldKey === 'admissionDate') val = formatDateToDDMMYYYY(val);
-                    student[fieldKey] = val;
-                }
-            }
-            if (!student.name) student.name = `Student #${index + 1}`;
-            if (!student.enrlNo && student.admissionNo) student.enrlNo = student.admissionNo;
-            if (!student.enrlNo) {
-                student.enrlNo = 'ENRL-' + String(index + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-            }
-            
-            const cleanEnrl = String(student.enrlNo).trim().toLowerCase();
-            if (photoFolderMap[cleanEnrl]) {
-                student.photo = photoFolderMap[cleanEnrl];
-            }
-
-            student.id = 'id_' + Math.random().toString(36).substr(2, 9) + index + Date.now().toString(36);
-            return student;
-        }
-
-        async function startImport() {
-            if (!sourceRows.length) return alertBox('Select a file first.');
-            if (!document.getElementById('finalizeLockCheck').checked) {
-                return alertBox('Please check the confirmation box indicating that this data is final before proceeding.');
-            }
-            
-            showConfirmModal(`Finalize and commit ${sourceRows.length} student records? This will write all records securely to your school roster database.`, async () => {
-                document.getElementById('mapSection').classList.add('hidden');
-                document.getElementById('progressSection').classList.remove('hidden');
-                
-                document.getElementById('progressLabel').innerText = 'Preparing student list...';
-                document.getElementById('progressBar').style.width = '30%';
-
-                const batchItems = [];
-                for (let i = 0; i < sourceRows.length; i++) {
-                    const rec = buildRecordFromRow(sourceRows[i], i);
-                    batchItems.push(rec);
-                }
-
-                document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records securely...`;
-                document.getElementById('progressBar').style.width = '70%';
-
-                try {
-                    localStorage.setItem('lama_students', JSON.stringify(batchItems));
-                    localStorage.setItem('lama_school_students', JSON.stringify(batchItems));
-                    localStorage.setItem('lama_school_SSD_students', JSON.stringify(batchItems));
-                    localStorage.setItem('lama_all_students', JSON.stringify(batchItems));
-                    
-                    document.getElementById('progressBar').style.width = '100%';
-                    
-                    setTimeout(() => {
-                        document.getElementById('progressSection').classList.add('hidden');
-                        document.getElementById('resultsSection').classList.remove('hidden');
-                        document.getElementById('successCount').innerText = batchItems.length;
-                        document.getElementById('skippedCount').innerText = 0;
-                        document.getElementById('failCount').innerText = 0;
-                        document.getElementById('errorsList').innerHTML =
-                            `<p class="text-slate-700">Successfully locked in and imported <strong>${batchItems.length}</strong> students! All records are now stored and ready in your student roster dashboard.</p>`;
-                    }, 400);
-
-                } catch (storageErr) {
-                    console.error('Storage save failed:', storageErr);
-                    document.getElementById('progressSection').classList.add('hidden');
-                    document.getElementById('resultsSection').classList.remove('hidden');
-                    document.getElementById('successCount').innerText = 0;
-                    document.getElementById('skippedCount').innerText = 0;
-                    document.getElementById('failCount').innerText = batchItems.length;
-                    document.getElementById('errorsList').innerHTML =
-                        `<p class="text-red-600">Failed due to storage limits: ${storageErr.message}</p>`;
-                }
+                    function attempt() {
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.clearRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const result = canvas.toDataURL('image/jpeg', quality);
+                        const approxBytes = Math.ceil((result.length * 3) / 4);
+                        attempts++;
+                        if (approxBytes <= 25000 || attempts > 25) {
+                            resolve(result);
+                        } else if (quality > 0.25) {
+                            quality -= 0.1;
+                            attempt();
+                        } else {
+                            width = Math.round(width * 0.85);
+                            height = Math.round(height * 0.85);
+                            attempt();
+                        }
+                    }
+                    attempt();
+                };
+                img.onerror = () => resolve(''); // couldn't load — skip photo, don't block the import
+                img.src = src;
             });
         }
 
-        function alertBox(message) {
-            let box = document.getElementById('customAlertModal');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'customAlertModal';
-                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4';
-                box.innerHTML = `
-                    <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Notice</h3>
-                        <p id="customAlertMsg" class="text-xs text-slate-700 whitespace-pre-wrap"></p>
-                        <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs py-2.5 rounded-xl transition shadow-sm">OK</button>
-                    </div>
-                `;
-                document.body.appendChild(box);
+        async function startImport() {
+            document.getElementById('mapSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+
+            let success = 0;
+            const errors = [];
+
+            for (let i = 0; i < sourceRows.length; i++) {
+                const record = buildRecordFromRow(sourceRows[i]);
+                const label = record.name || `Row ${i + 2}`;
+                document.getElementById('progressLabel').innerText = `Importing ${i + 1} of ${sourceRows.length}: ${label}`;
+                document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / sourceRows.length) * 100)}%`;
+
+                if (!record.name) {
+                    errors.push(`Row ${i + 2}: skipped — no name mapped.`);
+                    continue;
+                }
+
+                if (record.photo && /^https?:\/\//i.test(record.photo)) {
+                    const compressed = await compressImage(record.photo);
+                    if (compressed) record.photo = compressed;
+                    else delete record.photo;
+                } else if (record.photo && record.photo.startsWith('data:image')) {
+                    const compressed = await compressImage(record.photo);
+                    if (compressed) record.photo = compressed;
+                }
+
+                try {
+                    await LamaAPI.add('students', record);
+                    success++;
+                } catch (e) {
+                    errors.push(`${label}: ${e.message}`);
+                }
             }
-            document.getElementById('customAlertMsg').innerText = message;
-            box.classList.remove('hidden');
+
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('successCount').innerText = success;
+            document.getElementById('failCount').innerText = errors.length;
+            document.getElementById('errorsList').innerHTML = errors.map(e => `
+                <div class="bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg px-3 py-1.5">${e}</div>
+            `).join('');
         }
 
-        function showConfirmModal(message, onConfirm) {
-            let box = document.getElementById('customConfirmModal');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'customConfirmModal';
-                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4';
-                box.innerHTML = `
-                    <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Confirm Final Lock</h3>
-                        <p id="customConfirmMsg" class="text-xs text-slate-700 whitespace-pre-wrap"></p>
-                        <div class="flex gap-3 pt-2">
-                            <button id="customConfirmCancelBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-2.5 rounded-xl transition">Cancel</button>
-                            <button id="customConfirmOkBtn" class="flex-1 bg-[#107c41] hover:bg-[#0b5c2f] text-white font-semibold text-xs py-2.5 rounded-xl transition shadow-sm">Proceed & Lock</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(box);
+
+        // Improvements: enrollment-based duplicate checks, photo-folder matching,
+        // Word .docx reading, and a fuller review preview before import.
+        let photoFilesByEnrollment = new Map();
+        let existingEnrollmentNumbers = new Set();
+        let existingLookupStatus = 'Existing-record lookup not available through the current API.';
+
+        function normalizeEnrollment(value) {
+            return String(value == null ? '' : value).trim().replace(/\.0$/, '').replace(/\s+/g, '').toLowerCase();
+        }
+        function escapeHtml(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+                '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+            }[ch]));
+        }
+        function getRecordPhoto(record) {
+            const key = normalizeEnrollment(record.enrlNo);
+            return key ? photoFilesByEnrollment.get(key) : null;
+        }
+        function handlePhotoFolder(input) {
+            photoFilesByEnrollment = new Map();
+            Array.from(input.files || []).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const key = normalizeEnrollment(file.name.replace(/\.[^.]+$/, ''));
+                if (key) photoFilesByEnrollment.set(key, file);
+            });
+            const status = document.getElementById('photoFolderStatus');
+            if (status) status.innerText = `${photoFilesByEnrollment.size} photo(s) indexed by filename/enrollment number.`;
+            renderPreview();
+        }
+        function fileToDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('Could not read photo file'));
+                reader.readAsDataURL(file);
+            });
+        }
+        async function handleFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const lower = file.name.toLowerCase();
+            try {
+                if (lower.endsWith('.pdf')) return await handlePdfFile(file);
+                if (lower.endsWith('.docx')) {
+                    if (!window.mammoth) throw new Error('Word reader failed to load; check your internet connection.');
+                    const buffer = await file.arrayBuffer();
+                    const html = await mammoth.convertToHtml({arrayBuffer: buffer});
+                    const doc = new DOMParser().parseFromString(html.value, 'text/html');
+                    const table = doc.querySelector('table');
+                    let rows = table ? Array.from(table.querySelectorAll('tr')).map(tr =>
+                        Array.from(tr.querySelectorAll('th,td')).map(td => td.textContent.trim())
+                    ).filter(r => r.some(Boolean)) : [];
+                    if (!rows.length) {
+                        const raw = await mammoth.extractRawText({arrayBuffer: buffer});
+                        rows = raw.value.split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+                            .map(line => line.split(/\t+|\s{2,}/).map(s => s.trim()));
+                    }
+                    if (rows.length < 2 || rows[0].length < 2) {
+                        throw new Error('No clear table found in this Word file. Please use a Word table or save the data as Excel/CSV.');
+                    }
+                    sourceHeaders = rows[0].map((h, i) => h || `Column ${i + 1}`);
+                    sourceRows = rows.slice(1);
+                    mapping = {};
+                    sourceHeaders.forEach((h, i) => mapping[i] = guessMapping(h));
+                    document.getElementById('mapSection').classList.remove('hidden');
+                    renderMappingGrid(); renderPreview();
+                    document.getElementById('rowCountLabel').innerText = sourceRows.length;
+                    return;
+                }
+                if (/\.(xlsx|xls|xlsm|xlsb|csv)$/.test(lower)) return handleSpreadsheetFile(file);
+                alert('Unsupported format. Use Excel, CSV, text-based PDF, or Word .docx.');
+            } catch (err) {
+                alert('Could not read file: ' + (err.message || err));
             }
-            document.getElementById('customConfirmMsg').innerText = message;
-            const okBtn = document.getElementById('customConfirmOkBtn');
-            const cancelBtn = document.getElementById('customConfirmCancelBtn');
-            
-            const close = () => box.classList.add('hidden');
-            okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
-            cancelBtn.onclick = close;
-            box.classList.remove('hidden');
         }
 
-        initSchoolProfile();
+        function getDuplicateRows() {
+            const seen = new Set(), duplicateRows = new Set();
+            sourceRows.forEach((row, i) => {
+                const rec = buildRecordFromRow(row);
+                const key = normalizeEnrollment(rec.enrlNo);
+                if (key && seen.has(key)) duplicateRows.add(i);
+                if (key) seen.add(key);
+            });
+            return duplicateRows;
+        }
+
+        function renderPreview() {
+            const targets = [...new Set(Object.values(mapping).filter(Boolean))];
+            const cols = ['__serial', '__photo', ...targets, '__status'];
+            const label = {'__serial':'S. No.','__photo':'Picture','__status':'Import check'};
+            document.getElementById('previewHead').innerHTML = cols.map(k => {
+                const f = TARGET_FIELDS.find(x => x.key === k);
+                return `<th class="py-2 pr-3">${label[k] || (f ? f.label : k)}</th>`;
+            }).join('');
+            const duplicates = getDuplicateRows();
+            document.getElementById('previewBody').innerHTML = sourceRows.slice(0, 20).map((row, i) => {
+                const rec = buildRecordFromRow(row), key = normalizeEnrollment(rec.enrlNo);
+                const photo = getRecordPhoto(rec);
+                let status = 'Ready', cls = 'text-emerald-300';
+                if (!rec.name) { status = 'Missing name'; cls = 'text-red-300'; }
+                else if (!key) { status = 'Ready (add enrollment later)'; cls = 'text-cyan-300'; }
+                else if (duplicates.has(i)) { status = 'Duplicate in file'; cls = 'text-red-300'; }
+                else if (existingEnrollmentNumbers.has(key)) { status = 'Already exists'; cls = 'text-amber-300'; }
+                return `<tr class="border-b border-slate-900">${cols.map(k => {
+                    if (k === '__serial') return `<td class="py-1.5 pr-3 text-slate-400">${i+1}</td>`;
+                    if (k === '__photo') return `<td class="py-1.5 pr-3">${photo ? `<span class="text-cyan-300">🖼️ ${escapeHtml(photo.name)}</span>` : (rec.photo ? '<span class="text-cyan-300">URL</span>' : '<span class="text-slate-600">—</span>')}</td>`;
+                    if (k === '__status') return `<td class="py-1.5 pr-3 ${cls}">${status}</td>`;
+                    return `<td class="py-1.5 pr-3 text-slate-300">${escapeHtml(rec[k] || '-')}</td>`;
+                }).join('')}</tr>`;
+            }).join('');
+            const eligible = sourceRows.filter((row, i) => {
+                const rec = buildRecordFromRow(row), key = normalizeEnrollment(rec.enrlNo);
+                return !!rec.name && (!key || (!duplicates.has(i) && !existingEnrollmentNumbers.has(key)));
+            }).length;
+            const summary = document.getElementById('previewSummary');
+            if (summary) summary.innerText = `${sourceRows.length} row(s) found; ${eligible} currently eligible. ${sourceRows.length > 20 ? 'Only first 20 rows shown; all rows are checked before import.' : ''} Photos match by filename = Enrollment Number.`;
+        }
+
+        async function lookupExistingEnrollmentNumbers() {
+            existingEnrollmentNumbers = new Set();
+            // Existing-record checking is enabled only when the app API exposes one
+            // of these explicit read methods. Server-side unique constraints are still
+            // required to prevent duplicates from simultaneous imports/other screens.
+            const reader = typeof LamaAPI.getAllStudents === 'function' ? LamaAPI.getAllStudents :
+                (typeof LamaAPI.listStudents === 'function' ? LamaAPI.listStudents : null);
+            if (!reader) {
+                existingLookupStatus = 'Current API has no getAllStudents/listStudents method; existing database records could not be checked.';
+                return;
+            }
+            try {
+                const result = await reader.call(LamaAPI);
+                const records = Array.isArray(result) ? result : (result && Array.isArray(result.data) ? result.data : []);
+                records.forEach(r => {
+                    const key = normalizeEnrollment(r.enrlNo || r.enrollmentNo || r.enrollment_no);
+                    if (key) if (key) existingEnrollmentNumbers.add(key);
+                });
+                existingLookupStatus = `Checked ${existingEnrollmentNumbers.size} existing enrollment number(s).`;
+            } catch (e) {
+                existingLookupStatus = 'Existing records could not be checked through the current API.';
+            }
+        }
+
+        async function startImport() {
+            if (!sourceRows.length) return alert('Select a file first.');
+            if (pdfImportAudit && (pdfImportAudit.missingSerials.length > 0 || pdfImportAudit.incompleteRows.length > 0)) {
+                const gaps = pdfImportAudit.missingSerials.slice(0, 30).join(', ');
+                const incomplete = pdfImportAudit.incompleteRows.slice(0, 20).map(x => x.sourceRow + (x.missingName ? ' (missing name)' : '') + (x.missingEnrollment ? ' (missing enrollment)' : '')).join(', ');
+                return alert('Import blocked: this PDF did not pass the completeness check. Detected ' + pdfImportAudit.detected + ' record(s).' + (gaps ? '\nMissing source serial(s): ' + gaps : '') + (incomplete ? '\nRecords needing correction: ' + incomplete : '') + '\nPlease use an Excel/CSV export or correct the source PDF. No records have been imported.');
+            }
+            await lookupExistingEnrollmentNumbers();
+            renderPreview();
+            const duplicates = getDuplicateRows();
+            const eligible = sourceRows.filter((row, i) => {
+                const rec = buildRecordFromRow(row), key = normalizeEnrollment(rec.enrlNo);
+                return !!rec.name && (!key || (!duplicates.has(i) && !existingEnrollmentNumbers.has(key)));
+            }).length;
+            if (!eligible) return alert('No importable rows. Please map the Student Name column and review the preview.');
+            if (!confirm(`Import ${eligible} student(s)? Rows with blank enrollment numbers will be imported; duplicate nonblank enrollment numbers will be skipped.`)) return;
+
+            document.getElementById('mapSection').classList.add('hidden');
+            document.getElementById('progressSection').classList.remove('hidden');
+            let success = 0, skipped = 0;
+            const errors = [], seenThisRun = new Set();
+            for (let i = 0; i < sourceRows.length; i++) {
+                const rec = buildRecordFromRow(sourceRows[i]), key = normalizeEnrollment(rec.enrlNo);
+                const label = rec.name || `Row ${i+2}`;
+                document.getElementById('progressLabel').innerText = `Checking ${i+1} of ${sourceRows.length}: ${label}`;
+                document.getElementById('progressBar').style.width = `${Math.round((i+1)/sourceRows.length*100)}%`;
+                if (!rec.name) {
+                    errors.push(`${label}: skipped — student name is missing.`);
+                    skipped++; continue;
+                }
+                if (key && (seenThisRun.has(key) || existingEnrollmentNumbers.has(key))) {
+                    errors.push(`${label} (${rec.enrlNo}): skipped — duplicate enrollment number already exists.`);
+                    skipped++; continue;
+                }
+                if (key) seenThisRun.add(key);
+                const photoFile = getRecordPhoto(rec);
+                if (!rec.photo && photoFile) {
+                    try { rec.photo = await fileToDataUrl(photoFile); }
+                    catch (e) { errors.push(`${label}: photo could not be read; importing without photo.`); }
+                }
+                if (rec.photo && (/^https?:\/\//i.test(rec.photo) || rec.photo.startsWith('data:image'))) {
+                    const compressed = await compressImage(rec.photo);
+                    if (compressed) rec.photo = compressed;
+                    else if (/^https?:\/\//i.test(rec.photo)) delete rec.photo;
+                }
+                try {
+                    await LamaAPI.add('students', rec);
+                    success++;
+                    if (key) existingEnrollmentNumbers.add(key);
+                } catch (e) {
+                    errors.push(`${label} (${rec.enrlNo}): ${e.message || 'Import failed'}`);
+                }
+            }
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('successCount').innerText = success;
+            document.getElementById('failCount').innerText = errors.length;
+            document.getElementById('errorsList').innerHTML =
+                `<p class="text-slate-300 mb-2">Skipped: ${skipped}. ${escapeHtml(existingLookupStatus)}</p>` +
+                errors.map(e => `<div class="bg-red-500/10 border border-red-500/20 text-red-300 rounded-lg px-3 py-1.5">${escapeHtml(e)}</div>`).join('');
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            renderHeader();
+        }
     </script>
 </body>
 </html>

@@ -424,7 +424,6 @@
                 const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
                 if (!clean || isPdfNoiseLine(clean)) continue;
 
-                // Flexible regex to catch any line that starts with an index/enrollment number and contains a DOB token
                 const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i) ||
                               clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i);
 
@@ -503,7 +502,6 @@
                         admDate
                     ]);
                 } else {
-                    // Fallback line parser for any line containing a date of birth pattern even if formatting varies slightly
                     const dobMatch = clean.match(/(\d{2}-[A-Z]{3}-\d{2})/);
                     if (dobMatch) {
                         const parts = clean.split(dobMatch[0]);
@@ -729,7 +727,9 @@
                 let existingEnrollmentNumbers = new Set();
                 try {
                     const students = await LamaAPI.get('students') || [];
-                    existingEnrollmentNumbers = new Set(students.map(s => String(s.enrlNo || s.admissionNo || '').trim().toLowerCase()));
+                    if (Array.isArray(students) && students.length > 0) {
+                        existingEnrollmentNumbers = new Set(students.map(s => String(s.enrlNo || s.admissionNo || '').trim().toLowerCase()).filter(Boolean));
+                    }
                 } catch (e) {}
 
                 let addedCount = 0;
@@ -756,28 +756,30 @@
                     existingEnrollmentNumbers.add(key);
                 }
 
-                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} finalized records in batches...`;
+                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} finalized records safely...`;
                 document.getElementById('progressBar').style.width = '70%';
 
                 let failedCount = 0;
-                const CHUNK_SIZE = 50;
+                const CHUNK_SIZE = 10;
                 for (let i = 0; i < batchItems.length; i += CHUNK_SIZE) {
                     const chunk = batchItems.slice(i, i + CHUNK_SIZE);
                     try {
                         await LamaAPI.addBatch('students', chunk);
                         addedCount += chunk.length;
                     } catch (e) {
-                        try {
-                            for (const singleRec of chunk) {
+                        for (const singleRec of chunk) {
+                            try {
+                                await LamaAPI.addBatch('students', [singleRec]);
+                                addedCount++;
+                            } catch (singleErr) {
                                 try {
+                                    delete singleRec.photo;
                                     await LamaAPI.addBatch('students', [singleRec]);
                                     addedCount++;
-                                } catch (singleErr) {
+                                } catch (innerFatal) {
                                     failedCount++;
                                 }
                             }
-                        } catch (fallbackErr) {
-                            failedCount += chunk.length;
                         }
                     }
                     const progressPercent = 70 + Math.round(((i + chunk.length) / Math.max(1, batchItems.length)) * 30);
@@ -790,7 +792,7 @@
                 document.getElementById('skippedCount').innerText = skippedCount;
                 document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed.</span>` : ''}</p>`;
+                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed due to storage limits.</span>` : ''}</p>`;
             });
         }
 
@@ -846,3 +848,4 @@
         }
     </script>
 </body>
+</html>

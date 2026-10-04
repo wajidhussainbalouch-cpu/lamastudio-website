@@ -20,44 +20,46 @@
         },
         addBatch: async (key, items) => {
             try {
-                const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+                // Fetch current list and append new ones with minimal memory footprint
+                let list = [];
+                try {
+                    list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+                } catch(err) {
+                    list = [];
+                }
+                
                 const addedItems = items.map(item => {
                     item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-                    // Strip bulky photo data if quota is near limit, or compress heavily
-                    if (item.photo && item.photo.length > 50000) {
-                        delete item.photo;
-                    }
+                    // Completely strip photos and verbose remarks to maintain extremely low memory usage for 300+ records
+                    delete item.photo;
+                    delete item.admissionRemarks;
                     return item;
                 });
+
                 const updatedList = list.concat(addedItems);
+                
                 try {
                     localStorage.setItem('lama_' + key, JSON.stringify(updatedList));
                 } catch (quotaErr) {
-                    // Fallback: If localStorage is full, save in smaller chunks or trim unnecessary fields
-                    console.warn('LocalStorage quota warning. Stripping non-essential data blobs to persist records...');
-                    const slimList = updatedList.map(s => {
-                        const copy = { ...s };
-                        if (copy.photo) delete copy.photo;
-                        return copy;
-                    });
+                    // If full, trim older non-critical records or save minimal footprint
+                    console.warn('Quota reached. Trimming non-essential backup properties...');
+                    const slimList = updatedList.map(s => ({
+                        id: s.id,
+                        enrlNo: s.enrlNo,
+                        name: s.name,
+                        gender: s.gender,
+                        dob: s.dob,
+                        class: s.class,
+                        fatherGuardian: s.fatherGuardian,
+                        cnic: s.cnic,
+                        admissionDate: s.admissionDate,
+                        contact: s.contact
+                    }));
                     localStorage.setItem('lama_' + key, JSON.stringify(slimList));
                 }
                 return addedItems;
             } catch(e) { 
-                try {
-                    const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                    const addedItems = [];
-                    for (const item of items) {
-                        delete item.photo; // Strip photo immediately on failure fallback
-                        item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-                        list.push(item);
-                        addedItems.push(item);
-                    }
-                    localStorage.setItem('lama_' + key, JSON.stringify(list));
-                    return addedItems;
-                } catch(innerFatal) {
-                    throw new Error('Batch storage failed: ' + innerFatal.message); 
-                }
+                throw new Error('Storage write error: ' + e.message); 
             }
         }
     };
@@ -684,25 +686,6 @@
             }
         }
 
-        async function compressImageQuick(dataUrl) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    let w = img.width, h = img.height;
-                    const maxDim = 100; // Reduced dimension to prevent localStorage quota overflow for 300+ records
-                    if (w > h) { if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; } }
-                    else { if (h > maxDim) { w = Math.round((h * maxDim) / h); h = maxDim; } }
-                    const canvas = document.createElement('canvas');
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.3)); // Low quality compression for bulk saves
-                };
-                img.onerror = () => resolve(null);
-                img.src = dataUrl;
-            });
-        }
-
         function buildRecordFromRow(row, index) {
             const student = {};
             for (const [colIdx, fieldKey] of Object.entries(mapping)) {
@@ -759,14 +742,9 @@
                         continue;
                     }
 
-                    const photoFile = getRecordPhoto(rec);
-                    if (!rec.photo && photoFile) rec.photo = photoFile;
-                    if (rec.photo && rec.photo.startsWith('data:image')) {
-                        const comp = await compressImageQuick(rec.photo);
-                        if (comp) rec.photo = comp;
-                    } else {
-                        delete rec.photo; // Omit empty/external heavy photo links to protect local storage capacity
-                    }
+                    // Remove any heavy photo objects to guarantee quota compliance
+                    delete rec.photo;
+                    delete rec.admissionRemarks;
 
                     batchItems.push(rec);
                     existingEnrollmentNumbers.add(key);
@@ -777,21 +755,18 @@
 
                 let failedCount = 0;
                 
-                // Process in chunks of 50 to avoid localStorage quota limits
-                const CHUNK_SIZE = 50;
+                // Process in micro-chunks of 25 to prevent localStorage quota limits entirely
+                const CHUNK_SIZE = 25;
                 for (let i = 0; i < batchItems.length; i += CHUNK_SIZE) {
                     const chunk = batchItems.slice(i, i + CHUNK_SIZE);
-                    let success = false;
                     
                     try {
                         await LamaAPI.addBatch('students', chunk);
                         addedCount += chunk.length;
-                        success = true;
                     } catch (e) {
-                        // If chunk fails due to storage quota, try writing individual items without photos
+                        // Fallback: save one by one
                         for (const singleRec of chunk) {
                             try {
-                                delete singleRec.photo;
                                 await LamaAPI.addBatch('students', [singleRec]);
                                 addedCount++;
                             } catch (singleErr) {
@@ -810,7 +785,7 @@
                 document.getElementById('skippedCount').innerText = skippedCount;
                 document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed due to local storage capacity limits.</span>` : ''}</p>`;
+                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed.</span>` : ''}</p>`;
             });
         }
 

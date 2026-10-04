@@ -360,7 +360,7 @@
 
         function parsePdfLines(lines) {
             const rows = [];
-            // Enhanced regex to catch serial number, enrollment, name, gender, dob, and tail tokens reliably across all pages
+            // Robust multi-format PDF parser handling shifted class / father name tokens accurately
             const generalPattern = /^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/;
 
             for (const rawLine of lines) {
@@ -376,26 +376,31 @@
                     let klass = 'ECE';
                     let admDate = '';
 
-                    // Look for date pattern in remainder (e.g., 06-MAY-24)
                     const dateMatch = remainder.match(/(\d{2}-[A-Z]{3}-\d{2})/);
                     if (dateMatch) {
                         admDate = pdfConvDate(dateMatch[1].toUpperCase());
                     }
 
-                    // Clean remainder of specific tags and numbers
                     let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2}/g, '').replace(/[\d\.]+\s*$/, '').trim();
                     
                     const tokens = cleanRem.split(/\s+/).filter(Boolean);
                     if (tokens.length > 0) {
-                        // The last token or second to last might be form-b or class
                         if (/^\d{13}$/.test(tokens[tokens.length - 1])) {
                             formb = tokens[tokens.length - 1];
                             tokens.pop();
                         }
-                        if (tokens.length > 0) {
-                            klass = tokens[tokens.length - 1];
-                            tokens.pop();
+                        
+                        // Intelligent check: if there are multiple tokens left, the first or second might be the Class/Grade name instead of father name
+                        if (tokens.length >= 2) {
+                            // Check if token looks like a class (e.g. ECE, ONE, TWO, CLASS, NURSERY, KG, 1, 2, 3...) or a surname/father word
+                            // In many rosters, father name has 2 words (e.g. MUHAMMAD IRSHAD). If 3+ words, token[0] or token[1] is class.
+                            const commonClasses = ['ECE', 'KG', 'NURSERY', 'PREP', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
+                            if (commonClasses.includes(tokens[0].toUpperCase()) || /^[1-12](TH|ST|ND|RD)?$/i.test(tokens[0])) {
+                                klass = tokens[0].toUpperCase();
+                                tokens.shift();
+                            }
                         }
+
                         if (tokens.length > 0) {
                             father = tokens.join(' ');
                         }
@@ -419,22 +424,19 @@
                 }
             }
 
-            // Fallback: If any rows missed, catch any line containing an enrollment number and name
-            if (rows.length < 50 && lines.length > 50) {
-                for (const rawLine of lines) {
+            if (rows.length === 0 && lines.length > 0) {
+                // Fallback line parser for custom text dumps
+                lines.forEach((rawLine, idx) => {
                     const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
-                    if (!clean || isPdfNoiseLine(clean)) continue;
+                    if (!clean || isPdfNoiseLine(clean)) return;
                     const parts = clean.split(/\s+/);
-                    if (parts.length >= 4 && /^\d+$/.test(parts[0]) && /^\d{3,6}$/.test(parts[1])) {
-                        const serial = Number(parts[0]);
-                        if (!rows.some(r => r.serial === serial)) {
-                            rows.push({
-                                serial: serial,
-                                row: [parts[1], parts.slice(2, 4).join(' '), 'M', '', 'ECE', 'Guardian', '', '']
-                            });
-                        }
+                    if (parts.length >= 3) {
+                        rows.push({
+                            serial: idx + 1,
+                            row: [parts[1] || '', parts.slice(2, 4).join(' '), 'M', '', 'ECE', parts[4] || 'Guardian', '', '']
+                        });
                     }
-                }
+                });
             }
 
             const seen = new Map();

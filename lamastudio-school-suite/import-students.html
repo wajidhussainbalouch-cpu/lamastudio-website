@@ -80,8 +80,17 @@
         </section>
 
         <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 hidden">
-            <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns to Fields</h2>
-            <p class="text-[11px] text-slate-400">Verify column mappings below. Matched photos will be compressed to 15KB–25KB during batch import.</p>
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Confirm Final Roster</h2>
+                    <p class="text-[11px] text-slate-400">Verify column mappings below. Once confirmed, this data is saved permanently as final school records.</p>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                    <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-900 border-slate-700 cursor-pointer">
+                    <label for="finalizeLockCheck" class="text-[11px] font-bold text-amber-300 cursor-pointer">I confirm this data is final and ready to commit</label>
+                </div>
+            </div>
+
             <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
 
             <div class="border-t border-slate-800 pt-3">
@@ -99,13 +108,13 @@
                 <p id="previewSummary" class="text-[10px] text-slate-400 mt-2"></p>
             </div>
 
-            <button onclick="startImport()" id="importBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
-                🚀 High-Speed Smart Import <span id="rowCountLabel"></span> Students
+            <button onclick="startImport()" id="importBtn" disabled class="bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+                <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel"></span> <span id="rowCountText">Students</span>
             </button>
         </section>
 
         <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Processing Batch Import...</h2>
+            <h2 class="text-xs font-black uppercase text-amber-400">Processing Finalized Batch Import...</h2>
             <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
                 <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
             </div>
@@ -113,7 +122,7 @@
         </section>
 
         <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
-            <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Import Complete</h2>
+            <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Final Import Complete</h2>
             <div class="grid grid-cols-3 gap-3">
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
                     <p class="text-[9px] uppercase text-slate-500 font-bold">New Added</p>
@@ -351,44 +360,48 @@
 
         function parsePdfLines(lines) {
             const rows = [];
-            // Highly robust pattern that matches student rows even if extra spacing or trailing tokens are present
-            const robustPattern = /^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})\s+[\d\.]+\s+(\d{2}-[A-Z]{3}-\d{2})\s+\(F\)\s+(.+)$/i;
-            const loosePattern = /^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/;
+            // Enhanced regex to catch serial number, enrollment, name, gender, dob, and tail tokens reliably across all pages
+            const generalPattern = /^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/;
 
             for (const rawLine of lines) {
                 const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
                 if (!clean || isPdfNoiseLine(clean)) continue;
 
-                const m = clean.match(robustPattern);
+                const m = clean.match(generalPattern);
                 if (m) {
-                    const [, serialText, enrl, name, gender, dob, admdate, tailPart] = m;
-                    let father = tailPart.trim();
+                    const [, serialText, enrl, name, gender, dob] = m;
+                    const remainder = clean.substring(m[0].length).trim();
+                    let father = 'Guardian';
                     let formb = '';
                     let klass = 'ECE';
+                    let admDate = '';
 
-                    const parts = father.split(/\s+/);
-                    if (parts.length >= 2) {
-                        const lastToken = parts[parts.length - 1];
-                        const secondLastToken = parts[parts.length - 2];
-
-                        if (/^\d{13}$/.test(lastToken)) {
-                            formb = lastToken;
-                            parts.pop();
-                            if (parts.length > 0) {
-                                klass = parts.pop();
-                            }
-                        } else if (/^\d{13}$/.test(secondLastToken)) {
-                            formb = secondLastToken;
-                            klass = lastToken;
-                            parts.splice(parts.length - 2, 2);
-                        } else {
-                            klass = lastToken;
-                            parts.pop();
-                        }
-                        father = parts.join(' ');
+                    // Look for date pattern in remainder (e.g., 06-MAY-24)
+                    const dateMatch = remainder.match(/(\d{2}-[A-Z]{3}-\d{2})/);
+                    if (dateMatch) {
+                        admDate = pdfConvDate(dateMatch[1].toUpperCase());
                     }
 
-                    if (!father) father = 'Guardian';
+                    // Clean remainder of specific tags and numbers
+                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2}/g, '').replace(/[\d\.]+\s*$/, '').trim();
+                    
+                    const tokens = cleanRem.split(/\s+/).filter(Boolean);
+                    if (tokens.length > 0) {
+                        // The last token or second to last might be form-b or class
+                        if (/^\d{13}$/.test(tokens[tokens.length - 1])) {
+                            formb = tokens[tokens.length - 1];
+                            tokens.pop();
+                        }
+                        if (tokens.length > 0) {
+                            klass = tokens[tokens.length - 1];
+                            tokens.pop();
+                        }
+                        if (tokens.length > 0) {
+                            father = tokens.join(' ');
+                        }
+                    }
+
+                    if (!father || father === '') father = 'Guardian';
 
                     rows.push({
                         serial: Number(serialText),
@@ -400,52 +413,30 @@
                             klass.toUpperCase(),
                             father.trim(),
                             formb,
-                            pdfConvDate(admdate.toUpperCase())
+                            admDate
                         ]
                     });
-                } else {
-                    const loose = clean.match(loosePattern);
-                    if (loose) {
-                        const [, serialText, enrl, name, gender, dob] = loose;
-                        // Extract remaining tail text if possible
-                        const remainder = clean.substring(loose[0].length).trim();
-                        let father = 'Guardian';
-                        let formb = '';
-                        let klass = 'ECE';
+                }
+            }
 
-                        if (remainder) {
-                            const tokens = remainder.replace(/\(F\)/g, '').trim().split(/\s+/).filter(Boolean);
-                            if (tokens.length > 0) {
-                                klass = tokens[tokens.length - 1];
-                                tokens.pop();
-                                if (tokens.length > 0 && /^\d{13}$/.test(tokens[tokens.length - 1])) {
-                                    formb = tokens[tokens.length - 1];
-                                    tokens.pop();
-                                }
-                                if (tokens.length > 0) {
-                                    father = tokens.join(' ');
-                                }
-                            }
+            // Fallback: If any rows missed, catch any line containing an enrollment number and name
+            if (rows.length < 50 && lines.length > 50) {
+                for (const rawLine of lines) {
+                    const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
+                    if (!clean || isPdfNoiseLine(clean)) continue;
+                    const parts = clean.split(/\s+/);
+                    if (parts.length >= 4 && /^\d+$/.test(parts[0]) && /^\d{3,6}$/.test(parts[1])) {
+                        const serial = Number(parts[0]);
+                        if (!rows.some(r => r.serial === serial)) {
+                            rows.push({
+                                serial: serial,
+                                row: [parts[1], parts.slice(2, 4).join(' '), 'M', '', 'ECE', 'Guardian', '', '']
+                            });
                         }
-
-                        rows.push({
-                            serial: Number(serialText),
-                            row: [
-                                enrl,
-                                name.trim(),
-                                gender.toUpperCase(),
-                                pdfConvDate(dob.toUpperCase()),
-                                klass.toUpperCase(),
-                                father.trim(),
-                                formb,
-                                ''
-                            ]
-                        });
                     }
                 }
             }
 
-            // Deduplicate and ensure exact sequential integrity
             const seen = new Map();
             for (const r of rows) {
                 const key = r.row[0] + '_' + r.serial;
@@ -453,7 +444,7 @@
                     seen.set(key, r.row);
                 }
             }
-            return { rows: Array.from(seen.values()) };
+            return { rows: Array.from(seen.values()).sort((a,b) => Number(a[0]) - Number(b[0])) };
         }
 
         async function handlePdfFile(file) {
@@ -561,6 +552,17 @@
             document.getElementById('previewSummary').innerText = `Showing first 20 of ${sourceRows.length} total records in file.`;
         }
 
+        function toggleFinalizeLock(checkbox) {
+            const btn = document.getElementById('importBtn');
+            if (checkbox.checked) {
+                btn.disabled = false;
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 cursor-pointer shadow-lg shadow-emerald-900/30";
+            } else {
+                btn.disabled = true;
+                btn.className = "bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2";
+            }
+        }
+
         async function compressImageQuick(dataUrl) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -597,8 +599,11 @@
 
         async function startImport() {
             if (!sourceRows.length) return alertBox('Select a file first.');
+            if (!document.getElementById('finalizeLockCheck').checked) {
+                return alertBox('Please check the confirmation box indicating that this data is final before proceeding.');
+            }
             
-            showConfirmModal(`Run High-Speed Smart Import on ${sourceRows.length} records? Existing records will be skipped instantly in batches.`, async () => {
+            showConfirmModal(`Finalize and commit ${sourceRows.length} student records? This will permanently write the data to the school system.`, async () => {
                 document.getElementById('mapSection').classList.add('hidden');
                 document.getElementById('progressSection').classList.remove('hidden');
                 
@@ -633,7 +638,7 @@
                     existingEnrollmentNumbers.add(key);
                 }
 
-                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} new records in batches...`;
+                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} finalized records in batches...`;
                 document.getElementById('progressBar').style.width = '70%';
 
                 let failedCount = 0;
@@ -656,7 +661,7 @@
                 document.getElementById('skippedCount').innerText = skippedCount;
                 document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.</p>`;
+                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.</p>`;
             });
         }
 
@@ -687,11 +692,11 @@
                 box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
                 box.innerHTML = `
                     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <h3 class="text-sm font-black uppercase text-cyan-400">Please Confirm Import</h3>
+                        <h3 class="text-sm font-black uppercase text-cyan-400">Confirm Final Lock</h3>
                         <p id="customConfirmMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
                         <div class="flex gap-2 pt-2">
                             <button id="customConfirmCancelBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">Cancel</button>
-                            <button id="customConfirmOkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition">Proceed</button>
+                            <button id="customConfirmOkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition">Proceed & Lock</button>
                         </div>
                     </div>
                 `;

@@ -3,143 +3,207 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">Bulk Import Students</title>
+<title id="pageTitle">Govt Primary School Shah Sadar Din | Student Management</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://unpkg.com/mammoth@1.8.0/mammoth.browser.min.js"></script>
-<link rel="stylesheet" href="assets/css/config.css">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+</style>
 <script>
     window.LamaAPI = window.LamaAPI || {
         getActiveSchool: async () => ({ name: 'Govt Primary School Shah Sadar Din', shortCode: 'SSD', logo: null }),
-        logout: () => { window.location.href = 'index.html'; }
+        logout: () => { 
+            localStorage.removeItem('lama_active_view');
+            location.reload(); 
+        }
     };
 </script>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
-    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
+    <!-- HEADER -->
+    <header class="max-w-6xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap border-b border-slate-800 pb-4">
         <div class="flex items-center gap-3">
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SSD</div>
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white shadow-lg">SSD</div>
             <div>
                 <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">Govt Primary School Shah Sadar Din</h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
+                <p id="headerSubtitle" class="text-[9px] uppercase tracking-widest text-purple-400 font-bold">Student Management & Bulk Import</p>
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
-            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+            <button onclick="switchView('list')" id="navListViewBtn" class="bg-purple-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-purple-900/30">
+                <span>👥 View Students</span> <span id="headerTotalBadge" class="bg-purple-900 px-2 py-0.5 rounded-full text-[10px]">0</span>
+            </button>
+            <button onclick="switchView('import')" id="navImportViewBtn" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">📤 Bulk Import</button>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+    <main class="max-w-6xl mx-auto px-4 py-5">
 
-        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800">
-            <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Roster & Photos</h2>
-            <p class="text-[11px] text-slate-400">
-                <strong>Complete List Import:</strong> Every single student record is preserved without filtering, extracting Name, Enrollment No, Gender, DOB (<code class="text-purple-400">DD-MM-YYYY</code>), Class, Father Name, CNIC/Form-B, and Admission Date (<code class="text-purple-400">DD-MM-YYYY</code>).
-            </p>
-            
-            <div class="space-y-1">
-                <label class="block text-[11px] font-bold text-slate-300">Roster File (Excel, CSV, PDF, or Word)</label>
-                <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
-            </div>
-            <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
-
-            <div class="border-t border-slate-800 pt-4 space-y-2">
-                <label class="block text-[11px] font-bold text-cyan-300">Where do you put the pictures? (Optional Photo Folder)</label>
-                <p class="text-[11px] text-slate-400">
-                    Select a folder on your computer containing student images named by enrollment number (e.g., <code class="text-purple-400">1678.jpg</code>).
-                </p>
-                <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold">
-                <p id="photoFolderStatus" class="text-[10px] text-cyan-400 font-semibold"></p>
-            </div>
-
-            <div id="sheetPicker" class="hidden pt-2">
-                <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
-                <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
-            </div>
-        </section>
-
-        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800 hidden">
-            <div class="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                    <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Confirm Final Roster</h2>
-                    <p class="text-[11px] text-slate-400">Verify column mappings below. Once confirmed, this data is saved permanently as final school records.</p>
+        <!-- VIEW 1: STUDENT LIST (DEFAULT) -->
+        <section id="studentListView" class="space-y-4">
+            <div class="flex items-center justify-between gap-3 flex-wrap bg-slate-900/60 border border-slate-800 p-4 rounded-2xl">
+                <div class="flex items-center gap-3 flex-1 min-w-[260px]">
+                    <input type="text" id="searchInput" oninput="filterStudents()" placeholder="Search by name, enrollment no, or father name..." class="w-full bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500">
                 </div>
-                <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
-                    <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-900 border-slate-700 cursor-pointer">
-                    <label for="finalizeLockCheck" class="text-[11px] font-bold text-amber-300 cursor-pointer">I confirm this data is final and ready to commit</label>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <select id="classFilter" onchange="filterStudents()" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5">
+                        <option value="">All Classes</option>
+                    </select>
+                    <button onclick="switchView('import')" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5">
+                        <span>+ Bulk Import Students</span>
+                    </button>
+                    <button onclick="clearAllStudentsConfirm()" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 font-bold text-xs px-3 py-2.5 rounded-xl transition" title="Clear all students">🗑️ Reset List</button>
                 </div>
             </div>
 
-            <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
-
-            <div class="border-t border-slate-800 pt-3">
-                <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview before import (first 20 rows - Dates in DD-MM-YYYY)</h3>
+            <div class="cyber-card rounded-2xl bg-slate-900/60 border border-slate-800 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-[10px] border-collapse min-w-[500px]">
+                    <table class="w-full text-xs text-left border-collapse">
                         <thead>
-                            <tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800">
-                                <th class="py-2 pr-3 w-10">#</th>
+                            <tr class="text-slate-400 border-b border-slate-800 bg-slate-950/60 text-[10px] uppercase tracking-wider">
+                                <th class="py-3 px-4 w-12">#</th>
+                                <th class="py-3 px-4">Student Name</th>
+                                <th class="py-3 px-4">Enrl No</th>
+                                <th class="py-3 px-4">Class</th>
+                                <th class="py-3 px-4">Gender</th>
+                                <th class="py-3 px-4">DOB</th>
+                                <th class="py-3 px-4">Father / Guardian</th>
+                                <th class="py-3 px-4">Contact</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="previewBody"></tbody>
+                        <tbody id="studentTableBody" class="divide-y divide-slate-800/60">
+                            <!-- Populated dynamically -->
+                        </tbody>
                     </table>
                 </div>
-                <p id="previewSummary" class="text-[10px] text-slate-400 mt-2"></p>
-            </div>
-
-            <button onclick="startImport()" id="importBtn" disabled class="bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">
-                <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel"></span> <span id="rowCountText">Students</span>
-            </button>
-        </section>
-
-        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Processing Finalized Batch Import...</h2>
-            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
-                <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
-            </div>
-            <p id="progressLabel" class="text-xs text-slate-400">Preparing records...</p>
-        </section>
-
-        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
-            <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Final Import Complete</h2>
-            <div class="grid grid-cols-3 gap-3">
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">New Added</p>
-                    <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
-                </div>
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Already Existed</p>
-                    <p id="skippedCount" class="text-2xl font-black text-cyan-400">0</p>
-                </div>
-                <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
-                    <p id="failCount" class="text-2xl font-black text-red-400">0</p>
+                <div id="emptyState" class="p-12 text-center space-y-3 hidden">
+                    <p class="text-3xl">📭</p>
+                    <p class="text-xs font-bold text-slate-300">No students found in school records.</p>
+                    <p class="text-[11px] text-slate-500">Upload an Excel, CSV, PDF, or Word roster via Bulk Import to get started.</p>
+                    <button onclick="switchView('import')" class="bg-purple-600 text-white font-bold text-xs px-4 py-2 rounded-xl transition">Go to Bulk Import &rarr;</button>
                 </div>
             </div>
-            <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
-            <div class="pt-2 flex gap-3">
-                <a href="index.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Return to Dashboard &rarr;</a>
-                <a href="manage-students.html" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students List &rarr;</a>
+            <div class="flex items-center justify-between text-[11px] text-slate-400 px-2">
+                <span id="studentCountFooter">Showing 0 students</span>
             </div>
         </section>
+
+        <!-- VIEW 2: BULK IMPORT -->
+        <section id="importView" class="space-y-5 hidden">
+            <div class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Roster & Photos</h2>
+                    <button onclick="switchView('list')" class="text-xs text-slate-400 hover:text-white">&larr; Back to Student List</button>
+                </div>
+                <p class="text-[11px] text-slate-400">
+                    <strong>Complete List Import:</strong> Every single student record is preserved without filtering, extracting Name, Enrollment No, Gender, DOB (<code class="text-purple-400">DD-MM-YYYY</code>), Class, Father Name, CNIC/Form-B, and Admission Date (<code class="text-purple-400">DD-MM-YYYY</code>).
+                </p>
+                
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-300">Roster File (Excel, CSV, PDF, or Word)</label>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-bold">
+                </div>
+                <p id="pdfStatus" class="text-[11px] text-cyan-400 hidden"></p>
+
+                <div class="border-t border-slate-800 pt-4 space-y-2">
+                    <label class="block text-[11px] font-bold text-cyan-300">Where do you put the pictures? (Optional Photo Folder)</label>
+                    <p class="text-[11px] text-slate-400">
+                        Select a folder on your computer containing student images named by enrollment number (e.g., <code class="text-purple-400">1678.jpg</code>).
+                    </p>
+                    <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-300 file:bg-cyan-700 file:text-white file:border-0 file:rounded-lg file:px-3 file:py-2 file:font-bold">
+                    <p id="photoFolderStatus" class="text-[10px] text-cyan-400 font-semibold"></p>
+                </div>
+
+                <div id="sheetPicker" class="hidden pt-2">
+                    <label class="block text-[10px] text-slate-400 mb-1">This file has multiple sheets — pick one:</label>
+                    <select id="sheetSelect" onchange="loadSheet(this.value)" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2"></select>
+                </div>
+            </div>
+
+            <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800 hidden">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Confirm Final Roster</h2>
+                        <p class="text-[11px] text-slate-400">Verify column mappings below. Once confirmed, this data is saved permanently as final school records.</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                        <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 bg-slate-900 border-slate-700 cursor-pointer">
+                        <label for="finalizeLockCheck" class="text-[11px] font-bold text-amber-300 cursor-pointer">I confirm this data is final and ready to commit</label>
+                    </div>
+                </div>
+
+                <div id="mappingGrid" class="grid sm:grid-cols-2 gap-2 text-xs"></div>
+
+                <div class="border-t border-slate-800 pt-3">
+                    <h3 class="text-[10px] font-black uppercase text-slate-400 mb-2">Preview before import (first 20 rows - Dates in DD-MM-YYYY)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[10px] border-collapse min-w-[500px]">
+                            <thead>
+                                <tr id="previewHead" class="text-left text-slate-500 border-b border-slate-800">
+                                    <th class="py-2 pr-3 w-10">#</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewBody"></tbody>
+                        </table>
+                    </div>
+                    <p id="previewSummary" class="text-[10px] text-slate-400 mt-2"></p>
+                </div>
+
+                <button onclick="startImport()" id="importBtn" disabled class="bg-slate-800 text-slate-500 cursor-not-allowed font-bold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2">
+                    <span>🔒 Confirm Lock & High-Speed Final Import</span> <span id="rowCountLabel"></span> <span id="rowCountText">Students</span>
+                </button>
+            </section>
+
+            <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
+                <h2 class="text-xs font-black uppercase text-amber-400">Processing Finalized Batch Import...</h2>
+                <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
+                </div>
+                <p id="progressLabel" class="text-xs text-slate-400">Preparing records...</p>
+            </section>
+
+            <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
+                <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Final Import Complete</h2>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                        <p class="text-[9px] uppercase text-slate-500 font-bold">New Added</p>
+                        <p id="successCount" class="text-2xl font-black text-emerald-400">0</p>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                        <p class="text-[9px] uppercase text-slate-500 font-bold">Already Existed</p>
+                        <p id="skippedCount" class="text-2xl font-black text-cyan-400">0</p>
+                    </div>
+                    <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+                        <p class="text-[9px] uppercase text-slate-500 font-bold">Failed</p>
+                        <p id="failCount" class="text-2xl font-black text-red-400">0</p>
+                    </div>
+                </div>
+                <div id="errorsList" class="space-y-1.5 text-[11px]"></div>
+                <div class="pt-2 flex gap-3">
+                    <button onclick="switchView('list')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">View Students List &rarr;</button>
+                </div>
+            </section>
+        </section>
+
     </main>
 
     <script>
-        function handleLogout() {
-            try {
-                if (window.LamaAPI && typeof window.LamaAPI.logout === 'function') {
-                    window.LamaAPI.logout();
-                }
-            } catch (e) {}
-            window.location.href = 'index.html';
-        }
-
         if (window.pdfjsLib) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
+
+        let allStudents = [];
+        let workbook = null;
+        let sourceHeaders = [];
+        let sourceRows = [];
+        let mapping = {};
+        let photoFolderMap = {};
 
         const TARGET_FIELDS = [
             { key: '', label: '-- Skip this column --' },
@@ -190,66 +254,166 @@
             admissionRemarks: ['remarks', 'comments']
         };
 
-        let workbook = null;
-        let sourceHeaders = [];
-        let sourceRows = [];
-        let mapping = {};
-        let photoFolderMap = {};
-
-        async function renderHeader() {
+        function loadStoredStudents() {
             try {
-                const school = (window.LamaAPI && typeof window.LamaAPI.getActiveSchool === 'function') 
-                    ? await window.LamaAPI.getActiveSchool() 
-                    : { name: 'Govt Primary School Shah Sadar Din', shortCode: 'SSD', logo: null };
-                
-                if (school) {
-                    document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
-                    document.getElementById('headerSchoolName').innerText = school.name || 'Govt Primary School Shah Sadar Din';
-                    const logoBox = document.getElementById('schoolLogoBox');
-                    if (school.logo) {
-                        logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
-                    } else {
-                        logoBox.innerText = school.shortCode || 'SSD';
+                const keys = ['lama_students', 'lama_school_students', 'lama_school_SSD_students'];
+                for (const k of keys) {
+                    const val = localStorage.getItem(k);
+                    if (val) {
+                        const parsed = JSON.parse(val);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            allStudents = parsed;
+                            break;
+                        }
                     }
                 }
+            } catch (e) {
+                allStudents = [];
+            }
+            updateTotalBadge();
+            populateClassFilter();
+            renderStudentTable();
+        }
+
+        function saveStudentsToStorage() {
+            try {
+                const dataStr = JSON.stringify(allStudents);
+                localStorage.setItem('lama_students', dataStr);
+                localStorage.setItem('lama_school_students', dataStr);
+                localStorage.setItem('lama_school_SSD_students', dataStr);
+            } catch (e) {
+                console.error('Storage save error:', e);
+            }
+            updateTotalBadge();
+            populateClassFilter();
+            renderStudentTable();
+        }
+
+        function updateTotalBadge() {
+            document.getElementById('headerTotalBadge').innerText = allStudents.length;
+        }
+
+        function populateClassFilter() {
+            const classes = [...new Set(allStudents.map(s => String(s.class || 'ECE').trim().toUpperCase()))].sort();
+            const select = document.getElementById('classFilter');
+            const current = select.value;
+            select.innerHTML = `<option value="">All Classes (${allStudents.length})</option>` + 
+                classes.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>Class: ${c}</option>`).join('');
+        }
+
+        function renderStudentTable() {
+            const tbody = document.getElementById('studentTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const searchTerm = (document.getElementById('searchInput').value || '').toLowerCase();
+            const classFilterVal = document.getElementById('classFilter').value;
+
+            const filtered = allStudents.filter(s => {
+                const name = (s.name || '').toLowerCase();
+                const enrl = (s.enrlNo || '').toLowerCase();
+                const father = (s.fatherGuardian || '').toLowerCase();
+                const cls = (s.class || 'ECE').toUpperCase();
+
+                const matchesSearch = !searchTerm || name.includes(searchTerm) || enrl.includes(searchTerm) || father.includes(searchTerm);
+                const matchesClass = !classFilterVal || cls === classFilterVal;
+                return matchesSearch && matchesClass;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                document.getElementById('studentCountFooter').innerText = `Showing 0 of ${allStudents.length} students`;
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            tbody.innerHTML = filtered.slice(0, 150).map((s, idx) => `
+                <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/60">
+                    <td class="py-3 px-4 font-bold text-slate-500">${idx + 1}</td>
+                    <td class="py-3 px-4 font-bold text-white">${s.name || '-'}</td>
+                    <td class="py-3 px-4 text-purple-400 font-mono">${s.enrlNo || '-'}</td>
+                    <td class="py-3 px-4"><span class="bg-slate-800 px-2 py-1 rounded-lg text-[10px] text-cyan-300 font-bold">${s.class || 'ECE'}</span></td>
+                    <td class="py-3 px-4 text-slate-300">${s.gender || '-'}</td>
+                    <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">${s.dob || '-'}</td>
+                    <td class="py-3 px-4 text-slate-300">${s.fatherGuardian || '-'}</td>
+                    <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">${s.contact || s.whatsapp || '-'}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteStudent('${s.id || s.enrlNo}')" class="text-red-400 hover:text-red-300 font-bold text-xs bg-red-950/40 hover:bg-red-950 px-2.5 py-1 rounded-lg transition">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('studentCountFooter').innerText = `Showing ${filtered.length} of ${allStudents.length} students`;
+        }
+
+        function filterStudents() {
+            renderStudentTable();
+        }
+
+        function deleteStudent(id) {
+            allStudents = allStudents.filter(s => s.id !== id && s.enrlNo !== id);
+            saveStudentsToStorage();
+        }
+
+        function clearAllStudentsConfirm() {
+            if (confirm('Are you sure you want to clear all student records?')) {
+                allStudents = [];
+                saveStudentsToStorage();
+            }
+        }
+
+        function switchView(viewName) {
+            const listSec = document.getElementById('studentListView');
+            const importSec = document.getElementById('importView');
+            const listBtn = document.getElementById('navListViewBtn');
+            const importBtn = document.getElementById('navImportViewBtn');
+
+            if (viewName === 'list') {
+                listSec.classList.remove('hidden');
+                importSec.classList.add('hidden');
+                listBtn.className = "bg-purple-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-purple-900/30";
+                importBtn.className = "bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition";
+                loadStoredStudents();
+            } else {
+                listSec.classList.add('hidden');
+                importSec.classList.remove('hidden');
+                listBtn.className = "bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5";
+                importBtn.className = "bg-purple-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-lg shadow-purple-900/30";
+            }
+        }
+
+        function handleLogout() {
+            try {
+                if (window.LamaAPI && typeof window.LamaAPI.logout === 'function') {
+                    window.LamaAPI.logout();
+                }
             } catch (e) {}
+            location.reload();
         }
 
         function formatDateToDDMMYYYY(dateStr) {
             if (!dateStr) return '';
             const clean = String(dateStr).trim();
-            
             let m = clean.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})$/);
             if (m) {
                 let [, d, mo, y] = m;
                 if (y.length === 2) y = '20' + y;
                 return `${String(d).padStart(2, '0')}-${String(mo).padStart(2, '0')}-${y}`;
             }
-
             m = clean.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
             if (m) {
                 let [, y, mo, d] = m;
                 return `${String(d).padStart(2, '0')}-${String(mo).padStart(2, '0')}-${y}`;
             }
-
             if (/^\d{5}$/.test(clean)) {
                 const excelDate = new Date((Number(clean) - (25567 + 2)) * 86400 * 1000);
                 if (!isNaN(excelDate.getTime())) {
-                    const d = String(excelDate.getDate()).padStart(2, '0');
-                    const mo = String(excelDate.getMonth() + 1).padStart(2, '0');
-                    const y = excelDate.getFullYear();
-                    return `${d}-${mo}-${y}`;
+                    return `${String(excelDate.getDate()).padStart(2, '0')}-${String(excelDate.getMonth() + 1).padStart(2, '0')}-${excelDate.getFullYear()}`;
                 }
             }
-
             const parsed = new Date(clean);
             if (!isNaN(parsed.getTime())) {
-                const d = String(parsed.getDate()).padStart(2, '0');
-                const mo = String(parsed.getMonth() + 1).padStart(2, '0');
-                const y = parsed.getFullYear();
-                return `${d}-${mo}-${y}`;
+                return `${String(parsed.getDate()).padStart(2, '0')}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${parsed.getFullYear()}`;
             }
-
             return clean;
         }
 
@@ -280,7 +444,7 @@
                     }
                     loadSheet(sheetNames[0]);
                 } catch(err) {
-                    alertBox("Error reading spreadsheet: " + err.message);
+                    alert("Error reading spreadsheet: " + err.message);
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -391,7 +555,6 @@
 
         function parsePdfLines(lines) {
             const rows = [];
-            
             for (const rawLine of lines) {
                 const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
                 if (!clean || isPdfNoiseLine(clean)) continue;
@@ -426,53 +589,27 @@
                     }
 
                     let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2}/g, '').trim();
-                    
                     const tokens = cleanRem.split(/\s+/).filter(Boolean);
                     if (tokens.length > 0) {
-                        if (/^\d{1,2}\.\d{1,2}$/.test(tokens[0])) {
-                            tokens.shift();
-                        }
-
+                        if (/^\d{1,2}\.\d{1,2}$/.test(tokens[0])) tokens.shift();
                         const cnicIdx = tokens.findIndex(t => /^\d{13}$/.test(t));
                         if (cnicIdx !== -1) {
                             formb = tokens[cnicIdx];
                             tokens.splice(cnicIdx, 1);
-                        } else {
-                            if (tokens.length > 0 && /^\d{13}$/.test(tokens[tokens.length - 1])) {
-                                formb = tokens[tokens.length - 1];
-                                tokens.pop();
-                            }
-                        }
-                        
-                        const commonClasses = ['ECE', 'KG', 'NURSERY', 'PREP', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
-                        if (tokens.length >= 2) {
-                            if (commonClasses.includes(tokens[0].toUpperCase()) || /^[1-12](TH|ST|ND|RD)?$/i.test(tokens[0])) {
-                                klass = tokens[0].toUpperCase();
-                                tokens.shift();
-                            }
-                        }
-
-                        while (tokens.length > 0 && commonClasses.includes(tokens[tokens.length - 1].toUpperCase())) {
+                        } else if (tokens.length > 0 && /^\d{13}$/.test(tokens[tokens.length - 1])) {
+                            formb = tokens[tokens.length - 1];
                             tokens.pop();
                         }
-
-                        if (tokens.length > 0) {
-                            father = tokens.join(' ');
+                        const commonClasses = ['ECE', 'KG', 'NURSERY', 'PREP', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN'];
+                        if (tokens.length >= 2 && (commonClasses.includes(tokens[0].toUpperCase()) || /^[1-12](TH|ST|ND|RD)?$/i.test(tokens[0]))) {
+                            klass = tokens[0].toUpperCase();
+                            tokens.shift();
                         }
+                        while (tokens.length > 0 && commonClasses.includes(tokens[tokens.length - 1].toUpperCase())) tokens.pop();
+                        if (tokens.length > 0) father = tokens.join(' ');
                     }
 
-                    if (!father || father === '') father = 'Guardian';
-
-                    rows.push([
-                        enrl,
-                        name.trim(),
-                        gender.toUpperCase(),
-                        pdfConvDate(dob.toUpperCase()),
-                        klass.toUpperCase(),
-                        father.trim(),
-                        formb,
-                        admDate
-                    ]);
+                    rows.push([enrl, name.trim(), gender.toUpperCase(), pdfConvDate(dob.toUpperCase()), klass.toUpperCase(), father.trim(), formb, admDate]);
                 } else {
                     const dobMatch = clean.match(/(\d{2}-[A-Z]{3}-\d{2})/);
                     if (dobMatch) {
@@ -480,40 +617,21 @@
                         const leftSide = parts[0].trim();
                         const rightSide = parts[1] ? parts[1].trim() : '';
                         const leftTokens = leftSide.split(/\s+/);
-                        
                         let enrl = leftTokens.length > 1 ? leftTokens[1] : (leftTokens[0] || '1000');
                         let name = leftTokens.slice(2).join(' ') || leftTokens[0] || 'Student';
                         let gender = /\b(M|F)\b/i.exec(leftSide)?.[1] || 'M';
                         let dob = pdfConvDate(dobMatch[0]);
-                        
-                        let formb = '';
-                        const cnicMatch = rightSide.match(/\b\d{13}\b/);
-                        if (cnicMatch) formb = cnicMatch[0];
-
+                        let formb = rightSide.match(/\b\d{13}\b/)?.[0] || '';
                         let admDate = '';
                         const allDates = rightSide.match(/(\d{2}-[A-Z]{3}-\d{2})/g);
-                        if (allDates && allDates.length > 0) {
-                            admDate = pdfConvDate(allDates[allDates.length - 1]);
-                        }
+                        if (allDates && allDates.length > 0) admDate = pdfConvDate(allDates[allDates.length - 1]);
+                        let father = rightSide.replace(/\b\d{13}\b/g, '').replace(/(\d{2}-[A-Z]{3}-\d{2})/g, '').trim() || 'Guardian';
 
-                        let father = rightSide.replace(/\b\d{13}\b/g, '').replace(/(\d{2}-[A-Z]{3}-\d{2})/g, '').trim();
-                        if (!father) father = 'Guardian';
-
-                        rows.push([
-                            enrl,
-                            name.replace(/[MF]\b/g, '').trim(),
-                            gender.toUpperCase(),
-                            dob,
-                            'ECE',
-                            father,
-                            formb,
-                            admDate
-                        ]);
+                        rows.push([enrl, name.replace(/[MF]\b/g, '').trim(), gender.toUpperCase(), dob, 'ECE', father, formb, admDate]);
                     }
                 }
             }
-
-            return { rows: rows };
+            return { rows };
         }
 
         async function handlePdfFile(file) {
@@ -595,18 +713,14 @@
         }
 
         function updateMapping(colIndex, fieldKey) {
-            if (!fieldKey) {
-                delete mapping[colIndex];
-            } else {
-                mapping[colIndex] = fieldKey;
-            }
+            if (!fieldKey) delete mapping[colIndex];
+            else mapping[colIndex] = fieldKey;
             renderPreview();
         }
 
         function renderPreview() {
             const head = document.getElementById('previewHead');
             const body = document.getElementById('previewBody');
-            
             head.innerHTML = `<th class="py-2 pr-3 w-10">#</th>` + sourceHeaders.map(h => `<th class="py-2 pr-3">${h}</th>`).join('');
             body.innerHTML = sourceRows.slice(0, 20).map((row, idx) => `
                 <tr class="border-b border-slate-800/60 hover:bg-slate-950/30">
@@ -614,14 +728,11 @@
                     ${row.map((cell, cIdx) => {
                         const hLower = (sourceHeaders[cIdx] || '').toLowerCase();
                         let val = cell || '-';
-                        if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) {
-                            val = formatDateToDDMMYYYY(val);
-                        }
+                        if (hLower.includes('dob') || hLower.includes('birth') || hLower.includes('date')) val = formatDateToDDMMYYYY(val);
                         return `<td class="py-2 pr-3 truncate max-w-[120px] text-slate-300">${val}</td>`;
                     }).join('')}
                 </tr>
             `).join('');
-
             document.getElementById('previewSummary').innerText = `Showing first 20 of ${sourceRows.length} total records in file.`;
         }
 
@@ -641,118 +752,48 @@
             for (const [colIdx, fieldKey] of Object.entries(mapping)) {
                 if (row[colIdx] !== undefined) {
                     let val = String(row[colIdx]).trim();
-                    if (fieldKey === 'dob' || fieldKey === 'admissionDate') {
-                        val = formatDateToDDMMYYYY(val);
-                    }
+                    if (fieldKey === 'dob' || fieldKey === 'admissionDate') val = formatDateToDDMMYYYY(val);
                     student[fieldKey] = val;
                 }
             }
             if (!student.name) student.name = `Student #${index + 1}`;
             if (!student.enrlNo && student.admissionNo) student.enrlNo = student.admissionNo;
-            if (!student.enrlNo) {
-                student.enrlNo = 'ENRL-' + String(index + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-            }
+            if (!student.enrlNo) student.enrlNo = 'ENRL-' + String(index + 1).padStart(4, '0') + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
             student.id = 'id_' + Math.random().toString(36).substr(2, 9) + index + Date.now().toString(36);
             return student;
         }
 
         async function startImport() {
-            if (!sourceRows.length) return alertBox('Select a file first.');
-            if (!document.getElementById('finalizeLockCheck').checked) {
-                return alertBox('Please check the confirmation box indicating that this data is final before proceeding.');
-            }
+            if (!sourceRows.length) return alert('Select a file first.');
+            if (!document.getElementById('finalizeLockCheck').checked) return alert('Please check the confirmation box indicating that this data is final before proceeding.');
             
-            showConfirmModal(`Finalize and commit ${sourceRows.length} student records? This will permanently write the data to the school system.`, async () => {
+            if (confirm(`Finalize and commit ${sourceRows.length} student records? This will permanently write the data to the school system.`)) {
                 document.getElementById('mapSection').classList.add('hidden');
                 document.getElementById('progressSection').classList.remove('hidden');
-                
-                document.getElementById('progressLabel').innerText = 'Preparing student list...';
-                document.getElementById('progressBar').style.width = '30%';
+                document.getElementById('progressBar').style.width = '50%';
+                document.getElementById('progressLabel').innerText = 'Building and writing records...';
 
-                const batchItems = [];
-                for (let i = 0; i < sourceRows.length; i++) {
-                    const rec = buildRecordFromRow(sourceRows[i], i);
-                    batchItems.push(rec);
-                }
+                setTimeout(() => {
+                    const batchItems = [];
+                    for (let i = 0; i < sourceRows.length; i++) {
+                        batchItems.push(buildRecordFromRow(sourceRows[i], i));
+                    }
 
-                document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records safely...`;
-                document.getElementById('progressBar').style.width = '70%';
+                    allStudents = batchItems;
+                    saveStudentsToStorage();
 
-                try {
-                    localStorage.setItem('lama_students', JSON.stringify(batchItems));
-                    localStorage.setItem('lama_school_students', JSON.stringify(batchItems));
-                    localStorage.setItem('lama_school_SSD_students', JSON.stringify(batchItems));
-                    
                     document.getElementById('progressBar').style.width = '100%';
-                    
                     document.getElementById('progressSection').classList.add('hidden');
                     document.getElementById('resultsSection').classList.remove('hidden');
                     document.getElementById('successCount').innerText = batchItems.length;
                     document.getElementById('skippedCount').innerText = 0;
                     document.getElementById('failCount').innerText = 0;
-                    document.getElementById('errorsList').innerHTML =
-                        `<p class="text-slate-300">Successfully locked in and imported <strong>${batchItems.length}</strong> new students!</p>`;
-                } catch (storageErr) {
-                    console.error('Storage save failed:', storageErr);
-                    document.getElementById('progressSection').classList.add('hidden');
-                    document.getElementById('resultsSection').classList.remove('hidden');
-                    document.getElementById('successCount').innerText = 0;
-                    document.getElementById('skippedCount').innerText = 0;
-                    document.getElementById('failCount').innerText = batchItems.length;
-                    document.getElementById('errorsList').innerHTML =
-                        `<p class="text-red-400">Failed due to storage limits: ${storageErr.message}</p>`;
-                }
-            });
-        }
-
-        function alertBox(message) {
-            let box = document.getElementById('customAlertModal');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'customAlertModal';
-                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
-                box.innerHTML = `
-                    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <h3 class="text-sm font-black uppercase text-purple-400">Notice</h3>
-                        <p id="customAlertMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
-                        <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 rounded-xl transition">OK</button>
-                    </div>
-                `;
-                document.body.appendChild(box);
+                    document.getElementById('errorsList').innerHTML = `<p class="text-slate-300">Successfully locked in and imported <strong>${batchItems.length}</strong> students!</p>`;
+                }, 400);
             }
-            document.getElementById('customAlertMsg').innerText = message;
-            box.classList.remove('hidden');
         }
 
-        function showConfirmModal(message, onConfirm) {
-            let box = document.getElementById('customConfirmModal');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'customConfirmModal';
-                box.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4';
-                box.innerHTML = `
-                    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                        <h3 class="text-sm font-black uppercase text-cyan-400">Confirm Final Lock</h3>
-                        <p id="customConfirmMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
-                        <div class="flex gap-2 pt-2">
-                            <button id="customConfirmCancelBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">Cancel</button>
-                            <button id="customConfirmOkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition">Proceed & Lock</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(box);
-            }
-            document.getElementById('customConfirmMsg').innerText = message;
-            const okBtn = document.getElementById('customConfirmOkBtn');
-            const cancelBtn = document.getElementById('customConfirmCancelBtn');
-            
-            const close = () => box.classList.add('hidden');
-            okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
-            cancelBtn.onclick = close;
-            box.classList.remove('hidden');
-        }
-
-        renderHeader();
+        loadStoredStudents();
     </script>
 </body>
 </html>

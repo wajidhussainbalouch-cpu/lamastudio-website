@@ -28,7 +28,28 @@
                 const updatedList = list.concat(addedItems);
                 localStorage.setItem('lama_' + key, JSON.stringify(updatedList));
                 return addedItems;
-            } catch(e) { throw new Error('Batch storage failed'); }
+            } catch(e) { 
+                try {
+                    const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+                    const addedItems = [];
+                    for (const item of items) {
+                        try {
+                            item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                            list.push(item);
+                            addedItems.push(item);
+                        } catch(innerErr) {
+                            delete item.photo;
+                            item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                            list.push(item);
+                            addedItems.push(item);
+                        }
+                    }
+                    localStorage.setItem('lama_' + key, JSON.stringify(list));
+                    return addedItems;
+                } catch(innerFatal) {
+                    throw new Error('Batch storage failed: ' + innerFatal.message); 
+                }
+            }
         }
     };
 </script>
@@ -398,44 +419,31 @@
 
         function parsePdfLines(lines) {
             const rows = [];
-            const generalPattern = /^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i;
-            const fallbackPattern = /^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i;
-            const loosePattern = /(\d{1,12})\s+([A-Z\s]+?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i;
-
+            
             for (const rawLine of lines) {
                 const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
                 if (!clean || isPdfNoiseLine(clean)) continue;
 
-                let m = clean.match(generalPattern);
-                let enrl = '', name = '', gender = '', dob = '', remainder = '';
+                // Flexible regex to catch any line that starts with an index/enrollment number and contains a DOB token
+                const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i) ||
+                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2})/i);
 
-                if (m) {
-                    enrl = m[2];
-                    name = m[3];
-                    gender = m[4];
-                    dob = m[5];
-                    remainder = clean.substring(m[0].length).trim();
-                } else {
-                    m = clean.match(fallbackPattern);
-                    if (m) {
-                        enrl = m[1];
-                        name = m[2];
-                        gender = m[3];
-                        dob = m[4];
-                        remainder = clean.substring(m[0].length).trim();
-                    } else {
-                        m = clean.match(loosePattern);
-                        if (m) {
-                            enrl = m[1];
-                            name = m[2];
-                            gender = m[3];
-                            dob = m[4];
-                            remainder = clean.substring(m[0].length).trim();
-                        }
+                if (match) {
+                    let enrl = '', name = '', gender = '', dob = '', remainder = '';
+                    if (match.length === 6) {
+                        enrl = match[2];
+                        name = match[3];
+                        gender = match[4];
+                        dob = match[5];
+                        remainder = clean.substring(match[0].length).trim();
+                    } else if (match.length === 5) {
+                        enrl = match[1];
+                        name = match[2];
+                        gender = match[3];
+                        dob = match[4];
+                        remainder = clean.substring(match[0].length).trim();
                     }
-                }
 
-                if (m) {
                     let father = 'Guardian';
                     let formb = '';
                     let klass = 'ECE';
@@ -494,22 +502,45 @@
                         formb,
                         admDate
                     ]);
-                }
-            }
+                } else {
+                    // Fallback line parser for any line containing a date of birth pattern even if formatting varies slightly
+                    const dobMatch = clean.match(/(\d{2}-[A-Z]{3}-\d{2})/);
+                    if (dobMatch) {
+                        const parts = clean.split(dobMatch[0]);
+                        const leftSide = parts[0].trim();
+                        const rightSide = parts[1] ? parts[1].trim() : '';
+                        const leftTokens = leftSide.split(/\s+/);
+                        
+                        let enrl = leftTokens.length > 1 ? leftTokens[1] : (leftTokens[0] || '1000');
+                        let name = leftTokens.slice(2).join(' ') || leftTokens[0] || 'Student';
+                        let gender = /\b(M|F)\b/i.exec(leftSide)?.[1] || 'M';
+                        let dob = pdfConvDate(dobMatch[0]);
+                        
+                        let formb = '';
+                        const cnicMatch = rightSide.match(/\b\d{13}\b/);
+                        if (cnicMatch) formb = cnicMatch[0];
 
-            // Ensure exact 304 capacity guarantee if 304 lines exist
-            if (rows.length < 304 && lines.length >= 304) {
-                // Fallback secondary line sweep for any omitted rows
-                lines.forEach((l) => {
-                    const clean = String(l || '').trim();
-                    if (rows.length < 304 && !isPdfNoiseLine(clean) && /\b[MF]\b/.test(clean) && !rows.some(r => clean.includes(r[0]))) {
-                        // Attempt basic split
-                        const parts = clean.split(/\s+/);
-                        if (parts.length >= 5) {
-                            rows.push([parts[1] || '000', parts.slice(2, 4).join(' '), parts.includes('F') ? 'F' : 'M', '01-01-2020', 'ECE', 'Guardian', '', '01-01-2025']);
+                        let admDate = '';
+                        const allDates = rightSide.match(/(\d{2}-[A-Z]{3}-\d{2})/g);
+                        if (allDates && allDates.length > 0) {
+                            admDate = pdfConvDate(allDates[allDates.length - 1]);
                         }
+
+                        let father = rightSide.replace(/\b\d{13}\b/g, '').replace(/(\d{2}-[A-Z]{3}-\d{2})/g, '').trim();
+                        if (!father) father = 'Guardian';
+
+                        rows.push([
+                            enrl,
+                            name.replace(/[MF]\b/g, '').trim(),
+                            gender.toUpperCase(),
+                            dob,
+                            'ECE',
+                            father,
+                            formb,
+                            admDate
+                        ]);
                     }
-                });
+                }
             }
 
             return { rows: rows };
@@ -736,7 +767,18 @@
                         await LamaAPI.addBatch('students', chunk);
                         addedCount += chunk.length;
                     } catch (e) {
-                        failedCount += chunk.length;
+                        try {
+                            for (const singleRec of chunk) {
+                                try {
+                                    await LamaAPI.addBatch('students', [singleRec]);
+                                    addedCount++;
+                                } catch (singleErr) {
+                                    failedCount++;
+                                }
+                            }
+                        } catch (fallbackErr) {
+                            failedCount += chunk.length;
+                        }
                     }
                     const progressPercent = 70 + Math.round(((i + chunk.length) / Math.max(1, batchItems.length)) * 30);
                     document.getElementById('progressBar').style.width = `${progressPercent}%`;
@@ -748,7 +790,7 @@
                 document.getElementById('skippedCount').innerText = skippedCount;
                 document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.</p>`;
+                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed.</span>` : ''}</p>`;
             });
         }
 
@@ -804,4 +846,3 @@
         }
     </script>
 </body>
-</html>

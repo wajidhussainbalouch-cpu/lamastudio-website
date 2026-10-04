@@ -6,7 +6,43 @@
 <title id="pageTitle">Manage Students</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
+<script>
+    window.LamaAPI = window.LamaAPI || {
+        getActiveSchool: async () => ({ name: 'Demo School', shortCode: 'DEMO', logo: null }),
+        logout: () => { window.location.href = 'login.html'; },
+        requireLogin: () => true,
+        deriveShortCode: (name) => (name || 'SCH').substring(0, 3).toUpperCase(),
+        list: async (key) => {
+            try { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); } catch(e) { return []; }
+        },
+        add: async (key, item) => {
+            try {
+                const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+                item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                list.push(item);
+                localStorage.setItem('lama_' + key, JSON.stringify(list));
+                return item;
+            } catch(e) { throw new Error('Storage failed'); }
+        },
+        update: async (key, id, item) => {
+            try {
+                let list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+                list = list.map(i => i.id === id ? { ...i, ...item, id } : i);
+                localStorage.setItem('lama_' + key, JSON.stringify(list));
+                return item;
+            } catch(e) { throw new Error('Update failed'); }
+        },
+        remove: async (key, id) => {
+            try {
+                let list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+                list = list.filter(i => i.id !== id);
+                localStorage.setItem('lama_' + key, JSON.stringify(list));
+                return true;
+            } catch(e) { throw new Error('Remove failed'); }
+        }
+    };
+</script>
+<script src="js/api-client.js" onerror="console.warn('External api-client.js not found; using built-in fallback.');"></script>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
@@ -38,10 +74,10 @@
 
         <!-- Roster Table -->
         <section class="cyber-card rounded-2xl p-5 overflow-x-auto">
-            <table class="w-full text-[11px] border-collapse min-w-[560px]">
+            <table class="w-full text-[11px] border-collapse min-w-[600px]">
                 <thead>
                     <tr class="text-left text-[9px] uppercase text-slate-500 border-b border-slate-800">
-                        <th class="py-1.5">Name</th><th>Enrl No</th><th>Class</th><th>Father/Guardian</th><th>Contact</th><th class="text-right">Actions</th>
+                        <th class="py-1.5 w-10">#</th><th>Photo</th><th>Name</th><th>Enrl No</th><th>Class</th><th>Father/Guardian</th><th>Contact</th><th class="text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="rosterBody"></tbody>
@@ -59,12 +95,18 @@
             </div>
             <input type="hidden" id="editId">
             <div class="flex items-center gap-3 border-b border-slate-800 pb-3">
-                <div id="photoPreviewBox" class="w-16 h-20 rounded-lg bg-slate-950 border-2 border-dashed border-slate-700 flex items-center justify-center text-[8px] text-slate-500 text-center flex-shrink-0">No Photo</div>
+                <div id="photoPreviewBox" class="w-16 h-20 rounded-lg bg-slate-950 border-2 border-dashed border-slate-700 flex items-center justify-center text-[8px] text-slate-500 text-center flex-shrink-0 overflow-hidden">No Photo</div>
                 <div class="flex-grow space-y-1">
                     <label class="block text-[10px] text-slate-400">Student Photo <span class="text-slate-600">(auto-resized to 800×600, ~15-25KB)</span></label>
-                    <div class="flex gap-1.5">
-                        <input type="file" accept="image/*" onchange="previewStudentPhoto(this)" class="text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
-                        <input type="file" accept="image/*" capture="environment" onchange="previewStudentPhoto(this)" class="text-[10px] text-slate-300 file:bg-emerald-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+                    <div class="flex gap-1.5 flex-wrap">
+                        <label class="cursor-pointer bg-purple-600 hover:bg-purple-500 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
+                            📁 Upload Photo
+                            <input type="file" accept="image/*" onchange="previewStudentPhoto(this)" class="hidden">
+                        </label>
+                        <label class="cursor-pointer bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
+                            📷 Take Camera Photo
+                            <input type="file" accept="image/*" capture="environment" onchange="previewStudentPhoto(this)" class="hidden">
+                        </label>
                     </div>
                     <p id="photoSizeNote" class="text-[9px] text-slate-500"></p>
                 </div>
@@ -93,14 +135,49 @@
         </div>
     </div>
 
-    <script>
+    <!-- CUSTOM ALERT MODAL -->
+    <div id="customAlertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 class="text-sm font-black uppercase text-purple-400">Notice</h3>
+            <p id="customAlertMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
+            <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 rounded-xl transition">OK</button>
+        </div>
+    </div>
 
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="customConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <h3 class="text-sm font-black uppercase text-cyan-400">Please Confirm</h3>
+            <p id="customConfirmMsg" class="text-xs text-slate-300 whitespace-pre-wrap"></p>
+            <div class="flex gap-2 pt-2">
+                <button id="customConfirmCancelBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-2.5 rounded-xl transition">Cancel</button>
+                <button id="customConfirmOkBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl transition">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
         function handleLogout() {
             LamaAPI.logout();
             window.location.href = 'login.html';
         }
         const STUDENTS = 'students';
         let allStudents = [];
+
+        function alertBox(message) {
+            document.getElementById('customAlertMsg').innerText = message;
+            document.getElementById('customAlertModal').classList.remove('hidden');
+        }
+
+        function showConfirmModal(message, onConfirm) {
+            document.getElementById('customConfirmMsg').innerText = message;
+            const okBtn = document.getElementById('customConfirmOkBtn');
+            const cancelBtn = document.getElementById('customConfirmCancelBtn');
+            const close = () => document.getElementById('customConfirmModal').classList.add('hidden');
+            okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
+            cancelBtn.onclick = close;
+            document.getElementById('customConfirmModal').classList.remove('hidden');
+        }
 
         async function renderHeader() {
             const school = await LamaAPI.getActiveSchool() || {};
@@ -118,7 +195,7 @@
             try {
                 allStudents = await LamaAPI.list(STUDENTS);
             } catch (e) {
-                alert('Could not load students: ' + e.message);
+                alertBox('Could not load students: ' + e.message);
                 return;
             }
             const classes = Array.from(new Set(allStudents.map(s => s.class).filter(Boolean))).sort();
@@ -138,16 +215,22 @@
                 filtered = filtered.filter(s => String(s.class) === classFilter);
             }
             document.getElementById('rosterEmpty').classList.toggle('hidden', filtered.length > 0);
-            document.getElementById('rosterBody').innerHTML = filtered.map(s => `
-                <tr class="border-b border-slate-900">
-                    <td class="py-1.5 font-semibold">${s.name}</td>
-                    <td>${s.enrlNo || '-'}</td>
-                    <td>${s.class || '-'}${s.section ? '-' + s.section : ''}</td>
-                    <td>${s.fatherGuardian || '-'}</td>
-                    <td>${s.contact || '-'}</td>
+            document.getElementById('rosterBody').innerHTML = filtered.map((s, idx) => `
+                <tr class="border-b border-slate-900 hover:bg-slate-950/40">
+                    <td class="py-2 text-slate-500 font-mono font-bold">${idx + 1}</td>
+                    <td class="py-2 pr-2">
+                        <div class="w-8 h-10 rounded bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden">
+                            ${s.photo ? `<img src="${s.photo}" class="w-full h-full object-cover">` : '<span class="text-[7px] text-slate-600">No</span>'}
+                        </div>
+                    </td>
+                    <td class="py-1.5 font-semibold text-white">${s.name}</td>
+                    <td class="text-slate-300">${s.enrlNo || '-'}</td>
+                    <td class="text-slate-300">${s.class || '-'}${s.section ? '-' + s.section : ''}</td>
+                    <td class="text-slate-300">${s.fatherGuardian || '-'}</td>
+                    <td class="text-slate-300">${s.contact || '-'}</td>
                     <td class="text-right space-x-1 whitespace-nowrap">
-                        <button onclick="openStudentModal('${s.id}')" class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white">Edit</button>
-                        <button onclick="deleteStudent('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white">Delete</button>
+                        <button onclick="openStudentModal('${s.id}')" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">Edit</button>
+                        <button onclick="deleteStudent('${s.id}', '${String(s.name || '').replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white transition">Delete</button>
                     </td>
                 </tr>
             `).join('');
@@ -235,7 +318,7 @@
 
         async function saveStudent() {
             const name = document.getElementById('inName').value.trim();
-            if (!name) { alert('Student name is required.'); return; }
+            if (!name) { alertBox('Student name is required.'); return; }
 
             const record = {
                 enrlNo: document.getElementById('inEnrl').value.trim(),
@@ -262,18 +345,19 @@
                 closeStudentModal();
                 await loadStudents();
             } catch (e) {
-                alert('Could not save this student: ' + e.message);
+                alertBox('Could not save this student: ' + e.message);
             }
         }
 
         async function deleteStudent(id, name) {
-            if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
-            try {
-                await LamaAPI.remove(STUDENTS, id);
-                await loadStudents();
-            } catch (e) {
-                alert('Could not delete this student: ' + e.message);
-            }
+            showConfirmModal(`Delete ${name}? This cannot be undone.`, async () => {
+                try {
+                    await LamaAPI.remove(STUDENTS, id);
+                    await loadStudents();
+                } catch (e) {
+                    alertBox('Could not delete this student: ' + e.message);
+                }
+            });
         }
 
         async function init() {

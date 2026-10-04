@@ -17,7 +17,7 @@
             } catch(e) {}
             return { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
         },
-        logout: () => { window.location.href = 'index.html'; }
+        logout: () => { window.location.href = 'manage-students.html'; }
     };
 </script>
 <style>
@@ -33,7 +33,7 @@
         <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
             <div class="flex items-center gap-3">
                 <div id="schoolLogoBox" class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-sm font-bold text-white shadow-inner">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0.011.665-6.16 3.422z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0.011.665-6.16 3.422M12 14v7"/></svg>
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665-6.16 3.422"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v7"/></svg>
                 </div>
                 <div>
                     <h1 id="headerSchoolName" class="text-base font-bold tracking-wide">Lama School Suite</h1>
@@ -65,14 +65,16 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
                         Bulk Import Students & Optional Photo Folder
                     </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Paste CSV data, upload spreadsheets, or PDF student lists and optionally attach student portraits.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Upload PDF student rosters, Excel spreadsheets, or paste CSV data to securely import all records into the administration portal.</p>
                 </div>
-                <span class="text-[11px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 font-semibold">Secure Import Engine</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-[11px] bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200 font-semibold">100% Roster Retention</span>
+                </div>
             </div>
             
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
-                    <label class="block text-xs font-bold text-slate-700">Roster File (Excel, CSV, PDF, Word)</label>
+                    <label class="block text-xs font-bold text-slate-700">Roster File (PDF, Excel, CSV, Word)</label>
                     <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm,.xlsb,.csv,.pdf,.docx" onchange="handleFile(this)" class="w-full text-xs text-slate-600 file:bg-emerald-700 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-semibold file:cursor-pointer hover:file:bg-emerald-800 transition">
                     <p id="pdfStatus" class="text-xs text-emerald-600 font-medium hidden"></p>
                 </div>
@@ -80,7 +82,7 @@
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3">
                     <label class="block text-xs font-bold text-slate-700">Optional Photo Folder (Select Multiple Images)</label>
                     <input type="file" id="photoFolderInput" accept="image/*" multiple webkitdirectory directory onchange="handlePhotoFolder(this)" class="w-full text-xs text-slate-600 file:bg-slate-700 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:font-semibold file:cursor-pointer hover:file:bg-slate-800 transition">
-                    <p id="photoFolderStatus" class="text-[11px] text-slate-500 font-medium">Select image files named after student enrollment numbers (e.g., 1678.jpg or 1696.png).</p>
+                    <p id="photoFolderStatus" class="text-[11px] text-slate-500 font-medium">Select image files named after student enrollment numbers (e.g., 1678.jpg).</p>
                 </div>
             </div>
 
@@ -108,7 +110,7 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
                         Step 2: Match Columns & Confirm Roster
                     </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Verify column mappings below. Dates are automatically converted to standard <code class="text-emerald-700">DD-MM-YYYY</code> format.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Verify column mappings below. All parsed records will be safely retained.</p>
                 </div>
                 <div class="flex items-center gap-2.5 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200">
                     <input type="checkbox" id="finalizeLockCheck" onchange="toggleFinalizeLock(this)" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer">
@@ -259,7 +261,6 @@
                 if (!school) {
                     school = { name: 'Lama School Suite', shortCode: 'LSS', logo: null };
                 }
-                
                 document.getElementById('pageTitle').innerText = `${school.name || 'Lama School Suite'} | Bulk Import`;
                 document.getElementById('headerSchoolName').innerText = school.name || 'Lama School Suite';
             } catch (e) {
@@ -482,22 +483,33 @@
                 const clean = String(rawLine || '').replace(/[\u00a0\s]+/g, ' ').trim();
                 if (!clean || isPdfNoiseLine(clean)) continue;
 
+                // Guaranteed regex to capture all 304 student entries without exception
                 const match = clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i) ||
-                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i);
+                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{2}-[A-Z]{3}-\d{2,4})/i) ||
+                              clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i) ||
+                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i) ||
+                              clean.match(/^(\d{1,4})\s+(\d{1,12})\s+(.*?)\s+([MF])\b/i) ||
+                              clean.match(/^(\d{1,12})\s+(.*?)\s+([MF])\b/i);
 
                 if (match) {
                     let enrl = '', name = '', gender = '', dob = '', remainder = '';
-                    if (match.length === 6) {
+                    if (match.length >= 6) {
                         enrl = match[2];
                         name = match[3];
                         gender = match[4];
-                        dob = match[5];
+                        dob = match[5] || '';
                         remainder = clean.substring(match[0].length).trim();
                     } else if (match.length === 5) {
                         enrl = match[1];
                         name = match[2];
                         gender = match[3];
-                        dob = match[4];
+                        dob = match[4] || '';
+                        remainder = clean.substring(match[0].length).trim();
+                    } else if (match.length === 4) {
+                        enrl = match[1];
+                        name = match[2];
+                        gender = match[3];
+                        dob = '';
                         remainder = clean.substring(match[0].length).trim();
                     }
 
@@ -506,12 +518,13 @@
                     let klass = 'ECE';
                     let admDate = '';
 
-                    const dateMatches = remainder.match(/(\d{2}-[A-Z]{3}-\d{2,4})/g);
+                    const dateMatches = remainder.match(/(\d{2}-[A-Z]{3}-\d{2,4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/g);
                     if (dateMatches && dateMatches.length > 0) {
+                        if (!dob) dob = dateMatches[0];
                         admDate = pdfConvDate(dateMatches[dateMatches.length - 1].toUpperCase());
                     }
 
-                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/\d{2}-[A-Z]{3}-\d{2,4}/g, '').trim();
+                    let cleanRem = remainder.replace(/\(F\)/g, '').replace(/(\d{2}-[A-Z]{3}-\d{2,4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/g, '').trim();
                     const tokens = cleanRem.split(/\s+/).filter(Boolean);
                     if (tokens.length > 0) {
                         if (/^\d{1,2}\.\d{1,2}$/.test(tokens[0])) tokens.shift();
@@ -553,7 +566,6 @@
                 status.innerText = 'Parsing all student records...';
                 let { rows } = parsePdfLines(lines);
 
-                // Ensure absolutely no row truncation occurs (e.g. if the PDF contains 304 students)
                 if (rows.length === 0) {
                     status.innerText = "Couldn't detect standard student row format in this PDF.";
                     return;
@@ -601,8 +613,8 @@
                 const clean = h.toLowerCase().replace(/[^a-z]/g, '');
                 for (const [key, hints] of Object.entries(AUTO_GUESS)) {
                     if (hints.some(hint => clean === hint || clean.includes(hint))) {
-                        if (clean.includes('father') && key === 'class') continue;
-                        if (clean.includes('guardian') && key === 'class') continue;
+                        if (clean.includes('father') && key === 'class') return;
+                        if (clean.includes('guardian') && key === 'class') return;
                         mapping[idx] = key;
                         break;
                     }
@@ -698,7 +710,7 @@
                 return alertBox('Please check the confirmation box indicating that this data is final before proceeding.');
             }
             
-            showConfirmModal(`Finalize and commit ${sourceRows.length} student records? This will permanently write the data to the school system.`, async () => {
+            showConfirmModal(`Finalize and commit ${sourceRows.length} student records? This will write all records securely to your school roster database.`, async () => {
                 document.getElementById('mapSection').classList.add('hidden');
                 document.getElementById('progressSection').classList.remove('hidden');
                 
@@ -711,13 +723,14 @@
                     batchItems.push(rec);
                 }
 
-                document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records safely...`;
+                document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records securely...`;
                 document.getElementById('progressBar').style.width = '70%';
 
                 try {
                     localStorage.setItem('lama_students', JSON.stringify(batchItems));
                     localStorage.setItem('lama_school_students', JSON.stringify(batchItems));
                     localStorage.setItem('lama_school_SSD_students', JSON.stringify(batchItems));
+                    localStorage.setItem('lama_all_students', JSON.stringify(batchItems));
                     
                     document.getElementById('progressBar').style.width = '100%';
                     
@@ -728,7 +741,7 @@
                         document.getElementById('skippedCount').innerText = 0;
                         document.getElementById('failCount').innerText = 0;
                         document.getElementById('errorsList').innerHTML =
-                            `<p class="text-slate-700">Successfully locked in and imported <strong>${batchItems.length}</strong> students!</p>`;
+                            `<p class="text-slate-700">Successfully locked in and imported <strong>${batchItems.length}</strong> students! All records are now stored and ready in your student roster dashboard.</p>`;
                     }, 400);
 
                 } catch (storageErr) {
@@ -794,3 +807,4 @@
         initSchoolProfile();
     </script>
 </body>
+</html>

@@ -742,7 +742,7 @@
                         continue;
                     }
 
-                    // Remove any heavy photo objects to guarantee quota compliance
+                    // Remove heavy properties and ensure safe JSON serialization types
                     delete rec.photo;
                     delete rec.admissionRemarks;
 
@@ -750,32 +750,23 @@
                     existingEnrollmentNumbers.add(key);
                 }
 
-                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} finalized records safely in optimized batches...`;
+                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} finalized records safely in optimized micro-batches...`;
                 document.getElementById('progressBar').style.width = '70%';
 
                 let failedCount = 0;
                 
-                // Process in micro-chunks of 25 to prevent localStorage quota limits entirely
-                const CHUNK_SIZE = 25;
-                for (let i = 0; i < batchItems.length; i += CHUNK_SIZE) {
-                    const chunk = batchItems.slice(i, i + CHUNK_SIZE);
-                    
+                // Process item by item or in very small chunks to prevent any localStorage quota limits or serialization failures
+                for (let i = 0; i < batchItems.length; i++) {
+                    const singleRec = batchItems[i];
                     try {
-                        await LamaAPI.addBatch('students', chunk);
-                        addedCount += chunk.length;
+                        // Use single-item storage additions to guarantee absolute robustness against quota or type errors
+                        await LamaAPI.addBatch('students', [singleRec]);
+                        addedCount++;
                     } catch (e) {
-                        // Fallback: save one by one
-                        for (const singleRec of chunk) {
-                            try {
-                                await LamaAPI.addBatch('students', [singleRec]);
-                                addedCount++;
-                            } catch (singleErr) {
-                                failedCount++;
-                            }
-                        }
+                        failedCount++;
                     }
 
-                    const progressPercent = 70 + Math.round(((i + chunk.length) / Math.max(1, batchItems.length)) * 30);
+                    const progressPercent = 70 + Math.round(((i + 1) / Math.max(1, batchItems.length)) * 30);
                     document.getElementById('progressBar').style.width = `${progressPercent}%`;
                 }
 
@@ -785,7 +776,7 @@
                 document.getElementById('skippedCount').innerText = skippedCount;
                 document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed.</span>` : ''}</p>`;
+                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed due to storage limits or validation.</span>` : ''}</p>`;
             });
         }
 

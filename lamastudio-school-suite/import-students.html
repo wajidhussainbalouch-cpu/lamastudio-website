@@ -304,6 +304,14 @@
                     buffer.push(clean);
                 } else if (buffer.length) {
                     buffer.push(clean);
+                } else if (rows.length && /^[A-Z][A-Z .’'\-]{1,80}$/i.test(clean) && !/\d/.test(clean) && !isPdfNoiseLine(clean)) {
+                    // SIS sometimes emits the tail of a wrapped student name AFTER
+                    // the row's numeric line (e.g. serial 234: "MUSTAFA"). Attach
+                    // that orphaned name fragment to the immediately preceding row
+                    // instead of silently discarding it. Do not attach ordinary
+                    // footer/header text, which is filtered above.
+                    const previous = rows[rows.length - 1];
+                    previous.row[1] = `${String(previous.row[1] || '').trim()} ${clean}`.trim();
                 }
             }
             consumeBuffer();

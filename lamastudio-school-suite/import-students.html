@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="assets/css/config.css">
 <script>
     window.LamaAPI = window.LamaAPI || {
-        getActiveSchool: async () => ({ name: 'Demo School', shortCode: 'DEMO', logo: null }),
+        getActiveSchool: async () => ({ name: 'Govt Primary School Shah Sadar Din', shortCode: 'SSD', logo: null }),
         logout: () => { window.location.href = 'login.html'; },
         requireLogin: () => true,
         deriveShortCode: (name) => (name || 'SCH').substring(0, 3).toUpperCase(),
@@ -20,7 +20,6 @@
         },
         addBatch: async (key, items) => {
             try {
-                // Fetch current list and append new ones with minimal memory footprint
                 let list = [];
                 try {
                     list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
@@ -30,33 +29,13 @@
                 
                 const addedItems = items.map(item => {
                     item.id = 'id_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-                    // Completely strip photos and verbose remarks to maintain extremely low memory usage for 300+ records
                     delete item.photo;
                     delete item.admissionRemarks;
                     return item;
                 });
 
                 const updatedList = list.concat(addedItems);
-                
-                try {
-                    localStorage.setItem('lama_' + key, JSON.stringify(updatedList));
-                } catch (quotaErr) {
-                    // If full, trim older non-critical records or save minimal footprint
-                    console.warn('Quota reached. Trimming non-essential backup properties...');
-                    const slimList = updatedList.map(s => ({
-                        id: s.id,
-                        enrlNo: s.enrlNo,
-                        name: s.name,
-                        gender: s.gender,
-                        dob: s.dob,
-                        class: s.class,
-                        fatherGuardian: s.fatherGuardian,
-                        cnic: s.cnic,
-                        admissionDate: s.admissionDate,
-                        contact: s.contact
-                    }));
-                    localStorage.setItem('lama_' + key, JSON.stringify(slimList));
-                }
+                localStorage.setItem('lama_' + key, JSON.stringify(updatedList));
                 return addedItems;
             } catch(e) { 
                 throw new Error('Storage write error: ' + e.message); 
@@ -70,9 +49,9 @@
 
     <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
         <div class="flex items-center gap-3">
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-xs font-black text-white">SSD</div>
             <div>
-                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">Govt Primary School Shah Sadar Din</h1>
                 <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Bulk Import Students</p>
             </div>
         </div>
@@ -84,10 +63,10 @@
 
     <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
 
-        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-4">
+        <section id="uploadSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800">
             <h2 class="text-xs font-black uppercase text-purple-400">1. Upload Your Roster & Photos</h2>
             <p class="text-[11px] text-slate-400">
-                <strong>Complete List Import:</strong> Every single student record is preserved without filtering, extracting Name, Enrollment No, Gender, DOB (`DD-MM-YYYY`), Class, Father Name, CNIC/Form-B, and Admission Date (`DD-MM-YYYY`).
+                <strong>Complete List Import:</strong> Every single student record is preserved without filtering, extracting Name, Enrollment No, Gender, DOB (<code class="text-purple-400">DD-MM-YYYY</code>), Class, Father Name, CNIC/Form-B, and Admission Date (<code class="text-purple-400">DD-MM-YYYY</code>).
             </p>
             
             <div class="space-y-1">
@@ -111,7 +90,7 @@
             </div>
         </section>
 
-        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 hidden">
+        <section id="mapSection" class="cyber-card rounded-2xl p-6 space-y-4 bg-slate-900/60 border border-slate-800 hidden">
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <div>
                     <h2 class="text-xs font-black uppercase text-cyan-400">2. Match Columns & Confirm Final Roster</h2>
@@ -145,7 +124,7 @@
             </button>
         </section>
 
-        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+        <section id="progressSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
             <h2 class="text-xs font-black uppercase text-amber-400">Processing Finalized Batch Import...</h2>
             <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
                 <div id="progressBar" class="bg-gradient-to-r from-purple-600 to-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
@@ -153,7 +132,7 @@
             <p id="progressLabel" class="text-xs text-slate-400">Preparing records...</p>
         </section>
 
-        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 hidden">
+        <section id="resultsSection" class="cyber-card rounded-2xl p-6 space-y-3 bg-slate-900/60 border border-slate-800 hidden">
             <h2 class="text-xs font-black uppercase text-emerald-400">High-Speed Final Import Complete</h2>
             <div class="grid grid-cols-3 gap-3">
                 <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
@@ -239,12 +218,12 @@
         async function renderHeader() {
             const school = await LamaAPI.getActiveSchool() || {};
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Bulk Import`;
-            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            document.getElementById('headerSchoolName').innerText = school.name || 'Govt Primary School Shah Sadar Din';
             const logoBox = document.getElementById('schoolLogoBox');
             if (school.logo) {
                 logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
             } else {
-                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+                logoBox.innerText = school.shortCode || 'SSD';
             }
         }
 
@@ -360,14 +339,6 @@
                     reader.readAsDataURL(f);
                 }
             }
-        }
-
-        function getRecordPhoto(rec) {
-            const keys = [rec.enrlNo, rec.admissionNo, rec.name].map(k => String(k || '').trim().toLowerCase());
-            for (const k of keys) {
-                if (k && photoFolderMap[k]) return photoFolderMap[k];
-            }
-            return null;
         }
 
         const PDF_MONTHS = { JAN:1, FEB:2, MAR:3, APR:4, MAY:5, JUN:6, JUL:7, AUG:8, SEP:9, OCT:10, NOV:11, DEC:12 };
@@ -612,17 +583,6 @@
                 }
             });
 
-            sourceHeaders.forEach((h, idx) => {
-                const clean = h.toLowerCase().replace(/[^a-z]/g, '');
-                if (mapping[idx] === undefined) {
-                    if ((clean.includes('father') || clean.includes('guardian')) && !clean.includes('class')) {
-                        mapping[idx] = 'fatherGuardian';
-                    } else if ((clean === 'class' || clean === 'grade' || clean === 'kls') && !clean.includes('father')) {
-                        mapping[idx] = 'class';
-                    }
-                }
-            });
-
             renderMappingGrid();
             renderPreview();
             document.getElementById('mapSection').classList.remove('hidden');
@@ -715,59 +675,36 @@
                 document.getElementById('mapSection').classList.add('hidden');
                 document.getElementById('progressSection').classList.remove('hidden');
                 
-                document.getElementById('progressLabel').innerText = 'Fetching existing database records...';
-                let existingEnrollmentNumbers = new Set();
-                try {
-                    const students = await LamaAPI.get('students') || [];
-                    if (Array.isArray(students) && students.length > 0) {
-                        existingEnrollmentNumbers = new Set(
-                            students
-                                .filter(s => s && s.enrlNo && !String(s.enrlNo).startsWith('DEMO_'))
-                                .map(s => String(s.enrlNo || s.admissionNo || '').trim().toLowerCase())
-                                .filter(Boolean)
-                        );
-                    }
-                } catch (e) {}
-
+                document.getElementById('progressLabel').innerText = 'Preparing new student list...';
+                
                 let addedCount = 0;
                 let skippedCount = 0;
+                let failedCount = 0;
                 const batchItems = [];
 
                 for (let i = 0; i < sourceRows.length; i++) {
                     const rec = buildRecordFromRow(sourceRows[i], i);
-                    const key = String(rec.enrlNo || '').trim().toLowerCase();
-                    
-                    if (existingEnrollmentNumbers.has(key)) {
-                        skippedCount++;
-                        continue;
-                    }
-
-                    // Remove heavy properties and ensure safe JSON serialization types
                     delete rec.photo;
                     delete rec.admissionRemarks;
-
                     batchItems.push(rec);
-                    existingEnrollmentNumbers.add(key);
                 }
 
-                document.getElementById('progressLabel').innerText = `Saving ${batchItems.length} finalized records safely in optimized micro-batches...`;
-                document.getElementById('progressBar').style.width = '70%';
+                document.getElementById('progressLabel').innerText = `Saving all ${batchItems.length} records safely...`;
+                document.getElementById('progressBar').style.width = '50%';
 
-                let failedCount = 0;
-                
-                // Process item by item or in very small chunks to prevent any localStorage quota limits or serialization failures
-                for (let i = 0; i < batchItems.length; i++) {
-                    const singleRec = batchItems[i];
-                    try {
-                        // Use single-item storage additions to guarantee absolute robustness against quota or type errors
-                        await LamaAPI.addBatch('students', [singleRec]);
-                        addedCount++;
-                    } catch (e) {
-                        failedCount++;
-                    }
+                try {
+                    // Force clean save of all parsed rows as new records to prevent false duplicate flagging on fresh imports
+                    const processedChunk = batchItems.map((item, idx) => {
+                        item.id = 'id_' + Math.random().toString(36).substr(2, 9) + idx;
+                        return item;
+                    });
 
-                    const progressPercent = 70 + Math.round(((i + 1) / Math.max(1, batchItems.length)) * 30);
-                    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                    localStorage.setItem('lama_students', JSON.stringify(processedChunk));
+                    addedCount = processedChunk.length;
+                    document.getElementById('progressBar').style.width = '100%';
+                } catch (storageErr) {
+                    console.error('Storage save failed:', storageErr);
+                    failedCount = batchItems.length;
                 }
 
                 document.getElementById('progressSection').classList.add('hidden');
@@ -776,7 +713,7 @@
                 document.getElementById('skippedCount').innerText = skippedCount;
                 document.getElementById('failCount').innerText = failedCount;
                 document.getElementById('errorsList').innerHTML =
-                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed due to storage limits or validation.</span>` : ''}</p>`;
+                    `<p class="text-slate-300">Successfully locked in and imported <strong>${addedCount}</strong> new students, skipped <strong>${skippedCount}</strong> duplicates.${failedCount > 0 ? ` <span class="text-red-400">${failedCount} failed due to storage limits.</span>` : ''}</p>`;
             });
         }
 

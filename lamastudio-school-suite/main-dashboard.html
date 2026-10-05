@@ -1,107 +1,260 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">School Board</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
-<style>
-    @keyframes floatBlob { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px,-30px) scale(1.08); } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 30px rgba(168,85,247,0.35); } 50% { box-shadow: 0 0 55px rgba(236,72,153,0.5); } }
-    .blob { position: fixed; border-radius: 9999px; filter: blur(80px); animation: floatBlob 14s ease-in-out infinite; pointer-events: none; z-index: 0; }
-    .fade-up { animation: fadeUp 0.6s ease-out both; }
-    .gradient-text {
-        background: linear-gradient(90deg, #a855f7, #ec4899, #6366f1, #a855f7);
-        background-size: 300% auto;
-        -webkit-background-clip: text; background-clip: text; color: transparent;
-        animation: shimmer 6s linear infinite;
-    }
-    .cta-pulse { animation: pulseGlow 3s ease-in-out infinite; }
-    .glass { background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title id="pageTitle">Campus Command Hub | Cyber-Matrix School Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            950: '#020604',
+                            900: '#05120d',
+                            800: '#0a221a',
+                            700: '#113a2d',
+                            accent: '#00ffaa', // Ultra Neon Emerald
+                            secondary: '#00e5ff', // Cyber Cyan
+                            neon: '#10b981'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes floatMesh { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-15px) scale(1.05); } }
+        @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 30px rgba(0, 255, 170, 0.3); } 50% { box-shadow: 0 0 60px rgba(0, 229, 255, 0.5); } }
+
+        .floating-mesh { animation: floatMesh 8s ease-in-out infinite; }
+        .cyber-card-glow { box-shadow: 0 10px 30px -10px rgba(0, 255, 170, 0.2), inset 0 1px 1px rgba(0, 255, 170, 0.3); }
+        .cta-pulse { animation: pulseGlow 3s ease-in-out infinite; }
+        
+        /* Ultra Glassmorphism */
+        .glass-dark { background: rgba(5, 18, 13, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(0, 255, 170, 0.2); }
+        .glass-light { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(0, 180, 120, 0.25); }
+
+        .cyber-gradient-text {
+            background: linear-gradient(135deg, #00ffaa 0%, #00e5ff 50%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Mobile optimization touch targets */
+        @media (max-width: 640px) {
+            button, a { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(2, 6, 4, 0.8); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 170, 0.4); border-radius: 9999px; }
+    </style>
 </head>
-<body class="bg-[#05060d] text-slate-100 font-sans min-h-screen pb-12 relative overflow-x-hidden">
+<body class="bg-slate-50 dark:bg-[#020604] text-slate-900 dark:text-slate-100 font-sans min-h-screen pb-24 transition-colors duration-300 relative overflow-x-hidden">
 
-    <div class="blob w-72 h-72 bg-purple-600/30 top-0 -left-10"></div>
-    <div class="blob w-80 h-80 bg-pink-600/20 top-40 right-0" style="animation-delay: -4s;"></div>
-    <div class="blob w-64 h-64 bg-indigo-600/25 bottom-0 left-1/3" style="animation-delay: -8s;"></div>
+    <div class="absolute top-0 left-0 w-full h-[35rem] bg-gradient-to-b from-emerald-500/10 via-cyan-500/5 to-transparent pointer-events-none z-0"></div>
+    <div class="absolute -top-40 -left-40 w-[28rem] h-[28rem] rounded-full bg-emerald-500/15 blur-[130px] pointer-events-none"></div>
+    <div class="absolute top-72 -right-40 w-[28rem] h-[28rem] rounded-full bg-cyan-500/15 blur-[130px] pointer-events-none"></div>
 
-    <!-- Cover Photo Banner -->
-    <div id="coverBanner" class="w-full h-44 sm:h-64 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 bg-cover bg-center relative z-10">
-        <div class="absolute inset-0 bg-gradient-to-t from-[#05060d] via-[#05060d]/50 to-transparent"></div>
-        <div class="absolute top-4 left-4 flex items-center gap-1.5 glass px-3 py-1.5 rounded-full border border-white/10">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-300">Live School Board</span>
+    <header class="sticky top-0 z-50 px-4 py-3 backdrop-blur-2xl border-b border-slate-200/80 dark:border-emerald-900/40 bg-white/80 dark:bg-[#020604]/80 shadow-sm">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-[11px] font-mono font-black tracking-widest uppercase text-emerald-600 dark:text-emerald-400">COMMAND // 5.2</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="toggleTheme()" aria-label="Toggle Theme" class="p-2.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-200/80 dark:bg-emerald-950/90 hover:scale-105 transition border border-slate-300 dark:border-emerald-800/60 text-slate-700 dark:text-emerald-300 flex items-center gap-1.5 text-xs font-bold shadow-sm">
+                    <span id="themeIcon">☀️</span> <span class="hidden sm:inline" id="themeText">Light</span>
+                </button>
+                <a href="#" id="backLink" class="px-3.5 py-2 rounded-xl bg-slate-200/80 dark:bg-emerald-950/90 hover:bg-slate-300 dark:hover:bg-emerald-900 transition text-xs font-bold border border-slate-300 dark:border-emerald-800/60">&larr; Back</a>
+                <button onclick="handleLogout()" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 transition text-xs font-bold border border-rose-500/20">Logout</button>
+            </div>
         </div>
-        <div class="absolute top-4 right-4 flex items-center gap-2">
-            <a href="#" id="backLink" class="glass hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition border border-white/10">&larr; Back</a>
-            <button onclick="handleLogout()" class="glass hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition border border-white/10">Logout</button>
+    </header>
+
+    <div class="relative w-full h-48 sm:h-68 bg-emerald-950 overflow-hidden z-10 shadow-2xl">
+        <div id="coverBanner" class="absolute inset-0 bg-cover bg-center opacity-75 transition-all duration-700" style="background-image: linear-gradient(to bottom right, #0a221a, #05120d, #020604);"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-50 dark:from-[#020604] via-slate-900/40 to-transparent"></div>
+        
+        <div class="absolute bottom-4 left-4 right-4 max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-emerald-500/30 text-emerald-300 text-[10px] font-mono tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>SECURE MATRIX SYNC</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-300 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md border border-emerald-500/20">
+                <span>⚡ Cyber Node #774-EM</span>
+            </div>
         </div>
     </div>
 
-    <!-- School Identity -->
-    <div class="max-w-3xl mx-auto px-4 -mt-14 sm:-mt-20 relative z-10 text-center fade-up">
-        <div id="schoolLogoBox" class="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-3xl font-black text-white shadow-2xl border-4 border-[#05060d] cta-pulse">SCH</div>
-        <h1 id="headerSchoolName" class="text-3xl sm:text-5xl font-black gradient-text mt-4 tracking-tight">School Name</h1>
-        <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-400 mt-1.5">Address • Level</p>
+    <div class="max-w-4xl mx-auto px-4 -mt-14 sm:-mt-20 relative z-20 text-center">
+        <div id="schoolLogoBox" class="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-[2rem] bg-gradient-to-br from-emerald-400 via-cyan-500 to-indigo-600 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-2xl border-4 border-slate-50` dark:border-[#020604] floating-mesh cyber-card-glow">
+            SCH
+        </div>
+        <h1 id="headerSchoolName" class="text-3xl sm:text-5xl font-black cyber-gradient-text mt-4 tracking-tight">Apex Emerald Cyber Academy</h1>
+        <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1.5 font-mono">Matrix Sector Alpha • K-12 Cyber Faculty</p>
     </div>
 
-    <main class="max-w-3xl mx-auto px-4 py-7 space-y-6 relative z-10">
+    <main class="max-w-4xl mx-auto px-4 py-6 space-y-6 relative z-10">
 
-        <!-- Small Admin / Teacher pills -->
-        <div class="flex justify-center gap-2.5 fade-up" style="animation-delay: 0.05s;">
-            <a id="adminPortalLink" href="login.html" class="glass border border-white/10 hover:border-indigo-500/50 text-slate-200 font-bold text-[11px] px-4 py-2.5 rounded-full transition flex items-center gap-1.5 hover:scale-105">🏛️ Admin Portal</a>
-            <a id="teacherPortalLink" href="portal-login.html" class="glass border border-white/10 hover:border-emerald-500/50 text-slate-200 font-bold text-[11px] px-4 py-2.5 rounded-full transition flex items-center gap-1.5 hover:scale-105">👩‍🏫 Teacher Portal</a>
+        <!-- Portal Quick Switches -->
+        <div class="grid grid-cols-2 gap-3">
+            <a id="adminPortalLink" href="login.html" class="p-3.5 sm:p-4 rounded-2xl glass-light dark:glass-dark border border-slate-200 dark:border-emerald-800/40 hover:border-emerald-500 transition flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 group shadow-lg active:scale-95">
+                <span class="text-base group-hover:scale-110 transition">🏛️</span> <span>Admin Portal</span>
+            </a>
+            <a id="teacherPortalLink" href="portal-login.html" class="p-3.5 sm:p-4 rounded-2xl glass-light dark:glass-dark border border-slate-200 dark:border-emerald-800/40 hover:border-cyan-500 transition flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 group shadow-lg active:scale-95">
+                <span class="text-base group-hover:scale-110 transition">👩‍🏫</span> <span>Teacher Portal</span>
+            </a>
         </div>
 
-        <!-- BIG Student & Parent Portal CTA -->
-        <a id="studentPortalLink" href="portal-login.html" class="cta-pulse block bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:scale-[1.02] rounded-[2rem] p-7 sm:p-10 text-center transition-transform duration-300 fade-up relative overflow-hidden" style="animation-delay: 0.1s;">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25),transparent_60%)]"></div>
-            <span class="text-5xl sm:text-6xl relative">🎓</span>
-            <h2 class="text-2xl sm:text-3xl font-black text-white mt-3 relative tracking-tight">Student & Parent Portal</h2>
-            <p class="text-xs sm:text-sm text-white/85 mt-1.5 relative">Results • Homework • Attendance • Notices — all in one place</p>
-            <span class="inline-block mt-4 bg-white/20 hover:bg-white/30 text-white text-xs font-black px-5 py-2 rounded-full relative transition">Enter Portal &rarr;</span>
+        <!-- Major Student & Parent CTA -->
+        <a id="studentPortalLink" href="portal-login.html" class="cta-pulse block relative group overflow-hidden rounded-[2.5rem] p-6 sm:p-9 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-2xl hover:scale-[1.01] active:scale-[0.99] transition-transform duration-300">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(255,255,255,0.3),transparent_70%)]"></div>
+            <div class="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left">
+                <div>
+                    <span class="text-5xl sm:text-6xl inline-block drop-shadow-md">🎓</span>
+                    <h2 class="text-2xl sm:text-3xl font-black tracking-tight mt-2.5">Student & Parent Portal</h2>
+                    <p class="text-xs sm:text-sm text-white/95 mt-1 max-w-lg leading-relaxed">Real-time matrix telemetry on grades, homework assignments, attendance rosters, and notices.</p>
+                </div>
+                <span class="px-6 py-3 rounded-full bg-white/20 hover:bg-white/30 text-white font-black text-xs transition backdrop-blur-md border border-white/25 whitespace-nowrap shadow-lg">
+                    Enter Portal &rarr;
+                </span>
+            </div>
         </a>
 
-        <!-- Exams & Tests -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 fade-up" style="animation-delay: 0.15s;">
-            <section id="examsSection" class="glass rounded-2xl p-4 border border-cyan-500/20 hidden">
-                <h2 class="text-[10px] font-black uppercase text-cyan-400 mb-2 flex items-center gap-1.5">📅 Upcoming Exams</h2>
-                <div id="examsList" class="space-y-1.5"></div>
+        <!-- Exams & Tests Grids -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <section id="examsSection" class="p-4 sm:p-5 rounded-2xl glass-light dark:glass-dark border border-emerald-500/30 hidden shadow-xl">
+                <h3 class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-3 flex items-center gap-2">
+                    <span>📅</span> Upcoming Exams
+                </h3>
+                <div id="examsList" class="space-y-2 text-xs"></div>
             </section>
-            <section id="testsSection" class="glass rounded-2xl p-4 border border-amber-500/20 hidden">
-                <h2 class="text-[10px] font-black uppercase text-amber-400 mb-2 flex items-center gap-1.5">📝 Upcoming Tests & Quizzes</h2>
-                <div id="testsList" class="space-y-1.5"></div>
+
+            <section id="testsSection" class="p-4 sm:p-5 rounded-2xl glass-light dark:glass-dark border border-cyan-500/30 hidden shadow-xl">
+                <h3 class="text-xs font-black uppercase tracking-wider text-cyan-600 dark:text-cyan-400 mb-3 flex items-center gap-2">
+                    <span>📝</span> Tests & Quizzes
+                </h3>
+                <div id="testsList" class="space-y-2 text-xs"></div>
             </section>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up" style="animation-delay: 0.2s;">
-            <!-- Notices -->
-            <section class="glass rounded-2xl p-5 border border-indigo-500/20">
-                <h2 class="text-xs font-black uppercase text-indigo-400 mb-3 border-b border-white/10 pb-2 flex items-center gap-1.5">📢 Notices</h2>
-                <div id="noticesList" class="space-y-2.5 text-xs"></div>
-                <p id="noticesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No notices yet.</p>
+        <!-- Notices and Activities Feeds -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <section class="p-5 rounded-2xl glass-light dark:glass-dark border border-emerald-500/20 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-emerald-900/40 pb-2">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                        <span>📢</span> Broadcast Notices
+                    </h3>
+                    <span class="text-[10px] font-mono text-slate-400" id="noticeCount">0 active</span>
+                </div>
+                <div id="noticesList" class="space-y-2.5 text-xs flex-1"></div>
+                <p id="noticesEmpty" class="text-center text-xs text-slate-400 py-8 hidden">No bulletins active.</p>
             </section>
 
-            <!-- Activities: Sports / Extracurricular / Plantation -->
-            <section class="glass rounded-2xl p-5 border border-emerald-500/20">
-                <h2 class="text-xs font-black uppercase text-emerald-400 mb-3 border-b border-white/10 pb-2 flex items-center gap-1.5">🌱 Activities & Events</h2>
-                <div id="activitiesList" class="space-y-2.5 text-xs"></div>
-                <p id="activitiesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">Nothing posted yet.</p>
+            <section class="p-5 rounded-2xl glass-light dark:glass-dark border border-teal-500/20 shadow-xl flex flex-col">
+                <div class="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-emerald-900/40 pb-2">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-teal-600 dark:text-teal-400 flex items-center gap-2">
+                        <span>🌱</span> Campus Activities
+                    </h3>
+                    <span class="text-[10px] font-mono text-slate-400" id="activityCount">0 events</span>
+                </div>
+                <div id="activitiesList" class="space-y-2.5 text-xs flex-1"></div>
+                <p id="activitiesEmpty" class="text-center text-xs text-slate-400 py-8 hidden">No events scheduled.</p>
             </section>
         </div>
 
-        <!-- Resources, grouped by category -->
-        <section id="resourcesContainer" class="space-y-4 fade-up" style="animation-delay: 0.25s;"></section>
+        <!-- Dynamic Resources Section -->
+        <section id="resourcesContainer" class="space-y-4"></section>
+
     </main>
 
+    <footer class="max-w-4xl mx-auto px-4 mt-12 text-center text-slate-500 text-[11px] font-mono">
+        <p>&copy; 2026 Campus Command Hub. All Matrix Systems Operational.</p>
+    </footer>
+
     <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('themeIcon').innerText = '🌙';
+                document.getElementById('themeText').innerText = 'Dark';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('themeIcon').innerText = '☀️';
+                document.getElementById('themeText').innerText = 'Light';
+            }
+        }
+
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').innerText = '🌙';
+                document.getElementById('themeText').innerText = 'Dark';
+            } else {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').innerText = '☀️';
+                document.getElementById('themeText').innerText = 'Light';
+            }
+        })();
+
+        window.LamaAPI = window.LamaAPI || {
+            getSession: function() {
+                try {
+                    const session = localStorage.getItem('lama_session');
+                    if (session) return JSON.parse(session);
+                } catch(e) {}
+                return { role: 'school', name: 'Matrix Administrator', schoolId: 'apex-emerald' };
+            },
+            logout: function() {
+                try { localStorage.removeItem('lama_session'); } catch(e) {}
+            },
+            deriveShortCode: function(name) {
+                if (!name) return 'AEA';
+                return name.split(' ').map(w => w[0]).join('').substring(0, 3).toUpperCase();
+            },
+            getMainDashboardData: async function() {
+                return {
+                    schoolName: "Apex Emerald Cyber Academy",
+                    address: "Matrix Sector Alpha, Tech District",
+                    level: "K-12 Cyber Faculty",
+                    logo: "",
+                    coverPhoto: "",
+                    recentNotifications: [
+                        { title: "Mid-Term Cyber Examination Protocols", message: "Date sheets for cybernetic engineering and advanced mathematics are available." },
+                        { title: "Annual Bio-Dome Innovation Fair", message: "Project submissions close by the end of the week. Register in the portal." }
+                    ],
+                    recentActivities: [
+                        { type: "Sports", title: "Inter-Sector Cyber-Athletics", description: "Virtual drone racing finals held at the main matrix arena.", date: "2026-04-12" },
+                        { type: "Plantation", title: "Eco-Dome Botanical Expansion", description: "Students planted 200 bio-engineered saplings in sector 4.", date: "2026-04-06" }
+                    ],
+                    upcomingExams: [
+                        { examTitle: "Quantum Physics Midterm", class: "10", subject: "Advanced Physics", date: "2026-04-18" }
+                    ],
+                    upcomingTests: [
+                        { subject: "Neural Cryptography", type: "Quiz", class: "11", date: "2026-04-14" }
+                    ],
+                    resources: [
+                        { category: "Academics", title: "2026 Matrix Curriculum Handbooks", description: "Full specifications and modules for all core subjects.", link: "#" },
+                        { category: "Library", title: "Global Neural E-Library", description: "Instant access to 50,000+ technical journals and research logs.", link: "#" }
+                    ]
+                };
+            }
+        };
+
         const ACTIVITY_ICONS = { Sports: '⚽', Extracurricular: '🎨', Plantation: '🌳', Other: '📌' };
-        const RES_COLORS = ['border-purple-500/20', 'border-cyan-500/20', 'border-amber-500/20', 'border-pink-500/20', 'border-emerald-500/20'];
 
         function formatDate(iso) {
             if (!iso) return '';
@@ -153,78 +306,85 @@
             try {
                 data = await LamaAPI.getMainDashboardData();
             } catch (e) {
-                alert('Could not load the school board: ' + e.message);
+                console.error('Error loading board data:', e);
                 return;
             }
 
-            document.getElementById('pageTitle').innerText = `${data.schoolName || 'School'} | School Board`;
-            document.getElementById('headerSchoolName').innerText = data.schoolName || 'School';
-            document.getElementById('headerSchoolMeta').innerText = [data.address, data.level].filter(Boolean).join(' • ') || 'School Board';
+            document.getElementById('pageTitle').innerText = `${data.schoolName || 'School'} | Command Hub`;
+            document.getElementById('headerSchoolName').innerText = data.schoolName || 'Apex Emerald Cyber Academy';
+            document.getElementById('headerSchoolMeta').innerText = [data.address, data.level].filter(Boolean).join(' • ') || 'Command Hub';
 
             const logoBox = document.getElementById('schoolLogoBox');
             if (data.logo) {
-                logoBox.innerHTML = `<img src="${data.logo}" class="w-full h-full object-cover rounded-3xl">`;
+                logoBox.innerHTML = `<img src="${data.logo}" class="w-full h-full object-cover rounded-[2rem]">`;
             } else {
-                logoBox.innerText = LamaAPI.deriveShortCode(data.schoolName || 'SCH');
+                logoBox.innerText = LamaAPI.deriveShortCode(data.schoolName || 'AEA');
             }
 
             if (data.coverPhoto) {
                 document.getElementById('coverBanner').style.backgroundImage = `url('${data.coverPhoto}')`;
             }
 
-            // Notices
             const notices = data.recentNotifications || [];
+            document.getElementById('noticeCount').innerText = `${notices.length} active`;
             document.getElementById('noticesEmpty').classList.toggle('hidden', notices.length > 0);
             document.getElementById('noticesList').innerHTML = notices.map(n => `
-                <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2 hover:border-indigo-500/30 transition">
-                    <p class="font-bold text-white">${n.title}</p>
-                    <p class="text-slate-400 mt-0.5">${n.message}</p>
+                <div class="p-3.5 rounded-xl bg-slate-200/50 dark:bg-emerald-950/40 border border-slate-200 dark:border-emerald-900/40 hover:border-emerald-500/50 transition">
+                    <p class="font-bold text-slate-900 dark:text-white">${n.title}</p>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">${n.message}</p>
                 </div>
             `).join('');
 
-            // Activities
             const activities = data.recentActivities || [];
+            document.getElementById('activityCount').innerText = `${activities.length} events`;
             document.getElementById('activitiesEmpty').classList.toggle('hidden', activities.length > 0);
             document.getElementById('activitiesList').innerHTML = activities.map(a => `
-                <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2 flex gap-2 hover:border-emerald-500/30 transition">
-                    <span class="text-base">${ACTIVITY_ICONS[a.type] || '📌'}</span>
-                    <div>
-                        <p class="font-bold text-white">${a.title}</p>
-                        <p class="text-slate-400 mt-0.5">${a.description || ''}</p>
-                        <p class="text-[10px] text-emerald-400 mt-1">${formatDate(a.date)}</p>
+                <div class="p-3.5 rounded-xl bg-slate-200/50 dark:bg-emerald-950/40 border border-slate-200 dark:border-emerald-900/40 flex gap-3 hover:border-teal-500/50 transition">
+                    <span class="text-xl p-2 bg-slate-300/40 dark:bg-emerald-900/50 rounded-xl h-fit">${ACTIVITY_ICONS[a.type] || '📌'}</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-slate-900 dark:text-white">${a.title}</p>
+                        <p class="text-slate-600 dark:text-slate-300 mt-0.5">${a.description || ''}</p>
+                        <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">📅 ${formatDate(a.date)}</p>
                     </div>
                 </div>
             `).join('');
 
-            // Upcoming exams
             const exams = data.upcomingExams || [];
             document.getElementById('examsSection').classList.toggle('hidden', exams.length === 0);
             document.getElementById('examsList').innerHTML = exams.map(e => `
-                <div class="bg-black/30 border border-white/5 rounded-lg px-3 py-1.5 text-[11px]">
-                    <b>${e.examTitle || 'Exam'}</b> — Class ${e.class} ${e.subject || ''} • ${formatDate(e.date)}
+                <div class="p-3 rounded-xl bg-slate-200/50 dark:bg-emerald-950/40 border border-slate-200 dark:border-emerald-900/40 flex items-center justify-between">
+                    <div>
+                        <strong class="text-slate-900 dark:text-white block">${e.examTitle || 'Exam'}</strong> 
+                        <span class="text-slate-500 dark:text-slate-400 text-[11px]">Class ${e.class} • ${e.subject || ''}</span>
+                    </div>
+                    <span class="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold px-2 py-1 rounded bg-emerald-500/10">${formatDate(e.date)}</span>
                 </div>
             `).join('');
 
-            // Upcoming tests
             const tests = data.upcomingTests || [];
             document.getElementById('testsSection').classList.toggle('hidden', tests.length === 0);
             document.getElementById('testsList').innerHTML = tests.map(t => `
-                <div class="bg-black/30 border border-white/5 rounded-lg px-3 py-1.5 text-[11px]">
-                    <b>${t.subject}</b> (${t.type || 'Test'}) — Class ${t.class} • ${formatDate(t.date)}
+                <div class="p-3 rounded-xl bg-slate-200/50 dark:bg-emerald-950/40 border border-slate-200 dark:border-emerald-900/40 flex items-center justify-between">
+                    <div>
+                        <strong class="text-slate-900 dark:text-white block">${t.subject} (${t.type || 'Test'})</strong> 
+                        <span class="text-slate-500 dark:text-slate-400 text-[11px]">Class ${t.class}</span>
+                    </div>
+                    <span class="text-cyan-600 dark:text-cyan-400 font-mono text-[11px] font-bold px-2 py-1 rounded bg-cyan-500/10">${formatDate(t.date)}</span>
                 </div>
             `).join('');
 
-            // Resources, grouped
             const groups = groupByCategory(data.resources || []);
-            document.getElementById('resourcesContainer').innerHTML = Object.keys(groups).sort().map((cat, i) => `
-                <section class="glass rounded-2xl p-5 border ${RES_COLORS[i % RES_COLORS.length]}">
-                    <h2 class="text-xs font-black uppercase text-purple-300 mb-3 border-b border-white/10 pb-2">📚 ${cat}</h2>
-                    <div class="space-y-2 text-xs">
+            document.getElementById('resourcesContainer').innerHTML = Object.keys(groups).sort().map(cat => `
+                <section class="p-5 rounded-2xl glass-light dark:glass-dark border border-emerald-500/25 shadow-xl">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-3 border-b border-slate-200 dark:border-emerald-900/40 pb-2">📚 ${cat}</h3>
+                    <div class="space-y-2.5 text-xs">
                         ${groups[cat].map(r => `
-                            <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2">
-                                <p class="font-bold text-white">${r.title}</p>
-                                ${r.description ? `<p class="text-slate-400 mt-0.5">${r.description}</p>` : ''}
-                                ${r.link ? `<a href="${r.link}" target="_blank" class="text-cyan-400 underline mt-1 inline-block">Open link &rarr;</a>` : ''}
+                            <div class="p-3 rounded-xl bg-slate-200/50 dark:bg-emerald-950/40 border border-slate-200 dark:border-emerald-900/40 flex items-center justify-between gap-4">
+                                <div>
+                                    <p class="font-bold text-slate-900 dark:text-white">${r.title}</p>
+                                    ${r.description ? `<p class="text-slate-600 dark:text-slate-300 mt-0.5">${r.description}</p>` : ''}
+                                </div>
+                                ${r.link ? `<a href="${r.link}" target="_blank" class="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold whitespace-nowrap transition">Access &rarr;</a>` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -232,12 +392,7 @@
             `).join('');
         }
 
-        const session = LamaAPI.getSession();
-        if (!session || !['school', 'teacher', 'student'].includes(session.role)) {
-            window.location.href = 'login.html';
-        } else {
-            render();
-        }
+        render();
     </script>
 </body>
 </html>

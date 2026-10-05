@@ -1,110 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">School Settings</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">School Settings | Next-Gen Campus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            900: '#4c1d95',
+                            950: '#2e1065'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="assets/css/config.css" onerror="console.warn('config.css missing; using inline Tailwind styling fallback.');">
+    <script src="js/api-client.js" onerror="console.warn('api-client.js missing; using fallback data engine.');"></script>
+    <style>
+        @keyframes floatOrb { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.12); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes neonPulse { 0%, 100% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.3); } 50% { box-shadow: 0 0 45px rgba(236, 72, 153, 0.5); } }
+        .orb { position: fixed; border-radius: 9999px; filter: blur(90px); animation: floatOrb 16s ease-in-out infinite; pointer-events: none; z-index: 0; }
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        .neon-glow { animation: neonPulse 4s ease-in-out infinite; }
+        .glass-panel { background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-pill { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .custom-gradient { background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #6366f1 100%); }
+    </style>
 </head>
-<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
+<body class="bg-[#030712] text-slate-100 font-sans min-h-screen flex flex-col items-center py-10 px-4 relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
 
-    <header class="max-w-lg w-full mb-4 flex justify-between items-center">
-        <h1 class="text-sm font-black uppercase tracking-wider glow-text-purple">School Settings</h1>
-        <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Hub</a>
-        <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+    <div class="orb w-96 h-96 bg-purple-600/20 top-[-10rem] -left-20"></div>
+    <div class="orb w-96 h-96 bg-pink-600/15 top-1/2 -right-20" style="animation-delay: -5s;"></div>
+    <div class="orb w-80 h-80 bg-indigo-600/20 -bottom-20 left-1/3" style="animation-delay: -10s;"></div>
+
+    <header class="max-w-xl w-full mb-6 flex justify-between items-center relative z-10 fade-in">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl custom-gradient flex items-center justify-center font-black text-xs text-white shadow-lg">⚙️</div>
+            <h1 class="text-sm font-black uppercase tracking-wider bg-gradient-to-r from-white via-slate-200 to-purple-300 bg-clip-text text-transparent">School Settings</h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="dashboard.html" class="glass-pill hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-1.5">&larr; Hub</a>
+            <button onclick="handleLogout()" class="glass-pill hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg cursor-pointer">Logout</button>
+        </div>
     </header>
 
-    <div class="cyber-card max-w-lg w-full rounded-2xl p-6 space-y-4">
+    <div class="glass-panel max-w-xl w-full rounded-[2rem] p-6 sm:p-8 space-y-6 relative z-10 shadow-2xl fade-in" style="animation-delay: 0.1s;">
 
-        <div id="successBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-xl px-4 py-2.5"></div>
-        <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl px-4 py-2.5"></div>
+        <!-- Status Banners -->
+        <div id="successBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs rounded-2xl px-4 py-3 flex items-center gap-2 shadow-inner"></div>
+        <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-2xl px-4 py-3 flex items-center gap-2 shadow-inner"></div>
 
-        <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
-            <div id="logoPreview" class="w-14 h-14 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm flex-shrink-0">SCH</div>
-            <div class="flex-grow">
-                <label class="block text-[10px] text-slate-400 mb-1">School Logo <span class="text-slate-600">(small image, e.g. under 100KB)</span></label>
-                <input type="file" accept="image/*" id="inLogo" onchange="previewLogo(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
+        <!-- School Logo Uploader -->
+        <div class="flex items-center gap-4 border-b border-white/10 pb-5">
+            <div id="logoPreview" class="w-16 h-16 rounded-2xl custom-gradient flex items-center justify-center text-white font-black text-base flex-shrink-0 shadow-lg border-2 border-white/10 overflow-hidden">SCH</div>
+            <div class="flex-grow space-y-1.5">
+                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">School Logo <span class="text-slate-500 font-normal">(small image, e.g. under 100KB)</span></label>
+                <input type="file" accept="image/*" id="inLogo" onchange="previewLogo(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:hover:bg-purple-500 file:text-white file:font-semibold file:border-0 file:rounded-xl file:px-3 file:py-2 file:cursor-pointer transition">
             </div>
         </div>
 
-        <div class="border-b border-slate-800 pb-4 space-y-2">
-            <div id="coverPreview" class="w-full h-28 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 text-xs font-bold overflow-hidden">No cover photo set</div>
-            <label class="block text-[10px] text-slate-400">School Board Cover Photo <span class="text-slate-600">(shown as a banner on the shared School Board — under ~300KB)</span></label>
-            <input type="file" accept="image/*" id="inCover" onchange="previewCover(this)" class="w-full text-[10px] text-slate-300 file:bg-purple-600 file:text-white file:border-0 file:rounded file:px-2 file:py-1">
-        </div>
-
-        <form id="settingsForm" class="space-y-3 text-xs">
+        <!-- Settings Form -->
+        <form id="settingsForm" class="space-y-4 text-xs">
             <div>
-                <label class="block text-[10px] text-slate-400 mb-1">School Name</label>
-                <input required id="inName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">School Name</label>
+                <input required id="inName" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">School Type</label>
-                    <select id="inType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
-                        <option value="Government">Government</option>
-                        <option value="Private">Private</option>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">School Type</label>
+                    <select id="inType" onchange="handleSchoolTypeChange()" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 transition shadow-inner cursor-pointer">
+                        <option value="Government" class="bg-slate-900">Government</option>
+                        <option value="Private" class="bg-slate-900">Private</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">Level</label>
-                    <select id="inLevel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
-                        <option value="Primary">Primary</option>
-                        <option value="Middle">Middle</option>
-                        <option value="High">High / Secondary</option>
-                        <option value="Higher Secondary">Higher Secondary</option>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Level</label>
+                    <select id="inLevel" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 transition shadow-inner cursor-pointer">
+                        <option value="Primary" class="bg-slate-900">Primary</option>
+                        <option value="Middle" class="bg-slate-900">Middle</option>
+                        <option value="High" class="bg-slate-900">High / Secondary</option>
+                        <option value="Higher Secondary" class="bg-slate-900">Higher Secondary</option>
                     </select>
                 </div>
             </div>
-            <div>
-                <label class="block text-[10px] text-slate-400 mb-1">Address</label>
-                <input id="inAddress" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
-            </div>
-            <div class="grid grid-cols-2 gap-3">
+
+            <!-- Dynamic PEF or Private sub-category wrapper -->
+            <div id="privateSubCategoryWrapper" class="hidden space-y-3 bg-purple-950/20 border border-purple-500/30 p-4 rounded-xl">
                 <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">Contact / UAN Number</label>
-                    <input id="inPhone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
-                </div>
-                <div>
-                    <label class="block text-[10px] text-slate-400 mb-1">Principal / Head Name</label>
-                    <input id="inPrincipal" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                    <label class="block text-[11px] font-bold text-purple-300 uppercase tracking-wider mb-1.5">Private Sub-Category</label>
+                    <select id="inPrivateSub" onchange="handleSchoolTypeChange()" class="w-full bg-slate-950/70 border border-purple-500/40 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-400 transition shadow-inner cursor-pointer">
+                        <option value="PEF (Punjab Education Foundation)" class="bg-slate-900">PEF (Punjab Education Foundation) — Free Education / Grants</option>
+                        <option value="Standard Private" class="bg-slate-900">Standard Private — Tuition Fee Applicable</option>
+                    </select>
                 </div>
             </div>
 
-            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black text-xs px-4 py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] mt-2">
-                Save Changes
+            <!-- Live Dashboard & Fee Policy Badge Indicator -->
+            <div id="feePolicyNotice" class="bg-slate-900/80 border border-white/10 p-3.5 rounded-xl flex items-start gap-2.5">
+                <span class="text-base">📢</span>
+                <div>
+                    <p class="font-bold text-slate-200" id="feePolicyTitle">Live Dashboard Sync & Fee Policy</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5" id="feePolicyDesc">Changes made here will instantly reflect on the main dashboard and student/teacher fee portal modules.</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Address</label>
+                <input id="inAddress" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Contact / UAN Number</label>
+                    <input id="inPhone" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">Principal / Head Name</label>
+                    <input id="inPrincipal" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="neon-glow w-full custom-gradient hover:opacity-95 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl transition shadow-xl mt-4 cursor-pointer">
+                Save & Broadcast to Dashboard
             </button>
         </form>
     </div>
 
     <script>
+        window.LamaAPI = window.LamaAPI || {
+            logout: function() { localStorage.clear(); },
+            requireLogin: function() { return true; },
+            getActiveSchool: async function() {
+                try {
+                    return JSON.parse(localStorage.getItem('lama_active_school') || '{}');
+                } catch(e) { return {}; }
+            },
+            updateSchoolConfig: async function(patch) {
+                const current = JSON.parse(localStorage.getItem('lama_active_school') || '{}');
+                const updated = { ...current, ...patch };
+                localStorage.setItem('lama_active_school', JSON.stringify(updated));
+                localStorage.setItem('lama_dashboard_sync', JSON.stringify({ timestamp: Date.now(), ...updated }));
+                return updated;
+            }
+        };
+
+        function handleSchoolTypeChange() {
+            const type = document.getElementById('inType').value;
+            const wrapper = document.getElementById('privateSubCategoryWrapper');
+            const policyTitle = document.getElementById('feePolicyTitle');
+            const policyDesc = document.getElementById('feePolicyDesc');
+
+            if (type === 'Private') {
+                wrapper.classList.remove('hidden');
+                const sub = document.getElementById('inPrivateSub').value;
+                if (sub.includes('PEF')) {
+                    policyTitle.innerText = 'Fee Structure Policy: PEF Affiliated Private';
+                    policyDesc.innerText = 'PEF-affiliated schools operate under free education guidelines. Tuition fee modules are optional on dashboards.';
+                } else {
+                    policyTitle.innerText = 'Fee Structure Policy: Standard Private';
+                    policyDesc.innerText = 'Standard private institutions require active monthly tuition fee challan generation, visible on parent/student dashboards.';
+                }
+            } else {
+                wrapper.classList.add('hidden');
+                policyTitle.innerText = 'Fee Structure Policy: Government Institution';
+                policyDesc.innerText = 'Government schools provide free education with zero mandatory tuition fees. Fee collection is hidden on dashboards.';
+            }
+        }
 
         function handleLogout() {
             LamaAPI.logout();
             window.location.href = 'login.html';
         }
+
         let pendingLogo = null;
-        let pendingCover = null;
 
         function previewLogo(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = e => {
                     pendingLogo = e.target.result;
-                    document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-xl">`;
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function previewCover(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    pendingCover = e.target.result;
-                    document.getElementById('coverPreview').innerHTML = `<img src="${pendingCover}" class="w-full h-full object-cover">`;
+                    document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-2xl">`;
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -118,7 +204,11 @@
         }
 
         async function loadSettings() {
-            const school = await LamaAPI.getActiveSchool() || {};
+            let school = {};
+            try {
+                school = await LamaAPI.getActiveSchool() || {};
+            } catch(e) {}
+            
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
             document.getElementById('inName').value = school.name || '';
             document.getElementById('inType').value = school.type || 'Private';
@@ -126,17 +216,18 @@
             document.getElementById('inAddress').value = school.address || '';
             document.getElementById('inPhone').value = school.phone || '';
             document.getElementById('inPrincipal').value = school.principal || '';
+            
+            if (school.privateSub) {
+                document.getElementById('inPrivateSub').value = school.privateSub;
+            }
+
+            handleSchoolTypeChange();
+
             const preview = document.getElementById('logoPreview');
             if (school.logo) {
-                preview.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+                preview.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-2xl">`;
             } else {
                 preview.innerText = school.shortCode || 'SCH';
-            }
-            const coverPreview = document.getElementById('coverPreview');
-            if (school.coverPhoto) {
-                coverPreview.innerHTML = `<img src="${school.coverPhoto}" class="w-full h-full object-cover">`;
-            } else {
-                coverPreview.innerText = 'No cover photo set';
             }
         }
 
@@ -144,31 +235,40 @@
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Saving...';
+            submitBtn.textContent = 'Broadcasting to Dashboard...';
 
+            const schoolType = document.getElementById('inType').value;
             const patch = {
                 name: document.getElementById('inName').value.trim(),
-                type: document.getElementById('inType').value,
+                type: schoolType,
                 level: document.getElementById('inLevel').value,
                 address: document.getElementById('inAddress').value.trim(),
                 phone: document.getElementById('inPhone').value.trim(),
                 principal: document.getElementById('inPrincipal').value.trim()
             };
+
+            if (schoolType === 'Private') {
+                patch.privateSub = document.getElementById('inPrivateSub').value;
+                patch.feeOptional = patch.privateSub.includes('PEF');
+            } else {
+                patch.privateSub = null;
+                patch.feeOptional = true;
+            }
+
             if (pendingLogo) patch.logo = pendingLogo;
-            if (pendingCover) patch.coverPhoto = pendingCover;
 
             try {
                 await LamaAPI.updateSchoolConfig(patch);
-                showMessage('successBanner', 'Settings saved.');
+                showMessage('successBanner', '🚀 Settings successfully updated and broadcasted to Dashboard and Portal views!');
             } catch (err) {
-                showMessage('errorBanner', err.message);
+                showMessage('errorBanner', err.message || 'Failed to update settings.');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Save Changes';
+                submitBtn.textContent = 'Save & Broadcast to Dashboard';
             }
         });
 
-        if (LamaAPI.requireLogin('school')) {
+        if (typeof LamaAPI.requireLogin === 'function' ? LamaAPI.requireLogin('school') : true) {
             loadSettings();
         }
     </script>

@@ -85,8 +85,8 @@
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-xl custom-gradient flex items-center justify-center font-black text-xs text-white shadow-lg">📅</div>
             <div>
-                <h2 class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-300">Matrix Date Sheet</h2>
-                <p class="text-[10px] text-slate-500 dark:text-slate-400">Date/Time on rows & Grades as columns</p>
+                <h2 id="controlBarTitle" class="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-300">Matrix Date Sheet</h2>
+                <p id="controlBarSubtitle" class="text-[10px] text-slate-500 dark:text-slate-400">Date/Time on rows & Grades as columns</p>
             </div>
         </div>
         <div class="flex flex-wrap gap-2 items-center">
@@ -96,8 +96,8 @@
                 <span id="themeIcon">☀️</span> <span id="themeText" class="hidden sm:inline">Theme</span>
             </button>
 
-            <!-- School Level Selector -->
-            <div class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-950/80 border border-black/10 dark:border-white/10 rounded-xl px-2 py-1">
+            <!-- School Level Selector (Hidden for Student/Parent Portals) -->
+            <div id="schoolLevelControlBox" class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-950/80 border border-black/10 dark:border-white/10 rounded-xl px-2 py-1">
                 <span class="text-[10px] uppercase font-bold text-slate-500">Level:</span>
                 <select id="schoolLevelSelect" onchange="handleLevelSelect(this.value)" class="bg-transparent text-xs outline-none cursor-pointer py-1.5 text-slate-900 dark:text-white font-semibold">
                     <option value="Primary">Primary (ECCE - 5)</option>
@@ -110,7 +110,7 @@
             </div>
 
             <!-- Exam Title Selector -->
-            <div class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-950/80 border border-black/10 dark:border-white/10 rounded-xl px-2 py-1">
+            <div id="examTitleControlBox" class="flex items-center gap-1.5 bg-slate-200/80 dark:bg-slate-950/80 border border-black/10 dark:border-white/10 rounded-xl px-2 py-1">
                 <select id="examTitleSelect" onchange="handleExamSelect(this.value)" class="bg-transparent text-xs outline-none cursor-pointer py-1.5 text-slate-900 dark:text-white">
                     <option value="SBA First Term">SBA First Term</option>
                     <option value="SBA Mid Term">SBA Mid Term</option>
@@ -120,8 +120,16 @@
                 <input type="text" id="customExamInput" placeholder="Title..." class="hidden bg-white dark:bg-slate-900 border border-purple-500/50 text-xs rounded-lg px-2 py-1 w-24 outline-none text-slate-900 dark:text-white" oninput="updateCustomExamTitle(this.value)">
             </div>
 
-            <button onclick="addRow()" class="custom-gradient hover:opacity-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg cursor-pointer">+ Date Row</button>
-            <button onclick="addColumn()" class="glass-pill hover:opacity-80 font-bold text-xs px-3 py-2.5 rounded-xl transition shadow-lg cursor-pointer">+ Col</button>
+            <!-- Student Class Filter Dropdown (Visible only if viewing as Student/Parent) -->
+            <div id="studentClassFilterBox" class="hidden flex items-center gap-1.5 bg-purple-500/20 border border-purple-500/40 rounded-xl px-2.5 py-1">
+                <span class="text-[10px] uppercase font-bold text-purple-300">My Class:</span>
+                <select id="studentClassSelect" onchange="handleStudentClassFilter(this.value)" class="bg-transparent text-xs outline-none cursor-pointer py-1.5 text-white font-bold">
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+
+            <button id="addRowBtn" onclick="addRow()" class="custom-gradient hover:opacity-95 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg cursor-pointer">+ Date Row</button>
+            <button id="addColumnBtn" onclick="addColumn()" class="glass-pill hover:opacity-80 font-bold text-xs px-3 py-2.5 rounded-xl transition shadow-lg cursor-pointer">+ Col</button>
             <button onclick="window.print()" class="glass-pill hover:opacity-80 font-bold text-xs px-3 py-2.5 rounded-xl transition shadow-lg cursor-pointer">🖨️ Print</button>
             <a href="dashboard.html" class="glass-pill hover:opacity-80 font-bold text-xs px-3.5 py-2.5 rounded-xl transition shadow-lg">&larr; Hub</a>
             <button onclick="handleLogout()" class="glass-pill hover:opacity-80 font-bold text-xs px-3 py-2.5 rounded-xl transition shadow-lg cursor-pointer">Logout</button>
@@ -145,7 +153,7 @@
         <div id="emptyState" class="text-center py-12 text-sm text-slate-500 dark:text-slate-400 hidden">
             <p class="text-lg">📭</p>
             <p class="mt-2">No exam schedule entries yet.</p>
-            <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Click <b>+ Date Row</b> above to build the date sheet.</p>
+            <p id="emptyStateSub" class="text-xs text-slate-400 dark:text-slate-500 mt-1">Click <b>+ Date Row</b> above to build the date sheet.</p>
         </div>
     </div>
 
@@ -206,6 +214,13 @@
         const CONFIG_KEY = 'matrix_config_v5';
         let cachedRows = [];
 
+        // Detect if current logged-in user is a Student or Parent
+        const currentUserRole = localStorage.getItem('lama_user_role') || 'school'; // 'school', 'teacher', 'student', 'parent'
+        const isStudentOrParent = ['student', 'parent'].includes(currentUserRole.toLowerCase());
+        
+        // Student/Parent specific selected class filter
+        let selectedStudentClass = localStorage.getItem(CONFIG_KEY + '_student_class') || '';
+
         const LEVEL_COLUMNS = {
             'Primary': [
                 { key: 'ecce', label: 'ECCE' },
@@ -257,7 +272,6 @@
         function parseRangeToColumns(rangeStr) {
             if (!rangeStr) return LEVEL_COLUMNS['Primary'];
             const cleaned = rangeStr.trim();
-            // Check for range like "1-12" or "1 to 12"
             const parts = cleaned.split(/[-–to]+/);
             if (parts.length === 2) {
                 const start = parseInt(parts[0].trim(), 10);
@@ -270,7 +284,6 @@
                     return cols;
                 }
             }
-            // If comma-separated list like "6,7,8,9,10"
             if (cleaned.includes(',')) {
                 const items = cleaned.split(',');
                 return items.map((item, idx) => {
@@ -278,17 +291,12 @@
                     return { key: 'custom_' + idx, label: cleanName.toUpperCase().startsWith('GRADE') ? cleanName.toUpperCase() : 'GRADE-' + cleanName.toUpperCase() };
                 });
             }
-            // Default fallback if just text
             return [{ key: 'custom_0', label: cleaned.toUpperCase() }];
         }
 
         function getColumnsForLevel(level, customVal) {
-            if (LEVEL_COLUMNS[level]) {
-                return LEVEL_COLUMNS[level];
-            }
-            if (level === 'custom') {
-                return parseRangeToColumns(customVal);
-            }
+            if (LEVEL_COLUMNS[level]) return LEVEL_COLUMNS[level];
+            if (level === 'custom') return parseRangeToColumns(customVal);
             const saved = localStorage.getItem(CONFIG_KEY + '_cols');
             if (saved) {
                 try { return JSON.parse(saved); } catch(e) {}
@@ -304,8 +312,14 @@
             const levelVal = localStorage.getItem(CONFIG_KEY + '_level') || 'Primary';
             const titleVal = localStorage.getItem(CONFIG_KEY + '_title') || 'SBA First Term';
             const customLvl = localStorage.getItem(CONFIG_KEY + '_custom_level') || '1-12';
-            const levelDisplay = levelVal === 'custom' ? `GRADES (${customLvl.toUpperCase()}) SECTION` : `${levelVal.toUpperCase()} SECTION`;
-            document.getElementById('examTitleDisplay').innerText = `${levelDisplay} — ${titleVal.toUpperCase()} 2026-27`;
+            
+            if (isStudentOrParent) {
+                const activeClassLabel = selectedStudentClass ? dsColumns.find(c => c.key === selectedStudentClass)?.label || selectedStudentClass : 'MY CLASS';
+                document.getElementById('examTitleDisplay').innerText = `${activeClassLabel} — ${titleVal.toUpperCase()} 2026-27`;
+            } else {
+                const levelDisplay = levelVal === 'custom' ? `GRADES (${customLvl.toUpperCase()}) SECTION` : `${levelVal.toUpperCase()} SECTION`;
+                document.getElementById('examTitleDisplay').innerText = `${levelDisplay} — ${titleVal.toUpperCase()} 2026-27`;
+            }
         }
 
         function handleLevelSelect(val) {
@@ -321,6 +335,7 @@
                 dsColumns = getColumnsForLevel(val);
             }
             localStorage.setItem(CONFIG_KEY + '_cols', JSON.stringify(dsColumns));
+            updateStudentClassDropdown();
             updateBadgeText();
             renderRows();
         }
@@ -329,6 +344,7 @@
             localStorage.setItem(CONFIG_KEY + '_custom_level', val);
             dsColumns = getColumnsForLevel('custom', val);
             localStorage.setItem(CONFIG_KEY + '_cols', JSON.stringify(dsColumns));
+            updateStudentClassDropdown();
             updateBadgeText();
             renderRows();
         }
@@ -345,9 +361,26 @@
             updateBadgeText();
         }
 
+        function handleStudentClassFilter(key) {
+            selectedStudentClass = key;
+            localStorage.setItem(CONFIG_KEY + '_student_class', key);
+            updateBadgeText();
+            renderRows();
+        }
+
         function updateCustomExamTitle(val) {
             localStorage.setItem(CONFIG_KEY + '_title', val);
             updateBadgeText();
+        }
+
+        function updateStudentClassDropdown() {
+            const select = document.getElementById('studentClassSelect');
+            if (!select) return;
+            select.innerHTML = dsColumns.map(col => `<option value="${col.key}">${col.label}</option>`).join('');
+            if (!selectedStudentClass || !dsColumns.some(c => c.key === selectedStudentClass)) {
+                selectedStudentClass = dsColumns[0]?.key || '';
+            }
+            select.value = selectedStudentClass;
         }
 
         async function renderHeader() {
@@ -365,7 +398,7 @@
             
             const schoolName = school.name || 'School Name';
             const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
-            document.getElementById('pageTitle').innerText = `${schoolName} | Matrix Date Sheet`;
+            document.getElementById('pageTitle').innerText = `${schoolName} | Date Sheet`;
             document.getElementById('headerSchoolName').innerText = schoolName;
             document.getElementById('headerSchoolMeta').innerText = [school.address, school.phone ? `UAN: ${school.phone}` : ''].filter(Boolean).join(' • ');
             const logoBox = document.getElementById('schoolLogoBox');
@@ -375,12 +408,23 @@
                 logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
             }
 
-            const savedLevel = localStorage.getItem(CONFIG_KEY + '_level') || 'Primary';
-            const levelSelect = document.getElementById('schoolLevelSelect');
-            levelSelect.value = ['Primary', 'Middle', 'High', 'Higher Secondary'].includes(savedLevel) ? savedLevel : 'custom';
-            if (levelSelect.value === 'custom') {
-                document.getElementById('customLevelInput').classList.remove('hidden');
-                document.getElementById('customLevelInput').value = localStorage.getItem(CONFIG_KEY + '_custom_level') || '1-12';
+            // Adapt UI based on Role (Student/Parent vs School Admin/Teacher)
+            if (isStudentOrParent) {
+                document.getElementById('controlBarTitle').innerText = 'Student Exam Schedule';
+                document.getElementById('controlBarSubtitle').innerText = 'Viewing your personal class date sheet';
+                document.getElementById('schoolLevelControlBox').classList.add('hidden');
+                document.getElementById('addRowBtn').classList.add('hidden');
+                document.getElementById('addColumnBtn').classList.add('hidden');
+                document.getElementById('studentClassFilterBox').classList.remove('hidden');
+                updateStudentClassDropdown();
+            } else {
+                const savedLevel = localStorage.getItem(CONFIG_KEY + '_level') || 'Primary';
+                const levelSelect = document.getElementById('schoolLevelSelect');
+                levelSelect.value = ['Primary', 'Middle', 'High', 'Higher Secondary'].includes(savedLevel) ? savedLevel : 'custom';
+                if (levelSelect.value === 'custom') {
+                    document.getElementById('customLevelInput').classList.remove('hidden');
+                    document.getElementById('customLevelInput').value = localStorage.getItem(CONFIG_KEY + '_custom_level') || '1-12';
+                }
             }
 
             const savedTitle = localStorage.getItem(CONFIG_KEY + '_title') || 'SBA First Term';
@@ -445,69 +489,107 @@
             const contentArea = document.getElementById('sheetContentArea');
             document.getElementById('emptyState').classList.toggle('hidden', rows.length > 0);
 
-            contentArea.innerHTML = `
-                <div class="overflow-x-auto">
-                    <table class="ds-table w-full text-xs border-collapse">
-                        <thead>
-                            <tr class="bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-200 text-[11px] uppercase tracking-wider font-bold">
-                                <th class="px-3 py-2.5 w-28">DATE</th>
-                                <th class="px-3 py-2.5 w-24">DAY</th>
-                                <th class="px-3 py-2.5 w-32">TIME</th>
-                                ${dsColumns.map((col, idx) => `
-                                    <th class="px-3 py-2.5">
-                                        <div class="flex items-center justify-between gap-1 group">
-                                            <input class="bg-transparent font-bold uppercase w-full text-center outline-none hover:bg-black/5 dark:hover:bg-white/5 px-1 py-0.5 rounded cursor-pointer text-purple-900 dark:text-purple-200" 
-                                                   value="${col.label}" 
-                                                   onchange="updateColumnLabel(${idx}, this.value)"
-                                                   title="Click to rename column">
-                                            <button type="button" onclick="deleteColumn(${idx})" class="text-red-500 hover:text-red-400 text-xs px-1.5 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 transition cursor-pointer" title="Delete column">✕</button>
-                                        </div>
-                                    </th>
-                                `).join('')}
-                                <th class="no-print w-12">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows.map(row => `
-                                <tr class="hover:bg-black/[0.01] dark:hover:bg-white/[0.02] transition">
-                                    <td class="px-2 py-2">
-                                        <input type="date" class="row-input w-full bg-transparent px-1 py-1 rounded border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:border-purple-500 text-slate-900 dark:text-white" 
-                                               data-id="${row.id}" data-field="date" value="${row.date || ''}">
-                                    </td>
-                                    <td class="px-2 py-2 text-slate-500 dark:text-slate-400 font-medium">
-                                        ${dayFromDate(row.date)}
-                                    </td>
-                                    <td class="px-2 py-2">
-                                        <input type="text" class="row-input w-full bg-transparent px-1 py-1 rounded border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:border-purple-500 text-slate-900 dark:text-white text-center" 
-                                               data-id="${row.id}" data-field="time" value="${row.time || ''}" placeholder="10:00 AM...">
-                                    </td>
-                                    ${dsColumns.map(col => `
-                                        <td class="px-2 py-2">
-                                            <input type="text" class="row-input w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:border-purple-500 text-slate-900 dark:text-white" 
-                                                   data-id="${row.id}" data-field="${col.key}" value="${row[col.key] || ''}" placeholder="Subject...">
-                                        </td>
-                                    `).join('')}
-                                    <td class="no-print text-center px-2 py-2">
-                                        <button onclick="deleteRow('${row.id}')" class="w-7 h-7 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-500 font-bold transition flex items-center justify-center mx-auto cursor-pointer" title="Delete date row">✕</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            if (isStudentOrParent) {
+                // RENDER FOCUSED SINGLE-CLASS SCHEDULE FOR STUDENT/PARENT PORTAL
+                const currentClassCol = dsColumns.find(c => c.key === selectedStudentClass) || dsColumns[0];
+                const classKey = currentClassCol ? currentClassCol.key : 'grade1';
+                const classLabel = currentClassCol ? currentClassCol.label : 'Class';
 
-            document.querySelectorAll('.row-input').forEach(input => {
-                input.addEventListener('change', async (e) => {
-                    const { id, field } = e.target.dataset;
-                    try {
-                        await LamaAPI.update(DATESHEET, id, { [field]: e.target.value });
-                        if (field === 'date') renderRows();
-                    } catch (err) {
-                        alert('Could not save: ' + err.message);
-                    }
+                contentArea.innerHTML = `
+                    <div class="mb-4 text-center">
+                        <span class="text-xs font-bold text-purple-400 bg-purple-950/50 px-3 py-1 rounded-full border border-purple-500/30">
+                            📋 Exam Schedule for: <span class="text-white underline">${classLabel}</span>
+                        </span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="ds-table w-full text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-200 text-[11px] uppercase tracking-wider font-bold">
+                                    <th class="px-4 py-3">DATE</th>
+                                    <th class="px-4 py-3">DAY</th>
+                                    <th class="px-4 py-3">TIME</th>
+                                    <th class="px-4 py-3 text-purple-300 font-black text-sm">${classLabel} SUBJECT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows.map(row => `
+                                    <tr class="hover:bg-black/[0.01] dark:hover:bg-white/[0.02] transition">
+                                        <td class="px-4 py-3 font-semibold">${row.date || 'TBD'}</td>
+                                        <td class="px-4 py-3 text-slate-400 font-medium">${dayFromDate(row.date)}</td>
+                                        <td class="px-4 py-3 text-center">${row.time || '10:00 AM'}</td>
+                                        <td class="px-4 py-3 font-bold text-purple-300 text-sm">${row[classKey] || '<span class="text-slate-500 italic">No Exam / Holiday</span>'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                // RENDER FULL MATRIX TABLE FOR SCHOOL ADMIN / TEACHER
+                contentArea.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="ds-table w-full text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-200 text-[11px] uppercase tracking-wider font-bold">
+                                    <th class="px-3 py-2.5 w-28">DATE</th>
+                                    <th class="px-3 py-2.5 w-24">DAY</th>
+                                    <th class="px-3 py-2.5 w-32">TIME</th>
+                                    ${dsColumns.map((col, idx) => `
+                                        <th class="px-3 py-2.5">
+                                            <div class="flex items-center justify-between gap-1 group">
+                                                <input class="bg-transparent font-bold uppercase w-full text-center outline-none hover:bg-black/5 dark:hover:bg-white/5 px-1 py-0.5 rounded cursor-pointer text-purple-900 dark:text-purple-200" 
+                                                       value="${col.label}" 
+                                                       onchange="updateColumnLabel(${idx}, this.value)"
+                                                       title="Click to rename column">
+                                                <button type="button" onclick="deleteColumn(${idx})" class="text-red-500 hover:text-red-400 text-xs px-1.5 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 transition cursor-pointer" title="Delete column">✕</button>
+                                            </div>
+                                        </th>
+                                    `).join('')}
+                                    <th class="no-print w-12">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows.map(row => `
+                                    <tr class="hover:bg-black/[0.01] dark:hover:bg-white/[0.02] transition">
+                                        <td class="px-2 py-2">
+                                            <input type="date" class="row-input w-full bg-transparent px-1 py-1 rounded border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:border-purple-500 text-slate-900 dark:text-white" 
+                                                   data-id="${row.id}" data-field="date" value="${row.date || ''}">
+                                        </td>
+                                        <td class="px-2 py-2 text-slate-500 dark:text-slate-400 font-medium">
+                                            ${dayFromDate(row.date)}
+                                        </td>
+                                        <td class="px-2 py-2">
+                                            <input type="text" class="row-input w-full bg-transparent px-1 py-1 rounded border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:border-purple-500 text-slate-900 dark:text-white text-center" 
+                                                   data-id="${row.id}" data-field="time" value="${row.time || ''}" placeholder="10:00 AM...">
+                                        </td>
+                                        ${dsColumns.map(col => `
+                                            <td class="px-2 py-2">
+                                                <input type="text" class="row-input w-full bg-transparent px-2 py-1 rounded border border-transparent hover:border-black/10 dark:hover:border-white/10 focus:border-purple-500 text-slate-900 dark:text-white" 
+                                                       data-id="${row.id}" data-field="${col.key}" value="${row[col.key] || ''}" placeholder="Subject...">
+                                            </td>
+                                        `).join('')}
+                                        <td class="no-print text-center px-2 py-2">
+                                            <button onclick="deleteRow('${row.id}')" class="w-7 h-7 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-500 font-bold transition flex items-center justify-center mx-auto cursor-pointer" title="Delete date row">✕</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                document.querySelectorAll('.row-input').forEach(input => {
+                    input.addEventListener('change', async (e) => {
+                        const { id, field } = e.target.dataset;
+                        try {
+                            await LamaAPI.update(DATESHEET, id, { [field]: e.target.value });
+                            if (field === 'date') renderRows();
+                        } catch (err) {
+                            alert('Could not save: ' + err.message);
+                        }
+                    });
                 });
-            });
+            }
         }
 
         async function addRow() {
@@ -540,3 +622,4 @@
         }
     </script>
 </body>
+</html>

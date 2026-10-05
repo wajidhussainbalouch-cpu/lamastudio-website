@@ -8,8 +8,31 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="assets/css/config.css">
     <script src="js/api-client.js"></script>
+    <style>
+        :root{--neon:#8b5cf6;--cyan:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#fb7185}
+        html{scroll-behavior:smooth}
+        body{background:#050816!important;background-image:radial-gradient(circle at 15% 10%,rgba(99,102,241,.14),transparent 28%),radial-gradient(circle at 85% 25%,rgba(34,211,238,.10),transparent 30%),linear-gradient(180deg,#050816 0%,#080b17 45%,#050816 100%);overflow-x:hidden}
+        .scanline{position:fixed;inset:0;pointer-events:none;z-index:1;background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px);background-size:100% 4px;opacity:.25;mix-blend-mode:screen}
+        .neo-card{background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(7,12,28,.72));border:1px solid rgba(148,163,184,.13);box-shadow:0 18px 60px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.035);backdrop-filter:blur(18px)}
+        .neo-card:hover{border-color:rgba(139,92,246,.34);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 28px rgba(139,92,246,.06)}
+        .metric-card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(15,23,42,.9),rgba(8,12,26,.8));border:1px solid rgba(148,163,184,.12)}
+        .metric-card:after{content:'';position:absolute;right:-25px;top:-35px;width:90px;height:90px;border-radius:999px;background:var(--glow,rgba(139,92,246,.16));filter:blur(22px)}
+        .data-dot{width:7px;height:7px;border-radius:999px;background:#34d399;box-shadow:0 0 12px #34d399;display:inline-block}
+        .section-kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:#94a3b8}
+        .chart-shell{height:270px;position:relative}
+        .mini-chart{height:220px;position:relative}
+        .engine-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem .75rem;border:1px solid rgba(148,163,184,.1);background:rgba(2,6,23,.38);border-radius:12px}
+        .pulse-ring{box-shadow:0 0 0 0 rgba(52,211,153,.45);animation:pulseRing 2s infinite}
+        @keyframes pulseRing{70%{box-shadow:0 0 0 10px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+        .command-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+        .span-8{grid-column:span 8}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-12{grid-column:span 12}
+        @media(max-width:900px){.span-8,.span-4,.span-6{grid-column:span 12}}
+        @media(max-width:640px){.chart-shell{height:230px}.mini-chart{height:190px}.command-grid{gap:12px}}
+    </style>
+
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+    <div class="scanline"></div>
 
     <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
     <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -35,408 +58,120 @@
         </div>
     </header>
 
-    <main class="max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 flex-grow space-y-6 relative z-10">
-
-        <!-- Hero Card -->
-        <section class="cyber-card rounded-3xl p-6 md:p-8 relative overflow-hidden">
-            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+    <main class="max-w-[1500px] w-full mx-auto px-3 sm:px-5 lg:px-7 py-5 flex-grow space-y-5 relative z-10">
+        <!-- Command header -->
+        <section class="neo-card rounded-[28px] p-5 md:p-7 overflow-hidden relative">
+            <div class="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl"></div>
+            <div class="absolute -left-20 -bottom-24 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl"></div>
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative">
                 <div>
-                    <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full mb-3">
-                        <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-purple-300">Live</span>
-                    </div>
-                    <h2 id="heroSchoolName" class="text-2xl md:text-3xl font-black text-white tracking-tight">Campus Command Hub</h2>
-                    <p class="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">Your full control center — add, edit, or delete any student, teacher, notice, exam, test, or fee record. Nothing here is visible to teachers, students, or parents unless you choose to share it.</p>
+                    <div class="flex items-center gap-2 mb-3"><span class="data-dot pulse-ring"></span><span class="section-kicker text-emerald-300">LIVE SCHOOL DATA ENGINE</span><span id="engineState" class="text-[9px] text-slate-500">connecting...</span></div>
+                    <h2 id="heroSchoolName" class="text-3xl md:text-5xl font-black tracking-[-.04em] text-white">Campus Command Hub</h2>
+                    <p class="text-xs md:text-sm text-slate-400 mt-2 max-w-2xl leading-relaxed">A real-time command center for students, staff, attendance, finance, assessments and school operations. Every metric below is calculated from the active school's stored records.</p>
                 </div>
-                <div class="bg-slate-900/80 border border-slate-800 p-3.5 rounded-2xl text-right w-full md:w-auto">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Node Controller</p>
-                    <p id="principalDisplay" class="text-xs font-bold text-cyan-400 mt-0.5">Principal / Admin</p>
-                    <p class="text-[10px] text-slate-400 mt-1" id="todayDateDisplay">-</p>
-                </div>
-            </div>
-
-            <!-- Quick Metrics Grid — real data from getDashboardStats() -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-800">
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Total Students</p>
-                    <p id="totalStudentsCount" class="text-xl font-black text-purple-400 glow-text-purple mt-0.5">-</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Absent Today</p>
-                    <p id="absentTodayCount" class="text-xl font-black text-red-400 mt-0.5">-</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Attendance Ratio</p>
-                    <p id="attendanceRatioDisplay" class="text-xl font-black text-emerald-400 mt-0.5">-</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Today's Fee Collection</p>
-                    <p id="todayCollectionDisplay" class="text-xl font-black text-amber-400 mt-0.5">-</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Students (M / F)</p>
-                    <p id="genderDisplay" class="text-xl font-black text-cyan-400 mt-0.5">- / -</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Teachers Present / Total</p>
-                    <p id="teacherAttDisplay" class="text-xl font-black text-emerald-400 mt-0.5">- / -</p>
-                </div>
-                <a href="teacher-attendance.html" id="notMarkedCard" class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl hover:border-amber-500/50 transition">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">Haven't Marked Attendance</p>
-                    <p id="notMarkedDisplay" class="text-xl font-black text-amber-400 mt-0.5">-</p>
-                </a>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">This Month's Fees</p>
-                    <p id="monthCollectionDisplay" class="text-xl font-black text-purple-400 mt-0.5">-</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">This Year's Fees</p>
-                    <p id="yearCollectionDisplay" class="text-xl font-black text-purple-400 mt-0.5">-</p>
-                </div>
-                <div class="bg-slate-900/50 border border-slate-800/80 p-3.5 rounded-2xl">
-                    <p class="text-[9px] uppercase font-bold text-slate-400">All-Time Fees</p>
-                    <p id="overallCollectionDisplay" class="text-xl font-black text-purple-400 mt-0.5">-</p>
+                <div class="flex items-center gap-2 flex-wrap lg:justify-end">
+                    <div class="neo-card rounded-2xl px-4 py-3 min-w-[180px]"><p class="section-kicker">Administrator</p><p id="principalDisplay" class="text-sm font-black text-cyan-300 mt-1">Principal / Admin</p><p id="todayDateDisplay" class="text-[10px] text-slate-500 mt-1">-</p></div>
+                    <button onclick="refreshDashboard()" class="rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-3 text-xs font-black transition">↻ Refresh Engine</button>
                 </div>
             </div>
         </section>
 
-        <!-- Student 360° / Academic History -->
-        <section class="cyber-card rounded-3xl p-6 border border-indigo-500/20">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-indigo-400">🎓 Student 360° Record</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">One student profile should connect current data, previous results, tests, homework, attendance and fees.</p>
+        <!-- KPI matrix -->
+        <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(139,92,246,.18)"><p class="section-kicker">Students</p><p id="totalStudentsCount" class="text-2xl font-black text-purple-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">active database records</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Attendance</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(52,211,153,.18)"><p class="section-kicker">Teachers</p><p id="teacherAttDisplay" class="text-2xl font-black text-emerald-300 mt-2">—</p><p id="notMarkedDisplay" class="text-[10px] text-slate-500 mt-1">— not marked</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(251,191,36,.18)"><p class="section-kicker">Today Collection</p><p id="todayCollectionDisplay" class="text-xl font-black text-amber-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">paid records today</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(236,72,153,.18)"><p class="section-kicker">This Month</p><p id="monthCollectionDisplay" class="text-xl font-black text-pink-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(99,102,241,.18)"><p class="section-kicker">This Year</p><p id="yearCollectionDisplay" class="text-xl font-black text-indigo-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
+        </section>
+
+        <!-- Real database engine -->
+        <section class="command-grid">
+            <div class="span-8 neo-card rounded-3xl p-5">
+                <div class="flex items-center justify-between gap-3 mb-4"><div><p class="section-kicker text-cyan-300">Database Intelligence</p><h3 class="text-lg font-black text-white mt-1">School Operations Overview</h3></div><span id="dbUpdated" class="text-[9px] text-slate-500">waiting for sync</span></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><p class="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-2">Students by class</p><div class="chart-shell"><canvas id="classChart"></canvas></div></div>
+                    <div><p class="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-2">Gender distribution</p><div class="mini-chart"><canvas id="genderChart"></canvas></div></div>
                 </div>
-                <a href="manage-students-enhanced.html" class="text-[10px] font-black bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-center">Open Student Records →</a>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                <a href="manage-students-enhanced.html" class="bg-slate-950/60 border border-slate-800 hover:border-purple-500/50 rounded-xl p-3 transition"><div class="text-lg">🧑‍🎓</div><p class="text-[10px] font-bold text-white mt-1">Current & Former</p><p class="text-[9px] text-slate-500">Active / Passed / Left</p></a>
-                <a href="manage-students-enhanced.html" class="bg-slate-950/60 border border-slate-800 hover:border-cyan-500/50 rounded-xl p-3 transition"><div class="text-lg">🏆</div><p class="text-[10px] font-bold text-white mt-1">Previous Results</p><p class="text-[9px] text-slate-500">2025 & older history</p></a>
-                <a href="tests.html" class="bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl p-3 transition"><div class="text-lg">📝</div><p class="text-[10px] font-bold text-white mt-1">Tests</p><p class="text-[9px] text-slate-500">All class tests</p></a>
-                <a href="attendance.html" class="bg-slate-950/60 border border-slate-800 hover:border-amber-500/50 rounded-xl p-3 transition"><div class="text-lg">📅</div><p class="text-[10px] font-bold text-white mt-1">Attendance</p><p class="text-[9px] text-slate-500">Daily & history</p></a>
-                <a href="fees.html" class="bg-slate-950/60 border border-slate-800 hover:border-pink-500/50 rounded-xl p-3 transition"><div class="text-lg">💰</div><p class="text-[10px] font-bold text-white mt-1">Fees</p><p class="text-[9px] text-slate-500">Payment history</p></a>
-                <a href="portal-login.html" class="bg-slate-950/60 border border-slate-800 hover:border-indigo-500/50 rounded-xl p-3 transition"><div class="text-lg">🔐</div><p class="text-[10px] font-bold text-white mt-1">Student Portal</p><p class="text-[9px] text-slate-500">Student / Parent</p></a>
+            <div class="span-4 neo-card rounded-3xl p-5">
+                <div class="flex items-center justify-between mb-4"><div><p class="section-kicker text-emerald-300">Engine Monitor</p><h3 class="text-lg font-black text-white mt-1">Live Records</h3></div><span class="data-dot"></span></div>
+                <div id="engineRows" class="space-y-2"></div>
+                <div class="mt-4 rounded-2xl border border-emerald-500/10 bg-emerald-500/5 p-3"><p class="text-[10px] font-black text-emerald-300">ACTIVE SCHOOL SCOPE</p><p id="scopeDisplay" class="text-[11px] text-slate-400 mt-1">Loading school database...</p></div>
             </div>
         </section>
 
-        <!-- Class Sections -->
-        <section class="cyber-card-amber rounded-3xl p-6">
-            <h3 class="text-xs font-black uppercase tracking-wider text-amber-400 mb-3">🏫 Classes & Sections</h3>
-            <div id="sectionsGrid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3"></div>
+        <!-- Finance + attendance analytics -->
+        <section class="command-grid">
+            <div class="span-8 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-purple-300">Financial Intelligence</p><h3 class="text-lg font-black">Fee Collection Trend</h3></div><a href="fees.html" class="text-[10px] font-black text-purple-300">OPEN FINANCE →</a></div><div class="chart-shell"><canvas id="incomeChart"></canvas></div></div>
+            <div class="span-4 neo-card rounded-3xl p-5"><div class="mb-3"><p class="section-kicker text-red-300">Attendance Intelligence</p><h3 class="text-lg font-black">Today's Status</h3></div><div class="mini-chart"><canvas id="attendanceChart"></canvas></div><div id="attendanceSummary" class="grid grid-cols-2 gap-2 mt-2"></div></div>
         </section>
 
-        <!-- Today's Absentee Alerts -->
-        <section class="cyber-card rounded-3xl p-6">
-            <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-red-400">🔔 Today's Absentees — Send Alerts</h3>
-                    <p class="text-[11px] text-slate-400">Tap WhatsApp or SMS to open a pre-filled message to that parent.</p>
-                </div>
-            </div>
-            <div id="absenteesList" class="space-y-2"></div>
-            <p id="absenteesEmpty" class="text-center text-xs text-slate-500 py-4 hidden">No absentees recorded for today yet.</p>
-        </section>
-
-        <!-- Quick Access Grid -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <a href="manage-students.html" class="cyber-card rounded-2xl p-5 hover:border-purple-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">🧑‍🎓</span>
-                        <span class="text-[9px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">Students</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-purple-300 transition">Manage Students</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Add, edit, or remove any student's record.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-purple-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="import-students.html" class="cyber-card rounded-2xl p-5 hover:border-cyan-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">📤</span>
-                        <span class="text-[9px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded">Students</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-cyan-300 transition">Bulk Import Students</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Upload an Excel/CSV roster or a standard EMIS/SIS PDF export.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-cyan-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="manage-teachers.html" class="cyber-card-emerald rounded-2xl p-5 hover:border-emerald-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">👩‍🏫</span>
-                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">Staff</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-emerald-300 transition">Manage Teachers</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Create, edit, or remove teacher accounts.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-emerald-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="teacher-attendance.html" class="cyber-card rounded-2xl p-5 hover:border-cyan-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">🕐</span>
-                        <span class="text-[9px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 px-2 py-0.5 rounded">Staff</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-cyan-300 transition">Teacher Attendance</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Mark who's present and ping anyone who hasn't taken attendance yet.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-cyan-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="fees.html" class="cyber-card-amber rounded-2xl p-5 hover:border-amber-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">💰</span>
-                        <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Finance</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-amber-300 transition">Fee Collection</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Record dues and payments, track pending and overdue amounts per student.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-amber-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="activities.html" class="cyber-card-emerald rounded-2xl p-5 hover:border-emerald-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">🌱</span>
-                        <span class="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-0.5 rounded">School Board</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-emerald-300 transition">Activities & Events</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Post sports, extracurricular, and plantation updates for everyone to see.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-emerald-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="resources.html" class="cyber-card rounded-2xl p-5 hover:border-indigo-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">📚</span>
-                        <span class="text-[9px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded">School Board</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-indigo-300 transition">Board Resources</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Syllabus, books, uniform, exam prep links — any category you add.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-indigo-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="promote-students.html" class="cyber-card-amber rounded-2xl p-5 hover:border-amber-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">🎓</span>
-                        <span class="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 rounded">Year-End</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-amber-300 transition">Promote Students</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Move a whole class up (or hold back failing students) at year end.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-amber-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-
-            <a href="portal-login.html" class="cyber-card rounded-2xl p-5 hover:border-purple-500/50 transition-all duration-300 group flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-2xl">🎓</span>
-                        <span class="text-[9px] bg-purple-500/10 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded">Teacher & Student Login</span>
-                    </div>
-                    <h3 class="text-sm font-black text-white group-hover:text-purple-300 transition">Portal Login</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Where your teachers and students/parents log in.</p>
-                </div>
-                <div class="mt-4 flex items-center justify-between text-[11px] font-bold text-purple-400"><span>Open</span><span class="group-hover:translate-x-1 transition">&rarr;</span></div>
-            </a>
-        </section>
-
-        <!-- Data Architecture Note -->
-        <section class="cyber-card rounded-3xl p-5 border border-slate-800/80">
-            <div class="flex items-start gap-3">
-                <div class="text-xl">🛡️</div>
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-slate-200">Student data protection rule</h3>
-                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Current student information and historical academic information should remain separate. Promotion should preserve previous-class results; a Class 5 student who passes out should remain searchable as a former student instead of being deleted.</p>
-                </div>
+        <!-- Command actions -->
+        <section class="neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-4"><div><p class="section-kicker">Command Center</p><h3 class="text-lg font-black">Core School Modules</h3></div><span class="text-[9px] text-slate-500">DATABASE-AWARE NAVIGATION</span></div>
+            <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+                <a href="manage-students.html" class="rounded-2xl p-3 bg-purple-500/5 border border-purple-500/10 hover:border-purple-400/40 transition"><b>🧑‍🎓</b><p class="text-[11px] font-black mt-2">Students</p><p class="text-[9px] text-slate-500">360° records</p></a>
+                <a href="import-students.html" class="rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>⇩</b><p class="text-[11px] font-black mt-2">Import</p><p class="text-[9px] text-slate-500">safe bulk data</p></a>
+                <a href="manage-teachers.html" class="rounded-2xl p-3 bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-400/40 transition"><b>👩‍🏫</b><p class="text-[11px] font-black mt-2">Teachers</p><p class="text-[9px] text-slate-500">staff records</p></a>
+                <a href="teacher-attendance.html" class="rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>◷</b><p class="text-[11px] font-black mt-2">Attendance</p><p class="text-[9px] text-slate-500">staff + daily</p></a>
+                <a href="fees.html" class="rounded-2xl p-3 bg-amber-500/5 border border-amber-500/10 hover:border-amber-400/40 transition"><b>💰</b><p class="text-[11px] font-black mt-2">Finance</p><p class="text-[9px] text-slate-500">fees & dues</p></a>
+                <a href="tests.html" class="rounded-2xl p-3 bg-pink-500/5 border border-pink-500/10 hover:border-pink-400/40 transition"><b>◈</b><p class="text-[11px] font-black mt-2">Tests</p><p class="text-[9px] text-slate-500">assessments</p></a>
+                <a href="promote-students.html" class="rounded-2xl p-3 bg-indigo-500/5 border border-indigo-500/10 hover:border-indigo-400/40 transition"><b>🎓</b><p class="text-[11px] font-black mt-2">Promotion</p><p class="text-[9px] text-slate-500">year-end engine</p></a>
+                <a href="portal-login.html" class="rounded-2xl p-3 bg-violet-500/5 border border-violet-500/10 hover:border-violet-400/40 transition"><b>◉</b><p class="text-[11px] font-black mt-2">Portal</p><p class="text-[9px] text-slate-500">student / parent</p></a>
             </div>
         </section>
 
-        <!-- Income Chart -->
-        <section class="cyber-card rounded-3xl p-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 border-b border-slate-800 pb-3 gap-2">
-                <div>
-                    <h3 class="text-xs font-black uppercase tracking-wider text-purple-400">📈 Fee Collection — Last 12 Months</h3>
-                    <p class="text-[11px] text-slate-400">Total amount marked "Paid" per month.</p>
-                </div>
-            </div>
-            <div class="relative h-56 w-full bg-slate-950/40 rounded-2xl p-3 border border-slate-800/80">
-                <canvas id="incomeChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Recent Notifications + Quick Links -->
-        <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="cyber-card rounded-2xl p-5">
-                <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                    <h4 class="text-xs font-black uppercase tracking-wider text-indigo-400">📢 Recent Notices</h4>
-                    <a href="notifications.html" class="text-[9px] bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded">Manage &rarr;</a>
-                </div>
-                <div id="recentNoticesList" class="space-y-2.5 text-xs"></div>
-                <p id="noticesEmpty" class="text-center text-xs text-slate-500 py-4 hidden">No notices sent yet.</p>
-            </div>
-
-            <div class="cyber-card-emerald rounded-2xl p-5">
-                <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                    <h4 class="text-xs font-black uppercase tracking-wider text-emerald-400">📅 Exams & Schedule</h4>
-                </div>
-                <div class="space-y-2 text-xs">
-                    <a href="date-sheet.html" class="block bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition">
-                        <p class="font-bold text-white text-[11px]">Date Sheet</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Build the exam schedule</p>
-                    </a>
-                    <a href="tests.html" class="block bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition">
-                        <p class="font-bold text-white text-[11px]">Tests & Quizzes</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Schedule class tests</p>
-                    </a>
-                </div>
-            </div>
+        <!-- Alerts + notices -->
+        <section class="command-grid">
+            <div class="span-8 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-red-300">Live Alerts</p><h3 class="text-lg font-black">Today's Absentees</h3></div><a href="teacher-attendance.html" class="text-[10px] text-red-300 font-black">OPEN ATTENDANCE →</a></div><div id="absenteesList" class="space-y-2"></div><p id="absenteesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No absentees recorded for today yet.</p></div>
+            <div class="span-4 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-indigo-300">Communications</p><h3 class="text-lg font-black">Recent Notices</h3></div><a href="notifications.html" class="text-[10px] text-indigo-300 font-black">MANAGE →</a></div><div id="recentNoticesList" class="space-y-2"></div><p id="noticesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No notices sent yet.</p></div>
         </section>
     </main>
-
     <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
-        <p id="footerText">&copy; 2026 Campus Management Architecture</p>
+        <p id="footerText">&copy; 2026 School Data Command Center</p>
     </footer>
 
     <script>
-        let incomeChart = null;
+        let charts = {};
+        const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+        const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
+        async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:[]; } catch(e){ return []; } }
+        function handleLogout(){ LamaAPI.logout(); window.location.href='login.html'; }
+        function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
+        function chartDefaults(){ return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#cbd5e1',font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:'#94a3b8',font:{size:9}},grid:{color:'rgba(148,163,184,.06)'}},y:{ticks:{color:'#94a3b8',font:{size:9}},grid:{color:'rgba(148,163,184,.06)'}}}}; }
 
-        function handleLogout() {
-            LamaAPI.logout();
-            window.location.href = 'login.html';
+        async function renderDashboard(){
+            const school=await LamaAPI.getActiveSchool()||{}; const schoolName=school.name||'Campus Command Hub';
+            const shortCode=school.shortCode|| (LamaAPI.deriveShortCode?LamaAPI.deriveShortCode(schoolName):'SCH');
+            document.getElementById('pageTitle').innerText=`${schoolName} | School Data Command Center`;
+            document.getElementById('navSchoolName').innerText=schoolName; document.getElementById('navShortCode').innerText=shortCode;
+            document.getElementById('heroSchoolName').innerText=schoolName; document.getElementById('principalDisplay').innerText=school.principal||'Principal / Admin';
+            document.getElementById('scopeDisplay').innerText=`${schoolName} • ${school.id||school.schoolId||'active school context'}`;
+            document.getElementById('todayDateDisplay').innerText=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'short',day:'numeric'});
+            document.getElementById('engineState').innerText='online'; document.getElementById('dbUpdated').innerText=`synced ${new Date().toLocaleTimeString()}`;
+            let stats={}; try{stats=await LamaAPI.getDashboardStats()||{};}catch(e){console.warn(e)}
+            document.getElementById('totalStudentsCount').innerText=stats.totalStudents??0;
+            document.getElementById('absentTodayCount').innerText=`${stats.absentToday??0} absent today`;
+            document.getElementById('attendanceRatioDisplay').innerText=stats.attendanceRatio!=null?`${stats.attendanceRatio}%`:'—';
+            document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
+            document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText=`${stats.teachersPresentToday||0} / ${stats.totalTeachers||0}`;
+            document.getElementById('notMarkedDisplay').innerText=`${(stats.teachersNotMarked||[]).length} not marked`;
+            const [students,teachers,attendance,fees,notifications,tests]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests')]);
+            renderEngineRows({students,teachers,attendance,fees,notifications,tests});
+            renderClassChart(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
-
-        async function renderDashboard() {
-            const school = await LamaAPI.getActiveSchool() || {};
-            const schoolName = school.name || 'Campus Command Hub';
-            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
-            const principalName = school.principal || 'Principal / Admin';
-
-            document.getElementById('pageTitle').innerText = `${schoolName} | Campus Command Hub`;
-            document.getElementById('navSchoolName').innerText = schoolName;
-            document.getElementById('navShortCode').innerText = shortCode;
-            document.getElementById('heroSchoolName').innerText = schoolName;
-            document.getElementById('principalDisplay').innerText = principalName;
-            document.getElementById('footerText').innerHTML = `&copy; 2026 ${schoolName} &bull; Campus Management Architecture`;
-            document.getElementById('todayDateDisplay').innerText = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
-
-            try {
-                const stats = await LamaAPI.getDashboardStats();
-                document.getElementById('totalStudentsCount').innerText = stats.totalStudents;
-                document.getElementById('absentTodayCount').innerText = stats.absentToday;
-                document.getElementById('attendanceRatioDisplay').innerText = stats.attendanceRatio !== null ? `${stats.attendanceRatio}%` : 'Not marked yet';
-                document.getElementById('todayCollectionDisplay').innerText = `Rs. ${Number(stats.todayCollection || 0).toLocaleString()}`;
-
-                const g = stats.genderBreakdown || { male: 0, female: 0 };
-                document.getElementById('genderDisplay').innerText = `${g.male} / ${g.female}`;
-                document.getElementById('teacherAttDisplay').innerText = `${stats.teachersPresentToday || 0} / ${stats.totalTeachers || 0}`;
-                const notMarked = stats.teachersNotMarked || [];
-                document.getElementById('notMarkedDisplay').innerText = notMarked.length;
-                document.getElementById('monthCollectionDisplay').innerText = `Rs. ${Number(stats.monthTotal || 0).toLocaleString()}`;
-                document.getElementById('yearCollectionDisplay').innerText = `Rs. ${Number(stats.yearTotal || 0).toLocaleString()}`;
-                document.getElementById('overallCollectionDisplay').innerText = `Rs. ${Number(stats.overallTotal || 0).toLocaleString()}`;
-
-                renderIncomeChart(stats.incomeSeries || []);
-                renderNotices(stats.recentNotifications || []);
-                renderSections(stats.classSections || []);
-            } catch (e) {
-                console.warn('Could not load dashboard stats:', e.message);
-            }
-
-            renderAbsenteeAlerts();
-        }
-
-        function renderSections(sections) {
-            document.getElementById('sectionsGrid').innerHTML = sections.map(s => `
-                <div class="bg-slate-950/50 border border-slate-800 rounded-xl p-3 text-center">
-                    <p class="text-sm font-black text-white">Class ${s.class}${s.section ? '-' + s.section : ''}</p>
-                    <p class="text-[10px] text-amber-400 mt-1">${s.studentCount} student${s.studentCount === 1 ? '' : 's'}</p>
-                </div>
-            `).join('') || '<p class="col-span-full text-center text-xs text-slate-500 py-4">No classes yet — add students to see them here.</p>';
-        }
-
-        function waLink(number, message) {
-            const digits = String(number || '').replace(/[^0-9]/g, '');
-            return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
-        }
-
-        function smsLink(number, message) {
-            return `sms:${number}?body=${encodeURIComponent(message)}`;
-        }
-
-        async function renderAbsenteeAlerts() {
-            const todayStr = new Date().toISOString().split('T')[0];
-            let attendance, students;
-            try {
-                [attendance, students] = await Promise.all([LamaAPI.list('attendance'), LamaAPI.list('students')]);
-            } catch (e) {
-                return;
-            }
-            const absentToday = attendance.filter(a => a.date === todayStr && a.status === 'Absent');
-            document.getElementById('absenteesEmpty').classList.toggle('hidden', absentToday.length > 0);
-
-            document.getElementById('absenteesList').innerHTML = absentToday.map(a => {
-                const student = students.find(s => s.id === a.studentId) || {};
-                const message = `Dear Parent, your child ${a.studentName || student.name || ''} (Class ${a.class || student.class || ''}) was marked absent from school today. Please contact the school office if this is unexpected.`;
-                const number = student.whatsapp || student.contact || '';
-                return `
-                <div class="flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
-                    <span class="text-xs font-semibold">${a.studentName || student.name || 'Unknown'} <span class="text-slate-500">— Class ${a.class || student.class || '-'}</span></span>
-                    <div class="flex gap-1.5">
-                        ${number ? `<a href="${waLink(number, message)}" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg">WhatsApp</a>
-                        <a href="${smsLink(number, message)}" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg">SMS</a>` :
-                        `<span class="text-[10px] text-slate-500 italic">No contact number</span>`}
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function renderIncomeChart(series) {
-            const ctx = document.getElementById('incomeChart').getContext('2d');
-            const labels = series.map(s => s.month);
-            const data = {
-                labels,
-                datasets: [{
-                    label: 'Fee Collection',
-                    data: series.map(s => s.total),
-                    borderColor: '#a855f7',
-                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                    borderWidth: 2, tension: 0.4, fill: true, pointBackgroundColor: '#a855f7'
-                }]
-            };
-            const options = {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } },
-                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255, 255, 255, 0.03)' } }
-                }
-            };
-            if (incomeChart) { incomeChart.data = data; incomeChart.update(); }
-            else { incomeChart = new Chart(ctx, { type: 'line', data, options }); }
-        }
-
-        function renderNotices(notices) {
-            document.getElementById('noticesEmpty').classList.toggle('hidden', notices.length > 0);
-            document.getElementById('recentNoticesList').innerHTML = notices.map(n => `
-                <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-                    <p class="font-bold text-white text-[11px]">${n.title}</p>
-                    <p class="text-[10px] text-slate-300 mt-1">${n.message}</p>
-                </div>
-            `).join('');
-        }
-
-        if (LamaAPI.requireLogin('school')) {
-            renderDashboard();
-        }
+        function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance',d.attendance.length,'attendance events'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
+        function renderClassChart(students){ const counts={}; students.forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
+        function renderGenderChart(students){ const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }
+        function renderAttendanceChart(attendance,students){ const today=new Date().toISOString().slice(0,10); const rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today); const present=rows.filter(a=>String(a.status||'').toLowerCase()==='present').length, absent=rows.filter(a=>String(a.status||'').toLowerCase()==='absent').length, leave=rows.length-present-absent; destroyChart('attendance'); charts.attendance=new Chart(document.getElementById('attendanceChart'),{type:'doughnut',data:{labels:['Present','Absent','Other'],datasets:[{data:[present,absent,leave],backgroundColor:['rgba(52,211,153,.75)','rgba(251,113,133,.78)','rgba(148,163,184,.45)'],borderColor:'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}}); document.getElementById('attendanceSummary').innerHTML=[['Present',present,'text-emerald-300'],['Absent',absent,'text-red-300']].map(x=>`<div class="rounded-xl bg-slate-950/50 border border-slate-800 p-2"><p class="text-[9px] text-slate-500">${x[0]}</p><p class="text-sm font-black ${x[2]}">${x[1]}</p></div>`).join(''); }
+        function renderFeeChart(series,fees){ let labels=series.map(s=>s.month), data=series.map(s=>Number(s.total||0)); if(!labels.length&&fees.length){const map={};fees.forEach(f=>{const d=new Date(f.date||f.paymentDate||f.createdAt);if(!isNaN(d)){const k=d.toLocaleDateString(undefined,{month:'short',year:'2-digit'});map[k]=(map[k]||0)+Number(f.amount||f.paidAmount||f.total||0)}});labels=Object.keys(map).slice(-12);data=labels.map(k=>map[k]);} destroyChart('income'); charts.income=new Chart(document.getElementById('incomeChart'),{type:'line',data:{labels,datasets:[{label:'Fee Collection',data,borderColor:'#a78bfa',backgroundColor:'rgba(139,92,246,.10)',borderWidth:2.5,tension:.38,fill:true,pointRadius:3,pointBackgroundColor:'#c4b5fd'}]},options:chartDefaults()}); }
+        function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
+        function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
+        function renderAbsentees(attendance,students){const today=new Date().toISOString().slice(0,10), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }
+        function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
+        async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
+        if(LamaAPI.requireLogin('school')) renderDashboard();
     </script>
 </body>
 </html>

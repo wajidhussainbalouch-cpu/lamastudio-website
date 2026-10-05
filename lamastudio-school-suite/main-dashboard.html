@@ -1,201 +1,104 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">School Board | Next-Gen Campus</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f5f3ff',
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
-                            900: '#4c1d95',
-                            950: '#2e1065'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <script>
-        window.LamaAPI = window.LamaAPI || {
-            getSession: function() {
-                try {
-                    const sess = localStorage.getItem('lama_session') || localStorage.getItem('session');
-                    if (sess) return JSON.parse(sess);
-                } catch(e) {}
-                return { role: 'school', name: 'Administrator' };
-            },
-            logout: function() {
-                try {
-                    localStorage.removeItem('lama_session');
-                    localStorage.removeItem('session');
-                } catch(e) {}
-            },
-            deriveShortCode: function(name) {
-                if (!name) return 'SCH';
-                return name.split(' ').map(w => w[0]).join('').substring(0, 3).toUpperCase();
-            },
-            getMainDashboardData: async function() {
-                try {
-                    for (const key of ['lama_active_school', 'lama_school_info', 'lama_school', 'school_info']) {
-                        const stored = localStorage.getItem(key);
-                        if (stored) {
-                            const parsed = JSON.parse(stored);
-                            if (parsed && (parsed.name || parsed.schoolName)) {
-                                return {
-                                    schoolName: parsed.name || parsed.schoolName || 'Lama Academy',
-                                    address: parsed.address || 'Global Campus',
-                                    level: parsed.level || 'K-12 Advanced',
-                                    logo: parsed.logo || parsed.schoolLogo || null,
-                                    coverPhoto: parsed.coverPhoto || null,
-                                    recentNotifications: JSON.parse(localStorage.getItem('lama_notices') || '[]'),
-                                    recentActivities: JSON.parse(localStorage.getItem('lama_activities') || '[]'),
-                                    upcomingExams: JSON.parse(localStorage.getItem('lama_exams') || '[]'),
-                                    upcomingTests: JSON.parse(localStorage.getItem('lama_tests') || '[]'),
-                                    resources: JSON.parse(localStorage.getItem('lama_resources') || '[]')
-                                };
-                            }
-                        }
-                    }
-                } catch(e) {}
-
-                return {
-                    schoolName: 'Lama Cyber Academy',
-                    address: 'Sector 7, Neo District',
-                    level: 'K-12 Higher Education',
-                    logo: null,
-                    coverPhoto: null,
-                    recentNotifications: [
-                        { title: 'System Online', message: 'Live Google Sheet data bridge active.' },
-                        { title: 'Midterm Schedules', message: 'Check the exam panel below for upcoming term schedules.' }
-                    ],
-                    recentActivities: [
-                        { title: 'Annual Tech Hackathon', description: 'Students built AI agents.', type: 'Extracurricular', date: '2026-10-15' },
-                        { title: 'Green Campus Drive', description: 'Tree planting in south quad.', type: 'Plantation', date: '2026-10-20' }
-                    ],
-                    upcomingExams: [
-                        { examTitle: 'Advanced Physics Final', class: '12', subject: 'Physics', date: '2026-10-25' }
-                    ],
-                    upcomingTests: [
-                        { subject: 'Calculus Quiz 3', type: 'Quiz', class: '11', date: '2026-10-18' }
-                    ],
-                    resources: [
-                        { category: 'Syllabus', title: 'Semester 1 Curriculum 2026', description: 'Complete roadmap for all academic streams.', link: '#' },
-                        { category: 'Library', title: 'Digital Textbooks Archive', description: 'Access open-source academic publications.', link: '#' }
-                    ]
-                };
-            }
-        };
-    </script>
-    <script src="js/api-client.js" onerror="console.warn('api-client.js missing; using fallback data engine.');"></script>
-    <style>
-        @keyframes floatOrb { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.12); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes neonPulse { 0%, 100% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.4); } 50% { box-shadow: 0 0 50px rgba(236, 72, 153, 0.6); } }
-        .orb { position: fixed; border-radius: 9999px; filter: blur(90px); animation: floatOrb 16s ease-in-out infinite; pointer-events: none; z-index: 0; }
-        .fade-in { animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        .neon-glow { animation: neonPulse 4s ease-in-out infinite; }
-        .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-pill { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .custom-gradient { background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #6366f1 100%); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">School Board</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+<style>
+    @keyframes floatBlob { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(20px,-30px) scale(1.08); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 30px rgba(168,85,247,0.35); } 50% { box-shadow: 0 0 55px rgba(236,72,153,0.5); } }
+    .blob { position: fixed; border-radius: 9999px; filter: blur(80px); animation: floatBlob 14s ease-in-out infinite; pointer-events: none; z-index: 0; }
+    .fade-up { animation: fadeUp 0.6s ease-out both; }
+    .gradient-text {
+        background: linear-gradient(90deg, #a855f7, #ec4899, #6366f1, #a855f7);
+        background-size: 300% auto;
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        animation: shimmer 6s linear infinite;
+    }
+    .cta-pulse { animation: pulseGlow 3s ease-in-out infinite; }
+    .glass { background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+</style>
 </head>
-<body class="bg-[#030712] text-slate-100 font-sans min-h-screen pb-16 relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
+<body class="bg-[#05060d] text-slate-100 font-sans min-h-screen pb-12 relative overflow-x-hidden">
 
-    <div class="orb w-96 h-96 bg-purple-600/20 top-[-10rem] -left-20"></div>
-    <div class="orb w-96 h-96 bg-pink-600/15 top-1/3 -right-20" style="animation-delay: -5s;"></div>
-    <div class="orb w-80 h-80 bg-indigo-600/20 -bottom-20 left-1/4" style="animation-delay: -10s;"></div>
+    <div class="blob w-72 h-72 bg-purple-600/30 top-0 -left-10"></div>
+    <div class="blob w-80 h-80 bg-pink-600/20 top-40 right-0" style="animation-delay: -4s;"></div>
+    <div class="blob w-64 h-64 bg-indigo-600/25 bottom-0 left-1/3" style="animation-delay: -8s;"></div>
 
-    <div id="coverBanner" class="w-full h-52 sm:h-72 bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 bg-cover bg-center relative z-10 border-b border-white/10 shadow-2xl">
-        <div class="absolute inset-0 bg-gradient-to-t from-[#030712] via-[#030712]/50 to-transparent"></div>
-        <div class="absolute top-5 left-5 flex items-center gap-2 glass-pill px-4 py-2 rounded-full shadow-lg">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            <span class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-300">Live Campus Feed</span>
+    <!-- Cover Photo Banner -->
+    <div id="coverBanner" class="w-full h-44 sm:h-64 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 bg-cover bg-center relative z-10">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#05060d] via-[#05060d]/50 to-transparent"></div>
+        <div class="absolute top-4 left-4 flex items-center gap-1.5 glass px-3 py-1.5 rounded-full border border-white/10">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-300">Live School Board</span>
         </div>
-        <div class="absolute top-5 right-5 flex items-center gap-2.5">
-            <button onclick="toggleTheme()" id="themeToggleBtn" class="glass-pill hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg flex items-center gap-1.5 cursor-pointer">
-                <span id="themeIcon">🌙</span> <span class="hidden sm:inline">Theme</span>
-            </button>
-            <a href="#" id="backLink" class="glass-pill hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg">&larr; Back</a>
-            <button onclick="handleLogout()" class="glass-pill hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg cursor-pointer">Logout</button>
-        </div>
+        <a href="#" id="backLink" class="absolute top-4 right-4 glass hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition border border-white/10">&larr; Back</a>
     </div>
 
-    <div class="max-w-4xl mx-auto px-4 -mt-16 sm:-mt-24 relative z-10 text-center fade-in">
-        <div id="schoolLogoBox" class="w-28 h-28 sm:w-32 sm:h-32 mx-auto rounded-3xl custom-gradient flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-2xl border-4 border-[#030712] neon-glow">SCH</div>
-        <h1 id="headerSchoolName" class="text-3xl sm:text-5xl font-black bg-gradient-to-r from-white via-slate-200 to-purple-300 bg-clip-text text-transparent mt-5 tracking-tight drop-shadow-sm">School Name</h1>
-        <p id="headerSchoolMeta" class="text-xs sm:text-sm text-purple-300/80 mt-2 font-medium">Loading credentials...</p>
+    <!-- School Identity -->
+    <div class="max-w-3xl mx-auto px-4 -mt-14 sm:-mt-20 relative z-10 text-center fade-up">
+        <div id="schoolLogoBox" class="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-3xl font-black text-white shadow-2xl border-4 border-[#05060d] cta-pulse">SCH</div>
+        <h1 id="headerSchoolName" class="text-3xl sm:text-5xl font-black gradient-text mt-4 tracking-tight">School Name</h1>
+        <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-400 mt-1.5">Address • Level</p>
     </div>
 
-    <main class="max-w-4xl mx-auto px-4 py-8 space-y-6 relative z-10">
+    <main class="max-w-3xl mx-auto px-4 py-7 space-y-6 relative z-10">
 
-        <div class="flex justify-center gap-3 fade-in" style="animation-delay: 0.05s;">
-            <a id="adminPortalLink" href="login.html" class="glass-pill border-white/10 hover:border-purple-500/50 text-slate-200 font-bold text-xs px-5 py-3 rounded-2xl transition flex items-center gap-2 hover:scale-105 shadow-xl">🏛️ Admin Portal</a>
-            <a id="teacherPortalLink" href="portal-login.html" class="glass-pill border-white/10 hover:border-pink-500/50 text-slate-200 font-bold text-xs px-5 py-3 rounded-2xl transition flex items-center gap-2 hover:scale-105 shadow-xl">👩‍🏫 Teacher Portal</a>
+        <!-- Small Admin / Teacher pills -->
+        <div class="flex justify-center gap-2.5 fade-up" style="animation-delay: 0.05s;">
+            <a id="adminPortalLink" href="login.html" class="glass border border-white/10 hover:border-indigo-500/50 text-slate-200 font-bold text-[11px] px-4 py-2.5 rounded-full transition flex items-center gap-1.5 hover:scale-105">🏛️ Admin Portal</a>
+            <a id="teacherPortalLink" href="portal-login.html" class="glass border border-white/10 hover:border-emerald-500/50 text-slate-200 font-bold text-[11px] px-4 py-2.5 rounded-full transition flex items-center gap-1.5 hover:scale-105">👩‍🏫 Teacher Portal</a>
         </div>
 
-        <a id="studentPortalLink" href="portal-login.html" class="neon-glow block custom-gradient hover:scale-[1.01] rounded-[2.5rem] p-8 sm:p-12 text-center transition-all duration-300 fade-in relative overflow-hidden shadow-2xl group" style="animation-delay: 0.1s;">
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_60%)] group-hover:scale-110 transition-transform duration-700"></div>
-            <span class="text-6xl sm:text-7xl relative inline-block drop-shadow-md">🎓</span>
-            <h2 class="text-3xl sm:text-4xl font-black text-white mt-4 relative tracking-tight">Student & Parent Portal</h2>
-            <p class="text-xs sm:text-sm text-white/90 mt-2 relative font-medium max-w-lg mx-auto">Real-time grades, attendance logs, homework submissions & notices — all centralized in your pocket.</p>
-            <span class="inline-block mt-6 bg-white text-purple-950 hover:bg-slate-100 text-xs font-black px-7 py-3 rounded-full relative transition shadow-xl uppercase tracking-wider">Access Portal &rarr;</span>
+        <!-- BIG Student & Parent Portal CTA -->
+        <a id="studentPortalLink" href="portal-login.html" class="cta-pulse block bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:scale-[1.02] rounded-[2rem] p-7 sm:p-10 text-center transition-transform duration-300 fade-up relative overflow-hidden" style="animation-delay: 0.1s;">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25),transparent_60%)]"></div>
+            <span class="text-5xl sm:text-6xl relative">🎓</span>
+            <h2 class="text-2xl sm:text-3xl font-black text-white mt-3 relative tracking-tight">Student & Parent Portal</h2>
+            <p class="text-xs sm:text-sm text-white/85 mt-1.5 relative">Results • Homework • Attendance • Notices — all in one place</p>
+            <span class="inline-block mt-4 bg-white/20 hover:bg-white/30 text-white text-xs font-black px-5 py-2 rounded-full relative transition">Enter Portal &rarr;</span>
         </a>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 fade-in" style="animation-delay: 0.15s;">
-            <section id="examsSection" class="glass-panel rounded-3xl p-5 border-cyan-500/20 hidden shadow-2xl">
-                <h2 class="text-xs font-black uppercase text-cyan-400 mb-3 flex items-center gap-2 tracking-wider">📅 Upcoming Exams</h2>
-                <div id="examsList" class="space-y-2"></div>
+        <!-- Exams & Tests -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 fade-up" style="animation-delay: 0.15s;">
+            <section id="examsSection" class="glass rounded-2xl p-4 border border-cyan-500/20 hidden">
+                <h2 class="text-[10px] font-black uppercase text-cyan-400 mb-2 flex items-center gap-1.5">📅 Upcoming Exams</h2>
+                <div id="examsList" class="space-y-1.5"></div>
             </section>
-            <section id="testsSection" class="glass-panel rounded-3xl p-5 border-pink-500/20 hidden shadow-2xl">
-                <h2 class="text-xs font-black uppercase text-pink-400 mb-3 flex items-center gap-2 tracking-wider">📝 Upcoming Tests & Quizzes</h2>
-                <div id="testsList" class="space-y-2"></div>
-            </section>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 fade-in" style="animation-delay: 0.2s;">
-            <section class="glass-panel rounded-3xl p-6 border-purple-500/20 shadow-2xl flex flex-col">
-                <h2 class="text-xs font-black uppercase text-purple-300 mb-4 border-b border-white/10 pb-3 flex items-center gap-2 tracking-wider">📢 Campus Notices</h2>
-                <div id="noticesList" class="space-y-3 text-xs flex-1"></div>
-                <p id="noticesEmpty" class="text-center text-xs text-slate-500 py-10 hidden">No notices currently published.</p>
-            </section>
-
-            <section class="glass-panel rounded-3xl p-6 border-indigo-500/20 shadow-2xl flex flex-col">
-                <h2 class="text-xs font-black uppercase text-indigo-300 mb-4 border-b border-white/10 pb-3 flex items-center gap-2 tracking-wider">🌱 Activities & Events</h2>
-                <div id="activitiesList" class="space-y-3 text-xs flex-1"></div>
-                <p id="activitiesEmpty" class="text-center text-xs text-slate-500 py-10 hidden">No upcoming activities posted.</p>
+            <section id="testsSection" class="glass rounded-2xl p-4 border border-amber-500/20 hidden">
+                <h2 class="text-[10px] font-black uppercase text-amber-400 mb-2 flex items-center gap-1.5">📝 Upcoming Tests & Quizzes</h2>
+                <div id="testsList" class="space-y-1.5"></div>
             </section>
         </div>
 
-        <section id="resourcesContainer" class="space-y-5 fade-in" style="animation-delay: 0.25s;"></section>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up" style="animation-delay: 0.2s;">
+            <!-- Notices -->
+            <section class="glass rounded-2xl p-5 border border-indigo-500/20">
+                <h2 class="text-xs font-black uppercase text-indigo-400 mb-3 border-b border-white/10 pb-2 flex items-center gap-1.5">📢 Notices</h2>
+                <div id="noticesList" class="space-y-2.5 text-xs"></div>
+                <p id="noticesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No notices yet.</p>
+            </section>
+
+            <!-- Activities: Sports / Extracurricular / Plantation -->
+            <section class="glass rounded-2xl p-5 border border-emerald-500/20">
+                <h2 class="text-xs font-black uppercase text-emerald-400 mb-3 border-b border-white/10 pb-2 flex items-center gap-1.5">🌱 Activities & Events</h2>
+                <div id="activitiesList" class="space-y-2.5 text-xs"></div>
+                <p id="activitiesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">Nothing posted yet.</p>
+            </section>
+        </div>
+
+        <!-- Resources, grouped by category -->
+        <section id="resourcesContainer" class="space-y-4 fade-up" style="animation-delay: 0.25s;"></section>
     </main>
 
     <script>
         const ACTIVITY_ICONS = { Sports: '⚽', Extracurricular: '🎨', Plantation: '🌳', Other: '📌' };
-        const RES_COLORS = ['border-purple-500/20', 'border-pink-500/20', 'border-indigo-500/20', 'border-cyan-500/20', 'border-teal-500/20'];
-
-        function toggleTheme() {
-            const htmlEl = document.documentElement;
-            const isDark = htmlEl.classList.toggle('dark');
-            localStorage.setItem('cyber_theme', isDark ? 'dark' : 'light');
-            document.getElementById('themeIcon').innerText = isDark ? '🌙' : '☀️';
-        }
-
-        (function() {
-            const savedTheme = localStorage.getItem('cyber_theme');
-            if (savedTheme === 'light') {
-                document.documentElement.classList.remove('dark');
-                const icon = document.getElementById('themeIcon');
-                if (icon) icon.innerText = '☀️';
-            }
-        })();
+        const RES_COLORS = ['border-purple-500/20', 'border-cyan-500/20', 'border-amber-500/20', 'border-pink-500/20', 'border-emerald-500/20'];
 
         function formatDate(iso) {
             if (!iso) return '';
@@ -210,18 +113,6 @@
             return 'dashboard.html';
         }
 
-        function loginPageFor(role) {
-            if (role === 'teacher' || role === 'student') return 'portal-login.html';
-            return 'login.html';
-        }
-
-        function handleLogout() {
-            const session = window.LamaAPI.getSession();
-            const dest = loginPageFor(session ? session.role : 'school');
-            window.LamaAPI.logout();
-            window.location.href = dest;
-        }
-
         function wirePortalLinks(role) {
             document.getElementById('adminPortalLink').href = role === 'school' ? 'dashboard.html' : 'login.html';
             document.getElementById('teacherPortalLink').href = role === 'teacher' ? 'portals/teacher/index.html' : 'portal-login.html';
@@ -230,7 +121,7 @@
 
         function groupByCategory(items) {
             const groups = {};
-            (items || []).forEach(r => {
+            items.forEach(r => {
                 const cat = r.category || 'Other';
                 if (!groups[cat]) groups[cat] = [];
                 groups[cat].push(r);
@@ -239,16 +130,16 @@
         }
 
         async function render() {
-            const session = window.LamaAPI.getSession();
+            const session = LamaAPI.getSession();
             document.getElementById('backLink').href = backLinkFor(session.role);
             wirePortalLinks(session.role);
 
             let data;
             try {
-                data = await window.LamaAPI.getMainDashboardData();
+                data = await LamaAPI.getMainDashboardData();
             } catch (e) {
-                console.error('Could not load school board:', e);
-                data = { schoolName: 'School Board', address: '', level: '' };
+                alert('Could not load the school board: ' + e.message);
+                return;
             }
 
             document.getElementById('pageTitle').innerText = `${data.schoolName || 'School'} | School Board`;
@@ -259,7 +150,7 @@
             if (data.logo) {
                 logoBox.innerHTML = `<img src="${data.logo}" class="w-full h-full object-cover rounded-3xl">`;
             } else {
-                logoBox.innerText = window.LamaAPI.deriveShortCode(data.schoolName || 'SCH');
+                logoBox.innerText = LamaAPI.deriveShortCode(data.schoolName || 'SCH');
             }
 
             if (data.coverPhoto) {
@@ -270,9 +161,9 @@
             const notices = data.recentNotifications || [];
             document.getElementById('noticesEmpty').classList.toggle('hidden', notices.length > 0);
             document.getElementById('noticesList').innerHTML = notices.map(n => `
-                <div class="bg-slate-900/50 border border-white/5 rounded-2xl p-3.5 hover:border-purple-500/40 transition-all shadow-inner">
-                    <p class="font-bold text-white text-sm">${n.title}</p>
-                    <p class="text-slate-400 mt-1 leading-relaxed">${n.message}</p>
+                <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2 hover:border-indigo-500/30 transition">
+                    <p class="font-bold text-white">${n.title}</p>
+                    <p class="text-slate-400 mt-0.5">${n.message}</p>
                 </div>
             `).join('');
 
@@ -280,12 +171,12 @@
             const activities = data.recentActivities || [];
             document.getElementById('activitiesEmpty').classList.toggle('hidden', activities.length > 0);
             document.getElementById('activitiesList').innerHTML = activities.map(a => `
-                <div class="bg-slate-900/50 border border-white/5 rounded-2xl p-3.5 flex gap-3 hover:border-indigo-500/40 transition-all shadow-inner">
-                    <span class="text-xl shrink-0 mt-0.5">${ACTIVITY_ICONS[a.type] || '📌'}</span>
+                <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2 flex gap-2 hover:border-emerald-500/30 transition">
+                    <span class="text-base">${ACTIVITY_ICONS[a.type] || '📌'}</span>
                     <div>
-                        <p class="font-bold text-white text-sm">${a.title}</p>
-                        <p class="text-slate-400 mt-0.5 leading-relaxed">${a.description || ''}</p>
-                        <p class="text-[10px] text-indigo-400 font-semibold mt-2">${formatDate(a.date)}</p>
+                        <p class="font-bold text-white">${a.title}</p>
+                        <p class="text-slate-400 mt-0.5">${a.description || ''}</p>
+                        <p class="text-[10px] text-emerald-400 mt-1">${formatDate(a.date)}</p>
                     </div>
                 </div>
             `).join('');
@@ -294,8 +185,8 @@
             const exams = data.upcomingExams || [];
             document.getElementById('examsSection').classList.toggle('hidden', exams.length === 0);
             document.getElementById('examsList').innerHTML = exams.map(e => `
-                <div class="bg-slate-900/50 border border-white/5 rounded-xl p-3 text-xs shadow-inner">
-                    <b class="text-cyan-300 font-bold">${e.examTitle || 'Exam'}</b> — Class ${e.class} ${e.subject || ''} <span class="text-slate-400 float-right font-medium">${formatDate(e.date)}</span>
+                <div class="bg-black/30 border border-white/5 rounded-lg px-3 py-1.5 text-[11px]">
+                    <b>${e.examTitle || 'Exam'}</b> — Class ${e.class} ${e.subject || ''} • ${formatDate(e.date)}
                 </div>
             `).join('');
 
@@ -303,22 +194,22 @@
             const tests = data.upcomingTests || [];
             document.getElementById('testsSection').classList.toggle('hidden', tests.length === 0);
             document.getElementById('testsList').innerHTML = tests.map(t => `
-                <div class="bg-slate-900/50 border border-white/5 rounded-xl p-3 text-xs shadow-inner">
-                    <b class="text-pink-300 font-bold">${t.subject}</b> (${t.type || 'Test'}) — Class ${t.class} <span class="text-slate-400 float-right font-medium">${formatDate(t.date)}</span>
+                <div class="bg-black/30 border border-white/5 rounded-lg px-3 py-1.5 text-[11px]">
+                    <b>${t.subject}</b> (${t.type || 'Test'}) — Class ${t.class} • ${formatDate(t.date)}
                 </div>
             `).join('');
 
             // Resources, grouped
             const groups = groupByCategory(data.resources || []);
             document.getElementById('resourcesContainer').innerHTML = Object.keys(groups).sort().map((cat, i) => `
-                <section class="glass-panel rounded-3xl p-6 border ${RES_COLORS[i % RES_COLORS.length]} shadow-2xl">
-                    <h2 class="text-xs font-black uppercase text-purple-300 mb-4 border-b border-white/10 pb-3 flex items-center gap-2 tracking-wider">📚 ${cat}</h2>
-                    <div class="space-y-3 text-xs">
+                <section class="glass rounded-2xl p-5 border ${RES_COLORS[i % RES_COLORS.length]}">
+                    <h2 class="text-xs font-black uppercase text-purple-300 mb-3 border-b border-white/10 pb-2">📚 ${cat}</h2>
+                    <div class="space-y-2 text-xs">
                         ${groups[cat].map(r => `
-                            <div class="bg-slate-900/50 border border-white/5 rounded-2xl p-4 hover:border-purple-500/40 transition-all shadow-inner">
-                                <p class="font-bold text-white text-sm">${r.title}</p>
-                                ${r.description ? `<p class="text-slate-400 mt-1 leading-relaxed">${r.description}</p>` : ''}
-                                ${r.link ? `<a href="${r.link}" target="_blank" class="text-cyan-400 font-semibold hover:underline mt-2 inline-flex items-center gap-1">Open Resource &rarr;</a>` : ''}
+                            <div class="bg-black/30 border border-white/5 rounded-xl px-3 py-2">
+                                <p class="font-bold text-white">${r.title}</p>
+                                ${r.description ? `<p class="text-slate-400 mt-0.5">${r.description}</p>` : ''}
+                                ${r.link ? `<a href="${r.link}" target="_blank" class="text-cyan-400 underline mt-1 inline-block">Open link &rarr;</a>` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -326,7 +217,7 @@
             `).join('');
         }
 
-        const session = window.LamaAPI.getSession();
+        const session = LamaAPI.getSession();
         if (!session || !['school', 'teacher', 'student'].includes(session.role)) {
             window.location.href = 'login.html';
         } else {

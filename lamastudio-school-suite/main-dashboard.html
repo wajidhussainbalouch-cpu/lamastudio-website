@@ -226,12 +226,32 @@
                 return name.split(' ').map(w => w[0]).join('').substring(0, 3).toUpperCase();
             },
             getMainDashboardData: async function() {
+                let schoolName = "Apex Emerald Cyber Academy";
+                let address = "Matrix Sector Alpha, Tech District";
+                let level = "K-12 Cyber Faculty";
+                let logo = "";
+                let coverPhoto = "";
+
+                try {
+                    const storedSettings = localStorage.getItem('school_settings');
+                    if (storedSettings) {
+                        const parsed = JSON.parse(storedSettings);
+                        if (parsed.schoolName) schoolName = parsed.schoolName;
+                        if (parsed.address) address = parsed.address;
+                        if (parsed.level) level = parsed.level;
+                        if (parsed.logo) logo = parsed.logo;
+                        if (parsed.coverPhoto) coverPhoto = parsed.coverPhoto;
+                    }
+                } catch (e) {
+                    console.error("Error reading school settings from storage", e);
+                }
+
                 return {
-                    schoolName: "Apex Emerald Cyber Academy",
-                    address: "Matrix Sector Alpha, Tech District",
-                    level: "K-12 Cyber Faculty",
-                    logo: "",
-                    coverPhoto: "",
+                    schoolName: schoolName,
+                    address: address,
+                    level: level,
+                    logo: logo,
+                    coverPhoto: coverPhoto,
                     recentNotifications: [
                         { title: "Mid-Term Cyber Examination Protocols", message: "Date sheets for cybernetic engineering and advanced mathematics are available." },
                         { title: "Annual Bio-Dome Innovation Fair", message: "Project submissions close by the end of the week. Register in the portal." }

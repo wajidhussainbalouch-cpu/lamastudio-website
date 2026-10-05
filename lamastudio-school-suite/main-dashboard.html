@@ -70,6 +70,9 @@
             </div>
             
             <div class="flex items-center gap-2">
+                <button onclick="openSheetConfigModal()" class="p-2.5 sm:px-3 sm:py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-xs border border-emerald-500/30 transition flex items-center gap-1.5" title="Configure Google Sheet Link">
+                    <span>📊</span> <span class="hidden sm:inline">Sheet URL</span>
+                </button>
                 <button onclick="toggleTheme()" aria-label="Toggle Theme" class="p-2.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-200/80 dark:bg-emerald-950/90 hover:scale-105 transition border border-slate-300 dark:border-emerald-800/60 text-slate-700 dark:text-emerald-300 flex items-center gap-1.5 text-xs font-bold shadow-sm">
                     <span id="themeIcon">☀️</span> <span class="hidden sm:inline" id="themeText">Light</span>
                 </button>
@@ -85,8 +88,8 @@
         
         <div class="absolute bottom-4 left-4 right-4 max-w-4xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-emerald-500/30 text-emerald-300 text-[10px] font-mono tracking-wider">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>SECURE MATRIX SYNC</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="syncStatusDot"></span>
+                <span id="syncStatusText">LIVE SHEET SYNC</span>
             </div>
             <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-slate-300 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md border border-emerald-500/20">
                 <span>⚡ Cyber Node #774-EM</span>
@@ -95,7 +98,7 @@
     </div>
 
     <div class="max-w-4xl mx-auto px-4 -mt-14 sm:-mt-20 relative z-20 text-center">
-        <div id="schoolLogoBox" class="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-[2rem] bg-gradient-to-br from-emerald-400 via-cyan-500 to-indigo-600 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-2xl border-4 border-slate-50` dark:border-[#020604] floating-mesh cyber-card-glow">
+        <div id="schoolLogoBox" class="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-[2rem] bg-gradient-to-br from-emerald-400 via-cyan-500 to-indigo-600 flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-2xl border-4 border-slate-50 dark:border-[#020604] floating-mesh cyber-card-glow">
             SCH
         </div>
         <h1 id="headerSchoolName" class="text-3xl sm:text-5xl font-black cyber-gradient-text mt-4 tracking-tight">Apex Emerald Cyber Academy</h1>
@@ -176,8 +179,34 @@
 
     </main>
 
+    <!-- Google Sheet Config Modal -->
+    <div id="sheetConfigModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-dark border border-emerald-500/40 w-full max-w-lg rounded-3xl p-6 shadow-2xl relative text-slate-100">
+            <h3 class="text-lg font-black text-emerald-400 mb-2 flex items-center gap-2">
+                <span>📊</span> Google Sheet Integration Setup
+            </h3>
+            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                Provide a published Google Sheet CSV link or Sheet ID to pull live announcements, exam schedules, and curriculum resources into LamaAPI.
+            </p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-mono uppercase text-emerald-400 mb-1">Google Sheet Published CSV URL:</label>
+                    <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv" class="w-full px-3.5 py-2.5 rounded-xl bg-black/50 border border-emerald-900/60 focus:border-emerald-400 outline-none text-xs text-white">
+                </div>
+                <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-900/60 text-[11px] text-slate-300 space-y-1">
+                    <p class="font-bold text-emerald-400">💡 How to format your Google Sheet:</p>
+                    <p>Create columns: <code class="text-cyan-300">type</code> (notice, activity, exam, test, resource), <code class="text-cyan-300">title</code>, <code class="text-cyan-300">message</code>, <code class="text-cyan-300">date</code>, <code class="text-cyan-300">category</code>, <code class="text-cyan-300">class_val</code>, <code class="text-cyan-300">link</code></p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 mt-6">
+                <button onclick="closeSheetConfigModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold transition">Cancel</button>
+                <button onclick="saveSheetConfig()" class="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black transition shadow-lg">Save & Sync Live</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="max-w-4xl mx-auto px-4 mt-12 text-center text-slate-500 text-[11px] font-mono">
-        <p>&copy; 2026 Campus Command Hub. All Matrix Systems Operational.</p>
+        <p>&copy; 2026 Campus Command Hub. Google Sheets Live Integration Active.</p>
     </footer>
 
     <script>
@@ -210,6 +239,46 @@
             }
         })();
 
+        function openSheetConfigModal() {
+            const currentUrl = localStorage.getItem('lama_sheet_url') || '';
+            document.getElementById('sheetUrlInput').value = currentUrl;
+            document.getElementById('sheetConfigModal').classList.remove('hidden');
+        }
+
+        function closeSheetConfigModal() {
+            document.getElementById('sheetConfigModal').classList.add('hidden');
+        }
+
+        async function saveSheetConfig() {
+            const url = document.getElementById('sheetUrlInput').value.trim();
+            localStorage.setItem('lama_sheet_url', url);
+            closeSheetConfigModal();
+            await render();
+        }
+
+        // CSV Parser utility
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const result = [];
+            if (lines.length === 0) return result;
+            
+            // parse header
+            const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const currentline = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const obj = {};
+                for (let j = 0; j < headers.length; j++) {
+                    let val = currentline[j] !== undefined ? currentline[j].trim() : '';
+                    val = val.replace(/^["']|["']$/g, '');
+                    obj[headers[j]] = val;
+                }
+                result.push(obj);
+            }
+            return result;
+        }
+
         window.LamaAPI = window.LamaAPI || {
             getSession: function() {
                 try {
@@ -232,18 +301,61 @@
                 let logo = "";
                 let coverPhoto = "";
 
-                try {
-                    const storedSettings = localStorage.getItem('school_settings');
-                    if (storedSettings) {
-                        const parsed = JSON.parse(storedSettings);
-                        if (parsed.schoolName) schoolName = parsed.schoolName;
-                        if (parsed.address) address = parsed.address;
-                        if (parsed.level) level = parsed.level;
-                        if (parsed.logo) logo = parsed.logo;
-                        if (parsed.coverPhoto) coverPhoto = parsed.coverPhoto;
+                let recentNotifications = [];
+                let recentActivities = [];
+                let upcomingExams = [];
+                let upcomingTests = [];
+                let resources = [];
+
+                const sheetUrl = localStorage.getItem('lama_sheet_url');
+                if (sheetUrl) {
+                    try {
+                        const response = await fetch(sheetUrl);
+                        if (response.ok) {
+                            const csvText = await response.text();
+                            const rows = parseCSV(csvText);
+                            
+                            document.getElementById('syncStatusText').innerText = "GOOGLE SHEET CONNECTED";
+                            document.getElementById('syncStatusDot').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+
+                            rows.forEach(r => {
+                                const type = (r.type || '').toLowerCase();
+                                if (type === 'notice') {
+                                    recentNotifications.push({ title: r.title, message: r.message });
+                                } else if (type === 'activity') {
+                                    recentActivities.push({ type: r.category || 'Other', title: r.title, description: r.message, date: r.date });
+                                } else if (type === 'exam') {
+                                    upcomingExams.push({ examTitle: r.title, class: r.class_val || 'All', subject: r.message, date: r.date });
+                                } else if (type === 'test') {
+                                    upcomingTests.push({ subject: r.title, type: r.category || 'Quiz', class: r.class_val || 'All', date: r.date });
+                                } else if (type === 'resource') {
+                                    resources.push({ category: r.category || 'Academics', title: r.title, description: r.message, link: r.link });
+                                } else if (type === 'settings') {
+                                    if (r.title === 'schoolName') schoolName = r.message;
+                                    if (r.title === 'address') address = r.message;
+                                    if (r.title === 'level') level = r.message;
+                                    if (r.title === 'logo') logo = r.message;
+                                    if (r.title === 'coverPhoto') coverPhoto = r.message;
+                                }
+                            });
+                        } else {
+                            throw new Error("Failed to fetch Google Sheet");
+                        }
+                    } catch (err) {
+                        console.error("Error fetching Google Sheet CSV:", err);
+                        document.getElementById('syncStatusText').innerText = "SHEET SYNC ERROR (FALLBACK MODE)";
+                        document.getElementById('syncStatusDot').className = "w-2 h-2 rounded-full bg-rose-500 animate-ping";
                     }
-                } catch (e) {
-                    console.error("Error reading school settings from storage", e);
+                } else {
+                    document.getElementById('syncStatusText').innerText = "NO SHEET LINKED (CLICK 'SHEET URL')";
+                    document.getElementById('syncStatusDot').className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+                }
+
+                // Default fallbacks if sheet is empty or unlinked
+                if (recentNotifications.length === 0 && !sheetUrl) {
+                    recentNotifications = [
+                        { title: "Link your Google Sheet", message: "Click the 'Sheet URL' button at the top right to load live data directly from Google Sheets." }
+                    ];
                 }
 
                 return {
@@ -252,24 +364,11 @@
                     level: level,
                     logo: logo,
                     coverPhoto: coverPhoto,
-                    recentNotifications: [
-                        { title: "Mid-Term Cyber Examination Protocols", message: "Date sheets for cybernetic engineering and advanced mathematics are available." },
-                        { title: "Annual Bio-Dome Innovation Fair", message: "Project submissions close by the end of the week. Register in the portal." }
-                    ],
-                    recentActivities: [
-                        { type: "Sports", title: "Inter-Sector Cyber-Athletics", description: "Virtual drone racing finals held at the main matrix arena.", date: "2026-04-12" },
-                        { type: "Plantation", title: "Eco-Dome Botanical Expansion", description: "Students planted 200 bio-engineered saplings in sector 4.", date: "2026-04-06" }
-                    ],
-                    upcomingExams: [
-                        { examTitle: "Quantum Physics Midterm", class: "10", subject: "Advanced Physics", date: "2026-04-18" }
-                    ],
-                    upcomingTests: [
-                        { subject: "Neural Cryptography", type: "Quiz", class: "11", date: "2026-04-14" }
-                    ],
-                    resources: [
-                        { category: "Academics", title: "2026 Matrix Curriculum Handbooks", description: "Full specifications and modules for all core subjects.", link: "#" },
-                        { category: "Library", title: "Global Neural E-Library", description: "Instant access to 50,000+ technical journals and research logs.", link: "#" }
-                    ]
+                    recentNotifications: recentNotifications,
+                    recentActivities: recentActivities,
+                    upcomingExams: upcomingExams,
+                    upcomingTests: upcomingTests,
+                    resources: resources
                 };
             }
         };
@@ -364,7 +463,7 @@
                     <div class="flex-1">
                         <p class="font-bold text-slate-900 dark:text-white">${a.title}</p>
                         <p class="text-slate-600 dark:text-slate-300 mt-0.5">${a.description || ''}</p>
-                        <p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">📅 ${formatDate(a.date)}</p>
+                        ${a.date ? `<p class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">📅 ${formatDate(a.date)}</p>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -377,7 +476,7 @@
                         <strong class="text-slate-900 dark:text-white block">${e.examTitle || 'Exam'}</strong> 
                         <span class="text-slate-500 dark:text-slate-400 text-[11px]">Class ${e.class} • ${e.subject || ''}</span>
                     </div>
-                    <span class="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold px-2 py-1 rounded bg-emerald-500/10">${formatDate(e.date)}</span>
+                    ${e.date ? `<span class="text-emerald-600 dark:text-emerald-400 font-mono text-[11px] font-bold px-2 py-1 rounded bg-emerald-500/10">${formatDate(e.date)}</span>` : ''}
                 </div>
             `).join('');
 
@@ -389,7 +488,7 @@
                         <strong class="text-slate-900 dark:text-white block">${t.subject} (${t.type || 'Test'})</strong> 
                         <span class="text-slate-500 dark:text-slate-400 text-[11px]">Class ${t.class}</span>
                     </div>
-                    <span class="text-cyan-600 dark:text-cyan-400 font-mono text-[11px] font-bold px-2 py-1 rounded bg-cyan-500/10">${formatDate(t.date)}</span>
+                    ${t.date ? `<span class="text-cyan-600 dark:text-cyan-400 font-mono text-[11px] font-bold px-2 py-1 rounded bg-cyan-500/10">${formatDate(t.date)}</span>` : ''}
                 </div>
             `).join('');
 

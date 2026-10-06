@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<title id="pageTitle">School Board</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+
+<style>
+:root{
+    --bg:#050812;--bg2:#091120;--card:rgba(12,20,35,.72);--card2:rgba(16,27,46,.62);
+    --text:#f8fafc;--muted:#94a3b8;--line:rgba(148,163,184,.15);
+    --primary:#8b5cf6;--cyan:#22d3ee;--pink:#ec4899;--green:#34d399;
+    --shadow:0 24px 70px rgba(0,0,0,.28);
+}
+html[data-theme="light"]{
+    --bg:#f4f7fb;--bg2:#eef3fa;--card:rgba(255,255,255,.88);--card2:rgba(248,250,252,.95);
+    --text:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.10);
+    --shadow:0 18px 50px rgba(15,23,42,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+    margin:0;min-height:100vh;overflow-x:hidden;color:var(--text);
+    background:
+      radial-gradient(circle at 8% 0%,rgba(124,58,237,.16),transparent 28%),
+      radial-gradient(circle at 92% 15%,rgba(34,211,238,.12),transparent 25%),
+      linear-gradient(135deg,var(--bg),var(--bg2));
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+body:before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.035;
+    background-image:linear-gradient(rgba(255,255,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.8) 1px,transparent 1px);
+    background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent 80%);
+}
+.glass{
+    background:var(--card);border:1px solid var(--line);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    box-shadow:var(--shadow);
+}
+.topbar{
+    position:sticky;top:0;z-index:60;
+    background:color-mix(in srgb,var(--bg) 78%,transparent);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    border-bottom:1px solid var(--line);
+}
+.banner-wrap{
+    position:relative;overflow:hidden;border-radius:0 0 36px 36px;
+    border-bottom:1px solid var(--line);box-shadow:0 22px 80px rgba(0,0,0,.28);
+}
+.banner{
+    min-height:330px;height:clamp(330px,43vw,450px);
+    background:
+      linear-gradient(90deg,rgba(3,7,18,.86) 0%,rgba(3,7,18,.55) 42%,rgba(3,7,18,.18) 100%),
+      url("lama-school-banner.jpg");
+    background-size:cover;background-position:center;
+}
+.banner:after{
+    content:"";position:absolute;inset:auto 0 0;height:52%;
+    background:linear-gradient(to top,var(--bg),transparent);
+}
+.banner-content{position:relative;z-index:2;height:100%;display:flex;align-items:flex-end}
+.school-logo{
+    width:92px;height:92px;border-radius:27px;overflow:hidden;display:grid;place-items:center;flex:none;
+    background:linear-gradient(135deg,#4f46e5,#9333ea);border:3px solid rgba(255,255,255,.85);
+    box-shadow:0 15px 45px rgba(79,70,229,.38);
+}
+.school-logo img{width:100%;height:100%;object-fit:cover}
+.gradient-text{
+    background:linear-gradient(100deg,#a78bfa,#22d3ee,#f472b6,#a78bfa);
+    background-size:250% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:shine 7s linear infinite;
+}
+@keyframes shine{to{background-position:250% center}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+.float{animation:float 5s ease-in-out infinite}
+.live-dot{animation:pulse 1.7s ease-in-out infinite}
+
+.theme-toggle,.nav-btn{
+    min-height:42px;border-radius:13px;border:1px solid var(--line);
+    background:var(--card);color:var(--text);font-size:12px;font-weight:800;
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;
+}
+.theme-toggle{width:44px;padding:0;font-size:18px}
+.theme-toggle:hover,.nav-btn:hover{border-color:rgba(139,92,246,.48);background:rgba(139,92,246,.10)}
+
+.portal-card{
+    position:relative;overflow:hidden;transition:.22s ease;
+}
+.portal-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.42);box-shadow:0 20px 55px rgba(0,0,0,.18)}
+.portal-icon{
+    width:48px;height:48px;border-radius:15px;display:grid;place-items:center;
+    font-size:24px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.18);
+}
+.portal-card:after{
+    content:"";position:absolute;width:130px;height:130px;right:-65px;bottom:-75px;
+    border-radius:50%;background:rgba(34,211,238,.10);filter:blur(12px);
+}
+.service-card{transition:.2s ease}
+.service-card:hover{transform:translateY(-3px);border-color:rgba(34,211,238,.35)}
+.content-item{background:var(--card2);border:1px solid var(--line);transition:.2s ease}
+.content-item:hover{border-color:rgba(34,211,238,.28)}
+.section-label{letter-spacing:.14em}
+@media(max-width:639px){
+    .banner-wrap{border-radius:0 0 25px 25px}
+    .banner{height:315px;min-height:315px;background-position:58% center}
+    .topbar-inner{padding-left:12px!important;padding-right:12px!important}
+    .main-wrap{padding-left:12px!important;padding-right:12px!important}
+    .school-logo{width:70px;height:70px;border-radius:20px}
+    .school-title{font-size:1.85rem;line-height:1.05}
+    .hide-mobile{display:none!important}
+    .service-card{min-height:104px}
+}
+@media(max-width:380px){
+    .banner{height:295px;min-height:295px}
+    .school-title{font-size:1.58rem}
+}
+</style>
+</head>
+
+<body>
+
+<!-- Common navigation for all three portals -->
+<header class="topbar">
+    <div class="topbar-inner max-w-7xl mx-auto px-4 sm:px-6 h-[62px] flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 grid place-items-center text-white font-black shadow-lg">L</div>
+            <div class="min-w-0">
+                <p class="text-[9px] uppercase tracking-[.2em] font-black text-cyan-400">Lama School</p>
+                <p id="navSchoolName" class="font-black text-sm truncate max-w-[190px]">School Board</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀️</button>
+            <a id="backLink" href="login.html" class="nav-btn hide-mobile">← Back</a>
+        </div>
+    </div>
+</header>
+
+<!-- Public/general school identity -->
+<section class="banner-wrap">
+    <div class="banner">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 banner-content">
+            <div class="w-full pb-8 sm:pb-11">
+                <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
+                    <div id="schoolLogoBox" class="school-logo float">SCH</div>
+                    <div class="min-w-0">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 border border-white/15 text-[10px] font-black uppercase tracking-widest text-emerald-300 mb-2">
+                            <span class="live-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+                            Official School Board
+                        </div>
+                        <h1 id="headerSchoolName" class="school-title text-3xl sm:text-5xl font-black tracking-tight gradient-text">School Name</h1>
+                        <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-200/85 mt-2">School information</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<main class="main-wrap max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9 space-y-8">
+
+    <!-- Three portal entry points ONLY -->
+    <section>
+        <div class="text-center mb-5">
+            <p class="section-label text-[9px] font-black uppercase text-cyan-400">One School • Three Portals</p>
+            <h2 class="text-2xl sm:text-3xl font-black mt-1">Choose Your Portal</h2>
+            <p class="text-xs sm:text-sm text-[color:var(--muted)] mt-2">Access the area designed for your role.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="portal-login.html" class="portal-card glass rounded-[22px] p-5 sm:p-6">
+                <div class="portal-icon">🎓</div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-purple-400 mt-4">Student / Parent</p>
+                <h3 class="text-xl font-black mt-1">Student Portal</h3>
+                <p class="text-xs text-[color:var(--muted)] mt-2 leading-relaxed">Results, attendance, homework, notices and personal academic information.</p>
+                <span class="inline-flex mt-4 text-xs font-black text-purple-400">Enter Portal →</span>
+            </a>
+
+            <a href="portal-login.html" class="portal-card glass rounded-[22px] p-5 sm:p-6">
+                <div class="portal-icon" style="background:rgba(52,211,153,.11);border-color:rgba(52,211,153,.18)">👩‍🏫</div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-emerald-400 mt-4">Faculty</p>
+                <h3 class="text-xl font-black mt-1">Teacher Portal</h3>
+                <p class="text-xs text-[color:var(--muted)] mt-2 leading-relaxed">Teacher workspace, academic activities and school communication.</p>
+                <span class="inline-flex mt-4 text-xs font-black text-emerald-400">Enter Portal →</span>
+            </a>
+
+            <a href="login.html" class="portal-card glass rounded-[22px] p-5 sm:p-6">
+                <div class="portal-icon" style="background:rgba(34,211,238,.11);border-color:rgba(34,211,238,.18)">🏛️</div>
+                <p class="text-[9px] font-black uppercase tracking-widest text-cyan-400 mt-4">Administration</p>
+                <h3 class="text-xl font-black mt-1">Admin Portal</h3>
+                <p class="text-xs text-[color:var(--muted)] mt-2 leading-relaxed">Authorized school administration and management access.</p>
+                <span class="inline-flex mt-4 text-xs font-black text-cyan-400">Admin Login →</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- General public/common services -->
+    <section>
+        <div class="flex items-end justify-between mb-4">
+            <div>
+                <p class="section-label text-[9px] font-black uppercase text-purple-400">School Information Hub</p>
+                <h2 class="text-xl sm:text-2xl font-black mt-1">What's Happening at School?</h2>
+            </div>
+            <span class="text-[10px] font-bold text-[color:var(--muted)]">General information</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <a href="#published-date-sheet" class="service-card glass rounded-2xl p-4 text-center">
+                <div class="text-2xl">🗓️</div><p class="font-black text-sm mt-2">Date Sheet</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Exams & schedule</p>
+            </a>
+            <a href="#published-tests" class="service-card glass rounded-2xl p-4 text-center">
+                <div class="text-2xl">📝</div><p class="font-black text-sm mt-2">Online Tests</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Practice & quizzes</p>
+            </a>
+            <a href="#published-activities" class="service-card glass rounded-2xl p-4 text-center">
+                <div class="text-2xl">🌱</div><p class="font-black text-sm mt-2">Events</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Activities & sports</p>
+            </a>
+            <a href="#published-resources" class="service-card glass rounded-2xl p-4 text-center">
+                <div class="text-2xl">📚</div><p class="font-black text-sm mt-2">E-Library</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Learning resources</p>
+            </a>
+            <a href="#notices" class="service-card glass rounded-2xl p-4 text-center">
+                <div class="text-2xl">📢</div><p class="font-black text-sm mt-2">Notices</p><p class="text-[9px] text-[color:var(--muted)] mt-1">School announcements</p>
+            </a>
+            <a href="#schedule" class="service-card glass rounded-2xl p-4 text-center">
+                <div class="text-2xl">📅</div><p class="font-black text-sm mt-2">Schedule</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Upcoming events</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- General school feed -->
+    <section id="schedule" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <span id="published-date-sheet" class="sr-only"></span>
+        <span id="published-tests" class="sr-only"></span>
+
+        <!-- Upcoming exams/date sheet -->
+        <section id="examsSection" class="glass rounded-[22px] p-5 hidden">
+            <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
+                <div>
+                    <p class="section-label text-[9px] font-black uppercase text-cyan-400">Academic Calendar</p>
+                    <h2 class="text-lg font-black mt-1">📅 Upcoming Exams</h2>
+                </div>
+                <a href="#published-date-sheet" class="text-[10px] font-black text-cyan-400">View published →</a>
+            </div>
+            <div id="examsList" class="space-y-2"></div>
+        </section>
+
+        <!-- Online tests -->
+        <section id="testsSection" class="glass rounded-[22px] p-5 hidden">
+            <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
+                <div>
+                    <p class="section-label text-[9px] font-black uppercase text-amber-400">Digital Learning</p>
+                    <h2 class="text-lg font-black mt-1">📝 Online Tests & Quizzes</h2>
+                </div>
+                <a href="#published-tests" class="text-[10px] font-black text-amber-400">View published →</a>
+            </div>
+            <div id="testsList" class="space-y-2"></div>
+        </section>
+
+        <!-- Fallback if neither exists -->
+        <section id="scheduleEmpty" class="glass rounded-[22px] p-6 lg:col-span-2 hidden">
+            <div class="text-center py-4">
+                <div class="text-3xl">📅</div>
+                <h2 class="font-black mt-2">School Schedule</h2>
+                <p class="text-xs text-[color:var(--muted)] mt-1">Check the date sheet and school activities for upcoming events.</p>
+                <div class="flex flex-wrap justify-center gap-2 mt-4">
+                    <a href="#published-date-sheet" class="nav-btn">View Published Date Sheet</a>
+                    <a href="#published-activities" class="nav-btn">View Published Activities</a>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- Notices and activities -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section id="notices" class="glass rounded-[22px] p-5">
+            <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
+                <div>
+                    <p class="section-label text-[9px] font-black uppercase text-indigo-400">Stay Informed</p>
+                    <h2 class="text-lg font-black mt-1">📢 School Notices</h2>
+                </div>
+                <span id="noticeCountLabel" class="text-[10px] font-bold text-[color:var(--muted)]">0 updates</span>
+            </div>
+            <div id="noticesList" class="space-y-2.5 text-xs"></div>
+            <p id="noticesEmpty" class="text-center text-xs text-[color:var(--muted)] py-8 hidden">No notices have been published yet.</p>
+        </section>
+
+        <section id="published-activities" class="glass rounded-[22px] p-5">
+            <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
+                <div>
+                    <p class="section-label text-[9px] font-black uppercase text-emerald-400">Campus Life</p>
+                    <h2 class="text-lg font-black mt-1">🌱 Events, Sports & Activities</h2>
+                </div>
+                <a href="#published-activities" class="text-[10px] font-black text-emerald-400">View published →</a>
+            </div>
+            <div id="activitiesList" class="space-y-2.5 text-xs"></div>
+            <p id="activitiesEmpty" class="text-center text-xs text-[color:var(--muted)] py-8 hidden">No events have been published yet.</p>
+        </section>
+    </section>
+
+    <!-- Stories / highlights -->
+    <section>
+        <div class="flex items-end justify-between mb-4">
+            <div>
+                <p class="section-label text-[9px] font-black uppercase text-pink-400">School Life</p>
+                <h2 class="text-xl sm:text-2xl font-black mt-1">Stories & Highlights</h2>
+            </div>
+            <a href="#published-activities" class="text-[10px] font-black text-pink-400">Explore →</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="glass rounded-2xl p-5">
+                <div class="text-3xl">🏆</div>
+                <h3 class="font-black mt-3">Achievements</h3>
+                <p class="text-xs text-[color:var(--muted)] mt-1.5">Celebrate student and school achievements, competitions and milestones.</p>
+            </div>
+            <div class="glass rounded-2xl p-5">
+                <div class="text-3xl">⚽</div>
+                <h3 class="font-black mt-3">Sports & Clubs</h3>
+                <p class="text-xs text-[color:var(--muted)] mt-1.5">Follow sports, clubs, creative activities and extracurricular events.</p>
+            </div>
+            <div class="glass rounded-2xl p-5">
+                <div class="text-3xl">🌳</div>
+                <h3 class="font-black mt-3">Campus Stories</h3>
+                <p class="text-xs text-[color:var(--muted)] mt-1.5">School campaigns, plantation, celebrations and community activities.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- E-library -->
+    <section id="published-resources" class="glass rounded-[24px] p-5 sm:p-7">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <p class="section-label text-[9px] font-black uppercase text-purple-400">Digital Learning</p>
+                <h2 class="text-xl sm:text-2xl font-black mt-1">📚 E-Library & Learning Resources</h2>
+                <p class="text-xs text-[color:var(--muted)] mt-1.5">Books, learning materials, links and educational resources shared by the school.</p>
+            </div>
+            <a href="#published-resources" class="nav-btn shrink-0">View Published Resources →</a>
+        </div>
+        <div id="resourcesPreview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5"></div>
+        <p id="resourcesEmpty" class="text-center text-xs text-[color:var(--muted)] py-5 hidden">No library resources have been published yet.</p>
+    </section>
+
+    <footer class="pt-2 pb-5 text-center">
+        <p class="text-[10px] text-[color:var(--muted)]">Lama School Suite • Main School Board • Published by School Administration • Student • Parent • Teacher • Administration</p>
+    </footer>
+</main>
+
+<script>
+const ACTIVITY_ICONS = {
+    Sports:'⚽', Extracurricular:'🎨', Plantation:'🌳', Other:'📌',
+    Academic:'📚', Competition:'🏆', Event:'🎉'
+};
+
+function esc(value){
+    return String(value ?? '').replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+}
+
+function safeUrl(value){
+    const s = String(value || '').trim();
+    if(!s) return '#';
+    try{
+        const u = new URL(s, window.location.href);
+        if(['http:','https:'].includes(u.protocol)) return u.href;
+    }catch(_){}
+    return '#';
+}
+
+function formatDate(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    if(isNaN(d)) return String(iso);
+    return d.toLocaleDateString(undefined,{
+        year:'numeric',month:'short',day:'numeric'
+    });
+}
+
+function backLinkFor(role){
+    if(role === 'teacher') return 'portals/teacher/index.html';
+    if(role === 'student') return 'portals/student/index.html';
+    return 'login.html';
+}
+
+/* Dark / Light theme */
+const savedTheme = localStorage.getItem('lama-main-dashboard-theme');
+if(savedTheme === 'light' || savedTheme === 'dark'){
+    document.documentElement.dataset.theme = savedTheme;
+}
+function updateThemeButton(){
+    const isLight = document.documentElement.dataset.theme === 'light';
+    const btn = document.getElementById('themeToggle');
+    btn.textContent = isLight ? '🌙' : '☀️';
+    btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+}
+document.getElementById('themeToggle').addEventListener('click',()=>{
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('lama-main-dashboard-theme',next);
+    updateThemeButton();
+});
+updateThemeButton();
+
+/*
+  PUBLICATION RULE
+  ----------------
+  The main dashboard is display-only. It must never decide that an item is public
+  merely because it exists in the database.
+
+  Admin management pages should save one of these explicit states:
+    isPublished: true/false
+    published: true/false
+    status: "published" / "draft" / "archived"
+    visibility: "public" / "private"
+
+  Only explicitly published/public records are rendered here.
+  Prefer `isPublished: true` in all new Admin forms.
+*/
+function isPublished(item){
+    if(!item || typeof item !== 'object') return false;
+    if(item.isPublished === true || item.published === true) return true;
+    const status = String(item.status ?? '').trim().toLowerCase();
+    const visibility = String(item.visibility ?? '').trim().toLowerCase();
+    if(status === 'published' || status === 'public') return true;
+    if(visibility === 'public' || visibility === 'published') return true;
+    return false;
+}
+
+function publishedOnly(value){
+    return Array.isArray(value) ? value.filter(isPublished) : [];
+}
+
+async function render(){
+    const session = LamaAPI.getSession();
+    document.getElementById('backLink').href = backLinkFor(session.role);
+
+    let data;
+    try{
+        data = await LamaAPI.getMainDashboardData();
+        // IMPORTANT: this page never creates, edits, deletes, or publishes data.
+        // It only reads the school-board feed and renders records explicitly marked published.
+    }catch(e){
+        alert('Could not load the school board: ' + e.message);
+        return;
+    }
+
+    const schoolName = data.schoolName || 'School';
+
+    document.getElementById('pageTitle').innerText = `${schoolName} | School Board`;
+    document.getElementById('navSchoolName').innerText = schoolName;
+    document.getElementById('headerSchoolName').innerText = schoolName;
+    document.getElementById('headerSchoolMeta').innerText =
+        [data.address,data.level].filter(Boolean).join(' • ') || 'Official School Board';
+
+    const logoBox = document.getElementById('schoolLogoBox');
+    if(data.logo){
+        logoBox.innerHTML = `<img src="${esc(data.logo)}" alt="${esc(schoolName)} logo">`;
+    }else{
+        logoBox.innerText = LamaAPI.deriveShortCode(schoolName);
+    }
+
+    /* Use the school's uploaded cover when available; otherwise the requested banner remains visible. */
+    if(data.coverPhoto){
+        const safeCover = String(data.coverPhoto).replace(/"/g,'&quot;');
+        document.querySelector('.banner').style.backgroundImage =
+            `linear-gradient(90deg,rgba(3,7,18,.86) 0%,rgba(3,7,18,.55) 42%,rgba(3,7,18,.18) 100%),url("${safeCover}")`;
+    }
+
+    const notices = publishedOnly(data.recentNotifications);
+    const activities = publishedOnly(data.recentActivities);
+    const exams = publishedOnly(data.upcomingExams);
+    const tests = publishedOnly(data.upcomingTests);
+    const resources = publishedOnly(data.resources);
+
+    /* Notices */
+    document.getElementById('noticeCountLabel').textContent =
+        `${notices.length} ${notices.length === 1 ? 'update' : 'updates'}`;
+
+    document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length > 0);
+
+    document.getElementById('noticesList').innerHTML = notices.map(n => `
+        <article class="content-item rounded-xl px-3.5 py-3">
+            <p class="font-black">${esc(n.title || 'School Notice')}</p>
+            <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(n.message || '')}</p>
+            ${n.date ? `<p class="text-[10px] text-indigo-400 font-bold mt-2">${esc(formatDate(n.date))}</p>` : ''}
+        </article>
+    `).join('');
+
+    /* Activities / sports / events */
+    document.getElementById('activitiesEmpty').classList.toggle('hidden',activities.length > 0);
+
+    document.getElementById('activitiesList').innerHTML = activities.map(a => `
+        <article class="content-item rounded-xl px-3.5 py-3 flex gap-3">
+            <span class="text-xl shrink-0">${ACTIVITY_ICONS[a.type] || '📌'}</span>
+            <div class="min-w-0">
+                <p class="font-black">${esc(a.title || 'School Activity')}</p>
+                <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(a.description || '')}</p>
+                ${a.date ? `<p class="text-[10px] text-emerald-400 font-bold mt-2">${esc(formatDate(a.date))}</p>` : ''}
+            </div>
+        </article>
+    `).join('');
+
+    /* Exams / date sheet */
+    document.getElementById('examsSection').classList.toggle('hidden',exams.length === 0);
+
+    document.getElementById('examsList').innerHTML = exams.map(e => `
+        <article class="content-item rounded-xl px-3.5 py-3 text-xs">
+            <p class="font-black">${esc(e.examTitle || 'Examination')}</p>
+            <p class="text-[color:var(--muted)] mt-1">
+                Class ${esc(e.class || '')}
+                ${e.subject ? ` • ${esc(e.subject)}` : ''}
+                ${e.date ? ` • ${esc(formatDate(e.date))}` : ''}
+            </p>
+        </article>
+    `).join('');
+
+    /* Online tests */
+    document.getElementById('testsSection').classList.toggle('hidden',tests.length === 0);
+
+    document.getElementById('testsList').innerHTML = tests.map(t => `
+        <article class="content-item rounded-xl px-3.5 py-3 text-xs">
+            <p class="font-black">${esc(t.subject || 'Online Test')}</p>
+            <p class="text-[color:var(--muted)] mt-1">
+                ${esc(t.type || 'Test')}
+                ${t.class ? ` • Class ${esc(t.class)}` : ''}
+                ${t.date ? ` • ${esc(formatDate(t.date))}` : ''}
+            </p>
+        </article>
+    `).join('');
+
+    /* If no schedules/tests are published, show a useful general card. */
+    document.getElementById('scheduleEmpty').classList.toggle(
+        'hidden', exams.length > 0 || tests.length > 0
+    );
+
+    /* E-library preview: only general resources, not internal admin records. */
+    const preview = resources.slice(0,6);
+
+    document.getElementById('resourcesEmpty').classList.toggle('hidden',preview.length > 0);
+
+    document.getElementById('resourcesPreview').innerHTML = preview.map(r => `
+        <article class="content-item rounded-xl p-4">
+            <div class="text-xl">📚</div>
+            <p class="font-black text-sm mt-2">${esc(r.title || 'Learning Resource')}</p>
+            ${r.category ? `<p class="text-[9px] uppercase tracking-wider text-purple-400 font-black mt-1">${esc(r.category)}</p>` : ''}
+            ${r.description ? `<p class="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed">${esc(r.description)}</p>` : ''}
+            ${r.link ? `<a href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" class="text-cyan-400 text-xs font-black mt-2 inline-block">Open resource →</a>` : ''}
+        </article>
+    `).join('');
+}
+
+const session = LamaAPI.getSession();
+
+if(!session || !['school','teacher','student'].includes(session.role)){
+    /*
+      This page is the common front door. Unauthenticated visitors may still
+      see the general school board if getMainDashboardData supports it; otherwise
+      the existing login behavior remains.
+    */
+    render();
+}else{
+    render();
+}
+</script>
+</body>
+</html>

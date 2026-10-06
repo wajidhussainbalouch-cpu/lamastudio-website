@@ -7,8 +7,8 @@
 <title id="pageTitle">School Board</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
+<link rel="stylesheet" href="assets/css/config.css" onerror="console.warn('config.css missing');">
+<script src="js/api-client.js" onerror="console.warn('api-client.js missing');"></script>
 
 <style>
 :root{
@@ -63,7 +63,6 @@ body:before{
     content:"";position:absolute;inset:auto 0 0;height:52%;
     background:linear-gradient(to top,var(--bg),transparent);
 }
-.banner-content{position:relative;z-index:2;height:100%;display:flex;align-items:flex-end}
 .school-logo{
     width:92px;height:92px;border-radius:27px;overflow:hidden;display:grid;place-items:center;flex:none;
     background:linear-gradient(135deg,#4f46e5,#9333ea);border:3px solid rgba(255,255,255,.85);
@@ -89,20 +88,44 @@ body:before{
 .theme-toggle{width:44px;padding:0;font-size:18px}
 .theme-toggle:hover,.nav-btn:hover{border-color:rgba(139,92,246,.48);background:rgba(139,92,246,.10)}
 
-.portal-card{
-    position:relative;overflow:hidden;transition:.22s ease;
+/* Distinct Portal Cards Styling with matching border outlines */
+.portal-card-student{
+    position:relative;overflow:hidden;transition:.25s ease;
+    background:linear-gradient(145deg, rgba(147,51,234,0.08), var(--card));
+    border:2px solid rgba(168,85,247,0.55);
 }
-.portal-card:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.42);box-shadow:0 20px 55px rgba(0,0,0,.18)}
-.portal-icon{
-    width:48px;height:48px;border-radius:15px;display:grid;place-items:center;
-    font-size:24px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.18);
+.portal-card-student:hover{transform:translateY(-5px);border-color:rgba(168,85,247,0.95);box-shadow:0 22px 60px rgba(147,51,234,0.25);}
+
+.portal-card-teacher{
+    position:relative;overflow:hidden;transition:.25s ease;
+    background:linear-gradient(145deg, rgba(16,185,129,0.08), var(--card));
+    border:2px solid rgba(52,211,153,0.55);
 }
-.portal-card:after{
-    content:"";position:absolute;width:130px;height:130px;right:-65px;bottom:-75px;
-    border-radius:50%;background:rgba(34,211,238,.10);filter:blur(12px);
+.portal-card-teacher:hover{transform:translateY(-5px);border-color:rgba(52,211,153,0.95);box-shadow:0 22px 60px rgba(16,185,129,0.25);}
+
+.portal-card-admin{
+    position:relative;overflow:hidden;transition:.25s ease;
+    background:linear-gradient(145deg, rgba(6,182,212,0.08), var(--card));
+    border:2px solid rgba(34,211,238,0.55);
 }
-.service-card{transition:.2s ease}
-.service-card:hover{transform:translateY(-3px);border-color:rgba(34,211,238,.35)}
+.portal-card-admin:hover{transform:translateY(-5px);border-color:rgba(34,211,238,0.95);box-shadow:0 22px 60px rgba(6,182,212,0.25);}
+
+.portal-icon-student{
+    width:54px;height:54px;border-radius:18px;display:grid;place-items:center;
+    font-size:26px;background:linear-gradient(135deg, rgba(147,51,234,0.2), rgba(124,58,237,0.3));
+    border:1px solid rgba(147,51,234,0.35);box-shadow:0 8px 20px rgba(147,51,234,0.2);
+}
+.portal-icon-teacher{
+    width:54px;height:54px;border-radius:18px;display:grid;place-items:center;
+    font-size:26px;background:linear-gradient(135deg, rgba(16,185,129,0.2), rgba(5,150,105,0.3));
+    border:1px solid rgba(16,185,129,0.35);box-shadow:0 8px 20px rgba(16,185,129,0.2);
+}
+.portal-icon-admin{
+    width:54px;height:54px;border-radius:18px;display:grid;place-items:center;
+    font-size:26px;background:linear-gradient(135deg, rgba(6,182,212,0.2), rgba(14,165,233,0.3));
+    border:1px solid rgba(6,182,212,0.35);box-shadow:0 8px 20px rgba(6,182,212,0.2);
+}
+
 .content-item{background:var(--card2);border:1px solid var(--line);transition:.2s ease}
 .content-item:hover{border-color:rgba(34,211,238,.28)}
 .section-label{letter-spacing:.14em}
@@ -114,7 +137,6 @@ body:before{
     .school-logo{width:70px;height:70px;border-radius:20px}
     .school-title{font-size:1.85rem;line-height:1.05}
     .hide-mobile{display:none!important}
-    .service-card{min-height:104px}
 }
 @media(max-width:380px){
     .banner{height:295px;min-height:295px}
@@ -125,7 +147,6 @@ body:before{
 
 <body>
 
-<!-- Common navigation for all three portals -->
 <header class="topbar">
     <div class="topbar-inner max-w-7xl mx-auto px-4 sm:px-6 h-[62px] flex items-center justify-between gap-3">
         <div class="flex items-center gap-2 min-w-0">
@@ -142,7 +163,6 @@ body:before{
     </div>
 </header>
 
-<!-- Public/general school identity -->
 <section class="banner-wrap">
     <div class="banner">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 banner-content">
@@ -165,117 +185,89 @@ body:before{
 
 <main class="main-wrap max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9 space-y-8">
 
-    <!-- Three portal entry points ONLY -->
     <section>
-        <div class="text-center mb-5">
-            <p class="section-label text-[9px] font-black uppercase text-cyan-400">One School • Three Portals</p>
-            <h2 class="text-2xl sm:text-3xl font-black mt-1">Choose Your Portal</h2>
-            <p class="text-xs sm:text-sm text-[color:var(--muted)] mt-2">Access the area designed for your role.</p>
+        <div class="text-center mb-6">
+            <p class="section-label text-[9px] font-black uppercase text-cyan-400">School Life & Workspace</p>
+            <h2 class="text-2xl sm:text-3xl font-black mt-1">Enter into the World of School</h2>
+            <p class="text-xs sm:text-sm text-[color:var(--muted)] mt-2">Step into your dedicated portal workspace below to experience learning, teaching, and campus management.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="portal-login.html" class="portal-card glass rounded-[22px] p-5 sm:p-6">
-                <div class="portal-icon">🎓</div>
-                <p class="text-[9px] font-black uppercase tracking-widest text-purple-400 mt-4">Student / Parent</p>
-                <h3 class="text-xl font-black mt-1">Student Portal</h3>
-                <p class="text-xs text-[color:var(--muted)] mt-2 leading-relaxed">Results, attendance, homework, notices and personal academic information.</p>
-                <span class="inline-flex mt-4 text-xs font-black text-purple-400">Enter Portal →</span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- Student Portal Gateway -->
+            <a href="portal-login.html" class="portal-card-student rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
+                <div>
+                    <div class="portal-icon-student">🎓</div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-[9px] font-black uppercase tracking-widest text-purple-300 mt-4">
+                        <span>Students & Parents</span>
+                    </div>
+                    <h3 class="text-2xl font-black mt-3 text-purple-300">Student Portal</h3>
+                    <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Access report cards, grades, homework, attendance records, test schedules and personal notices.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-purple-500/20 flex items-center justify-between">
+                    <span class="text-xs font-black text-purple-300 group-hover:translate-x-1 transition-transform">Launch Portal</span>
+                    <span class="w-8 h-8 rounded-full bg-purple-500/20 grid place-items-center text-purple-300 font-bold">→</span>
+                </div>
             </a>
 
-            <a href="portal-login.html" class="portal-card glass rounded-[22px] p-5 sm:p-6">
-                <div class="portal-icon" style="background:rgba(52,211,153,.11);border-color:rgba(52,211,153,.18)">👩‍🏫</div>
-                <p class="text-[9px] font-black uppercase tracking-widest text-emerald-400 mt-4">Faculty</p>
-                <h3 class="text-xl font-black mt-1">Teacher Portal</h3>
-                <p class="text-xs text-[color:var(--muted)] mt-2 leading-relaxed">Teacher workspace, academic activities and school communication.</p>
-                <span class="inline-flex mt-4 text-xs font-black text-emerald-400">Enter Portal →</span>
+            <!-- Teacher Portal Gateway -->
+            <a href="portal-login.html" class="portal-card-teacher rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
+                <div>
+                    <div class="portal-icon-teacher">👩‍🏫</div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest text-emerald-300 mt-4">
+                        <span>Faculty & Staff</span>
+                    </div>
+                    <h3 class="text-2xl font-black mt-3 text-emerald-300">Teacher Portal</h3>
+                    <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Manage classroom marks, enter attendance, publish assignments and communicate with students & parents.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-emerald-500/20 flex items-center justify-between">
+                    <span class="text-xs font-black text-emerald-300 group-hover:translate-x-1 transition-transform">Launch Portal</span>
+                    <span class="w-8 h-8 rounded-full bg-emerald-500/20 grid place-items-center text-emerald-300 font-bold">→</span>
+                </div>
             </a>
 
-            <a href="login.html" class="portal-card glass rounded-[22px] p-5 sm:p-6">
-                <div class="portal-icon" style="background:rgba(34,211,238,.11);border-color:rgba(34,211,238,.18)">🏛️</div>
-                <p class="text-[9px] font-black uppercase tracking-widest text-cyan-400 mt-4">Administration</p>
-                <h3 class="text-xl font-black mt-1">Admin Portal</h3>
-                <p class="text-xs text-[color:var(--muted)] mt-2 leading-relaxed">Authorized school administration and management access.</p>
-                <span class="inline-flex mt-4 text-xs font-black text-cyan-400">Admin Login →</span>
+            <!-- Admin Portal Gateway -->
+            <a href="login.html" class="portal-card-admin rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
+                <div>
+                    <div class="portal-icon-admin">🏛</div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-black uppercase tracking-widest text-cyan-300 mt-4">
+                        <span>Administration</span>
+                    </div>
+                    <h3 class="text-2xl font-black mt-3 text-cyan-300">Admin Portal</h3>
+                    <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Full master control: manage student accounts, configure school data, publish board notices and date sheets.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-cyan-500/20 flex items-center justify-between">
+                    <span class="text-xs font-black text-cyan-300 group-hover:translate-x-1 transition-transform">Admin Login</span>
+                    <span class="w-8 h-8 rounded-full bg-cyan-500/20 grid place-items-center text-cyan-300 font-bold">→</span>
+                </div>
             </a>
         </div>
     </section>
 
-    <!-- General public/common services -->
-    <section>
-        <div class="flex items-end justify-between mb-4">
-            <div>
-                <p class="section-label text-[9px] font-black uppercase text-purple-400">School Information Hub</p>
-                <h2 class="text-xl sm:text-2xl font-black mt-1">What's Happening at School?</h2>
-            </div>
-            <span class="text-[10px] font-bold text-[color:var(--muted)]">General information</span>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <a href="#published-date-sheet" class="service-card glass rounded-2xl p-4 text-center">
-                <div class="text-2xl">🗓️</div><p class="font-black text-sm mt-2">Date Sheet</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Exams & schedule</p>
-            </a>
-            <a href="#published-tests" class="service-card glass rounded-2xl p-4 text-center">
-                <div class="text-2xl">📝</div><p class="font-black text-sm mt-2">Online Tests</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Practice & quizzes</p>
-            </a>
-            <a href="#published-activities" class="service-card glass rounded-2xl p-4 text-center">
-                <div class="text-2xl">🌱</div><p class="font-black text-sm mt-2">Events</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Activities & sports</p>
-            </a>
-            <a href="#published-resources" class="service-card glass rounded-2xl p-4 text-center">
-                <div class="text-2xl">📚</div><p class="font-black text-sm mt-2">E-Library</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Learning resources</p>
-            </a>
-            <a href="#notices" class="service-card glass rounded-2xl p-4 text-center">
-                <div class="text-2xl">📢</div><p class="font-black text-sm mt-2">Notices</p><p class="text-[9px] text-[color:var(--muted)] mt-1">School announcements</p>
-            </a>
-            <a href="#schedule" class="service-card glass rounded-2xl p-4 text-center">
-                <div class="text-2xl">📅</div><p class="font-black text-sm mt-2">Schedule</p><p class="text-[9px] text-[color:var(--muted)] mt-1">Upcoming events</p>
-            </a>
-        </div>
-    </section>
-
-    <!-- General school feed -->
     <section id="schedule" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <span id="published-date-sheet" class="sr-only"></span>
         <span id="published-tests" class="sr-only"></span>
 
-        <!-- Upcoming exams/date sheet -->
         <section id="examsSection" class="glass rounded-[22px] p-5 hidden">
             <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
                 <div>
                     <p class="section-label text-[9px] font-black uppercase text-cyan-400">Academic Calendar</p>
                     <h2 class="text-lg font-black mt-1">📅 Upcoming Exams</h2>
                 </div>
-                <a href="#published-date-sheet" class="text-[10px] font-black text-cyan-400">View published →</a>
             </div>
             <div id="examsList" class="space-y-2"></div>
         </section>
 
-        <!-- Online tests -->
         <section id="testsSection" class="glass rounded-[22px] p-5 hidden">
             <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
                 <div>
                     <p class="section-label text-[9px] font-black uppercase text-amber-400">Digital Learning</p>
                     <h2 class="text-lg font-black mt-1">📝 Online Tests & Quizzes</h2>
                 </div>
-                <a href="#published-tests" class="text-[10px] font-black text-amber-400">View published →</a>
             </div>
             <div id="testsList" class="space-y-2"></div>
         </section>
-
-        <!-- Fallback if neither exists -->
-        <section id="scheduleEmpty" class="glass rounded-[22px] p-6 lg:col-span-2 hidden">
-            <div class="text-center py-4">
-                <div class="text-3xl">📅</div>
-                <h2 class="font-black mt-2">School Schedule</h2>
-                <p class="text-xs text-[color:var(--muted)] mt-1">Check the date sheet and school activities for upcoming events.</p>
-                <div class="flex flex-wrap justify-center gap-2 mt-4">
-                    <a href="#published-date-sheet" class="nav-btn">View Published Date Sheet</a>
-                    <a href="#published-activities" class="nav-btn">View Published Activities</a>
-                </div>
-            </div>
-        </section>
     </section>
 
-    <!-- Notices and activities -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section id="notices" class="glass rounded-[22px] p-5">
             <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
@@ -295,21 +287,18 @@ body:before{
                     <p class="section-label text-[9px] font-black uppercase text-emerald-400">Campus Life</p>
                     <h2 class="text-lg font-black mt-1">🌱 Events, Sports & Activities</h2>
                 </div>
-                <a href="#published-activities" class="text-[10px] font-black text-emerald-400">View published →</a>
             </div>
             <div id="activitiesList" class="space-y-2.5 text-xs"></div>
             <p id="activitiesEmpty" class="text-center text-xs text-[color:var(--muted)] py-8 hidden">No events have been published yet.</p>
         </section>
     </section>
 
-    <!-- Stories / highlights -->
     <section>
         <div class="flex items-end justify-between mb-4">
             <div>
                 <p class="section-label text-[9px] font-black uppercase text-pink-400">School Life</p>
                 <h2 class="text-xl sm:text-2xl font-black mt-1">Stories & Highlights</h2>
             </div>
-            <a href="#published-activities" class="text-[10px] font-black text-pink-400">Explore →</a>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="glass rounded-2xl p-5">
@@ -330,7 +319,6 @@ body:before{
         </div>
     </section>
 
-    <!-- E-library -->
     <section id="published-resources" class="glass rounded-[24px] p-5 sm:p-7">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -338,14 +326,13 @@ body:before{
                 <h2 class="text-xl sm:text-2xl font-black mt-1">📚 E-Library & Learning Resources</h2>
                 <p class="text-xs text-[color:var(--muted)] mt-1.5">Books, learning materials, links and educational resources shared by the school.</p>
             </div>
-            <a href="#published-resources" class="nav-btn shrink-0">View Published Resources →</a>
         </div>
         <div id="resourcesPreview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5"></div>
         <p id="resourcesEmpty" class="text-center text-xs text-[color:var(--muted)] py-5 hidden">No library resources have been published yet.</p>
     </section>
 
     <footer class="pt-2 pb-5 text-center">
-        <p class="text-[10px] text-[color:var(--muted)]">Lama School Suite • Main School Board • Published by School Administration • Student • Parent • Teacher • Administration</p>
+        <p class="text-[10px] text-[color:var(--muted)]">Lama School Suite • Public School Board • Managed via Administrator Portal • Student • Parent • Teacher • Administration</p>
     </footer>
 </main>
 
@@ -405,21 +392,6 @@ document.getElementById('themeToggle').addEventListener('click',()=>{
 });
 updateThemeButton();
 
-/*
-  PUBLICATION RULE
-  ----------------
-  The main dashboard is display-only. It must never decide that an item is public
-  merely because it exists in the database.
-
-  Admin management pages should save one of these explicit states:
-    isPublished: true/false
-    published: true/false
-    status: "published" / "draft" / "archived"
-    visibility: "public" / "private"
-
-  Only explicitly published/public records are rendered here.
-  Prefer `isPublished: true` in all new Admin forms.
-*/
 function isPublished(item){
     if(!item || typeof item !== 'object') return false;
     if(item.isPublished === true || item.published === true) return true;
@@ -435,20 +407,23 @@ function publishedOnly(value){
 }
 
 async function render(){
-    const session = LamaAPI.getSession();
-    document.getElementById('backLink').href = backLinkFor(session.role);
-
-    let data;
-    try{
-        data = await LamaAPI.getMainDashboardData();
-        // IMPORTANT: this page never creates, edits, deletes, or publishes data.
-        // It only reads the school-board feed and renders records explicitly marked published.
-    }catch(e){
-        alert('Could not load the school board: ' + e.message);
-        return;
+    const session = typeof LamaAPI !== 'undefined' && LamaAPI.getSession ? LamaAPI.getSession() : {};
+    if(document.getElementById('backLink')) {
+        document.getElementById('backLink').href = backLinkFor(session.role);
     }
 
-    const schoolName = data.schoolName || 'School';
+    let data = {};
+    try{
+        if(typeof LamaAPI !== 'undefined' && LamaAPI.getMainDashboardData) {
+            data = await LamaAPI.getMainDashboardData();
+        } else {
+            data = { schoolName: 'Lama School Suite', address: 'Main Campus', level: 'K-12' };
+        }
+    }catch(e){
+        console.warn('Could not load getMainDashboardData: ' + e.message);
+    }
+
+    const schoolName = data.schoolName || 'School Name';
 
     document.getElementById('pageTitle').innerText = `${schoolName} | School Board`;
     document.getElementById('navSchoolName').innerText = schoolName;
@@ -459,24 +434,24 @@ async function render(){
     const logoBox = document.getElementById('schoolLogoBox');
     if(data.logo){
         logoBox.innerHTML = `<img src="${esc(data.logo)}" alt="${esc(schoolName)} logo">`;
-    }else{
+    }else if(typeof LamaAPI !== 'undefined' && LamaAPI.deriveShortCode) {
         logoBox.innerText = LamaAPI.deriveShortCode(schoolName);
+    } else {
+        logoBox.innerText = 'SCH';
     }
 
-    /* Use the school's uploaded cover when available; otherwise the requested banner remains visible. */
     if(data.coverPhoto){
         const safeCover = String(data.coverPhoto).replace(/"/g,'&quot;');
         document.querySelector('.banner').style.backgroundImage =
             `linear-gradient(90deg,rgba(3,7,18,.86) 0%,rgba(3,7,18,.55) 42%,rgba(3,7,18,.18) 100%),url("${safeCover}")`;
     }
 
-    const notices = publishedOnly(data.recentNotifications);
-    const activities = publishedOnly(data.recentActivities);
-    const exams = publishedOnly(data.upcomingExams);
-    const tests = publishedOnly(data.upcomingTests);
-    const resources = publishedOnly(data.resources);
+    const notices = publishedOnly(data.recentNotifications || []);
+    const activities = publishedOnly(data.recentActivities || []);
+    const exams = publishedOnly(data.upcomingExams || []);
+    const tests = publishedOnly(data.upcomingTests || []);
+    const resources = publishedOnly(data.resources || []);
 
-    /* Notices */
     document.getElementById('noticeCountLabel').textContent =
         `${notices.length} ${notices.length === 1 ? 'update' : 'updates'}`;
 
@@ -490,7 +465,6 @@ async function render(){
         </article>
     `).join('');
 
-    /* Activities / sports / events */
     document.getElementById('activitiesEmpty').classList.toggle('hidden',activities.length > 0);
 
     document.getElementById('activitiesList').innerHTML = activities.map(a => `
@@ -504,7 +478,6 @@ async function render(){
         </article>
     `).join('');
 
-    /* Exams / date sheet */
     document.getElementById('examsSection').classList.toggle('hidden',exams.length === 0);
 
     document.getElementById('examsList').innerHTML = exams.map(e => `
@@ -518,7 +491,6 @@ async function render(){
         </article>
     `).join('');
 
-    /* Online tests */
     document.getElementById('testsSection').classList.toggle('hidden',tests.length === 0);
 
     document.getElementById('testsList').innerHTML = tests.map(t => `
@@ -532,12 +504,6 @@ async function render(){
         </article>
     `).join('');
 
-    /* If no schedules/tests are published, show a useful general card. */
-    document.getElementById('scheduleEmpty').classList.toggle(
-        'hidden', exams.length > 0 || tests.length > 0
-    );
-
-    /* E-library preview: only general resources, not internal admin records. */
     const preview = resources.slice(0,6);
 
     document.getElementById('resourcesEmpty').classList.toggle('hidden',preview.length > 0);
@@ -553,18 +519,7 @@ async function render(){
     `).join('');
 }
 
-const session = LamaAPI.getSession();
-
-if(!session || !['school','teacher','student'].includes(session.role)){
-    /*
-      This page is the common front door. Unauthenticated visitors may still
-      see the general school board if getMainDashboardData supports it; otherwise
-      the existing login behavior remains.
-    */
-    render();
-}else{
-    render();
-}
+render();
 </script>
 </body>
 </html>

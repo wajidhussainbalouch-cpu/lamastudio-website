@@ -10,12 +10,8 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
   body { font-family: 'Plus Jakarta Sans', sans-serif; }
-  .cyber-glow {
-    box-shadow: 0 0 35px rgba(168, 85, 247, 0.15);
-  }
-  .card-gradient {
-    background: linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%);
-  }
+  .cyber-glow { box-shadow: 0 0 35px rgba(168, 85, 247, 0.15); }
+  .card-gradient { background: linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%); }
 </style>
 </head>
 <body class="bg-[#07090e] text-slate-100 min-h-screen flex flex-col items-center py-10 px-4">
@@ -30,6 +26,7 @@
         <button onclick="openCircularModal()" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-95 text-white font-black text-xs px-5 py-2.5 rounded-2xl transition shadow-lg shadow-purple-600/30 flex-shrink-0 flex items-center gap-2">
             <span class="text-sm">+</span> New Circular
         </button>
+        <a href="main-dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs px-4 py-2.5 rounded-2xl transition flex-shrink-0 border border-slate-700">Main Dashboard</a>
         <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs px-4 py-2.5 rounded-2xl transition flex-shrink-0 border border-slate-700">Hub</a>
         <button onclick="handleLogout()" class="bg-slate-800/80 hover:bg-red-500/20 hover:text-red-400 text-slate-300 font-bold text-xs px-4 py-2.5 rounded-2xl transition flex-shrink-0 border border-slate-700">Logout</button>
     </header>
@@ -56,7 +53,7 @@
             <div class="flex justify-between items-center border-b border-slate-800/80 pb-3">
                 <div>
                     <h3 class="text-sm font-black uppercase text-purple-400 tracking-wider">Create New Circular</h3>
-                    <p class="text-[11px] text-slate-400">Broadcast official announcements to parents instantly.</p>
+                    <p class="text-[11px] text-slate-400">Broadcast official announcements & files to parents instantly.</p>
                 </div>
                 <button onclick="closeCircularModal()" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold">&times;</button>
             </div>
@@ -68,13 +65,7 @@
                 <div class="grid grid-cols-2 gap-3.5">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Audience</label>
-                        <select id="inAudience" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition">
-                            <option>All Classes</option>
-                            <option>Class 1-5 (Primary)</option>
-                            <option>Class 6-8 (Middle)</option>
-                            <option>Class 9-10 (Secondary)</option>
-                            <option>Class 11-12 (Higher Secondary)</option>
-                        </select>
+                        <input id="inAudience" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition" placeholder="e.g. All Classes, Grade 10, Parents">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Channel</label>
@@ -88,7 +79,11 @@
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Message</label>
-                    <textarea id="inMessage" rows="4" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition shadow-inner resize-none" placeholder="Write the circular message here..."></textarea>
+                    <textarea id="inMessage" rows="3" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-purple-500 transition shadow-inner resize-none" placeholder="Write the circular message here..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Attach Picture / PDF / File</label>
+                    <input type="file" id="inFile" accept="image/*,.pdf,.doc,.docx" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-2 text-slate-300 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 transition">
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-300 mb-1.5 uppercase tracking-wider">Status</label>
@@ -101,13 +96,12 @@
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-800/80">
                 <button onclick="closeCircularModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-5 py-2.5 rounded-xl transition">Cancel</button>
-                <button onclick="saveCircular()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white text-xs font-black px-6 py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition">Save Circular</button>
+                <button onclick="saveCircular()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white text-xs font-black px-6 py-2.5 rounded-xl shadow-lg shadow-purple-600/30 transition">Save & Sync to Dashboard</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Fallback implementation of LamaAPI if not loaded externally
         if (typeof window.LamaAPI === 'undefined') {
             window.LamaAPI = {
                 logout: function() { localStorage.clear(); },
@@ -134,6 +128,7 @@
             LamaAPI.logout();
             window.location.href = 'login.html';
         }
+
         const NOTIFICATIONS = 'notifications';
         let activeFilter = 'All';
 
@@ -163,6 +158,20 @@
             return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
+        // Helper to push updates to main dashboard local storage feed
+        async function syncToMainDashboard() {
+            try {
+                const allNotifs = await LamaAPI.list(NOTIFICATIONS);
+                // Save formatted list so main dashboard can directly consume it
+                localStorage.setItem('lama_main_dashboard_notices', JSON.stringify(allNotifs));
+                
+                // Also trigger storage event for cross-tab sync if needed
+                window.dispatchEvent(new Event('storage'));
+            } catch (err) {
+                console.warn('Dashboard sync warning:', err);
+            }
+        }
+
         async function renderFeed() {
             let items;
             try {
@@ -185,19 +194,35 @@
                         <div>
                             <h4 class="text-sm font-extrabold text-white tracking-wide">${item.title}</h4>
                             <p class="text-[10px] text-slate-400 mt-1 font-medium flex items-center gap-2">
-                                <span class="text-purple-400">${formatDate(item.createdAt)}</span> • 
-                                <span class="bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300">${item.audience}</span> • 
+                                <span class="text-purple-400">${formatDate(item.createdAt)}</span> •
+                                <span class="bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300">${item.audience}</span> •
                                 <span class="text-indigo-300 font-semibold">${item.channel}</span>
                             </p>
                         </div>
                         <span class="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border ${STATUS_STYLES[item.status] || STATUS_STYLES['Draft']}">${item.status}</span>
                     </div>
                     <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/50">${item.message}</p>
-                    <div class="flex justify-end gap-3 pt-2 border-t border-slate-800/80 mt-1">
+                    
+                    ${item.fileData ? `
+                        <div class="mt-2">
+                            ${item.fileType && item.fileType.startsWith('image/') ? 
+                                `<div class="rounded-2xl overflow-hidden border border-slate-800 bg-black/40 p-2 max-h-60 flex justify-center"><img src="${item.fileData}" class="max-h-52 object-contain rounded-xl"></div>` :
+                                `<a href="${item.fileData}" download="${item.fileName || 'attachment'}" class="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 p-3 rounded-2xl border border-slate-700 text-xs text-purple-300 font-bold transition">
+                                    <span class="text-base">📎</span>
+                                    <span class="truncate">${item.fileName || 'Download Attached File'}</span>
+                                </a>`
+                            }
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 mt-1">
+                        <span class="text-[10px] text-emerald-400 font-medium">⚡ Synced to Main Dashboard</span>
                         <button onclick="deleteCircular('${item.id}')" class="text-[11px] font-bold text-red-400 hover:text-red-300 transition flex items-center gap-1 bg-red-500/10 px-3 py-1.5 rounded-xl border border-red-500/20">🗑️ Delete</button>
                     </div>
                 </div>
             `).join('');
+
+            await syncToMainDashboard();
         }
 
         function openCircularModal() {
@@ -205,6 +230,7 @@
             document.getElementById('inAudience').value = 'All Classes';
             document.getElementById('inChannel').value = 'WhatsApp';
             document.getElementById('inMessage').value = '';
+            document.getElementById('inFile').value = '';
             document.getElementById('inStatus').value = 'Sent';
             document.getElementById('circularModal').classList.remove('hidden');
         }
@@ -217,7 +243,27 @@
             const title = document.getElementById('inTitle').value.trim();
             const message = document.getElementById('inMessage').value.trim();
             const status = document.getElementById('inStatus').value;
-            if (!title || !message) { alert('Title and message are required.'); return; }
+            const fileInput = document.getElementById('inFile');
+
+            if (!title || !message) {
+                alert('Title and message are required.');
+                return;
+            }
+
+            let fileData = null;
+            let fileName = null;
+            let fileType = null;
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                fileName = file.name;
+                fileType = file.type;
+                fileData = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+            }
 
             try {
                 await LamaAPI.add(NOTIFICATIONS, {
@@ -225,12 +271,15 @@
                     audience: document.getElementById('inAudience').value,
                     channel: document.getElementById('inChannel').value,
                     message,
+                    fileData,
+                    fileName,
+                    fileType,
                     status,
                     isPublished: status === 'Sent',
                     createdAt: new Date().toISOString()
                 });
                 closeCircularModal();
-                renderFeed();
+                await renderFeed();
             } catch (e) {
                 alert('Could not save this circular: ' + e.message);
             }
@@ -239,7 +288,7 @@
         async function deleteCircular(id) {
             try {
                 await LamaAPI.remove(NOTIFICATIONS, id);
-                renderFeed();
+                await renderFeed();
             } catch (e) {
                 alert('Could not delete this circular: ' + e.message);
             }

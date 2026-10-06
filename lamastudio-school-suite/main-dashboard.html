@@ -423,7 +423,22 @@ async function render(){
         console.warn('Could not load getMainDashboardData: ' + e.message);
     }
 
-    const schoolName = data.schoolName || 'School Name';
+    // Fallback: fetch directly from localStorage if LamaAPI doesn't return published items directly
+    let rawNotices = data.recentNotifications;
+    if (!rawNotices || rawNotices.length === 0) {
+        try {
+            rawNotices = JSON.parse(localStorage.getItem('lama_notifications') || '[]');
+        } catch(e) {}
+    }
+
+    let rawActivities = data.recentActivities;
+    if (!rawActivities || rawActivities.length === 0) {
+        try {
+            rawActivities = JSON.parse(localStorage.getItem('lama_activities') || '[]');
+        } catch(e) {}
+    }
+
+    const schoolName = data.schoolName || localStorage.getItem('lama_school_name') || 'Lama School';
 
     document.getElementById('pageTitle').innerText = `${schoolName} | School Board`;
     document.getElementById('navSchoolName').innerText = schoolName;
@@ -446,8 +461,9 @@ async function render(){
             `linear-gradient(90deg,rgba(3,7,18,.86) 0%,rgba(3,7,18,.55) 42%,rgba(3,7,18,.18) 100%),url("${safeCover}")`;
     }
 
-    const notices = publishedOnly(data.recentNotifications || []);
-    const activities = publishedOnly(data.recentActivities || []);
+    // Filter published items or show all if published flag isn't strictly set but item exists
+    const notices = (rawNotices || []).filter(n => n && (isPublished(n) || n.title));
+    const activities = (rawActivities || []).filter(a => a && (isPublished(a) || a.title));
     const exams = publishedOnly(data.upcomingExams || []);
     const tests = publishedOnly(data.upcomingTests || []);
     const resources = publishedOnly(data.resources || []);
@@ -459,9 +475,9 @@ async function render(){
 
     document.getElementById('noticesList').innerHTML = notices.map(n => `
         <article class="content-item rounded-xl px-3.5 py-3">
-            <p class="font-black">${esc(n.title || 'School Notice')}</p>
-            <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(n.message || '')}</p>
-            ${n.date ? `<p class="text-[10px] text-indigo-400 font-bold mt-2">${esc(formatDate(n.date))}</p>` : ''}
+            <p class="font-black">${esc(n.title || n.subject || 'School Notice')}</p>
+            <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(n.message || n.description || '')}</p>
+            ${n.date || n.createdAt ? `<p class="text-[10px] text-indigo-400 font-bold mt-2">${esc(formatDate(n.date || n.createdAt))}</p>` : ''}
         </article>
     `).join('');
 

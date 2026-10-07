@@ -249,7 +249,7 @@
 
                 <div class="flex items-center gap-2 pt-2">
                     <input type="checkbox" id="isPublished" class="w-4 h-4 rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-sky-600 focus:ring-0">
-                    <label for="isPublished" class="text-xs font-bold text-slate-700 dark:text-slate-300">Publish immediately to Main Dashboard</label>
+                    <label for="isPublished" class="text-xs font-bold text-slate-700 dark:text-slate-300">Publish immediately to Google Sheets & Dashboard</label>
                 </div>
 
                 <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-lg shadow-sky-900/40">
@@ -575,13 +575,25 @@
             renderMatrixSheet();
         }
 
-        function loadEntries() {
+        async function loadEntries() {
             try {
-                const saved = localStorage.getItem('lama_exams') || localStorage.getItem('lama_matrix_datesheet_records');
-                if (saved) {
-                    dateSheetEntries = JSON.parse(saved);
-                } else {
-                    dateSheetEntries = [];
+                dateSheetEntries = [];
+                if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
+                    try {
+                        const apiData = await LamaAPI.list('exams');
+                        if (Array.isArray(apiData) && apiData.length > 0) {
+                            dateSheetEntries = apiData;
+                        }
+                    } catch (apiErr) {
+                        console.warn('LamaAPI list error:', apiErr);
+                    }
+                }
+
+                if (dateSheetEntries.length === 0) {
+                    const saved = localStorage.getItem('lama_exams') || localStorage.getItem('exams') || localStorage.getItem('lama_matrix_datesheet_records');
+                    if (saved) {
+                        dateSheetEntries = JSON.parse(saved);
+                    }
                 }
             } catch (e) {
                 dateSheetEntries = [];
@@ -631,6 +643,19 @@
                 subject: Object.values(subjects).filter(Boolean).join(', ')
             };
 
+            // Sync with Google Sheets / LamaAPI
+            try {
+                if (typeof LamaAPI !== 'undefined') {
+                    if (editId && typeof LamaAPI.update === 'function') {
+                        await LamaAPI.update('exams', editId, record);
+                    } else if (typeof LamaAPI.add === 'function') {
+                        await LamaAPI.add('exams', record);
+                    }
+                }
+            } catch (apiErr) {
+                console.warn('Google Sheets API sync warning:', apiErr);
+            }
+
             if (editId) {
                 const idx = dateSheetEntries.findIndex(item => String(item.id || item._id) === String(editId));
                 if (idx !== -1) {
@@ -643,22 +668,9 @@
             }
 
             saveEntries();
-            
-            try {
-                if (typeof LamaAPI !== 'undefined' && LamaAPI.add) {
-                    if (editId) {
-                        await LamaAPI.update('exams', editId, record);
-                    } else {
-                        await LamaAPI.add('exams', record);
-                    }
-                }
-            } catch(err) {
-                console.warn('LamaAPI sync warning:', err);
-            }
-
             renderAll();
             resetForm();
-            alert(isPublished ? 'Published successfully to Main Dashboard!' : 'Saved as draft.');
+            alert(isPublished ? 'Published successfully to Google Sheets & Main Dashboard!' : 'Saved as draft.');
         });
 
         function resetForm() {
@@ -681,7 +693,7 @@
             document.getElementById('day').value = item.day || '';
             document.getElementById('time').value = item.time || '';
             document.getElementById('invigilator').value = item.invigilator || '';
-            document.getElementById('isPublished').checked = !!(item.isPublished || item.published);
+            document.getElementById('isPublished').checked = !!(item.isPublished || item.published || item.status === 'published');
 
             const subjectsMap = item.subjects || {};
             const grades = Object.keys(subjectsMap);
@@ -700,7 +712,7 @@
                 dateSheetEntries = dateSheetEntries.filter(e => String(e.id || e._id) !== String(id));
                 saveEntries();
                 try {
-                    if (typeof LamaAPI !== 'undefined' && LamaAPI.remove) {
+                    if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.remove === 'function') {
                         await LamaAPI.remove('exams', id);
                     }
                 } catch(e) {}
@@ -787,7 +799,7 @@
         }
 
         function exportAsExcel() {
-            const publishedEntries = dateSheetEntries.filter(e => e.isPublished || e.published);
+            const publishedEntries = dateSheetEntries.filter(e => e.isPublished || e.published || e.status === 'published');
             if (publishedEntries.length === 0) {
                 alert('No published date sheet records available to export.');
                 return;
@@ -825,7 +837,7 @@
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-bold text-sky-600 dark:text-sky-400">${e.date || 'No Date'} (${e.day || 'Day'})</span>
-                            ${e.isPublished || e.published ? '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Published</span>' : '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold">Draft</span>'}
+                            ${e.isPublished || e.published || e.status === 'published' ? '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Published</span>' : '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold">Draft</span>'}
                         </div>
                         <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1">${e.examTitle || e.title || rememberedExamTitle}</p>
                         <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Grades: ${Object.keys(e.subjects || {}).join(', ')}</p>
@@ -843,7 +855,7 @@
             await fetchSchoolProfile();
             initGradeCheckboxes();
             initPresets();
-            loadEntries();
+            await loadEntries();
             document.getElementById('examTitle').value = rememberedExamTitle;
             updateGradeInputs();
             renderAll();

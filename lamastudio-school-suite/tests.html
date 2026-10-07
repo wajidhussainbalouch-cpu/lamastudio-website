@@ -1,10 +1,88 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Online Tests — Admin</title><style>*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07111f;color:#eaf3ff}.wrap{max-width:1180px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.brand{font-size:21px;font-weight:900}.muted{color:#8fa6bd;font-size:13px}.grid{display:grid;grid-template-columns:390px 1fr;gap:18px}.card{background:#0d1b2e;border:1px solid #203850;border-radius:18px;padding:18px}label{display:block;font-size:12px;font-weight:800;color:#b9cce0;margin:11px 0 6px}input,textarea,select{width:100%;background:#081727;border:1px solid #29445d;color:#eaf3ff;border-radius:10px;padding:11px;font:inherit}textarea{min-height:105px}.btn{border:1px solid #29445d;background:#13283d;color:#eaf3ff;padding:10px 13px;border-radius:10px;font-weight:800;cursor:pointer}.primary{background:#087fbd;border-color:#087fbd}.green{background:#166534}.red{background:#7f1d1d}.row{display:flex;gap:8px;flex-wrap:wrap}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.item{background:#09192b;border:1px solid #203850;border-radius:14px;padding:14px;margin-top:10px}.head{display:flex;justify-content:space-between;gap:10px}.badge{border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900}.pub{background:#14532d;color:#bbf7d0}.draft{background:#713f12;color:#fde68a}.check{display:flex;gap:8px;align-items:center;margin-top:13px;font-size:13px}.check input{width:auto}@media(max-width:800px){.grid{grid-template-columns:1fr}.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}}</style></head><body><main class="wrap"><header class="top"><div><div class="brand">Lama School Suite · Admin Portal</div><div class="muted">Online Tests Management — Main Dashboard is display-only</div></div><div class="row"><button class="btn" onclick="location.href='dashboard.html'">Admin Dashboard</button><button class="btn" onclick="location.href='main-dashboard.html'">School Board</button></div></header><div class="grid"><section class="card"><h2 style="margin-top:0">Create / Edit</h2><p class="muted">Admin controls this information. A record appears on the Main Dashboard only after it is published.</p><form id="form"><input type="hidden" id="editId"><label>Class</label><input id="class"><label>Subject</label><input id="subject"><label>Test Type</label><input id="type"><label>Date</label><input id="date" type="date"><label>Total Marks</label><input id="totalMarks" type="number" min="0"><label>Topics</label><textarea id="topics"></textarea><label class="check"><input type="checkbox" id="isPublished"> Publish on Main Dashboard</label><div class="actions"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" onclick="resetForm()">Clear</button></div></form></section><section class="card"><div class="head"><div><h2 style="margin:0">Online Tests</h2><div class="muted">Draft = Admin only · Published = Dashboard display</div></div><button class="btn" onclick="load()">Refresh</button></div><div id="list"></div></section></div></main><script src="js/lama-api.js"></script><script>
-const COLLECTION=tests; const FIELDS={"class":"class","subject":"subject","type":"type","date":"date","totalMarks":"totalMarks","topics":"topics"}; const $=id=>document.getElementById(id); let rows=[];
-function id(x){return String(x?.id??'');} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function pub(x){return x?.isPublished===true||x?.published===true||String(x?.status||'').toLowerCase()==='published';}
-function resetForm(){$('form').reset();$('editId').value='';}
-function edit(x){$('editId').value=id(x);Object.keys(FIELDS).forEach(k=>{if($(FIELDS[k]))$(FIELDS[k]).value=x[k]??''});$('isPublished').checked=pub(x);scrollTo({top:0,behavior:'smooth'})}
-async function load(){try{rows=await LamaAPI.list(COLLECTION)||[];rows=Array.isArray(rows)?rows:[];$('list').innerHTML=rows.length?rows.map(x=>`<article class="item"><div class="head"><div><b>${esc(x.title||x.examTitle||x.subject||'Record')}</b><div class="muted">${esc(x.date||x.createdAt||'')}</div></div><span class="badge ${pub(x)?'pub':'draft'}">${pub(x)?'PUBLISHED':'DRAFT'}</span></div><div class="muted" style="margin-top:8px">${esc(x.message||x.description||x.topics||x.subject||x.type||'')}</div><div class="actions"><button class="btn" onclick='edit(${JSON.stringify(x)})'>Edit</button><button class="btn ${pub(x)?'red':'green'}" onclick="toggle('${id(x)}')">${pub(x)?'Unpublish':'Publish'}</button><button class="btn red" onclick="del('${id(x)}')">Delete</button></div></article>`).join(''):'<div class="muted" style="text-align:center;padding:35px">No records yet.</div>'}catch(e){$('list').innerHTML='<div class="muted">Load failed: '+esc(e.message)+'</div>'}}
-$('form').addEventListener('submit',async e=>{e.preventDefault();const r={};Object.keys(FIELDS).forEach(k=>r[k]=$(FIELDS[k]).value.trim());const p=$('isPublished').checked;r.isPublished=p;r.published=p;r.status=p?'published':'draft';r.updatedAt=new Date().toISOString();try{const eid=$('editId').value;if(eid)await LamaAPI.update(COLLECTION,eid,r);else{r.createdAt=new Date().toISOString();await LamaAPI.add(COLLECTION,r)}resetForm();await load();alert(p?'Published — it will appear on the Main Dashboard.':'Saved as draft — it will remain hidden.')}catch(e){alert('Save failed: '+e.message)}});
-async function toggle(i){const x=rows.find(r=>id(r)===String(i));if(!x)return;const p=!pub(x);await LamaAPI.update(COLLECTION,i,{...x,isPublished:p,published:p,status:p?'published':'draft',updatedAt:new Date().toISOString()});load()} async function del(i){if(!confirm('Delete this record?'))return;await LamaAPI.remove(COLLECTION,i);load()} load();
-</script></body></html>
+<script src="js/lama-api.js"></script>
+<script>
+// Use the correct collection string identifier that LamaAPI recognizes for tests
+const COLLECTION = 'tests'; 
+const FIELDS = {"class":"class","subject":"subject","type":"type","date":"date","totalMarks":"totalMarks","topics":"topics"}; 
+const $ = id => document.getElementById(id); 
+let rows = [];
+
+function id(x){ return String(x?.id ?? x?._id ?? ''); } 
+function esc(v){ return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function pub(x){ return x?.isPublished === true || x?.published === true || String(x?.status || '').toLowerCase() === 'published'; }
+
+function resetForm(){ $('form').reset();$('editId').value = ''; }
+
+function edit(x){ 
+    $('editId').value = id(x); 
+    Object.keys(FIELDS).forEach(k => { if($(FIELDS[k])) $(FIELDS[k]).value = x[k] ?? ''; });$('isPublished').checked = pub(x); 
+    scrollTo({ top: 0, behavior: 'smooth' }); 
+}
+
+async function load(){
+    try {
+        rows = await LamaAPI.list(COLLECTION) || [];
+        rows = Array.isArray(rows) ? rows : [];
+        $('list').innerHTML = rows.length ? rows.map(x => `
+            <article class="item">
+                <div class="head">
+                    <div>
+                        <b>${esc(x.subject || x.title || 'Online Test')}</b>
+                        <div class="muted">Class: ${esc(x.class || 'N/A')} • ${esc(x.date || '')}</div>
+                    </div>
+                    <span class="badge ${pub(x) ? 'pub' : 'draft'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
+                </div>
+                <div class="muted" style="margin-top:8px">${esc(x.topics || x.description || '')}</div>
+                <div class="actions">
+                    <button class="btn" onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
+                    <button class="btn ${pub(x) ? 'red' : 'green'}" onclick="toggle('${id(x)}')">${pub(x) ? 'Unpublish' : 'Publish'}</button>
+                    <button class="btn red" onclick="del('${id(x)}')">Delete</button>
+                </div>
+            </article>
+        `).join('') : '<div class="muted" style="text-align:center;padding:35px">No records yet.</div>';
+    } catch(e) {
+        $('list').innerHTML = '<div class="muted">Load failed: ' + esc(e.message) + '</div>';
+    }
+}
+
+$('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const r = {};
+    Object.keys(FIELDS).forEach(k => r[k] = $(FIELDS[k]).value.trim());
+    const p = $('isPublished').checked;
+    r.isPublished = p;
+    r.published = p;
+    r.status = p ? 'published' : 'draft';
+    r.updatedAt = new Date().toISOString();
+    
+    try {
+        const eid = $('editId').value;
+        if(eid) {
+            await LamaAPI.update(COLLECTION, eid, r);
+        } else {
+            r.createdAt = new Date().toISOString();
+            await LamaAPI.add(COLLECTION, r);
+        }
+        resetForm();
+        await load();
+        alert(p ? 'Published — it will appear on the Main Dashboard.' : 'Saved as draft — it will remain hidden.');
+    } catch(e) {
+        alert('Save failed: ' + e.message);
+    }
+});
+
+async function toggle(i){
+    const x = rows.find(r => id(r) === String(i));
+    if(!x) return;
+    const p = !pub(x);
+    await LamaAPI.update(COLLECTION, i, { ...x, isPublished: p, published: p, status: p ? 'published' : 'draft', updatedAt: new Date().toISOString() });
+    load();
+}
+
+async function del(i){
+    if(!confirm('Delete this record?')) return;
+    await LamaAPI.remove(COLLECTION, i);
+    load();
+}
+
+load();
+</script>

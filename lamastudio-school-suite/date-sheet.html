@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="htmlRoot" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matrix Date Sheet Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -16,23 +21,27 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
-    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-lg no-print">
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-md dark:shadow-lg no-print">
         <div class="flex items-center gap-3">
             <div id="schoolLogoContainer" class="bg-sky-600 rounded-xl text-white font-black text-lg overflow-hidden flex items-center justify-center w-10 h-10 shadow">
                 <span id="schoolInitials">DS</span>
             </div>
             <div>
-                <h1 id="schoolName" class="font-bold text-lg text-white">Date Sheet Admin</h1>
-                <p class="text-xs text-slate-400">Manage grade-wise exam schedules & subjects</p>
+                <h1 id="schoolName" class="font-bold text-lg text-slate-900 dark:text-white">Date Sheet Admin</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Manage grade-wise exam schedules & subjects</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <!-- Theme Toggle Button -->
+            <button onclick="toggleTheme()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 p-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center w-9 h-9" title="Toggle Light/Dark Theme">
+                <span id="themeIcon">☀️</span>
+            </button>
+            <button onclick="window.print()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
                 🖨️ Print Matrix Sheet
             </button>
-            <button onclick="if(typeof LamaAPI !== 'undefined' && LamaAPI.logout) LamaAPI.logout(); else { localStorage.clear(); location.reload(); }" class="bg-red-900/40 hover:bg-red-800 text-red-300 px-3 py-2 rounded-xl text-xs font-bold transition">
+            <button onclick="if(typeof LamaAPI !== 'undefined' && LamaAPI.logout) LamaAPI.logout(); else { localStorage.clear(); location.reload(); }" class="bg-red-500/10 dark:bg-red-900/40 hover:bg-red-500/20 dark:hover:bg-red-800 text-red-600 dark:text-red-300 px-3 py-2 rounded-xl text-xs font-bold transition">
                 Logout
             </button>
         </div>
@@ -40,46 +49,47 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        <section class="lg:col-span-5 bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl no-print">
+        <section class="lg:col-span-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-xl no-print">
             <div class="flex justify-between items-center mb-5">
-                <h2 class="text-base font-bold text-sky-400">Create / Edit Date Sheet Entry</h2>
-                <button type="button" onclick="resetForm()" class="text-xs text-slate-400 hover:text-slate-200 underline">Clear</button>
+                <h2 class="text-base font-bold text-sky-600 dark:text-sky-400">Create / Edit Date Sheet Entry</h2>
+                <button type="button" onclick="resetForm()" class="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 underline">Clear</button>
             </div>
 
             <form id="form" class="space-y-4">
                 <input type="hidden" id="editId">
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Exam Title / Term</label>
-                    <input type="text" id="examTitle" required placeholder="e.g., Final Term Examination 2026" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Exam Title / Term</label>
+                    <input type="text" id="examTitle" required placeholder="e.g., Final Term Examination 2026" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Date</label>
-                        <input type="date" id="date" required onchange="handleDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Date (DD/MM/YYYY)</label>
+                        <input type="text" id="date" required placeholder="DD/MM/YYYY" oninput="handleDateInput(this)" onblur="formatDateInputOnBlur(this)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                        <p class="text-[10px] text-slate-400 mt-0.5">Format: DD/MM/YYYY (e.g. 25/12/2026)</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Day</label>
-                        <input type="text" id="day" placeholder="e.g., Monday" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Day</label>
+                        <input type="text" id="day" placeholder="e.g., Monday" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Timing / Shift</label>
-                        <input type="text" id="time" placeholder="e.g., 09:00 AM - 12:00 PM" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Timing / Shift</label>
+                        <input type="text" id="time" placeholder="e.g., 09:00 AM - 12:00 PM" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Invigilator Notes</label>
-                        <input type="text" id="invigilator" placeholder="e.g., Room A" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Invigilator Notes</label>
+                        <input type="text" id="invigilator" placeholder="e.g., Room A" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                 </div>
 
-                <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700 space-y-3">
+                <div class="bg-slate-100 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div class="flex justify-between items-center">
-                        <label class="text-xs font-bold text-sky-300">Grade / Class Selection Mode</label>
-                        <select id="gradeMode" onchange="onGradeModeChange()" class="bg-slate-800 text-xs border border-slate-700 rounded-lg px-2 py-1 text-slate-200">
+                        <label class="text-xs font-bold text-sky-600 dark:text-sky-300">Grade / Class Selection Mode</label>
+                        <select id="gradeMode" onchange="onGradeModeChange()" class="bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-800 dark:text-slate-200">
                             <option value="custom">Select Specific Grades</option>
                             <option value="range">Range Selection</option>
                         </select>
@@ -87,15 +97,15 @@
 
                     <!-- Custom Checkboxes -->
                     <div id="customGradesBox" class="space-y-2">
-                        <p class="text-[11px] text-slate-400">Check grades to include in this exam date:</p>
-                        <div id="gradeCheckboxes" class="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-slate-900 rounded-lg border border-slate-800"></div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Check grades to include in this exam date:</p>
+                        <div id="gradeCheckboxes" class="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"></div>
                     </div>
 
                     <!-- Range Selector -->
                     <div id="rangeGradesBox" class="hidden grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[11px] text-slate-400 mb-1">From Grade</label>
-                            <select id="rangeStart" onchange="updateGradeInputs()" class="w-full bg-slate-800 text-xs border border-slate-700 rounded-lg px-2 py-2 text-slate-200">
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">From Grade</label>
+                            <select id="rangeStart" onchange="updateGradeInputs()" class="w-full bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-slate-800 dark:text-slate-200">
                                 <option value="Grade-1">Grade-1</option>
                                 <option value="Grade-2">Grade-2</option>
                                 <option value="Grade-3">Grade-3</option>
@@ -111,8 +121,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[11px] text-slate-400 mb-1">To Grade</label>
-                            <select id="rangeEnd" onchange="updateGradeInputs()" class="w-full bg-slate-800 text-xs border border-slate-700 rounded-lg px-2 py-2 text-slate-200">
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">To Grade</label>
+                            <select id="rangeEnd" onchange="updateGradeInputs()" class="w-full bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-slate-800 dark:text-slate-200">
                                 <option value="Grade-1">Grade-1</option>
                                 <option value="Grade-2">Grade-2</option>
                                 <option value="Grade-3">Grade-3</option>
@@ -133,20 +143,20 @@
                 <!-- Subject Quick Presets -->
                 <div>
                     <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-bold text-slate-300">Quick Subject Presets (Click to insert)</label>
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Subject Presets (Click to insert)</label>
                     </div>
-                    <div id="presetChips" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-slate-900 rounded-xl border border-slate-700"></div>
+                    <div id="presetChips" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-700"></div>
                 </div>
 
                 <!-- Dynamic Grade Subject Inputs -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-2">Subject Assigned per Grade</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Subject Assigned per Grade (First paper auto-fixes remaining)</label>
                     <div id="gradesContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
                 </div>
 
                 <div class="flex items-center gap-2 pt-2">
-                    <input type="checkbox" id="isPublished" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-sky-600 focus:ring-0">
-                    <label for="isPublished" class="text-xs font-bold text-slate-300">Publish immediately to Matrix Schedule</label>
+                    <input type="checkbox" id="isPublished" class="w-4 h-4 rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-sky-600 focus:ring-0">
+                    <label for="isPublished" class="text-xs font-bold text-slate-700 dark:text-slate-300">Publish immediately to Matrix Schedule</label>
                 </div>
 
                 <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-lg shadow-sky-900/40">
@@ -181,8 +191,8 @@
             </div>
 
             <!-- Stored Entries Management List -->
-            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl no-print">
-                <h3 class="text-sm font-bold text-slate-200 mb-4">Saved Date Sheet Records</h3>
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-xl no-print">
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">Saved Date Sheet Records</h3>
                 <div id="list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
             </div>
 
@@ -240,27 +250,73 @@
     const COLLECTION = 'matrix_datesheet';
     const ALL_POSSIBLE_GRADES = ['PG', 'ECCE', 'Prep', 'KG', 'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5', 'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10', 'Grade-11', 'Grade-12'];
 
-    // Helper to format YYYY-MM-DD into DD/MM/YYYY
-    function formatDateDDMMYYYY(dateStr) {
-        if (!dateStr) return '';
-        // If already in DD/MM/YYYY format or has slashes
-        if (dateStr.includes('/')) return dateStr;
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    // Theme toggle handling
+    function toggleTheme() {
+        const html = document.getElementById('htmlRoot');
+        const icon = document.getElementById('themeIcon');
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.setItem('matrix_theme', 'light');
+            icon.innerText = '🌙';
+        } else {
+            html.classList.add('dark');
+            localStorage.setItem('matrix_theme', 'dark');
+            icon.innerText = '☀️';
         }
-        return dateStr;
     }
 
-    function handleDateChange() {
-        const dateVal = $('date').value;
-        if (dateVal) {
-            const dateObj = new Date(dateVal + 'T00:00:00');
+    function initTheme() {
+        const saved = localStorage.getItem('matrix_theme');
+        const html = document.getElementById('htmlRoot');
+        const icon = document.getElementById('themeIcon');
+        if (saved === 'light') {
+            html.classList.remove('dark');
+            if (icon) icon.innerText = '🌙';
+        } else {
+            html.classList.add('dark');
+            if (icon) icon.innerText = '☀️';
+        }
+    }
+
+    // Enforce strict DD/MM/YYYY formatting
+    function ensureDDMMYYYY(val) {
+        if (!val) return '';
+        val = val.trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+            const parts = val.split('-');
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return val;
+    }
+
+    function handleDateInput(input) {
+        let v = input.value.replace(/\D/g, '');
+        if (v.length > 8) v = v.slice(0, 8);
+        let formatted = '';
+        if (v.length > 4) {
+            formatted = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
+        } else if (v.length > 2) {
+            formatted = `${v.slice(0, 2)}/${v.slice(2)}`;
+        } else {
+            formatted = v;
+        }
+        input.value = formatted;
+
+        if (formatted.length === 10) {
+            const parts = formatted.split('/');
+            const dayNum = parseInt(parts[0], 10);
+            const monthNum = parseInt(parts[1], 10) - 1;
+            const yearNum = parseInt(parts[2], 10);
+            const dateObj = new Date(yearNum, monthNum, dayNum);
             if (!isNaN(dateObj.getTime())) {
                 const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                 $('day').value = daysOfWeek[dateObj.getDay()];
             }
         }
+    }
+
+    function formatDateInputOnBlur(input) {
+        input.value = ensureDDMMYYYY(input.value);
     }
 
     const GRADE_SUBJECT_PRESETS = {
@@ -290,7 +346,7 @@
         const container = $('presetChips');
         const allPresets = ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Science', 'SSt', 'Nazra', 'Computer', 'Drawing', 'Arabic', 'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Custom', '---'];
         container.innerHTML = allPresets.map(subj => `
-            <button type="button" onclick="insertSubjectPreset('${subj}')" class="bg-slate-800 hover:bg-sky-700 text-sky-200 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700 transition">
+            <button type="button" onclick="insertSubjectPreset('${subj}')" class="bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-700 text-slate-700 dark:text-sky-200 hover:text-sky-600 dark:hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 transition">
                 ${subj}
             </button>
         `).join('');
@@ -299,10 +355,12 @@
     function insertSubjectPreset(subj) {
         if (lastFocusedInput) {
             lastFocusedInput.value = subj;
+            checkAndAutoFillFirstPaper(lastFocusedInput);
         } else {
             const firstInput = document.querySelector('.grade-sub-input');
             if (firstInput) {
                 firstInput.value = subj;
+                checkAndAutoFillFirstPaper(firstInput);
                 firstInput.focus();
             }
         }
@@ -313,7 +371,7 @@
         container.innerHTML = ALL_POSSIBLE_GRADES.map(g => {
             const isChecked = selectedGrades.length === 0 || selectedGrades.includes(g) ? 'checked' : '';
             return `
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input type="checkbox" class="grade-checkbox" value="${g}" ${isChecked} onchange="updateGradeInputs()">
                     ${g}
                 </label>
@@ -351,16 +409,28 @@
         }
     }
 
+    function checkAndAutoFillFirstPaper(changedInput) {
+        const allInputs = document.querySelectorAll('.grade-sub-input');
+        if (allInputs.length > 0 && allInputs[0] === changedInput) {
+            const firstPaperValue = changedInput.value;
+            allInputs.forEach((inp, idx) => {
+                if (idx > 0 && (!inp.value || inp.value.trim() === '' || inp.value === '---')) {
+                    inp.value = firstPaperValue;
+                }
+            });
+        }
+    }
+
     function updateGradeInputs(existingGradesData = {}) {
         const grades = getActiveGrades();
         const container = $('gradesContainer');
-        container.innerHTML = grades.map(g => {
+        container.innerHTML = grades.map((g, idx) => {
             const defaultSubj = GRADE_SUBJECT_PRESETS[g]?.[0] || '---';
             const val = existingGradesData[g] !== undefined ? existingGradesData[g] : defaultSubj;
             return `
                 <div class="flex items-center gap-2">
-                    <span class="w-24 text-xs font-bold text-sky-300 flex-shrink-0">${g}</span>
-                    <input class="grade-sub-input w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-sky-500" data-grade="${g}" placeholder="e.g. ${defaultSubj}" value="${val}" onfocus="lastFocusedInput=this">
+                    <span class="w-24 text-xs font-bold text-sky-600 dark:text-sky-300 flex-shrink-0">${g}</span>
+                    <input class="grade-sub-input w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500" data-grade="${g}" placeholder="e.g. ${defaultSubj}" value="${val}" onfocus="lastFocusedInput=this" oninput="checkAndAutoFillFirstPaper(this)" onchange="checkAndAutoFillFirstPaper(this)">
                 </div>
             `;
         }).join('');
@@ -381,7 +451,7 @@
     function edit(x) {
         $('editId').value = id(x);
         if ($('examTitle')) $('examTitle').value = x.examTitle || '';
-        if ($('date')) $('date').value = x.date || '';
+        if ($('date')) $('date').value = ensureDDMMYYYY(x.date || '');
         if ($('day')) $('day').value = x.day || '';
         if ($('time')) $('time').value = x.time || '';
         if ($('invigilator')) $('invigilator').value = x.invigilator || '';
@@ -409,7 +479,7 @@
         const editId = $('editId').value;
         const itemData = {
             examTitle: $('examTitle').value.trim(),
-            date: $('date').value,
+            date: ensureDDMMYYYY($('date').value),
             day: $('day').value.trim(),
             time: $('time').value.trim(),
             invigilator: $('invigilator').value.trim(),
@@ -426,7 +496,6 @@
             resetForm();
             load();
         } catch (err) {
-            console.error('Save error, saving to local fallback:', err);
             const list = JSON.parse(localStorage.getItem('lama_' + COLLECTION) || '[]');
             if (editId) {
                 const idx = list.findIndex(i => String(i.id) === String(editId));
@@ -451,25 +520,28 @@
         
         const container = $('list');
         container.innerHTML = rows.length ? rows.map(x => `
-            <article class="bg-slate-900 border border-slate-700 p-4 rounded-xl flex flex-col gap-2">
+            <article class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 rounded-xl flex flex-col gap-2">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h4 class="font-bold text-xs text-white">${esc(x.examTitle || 'Exam')}</h4>
-                        <p class="text-[11px] text-slate-400">${esc(formatDateDDMMYYYY(x.date))} ${x.day ? '(' + esc(x.day) + ')' : ''} ${x.time ? '• ' + esc(x.time) : ''}</p>
+                        <h4 class="font-bold text-xs text-slate-900 dark:text-white">${esc(x.examTitle || 'Exam')}</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">${esc(ensureDDMMYYYY(x.date))} ${x.day ? '(' + esc(x.day) + ')' : ''} ${x.time ? '• ' + esc(x.time) : ''}</p>
                     </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${pub(x) ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700' : 'bg-amber-900/60 text-amber-300 border border-amber-700'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${pub(x) ? 'bg-emerald-100 dark:bg-emerald-900/65 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-amber-100 dark:bg-amber-900/65 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
                 </div>
-                <p class="text-[11px] text-slate-300"><b>Grades:</b> ${Object.keys(x.grades || {}).join(', ') || 'All'}</p>
-                <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                    <button onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})' class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded-lg text-xs font-bold transition">Edit</button>
-                    <button onclick="toggle('${id(x)}')" class="bg-slate-800 hover:bg-slate-700 text-sky-300 px-3 py-1 rounded-lg text-xs font-bold transition">${pub(x) ? 'Unpublish' : 'Publish'}</button>
-                    <button onclick="del('${id(x)}')" class="bg-red-900/40 hover:bg-red-800 text-red-300 px-3 py-1 rounded-lg text-xs font-bold transition ml-auto">Delete</button>
+                <p class="text-[11px] text-slate-600 dark:text-slate-300"><b>Grades:</b> ${Object.keys(x.grades || {}).join(', ') || 'All'}</p>
+                <div class="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <button onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})' class="bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-1 rounded-lg text-xs font-bold transition border border-slate-300 dark:border-slate-700">Edit</button>
+                    <button onclick="toggle('${id(x)}')" class="bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sky-600 dark:text-sky-300 px-3 py-1 rounded-lg text-xs font-bold transition border border-slate-300 dark:border-slate-700">${pub(x) ? 'Unpublish' : 'Publish'}</button>
+                    <button onclick="del('${id(x)}')" class="bg-red-50 dark:bg-red-900/40 hover:bg-red-100 dark:hover:bg-red-800 text-red-600 dark:text-red-300 px-3 py-1 rounded-lg text-xs font-bold transition ml-auto border border-red-200 dark:border-red-900">Delete</button>
                 </div>
             </article>
-        `).join('') : '<p class="text-xs text-slate-400 text-center py-6">No date sheet records created yet.</p>';
+        `).join('') : '<p class="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No date sheet records created yet.</p>';
         
-        // Build Printable Matrix Table
-        const publishedRows = rows.filter(pub).sort((a,b) => (a.date || '').localeCompare(b.date || ''));
+        const publishedRows = rows.filter(pub).sort((a,b) => {
+            const da = (a.date || '').split('/').reverse().join('');
+            const db = (b.date || '').split('/').reverse().join('');
+            return da.localeCompare(db);
+        });
         
         let allUsedGrades = [];
         publishedRows.forEach(r => {
@@ -494,65 +566,68 @@
         const sheetBody = $('sheetRowsBody');
         sheetBody.innerHTML = publishedRows.length ? publishedRows.map(x => `
             <tr>
-                <td class="p-2 font-bold whitespace-nowrap">${esc(formatDateDDMMYYYY(x.date) || '-')}</td>
+                <td class="p-2 font-bold whitespace-nowrap">${esc(ensureDDMMYYYY(x.date) || '-')}</td>
                 <td class="p-2 whitespace-nowrap">${esc(x.day || '-')}</td>
                 ${allUsedGrades.map(g => `<td class="p-2 text-center text-slate-700">${esc(x.grades?.[g] || '---')}</td>`).join('')}
             </tr>
-        `).join('') : `<tr><td colspan="${allUsedGrades.length + 2}" class="text-center py-6 text-slate-400">No published date sheet entries available.</td></tr>`;
+        `).join('') : `<tr><td colspan="${allUsedGrades.length + 2}" class="text-center py-6 text-slate-500">No published date sheet entries available.</td></tr>`;
 
         if (publishedRows.length > 0 && $('sheetExamTitle')) {
-            $('sheetExamTitle').innerText = publishedRows[0].examTitle || 'OFFICIAL EXAMINATION DATE SHEET';
+            $('sheetExamTitle').innerText = publishedRows[0].examTitle || 'EXAMINATION DATE SHEET';
             if (publishedRows[0].time) $('sheetTimings').innerText = 'TIMING: ' + publishedRows[0].time;
         }
 
-        // Fetch real active school profile data from multiple storage sources
+        // Fetch Real School Profile via LamaAPI or Storage
         try {
-            let school = null;
+            let schoolData = null;
             if (typeof LamaAPI.getActiveSchool === 'function') {
-                school = await LamaAPI.getActiveSchool();
+                schoolData = await LamaAPI.getActiveSchool();
             }
-            if (!school) {
-                const keys = ['lama_active_school', 'active_school', 'school_profile', 'current_school', 'school'];
-                for (const k of keys) {
-                    const val = localStorage.getItem(k);
-                    if (val) {
+            if (!schoolData) {
+                const possibleKeys = ['lama_active_school', 'active_school', 'school_profile', 'current_school', 'school', 'lama_schools'];
+                for (const k of possibleKeys) {
+                    const raw = localStorage.getItem(k);
+                    if (raw) {
                         try {
-                            const parsed = JSON.parse(val);
-                            if (parsed && (parsed.name || parsed.schoolName || parsed.title)) {
-                                school = parsed;
+                            const parsed = JSON.parse(raw);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                                schoolData = parsed[0];
+                                break;
+                            } else if (parsed && (parsed.name || parsed.schoolName || parsed.title)) {
+                                schoolData = parsed;
                                 break;
                             }
-                        } catch(e) {}
+                        } catch(err) {}
                     }
                 }
             }
-            if (!school && typeof LamaAPI.list === 'function') {
+            if (!schoolData && typeof LamaAPI.list === 'function') {
                 try {
-                    const schools = await LamaAPI.list('schools');
-                    if (schools && schools.length > 0) school = schools[0];
+                    const listSchools = await LamaAPI.list('schools');
+                    if (listSchools && listSchools.length > 0) schoolData = listSchools[0];
                 } catch(e) {}
             }
 
-            const realName = school?.name || school?.schoolName || school?.title || school?.school_name;
-            const realLogo = school?.logo || school?.logoUrl || school?.image || school?.schoolLogo;
+            const schoolName = schoolData?.name || schoolData?.schoolName || schoolData?.title || schoolData?.school_name;
+            const schoolLogo = schoolData?.logo || schoolData?.logoUrl || schoolData?.image || schoolData?.schoolLogo;
 
-            if (realName) {
-                $('schoolName').innerText = realName + ' - Date Sheet Admin';
-                if ($('sheetSchoolSub')) $('sheetSchoolSub').innerText = realName.toUpperCase();
-                const words = realName.trim().split(' ');
-                const initials = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : realName.substring(0, 2).toUpperCase();
+            if (schoolName) {
+                $('schoolName').innerText = schoolName + ' - Date Sheet Admin';
+                if ($('sheetSchoolSub')) $('sheetSchoolSub').innerText = schoolName.toUpperCase();
+                const words = schoolName.trim().split(' ');
+                const initials = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : schoolName.substring(0, 2).toUpperCase();
                 $('schoolInitials').innerText = initials;
             }
 
-            if (realLogo) {
-                $('schoolLogoContainer').innerHTML = `<img src="${realLogo}" alt="Logo" class="w-full h-full object-cover">`;
+            if (schoolLogo) {
+                $('schoolLogoContainer').innerHTML = `<img src="${schoolLogo}" alt="Logo" class="w-full h-full object-cover">`;
                 if ($('printLogoWrapper') && $('printSchoolLogo')) {
-                    $('printSchoolLogo').src = realLogo;
+                    $('printSchoolLogo').src = schoolLogo;
                     $('printLogoWrapper').classList.remove('hidden');
                 }
             }
-        } catch(e) {
-            console.warn('Could not fetch active school profile:', e);
+        } catch(err) {
+            console.warn('Could not load active school name:', err);
         }
     }
 
@@ -583,6 +658,7 @@
     }
 
     window.onload = () => {
+        initTheme();
         initPresetChips();
         initGradeCheckboxes();
         onGradeModeChange();

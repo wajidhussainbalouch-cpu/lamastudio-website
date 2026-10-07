@@ -19,19 +19,12 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen">
 
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-lg no-print">
-    <div class="flex items-center gap-3">
-        <div id="schoolLogoContainer" class="bg-sky-600 rounded-xl text-white font-black text-lg overflow-hidden flex items-center justify-center w-10 h-10 shadow">
-            <span id="schoolInitials">DS</span>
-        </div>
-        <div>
-            <h1 id="schoolName" class="font-bold text-lg text-white">Matrix Date Sheet Admin</h1>
-            <p class="text-xs text-slate-400">Manage grade-wise exam schedules & subjects</p>
-        </div>
-    </div>
-    <div class="flex items-center gap-3">
-            <div class="bg-sky-600 p-2 rounded-xl text-white font-black text-lg">DS</div>
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoContainer" class="bg-sky-600 rounded-xl text-white font-black text-lg overflow-hidden flex items-center justify-center w-10 h-10 shadow">
+                <span id="schoolInitials">DS</span>
+            </div>
             <div>
-                <h1 id="schoolName" class="font-bold text-lg text-white">Matrix Date Sheet Admin</h1>
+                <h1 id="schoolName" class="font-bold text-lg text-white">Date Sheet Admin</h1>
                 <p class="text-xs text-slate-400">Manage grade-wise exam schedules & subjects</p>
             </div>
         </div>
@@ -165,17 +158,17 @@
         <section class="lg:col-span-7 space-y-6">
             
             <!-- Matrix Live Printable Preview Card -->
-    <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden">
-        <div class="text-center pb-4 border-b border-slate-200 flex flex-col items-center">
-            <div id="printLogoWrapper" class="mb-2 hidden">
-                <img id="printSchoolLogo" src="" alt="School Logo" class="h-12 w-12 object-contain mx-auto">
-            </div>
-            <h2 id="sheetSchoolSub" class="text-sm font-bold text-slate-600 uppercase tracking-widest">OFFICIAL EXAMINATION MATRIX</h2>
-            <h1 id="sheetExamTitle" class="text-xl font-black tracking-wider text-slate-900 uppercase mt-1">EXAMINATION DATE SHEET</h1>
-            <p id="sheetTimings" class="text-[11px] font-bold text-sky-700 mt-1"></p>
-        </div>
+            <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden">
+                <div class="text-center pb-4 border-b border-slate-200 flex flex-col items-center">
+                    <div id="printLogoWrapper" class="mb-2 hidden">
+                        <img id="printSchoolLogo" src="" alt="School Logo" class="h-12 w-12 object-contain mx-auto">
+                    </div>
+                    <h2 id="sheetSchoolSub" class="text-sm font-bold text-slate-600 uppercase tracking-widest">OFFICIAL EXAMINATION MATRIX</h2>
+                    <h1 id="sheetExamTitle" class="text-xl font-black tracking-wider text-slate-900 uppercase mt-1">EXAMINATION DATE SHEET</h1>
+                    <p id="sheetTimings" class="text-[11px] font-bold text-sky-700 mt-1"></p>
+                </div>
 
-        <div class="overflow-x-auto mt-4">
+                <div class="overflow-x-auto mt-4">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead id="sheetTableHeader" class="bg-slate-100 text-slate-700 border-b border-slate-300"></thead>
                         <tbody id="sheetRowsBody" class="divide-y divide-slate-200"></tbody>
@@ -202,7 +195,9 @@
         window.LamaAPI = {
             logout: function() { localStorage.clear(); location.reload(); },
             requireLogin: function() { return true; },
-            getActiveSchool: async function() { return JSON.parse(localStorage.getItem('lama_active_school') || '{"name":"Model Public School"}'); },
+            getActiveSchool: async function() { 
+                return JSON.parse(localStorage.getItem('lama_active_school') || localStorage.getItem('active_school') || 'null'); 
+            },
             list: async function(key) { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); },
             add: async function(key, item) {
                 const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
@@ -245,6 +240,18 @@
     const COLLECTION = 'matrix_datesheet';
     const ALL_POSSIBLE_GRADES = ['PG', 'ECCE', 'Prep', 'KG', 'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5', 'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10', 'Grade-11', 'Grade-12'];
 
+    // Helper to format YYYY-MM-DD into DD/MM/YYYY
+    function formatDateDDMMYYYY(dateStr) {
+        if (!dateStr) return '';
+        // If already in DD/MM/YYYY format or has slashes
+        if (dateStr.includes('/')) return dateStr;
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
     function handleDateChange() {
         const dateVal = $('date').value;
         if (dateVal) {
@@ -256,7 +263,6 @@
         }
     }
 
-    // Precise presets corresponding to user specifications
     const GRADE_SUBJECT_PRESETS = {
         'Grade-1': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Nazra', '---'],
         'Grade-2': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Nazra', '---'],
@@ -449,7 +455,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <h4 class="font-bold text-xs text-white">${esc(x.examTitle || 'Exam')}</h4>
-                        <p class="text-[11px] text-slate-400">${esc(x.date || '')} ${x.day ? '(' + esc(x.day) + ')' : ''} ${x.time ? '• ' + esc(x.time) : ''}</p>
+                        <p class="text-[11px] text-slate-400">${esc(formatDateDDMMYYYY(x.date))} ${x.day ? '(' + esc(x.day) + ')' : ''} ${x.time ? '• ' + esc(x.time) : ''}</p>
                     </div>
                     <span class="px-2 py-0.5 rounded text-[10px] font-bold ${pub(x) ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-700' : 'bg-amber-900/60 text-amber-300 border border-amber-700'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
                 </div>
@@ -488,7 +494,7 @@
         const sheetBody = $('sheetRowsBody');
         sheetBody.innerHTML = publishedRows.length ? publishedRows.map(x => `
             <tr>
-                <td class="p-2 font-bold whitespace-nowrap">${esc(x.date || '-')}</td>
+                <td class="p-2 font-bold whitespace-nowrap">${esc(formatDateDDMMYYYY(x.date) || '-')}</td>
                 <td class="p-2 whitespace-nowrap">${esc(x.day || '-')}</td>
                 ${allUsedGrades.map(g => `<td class="p-2 text-center text-slate-700">${esc(x.grades?.[g] || '---')}</td>`).join('')}
             </tr>
@@ -499,22 +505,36 @@
             if (publishedRows[0].time) $('sheetTimings').innerText = 'TIMING: ' + publishedRows[0].time;
         }
 
-        // Fetch real active school profile data (Name and Logo)
+        // Fetch real active school profile data from multiple storage sources
         try {
             let school = null;
             if (typeof LamaAPI.getActiveSchool === 'function') {
                 school = await LamaAPI.getActiveSchool();
             }
-            if (!school && typeof LamaAPI.list === 'function') {
-                const schools = await LamaAPI.list('schools');
-                if (schools && schools.length > 0) school = schools[0];
-            }
             if (!school) {
-                school = JSON.parse(localStorage.getItem('lama_active_school') || localStorage.getItem('active_school') || 'null');
+                const keys = ['lama_active_school', 'active_school', 'school_profile', 'current_school', 'school'];
+                for (const k of keys) {
+                    const val = localStorage.getItem(k);
+                    if (val) {
+                        try {
+                            const parsed = JSON.parse(val);
+                            if (parsed && (parsed.name || parsed.schoolName || parsed.title)) {
+                                school = parsed;
+                                break;
+                            }
+                        } catch(e) {}
+                    }
+                }
+            }
+            if (!school && typeof LamaAPI.list === 'function') {
+                try {
+                    const schools = await LamaAPI.list('schools');
+                    if (schools && schools.length > 0) school = schools[0];
+                } catch(e) {}
             }
 
-            const realName = school?.name || school?.schoolName || school?.title;
-            const realLogo = school?.logo || school?.logoUrl || school?.image;
+            const realName = school?.name || school?.schoolName || school?.title || school?.school_name;
+            const realLogo = school?.logo || school?.logoUrl || school?.image || school?.schoolLogo;
 
             if (realName) {
                 $('schoolName').innerText = realName + ' - Date Sheet Admin';
@@ -532,7 +552,7 @@
                 }
             }
         } catch(e) {
-            console.warn('Could not fetch active school profile, falling back to defaults:', e);
+            console.warn('Could not fetch active school profile:', e);
         }
     }
 

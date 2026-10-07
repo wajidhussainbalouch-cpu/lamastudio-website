@@ -576,8 +576,10 @@ async function render(){
 
     const notices = (rawNotices || []).filter(n => n && (isPublished(n) || n.title));
     const activities = (rawActivities || []).filter(a => a && (isPublished(a) || a.title));
-    const exams = publishedOnly(rawExams || []);
-    const tests = publishedOnly(rawTests || []);
+    
+    // Display all saved exams and tests immediately without strict publication filters
+    const exams = rawExams || [];
+    const tests = rawTests || [];
     const resources = publishedOnly(data.resources || []);
 
     // Render Notices
@@ -646,7 +648,7 @@ async function render(){
     if(document.getElementById('examsList')) document.getElementById('examsList').innerHTML = examHtml;
     if(document.getElementById('modalExamsList')) document.getElementById('modalExamsList').innerHTML = examHtml;
 
-    // Render Tests & Quizzes (from tests.html / tests collection)
+    // Render Tests & Quizzes
     const testHtml = tests.map(t => {
         const subjectName = t.subject || t.title || 'Online Test';
         const testType = t.type || t.testType || 'Quiz / Test';

@@ -445,31 +445,36 @@ function closeModal(id){
     document.getElementById(id).classList.remove('active');
 }
 
-/* Dark / Light theme */
-const savedTheme = localStorage.getItem('lama-main-dashboard-theme');
-if(savedTheme === 'light' || savedTheme === 'dark'){
-    document.documentElement.dataset.theme = savedTheme;
-}
+/* Dark / Light theme synchronization */
+const savedTheme = localStorage.getItem('lama-main-dashboard-theme') || localStorage.getItem('lama_theme') || 'dark';
+document.documentElement.dataset.theme = savedTheme;
+
 function updateThemeButton(){
     const isLight = document.documentElement.dataset.theme === 'light';
     const btn = document.getElementById('themeToggle');
-    btn.textContent = isLight ? '🌙' : '☀️';
-    btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+    if(btn) {
+        btn.textContent = isLight ? '🌙' : '☀️';
+        btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+    }
 }
-document.getElementById('themeToggle').addEventListener('click',()=>{
-    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-    document.documentElement.dataset.theme = next;
-    localStorage.setItem('lama-main-dashboard-theme',next);
-    updateThemeButton();
-});
+const themeToggleBtn = document.getElementById('themeToggle');
+if(themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem('lama-main-dashboard-theme', next);
+        localStorage.setItem('lama_theme', next);
+        updateThemeButton();
+    });
+}
 updateThemeButton();
 
 function isPublished(item){
     if(!item || typeof item !== 'object') return false;
-    if(item.isPublished === true || item.published === true) return true;
+    if(item.isPublished === true || item.published === true || item.status === 'published' || item.status === 'active') return true;
     const status = String(item.status ?? '').trim().toLowerCase();
     const visibility = String(item.visibility ?? '').trim().toLowerCase();
-    if(status === 'published' || status === 'public') return true;
+    if(status === 'published' || status === 'public' || status === 'active') return true;
     if(visibility === 'public' || visibility === 'published') return true;
     return false;
 }
@@ -481,7 +486,7 @@ function publishedOnly(value){
 async function render(){
     let data = {};
     try{
-        if(typeof LamaAPI !== 'undefined' && LamaAPI.getMainDashboardData) {
+        if(typeof LamaAPI !== 'undefined' && typeof LamaAPI.getMainDashboardData === 'function') {
             data = await LamaAPI.getMainDashboardData();
         } else {
             data = { schoolName: 'Lama School Suite', address: 'Main Campus', level: 'K-12' };
@@ -490,34 +495,57 @@ async function render(){
         console.warn('Could not load getMainDashboardData: ' + e.message);
     }
 
-    // Direct collection fallbacks from API or localStorage
+    // 1. Fetch Tests Collection (from API or local storage fallbacks)
     let rawTests = data.upcomingTests;
     if (!rawTests || rawTests.length === 0) {
         try {
-            if (typeof LamaAPI !== 'undefined' && LamaAPI.list) {
+            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
                 rawTests = await LamaAPI.list('tests');
             }
         } catch(e) {}
         if (!rawTests || rawTests.length === 0) {
-            try { rawTests = JSON.parse(localStorage.getItem('lama_tests') || localStorage.getItem('tests') || '[]'); } catch(e) {}
+            try { 
+                rawTests = JSON.parse(
+                    localStorage.getItem('lama_tests') || 
+                    localStorage.getItem('tests') || 
+                    localStorage.getItem('lama_main_dashboard_tests') || 
+                    '[]'
+                ); 
+            } catch(e) {}
         }
     }
 
+    // 2. Fetch Exams / Date Sheets Collection
     let rawExams = data.upcomingExams;
     if (!rawExams || rawExams.length === 0) {
         try {
-            if (typeof LamaAPI !== 'undefined' && LamaAPI.list) {
+            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
                 rawExams = await LamaAPI.list('exams');
             }
         } catch(e) {}
         if (!rawExams || rawExams.length === 0) {
-            try { rawExams = JSON.parse(localStorage.getItem('lama_exams') || localStorage.getItem('exams') || '[]'); } catch(e) {}
+            try { 
+                rawExams = JSON.parse(
+                    localStorage.getItem('lama_exams') || 
+                    localStorage.getItem('exams') || 
+                    localStorage.getItem('lama_matrix_datesheet_records') || 
+                    localStorage.getItem('lama_main_dashboard_exams') ||
+                    '[]'
+                ); 
+            } catch(e) {}
         }
     }
 
+    // 3. Fetch Notices & Activities
     let rawNotices = data.recentNotifications;
     if (!rawNotices || rawNotices.length === 0) {
-        try { rawNotices = JSON.parse(localStorage.getItem('lama_notifications') || '[]'); } catch(e) {}
+        try { 
+            rawNotices = JSON.parse(
+                localStorage.getItem('lama_notifications') || 
+                localStorage.getItem('lama_main_dashboard_notices') || 
+                '[]'
+            ); 
+        } catch(e) {}
     }
 
     let rawActivities = data.recentActivities;
@@ -525,21 +553,25 @@ async function render(){
         try { rawActivities = JSON.parse(localStorage.getItem('lama_activities') || '[]'); } catch(e) {}
     }
 
-    const schoolName = data.schoolName || localStorage.getItem('lama_school_name') || 'Lama School';
+    const schoolName = data.schoolName || localStorage.getItem('lama_school_name') || localStorage.getItem('schoolName') || 'Lama School';
 
     document.getElementById('pageTitle').innerText = `${schoolName} | School Board`;
-    document.getElementById('navSchoolName').innerText = schoolName;
-    document.getElementById('headerSchoolName').innerText = schoolName;
-    document.getElementById('headerSchoolMeta').innerText =
-        [data.address,data.level].filter(Boolean).join(' • ') || 'Official School Board';
+    const navNameEl = document.getElementById('navSchoolName');
+    if(navNameEl) navNameEl.innerText = schoolName;
+    const headerNameEl = document.getElementById('headerSchoolName');
+    if(headerNameEl) headerNameEl.innerText = schoolName;
+    const metaEl = document.getElementById('headerSchoolMeta');
+    if(metaEl) metaEl.innerText = [data.address, data.level].filter(Boolean).join(' • ') || 'Official School Board';
 
     const logoBox = document.getElementById('schoolLogoBox');
-    if(data.logo){
-        logoBox.innerHTML = `<img src="${esc(data.logo)}" alt="${esc(schoolName)} logo">`;
-    }else if(typeof LamaAPI !== 'undefined' && LamaAPI.deriveShortCode) {
-        logoBox.innerText = LamaAPI.deriveShortCode(schoolName);
-    } else {
-        logoBox.innerText = 'SCH';
+    if(logoBox) {
+        if(data.logo || localStorage.getItem('lama_school_logo')) {
+            logoBox.innerHTML = `<img src="${esc(data.logo || localStorage.getItem('lama_school_logo'))}" alt="Logo" class="w-full h-full object-cover">`;
+        } else if(typeof LamaAPI !== 'undefined' && typeof LamaAPI.deriveShortCode === 'function') {
+            logoBox.innerText = LamaAPI.deriveShortCode(schoolName);
+        } else {
+            logoBox.innerText = 'SCH';
+        }
     }
 
     const notices = (rawNotices || []).filter(n => n && (isPublished(n) || n.title));
@@ -548,67 +580,104 @@ async function render(){
     const tests = publishedOnly(rawTests || []);
     const resources = publishedOnly(data.resources || []);
 
-    document.getElementById('noticeCountLabel').textContent =
-        `${notices.length} ${notices.length === 1 ? 'update' : 'updates'}`;
+    // Render Notices
+    const noticeCountEl = document.getElementById('noticeCountLabel');
+    if(noticeCountEl) noticeCountEl.textContent = `${notices.length} ${notices.length === 1 ? 'update' : 'updates'}`;
+    const noticesEmptyEl = document.getElementById('noticesEmpty');
+    if(noticesEmptyEl) noticesEmptyEl.classList.toggle('hidden', notices.length > 0);
+    
+    const noticesListEl = document.getElementById('noticesList');
+    if(noticesListEl) {
+        noticesListEl.innerHTML = notices.map(n => `
+            <article class="content-item rounded-xl px-3.5 py-3">
+                <p class="font-black">${esc(n.title || n.subject || 'School Notice')}</p>
+                <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(n.message || n.description || '')}</p>
+                ${n.date || n.createdAt ? `<p class="text-[10px] text-indigo-400 font-bold mt-2">${esc(formatDate(n.date || n.createdAt))}</p>` : ''}
+            </article>
+        `).join('');
+    }
 
-    document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length > 0);
+    // Render Activities
+    const activitiesEmptyEl = document.getElementById('activitiesEmpty');
+    if(activitiesEmptyEl) activitiesEmptyEl.classList.toggle('hidden', activities.length > 0);
+    const activitiesListEl = document.getElementById('activitiesList');
+    if(activitiesListEl) {
+        activitiesListEl.innerHTML = activities.map(a => `
+            <article class="content-item rounded-xl px-3.5 py-3 flex gap-3">
+                <span class="text-xl shrink-0">${ACTIVITY_ICONS[a.type] || '📌'}</span>
+                <div class="min-w-0">
+                    <p class="font-black">${esc(a.title || 'School Activity')}</p>
+                    <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(a.description || '')}</p>
+                    ${a.date ? `<p class="text-[10px] text-emerald-400 font-bold mt-2">${esc(formatDate(a.date))}</p>` : ''}
+                </div>
+            </article>
+        `).join('');
+    }
 
-    document.getElementById('noticesList').innerHTML = notices.map(n => `
-        <article class="content-item rounded-xl px-3.5 py-3">
-            <p class="font-black">${esc(n.title || n.subject || 'School Notice')}</p>
-            <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(n.message || n.description || '')}</p>
-            ${n.date || n.createdAt ? `<p class="text-[10px] text-indigo-400 font-bold mt-2">${esc(formatDate(n.date || n.createdAt))}</p>` : ''}
-        </article>
-    `).join('');
+    // Render Exams & Date Sheets Matrix
+    const examHtml = exams.map(e => {
+        const title = e.examTitle || e.title || 'Examination';
+        const dateStr = e.date ? `📅 ${esc(e.date)}` : '';
+        const dayStr = e.day ? `(${esc(e.day)})` : '';
+        const timeStr = e.time ? `⏱️ ${esc(e.time)}` : '';
+        
+        let gradeSubjText = '';
+        if (e.subjects && typeof e.subjects === 'object') {
+            const pairs = Object.entries(e.subjects).filter(([g, sub]) => sub);
+            gradeSubjText = pairs.map(([g, sub]) => `<span class="inline-block bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-[10px] mr-1 mb-1"><b>${esc(g)}:</b> ${esc(sub)}</span>`).join('');
+        } else {
+            gradeSubjText = `Class ${esc(e.class || '')} ${e.subject ? ' • ' + esc(e.subject) : ''}`;
+        }
 
-    document.getElementById('activitiesEmpty').classList.toggle('hidden',activities.length > 0);
+        return `
+            <article class="content-item rounded-xl px-3.5 py-3 text-xs space-y-1.5">
+                <div class="flex justify-between items-start">
+                    <p class="font-black text-cyan-300">${esc(title)}</p>
+                    <span class="text-[10px] text-slate-400 font-semibold">${dateStr} ${dayStr}</span>
+                </div>
+                ${timeStr ? `<p class="text-[10px] text-cyan-400 font-bold">${timeStr}</p>` : ''}
+                <div class="mt-1 pt-1 border-t border-white/10 flex flex-wrap gap-1">
+                    ${gradeSubjText}
+                </div>
+            </article>
+        `;
+    }).join('') || '<p class="text-xs text-[color:var(--muted)]">No date sheets published yet.</p>';
 
-    document.getElementById('activitiesList').innerHTML = activities.map(a => `
-        <article class="content-item rounded-xl px-3.5 py-3 flex gap-3">
-            <span class="text-xl shrink-0">${ACTIVITY_ICONS[a.type] || '📌'}</span>
-            <div class="min-w-0">
-                <p class="font-black">${esc(a.title || 'School Activity')}</p>
-                <p class="text-[color:var(--muted)] mt-1 leading-relaxed">${esc(a.description || '')}</p>
-                ${a.date ? `<p class="text-[10px] text-emerald-400 font-bold mt-2">${esc(formatDate(a.date))}</p>` : ''}
-            </div>
-        </article>
-    `).join('');
+    if(document.getElementById('examsList')) document.getElementById('examsList').innerHTML = examHtml;
+    if(document.getElementById('modalExamsList')) document.getElementById('modalExamsList').innerHTML = examHtml;
 
-    // Exams & Date Sheets rendering
-    const examHtml = exams.map(e => `
-        <article class="content-item rounded-xl px-3.5 py-3 text-xs">
-            <p class="font-black">${esc(e.examTitle || e.subject || 'Examination')}</p>
-            <p class="text-[color:var(--muted)] mt-1">
-                Class ${esc(e.class || '')}
-                ${e.subject ? ` • ${esc(e.subject)}` : ''}
-                ${e.date ? ` • ${esc(formatDate(e.date))}` : ''}
-            </p>
-        </article>
-    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No date sheets published yet.</p>';
+    // Render Tests & Quizzes (from tests.html / tests collection)
+    const testHtml = tests.map(t => {
+        const subjectName = t.subject || t.title || 'Online Test';
+        const testType = t.type || t.testType || 'Quiz / Test';
+        const className = t.class || t.grade || 'All Classes';
+        const dateStr = t.date ? `📅 ${esc(formatDate(t.date))}` : '';
+        const marksStr = t.totalMarks ? `🏆 Marks: ${esc(t.totalMarks)}` : '';
+        const topicsStr = t.topics || t.description || '';
 
-    document.getElementById('examsList').innerHTML = examHtml;
-    document.getElementById('modalExamsList').innerHTML = examHtml;
+        return `
+            <article class="content-item rounded-xl px-3.5 py-3 text-xs space-y-1">
+                <div class="flex justify-between items-start">
+                    <p class="font-black text-amber-300">${esc(subjectName)}</p>
+                    <span class="text-[10px] font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">${esc(testType)}</span>
+                </div>
+                <p class="text-[color:var(--muted)]">
+                    <b>Class:</b> ${esc(className)} 
+                    ${dateStr ? ` • ${dateStr}` : ''} 
+                    ${marksStr ? ` • ${marksStr}` : ''}
+                </p>
+                ${topicsStr ? `<p class="text-[11px] text-slate-300 bg-black/20 p-2 rounded-lg mt-1"><b>Topics/Notes:</b> ${esc(topicsStr)}</p>` : ''}
+            </article>
+        `;
+    }).join('') || '<p class="text-xs text-[color:var(--muted)]">No online tests published yet.</p>';
 
-    // Tests rendering
-    const testHtml = tests.map(t => `
-        <article class="content-item rounded-xl px-3.5 py-3 text-xs">
-            <p class="font-black">${esc(t.subject || 'Online Test')}</p>
-            <p class="text-[color:var(--muted)] mt-1">
-                ${esc(t.type || 'Test')}
-                ${t.class ? ` • Class ${esc(t.class)}` : ''}
-                ${t.date ? ` • ${esc(formatDate(t.date))}` : ''}
-                ${t.totalMarks ? ` • Marks: ${esc(t.totalMarks)}` : ''}
-            </p>
-            ${t.topics ? `<p class="text-[11px] text-[color:var(--muted)] mt-1">Topics: ${esc(t.topics)}</p>` : ''}
-        </article>
-    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No online tests published yet.</p>';
+    if(document.getElementById('testsList')) document.getElementById('testsList').innerHTML = testHtml;
+    if(document.getElementById('modalTestsList')) document.getElementById('modalTestsList').innerHTML = testHtml;
 
-    document.getElementById('testsList').innerHTML = testHtml;
-    document.getElementById('modalTestsList').innerHTML = testHtml;
-
-    // Resources rendering
-    const preview = resources.slice(0,6);
-    document.getElementById('resourcesEmpty').classList.toggle('hidden',preview.length > 0);
+    // Render Resources
+    const preview = resources.slice(0, 6);
+    const resEmpty = document.getElementById('resourcesEmpty');
+    if(resEmpty) resEmpty.classList.toggle('hidden', preview.length > 0);
 
     const resourceCardHtml = r => `
         <article class="content-item rounded-xl p-4">
@@ -620,8 +689,8 @@ async function render(){
         </article>
     `;
 
-    document.getElementById('resourcesPreview').innerHTML = preview.map(resourceCardHtml).join('');
-    document.getElementById('modalResourcesList').innerHTML = resources.map(resourceCardHtml).join('') || '<p class="text-xs text-[color:var(--muted)]">No resources available.</p>';
+    if(document.getElementById('resourcesPreview')) document.getElementById('resourcesPreview').innerHTML = preview.map(resourceCardHtml).join('');
+    if(document.getElementById('modalResourcesList')) document.getElementById('modalResourcesList').innerHTML = resources.map(resourceCardHtml).join('') || '<p class="text-xs text-[color:var(--muted)]">No resources available.</p>';
 }
 
 render();

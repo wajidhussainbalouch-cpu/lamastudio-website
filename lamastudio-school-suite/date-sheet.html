@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Date Sheet — Admin</title>
+<title>Matrix Date Sheet — Admin</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="assets/css/config.css" onerror="console.warn('config.css missing');">
 <script src="js/api-client.js" onerror="console.warn('api-client.js missing');"></script>
 <style>
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07111f;color:#eaf3ff}
-  .wrap{max-width:1180px;margin:auto;padding:20px}
+  .wrap{max-width:1380px;margin:auto;padding:20px}
   .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
   .brand{font-size:21px;font-weight:900}
   .muted{color:#8fa6bd;font-size:13px}
-  .grid{display:grid;grid-template-columns:390px 1fr;gap:18px}
+  .grid{display:grid;grid-template-columns:400px 1fr;gap:18px}
   .card{background:#0d1b2e;border:1px solid #203850;border-radius:18px;padding:18px}
   label{display:block;font-size:12px;font-weight:800;color:#b9cce0;margin:11px 0 6px}
   input,textarea,select{width:100%;background:#081727;border:1px solid #29445d;color:#eaf3ff;border-radius:10px;padding:11px;font:inherit}
-  textarea{min-height:105px}
+  textarea{min-height:90px}
   .btn{border:1px solid #29445d;background:#13283d;color:#eaf3ff;padding:10px 13px;border-radius:10px;font-weight:800;cursor:pointer}
   .primary{background:#087fbd;border-color:#087fbd}
   .green{background:#166534}
@@ -39,14 +39,15 @@
       .print-sheet {
           display: block !important;
           width: 100% !important; margin: 0 !important;
-          padding: 10mm !important; border: none !important; box-shadow: none !important;
+          padding: 8mm !important; border: none !important; box-shadow: none !important;
           background: #ffffff !important; color: #0f172a !important;
       }
-      @page { size: A4 landscape; margin: 8mm; }
+      @page { size: A4 landscape; margin: 6mm; }
   }
   .print-sheet { display: none; }
-  .ds-table th, .ds-table td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 12px; }
-  @media(max-width:800px){.grid{grid-template-columns:1fr}.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}}
+  .ds-table th, .ds-table td { border: 1px solid #cbd5e1; padding: 7px 8px; font-size: 11px; text-align: center; }
+  .ds-table th:first-child, .ds-table td:first-child { text-align: left; }
+  @media(max-width:900px){.grid{grid-template-columns:1fr}.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
@@ -54,66 +55,129 @@
     <header class="top no-print">
         <div>
             <div class="brand" id="brandTitle">Lama School Suite · Admin Portal</div>
-            <div class="muted">Date Sheet Management — Syncs to Student Dashboard & School Board</div>
+            <div class="muted">Matrix Date Sheet Builder with Custom Grade Ranges & Print Export</div>
         </div>
         <div class="row">
-            <button class="btn primary" onclick="printFullSheet()">🖨️ Print Full Date Sheet</button>
+            <button class="btn primary" onclick="printFullSheet()">🖨️ Print Matrix Date Sheet</button>
             <button class="btn" onclick="location.href='dashboard.html'">Admin Dashboard</button>
             <button class="btn" onclick="location.href='main-dashboard.html'">School Board</button>
         </div>
     </header>
 
-    <!-- Printable Full Page Date Sheet -->
+    <!-- Printable Matrix Date Sheet -->
     <div id="printSheetContainer" class="print-sheet bg-white text-slate-900 rounded-2xl p-6 shadow-xl mb-6">
         <div class="text-center border-b-2 border-slate-800 pb-3 mb-4">
-            <h1 id="sheetSchoolName" class="text-2xl font-black tracking-wide">School Name</h1>
-            <p class="text-xs uppercase tracking-widest font-extrabold text-sky-700 mt-1">Official Examination Date Sheet</p>
+            <h1 id="sheetSchoolName" class="text-2xl font-black tracking-wide uppercase">School Name</h1>
+            <p id="sheetExamTitle" class="text-sm uppercase tracking-wider font-black text-sky-800 mt-1">OFFICIAL EXAMINATION DATE SHEET</p>
+            <p id="sheetTimings" class="text-xs font-bold text-slate-700 mt-1">TIMING: 09:00 AM To 12:00 PM</p>
         </div>
-        <table class="ds-table w-full border-collapse">
-            <thead>
-                <tr class="bg-sky-700 text-white text-xs uppercase">
-                    <th class="text-left">Exam / Paper</th>
-                    <th class="text-left">Class</th>
-                    <th class="text-left">Subject</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th class="text-left">Invigilator</th>
-                </tr>
-            </thead>
-            <tbody id="sheetRowsBody"></tbody>
-        </table>
+        <div class="overflow-x-auto">
+            <table class="ds-table w-full border-collapse">
+                <thead id="sheetTableHeader"></thead>
+                <tbody id="sheetRowsBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <div class="grid no-print">
         <section class="card">
-            <h2 style="margin-top:0">Create / Edit Record</h2>
-            <p class="muted">Admin controls this information. Published records appear on the Student Dashboard & School Board.</p>
+            <h2 style="margin-top:0">Create / Edit Date Sheet Entry</h2>
+            <p class="muted">Select custom grade range or specific classes, specify subjects per class for this date, and publish.</p>
             <form id="form">
                 <input type="hidden" id="editId">
-                <label>Exam / Paper</label>
-                <input id="examTitle" required placeholder="e.g. Mid-Term Examination 2026">
-                <label>Class</label>
-                <input id="class" required placeholder="e.g. Grade 10">
-                <label>Subject</label>
-                <input id="subject" required placeholder="e.g. Mathematics">
+                <label>Exam / Paper Title</label>
+                <input id="examTitle" required placeholder="e.g. First-Term Examination 2026">
+                
+                <label>Select Grade Selection Mode / Range</label>
+                <select id="gradeMode" onchange="onGradeModeChange()">
+                    <option value="custom">Custom Grades Selection (Checkboxes)</option>
+                    <option value="range">Range Selection (e.g. Grade 1 to 5)</option>
+                </select>
+
+                <!-- Custom Checkbox Selector -->
+                <div id="customGradesBox" class="my-3 p-3 bg-slate-950/40 rounded-xl border border-slate-800">
+                    <div class="text-xs font-bold text-sky-400 mb-2 uppercase">Select Active Classes / Grades</div>
+                    <div class="grid grid-cols-3 gap-2" id="gradeCheckboxes">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Range Selector -->
+                <div id="rangeGradesBox" class="my-3 p-3 bg-slate-950/40 rounded-xl border border-slate-800 hidden">
+                    <div class="text-xs font-bold text-sky-400 mb-2 uppercase">Select Grade Range</div>
+                    <div class="flex gap-2 items-center">
+                        <select id="rangeStart" onchange="updateGradeInputs()">
+                            <option value="PG">PG</option>
+                            <option value="ECCE">ECCE</option>
+                            <option value="Prep">Prep</option>
+                            <option value="KG">KG</option>
+                            <option value="1" selected>Grade 1</option>
+                            <option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option>
+                            <option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option>
+                            <option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option>
+                            <option value="8">Grade 8</option>
+                            <option value="9">Grade 9</option>
+                            <option value="10">Grade 10</option>
+                            <option value="11">Grade 11</option>
+                            <option value="12">Grade 12</option>
+                        </select>
+                        <span class="text-xs font-bold text-slate-400">to</span>
+                        <select id="rangeEnd" onchange="updateGradeInputs()">
+                            <option value="PG">PG</option>
+                            <option value="ECCE">ECCE</option>
+                            <option value="Prep">Prep</option>
+                            <option value="KG">KG</option>
+                            <option value="1">Grade 1</option>
+                            <option value="2">Grade 2</option>
+                            <option value="3">Grade 3</option>
+                            <option value="4">Grade 4</option>
+                            <option value="5">Grade 5</option>
+                            <option value="6">Grade 6</option>
+                            <option value="7">Grade 7</option>
+                            <option value="8">Grade 8</option>
+                            <option value="9">Grade 9</option>
+                            <option value="10" selected>Grade 10</option>
+                            <option value="11">Grade 11</option>
+                            <option value="12">Grade 12</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Subject Inputs Container -->
+                <div class="my-3">
+                    <div class="text-xs font-bold text-sky-400 uppercase mb-2">Subject per Grade for this Date</div>
+                    <div id="gradesContainer" class="space-y-2 max-h-60 overflow-y-auto p-2 bg-slate-950/60 rounded-xl border border-slate-800"></div>
+                </div>
+
                 <label>Date</label>
                 <input id="date" type="date" required>
-                <label>Time</label>
+                
+                <label>Day of Week (e.g. Monday)</label>
+                <input id="day" placeholder="e.g. Monday (Auto-filled on date selection)">
+
+                <label>Timing / Shift</label>
                 <input id="time" placeholder="e.g. 09:00 AM - 12:00 PM">
-                <label>Invigilator</label>
+
+                <label>Invigilator / Supervisor Notes</label>
                 <input id="invigilator" placeholder="e.g. Mr. John Doe">
-                <label class="check"><input type="checkbox" id="isPublished"> Publish on Student & School Board</label>
+
+                <label class="check"><input type="checkbox" id="isPublished" checked> Publish on Student Dashboard & School Board</label>
+                
                 <div class="actions">
-                    <button class="btn primary" type="submit">Save Record</button>
-                    <button class="btn" type="button" onclick="resetForm()">Clear</button>
+                    <button class="btn primary" type="submit">Save Date Sheet Entry</button>
+                    <button class="btn" type="button" onclick="resetForm()">Clear Form</button>
                 </div>
             </form>
         </section>
+
         <section class="card">
             <div class="head">
                 <div>
-                    <h2 style="margin:0">Date Sheet Records</h2>
-                    <div class="muted">Draft = Admin only · Published = Student Dashboard & School Board display</div>
+                    <h2 style="margin:0">Saved Entries</h2>
+                    <div class="muted">Draft = Admin only · Published = Student Dashboard & School Board</div>
                 </div>
                 <button class="btn" onclick="load()">Refresh</button>
             </div>
@@ -121,6 +185,7 @@
         </section>
     </div>
 </main>
+
 <script>
 if (typeof window.LamaAPI === 'undefined') {
     window.LamaAPI = {
@@ -151,10 +216,64 @@ if (typeof window.LamaAPI === 'undefined') {
     };
 }
 
-const COLLECTION = 'datesheet';
-const FIELDS = { "examTitle": "examTitle", "class": "class", "subject": "subject", "date": "date", "time": "time", "invigilator": "invigilator" };
+const COLLECTION = 'matrix_datesheet';
+const ALL_POSSIBLE_GRADES = ['PG', 'ECCE', 'Prep', 'KG', 'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5', 'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10', 'Grade-11', 'Grade-12'];
 const $ = id => document.getElementById(id);
 let rows = [];
+
+function initGradeCheckboxes(selectedGrades = []) {
+    const container = $('gradeCheckboxes');
+    container.innerHTML = ALL_POSSIBLE_GRADES.map(g => {
+        const isChecked = selectedGrades.length === 0 || selectedGrades.includes(g) ? 'checked' : '';
+        return `
+            <label class="flex items-center gap-2 text-xs font-bold text-slate-300 cursor-pointer">
+                <input type="checkbox" class="grade-checkbox" value="${g}" ${isChecked} onchange="updateGradeInputs()">
+                ${g}
+            </label>
+        `;
+    }).join('');
+}
+
+function onGradeModeChange() {
+    const mode = $('gradeMode').value;
+    if (mode === 'custom') {
+        $('customGradesBox').classList.remove('hidden');
+        $('rangeGradesBox').classList.add('hidden');
+    } else {
+        $('customGradesBox').classList.add('hidden');
+        $('rangeGradesBox').classList.remove('hidden');
+    }
+    updateGradeInputs();
+}
+
+function getActiveGrades() {
+    const mode = $('gradeMode').value;
+    if (mode === 'custom') {
+        const checked = [];
+        document.querySelectorAll('.grade-checkbox:checked').forEach(cb => checked.push(cb.value));
+        return checked.length > 0 ? checked : ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+    } else {
+        const start = $('rangeStart').value;
+        const end = $('rangeEnd').value;
+        const startIndex = ALL_POSSIBLE_GRADES.indexOf(start);
+        const endIndex = ALL_POSSIBLE_GRADES.indexOf(end);
+        if (startIndex >= 0 && endIndex >= 0 && startIndex <= endIndex) {
+            return ALL_POSSIBLE_GRADES.slice(startIndex, endIndex + 1);
+        }
+        return ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+    }
+}
+
+function updateGradeInputs(existingGradesData = {}) {
+    const grades = getActiveGrades();
+    const container = $('gradesContainer');
+    container.innerHTML = grades.map(g => `
+        <div class="flex items-center gap-2">
+            <span class="w-24 text-xs font-bold text-sky-300 flex-shrink-0">${g}</span>
+            <input class="grade-sub-input" data-grade="${g}" placeholder="e.g. Mathematics or ---" value="${existingGradesData[g] || ''}">
+        </div>
+    `).join('');
+}
 
 function id(x) { return String(x?.id ?? ''); }
 function esc(v) { return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -163,14 +282,29 @@ function pub(x) { return x?.isPublished === true || x?.published === true || Str
 function resetForm() {
     $('form').reset();
     $('editId').value = '';
+    $('gradeMode').value = 'custom';
+    initGradeCheckboxes();
+    onGradeModeChange();
 }
 
 function edit(x) {
     $('editId').value = id(x);
-    Object.keys(FIELDS).forEach(k => {
-        if ($(FIELDS[k])) $(FIELDS[k]).value = x[k] ?? '';
-    });
-    $('isPublished').checked = pub(x);
+    if ($('examTitle')) $('examTitle').value = x.examTitle || '';
+    if ($('date')) $('date').value = x.date || '';
+    if ($('day')) $('day').value = x.day || '';
+    if ($('time')) $('time').value = x.time || '';
+    if ($('invigilator')) $('invigilator').value = x.invigilator || '';
+    if ($('isPublished')) $('isPublished').checked = pub(x);
+    
+    if (x.grades && typeof x.grades === 'object') {
+        const gradeKeys = Object.keys(x.grades);
+        if (gradeKeys.length > 0) {
+            $('gradeMode').value = 'custom';
+            onGradeModeChange();
+            initGradeCheckboxes(gradeKeys);
+            updateGradeInputs(x.grades);
+        }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -195,12 +329,12 @@ async function load() {
             <article class="item">
                 <div class="head">
                     <div>
-                        <b>[${esc(x.class || 'Class')}] ${esc(x.subject || x.examTitle || 'Exam')}</b>
-                        <div class="muted">${esc(x.examTitle || '')} • ${esc(x.date || '')} ${x.time ? '(' + esc(x.time) + ')' : ''}</div>
+                        <b>${esc(x.examTitle || 'Exam')}</b>
+                        <div class="muted">${esc(x.date || '')} ${x.day ? '(' + esc(x.day) + ')' : ''} ${x.time ? '• ' + esc(x.time) : ''}</div>
                     </div>
                     <span class="badge ${pub(x) ? 'pub' : 'draft'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
                 </div>
-                <div class="muted" style="margin-top:8px">Invigilator: ${esc(x.invigilator || 'Not assigned')}</div>
+                <div class="muted" style="margin-top:6px"><b>Grades Covered:</b> ${Object.keys(x.grades || {}).join(', ') || 'All'}</div>
                 <div class="actions">
                     <button class="btn" onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
                     <button class="btn ${pub(x) ? 'red' : 'green'}" onclick="toggle('${id(x)}')">${pub(x) ? 'Unpublish' : 'Publish'}</button>
@@ -209,19 +343,44 @@ async function load() {
             </article>
         `).join('') : '<div class="muted" style="text-align:center;padding:35px">No date sheet records yet.</div>';
         
-        // Populate printable sheet rows with published items
-        const publishedRows = rows.filter(pub);
+        // Build Printable Matrix Table
+        const publishedRows = rows.filter(pub).sort((a,b) => (a.date || '').localeCompare(b.date || ''));
+        
+        // Collect all unique grades across published records
+        let allUsedGrades = [];
+        publishedRows.forEach(r => {
+            if (r.grades) {
+                Object.keys(r.grades).forEach(g => {
+                    if (!allUsedGrades.includes(g)) allUsedGrades.push(g);
+                });
+            }
+        });
+        // Sort according to ALL_POSSIBLE_GRADES order
+        allUsedGrades.sort((a,b) => ALL_POSSIBLE_GRADES.indexOf(a) - ALL_POSSIBLE_GRADES.indexOf(b));
+        if (allUsedGrades.length === 0) allUsedGrades = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+
+        const thead = $('sheetTableHeader');
+        thead.innerHTML = `
+            <tr>
+                <th>DATE</th>
+                <th>DAY</th>
+                ${allUsedGrades.map(g => `<th>${g}</th>`).join('')}
+            </tr>
+        `;
+
         const sheetBody = $('sheetRowsBody');
         sheetBody.innerHTML = publishedRows.length ? publishedRows.map(x => `
             <tr>
-                <td><b>${esc(x.examTitle || '-')}</b></td>
-                <td>${esc(x.class || '-')}</td>
-                <td>${esc(x.subject || '-')}</td>
-                <td>${esc(x.date || '-')}</td>
-                <td>${esc(x.time || '-')}</td>
-                <td>${esc(x.invigilator || '-')}</td>
+                <td><b>${esc(x.date || '-')}</b></td>
+                <td>${esc(x.day || '-')}</td>
+                ${allUsedGrades.map(g => `<td>${esc(x.grades?.[g] || '---')}</td>`).join('')}
             </tr>
-        `).join('') : `<tr><td colspan="6" style="text-align:center;padding:15px;color:#64748b">No published date sheet entries available.</td></tr>`;
+        `).join('') : `<tr><td colspan="${allUsedGrades.length + 2}" style="text-align:center;padding:15px;color:#64748b">No published date sheet entries available.</td></tr>`;
+
+        if (publishedRows.length > 0 && $('sheetExamTitle')) {
+            $('sheetExamTitle').innerText = publishedRows[0].examTitle || 'OFFICIAL EXAMINATION DATE SHEET';
+            if (publishedRows[0].time) $('sheetTimings').innerText = 'TIMING: ' + publishedRows[0].time;
+        }
 
         await syncToSchoolBoard();
     } catch(e) {
@@ -236,44 +395,35 @@ function printFullSheet() {
     sheet.style.display = 'none';
 }
 
-async function load() {
-    try {
-        rows = await LamaAPI.list(COLLECTION) || [];
-        rows = Array.isArray(rows) ? rows : [];
-        const container = $('list');
-        container.innerHTML = rows.length ? rows.map(x => `
-            <article class="item">
-                <div class="head">
-                    <div>
-                        <b>[${esc(x.class || 'Class')}] ${esc(x.subject || x.examTitle || 'Exam')}</b>
-                        <div class="muted">${esc(x.examTitle || '')} • ${esc(x.date || '')} ${x.time ? '(' + esc(x.time) + ')' : ''}</div>
-                    </div>
-                    <span class="badge ${pub(x) ? 'pub' : 'draft'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
-                </div>
-                <div class="muted" style="margin-top:8px">Invigilator: ${esc(x.invigilator || 'Not assigned')}</div>
-                <div class="actions">
-                    <button class="btn" onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
-                    <button class="btn ${pub(x) ? 'red' : 'green'}" onclick="toggle('${id(x)}')">${pub(x) ? 'Unpublish' : 'Publish'}</button>
-                    <button class="btn red" onclick="del('${id(x)}')">Delete</button>
-                </div>
-            </article>
-        `).join('') : '<div class="muted" style="text-align:center;padding:35px">No date sheet records yet.</div>';
-        
-        await syncToSchoolBoard();
-    } catch(e) {
-        $('list').innerHTML = '<div class="muted">Load failed: ' + esc(e.message) + '</div>';
+$('date').addEventListener('change', e => {
+    const val = e.target.value;
+    if (val) {
+        const d = new Date(val);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        $('day').value = days[d.getDay()];
     }
-}
+});
 
 $('form').addEventListener('submit', async e => {
     e.preventDefault();
-    const r = {};
-    Object.keys(FIELDS).forEach(k => r[k] = $(FIELDS[k]).value.trim());
+    const grades = {};
+    document.querySelectorAll('.grade-sub-input').forEach(inp => {
+        grades[inp.dataset.grade] = inp.value.trim() || '---';
+    });
+
     const p = $('isPublished').checked;
-    r.isPublished = p;
-    r.published = p;
-    r.status = p ? 'published' : 'draft';
-    r.updatedAt = new Date().toISOString();
+    const r = {
+        examTitle: $('examTitle').value.trim(),
+        date: $('date').value,
+        day: $('day').value.trim(),
+        time: $('time').value.trim(),
+        invigilator: $('invigilator').value.trim(),
+        grades,
+        isPublished: p,
+        published: p,
+        status: p ? 'published' : 'draft',
+        updatedAt: new Date().toISOString()
+    };
     
     try {
         const eid = $('editId').value;
@@ -285,7 +435,7 @@ $('form').addEventListener('submit', async e => {
         }
         resetForm();
         await load();
-        alert(p ? 'Published — it will appear on the School Board.' : 'Saved as draft — it will remain hidden.');
+        alert(p ? 'Published — matrix date sheet is now live on Student Dashboard & School Board.' : 'Saved as draft.');
     } catch(e) {
         alert('Save failed: ' + e.message);
     }
@@ -322,6 +472,8 @@ async function initHeader() {
     }
 }
 
+initGradeCheckboxes();
+onGradeModeChange();
 initHeader();
 load();
 </script>

@@ -78,8 +78,8 @@
             <button onclick="toggleTheme()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 p-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center w-9 h-9" title="Toggle Light/Dark Theme">
                 <span id="themeIcon">☀️</span>
             </button>
-            <button onclick="window.print()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
-                🖨️ Print Matrix Sheet
+            <button onclick="window.print()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                🖨️ Print Matrix
             </button>
             <button onclick="if(typeof LamaAPI !== 'undefined' && LamaAPI.logout) LamaAPI.logout(); else { localStorage.clear(); location.reload(); }" class="bg-red-500/10 dark:bg-red-900/40 hover:bg-red-500/20 dark:hover:bg-red-800 text-red-600 dark:text-red-300 px-3 py-2 rounded-xl text-xs font-bold transition">
                 Logout
@@ -207,9 +207,41 @@
 
         <section class="lg:col-span-7 space-y-6">
             
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-xl no-print space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Filter Class:</label>
+                        <select id="filterClass" onchange="renderMatrixSheet()" class="bg-slate-50 dark:bg-slate-900 text-xs border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200">
+                            <option value="ALL">All Classes (Full Matrix)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Print Multi-Up:</label>
+                        <select id="printLayoutMode" onchange="updatePrintLayoutClass()" class="bg-slate-50 dark:bg-slate-900 text-xs border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 font-bold text-sky-600 dark:text-sky-400">
+                            <option value="1">1x Standard View</option>
+                            <option value="2">2x Per Page (Half Card)</option>
+                            <option value="3">3x Per Page (Compact Card)</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Export Buttons Bar -->
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <span class="text-[11px] font-bold text-slate-400 mr-1">Export As:</span>
+                    <button onclick="exportAsPDF()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                        📄 PDF / Print
+                    </button>
+                    <button onclick="exportAsWord()" class="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                        📝 Word (DOC)
+                    </button>
+                    <button onclick="exportAsExcel()" class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition flex items-center gap-1">
+                        📊 Excel (CSV)
+                    </button>
+                </div>
+            </div>
+
             <!-- Matrix Live Printable Preview Card Container -->
             <div id="printContainer" class="print-container space-y-6">
-                <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden w-full">
+                <div id="matrixCardWrapper" class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden w-full transition-all">
                     <div class="text-center pb-3 border-b border-slate-200 flex flex-col items-center">
                         <div id="printLogoWrapper" class="mb-1 hidden">
                             <img id="printSchoolLogo" src="" alt="School Logo" class="h-10 w-10 object-contain mx-auto">
@@ -263,7 +295,7 @@
         let rememberedGradeMode = 'custom';
         let rememberedExamTitle = 'SBA First Term Examination 2026';
 
-        // Initialize Theme
+        // Initialize Theme & Filter Dropdown
         function initTheme() {
             const saved = localStorage.getItem('lama_theme') || 'dark';
             if(saved === 'light') {
@@ -275,18 +307,17 @@
             }
         }
 
-        function toggleTheme() {
-            const root = document.getElementById('htmlRoot');
-            const isDark = root.classList.contains('dark');
-            if(isDark) {
-                root.classList.remove('dark');
-                localStorage.setItem('lama_theme', 'light');
-                document.getElementById('themeIcon').textContent = '🌙';
-            } else {
-                root.classList.add('dark');
-                localStorage.setItem('lama_theme', 'dark');
-                document.getElementById('themeIcon').textContent = '☀️';
-            }
+        function initFilterDropdown() {
+            const select = document.getElementById('filterClass');
+            select.innerHTML = `<option value="ALL">All Classes (Full Matrix)</option>` + 
+                ALL_GRADES.map(g => `<option value="${g}">${g.replace('-', ' ')}</option>`).join('');
+        }
+
+        function updatePrintLayoutClass() {
+            const mode = document.getElementById('printLayoutMode').value;
+            const card = document.getElementById('matrixCardWrapper');
+            card.className = card.className.replace(/print-mode-\d/g, '');
+            card.classList.add(`print-mode-${mode}`);
         }
 
         // Robust School Name & Logo Fetcher via LamaAPI or Storage
@@ -598,12 +629,14 @@
 
         // Render Matrix Table & List
         function renderAll() {
+            initFilterDropdown();
             renderMatrixSheet();
             renderRecordsList();
         }
 
         function renderMatrixSheet() {
             const publishedEntries = dateSheetEntries.filter(e => e.isPublished);
+            const filterClass = document.getElementById('filterClass').value;
             
             // Set exam title in preview header
             const titleToUse = publishedEntries.length > 0 && publishedEntries[0].examTitle ? publishedEntries[0].examTitle : rememberedExamTitle;
@@ -616,9 +649,14 @@
                     Object.keys(e.subjects).forEach(g => gradeSet.add(g));
                 }
             });
-            const activeGrades = ALL_GRADES.filter(g => gradeSet.has(g));
+            let activeGrades = ALL_GRADES.filter(g => gradeSet.has(g));
             if (activeGrades.length === 0) {
-                activeGrades.push('Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5');
+                activeGrades = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+            }
+
+            // If filter class is selected and not ALL
+            if (filterClass !== 'ALL') {
+                activeGrades = [filterClass];
             }
 
             // Timings
@@ -642,13 +680,64 @@
                 return;
             }
 
-            tbody.innerHTML = publishedEntries.map(e => `
-                <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                    <td class="py-2.5 px-3 font-bold text-slate-900">${e.date || '---'}</td>
-                    <td class="py-2.5 px-3 font-semibold text-slate-700">${e.day || '---'}</td>
-                    ${activeGrades.map(g => `<td class="py-2.5 px-3 text-slate-800">${e.subjects && e.subjects[g] ? e.subjects[g] : '---'}</td>`).join('')}
-                </tr>
-            `).join('');
+            tbody.innerHTML = publishedEntries.map(e => {
+                // If filtering by class, skip row if class has no subject
+                if (filterClass !== 'ALL' && (!e.subjects || !e.subjects[filterClass])) {
+                    return '';
+                }
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td class="py-2.5 px-3 font-bold text-slate-900">${e.date || '---'}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-700">${e.day || '---'}</td>
+                        ${activeGrades.map(g => `<td class="py-2.5 px-3 text-slate-800">${e.subjects && e.subjects[g] ? e.subjects[g] : '---'}</td>`).join('')}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Export Functions
+        function exportAsPDF() {
+            window.print();
+        }
+
+        function exportAsWord() {
+            const cardHtml = document.getElementById('matrixCardWrapper').outerHTML;
+            const blob = new Blob(['<!DOCTYPE html><html><head><meta charset="utf-8"><title>Date Sheet</title><style>body{font-family:Arial,sans-serif;}</style></head><body>' + cardHtml + '</body></html>'], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (activeSchoolName || 'DateSheet').replace(/\s+/g, '_') + '_Exam_Matrix.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportAsExcel() {
+            const publishedEntries = dateSheetEntries.filter(e => e.isPublished);
+            if (publishedEntries.length === 0) {
+                alert('No published date sheet records available to export.');
+                return;
+            }
+
+            let csv = 'Date,Day,' + ALL_GRADES.join(',') + '\n';
+            publishedEntries.forEach(e => {
+                let row = `"${e.date || ''}","${e.day || ''}"`;
+                ALL_GRADES.forEach(g => {
+                    row += `,"${e.subjects && e.subjects[g] ? e.subjects[g] : ''}"`;
+                });
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (activeSchoolName || 'DateSheet').replace(/\s+/g, '_') + '_Date_Sheet.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         function renderRecordsList() {
@@ -688,5 +777,14 @@
             renderAll();
         };
     </script>
+    <style>
+        /* Print mode adjustments for 1x, 2x, 3x multi-up layout */
+        .print-mode-2 { transform: scale(0.85); transform-origin: top center; }
+        .print-mode-3 { transform: scale(0.70); transform-origin: top center; }
+        @media print {
+            .print-mode-2 { transform: scale(0.9) !important; max-height: 110mm !important; }
+            .print-mode-3 { transform: scale(0.75) !important; max-height: 90mm !important; }
+        }
+    </style>
 </body>
 </html>

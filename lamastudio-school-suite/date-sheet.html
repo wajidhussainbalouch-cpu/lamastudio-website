@@ -1,10 +1,329 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Date Sheet — Admin</title><style>*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07111f;color:#eaf3ff}.wrap{max-width:1180px;margin:auto;padding:20px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.brand{font-size:21px;font-weight:900}.muted{color:#8fa6bd;font-size:13px}.grid{display:grid;grid-template-columns:390px 1fr;gap:18px}.card{background:#0d1b2e;border:1px solid #203850;border-radius:18px;padding:18px}label{display:block;font-size:12px;font-weight:800;color:#b9cce0;margin:11px 0 6px}input,textarea,select{width:100%;background:#081727;border:1px solid #29445d;color:#eaf3ff;border-radius:10px;padding:11px;font:inherit}textarea{min-height:105px}.btn{border:1px solid #29445d;background:#13283d;color:#eaf3ff;padding:10px 13px;border-radius:10px;font-weight:800;cursor:pointer}.primary{background:#087fbd;border-color:#087fbd}.green{background:#166534}.red{background:#7f1d1d}.row{display:flex;gap:8px;flex-wrap:wrap}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.item{background:#09192b;border:1px solid #203850;border-radius:14px;padding:14px;margin-top:10px}.head{display:flex;justify-content:space-between;gap:10px}.badge{border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900}.pub{background:#14532d;color:#bbf7d0}.draft{background:#713f12;color:#fde68a}.check{display:flex;gap:8px;align-items:center;margin-top:13px;font-size:13px}.check input{width:auto}@media(max-width:800px){.grid{grid-template-columns:1fr}.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}}</style></head><body><main class="wrap"><header class="top"><div><div class="brand">Lama School Suite · Admin Portal</div><div class="muted">Date Sheet Management — Main Dashboard is display-only</div></div><div class="row"><button class="btn" onclick="location.href='dashboard.html'">Admin Dashboard</button><button class="btn" onclick="location.href='main-dashboard.html'">School Board</button></div></header><div class="grid"><section class="card"><h2 style="margin-top:0">Create / Edit</h2><p class="muted">Admin controls this information. A record appears on the Main Dashboard only after it is published.</p><form id="form"><input type="hidden" id="editId"><label>Exam / Paper</label><input id="examTitle"><label>Class</label><input id="class"><label>Subject</label><input id="subject"><label>Date</label><input id="date" type="date"><label>Time</label><input id="time"><label>Invigilator</label><input id="invigilator"><label class="check"><input type="checkbox" id="isPublished"> Publish on Main Dashboard</label><div class="actions"><button class="btn primary" type="submit">Save</button><button class="btn" type="button" onclick="resetForm()">Clear</button></div></form></section><section class="card"><div class="head"><div><h2 style="margin:0">Date Sheet</h2><div class="muted">Draft = Admin only · Published = Dashboard display</div></div><button class="btn" onclick="load()">Refresh</button></div><div id="list"></div></section></div></main><script src="js/lama-api.js"></script><script>
-const COLLECTION=datesheet; const FIELDS={"examTitle":"examTitle","class":"class","subject":"subject","date":"date","time":"time","invigilator":"invigilator"}; const $=id=>document.getElementById(id); let rows=[];
-function id(x){return String(x?.id??'');} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function pub(x){return x?.isPublished===true||x?.published===true||String(x?.status||'').toLowerCase()==='published';}
-function resetForm(){$('form').reset();$('editId').value='';}
-function edit(x){$('editId').value=id(x);Object.keys(FIELDS).forEach(k=>{if($(FIELDS[k]))$(FIELDS[k]).value=x[k]??''});$('isPublished').checked=pub(x);scrollTo({top:0,behavior:'smooth'})}
-async function load(){try{rows=await LamaAPI.list(COLLECTION)||[];rows=Array.isArray(rows)?rows:[];$('list').innerHTML=rows.length?rows.map(x=>`<article class="item"><div class="head"><div><b>${esc(x.title||x.examTitle||x.subject||'Record')}</b><div class="muted">${esc(x.date||x.createdAt||'')}</div></div><span class="badge ${pub(x)?'pub':'draft'}">${pub(x)?'PUBLISHED':'DRAFT'}</span></div><div class="muted" style="margin-top:8px">${esc(x.message||x.description||x.topics||x.subject||x.type||'')}</div><div class="actions"><button class="btn" onclick='edit(${JSON.stringify(x)})'>Edit</button><button class="btn ${pub(x)?'red':'green'}" onclick="toggle('${id(x)}')">${pub(x)?'Unpublish':'Publish'}</button><button class="btn red" onclick="del('${id(x)}')">Delete</button></div></article>`).join(''):'<div class="muted" style="text-align:center;padding:35px">No records yet.</div>'}catch(e){$('list').innerHTML='<div class="muted">Load failed: '+esc(e.message)+'</div>'}}
-$('form').addEventListener('submit',async e=>{e.preventDefault();const r={};Object.keys(FIELDS).forEach(k=>r[k]=$(FIELDS[k]).value.trim());const p=$('isPublished').checked;r.isPublished=p;r.published=p;r.status=p?'published':'draft';r.updatedAt=new Date().toISOString();try{const eid=$('editId').value;if(eid)await LamaAPI.update(COLLECTION,eid,r);else{r.createdAt=new Date().toISOString();await LamaAPI.add(COLLECTION,r)}resetForm();await load();alert(p?'Published — it will appear on the Main Dashboard.':'Saved as draft — it will remain hidden.')}catch(e){alert('Save failed: '+e.message)}});
-async function toggle(i){const x=rows.find(r=>id(r)===String(i));if(!x)return;const p=!pub(x);await LamaAPI.update(COLLECTION,i,{...x,isPublished:p,published:p,status:p?'published':'draft',updatedAt:new Date().toISOString()});load()} async function del(i){if(!confirm('Delete this record?'))return;await LamaAPI.remove(COLLECTION,i);load()} load();
-</script></body></html>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Sheet — Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css" onerror="console.warn('config.css missing');">
+<script src="js/api-client.js" onerror="console.warn('api-client.js missing');"></script>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07111f;color:#eaf3ff}
+  .wrap{max-width:1180px;margin:auto;padding:20px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+  .brand{font-size:21px;font-weight:900}
+  .muted{color:#8fa6bd;font-size:13px}
+  .grid{display:grid;grid-template-columns:390px 1fr;gap:18px}
+  .card{background:#0d1b2e;border:1px solid #203850;border-radius:18px;padding:18px}
+  label{display:block;font-size:12px;font-weight:800;color:#b9cce0;margin:11px 0 6px}
+  input,textarea,select{width:100%;background:#081727;border:1px solid #29445d;color:#eaf3ff;border-radius:10px;padding:11px;font:inherit}
+  textarea{min-height:105px}
+  .btn{border:1px solid #29445d;background:#13283d;color:#eaf3ff;padding:10px 13px;border-radius:10px;font-weight:800;cursor:pointer}
+  .primary{background:#087fbd;border-color:#087fbd}
+  .green{background:#166534}
+  .red{background:#7f1d1d}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .item{background:#09192b;border:1px solid #203850;border-radius:14px;padding:14px;margin-top:10px}
+  .head{display:flex;justify-content:space-between;gap:10px}
+  .badge{border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900}
+  .pub{background:#14532d;color:#bbf7d0}
+  .draft{background:#713f12;color:#fde68a}
+  .check{display:flex;gap:8px;align-items:center;margin-top:13px;font-size:13px}
+  .check input{width:auto}
+
+  @media print {
+      body { background: #ffffff !important; color: #0f172a !important; }
+      .no-print { display: none !important; }
+      .print-sheet {
+          display: block !important;
+          width: 100% !important; margin: 0 !important;
+          padding: 10mm !important; border: none !important; box-shadow: none !important;
+          background: #ffffff !important; color: #0f172a !important;
+      }
+      @page { size: A4 landscape; margin: 8mm; }
+  }
+  .print-sheet { display: none; }
+  .ds-table th, .ds-table td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 12px; }
+  @media(max-width:800px){.grid{grid-template-columns:1fr}.wrap{padding:12px}.top{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="wrap">
+    <header class="top no-print">
+        <div>
+            <div class="brand" id="brandTitle">Lama School Suite · Admin Portal</div>
+            <div class="muted">Date Sheet Management — Syncs to Student Dashboard & School Board</div>
+        </div>
+        <div class="row">
+            <button class="btn primary" onclick="printFullSheet()">🖨️ Print Full Date Sheet</button>
+            <button class="btn" onclick="location.href='dashboard.html'">Admin Dashboard</button>
+            <button class="btn" onclick="location.href='main-dashboard.html'">School Board</button>
+        </div>
+    </header>
+
+    <!-- Printable Full Page Date Sheet -->
+    <div id="printSheetContainer" class="print-sheet bg-white text-slate-900 rounded-2xl p-6 shadow-xl mb-6">
+        <div class="text-center border-b-2 border-slate-800 pb-3 mb-4">
+            <h1 id="sheetSchoolName" class="text-2xl font-black tracking-wide">School Name</h1>
+            <p class="text-xs uppercase tracking-widest font-extrabold text-sky-700 mt-1">Official Examination Date Sheet</p>
+        </div>
+        <table class="ds-table w-full border-collapse">
+            <thead>
+                <tr class="bg-sky-700 text-white text-xs uppercase">
+                    <th class="text-left">Exam / Paper</th>
+                    <th class="text-left">Class</th>
+                    <th class="text-left">Subject</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th class="text-left">Invigilator</th>
+                </tr>
+            </thead>
+            <tbody id="sheetRowsBody"></tbody>
+        </table>
+    </div>
+
+    <div class="grid no-print">
+        <section class="card">
+            <h2 style="margin-top:0">Create / Edit Record</h2>
+            <p class="muted">Admin controls this information. Published records appear on the Student Dashboard & School Board.</p>
+            <form id="form">
+                <input type="hidden" id="editId">
+                <label>Exam / Paper</label>
+                <input id="examTitle" required placeholder="e.g. Mid-Term Examination 2026">
+                <label>Class</label>
+                <input id="class" required placeholder="e.g. Grade 10">
+                <label>Subject</label>
+                <input id="subject" required placeholder="e.g. Mathematics">
+                <label>Date</label>
+                <input id="date" type="date" required>
+                <label>Time</label>
+                <input id="time" placeholder="e.g. 09:00 AM - 12:00 PM">
+                <label>Invigilator</label>
+                <input id="invigilator" placeholder="e.g. Mr. John Doe">
+                <label class="check"><input type="checkbox" id="isPublished"> Publish on Student & School Board</label>
+                <div class="actions">
+                    <button class="btn primary" type="submit">Save Record</button>
+                    <button class="btn" type="button" onclick="resetForm()">Clear</button>
+                </div>
+            </form>
+        </section>
+        <section class="card">
+            <div class="head">
+                <div>
+                    <h2 style="margin:0">Date Sheet Records</h2>
+                    <div class="muted">Draft = Admin only · Published = Student Dashboard & School Board display</div>
+                </div>
+                <button class="btn" onclick="load()">Refresh</button>
+            </div>
+            <div id="list"></div>
+        </section>
+    </div>
+</main>
+<script>
+if (typeof window.LamaAPI === 'undefined') {
+    window.LamaAPI = {
+        logout: function() { localStorage.clear(); },
+        requireLogin: function() { return true; },
+        getActiveSchool: async function() { return JSON.parse(localStorage.getItem('lama_active_school') || '{}'); },
+        list: async function(key) { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); },
+        add: async function(key, item) {
+            const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+            item.id = 'ds_' + Date.now() + Math.random().toString(36).substr(2, 4);
+            list.push(item);
+            localStorage.setItem('lama_' + key, JSON.stringify(list));
+            return item;
+        },
+        update: async function(key, id, patch) {
+            const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+            const idx = list.findIndex(i => i.id === id);
+            if (idx >= 0) {
+                list[idx] = { ...list[idx], ...patch };
+                localStorage.setItem('lama_' + key, JSON.stringify(list));
+            }
+        },
+        remove: async function(key, id) {
+            let list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
+            list = list.filter(i => i.id !== id);
+            localStorage.setItem('lama_' + key, JSON.stringify(list));
+        }
+    };
+}
+
+const COLLECTION = 'datesheet';
+const FIELDS = { "examTitle": "examTitle", "class": "class", "subject": "subject", "date": "date", "time": "time", "invigilator": "invigilator" };
+const $ = id => document.getElementById(id);
+let rows = [];
+
+function id(x) { return String(x?.id ?? ''); }
+function esc(v) { return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function pub(x) { return x?.isPublished === true || x?.published === true || String(x?.status || '').toLowerCase() === 'published'; }
+
+function resetForm() {
+    $('form').reset();
+    $('editId').value = '';
+}
+
+function edit(x) {
+    $('editId').value = id(x);
+    Object.keys(FIELDS).forEach(k => {
+        if ($(FIELDS[k])) $(FIELDS[k]).value = x[k] ?? '';
+    });
+    $('isPublished').checked = pub(x);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function syncToSchoolBoard() {
+    try {
+        const allItems = await LamaAPI.list(COLLECTION);
+        const published = allItems.filter(pub);
+        localStorage.setItem('lama_main_dashboard_datesheet', JSON.stringify(published));
+        localStorage.setItem('lama_student_datesheet', JSON.stringify(published));
+        window.dispatchEvent(new Event('storage'));
+    } catch (e) {
+        console.warn('Dashboard sync warning:', e);
+    }
+}
+
+async function load() {
+    try {
+        rows = await LamaAPI.list(COLLECTION) || [];
+        rows = Array.isArray(rows) ? rows : [];
+        const container = $('list');
+        container.innerHTML = rows.length ? rows.map(x => `
+            <article class="item">
+                <div class="head">
+                    <div>
+                        <b>[${esc(x.class || 'Class')}] ${esc(x.subject || x.examTitle || 'Exam')}</b>
+                        <div class="muted">${esc(x.examTitle || '')} • ${esc(x.date || '')} ${x.time ? '(' + esc(x.time) + ')' : ''}</div>
+                    </div>
+                    <span class="badge ${pub(x) ? 'pub' : 'draft'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
+                </div>
+                <div class="muted" style="margin-top:8px">Invigilator: ${esc(x.invigilator || 'Not assigned')}</div>
+                <div class="actions">
+                    <button class="btn" onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
+                    <button class="btn ${pub(x) ? 'red' : 'green'}" onclick="toggle('${id(x)}')">${pub(x) ? 'Unpublish' : 'Publish'}</button>
+                    <button class="btn red" onclick="del('${id(x)}')">Delete</button>
+                </div>
+            </article>
+        `).join('') : '<div class="muted" style="text-align:center;padding:35px">No date sheet records yet.</div>';
+        
+        // Populate printable sheet rows with published items
+        const publishedRows = rows.filter(pub);
+        const sheetBody = $('sheetRowsBody');
+        sheetBody.innerHTML = publishedRows.length ? publishedRows.map(x => `
+            <tr>
+                <td><b>${esc(x.examTitle || '-')}</b></td>
+                <td>${esc(x.class || '-')}</td>
+                <td>${esc(x.subject || '-')}</td>
+                <td>${esc(x.date || '-')}</td>
+                <td>${esc(x.time || '-')}</td>
+                <td>${esc(x.invigilator || '-')}</td>
+            </tr>
+        `).join('') : `<tr><td colspan="6" style="text-align:center;padding:15px;color:#64748b">No published date sheet entries available.</td></tr>`;
+
+        await syncToSchoolBoard();
+    } catch(e) {
+        $('list').innerHTML = '<div class="muted">Load failed: ' + esc(e.message) + '</div>';
+    }
+}
+
+function printFullSheet() {
+    const sheet = $('printSheetContainer');
+    sheet.style.display = 'block';
+    window.print();
+    sheet.style.display = 'none';
+}
+
+async function load() {
+    try {
+        rows = await LamaAPI.list(COLLECTION) || [];
+        rows = Array.isArray(rows) ? rows : [];
+        const container = $('list');
+        container.innerHTML = rows.length ? rows.map(x => `
+            <article class="item">
+                <div class="head">
+                    <div>
+                        <b>[${esc(x.class || 'Class')}] ${esc(x.subject || x.examTitle || 'Exam')}</b>
+                        <div class="muted">${esc(x.examTitle || '')} • ${esc(x.date || '')} ${x.time ? '(' + esc(x.time) + ')' : ''}</div>
+                    </div>
+                    <span class="badge ${pub(x) ? 'pub' : 'draft'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
+                </div>
+                <div class="muted" style="margin-top:8px">Invigilator: ${esc(x.invigilator || 'Not assigned')}</div>
+                <div class="actions">
+                    <button class="btn" onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
+                    <button class="btn ${pub(x) ? 'red' : 'green'}" onclick="toggle('${id(x)}')">${pub(x) ? 'Unpublish' : 'Publish'}</button>
+                    <button class="btn red" onclick="del('${id(x)}')">Delete</button>
+                </div>
+            </article>
+        `).join('') : '<div class="muted" style="text-align:center;padding:35px">No date sheet records yet.</div>';
+        
+        await syncToSchoolBoard();
+    } catch(e) {
+        $('list').innerHTML = '<div class="muted">Load failed: ' + esc(e.message) + '</div>';
+    }
+}
+
+$('form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const r = {};
+    Object.keys(FIELDS).forEach(k => r[k] = $(FIELDS[k]).value.trim());
+    const p = $('isPublished').checked;
+    r.isPublished = p;
+    r.published = p;
+    r.status = p ? 'published' : 'draft';
+    r.updatedAt = new Date().toISOString();
+    
+    try {
+        const eid = $('editId').value;
+        if (eid) {
+            await LamaAPI.update(COLLECTION, eid, r);
+        } else {
+            r.createdAt = new Date().toISOString();
+            await LamaAPI.add(COLLECTION, r);
+        }
+        resetForm();
+        await load();
+        alert(p ? 'Published — it will appear on the School Board.' : 'Saved as draft — it will remain hidden.');
+    } catch(e) {
+        alert('Save failed: ' + e.message);
+    }
+});
+
+async function toggle(i) {
+    const x = rows.find(r => id(r) === String(i));
+    if (!x) return;
+    const p = !pub(x);
+    await LamaAPI.update(COLLECTION, i, {
+        ...x,
+        isPublished: p,
+        published: p,
+        status: p ? 'published' : 'draft',
+        updatedAt: new Date().toISOString()
+    });
+    await load();
+}
+
+async function del(i) {
+    if (!confirm('Delete this record?')) return;
+    await LamaAPI.remove(COLLECTION, i);
+    await load();
+}
+
+async function initHeader() {
+    try {
+        const school = (await LamaAPI.getActiveSchool()) || {};
+        const schoolName = school.name || 'Lama School';
+        $('brandTitle').innerText = `${schoolName} · Admin Portal`;
+        if ($('sheetSchoolName')) $('sheetSchoolName').innerText = schoolName;
+    } catch (e) {
+        console.warn('Could not load active school:', e);
+    }
+}
+
+initHeader();
+load();
+</script>
+</body>
+</html>

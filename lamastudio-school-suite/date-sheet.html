@@ -21,16 +21,19 @@
             
             @page {
                 size: A4 portrait;
-                margin: 4mm;
+                margin: 3mm;
             }
             body {
-                margin: 0;
-                padding: 0;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: 100% !important;
+                overflow: hidden !important;
             }
             main {
                 display: block !important;
                 padding: 0 !important;
                 max-width: none !important;
+                margin: 0 !important;
             }
             section.lg\:col-span-5 {
                 display: none !important;
@@ -38,57 +41,68 @@
             .print-container {
                 display: flex !important;
                 flex-direction: column !important;
-                gap: 2mm !important;
-                align-items: center !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
             .print-card {
                 box-shadow: none !important;
-                border: 1px dashed #94a3b8 !important;
+                border: 1px dashed #cbd5e1 !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                margin: 0 !important;
             }
             
-            /* Print mode styling for 1x, 2x, and 3x tight packing */
+            /* Print mode styling for 1x, 2x, and 3x tight packing on 1 page */
             body.print-mode-1 .print-card {
-                max-height: 278mm !important;
-                padding: 10px !important;
+                max-height: 285mm !important;
+                padding: 12px !important;
             }
+            
             body.print-mode-2 .print-container {
-                display: grid !important;
-                grid-template-columns: 1fr !important;
-                grid-template-rows: repeat(2, 1fr) !important;
-                height: 284mm !important;
-                gap: 2mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: 288mm !important;
+                max-height: 288mm !important;
+                gap: 3mm !important;
             }
             body.print-mode-2 .print-card {
-                max-height: 139mm !important;
+                height: 140mm !important;
+                max-height: 140mm !important;
                 padding: 6px 10px !important;
-                font-size: 8.5px !important;
+                font-size: 8px !important;
+                overflow: hidden !important;
             }
             body.print-mode-2 .print-card h1 { font-size: 11px !important; margin: 0 !important; }
-            body.print-mode-2 .print-card h2, body.print-mode-2 .print-card h3 { font-size: 8.5px !important; margin: 0 !important; }
-            body.print-mode-2 .print-card table th, body.print-mode-2 .print-card table td { padding: 2px 4px !important; font-size: 8px !important; }
+            body.print-mode-2 .print-card h2, body.print-mode-2 .print-card h3 { font-size: 8px !important; margin: 0 !important; }
+            body.print-mode-2 .print-card table th, body.print-mode-2 .print-card table td { padding: 1px 3px !important; font-size: 7.5px !important; }
+            body.print-mode-2 .print-card img { height: 18px !important; width: 18px !important; }
 
             body.print-mode-3 .print-container {
-                display: grid !important;
-                grid-template-columns: 1fr !important;
-                grid-template-rows: repeat(3, 1fr) !important;
-                height: 284mm !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: 288mm !important;
+                max-height: 288mm !important;
                 gap: 2mm !important;
             }
             body.print-mode-3 .print-card {
-                max-height: 92mm !important;
+                height: 93mm !important;
+                max-height: 93mm !important;
                 padding: 4px 8px !important;
-                font-size: 7.5px !important;
+                font-size: 7px !important;
+                overflow: hidden !important;
             }
-            body.print-mode-3 .print-card h1 { font-size: 10px !important; margin: 0 !important; }
-            body.print-mode-3 .print-card h2, body.print-mode-3 .print-card h3 { font-size: 7.5px !important; margin: 0 !important; }
-            body.print-mode-3 .print-card table th, body.print-mode-3 .print-card table td { padding: 1.5px 3px !important; font-size: 7px !important; }
-            body.print-mode-3 .print-card img { height: 20px !important; width: 20px !important; }
+            body.print-mode-3 .print-card h1 { font-size: 9.5px !important; margin: 0 !important; }
+            body.print-mode-3 .print-card h2, body.print-mode-3 .print-card h3 { font-size: 7px !important; margin: 0 !important; }
+            body.print-mode-3 .print-card table th, body.print-mode-3 .print-card table td { padding: 0.5px 2px !important; font-size: 6.5px !important; }
+            body.print-mode-3 .print-card img { height: 16px !important; width: 16px !important; }
+            body.print-mode-3 .print-card .mt-2 { margin-top: 2px !important; }
+            body.print-mode-3 .print-card .pb-2 { padding-bottom: 2px !important; }
         }
     </style>
 </head>
@@ -737,9 +751,9 @@
             const thead = document.getElementById('sheetTableHeader');
             thead.innerHTML = `
                 <tr class="text-[11px] font-black uppercase text-slate-700 border-b border-slate-300">
-                    <th class="py-2.5 px-3">DATE</th>
-                    <th class="py-2.5 px-3">DAY</th>
-                    ${activeGrades.map(g => `<th class="py-2.5 px-3">${g}</th>`).join('')}
+                    <th class="py-2 px-3">DATE</th>
+                    <th class="py-2 px-3">DAY</th>
+                    ${activeGrades.map(g => `<th class="py-2 px-3">${g}</th>`).join('')}
                 </tr>
             `;
 
@@ -755,9 +769,9 @@
                 }
                 return `
                     <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td class="py-2.5 px-3 font-bold text-slate-900">${e.date || '---'}</td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-700">${e.day || '---'}</td>
-                        ${activeGrades.map(g => `<td class="py-2.5 px-3 text-slate-800">${e.subjects && e.subjects[g] ? e.subjects[g] : '---'}</td>`).join('')}
+                        <td class="py-2 px-3 font-bold text-slate-900">${e.date || '---'}</td>
+                        <td class="py-2 px-3 font-semibold text-slate-700">${e.day || '---'}</td>
+                        ${activeGrades.map(g => `<td class="py-2 px-3 text-slate-800">${e.subjects && e.subjects[g] ? e.subjects[g] : '---'}</td>`).join('')}
                     </tr>
                 `;
             }).join('');

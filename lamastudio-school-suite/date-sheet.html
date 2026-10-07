@@ -18,14 +18,14 @@
             body { background: white !important; color: black !important; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            .print-card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
             
             @page {
                 size: A4 portrait;
-                margin: 10mm;
+                margin: 8mm;
             }
             body {
                 margin: 0;
+                padding: 0;
             }
             main {
                 display: block !important;
@@ -38,26 +38,57 @@
             .print-container {
                 display: flex !important;
                 flex-direction: column !important;
-                gap: 12mm !important;
+                gap: 4mm !important;
                 align-items: center !important;
                 width: 100% !important;
+                box-sizing: border-box !important;
             }
             .print-card {
+                box-shadow: none !important;
+                border: 1px dashed #94a3b8 !important;
                 width: 100% !important;
-                max-height: 130mm !important;
-                overflow: hidden !important;
+                box-sizing: border-box !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
-                padding: 12px !important;
-                border: 1px dashed #94a3b8 !important;
             }
-            .print-card:first-child::after {
-                content: "";
-                display: block;
-                border-bottom: 1px dashed #cbd5e1;
-                margin-top: 8mm;
-                margin-bottom: -4mm;
+            
+            /* Dynamic Multi-Up styles for single-page fitting */
+            body.print-mode-1 .print-card {
+                max-height: 270mm !important;
+                padding: 16px !important;
             }
+            body.print-mode-2 .print-container {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: repeat(2, 1fr) !important;
+                height: 276mm !important;
+                gap: 4mm !important;
+            }
+            body.print-mode-2 .print-card {
+                max-height: 133mm !important;
+                padding: 10px !important;
+                font-size: 10px !important;
+            }
+            body.print-mode-2 .print-card h1 { font-size: 14px !important; margin: 0 !important; }
+            body.print-mode-2 .print-card h2, body.print-mode-2 .print-card h3 { font-size: 10px !important; margin: 0 !important; }
+            body.print-mode-2 .print-card table th, body.print-mode-2 .print-card table td { padding: 3px 6px !important; font-size: 9px !important; }
+
+            body.print-mode-3 .print-container {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: repeat(3, 1fr) !important;
+                height: 276mm !important;
+                gap: 3mm !important;
+            }
+            body.print-mode-3 .print-card {
+                max-height: 88mm !important;
+                padding: 8px !important;
+                font-size: 9px !important;
+            }
+            body.print-mode-3 .print-card h1 { font-size: 12px !important; margin: 0 !important; }
+            body.print-mode-3 .print-card h2, body.print-mode-3 .print-card h3 { font-size: 9px !important; margin: 0 !important; }
+            body.print-mode-3 .print-card table th, body.print-mode-3 .print-card table td { padding: 2px 4px !important; font-size: 8px !important; }
+            body.print-mode-3 .print-card img { height: 24px !important; width: 24px !important; }
         }
     </style>
 </head>
@@ -315,9 +346,23 @@
 
         function updatePrintLayoutClass() {
             const mode = document.getElementById('printLayoutMode').value;
-            const card = document.getElementById('matrixCardWrapper');
-            card.className = card.className.replace(/print-mode-\d/g, '');
-            card.classList.add(`print-mode-${mode}`);
+            const body = document.body;
+            body.className = body.className.replace(/print-mode-\d/g, '');
+            body.classList.add(`print-mode-${mode}`);
+
+            // Replicate cards in the print container for live preview & printing according to mode
+            const container = document.getElementById('printContainer');
+            const originalCardHtml = document.getElementById('matrixCardWrapper').outerHTML;
+            
+            let count = 1;
+            if (mode === '2') count = 2;
+            if (mode === '3') count = 3;
+
+            let cardsHtml = '';
+            for (let i = 0; i < count; i++) {
+                cardsHtml += originalCardHtml;
+            }
+            container.innerHTML = cardsHtml;
         }
 
         // Robust School Name & Logo Fetcher via LamaAPI or Storage
@@ -632,6 +677,7 @@
             initFilterDropdown();
             renderMatrixSheet();
             renderRecordsList();
+            updatePrintLayoutClass();
         }
 
         function renderMatrixSheet() {
@@ -777,14 +823,5 @@
             renderAll();
         };
     </script>
-    <style>
-        /* Print mode adjustments for 1x, 2x, 3x multi-up layout */
-        .print-mode-2 { transform: scale(0.85); transform-origin: top center; }
-        .print-mode-3 { transform: scale(0.70); transform-origin: top center; }
-        @media print {
-            .print-mode-2 { transform: scale(0.9) !important; max-height: 110mm !important; }
-            .print-mode-3 { transform: scale(0.75) !important; max-height: 90mm !important; }
-        }
-    </style>
 </body>
 </html>

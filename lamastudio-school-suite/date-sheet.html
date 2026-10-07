@@ -19,7 +19,16 @@
 <body class="bg-slate-900 text-slate-100 min-h-screen">
 
     <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-lg no-print">
-        <div class="flex items-center gap-3">
+    <div class="flex items-center gap-3">
+        <div id="schoolLogoContainer" class="bg-sky-600 rounded-xl text-white font-black text-lg overflow-hidden flex items-center justify-center w-10 h-10 shadow">
+            <span id="schoolInitials">DS</span>
+        </div>
+        <div>
+            <h1 id="schoolName" class="font-bold text-lg text-white">Matrix Date Sheet Admin</h1>
+            <p class="text-xs text-slate-400">Manage grade-wise exam schedules & subjects</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-3">
             <div class="bg-sky-600 p-2 rounded-xl text-white font-black text-lg">DS</div>
             <div>
                 <h1 id="schoolName" class="font-bold text-lg text-white">Matrix Date Sheet Admin</h1>
@@ -55,7 +64,7 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">Date</label>
-                        <input type="date" id="date" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
+                        <input type="date" id="date" required onchange="handleDateChange()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-300 mb-1">Day</label>
@@ -156,14 +165,17 @@
         <section class="lg:col-span-7 space-y-6">
             
             <!-- Matrix Live Printable Preview Card -->
-            <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden">
-                <div class="text-center pb-4 border-b border-slate-200">
-                    <h2 id="sheetExamTitle" class="text-lg font-black tracking-wider text-slate-800 uppercase">OFFICIAL EXAMINATION MATRIX</h2>
-                    <p id="sheetSchoolSub" class="text-xs font-semibold text-slate-500 mt-1">ACADEMIC DATE SHEET SCHEDULE</p>
-                    <p id="sheetTimings" class="text-[11px] font-bold text-sky-700 mt-1"></p>
-                </div>
+    <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden">
+        <div class="text-center pb-4 border-b border-slate-200 flex flex-col items-center">
+            <div id="printLogoWrapper" class="mb-2 hidden">
+                <img id="printSchoolLogo" src="" alt="School Logo" class="h-12 w-12 object-contain mx-auto">
+            </div>
+            <h2 id="sheetSchoolSub" class="text-sm font-bold text-slate-600 uppercase tracking-widest">OFFICIAL EXAMINATION MATRIX</h2>
+            <h1 id="sheetExamTitle" class="text-xl font-black tracking-wider text-slate-900 uppercase mt-1">EXAMINATION DATE SHEET</h1>
+            <p id="sheetTimings" class="text-[11px] font-bold text-sky-700 mt-1"></p>
+        </div>
 
-                <div class="overflow-x-auto mt-4">
+        <div class="overflow-x-auto mt-4">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead id="sheetTableHeader" class="bg-slate-100 text-slate-700 border-b border-slate-300"></thead>
                         <tbody id="sheetRowsBody" class="divide-y divide-slate-200"></tbody>
@@ -232,6 +244,17 @@
 
     const COLLECTION = 'matrix_datesheet';
     const ALL_POSSIBLE_GRADES = ['PG', 'ECCE', 'Prep', 'KG', 'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5', 'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10', 'Grade-11', 'Grade-12'];
+
+    function handleDateChange() {
+        const dateVal = $('date').value;
+        if (dateVal) {
+            const dateObj = new Date(dateVal + 'T00:00:00');
+            if (!isNaN(dateObj.getTime())) {
+                const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                $('day').value = daysOfWeek[dateObj.getDay()];
+            }
+        }
+    }
 
     // Precise presets corresponding to user specifications
     const GRADE_SUBJECT_PRESETS = {
@@ -476,14 +499,41 @@
             if (publishedRows[0].time) $('sheetTimings').innerText = 'TIMING: ' + publishedRows[0].time;
         }
 
-        // Fetch active school name if available
+        // Fetch real active school profile data (Name and Logo)
         try {
-            const school = await LamaAPI.getActiveSchool();
-            if (school && school.name) {
-                $('schoolName').innerText = school.name + ' - Date Sheet Admin';
-                if ($('sheetSchoolSub')) $('sheetSchoolSub').innerText = school.name.toUpperCase() + ' — EXAMINATION SCHEDULE';
+            let school = null;
+            if (typeof LamaAPI.getActiveSchool === 'function') {
+                school = await LamaAPI.getActiveSchool();
             }
-        } catch(e) {}
+            if (!school && typeof LamaAPI.list === 'function') {
+                const schools = await LamaAPI.list('schools');
+                if (schools && schools.length > 0) school = schools[0];
+            }
+            if (!school) {
+                school = JSON.parse(localStorage.getItem('lama_active_school') || localStorage.getItem('active_school') || 'null');
+            }
+
+            const realName = school?.name || school?.schoolName || school?.title;
+            const realLogo = school?.logo || school?.logoUrl || school?.image;
+
+            if (realName) {
+                $('schoolName').innerText = realName + ' - Date Sheet Admin';
+                if ($('sheetSchoolSub')) $('sheetSchoolSub').innerText = realName.toUpperCase();
+                const words = realName.trim().split(' ');
+                const initials = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : realName.substring(0, 2).toUpperCase();
+                $('schoolInitials').innerText = initials;
+            }
+
+            if (realLogo) {
+                $('schoolLogoContainer').innerHTML = `<img src="${realLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                if ($('printLogoWrapper') && $('printSchoolLogo')) {
+                    $('printSchoolLogo').src = realLogo;
+                    $('printLogoWrapper').classList.remove('hidden');
+                }
+            }
+        } catch(e) {
+            console.warn('Could not fetch active school profile, falling back to defaults:', e);
+        }
     }
 
     async function toggle(id) {

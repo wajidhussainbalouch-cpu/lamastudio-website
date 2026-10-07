@@ -21,7 +21,7 @@
             
             @page {
                 size: A4 portrait;
-                margin: 4mm; /* Narrow margins to maximize printable space */
+                margin: 4mm;
             }
             body {
                 margin: 0;
@@ -52,7 +52,7 @@
                 break-inside: avoid !important;
             }
             
-            /* Dynamic Multi-Up styles optimized to fit entire page picture */
+            /* Print mode styling for 1x, 2x, and 3x tight packing */
             body.print-mode-1 .print-card {
                 max-height: 278mm !important;
                 padding: 10px !important;
@@ -137,8 +137,8 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Date (DD/MM/YYYY)</label>
-                        <input type="text" id="date" required placeholder="DD/MM/YYYY" oninput="handleDateInput(this)" onblur="formatDateInputOnBlur(this)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
-                        <p class="text-[10px] text-slate-400 mt-0.5">Format: DD/MM/YYYY (e.g. 10/10/2026)</p>
+                        <input type="text" id="date" required placeholder="DD/MM/YYYY" oninput="handleDateInput(this)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                        <p class="text-[10px] text-slate-400 mt-0.5">Format: DD/MM/YYYY</p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Day</label>
@@ -159,7 +159,7 @@
 
                 <div class="bg-slate-100 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
                     <div class="flex justify-between items-center">
-                        <label class="text-xs font-bold text-sky-600 dark:text-sky-300">Grade / Class Selection Mode</label>
+                        <label class="text-xs font-bold text-sky-600 dark:text-sky-300">Grade Selection Mode</label>
                         <select id="gradeMode" onchange="onGradeModeChange()" class="bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-800 dark:text-slate-200">
                             <option value="custom">Select Specific Grades</option>
                             <option value="range">Range Selection</option>
@@ -168,7 +168,6 @@
 
                     <!-- Custom Checkboxes -->
                     <div id="customGradesBox" class="space-y-2">
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Check grades to include in this exam date:</p>
                         <div id="gradeCheckboxes" class="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"></div>
                     </div>
 
@@ -177,6 +176,10 @@
                         <div>
                             <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">From Grade</label>
                             <select id="rangeStart" onchange="updateGradeInputs()" class="w-full bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-slate-800 dark:text-slate-200">
+                                <option value="PG">PG</option>
+                                <option value="KG">KG</option>
+                                <option value="Prep">Prep</option>
+                                <option value="ECCE">ECCE</option>
                                 <option value="Grade-1">Grade-1</option>
                                 <option value="Grade-2">Grade-2</option>
                                 <option value="Grade-3">Grade-3</option>
@@ -194,6 +197,10 @@
                         <div>
                             <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">To Grade</label>
                             <select id="rangeEnd" onchange="updateGradeInputs()" class="w-full bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-slate-800 dark:text-slate-200">
+                                <option value="PG">PG</option>
+                                <option value="KG">KG</option>
+                                <option value="Prep">Prep</option>
+                                <option value="ECCE">ECCE</option>
                                 <option value="Grade-1">Grade-1</option>
                                 <option value="Grade-2">Grade-2</option>
                                 <option value="Grade-3">Grade-3</option>
@@ -211,17 +218,24 @@
                     </div>
                 </div>
 
-                <!-- Subject Quick Presets -->
+                <!-- Level-Based Subject Presets -->
                 <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Subject Presets (Click to insert)</label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Subject Presets by Level</label>
                     </div>
-                    <div id="presetChips" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-700"></div>
+                    <!-- Level Tabs -->
+                    <div class="flex gap-1 mb-2">
+                        <button type="button" onclick="switchPresetLevel('primary')" id="tab-primary" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-sky-600 text-white transition">Primary</button>
+                        <button type="button" onclick="switchPresetLevel('middle')" id="tab-middle" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition">Middle</button>
+                        <button type="button" onclick="switchPresetLevel('high')" id="tab-high" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition">High</button>
+                        <button type="button" onclick="switchPresetLevel('higher')" id="tab-higher" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition">Higher</button>
+                    </div>
+                    <div id="presetChips" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-700"></div>
                 </div>
 
                 <!-- Dynamic Grade Subject Inputs -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Subject Assigned per Grade (First paper auto-fixes remaining)</label>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Subject Assigned per Grade</label>
                     <div id="gradesContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
                 </div>
 
@@ -314,23 +328,25 @@
     </main>
 
     <script>
-        // Global state and constants
         const ALL_GRADES = [
+            'PG', 'KG', 'Prep', 'ECCE',
             'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5',
             'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10',
             'Grade-11', 'Grade-12'
         ];
 
-        const SUBJECT_PRESETS = [
-            'English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge',
-            'Nazra', 'Science', 'SSt', 'Computer', 'Drawing', 'Arabic',
-            'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Islamiyat (Compulsory)'
-        ];
+        const SUBJECT_PRESETS_BY_LEVEL = {
+            primary: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Science', 'SSt', 'Nazra', 'Computer', 'Drawing', 'Dictation'],
+            middle: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'History', 'Geography', 'Arabic', 'Tarjama-tul-Quran', 'Computer', 'Drawing'],
+            high: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Computer Studies', 'Tarjama-tul-Quran'],
+            higher: ['English', 'Urdu', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Economics', 'Statistics', 'Islamic Education', 'Pakistan Studies']
+        };
 
+        let currentPresetLevel = 'primary';
         let dateSheetEntries = [];
         let activeSchoolName = "DS Model Public School";
         let activeSchoolLogo = "";
-        let rememberedGradeSelection = [...ALL_GRADES];
+        let rememberedGradeSelection = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
         let rememberedGradeMode = 'custom';
         let rememberedExamTitle = 'SBA First Term Examination 2026';
 
@@ -346,10 +362,17 @@
             }
         }
 
+        function toggleTheme() {
+            const root = document.getElementById('htmlRoot');
+            const isDark = root.classList.toggle('dark');
+            localStorage.setItem('lama_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+        }
+
         function initFilterDropdown() {
             const select = document.getElementById('filterClass');
             select.innerHTML = `<option value="ALL">All Classes (Full Matrix)</option>` + 
-                ALL_GRADES.map(g => `<option value="${g}">${g.replace('-', ' ')}</option>`).join('');
+                ALL_GRADES.map(g => `<option value="${g}">${g}</option>`).join('');
         }
 
         function updatePrintLayoutClass() {
@@ -358,7 +381,6 @@
             body.className = body.className.replace(/print-mode-\d/g, '');
             body.classList.add(`print-mode-${mode}`);
 
-            // Replicate cards in the print container for live preview & printing according to mode
             const container = document.getElementById('printContainer');
             const originalCardHtml = document.getElementById('matrixCardWrapper').outerHTML;
             
@@ -373,7 +395,7 @@
             container.innerHTML = cardsHtml;
         }
 
-        // Robust School Name & Logo Fetcher via LamaAPI or Storage
+        // Fetch School Profile
         async function fetchSchoolProfile() {
             try {
                 if (typeof LamaAPI !== 'undefined') {
@@ -395,7 +417,6 @@
                 console.warn('LamaAPI profile fetch error:', e);
             }
 
-            // Fallback to localStorage keys if LamaAPI didn't populate
             if (!activeSchoolName || activeSchoolName === "School Board") {
                 activeSchoolName = localStorage.getItem('lama_school_name') || 
                                    localStorage.getItem('active_school_name') || 
@@ -408,7 +429,6 @@
                                    localStorage.getItem('schoolLogo') || "";
             }
 
-            // Update Header & Printable title
             document.getElementById('schoolNameHeader').textContent = activeSchoolName;
             document.getElementById('sheetSchoolTitleDisplay').textContent = activeSchoolName;
             const initials = activeSchoolName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
@@ -427,7 +447,7 @@
             }
         }
 
-        // Improved Date input formatting (DD/MM/YYYY)
+        // Date input formatting DD/MM/YYYY
         function handleDateInput(input) {
             let v = input.value.replace(/\D/g, '');
             if (v.length > 8) v = v.substring(0, 8);
@@ -449,7 +469,6 @@
             
             input.value = formatted;
 
-            // Auto-calculate Day if complete date entered
             if (formatted.length === 10) {
                 const parts = formatted.split('/');
                 if (parts.length === 3) {
@@ -465,25 +484,33 @@
             }
         }
 
-        function formatDateInputOnBlur(input) {
-            // Optional cleanup on blur if needed
-        }
-
-        // Initialize Grade Checkboxes
         function initGradeCheckboxes() {
             const container = document.getElementById('gradeCheckboxes');
             container.innerHTML = ALL_GRADES.map(g => `
                 <label class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
                     <input type="checkbox" value="${g}" class="grade-cb rounded border-slate-300 text-sky-600 focus:ring-0" ${rememberedGradeSelection.includes(g) ? 'checked' : ''} onchange="updateGradeInputs()">
                     <span>${g}</span>
-                >
+                </label>
             `).join('');
         }
 
-        // Initialize Quick Presets
+        function switchPresetLevel(level) {
+            currentPresetLevel = level;
+            ['primary', 'middle', 'high', 'higher'].forEach(l => {
+                const btn = document.getElementById(`tab-${l}`);
+                if (l === level) {
+                    btn.className = 'flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-sky-600 text-white transition';
+                } else {
+                    btn.className = 'flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition';
+                }
+            });
+            initPresets();
+        }
+
         function initPresets() {
             const container = document.getElementById('presetChips');
-            container.innerHTML = SUBJECT_PRESETS.map(sub => `
+            const subjects = SUBJECT_PRESETS_BY_LEVEL[currentPresetLevel] || [];
+            container.innerHTML = subjects.map(sub => `
                 <button type="button" onclick="insertSubjectPreset('${sub}')" class="px-2 py-1 bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition">
                     + ${sub}
                 </button>
@@ -525,7 +552,7 @@
             } else {
                 const cbs = document.querySelectorAll('.grade-cb:checked');
                 const list = Array.from(cbs).map(cb => cb.value);
-                return list.length > 0 ? list : [...ALL_GRADES.slice(0, 5)];
+                return list.length > 0 ? list : ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
             }
         }
 
@@ -545,13 +572,11 @@
             }).join('');
         }
 
-        // Smart auto-fill: if first grade subject changes, propagate to others if they match previous first or are empty
         let lastFirstVal = '';
         function triggerAutoFill(input) {
             const inputs = document.querySelectorAll('.grade-subject-input');
             if (inputs.length > 0 && inputs[0] === input) {
                 const newVal = input.value;
-                // If primary level subjects (English, Urdu, Mathematics, Islamiat, Science, SSt)
                 for (let i = 1; i < inputs.length; i++) {
                     if (!inputs[i].value || inputs[i].value === lastFirstVal) {
                         inputs[i].value = newVal;
@@ -561,14 +586,12 @@
             }
         }
 
-        // Save and Storage
         function loadEntries() {
             try {
                 const saved = localStorage.getItem('lama_matrix_datesheet_records');
                 if (saved) {
                     dateSheetEntries = JSON.parse(saved);
                 } else {
-                    // Default sample entry if none exists
                     dateSheetEntries = [
                         {
                             id: 'sample-1',
@@ -660,7 +683,6 @@
             document.getElementById('invigilator').value = item.invigilator || '';
             document.getElementById('isPublished').checked = !!item.isPublished;
 
-            // Set grades
             const grades = Object.keys(item.subjects || {});
             if (grades.length > 0) {
                 rememberedGradeSelection = grades;
@@ -680,7 +702,6 @@
             }
         }
 
-        // Render Matrix Table & List
         function renderAll() {
             initFilterDropdown();
             renderMatrixSheet();
@@ -692,11 +713,9 @@
             const publishedEntries = dateSheetEntries.filter(e => e.isPublished);
             const filterClass = document.getElementById('filterClass').value;
             
-            // Set exam title in preview header
             const titleToUse = publishedEntries.length > 0 && publishedEntries[0].examTitle ? publishedEntries[0].examTitle : rememberedExamTitle;
             document.getElementById('sheetExamTitle').textContent = titleToUse.toUpperCase();
             
-            // Get all unique grades across published entries
             const gradeSet = new Set();
             publishedEntries.forEach(e => {
                 if (e.subjects) {
@@ -708,26 +727,22 @@
                 activeGrades = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
             }
 
-            // If filter class is selected and not ALL
             if (filterClass !== 'ALL') {
                 activeGrades = [filterClass];
             }
 
-            // Timings
             const timings = publishedEntries.map(e => e.time).filter(Boolean);
             document.getElementById('sheetTimings').textContent = timings.length > 0 ? `TIMING: ${timings[0]}` : 'TIMING: 09:00 - 11:00';
 
-            // Table Header
             const thead = document.getElementById('sheetTableHeader');
             thead.innerHTML = `
                 <tr class="text-[11px] font-black uppercase text-slate-700 border-b border-slate-300">
                     <th class="py-2.5 px-3">DATE</th>
                     <th class="py-2.5 px-3">DAY</th>
-                    ${activeGrades.map(g => `<th class="py-2.5 px-3">${g.replace('-', ' ')}</th>`).join('')}
+                    ${activeGrades.map(g => `<th class="py-2.5 px-3">${g}</th>`).join('')}
                 </tr>
             `;
 
-            // Table Body
             const tbody = document.getElementById('sheetRowsBody');
             if (publishedEntries.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${activeGrades.length + 2}" class="text-center py-6 text-slate-400 text-xs font-medium">No published date sheet records found. Check "Publish immediately" when saving entries.</td></tr>`;
@@ -735,7 +750,6 @@
             }
 
             tbody.innerHTML = publishedEntries.map(e => {
-                // If filtering by class, skip row if class has no subject
                 if (filterClass !== 'ALL' && (!e.subjects || !e.subjects[filterClass])) {
                     return '';
                 }
@@ -749,7 +763,6 @@
             }).join('');
         }
 
-        // Export Functions
         function exportAsPDF() {
             window.print();
         }
@@ -819,7 +832,6 @@
             `).join('');
         }
 
-        // On Load
         window.onload = async function() {
             initTheme();
             await fetchSchoolProfile();

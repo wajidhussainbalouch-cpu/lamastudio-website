@@ -11,6 +11,7 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="js/api-client.js" onerror="console.warn('api-client.js missing');"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         @media print {
@@ -18,6 +19,45 @@
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             .print-card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+            
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            body {
+                margin: 0;
+            }
+            main {
+                display: block !important;
+                padding: 0 !important;
+                max-width: none !important;
+            }
+            section.lg\:col-span-5 {
+                display: none !important;
+            }
+            .print-container {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12mm !important;
+                align-items: center !important;
+                width: 100% !important;
+            }
+            .print-card {
+                width: 100% !important;
+                max-height: 130mm !important;
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                padding: 12px !important;
+                border: 1px dashed #94a3b8 !important;
+            }
+            .print-card:first-child::after {
+                content: "";
+                display: block;
+                border-bottom: 1px dashed #cbd5e1;
+                margin-top: 8mm;
+                margin-bottom: -4mm;
+            }
         }
     </style>
 </head>
@@ -29,7 +69,7 @@
                 <span id="schoolInitials">DS</span>
             </div>
             <div>
-                <h1 id="schoolName" class="font-bold text-lg text-slate-900 dark:text-white">Date Sheet Admin</h1>
+                <h1 id="schoolNameHeader" class="font-bold text-lg text-slate-900 dark:text-white">Date Sheet Admin</h1>
                 <p class="text-xs text-slate-500 dark:text-slate-400">Manage grade-wise exam schedules & subjects</p>
             </div>
         </div>
@@ -59,26 +99,26 @@
                 <input type="hidden" id="editId">
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Exam Title / Term</label>
-                    <input type="text" id="examTitle" required placeholder="e.g., Final Term Examination 2026" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Exam Title / Term (Global)</label>
+                    <input type="text" id="examTitle" required placeholder="e.g., SBA First Term Examination 2026" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Date (DD/MM/YYYY)</label>
                         <input type="text" id="date" required placeholder="DD/MM/YYYY" oninput="handleDateInput(this)" onblur="formatDateInputOnBlur(this)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
-                        <p class="text-[10px] text-slate-400 mt-0.5">Format: DD/MM/YYYY (e.g. 25/12/2026)</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Format: DD/MM/YYYY (e.g. 10/10/2026)</p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Day</label>
-                        <input type="text" id="day" placeholder="e.g., Monday" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                        <input type="text" id="day" placeholder="e.g., Friday" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Timing / Shift</label>
-                        <input type="text" id="time" placeholder="e.g., 09:00 AM - 12:00 PM" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                        <input type="text" id="time" placeholder="e.g., 09:00 - 11:00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Invigilator Notes</label>
@@ -167,26 +207,29 @@
 
         <section class="lg:col-span-7 space-y-6">
             
-            <!-- Matrix Live Printable Preview Card -->
-            <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden">
-                <div class="text-center pb-4 border-b border-slate-200 flex flex-col items-center">
-                    <div id="printLogoWrapper" class="mb-2 hidden">
-                        <img id="printSchoolLogo" src="" alt="School Logo" class="h-12 w-12 object-contain mx-auto">
+            <!-- Matrix Live Printable Preview Card Container -->
+            <div id="printContainer" class="print-container space-y-6">
+                <div class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden w-full">
+                    <div class="text-center pb-3 border-b border-slate-200 flex flex-col items-center">
+                        <div id="printLogoWrapper" class="mb-1 hidden">
+                            <img id="printSchoolLogo" src="" alt="School Logo" class="h-10 w-10 object-contain mx-auto">
+                        </div>
+                        <h2 id="sheetSchoolSub" class="text-xs font-bold text-slate-600 uppercase tracking-widest">OFFICIAL EXAMINATION MATRIX</h2>
+                        <h1 id="sheetSchoolTitleDisplay" class="text-lg font-black tracking-wider text-slate-900 uppercase mt-0.5">SCHOOL NAME</h1>
+                        <h3 id="sheetExamTitle" class="text-sm font-bold text-indigo-700 uppercase mt-0.5">EXAMINATION DATE SHEET</h3>
+                        <p id="sheetTimings" class="text-[10px] font-bold text-sky-700 mt-0.5"></p>
                     </div>
-                    <h2 id="sheetSchoolSub" class="text-sm font-bold text-slate-600 uppercase tracking-widest">OFFICIAL EXAMINATION MATRIX</h2>
-                    <h1 id="sheetExamTitle" class="text-xl font-black tracking-wider text-slate-900 uppercase mt-1">EXAMINATION DATE SHEET</h1>
-                    <p id="sheetTimings" class="text-[11px] font-bold text-sky-700 mt-1"></p>
-                </div>
 
-                <div class="overflow-x-auto mt-4">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead id="sheetTableHeader" class="bg-slate-100 text-slate-700 border-b border-slate-300"></thead>
-                        <tbody id="sheetRowsBody" class="divide-y divide-slate-200"></tbody>
-                    </table>
-                </div>
-                <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500">
-                    <span>Note: Please report to examination hall 15 minutes prior.</span>
-                    <span>Principal Signature: ___________________</span>
+                    <div class="overflow-x-auto mt-3">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead id="sheetTableHeader" class="bg-slate-100 text-slate-700 border-b border-slate-300"></thead>
+                            <tbody id="sheetRowsBody" class="divide-y divide-slate-200"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-200 flex justify-between items-center text-[9px] text-slate-500">
+                        <span>Note: Please report to examination hall 15 minutes prior.</span>
+                        <span>Principal Signature: ___________________</span>
+                    </div>
                 </div>
             </div>
 
@@ -197,491 +240,438 @@
             </div>
 
         </section>
-
     </main>
 
     <script>
-    if (typeof window.LamaAPI === 'undefined') {
-        window.LamaAPI = {
-            logout: function() { localStorage.clear(); location.reload(); },
-            requireLogin: function() { return true; },
-            getActiveSchool: async function() { 
-                return JSON.parse(localStorage.getItem('lama_active_school') || localStorage.getItem('active_school') || 'null'); 
-            },
-            list: async function(key) { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); },
-            add: async function(key, item) {
-                const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                item.id = 'ds_' + Date.now() + Math.random().toString(36).substr(2, 4);
-                list.push(item);
-                localStorage.setItem('lama_' + key, JSON.stringify(list));
-                return item;
-            },
-            update: async function(key, id, patch) {
-                const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                const idx = list.findIndex(i => String(i.id) === String(id));
-                if (idx >= 0) {
-                    list[idx] = { ...list[idx], ...patch };
-                    localStorage.setItem('lama_' + key, JSON.stringify(list));
-                }
-            },
-            remove: async function(key, id) {
-                let list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                list = list.filter(i => String(i.id) !== String(id));
-                localStorage.setItem('lama_' + key, JSON.stringify(list));
-            }
-        };
-    } else {
-        const originalAdd = window.LamaAPI.add;
-        if (originalAdd) {
-            window.LamaAPI.add = async function(key, item) {
-                try {
-                    return await originalAdd(key, item);
-                } catch(err) {
-                    const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                    item.id = 'ds_' + Date.now() + Math.random().toString(36).substr(2, 4);
-                    list.push(item);
-                    localStorage.setItem('lama_' + key, JSON.stringify(list));
-                    return item;
-                }
-            };
-        }
-    }
+        // Global state and constants
+        const ALL_GRADES = [
+            'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5',
+            'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10',
+            'Grade-11', 'Grade-12'
+        ];
 
-    const COLLECTION = 'matrix_datesheet';
-    const ALL_POSSIBLE_GRADES = ['PG', 'ECCE', 'Prep', 'KG', 'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5', 'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10', 'Grade-11', 'Grade-12'];
+        const SUBJECT_PRESETS = [
+            'English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge',
+            'Nazra', 'Science', 'SSt', 'Computer', 'Drawing', 'Arabic',
+            'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Islamiyat (Compulsory)'
+        ];
 
-    // Theme toggle handling
-    function toggleTheme() {
-        const html = document.getElementById('htmlRoot');
-        const icon = document.getElementById('themeIcon');
-        if (html.classList.contains('dark')) {
-            html.classList.remove('dark');
-            localStorage.setItem('matrix_theme', 'light');
-            icon.innerText = '🌙';
-        } else {
-            html.classList.add('dark');
-            localStorage.setItem('matrix_theme', 'dark');
-            icon.innerText = '☀️';
-        }
-    }
+        let dateSheetEntries = [];
+        let activeSchoolName = "DS Model Public School";
+        let activeSchoolLogo = "";
+        let rememberedGradeSelection = [...ALL_GRADES];
+        let rememberedGradeMode = 'custom';
+        let rememberedExamTitle = 'SBA First Term Examination 2026';
 
-    function initTheme() {
-        const saved = localStorage.getItem('matrix_theme');
-        const html = document.getElementById('htmlRoot');
-        const icon = document.getElementById('themeIcon');
-        if (saved === 'light') {
-            html.classList.remove('dark');
-            if (icon) icon.innerText = '🌙';
-        } else {
-            html.classList.add('dark');
-            if (icon) icon.innerText = '☀️';
-        }
-    }
-
-    // Enforce strict DD/MM/YYYY formatting
-    function ensureDDMMYYYY(val) {
-        if (!val) return '';
-        val = val.trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
-            const parts = val.split('-');
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        return val;
-    }
-
-    function handleDateInput(input) {
-        let v = input.value.replace(/\D/g, '');
-        if (v.length > 8) v = v.slice(0, 8);
-        let formatted = '';
-        if (v.length > 4) {
-            formatted = `${v.slice(0, 2)}/${v.slice(2, 4)}/${v.slice(4)}`;
-        } else if (v.length > 2) {
-            formatted = `${v.slice(0, 2)}/${v.slice(2)}`;
-        } else {
-            formatted = v;
-        }
-        input.value = formatted;
-
-        if (formatted.length === 10) {
-            const parts = formatted.split('/');
-            const dayNum = parseInt(parts[0], 10);
-            const monthNum = parseInt(parts[1], 10) - 1;
-            const yearNum = parseInt(parts[2], 10);
-            const dateObj = new Date(yearNum, monthNum, dayNum);
-            if (!isNaN(dateObj.getTime())) {
-                const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                $('day').value = daysOfWeek[dateObj.getDay()];
-            }
-        }
-    }
-
-    function formatDateInputOnBlur(input) {
-        input.value = ensureDDMMYYYY(input.value);
-    }
-
-    const GRADE_SUBJECT_PRESETS = {
-        'Grade-1': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Nazra', '---'],
-        'Grade-2': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Nazra', '---'],
-        'Grade-3': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Nazra', '---'],
-        'Grade-4': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'SSt', 'Nazra', '---'],
-        'Grade-5': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'SSt', 'Nazra', '---'],
-        'Grade-6': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'SSt', 'Computer', 'Drawing', 'Arabic', '---'],
-        'Grade-7': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'SSt', 'Computer', 'Drawing', 'Arabic', '---'],
-        'Grade-8': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'SSt', 'Computer', 'Drawing', 'Arabic', '---'],
-        'Grade-9': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Physics', 'Chemistry', 'Biology', 'Computer', 'Pakistan Studies', '---'],
-        'Grade-10': ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Physics', 'Chemistry', 'Biology', 'Computer', 'Pakistan Studies', '---'],
-        'Grade-11': ['Custom Subject / Paper', '---'],
-        'Grade-12': ['Custom Subject / Paper', '---'],
-        'PG': ['General Activities', 'Nazra', '---'],
-        'ECCE': ['General Activities', 'Nazra', '---'],
-        'Prep': ['English', 'Urdu', 'Mathematics', 'Nazra', '---'],
-        'KG': ['English', 'Urdu', 'Mathematics', 'Nazra', '---']
-    };
-
-    const $ = id => document.getElementById(id);
-    let rows = [];
-    let lastFocusedInput = null;
-    let rememberedGrades = null; // Store last selected active grades for continuity
-
-    function initPresetChips() {
-        const container = $('presetChips');
-        const allPresets = ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Science', 'SSt', 'Nazra', 'Computer', 'Drawing', 'Arabic', 'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Custom', '---'];
-        container.innerHTML = allPresets.map(subj => `
-            <button type="button" onclick="insertSubjectPreset('${subj}')" class="bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-sky-700 text-slate-700 dark:text-sky-200 hover:text-sky-600 dark:hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-300 dark:border-slate-700 transition">
-                ${subj}
-            </button>
-        `).join('');
-    }
-
-    function insertSubjectPreset(subj) {
-        if (lastFocusedInput) {
-            lastFocusedInput.value = subj;
-            checkAndAutoFillFirstPaper(lastFocusedInput);
-        } else {
-            const firstInput = document.querySelector('.grade-sub-input');
-            if (firstInput) {
-                firstInput.value = subj;
-                checkAndAutoFillFirstPaper(firstInput);
-                firstInput.focus();
-            }
-        }
-    }
-
-    function initGradeCheckboxes(selectedGrades = []) {
-        const container = $('gradeCheckboxes');
-        container.innerHTML = ALL_POSSIBLE_GRADES.map(g => {
-            let isChecked = false;
-            if (selectedGrades.length > 0) {
-                isChecked = selectedGrades.includes(g);
-            } else if (rememberedGrades && rememberedGrades.length > 0) {
-                isChecked = rememberedGrades.includes(g);
+        // Initialize Theme
+        function initTheme() {
+            const saved = localStorage.getItem('lama_theme') || 'dark';
+            if(saved === 'light') {
+                document.getElementById('htmlRoot').classList.remove('dark');
+                document.getElementById('themeIcon').textContent = '🌙';
             } else {
-                isChecked = true; // default first time
+                document.getElementById('htmlRoot').classList.add('dark');
+                document.getElementById('themeIcon').textContent = '☀️';
             }
-            return `
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                    <input type="checkbox" class="grade-checkbox" value="${g}" ${isChecked ? 'checked' : ''} onchange="updateGradeInputs()">
-                    ${g}
-                </label>
-            `;
-        }).join('');
-    }
-
-    function onGradeModeChange() {
-        const mode = $('gradeMode').value;
-        if (mode === 'custom') {
-            $('customGradesBox').classList.remove('hidden');
-            $('rangeGradesBox').classList.add('hidden');
-        } else {
-            $('customGradesBox').classList.add('hidden');
-            $('rangeGradesBox').classList.remove('hidden');
         }
-        updateGradeInputs();
-    }
 
-    function getActiveGrades() {
-        const mode = $('gradeMode').value;
-        if (mode === 'custom') {
-            const checked = [];
-            document.querySelectorAll('.grade-checkbox:checked').forEach(cb => checked.push(cb.value));
-            rememberedGrades = checked.length > 0 ? checked : ['Grade-1', 'Grade-2', 'Grade-3'];
-            return rememberedGrades;
-        } else {
-            const start = $('rangeStart').value;
-            const end = $('rangeEnd').value;
-            const startIndex = ALL_POSSIBLE_GRADES.indexOf(start);
-            const endIndex = ALL_POSSIBLE_GRADES.indexOf(end);
-            if (startIndex >= 0 && endIndex >= 0 && startIndex <= endIndex) {
-                rememberedGrades = ALL_POSSIBLE_GRADES.slice(startIndex, endIndex + 1);
-                return rememberedGrades;
+        function toggleTheme() {
+            const root = document.getElementById('htmlRoot');
+            const isDark = root.classList.contains('dark');
+            if(isDark) {
+                root.classList.remove('dark');
+                localStorage.setItem('lama_theme', 'light');
+                document.getElementById('themeIcon').textContent = '🌙';
+            } else {
+                root.classList.add('dark');
+                localStorage.setItem('lama_theme', 'dark');
+                document.getElementById('themeIcon').textContent = '☀️';
             }
-            return ['Grade-1', 'Grade-2', 'Grade-3'];
         }
-    }
 
-    function checkAndAutoFillFirstPaper(changedInput) {
-        const allInputs = document.querySelectorAll('.grade-sub-input');
-        if (allInputs.length > 0 && allInputs[0] === changedInput) {
-            const firstPaperValue = changedInput.value;
-            allInputs.forEach((inp, idx) => {
-                if (idx > 0 && (!inp.value || inp.value.trim() === '' || inp.value === '---')) {
-                    inp.value = firstPaperValue;
+        // Robust School Name & Logo Fetcher via LamaAPI or Storage
+        async function fetchSchoolProfile() {
+            try {
+                if (typeof LamaAPI !== 'undefined') {
+                    if (typeof LamaAPI.getSchoolInfo === 'function') {
+                        const info = await LamaAPI.getSchoolInfo();
+                        if (info) {
+                            if (info.schoolName || info.name) activeSchoolName = info.schoolName || info.name;
+                            if (info.logo || info.cover) activeSchoolLogo = info.logo || info.cover;
+                        }
+                    } else if (typeof LamaAPI.getActiveSchool === 'function') {
+                        const sch = await LamaAPI.getActiveSchool();
+                        if (sch) {
+                            if (sch.name) activeSchoolName = sch.name;
+                            if (sch.logo) activeSchoolLogo = sch.logo;
+                        }
+                    }
                 }
-            });
-        }
-    }
+            } catch (e) {
+                console.warn('LamaAPI profile fetch error:', e);
+            }
 
-    function updateGradeInputs(existingGradesData = {}) {
-        const grades = getActiveGrades();
-        const container = $('gradesContainer');
-        container.innerHTML = grades.map((g, idx) => {
-            const defaultSubj = GRADE_SUBJECT_PRESETS[g]?.[0] || '---';
-            const val = existingGradesData[g] !== undefined ? existingGradesData[g] : defaultSubj;
-            return `
-                <div class="flex items-center gap-2">
-                    <span class="w-24 text-xs font-bold text-sky-600 dark:text-sky-300 flex-shrink-0">${g}</span>
-                    <input class="grade-sub-input w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500" data-grade="${g}" placeholder="e.g. ${defaultSubj}" value="${val}" onfocus="lastFocusedInput=this" oninput="checkAndAutoFillFirstPaper(this)" onchange="checkAndAutoFillFirstPaper(this)">
-                </div>
-            `;
-        }).join('');
-    }
+            // Fallback to localStorage keys if LamaAPI didn't populate
+            if (!activeSchoolName || activeSchoolName === "School Board") {
+                activeSchoolName = localStorage.getItem('lama_school_name') || 
+                                   localStorage.getItem('active_school_name') || 
+                                   localStorage.getItem('schoolName') || 
+                                   "DS Model Public School";
+            }
+            if (!activeSchoolLogo) {
+                activeSchoolLogo = localStorage.getItem('lama_school_logo') || 
+                                   localStorage.getItem('active_school_logo') || 
+                                   localStorage.getItem('schoolLogo') || "";
+            }
 
-    function id(x) { return String(x?.id ?? ''); }
-    function esc(v) { return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    function pub(x) { return x?.isPublished === true || x?.published === true || String(x?.status || '').toLowerCase() === 'published'; }
+            // Update Header & Printable title
+            document.getElementById('schoolNameHeader').textContent = activeSchoolName;
+            document.getElementById('sheetSchoolTitleDisplay').textContent = activeSchoolName;
+            const initials = activeSchoolName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('schoolInitials').textContent = initials || 'DS';
 
-    function resetForm() {
-        $('form').reset();
-        $('editId').value = '';
-        // Keep previous grade mode & remembered grades instead of hard resetting everything
-        if (rememberedGrades && rememberedGrades.length > 0) {
-            initGradeCheckboxes(rememberedGrades);
-        } else {
-            initGradeCheckboxes();
-        }
-        onGradeModeChange();
-    }
-
-    function edit(x) {
-        $('editId').value = id(x);
-        if ($('examTitle')) $('examTitle').value = x.examTitle || '';
-        if ($('date')) $('date').value = ensureDDMMYYYY(x.date || '');
-        if ($('day')) $('day').value = x.day || '';
-        if ($('time')) $('time').value = x.time || '';
-        if ($('invigilator')) $('invigilator').value = x.invigilator || '';
-        if ($('isPublished')) $('isPublished').checked = pub(x);
-        
-        if (x.grades && typeof x.grades === 'object') {
-            const gradeKeys = Object.keys(x.grades);
-            if (gradeKeys.length > 0) {
-                rememberedGrades = gradeKeys;
-                $('gradeMode').value = 'custom';
-                onGradeModeChange();
-                initGradeCheckboxes(gradeKeys);
-                updateGradeInputs(x.grades);
+            if (activeSchoolLogo) {
+                const logoContainer = document.getElementById('schoolLogoContainer');
+                logoContainer.innerHTML = `<img src="${activeSchoolLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                
+                const printLogoWrap = document.getElementById('printLogoWrapper');
+                const printLogoImg = document.getElementById('printSchoolLogo');
+                if(printLogoWrap && printLogoImg) {
+                    printLogoImg.src = activeSchoolLogo;
+                    printLogoWrap.classList.remove('hidden');
+                }
             }
         }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
 
-    $('form').addEventListener('submit', async e => {
-        e.preventDefault();
-        const grades = {};
-        document.querySelectorAll('.grade-sub-input').forEach(inp => {
-            grades[inp.dataset.grade] = inp.value.trim() || '---';
-        });
+        // Date input formatting (DD/MM/YYYY)
+        function handleDateInput(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 2) v = v.substring(0, 2) + '/' + v.substring(2);
+            if (v.length > 5) v = v.substring(0, 5) + '/' + v.substring(9, 4);
+            if (v.length > 10) v = v.substring(0, 10);
+            input.value = v;
 
-        // Remember active grades upon submission for subsequent entries
-        rememberedGrades = Object.keys(grades);
-
-        const editId = $('editId').value;
-        const itemData = {
-            examTitle: $('examTitle').value.trim(),
-            date: ensureDDMMYYYY($('date').value),
-            day: $('day').value.trim(),
-            time: $('time').value.trim(),
-            invigilator: $('invigilator').value.trim(),
-            isPublished: $('isPublished').checked,
-            grades: grades
-        };
-
-        try {
-            if (editId) {
-                await LamaAPI.update(COLLECTION, editId, itemData);
-            } else {
-                await LamaAPI.add(COLLECTION, itemData);
-            }
-            resetForm();
-            load();
-        } catch (err) {
-            const list = JSON.parse(localStorage.getItem('lama_' + COLLECTION) || '[]');
-            if (editId) {
-                const idx = list.findIndex(i => String(i.id) === String(editId));
-                if (idx >= 0) list[idx] = { ...list[idx], ...itemData };
-            } else {
-                itemData.id = 'ds_' + Date.now();
-                list.push(itemData);
-            }
-            localStorage.setItem('lama_' + COLLECTION, JSON.stringify(list));
-            resetForm();
-            load();
-        }
-    });
-
-    async function load() {
-        try {
-            rows = await LamaAPI.list(COLLECTION) || [];
-        } catch(e) {
-            rows = JSON.parse(localStorage.getItem('lama_' + COLLECTION) || '[]');
-        }
-        rows = Array.isArray(rows) ? rows : [];
-        
-        const container = $('list');
-        container.innerHTML = rows.length ? rows.map(x => `
-            <article class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 rounded-xl flex flex-col gap-2">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h4 class="font-bold text-xs text-slate-900 dark:text-white">${esc(x.examTitle || 'Exam')}</h4>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-400">${esc(ensureDDMMYYYY(x.date))} ${x.day ? '(' + esc(x.day) + ')' : ''} ${x.time ? '• ' + esc(x.time) : ''}</p>
-                    </div>
-                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${pub(x) ? 'bg-emerald-100 dark:bg-emerald-900/65 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : 'bg-amber-100 dark:bg-amber-900/65 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
-                </div>
-                <p class="text-[11px] text-slate-600 dark:text-slate-300"><b>Grades:</b> ${Object.keys(x.grades || {}).join(', ') || 'All'}</p>
-                <div class="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <button onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})' class="bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-3 py-1 rounded-lg text-xs font-bold transition border border-slate-300 dark:border-slate-700">Edit</button>
-                    <button onclick="toggle('${id(x)}')" class="bg-white dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-sky-600 dark:text-sky-300 px-3 py-1 rounded-lg text-xs font-bold transition border border-slate-300 dark:border-slate-700">${pub(x) ? 'Unpublish' : 'Publish'}</button>
-                    <button onclick="del('${id(x)}')" class="bg-red-50 dark:bg-red-900/40 hover:bg-red-100 dark:hover:bg-red-800 text-red-600 dark:text-red-300 px-3 py-1 rounded-lg text-xs font-bold transition ml-auto border border-red-200 dark:border-red-900">Delete</button>
-                </div>
-            </article>
-        `).join('') : '<p class="text-xs text-slate-500 dark:text-slate-400 text-center py-6">No date sheet records created yet.</p>';
-        
-        const publishedRows = rows.filter(pub).sort((a,b) => {
-            const da = (a.date || '').split('/').reverse().join('');
-            const db = (b.date || '').split('/').reverse().join('');
-            return da.localeCompare(db);
-        });
-        
-        let allUsedGrades = [];
-        publishedRows.forEach(r => {
-            if (r.grades) {
-                Object.keys(r.grades).forEach(g => {
-                    if (!allUsedGrades.includes(g)) allUsedGrades.push(g);
-                });
-            }
-        });
-        allUsedGrades.sort((a,b) => ALL_POSSIBLE_GRADES.indexOf(a) - ALL_POSSIBLE_GRADES.indexOf(b));
-        if (allUsedGrades.length === 0) allUsedGrades = ['Grade-1', 'Grade-2', 'Grade-3'];
-
-        const thead = $('sheetTableHeader');
-        thead.innerHTML = `
-            <tr>
-                <th class="p-2 border-b border-slate-300 font-bold">DATE</th>
-                <th class="p-2 border-b border-slate-300 font-bold">DAY</th>
-                ${allUsedGrades.map(g => `<th class="p-2 border-b border-slate-300 font-bold text-center">${g}</th>`).join('')}
-            </tr>
-        `;
-
-        const sheetBody = $('sheetRowsBody');
-        sheetBody.innerHTML = publishedRows.length ? publishedRows.map(x => `
-            <tr>
-                <td class="p-2 font-bold whitespace-nowrap">${esc(ensureDDMMYYYY(x.date) || '-')}</td>
-                <td class="p-2 whitespace-nowrap">${esc(x.day || '-')}</td>
-                ${allUsedGrades.map(g => `<td class="p-2 text-center text-slate-700">${esc(x.grades?.[g] || '---')}</td>`).join('')}
-            </tr>
-        `).join('') : `<tr><td colspan="${allUsedGrades.length + 2}" class="text-center py-6 text-slate-500">No published date sheet entries available.</td></tr>`;
-
-        if (publishedRows.length > 0 && $('sheetExamTitle')) {
-            $('sheetExamTitle').innerText = publishedRows[0].examTitle || 'EXAMINATION DATE SHEET';
-            if (publishedRows[0].time) $('sheetTimings').innerText = 'TIMING: ' + publishedRows[0].time;
-        }
-
-        // Fetch Real School Profile via LamaAPI or Storage
-        try {
-            let schoolData = null;
-            if (typeof LamaAPI.getActiveSchool === 'function') {
-                schoolData = await LamaAPI.getActiveSchool();
-            }
-            if (!schoolData) {
-                const possibleKeys = ['lama_active_school', 'active_school', 'school_profile', 'current_school', 'school', 'lama_schools'];
-                for (const k of possibleKeys) {
-                    const raw = localStorage.getItem(k);
-                    if (raw) {
-                        try {
-                            const parsed = JSON.parse(raw);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                                schoolData = parsed[0];
-                                break;
-                            } else if (parsed && (parsed.name || parsed.schoolName || parsed.title)) {
-                                schoolData = parsed;
-                                break;
-                            }
-                        } catch(err) {}
+            if (v.length === 10) {
+                const parts = v.split('/');
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const y = parseInt(parts[2], 10);
+                    const dateObj = new Date(y, m, d);
+                    if (!isNaN(dateObj.getTime())) {
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        document.getElementById('day').value = days[dateObj.getDay()];
                     }
                 }
             }
-            if (!schoolData && typeof LamaAPI.list === 'function') {
-                try {
-                    const listSchools = await LamaAPI.list('schools');
-                    if (listSchools && listSchools.length > 0) schoolData = listSchools[0];
-                } catch(e) {}
+        }
+
+        function formatDateInputOnBlur(input) {
+            // Ensure format consistency
+        }
+
+        // Initialize Grade Checkboxes
+        function initGradeCheckboxes() {
+            const container = document.getElementById('gradeCheckboxes');
+            container.innerHTML = ALL_GRADES.map(g => `
+                <label class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input type="checkbox" value="${g}" class="grade-cb rounded border-slate-300 text-sky-600 focus:ring-0" ${rememberedGradeSelection.includes(g) ? 'checked' : ''} onchange="updateGradeInputs()">
+                    <span>${g}</span>
+                >
+            `).join('');
+        }
+
+        // Initialize Quick Presets
+        function initPresets() {
+            const container = document.getElementById('presetChips');
+            container.innerHTML = SUBJECT_PRESETS.map(sub => `
+                <button type="button" onclick="insertSubjectPreset('${sub}')" class="px-2 py-1 bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition">
+                    + ${sub}
+                </button>
+            `).join('');
+        }
+
+        function insertSubjectPreset(sub) {
+            const firstInput = document.querySelector('.grade-subject-input');
+            if (firstInput) {
+                firstInput.value = sub;
+                triggerAutoFill(firstInput);
             }
+        }
 
-            const schoolName = schoolData?.name || schoolData?.schoolName || schoolData?.title || schoolData?.school_name;
-            const schoolLogo = schoolData?.logo || schoolData?.logoUrl || schoolData?.image || schoolData?.schoolLogo;
-
-            if (schoolName) {
-                $('schoolName').innerText = schoolName + ' - Date Sheet Admin';
-                if ($('sheetSchoolSub')) $('sheetSchoolSub').innerText = schoolName.toUpperCase();
-                const words = schoolName.trim().split(' ');
-                const initials = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : schoolName.substring(0, 2).toUpperCase();
-                $('schoolInitials').innerText = initials;
+        function onGradeModeChange() {
+            const mode = document.getElementById('gradeMode').value;
+            rememberedGradeMode = mode;
+            if (mode === 'range') {
+                document.getElementById('customGradesBox').classList.add('hidden');
+                document.getElementById('rangeGradesBox').classList.remove('hidden');
+            } else {
+                document.getElementById('customGradesBox').classList.remove('hidden');
+                document.getElementById('rangeGradesBox').classList.add('hidden');
             }
+            updateGradeInputs();
+        }
 
-            if (schoolLogo) {
-                $('schoolLogoContainer').innerHTML = `<img src="${schoolLogo}" alt="Logo" class="w-full h-full object-cover">`;
-                if ($('printLogoWrapper') && $('printSchoolLogo')) {
-                    $('printSchoolLogo').src = schoolLogo;
-                    $('printLogoWrapper').classList.remove('hidden');
+        function getSelectedGrades() {
+            const mode = document.getElementById('gradeMode').value;
+            if (mode === 'range') {
+                const start = document.getElementById('rangeStart').value;
+                const end = document.getElementById('rangeEnd').value;
+                const sIdx = ALL_GRADES.indexOf(start);
+                const eIdx = ALL_GRADES.indexOf(end);
+                if (sIdx <= eIdx && sIdx !== -1 && eIdx !== -1) {
+                    return ALL_GRADES.slice(sIdx, eIdx + 1);
                 }
+                return [start];
+            } else {
+                const cbs = document.querySelectorAll('.grade-cb:checked');
+                const list = Array.from(cbs).map(cb => cb.value);
+                return list.length > 0 ? list : [...ALL_GRADES.slice(0, 5)];
             }
-        } catch(err) {
-            console.warn('Could not load active school name:', err);
         }
-    }
 
-    async function toggle(id) {
-        const item = rows.find(x => String(x.id) === String(id));
-        if (item) {
-            const newStatus = !pub(item);
+        function updateGradeInputs(existingValues = {}) {
+            const grades = getSelectedGrades();
+            rememberedGradeSelection = grades;
+            const container = document.getElementById('gradesContainer');
+            
+            container.innerHTML = grades.map((g, idx) => {
+                const val = existingValues[g] || (idx === 0 ? (document.querySelector('.grade-subject-input')?.value || '') : '');
+                return `
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="w-24 text-xs font-bold text-slate-700 dark:text-slate-300 truncate">${g}</span>
+                        <input type="text" data-grade="${g}" value="${val}" placeholder="Subject name" oninput="triggerAutoFill(this)" class="grade-subject-input flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Smart auto-fill: if first grade subject changes, propagate to others if they match previous first or are empty
+        let lastFirstVal = '';
+        function triggerAutoFill(input) {
+            const inputs = document.querySelectorAll('.grade-subject-input');
+            if (inputs.length > 0 && inputs[0] === input) {
+                const newVal = input.value;
+                // If primary level subjects (English, Urdu, Mathematics, Islamiat, Science, SSt)
+                for (let i = 1; i < inputs.length; i++) {
+                    if (!inputs[i].value || inputs[i].value === lastFirstVal) {
+                        inputs[i].value = newVal;
+                    }
+                }
+                lastFirstVal = newVal;
+            }
+        }
+
+        // Save and Storage
+        function loadEntries() {
             try {
-                await LamaAPI.update(COLLECTION, id, { isPublished: newStatus });
-            } catch(e) {
-                item.isPublished = newStatus;
-                localStorage.setItem('lama_' + COLLECTION, JSON.stringify(rows));
+                const saved = localStorage.getItem('lama_matrix_datesheet_records');
+                if (saved) {
+                    dateSheetEntries = JSON.parse(saved);
+                } else {
+                    // Default sample entry if none exists
+                    dateSheetEntries = [
+                        {
+                            id: 'sample-1',
+                            examTitle: 'SBA First Term Examination 2026',
+                            date: '10/10/2026',
+                            day: 'Saturday',
+                            time: '09:00-11:00',
+                            invigilator: 'Hall A',
+                            isPublished: true,
+                            subjects: {
+                                'Grade-1': 'English',
+                                'Grade-2': 'English',
+                                'Grade-3': 'English',
+                                'Grade-4': 'English',
+                                'Grade-5': 'English'
+                            }
+                        }
+                    ];
+                }
+            } catch (e) {
+                dateSheetEntries = [];
             }
-            load();
         }
-    }
 
-    async function del(id) {
-        if (confirm('Are you sure you want to delete this date sheet entry?')) {
+        function saveEntries() {
             try {
-                await LamaAPI.remove(COLLECTION, id);
-            } catch(e) {
-                rows = rows.filter(x => String(x.id) !== String(id));
-                localStorage.setItem('lama_' + COLLECTION, JSON.stringify(rows));
+                localStorage.setItem('lama_matrix_datesheet_records', JSON.stringify(dateSheetEntries));
+            } catch (e) {
+                console.error('Storage error:', e);
             }
-            load();
         }
-    }
 
-    window.onload = () => {
-        initTheme();
-        initPresetChips();
-        initGradeCheckboxes();
-        onGradeModeChange();
-        load();
-    };
+        document.getElementById('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editId').value;
+            const examTitle = document.getElementById('examTitle').value.trim() || rememberedExamTitle;
+            rememberedExamTitle = examTitle;
+            const date = document.getElementById('date').value.trim();
+            const day = document.getElementById('day').value.trim();
+            const time = document.getElementById('time').value.trim();
+            const invigilator = document.getElementById('invigilator').value.trim();
+            const isPublished = document.getElementById('isPublished').checked;
+
+            const subjects = {};
+            document.querySelectorAll('.grade-subject-input').forEach(inp => {
+                subjects[inp.dataset.grade] = inp.value.trim();
+            });
+
+            if (editId) {
+                const idx = dateSheetEntries.findIndex(item => item.id === editId);
+                if (idx !== -1) {
+                    dateSheetEntries[idx] = {
+                        id: editId,
+                        examTitle, date, day, time, invigilator, isPublished, subjects
+                    };
+                }
+            } else {
+                const newEntry = {
+                    id: 'entry-' + Date.now(),
+                    examTitle, date, day, time, invigilator, isPublished, subjects
+                };
+                dateSheetEntries.push(newEntry);
+            }
+
+            saveEntries();
+            renderAll();
+            resetForm();
+        });
+
+        function resetForm() {
+            document.getElementById('editId').value = '';
+            document.getElementById('date').value = '';
+            document.getElementById('day').value = '';
+            document.getElementById('time').value = '';
+            document.getElementById('invigilator').value = '';
+            document.getElementById('isPublished').checked = false;
+            document.getElementById('examTitle').value = rememberedExamTitle;
+            updateGradeInputs();
+        }
+
+        function editEntry(id) {
+            const item = dateSheetEntries.find(e => e.id === id);
+            if (!item) return;
+            document.getElementById('editId').value = item.id;
+            document.getElementById('examTitle').value = item.examTitle || rememberedExamTitle;
+            document.getElementById('date').value = item.date || '';
+            document.getElementById('day').value = item.day || '';
+            document.getElementById('time').value = item.time || '';
+            document.getElementById('invigilator').value = item.invigilator || '';
+            document.getElementById('isPublished').checked = !!item.isPublished;
+
+            // Set grades
+            const grades = Object.keys(item.subjects || {});
+            if (grades.length > 0) {
+                rememberedGradeSelection = grades;
+                document.querySelectorAll('.grade-cb').forEach(cb => {
+                    cb.checked = grades.includes(cb.value);
+                });
+                updateGradeInputs(item.subjects);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteEntry(id) {
+            if (confirm('Are you sure you want to delete this date sheet schedule entry?')) {
+                dateSheetEntries = dateSheetEntries.filter(e => e.id !== id);
+                saveEntries();
+                renderAll();
+            }
+        }
+
+        // Render Matrix Table & List
+        function renderAll() {
+            renderMatrixSheet();
+            renderRecordsList();
+        }
+
+        function renderMatrixSheet() {
+            const publishedEntries = dateSheetEntries.filter(e => e.isPublished);
+            
+            // Set exam title in preview header
+            const titleToUse = publishedEntries.length > 0 && publishedEntries[0].examTitle ? publishedEntries[0].examTitle : rememberedExamTitle;
+            document.getElementById('sheetExamTitle').textContent = titleToUse.toUpperCase();
+            
+            // Get all unique grades across published entries
+            const gradeSet = new Set();
+            publishedEntries.forEach(e => {
+                if (e.subjects) {
+                    Object.keys(e.subjects).forEach(g => gradeSet.add(g));
+                }
+            });
+            const activeGrades = ALL_GRADES.filter(g => gradeSet.has(g));
+            if (activeGrades.length === 0) {
+                activeGrades.push('Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5');
+            }
+
+            // Timings
+            const timings = publishedEntries.map(e => e.time).filter(Boolean);
+            document.getElementById('sheetTimings').textContent = timings.length > 0 ? `TIMING: ${timings[0]}` : 'TIMING: 09:00 - 11:00';
+
+            // Table Header
+            const thead = document.getElementById('sheetTableHeader');
+            thead.innerHTML = `
+                <tr class="text-[11px] font-black uppercase text-slate-700 border-b border-slate-300">
+                    <th class="py-2.5 px-3">DATE</th>
+                    <th class="py-2.5 px-3">DAY</th>
+                    ${activeGrades.map(g => `<th class="py-2.5 px-3">${g.replace('-', ' ')}</th>`).join('')}
+                </tr>
+            `;
+
+            // Table Body
+            const tbody = document.getElementById('sheetRowsBody');
+            if (publishedEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${activeGrades.length + 2}" class="text-center py-6 text-slate-400 text-xs font-medium">No published date sheet records found. Check "Publish immediately" when saving entries.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = publishedEntries.map(e => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                    <td class="py-2.5 px-3 font-bold text-slate-900">${e.date || '---'}</td>
+                    <td class="py-2.5 px-3 font-semibold text-slate-700">${e.day || '---'}</td>
+                    ${activeGrades.map(g => `<td class="py-2.5 px-3 text-slate-800">${e.subjects && e.subjects[g] ? e.subjects[g] : '---'}</td>`).join('')}
+                </tr>
+            `).join('');
+        }
+
+        function renderRecordsList() {
+            const listEl = document.getElementById('list');
+            if (dateSheetEntries.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No date sheet records created yet.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = dateSheetEntries.map(e => `
+                <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-sky-600 dark:text-sky-400">${e.date || 'No Date'} (${e.day || 'Day'})</span>
+                            ${e.isPublished ? '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Published</span>' : '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold">Draft</span>'}
+                        </div>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1">${e.examTitle || rememberedExamTitle}</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Grades: ${Object.keys(e.subjects || {}).join(', ')}</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="editEntry('${e.id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition">Edit</button>
+                        <button onclick="deleteEntry('${e.id}')" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold transition">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // On Load
+        window.onload = async function() {
+            initTheme();
+            await fetchSchoolProfile();
+            initGradeCheckboxes();
+            initPresets();
+            loadEntries();
+            document.getElementById('examTitle').value = rememberedExamTitle;
+            updateGradeInputs();
+            renderAll();
+        };
     </script>
 </body>
 </html>

@@ -1,88 +1,168 @@
 <script src="js/lama-api.js"></script>
 <script>
-// Use the correct collection string identifier that LamaAPI recognizes for tests
-const COLLECTION = 'tests'; 
-const FIELDS = {"class":"class","subject":"subject","type":"type","date":"date","totalMarks":"totalMarks","topics":"topics"}; 
-const $ = id => document.getElementById(id); 
+const COLLECTION = 'tests';
+const FIELDS = {
+    class: 'class',
+    subject: 'subject',
+    type: 'type',
+    date: 'date',
+    totalMarks: 'totalMarks',
+    topics: 'topics'
+};
+
+const $ = id => document.getElementById(id);
 let rows = [];
 
-function id(x){ return String(x?.id ?? x?._id ?? ''); } 
-function esc(v){ return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function pub(x){ return x?.isPublished === true || x?.published === true || String(x?.status || '').toLowerCase() === 'published'; }
-
-function resetForm(){ $('form').reset();$('editId').value = ''; }
-
-function edit(x){ 
-    $('editId').value = id(x); 
-    Object.keys(FIELDS).forEach(k => { if($(FIELDS[k])) $(FIELDS[k]).value = x[k] ?? ''; });$('isPublished').checked = pub(x); 
-    scrollTo({ top: 0, behavior: 'smooth' }); 
+function getId(x) {
+    return String(x?.id ?? x?._id ?? '');
 }
 
-async function load(){
+function escapeHtml(v) {
+    return String(v ?? '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+}
+
+function isPublished(x) {
+    return x?.isPublished === true || x?.published === true || String(x?.status || '').toLowerCase() === 'published';
+}
+
+function resetForm() {
+    const form = $('form');
+    if (form) form.reset();
+    const editId = $('editId');
+    if (editId) editId.value = '';
+}
+
+function editRecord(x) {
     try {
+        const editId = $('editId');
+        if (editId) editId.value = getId(x);
+
+        Object.keys(FIELDS).forEach(k => {
+            const el = $(FIELDS[k]);
+            if (el) el.value = x[k] ?? '';
+        });
+
+        const isPub = $('isPublished');
+        if (isPub) isPub.checked = isPublished(x);
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+        console.error('Edit error:', err);
+    }
+}
+
+async function loadRecords() {
+    try {
+        if (typeof LamaAPI === 'undefined' || !LamaAPI.list) {
+            console.warn('LamaAPI not available.');
+            return;
+        }
+        
         rows = await LamaAPI.list(COLLECTION) || [];
         rows = Array.isArray(rows) ? rows : [];
-        $('list').innerHTML = rows.length ? rows.map(x => `
+
+        const listEl = $('list');
+        if (!listEl) return;
+
+        listEl.innerHTML = rows.length ? rows.map(x => `
             <article class="item">
                 <div class="head">
                     <div>
-                        <b>${esc(x.subject || x.title || 'Online Test')}</b>
-                        <div class="muted">Class: ${esc(x.class || 'N/A')} • ${esc(x.date || '')}</div>
+                        <b>${escapeHtml(x.subject || 'Online Test')}</b>
+                        <div class="muted">Class: ${escapeHtml(x.class || 'N/A')} • Date: ${escapeHtml(x.date || 'TBD')}</div>
                     </div>
-                    <span class="badge ${pub(x) ? 'pub' : 'draft'}">${pub(x) ? 'PUBLISHED' : 'DRAFT'}</span>
+                    <span class="badge ${isPublished(x) ? 'pub' : 'draft'}">${isPublished(x) ? 'PUBLISHED' : 'DRAFT'}</span>
                 </div>
-                <div class="muted" style="margin-top:8px">${esc(x.topics || x.description || '')}</div>
+                <div class="muted" style="margin-top:8px">Topics: ${escapeHtml(x.topics || 'None specified')}</div>
                 <div class="actions">
-                    <button class="btn" onclick='edit(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
-                    <button class="btn ${pub(x) ? 'red' : 'green'}" onclick="toggle('${id(x)}')">${pub(x) ? 'Unpublish' : 'Publish'}</button>
-                    <button class="btn red" onclick="del('${id(x)}')">Delete</button>
+                    <button class="btn" type="button" onclick='editRecord(${JSON.stringify(x).replace(/'/g, "&#39;")})'>Edit</button>
+                    <button class="btn ${isPublished(x) ? 'red' : 'green'}" type="button" onclick="togglePublish('${getId(x)}')">${isPublished(x) ? 'Unpublish' : 'Publish'}</button>
+                    <button class="btn red" type="button" onclick="deleteRecord('${getId(x)}')">Delete</button>
                 </div>
             </article>
         `).join('') : '<div class="muted" style="text-align:center;padding:35px">No records yet.</div>';
-    } catch(e) {
-        $('list').innerHTML = '<div class="muted">Load failed: ' + esc(e.message) + '</div>';
+    } catch (e) {
+        console.error('Load failed:', e);
+        const listEl = $('list');
+        if (listEl) listEl.innerHTML = '<div class="muted">Load failed: ' + escapeHtml(e.message) + '</div>';
     }
 }
 
-$('form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const r = {};
-    Object.keys(FIELDS).forEach(k => r[k] = $(FIELDS[k]).value.trim());
-    const p = $('isPublished').checked;
-    r.isPublished = p;
-    r.published = p;
-    r.status = p ? 'published' : 'draft';
-    r.updatedAt = new Date().toISOString();
-    
-    try {
-        const eid = $('editId').value;
-        if(eid) {
-            await LamaAPI.update(COLLECTION, eid, r);
-        } else {
-            r.createdAt = new Date().toISOString();
-            await LamaAPI.add(COLLECTION, r);
-        }
-        resetForm();
-        await load();
-        alert(p ? 'Published — it will appear on the Main Dashboard.' : 'Saved as draft — it will remain hidden.');
-    } catch(e) {
-        alert('Save failed: ' + e.message);
+document.addEventListener('DOMContentLoaded', () => {
+    const formEl = $('form');
+    if (formEl) {
+        formEl.addEventListener('submit', async e => {
+            e.preventDefault();
+
+            try {
+                const r = {};
+                Object.keys(FIELDS).forEach(k => {
+                    const el = $(FIELDS[k]);
+                    r[k] = el ? el.value.trim() : '';
+                });
+
+                const isPubEl = $('isPublished');
+                const p = isPubEl ? isPubEl.checked : false;
+
+                r.isPublished = p;
+                r.published = p;
+                r.status = p ? 'published' : 'draft';
+                r.updatedAt = new Date().toISOString();
+
+                const editIdEl = $('editId');
+                const eid = editIdEl ? editIdEl.value : '';
+
+                if (typeof LamaAPI === 'undefined') {
+                    throw new Error('LamaAPI is not initialized.');
+                }
+
+                if (eid) {
+                    await LamaAPI.update(COLLECTION, eid, r);
+                } else {
+                    r.createdAt = new Date().toISOString();
+                    await LamaAPI.add(COLLECTION, r);
+                }
+
+                resetForm();
+                await loadRecords();
+                alert(p ? 'Published successfully to the Main Dashboard!' : 'Saved as draft.');
+            } catch (err) {
+                console.error('Save failed:', err);
+                alert('Save failed: ' + (err.message || 'Unknown error'));
+            }
+        });
     }
+    loadRecords();
 });
 
-async function toggle(i){
-    const x = rows.find(r => id(r) === String(i));
-    if(!x) return;
-    const p = !pub(x);
-    await LamaAPI.update(COLLECTION, i, { ...x, isPublished: p, published: p, status: p ? 'published' : 'draft', updatedAt: new Date().toISOString() });
-    load();
+async function togglePublish(i) {
+    try {
+        const x = rows.find(r => getId(r) === String(i));
+        if (!x) return;
+        const p = !isPublished(x);
+        
+        await LamaAPI.update(COLLECTION, i, {
+            ...x,
+            isPublished: p,
+            published: p,
+            status: p ? 'published' : 'draft',
+            updatedAt: new Date().toISOString()
+        });
+        await loadRecords();
+    } catch (e) {
+        alert('Action failed: ' + e.message);
+    }
 }
 
-async function del(i){
-    if(!confirm('Delete this record?')) return;
-    await LamaAPI.remove(COLLECTION, i);
-    load();
+async function deleteRecord(i) {
+    try {
+        if (!confirm('Are you sure you want to delete this test?')) return;
+        await LamaAPI.remove(COLLECTION, i);
+        await loadRecords();
+    } catch (e) {
+        alert('Delete failed: ' + e.message);
+    }
 }
-
-load();
 </script>

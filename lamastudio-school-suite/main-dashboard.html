@@ -88,21 +88,19 @@ body:before{
 .theme-toggle{width:44px;padding:0;font-size:18px}
 .theme-toggle:hover,.nav-btn:hover{border-color:rgba(139,92,246,.48);background:rgba(139,92,246,.10)}
 
-/* Distinct Portal Cards Styling with matching border outlines */
+/* Portal Cards */
 .portal-card-student{
     position:relative;overflow:hidden;transition:.25s ease;
     background:linear-gradient(145deg, rgba(147,51,234,0.08), var(--card));
     border:2px solid rgba(168,85,247,0.55);
 }
 .portal-card-student:hover{transform:translateY(-5px);border-color:rgba(168,85,247,0.95);box-shadow:0 22px 60px rgba(147,51,234,0.25);}
-
 .portal-card-teacher{
     position:relative;overflow:hidden;transition:.25s ease;
     background:linear-gradient(145deg, rgba(16,185,129,0.08), var(--card));
     border:2px solid rgba(52,211,153,0.55);
 }
 .portal-card-teacher:hover{transform:translateY(-5px);border-color:rgba(52,211,153,0.95);box-shadow:0 22px 60px rgba(16,185,129,0.25);}
-
 .portal-card-admin{
     position:relative;overflow:hidden;transition:.25s ease;
     background:linear-gradient(145deg, rgba(6,182,212,0.08), var(--card));
@@ -129,6 +127,21 @@ body:before{
 .content-item{background:var(--card2);border:1px solid var(--line);transition:.2s ease}
 .content-item:hover{border-color:rgba(34,211,238,.28)}
 .section-label{letter-spacing:.14em}
+
+/* Modal styling */
+.modal-backdrop{
+    position:fixed;inset:0;z-index:100;background:rgba(3,7,18,0.75);
+    backdrop-filter:blur(8px);display:grid;place-items:center;padding:1rem;
+    opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.modal-backdrop.active{opacity:1;pointer-events:auto;}
+.modal-box{
+    width:100%;max-width:650px;max-height:85vh;overflow-y:auto;
+    background:var(--bg2);border:1px solid var(--line);border-radius:24px;
+    box-shadow:0 25px 60px rgba(0,0,0,0.5);transform:scale(0.95);transition:transform .25s ease;
+}
+.modal-backdrop.active .modal-box{transform:scale(1);}
+
 @media(max-width:639px){
     .banner-wrap{border-radius:0 0 25px 25px}
     .banner{height:315px;min-height:315px;background-position:58% center}
@@ -137,10 +150,6 @@ body:before{
     .school-logo{width:70px;height:70px;border-radius:20px}
     .school-title{font-size:1.85rem;line-height:1.05}
     .hide-mobile{display:none!important}
-}
-@media(max-width:380px){
-    .banner{height:295px;min-height:295px}
-    .school-title{font-size:1.58rem}
 }
 </style>
 </head>
@@ -185,6 +194,7 @@ body:before{
 
 <main class="main-wrap max-w-7xl mx-auto px-4 sm:px-6 py-7 sm:py-9 space-y-8">
 
+    <!-- Portals Section -->
     <section>
         <div class="text-center mb-6">
             <p class="section-label text-[9px] font-black uppercase text-cyan-400">School Life & Workspace</p>
@@ -193,7 +203,6 @@ body:before{
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <!-- Student Portal Gateway -->
             <a href="portals/student/index.html" class="portal-card-student rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
                 <div>
                     <div class="portal-icon-student">🎓</div>
@@ -204,12 +213,11 @@ body:before{
                     <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Access report cards, grades, homework, attendance records, test schedules and personal notices.</p>
                 </div>
                 <div class="mt-6 pt-4 border-t border-purple-500/20 flex items-center justify-between">
-                    <span class="text-xs font-black text-purple-300 group-hover:translate-x-1 transition-transform">Launch Portal</span>
+                    <span class="text-xs font-black text-purple-300">Launch Portal</span>
                     <span class="w-8 h-8 rounded-full bg-purple-500/20 grid place-items-center text-purple-300 font-bold">→</span>
                 </div>
             </a>
 
-            <!-- Teacher Portal Gateway -->
             <a href="portals/teacher/index.html" class="portal-card-teacher rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
                 <div>
                     <div class="portal-icon-teacher">👩‍🏫</div>
@@ -220,12 +228,11 @@ body:before{
                     <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Manage classroom marks, enter attendance, publish assignments and communicate with students & parents.</p>
                 </div>
                 <div class="mt-6 pt-4 border-t border-emerald-500/20 flex items-center justify-between">
-                    <span class="text-xs font-black text-emerald-300 group-hover:translate-x-1 transition-transform">Launch Portal</span>
+                    <span class="text-xs font-black text-emerald-300">Launch Portal</span>
                     <span class="w-8 h-8 rounded-full bg-emerald-500/20 grid place-items-center text-emerald-300 font-bold">→</span>
                 </div>
             </a>
 
-            <!-- Admin Portal Gateway -->
             <a href="dashboard.html" class="portal-card-admin rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
                 <div>
                     <div class="portal-icon-admin">🏛</div>
@@ -236,38 +243,39 @@ body:before{
                     <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Full master control: manage student accounts, configure school data, publish board notices and date sheets.</p>
                 </div>
                 <div class="mt-6 pt-4 border-t border-cyan-500/20 flex items-center justify-between">
-                    <span class="text-xs font-black text-cyan-300 group-hover:translate-x-1 transition-transform">Admin Login</span>
+                    <span class="text-xs font-black text-cyan-300">Admin Login</span>
                     <span class="w-8 h-8 rounded-full bg-cyan-500/20 grid place-items-center text-cyan-300 font-bold">→</span>
                 </div>
             </a>
         </div>
     </section>
 
+    <!-- Date Sheets & Tests Module Section -->
     <section id="schedule" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <span id="published-date-sheet" class="sr-only"></span>
-        <span id="published-tests" class="sr-only"></span>
-
-        <section id="examsSection" class="glass rounded-[22px] p-5 hidden">
+        <section id="examsSection" class="glass rounded-[22px] p-5">
             <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
                 <div>
                     <p class="section-label text-[9px] font-black uppercase text-cyan-400">Academic Calendar</p>
-                    <h2 class="text-lg font-black mt-1">📅 Upcoming Exams</h2>
+                    <h2 class="text-lg font-black mt-1">📅 Date Sheets & Exams</h2>
                 </div>
+                <button onclick="openModal('dateSheetModal')" class="text-xs text-cyan-400 font-bold hover:underline">View All →</button>
             </div>
             <div id="examsList" class="space-y-2"></div>
         </section>
 
-        <section id="testsSection" class="glass rounded-[22px] p-5 hidden">
+        <section id="testsSection" class="glass rounded-[22px] p-5">
             <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
                 <div>
                     <p class="section-label text-[9px] font-black uppercase text-amber-400">Digital Learning</p>
                     <h2 class="text-lg font-black mt-1">📝 Online Tests & Quizzes</h2>
                 </div>
+                <button onclick="openModal('testsModal')" class="text-xs text-amber-400 font-bold hover:underline">View All →</button>
             </div>
             <div id="testsList" class="space-y-2"></div>
         </section>
     </section>
 
+    <!-- Notices & Activities -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section id="notices" class="glass rounded-[22px] p-5">
             <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-3 mb-3">
@@ -293,25 +301,27 @@ body:before{
         </section>
     </section>
 
+    <!-- Achievements & Stories Module Section -->
     <section>
         <div class="flex items-end justify-between mb-4">
             <div>
                 <p class="section-label text-[9px] font-black uppercase text-pink-400">School Life</p>
-                <h2 class="text-xl sm:text-2xl font-black mt-1">Stories & Highlights</h2>
+                <h2 class="text-xl sm:text-2xl font-black mt-1">🏆 Achievements & Stories</h2>
             </div>
+            <button onclick="openModal('achievementsModal')" class="text-xs text-pink-400 font-bold hover:underline">Explore All →</button>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="glass rounded-2xl p-5">
+            <div class="glass rounded-2xl p-5 cursor-pointer hover:border-pink-500/40 transition" onclick="openModal('achievementsModal')">
                 <div class="text-3xl">🏆</div>
                 <h3 class="font-black mt-3">Achievements</h3>
                 <p class="text-xs text-[color:var(--muted)] mt-1.5">Celebrate student and school achievements, competitions and milestones.</p>
             </div>
-            <div class="glass rounded-2xl p-5">
+            <div class="glass rounded-2xl p-5 cursor-pointer hover:border-emerald-500/40 transition" onclick="openModal('achievementsModal')">
                 <div class="text-3xl">⚽</div>
                 <h3 class="font-black mt-3">Sports & Clubs</h3>
                 <p class="text-xs text-[color:var(--muted)] mt-1.5">Follow sports, clubs, creative activities and extracurricular events.</p>
             </div>
-            <div class="glass rounded-2xl p-5">
+            <div class="glass rounded-2xl p-5 cursor-pointer hover:border-cyan-500/40 transition" onclick="openModal('achievementsModal')">
                 <div class="text-3xl">🌳</div>
                 <h3 class="font-black mt-3">Campus Stories</h3>
                 <p class="text-xs text-[color:var(--muted)] mt-1.5">School campaigns, plantation, celebrations and community activities.</p>
@@ -319,6 +329,7 @@ body:before{
         </div>
     </section>
 
+    <!-- Resources / E-Library Section -->
     <section id="published-resources" class="glass rounded-[24px] p-5 sm:p-7">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -326,6 +337,7 @@ body:before{
                 <h2 class="text-xl sm:text-2xl font-black mt-1">📚 E-Library & Learning Resources</h2>
                 <p class="text-xs text-[color:var(--muted)] mt-1.5">Books, learning materials, links and educational resources shared by the school.</p>
             </div>
+            <button onclick="openModal('resourcesModal')" class="text-xs text-purple-400 font-bold hover:underline">Open Full Library →</button>
         </div>
         <div id="resourcesPreview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5"></div>
         <p id="resourcesEmpty" class="text-center text-xs text-[color:var(--muted)] py-5 hidden">No library resources have been published yet.</p>
@@ -335,6 +347,65 @@ body:before{
         <p class="text-[10px] text-[color:var(--muted)]">Lama School Suite • Public School Board • Managed via Administrator Portal • Student • Parent • Teacher • Administration</p>
     </footer>
 </main>
+
+<!-- MODALS FOR DEDICATED SECTIONS -->
+
+<!-- Date Sheet Modal -->
+<div id="dateSheetModal" class="modal-backdrop">
+    <div class="modal-box p-6">
+        <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-4 mb-4">
+            <h3 class="text-lg font-black text-cyan-400">📅 Complete Date Sheets & Exams</h3>
+            <button onclick="closeModal('dateSheetModal')" class="w-8 h-8 rounded-full bg-white/10 grid place-items-center font-bold">✕</button>
+        </div>
+        <div id="modalExamsList" class="space-y-3"></div>
+    </div>
+</div>
+
+<!-- Tests Modal -->
+<div id="testsModal" class="modal-backdrop">
+    <div class="modal-box p-6">
+        <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-4 mb-4">
+            <h3 class="text-lg font-black text-amber-400">📝 All Online Tests & Quizzes</h3>
+            <button onclick="closeModal('testsModal')" class="w-8 h-8 rounded-full bg-white/10 grid place-items-center font-bold">✕</button>
+        </div>
+        <div id="modalTestsList" class="space-y-3"></div>
+    </div>
+</div>
+
+<!-- Achievements Modal -->
+<div id="achievementsModal" class="modal-backdrop">
+    <div class="modal-box p-6">
+        <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-4 mb-4">
+            <h3 class="text-lg font-black text-pink-400">🏆 Achievements, Stories & Highlights</h3>
+            <button onclick="closeModal('achievementsModal')" class="w-8 h-8 rounded-full bg-white/10 grid place-items-center font-bold">✕</button>
+        </div>
+        <div id="modalAchievementsList" class="space-y-3">
+            <div class="content-item rounded-xl p-4">
+                <h4 class="font-black text-sm">🏆 Annual Science Olympiad Winners</h4>
+                <p class="text-xs text-[color:var(--muted)] mt-1">Our students secured 1st place in the inter-school regional science championship.</p>
+            </div>
+            <div class="content-item rounded-xl p-4">
+                <h4 class="font-black text-sm">⚽ Inter-School Football Championship</h4>
+                <p class="text-xs text-[color:var(--muted)] mt-1">The school football squad lifted the district trophy after a thrilling final match.</p>
+            </div>
+            <div class="content-item rounded-xl p-4">
+                <h4 class="font-black text-sm">🌳 Green Campus Plantation Campaign</h4>
+                <p class="text-xs text-[color:var(--muted)] mt-1">Students and faculty planted over 200 saplings around the campus grounds as part of our green initiative.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resources / E-Library Modal -->
+<div id="resourcesModal" class="modal-backdrop">
+    <div class="modal-box p-6">
+        <div class="flex justify-between items-center border-b border-[color:var(--line)] pb-4 mb-4">
+            <h3 class="text-lg font-black text-purple-400">📚 Complete E-Library Directory</h3>
+            <button onclick="closeModal('resourcesModal')" class="w-8 h-8 rounded-full bg-white/10 grid place-items-center font-bold">✕</button>
+        </div>
+        <div id="modalResourcesList" class="grid grid-cols-1 gap-3"></div>
+    </div>
+</div>
 
 <script>
 const ACTIVITY_ICONS = {
@@ -367,10 +438,11 @@ function formatDate(iso){
     });
 }
 
-function backLinkFor(role){
-    if(role === 'teacher') return 'portals/teacher/index.html';
-    if(role === 'student') return 'portals/student/index.html';
-    return 'login.html';
+function openModal(id){
+    document.getElementById(id).classList.add('active');
+}
+function closeModal(id){
+    document.getElementById(id).classList.remove('active');
 }
 
 /* Dark / Light theme */
@@ -407,11 +479,6 @@ function publishedOnly(value){
 }
 
 async function render(){
-    const session = typeof LamaAPI !== 'undefined' && LamaAPI.getSession ? LamaAPI.getSession() : {};
-    if(document.getElementById('backLink')) {
-        document.getElementById('backLink').href = backLinkFor(session.role);
-    }
-
     let data = {};
     try{
         if(typeof LamaAPI !== 'undefined' && LamaAPI.getMainDashboardData) {
@@ -423,19 +490,14 @@ async function render(){
         console.warn('Could not load getMainDashboardData: ' + e.message);
     }
 
-    // Fallback: fetch directly from localStorage if LamaAPI doesn't return published items directly
     let rawNotices = data.recentNotifications;
     if (!rawNotices || rawNotices.length === 0) {
-        try {
-            rawNotices = JSON.parse(localStorage.getItem('lama_notifications') || '[]');
-        } catch(e) {}
+        try { rawNotices = JSON.parse(localStorage.getItem('lama_notifications') || '[]'); } catch(e) {}
     }
 
     let rawActivities = data.recentActivities;
     if (!rawActivities || rawActivities.length === 0) {
-        try {
-            rawActivities = JSON.parse(localStorage.getItem('lama_activities') || '[]');
-        } catch(e) {}
+        try { rawActivities = JSON.parse(localStorage.getItem('lama_activities') || '[]'); } catch(e) {}
     }
 
     const schoolName = data.schoolName || localStorage.getItem('lama_school_name') || 'Lama School';
@@ -455,13 +517,6 @@ async function render(){
         logoBox.innerText = 'SCH';
     }
 
-    if(data.coverPhoto){
-        const safeCover = String(data.coverPhoto).replace(/"/g,'&quot;');
-        document.querySelector('.banner').style.backgroundImage =
-            `linear-gradient(90deg,rgba(3,7,18,.86) 0%,rgba(3,7,18,.55) 42%,rgba(3,7,18,.18) 100%),url("${safeCover}")`;
-    }
-
-    // Filter published items or show all if published flag isn't strictly set but item exists
     const notices = (rawNotices || []).filter(n => n && (isPublished(n) || n.title));
     const activities = (rawActivities || []).filter(a => a && (isPublished(a) || a.title));
     const exams = publishedOnly(data.upcomingExams || []);
@@ -494,9 +549,8 @@ async function render(){
         </article>
     `).join('');
 
-    document.getElementById('examsSection').classList.toggle('hidden',exams.length === 0);
-
-    document.getElementById('examsList').innerHTML = exams.map(e => `
+    // Exams & Date Sheets rendering
+    const examHtml = exams.map(e => `
         <article class="content-item rounded-xl px-3.5 py-3 text-xs">
             <p class="font-black">${esc(e.examTitle || 'Examination')}</p>
             <p class="text-[color:var(--muted)] mt-1">
@@ -505,11 +559,13 @@ async function render(){
                 ${e.date ? ` • ${esc(formatDate(e.date))}` : ''}
             </p>
         </article>
-    `).join('');
+    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No date sheets published.</p>';
 
-    document.getElementById('testsSection').classList.toggle('hidden',tests.length === 0);
+    document.getElementById('examsList').innerHTML = examHtml;
+    document.getElementById('modalExamsList').innerHTML = examHtml;
 
-    document.getElementById('testsList').innerHTML = tests.map(t => `
+    // Tests rendering
+    const testHtml = tests.map(t => `
         <article class="content-item rounded-xl px-3.5 py-3 text-xs">
             <p class="font-black">${esc(t.subject || 'Online Test')}</p>
             <p class="text-[color:var(--muted)] mt-1">
@@ -518,13 +574,16 @@ async function render(){
                 ${t.date ? ` • ${esc(formatDate(t.date))}` : ''}
             </p>
         </article>
-    `).join('');
+    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No online tests published.</p>';
 
+    document.getElementById('testsList').innerHTML = testHtml;
+    document.getElementById('modalTestsList').innerHTML = testHtml;
+
+    // Resources rendering
     const preview = resources.slice(0,6);
-
     document.getElementById('resourcesEmpty').classList.toggle('hidden',preview.length > 0);
 
-    document.getElementById('resourcesPreview').innerHTML = preview.map(r => `
+    const resourceCardHtml = r => `
         <article class="content-item rounded-xl p-4">
             <div class="text-xl">📚</div>
             <p class="font-black text-sm mt-2">${esc(r.title || 'Learning Resource')}</p>
@@ -532,7 +591,10 @@ async function render(){
             ${r.description ? `<p class="text-xs text-[color:var(--muted)] mt-1.5 leading-relaxed">${esc(r.description)}</p>` : ''}
             ${r.link ? `<a href="${esc(safeUrl(r.link))}" target="_blank" rel="noopener" class="text-cyan-400 text-xs font-black mt-2 inline-block">Open resource →</a>` : ''}
         </article>
-    `).join('');
+    `;
+
+    document.getElementById('resourcesPreview').innerHTML = preview.map(resourceCardHtml).join('');
+    document.getElementById('modalResourcesList').innerHTML = resources.map(resourceCardHtml).join('') || '<p class="text-xs text-[color:var(--muted)]">No resources available.</p>';
 }
 
 render();

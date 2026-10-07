@@ -490,6 +490,31 @@ async function render(){
         console.warn('Could not load getMainDashboardData: ' + e.message);
     }
 
+    // Direct collection fallbacks from API or localStorage
+    let rawTests = data.upcomingTests;
+    if (!rawTests || rawTests.length === 0) {
+        try {
+            if (typeof LamaAPI !== 'undefined' && LamaAPI.list) {
+                rawTests = await LamaAPI.list('tests');
+            }
+        } catch(e) {}
+        if (!rawTests || rawTests.length === 0) {
+            try { rawTests = JSON.parse(localStorage.getItem('lama_tests') || localStorage.getItem('tests') || '[]'); } catch(e) {}
+        }
+    }
+
+    let rawExams = data.upcomingExams;
+    if (!rawExams || rawExams.length === 0) {
+        try {
+            if (typeof LamaAPI !== 'undefined' && LamaAPI.list) {
+                rawExams = await LamaAPI.list('exams');
+            }
+        } catch(e) {}
+        if (!rawExams || rawExams.length === 0) {
+            try { rawExams = JSON.parse(localStorage.getItem('lama_exams') || localStorage.getItem('exams') || '[]'); } catch(e) {}
+        }
+    }
+
     let rawNotices = data.recentNotifications;
     if (!rawNotices || rawNotices.length === 0) {
         try { rawNotices = JSON.parse(localStorage.getItem('lama_notifications') || '[]'); } catch(e) {}
@@ -519,8 +544,8 @@ async function render(){
 
     const notices = (rawNotices || []).filter(n => n && (isPublished(n) || n.title));
     const activities = (rawActivities || []).filter(a => a && (isPublished(a) || a.title));
-    const exams = publishedOnly(data.upcomingExams || []);
-    const tests = publishedOnly(data.upcomingTests || []);
+    const exams = publishedOnly(rawExams || []);
+    const tests = publishedOnly(rawTests || []);
     const resources = publishedOnly(data.resources || []);
 
     document.getElementById('noticeCountLabel').textContent =
@@ -552,14 +577,14 @@ async function render(){
     // Exams & Date Sheets rendering
     const examHtml = exams.map(e => `
         <article class="content-item rounded-xl px-3.5 py-3 text-xs">
-            <p class="font-black">${esc(e.examTitle || 'Examination')}</p>
+            <p class="font-black">${esc(e.examTitle || e.subject || 'Examination')}</p>
             <p class="text-[color:var(--muted)] mt-1">
                 Class ${esc(e.class || '')}
                 ${e.subject ? ` • ${esc(e.subject)}` : ''}
                 ${e.date ? ` • ${esc(formatDate(e.date))}` : ''}
             </p>
         </article>
-    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No date sheets published.</p>';
+    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No date sheets published yet.</p>';
 
     document.getElementById('examsList').innerHTML = examHtml;
     document.getElementById('modalExamsList').innerHTML = examHtml;
@@ -572,9 +597,11 @@ async function render(){
                 ${esc(t.type || 'Test')}
                 ${t.class ? ` • Class ${esc(t.class)}` : ''}
                 ${t.date ? ` • ${esc(formatDate(t.date))}` : ''}
+                ${t.totalMarks ? ` • Marks: ${esc(t.totalMarks)}` : ''}
             </p>
+            ${t.topics ? `<p class="text-[11px] text-[color:var(--muted)] mt-1">Topics: ${esc(t.topics)}</p>` : ''}
         </article>
-    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No online tests published.</p>';
+    `).join('') || '<p class="text-xs text-[color:var(--muted)]">No online tests published yet.</p>';
 
     document.getElementById('testsList').innerHTML = testHtml;
     document.getElementById('modalTestsList').innerHTML = testHtml;

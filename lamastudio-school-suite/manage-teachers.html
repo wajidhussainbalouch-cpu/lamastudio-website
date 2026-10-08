@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Manage Teachers</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+<style>
+.teacher-photo{width:90px;height:120px;object-fit:cover;border-radius:12px;border:2px solid #67e8f9;background:#182b42}.teacher-input{font-size:15px!important;min-height:42px}
+#printSheet{display:none}
+@page{size:A4 portrait;margin:10mm}
+@media print{
+ html,body{width:auto!important;margin:0!important;padding:0!important;background:white!important;color:#111!important;overflow:visible!important}
+ body>nav,body>header,body>main,body>script{display:none!important}
+ #printSheet{display:block!important;position:static!important;width:100%!important;margin:0!important;padding:0!important}
+ .print-page{box-sizing:border-box!important;position:relative!important;width:100%!important;height:273mm!important;max-height:273mm!important;margin:0!important;padding:8mm 9mm 19mm!important;background:white!important;color:#172033!important;break-inside:avoid!important;page-break-inside:avoid!important;break-after:auto!important;page-break-after:auto!important;overflow:hidden!important}
+ .print-page + .print-page{break-before:page!important;page-break-before:always!important}
+ .print-head{display:flex;align-items:center;gap:15px;border-bottom:3px solid #0e7490;padding-bottom:18px;margin-bottom:25px}
+ .print-logo{width:80px;height:80px;object-fit:contain;border-radius:8px}.print-school{font-size:23px;font-weight:800;line-height:1.25}.print-sub{font-size:14px;letter-spacing:1.5px;font-weight:700;color:#0e7490;margin-top:8px}
+ .print-profile{display:flex;gap:25px;align-items:center;margin-bottom:26px}.print-portrait{width:132px;height:176px;object-fit:cover;border:2px solid #cbd5e1;border-radius:9px}.print-person{font-size:24px;font-weight:800}
+ .print-details{display:grid;grid-template-columns:1fr 1fr;gap:13px 20px}.print-detail{border-bottom:1px solid #cbd5e1;padding:9px 0;min-height:48px}.print-label{display:block;color:#475569;font-size:12px;font-weight:700;text-transform:uppercase}.print-value{font-size:16px;font-weight:600;overflow-wrap:anywhere}
+ .print-footer{position:absolute;bottom:9mm;left:9mm;right:9mm;display:flex;justify-content:space-between;align-items:end;gap:16px;font-size:12px;color:#475569;border-top:1px solid #cbd5e1;padding-top:10px}.print-sign{border-top:1px solid #475569;padding-top:8px;min-width:150px;text-align:center}
+}
+</style></head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen"><nav style="background:#102b47;color:#fff;padding:9px 16px;display:flex;gap:18px;flex-wrap:wrap;font:13px system-ui"><a style="color:#93c5fd" href="identity-cards.html">Preview / Print ID Card</a><a style="color:#93c5fd" href="document-import.html">Import documents (Excel, PDF, DOCX, images)</a></nav>
+
+    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Manage Teachers</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
+
+        <div class="flex flex-wrap gap-3">
+<a class="bg-cyan-700 rounded-xl px-4 py-3 font-bold" href="identity-cards.html?role=school&type=teacher">Teacher ID Cards / Print</a>
+<button class="bg-indigo-600 rounded-xl px-4 py-3 font-bold" onclick="printTeachers()">Print All Teacher Profiles</button>
+</div>
+<!-- Add Teacher Form -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+<div class="sm:col-span-2 bg-slate-900/70 rounded-xl p-3">
+<label class="block text-sm font-bold mb-2">Teacher photo — Upload or use camera</label>
+<div class="grid grid-cols-2 gap-2"><button type="button" onclick="document.getElementById('inCameraFile').click()" class="bg-cyan-700 rounded-lg px-3 py-3 font-bold">📷 Capture Photo</button><button type="button" onclick="document.getElementById('inPhotoFile').click()" class="bg-indigo-600 rounded-lg px-3 py-3 font-bold">⬆ Upload Photo</button></div>
+<input type="file" id="inCameraFile" accept="image/*" capture="user" onchange="processTeacherPhoto(this,'in')" hidden>
+<input type="file" id="inPhotoFile" accept="image/*" onchange="processTeacherPhoto(this,'in')" hidden>
+<div class="flex gap-3 items-center mt-2"><img id="inPhotoPreview" class="teacher-photo" alt="Teacher photo preview"><span id="inPhotoStatus" class="text-sm text-cyan-200">No photo selected</span></div>
+<p class="text-xs text-slate-300 mt-2">Automatically crops to 600 × 800 pixels and targets 15–25 KB JPEG. Check photo quality before saving.</p>
+</div>
+                <input id="inName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inEmail" type="email" placeholder="Email (optional; also works for login)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inLoginId" placeholder="Teacher Login ID (e.g. t-01, t-20)" required class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inSubject" placeholder="Subject (e.g. Math)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inClass" placeholder="Assigned Class (e.g. 5)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inSection" placeholder="Assigned Section (e.g. A)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inCnic" placeholder="CNIC No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
+                <input type="date" id="inDob" placeholder="Date of Birth" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="inGender" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="">Gender</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+                <input id="inQualification" placeholder="Qualification (e.g. M.Ed, MSc)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input type="date" id="inJoiningDate" placeholder="Joining Date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inAddress" placeholder="Residential Address" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <div class="sm:col-span-2 flex gap-2"><input id="inPassword" type="password" autocomplete="new-password" placeholder="Password (8+ chars)" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><button type="button" onclick="togglePassword('inPassword',this)" class="px-3 rounded-lg bg-slate-700" aria-label="Show password">👁 Show</button></div>
+            </div>
+            <button onclick="createTeacher()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Create Teacher Account</button>
+            <p class="text-[10px] text-slate-500">Share the <b>School ID / Login Code</b> below, plus the Teacher ID (or email) and password, with the teacher — they'll log in at <code>portal-login.html</code>.</p>
+        </section>
+
+        <!-- Edit Teacher (hidden until "Edit" is clicked) -->
+        <section id="editSection" class="cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Edit Teacher</h2>
+            <input type="hidden" id="editId">
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+<div class="sm:col-span-2 bg-slate-900/70 rounded-xl p-3">
+<label class="block text-sm font-bold mb-2">Teacher photo — Upload or use camera</label>
+<div class="grid grid-cols-2 gap-2"><button type="button" onclick="document.getElementById('editCameraFile').click()" class="bg-cyan-700 rounded-lg px-3 py-3 font-bold">📷 Capture Photo</button><button type="button" onclick="document.getElementById('editPhotoFile').click()" class="bg-indigo-600 rounded-lg px-3 py-3 font-bold">⬆ Upload Photo</button></div>
+<input type="file" id="editCameraFile" accept="image/*" capture="user" onchange="processTeacherPhoto(this,'edit')" hidden>
+<input type="file" id="editPhotoFile" accept="image/*" onchange="processTeacherPhoto(this,'edit')" hidden>
+<div class="flex gap-3 items-center mt-2"><img id="editPhotoPreview" class="teacher-photo" alt="Teacher photo preview"><span id="editPhotoStatus" class="text-sm text-cyan-200">No photo selected</span></div>
+<p class="text-xs text-slate-300 mt-2">Automatically crops to 600 × 800 pixels and targets 15–25 KB JPEG. Check photo quality before saving.</p>
+</div>
+                <input id="editLoginId" placeholder="Teacher Login ID" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editEmail" type="email" placeholder="Email (optional)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editSectionInput" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editCnic" placeholder="CNIC No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
+                <input type="date" id="editDob" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="editGender" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="">Gender</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+                <input id="editQualification" placeholder="Qualification" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input type="date" id="editJoiningDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editAddress" placeholder="Residential Address" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="editStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
+                </select>
+            </div>
+            <div class="flex gap-2"><input id="editPassword" type="password" autocomplete="new-password" placeholder="New password (optional, 8+ chars)" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><button type="button" onclick="togglePassword('editPassword',this)" class="px-3 rounded-lg bg-slate-700" aria-label="Show password">👁 Show</button></div>
+            <p class="text-[10px] text-slate-500">Leave the new password blank to keep the current password. Changing a password signs out existing teacher sessions.</p>
+            <div class="flex gap-2">
+                <button onclick="saveTeacherEdit()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Save Changes</button>
+                <button onclick="closeEdit()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Cancel</button>
+            </div>
+        </section>
+
+        <!-- School Login Code -->
+        <section class="cyber-card rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+                <p class="text-[9px] uppercase font-bold text-slate-500">Your School ID / Login Code</p>
+                <p id="schoolIdDisplay" class="text-sm font-mono font-bold text-cyan-400 mt-0.5">-</p>
+            </div>
+            <button onclick="copySchoolId()" class="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold px-3 py-2 rounded-lg">Copy</button>
+        </section>
+
+        <!-- Teachers List -->
+        <section class="cyber-card rounded-2xl p-5 space-y-3">
+            <h2 class="text-xs font-black uppercase text-slate-300">Your Teachers</h2>
+            <div id="teachersList" class="space-y-2"></div>
+            <p id="teachersEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No teachers added yet.</p>
+        </section>
+    </main><div id="printSheet"></div>
+
+    <script>
+        let allTeachers = [];
+        const teacherPhotos={in:null,edit:null};
+        // Local print fallback when the Apps Script teacher schema does not return photo.
+        // This is device-local, not shared cloud storage.
+        const photoKey=t=>'lama_teacher_photo_'+String((currentSchool&&currentSchool.schoolId)||'school')+'_'+String(t.id||t.loginId||t.email||'');
+        function localTeacherPhoto(t){try{return localStorage.getItem(photoKey(t))||''}catch(_){return ''}}
+        function storeTeacherPhoto(t,data){if(!data)return;try{localStorage.setItem(photoKey(t),data)}catch(e){console.warn('Photo cache unavailable',e)}}
+        function teacherDate(value){
+          if(!value)return '-';
+          const s=String(value);
+          const match=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if(match){let d=new Date(s);if(!Number.isNaN(d.getTime()) && /T/.test(s)){const f=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',day:'2-digit',month:'2-digit',year:'numeric'}).format(d);return f;}return match[3]+'/'+match[2]+'/'+match[1];}
+          return s;
+        }
+        function teacherDateInput(value){
+          if(!value)return '';
+          const s=String(value);const d=new Date(s);
+          if(/T/.test(s)&&!Number.isNaN(d.getTime())){
+            const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+            const o=Object.fromEntries(parts.map(p=>[p.type,p.value]));return o.year+'-'+o.month+'-'+o.day;
+          }
+          return s.slice(0,10);
+        }
+        function teacherEsc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+        async function processTeacherPhoto(input,prefix){
+          const file=input.files?.[0];if(!file)return;
+          const status=document.getElementById(prefix+'PhotoStatus');
+          status.textContent='Processing photo...';
+          try{
+            const bmp=await createImageBitmap(file);
+            const canvas=document.createElement('canvas');canvas.width=600;canvas.height=800;
+            const ctx=canvas.getContext('2d',{alpha:false});
+            ctx.fillStyle='#fff';ctx.fillRect(0,0,600,800);
+            const scale=Math.max(600/bmp.width,800/bmp.height);
+            const w=bmp.width*scale,h=bmp.height*scale;
+            ctx.filter='contrast(1.06) saturate(1.10) brightness(1.02)';
+            ctx.drawImage(bmp,(600-w)/2,(800-h)/2,w,h);
+            bmp.close?.();
+            let best=null;
+            for(let quality=.85;quality>=.10;quality-=.05){
+              const data=canvas.toDataURL('image/jpeg',quality);
+              const bytes=Math.floor((data.length-data.indexOf(',')-1)*3/4);
+              if(!best||Math.abs(bytes-20480)<Math.abs(best.bytes-20480))best={data,bytes};
+              if(bytes>=15360&&bytes<=25600){best={data,bytes};break;}
+            }
+            teacherPhotos[prefix]=best.data;
+            document.getElementById(prefix+'PhotoPreview').src=best.data;
+            status.textContent='600 × 800 • '+(best.bytes/1024).toFixed(1)+' KB'+(best.bytes<15360||best.bytes>25600?' (target not achievable for this photo)':' ✓');
+          }catch(e){status.textContent='Photo processing failed: '+e.message;}
+        }
+        let currentSchool={};
+        function teacherProfileCard(t,page,total){
+          const schoolName=currentSchool.name||document.getElementById('headerSchoolName').textContent||'School';
+          const logo=currentSchool.logo||currentSchool.logoUrl||'';
+          const logoHtml=typeof logo==='string'&&/^(https:\/\/|data:image\/)/.test(logo)?'<img class="print-logo" src="'+teacherEsc(logo)+'" alt="School logo">':'<div class="print-logo" style="display:grid;place-items:center;background:#e0f2fe;color:#155e75;font-weight:800">SCHOOL</div>';
+          const photo=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||'';
+          const safePhoto=typeof photo==='string'&&/^(data:image\/|https:\/\/)/.test(photo)?photo:'';
+          const portrait=safePhoto?'<img class="print-portrait" src="'+teacherEsc(safePhoto)+'" alt="Teacher photo">':'<div class="print-portrait" style="display:grid;place-items:center;color:#64748b">PHOTO</div>';
+          const details=[['Teacher ID',t.loginId||t.email],['Designation',t.designation],['Subject',t.subject],['Assigned class',(t.assignedClass||'-')+(t.assignedSection?'-'+t.assignedSection:'')],['Qualification',t.qualification],['Joining date',teacherDate(t.joiningDate)],['Date of birth',teacherDate(t.dob)],['Contact',t.contact],['Email',t.email],['Status',t.status]];
+          return '<section class="print-page"><div class="print-head">'+logoHtml+'<div><div class="print-school">'+teacherEsc(schoolName)+'</div><div class="print-sub">TEACHER EMPLOYEE PROFILE</div></div></div>'+ 
+            '<div class="print-profile">'+portrait+'<div><div class="print-person">'+teacherEsc(t.name||'Unnamed Teacher')+'</div><div style="font-size:17px;color:#0e7490;font-weight:700;margin-top:8px">'+teacherEsc(t.loginId||t.email||'')+'</div></div></div>'+ 
+            '<div class="print-details">'+details.map(([k,v])=>'<div class="print-detail"><span class="print-label">'+teacherEsc(k)+'</span><span class="print-value">'+teacherEsc(v||'-')+'</span></div>').join('')+'</div>'+ 
+            '<div class="print-footer"><span><b>Lamastudio.pk</b> · Page '+page+' of '+total+'</span><span class="print-sign">School Administrator Signature</span></div></section>';
+        }
+        function printTeachers(ids){
+          const list=ids?allTeachers.filter(t=>ids.includes(String(t.id))):allTeachers;
+          if(!list.length){alert('No teacher records available.');return;}
+          const sheet=document.getElementById('printSheet');sheet.innerHTML=list.map((t,i)=>teacherProfileCard(t,i+1,list.length)).join('');
+          const images=Array.from(sheet.querySelectorAll('img'));
+          Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,4000)}))).then(()=>window.print());
+        }
+        function togglePassword(id,btn) { const e=document.getElementById(id); e.type=e.type==='password'?'text':'password'; btn.textContent=e.type==='password'?'👁 Show':'🙈 Hide'; }
+
+        function handleLogout() {
+            LamaAPI.logout();
+            window.location.href = 'login.html';
+        }
+
+        function copySchoolId() {
+            const text = document.getElementById('schoolIdDisplay').innerText;
+            navigator.clipboard.writeText(text).then(() => alert('School ID copied.'));
+        }
+
+        async function renderHeader() {
+            const school = await LamaAPI.getActiveSchool() || {};
+            currentSchool=school;
+            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Manage Teachers`;
+            document.getElementById('headerSchoolName').innerText = school.name || 'School';
+            document.getElementById('schoolIdDisplay').innerText = school.schoolId || '-';
+            const logoBox = document.getElementById('schoolLogoBox');
+            if (school.logo) {
+                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
+            } else {
+                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
+            }
+        }
+
+        async function renderTeachers() {
+            const teachers = await LamaAPI.list('teachers');
+            allTeachers = teachers;
+            // Match newly created teacher by login ID if API generated the ID after saving.
+            teachers.forEach(t=>{const fromLogin=localTeacherPhoto({loginId:t.loginId,email:t.email});if(fromLogin&&!localTeacherPhoto(t))storeTeacherPhoto(t,fromLogin)});
+            document.getElementById('teachersEmpty').classList.toggle('hidden', teachers.length > 0);
+            document.getElementById('teachersList').innerHTML = teachers.map(t => `
+                <div class="flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5">
+                    <div>
+                        <p class="text-xs font-bold">${t.name} <span class="text-cyan-300">[${t.loginId || t.email || "-"}]</span> <span class="text-slate-500 font-normal">— ${t.email}</span></p>
+                        <p class="text-[10px] text-slate-400">${t.subject || 'No subject'} • Class ${t.assignedClass || '-'}${t.assignedSection ? '-' + t.assignedSection : ''} • ${t.contact || 'No contact'}</p>
+                        <p class="text-[10px] text-slate-500 mt-0.5">${t.qualification || 'No qualification on file'}${t.joiningDate ? ' • Joined ' + teacherDate(t.joiningDate) : ''}</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button onclick="printTeachers(['${String(t.id)}'])" class="text-[10px] font-bold px-2 py-1 rounded bg-cyan-700 text-white">Print</button>
+                        <span class="text-[9px] font-bold uppercase px-2 py-1 rounded ${t.status === 'Active' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-slate-700 text-slate-400'}">${t.status}</span>
+                        <button onclick="openEdit('${t.id}')" class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white">Edit</button>
+                        <button onclick="deleteTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openEdit(teacherId) {
+            const t = allTeachers.find(x => x.id === teacherId);
+            if (!t) return;
+            document.getElementById('editId').value = t.id;
+            document.getElementById('editLoginId').value = t.loginId || t.email || '';
+            document.getElementById('editEmail').value = t.email || '';
+            document.getElementById('editPassword').value = '';
+            document.getElementById('editName').value = t.name || '';
+            document.getElementById('editSubject').value = t.subject || '';
+            document.getElementById('editClass').value = t.assignedClass || '';
+            document.getElementById('editSectionInput').value = t.assignedSection || '';
+            document.getElementById('editContact').value = t.contact || '';
+            document.getElementById('editCnic').value = t.cnic || '';
+            document.getElementById('editDob').value = teacherDateInput(t.dob);
+            document.getElementById('editGender').value = t.gender || '';
+            document.getElementById('editQualification').value = t.qualification || '';
+            document.getElementById('editJoiningDate').value = teacherDateInput(t.joiningDate);
+            document.getElementById('editEmergencyContact').value = t.emergencyContact || '';
+            document.getElementById('editAddress').value = t.address || '';
+            document.getElementById('editStatus').value = t.status || 'Active';
+            teacherPhotos.edit=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||null;
+            document.getElementById('editPhotoPreview').src=teacherPhotos.edit||'';
+            document.getElementById('editPhotoStatus').textContent=teacherPhotos.edit?'Existing photo loaded':'No photo saved';
+            document.getElementById('editSection').classList.remove('hidden');
+            document.getElementById('editSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeEdit() {
+            document.getElementById('editSection').classList.add('hidden');
+        }
+
+        async function saveTeacherEdit() {
+            const id = document.getElementById('editId').value;
+            try {
+                await LamaAPI.update('teachers', id, {
+                    name: document.getElementById('editName').value.trim(),
+                    loginId: document.getElementById('editLoginId').value.trim(),
+                    email: document.getElementById('editEmail').value.trim(),
+                    ...(document.getElementById('editPassword').value ? {password:document.getElementById('editPassword').value} : {}),
+                    ...(teacherPhotos.edit ? {photo:teacherPhotos.edit} : {}),
+                    subject: document.getElementById('editSubject').value.trim(),
+                    assignedClass: document.getElementById('editClass').value.trim(),
+                    assignedSection: document.getElementById('editSectionInput').value.trim(),
+                    contact: document.getElementById('editContact').value.trim(),
+                    cnic: document.getElementById('editCnic').value.trim(),
+                    dob: document.getElementById('editDob').value,
+                    gender: document.getElementById('editGender').value,
+                    qualification: document.getElementById('editQualification').value.trim(),
+                    joiningDate: document.getElementById('editJoiningDate').value,
+                    emergencyContact: document.getElementById('editEmergencyContact').value.trim(),
+                    address: document.getElementById('editAddress').value.trim(),
+                    status: document.getElementById('editStatus').value
+                });
+                if(teacherPhotos.edit)storeTeacherPhoto({id},teacherPhotos.edit);
+                closeEdit();
+                renderTeachers();
+            } catch (e) {
+                alert('Could not save changes: ' + e.message);
+            }
+        }
+
+        async function deleteTeacher(id, name) {
+            if (!confirm(`Delete ${name}'s teacher account? This cannot be undone.`)) return;
+            try {
+                await LamaAPI.remove('teachers', id);
+                renderTeachers();
+            } catch (e) {
+                alert('Could not delete this teacher: ' + e.message);
+            }
+        }
+
+        async function createTeacher() {
+            const name = document.getElementById('inName').value.trim();
+            const email = document.getElementById('inEmail').value.trim();
+            const loginId = document.getElementById('inLoginId').value.trim();
+            const password = document.getElementById('inPassword').value;
+            if (!name || !loginId || !password || password.length < 8) {
+                alert('Name, Teacher ID, and a password of at least 8 characters are required.');
+                return;
+            }
+            try {
+                const created=await LamaAPI.addTeacher({
+                    name, email, loginId, password,
+                    subject: document.getElementById('inSubject').value.trim(),
+                    assignedClass: document.getElementById('inClass').value.trim(),
+                    assignedSection: document.getElementById('inSection').value.trim(),
+                    contact: document.getElementById('inContact').value.trim(),
+                    cnic: document.getElementById('inCnic').value.trim(),
+                    dob: document.getElementById('inDob').value,
+                    gender: document.getElementById('inGender').value,
+                    qualification: document.getElementById('inQualification').value.trim(),
+                    joiningDate: document.getElementById('inJoiningDate').value,
+                    emergencyContact: document.getElementById('inEmergencyContact').value.trim(),
+                    address: document.getElementById('inAddress').value.trim(),
+                    ...(teacherPhotos.in ? {photo:teacherPhotos.in} : {})
+                });
+                if(teacherPhotos.in)storeTeacherPhoto({id:created&&created.id,loginId,email},teacherPhotos.in);
+                ['inName', 'inEmail', 'inLoginId', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
+                 'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword']
+                    .forEach(id => document.getElementById(id).value = '');
+                teacherPhotos.in=null;document.getElementById('inPhotoPreview').removeAttribute('src');document.getElementById('inPhotoStatus').textContent='No photo selected';
+                renderTeachers();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function init() {
+            await renderHeader();
+            await renderTeachers();
+        }
+
+        if (LamaAPI.requireLogin('school', 'login.html')) {
+            init();
+        }
+    </script>
+</body>
+</html>

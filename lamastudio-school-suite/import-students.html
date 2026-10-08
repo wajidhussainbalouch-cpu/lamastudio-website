@@ -79,7 +79,7 @@ function dataUrlBytes(d){const m=String(d||'').match(/^data:image\/(png|jpe?g);b
 async function exportExcel(){
  const a=filteredStudents();if(!a.length)return alert('No students match the current filters.');
  const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Students');
- const keys=[...new Set(a.flatMap(s=>Object.keys(s)))].filter(k=>k!=='id'&&k!=='historicalResults');
+ const keys=[...new Set(a.flatMap(s=>Object.keys(s)))].filter(k=>!['id','password','apiKey','passwordHash','historicalResults'].includes(k));
  if(!keys.includes('photo'))keys.push('photo');
  ws.columns=keys.map(k=>({header:k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()),key:k,width:k==='photo'?16:22}));
  a.forEach(s=>{const row=ws.addRow(keys.map(k=>k==='photo'?'':String(s[k]??'')));const img=dataUrlBytes(s.photo);if(img){try{const id=wb.addImage({base64:img.base64,extension:img.type});ws.addImage(id,{tl:{col:keys.indexOf('photo'),row:row.number-1},ext:{width:80,height:100}});row.height=80}catch(e){}}});
@@ -98,7 +98,7 @@ async function exportPDF(){
  const a=filteredStudents();if(!a.length)return alert('No students match the current filters.');
  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),school=await LamaAPI.getActiveSchool()||{};
  doc.setFontSize(16);doc.text(school.name||'Student Roster',14,14);doc.setFontSize(8);doc.text(`Students: ${a.length} • Generated: ${new Date().toLocaleString()}`,14,20);
- const keys=[...new Set(a.flatMap(s=>Object.keys(s)))].filter(k=>k!=='id'&&k!=='photo'&&k!=='historicalResults');
+ const keys=[...new Set(a.flatMap(s=>Object.keys(s)))].filter(k=>!['id','password','apiKey','passwordHash','photo','historicalResults'].includes(k));
  const headers=['#',...keys.map(k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase()))];const body=a.map((s,i)=>[i+1,...keys.map(k=>String(s[k]??''))]);
  doc.autoTable({head:[headers],body,startY:25,styles:{fontSize:5,cellPadding:1,overflow:'linebreak'},headStyles:{fontSize:5},margin:{left:8,right:8}});
  for(let i=0;i<a.length;i++){

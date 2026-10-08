@@ -579,7 +579,7 @@ function resolveContext(p) {
 
 const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework'];
 const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings', 'resources'];
-const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources'];
+const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources', 'timetable'];
 function sameClass(a,b){ return String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase(); }
 function sameSection(record,section){ return !section || !record.section || sameClass(record.section,section); }
 function teacherOwns(ctx,r){ return sameClass(r.class,ctx.teacher.assignedClass) && sameSection(r,ctx.teacher.assignedSection); }
@@ -627,7 +627,7 @@ function listRecords(ctx, collection) {
     const data = sheet.getDataRange().getValues();
     let records = [];
     for (let i = 1; i < data.length; i++) {
-        if (!data[i][0]) continue;
+        if (!data[i][headers.indexOf('id')]) continue;
         records.push(rowToRecord(headers, data[i]));
     }
     if (ctx.role === 'teacher' && (collection === 'attendance' || collection === 'homework' || collection === 'students')) {
@@ -636,8 +636,8 @@ function listRecords(ctx, collection) {
     if (ctx.role === 'teacher' && collection === 'teacherPings') {
         records = records.filter(r => r.teacherId === ctx.teacher.id);
     }
-    if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests')) {
-        records = records.filter(r => sameClass(r.class,ctx.student.class) && sameSection(r,ctx.student.section));
+    if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests' || collection === 'timetable')) {
+        records = records.filter(r => collection === 'datesheet' ? (String(r.class||'').split(',').some(c=>sameClass(c,ctx.student.class)) || Object.keys((function(){try{return JSON.parse(r.subjectsJson||'{}')}catch(e){return {}}})()).some(c=>sameClass(c,ctx.student.class))) : ((!r.class || sameClass(r.class,ctx.student.class)) && sameSection(r,ctx.student.section)));
     }
     return records;
 }

@@ -256,7 +256,7 @@ function registerSchool(p) {
     registry.appendRow([
         schoolId, p.name.trim(), p.address || '', p.phone || '', p.principal || '', p.type || 'Private',
         p.level || 'High', p.adminEmail.trim(), passwordHash, apiKey, sheetId,
-        p.logo || '', shortCode, 'Free', 'Active', new Date().toISOString()
+        p.logo || '', p.coverPhoto || '', shortCode, 'Free', 'Active', new Date().toISOString()
     ]);
 
     return {
@@ -449,7 +449,7 @@ function teacherLogin(schoolId, email, password) {
             if (hashPassword(password, row.id) !== row.passwordHash) throw new Error('Incorrect password.');
             return {
                 schoolId, teacherId: row.id, apiKey: row.apiKey, name: row.name,
-                subject: row.subject, assignedClass: row.assignedClass,
+                subject: row.subject, assignedClass: row.assignedClass, assignedSection: row.assignedSection || '',
                 schoolName: schoolMatch.obj.name, schoolLogo: schoolMatch.obj.logo
             };
         }
@@ -497,7 +497,7 @@ function studentLogin(schoolId, enrlNo, password) {
         if (String(row.enrlNo) === String(enrlNo)) {
             if (String(row.password) !== String(password)) throw new Error('Incorrect password.');
             return {
-                schoolId, studentId: row.id, apiKey: row.apiKey, name: row.name, class: row.class,
+                schoolId, studentId: row.id, apiKey: row.apiKey, name: row.name, class: row.class, section: row.section || '',
                 schoolName: schoolMatch.obj.name, schoolLogo: schoolMatch.obj.logo
             };
         }
@@ -577,15 +577,19 @@ function resolveContext(p) {
     throw new Error('Unknown role: ' + role);
 }
 
-const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework', 'notifications'];
+const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework'];
 const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings', 'resources'];
 const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources'];
+function sameClass(a,b){ return String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase(); }
+function sameSection(record,section){ return !section || !record.section || sameClass(record.section,section); }
+function teacherOwns(ctx,r){ return sameClass(r.class,ctx.teacher.assignedClass) && sameSection(r,ctx.teacher.assignedSection); }
 
 function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
-        if (TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) return; // add/update/remove ok
+        if (TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) return; // class-scoped writes
         if (collection === 'students' && (action === 'list' || action === 'get' || action === 'update')) return;
+        if (collection === 'notifications' && (action === 'list' || action === 'get' || action === 'add')) return;
         if (TEACHER_READ_COLLECTIONS.indexOf(collection) !== -1 && (action === 'list' || action === 'get')) return;
         throw new Error('Teachers do not have permission for this action.');
     }
@@ -625,13 +629,13 @@ function listRecords(ctx, collection) {
         records.push(rowToRecord(headers, data[i]));
     }
     if (ctx.role === 'teacher' && (collection === 'attendance' || collection === 'homework' || collection === 'students')) {
-        records = records.filter(r => String(r.class) === String(ctx.teacher.assignedClass));
+        records = records.filter(r => teacherOwns(ctx,r));
     }
     if (ctx.role === 'teacher' && collection === 'teacherPings') {
         records = records.filter(r => r.teacherId === ctx.teacher.id);
     }
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests')) {
-        records = records.filter(r => String(r.class) === String(ctx.student.class));
+        records = records.filter(r => sameClass(r.class,ctx.student.class) && sameSection(r,ctx.student.section));
     }
     return records;
 }
@@ -644,7 +648,11 @@ function getRecord(ctx, collection, id) {
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === id) return rowToRecord(headers, data[i]);
+        if (data[i][0] === id) {
+            const r=rowToRecord(headers,data[i]);
+            if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
+            return r;
+        }
     }
     return null;
 }
@@ -652,7 +660,7 @@ function getRecord(ctx, collection, id) {
 function addRecord(ctx, collection, record) {
     checkPermission(ctx, 'add', collection);
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {
-        record = Object.assign({}, record, { class: ctx.teacher.assignedClass, markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
+        record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const id = genId(collection.slice(0, 3));
@@ -674,6 +682,16 @@ function updateRecord(ctx, collection, id, patch) {
             if (ctx.role === 'teacher' && collection === 'students' && String(existing.class) !== String(ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }
+            if(ctx.role==='teacher') {
+                if(collection==='students') {
+                    if(!teacherOwns(ctx,existing)) throw new Error('Student outside assigned class/section.');
+                    const allowed=['subjects','teacherRemarks'];
+                    if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1)) throw new Error('Teachers may only update student marks and teacher remarks.');
+                } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
+                    if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');
+                    patch=Object.assign({},patch,{class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||''});
+                }
+            }
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
             return updated;
@@ -689,6 +707,7 @@ function removeRecord(ctx, collection, id) {
     const idCol = headers.indexOf('id');
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
+            if(ctx.role==='teacher' && !teacherOwns(ctx,rowToRecord(headers,data[i]))) throw new Error('Record outside assigned class/section.');
             sheet.deleteRow(i + 1);
             return true;
         }
@@ -774,7 +793,7 @@ function getMainDashboardData(params) {
     const upcomingExams = [];
     for (let i = 1; i < dsRows.length; i++) {
         const r = rowToRecord(dsHeaders, dsRows[i]);
-        if (r.id && r.date && String(r.date) >= todayStr) upcomingExams.push(r);
+        if (r.id && (!r.status || ['published','active','public'].includes(String(r.status).toLowerCase()) || r.isPublished === true)) upcomingExams.push(r);
     }
     upcomingExams.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
@@ -783,7 +802,7 @@ function getMainDashboardData(params) {
     const upcomingTests = [];
     for (let i = 1; i < testRows.length; i++) {
         const r = rowToRecord(testHeaders, testRows[i]);
-        if (r.id && r.date && String(r.date) >= todayStr) upcomingTests.push(r);
+        if (r.id && (!r.status || ['published','active','public'].includes(String(r.status).toLowerCase()) || r.isPublished === true)) upcomingTests.push(r);
     }
     upcomingTests.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
@@ -797,11 +816,11 @@ function getMainDashboardData(params) {
     resources.sort((a, b) => String(a.category).localeCompare(String(b.category)));
 
     return {
-        schoolName, logo, coverPhoto, address, level, type,
+        schoolId: params.schoolId, schoolName, logo, coverPhoto, address, level, type,
         recentNotifications: notifications.slice(0, 5),
         recentActivities: activities.slice(0, 5),
-        upcomingExams: upcomingExams.slice(0, 5),
-        upcomingTests: upcomingTests.slice(0, 5),
+        upcomingExams: upcomingExams,
+        upcomingTests: upcomingTests,
         resources
     };
 }

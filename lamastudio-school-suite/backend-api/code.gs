@@ -85,6 +85,10 @@ const COLLECTIONS = {
         tab: 'TeacherAttendance',
         headers: ['id', 'teacherId', 'teacherName', 'date', 'status', 'markedBy', 'createdAt']
     },
+    studentRequests: {
+        tab: 'StudentRequests',
+        headers: ['id','studentId','studentName','enrlNo','class','section','requestType','subject','message','leaveFrom','leaveTo','status','teacherReply','adminReply','assignedTeacherId','createdAt','updatedAt','reviewedBy']
+    },
     teacherPings: {
         tab: 'TeacherPings',
         headers: ['id', 'teacherId', 'message', 'acknowledged', 'createdAt']
@@ -580,13 +584,29 @@ function resolveContext(p) {
 const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework'];
 const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings', 'resources'];
 const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources', 'timetable'];
-function sameClass(a,b){ return String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase(); }
+function normalizeSchoolClass(value) {
+    return String(value == null ? '' : value).trim().toLowerCase()
+      .replace(/^(grade|class|standard|std)[\s._-]*/i, '')
+      .replace(/^0+(?=\d)/, '').replace(/\s+/g, '');
+}
+function sameClass(a,b){ return normalizeSchoolClass(a) === normalizeSchoolClass(b); }
+function recordAppliesToClass(record, studentClass) {
+    var classes = String(record.class || '').split(/[,;|]/).map(function(v){return v.trim();}).filter(Boolean);
+    var map = record.subjects && typeof record.subjects === 'object' ? record.subjects : {};
+    if (!Object.keys(map).length && record.subjectsJson) {
+        try { map = JSON.parse(record.subjectsJson); } catch (e) { map = {}; }
+    }
+    var keys = Object.keys(map);
+    if (keys.length) return keys.some(function(k){return sameClass(k,studentClass) && !!map[k];});
+    return classes.length ? classes.some(function(k){return sameClass(k,studentClass);}) : true;
+}
 function sameSection(record,section){ return !section || !record.section || sameClass(record.section,section); }
 function teacherOwns(ctx,r){ return sameClass(r.class,ctx.teacher.assignedClass) && sameSection(r,ctx.teacher.assignedSection); }
 
 function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
+        if (collection === 'studentRequests' && ['list','get','update'].indexOf(action) !== -1) return;
         if (TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) return; // class-scoped writes
         if (collection === 'students' && (action === 'list' || action === 'get' || action === 'update')) return;
         if (collection === 'notifications' && (action === 'list' || action === 'get' || action === 'add')) return;
@@ -594,6 +614,7 @@ function checkPermission(ctx, action, collection) {
         throw new Error('Teachers do not have permission for this action.');
     }
     if (ctx.role === 'student') {
+        if (collection === 'studentRequests' && ['list','get','add'].indexOf(action) !== -1) return;
         if (collection === 'students' && action === 'get') return;
         if (STUDENT_READ_COLLECTIONS.indexOf(collection) !== -1 && action === 'list') return;
         throw new Error('Students only have read access to their own record and class information.');
@@ -630,6 +651,10 @@ function listRecords(ctx, collection) {
         if (!data[i][headers.indexOf('id')]) continue;
         records.push(rowToRecord(headers, data[i]));
     }
+    if (collection === 'studentRequests') {
+        if (ctx.role === 'student') records = records.filter(r => String(r.studentId) === String(ctx.student.id));
+        if (ctx.role === 'teacher') records = records.filter(r => teacherOwns(ctx,r));
+    }
     if (ctx.role === 'teacher' && (collection === 'attendance' || collection === 'homework' || collection === 'students')) {
         records = records.filter(r => teacherOwns(ctx,r));
     }
@@ -637,7 +662,7 @@ function listRecords(ctx, collection) {
         records = records.filter(r => r.teacherId === ctx.teacher.id);
     }
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests' || collection === 'timetable')) {
-        records = records.filter(r => collection === 'datesheet' ? (String(r.class||'').split(',').some(c=>sameClass(c,ctx.student.class)) || Object.keys((function(){try{return JSON.parse(r.subjectsJson||'{}')}catch(e){return {}}})()).some(c=>sameClass(c,ctx.student.class))) : ((!r.class || sameClass(r.class,ctx.student.class)) && sameSection(r,ctx.student.section)));
+        records = records.filter(r => collection === 'datesheet' ? recordAppliesToClass(r, ctx.student.class) : (recordAppliesToClass(r, ctx.student.class) && sameSection(r,ctx.student.section)));
     }
     return records;
 }
@@ -652,6 +677,10 @@ function getRecord(ctx, collection, id) {
     for (let i = 1; i < data.length; i++) {
         if (data[i][0] === id) {
             const r=rowToRecord(headers,data[i]);
+            if (collection === 'studentRequests') {
+                if (ctx.role === 'student' && String(r.studentId) !== String(ctx.student.id)) throw new Error('Request not found.');
+                if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
+            }
             if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
             return r;
         }
@@ -661,6 +690,15 @@ function getRecord(ctx, collection, id) {
 
 function addRecord(ctx, collection, record) {
     checkPermission(ctx, 'add', collection);
+    if (collection === 'studentRequests' && ctx.role === 'student') {
+        const type = String(record.requestType || 'help');
+        if (['help','sick_leave'].indexOf(type) === -1) throw new Error('Invalid request type.');
+        const message = String(record.message || '').trim();
+        if (!message || message.length > 3000) throw new Error('Describe your problem (maximum 3000 characters).');
+        const from = String(record.leaveFrom || ''), to = String(record.leaveTo || '');
+        if (type === 'sick_leave' && (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to)) throw new Error('Enter a valid sick leave date range.');
+        record = {studentId:ctx.student.id,studentName:ctx.student.name || '',enrlNo:ctx.student.enrlNo || '',class:ctx.student.class || '',section:ctx.student.section || '',requestType:type,subject:String(record.subject || '').slice(0,120),message:message,leaveFrom:type==='sick_leave'?from:'',leaveTo:type==='sick_leave'?to:'',status:'Pending',teacherReply:'',adminReply:'',assignedTeacherId:'',updatedAt:new Date().toISOString(),reviewedBy:''};
+    }
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
@@ -681,7 +719,7 @@ function updateRecord(ctx, collection, id, patch) {
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
             const existing = rowToRecord(headers, data[i]);
-            if (ctx.role === 'teacher' && collection === 'students' && String(existing.class) !== String(ctx.teacher.assignedClass)) {
+            if (ctx.role === 'teacher' && collection === 'students' && !sameClass(existing.class, ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }
             if(ctx.role==='teacher') {
@@ -692,6 +730,20 @@ function updateRecord(ctx, collection, id, patch) {
                 } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
                     if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');
                     patch=Object.assign({},patch,{class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||''});
+                }
+            }
+            if (collection === 'studentRequests') {
+                if (ctx.role === 'student') throw new Error('Students cannot change submitted requests.');
+                if (ctx.role === 'teacher') {
+                    if (!teacherOwns(ctx,existing)) throw new Error('Request outside assigned class.');
+                    if (Object.keys(patch).some(k => ['teacherReply','status'].indexOf(k) === -1)) throw new Error('Teacher can only reply and update status.');
+                    if (patch.status && ['Pending','In Review','Resolved','Approved','Rejected'].indexOf(String(patch.status)) === -1) throw new Error('Invalid status.');
+                    patch = Object.assign({},patch,{reviewedBy:ctx.teacher.name || 'Class Teacher',updatedAt:new Date().toISOString()});
+                }
+                if (ctx.role === 'school') {
+                    if (Object.keys(patch).some(k => ['adminReply','status'].indexOf(k) === -1)) throw new Error('School admin can only reply and update status.');
+                    if (patch.status && ['Pending','In Review','Resolved','Approved','Rejected'].indexOf(String(patch.status)) === -1) throw new Error('Invalid status.');
+                    patch = Object.assign({},patch,{reviewedBy:'School Admin',updatedAt:new Date().toISOString()});
                 }
             }
             const updated = Object.assign({}, existing, patch, { id });
@@ -824,8 +876,8 @@ function getMainDashboardData(params) {
         schoolId: params.schoolId, schoolName, logo, coverPhoto, address, level, type,
         recentNotifications: notifications.slice(0, 5),
         recentActivities: activities.slice(0, 5),
-        upcomingExams: ctx.role === 'student' ? upcomingExams.filter(r => (r.subjects && Object.prototype.hasOwnProperty.call(r.subjects, ctx.student.class)) || String(r.class) === String(ctx.student.class)) : upcomingExams,
-        upcomingTests: ctx.role === 'student' ? upcomingTests.filter(r => String(r.class) === String(ctx.student.class)) : upcomingTests,
+        upcomingExams: ctx.role === 'student' ? upcomingExams.filter(r => recordAppliesToClass(r, ctx.student.class)) : upcomingExams,
+        upcomingTests: ctx.role === 'student' ? upcomingTests.filter(r => recordAppliesToClass(r, ctx.student.class)) : upcomingTests,
         resources
     };
 }

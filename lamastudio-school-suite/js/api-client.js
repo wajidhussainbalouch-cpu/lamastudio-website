@@ -1,233 +1,103 @@
-/**
- * LamaStudio School Suite — Live API Client (multi-role)
- * -------------------------------------------------------------
- * Every read and write here goes over the network to your Google Apps
- * Script backend (code.gs), so data is the same no matter which device
- * or browser someone logs in from.
- *
- * FOUR roles share this one client, distinguished by session.role:
- *   'school'  — School Admin (unchanged from before)
- *   'teacher' — a teacher account, scoped to one class
- *   'student' — a student portal login, scoped to their own record/class
- *   'admin'   — the Super Admin (you)
- */
+/** Lama School Suite — role-isolated Google Apps Script API client */
 const API_URL = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
-
-const LamaAPI = (function () {
-    const SESSION_KEY = 'lamastudio_session';
-
-    function getSession() {
-        try {
-            return JSON.parse(localStorage.getItem(SESSION_KEY));
-        } catch (e) {
-            return null;
-        }
+const LamaAPI = (() => {
+  const ROLES = ['school','teacher','student','admin'];
+  const legacyKey = 'lamastudio_session';
+  const key = role => 'lamastudio_session_' + role;
+  const activeKey = 'lamastudio_active_role';
+  const parse = value => { try { return value ? JSON.parse(value) : null; } catch (_) { return null; } };
+  function migrate() {
+    const old = parse(localStorage.getItem(legacyKey));
+    if (old && ROLES.includes(old.role) && !localStorage.getItem(key(old.role))) {
+      localStorage.setItem(key(old.role), JSON.stringify(old));
     }
-
-    function setSession(session) {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    }
-
-    function clearSession() {
-        localStorage.removeItem(SESSION_KEY);
-    }
-
-    function isLoggedIn() {
-        return !!getSession();
-    }
-
-    function authFieldsFor(session) {
-        if (!session) return {};
-        if (session.role === 'teacher') {
-            return { role: 'teacher', schoolId: session.schoolId, teacherId: session.teacherId, apiKey: session.apiKey };
-        }
-        if (session.role === 'student') {
-            return { role: 'student', schoolId: session.schoolId, studentId: session.studentId, apiKey: session.apiKey };
-        }
-        if (session.role === 'admin') {
-            return { role: 'admin', adminApiKey: session.adminApiKey };
-        }
-        return { role: 'school', schoolId: session.schoolId, apiKey: session.apiKey };
-    }
-
-    async function callApi(action, payload, method) {
-        method = method || 'POST';
-        const authFields = authFieldsFor(getSession());
-        const body = Object.assign({ action: action }, authFields, payload || {});
-
-        let response;
-        if (method === 'GET') {
-            const qs = new URLSearchParams();
-            Object.keys(body).forEach(k => {
-                if (body[k] !== undefined && body[k] !== null) qs.set(k, body[k]);
-            });
-            response = await fetch(`${API_URL}?${qs.toString()}`, { method: 'GET' });
-        } else {
-            response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(body)
-            });
-        }
-
-        const data = await response.json();
-        if (data.status !== 'success') {
-            throw new Error(data.message || 'Something went wrong. Please try again.');
-        }
-        return data;
-    }
-
-    async function register(schoolData) {
-        const data = await callApi('register', schoolData, 'POST');
-        setSession(Object.assign({}, data.school, { role: 'school' }));
-        return data.school;
-    }
-
-    async function login(email, password) {
-        const data = await callApi('login', { email, password }, 'POST');
-        setSession(Object.assign({}, data.school, { role: 'school' }));
-        return data.school;
-    }
-
-    async function teacherLogin(schoolId, email, password) {
-        const data = await callApi('teacherLogin', { schoolId, email, password }, 'POST');
-        setSession(Object.assign({}, data.teacher, { role: 'teacher' }));
-        return data.teacher;
-    }
-
-    async function studentLogin(schoolId, enrlNo, password) {
-        const data = await callApi('studentLogin', { schoolId, enrlNo, password }, 'POST');
-        setSession(Object.assign({}, data.student, { role: 'student' }));
-        return data.student;
-    }
-
-    async function adminLogin(password) {
-        const data = await callApi('adminLogin', { password }, 'POST');
-        setSession(Object.assign({}, data.admin, { role: 'admin' }));
-        return data.admin;
-    }
-
-    function logout() {
-        clearSession();
-    }
-
-    function requireLogin(expectedRole, loginPage) {
-        const session = getSession();
-        if (!session || session.role !== expectedRole) {
-            window.location.href = loginPage || 'login.html';
-            return false;
-        }
-        return true;
-    }
-
-    function requireAnyLogin(expectedRoles, loginPage) {
-        const session = getSession();
-        if (!session || expectedRoles.indexOf(session.role) === -1) {
-            window.location.href = loginPage || 'login.html';
-            return false;
-        }
-        return true;
-    }
-
-    async function getActiveSchool() {
-        const session = getSession();
-        if (!session) return null;
-        try {
-            const data = await callApi('getSchoolConfig', {}, 'GET');
-            const merged = Object.assign({}, session, data.school);
-            setSession(merged);
-            return merged;
-        } catch (e) {
-            console.warn('LamaAPI.getActiveSchool: serving cached session —', e.message);
-            return session;
-        }
-    }
-
-    async function updateSchoolConfig(patch) {
-        const data = await callApi('updateSchoolConfig', { patch }, 'POST');
-        setSession(Object.assign({}, getSession(), data.school));
-        return data.school;
-    }
-
-    async function getDashboardStats() {
-        const data = await callApi('getDashboardStats', {}, 'GET');
-        return data.stats;
-    }
-
-    async function getStudentFeeSummary(studentId) {
-        const data = await callApi('getStudentFeeSummary', { studentId }, 'GET');
-        return data.summary;
-    }
-
-    async function getMainDashboardData() {
-        const data = await callApi('getMainDashboardData', {}, 'GET');
-        return data.data;
-    }
-
-    async function pingTeacher(teacherId, message) {
-        const data = await callApi('pingTeacher', { teacherId, message }, 'POST');
-        return data.ping;
-    }
-
-    async function acknowledgePing(pingId) {
-        const data = await callApi('acknowledgePing', { pingId }, 'POST');
-        return data.ping;
-    }
-
-    function deriveShortCode(name) {
-        return String(name || 'SCH').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 3) || 'SCH';
-    }
-
-    async function addTeacher(teacherData) {
-        const data = await callApi('addTeacher', { teacher: teacherData }, 'POST');
-        return data.teacher;
-    }
-
-    async function adminListSchools() {
-        const data = await callApi('adminListSchools', {}, 'GET');
-        return data.schools;
-    }
-
-    async function adminSetStatus(schoolId, newStatus) {
-        const data = await callApi('adminSetStatus', { schoolId, newStatus }, 'POST');
-        return data.result;
-    }
-
-    async function adminResetPassword(schoolId) {
-        const data = await callApi('adminResetPassword', { schoolId }, 'POST');
-        return data.result;
-    }
-
-    async function list(collection) {
-        const data = await callApi('list', { collection }, 'GET');
-        return data.records;
-    }
-
-    async function get(collection, id) {
-        const data = await callApi('get', { collection, id }, 'GET');
-        return data.record;
-    }
-
-    async function add(collection, record) {
-        const data = await callApi('add', { collection, record }, 'POST');
-        return data.record;
-    }
-
-    async function update(collection, id, patch) {
-        const data = await callApi('update', { collection, id, patch }, 'POST');
-        return data.record;
-    }
-
-    async function remove(collection, id) {
-        await callApi('remove', { collection, id }, 'POST');
-    }
-
-    return {
-        register, login, teacherLogin, studentLogin, adminLogin,
-        logout, isLoggedIn, requireLogin, getSession,
-        getActiveSchool, updateSchoolConfig, getDashboardStats, getStudentFeeSummary, deriveShortCode, addTeacher,
-        getMainDashboardData, pingTeacher, acknowledgePing,
-        adminListSchools, adminSetStatus, adminResetPassword,
-        list, get, add, update, remove
-    };
+    if (old) localStorage.removeItem(legacyKey);
+  }
+  migrate();
+  function activeRole() { return sessionStorage.getItem(activeKey) || 'school'; }
+  function getSession(role) { return parse(localStorage.getItem(key(role || activeRole()))); }
+  function setSession(session) {
+    if (!session || !ROLES.includes(session.role)) throw Error('Invalid login role.');
+    localStorage.setItem(key(session.role), JSON.stringify(session));
+    sessionStorage.setItem(activeKey, session.role);
+  }
+  function clearSession(role) {
+    const target = role || activeRole();
+    localStorage.removeItem(key(target));
+    if (activeRole() === target) sessionStorage.removeItem(activeKey);
+  }
+  function isLoggedIn(role) { return !!getSession(role); }
+  function authFieldsFor(session) {
+    if (!session) return {};
+    if (session.role === 'teacher') return { role:'teacher', schoolId:session.schoolId, teacherId:session.teacherId || session.id, apiKey:session.apiKey };
+    if (session.role === 'student') return { role:'student', schoolId:session.schoolId, studentId:session.studentId || session.id, apiKey:session.apiKey };
+    if (session.role === 'admin') return { role:'admin', adminApiKey:session.adminApiKey };
+    return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
+  }
+  async function callApi(action, payload = {}, method = 'POST') {
+    const body = Object.assign({action}, authFieldsFor(getSession()), payload);
+    let response;
+    try {
+      if (method === 'GET') {
+        const params = new URLSearchParams();
+        Object.entries(body).forEach(([k,v]) => { if (v !== undefined && v !== null) params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v)); });
+        response = await fetch(API_URL + '?' + params.toString(), {method:'GET',redirect:'follow'});
+      } else {
+        response = await fetch(API_URL, {method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),redirect:'follow'});
+      }
+    } catch (e) { throw Error('Network request failed. Check connection, deployed Apps Script URL, and browser console. ' + e.message); }
+    const raw = await response.text();
+    let data;
+    try { data = JSON.parse(raw); } catch (_) { throw Error('Server returned non-JSON (HTTP ' + response.status + '). Verify Apps Script deployment access and URL.'); }
+    if (!response.ok || data.status !== 'success') throw Error(data.message || 'Server rejected ' + action + ' (HTTP ' + response.status + ')');
+    return data;
+  }
+  const loginResult = async (action, payload, property, role) => {
+    const data = await callApi(action,payload);
+    if (!data[property]) throw Error('Login response is missing ' + property);
+    const session = Object.assign({},data[property],{role});
+    setSession(session);
+    return session;
+  };
+  function requireLogin(role, page) {
+    if (!getSession(role)) { location.href = page || 'login.html'; return false; }
+    sessionStorage.setItem(activeKey,role);
+    return true;
+  }
+  function requireAnyLogin(roles,page) {
+    const role = roles.find(r => getSession(r));
+    if (!role) { location.href = page || 'login.html'; return false; }
+    sessionStorage.setItem(activeKey,role);
+    return true;
+  }
+  async function getActiveSchool() {
+    const session = getSession(); if (!session) return null;
+    try { const d=await callApi('getSchoolConfig',{},'GET'); const merged=Object.assign({},session,d.school); setSession(merged); return merged; }
+    catch(e) { console.warn('School profile unavailable:',e.message); return session; }
+  }
+  async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
+  function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
+  return {
+    getSession,setSession,clearSession,logout:clearSession,isLoggedIn,requireLogin,requireAnyLogin,
+    register:data=>loginResult('register',data,'school','school'),
+    login:(email,password)=>loginResult('login',{email,password},'school','school'),
+    teacherLogin:(schoolId,email,password)=>loginResult('teacherLogin',{schoolId,email,password},'teacher','teacher'),
+    studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),
+    adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
+    getActiveSchool,updateSchoolConfig,deriveShortCode,
+    getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
+    getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
+    getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,
+    pingTeacher:async(teacherId,message)=>(await callApi('pingTeacher',{teacherId,message})).ping,
+    acknowledgePing:async pingId=>(await callApi('acknowledgePing',{pingId})).ping,
+    addTeacher:async teacher=>(await callApi('addTeacher',{teacher})).teacher,
+    adminListSchools:async()=>(await callApi('adminListSchools',{},'GET')).schools,
+    adminSetStatus:async(schoolId,newStatus)=>(await callApi('adminSetStatus',{schoolId,newStatus})).result,
+    adminResetPassword:async schoolId=>(await callApi('adminResetPassword',{schoolId})).result,
+    list:async collection=>(await callApi('list',{collection},'GET')).records,
+    get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,
+    add:async(collection,record)=>(await callApi('add',{collection,record})).record,
+    update:async(collection,id,patch)=>(await callApi('update',{collection,id,patch})).record,
+    remove:async(collection,id)=>{await callApi('remove',{collection,id});}
+  };
 })();

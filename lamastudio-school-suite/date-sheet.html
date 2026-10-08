@@ -104,6 +104,32 @@
             body.print-mode-3 .print-card .mt-2 { margin-top: 2px !important; }
             body.print-mode-3 .print-card .pb-2 { padding-bottom: 2px !important; }
         }
+
+/* Compact print layouts: no stretched whitespace, all copies on one A4 page when content fits. */
+@media print {
+ @page { size:A4 portrait; margin:4mm; }
+ html,body { height:auto!important; overflow:visible!important; }
+ .print-container { display:flex!important; flex-direction:column!important; justify-content:flex-start!important; gap:1mm!important; height:auto!important; max-height:none!important; }
+ .print-card { flex:0 0 auto!important; height:auto!important; min-height:0!important; max-height:none!important; overflow:visible!important; padding:2mm 2.5mm!important; margin:0!important; border:1px dashed #aaa!important; border-radius:0!important; box-shadow:none!important; break-inside:avoid!important; page-break-inside:avoid!important; }
+ .print-card .overflow-x-auto { overflow:visible!important; margin-top:1mm!important; }
+ .print-card table { width:100%!important; table-layout:auto!important; border-collapse:collapse!important; }
+ .print-card th,.print-card td { padding:1px 2px!important; line-height:1.12!important; overflow-wrap:anywhere!important; }
+ .print-card .pb-2 { padding-bottom:1mm!important; }
+ .print-card .mt-2 { margin-top:1mm!important; }
+ .print-card .pt-1 { padding-top:.5mm!important; }
+ body.print-mode-1 .print-card { font-size:9px!important; }
+ body.print-mode-2 .print-card { font-size:7.5px!important; }
+ body.print-mode-3 .print-card { font-size:6.5px!important; }
+ body.print-mode-4 .print-card { font-size:5.8px!important; }
+ body.print-mode-2 .print-card th,body.print-mode-2 .print-card td {font-size:7px!important;}
+ body.print-mode-3 .print-card th,body.print-mode-3 .print-card td {font-size:6px!important;}
+ body.print-mode-4 .print-card th,body.print-mode-4 .print-card td {font-size:5.3px!important; padding:.5px 1px!important;}
+ body.print-mode-2 .print-card h1 {font-size:10px!important;}
+ body.print-mode-3 .print-card h1 {font-size:9px!important;}
+ body.print-mode-4 .print-card h1 {font-size:8px!important;}
+ body.print-mode-4 .print-card img {width:15px!important;height:15px!important;}
+}
+@media screen { .print-copy { display:none!important; } }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
@@ -274,6 +300,7 @@
                             <option value="1">1x Standard View</option>
                             <option value="2">2x Per Page (Half Card)</option>
                             <option value="3">3x Per Page (Compact Card)</option>
+                             <option value="4">4x Per Page (Ultra Compact)</option>
                         </select>
                     </div>
                 </div>
@@ -286,7 +313,7 @@
             </div>
 
             <!-- Matrix Live Printable Preview Card Container -->
-            <div id="printContainer" class="print-container space-y-6">
+            <div id="printContainer" class="print-container">
                 <div id="matrixCardWrapper" class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden w-full transition-all">
                     <div class="pb-2 border-b border-slate-200 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
@@ -374,23 +401,20 @@
         }
 
         function updatePrintLayoutClass() {
-            const mode = document.getElementById('printLayoutMode').value;
-            const body = document.body;
-            body.className = body.className.replace(/print-mode-\d/g, '');
-            body.classList.add(`print-mode-${mode}`);
-
+            const mode = Number(document.getElementById('printLayoutMode').value) || 1;
+            document.body.classList.remove('print-mode-1','print-mode-2','print-mode-3','print-mode-4');
+            document.body.classList.add('print-mode-' + mode);
             const container = document.getElementById('printContainer');
-            const originalCardHtml = document.getElementById('matrixCardWrapper').outerHTML;
-            
-            let count = 1;
-            if (mode === '2') count = 2;
-            if (mode === '3') count = 3;
-
-            let cardsHtml = '';
-            for (let i = 0; i < count; i++) {
-                cardsHtml += originalCardHtml;
+            container.querySelectorAll('.print-copy').forEach(el => el.remove());
+            const original = document.getElementById('matrixCardWrapper');
+            if (!original) return;
+            for (let i=1; i<mode; i++) {
+                const copy=original.cloneNode(true);
+                copy.removeAttribute('id');
+                copy.classList.add('print-copy');
+                copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+                container.appendChild(copy);
             }
-            container.innerHTML = cardsHtml;
         }
 
         async function fetchSchoolProfile() {
@@ -580,10 +604,8 @@
                 dateSheetEntries = [];
                 if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
                     try {
-                        const apiData = await LamaAPI.list('exams');
-                        if (Array.isArray(apiData) && apiData.length > 0) {
-                            dateSheetEntries = apiData;
-                        }
+                        const apiData = await LamaAPI.list('datesheet');
+                        if (Array.isArray(apiData)) { dateSheetEntries = apiData; return; }
                     } catch (apiErr) {
                         console.warn('LamaAPI list error:', apiErr);
                     }
@@ -643,19 +665,25 @@
                 subject: Object.values(subjects).filter(Boolean).join(', ')
             };
 
-            // Sync with Google Sheets / LamaAPI
+            // Sync with Google Sheets / LamaAPI; never claim publication on a failed request.
+            let savedRemote = null;
+            let syncError = null;
             try {
                 if (typeof LamaAPI !== 'undefined') {
                     if (editId && typeof LamaAPI.update === 'function') {
-                        await LamaAPI.update('exams', editId, record);
+                        savedRemote = await LamaAPI.update('datesheet', editId, record);
                     } else if (typeof LamaAPI.add === 'function') {
-                        await LamaAPI.add('exams', record);
+                        savedRemote = await LamaAPI.add('datesheet', record);
                     }
                 }
             } catch (apiErr) {
-                console.warn('Google Sheets API sync warning:', apiErr);
+                syncError = apiErr; console.warn('Google Sheets API sync warning:', apiErr);
             }
 
+            if (savedRemote && typeof savedRemote === 'object') record.id = savedRemote.id || savedRemote.record?.id || record.id;
+            if (isPublished && (syncError || !savedRemote)) {
+                alert('The date sheet was NOT published to the server. Check LamaAPI connection and login. It will be saved locally only.');
+            }
             if (editId) {
                 const idx = dateSheetEntries.findIndex(item => String(item.id || item._id) === String(editId));
                 if (idx !== -1) {
@@ -670,7 +698,8 @@
             saveEntries();
             renderAll();
             resetForm();
-            alert(isPublished ? 'Published successfully to Google Sheets & Main Dashboard!' : 'Saved as draft.');
+            if (!syncError && savedRemote) alert(isPublished ? 'Published to Google Sheets. Refresh the School Board to view it.' : 'Draft saved to server.');
+            else if (!isPublished) alert('Draft saved locally.');
         });
 
         function resetForm() {
@@ -713,7 +742,7 @@
                 saveEntries();
                 try {
                     if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.remove === 'function') {
-                        await LamaAPI.remove('exams', id);
+                        await LamaAPI.remove('datesheet', id);
                     }
                 } catch(e) {}
                 renderAll();
@@ -721,12 +750,15 @@
         }
 
         function renderAll() {
+            const currentFilter = document.getElementById('filterClass').value;
             initFilterDropdown();
+            document.getElementById('filterClass').value = currentFilter;
             renderMatrixSheet();
             renderRecordsList();
             updatePrintLayoutClass();
         }
 
+        function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
         function renderMatrixSheet() {
             const publishedEntries = dateSheetEntries.filter(e => e.isPublished || e.published || String(e.status) === 'published');
             const filterClass = document.getElementById('filterClass').value;
@@ -759,7 +791,7 @@
                 <tr class="text-[11px] font-black uppercase text-slate-700 border-b border-slate-300">
                     <th class="py-2 px-3">DATE</th>
                     <th class="py-2 px-3">DAY</th>
-                    ${activeGrades.map(g => `<th class="py-2 px-3">${g}</th>`).join('')}
+                    ${activeGrades.map(g => `<th class="py-2 px-3">${escapeHtml(g)}</th>`).join('')}
                 </tr>
             `;
 
@@ -775,9 +807,9 @@
                 }
                 return `
                     <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td class="py-2 px-3 font-bold text-slate-900">${e.date || '---'}</td>
-                        <td class="py-2 px-3 font-semibold text-slate-700">${e.day || '---'}</td>
-                        ${activeGrades.map(g => `<td class="py-2 px-3 text-slate-800">${e.subjects && e.subjects[g] ? e.subjects[g] : '---'}</td>`).join('')}
+                        <td class="py-2 px-3 font-bold text-slate-900">${escapeHtml(e.date || '---')}</td>
+                        <td class="py-2 px-3 font-semibold text-slate-700">${escapeHtml(e.day || '---')}</td>
+                        ${activeGrades.map(g => `<td class="py-2 px-3 text-slate-800">${escapeHtml(e.subjects && e.subjects[g] ? e.subjects[g] : '---')}</td>`).join('')}
                     </tr>
                 `;
             }).join('');

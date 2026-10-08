@@ -73,7 +73,7 @@ const COLLECTIONS = {
     },
     teachers: {
         tab: 'Teachers',
-        headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
+        headers: ['id', 'name', 'email', 'loginId', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
                   'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact']
     },
@@ -405,62 +405,58 @@ function adminResetPassword(adminApiKey, schoolId) {
 // ============================================================================
 
 /** School Admin action: create a teacher account inside their own school's sheet. */
+function teacherLoginIdentifier(v) { return String(v || '').trim().toLowerCase(); }
+function validateTeacherLoginId(v) {
+    const id = String(v || '').trim();
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._@-]{1,79}$/.test(id)) throw new Error('Teacher ID must be 2-80 characters: letters, numbers, dots, @, _ or hyphens.');
+    return id;
+}
+function teacherLoginIdInUse(sheet, headers, loginId, excludeId) {
+    const rows = sheet.getDataRange().getValues();
+    return rows.slice(1).some(values => {
+        const r = rowToRecord(headers, values);
+        return r.id !== excludeId && [r.loginId, r.email].some(v => v && teacherLoginIdentifier(v) === teacherLoginIdentifier(loginId));
+    });
+}
 function addTeacher(schoolId, apiKey, p) {
-    if (!p.name || !p.email || !p.password || p.password.length < 6) {
-        throw new Error('Name, email, and a password of at least 6 characters are required.');
-    }
+    if (!p.name || !p.password || String(p.password).length < 8) throw new Error('Teacher name and password (at least 8 characters) are required.');
+    const loginId = validateTeacherLoginId(p.loginId || p.email);
+    const email = String(p.email || '').trim().toLowerCase();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email or leave it empty.');
     const match = authorizeSchool(schoolId, apiKey);
     const ss = SpreadsheetApp.openById(match.obj.sheetId);
-    const ctx = { role: 'school', ss };
-    const { sheet, headers } = getCollectionSheet(ctx, 'teachers');
-    const existing = sheet.getDataRange().getValues();
-    const emailCol = headers.indexOf('email');
-    for (let i = 1; i < existing.length; i++) {
-        if (String(existing[i][emailCol]).toLowerCase() === p.email.toLowerCase()) {
-            throw new Error('A teacher with this email already exists at this school.');
-        }
-    }
+    const { sheet, headers } = getCollectionSheet({role:'school',ss}, 'teachers');
+    if (teacherLoginIdInUse(sheet, headers, loginId) || (email && teacherLoginIdInUse(sheet, headers, email))) throw new Error('Teacher ID or email is already in use at this school.');
     const id = genId('tch');
-    const teacherApiKey = Utilities.getUuid();
-    const record = {
-        id, name: p.name.trim(), email: p.email.trim().toLowerCase(),
-        passwordHash: hashPassword(p.password, id), apiKey: teacherApiKey,
-        subject: p.subject || '', assignedClass: p.assignedClass || '', assignedSection: p.assignedSection || '',
-        contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString(),
-        cnic: p.cnic || '', dob: p.dob || '', gender: p.gender || '', qualification: p.qualification || '',
-        joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || ''
-    };
-    sheet.appendRow(recordToRow(headers, record));
-    const safe = Object.assign({}, record); delete safe.passwordHash;
-    return safe;
+    const record = { id, name:String(p.name).trim(), email, loginId,
+        passwordHash:hashPassword(String(p.password),id), apiKey:Utilities.getUuid(),
+        subject:p.subject||'', assignedClass:p.assignedClass||'', assignedSection:p.assignedSection||'',
+        contact:p.contact||'', status:'Active', createdAt:new Date().toISOString(),
+        cnic:p.cnic||'', dob:p.dob||'', gender:p.gender||'', qualification:p.qualification||'',
+        joiningDate:p.joiningDate||'', address:p.address||'', emergencyContact:p.emergencyContact||'' };
+    sheet.appendRow(recordToRow(headers,record));
+    const safe=Object.assign({},record); delete safe.passwordHash; delete safe.apiKey; return safe;
 }
-
-function teacherLogin(schoolId, email, password) {
-    if (!schoolId || !email || !password) throw new Error('School ID, email, and password are required.');
-    const registry = getRegistrySheet();
-    const schoolMatch = findSchoolRow(registry, r => r.schoolId === schoolId);
-    if (!schoolMatch) throw new Error('School not found. Check your School ID.');
-    if (schoolMatch.obj.status !== 'Active') throw new Error('This school\'s account is currently blocked.');
-
-    const ss = SpreadsheetApp.openById(schoolMatch.obj.sheetId);
-    const sheet = ss.getSheetByName(COLLECTIONS.teachers.tab);
-    const data = sheet.getDataRange().getValues();
-    const headers = data[0];
-    for (let i = 1; i < data.length; i++) {
-        const row = rowToRecord(headers, data[i]);
-        if (String(row.email).toLowerCase() === email.toLowerCase()) {
-            if (row.status !== 'Active') throw new Error('This teacher account has been disabled by the school.');
-            if (hashPassword(password, row.id) !== row.passwordHash) throw new Error('Incorrect password.');
-            return {
-                schoolId, teacherId: row.id, apiKey: row.apiKey, name: row.name,
-                subject: row.subject, assignedClass: row.assignedClass, assignedSection: row.assignedSection || '',
-                schoolName: schoolMatch.obj.name, schoolLogo: schoolMatch.obj.logo
-            };
+function teacherLogin(schoolId, identifier, password) {
+    if (!schoolId || !identifier || !password) throw new Error('School ID, Teacher ID/email and password are required.');
+    const registry=getRegistrySheet();
+    const schoolMatch=findSchoolRow(registry,r=>r.schoolId===schoolId);
+    if(!schoolMatch || schoolMatch.obj.status!=='Active') throw new Error('School not found or inactive.');
+    const ss=SpreadsheetApp.openById(schoolMatch.obj.sheetId);
+    const {sheet,headers}=getCollectionSheet({role:'school',ss},'teachers');
+    const data=sheet.getDataRange().getValues();
+    for(let i=1;i<data.length;i++) {
+        const row=rowToRecord(headers,data[i]);
+        if([row.loginId,row.email].some(v=>v && teacherLoginIdentifier(v)===teacherLoginIdentifier(identifier))) {
+            if(row.status!=='Active') throw new Error('Teacher account disabled.');
+            if(hashPassword(String(password),row.id)!==row.passwordHash) throw new Error('Incorrect password.');
+            return {schoolId,teacherId:row.id,apiKey:row.apiKey,name:row.name,loginId:row.loginId||row.email,
+                subject:row.subject,assignedClass:row.assignedClass,assignedSection:row.assignedSection||'',
+                schoolName:schoolMatch.obj.name,schoolLogo:schoolMatch.obj.logo};
         }
     }
-    throw new Error('No teacher account found with this email at this school.');
+    throw new Error('Teacher ID/email not found at this school.');
 }
-
 /** Every teacher-authenticated call goes through here. Returns the school context + the teacher's own row. */
 function authorizeTeacher(schoolId, teacherId, apiKey) {
     if (!schoolId || !teacherId || !apiKey) throw new Error('Missing session — please log in again.');
@@ -745,6 +741,29 @@ function updateRecord(ctx, collection, id, patch) {
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
             const existing = rowToRecord(headers, data[i]);
+            if (ctx.role === 'school' && collection === 'teachers') {
+                patch = Object.assign({}, patch);
+                delete patch.apiKey; delete patch.passwordHash;
+                if (Object.prototype.hasOwnProperty.call(patch,'password')) {
+                    if (patch.password) {
+                        if (String(patch.password).length < 8) throw new Error('New password must have at least 8 characters.');
+                        patch._passwordHash = hashPassword(String(patch.password), existing.id);
+                        patch.apiKey = Utilities.getUuid(); // revoke existing teacher sessions
+                    }
+                    delete patch.password;
+                }
+                if (Object.prototype.hasOwnProperty.call(patch,'loginId')) {
+                    patch.loginId = validateTeacherLoginId(patch.loginId);
+                    if (teacherLoginIdInUse(sheet,headers,patch.loginId,id)) throw new Error('Teacher ID already in use.');
+                }
+                if (Object.prototype.hasOwnProperty.call(patch,'email')) {
+                    patch.email = String(patch.email||'').trim().toLowerCase();
+                    if (patch.email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(patch.email) || teacherLoginIdInUse(sheet,headers,patch.email,id))) throw new Error('Invalid or duplicate email.');
+                }
+                delete patch.id; delete patch.passwordHash;
+                if (patch._passwordHash) { patch.passwordHash=patch._passwordHash; delete patch._passwordHash; }
+
+            }
             if (ctx.role === 'teacher' && collection === 'students' && !sameClass(existing.class, ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }

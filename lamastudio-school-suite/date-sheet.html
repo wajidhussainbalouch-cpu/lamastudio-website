@@ -677,12 +677,13 @@
                     }
                 }
             } catch (apiErr) {
-                syncError = apiErr; console.warn('Google Sheets API sync warning:', apiErr);
+                syncError = apiErr; console.error('Google Sheets API sync failed:', apiErr); window.lastDateSheetServerError = apiErr.message;
             }
 
             if (savedRemote && typeof savedRemote === 'object') record.id = savedRemote.id || savedRemote.record?.id || record.id;
             if (isPublished && (syncError || !savedRemote)) {
-                alert('The date sheet was NOT published to the server. Check LamaAPI connection and login. It will be saved locally only.');
+                record.isPublished = false; record.published = false; record.status = 'draft';
+                alert('Date sheet NOT published to Google Sheets. Server error: ' + (window.lastDateSheetServerError || 'No server confirmation') + '. Local backup only.');
             }
             if (editId) {
                 const idx = dateSheetEntries.findIndex(item => String(item.id || item._id) === String(editId));

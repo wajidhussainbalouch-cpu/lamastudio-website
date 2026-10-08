@@ -26,7 +26,7 @@ const LamaAPI = (() => {
     localStorage.removeItem(key(target));
     if (activeRole() === target) sessionStorage.removeItem(activeKey);
   }
-  function isLoggedIn(role) { return !!getSession(role || 'school'); }
+  function isLoggedIn(role) { return !!getSession(role); }
   function authFieldsFor(session) {
     if (!session) return {};
     if (session.role === 'teacher') return { role:'teacher', schoolId:session.schoolId, teacherId:session.teacherId || session.id, apiKey:session.apiKey };

@@ -163,6 +163,7 @@ body:before{
             <div class="min-w-0">
                 <p class="text-[9px] uppercase tracking-[.2em] font-black text-cyan-400">Lama School</p>
                 <p id="navSchoolName" class="font-black text-sm truncate max-w-[190px]">School Board</p>
+                <p id="navSchoolId" class="text-[10px] text-cyan-400 font-bold"></p>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -185,6 +186,7 @@ body:before{
                         </div>
                         <h1 id="headerSchoolName" class="school-title text-3xl sm:text-5xl font-black tracking-tight gradient-text">School Name</h1>
                         <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-200/85 mt-2">School information</p>
+                        <p class="text-xs text-cyan-200 mt-2 font-bold">School ID: <span id="schoolIdDisplay">Loading…</span> <button type="button" onclick="copySchoolId()" class="ml-2 underline">Copy</button></p>
                     </div>
                 </div>
             </div>
@@ -483,6 +485,57 @@ function publishedOnly(value){
     return Array.isArray(value) ? value.filter(isPublished) : [];
 }
 
+// Publication and school scope are mandatory for public records.
+function sameSchool(item, id) {
+    if (!id) return false;
+    const recordId = item.schoolId || item.school_id || item.school?.id;
+    return !!recordId && String(recordId) === String(id);
+}
+async function resolveSchool(data) {
+    let active = {};
+    try { if (typeof LamaAPI?.getActiveSchool === 'function') active = await LamaAPI.getActiveSchool() || {}; } catch (_) {}
+    const id = active.id || active.schoolId || data.schoolId || data.school?.id || '';
+    return { id:String(id), name:active.name || active.schoolName || data.schoolName, logo:active.logo || active.schoolLogo || data.logo };
+}
+async function loadPublishedCollection(names, summary, schoolId) {
+    if (!schoolId) return [];
+    for (const name of names) {
+        try {
+            const rows = await LamaAPI.list(name);
+            if (Array.isArray(rows) && rows.length) {
+                const scoped = rows.filter(x => sameSchool(x,schoolId) && isPublished(x));
+                if (scoped.length) return scoped;
+            }
+        } catch (e) { console.warn(`Collection ${name} unavailable`, e); }
+    }
+    return Array.isArray(summary) ? summary.filter(x => sameSchool(x,schoolId) && isPublished(x)) : [];
+}
+function normalizeExamRows(records) {
+    const rows = [];
+    for (const exam of records) {
+        const title = exam.examTitle || exam.title || exam.name || 'Examination';
+        const base = {title, time:exam.time || exam.startTime || '', notes:exam.notes || exam.instructions || ''};
+        const dates = Array.isArray(exam.rows) ? exam.rows : Array.isArray(exam.schedule) ? exam.schedule : Array.isArray(exam.entries) ? exam.entries : Array.isArray(exam.dateSheet) ? exam.dateSheet : null;
+        if (dates) {
+            for (const row of dates) {
+                const subjects = row.subjects && typeof row.subjects === 'object' && !Array.isArray(row.subjects)
+                    ? Object.entries(row.subjects).filter(([,v])=>v).map(([grade,subject])=>({grade,subject}))
+                    : [{grade:row.class || row.grade || exam.class || '-',subject:row.subject || row.paper || '-'}];
+                rows.push({...base,date:row.date || exam.date || '',day:row.day || '',time:row.time || base.time,entries:subjects});
+            }
+        } else {
+            const entries = exam.subjects && typeof exam.subjects === 'object' && !Array.isArray(exam.subjects)
+                ? Object.entries(exam.subjects).filter(([,v])=>v).map(([grade,subject])=>({grade,subject}))
+                : [{grade:exam.class || exam.grade || '-',subject:exam.subject || exam.paper || '-'}];
+            rows.push({...base,date:exam.date || '',day:exam.day || '',entries});
+        }
+    }
+    return rows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+}
+function copySchoolId() {
+    if (window.currentSchoolId && navigator.clipboard) navigator.clipboard.writeText(window.currentSchoolId);
+}
+
 async function render(){
     let data = {};
     try{
@@ -495,46 +548,15 @@ async function render(){
         console.warn('Could not load getMainDashboardData: ' + e.message);
     }
 
-    // 1. Fetch Tests Collection (from API or local storage fallbacks)
-    let rawTests = data.upcomingTests;
-    if (!rawTests || rawTests.length === 0) {
-        try {
-            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
-                rawTests = await LamaAPI.list('tests');
-            }
-        } catch(e) {}
-        if (!rawTests || rawTests.length === 0) {
-            try { 
-                rawTests = JSON.parse(
-                    localStorage.getItem('lama_tests') || 
-                    localStorage.getItem('tests') || 
-                    localStorage.getItem('lama_main_dashboard_tests') || 
-                    '[]'
-                ); 
-            } catch(e) {}
-        }
-    }
-
-    // 2. Fetch Exams / Date Sheets Collection
-    let rawExams = data.upcomingExams;
-    if (!rawExams || rawExams.length === 0) {
-        try {
-            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
-                rawExams = await LamaAPI.list('exams');
-            }
-        } catch(e) {}
-        if (!rawExams || rawExams.length === 0) {
-            try { 
-                rawExams = JSON.parse(
-                    localStorage.getItem('lama_exams') || 
-                    localStorage.getItem('exams') || 
-                    localStorage.getItem('lama_matrix_datesheet_records') || 
-                    localStorage.getItem('lama_main_dashboard_exams') ||
-                    '[]'
-                ); 
-            } catch(e) {}
-        }
-    }
+    // Read the same administrator-managed collections; never substitute unrelated
+    // browser-local data belonging to a different school or unpublished drafts.
+    const school = await resolveSchool(data);
+    const schoolId = school.id;
+    document.getElementById('schoolIdDisplay').textContent = schoolId || 'Not configured';
+    document.getElementById('navSchoolId').textContent = schoolId ? `ID: ${schoolId}` : '';
+    window.currentSchoolId = schoolId;
+    const rawTests = await loadPublishedCollection(['tests'], data.upcomingTests, schoolId);
+    const rawExams = await loadPublishedCollection(['dateSheets','date-sheets','date_sheets','exams'], data.upcomingExams, schoolId);
 
     // 3. Fetch Notices & Activities
     let rawNotices = data.recentNotifications;
@@ -553,7 +575,7 @@ async function render(){
         try { rawActivities = JSON.parse(localStorage.getItem('lama_activities') || '[]'); } catch(e) {}
     }
 
-    const schoolName = data.schoolName || localStorage.getItem('lama_school_name') || localStorage.getItem('schoolName') || 'Lama School';
+    const schoolName = school.name || data.schoolName || 'Lama School';
 
     document.getElementById('pageTitle').innerText = `${schoolName} | School Board`;
     const navNameEl = document.getElementById('navSchoolName');
@@ -565,8 +587,8 @@ async function render(){
 
     const logoBox = document.getElementById('schoolLogoBox');
     if(logoBox) {
-        if(data.logo || localStorage.getItem('lama_school_logo')) {
-            logoBox.innerHTML = `<img src="${esc(data.logo || localStorage.getItem('lama_school_logo'))}" alt="Logo" class="w-full h-full object-cover">`;
+        if(school.logo || data.logo) {
+            logoBox.innerHTML = `<img src="${esc(school.logo || data.logo)}" alt="Logo" class="w-full h-full object-cover">`;
         } else if(typeof LamaAPI !== 'undefined' && typeof LamaAPI.deriveShortCode === 'function') {
             logoBox.innerText = LamaAPI.deriveShortCode(schoolName);
         } else {
@@ -578,7 +600,7 @@ async function render(){
     const activities = (rawActivities || []).filter(a => a && (isPublished(a) || a.title));
     
     // Display all saved exams and tests immediately without strict publication filters
-    const exams = rawExams || [];
+    const exams = normalizeExamRows(rawExams || []);
     const tests = rawTests || [];
     const resources = publishedOnly(data.resources || []);
 
@@ -616,65 +638,31 @@ async function render(){
         `).join('');
     }
 
-    // Render Exams & Date Sheets Matrix
-    const examHtml = exams.map(e => {
-        const title = e.examTitle || e.title || 'Examination';
-        const dateStr = e.date ? `📅 ${esc(e.date)}` : '';
-        const dayStr = e.day ? `(${esc(e.day)})` : '';
-        const timeStr = e.time ? `⏱️ ${esc(e.time)}` : '';
-        
-        let gradeSubjText = '';
-        if (e.subjects && typeof e.subjects === 'object') {
-            const pairs = Object.entries(e.subjects).filter(([g, sub]) => sub);
-            gradeSubjText = pairs.map(([g, sub]) => `<span class="inline-block bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-[10px] mr-1 mb-1"><b>${esc(g)}:</b> ${esc(sub)}</span>`).join('');
-        } else {
-            gradeSubjText = `Class ${esc(e.class || '')} ${e.subject ? ' • ' + esc(e.subject) : ''}`;
-        }
+    // Full public date sheet: one row per exam date, including every class subject.
+    const examHtml = exams.map(e => `
+      <article class="content-item rounded-xl px-3.5 py-3 text-xs space-y-2">
+        <div class="flex flex-wrap justify-between gap-2"><strong class="text-cyan-300">${esc(e.title)}</strong><strong>${esc(formatDate(e.date))} ${esc(e.day)}</strong></div>
+        ${e.time ? `<p class="text-cyan-400">⏱ ${esc(e.time)}</p>` : ''}
+        <div class="flex flex-wrap gap-2">${e.entries.map(x=>`<span class="px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20"><b>Class ${esc(x.grade)}:</b> ${esc(x.subject)}</span>`).join('')}</div>
+        ${e.notes ? `<p class="text-[color:var(--muted)]">${esc(e.notes)}</p>` : ''}
+      </article>`).join('') || '<p class="text-xs text-[color:var(--muted)]">No published date sheet for this school.</p>';
+    document.getElementById('examsList').innerHTML = examHtml;
+    document.getElementById('modalExamsList').innerHTML = examHtml;
 
-        return `
-            <article class="content-item rounded-xl px-3.5 py-3 text-xs space-y-1.5">
-                <div class="flex justify-between items-start">
-                    <p class="font-black text-cyan-300">${esc(title)}</p>
-                    <span class="text-[10px] text-slate-400 font-semibold">${dateStr} ${dayStr}</span>
-                </div>
-                ${timeStr ? `<p class="text-[10px] text-cyan-400 font-bold">${timeStr}</p>` : ''}
-                <div class="mt-1 pt-1 border-t border-white/10 flex flex-wrap gap-1">
-                    ${gradeSubjText}
-                </div>
-            </article>
-        `;
-    }).join('') || '<p class="text-xs text-[color:var(--muted)]">No date sheets published yet.</p>';
-
-    if(document.getElementById('examsList')) document.getElementById('examsList').innerHTML = examHtml;
-    if(document.getElementById('modalExamsList')) document.getElementById('modalExamsList').innerHTML = examHtml;
-
-    // Render Tests & Quizzes
     const testHtml = tests.map(t => {
-        const subjectName = t.subject || t.title || 'Online Test';
-        const testType = t.type || t.testType || 'Quiz / Test';
-        const className = t.class || t.grade || 'All Classes';
-        const dateStr = t.date ? `📅 ${esc(formatDate(t.date))}` : '';
-        const marksStr = t.totalMarks ? `🏆 Marks: ${esc(t.totalMarks)}` : '';
-        const topicsStr = t.topics || t.description || '';
-
-        return `
-            <article class="content-item rounded-xl px-3.5 py-3 text-xs space-y-1">
-                <div class="flex justify-between items-start">
-                    <p class="font-black text-amber-300">${esc(subjectName)}</p>
-                    <span class="text-[10px] font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">${esc(testType)}</span>
-                </div>
-                <p class="text-[color:var(--muted)]">
-                    <b>Class:</b> ${esc(className)} 
-                    ${dateStr ? ` • ${dateStr}` : ''} 
-                    ${marksStr ? ` • ${marksStr}` : ''}
-                </p>
-                ${topicsStr ? `<p class="text-[11px] text-slate-300 bg-black/20 p-2 rounded-lg mt-1"><b>Topics/Notes:</b> ${esc(topicsStr)}</p>` : ''}
-            </article>
-        `;
-    }).join('') || '<p class="text-xs text-[color:var(--muted)]">No online tests published yet.</p>';
-
-    if(document.getElementById('testsList')) document.getElementById('testsList').innerHTML = testHtml;
-    if(document.getElementById('modalTestsList')) document.getElementById('modalTestsList').innerHTML = testHtml;
+      const title = t.title || t.subject || t.name || 'Online Test';
+      const grade = t.class || t.grade || t.className || t.targetClass || 'All Classes';
+      const link = safeUrl(t.link || t.url || t.testUrl || t.testLink);
+      return `<article class="content-item rounded-xl px-3.5 py-3 text-xs space-y-2">
+        <div class="flex flex-wrap justify-between gap-2"><strong class="text-amber-300">${esc(title)}</strong><span>${esc(t.type || t.testType || 'Test')}</span></div>
+        <p>Class: ${esc(grade)} ${t.subject ? ` • Subject: ${esc(t.subject)}` : ''} ${t.date ? ` • ${esc(formatDate(t.date))}` : ''}</p>
+        ${t.totalMarks != null ? `<p>Maximum marks: ${esc(t.totalMarks)}</p>` : ''}
+        ${t.topics || t.description ? `<p class="text-[color:var(--muted)]">${esc(t.topics || t.description)}</p>` : ''}
+        ${link !== '#' ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="inline-block rounded-lg bg-amber-600 px-3 py-2 font-bold text-white">Open Test ↗</a>` : ''}
+      </article>`;
+    }).join('') || '<p class="text-xs text-[color:var(--muted)]">No published tests for this school.</p>';
+    document.getElementById('testsList').innerHTML = testHtml;
+    document.getElementById('modalTestsList').innerHTML = testHtml;
 
     // Render Resources
     const preview = resources.slice(0, 6);

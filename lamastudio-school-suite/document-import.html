@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lama School Suite | Verified Import</title>
+<script src="https://cdn.tailwindcss.com"></script><script src="js/api-client.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.9.1/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+:root{color-scheme:dark}body{background:#0b1220;color:#f1f5f9;font:16px/1.55 system-ui,sans-serif}
+main{max-width:1080px;margin:auto;padding:16px}.panel{background:#17243a;border:1px solid #415473;border-radius:17px;padding:17px;margin:14px 0}
+label{display:block;font-size:15px;font-weight:650;color:#e2e8f0;margin:8px 0 5px}
+input,select,textarea{width:100%;min-height:45px;padding:10px;background:#0c1728;border:1px solid #7285a2;border-radius:10px;color:#fff;font-size:16px}
+input:focus,select:focus{outline:2px solid #67e8f9}button,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:10px 16px;border-radius:10px;background:#2563eb;color:#fff;font-weight:700}
+button:disabled{opacity:.5;cursor:not-allowed}.muted{color:#cbd5e1}.secondary{background:#334155}.success{color:#86efac}.error{color:#fda4af}
+.rowcard{border:1px solid #455a78;border-radius:13px;padding:14px;margin-top:12px;background:#101e32}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px 14px}
+#previewImage{max-height:280px;max-width:100%;object-fit:contain;border-radius:12px}
+.notice{padding:12px;border-radius:10px;background:#0c1728;border:1px solid #3b526d;white-space:pre-wrap}
+@media(max-width:600px){h1{font-size:26px!important}.panel{padding:13px}button,.btn{width:100%}}
+</style></head>
+<body><main>
+<header><h1 class="text-3xl font-bold">Document Import & Verification</h1>
+<p class="muted">Upload → Read → Correct → Save. Nothing is saved automatically.</p></header>
+<section class="panel">
+<label for="kind">Import for</label><select id="kind"><option value="students">Students</option><option value="teachers">Teachers</option></select>
+<a id="manageLink" class="btn mt-3" href="manage-students.html">Open Student Management</a>
+<label for="file" class="mt-4">Choose image, PDF, Word or spreadsheet</label>
+<input id="file" type="file" accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,.pdf,.docx,.doc,.csv,.xls,.xlsx,.xlsm">
+<p id="selected" class="muted mt-2" aria-live="polite">No document selected.</p>
+<div id="imageWrap" class="mt-3 hidden"><img id="previewImage" alt="Selected document preview"></div>
+<button id="readBtn" class="mt-3" type="button">Read selected file</button>
+<p class="muted mt-2">A portrait photo alone does not contain a teacher's employment details. Enter missing information manually. OCR can make mistakes.</p>
+</section>
+<section class="panel"><h2 class="text-xl font-bold">Import status</h2>
+<div id="status" class="notice mt-3" role="status" aria-live="polite">Waiting for file selection.</div>
+<div id="progress" class="muted mt-2"></div></section>
+<section class="panel"><div class="flex flex-wrap items-center justify-between gap-3"><h2 class="text-xl font-bold">Preview and correct records</h2><button id="addRow" class="secondary" type="button">+ Add record manually</button></div>
+<p class="muted mt-2">Review each field before saving. Missing enrollment numbers are allowed for students. Teachers require a unique login ID and an initial password of at least 8 characters.</p>
+<div id="rows"></div>
+<div class="grid md:grid-cols-2 gap-3 mt-4"><button id="csvBtn" class="secondary" type="button">Download reviewed CSV</button><button id="saveBtn" type="button" disabled>Save verified records</button></div>
+<p class="muted mt-3">Existing records are not overwritten. Import checks for duplicate student enrollment numbers and teacher login IDs in the current school.</p>
+</section></main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const F={students:['serialNo','enrlNo','name','fatherGuardian','class','section','gender','dob','contact','address'],
+teachers:['loginId','name','email','assignedClass','assignedSection','subject','designation','contact','qualification','password']};
+const LABEL={serialNo:'Serial No',enrlNo:'Enrollment No',name:'Full name',fatherGuardian:'Father / Guardian',class:'Class',section:'Section',gender:'Gender',dob:'Date of birth',contact:'Contact number',address:'Address',loginId:'Teacher ID / Login',email:'Email',assignedClass:'Assigned class',assignedSection:'Assigned section',subject:'Subject',designation:'Designation',qualification:'Qualification',password:'Initial password'};
+const ALIAS={serialNo:['serialno','srno','serial'],enrlNo:['enrollmentno','enrlno','admissionno','studentid','rollno'],name:['fullname','studentname','teachername','employeename','name'],fatherGuardian:['fathername','guardian','father'],class:['class','grade'],section:['section'],gender:['gender','sex'],dob:['dateofbirth','birthdate','dob'],contact:['contactno','contact','mobile','phone'],address:['address'],loginId:['teacherid','employeeid','staffid','loginid'],email:['email'],assignedClass:['assignedclass','class'],assignedSection:['assignedsection','section'],subject:['subject'],designation:['designation','position'],qualification:['qualification'],password:['password']};
+const norm=s=>String(s??'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let rows=[],kind='students',objectUrl=null,busy=false;
+function status(message,error=false){$('status').textContent=message;$('status').className='notice mt-3 '+(error?'error':'');}
+function setKind(){kind=$('kind').value;rows=[];render();$('manageLink').href=kind==='teachers'?'manage-teachers.html':'manage-students.html';$('manageLink').textContent=kind==='teachers'?'Open Teacher Management':'Open Student Management';status('Selected '+kind+'. Choose a document, or add a record manually.');}
+function fieldFor(key){return F[kind].find(f=>[norm(f),...(ALIAS[f]||[])].includes(norm(key)))||null;}
+function fromMatrix(matrix){matrix=matrix.filter(row=>row.some(x=>String(x??'').trim()));if(!matrix.length)return[];
+const heads=matrix[0].map(x=>fieldFor(x));const header=heads.filter(Boolean).length>=2;return matrix.slice(header?1:0).map(row=>{const r={};F[kind].forEach((f,i)=>{const j=header?heads.indexOf(f):i;r[f]=j<0?'':String(row[j]??'').trim()});return r});}
+function fromText(text){const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);if(!lines.length)return[];
+const record={};for(const line of lines){const match=line.match(/^([^:：]{2,35})\s*[:：]\s*(.+)$/);if(match){const f=fieldFor(match[1]);if(f)record[f]=match[2].trim();}}
+if(Object.keys(record).length)return[record];
+const delimiter=lines.some(x=>x.includes('\t'))?'\t':lines.some(x=>x.includes('|'))?'|':lines.some(x=>x.includes(','))?',':null;
+if(delimiter)return fromMatrix(lines.map(x=>x.split(delimiter).map(y=>y.trim())));
+return [{name:'',notes:lines.join(' ').slice(0,500)}];}
+function render(){const container=$('rows');container.replaceChildren();rows.forEach((record,index)=>{const card=document.createElement('section');card.className='rowcard';
+const heading=document.createElement('div');heading.className='flex items-center justify-between gap-3 mb-2';const title=document.createElement('strong');title.textContent='Record '+(index+1);const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Remove';del.onclick=()=>{rows.splice(index,1);render()};heading.append(title,del);card.append(heading);
+const fields=document.createElement('div');fields.className='fields';F[kind].forEach(f=>{const box=document.createElement('div');const label=document.createElement('label');const id='field-'+index+'-'+f;label.htmlFor=id;label.textContent=LABEL[f]||f;const input=document.createElement('input');input.id=id;input.value=record[f]||'';input.type=f==='password'?'password':'text';input.autocomplete='off';input.oninput=()=>record[f]=input.value;box.append(label,input);if(f==='password'){const show=document.createElement('button');show.type='button';show.className='secondary mt-2';show.textContent='Show / Hide';show.onclick=()=>input.type=input.type==='password'?'text':'password';box.append(show)}fields.append(box)});card.append(fields);if(record.notes){const p=document.createElement('p');p.className='muted mt-2';p.textContent='Unmatched extracted text: '+record.notes;card.append(p)}container.append(card)});
+$('saveBtn').disabled=!rows.length||busy;$('csvBtn').disabled=!rows.length;}
+$('kind').onchange=setKind;
+$('file').onchange=()=>{const file=$('file').files[0];rows=[];render();if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;$('imageWrap').classList.add('hidden');if(!file){$('selected').textContent='No document selected.';return}
+$('selected').textContent='Selected: '+file.name+' ('+Math.round(file.size/1024)+' KB). Not read or saved yet.';
+if(file.type.startsWith('image/')){objectUrl=URL.createObjectURL(file);$('previewImage').src=objectUrl;$('imageWrap').classList.remove('hidden')}
+status('File selected. Tap “Read selected file” to extract information.');};
+$('readBtn').onclick=async()=>{const file=$('file').files[0];if(!file){status('Choose a document first.',true);return}if(busy)return;busy=true;$('readBtn').disabled=true;$('progress').textContent='';rows=[];render();const ext=file.name.split('.').pop().toLowerCase();
+try{status('Reading '+file.name+'…');let extracted=[];
+if(['xlsx','xls','xlsm','csv'].includes(ext)){if(!window.XLSX)throw Error('Spreadsheet reader did not load. Check internet connection.');const wb=XLSX.read(await file.arrayBuffer(),{type:'array',raw:false});for(const sheetName of wb.SheetNames){const matrix=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false});extracted.push(...fromMatrix(matrix))}}
+else if(ext==='docx'){if(!window.mammoth)throw Error('Word reader did not load.');const r=await mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});extracted=fromText(r.value)}
+else if(ext==='doc')throw Error('Older .doc files must be converted to .docx first.');
+else if(ext==='pdf'){if(!window.pdfjsLib)throw Error('PDF reader did not load.');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const pdf=await pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;let text='';for(let i=1;i<=Math.min(pdf.numPages,30);i++){const page=await pdf.getPage(i);const c=await page.getTextContent();text+=c.items.map(item=>item.str).join(' ')+'\n'}if(!text.trim())throw Error('Scanned PDF has no selectable text. Export pages as images for OCR.');extracted=fromText(text)}
+else if(['jpg','jpeg','png','webp','tif','tiff'].includes(ext)){if(!window.Tesseract)throw Error('OCR library did not load. Check internet connection.');const result=await Tesseract.recognize(file,'eng',{logger:m=>{if(m.progress!=null)$('progress').textContent=(m.status||'Reading')+' '+Math.round(m.progress*100)+'%'}});extracted=fromText(result.data.text);if(!result.data.text.trim())extracted=[{}]}
+else throw Error('Unsupported file type.');
+rows=extracted;render();status('Read complete: '+rows.length+' draft record(s). Nothing has been saved. Check every field, especially image/PDF results.');}
+catch(e){status('Could not read file: '+e.message+' You can use “Add record manually” to enter the details.',true)}
+finally{busy=false;$('readBtn').disabled=false;render()}};
+$('addRow').onclick=()=>{rows.push({});render();status('Blank '+kind.slice(0,-1)+' record added to preview. Fill the fields, then save.')};
+$('csvBtn').onclick=()=>{if(!rows.length)return;const f=F[kind],quote=x=>'"'+String(x??'').replace(/"/g,'""')+'"';const csv=[f.join(','),...rows.map(r=>f.map(k=>quote(k==='password'?'':r[k])).join(','))].join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff',csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=kind+'-reviewed.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);status('Reviewed CSV downloaded. Passwords excluded from export.')};
+$('saveBtn').onclick=async()=>{if(busy||!rows.length)return;const missing=rows.findIndex(r=>!String(r.name||'').trim()||(kind==='teachers'&&(!String(r.loginId||r.email||'').trim()||String(r.password||'').length<8)));if(missing>=0){status('Record '+(missing+1)+' needs a name'+(kind==='teachers'?', login ID and password of at least 8 characters':'')+'.',true);return}
+if(!confirm('Save '+rows.length+' verified '+kind+' records to the currently signed-in school?'))return;busy=true;render();let saved=0,errors=[];try{const existing=await LamaAPI.list(kind);const used=new Set((existing||[]).map(r=>norm(kind==='students'?r.enrlNo:(r.loginId||r.email))).filter(Boolean));for(let i=0;i<rows.length;i++){const record=Object.fromEntries(F[kind].map(f=>[f,String(rows[i][f]??'').trim()]));const key=norm(kind==='students'?record.enrlNo:(record.loginId||record.email));try{if(key&&used.has(key))throw Error('Duplicate ID');if(kind==='teachers')await LamaAPI.addTeacher(record);else await LamaAPI.add('students',record);saved++;if(key)used.add(key)}catch(e){errors.push('Record '+(i+1)+': '+e.message)}}status('Saved '+saved+' record(s). '+errors.length+' failed. '+errors.slice(0,10).join(' | '),!!errors.length)}
+catch(e){status('Save failed: '+e.message,true)}finally{busy=false;render()}};
+if(LamaAPI.requireLogin('school','login.html')){const requested=new URLSearchParams(location.search).get('kind');if(requested==='teachers'||requested==='students')$('kind').value=requested;setKind()}
+</script></body></html>

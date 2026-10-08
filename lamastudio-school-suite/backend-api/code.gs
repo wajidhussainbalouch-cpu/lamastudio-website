@@ -69,7 +69,7 @@ const COLLECTIONS = {
                   'admissionNo', 'academicSession', 'admissionTestMarks', 'interviewMarks', 'admissionRemarks', 'address',
                   'admissionDate', 'schoolAdmissionNo', 'emergencyCampaign',
                   'guardianName', 'guardianCnic', 'guardianCell', 'guardianRelation', 'guardianProfession',
-                  'guardianAddress', 'distanceFromSchool', 'canWrite', 'canRead', 'canCount']
+                  'guardianAddress', 'distanceFromSchool', 'canWrite', 'canRead', 'canCount', 'serialNo', 'studentStatus', 'updatedAt']
     },
     teachers: {
         tab: 'Teachers',
@@ -499,7 +499,13 @@ function studentLogin(schoolId, enrlNo, password) {
     for (let i = 1; i < data.length; i++) {
         const row = rowToRecord(headers, data[i]);
         if (String(row.enrlNo) === String(enrlNo)) {
-            if (String(row.password) !== String(password)) throw new Error('Incorrect password.');
+            const suppliedHash = hashPassword(String(password), 'STUDENT:' + row.id);
+            const storedPassword = String(row.password || '');
+            if (storedPassword !== suppliedHash && storedPassword !== String(password)) throw new Error('Incorrect password.');
+            if (storedPassword === String(password)) {
+                const passCol = headers.indexOf('password');
+                if (passCol >= 0) sheet.getRange(i + 1, passCol + 1).setValue(suppliedHash);
+            }
             return {
                 schoolId, studentId: row.id, apiKey: row.apiKey, name: row.name, class: row.class, section: row.section || '',
                 schoolName: schoolMatch.obj.name, schoolLogo: schoolMatch.obj.logo
@@ -642,6 +648,17 @@ function getCollectionSheet(ctx, collection) {
     return { sheet, headers: actualHeaders };
 }
 
+function safeRecord(collection, record) {
+    const copy = Object.assign({}, record);
+    if (collection === 'students') { delete copy.password; delete copy.apiKey; }
+    if (collection === 'teachers') { delete copy.passwordHash; delete copy.apiKey; }
+    return copy;
+}
+function publishedRecord(record) {
+    return String(record.isPublished).toLowerCase() === 'true' ||
+           String(record.published).toLowerCase() === 'true' ||
+           String(record.status).toLowerCase() === 'published';
+}
 function listRecords(ctx, collection) {
     checkPermission(ctx, 'list', collection);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
@@ -664,7 +681,10 @@ function listRecords(ctx, collection) {
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests' || collection === 'timetable')) {
         records = records.filter(r => collection === 'datesheet' ? recordAppliesToClass(r, ctx.student.class) : (recordAppliesToClass(r, ctx.student.class) && sameSection(r,ctx.student.section)));
     }
-    return records;
+    if (ctx.role === 'student' && ['datesheet','tests','notifications','activities','resources'].indexOf(collection) !== -1) {
+        records = records.filter(publishedRecord);
+    }
+    return records.map(r => safeRecord(collection, r));
 }
 
 function getRecord(ctx, collection, id) {
@@ -682,7 +702,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
-            return r;
+            return safeRecord(collection, r);
         }
     }
     return null;
@@ -703,12 +723,18 @@ function addRecord(ctx, collection, record) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
+    if (collection === 'students' && String(record.enrlNo || '').trim()) {
+        const rows = sheet.getDataRange().getValues();
+        const idx = headers.indexOf('enrlNo');
+        if (idx >= 0 && rows.slice(1).some(r => String(r[idx] || '').trim() === String(record.enrlNo).trim()))
+            throw new Error('Enrollment number already exists in this school.');
+    }
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
     if (collection === 'students' && !full.apiKey) full.apiKey = Utilities.getUuid();
-    if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
+    if (collection === 'students') full.password = hashPassword(String(full.password || full.enrlNo || id), 'STUDENT:' + id);
     sheet.appendRow(recordToRow(headers, full));
-    return full;
+    return safeRecord(collection, full);
 }
 
 function updateRecord(ctx, collection, id, patch) {
@@ -746,9 +772,13 @@ function updateRecord(ctx, collection, id, patch) {
                     patch = Object.assign({},patch,{reviewedBy:'School Admin',updatedAt:new Date().toISOString()});
                 }
             }
+            if (collection === 'students' && ctx.role === 'school' && Object.prototype.hasOwnProperty.call(patch,'password')) {
+                if (!patch.password) delete patch.password;
+                else if (String(patch.password) !== String(existing.password)) patch.password = hashPassword(String(patch.password), 'STUDENT:' + id);
+            }
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
-            return updated;
+            return safeRecord(collection, updated);
         }
     }
     throw new Error('Record not found: ' + id);
@@ -874,11 +904,11 @@ function getMainDashboardData(params) {
 
     return {
         schoolId: params.schoolId, schoolName, logo, coverPhoto, address, level, type,
-        recentNotifications: notifications.slice(0, 5),
-        recentActivities: activities.slice(0, 5),
+        recentNotifications: (ctx.role === 'student' ? notifications.filter(publishedRecord) : notifications).slice(0, 5),
+        recentActivities: (ctx.role === 'student' ? activities.filter(publishedRecord) : activities).slice(0, 5),
         upcomingExams: ctx.role === 'student' ? upcomingExams.filter(r => recordAppliesToClass(r, ctx.student.class)) : upcomingExams,
         upcomingTests: ctx.role === 'student' ? upcomingTests.filter(r => recordAppliesToClass(r, ctx.student.class)) : upcomingTests,
-        resources
+        resources: ctx.role === 'student' ? resources.filter(publishedRecord) : resources
     };
 }
 
@@ -992,7 +1022,7 @@ function getDashboardStats(schoolId, apiKey) {
     const actSheet = ss.getSheetByName(COLLECTIONS.activities.tab) || ss.insertSheet(COLLECTIONS.activities.tab);
     if (actSheet.getLastRow() === 0) { actSheet.appendRow(COLLECTIONS.activities.headers); actSheet.setFrozenRows(1); }
     const actRows = actSheet.getDataRange().getValues();
-    const actHeaders = getCollectionSheet(ctx, 'activities').headers;
+    const actHeaders = actRows[0];
     const activities = [];
     for (let i = 1; i < actRows.length; i++) {
         const r = rowToRecord(actHeaders, actRows[i]);

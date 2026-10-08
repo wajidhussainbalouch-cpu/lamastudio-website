@@ -31,7 +31,8 @@
             <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2>
             <div class="grid sm:grid-cols-2 gap-3 text-xs">
                 <input id="inName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="inEmail" type="email" placeholder="Email (used to log in)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inEmail" type="email" placeholder="Email (optional; also works for login)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="inLoginId" placeholder="Teacher Login ID (e.g. t-01, t-20)" required class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inSubject" placeholder="Subject (e.g. Math)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inClass" placeholder="Assigned Class (e.g. 5)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inSection" placeholder="Assigned Section (e.g. A)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -47,10 +48,10 @@
                 <input type="date" id="inJoiningDate" placeholder="Joining Date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inAddress" placeholder="Residential Address" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="inPassword" type="text" placeholder="Password (min 6 chars)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <div class="sm:col-span-2 flex gap-2"><input id="inPassword" type="password" autocomplete="new-password" placeholder="Password (8+ chars)" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><button type="button" onclick="togglePassword('inPassword',this)" class="px-3 rounded-lg bg-slate-700" aria-label="Show password">👁 Show</button></div>
             </div>
             <button onclick="createTeacher()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Create Teacher Account</button>
-            <p class="text-[10px] text-slate-500">Share the <b>School ID / Login Code</b> below, plus this email and password, with the teacher — they'll log in at <code>portal-login.html</code>.</p>
+            <p class="text-[10px] text-slate-500">Share the <b>School ID / Login Code</b> below, plus the Teacher ID (or email) and password, with the teacher — they'll log in at <code>portal-login.html</code>.</p>
         </section>
 
         <!-- Edit Teacher (hidden until "Edit" is clicked) -->
@@ -58,6 +59,8 @@
             <h2 class="text-xs font-black uppercase text-amber-400">Edit Teacher</h2>
             <input type="hidden" id="editId">
             <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <input id="editLoginId" placeholder="Teacher Login ID" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editEmail" type="email" placeholder="Email (optional)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -79,7 +82,8 @@
                     <option value="Suspended">Suspended</option>
                 </select>
             </div>
-            <p class="text-[10px] text-slate-500">Note: password can't be changed from here yet — the teacher's email/password stay as set at creation.</p>
+            <div class="flex gap-2"><input id="editPassword" type="password" autocomplete="new-password" placeholder="New password (optional, 8+ chars)" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><button type="button" onclick="togglePassword('editPassword',this)" class="px-3 rounded-lg bg-slate-700" aria-label="Show password">👁 Show</button></div>
+            <p class="text-[10px] text-slate-500">Leave the new password blank to keep the current password. Changing a password signs out existing teacher sessions.</p>
             <div class="flex gap-2">
                 <button onclick="saveTeacherEdit()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Save Changes</button>
                 <button onclick="closeEdit()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Cancel</button>
@@ -105,6 +109,7 @@
 
     <script>
         let allTeachers = [];
+        function togglePassword(id,btn) { const e=document.getElementById(id); e.type=e.type==='password'?'text':'password'; btn.textContent=e.type==='password'?'👁 Show':'🙈 Hide'; }
 
         function handleLogout() {
             LamaAPI.logout();
@@ -136,7 +141,7 @@
             document.getElementById('teachersList').innerHTML = teachers.map(t => `
                 <div class="flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5">
                     <div>
-                        <p class="text-xs font-bold">${t.name} <span class="text-slate-500 font-normal">— ${t.email}</span></p>
+                        <p class="text-xs font-bold">${t.name} <span class="text-cyan-300">[${t.loginId || t.email || "-"}]</span> <span class="text-slate-500 font-normal">— ${t.email}</span></p>
                         <p class="text-[10px] text-slate-400">${t.subject || 'No subject'} • Class ${t.assignedClass || '-'}${t.assignedSection ? '-' + t.assignedSection : ''} • ${t.contact || 'No contact'}</p>
                         <p class="text-[10px] text-slate-500 mt-0.5">${t.qualification || 'No qualification on file'}${t.joiningDate ? ' • Joined ' + t.joiningDate : ''}${t.cnic ? ' • CNIC ' + t.cnic : ''}</p>
                     </div>
@@ -153,6 +158,9 @@
             const t = allTeachers.find(x => x.id === teacherId);
             if (!t) return;
             document.getElementById('editId').value = t.id;
+            document.getElementById('editLoginId').value = t.loginId || t.email || '';
+            document.getElementById('editEmail').value = t.email || '';
+            document.getElementById('editPassword').value = '';
             document.getElementById('editName').value = t.name || '';
             document.getElementById('editSubject').value = t.subject || '';
             document.getElementById('editClass').value = t.assignedClass || '';
@@ -179,6 +187,9 @@
             try {
                 await LamaAPI.update('teachers', id, {
                     name: document.getElementById('editName').value.trim(),
+                    loginId: document.getElementById('editLoginId').value.trim(),
+                    email: document.getElementById('editEmail').value.trim(),
+                    password: document.getElementById('editPassword').value,
                     subject: document.getElementById('editSubject').value.trim(),
                     assignedClass: document.getElementById('editClass').value.trim(),
                     assignedSection: document.getElementById('editSectionInput').value.trim(),
@@ -212,14 +223,15 @@
         async function createTeacher() {
             const name = document.getElementById('inName').value.trim();
             const email = document.getElementById('inEmail').value.trim();
+            const loginId = document.getElementById('inLoginId').value.trim();
             const password = document.getElementById('inPassword').value;
-            if (!name || !email || !password || password.length < 6) {
-                alert('Name, email, and a password of at least 6 characters are required.');
+            if (!name || !loginId || !password || password.length < 8) {
+                alert('Name, Teacher ID, and a password of at least 8 characters are required.');
                 return;
             }
             try {
                 await LamaAPI.addTeacher({
-                    name, email, password,
+                    name, email, loginId, password,
                     subject: document.getElementById('inSubject').value.trim(),
                     assignedClass: document.getElementById('inClass').value.trim(),
                     assignedSection: document.getElementById('inSection').value.trim(),
@@ -232,7 +244,7 @@
                     emergencyContact: document.getElementById('inEmergencyContact').value.trim(),
                     address: document.getElementById('inAddress').value.trim()
                 });
-                ['inName', 'inEmail', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
+                ['inName', 'inEmail', 'inLoginId', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
                  'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword']
                     .forEach(id => document.getElementById(id).value = '');
                 renderTeachers();

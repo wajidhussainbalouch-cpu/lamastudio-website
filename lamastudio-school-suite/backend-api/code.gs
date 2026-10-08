@@ -103,11 +103,11 @@ const COLLECTIONS = {
     },
     datesheet: {
         tab: 'DateSheet',
-        headers: ['id', 'examTitle', 'class', 'subject', 'date', 'time', 'invigilator', 'createdAt']
+        headers: ['id', 'examTitle', 'class', 'subject', 'date', 'time', 'invigilator', 'createdAt', 'day', 'subjectsJson', 'isPublished', 'published', 'status', 'schoolId']
     },
     tests: {
         tab: 'Tests',
-        headers: ['id', 'class', 'subject', 'type', 'date', 'totalMarks', 'topics', 'createdAt']
+        headers: ['id', 'class', 'subject', 'type', 'date', 'totalMarks', 'topics', 'createdAt', 'isPublished', 'published', 'status', 'updatedAt', 'link', 'title', 'schoolId']
     },
     notifications: {
         tab: 'Notifications',
@@ -793,16 +793,19 @@ function getMainDashboardData(params) {
     const upcomingExams = [];
     for (let i = 1; i < dsRows.length; i++) {
         const r = rowToRecord(dsHeaders, dsRows[i]);
-        if (r.id && (!r.status || ['published','active','public'].includes(String(r.status).toLowerCase()) || r.isPublished === true)) upcomingExams.push(r);
+        if (r.id && (r.isPublished === true || r.published === true || String(r.status).toLowerCase() === 'published')) upcomingExams.push(r);
     }
-    upcomingExams.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    upcomingExams.sort((a, b) => {
+        function key(v) { const s=String(v||''); const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? m[3]+'-'+m[2]+'-'+m[1] : s; }
+        return key(a.date).localeCompare(key(b.date));
+    });
 
     const testRows = getCollectionSheet(ctx, 'tests').sheet.getDataRange().getValues();
     const testHeaders = COLLECTIONS.tests.headers;
     const upcomingTests = [];
     for (let i = 1; i < testRows.length; i++) {
         const r = rowToRecord(testHeaders, testRows[i]);
-        if (r.id && (!r.status || ['published','active','public'].includes(String(r.status).toLowerCase()) || r.isPublished === true)) upcomingTests.push(r);
+        if (r.id && (r.isPublished === true || r.published === true || String(r.status).toLowerCase() === 'published')) upcomingTests.push(r);
     }
     upcomingTests.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
@@ -819,8 +822,8 @@ function getMainDashboardData(params) {
         schoolId: params.schoolId, schoolName, logo, coverPhoto, address, level, type,
         recentNotifications: notifications.slice(0, 5),
         recentActivities: activities.slice(0, 5),
-        upcomingExams: upcomingExams,
-        upcomingTests: upcomingTests,
+        upcomingExams: ctx.role === 'student' ? upcomingExams.filter(r => (r.subjects && Object.prototype.hasOwnProperty.call(r.subjects, ctx.student.class)) || String(r.class) === String(ctx.student.class)) : upcomingExams,
+        upcomingTests: ctx.role === 'student' ? upcomingTests.filter(r => String(r.class) === String(ctx.student.class)) : upcomingTests,
         resources
     };
 }

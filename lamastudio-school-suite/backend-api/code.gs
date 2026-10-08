@@ -616,7 +616,9 @@ function getCollectionSheet(ctx, collection) {
         // columns added automatically, so nothing new is ever silently dropped.
         ensureSheetHeaders(sheet, cfg.headers);
     }
-    return { sheet, headers: cfg.headers };
+    // Existing sheets may have gained new columns over time; read their actual order.
+    const actualHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    return { sheet, headers: actualHeaders };
 }
 
 function listRecords(ctx, collection) {
@@ -770,7 +772,7 @@ function getMainDashboardData(params) {
     }
 
     const notifRows = getCollectionSheet(ctx, 'notifications').sheet.getDataRange().getValues();
-    const notifHeaders = COLLECTIONS.notifications.headers;
+    const notifHeaders = getCollectionSheet(ctx, 'notifications').headers;
     const notifications = [];
     for (let i = 1; i < notifRows.length; i++) {
         const r = rowToRecord(notifHeaders, notifRows[i]);
@@ -779,7 +781,7 @@ function getMainDashboardData(params) {
     notifications.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
     const actRows = getCollectionSheet(ctx, 'activities').sheet.getDataRange().getValues();
-    const actHeaders = COLLECTIONS.activities.headers;
+    const actHeaders = getCollectionSheet(ctx, 'activities').headers;
     const activities = [];
     for (let i = 1; i < actRows.length; i++) {
         const r = rowToRecord(actHeaders, actRows[i]);
@@ -788,12 +790,12 @@ function getMainDashboardData(params) {
     activities.sort((a, b) => String(b.date || b.createdAt).localeCompare(String(a.date || a.createdAt)));
 
     const dsRows = getCollectionSheet(ctx, 'datesheet').sheet.getDataRange().getValues();
-    const dsHeaders = COLLECTIONS.datesheet.headers;
+    const dsHeaders = getCollectionSheet(ctx, 'datesheet').headers;
     const todayStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
     const upcomingExams = [];
     for (let i = 1; i < dsRows.length; i++) {
         const r = rowToRecord(dsHeaders, dsRows[i]);
-        if (r.id && (r.isPublished === true || r.published === true || String(r.status).toLowerCase() === 'published')) upcomingExams.push(r);
+        if (r.id && (String(r.isPublished).toLowerCase() === 'true' || String(r.published).toLowerCase() === 'true' || String(r.status).toLowerCase() === 'published')) upcomingExams.push(r);
     }
     upcomingExams.sort((a, b) => {
         function key(v) { const s=String(v||''); const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? m[3]+'-'+m[2]+'-'+m[1] : s; }
@@ -801,16 +803,16 @@ function getMainDashboardData(params) {
     });
 
     const testRows = getCollectionSheet(ctx, 'tests').sheet.getDataRange().getValues();
-    const testHeaders = COLLECTIONS.tests.headers;
+    const testHeaders = getCollectionSheet(ctx, 'tests').headers;
     const upcomingTests = [];
     for (let i = 1; i < testRows.length; i++) {
         const r = rowToRecord(testHeaders, testRows[i]);
-        if (r.id && (r.isPublished === true || r.published === true || String(r.status).toLowerCase() === 'published')) upcomingTests.push(r);
+        if (r.id && (String(r.isPublished).toLowerCase() === 'true' || String(r.published).toLowerCase() === 'true' || String(r.status).toLowerCase() === 'published')) upcomingTests.push(r);
     }
     upcomingTests.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
     const resRows = getCollectionSheet(ctx, 'resources').sheet.getDataRange().getValues();
-    const resHeaders = COLLECTIONS.resources.headers;
+    const resHeaders = getCollectionSheet(ctx, 'resources').headers;
     const resources = [];
     for (let i = 1; i < resRows.length; i++) {
         const r = rowToRecord(resHeaders, resRows[i]);
@@ -938,7 +940,7 @@ function getDashboardStats(schoolId, apiKey) {
     const actSheet = ss.getSheetByName(COLLECTIONS.activities.tab) || ss.insertSheet(COLLECTIONS.activities.tab);
     if (actSheet.getLastRow() === 0) { actSheet.appendRow(COLLECTIONS.activities.headers); actSheet.setFrozenRows(1); }
     const actRows = actSheet.getDataRange().getValues();
-    const actHeaders = COLLECTIONS.activities.headers;
+    const actHeaders = getCollectionSheet(ctx, 'activities').headers;
     const activities = [];
     for (let i = 1; i < actRows.length; i++) {
         const r = rowToRecord(actHeaders, actRows[i]);

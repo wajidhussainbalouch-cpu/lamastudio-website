@@ -473,7 +473,7 @@ updateThemeButton();
 
 function isPublished(item){
     if(!item || typeof item !== 'object') return false;
-    if(item.isPublished === true || item.published === true || item.status === 'published' || item.status === 'active') return true;
+    if([true, 'true', 'TRUE', 1, '1'].includes(item.isPublished) || [true, 'true', 'TRUE', 1, '1'].includes(item.published) || item.status === 'published' || item.status === 'active') return true;
     const status = String(item.status ?? '').trim().toLowerCase();
     const visibility = String(item.visibility ?? '').trim().toLowerCase();
     if(status === 'published' || status === 'public' || status === 'active') return true;
@@ -489,16 +489,17 @@ function publishedOnly(value){
 function sameSchool(item, id) {
     if (!id) return false;
     const recordId = item.schoolId || item.school_id || item.school?.id;
-    return !!recordId && String(recordId) === String(id);
+    return !recordId || !id || String(recordId) === String(id); // Per-school private sheets have no schoolId field
 }
 async function resolveSchool(data) {
     let active = {};
     try { if (typeof LamaAPI?.getActiveSchool === 'function') active = await LamaAPI.getActiveSchool() || {}; } catch (_) {}
-    const id = active.id || active.schoolId || data.schoolId || data.school?.id || '';
+    const session = typeof LamaAPI !== 'undefined' && typeof LamaAPI.getSession === 'function' ? (LamaAPI.getSession() || {}) : {};
+    const id = active.id || active.schoolId || session.schoolId || data.schoolId || data.school?.id || '';
     return { id:String(id), name:active.name || active.schoolName || data.schoolName, logo:active.logo || active.schoolLogo || data.logo };
 }
 async function loadPublishedCollection(names, summary, schoolId) {
-    if (!schoolId) return [];
+    // A missing client-side school ID must not suppress the authenticated backend summary.
     for (const name of names) {
         try {
             const rows = await LamaAPI.list(name);
@@ -508,7 +509,7 @@ async function loadPublishedCollection(names, summary, schoolId) {
             }
         } catch (e) { console.warn(`Collection ${name} unavailable`, e); }
     }
-    return Array.isArray(summary) ? summary.filter(x => sameSchool(x,schoolId) && isPublished(x)) : [];
+    return Array.isArray(summary) ? summary.filter(x => (!schoolId || sameSchool(x,schoolId)) && isPublished(x)) : [];
 }
 function normalizeExamRows(records) {
     const rows = [];
@@ -530,7 +531,8 @@ function normalizeExamRows(records) {
             rows.push({...base,date:exam.date || '',day:exam.day || '',entries});
         }
     }
-    return rows.sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const sortKey = d => { const x=String(d||''); const m=x.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : x; };
+    return rows.sort((a,b)=>sortKey(a.date).localeCompare(sortKey(b.date)));
 }
 function copySchoolId() {
     if (window.currentSchoolId && navigator.clipboard) navigator.clipboard.writeText(window.currentSchoolId);
@@ -556,7 +558,7 @@ async function render(){
     document.getElementById('navSchoolId').textContent = schoolId ? `ID: ${schoolId}` : '';
     window.currentSchoolId = schoolId;
     const rawTests = await loadPublishedCollection(['tests'], data.upcomingTests, schoolId);
-    const rawExams = await loadPublishedCollection(['dateSheets','date-sheets','date_sheets','exams'], data.upcomingExams, schoolId);
+    const rawExams = await loadPublishedCollection(['datesheet'], data.upcomingExams, schoolId);
 
     // 3. Fetch Notices & Activities
     let rawNotices = data.recentNotifications;

@@ -46,6 +46,7 @@
 <a class="bg-cyan-700 rounded-xl px-4 py-3 font-bold" href="identity-cards.html?role=school&type=teacher">Teacher ID Cards / Print</a>
 <button class="bg-indigo-600 rounded-xl px-4 py-3 font-bold" onclick="printTeachers()">Print All Teacher Profiles</button>
 </div>
+<div class="flex flex-wrap items-center gap-2 my-3"><label for="facultyStyle" class="text-white font-semibold">Faculty display design</label><select id="facultyStyle" class="bg-slate-900 text-white border border-cyan-500 rounded-lg p-2"><option value="watercolor">🌸 Watercolor poster</option><option value="modern">✨ Modern cards</option><option value="classic">🏫 Professional profile</option></select><button type="button" id="facultyCopyLink" class="bg-cyan-700 text-white rounded-lg px-3 py-2">Copy public design link</button></div><script>document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('facultyCopyLink');if(!b)return;b.addEventListener('click',async()=>{const s=document.getElementById('facultyStyle').value;const session=(window.LamaAPI&&LamaAPI.getSession&&LamaAPI.getSession())||{};const id=session.schoolId||session.school_id||new URLSearchParams(location.search).get('schoolId')||'';if(!id){alert('School ID unavailable. Open this page while logged in as School Admin.');return}const link=new URL('meet-the-teachers.html',location.href);link.searchParams.set('schoolId',id);link.searchParams.set('style',s);try{await navigator.clipboard.writeText(link.href);b.textContent='Link copied ✓'}catch(e){prompt('Copy public faculty link',link.href)}})})</script><a href="meet-the-teachers.html" target="_blank" class="inline-block bg-pink-600 px-4 py-3 rounded-xl font-bold">🌸 Preview Meet Our Teachers</a>
 <!-- Add Teacher Form -->
         <section class="cyber-card rounded-2xl p-5 space-y-3">
             <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2>
@@ -61,6 +62,17 @@
                 <input id="inName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inEmail" type="email" placeholder="Email (optional; also works for login)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inLoginId" placeholder="Teacher Login ID (e.g. t-01, t-20)" required class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <div class="sm:col-span-2 rounded-xl border border-cyan-800 p-3"><p class="font-bold text-cyan-300 mb-2">Professional & Public Faculty Profile</p><p class="text-slate-300 mb-3">Only approved public information appears in Meet Our Teachers. CNIC, private address, birth date, password and personal contact remain private.</p><div class="grid sm:grid-cols-2 gap-3">
+ <input id="inDesignation" placeholder="Designation (e.g. Senior Teacher)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="inDepartment" placeholder="Department (e.g. Primary Wing)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="inExperience" placeholder="Experience (e.g. 8 years)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="inSpecialization" placeholder="Specialization / Teaching strengths" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="inPublicEmail" type="email" placeholder="Public work email (optional)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="inDisplayOrder" type="number" min="0" placeholder="Faculty display order" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <textarea id="inBio" rows="3" maxlength="500" placeholder="About me — short professional introduction (max 500 characters)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+ <textarea id="inEducation" rows="2" maxlength="350" placeholder="Education / degrees and certifications" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+ <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="inIsPublic" type="checkbox" class="w-5 h-5"> Publish on Meet Our Teachers (public website and student portal)</label>
+ </div></div>
                 <input id="inSubject" placeholder="Subject (e.g. Math)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inClass" placeholder="Assigned Class (e.g. 5)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inSection" placeholder="Assigned Section (e.g. A)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -98,6 +110,17 @@
                 <input id="editLoginId" placeholder="Teacher Login ID" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editEmail" type="email" placeholder="Email (optional)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editName" placeholder="Full Name" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <div class="sm:col-span-2 rounded-xl border border-cyan-800 p-3"><p class="font-bold text-cyan-300 mb-2">Professional & Public Faculty Profile</p><p class="text-slate-300 mb-3">Only approved public information appears in Meet Our Teachers. CNIC, private address, birth date, password and personal contact remain private.</p><div class="grid sm:grid-cols-2 gap-3">
+ <input id="editDesignation" placeholder="Designation (e.g. Senior Teacher)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="editDepartment" placeholder="Department (e.g. Primary Wing)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="editExperience" placeholder="Experience (e.g. 8 years)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="editSpecialization" placeholder="Specialization / Teaching strengths" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="editPublicEmail" type="email" placeholder="Public work email (optional)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <input id="editDisplayOrder" type="number" min="0" placeholder="Faculty display order" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+ <textarea id="editBio" rows="3" maxlength="500" placeholder="About me — short professional introduction (max 500 characters)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+ <textarea id="editEducation" rows="2" maxlength="350" placeholder="Education / degrees and certifications" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+ <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="editIsPublic" type="checkbox" class="w-5 h-5"> Publish on Meet Our Teachers (public website and student portal)</label>
+ </div></div>
                 <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editSectionInput" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -284,6 +307,15 @@
             document.getElementById('editEmergencyContact').value = t.emergencyContact || '';
             document.getElementById('editAddress').value = t.address || '';
             document.getElementById('editStatus').value = t.status || 'Active';
+            document.getElementById('editDesignation').value = t.designation || '';
+            document.getElementById('editDepartment').value = t.department || '';
+            document.getElementById('editExperience').value = t.experience || '';
+            document.getElementById('editSpecialization').value = t.specialization || '';
+            document.getElementById('editPublicEmail').value = t.publicEmail || '';
+            document.getElementById('editDisplayOrder').value = t.displayOrder || '';
+            document.getElementById('editBio').value = t.bio || '';
+            document.getElementById('editEducation').value = t.education || '';
+            document.getElementById('editIsPublic').checked = String(t.isPublic||'').toLowerCase() === 'yes';
             teacherPhotos.edit=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||null;
             if(!teacherPhotos.edit && LamaAPI.getTeacherPhoto){try{const remote=await LamaAPI.getTeacherPhoto(t.id);if(remote.photo){teacherPhotos.edit=remote.photo;storeTeacherPhoto(t,remote.photo)}}catch(e){console.warn('Photo fetch failed',e)}}
             document.getElementById('editPhotoPreview').src=teacherPhotos.edit||'';
@@ -316,7 +348,16 @@
                     joiningDate: document.getElementById('editJoiningDate').value,
                     emergencyContact: document.getElementById('editEmergencyContact').value.trim(),
                     address: document.getElementById('editAddress').value.trim(),
-                    status: document.getElementById('editStatus').value
+                    status: document.getElementById('editStatus').value,
+                    designation: document.getElementById('editDesignation').value.trim(),
+                    department: document.getElementById('editDepartment').value.trim(),
+                    experience: document.getElementById('editExperience').value.trim(),
+                    specialization: document.getElementById('editSpecialization').value.trim(),
+                    publicEmail: document.getElementById('editPublicEmail').value.trim(),
+                    displayOrder: document.getElementById('editDisplayOrder').value.trim(),
+                    bio: document.getElementById('editBio').value.trim(),
+                    education: document.getElementById('editEducation').value.trim(),
+                    isPublic: document.getElementById('editIsPublic').checked ? 'Yes' : 'No'
                 });
                 if(teacherPhotos.edit && teacherPhotos.edit.startsWith('data:image/jpeg;base64,')){await LamaAPI.saveTeacherPhoto(id,teacherPhotos.edit);storeTeacherPhoto({id},teacherPhotos.edit);}
                 if(teacherPhotos.edit)storeTeacherPhoto({id},teacherPhotos.edit);
@@ -359,13 +400,22 @@
                     qualification: document.getElementById('inQualification').value.trim(),
                     joiningDate: document.getElementById('inJoiningDate').value,
                     emergencyContact: document.getElementById('inEmergencyContact').value.trim(),
-                    address: document.getElementById('inAddress').value.trim()
+                    address: document.getElementById('inAddress').value.trim(),
+                    designation: document.getElementById('inDesignation').value.trim(),
+                    department: document.getElementById('inDepartment').value.trim(),
+                    experience: document.getElementById('inExperience').value.trim(),
+                    specialization: document.getElementById('inSpecialization').value.trim(),
+                    publicEmail: document.getElementById('inPublicEmail').value.trim(),
+                    displayOrder: document.getElementById('inDisplayOrder').value.trim(),
+                    bio: document.getElementById('inBio').value.trim(),
+                    education: document.getElementById('inEducation').value.trim(),
+                    isPublic: document.getElementById('inIsPublic').checked ? 'Yes' : 'No'
                 });
                 if(teacherPhotos.in && created&&created.id){await LamaAPI.saveTeacherPhoto(created.id,teacherPhotos.in);storeTeacherPhoto({id:created.id,loginId,email},teacherPhotos.in);}
                 ['inName', 'inEmail', 'inLoginId', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
-                 'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword']
+                 'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword','inDesignation','inDepartment','inExperience','inSpecialization','inPublicEmail','inDisplayOrder','inBio','inEducation']
                     .forEach(id => document.getElementById(id).value = '');
-                teacherPhotos.in=null;document.getElementById('inPhotoPreview').removeAttribute('src');document.getElementById('inPhotoStatus').textContent='No photo selected';
+                document.getElementById('inIsPublic').checked=false;teacherPhotos.in=null;document.getElementById('inPhotoPreview').removeAttribute('src');document.getElementById('inPhotoStatus').textContent='No photo selected';
                 renderTeachers();
             } catch (err) {
                 alert(err.message);

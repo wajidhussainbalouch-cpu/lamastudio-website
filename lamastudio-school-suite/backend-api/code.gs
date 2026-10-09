@@ -1100,6 +1100,47 @@ function jsonOut(obj) {
     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+
+// Teacher photos: separate sheet avoids sending all images with teacher lists.
+// JPEG data URLs only, maximum 25 KiB (base64 is below Sheets' 50k character cell limit).
+function teacherPhotoSheet_(ss) {
+  var sheet=ss.getSheetByName('TeacherPhotos');
+  if(!sheet){sheet=ss.insertSheet('TeacherPhotos');sheet.appendRow(['teacherId','photo','updatedAt']);sheet.setFrozenRows(1);}
+  return sheet;
+}
+function teacherPhotoAccess_(params, write) {
+  var ctx=resolveContext(params);
+  if(ctx.role!=='school' && ctx.role!=='teacher')throw new Error('Teacher photo access denied.');
+  if(write && ctx.role!=='school')throw new Error('Only School Admin can change teacher photographs.');
+  var id=String(params.teacherId||'').trim();
+  if(!id)throw new Error('Teacher ID required.');
+  if(ctx.role==='teacher' && String(ctx.teacher.id)!==id)throw new Error('You can only view your own photograph.');
+  var teachers=getCollectionSheet({role:'school',ss:ctx.ss},'teachers');
+  var values=teachers.sheet.getDataRange().getValues();
+  var index=teachers.headers.indexOf('id');
+  if(!values.slice(1).some(function(row){return String(row[index])===id;}))throw new Error('Teacher not found.');
+  return {ss:ctx.ss,id:id};
+}
+function saveTeacherPhoto_(params) {
+  var access=teacherPhotoAccess_(params,true);
+  var data=String(params.photo||'');
+  var m=/^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/.exec(data);
+  if(!m)throw new Error('Upload a processed JPEG photograph.');
+  var bytes=Utilities.base64Decode(m[1]);
+  if(bytes.length<15*1024||bytes.length>25*1024)throw new Error('Photo must be 15–25 KB.');
+  // Ensure real JPEG bytes; don't trust the data URL label alone.
+  if((bytes[0]&255)!==255||(bytes[1]&255)!==216||(bytes[bytes.length-2]&255)!==255||(bytes[bytes.length-1]&255)!==217)throw new Error('Invalid JPEG.');
+  var sheet=teacherPhotoSheet_(access.ss),values=sheet.getDataRange().getValues();
+  for(var i=1;i<values.length;i++)if(String(values[i][0])===access.id){sheet.getRange(i+1,2,1,2).setValues([[data,new Date().toISOString()]]);return {teacherId:access.id,saved:true};}
+  sheet.appendRow([access.id,data,new Date().toISOString()]);return {teacherId:access.id,saved:true};
+}
+function getTeacherPhoto_(params) {
+  var access=teacherPhotoAccess_(params,false);
+  var sheet=teacherPhotoSheet_(access.ss),values=sheet.getDataRange().getValues();
+  for(var i=1;i<values.length;i++)if(String(values[i][0])===access.id)return {teacherId:access.id,photo:String(values[i][1]||''),updatedAt:values[i][2]};
+  return {teacherId:access.id,photo:'',updatedAt:''};
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
@@ -1123,6 +1164,10 @@ function handleRequest(params) {
             case 'acknowledgePing':
                 return { status: 'success', ping: acknowledgePing(params.schoolId, params.teacherId, params.apiKey, params.pingId) };
 
+            case 'saveTeacherPhoto':
+                return {status:'success', result:saveTeacherPhoto_(params)};
+            case 'getTeacherPhoto':
+                return {status:'success', result:getTeacherPhoto_(params)};
             case 'addTeacher':
                 return { status: 'success', teacher: addTeacher(params.schoolId, params.apiKey, params.teacher || {}) };
             case 'teacherLogin':

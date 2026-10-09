@@ -91,6 +91,27 @@
           .chart-shell{height:195px}.mini-chart{height:160px}
           .grid.grid-cols-2.md\:grid-cols-3.xl\:grid-cols-6{gap:7px}
         }
+
+        /* 2026 professional dashboard polish */
+        :root{--panel-radius:24px}
+        .neo-card{border-radius:var(--panel-radius);transition:border-color .2s ease,box-shadow .2s ease}
+        .metric-card{transition:transform .2s ease,border-color .2s ease}
+        .metric-card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.35)}
+        .module-tile{min-height:104px;display:flex;flex-direction:column;justify-content:center;gap:2px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+        .module-tile:hover{transform:translateY(-3px);background:rgba(99,102,241,.12)}
+        .module-tile:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid #22d3ee;outline-offset:3px}
+        .module-tile b{font-size:23px;line-height:1.25}
+        .module-tile p{font-size:12px;margin-top:5px;white-space:normal;line-height:1.35}
+        .module-tile small{font-size:10px;white-space:normal;line-height:1.4}
+        .finance-metric{border:1px solid rgba(148,163,184,.14);background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border-radius:17px;padding:16px}
+        .finance-metric strong{font-size:clamp(16px,2vw,22px);letter-spacing:-.03em}
+        .section-heading{font-size:clamp(19px,2vw,25px);letter-spacing:-.035em;line-height:1.2}
+        .section-description{line-height:1.6;max-width:62ch}
+        .section-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;text-decoration:none;transition:background .2s ease,transform .2s ease}
+        .section-link:hover{transform:translateY(-1px)}
+        #incomeChart{max-width:100%}
+        @media(max-width:640px){.module-tile{min-height:92px}.finance-metric{padding:12px}.section-heading{font-size:19px}}
+        @media(prefers-reduced-motion:reduce){.module-tile,.metric-card,.section-link{transition:none!important;transform:none!important}}
     </style>
 
 </head>
@@ -170,13 +191,13 @@
         <section class="command-grid" aria-label="Financial and attendance intelligence">
             <div class="span-8 neo-card rounded-3xl p-5">
                 <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-                    <div><p class="section-kicker text-purple-300">Financial Intelligence</p><h3 class="text-lg font-black text-white">Fee Collection Analytics</h3><p class="text-xs text-slate-400 mt-1">Collection trends from your school's fee records</p></div>
-                    <div class="flex gap-2 flex-wrap"><a href="fees.html" class="text-xs font-black text-purple-300 border border-purple-500/20 rounded-xl px-3 py-2 hover:bg-purple-500/10">Fee Management →</a><a href="finance-center.html" class="text-xs font-black text-amber-300 border border-amber-500/20 rounded-xl px-3 py-2 hover:bg-amber-500/10">Accounts →</a></div>
+                    <div><p class="section-kicker text-purple-300">Financial Intelligence</p><h3 class="section-heading font-black text-white mt-1">Fee Collection Analytics</h3><p class="text-xs text-slate-400 mt-1">Live collection totals and monthly fee performance from your school records</p></div>
+                    <div class="flex gap-2 flex-wrap"><a href="fees.html" class="section-link text-xs font-black text-purple-300 border border-purple-500/20 rounded-xl px-3 py-2 hover:bg-purple-500/10">Fee Management →</a><a href="finance-center.html" class="section-link text-xs font-black text-amber-300 border border-amber-500/20 rounded-xl px-3 py-2 hover:bg-amber-500/10">Accounts →</a></div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                    <div class="metric-card rounded-xl p-3"><p class="section-kicker">Today</p><strong id="financeToday" class="text-lg text-amber-300 block mt-1">—</strong></div>
-                    <div class="metric-card rounded-xl p-3"><p class="section-kicker">This Month</p><strong id="financeMonth" class="text-lg text-pink-300 block mt-1">—</strong></div>
-                    <div class="metric-card rounded-xl p-3"><p class="section-kicker">This Year</p><strong id="financeYear" class="text-lg text-emerald-300 block mt-1">—</strong></div>
+                    <div class="finance-metric"><p class="section-kicker">Today</p><strong id="financeToday" class="text-lg text-amber-300 block mt-1">—</strong></div>
+                    <div class="finance-metric"><p class="section-kicker">This Month</p><strong id="financeMonth" class="text-lg text-pink-300 block mt-1">—</strong></div>
+                    <div class="finance-metric"><p class="section-kicker">This Year</p><strong id="financeYear" class="text-lg text-emerald-300 block mt-1">—</strong></div>
                 </div>
                 <div class="chart-shell"><canvas id="incomeChart" aria-label="Fee collection trend bar chart" role="img"></canvas></div>
                 <p id="financeChartNote" class="text-xs text-slate-400 mt-3" aria-live="polite">Loading fee collection data…</p>
@@ -186,8 +207,8 @@
 
         <!-- Independent administration tools: not part of finance -->
         <section class="neo-card rounded-3xl p-5" aria-label="School administration tools">
-            <div class="mb-4"><p class="section-kicker text-cyan-300">Administration Tools</p><h3 class="text-lg font-black text-white">School Operations & Documents</h3><p class="text-xs text-slate-400 mt-1">Independent tools for requests, document processing and identity cards</p></div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="mb-4"><p class="section-kicker text-cyan-300">Administration Tools</p><h3 class="section-heading font-black text-white mt-1">School Operations & Documents</h3><p class="text-xs text-slate-400 mt-1">Manage student and staff requests, import documents, and issue secure ID cards in separate workspaces</p></div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                 <a href="leave-manager.html" class="module-tile rounded-2xl p-4 bg-teal-500/5 border border-teal-500/20 hover:border-teal-400/50 transition"><b>📝</b><p>Leave Requests</p><small>Student & teacher leave management</small></a>
                 <a href="document-import.html" class="module-tile rounded-2xl p-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-400/50 transition"><b>📥</b><p>Document Import</p><small>PDF / Word / Excel documents</small></a>
                 <a href="identity-cards.html" class="module-tile rounded-2xl p-4 bg-violet-500/5 border border-violet-500/20 hover:border-violet-400/50 transition"><b>🪪</b><p>ID Cards</p><small>Authorized preview & printing</small></a>
@@ -207,7 +228,7 @@
                 <a href="activities.html" class="module-tile rounded-2xl p-3 bg-orange-500/5 border border-orange-500/10 hover:border-orange-400/40 transition"><b>🎯</b><p>Activities</p><small>events & clubs</small></a>
                 <a href="promote-students.html" class="module-tile rounded-2xl p-3 bg-indigo-500/5 border border-indigo-500/10 hover:border-indigo-400/40 transition"><b>🎓</b><p>Promotion</p><small>year-end engine</small></a>
                 <a href="report-card.html" class="module-tile rounded-2xl p-3 bg-teal-500/5 border border-teal-500/10 hover:border-teal-400/40 transition"><b>📋</b><p>Report Card</p><small>print reports</small></a>
-                <a href="result-card.html" class="module-tile rounded-2xl p-3 bg-violet-500/5 border border-violet-500/10 hover:border-violet-400/40 transition"><b>🏆</b><p>Result Card</p><small>academic results</small></a>
+                <a href="result-card" class="module-tile rounded-2xl p-3 bg-violet-500/5 border border-violet-500/10 hover:border-violet-400/40 transition"><b>🏆</b><p>Result Card</p><small>academic results</small></a>
                 <a href="portal-login.html" class="module-tile rounded-2xl p-3 bg-fuchsia-500/5 border border-fuchsia-500/10 hover:border-fuchsia-400/40 transition"><b>◉</b><p>Portal</p><small>student / parent</small></a>
                 <a href="notifications.html" class="module-tile rounded-2xl p-3 bg-rose-500/5 border border-rose-500/10 hover:border-rose-400/40 transition"><b>🔔</b><p>Notifications</p><small>messages & alerts</small></a>
                 <a href="resources.html" class="module-tile rounded-2xl p-3 bg-sky-500/5 border border-sky-500/10 hover:border-sky-400/40 transition"><b>📚</b><p>Resources</p><small>learning material</small></a>

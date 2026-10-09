@@ -75,7 +75,7 @@ const COLLECTIONS = {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'loginId', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
-                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact']
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'designation', 'department', 'experience', 'specialization', 'publicEmail', 'displayOrder', 'bio', 'education', 'isPublic']
     },
     activities: {
         tab: 'Activities',
@@ -433,7 +433,7 @@ function addTeacher(schoolId, apiKey, p) {
         subject:p.subject||'', assignedClass:p.assignedClass||'', assignedSection:p.assignedSection||'',
         contact:p.contact||'', status:'Active', createdAt:new Date().toISOString(),
         cnic:p.cnic||'', dob:p.dob||'', gender:p.gender||'', qualification:p.qualification||'',
-        joiningDate:p.joiningDate||'', address:p.address||'', emergencyContact:p.emergencyContact||'' };
+        joiningDate:p.joiningDate||'', address:p.address||'', emergencyContact:p.emergencyContact||'', designation:p.designation||'', department:p.department||'', experience:p.experience||'', specialization:p.specialization||'', publicEmail:p.publicEmail||'', displayOrder:p.displayOrder||'', bio:p.bio||'', education:p.education||'', isPublic:p.isPublic==='Yes'?'Yes':'No' };
     sheet.appendRow(recordToRow(headers,record));
     const safe=Object.assign({},record); delete safe.passwordHash; delete safe.apiKey; return safe;
 }
@@ -1141,10 +1141,33 @@ function getTeacherPhoto_(params) {
   return {teacherId:access.id,photo:'',updatedAt:''};
 }
 
+
+/** Explicitly public, opt-in faculty directory. Never return private teacher fields. */
+function getPublicFaculty_(schoolId) {
+  if (!schoolId) throw new Error('School ID required.');
+  const registry = getRegistrySheet();
+  const match = findSchoolRow(registry, r => String(r.schoolId) === String(schoolId));
+  if (!match || match.obj.status !== 'Active') throw new Error('School not available.');
+  const ss = SpreadsheetApp.openById(match.obj.sheetId);
+  const sh = ss.getSheetByName('Teachers');
+  if (!sh || sh.getLastRow() < 2) return {school:{name:match.obj.name,logo:match.obj.logo||''},teachers:[]};
+  const values=sh.getDataRange().getValues(), headers=values[0];
+  const publicTeachers=values.slice(1).map(row=>rowToRecord(headers,row))
+    .filter(t=>String(t.status||'').toLowerCase()==='active' && String(t.isPublic||'').toLowerCase()==='yes')
+    .map(t=>({id:String(t.id||''),name:String(t.name||''),designation:String(t.designation||'Teacher'),
+      subject:String(t.subject||''),assignedClass:String(t.assignedClass||''),department:String(t.department||''),
+      qualification:String(t.qualification||''),education:String(t.education||''),experience:String(t.experience||''),
+      specialization:String(t.specialization||''),bio:String(t.bio||''),publicEmail:String(t.publicEmail||''),
+      displayOrder:Number(t.displayOrder)||9999}));
+  publicTeachers.sort((a,b)=>a.displayOrder-b.displayOrder||a.name.localeCompare(b.name));
+  return {school:{name:match.obj.name,logo:match.obj.logo||''},teachers:publicTeachers};
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
         switch (action) {
+            case 'getPublicFaculty': return {status:'success',data:getPublicFaculty_(params.schoolId)};
             case 'register':
                 return { status: 'success', school: registerSchool(params) };
             case 'login':

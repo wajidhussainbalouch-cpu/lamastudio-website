@@ -75,7 +75,7 @@ const COLLECTIONS = {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'loginId', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
-                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'designation', 'department', 'experience', 'specialization', 'publicEmail', 'displayOrder', 'bio', 'education', 'isPublic']
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'designation', 'department', 'experience', 'specialization', 'publicEmail', 'displayOrder', 'bio', 'education', 'isPublic', 'publishPhoto', 'maritalStatus', 'domicileDistrict', 'disability', 'seriousIllness', 'highestDegree', 'majorSubjects', 'professionalDegree', 'trainings', 'personnelNumber', 'employmentType', 'subjectsOfInterest', 'firstJoiningDate', 'payScale', 'basicPay', 'allowances', 'deductions', 'arrears', 'bankName', 'accountLast4', 'heightCm', 'weightKg', 'eyeVision', 'medicalConditions', 'bloodPressure', 'rbs', 'bloodGroup', 'disabilityType', 'covidVaccination', 'otherVaccinations']
     },
     activities: {
         tab: 'Activities',
@@ -433,7 +433,7 @@ function addTeacher(schoolId, apiKey, p) {
         subject:p.subject||'', assignedClass:p.assignedClass||'', assignedSection:p.assignedSection||'',
         contact:p.contact||'', status:'Active', createdAt:new Date().toISOString(),
         cnic:p.cnic||'', dob:p.dob||'', gender:p.gender||'', qualification:p.qualification||'',
-        joiningDate:p.joiningDate||'', address:p.address||'', emergencyContact:p.emergencyContact||'', designation:p.designation||'', department:p.department||'', experience:p.experience||'', specialization:p.specialization||'', publicEmail:p.publicEmail||'', displayOrder:p.displayOrder||'', bio:p.bio||'', education:p.education||'', isPublic:p.isPublic==='Yes'?'Yes':'No' };
+        joiningDate:p.joiningDate||'', address:p.address||'', emergencyContact:p.emergencyContact||'', designation:p.designation||'', department:p.department||'', experience:p.experience||'', specialization:p.specialization||'', publicEmail:p.publicEmail||'', displayOrder:p.displayOrder||'', bio:p.bio||'', education:p.education||'', isPublic:p.isPublic==='Yes'?'Yes':'No', publishPhoto:p.publishPhoto==='Yes'?'Yes':'No' };
     sheet.appendRow(recordToRow(headers,record));
     const safe=Object.assign({},record); delete safe.passwordHash; delete safe.apiKey; return safe;
 }
@@ -1158,7 +1158,15 @@ function getPublicFaculty_(schoolId) {
       subject:String(t.subject||''),assignedClass:String(t.assignedClass||''),department:String(t.department||''),
       qualification:String(t.qualification||''),education:String(t.education||''),experience:String(t.experience||''),
       specialization:String(t.specialization||''),bio:String(t.bio||''),publicEmail:String(t.publicEmail||''),
-      displayOrder:Number(t.displayOrder)||9999}));
+      displayOrder:Number(t.displayOrder)||9999, photoAllowed:String(t.publishPhoto||'').toLowerCase()==='yes'}));
+  // Public photographs are released only when both faculty publication and photo consent are enabled.
+  const photos=ss.getSheetByName('TeacherPhotos');
+  if(photos && publicTeachers.some(t=>t.photoAllowed)){
+    const entries=photos.getDataRange().getValues().slice(1);
+    const photoMap={};entries.forEach(row=>{photoMap[String(row[0])]=String(row[1]||'');});
+    publicTeachers.forEach(t=>{if(t.photoAllowed&&/^data:image\/jpeg;base64,/.test(photoMap[t.id]||''))t.photo=photoMap[t.id];});
+  }
+  publicTeachers.forEach(t=>delete t.photoAllowed);
   publicTeachers.sort((a,b)=>a.displayOrder-b.displayOrder||a.name.localeCompare(b.name));
   return {school:{name:match.obj.name,logo:match.obj.logo||''},teachers:publicTeachers};
 }

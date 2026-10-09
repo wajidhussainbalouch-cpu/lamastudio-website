@@ -85,6 +85,8 @@ const LamaAPI = (() => {
     studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
     getActiveSchool,updateSchoolConfig,deriveShortCode,
+   saveTeacherPhoto:async(teacherId,photo)=>(await callApi('saveTeacherPhoto',{teacherId,photo})).result,
+   getTeacherPhoto:async(teacherId)=>(await callApi('getTeacherPhoto',{teacherId},'GET')).result,
     getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,

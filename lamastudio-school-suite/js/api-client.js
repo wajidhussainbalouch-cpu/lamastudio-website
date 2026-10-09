@@ -83,7 +83,12 @@ const LamaAPI = (() => {
     teacherLogin:(schoolId,email,password)=>loginResult('teacherLogin',{schoolId,email,password},'teacher','teacher'),
     studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
-    getActiveSchool,updateSchoolConfig,deriveShortCode,
+    setFacultyVisibility: async (visible) => {
+  const data = await callApi('setFacultyVisibility', {
+    visible: Boolean(visible)
+  });
+  return data.result ?? data;
+},
     // Backend must implement this action and enforce school-admin authorization.
     setFacultyVisibility:async visible=>(await callApi('setFacultyVisibility',{visible:Boolean(visible)},'POST','school')).result,
     saveTeacherPhoto:async(teacherId,photo)=>(await callApi('saveTeacherPhoto',{teacherId,photo})).result,

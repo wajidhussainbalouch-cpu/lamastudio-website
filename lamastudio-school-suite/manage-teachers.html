@@ -208,7 +208,7 @@
             '<div class="print-details">'+details.map(([k,v])=>'<div class="print-detail"><span class="print-label">'+teacherEsc(k)+'</span><span class="print-value">'+teacherEsc(v||'-')+'</span></div>').join('')+'</div>'+ 
             '<div class="print-footer"><span><b>Lamastudio.pk</b> · Page '+page+' of '+total+'</span><span class="print-sign">School Administrator Signature</span></div></section>';
         }
-        function printTeachers(ids){
+        async function printTeachers(ids){
           const list=ids?allTeachers.filter(t=>ids.includes(String(t.id))):allTeachers;
           if(!list.length){alert('No teacher records available.');return;}
           const sheet=document.getElementById('printSheet');sheet.innerHTML=list.map((t,i)=>teacherProfileCard(t,i+1,list.length)).join('');
@@ -264,7 +264,7 @@
             `).join('');
         }
 
-        function openEdit(teacherId) {
+        async function openEdit(teacherId) {
             const t = allTeachers.find(x => x.id === teacherId);
             if (!t) return;
             document.getElementById('editId').value = t.id;
@@ -285,6 +285,7 @@
             document.getElementById('editAddress').value = t.address || '';
             document.getElementById('editStatus').value = t.status || 'Active';
             teacherPhotos.edit=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||null;
+            if(!teacherPhotos.edit && LamaAPI.getTeacherPhoto){try{const remote=await LamaAPI.getTeacherPhoto(t.id);if(remote.photo){teacherPhotos.edit=remote.photo;storeTeacherPhoto(t,remote.photo)}}catch(e){console.warn('Photo fetch failed',e)}}
             document.getElementById('editPhotoPreview').src=teacherPhotos.edit||'';
             document.getElementById('editPhotoStatus').textContent=teacherPhotos.edit?'Existing photo loaded':'No photo saved';
             document.getElementById('editSection').classList.remove('hidden');
@@ -303,7 +304,7 @@
                     loginId: document.getElementById('editLoginId').value.trim(),
                     email: document.getElementById('editEmail').value.trim(),
                     ...(document.getElementById('editPassword').value ? {password:document.getElementById('editPassword').value} : {}),
-                    ...(teacherPhotos.edit ? {photo:teacherPhotos.edit} : {}),
+
                     subject: document.getElementById('editSubject').value.trim(),
                     assignedClass: document.getElementById('editClass').value.trim(),
                     assignedSection: document.getElementById('editSectionInput').value.trim(),
@@ -317,6 +318,7 @@
                     address: document.getElementById('editAddress').value.trim(),
                     status: document.getElementById('editStatus').value
                 });
+                if(teacherPhotos.edit && teacherPhotos.edit.startsWith('data:image/jpeg;base64,')){await LamaAPI.saveTeacherPhoto(id,teacherPhotos.edit);storeTeacherPhoto({id},teacherPhotos.edit);}
                 if(teacherPhotos.edit)storeTeacherPhoto({id},teacherPhotos.edit);
                 closeEdit();
                 renderTeachers();
@@ -357,10 +359,9 @@
                     qualification: document.getElementById('inQualification').value.trim(),
                     joiningDate: document.getElementById('inJoiningDate').value,
                     emergencyContact: document.getElementById('inEmergencyContact').value.trim(),
-                    address: document.getElementById('inAddress').value.trim(),
-                    ...(teacherPhotos.in ? {photo:teacherPhotos.in} : {})
+                    address: document.getElementById('inAddress').value.trim()
                 });
-                if(teacherPhotos.in)storeTeacherPhoto({id:created&&created.id,loginId,email},teacherPhotos.in);
+                if(teacherPhotos.in && created&&created.id){await LamaAPI.saveTeacherPhoto(created.id,teacherPhotos.in);storeTeacherPhoto({id:created.id,loginId,email},teacherPhotos.in);}
                 ['inName', 'inEmail', 'inLoginId', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
                  'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword']
                     .forEach(id => document.getElementById(id).value = '');

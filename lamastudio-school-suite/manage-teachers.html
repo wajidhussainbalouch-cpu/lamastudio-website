@@ -36,6 +36,23 @@
  .profile-qr{position:absolute;right:10mm;bottom:22mm;width:78px;height:78px}
  .print-footer{position:relative!important;margin-top:14px!important;bottom:auto!important}
 }
+</style><style id="a4-single-page-fix">
+@page{size:A4 portrait;margin:6mm}
+@media print{
+ .print-page{height:283mm!important;min-height:0!important;max-height:283mm!important;overflow:hidden!important;break-inside:avoid!important;break-after:page!important;padding:3mm 5mm 12mm!important}
+ .print-page:last-child{break-after:auto!important}
+ .print-head{gap:8px!important;padding-bottom:5px!important;margin-bottom:5px!important}
+ .print-logo{height:39px!important;width:39px!important}.print-school{font-size:14px!important}.print-sub{font-size:9px!important;margin-top:1px!important}
+ .print-profile{gap:9px!important;margin-bottom:5px!important}.print-portrait{width:55px!important;height:69px!important;object-fit:cover!important}.print-person{font-size:15px!important}
+ .profile-section{margin-top:3px!important;break-inside:avoid!important}.profile-section h3{font-size:10px!important;margin:0 0 2px!important;padding:0 0 1px!important}
+ .profile-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:1px 6px!important}
+ .print-detail{padding:1px 0!important;min-height:0!important;line-height:1.05!important;border-bottom:1px solid #e2e8f0!important}
+ .print-label{font-size:6.5px!important;line-height:1.05!important}.print-value{font-size:8px!important;line-height:1.08!important;overflow-wrap:anywhere!important}
+ .print-details{display:block!important}.profile-qr{position:absolute!important;right:7mm!important;bottom:9mm!important;width:55px!important;height:55px!important}.profile-qr img,.profile-qr canvas{width:55px!important;height:55px!important}
+ .print-footer{position:absolute!important;bottom:3mm!important;left:5mm!important;right:27mm!important;margin:0!important;padding-top:3px!important;font-size:8px!important}
+}
+.teacher-admin-panel{border:1px solid #1e7493;border-radius:16px;padding:18px;background:linear-gradient(135deg,#11263f,#152f45);box-shadow:0 8px 24px #0002}
+.teacher-admin-panel label{font-weight:700;letter-spacing:.01em}.teacher-admin-panel input,.teacher-admin-panel select,.teacher-admin-panel textarea{border-radius:10px}
 </style></head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen"><nav style="background:#102b47;color:#fff;padding:9px 16px;display:flex;gap:18px;flex-wrap:wrap;font:13px system-ui"><a style="color:#93c5fd" href="identity-cards.html">Preview / Print ID Card</a><a style="color:#93c5fd" href="document-import.html">Import documents (Excel, PDF, DOCX, images)</a></nav>
 
@@ -60,7 +77,7 @@
 <button class="bg-indigo-600 rounded-xl px-4 py-3 font-bold" onclick="printTeachers()">Print All Teacher Profiles</button>
 </div>
 <div class="flex flex-wrap items-center gap-2 my-3"><label for="facultyStyle" class="text-white font-semibold">Faculty display design</label><select id="facultyStyle" class="bg-slate-900 text-white border border-cyan-500 rounded-lg p-2"><option value="watercolor">🌸 Watercolor poster</option><option value="modern">✨ Modern cards</option><option value="classic">🏫 Professional profile</option></select><button type="button" id="facultyCopyLink" class="bg-cyan-700 text-white rounded-lg px-3 py-2">Copy public design link</button></div><script>document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('facultyCopyLink');if(!b)return;b.addEventListener('click',async()=>{const s=document.getElementById('facultyStyle').value;const session=(window.LamaAPI&&LamaAPI.getSession&&LamaAPI.getSession())||{};const id=session.schoolId||session.school_id||new URLSearchParams(location.search).get('schoolId')||'';if(!id){alert('School ID unavailable. Open this page while logged in as School Admin.');return}const link=new URL('meet-the-teachers.html',location.href);link.searchParams.set('schoolId',id);link.searchParams.set('style',s);try{await navigator.clipboard.writeText(link.href);b.textContent='Link copied ✓'}catch(e){prompt('Copy public faculty link',link.href)}})})</script><a href="meet-the-teachers.html" target="_blank" class="inline-block bg-pink-600 px-4 py-3 rounded-xl font-bold">🌸 Preview Meet Our Teachers</a>
-<!-- Add Teacher Form -->
+<section style="background:#123047;border:1px solid #22d3ee;border-radius:14px;padding:16px;margin:16px 0;color:#fff"><h2 style="font-weight:800;font-size:19px">Faculty on Main Dashboard</h2><p style="font-size:14px;margin:7px 0">Only teachers individually approved for publication are shown.</p><label style="display:flex;gap:10px"><input id="facultyEnabled" type="checkbox"> Show Meet Our Teachers publicly</label><button id="facultySave" type="button" style="background:#0891b2;padding:11px;border-radius:10px">Save faculty visibility</button><p id="facultyStatus"></p></section><!-- Add Teacher Form -->
         <section class="cyber-card rounded-2xl p-5 space-y-3">
             <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2>
             <div class="grid sm:grid-cols-2 gap-3 text-xs">
@@ -182,6 +199,8 @@
     </main><div id="printSheet"></div>
 
     <script>
+        document.getElementById('facultySave').onclick=async()=>{const status=document.getElementById('facultyStatus');try{await LamaAPI.setFacultyVisibility(document.getElementById('facultyEnabled').checked);status.textContent='Visibility saved';}catch(e){status.textContent=e.message}};
+        (async()=>{try{const id=LamaAPI.getSession('school')?.schoolId;const r=await fetch(API_URL+'?action=getPublicFaculty&schoolId='+encodeURIComponent(id));const d=await r.json();document.getElementById('facultyEnabled').checked=!!d.data?.enabled;}catch(e){console.warn(e)}})();
         let allTeachers = [];
         const teacherPhotos={in:null,edit:null};
         // Local print fallback when the Apps Script teacher schema does not return photo.
@@ -593,5 +612,12 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
             init();
         }
     </script>
-</body>
+<script id="designation-bio-helper">
+(function(){
+ const roles=[[/head\s*(master|teacher)|principal|headmistress|administrator|director|coordinator|vice principal/i,['Administration','Responsible for school leadership, academic planning, teacher support and student development.']],[/librarian/i,['Library','Supports reading, research and responsible use of library resources.']],[/account|finance|bursar/i,['Finance','Supports accurate financial records and school administrative operations.']],[/clerk|office|assistant/i,['Administration','Supports school office services, records and communication.']],[/teacher|instructor|lecturer|educator/i,['Teaching','Supports student learning through engaging lessons, assessment and individual guidance.']]];
+ function suggest(prefix){const d=document.getElementById(prefix+'Designation'),b=document.getElementById(prefix+'Bio'),dep=document.getElementById(prefix+'Department');if(!d)return;const match=roles.find(r=>r[0].test(d.value));if(!match)return;if(dep&&!dep.value.trim())dep.value=match[1][0];if(b&&(!b.value.trim()||b.dataset.autoBio==='1')){b.value=match[1][1];b.dataset.autoBio='1'}}
+ document.addEventListener('input',e=>{if(e.target.id==='editBio')e.target.dataset.autoBio='0';if(e.target.id==='editDesignation')suggest('edit')});
+ document.addEventListener('change',e=>{if(e.target.id==='editDesignation')suggest('edit')});
+})();
+</script></body>
 </html>

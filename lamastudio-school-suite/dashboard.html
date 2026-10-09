@@ -166,14 +166,32 @@
             </div>
         </section>
 
-        <!-- Finance + attendance analytics -->
-        <section class="command-grid">
-            <div class="span-8 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-purple-300">Financial Intelligence</p><h3 class="text-lg font-black">Fee Collection Trend</h3></div><a href="finance-center.html" class="module-tile rounded-2xl p-3 bg-amber-500/5 border border-amber-500/10 hover:border-amber-400/40 transition"><b>📊</b><p>Accounts</p><small>daily expenses & income</small></a>
-<a href="leave-manager.html" class="module-tile rounded-2xl p-3 bg-teal-500/5 border border-teal-500/10 hover:border-teal-400/40 transition"><b>📝</b><p>Leave Requests</p><small>student & teacher</small></a>
-<a href="document-import.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>📥</b><p>Document Import</p><small>PDF / Word / Excel</small></a>
-<a href="identity-cards.html" class="module-tile rounded-2xl p-3 bg-violet-500/5 border border-violet-500/10 hover:border-violet-400/40 transition"><b>🪪</b><p>ID Cards</p><small>preview & print</small></a>
-<a href="fees.html" class="text-[10px] font-black text-purple-300">OPEN FINANCE →</a></div><div class="chart-shell"><canvas id="incomeChart"></canvas></div></div>
+        <!-- Finance analytics: dedicated container -->
+        <section class="command-grid" aria-label="Financial and attendance intelligence">
+            <div class="span-8 neo-card rounded-3xl p-5">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <div><p class="section-kicker text-purple-300">Financial Intelligence</p><h3 class="text-lg font-black text-white">Fee Collection Analytics</h3><p class="text-xs text-slate-400 mt-1">Collection trends from your school's fee records</p></div>
+                    <div class="flex gap-2 flex-wrap"><a href="fees.html" class="text-xs font-black text-purple-300 border border-purple-500/20 rounded-xl px-3 py-2 hover:bg-purple-500/10">Fee Management →</a><a href="finance-center.html" class="text-xs font-black text-amber-300 border border-amber-500/20 rounded-xl px-3 py-2 hover:bg-amber-500/10">Accounts →</a></div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    <div class="metric-card rounded-xl p-3"><p class="section-kicker">Today</p><strong id="financeToday" class="text-lg text-amber-300 block mt-1">—</strong></div>
+                    <div class="metric-card rounded-xl p-3"><p class="section-kicker">This Month</p><strong id="financeMonth" class="text-lg text-pink-300 block mt-1">—</strong></div>
+                    <div class="metric-card rounded-xl p-3"><p class="section-kicker">This Year</p><strong id="financeYear" class="text-lg text-emerald-300 block mt-1">—</strong></div>
+                </div>
+                <div class="chart-shell"><canvas id="incomeChart" aria-label="Fee collection trend bar chart" role="img"></canvas></div>
+                <p id="financeChartNote" class="text-xs text-slate-400 mt-3" aria-live="polite">Loading fee collection data…</p>
+            </div>
             <div class="span-4 neo-card rounded-3xl p-5"><div class="mb-3"><p class="section-kicker text-red-300">Attendance Intelligence</p><h3 class="text-lg font-black">Today's Status</h3></div><div class="mini-chart"><canvas id="attendanceChart"></canvas></div><div id="attendanceSummary" class="grid grid-cols-2 gap-2 mt-2"></div></div>
+        </section>
+
+        <!-- Independent administration tools: not part of finance -->
+        <section class="neo-card rounded-3xl p-5" aria-label="School administration tools">
+            <div class="mb-4"><p class="section-kicker text-cyan-300">Administration Tools</p><h3 class="text-lg font-black text-white">School Operations & Documents</h3><p class="text-xs text-slate-400 mt-1">Independent tools for requests, document processing and identity cards</p></div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <a href="leave-manager.html" class="module-tile rounded-2xl p-4 bg-teal-500/5 border border-teal-500/20 hover:border-teal-400/50 transition"><b>📝</b><p>Leave Requests</p><small>Student & teacher leave management</small></a>
+                <a href="document-import.html" class="module-tile rounded-2xl p-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-400/50 transition"><b>📥</b><p>Document Import</p><small>PDF / Word / Excel documents</small></a>
+                <a href="identity-cards.html" class="module-tile rounded-2xl p-4 bg-violet-500/5 border border-violet-500/20 hover:border-violet-400/50 transition"><b>🪪</b><p>ID Cards</p><small>Authorized preview & printing</small></a>
+            </div>
         </section>
 
         <!-- Command actions -->
@@ -249,7 +267,7 @@
             document.getElementById('absentTodayCount').innerText=`${stats.absentToday??0} absent today`;
             document.getElementById('attendanceRatioDisplay').innerText=stats.attendanceRatio!=null?`${stats.attendanceRatio}%`:'—';
             document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
-            document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText=`${stats.teachersPresentToday||0} / ${stats.totalTeachers||0}`;
+            document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText=`${stats.teachersPresentToday||0} / ${stats.totalTeachers||0}`;
             document.getElementById('notMarkedDisplay').innerText=`${(stats.teachersNotMarked||[]).length} not marked`;
             const [students,teachers,attendance,fees,notifications,tests]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[]};
             renderEngineRows({students,teachers,attendance,fees,notifications,tests});
@@ -259,8 +277,34 @@
         function renderClassChart(students){ const counts={}; students.forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
         function renderGenderChart(students){ const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }
         function renderAttendanceChart(attendance,students){ const today=new Date().toISOString().slice(0,10); const rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today); const present=rows.filter(a=>String(a.status||'').toLowerCase()==='present').length, absent=rows.filter(a=>String(a.status||'').toLowerCase()==='absent').length, leave=rows.length-present-absent; destroyChart('attendance'); charts.attendance=new Chart(document.getElementById('attendanceChart'),{type:'doughnut',data:{labels:['Present','Absent','Other'],datasets:[{data:[present,absent,leave],backgroundColor:['rgba(52,211,153,.75)','rgba(251,113,133,.78)','rgba(148,163,184,.45)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}}); document.getElementById('attendanceSummary').innerHTML=[['Present',present,'text-emerald-300'],['Absent',absent,'text-red-300']].map(x=>`<div class="rounded-xl bg-slate-950/50 border border-slate-800 p-2"><p class="text-[9px] text-slate-500">${x[0]}</p><p class="text-sm font-black ${x[2]}">${x[1]}</p></div>`).join(''); }
-        function renderFeeChart(series,fees){ let labels=series.map(s=>s.month), data=series.map(s=>Number(s.total||0)); if(!labels.length&&fees.length){const map={};fees.forEach(f=>{const d=new Date(f.date||f.paymentDate||f.createdAt);if(!isNaN(d)){const k=d.toLocaleDateString(undefined,{month:'short',year:'2-digit'});map[k]=(map[k]||0)+Number(f.amount||f.paidAmount||f.total||0)}});labels=Object.keys(map).slice(-12);data=labels.map(k=>map[k]);} destroyChart('income'); charts.income=new Chart(document.getElementById('incomeChart'),{type:'line',data:{labels,datasets:[{label:'Fee Collection',data,borderColor:'#a78bfa',backgroundColor:'rgba(139,92,246,.10)',borderWidth:2.5,tension:.38,fill:true,pointRadius:3,pointBackgroundColor:'#c4b5fd'}]},options:chartDefaults()}); }
-        function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
+                 function renderFeeChart(series,fees){
+             // Prefer server-calculated collection series; otherwise aggregate dated payments.
+             let points=[];
+             if(Array.isArray(series)&&series.length){
+                 points=series.map(s=>({label:String(s.month||s.label||''),total:Number(s.total||0)})).filter(s=>s.label);
+             } else if(Array.isArray(fees)){
+                 const monthly=new Map();
+                 fees.forEach(f=>{
+                     const raw=f.paymentDate||f.paidDate||f.date||f.createdAt;
+                     const date=raw?new Date(raw):null;
+                     if(!date||Number.isNaN(date.getTime()))return;
+                     const status=String(f.status||f.paymentStatus||'').toLowerCase();
+                     if(status&&['unpaid','pending','due','overdue','cancelled','canceled'].includes(status))return;
+                     const amount=Number(f.paidAmount??f.amountPaid??f.receivedAmount??f.amount??0);
+                     if(!Number.isFinite(amount)||amount<=0)return;
+                     const key=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0');
+                     monthly.set(key,(monthly.get(key)||0)+amount);
+                 });
+                 points=[...monthly.entries()].sort(([a],[b])=>a.localeCompare(b)).slice(-12).map(([key,total])=>({label:new Date(key+'-01T12:00:00').toLocaleDateString(undefined,{month:'short',year:'2-digit'}),total}));
+             }
+             destroyChart('income');
+             charts.income=new Chart(document.getElementById('incomeChart'),{
+                 type:'bar',data:{labels:points.map(p=>p.label),datasets:[{label:'Fee Collection (PKR)',data:points.map(p=>p.total),backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1,borderRadius:7,maxBarThickness:44}]},
+                 options:{...chartDefaults(),plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>' '+money(context.parsed.y)}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#94a3b8',callback:v=>'Rs. '+Number(v).toLocaleString()},grid:{color:'rgba(148,163,184,.09)'}}}}
+             });
+             document.getElementById('financeChartNote').textContent=points.length?'Monthly fee collections · '+points.length+' period(s) shown':'No dated fee collection data available yet.';
+         }
+function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
         function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
         function renderAbsentees(attendance,students){const today=new Date().toISOString().slice(0,10), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}

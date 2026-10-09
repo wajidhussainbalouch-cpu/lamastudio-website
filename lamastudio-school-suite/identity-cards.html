@@ -64,10 +64,15 @@
 .designer .muted{color:#aebed4;font-size:12px}
 @media print{.designer{display:none!important}.card.teacher .top,.card.teacher .top:after,.card.teacher .bottomwave{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}}
 </style>
-</head><body><header><h1>School Identity Cards</h1><p>Double-sided student and employee cards · 54 × 85.6 mm portrait · A4 print-ready</p></header><section class="toolbar"><label>Card type<select id="kind"><option value="students">Student</option><option value="teachers">Teacher / Employee</option></select></label><label>Search<input id="search" placeholder="Name, ID, guardian, class"></label><label class="filter-label">Class<select id="classFilter"><option value="">All classes</option></select></label><label class="filter-label">Section<select id="sectionFilter"><option value="">All sections</option></select></label><label class="filter-label">Gender<select id="genderFilter"><option value="">All genders</option></select></label><label class="filter-label">Status<select id="statusFilter"><option value="">All statuses</option></select></label><label class="filter-label">Sort by<select id="sortBy"><option value="name">Name</option><option value="class">Class / section</option><option value="id">ID / Enrollment</option></select></label><label>Print cards<select id="scope"><option value="one">Selected person</option><option value="all">All matching people</option></select></label><label>Select person<select id="person"></select></label><label class="checkbox"><input type="checkbox" id="backs" checked> Include back side</label><button id="print">Print / Save as PDF</button><button id="download" type="button">Download card image</button></section>
+<style id="per-card-font-color">
+:root{--lama-name-color:#1b2939;--lama-detail-color:#1b2939;--lama-school-color:#ffffff}
+.card .name{color:var(--lama-name-color)!important}
+.card .data,.card .data td{color:var(--lama-detail-color)!important}
+.card:not(.back) .schoolname{color:var(--lama-school-color)!important}
+</style></head><body><header><h1>School Identity Cards</h1><p>Double-sided student and employee cards · 54 × 85.6 mm portrait · A4 print-ready</p></header><section class="toolbar"><label>Card type<select id="kind"><option value="students">Student</option><option value="teachers">Teacher / Employee</option></select></label><label>Search<input id="search" placeholder="Name, ID, guardian, class"></label><label class="filter-label">Class<select id="classFilter"><option value="">All classes</option></select></label><label class="filter-label">Section<select id="sectionFilter"><option value="">All sections</option></select></label><label class="filter-label">Gender<select id="genderFilter"><option value="">All genders</option></select></label><label class="filter-label">Status<select id="statusFilter"><option value="">All statuses</option></select></label><label class="filter-label">Sort by<select id="sortBy"><option value="name">Name</option><option value="class">Class / section</option><option value="id">ID / Enrollment</option></select></label><label>Print cards<select id="scope"><option value="one">Selected person</option><option value="all">All matching people</option></select></label><label>Select person<select id="person"></select></label><label class="checkbox"><input type="checkbox" id="backs" checked> Include back side</label><button id="print">Print / Save as PDF</button><button id="download" type="button">Download card image</button></section>
 <section class="designer" id="designer">
 <h2>🎨 ID Card Design Studio</h2>
-<p class="muted">Choose a template, colors, fonts and sizes. Changes appear immediately in the card preview. Saved settings apply in this browser.</p>
+<p class="muted">Choose a template, colors, fonts and sizes. Changes appear immediately in the card preview. Designs are temporary and apply only to the selected person. Refresh resets everything.</p>
 <div class="designer-grid">
 <label>Card design<select id="designTheme"><option value="classic">Classic Waves</option><option value="minimal">Minimal Professional</option><option value="floral">Soft Floral</option><option value="bold">Bold Modern</option></select></label>
 <label>Primary color<input id="designPrimary" type="color" value="#079ebf"></label>
@@ -78,7 +83,7 @@
 <label>School name size (px)<input id="designSchoolSize" type="number" min="8" max="16" step="1" value="11"></label>
 <label>Portrait diameter (mm)<input id="designPortraitSize" type="number" min="20" max="30" step="1" value="25"></label>
 </div>
-<div class="designer-actions"><button id="saveDesign" type="button">Save My Design</button><button id="resetDesign" type="button">Reset to Default</button><button id="exportDesign" type="button">Export Design JSON</button><label style="display:inline-flex;align-items:center;gap:8px">Import Design JSON<input id="importDesign" type="file" accept=".json,application/json" style="max-width:240px"></label></div>
+<div class="designer-actions"><button id="saveDesign" type="button">Finalize Selected Card &amp; Print</button><button id="resetDesign" type="button">Reset Selected Card</button><button id="exportDesign" type="button">Export Design JSON</button><label style="display:inline-flex;align-items:center;gap:8px">Import Design JSON<input id="importDesign" type="file" accept=".json,application/json" style="max-width:240px"></label></div>
 </section>
 <div id="status" class="notice">Loading school records…</div><div class="print-tip">Filter by class and section, select a person or choose “All matching people” for batch cards. QR codes contain only the school ID, role and person ID (no passwords or contact details).</div><main id="cards" class="sheet"></main><script>
  'use strict';
@@ -135,40 +140,68 @@ catch(e){alert('Image export failed: '+e.message+'; try Print / Save as PDF.')}f
 <script id="lama-designer-js">
 (function(){
 'use strict';
-const KEY='lama_card_design_v1';
-const defaults={theme:'classic',primary:'#079ebf',accent:'#f7a349',font:'Arial, sans-serif',name:11,detail:7.8,school:11,portrait:25};
-const ids={theme:'designTheme',primary:'designPrimary',accent:'designAccent',font:'designFont',name:'designNameSize',detail:'designDetailSize',school:'designSchoolSize',portrait:'designPortraitSize'};
+const defaults={theme:'classic',primary:'#079ebf',accent:'#f7a349',font:'Arial, sans-serif',name:11,detail:7.8,school:11,portrait:25,nameColor:'#1b2939',detailColor:'#1b2939',schoolColor:'#ffffff'};
+const ids={theme:'designTheme',primary:'designPrimary',accent:'designAccent',font:'designFont',name:'designNameSize',detail:'designDetailSize',school:'designSchoolSize',portrait:'designPortraitSize',nameColor:'designNameColor',detailColor:'designDetailColor',schoolColor:'designSchoolColor'};
 const $d=id=>document.getElementById(id);
-let config={...defaults};
-function safeConfig(c){const hex=v=>/^#[0-9a-f]{6}$/i.test(v)?v:null;return {
-theme:['classic','minimal','floral','bold'].includes(c.theme)?c.theme:defaults.theme,
-primary:hex(c.primary)||defaults.primary,accent:hex(c.accent)||defaults.accent,
-font:[...$d(ids.font).options].some(o=>o.value===c.font)?c.font:defaults.font,
-name:Math.min(18,Math.max(8,Number(c.name)||11)),
-detail:Math.min(12,Math.max(6,Number(c.detail)||7.8)),
-school:Math.min(16,Math.max(8,Number(c.school)||11)),
-portrait:Math.min(30,Math.max(20,Number(c.portrait)||25))};}
-function apply(){
-const root=document.documentElement.style;
-root.setProperty('--lama-primary',config.primary);
-root.setProperty('--lama-accent',config.accent);
-root.setProperty('--lama-card-font',config.font);
-root.setProperty('--lama-name-size',config.name+'px');
-root.setProperty('--lama-detail-size',config.detail+'px');
-root.setProperty('--lama-school-size',config.school+'px');
-root.setProperty('--lama-portrait-size',config.portrait+'mm');
-document.querySelectorAll('.card').forEach(c=>{c.classList.remove('theme-classic','theme-minimal','theme-floral','theme-bold');c.classList.add('theme-'+config.theme)});
+const designs=new Map();
+const finalized=new Set();
+const cssVars={primary:'--lama-primary',accent:'--lama-accent',font:'--lama-card-font',name:'--lama-name-size',detail:'--lama-detail-size',school:'--lama-school-size',portrait:'--lama-portrait-size',nameColor:'--lama-name-color',detailColor:'--lama-detail-color',schoolColor:'--lama-school-color'};
+function selectedKey(){
+const person=$d('person').value,kind=$d('kind').value,scope=$d('scope').value;
+return scope==='one'&&person?kind+':'+person:null;
 }
-function sync(){for(const [k,id] of Object.entries(ids))$d(id).value=config[k];apply()}
-function update(){const next={};for(const [k,id] of Object.entries(ids))next[k]=$d(id).value;config=safeConfig(next);apply()}
-try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved)config=safeConfig(saved)}catch(e){}
-Object.values(ids).forEach(id=>$d(id).addEventListener('input',update));
-$d('saveDesign').onclick=()=>{localStorage.setItem(KEY,JSON.stringify(config));alert('Design saved on this device/browser. Export JSON to reuse elsewhere.')};
-$d('resetDesign').onclick=()=>{config={...defaults};localStorage.removeItem(KEY);sync()};
-$d('exportDesign').onclick=()=>{const blob=new Blob([JSON.stringify(config,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='lama-id-card-design.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-$d('importDesign').onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{config=safeConfig(JSON.parse(await f.text()));sync();localStorage.setItem(KEY,JSON.stringify(config))}catch(err){alert('Invalid design file')}e.target.value=''};
-new MutationObserver(()=>apply()).observe($d('cards'),{childList:true,subtree:false});
-sync();
+function sanitize(obj){
+const hex=v=>/^#[0-9a-f]{6}$/i.test(String(v))?v:null;
+const clamp=(v,min,max,def)=>Math.min(max,Math.max(min,Number(v)||def));
+return {theme:['classic','minimal','floral','bold'].includes(obj.theme)?obj.theme:defaults.theme,
+primary:hex(obj.primary)||defaults.primary,accent:hex(obj.accent)||defaults.accent,
+font:[...$d(ids.font).options].some(o=>o.value===obj.font)?obj.font:defaults.font,
+name:clamp(obj.name,8,18,11),detail:clamp(obj.detail,6,12,7.8),school:clamp(obj.school,8,16,11),portrait:clamp(obj.portrait,20,30,25),
+nameColor:hex(obj.nameColor)||defaults.nameColor,detailColor:hex(obj.detailColor)||defaults.detailColor,schoolColor:hex(obj.schoolColor)||defaults.schoolColor};
+}
+function setInputs(c){Object.entries(ids).forEach(([key,id])=>{$d(id).value=c[key]})}
+function applyCard(card,c){
+const unit={name:'px',detail:'px',school:'px',portrait:'mm'};
+for(const [k,v] of Object.entries(cssVars))card.style.setProperty(v,String(c[k])+(unit[k]||''));
+card.classList.remove('theme-classic','theme-minimal','theme-floral','theme-bold');
+card.classList.add('theme-'+c.theme);
+}
+function refresh(){
+const key=selectedKey(),c=designs.get(key)||defaults;
+setInputs(c);
+document.querySelectorAll('#cards .card').forEach(card=>applyCard(card,c));
+const disabled=!key||finalized.has(key);
+Object.values(ids).forEach(id=>$d(id).disabled=disabled);
+$d('saveDesign').disabled=disabled;
+$d('resetDesign').disabled=!key;
+$d('designer').querySelector('.muted').textContent=!key?'Select one person to customize their card.':finalized.has(key)?'Finalized for this preview. Refresh the page to return to normal.':'Live preview for this person only. No changes are saved to the server or browser.';
+}
+function changed(){
+const key=selectedKey();if(!key||finalized.has(key))return;
+const c={};for(const [k,id] of Object.entries(ids))c[k]=$d(id).value;
+designs.set(key,sanitize(c));refresh();
+}
+Object.values(ids).forEach(id=>$d(id).addEventListener('input',changed));
+$d('saveDesign').onclick=async()=>{
+const key=selectedKey();if(!key)return;
+finalized.add(key);refresh();
+const printButton=$d('print');
+if(printButton)printButton.click();
+};
+$d('resetDesign').onclick=()=>{const key=selectedKey();if(!key)return;designs.delete(key);finalized.delete(key);refresh()};
+$d('exportDesign').onclick=()=>{
+const c=designs.get(selectedKey())||defaults;
+const url=URL.createObjectURL(new Blob([JSON.stringify(c,null,2)],{type:'application/json'}));
+const a=document.createElement('a');a.href=url;a.download='lama-single-card-design.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+$d('importDesign').onchange=async e=>{
+const key=selectedKey(),f=e.target.files?.[0];if(!key||!f||finalized.has(key))return;
+try{designs.set(key,sanitize(JSON.parse(await f.text())));refresh()}catch{alert('Invalid design file')}
+e.target.value='';
+};
+['person','scope','kind'].forEach(id=>$d(id).addEventListener('change',()=>setTimeout(refresh,0)));
+new MutationObserver(refresh).observe($d('cards'),{childList:true});
+refresh();
 })();
 </script>
 </body></html>

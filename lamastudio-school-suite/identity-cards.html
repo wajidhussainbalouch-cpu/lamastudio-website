@@ -81,10 +81,40 @@
 .card.back.theme-minimal .top:after,.card.back.theme-minimal .bottomwave{display:none!important}
 .card.back.theme-floral{border:2px solid var(--lama-accent,#f7a349)!important;border-radius:5mm!important}
 .card.back.theme-bold .top:after{transform:rotate(-14deg)!important;border-radius:10mm!important}
-</style><style id="reverse-heading-white-only">
-.card.back .schoolhead{background:transparent!important;box-shadow:none!important;border:0!important;padding:0!important;border-radius:0!important}
-.card.back .schoolhead .schoolname{color:#ffffff!important}
-.card.back .schoolhead .cardtype{color:#ffffff!important}
+</style><style id="lama-flexible-shapes-contrast">
+/* Front and back shapes have independent, person-scoped colors. */
+.card:not(.back) .top{background:var(--lama-primary,#079ebf)!important}
+.card:not(.back) .top:after,.card:not(.back) .bottomwave{background:var(--lama-accent,#f7a349)!important}
+.card.back .top:after{background:var(--lama-back-primary,#079ebf)!important}
+.card.back .bottomwave{background:var(--lama-back-accent,#f7a349)!important}
+/* Keep the complete reverse title readable on a configurable opaque plate. */
+.card.back .schoolhead{
+  z-index:10!important;top:3mm!important;left:2.5mm!important;right:2.5mm!important;
+  padding:1.3mm!important;border-radius:2mm!important;
+  background:var(--lama-back-header-bg,#ffffff)!important;
+  align-items:center!important;
+}
+.card.back .schoolhead .schoolname{color:var(--lama-back-school-color,#1b2939)!important}
+.card.back .schoolhead .cardtype{color:var(--lama-back-subtitle-color,#334155)!important}
+.card.back .top{isolation:isolate}
+.card.back .top:after{z-index:-1}
+.card.back .logo{background:#fff!important;color:#0c879d!important}
+@media print{
+.card.back .schoolhead{background:var(--lama-back-header-bg,#ffffff)!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+}
+</style><style id="lama-original-wave-layout-restore">
+/* Restore the reference screenshot's cyan/orange front and navy/cyan/orange back. */
+.card.student:not(.back) .top,.card.teacher:not(.back) .top{background:var(--lama-primary,#079ebf)!important}
+.card:not(.back) .top:after,.card:not(.back) .bottomwave{background:var(--lama-accent,#f7a349)!important}
+.card.back .top{background:#202b3b!important}
+.card.back .top:after{background:var(--lama-back-primary,#079ebf)!important}
+.card.back .bottomwave{background:var(--lama-back-accent,#f7a349)!important}
+/* No badge/rectangle behind school name. Retain original layout and curves. */
+.card.back .schoolhead{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important;padding:0!important;top:5mm!important;left:4mm!important;right:4mm!important;z-index:10!important}
+.card.back .schoolhead .schoolname{color:var(--lama-back-school-color,#ffffff)!important}
+.card.back .schoolhead .cardtype{color:var(--lama-back-subtitle-color,#ffffff)!important}
+.card.back .logo{background:#ffffff!important}
+@media print{.card.back .schoolhead{background:transparent!important}}
 </style></head><body><header><h1>School Identity Cards</h1><p>Double-sided student and employee cards · 54 × 85.6 mm portrait · A4 print-ready</p></header><section class="toolbar"><label>Card type<select id="kind"><option value="students">Student</option><option value="teachers">Teacher / Employee</option></select></label><label>Search<input id="search" placeholder="Name, ID, guardian, class"></label><label class="filter-label">Class<select id="classFilter"><option value="">All classes</option></select></label><label class="filter-label">Section<select id="sectionFilter"><option value="">All sections</option></select></label><label class="filter-label">Gender<select id="genderFilter"><option value="">All genders</option></select></label><label class="filter-label">Status<select id="statusFilter"><option value="">All statuses</option></select></label><label class="filter-label">Sort by<select id="sortBy"><option value="name">Name</option><option value="class">Class / section</option><option value="id">ID / Enrollment</option></select></label><label>Print cards<select id="scope"><option value="one">Selected person</option><option value="all">All matching people</option></select></label><label>Select person<select id="person"></select></label><label class="checkbox"><input type="checkbox" id="backs" checked> Include back side</label><label class="checkbox" title="Mobile numbers and CNIC are personal information. Anyone scanning a printed QR can read them."><input type="checkbox" id="qrSensitive"> Include mobile &amp; CNIC in QR</label><button id="print">Print / Save as PDF</button><button id="download" type="button">Download card image</button></section>
 <section class="designer" id="designer">
 <h2>🎨 ID Card Design Studio</h2>
@@ -99,11 +129,11 @@
 <label>Front school name color<input id="designSchoolColor" type="color" value="#ffffff"></label>
 <label>Back shape color<input id="designBackPrimary" type="color" value="#079ebf"></label>
 <label>Back wave color<input id="designBackAccent" type="color" value="#f7a349"></label>
-
-
+<input id="designBackHeaderBg" type="hidden" value="#ffffff">
+<label>Back header subtitle color<input id="designBackSubtitleColor" type="color" value="#ffffff"></label>
 <label>Back heading color<input id="designBackHeadingColor" type="color" value="#1b2939"></label>
 <label>Back rules / text color<input id="designBackTextColor" type="color" value="#1b2939"></label>
-
+<label>Back school name color<input id="designBackSchoolColor" type="color" value="#ffffff"></label>
 <label>Back signature color<input id="designBackSignatureColor" type="color" value="#1b2939"></label>
 <label>Back text size (px)<input id="designBackSize" type="number" min="6" max="12" step=".5" value="8"></label>
 <label>Teacher name size (px)<input id="designNameSize" type="number" min="8" max="18" step="1" value="11"></label>
@@ -184,7 +214,7 @@ catch(e){alert('Image export failed: '+e.message+'; try Print / Save as PDF.')}f
 <script id="lama-designer-js">
 (function(){
 'use strict';
-const defaults={theme:'classic',primary:'#079ebf',accent:'#f7a349',font:'Arial, sans-serif',name:11,detail:7.8,school:11,portrait:25,nameColor:'#1b2939',detailColor:'#1b2939',schoolColor:'#ffffff',backHeadingColor:'#1b2939',backTextColor:'#1b2939',backSchoolColor:'#1b2939',backSignatureColor:'#1b2939',backSize:8,backPrimary:'#079ebf',backAccent:'#f7a349',backHeaderBg:'#ffffff',backSubtitleColor:'#334155'};
+const defaults={theme:'classic',primary:'#079ebf',accent:'#f7a349',font:'Arial, sans-serif',name:11,detail:7.8,school:11,portrait:25,nameColor:'#1b2939',detailColor:'#1b2939',schoolColor:'#ffffff',backHeadingColor:'#1b2939',backTextColor:'#1b2939',backSchoolColor:'#ffffff',backSignatureColor:'#1b2939',backSize:8,backPrimary:'#079ebf',backAccent:'#f7a349',backHeaderBg:'#ffffff',backSubtitleColor:'#ffffff'};
 const ids={theme:'designTheme',primary:'designPrimary',accent:'designAccent',font:'designFont',name:'designNameSize',detail:'designDetailSize',school:'designSchoolSize',portrait:'designPortraitSize',nameColor:'designNameColor',detailColor:'designDetailColor',schoolColor:'designSchoolColor',backHeadingColor:'designBackHeadingColor',backTextColor:'designBackTextColor',backSchoolColor:'designBackSchoolColor',backSignatureColor:'designBackSignatureColor',backSize:'designBackSize',backPrimary:'designBackPrimary',backAccent:'designBackAccent',backHeaderBg:'designBackHeaderBg',backSubtitleColor:'designBackSubtitleColor'};
 const $d=id=>document.getElementById(id);
 const designs=new Map();

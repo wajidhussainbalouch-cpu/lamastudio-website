@@ -1142,12 +1142,27 @@ function getTeacherPhoto_(params) {
 }
 
 
+/** School-wide faculty directory visibility, stored per school in the registry. */
+function setFacultyVisibility_(params) {
+  const match = authorizeSchool(params.schoolId, params.apiKey);
+  if (typeof params.visible !== 'boolean') throw new Error('Faculty visibility must be true or false.');
+  const registry = getRegistrySheet();
+  ensureSheetHeaders(registry, ['facultyVisible']);
+  const headers = registry.getRange(1, 1, 1, registry.getLastColumn()).getValues()[0];
+  const col = headers.indexOf('facultyVisible') + 1;
+  registry.getRange(match.rowIndex, col).setValue(params.visible);
+  return { visible: params.visible };
+}
+
 /** Explicitly public, opt-in faculty directory. Never return private teacher fields. */
 function getPublicFaculty_(schoolId) {
   if (!schoolId) throw new Error('School ID required.');
   const registry = getRegistrySheet();
   const match = findSchoolRow(registry, r => String(r.schoolId) === String(schoolId));
   if (!match || match.obj.status !== 'Active') throw new Error('School not available.');
+  // Fail closed: an unset school-wide visibility flag means not public.
+  const visible = String(match.obj.facultyVisible || '').toLowerCase() === 'true';
+  if (!visible) return {school:{name:match.obj.name,logo:match.obj.logo||''},teachers:[],visible:false};
   const ss = SpreadsheetApp.openById(match.obj.sheetId);
   const sh = ss.getSheetByName('Teachers');
   if (!sh || sh.getLastRow() < 2) return {school:{name:match.obj.name,logo:match.obj.logo||''},teachers:[]};
@@ -1171,10 +1186,59 @@ function getPublicFaculty_(schoolId) {
   return {school:{name:match.obj.name,logo:match.obj.logo||''},teachers:publicTeachers};
 }
 
+
+// Identity cards: server-enforced own-record access and school-owned design.
+const ID_CARD_DESIGN_DEFAULT_ = {theme:'classic',primary:'#079ebf',accent:'#f7a349',font:'Arial, sans-serif',name:11,detail:7.8,school:11,portrait:25,nameColor:'#1b2939',detailColor:'#1b2939',schoolColor:'#ffffff',backHeadingColor:'#1b2939',backTextColor:'#1b2939',backSchoolColor:'#ffffff',backSignatureColor:'#1b2939',backSize:8,backPrimary:'#079ebf',backAccent:'#f7a349',backHeaderBg:'#ffffff',backSubtitleColor:'#ffffff'};
+function identityDesign_(p) {
+  const ctx=resolveContext(p); // validates each session, including teacher/student ownership
+  const registry=getRegistrySheet();
+  const match=findSchoolRow(registry,r=>String(r.schoolId)===String(p.schoolId));
+  const raw=String(match.obj.identityCardDesign||'');
+  let saved={};try{saved=JSON.parse(raw)||{};}catch(_){}
+  return {design:Object.assign({},ID_CARD_DESIGN_DEFAULT_,saved),school:{schoolId:match.obj.schoolId,name:match.obj.name,logo:match.obj.logo||'',address:match.obj.address||'',phone:match.obj.phone||''}};
+}
+function saveIdentityDesign_(p) {
+  const match=authorizeSchool(p.schoolId,p.apiKey);
+  const input=p.design||{};
+  const allowed=Object.keys(ID_CARD_DESIGN_DEFAULT_);
+  const result={};
+  const themes=['classic','minimal','floral','bold'];
+  const fonts=['Arial, sans-serif','Inter, Arial, sans-serif','Georgia, serif','Tahoma, sans-serif',"'Trebuchet MS', sans-serif","'Times New Roman', serif"];
+  const sizes={name:[8,18],detail:[6,12],school:[8,16],portrait:[20,30],backSize:[6,12]};
+  allowed.forEach(k=>{
+    const v=input[k];if(v===undefined)return;
+    if(k==='theme'){if(!themes.includes(v))throw Error('Invalid theme');result[k]=v;}
+    else if(k==='font'){if(!fonts.includes(v))throw Error('Invalid font');result[k]=v;}
+    else if(sizes[k]){const n=Number(v);if(!Number.isFinite(n)||n<sizes[k][0]||n>sizes[k][1])throw Error('Invalid size: '+k);result[k]=n;}
+    else {if(!/^#[0-9a-f]{6}$/i.test(String(v)))throw Error('Invalid color: '+k);result[k]=String(v);}
+  });
+  const registry=getRegistrySheet();ensureSheetHeaders(registry,['identityCardDesign']);
+  const headers=registry.getRange(1,1,1,registry.getLastColumn()).getValues()[0];
+  registry.getRange(match.rowIndex,headers.indexOf('identityCardDesign')+1).setValue(JSON.stringify(Object.assign({},ID_CARD_DESIGN_DEFAULT_,result)));
+  return {saved:true};
+}
+function myIdentityCard_(p) {
+  const ctx=resolveContext(p);
+  if(ctx.role!=='teacher'&&ctx.role!=='student')throw Error('Personal identity cards require a teacher or student session.');
+  const r=ctx.role==='teacher'?ctx.teacher:ctx.student;
+  const type=ctx.role;
+  const fields=type==='teacher'?['id','name','loginId','subject','designation','joiningDate','contact','photo']:['id','enrlNo','name','class','section','fatherGuardian','dob','contact','photo'];
+  const card={};fields.forEach(k=>card[k]=r[k]||'');
+  if(type==='teacher'){
+    const photos=ctx.ss.getSheetByName('TeacherPhotos');
+    if(photos){const rows=photos.getDataRange().getValues();const found=rows.slice(1).find(row=>String(row[0])===String(r.id));if(found)card.photo=String(found[1]||'');}
+  }
+  return {type,record:card};
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
         switch (action) {
+            case 'getIdentityCardDesign': return {status:'success',result:identityDesign_(params)};
+            case 'saveIdentityCardDesign': return {status:'success',result:saveIdentityDesign_(params)};
+            case 'getMyIdentityCard': return {status:'success',result:myIdentityCard_(params)};
+            case 'setFacultyVisibility': return {status:'success',result:setFacultyVisibility_(params)};
             case 'getPublicFaculty': return {status:'success',data:getPublicFaculty_(params.schoolId)};
             case 'register':
                 return { status: 'success', school: registerSchool(params) };

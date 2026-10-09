@@ -8,9 +8,7 @@ const LamaAPI = (() => {
   const parse = value => { try { return value ? JSON.parse(value) : null; } catch (_) { return null; } };
   function migrate() {
     const old = parse(localStorage.getItem(legacyKey));
-    if (old && ROLES.includes(old.role) && !localStorage.getItem(key(old.role))) {
-      localStorage.setItem(key(old.role), JSON.stringify(old));
-    }
+    if (old && ROLES.includes(old.role) && !localStorage.getItem(key(old.role))) localStorage.setItem(key(old.role), JSON.stringify(old));
     if (old) localStorage.removeItem(legacyKey);
   }
   migrate();
@@ -34,8 +32,8 @@ const LamaAPI = (() => {
     if (session.role === 'admin') return { role:'admin', adminApiKey:session.adminApiKey };
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
-  async function callApi(action, payload = {}, method = 'POST') {
-    const body = Object.assign({action}, authFieldsFor(getSession()), payload);
+  async function callApi(action, payload = {}, method = 'POST', role) {
+    const body = Object.assign({action}, authFieldsFor(getSession(role)), payload);
     let response;
     try {
       if (method === 'GET') {
@@ -53,7 +51,8 @@ const LamaAPI = (() => {
     return data;
   }
   const loginResult = async (action, payload, property, role) => {
-    const data = await callApi(action,payload);
+    // Login is deliberately unauthenticated: never attach credentials from another role.
+    const data = await callApi(action,payload,'POST',null);
     if (!data[property]) throw Error('Login response is missing ' + property);
     const session = Object.assign({},data[property],{role});
     setSession(session);
@@ -75,7 +74,7 @@ const LamaAPI = (() => {
     try { const d=await callApi('getSchoolConfig',{},'GET'); const merged=Object.assign({},session,d.school); setSession(merged); return merged; }
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
-  async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
+  async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch},'POST','school'); setSession(Object.assign({},getSession('school'),d.school)); return d.school; }
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
     getSession,setSession,clearSession,logout:clearSession,isLoggedIn,requireLogin,requireAnyLogin,
@@ -85,8 +84,10 @@ const LamaAPI = (() => {
     studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
     getActiveSchool,updateSchoolConfig,deriveShortCode,
-   saveTeacherPhoto:async(teacherId,photo)=>(await callApi('saveTeacherPhoto',{teacherId,photo})).result,
-   getTeacherPhoto:async(teacherId)=>(await callApi('getTeacherPhoto',{teacherId},'GET')).result,
+    // Backend must implement this action and enforce school-admin authorization.
+    setFacultyVisibility:async visible=>(await callApi('setFacultyVisibility',{visible:Boolean(visible)},'POST','school')).result,
+    saveTeacherPhoto:async(teacherId,photo)=>(await callApi('saveTeacherPhoto',{teacherId,photo})).result,
+    getTeacherPhoto:async teacherId=>(await callApi('getTeacherPhoto',{teacherId},'GET')).result,
     getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,

@@ -23,6 +23,19 @@
  .print-details{display:grid;grid-template-columns:1fr 1fr;gap:13px 20px}.print-detail{border-bottom:1px solid #cbd5e1;padding:9px 0;min-height:48px}.print-label{display:block;color:#475569;font-size:12px;font-weight:700;text-transform:uppercase}.print-value{font-size:16px;font-weight:600;overflow-wrap:anywhere}
  .print-footer{position:absolute;bottom:9mm;left:9mm;right:9mm;display:flex;justify-content:space-between;align-items:end;gap:16px;font-size:12px;color:#475569;border-top:1px solid #cbd5e1;padding-top:10px}.print-sign{border-top:1px solid #475569;padding-top:8px;min-width:150px;text-align:center}
 }
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script><style>
+@media print{
+ .print-page{height:auto!important;min-height:260mm!important;max-height:none!important;overflow:visible!important;break-after:page!important;padding-bottom:23mm!important}
+ .print-page:last-child{break-after:auto!important}
+ .print-details{display:block!important}
+ .profile-section{margin-top:9px;break-inside:avoid}
+ .profile-section h3{font-size:12px!important;color:#0e7490!important;border-bottom:1px solid #0e7490;margin:0 0 4px;padding-bottom:2px}
+ .profile-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px 9px}
+ .print-detail{padding:2px 0!important;min-height:0!important;font-size:9px!important}
+ .print-label{font-size:8px!important}.print-value{font-size:9px!important}
+ .profile-qr{position:absolute;right:10mm;bottom:22mm;width:78px;height:78px}
+ .print-footer{position:relative!important;margin-top:14px!important;bottom:auto!important}
+}
 </style></head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen"><nav style="background:#102b47;color:#fff;padding:9px 16px;display:flex;gap:18px;flex-wrap:wrap;font:13px system-ui"><a style="color:#93c5fd" href="identity-cards.html">Preview / Print ID Card</a><a style="color:#93c5fd" href="document-import.html">Import documents (Excel, PDF, DOCX, images)</a></nav>
 
@@ -71,7 +84,7 @@
  <input id="inDisplayOrder" type="number" min="0" placeholder="Faculty display order" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
  <textarea id="inBio" rows="3" maxlength="500" placeholder="About me — short professional introduction (max 500 characters)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
  <textarea id="inEducation" rows="2" maxlength="350" placeholder="Education / degrees and certifications" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
- <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="inIsPublic" type="checkbox" class="w-5 h-5"> Publish on Meet Our Teachers (public website and student portal)</label>
+ <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="inIsPublic" type="checkbox" class="w-5 h-5"> Publish on Meet Our Teachers (public website and student portal)</label><label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="inPublishPhoto" type="checkbox" class="w-5 h-5"> Publish teacher photo on public faculty page (only with consent)</label><label class="text-sm text-slate-200 block my-2"><input type="checkbox" id="inPublishPhoto"> Allow teacher portrait on public faculty page (requires teacher consent)</label>
  </div></div>
                 <input id="inSubject" placeholder="Subject (e.g. Math)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inClass" placeholder="Assigned Class (e.g. 5)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -88,6 +101,7 @@
                 <input type="date" id="inJoiningDate" placeholder="Joining Date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="inAddress" placeholder="Residential Address" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+<div class="sm:col-span-2 mt-3 border-t border-slate-700 pt-3"><h3 class="text-lg font-bold text-cyan-300">Personal · Education · Service · Finance</h3><p class="text-xs text-slate-400">Sensitive details are for authorized school administration only.</p></div><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Personal details</h4><label class="text-xs text-slate-200">Marital status<select id="inMaritalStatus" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Divorced">Divorced</option></select></label><label class="text-xs text-slate-200">District of domicile<input id="inDomicileDistrict" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Disability (confidential)<select id="inDisability" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="No">No</option><option value="Yes">Yes</option><option value="Prefer not to disclose">Prefer not to disclose</option></select></label><label class="text-xs text-slate-200">Relevant health accommodation (confidential; optional)<input id="inSeriousIllness" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Education details</h4><label class="text-xs text-slate-200">Highest academic degree<input id="inHighestDegree" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Major subjects<input id="inMajorSubjects" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Professional degree<input id="inProfessionalDegree" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="sm:col-span-2 text-xs text-slate-200">Professional trainings<textarea id="inTrainings" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></textarea></label><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Service details</h4><label class="text-xs text-slate-200">Personnel / employee number<input id="inPersonnelNumber" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Employment type<select id="inEmploymentType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="Regular">Regular</option><option value="Contract">Contract</option><option value="Part-time">Part-time</option><option value="Visiting">Visiting</option></select></label><label class="text-xs text-slate-200">Subjects of interest<input id="inSubjectsOfInterest" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Date of first joining<input id="inFirstJoiningDate" type="date"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Finance details</h4><label class="text-xs text-slate-200">Pay scale / grade<input id="inPayScale" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Basic monthly pay<input id="inBasicPay" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Monthly allowances<input id="inAllowances" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Monthly deductions<input id="inDeductions" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Arrears<input id="inArrears" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Bank name (confidential)<input id="inBankName" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Bank account last 4 digits only<input id="inAccountLast4" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><div class="sm:col-span-2 mt-4 border-t border-slate-700 pt-4"><h3 class="text-lg font-bold text-rose-300">Medical & Wellness · Private</h3><p class="text-xs text-slate-300">Optional confidential health information. Never published to faculty directory or ID cards. Enter only with consent and appropriate access controls.</p></div><label class="text-xs text-slate-200">Calculated age (from date of birth)<output id="inAge" class="block bg-slate-900 rounded-lg px-3 py-3 text-white">—</output></label><label class="text-xs text-slate-200">BMI (kg/m², automatically calculated)<output id="inBmi" class="block bg-slate-900 rounded-lg px-3 py-3 text-white">—</output></label><label class="text-xs text-slate-200">Height (cm)<input id="inHeightCm" type="number" min="80" max="250" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Weight (kg)<input id="inWeightKg" type="number" min="15" max="350" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Eye vision (e.g. 6/6; glasses)<input id="inEyeVision" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Medical conditions (optional, confidential)<textarea id="inMedicalConditions" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></textarea></label><label class="text-xs text-slate-200">Blood pressure (e.g. 120/80 mmHg)<input id="inBloodPressure" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Random blood sugar (mg/dL)<input id="inRbs" type="number" min="0" step="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Blood group<select id="inBloodGroup" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option><option value="Unknown">Unknown</option></select></label><label class="text-xs text-slate-200">Disability type / accommodation (optional)<input id="inDisabilityType" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">COVID-19 vaccination status<select id="inCovidVaccination" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="Not disclosed">Not disclosed</option><option value="Not vaccinated">Not vaccinated</option><option value="Partially vaccinated">Partially vaccinated</option><option value="Completed primary series">Completed primary series</option><option value="Booster received">Booster received</option><option value="Unknown">Unknown</option></select></label><label class="text-xs text-slate-200">Other vaccinations (optional)<textarea id="inOtherVaccinations" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></textarea></label>
                 <div class="sm:col-span-2 flex gap-2"><input id="inPassword" type="password" autocomplete="new-password" placeholder="Password (8+ chars)" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><button type="button" onclick="togglePassword('inPassword',this)" class="px-3 rounded-lg bg-slate-700" aria-label="Show password">👁 Show</button></div>
             </div>
             <button onclick="createTeacher()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">+ Create Teacher Account</button>
@@ -119,7 +133,7 @@
  <input id="editDisplayOrder" type="number" min="0" placeholder="Faculty display order" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
  <textarea id="editBio" rows="3" maxlength="500" placeholder="About me — short professional introduction (max 500 characters)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
  <textarea id="editEducation" rows="2" maxlength="350" placeholder="Education / degrees and certifications" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
- <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="editIsPublic" type="checkbox" class="w-5 h-5"> Publish on Meet Our Teachers (public website and student portal)</label>
+ <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="editIsPublic" type="checkbox" class="w-5 h-5"> Publish on Meet Our Teachers (public website and student portal)</label><label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="editPublishPhoto" type="checkbox" class="w-5 h-5"> Publish teacher photo on public faculty page (only with consent)</label><label class="text-sm text-slate-200 block my-2"><input type="checkbox" id="editPublishPhoto"> Allow teacher portrait on public faculty page (requires teacher consent)</label>
  </div></div>
                 <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -136,6 +150,7 @@
                 <input type="date" id="editJoiningDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editEmergencyContact" placeholder="Emergency Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editAddress" placeholder="Residential Address" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+<div class="sm:col-span-2 mt-3 border-t border-slate-700 pt-3"><h3 class="text-lg font-bold text-cyan-300">Personal · Education · Service · Finance</h3><p class="text-xs text-slate-400">Sensitive details are for authorized school administration only.</p></div><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Personal details</h4><label class="text-xs text-slate-200">Marital status<select id="editMaritalStatus" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="Single">Single</option><option value="Married">Married</option><option value="Widowed">Widowed</option><option value="Divorced">Divorced</option></select></label><label class="text-xs text-slate-200">District of domicile<input id="editDomicileDistrict" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Disability (confidential)<select id="editDisability" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="No">No</option><option value="Yes">Yes</option><option value="Prefer not to disclose">Prefer not to disclose</option></select></label><label class="text-xs text-slate-200">Relevant health accommodation (confidential; optional)<input id="editSeriousIllness" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Education details</h4><label class="text-xs text-slate-200">Highest academic degree<input id="editHighestDegree" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Major subjects<input id="editMajorSubjects" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Professional degree<input id="editProfessionalDegree" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="sm:col-span-2 text-xs text-slate-200">Professional trainings<textarea id="editTrainings" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></textarea></label><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Service details</h4><label class="text-xs text-slate-200">Personnel / employee number<input id="editPersonnelNumber" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Employment type<select id="editEmploymentType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="Regular">Regular</option><option value="Contract">Contract</option><option value="Part-time">Part-time</option><option value="Visiting">Visiting</option></select></label><label class="text-xs text-slate-200">Subjects of interest<input id="editSubjectsOfInterest" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Date of first joining<input id="editFirstJoiningDate" type="date"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><h4 class="sm:col-span-2 mt-3 text-sm font-bold text-amber-300">Finance details</h4><label class="text-xs text-slate-200">Pay scale / grade<input id="editPayScale" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Basic monthly pay<input id="editBasicPay" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Monthly allowances<input id="editAllowances" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Monthly deductions<input id="editDeductions" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Arrears<input id="editArrears" type="number" step="0.01" min="0" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Bank name (confidential)<input id="editBankName" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Bank account last 4 digits only<input id="editAccountLast4" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><div class="sm:col-span-2 mt-4 border-t border-slate-700 pt-4"><h3 class="text-lg font-bold text-rose-300">Medical & Wellness · Private</h3><p class="text-xs text-slate-300">Optional confidential health information. Never published to faculty directory or ID cards. Enter only with consent and appropriate access controls.</p></div><label class="text-xs text-slate-200">Calculated age (from date of birth)<output id="editAge" class="block bg-slate-900 rounded-lg px-3 py-3 text-white">—</output></label><label class="text-xs text-slate-200">BMI (kg/m², automatically calculated)<output id="editBmi" class="block bg-slate-900 rounded-lg px-3 py-3 text-white">—</output></label><label class="text-xs text-slate-200">Height (cm)<input id="editHeightCm" type="number" min="80" max="250" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Weight (kg)<input id="editWeightKg" type="number" min="15" max="350" step="0.1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Eye vision (e.g. 6/6; glasses)<input id="editEyeVision" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Medical conditions (optional, confidential)<textarea id="editMedicalConditions" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></textarea></label><label class="text-xs text-slate-200">Blood pressure (e.g. 120/80 mmHg)<input id="editBloodPressure" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Random blood sugar (mg/dL)<input id="editRbs" type="number" min="0" step="1" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">Blood group<select id="editBloodGroup" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option><option value="Unknown">Unknown</option></select></label><label class="text-xs text-slate-200">Disability type / accommodation (optional)<input id="editDisabilityType" type="text"  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label><label class="text-xs text-slate-200">COVID-19 vaccination status<select id="editCovidVaccination" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select</option><option value="Not disclosed">Not disclosed</option><option value="Not vaccinated">Not vaccinated</option><option value="Partially vaccinated">Partially vaccinated</option><option value="Completed primary series">Completed primary series</option><option value="Booster received">Booster received</option><option value="Unknown">Unknown</option></select></label><label class="text-xs text-slate-200">Other vaccinations (optional)<textarea id="editOtherVaccinations" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></textarea></label>
                 <select id="editStatus" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                     <option value="Active">Active</option>
                     <option value="Suspended">Suspended</option>
@@ -218,6 +233,48 @@
           }catch(e){status.textContent='Photo processing failed: '+e.message;}
         }
         let currentSchool={};
+
+        function calculateMedical_in() {
+          const dob=document.getElementById('inDob').value;
+          const ageOut=document.getElementById('inAge');
+          let age='—';
+          if(/^\d{4}-\d{2}-\d{2}$/.test(dob)){
+            const [y,m,d]=dob.split('-').map(Number),today=new Date();
+            const birth=new Date(y,m-1,d);
+            if(birth.getFullYear()===y&&birth.getMonth()===m-1&&birth.getDate()===d&&birth<=today){
+              let years=today.getFullYear()-y;
+              if(today.getMonth()+1<m||(today.getMonth()+1===m&&today.getDate()<d))years--;
+              age=years+' years';
+            }
+          }
+          ageOut.textContent=age;
+          const h=Number(document.getElementById('inHeightCm').value),w=Number(document.getElementById('inWeightKg').value);
+          document.getElementById('inBmi').textContent=(h>=80&&h<=250&&w>=15&&w<=350)?(w/((h/100)**2)).toFixed(1):'—';
+        }
+        ['inDob','inHeightCm','inWeightKg'].forEach(id=>document.getElementById(id).addEventListener('input',calculateMedical_in));
+
+
+        function calculateMedical_edit() {
+          const dob=document.getElementById('editDob').value;
+          const ageOut=document.getElementById('editAge');
+          let age='—';
+          if(/^\d{4}-\d{2}-\d{2}$/.test(dob)){
+            const [y,m,d]=dob.split('-').map(Number),today=new Date();
+            const birth=new Date(y,m-1,d);
+            if(birth.getFullYear()===y&&birth.getMonth()===m-1&&birth.getDate()===d&&birth<=today){
+              let years=today.getFullYear()-y;
+              if(today.getMonth()+1<m||(today.getMonth()+1===m&&today.getDate()<d))years--;
+              age=years+' years';
+            }
+          }
+          ageOut.textContent=age;
+          const h=Number(document.getElementById('editHeightCm').value),w=Number(document.getElementById('editWeightKg').value);
+          document.getElementById('editBmi').textContent=(h>=80&&h<=250&&w>=15&&w<=350)?(w/((h/100)**2)).toFixed(1):'—';
+        }
+        ['editDob','editHeightCm','editWeightKg'].forEach(id=>document.getElementById(id).addEventListener('input',calculateMedical_edit));
+
+        function ageFromDob(value){if(!value)return '-';const d=new Date(value),now=new Date();if(Number.isNaN(d.getTime()))return '-';const years=now.getFullYear()-d.getFullYear()-(now.getMonth()<d.getMonth()||(now.getMonth()===d.getMonth()&&now.getDate()<d.getDate())?1:0);return years>=0&&years<120?years+' years':'-'}
+        function bmiFromTeacher(t){const h=Number(t.heightCm),w=Number(t.weightKg);return h>=80&&w>=15?(w/(h/100)**2).toFixed(1):'-'}
         function teacherProfileCard(t,page,total){
           const schoolName=currentSchool.name||document.getElementById('headerSchoolName').textContent||'School';
           const logo=currentSchool.logo||currentSchool.logoUrl||'';
@@ -225,18 +282,42 @@
           const photo=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||'';
           const safePhoto=typeof photo==='string'&&/^(data:image\/|https:\/\/)/.test(photo)?photo:'';
           const portrait=safePhoto?'<img class="print-portrait" src="'+teacherEsc(safePhoto)+'" alt="Teacher photo">':'<div class="print-portrait" style="display:grid;place-items:center;color:#64748b">PHOTO</div>';
-          const details=[['Teacher ID',t.loginId||t.email],['Designation',t.designation],['Subject',t.subject],['Assigned class',(t.assignedClass||'-')+(t.assignedSection?'-'+t.assignedSection:'')],['Qualification',t.qualification],['Joining date',teacherDate(t.joiningDate)],['Date of birth',teacherDate(t.dob)],['Contact',t.contact],['Email',t.email],['Status',t.status]];
+          const groups=[
+            ['Personal',[['Name',t.name],['Gender',t.gender],['Marital status',t.maritalStatus],['Date of birth',teacherDate(t.dob)],['Age',ageFromDob(t.dob)],['CNIC',t.cnic],['Address',t.address],['Domicile district',t.domicileDistrict],['Contact',t.contact],['Emergency contact',t.emergencyContact],['Email',t.email]]],
+            ['Education',[['Qualification',t.qualification],['Highest degree',t.highestDegree],['Major subjects',t.majorSubjects],['Professional degree',t.professionalDegree],['Trainings',t.trainings]]],
+            ['Service',[['Teacher ID',t.loginId],['Personnel no.',t.personnelNumber],['Employment type',t.employmentType],['Designation',t.designation],['Department',t.department],['Subject',t.subject],['Subjects of interest',t.subjectsOfInterest],['Assigned class',String(t.assignedClass||'')+(t.assignedSection?'-'+t.assignedSection:'')],['Experience',t.experience],['First joining',teacherDate(t.firstJoiningDate)],['Joining date',teacherDate(t.joiningDate)],['Status',t.status]]],
+            ['Finance',[['Pay scale',t.payScale],['Basic pay',t.basicPay],['Allowances',t.allowances],['Deductions',t.deductions],['Arrears',t.arrears],['Bank name',t.bankName],['Account last 4',t.accountLast4]]],
+            ['Medical · confidential',[['Height (cm)',t.heightCm],['Weight (kg)',t.weightKg],['BMI',bmiFromTeacher(t)],['Eye vision',t.eyeVision],['Blood pressure',t.bloodPressure],['RBS (mg/dL)',t.rbs],['Blood group',t.bloodGroup],['Disability',t.disability],['Disability type',t.disabilityType],['Health accommodation',t.seriousIllness],['Medical conditions',t.medicalConditions],['COVID vaccination',t.covidVaccination],['Other vaccinations',t.otherVaccinations]]]
+          ];
+          const details=groups.map(([title,fields])=>'<div class="profile-section"><h3>'+teacherEsc(title)+'</h3><div class="profile-grid">'+fields.map(([k,v])=>'<div class="print-detail"><span class="print-label">'+teacherEsc(k)+'</span><span class="print-value">'+teacherEsc(v===undefined||v===null||v===''?'-':v)+'</span></div>').join('')+'</div></div>').join('');
+          const qrPayload=JSON.stringify({schoolId:currentSchool.schoolId||currentSchool.id||'',role:'teacher',id:t.id||t.teacherId||t.loginId||''});
           return '<section class="print-page"><div class="print-head">'+logoHtml+'<div><div class="print-school">'+teacherEsc(schoolName)+'</div><div class="print-sub">TEACHER EMPLOYEE PROFILE</div></div></div>'+ 
             '<div class="print-profile">'+portrait+'<div><div class="print-person">'+teacherEsc(t.name||'Unnamed Teacher')+'</div><div style="font-size:17px;color:#0e7490;font-weight:700;margin-top:8px">'+teacherEsc(t.loginId||t.email||'')+'</div></div></div>'+ 
-            '<div class="print-details">'+details.map(([k,v])=>'<div class="print-detail"><span class="print-label">'+teacherEsc(k)+'</span><span class="print-value">'+teacherEsc(v||'-')+'</span></div>').join('')+'</div>'+ 
+            '<div class="print-details">'+details+'</div><div class="profile-qr" data-profile-qr="'+teacherEsc(qrPayload)+'"></div>'+ 
             '<div class="print-footer"><span><b>Lamastudio.pk</b> · Page '+page+' of '+total+'</span><span class="print-sign">School Administrator Signature</span></div></section>';
+        }
+        async function loadSavedTeacherPhoto(t){
+          const existing=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t);
+          if(existing && /^(data:image\/|https:\/\/)/.test(existing))return existing;
+          if(!LamaAPI.getTeacherPhoto)return '';
+          try {const result=await LamaAPI.getTeacherPhoto(t.id);const photo=result&&result.photo||'';
+            if(photo && /^data:image\//.test(photo)){storeTeacherPhoto(t,photo);return photo;}
+          }catch(error){console.warn('Cannot fetch photo for '+t.id,error);}
+          return '';
         }
         async function printTeachers(ids){
           const list=ids?allTeachers.filter(t=>ids.includes(String(t.id))):allTeachers;
           if(!list.length){alert('No teacher records available.');return;}
-          const sheet=document.getElementById('printSheet');sheet.innerHTML=list.map((t,i)=>teacherProfileCard(t,i+1,list.length)).join('');
-          const images=Array.from(sheet.querySelectorAll('img'));
-          Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,4000)}))).then(()=>window.print());
+          const printButton=document.activeElement;
+          if(printButton&&printButton.tagName==='BUTTON')printButton.disabled=true;
+          try {
+            const enriched=await Promise.all(list.map(async t=>({...t,photo:await loadSavedTeacherPhoto(t)})));
+            const sheet=document.getElementById('printSheet');sheet.innerHTML=enriched.map((t,i)=>teacherProfileCard(t,i+1,enriched.length)).join('');
+            sheet.querySelectorAll('[data-profile-qr]').forEach(el=>{if(typeof QRCode==='function')new QRCode(el,{text:el.dataset.profileQr,width:78,height:78});else el.textContent='QR unavailable';});
+            const images=Array.from(sheet.querySelectorAll('img'));
+            await Promise.all(images.map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;setTimeout(resolve,6000)})));
+            window.print();
+          }finally{if(printButton&&printButton.tagName==='BUTTON')printButton.disabled=false;}
         }
         function togglePassword(id,btn) { const e=document.getElementById(id); e.type=e.type==='password'?'text':'password'; btn.textContent=e.type==='password'?'👁 Show':'🙈 Hide'; }
 
@@ -316,6 +397,26 @@
             document.getElementById('editBio').value = t.bio || '';
             document.getElementById('editEducation').value = t.education || '';
             document.getElementById('editIsPublic').checked = String(t.isPublic||'').toLowerCase() === 'yes';
+            document.getElementById('editMaritalStatus').value=t.maritalStatus||'';
+            document.getElementById('editDomicileDistrict').value=t.domicileDistrict||'';
+            document.getElementById('editDisability').value=t.disability||'';
+            document.getElementById('editSeriousIllness').value=t.seriousIllness||'';
+            document.getElementById('editHighestDegree').value=t.highestDegree||'';
+            document.getElementById('editMajorSubjects').value=t.majorSubjects||'';
+            document.getElementById('editProfessionalDegree').value=t.professionalDegree||'';
+            document.getElementById('editTrainings').value=t.trainings||'';
+            document.getElementById('editPersonnelNumber').value=t.personnelNumber||'';
+            document.getElementById('editEmploymentType').value=t.employmentType||'';
+            document.getElementById('editSubjectsOfInterest').value=t.subjectsOfInterest||'';
+            document.getElementById('editFirstJoiningDate').value=t.firstJoiningDate||'';
+            document.getElementById('editPayScale').value=t.payScale||'';
+            document.getElementById('editBasicPay').value=t.basicPay||'';
+            document.getElementById('editAllowances').value=t.allowances||'';
+            document.getElementById('editDeductions').value=t.deductions||'';
+            document.getElementById('editArrears').value=t.arrears||'';
+            document.getElementById('editBankName').value=t.bankName||'';
+            document.getElementById('editAccountLast4').value=t.accountLast4||'';
+document.getElementById('editHeightCm').value=t.heightCm||'';document.getElementById('editWeightKg').value=t.weightKg||'';document.getElementById('editEyeVision').value=t.eyeVision||'';document.getElementById('editMedicalConditions').value=t.medicalConditions||'';document.getElementById('editBloodPressure').value=t.bloodPressure||'';document.getElementById('editRbs').value=t.rbs||'';document.getElementById('editBloodGroup').value=t.bloodGroup||'';document.getElementById('editDisabilityType').value=t.disabilityType||'';document.getElementById('editCovidVaccination').value=t.covidVaccination||'';document.getElementById('editOtherVaccinations').value=t.otherVaccinations||''; calculateMedical_edit();
             teacherPhotos.edit=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||null;
             if(!teacherPhotos.edit && LamaAPI.getTeacherPhoto){try{const remote=await LamaAPI.getTeacherPhoto(t.id);if(remote.photo){teacherPhotos.edit=remote.photo;storeTeacherPhoto(t,remote.photo)}}catch(e){console.warn('Photo fetch failed',e)}}
             document.getElementById('editPhotoPreview').src=teacherPhotos.edit||'';
@@ -357,7 +458,37 @@
                     displayOrder: document.getElementById('editDisplayOrder').value.trim(),
                     bio: document.getElementById('editBio').value.trim(),
                     education: document.getElementById('editEducation').value.trim(),
-                    isPublic: document.getElementById('editIsPublic').checked ? 'Yes' : 'No'
+                    isPublic: document.getElementById('editIsPublic').checked ? 'Yes' : 'No',
+                    publishPhoto: document.getElementById('editPublishPhoto').checked ? 'Yes' : 'No',
+                    'maritalStatus': document.getElementById('editMaritalStatus').value.trim(),
+                    'domicileDistrict': document.getElementById('editDomicileDistrict').value.trim(),
+                    'disability': document.getElementById('editDisability').value.trim(),
+                    'seriousIllness': document.getElementById('editSeriousIllness').value.trim(),
+                    'highestDegree': document.getElementById('editHighestDegree').value.trim(),
+                    'majorSubjects': document.getElementById('editMajorSubjects').value.trim(),
+                    'professionalDegree': document.getElementById('editProfessionalDegree').value.trim(),
+                    'trainings': document.getElementById('editTrainings').value.trim(),
+                    'personnelNumber': document.getElementById('editPersonnelNumber').value.trim(),
+                    'employmentType': document.getElementById('editEmploymentType').value.trim(),
+                    'subjectsOfInterest': document.getElementById('editSubjectsOfInterest').value.trim(),
+                    'firstJoiningDate': document.getElementById('editFirstJoiningDate').value.trim(),
+                    'payScale': document.getElementById('editPayScale').value.trim(),
+                    'basicPay': document.getElementById('editBasicPay').value.trim(),
+                    'allowances': document.getElementById('editAllowances').value.trim(),
+                    'deductions': document.getElementById('editDeductions').value.trim(),
+                    'arrears': document.getElementById('editArrears').value.trim(),
+                    'bankName': document.getElementById('editBankName').value.trim(),
+                    'accountLast4': document.getElementById('editAccountLast4').value.trim(),
+                    'heightCm': document.getElementById('editHeightCm').value.trim(),
+                    'weightKg': document.getElementById('editWeightKg').value.trim(),
+                    'eyeVision': document.getElementById('editEyeVision').value.trim(),
+                    'medicalConditions': document.getElementById('editMedicalConditions').value.trim(),
+                    'bloodPressure': document.getElementById('editBloodPressure').value.trim(),
+                    'rbs': document.getElementById('editRbs').value.trim(),
+                    'bloodGroup': document.getElementById('editBloodGroup').value.trim(),
+                    'disabilityType': document.getElementById('editDisabilityType').value.trim(),
+                    'covidVaccination': document.getElementById('editCovidVaccination').value.trim(),
+                    'otherVaccinations': document.getElementById('editOtherVaccinations').value.trim()
                 });
                 if(teacherPhotos.edit && teacherPhotos.edit.startsWith('data:image/jpeg;base64,')){await LamaAPI.saveTeacherPhoto(id,teacherPhotos.edit);storeTeacherPhoto({id},teacherPhotos.edit);}
                 if(teacherPhotos.edit)storeTeacherPhoto({id},teacherPhotos.edit);
@@ -409,13 +540,44 @@
                     displayOrder: document.getElementById('inDisplayOrder').value.trim(),
                     bio: document.getElementById('inBio').value.trim(),
                     education: document.getElementById('inEducation').value.trim(),
-                    isPublic: document.getElementById('inIsPublic').checked ? 'Yes' : 'No'
+                    isPublic: document.getElementById('inIsPublic').checked ? 'Yes' : 'No',
+                    publishPhoto: document.getElementById('inPublishPhoto').checked ? 'Yes' : 'No',
+                    'maritalStatus': document.getElementById('inMaritalStatus').value.trim(),
+                    'domicileDistrict': document.getElementById('inDomicileDistrict').value.trim(),
+                    'disability': document.getElementById('inDisability').value.trim(),
+                    'seriousIllness': document.getElementById('inSeriousIllness').value.trim(),
+                    'highestDegree': document.getElementById('inHighestDegree').value.trim(),
+                    'majorSubjects': document.getElementById('inMajorSubjects').value.trim(),
+                    'professionalDegree': document.getElementById('inProfessionalDegree').value.trim(),
+                    'trainings': document.getElementById('inTrainings').value.trim(),
+                    'personnelNumber': document.getElementById('inPersonnelNumber').value.trim(),
+                    'employmentType': document.getElementById('inEmploymentType').value.trim(),
+                    'subjectsOfInterest': document.getElementById('inSubjectsOfInterest').value.trim(),
+                    'firstJoiningDate': document.getElementById('inFirstJoiningDate').value.trim(),
+                    'payScale': document.getElementById('inPayScale').value.trim(),
+                    'basicPay': document.getElementById('inBasicPay').value.trim(),
+                    'allowances': document.getElementById('inAllowances').value.trim(),
+                    'deductions': document.getElementById('inDeductions').value.trim(),
+                    'arrears': document.getElementById('inArrears').value.trim(),
+                    'bankName': document.getElementById('inBankName').value.trim(),
+                    'accountLast4': document.getElementById('inAccountLast4').value.trim(),
+                    'heightCm': document.getElementById('inHeightCm').value.trim(),
+                    'weightKg': document.getElementById('inWeightKg').value.trim(),
+                    'eyeVision': document.getElementById('inEyeVision').value.trim(),
+                    'medicalConditions': document.getElementById('inMedicalConditions').value.trim(),
+                    'bloodPressure': document.getElementById('inBloodPressure').value.trim(),
+                    'rbs': document.getElementById('inRbs').value.trim(),
+                    'bloodGroup': document.getElementById('inBloodGroup').value.trim(),
+                    'disabilityType': document.getElementById('inDisabilityType').value.trim(),
+                    'covidVaccination': document.getElementById('inCovidVaccination').value.trim(),
+                    'otherVaccinations': document.getElementById('inOtherVaccinations').value.trim()
                 });
                 if(teacherPhotos.in && created&&created.id){await LamaAPI.saveTeacherPhoto(created.id,teacherPhotos.in);storeTeacherPhoto({id:created.id,loginId,email},teacherPhotos.in);}
                 ['inName', 'inEmail', 'inLoginId', 'inSubject', 'inClass', 'inSection', 'inContact', 'inCnic', 'inDob',
                  'inGender', 'inQualification', 'inJoiningDate', 'inEmergencyContact', 'inAddress', 'inPassword','inDesignation','inDepartment','inExperience','inSpecialization','inPublicEmail','inDisplayOrder','inBio','inEducation']
                     .forEach(id => document.getElementById(id).value = '');
-                document.getElementById('inIsPublic').checked=false;teacherPhotos.in=null;document.getElementById('inPhotoPreview').removeAttribute('src');document.getElementById('inPhotoStatus').textContent='No photo selected';
+                document.getElementById('inMaritalStatus').value=''; document.getElementById('inDomicileDistrict').value=''; document.getElementById('inDisability').value=''; document.getElementById('inSeriousIllness').value=''; document.getElementById('inHighestDegree').value=''; document.getElementById('inMajorSubjects').value=''; document.getElementById('inProfessionalDegree').value=''; document.getElementById('inTrainings').value=''; document.getElementById('inPersonnelNumber').value=''; document.getElementById('inEmploymentType').value=''; document.getElementById('inSubjectsOfInterest').value=''; document.getElementById('inFirstJoiningDate').value=''; document.getElementById('inPayScale').value=''; document.getElementById('inBasicPay').value=''; document.getElementById('inAllowances').value=''; document.getElementById('inDeductions').value=''; document.getElementById('inArrears').value=''; document.getElementById('inBankName').value=''; document.getElementById('inAccountLast4').value=''; document.getElementById('inHeightCm').value=''; document.getElementById('inWeightKg').value=''; document.getElementById('inEyeVision').value=''; document.getElementById('inMedicalConditions').value=''; document.getElementById('inBloodPressure').value=''; document.getElementById('inRbs').value=''; document.getElementById('inBloodGroup').value=''; document.getElementById('inDisabilityType').value=''; document.getElementById('inCovidVaccination').value=''; document.getElementById('inOtherVaccinations').value=''; calculateMedical_in();
+                document.getElementById('inIsPublic').checked=false;document.getElementById('inPublishPhoto').checked=false;teacherPhotos.in=null;document.getElementById('inPhotoPreview').removeAttribute('src');document.getElementById('inPhotoStatus').textContent='No photo selected';
                 renderTeachers();
             } catch (err) {
                 alert(err.message);

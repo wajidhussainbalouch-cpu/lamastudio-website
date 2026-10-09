@@ -115,7 +115,7 @@
 .card.back .schoolhead .cardtype{color:var(--lama-back-subtitle-color,#ffffff)!important}
 .card.back .logo{background:#ffffff!important}
 @media print{.card.back .schoolhead{background:transparent!important}}
-</style></head><body><header><h1>School Identity Cards</h1><p>Double-sided student and employee cards · 54 × 85.6 mm portrait · A4 print-ready</p></header><section class="toolbar"><label>Card type<select id="kind"><option value="students">Student</option><option value="teachers">Teacher / Employee</option></select></label><label>Search<input id="search" placeholder="Name, ID, guardian, class"></label><label class="filter-label">Class<select id="classFilter"><option value="">All classes</option></select></label><label class="filter-label">Section<select id="sectionFilter"><option value="">All sections</option></select></label><label class="filter-label">Gender<select id="genderFilter"><option value="">All genders</option></select></label><label class="filter-label">Status<select id="statusFilter"><option value="">All statuses</option></select></label><label class="filter-label">Sort by<select id="sortBy"><option value="name">Name</option><option value="class">Class / section</option><option value="id">ID / Enrollment</option></select></label><label>Print cards<select id="scope"><option value="one">Selected person</option><option value="all">All matching people</option></select></label><label>Select person<select id="person"></select></label><label class="checkbox"><input type="checkbox" id="backs" checked> Include back side</label><label class="checkbox" title="Mobile numbers and CNIC are personal information. Anyone scanning a printed QR can read them."><input type="checkbox" id="qrSensitive"> Include mobile &amp; CNIC in QR</label><button id="print">Print / Save as PDF</button><button id="download" type="button">Download card image</button></section>
+</style><style>[hidden]{display:none!important}</style></head><body><header><h1>School Identity Cards</h1><p>Double-sided student and employee cards · 54 × 85.6 mm portrait · A4 print-ready</p></header><section class="toolbar"><label>Card type<select id="kind"><option value="students">Student</option><option value="teachers">Teacher / Employee</option></select></label><label>Search<input id="search" placeholder="Name, ID, guardian, class"></label><label class="filter-label">Class<select id="classFilter"><option value="">All classes</option></select></label><label class="filter-label">Section<select id="sectionFilter"><option value="">All sections</option></select></label><label class="filter-label">Gender<select id="genderFilter"><option value="">All genders</option></select></label><label class="filter-label">Status<select id="statusFilter"><option value="">All statuses</option></select></label><label class="filter-label">Sort by<select id="sortBy"><option value="name">Name</option><option value="class">Class / section</option><option value="id">ID / Enrollment</option></select></label><label>Print cards<select id="scope"><option value="one">Selected person</option><option value="all">All matching people</option></select></label><label>Select person<select id="person"></select></label><label class="checkbox"><input type="checkbox" id="backs" checked> Include back side</label><input type="checkbox" id="qrSensitive" hidden disabled><button id="print">Print / Save as PDF</button><button id="download" type="button">Download card image</button></section>
 <section class="designer" id="designer">
 <h2>🎨 ID Card Design Studio</h2>
 <p class="muted">Choose a template, colors, fonts and sizes. Changes appear immediately in the card preview. Designs are temporary and apply only to the selected person. Refresh resets everything.</p>
@@ -152,6 +152,20 @@ const first=(obj,keys)=>{for(const k of keys){const v=obj?.[k];if(v!==undefined&
 const dateValue=v=>{if(!v)return '—';const raw=String(v).trim();if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw.split('-').reverse().join('/');const d=new Date(raw);if(isNaN(d.getTime()))return raw;return new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',day:'2-digit',month:'2-digit',year:'numeric'}).format(d)};
 const safeImg=v=>{if(!v)return '';try{const u=new URL(String(v),location.href);return ['https:','http:','data:'].includes(u.protocol)?escapeHtml(u.href):''}catch{return ''}};
 let records=[],school={},role='',allowedKind='';
+
+// Card-only requests use the same deployed endpoint and authenticated role session.
+async function cardApi(action, extra={}) {
+ const s=LamaAPI.getSession(role);
+ if(!s)throw Error('Please sign in again.');
+ const auth={role,schoolId:s.schoolId,apiKey:s.apiKey};
+ if(role==='teacher')auth.teacherId=s.teacherId||s.id;
+ if(role==='student')auth.studentId=s.studentId||s.id;
+ const response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...auth,...extra,action})});
+ const data=await response.json();
+ if(!response.ok||data.status!=='success')throw Error(data.message||'Card service unavailable');
+ return data.result;
+}
+
 const remotePhotos=new Map();let photoRenderVersion=0;const pendingPhotos=new Map();
 const personId=(r,type)=>String(first(r,type==='student'?['enrlNo','enrollmentNo','admissionNo','studentId','id']:['loginId','employeeId','teacherId','email','id']));
 const personName=r=>first(r,['name','studentName','teacherName','fullName'])||'Unnamed';
@@ -183,7 +197,7 @@ function qrText(r,type){
  }
  return lines.join('\\n');
 }
-function front(r,type,index){const photo=safeImg(remotePhotos.get(String(r.id||r.teacherId))||first(r,['photo','photoData','photoUrl','photoURL','image','imageUrl','picture','studentPhoto','teacherPhoto']))||teacherPhotoBackup(r,type);const id=personId(r,type);const rows=type==='student'?[row('Student ID',id),row('Class',first(r,['class','grade','className'])),row('Section',first(r,['section','classSection'])),row('Guardian',first(r,['fatherGuardian','fatherName','guardian','guardianName'])),row('Date of birth',dateValue(first(r,['dob','dateOfBirth','birthDate']))),row('Contact',first(r,['contact','phone','mobile','contactNo']))]:[row('Employee ID',id),row('Subject',first(r,['subject','subjects'])),row('Designation',first(r,['designation','jobDesignation','position','jobTitle','post','roleName'])),row('Joined',dateValue(first(r,['joiningDate','dateOfJoining','joinDate']))),row('Contact',first(r,['contact','phone','mobile']))];return `<article class="card ${type}">${head(type,false)}${photo?`<img class="portrait" src="${photo}" alt="Portrait">`:'<div class="portrait">PHOTO</div>'}<div class="details"><div class="name">${text(personName(r))}</div><div class="designation">${text(type==='student'?'STUDENT':first(r,['designation','jobDesignation','position','jobTitle','post'])||'TEACHER')}</div><table class="data">${rows.join('')}</table></div><div class="bottomwave"></div><div class="qr-label">VERIFY ID</div><div class="site-credit">Lamastudio.pk</div><div class="qr-slot" id="qr-${index}" data-qr="${escapeHtml(qrText(r,type))}"></div></article>`}
+function front(r,type,index){const photo=safeImg(remotePhotos.get(String(r.id||r.teacherId))||first(r,['photo','photoData','photoUrl','photoURL','image','imageUrl','picture','studentPhoto','teacherPhoto']))||teacherPhotoBackup(r,type);const id=personId(r,type);const rows=type==='student'?[row('Student ID',id),row('Class',first(r,['class','grade','className'])),row('Section',first(r,['section','classSection'])),row('Guardian',first(r,['fatherGuardian','fatherName','guardian','guardianName'])),row('Date of birth',dateValue(first(r,['dob','dateOfBirth','birthDate']))),row('School',schoolName())]:[row('Employee ID',id),row('Subject',first(r,['subject','subjects'])),row('Designation',first(r,['designation','jobDesignation','position','jobTitle','post','roleName'])),row('Joined',dateValue(first(r,['joiningDate','dateOfJoining','joinDate']))),row('School',schoolName())];return `<article class="card ${type}">${head(type,false)}${photo?`<img class="portrait" src="${photo}" alt="Portrait">`:'<div class="portrait">PHOTO</div>'}<div class="details"><div class="name">${text(personName(r))}</div><div class="designation">${text(type==='student'?'STUDENT':first(r,['designation','jobDesignation','position','jobTitle','post'])||'TEACHER')}</div><table class="data">${rows.join('')}</table></div><div class="bottomwave"></div><div class="qr-label">VERIFY ID</div><div class="site-credit">Lamastudio.pk</div><div class="qr-slot" id="qr-${index}" data-qr="${escapeHtml(qrText(r,type))}"></div></article>`}
 function back(type){return `<article class="card back ${type}">${head(type,true)}<div class="backbody"><strong>Rules & Instructions</strong><ul><li>Carry this card while on school premises.</li><li>Report a lost or damaged card immediately.</li><li>This card belongs to the issuing school.</li><li>Return the card when enrollment or employment ends.</li></ul><div class="hint">${text(first(school,['address','schoolAddress','location']))}<div>${text(first(school,['phone','schoolPhone','contact','contactNumber']))}</div></div></div><div class="signature"><span>AUTHORIZING SIGNATURE</span></div><div class="bottomwave"></div><div class="site-credit">Lamastudio.pk</div></article>`}
 function recordKey(r){return String(first(r,['id','studentId','teacherId','enrlNo','enrollmentNo','loginId','email'])||personName(r))}
 function optionsFor(id,values,label){const node=$(id),previous=node.value;node.innerHTML=`<option value="">All ${label}</option>`+[...new Set(values.map(x=>String(x||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).map(v=>`<option value="${escapeHtml(v)}">${text(v)}</option>`).join('');if([...node.options].some(o=>o.value===previous))node.value=previous}
@@ -191,9 +205,40 @@ function setupFilters(){optionsFor('classFilter',records.map(r=>first(r,['class'
 function render(){const version=++photoRenderVersion;const q=$('search').value.toLowerCase().trim();const kind=$('kind').value;const type=kind==='students'?'student':'teacher';let filtered=records.filter(r=>{const match=(id,keys)=>!$(id).value||String(first(r,keys)).toLowerCase()===$(id).value.toLowerCase();return match('classFilter',['class','grade','className'])&&match('sectionFilter',['section','classSection'])&&match('genderFilter',['gender','sex'])&&match('statusFilter',['status','studentStatus','employmentStatus'])&&[personName(r),personId(r,type),first(r,['class','grade']),first(r,['section']),first(r,['fatherGuardian','fatherName','guardian'])].some(x=>String(x||'').toLowerCase().includes(q))});const sort=$('sortBy').value;filtered.sort((a,b)=>{const val=r=>sort==='class'?`${first(r,['class','grade'])} ${first(r,['section'])} ${personName(r)}`:sort==='id'?personId(r,type):personName(r);return String(val(a)).localeCompare(String(val(b)),undefined,{numeric:true})});const old=$('person').value;$('person').innerHTML=filtered.map(r=>`<option value="${escapeHtml(recordKey(r))}">${text(personName(r))} — ${text(personId(r,type))}</option>`).join('');if(filtered.some(r=>recordKey(r)===old))$('person').value=old;const chosen=$('scope').value==='all'?filtered:filtered.filter(r=>recordKey(r)===$('person').value).slice(0,1);$('cards').innerHTML=chosen.map((r,i)=>`<div class="pair">${front(r,type,i)}${$('backs').checked?back(type):''}</div>`).join('')||'<div class="empty">No matching cards. Change your filters.</div>';
 let qrCount=0;chosen.forEach((r,i)=>{const slot=$(`qr-${i}`);if(!slot)return;const payload=slot.dataset.qr;if(typeof QRCode==='function'){slot.replaceChildren();new QRCode(slot,{text:payload,width:112,height:112,correctLevel:QRCode.CorrectLevel.M});qrCount++}else{slot.title='QR library unavailable — reconnect to the internet';slot.textContent='QR offline';slot.style.fontSize='8px'}});
 $('status').textContent=`${filtered.length} matching ${kind}; ${chosen.length} card(s) in preview. ${qrCount} QR code(s) generated. For print: A4, 100% scale, background graphics. Test duplex alignment before production.`;
-if(type==='teacher' && LamaAPI.getTeacherPhoto){chosen.forEach(async(r,i)=>{const id=String(r.id||r.teacherId||'');if(!id||remotePhotos.has(id))return;try{if(!pendingPhotos.has(id))pendingPhotos.set(id,LamaAPI.getTeacherPhoto(id));const data=await pendingPhotos.get(id);remotePhotos.set(id,data.photo||'');if(version!==photoRenderVersion)return;const card=$('cards').querySelectorAll('.pair')[i]?.querySelector('.card.teacher');const portrait=card?.querySelector('.portrait');if(portrait&&data.photo){const img=document.createElement('img');img.className='portrait';img.alt='Teacher photo';img.src=data.photo;portrait.replaceWith(img)}}catch(e){console.warn('Photo not loaded',e)}})}
+if(type==='teacher' && role==='school' && LamaAPI.getTeacherPhoto){chosen.forEach(async(r,i)=>{const id=String(r.id||r.teacherId||'');if(!id||remotePhotos.has(id))return;try{if(!pendingPhotos.has(id))pendingPhotos.set(id,LamaAPI.getTeacherPhoto(id));const data=await pendingPhotos.get(id);remotePhotos.set(id,data.photo||'');if(version!==photoRenderVersion)return;const card=$('cards').querySelectorAll('.pair')[i]?.querySelector('.card.teacher');const portrait=card?.querySelector('.portrait');if(portrait&&data.photo){const img=document.createElement('img');img.className='portrait';img.alt='Teacher photo';img.src=data.photo;portrait.replaceWith(img)}}catch(e){console.warn('Photo not loaded',e)}})}
 }
-async function load(){try{const requested=new URLSearchParams(location.search).get('role');role=['school','teacher','student'].includes(requested)?requested:(['teacher','student','school'].find(x=>LamaAPI.getSession(x))||'');if(!role||!LamaAPI.getSession(role)){location.href=role==='teacher'?'teacher-login.html':role==='student'?'student-login.html':'login.html';return}if(LamaAPI.requireLogin&&!LamaAPI.requireLogin(role))return;allowedKind=role==='teacher'?'teachers':role==='student'?'students':'';if(allowedKind){$('kind').value=allowedKind;$('kind').closest('label').style.display='none';$('kind').disabled=true;$('scope').value='one';$('scope').disabled=true;$('search').disabled=true;$('person').disabled=true;['classFilter','sectionFilter','genderFilter','statusFilter','sortBy'].forEach(id=>$(id).disabled=true)}const session=LamaAPI.getSession(role);school={name:first(session,['schoolName','nameOfSchool'])||session.school?.name||'',logo:first(session,['schoolLogo','schoolLogoUrl'])||session.school?.logo||'',address:first(session,['schoolAddress'])||session.school?.address||'',phone:first(session,['schoolPhone'])||session.school?.phone||'',schoolId:session.schoolId||session.school?.id||''};if(role==='school'){try{const cfg=await LamaAPI.getActiveSchool();if(cfg)school={...school,...cfg,name:first(cfg,['name','schoolName'])||school.name,logo:first(cfg,['logo','logoUrl','schoolLogo'])||school.logo}}catch(e){console.warn('School config unavailable',e)}records=await LamaAPI.list($('kind').value)}else if(role==='student'){const r=await LamaAPI.get('students',session.studentId||session.id);records=r?[r]:[]}else{records=[{...session,id:session.teacherId||session.id,loginId:session.loginId||session.email}]}setupFilters();render()}catch(e){$('status').textContent='Could not load cards: '+e.message;console.error(e)}}
+async function load(){
+ try {
+  if(typeof LamaAPI==='undefined')throw Error('API client unavailable');
+  const requested=new URLSearchParams(location.search).get('role');
+  // Never auto-elevate a teacher/student URL to school administrator.
+  role=['school','teacher','student'].includes(requested)?requested:(['school','teacher','student'].find(x=>LamaAPI.getSession(x))||'');
+  if(!role||!LamaAPI.getSession(role)){
+    location.replace(role==='teacher'?'portal-login.html':role==='student'?'portal-login.html':'login.html');return;
+  }
+  if(LamaAPI.requireLogin&&!LamaAPI.requireLogin(role))return;
+  const session=LamaAPI.getSession(role);
+  allowedKind=role==='teacher'?'teachers':role==='student'?'students':'';
+  if(role!=='school'){
+    $('kind').value=allowedKind;$('kind').closest('label').hidden=true;$('kind').disabled=true;
+    $('scope').value='one';$('scope').closest('label').hidden=true;$('scope').disabled=true;
+    ['search','person','classFilter','sectionFilter','genderFilter','statusFilter','sortBy'].forEach(id=>{$(id).closest('label').hidden=true;$(id).disabled=true});
+    $('designer').hidden=true;
+  }
+  const config=await cardApi('getIdentityCardDesign');
+  school=config.school||{};
+  window.lamaCardSharedDesign=config.design||{};
+  if(role==='school'){
+    records=await LamaAPI.list($('kind').value);
+  } else {
+    const mine=await cardApi('getMyIdentityCard');
+    if(mine.type!==(role==='teacher'?'teacher':'student'))throw Error('Card ownership check failed');
+    records=mine.record?[mine.record]:[];
+  }
+  setupFilters();render();
+  document.dispatchEvent(new Event('lama-card-design-ready'));
+ }catch(e){$('cards').replaceChildren();$('status').textContent='Could not load cards: '+e.message;console.error(e)}
+}
 $('kind').addEventListener('change',()=>{if(role==='school')load()});['qrSensitive','search','scope','person','backs','classFilter','sectionFilter','genderFilter','statusFilter','sortBy'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));$('print').addEventListener('click',async()=>{await Promise.allSettled([...pendingPhotos.values()]);await Promise.all([...document.querySelectorAll('#cards img')].map(i=>i.decode().catch(()=>{})));window.print()});
 $('download').addEventListener('click',async()=>{
 const cards=[...document.querySelectorAll('#cards .card')];
@@ -212,70 +257,35 @@ catch(e){alert('Image export failed: '+e.message+'; try Print / Save as PDF.')}f
 });load();
 </script>
 <script id="lama-designer-js">
-(function(){
-'use strict';
-const defaults={theme:'classic',primary:'#079ebf',accent:'#f7a349',font:'Arial, sans-serif',name:11,detail:7.8,school:11,portrait:25,nameColor:'#1b2939',detailColor:'#1b2939',schoolColor:'#ffffff',backHeadingColor:'#1b2939',backTextColor:'#1b2939',backSchoolColor:'#ffffff',backSignatureColor:'#1b2939',backSize:8,backPrimary:'#079ebf',backAccent:'#f7a349',backHeaderBg:'#ffffff',backSubtitleColor:'#ffffff'};
-const ids={theme:'designTheme',primary:'designPrimary',accent:'designAccent',font:'designFont',name:'designNameSize',detail:'designDetailSize',school:'designSchoolSize',portrait:'designPortraitSize',nameColor:'designNameColor',detailColor:'designDetailColor',schoolColor:'designSchoolColor',backHeadingColor:'designBackHeadingColor',backTextColor:'designBackTextColor',backSchoolColor:'designBackSchoolColor',backSignatureColor:'designBackSignatureColor',backSize:'designBackSize',backPrimary:'designBackPrimary',backAccent:'designBackAccent',backHeaderBg:'designBackHeaderBg',backSubtitleColor:'designBackSubtitleColor'};
-const $d=id=>document.getElementById(id);
-const designs=new Map();
-const finalized=new Set();
-const cssVars={primary:'--lama-primary',accent:'--lama-accent',font:'--lama-card-font',name:'--lama-name-size',detail:'--lama-detail-size',school:'--lama-school-size',portrait:'--lama-portrait-size',nameColor:'--lama-name-color',detailColor:'--lama-detail-color',schoolColor:'--lama-school-color',backHeadingColor:'--lama-back-heading-color',backTextColor:'--lama-back-text-color',backSchoolColor:'--lama-back-school-color',backSignatureColor:'--lama-back-signature-color',backSize:'--lama-back-size',backPrimary:'--lama-back-primary',backAccent:'--lama-back-accent',backHeaderBg:'--lama-back-header-bg',backSubtitleColor:'--lama-back-subtitle-color'};
-function selectedKey(){
-const person=$d('person').value,kind=$d('kind').value,scope=$d('scope').value;
-return scope==='one'&&person?kind+':'+person:null;
-}
-function sanitize(obj){
-const hex=v=>/^#[0-9a-f]{6}$/i.test(String(v))?v:null;
-const clamp=(v,min,max,def)=>Math.min(max,Math.max(min,Number(v)||def));
-return {theme:['classic','minimal','floral','bold'].includes(obj.theme)?obj.theme:defaults.theme,
-primary:hex(obj.primary)||defaults.primary,accent:hex(obj.accent)||defaults.accent,
-font:[...$d(ids.font).options].some(o=>o.value===obj.font)?obj.font:defaults.font,
-name:clamp(obj.name,8,18,11),detail:clamp(obj.detail,6,12,7.8),school:clamp(obj.school,8,16,11),portrait:clamp(obj.portrait,20,30,25),
-nameColor:hex(obj.nameColor)||defaults.nameColor,detailColor:hex(obj.detailColor)||defaults.detailColor,schoolColor:hex(obj.schoolColor)||defaults.schoolColor,backHeadingColor:hex(obj.backHeadingColor)||defaults.backHeadingColor,backTextColor:hex(obj.backTextColor)||defaults.backTextColor,backSchoolColor:hex(obj.backSchoolColor)||defaults.backSchoolColor,backSignatureColor:hex(obj.backSignatureColor)||defaults.backSignatureColor,backSize:clamp(obj.backSize,6,12,8),backPrimary:hex(obj.backPrimary)||defaults.backPrimary,backAccent:hex(obj.backAccent)||defaults.backAccent,backHeaderBg:hex(obj.backHeaderBg)||defaults.backHeaderBg,backSubtitleColor:hex(obj.backSubtitleColor)||defaults.backSubtitleColor};
-}
-function setInputs(c){Object.entries(ids).forEach(([key,id])=>{$d(id).value=c[key]})}
-function applyCard(card,c){
-const unit={name:'px',detail:'px',school:'px',portrait:'mm',backSize:'px'};
-for(const [k,v] of Object.entries(cssVars))card.style.setProperty(v,String(c[k])+(unit[k]||''));
-card.classList.remove('theme-classic','theme-minimal','theme-floral','theme-bold');
-card.classList.add('theme-'+c.theme);
-}
-function refresh(){
-const key=selectedKey(),c=designs.get(key)||defaults;
-setInputs(c);
-document.querySelectorAll('#cards .card').forEach(card=>applyCard(card,c));
-const disabled=!key||finalized.has(key);
-Object.values(ids).forEach(id=>$d(id).disabled=disabled);
-$d('saveDesign').disabled=disabled;
-$d('resetDesign').disabled=!key;
-$d('designer').querySelector('.muted').textContent=!key?'Select one person to customize their card.':finalized.has(key)?'Finalized for this preview. Refresh the page to return to normal.':'Live preview for this person only. No changes are saved to the server or browser.';
-}
-function changed(){
-const key=selectedKey();if(!key||finalized.has(key))return;
-const c={};for(const [k,id] of Object.entries(ids))c[k]=$d(id).value;
-designs.set(key,sanitize(c));refresh();
-}
-Object.values(ids).forEach(id=>$d(id).addEventListener('input',changed));
-$d('saveDesign').onclick=async()=>{
-const key=selectedKey();if(!key)return;
-finalized.add(key);refresh();
-const printButton=$d('print');
-if(printButton)printButton.click();
-};
-$d('resetDesign').onclick=()=>{const key=selectedKey();if(!key)return;designs.delete(key);finalized.delete(key);refresh()};
-$d('exportDesign').onclick=()=>{
-const c=designs.get(selectedKey())||defaults;
-const url=URL.createObjectURL(new Blob([JSON.stringify(c,null,2)],{type:'application/json'}));
-const a=document.createElement('a');a.href=url;a.download='lama-single-card-design.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-};
-$d('importDesign').onchange=async e=>{
-const key=selectedKey(),f=e.target.files?.[0];if(!key||!f||finalized.has(key))return;
-try{designs.set(key,sanitize(JSON.parse(await f.text())));refresh()}catch{alert('Invalid design file')}
-e.target.value='';
-};
-['person','scope','kind'].forEach(id=>$d(id).addEventListener('change',()=>setTimeout(refresh,0)));
-new MutationObserver(refresh).observe($d('cards'),{childList:true});
-refresh();
+(()=>{
+ 'use strict';
+ const ids={theme:'designTheme',primary:'designPrimary',accent:'designAccent',font:'designFont',name:'designNameSize',detail:'designDetailSize',school:'designSchoolSize',portrait:'designPortraitSize',nameColor:'designNameColor',detailColor:'designDetailColor',schoolColor:'designSchoolColor',backHeadingColor:'designBackHeadingColor',backTextColor:'designBackTextColor',backSchoolColor:'designBackSchoolColor',backSignatureColor:'designBackSignatureColor',backSize:'designBackSize',backPrimary:'designBackPrimary',backAccent:'designBackAccent',backHeaderBg:'designBackHeaderBg',backSubtitleColor:'designBackSubtitleColor'};
+ const vars={primary:'--lama-primary',accent:'--lama-accent',font:'--lama-card-font',name:'--lama-name-size',detail:'--lama-detail-size',school:'--lama-school-size',portrait:'--lama-portrait-size',nameColor:'--lama-name-color',detailColor:'--lama-detail-color',schoolColor:'--lama-school-color',backHeadingColor:'--lama-back-heading-color',backTextColor:'--lama-back-text-color',backSchoolColor:'--lama-back-school-color',backSignatureColor:'--lama-back-signature-color',backSize:'--lama-back-size',backPrimary:'--lama-back-primary',backAccent:'--lama-back-accent',backHeaderBg:'--lama-back-header-bg',backSubtitleColor:'--lama-back-subtitle-color'};
+ const unit={name:'px',detail:'px',school:'px',portrait:'mm',backSize:'px'};
+ const $d=id=>document.getElementById(id);
+ let design=null;
+ function apply(){if(!design)return;
+  document.querySelectorAll('#cards .card').forEach(card=>{
+   for(const [key,v] of Object.entries(vars))card.style.setProperty(v,String(design[key])+(unit[key]||''));
+   card.classList.remove('theme-classic','theme-minimal','theme-floral','theme-bold');card.classList.add('theme-'+design.theme);
+  });
+ }
+ function fill(){if(!design)return;for(const [key,id] of Object.entries(ids))if(design[key]!==undefined)$d(id).value=design[key];}
+ function changed(){if(role!=='school'||!design)return;for(const [key,id] of Object.entries(ids))design[key]=$d(id).value;apply();}
+ Object.values(ids).forEach(id=>$d(id).addEventListener('input',changed));
+ $d('saveDesign').textContent='Save school-wide design';
+ $d('saveDesign').onclick=async()=>{
+  if(role!=='school')return;
+  const btn=$d('saveDesign');btn.disabled=true;
+  try{await cardApi('saveIdentityCardDesign',{design});alert('School design saved. All teacher and student cards will use this design on their next load.');}
+  catch(e){alert('Could not save design: '+e.message)}finally{btn.disabled=false}
+ };
+ $d('resetDesign').textContent='Reload saved design';
+ $d('resetDesign').onclick=async()=>{try{const data=await cardApi('getIdentityCardDesign');design=data.design;fill();apply()}catch(e){alert(e.message)}};
+ $d('exportDesign').onclick=()=>{if(role!=='school')return;const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(design,null,2)],{type:'application/json'}));a.href=url;a.download='school-id-card-design.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+ $d('importDesign').onchange=async e=>{if(role!=='school')return;try{design={...design,...JSON.parse(await e.target.files[0].text())};fill();apply()}catch(_){alert('Invalid JSON')}e.target.value=''};
+ document.addEventListener('lama-card-design-ready',()=>{design=window.lamaCardSharedDesign;fill();apply();$d('designer').hidden=role!=='school';$d('designer').querySelector('.muted').textContent='School administrator only. Save once to apply this design to every student and teacher card.'});
+ new MutationObserver(apply).observe($d('cards'),{childList:true});
 })();
 </script>
 </body></html>

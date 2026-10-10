@@ -124,7 +124,12 @@
         @media(max-width:640px){.student-attendance-card{padding:15px}.attendance-kpi{padding:10px}}
     </style>
 
-</head>
+<style>
+.hub-nav{position:sticky;top:76px;z-index:20;scrollbar-width:thin}.hub-nav a{flex:0 0 auto;border:1px solid var(--border);padding:9px 13px;border-radius:11px;color:var(--text);font-size:12px;font-weight:800;text-decoration:none;background:rgba(99,102,241,.06)}.hub-nav a:hover{border-color:#22d3ee}
+.hub-section-heading{scroll-margin-top:150px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 4px 4px;border-bottom:1px solid var(--border)}.hub-section-heading h2{font-size:clamp(20px,2.6vw,27px);font-weight:900;letter-spacing:-.04em;color:var(--text)}.hub-section-heading p:not(.section-kicker){font-size:12px;color:var(--muted);margin-top:3px}.hub-section-heading a,.hub-mini-link{display:inline-flex;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:11px;font-weight:850;color:var(--text);text-decoration:none;background:rgba(99,102,241,.07)}
+.hub-stat{border:1px solid var(--border);background:rgba(99,102,241,.055);border-radius:14px;padding:12px}.hub-stat small{display:block;font-size:10px;color:var(--muted)}.hub-stat b{font-size:24px;font-weight:900;display:block;margin-top:4px}
+@media(max-width:700px){.hub-nav{top:60px}.hub-nav a{padding:8px 10px;font-size:11px}.hub-section-heading{scroll-margin-top:125px}.hub-stat b{font-size:20px}}
+</style></head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
     <div class="scanline"></div>
 
@@ -171,6 +176,9 @@
             </div>
         </section>
 
+        <nav class="hub-nav neo-card p-3 rounded-2xl flex gap-2 overflow-x-auto" aria-label="Dashboard sections">
+<a href="#academicSection">🎓 Academic</a><a href="#attendanceSection">📅 Attendance</a><a href="#financeSection">💰 Finance</a><a href="#assessmentSection">📝 Assessments</a><a href="#operationsSection">🏫 Operations</a><a href="#communicationSection">🔔 Communications</a>
+</nav>
         <!-- KPI matrix -->
         <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(139,92,246,.18)"><p class="section-kicker">Students</p><p id="totalStudentsCount" class="text-2xl font-black text-purple-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">active database records</p></div>
@@ -182,6 +190,7 @@
         </section>
 
 
+        <div id="attendanceSection" class="hub-section-heading"><div><p class="section-kicker text-cyan-300">01 / Daily operations</p><h2>Attendance Intelligence</h2><p>Student and teacher registers, coverage and daily status</p></div><div class="flex gap-2 flex-wrap"><a href="student-attendance.html">Student Register →</a><a href="teacher-attendance.html">Teacher Register →</a></div></div>
         <!-- Student attendance: dedicated daily operational card -->
         <section class="student-attendance-card" aria-label="Student attendance today" id="studentAttendanceCard">
           <div class="flex flex-wrap justify-between items-start gap-3 mb-5">
@@ -201,7 +210,23 @@
           </div>
         </section>
 
-        <!-- Real database engine -->
+        <section class="command-grid" aria-label="Teacher attendance analytics">
+<div class="span-4 neo-card rounded-3xl p-5">
+ <div class="flex justify-between items-start gap-3"><div><p class="section-kicker text-emerald-300">Staff daily register</p><h3 class="text-lg font-black mt-1">👩‍🏫 Teacher Attendance</h3><p id="teacherAttDate" class="text-xs text-slate-400 mt-1">Today</p></div><a class="hub-mini-link" href="teacher-attendance.html">Manage →</a></div>
+ <div class="grid grid-cols-2 gap-2 mt-4">
+ <div class="hub-stat"><small>Total teachers</small><b id="taTotal">—</b></div><div class="hub-stat"><small>Present</small><b class="text-emerald-300" id="taPresent">—</b></div>
+ <div class="hub-stat"><small>Absent</small><b class="text-red-300" id="taAbsent">—</b></div><div class="hub-stat"><small>On leave</small><b class="text-amber-300" id="taLeave">—</b></div>
+ </div><p id="taCoverage" class="text-xs text-slate-400 mt-3">Awaiting attendance records</p>
+ <div class="h-2 rounded-full bg-slate-700/60 overflow-hidden mt-2"><div id="taProgress" class="h-full bg-emerald-400 rounded-full" style="width:0"></div></div>
+ <p id="taPending" class="text-xs text-amber-300 mt-3"></p>
+</div>
+<div class="span-8 neo-card rounded-3xl p-5">
+<div class="flex justify-between gap-3 flex-wrap items-center"><div><p class="section-kicker text-emerald-300">Attendance analytics</p><h3 class="text-lg font-black mt-1">Staff Attendance · Last 7 Days</h3></div><span class="text-xs text-slate-400">Daily recorded statuses, not assumptions</span></div>
+<div class="chart-shell mt-4"><canvas id="teacherAttendanceChart" aria-label="Seven day teacher attendance trend" role="img"></canvas></div>
+<p class="text-xs text-slate-400 mt-2" id="teacherTrendNote">Awaiting teacher attendance records</p>
+</div></section>
+<div id="academicSection" class="hub-section-heading"><div><p class="section-kicker text-purple-300">02 / Learning</p><h2>Academic Intelligence</h2><p>Enrollment distribution, gender mix and student population</p></div><a href="manage-students.html">Manage Students →</a></div>
+<!-- Real database engine -->
         <section class="command-grid">
             <div class="span-8 neo-card rounded-3xl p-5">
                 <div class="flex items-center justify-between gap-3 mb-4"><div><p class="section-kicker text-cyan-300">Database Intelligence</p><h3 class="text-lg font-black text-white mt-1">School Operations Overview</h3></div><span id="dbUpdated" class="text-[9px] text-slate-500">waiting for sync</span></div>
@@ -217,7 +242,8 @@
             </div>
         </section>
 
-        <!-- Finance analytics: dedicated container -->
+        <div id="financeSection" class="hub-section-heading"><div><p class="section-kicker text-amber-300">03 / Accounts</p><h2>Finance Intelligence</h2><p>Collections, fee trends and financial operations</p></div><a href="fees.html">Fee Management →</a></div>
+<!-- Finance analytics: dedicated container -->
         <section class="command-grid" aria-label="Financial and attendance intelligence">
             <div class="span-8 neo-card rounded-3xl p-5">
                 <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
@@ -235,7 +261,15 @@
             <div class="span-4 neo-card rounded-3xl p-5"><div class="mb-3"><p class="section-kicker text-red-300">Attendance Intelligence</p><h3 class="text-lg font-black">Today's Status</h3></div><div class="mini-chart"><canvas id="attendanceChart"></canvas></div><div id="attendanceSummary" class="grid grid-cols-2 gap-2 mt-2"></div></div>
         </section>
 
-        <!-- Independent administration tools: not part of finance -->
+        <div id="assessmentSection" class="hub-section-heading"><div><p class="section-kicker text-pink-300">04 / Performance</p><h2>Assessment Intelligence</h2><p>Test scheduling, publication readiness and class-wise coverage</p></div><div class="flex flex-wrap gap-2"><a href="tests.html">Tests Manager →</a><a href="result-card.html">Results →</a></div></div>
+<section class="command-grid">
+ <div class="span-4 neo-card rounded-3xl p-5"><p class="section-kicker text-pink-300">Assessment pipeline</p><h3 class="text-lg font-black mt-1">Tests & Assessments</h3>
+ <div class="grid grid-cols-2 gap-2 mt-4"><div class="hub-stat"><small>Total tests</small><b id="asTotal">—</b></div><div class="hub-stat"><small>Published</small><b id="asPublished" class="text-emerald-300">—</b></div><div class="hub-stat"><small>Drafts</small><b id="asDraft" class="text-amber-300">—</b></div><div class="hub-stat"><small>Upcoming</small><b id="asUpcoming" class="text-cyan-300">—</b></div></div>
+ <p id="asNote" class="text-xs text-slate-400 mt-3">Waiting for tests data</p><div class="mt-4 flex flex-wrap gap-2"><a class="hub-mini-link" href="date-sheet.html">Date Sheet →</a><a class="hub-mini-link" href="report-card.html">Report Cards →</a></div></div>
+ <div class="span-8 neo-card rounded-3xl p-5"><p class="section-kicker text-pink-300">Class-wise assessment workload</p><h3 class="text-lg font-black mt-1">Tests by Class</h3><div class="chart-shell mt-4"><canvas id="assessmentChart" aria-label="Number of tests by class" role="img"></canvas></div><p class="text-xs text-slate-400 mt-2" id="assessmentNote">No assessment data loaded yet</p></div>
+</section>
+<div id="operationsSection" class="hub-section-heading"><div><p class="section-kicker text-indigo-300">05 / Administration</p><h2>Campus Operations</h2><p>Staff, admissions, documents, scheduling and school services</p></div></div>
+<!-- Independent administration tools: not part of finance -->
         <section class="neo-card rounded-3xl p-5" aria-label="School administration tools">
             <div class="mb-4"><p class="section-kicker text-cyan-300">Administration Tools</p><h3 class="section-heading font-black text-white mt-1">School Operations & Documents</h3><p class="text-xs text-slate-400 mt-1">Manage student and staff requests, import documents, and issue secure ID cards in separate workspaces</p></div>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
@@ -251,7 +285,8 @@
                 <a href="manage-students.html" class="module-tile rounded-2xl p-3 bg-purple-500/5 border border-purple-500/10 hover:border-purple-400/40 transition"><b>🧑‍🎓</b><p>Students</p><small>360° records</small></a>
                 <a href="import-students.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>⇩</b><p>Import</p><small>safe bulk data</small></a>
                 <a href="manage-teachers.html" class="module-tile rounded-2xl p-3 bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-400/40 transition"><b>👩‍🏫</b><p>Teachers</p><small>staff records</small></a>
-                <a href="student-attendance.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>◷</b><p>Student Attendance</p><small>daily register</small></a>
+                <a href="teacher-attendance.html" class="module-tile rounded-2xl p-3 bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-400/40 transition"><b>👩‍🏫</b><p>Teacher Attendance</p><small>staff daily register</small></a>
+                 <a href="student-attendance.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>◷</b><p>Student Attendance</p><small>daily register</small></a>
                 <a href="fees.html" class="module-tile rounded-2xl p-3 bg-amber-500/5 border border-amber-500/10 hover:border-amber-400/40 transition"><b>💰</b><p>Finance</p><small>fees & dues</small></a>
                 <a href="tests.html" class="module-tile rounded-2xl p-3 bg-pink-500/5 border border-pink-500/10 hover:border-pink-400/40 transition"><b>◈</b><p>Tests</p><small>assessments</small></a>
                 <a href="date-sheet.html" class="module-tile rounded-2xl p-3 bg-blue-500/5 border border-blue-500/10 hover:border-blue-400/40 transition"><b>🗓️</b><p>Date Sheet</p><small>exams schedule</small></a>
@@ -267,9 +302,10 @@
             </div>
         </section>
 
-        <!-- Alerts + notices -->
+        <div id="communicationSection" class="hub-section-heading"><div><p class="section-kicker text-rose-300">06 / Communications</p><h2>Alerts & Communications</h2><p>Student absences and important school notices</p></div><a href="notifications.html">Manage Notices →</a></div>
+<!-- Alerts + notices -->
         <section class="command-grid">
-            <div class="span-8 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-red-300">Live Alerts</p><h3 class="text-lg font-black">Today's Absentees</h3></div><a href="teacher-attendance.html" class="text-[10px] text-red-300 font-black">OPEN ATTENDANCE →</a></div><div id="absenteesList" class="space-y-2"></div><p id="absenteesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No absentees recorded for today yet.</p></div>
+            <div class="span-8 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-red-300">Live Alerts</p><h3 class="text-lg font-black">Today's Absentees</h3></div><a href="student-attendance.html" class="text-[10px] text-red-300 font-black">OPEN STUDENT ATTENDANCE →</a></div><div id="absenteesList" class="space-y-2"></div><p id="absenteesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No absentees recorded for today yet.</p></div>
             <div class="span-4 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-indigo-300">Communications</p><h3 class="text-lg font-black">Recent Notices</h3></div><a href="notifications.html" class="text-[10px] text-indigo-300 font-black">MANAGE →</a></div><div id="recentNoticesList" class="space-y-2"></div><p id="noticesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No notices sent yet.</p></div>
         </section>
     </main>
@@ -297,7 +333,7 @@
                 Object.keys(charts).forEach(k=>{try{charts[k].destroy()}catch(e){} charts[k]=null;});
                 if(window.__dashboardData){
                     const d=window.__dashboardData;
-                    renderClassChart(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);
+                    renderClassChart(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
                 }
             }
         }
@@ -320,8 +356,8 @@
             document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText=`${stats.teachersPresentToday||0} / ${stats.totalTeachers||0}`;
             document.getElementById('notMarkedDisplay').innerText=`${(stats.teachersNotMarked||[]).length} not marked`;
-            const [students,teachers,attendance,fees,notifications,tests]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[]};
-            renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students);
+            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[],teacherAttendance};
+            renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);
             renderClassChart(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
@@ -350,6 +386,38 @@
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>`<div class="class-att-row"><span class="text-xs font-bold truncate">${esc(name)}</span><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span></div>`).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
         }
+
+        
+function renderTeacherAttendanceAnalytics(teachers,records){
+ const today=localISODate(),ids=new Set(teachers.map(t=>String(t.id??t._id??'')).filter(Boolean)),byDate=new Map();
+ const teacherKey=t=>String(t.teacherId??t.teacher_id??t.staffId??'');
+ for(const r of records){const date=String(r.date||'').slice(0,10),key=teacherKey(r);if(!date||!ids.has(key))continue;if(!byDate.has(date))byDate.set(date,new Map());byDate.get(date).set(key,String(r.status||'').trim().toLowerCase())}
+ const todayRows=byDate.get(today)||new Map(),vals=[...todayRows.values()];
+ const count=(...names)=>vals.filter(x=>names.includes(x)).length;
+ const present=count('present','p'),absent=count('absent','a'),leave=count('leave','l','on leave'),marked=present+absent+leave,total=teachers.length;
+ const put=(k,v)=>{const el=document.getElementById(k);if(el)el.textContent=v};
+ put('taTotal',total);put('taPresent',present);put('taAbsent',absent);put('taLeave',leave);put('taPending',Math.max(0,total-marked)+' teachers not marked today');
+ put('taCoverage',marked+' / '+total+' marked · '+(total?Math.round(marked/total*100):0)+'% coverage');
+ put('teacherAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}));
+ document.getElementById('taProgress').style.width=(total?100*marked/total:0)+'%';
+ const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(6-i));return {key:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),label:d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'})}});
+ const series=days.map(d=>{const v=[...(byDate.get(d.key)||new Map()).values()];return {present:v.filter(x=>['present','p'].includes(x)).length,absent:v.filter(x=>['absent','a'].includes(x)).length,leave:v.filter(x=>['leave','l','on leave'].includes(x)).length}});
+ put('teacherTrendNote',records.length?'Seven-day trend from saved teacher attendance; missing days are not treated as absences.':'No teacher attendance records found yet.');
+ destroyChart('teacherAttendance');
+ if(typeof Chart==='undefined')return;
+ charts.teacherAttendance=new Chart(document.getElementById('teacherAttendanceChart'),{type:'bar',data:{labels:days.map(d=>d.label),datasets:[{label:'Present',data:series.map(x=>x.present),backgroundColor:'rgba(52,211,153,.8)',borderRadius:5},{label:'Absent',data:series.map(x=>x.absent),backgroundColor:'rgba(251,113,133,.8)',borderRadius:5},{label:'Leave',data:series.map(x=>x.leave),backgroundColor:'rgba(251,191,36,.8)',borderRadius:5}]},options:{...chartDefaults(),scales:{x:{stacked:true,ticks:{color:'#94a3b8'},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
+}
+function renderAssessmentAnalytics(tests){
+ const today=localISODate(),isPub=x=>x.isPublished===true||x.published===true||String(x.status||'').toLowerCase()==='published';
+ const total=tests.length,published=tests.filter(isPub).length,upcoming=tests.filter(t=>String(t.date||'').slice(0,10)>=today).length;
+ for(const [k,v] of Object.entries({asTotal:total,asPublished:published,asDraft:total-published,asUpcoming:upcoming}))document.getElementById(k).textContent=v;
+ document.getElementById('asNote').textContent=total?Math.round(100*published/total)+'% of assessments published.':'No assessments added yet.';
+ const counts=new Map();for(const t of tests){const c=String(t.class||t.grade||'Unassigned').trim();counts.set(c,(counts.get(c)||0)+1)}
+ const entries=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
+ document.getElementById('assessmentNote').textContent=total?entries.length+' class(es) with test records; counts include published and drafts.':'Add tests in Tests Manager to populate this chart.';
+ destroyChart('assessment');if(typeof Chart==='undefined')return;
+ charts.assessment=new Chart(document.getElementById('assessmentChart'),{type:'bar',data:{labels:entries.map(x=>x[0]),datasets:[{label:'Tests',data:entries.map(x=>x[1]),backgroundColor:'rgba(236,72,153,.72)',borderColor:'#f9a8d4',borderWidth:1,borderRadius:6}]},options:{...chartDefaults(),plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
+}
 
         function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance',d.attendance.length,'attendance events'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
         function renderClassChart(students){ const counts={}; students.forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }

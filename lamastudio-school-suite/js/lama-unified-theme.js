@@ -1,0 +1,8 @@
+/* Shared theme state across all Lama School Suite pages using this script. */
+(function(){const root=document.documentElement,themeKey='lama_theme',paletteKey='lama_dashboard_palette';
+function get(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}
+function put(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function apply(){const theme=get(themeKey,'dark')==='light'?'light':'dark',palette=get(paletteKey,'lime');root.dataset.lamaTheme=theme;root.dataset.lamaPalette=palette;const btn=document.getElementById('lamaThemeButton');if(btn)btn.textContent=theme==='dark'?'☀ Light mode':'☾ Dark mode';const select=document.getElementById('lamaPaletteSelect');if(select){if(![...select.options].some(o=>o.value===palette))select.add(new Option(palette[0].toUpperCase()+palette.slice(1),palette));select.value=palette;}}
+window.setTheme=function(t){put(themeKey,t);apply()};window.setPalette=function(p){put(paletteKey,p);apply()};
+function bind(){apply();const btn=document.getElementById('lamaThemeButton');if(btn)btn.addEventListener('click',()=>window.setTheme(root.dataset.lamaTheme==='dark'?'light':'dark'));const sel=document.getElementById('lamaPaletteSelect');if(sel)sel.addEventListener('change',()=>window.setPalette(sel.value));}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();window.addEventListener('storage',e=>{if(e.key===themeKey||e.key===paletteKey)apply()});})();

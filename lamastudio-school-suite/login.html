@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log In | LamaStudio School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div class="cyber-card max-w-sm w-full rounded-2xl p-8 space-y-5">
+        <div class="text-center space-y-1">
+            <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-lg">LS</div>
+            <h1 class="text-lg font-black uppercase tracking-wide glow-text-purple">School Login</h1>
+            <p class="text-[11px] text-slate-400">LamaStudio School Suite</p>
+        </div>
+
+        <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl px-4 py-2.5"></div>
+
+        <form id="loginForm" class="space-y-3 text-xs">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Admin Email</label>
+                <input required type="email" id="inEmail" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="principal@school.edu.pk">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Password</label>
+                <input required type="password" id="inPassword" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black text-xs px-4 py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] mt-2">
+                Log In
+            </button>
+        </form>
+
+        <p class="text-center text-[11px] text-slate-400">
+            New school? <a href="register.html" class="text-purple-400 font-bold hover:underline">Register here</a>
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const errorBanner = document.getElementById('errorBanner');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBanner.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+
+            try {
+                await LamaAPI.login(
+                    document.getElementById('inEmail').value.trim(),
+                    document.getElementById('inPassword').value
+                );
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                errorBanner.textContent = err.message;
+                errorBanner.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Log In';
+            }
+        });
+
+        // If already logged in, skip straight to the dashboard.
+        if (LamaAPI.isLoggedIn('school')) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

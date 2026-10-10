@@ -329,6 +329,12 @@ header#topOverview{background:var(--lama-header)!important}
             </div>
         </section>
 
+        <section class="neo-card rounded-3xl p-5" aria-label="Current classes and enrollment">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4"><div><p class="section-kicker text-cyan-300">Student records only</p><h3 class="text-lg font-black">Classes & Enrollment</h3><p class="text-xs text-slate-400 mt-1">Current students by class, excluding passed-out and left students. Select a class to open its roster.</p></div><a href="manage-students.html" class="hub-mini-link">Full Student Directory →</a></div>
+          <div id="academicClassSummary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"><p class="text-xs text-slate-400">Loading class records…</p></div>
+          <p id="academicClassNote" class="text-xs text-slate-400 mt-3" aria-live="polite"></p>
+        </section>
+
         <div id="financeSection" class="hub-section-heading"><div><p class="section-kicker text-amber-300">03 / Accounts</p><h2>Finance Intelligence</h2><p>Collections, fee trends and financial operations</p></div><a href="fees.html">Fee Management →</a></div>
 <!-- Finance analytics: dedicated container -->
         <section class="command-grid" aria-label="Financial and attendance intelligence">
@@ -348,7 +354,7 @@ header#topOverview{background:var(--lama-header)!important}
             <div class="span-4 neo-card rounded-3xl p-5"><div class="mb-3"><p class="section-kicker text-red-300">Attendance Intelligence</p><h3 class="text-lg font-black">Today's Status</h3></div><div class="mini-chart"><canvas id="attendanceChart"></canvas></div><div id="attendanceSummary" class="grid grid-cols-2 gap-2 mt-2"></div></div>
         </section>
 
-        <div id="assessmentSection" class="hub-section-heading"><div><p class="section-kicker text-pink-300">04 / Performance</p><h2>Assessment Intelligence</h2><p>Test scheduling, publication readiness and class-wise coverage</p></div><div class="flex flex-wrap gap-2"><a href="tests.html">Tests Manager →</a><a href="result-card.html">Results →</a></div></div>
+        <div id="assessmentSection" class="hub-section-heading"><div><p class="section-kicker text-pink-300">04 / Performance</p><h2>Assessment Intelligence</h2><p>Test scheduling, examination results and class-wise coverage</p></div><div class="flex flex-wrap gap-2"><a href="tests.html">Tests Manager →</a><a href="result-card.html">Results →</a></div></div>
 <section class="command-grid">
  <div class="span-4 neo-card rounded-3xl p-5"><p class="section-kicker text-pink-300">Assessment pipeline</p><h3 class="text-lg font-black mt-1">Tests & Assessments</h3>
  <div class="grid grid-cols-2 gap-2 mt-4"><div class="hub-stat"><small>Total tests</small><b id="asTotal">—</b></div><div class="hub-stat"><small>Published</small><b id="asPublished" class="text-emerald-300">—</b></div><div class="hub-stat"><small>Drafts</small><b id="asDraft" class="text-amber-300">—</b></div><div class="hub-stat"><small>Upcoming</small><b id="asUpcoming" class="text-cyan-300">—</b></div></div>
@@ -420,7 +426,7 @@ header#topOverview{background:var(--lama-header)!important}
                 Object.keys(charts).forEach(k=>{try{charts[k].destroy()}catch(e){} charts[k]=null;});
                 if(window.__dashboardData){
                     const d=window.__dashboardData;
-                    renderClassChart(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
+                    renderClassChart(d.students);renderAcademicClasses(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
                 }
             }
         }
@@ -445,7 +451,7 @@ header#topOverview{background:var(--lama-header)!important}
             document.getElementById('notMarkedDisplay').innerText=`${(stats.teachersNotMarked||[]).length} not marked`;
             const [students,teachers,attendance,fees,notifications,tests,teacherAttendance]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[],teacherAttendance};
             document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);
-            renderClassChart(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
+            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -507,7 +513,18 @@ function renderAssessmentAnalytics(tests){
 }
 
         function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance',d.attendance.length,'attendance events'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
-        function renderClassChart(students){ if(typeof Chart==='undefined')return; const counts={}; students.forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
+        function renderAcademicClasses(students){
+          const container=document.getElementById('academicClassSummary'),note=document.getElementById('academicClassNote');
+          if(!container||!note)return;
+          const active=students.filter(s=>{const status=String(s.studentStatus||s.status||'Current').trim().toLowerCase();return s.active!==false&&!['passed','passed out','left','historical','withdrawn','inactive'].some(x=>status.includes(x))});
+          const classes=new Map();
+          for(const student of active){const label=String(student.class??student.grade??student.className??'Unassigned').trim()||'Unassigned';const entry=classes.get(label)||{total:0,boys:0,girls:0};entry.total++;const g=String(student.gender||'').trim().toLowerCase();if(['m','male','boy'].includes(g))entry.boys++;if(['f','female','girl'].includes(g))entry.girls++;classes.set(label,entry)}
+          const list=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
+          const max=Math.max(1,...list.map(([,v])=>v.total));
+          container.innerHTML=list.length?list.map(([name,r])=>`<a href="manage-students.html" class="rounded-2xl p-3 border border-cyan-500/20 bg-cyan-500/5 hover:border-cyan-400/60 transition block"><div class="flex items-center justify-between gap-2"><span class="text-xs font-black break-words">${esc(name==='Unassigned'?'Unassigned':'Class '+name)}</span><span class="text-xl font-black text-cyan-300">${r.total}</span></div><div class="h-1.5 rounded-full bg-slate-700/50 overflow-hidden mt-3"><div class="h-full rounded-full bg-lime-400" style="width:${100*r.total/max}%"></div></div><div class="text-[10px] text-slate-400 mt-2">${r.boys} boys · ${r.girls} girls${r.total-r.boys-r.girls?' · '+(r.total-r.boys-r.girls)+' unspecified':''}</div></a>`).join(''):'<p class="text-xs text-slate-400 col-span-full">No current student class records found.</p>';
+          note.textContent=`${active.length} current students across ${list.length} classes. ${students.length-active.length} non-current records excluded.`;
+        }
+        function renderClassChart(students){ if(typeof Chart==='undefined')return; const counts={}; students.filter(s=>s.active!==false&&!['passed','left','historical','withdrawn','inactive'].some(x=>String(s.studentStatus||s.status||'Current').toLowerCase().includes(x))).forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
         function renderGenderChart(students){ if(typeof Chart==='undefined')return; const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }
         function renderAttendanceChart(attendance,students){
           const today=localISODate(),byId=new Map(),byEnrollment=new Map(),unique=new Map();

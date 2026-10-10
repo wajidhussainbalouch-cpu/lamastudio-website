@@ -1,256 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="root">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">Behavioral & Teacher Evaluation Report Card</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Development & Behavioral Evaluation | Lama School Suite</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
+<link rel="stylesheet" href="assets/css/config.css"><script src="js/api-client.js"></script>
 <style>
-    body { background-color: #0b0f19; }
-    @media print {
-        body { background: #ffffff !important; }
-        .no-print { display: none !important; }
-        .print-sheet {
-            width: 100% !important; max-width: none !important; margin: 0 !important;
-            padding: 10mm 12mm !important; border: none !important; box-shadow: none !important;
-            background: #ffffff !important; color: #0f172a !important;
-        }
-        .ev-table th, .ev-table td { color: #0f172a !important; border-color: #cbd5e1 !important; }
-        @page { size: A4 portrait; margin: 6mm; }
-    }
-    .print-sheet { background: #ffffff; color: #0f172a; }
-    .ev-table th, .ev-table td { border: 1px solid #334155; padding: 6px 8px; }
-    .star { cursor: pointer; font-size: 16px; color: #cbd5e1; }
-    .star.filled { color: #f59e0b; }
-</style>
-</head>
-<body class="text-slate-100 font-sans min-h-screen flex flex-col items-center py-8 px-4">
-
-    <!-- Control Bar -->
-    <div class="no-print max-w-4xl w-full mb-4 flex flex-col sm:flex-row justify-between gap-3 items-stretch sm:items-center bg-slate-900 border border-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl">
-        <div>
-            <h2 class="text-xs font-black uppercase tracking-wider text-emerald-400">Behavioral & Evaluation Report</h2>
-            <p class="text-[10px] text-slate-400">Showing records for the active school</p>
-        </div>
-        <div class="flex flex-wrap gap-2 items-center">
-            <select id="studentSelect" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-emerald-500 min-w-[220px]"></select>
-            <button onclick="saveEvaluation()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">💾 Save Evaluation</button>
-            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">🖨️ Print</button>
-            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">&larr; Hub</a>
-            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition">Logout</button>
-        </div>
-    </div>
-
-    <!-- REPORT SHEET -->
-    <div class="print-sheet cyber-card-emerald max-w-4xl w-full p-8 rounded-2xl space-y-5">
-
-        <!-- Header -->
-        <div class="text-center border-b-2 border-emerald-600 pb-3">
-            <div id="schoolLogoBox" class="w-12 h-12 mx-auto rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs font-black uppercase mb-1">SCH</div>
-            <p class="text-[9px] uppercase tracking-widest font-extrabold text-emerald-600">Behavioral & Teacher Evaluation Report</p>
-            <h1 id="headerSchoolName" class="text-2xl font-black tracking-wide mt-1">School Name</h1>
-            <p id="headerSchoolMeta" class="text-[9px] font-semibold text-slate-500 mt-1">Address • UAN</p>
-        </div>
-
-        <div id="emptyState" class="text-center py-16 text-sm text-slate-400 hidden">
-            No students found yet. Add students first from the <b>Result Card</b> page, then come back here to evaluate them.
-        </div>
-
-        <div id="reportBody" class="space-y-5">
-            <!-- Student Info -->
-            <div class="grid grid-cols-3 gap-3 text-[11px] font-semibold">
-                <p><span class="text-slate-500 uppercase text-[9px] block">Student Name</span><span id="fName">-</span></p>
-                <p><span class="text-slate-500 uppercase text-[9px] block">Class</span><span id="fClass">-</span></p>
-                <p><span class="text-slate-500 uppercase text-[9px] block">Enrollment No</span><span id="fEnrl">-</span></p>
-            </div>
-
-            <!-- Behavioral Ratings -->
-            <table class="ev-table w-full text-[11px] border-collapse">
-                <thead>
-                    <tr class="bg-emerald-600 text-white text-[10px] uppercase">
-                        <th class="text-left">Evaluation Area</th>
-                        <th>Rating (out of 5)</th>
-                    </tr>
-                </thead>
-                <tbody id="ratingsBody"></tbody>
-            </table>
-
-            <!-- Attendance -->
-            <div class="grid grid-cols-2 gap-3">
-                <div class="border rounded-xl p-3 no-print">
-                    <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Attendance %</label>
-                    <input type="number" id="inAttendance" min="0" max="100" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm">
-                </div>
-                <div class="border rounded-xl p-3 hidden print:block">
-                    <p class="text-[9px] uppercase font-bold text-slate-500">Attendance %</p>
-                    <p id="printAttendance" class="text-lg font-black">-</p>
-                </div>
-            </div>
-
-            <!-- Teacher & Principal Remarks -->
-            <div class="space-y-2">
-                <label class="block text-[9px] uppercase font-bold text-slate-500">Class Teacher's Remarks</label>
-                <textarea id="inTeacherRemarks" rows="2" class="no-print w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs"></textarea>
-                <p id="printTeacherRemarks" class="hidden print:block text-[11px]"></p>
-            </div>
-            <div class="space-y-2">
-                <label class="block text-[9px] uppercase font-bold text-slate-500">Principal's Remarks</label>
-                <textarea id="inPrincipalRemarks" rows="2" class="no-print w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs"></textarea>
-                <p id="printPrincipalRemarks" class="hidden print:block text-[11px]"></p>
-            </div>
-
-            <!-- Signatures -->
-            <div class="flex justify-between items-end pt-4 border-t-2 border-emerald-900">
-                <div class="text-center">
-                    <div class="w-36 border-b border-slate-800 mb-1.5"></div>
-                    <p class="text-[8.5px] font-black uppercase">Class Teacher</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-36 border-b border-slate-800 mb-1.5"></div>
-                    <p class="text-[8.5px] font-black uppercase">Principal / Head</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-
-        function handleLogout() {
-            LamaAPI.logout();
-            window.location.href = 'login.html';
-        }
-        const STUDENTS = 'students';
-        const EVAL_AREAS = ['Punctuality', 'Discipline', 'Class Participation', 'Homework Completion', 'Conduct & Behavior'];
-        let currentEvaluation = {};
-        let currentStudentId = null;
-        let cachedStudents = [];
-
-        async function renderHeader() {
-            const school = (await LamaAPI.getActiveSchool()) || {};
-            const schoolName = school.name || 'School Name';
-            const shortCode = school.shortCode || LamaAPI.deriveShortCode(schoolName);
-            document.getElementById('pageTitle').innerText = `${schoolName} | Evaluation Report`;
-            document.getElementById('headerSchoolName').innerText = schoolName;
-            document.getElementById('headerSchoolMeta').innerText = [school.address, school.phone ? `UAN: ${school.phone}` : ''].filter(Boolean).join(' • ');
-            const logoBox = document.getElementById('schoolLogoBox');
-            if (school.logo) {
-                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-lg">`;
-            } else {
-                logoBox.innerText = shortCode.slice(0, 3).toUpperCase();
-            }
-        }
-
-        async function populateStudentSelect() {
-            const select = document.getElementById('studentSelect');
-            select.innerHTML = `<option value="">Loading students...</option>`;
-            let students = [];
-            try {
-                students = await LamaAPI.list(STUDENTS);
-            } catch (e) {
-                alert('Could not load students: ' + e.message);
-            }
-            cachedStudents = students;
-
-            if (students.length === 0) {
-                select.innerHTML = `<option value="">No students yet</option>`;
-                document.getElementById('emptyState').classList.remove('hidden');
-                document.getElementById('reportBody').classList.add('hidden');
-                return null;
-            }
-            document.getElementById('emptyState').classList.add('hidden');
-            document.getElementById('reportBody').classList.remove('hidden');
-            select.innerHTML = students
-                .map(s => `<option value="${s.id}">${s.name} — Class ${s.class} (${s.enrlNo || 'N/A'})</option>`)
-                .join('');
-            return students;
-        }
-
-        function renderStars(area, value) {
-            let html = `<div class="flex gap-1 justify-center" data-area="${area}">`;
-            for (let i = 1; i <= 5; i++) {
-                html += `<span class="star ${i <= value ? 'filled' : ''}" onclick="setStar('${area}', ${i})">★</span>`;
-            }
-            html += `</div>`;
-            return html;
-        }
-
-        function setStar(area, value) {
-            const container = document.querySelector(`[data-area="${CSS.escape(area)}"]`);
-            container.querySelectorAll('.star').forEach((el, i) => {
-                el.classList.toggle('filled', i < value);
-            });
-            currentEvaluation[area] = value;
-        }
-
-        async function renderReport(studentId) {
-            let student = cachedStudents.find(s => s.id === studentId);
-            if (!student) {
-                try {
-                    student = await LamaAPI.get(STUDENTS, studentId);
-                } catch (e) {
-                    alert('Could not load this student: ' + e.message);
-                    return;
-                }
-            }
-            if (!student) return;
-            currentStudentId = studentId;
-            await renderHeader();
-
-            document.getElementById('fName').innerText = student.name || '-';
-            document.getElementById('fClass').innerText = student.class || '-';
-            document.getElementById('fEnrl').innerText = student.enrlNo || '-';
-
-            const behavioral = student.behavioral || {};
-            currentEvaluation = {};
-            const tbody = document.getElementById('ratingsBody');
-            tbody.innerHTML = EVAL_AREAS.map(area => {
-                const value = Number(behavioral[area]) || 3;
-                currentEvaluation[area] = value;
-                return `<tr><td>${area}</td><td class="text-center">${renderStars(area, value)}</td></tr>`;
-            }).join('');
-
-            document.getElementById('inAttendance').value = student.attendance || '';
-            document.getElementById('printAttendance').innerText = student.attendance ? `${student.attendance}%` : '-';
-            document.getElementById('inTeacherRemarks').value = student.teacherRemarks || '';
-            document.getElementById('printTeacherRemarks').innerText = student.teacherRemarks || '-';
-            document.getElementById('inPrincipalRemarks').value = student.principalRemarks || '';
-            document.getElementById('printPrincipalRemarks').innerText = student.principalRemarks || '-';
-        }
-
-        async function saveEvaluation() {
-            if (!currentStudentId) return;
-            try {
-                await LamaAPI.update(STUDENTS, currentStudentId, {
-                    behavioral: currentEvaluation,
-                    attendance: document.getElementById('inAttendance').value,
-                    teacherRemarks: document.getElementById('inTeacherRemarks').value,
-                    principalRemarks: document.getElementById('inPrincipalRemarks').value
-                });
-                document.getElementById('printAttendance').innerText = document.getElementById('inAttendance').value ? `${document.getElementById('inAttendance').value}%` : '-';
-                document.getElementById('printTeacherRemarks').innerText = document.getElementById('inTeacherRemarks').value || '-';
-                document.getElementById('printPrincipalRemarks').innerText = document.getElementById('inPrincipalRemarks').value || '-';
-                alert('Evaluation saved.');
-            } catch (e) {
-                alert('Could not save evaluation: ' + e.message);
-            }
-        }
-
-        async function init() {
-            await renderHeader();
-            const students = await populateStudentSelect();
-            if (students && students.length) {
-                await renderReport(students[0].id);
-            }
-            document.getElementById('studentSelect').addEventListener('change', (e) => {
-                if (e.target.value) renderReport(e.target.value);
-            });
-        }
-
-        if (LamaAPI.requireLogin('school')) {
-            init();
-        }
-    </script>
-</body>
-</html>
+:root{--accent:#0284c7}body{font-family:Inter,system-ui,sans-serif;background:#f1f5f9;color:#0f172a}
+.dark body{background:#080f20;color:#e2e8f0}.panel{background:white;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 8px 26px #0f172a0a}.dark .panel{background:#111e33;border-color:#29364b}
+.field{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:10px;background:white;color:#0f172a;font-size:13px}.dark .field{background:#0b1526;color:#f8fafc;border-color:#334155}
+.btn{padding:10px 14px;border-radius:10px;font-size:12px;font-weight:750;cursor:pointer}.primary{background:#0284c7;color:white}.secondary{background:#e2e8f0;color:#0f172a}.dark .secondary{background:#334155;color:white}
+.muted{color:#64748b}.dark .muted{color:#94a3b8}.rating{display:flex;gap:3px;flex-wrap:wrap}.star{border:0;background:transparent;font-size:25px;line-height:1.2;color:#cbd5e1;cursor:pointer;padding:4px}.star.on{color:#f59e0b}.star:focus-visible{outline:2px solid #0284c7}
+.paper{background:#fff;color:#0f172a;border:2px solid #0284c7;border-radius:16px;padding:22px}.paper table{border-collapse:collapse;width:100%;font-size:11px}.paper th,.paper td{border:1px solid #cbd5e1;padding:7px;text-align:left}
+.paper th{background:#e0f2fe}.small{font-size:12px}.hidden{display:none!important}
+@media(max-width:640px){.paper{padding:12px}.paper th,.paper td{padding:5px}.star{font-size:22px}}
+@page{size:A4 portrait;margin:7mm}
+@media print{html,body{background:white!important;color:#000!important} .no-print{display:none!important}.print-area{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important;box-shadow:none!important}.paper{padding:8mm!important;border:1px solid #0284c7!important;break-inside:avoid;page-break-inside:avoid}.paper th,.paper td{padding:5px!important}.print-area *{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style></head>
+<body class="min-h-screen">
+<header class="no-print max-w-7xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+ <div class="flex items-center gap-3"><div id="topLogo" class="w-12 h-12 rounded-xl bg-sky-700 text-white grid place-items-center font-black overflow-hidden">LS</div><div><h1 id="schoolTop" class="font-black text-lg">School</h1><p class="small muted">Student Development & Behavioral Evaluation</p></div></div>
+ <div class="flex gap-2 flex-wrap"><button id="themeBtn" class="btn secondary">☾ Theme</button><a href="dashboard.html" class="btn secondary">← Dashboard</a><button id="logoutBtn" class="btn secondary">Logout</button></div>
+</header>
+<main class="max-w-7xl mx-auto px-4 pb-12">
+<div id="notice" class="no-print hidden mb-4 rounded-xl px-4 py-3 text-sm border border-amber-400 bg-amber-50 text-amber-950"></div>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+<section class="no-print xl:col-span-5 space-y-4">
+<div class="panel p-5 space-y-4">
+ <div><h2 class="font-extrabold text-sky-600">1 · Find student</h2><p class="muted small">Select a class, then a student. Enrollment is shown to prevent mix-ups.</p></div>
+ <div class="grid grid-cols-2 gap-3"><label class="small font-bold">Class<select id="classFilter" class="field mt-1"><option value="">All classes</option></select></label><label class="small font-bold">Session<input id="session" class="field mt-1" value="2026-27"></label></div>
+ <label class="small font-bold block">Find by name / enrollment<input id="search" class="field mt-1" placeholder="Search student"></label>
+ <label class="small font-bold block">Student<select id="student" class="field mt-1"><option value="">Loading...</option></select></label>
+ <div class="flex flex-wrap gap-2"><button id="reload" class="btn secondary">↻ Reload students</button><span id="studentCount" class="small muted self-center"></span></div>
+</div>
+<div class="panel p-5 space-y-4">
+ <div><h2 class="font-extrabold text-sky-600">2 · Evaluate behavior</h2><p class="small muted">Tap 1–5 stars for each area. Blank means not assessed.</p></div>
+ <div id="ratingInputs" class="space-y-2"></div>
+ <div class="grid grid-cols-2 gap-3">
+  <label class="small font-bold">Present days<input id="present" type="number" min="0" step="1" class="field mt-1" placeholder="e.g. 90"></label>
+  <label class="small font-bold">Working days<input id="working" type="number" min="0" step="1" class="field mt-1" placeholder="e.g. 100"></label>
+ </div>
+ <p id="attCalc" class="text-sm font-bold text-sky-600">Attendance: Not available</p>
+ <label class="small font-bold block">Class teacher remarks<textarea id="teacherRemarks" rows="3" class="field mt-1" placeholder="Individual feedback about strengths and next steps"></textarea></label>
+ <label class="small font-bold block">Head teacher / principal remarks<textarea id="principalRemarks" rows="2" class="field mt-1" placeholder="Independent head teacher feedback"></textarea></label>
+ <div class="flex flex-wrap gap-2"><button id="suggest" class="btn secondary">✨ Suggest remarks</button><button id="save" class="btn primary">💾 Save evaluation</button><button id="print" class="btn secondary">🖨 Print / PDF</button></div>
+ <p class="small muted">Suggested comments are editable. Saving updates the selected student through LamaAPI.</p>
+</div>
+<div class="panel p-5 space-y-3">
+ <h2 class="font-extrabold text-sky-600">3 · Class overview & export</h2>
+ <p class="small muted">Class filter above also applies to the overview. The CSV opens in Excel.</p>
+ <div class="flex gap-2 flex-wrap"><button id="export" class="btn secondary">↓ Export class CSV</button><button id="printClass" class="btn secondary">🖨 Print class overview</button></div>
+ <div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-left border-b"><th class="p-2">Enrollment</th><th class="p-2">Student</th><th class="p-2">Rating</th><th class="p-2">Attendance</th></tr></thead><tbody id="overview"></tbody></table></div>
+</div>
+</section>
+<section class="xl:col-span-7 min-w-0">
+ <div class="no-print flex flex-wrap items-center justify-between gap-2 mb-3"><div><h2 class="font-black">Live printable report</h2><p class="small muted">A4 layout · Print or save as PDF</p></div><button id="printTop" class="btn primary">🖨 Print report</button></div>
+ <div id="printArea" class="print-area">
+ <article id="report" class="paper shadow-xl">
+  <div class="flex items-center gap-3 border-b-2 border-sky-600 pb-3">
+   <div id="paperLogo" class="w-16 h-16 shrink-0 rounded-lg bg-sky-100 text-sky-800 grid place-items-center font-black overflow-hidden">SCH</div>
+   <div class="min-w-0 flex-1"><p class="text-[9px] font-extrabold uppercase tracking-widest text-sky-700">Official student development report</p><h2 id="paperSchool" class="text-xl font-black leading-tight">School Name</h2><p id="paperMeta" class="text-[10px] text-slate-500"></p></div>
+  </div>
+  <div class="mt-3 flex items-center justify-between gap-2"><h3 class="font-extrabold text-sky-800">Behavioral & Teacher Evaluation</h3><span id="paperSession" class="text-[11px] font-bold"></span></div>
+  <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] mt-3 border rounded-xl p-3">
+   <p><b>Student:</b> <span id="pName">—</span></p><p><b>Class:</b> <span id="pClass">—</span></p>
+   <p><b>Enrollment:</b> <span id="pEnrl">—</span></p><p><b>Section:</b> <span id="pSection">—</span></p>
+   <p><b>Father / Guardian:</b> <span id="pFather">—</span></p><p><b>Date:</b> <span id="pDate">—</span></p>
+  </div>
+  <table class="mt-4"><thead><tr><th>Evaluation area</th><th>Rating / 5</th><th>Assessment</th></tr></thead><tbody id="paperRatings"></tbody></table>
+  <div class="mt-4 rounded-xl border border-sky-200 p-3"><h4 class="text-xs font-black text-sky-800">Attendance / حاضری</h4><div class="grid grid-cols-3 gap-2 text-center mt-2"><div><div class="text-[10px] text-slate-500">Present</div><b id="pPresent">—</b></div><div><div class="text-[10px] text-slate-500">Working</div><b id="pWorking">—</b></div><div><div class="text-[10px] text-slate-500">Attendance %</div><b id="pAttendance">—</b></div></div></div>
+  <div class="mt-4 space-y-3 text-[11px]"><div><b class="text-sky-800">Class Teacher's Remarks</b><p id="pTeacherRemarks" class="mt-1 whitespace-pre-wrap">—</p></div><div><b class="text-sky-800">Head Teacher / Principal Remarks</b><p id="pPrincipalRemarks" class="mt-1 whitespace-pre-wrap">—</p></div></div>
+  <div class="grid grid-cols-2 gap-8 mt-10 text-center text-[10px] font-bold"><div class="border-t border-slate-500 pt-1">Class Teacher Signature</div><div class="border-t border-slate-500 pt-1">Head Teacher / Principal Signature</div></div>
+  <div class="text-center text-[9px] text-slate-500 border-t mt-5 pt-2">Powered by www.lamastudio.pk</div>
+ </article></div>
+</section></div>
+</main>
+<script>
+'use strict';
+const AREAS=['Punctuality','Discipline','Class Participation','Homework Completion','Conduct & Behavior','Teamwork','Respect for Others'];
+const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let students=[],chosen=null,school={},ratings={},dirty=false,loading=false,printClassMode=false;
+const getId=s=>String(s.id??s._id??s.enrlNo??s.enrollmentNo??'');
+const cls=s=>String(s.class??s.grade??s.className??'').trim();
+const enr=s=>String(s.enrlNo??s.enrollmentNo??s.enrollment??s.admissionNo??'');
+function msg(t){$('notice').textContent=t;$('notice').classList.remove('hidden')}
+function theme(){const dark=document.documentElement.classList.toggle('dark');localStorage.setItem('lama_theme',dark?'dark':'light');$('themeBtn').textContent=dark?'☀ Light mode':'☾ Dark mode'}
+function initTheme(){if((localStorage.getItem('lama_theme')||'dark')==='dark')document.documentElement.classList.add('dark');$('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀ Light mode':'☾ Dark mode'}
+function setLogo(el,src,alt){el.replaceChildren();if(src){const img=document.createElement('img');img.src=src;img.alt=alt;img.className='w-full h-full object-contain';img.onerror=()=>{el.textContent=(school.shortCode||'SCH').slice(0,3)};el.appendChild(img)}else el.textContent=(school.shortCode||'SCH').slice(0,3)}
+async function header(){try{school=await LamaAPI.getActiveSchool()||{}}catch(e){msg('School profile could not be loaded: '+e.message)}const n=school.name||school.schoolName||'School';$('schoolTop').textContent=n;$('paperSchool').textContent=n;$('paperMeta').textContent=[school.address,school.phone].filter(Boolean).join(' • ');document.title=n+' | Behavioral Evaluation';setLogo($('topLogo'),school.logo||school.cover,'School logo');setLogo($('paperLogo'),school.logo||school.cover,'School logo')}
+function normalizeResponse(v){if(Array.isArray(v))return v;if(Array.isArray(v?.data))return v.data;if(Array.isArray(v?.records))return v.records;return []}
+async function reload(){if(loading)return;loading=true;$('reload').disabled=true;try{students=normalizeResponse(await LamaAPI.list('students'));const classes=[...new Set(students.map(cls).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));const old=$('classFilter').value;$('classFilter').innerHTML='<option value="">All classes</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(classes.includes(old))$('classFilter').value=old;filterStudents()}catch(e){msg('Unable to load students: '+e.message);students=[];filterStudents()}finally{loading=false;$('reload').disabled=false}}
+function filtered(){const c=$('classFilter').value.toLowerCase(),q=$('search').value.trim().toLowerCase();return students.filter(s=>(!c||cls(s).toLowerCase()===c)&&(!q||[s.name,enr(s),s.fatherGuardian,s.fatherName].some(v=>String(v||'').toLowerCase().includes(q))))}
+function filterStudents(){const previous=$('student').value;const list=filtered();$('studentCount').textContent=list.length+' student(s)';$('student').innerHTML=list.length?list.map(s=>`<option value="${esc(getId(s))}">${esc(s.name||'Unnamed')} · ${esc(enr(s)||'No enrollment')}</option>`).join(''):'<option value="">No matching students</option>';if(list.some(s=>getId(s)===previous))$('student').value=previous;const next=$('student').value;loadStudent(next);renderOverview()}
+function dataFor(s){return s?.behavioral||s?.behavior||{}}
+function loadStudent(id){chosen=students.find(s=>getId(s)===String(id))||null;ratings={};const b=dataFor(chosen);for(const a of AREAS){const v=Number(b[a]);ratings[a]=v>=1&&v<=5?v:0}const att=chosen?.behavioralAttendance||{};$('present').value=att.present??chosen?.presentDays??'';$('working').value=att.working??chosen?.workingDays??'';$('teacherRemarks').value=chosen?.teacherRemarks||'';$('principalRemarks').value=chosen?.principalRemarks||'';dirty=false;renderRatings();preview()}
+function renderRatings(){$('ratingInputs').innerHTML=AREAS.map(a=>`<div class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-2"><span class="text-sm font-semibold">${esc(a)}</span><div class="rating" data-area="${esc(a)}">${[1,2,3,4,5].map(n=>`<button type="button" class="star ${n<=ratings[a]?'on':''}" data-n="${n}" aria-label="${esc(a)} ${n} out of 5" aria-pressed="${n===ratings[a]}">★</button>`).join('')}</div></div>`).join('')}
+function attendance(){const p=$('present').value,w=$('working').value;if(p===''||w==='')return null;const pn=Number(p),wn=Number(w);if(!Number.isInteger(pn)||!Number.isInteger(wn)||pn<0||wn<=0||pn>wn)return null;return {present:pn,working:wn,percentage:Math.round(pn/wn*1000)/10}}
+function score(s){const r=dataFor(s),vals=AREAS.map(a=>Number(r[a])).filter(n=>n>=1&&n<=5);return vals.length?Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10:null}
+function preview(){const s=chosen||{};$('paperSession').textContent='Session '+$('session').value;$('pName').textContent=s.name||'—';$('pClass').textContent=cls(s)||'—';$('pEnrl').textContent=enr(s)||'—';$('pSection').textContent=s.section||'—';$('pFather').textContent=s.fatherGuardian||s.fatherName||'—';$('pDate').textContent=new Date().toLocaleDateString('en-GB');$('paperRatings').innerHTML=AREAS.map(a=>{const v=ratings[a];return `<tr><td>${esc(a)}</td><td>${v||'—'} / 5</td><td>${v?['','Needs improvement','Developing','Satisfactory','Very good','Excellent'][v]:'Not assessed'}</td></tr>`}).join('');const a=attendance();$('attCalc').textContent=a?'Attendance: '+a.percentage+'%':'Attendance: Not available (enter valid present and working days)';$('pPresent').textContent=a?.present??'—';$('pWorking').textContent=a?.working??'—';$('pAttendance').textContent=a?a.percentage+'%':'Not available';$('pTeacherRemarks').textContent=$('teacherRemarks').value||'—';$('pPrincipalRemarks').textContent=$('principalRemarks').value||'—'}
+function suggest(){const v=Object.values(ratings).filter(Boolean),avg=v.length?v.reduce((a,b)=>a+b,0)/v.length:0;let t,h;if(!v.length){t='Evaluation is pending. Please assess the student before finalizing remarks.';h='Awaiting the class teacher’s assessment.'}else if(avg>=4.5){t='Demonstrates excellent discipline, punctuality and active participation. Sets a positive example for classmates.';h='Outstanding overall development. Keep maintaining these high standards.'}else if(avg>=3.5){t='Shows consistent effort and positive classroom behavior. Continued attention to daily learning habits will support further progress.';h='A commendable performance with encouraging potential for growth.'}else if(avg>=2.5){t='Is making steady progress in classroom routines. More regular participation and homework practice are recommended.';h='Improvement is evident; consistent support will help build confidence.'}else{t='Needs focused support in classroom engagement and regular work habits. A simple home-school improvement plan is recommended.';h='Closer monitoring and encouragement are advised for sustained progress.'}if($('teacherRemarks').value&&!confirm('Replace current teacher remarks with suggested text?'))return;$('teacherRemarks').value=t;if(!$('principalRemarks').value)$('principalRemarks').value=h;dirty=true;preview()}
+async function save(){if(!chosen)return msg('Select a student before saving.');const p=$('present').value,w=$('working').value;if((p!==''||w!=='')&&!attendance())return msg('Attendance is invalid. Present and working days must be whole numbers, working days greater than zero, and present days cannot exceed working days.');const patch={behavioral:{...dataFor(chosen),...Object.fromEntries(Object.entries(ratings).filter(([k,v])=>v>0))},teacherRemarks:$('teacherRemarks').value.trim(),principalRemarks:$('principalRemarks').value.trim()};if(attendance()){patch.behavioralAttendance=attendance();patch.attendance=attendance().percentage}const btn=$('save');btn.disabled=true;btn.textContent='Saving...';try{const res=await LamaAPI.update('students',getId(chosen),patch);if(res===false||res?.success===false)throw Error(res?.message||'Server rejected update');Object.assign(chosen,patch);dirty=false;msg('Evaluation saved for '+(chosen.name||'student')+'.');renderOverview()}catch(e){msg('Save failed; changes were NOT confirmed: '+e.message)}finally{btn.disabled=false;btn.textContent='💾 Save evaluation'}}
+function overviewRows(){const c=$('classFilter').value;return students.filter(s=>!c||cls(s).toLowerCase()===c.toLowerCase()).sort((a,b)=>enr(a).localeCompare(enr(b),undefined,{numeric:true}))}
+function renderOverview(){$('overview').innerHTML=overviewRows().map(s=>`<tr class="border-b border-slate-200 dark:border-slate-700"><td class="p-2">${esc(enr(s)||'—')}</td><td class="p-2">${esc(s.name||'—')}</td><td class="p-2">${score(s)??'—'}</td><td class="p-2">${esc(s.behavioralAttendance?.percentage??s.attendance??'—')}%</td></tr>`).join('')||'<tr><td colspan="4" class="p-3 muted">No students in selected class.</td></tr>'}
+function exportCsv(){const rows=[['Enrollment','Student','Class','Father / Guardian',...AREAS,'Average Rating','Attendance %','Teacher Remarks','Head Teacher Remarks'],...overviewRows().map(s=>[enr(s),s.name,cls(s),s.fatherGuardian||s.fatherName||'',...AREAS.map(a=>dataFor(s)[a]??''),score(s)??'',s.behavioralAttendance?.percentage??s.attendance??'',s.teacherRemarks||'',s.principalRemarks||''])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='Lama_Evaluation_'+($('classFilter').value||'All_Classes')+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+function printClass(){const rows=overviewRows();if(!rows.length)return msg('No students to print.');const win=window.open('','_blank');if(!win)return msg('Please allow pop-ups to print the class overview.');const html=`<!doctype html><html><head><title>Class Evaluation</title><style>@page{size:A4 landscape;margin:8mm}body{font:11px Arial}table{width:100%;border-collapse:collapse}th,td{border:1px solid #aaa;padding:5px}h2{margin:0 0 10px}</style></head><body><h2>${esc(school.name||'School')} — ${esc($('classFilter').value||'All classes')} — Behavioral Evaluation</h2><p>Session: ${esc($('session').value)}</p><table><tr><th>Enrollment</th><th>Name</th><th>Class</th>${AREAS.map(a=>`<th>${esc(a)}</th>`).join('')}<th>Avg</th><th>Attendance</th></tr>${rows.map(s=>`<tr><td>${esc(enr(s))}</td><td>${esc(s.name)}</td><td>${esc(cls(s))}</td>${AREAS.map(a=>`<td>${esc(dataFor(s)[a]??'—')}</td>`).join('')}<td>${score(s)??'—'}</td><td>${esc(s.behavioralAttendance?.percentage??s.attendance??'—')}</td></tr>`).join('')}</table><script>window.onload=()=>window.print()<\/script></body></html>`;win.document.write(html);win.document.close()}
+$('themeBtn').onclick=theme;$('logoutBtn').onclick=()=>{LamaAPI.logout();location.href='login.html'};$('reload').onclick=reload;$('classFilter').onchange=filterStudents;$('search').oninput=filterStudents;$('student').onchange=e=>{if(dirty&&!confirm('Discard unsaved evaluation changes?'))return;loadStudent(e.target.value)};$('session').oninput=preview;
+$('ratingInputs').onclick=e=>{const b=e.target.closest('.star');if(!b)return;const area=b.parentElement.dataset.area;ratings[area]=Number(b.dataset.n);dirty=true;renderRatings();preview()};
+['present','working','teacherRemarks','principalRemarks'].forEach(id=>$(id).addEventListener('input',()=>{dirty=true;preview()}));
+$('suggest').onclick=suggest;$('save').onclick=save;$('print').onclick=()=>window.print();$('printTop').onclick=()=>window.print();$('export').onclick=exportCsv;$('printClass').onclick=printClass;
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+(async()=>{initTheme();if(typeof LamaAPI==='undefined'){msg('LamaAPI is unavailable. Check js/api-client.js.');return}try{if(!LamaAPI.requireLogin('school','login.html'))return;await header();await reload()}catch(e){msg('Initialization failed: '+e.message)}})();
+</script></body></html>

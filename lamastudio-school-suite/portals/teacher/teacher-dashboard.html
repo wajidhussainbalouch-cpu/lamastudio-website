@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="pageTitle">Teacher Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="../../assets/css/config.css">
+<script src="../../js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
+
+    <!-- Header -->
+<div class="max-w-5xl mx-auto px-4 pt-3"><a href="help-requests.html" class="inline-block bg-cyan-700 text-white px-4 py-2 rounded-xl font-bold text-xs">💬 Student Help & Sick Leave Inbox</a></div>
+    <header class="max-w-5xl mx-auto px-4 pt-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
+            <div>
+                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
+                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Teacher Portal — <span id="teacherClassLabel">Class</span></p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="teacherNameLabel" class="text-xs font-bold text-slate-300 hidden sm:inline">Teacher</span>
+            <a href="index.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">🏫 Board</a>
+            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
+        </div>
+    </header>
+
+    <!-- Tab Bar -->
+    <nav class="max-w-5xl mx-auto px-4 mt-5 flex gap-2 flex-wrap">
+        <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance')">📋 Attendance</button>
+        <button class="tab-btn" data-tab="absentees" onclick="switchTab('absentees')">🔔 Absentee Alerts</button>
+        <button class="tab-btn" data-tab="homework" onclick="switchTab('homework')">📝 Homework</button>
+        <button class="tab-btn" data-tab="marks" onclick="switchTab('marks')">🎯 Marks</button>
+        <button class="tab-btn" data-tab="notices" onclick="switchTab('notices')">📢 Notices</button>
+        <button class="tab-btn" data-tab="promote" onclick="switchTab('promote')">🎓 Promotions</button>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-5 space-y-5">
+
+        <!-- ATTENDANCE TAB -->
+        <section id="tab-attendance" class="tab-panel cyber-card rounded-2xl p-5 space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <h2 class="text-xs font-black uppercase text-cyan-400">Mark Attendance</h2>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="attDate" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2">
+                    <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
+                </div>
+            </div>
+            <div id="attendanceList" class="space-y-2"></div>
+            <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
+        </section>
+
+        <!-- ABSENTEE ALERTS TAB -->
+        <section id="tab-absentees" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h2 class="text-xs font-black uppercase text-red-400">Today's Absentees</h2>
+                    <p class="text-[10px] text-slate-400">Tap WhatsApp or SMS to open a pre-filled message to that parent.</p>
+                </div>
+                <button onclick="loadAbsentees()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition">↻ Refresh</button>
+            </div>
+            <div id="absenteesList" class="space-y-2"></div>
+            <p id="absenteesEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No absentees marked for today yet — mark attendance first.</p>
+        </section>
+
+        <!-- HOMEWORK TAB -->
+        <section id="tab-homework" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-amber-400">Assign Homework</h2>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <input id="hwSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input type="date" id="hwDueDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="hwTitle" placeholder="Title" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <textarea id="hwDescription" rows="2" placeholder="Description / instructions" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
+            </div>
+            <button onclick="postHomework()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">+ Post Homework</button>
+            <div class="flex justify-between items-center border-t border-slate-800 pt-3">
+                <h3 class="text-[10px] font-black uppercase text-slate-400">History</h3>
+                <select id="hwFilter" onchange="loadHomework()" class="bg-slate-950 border border-slate-700 text-white text-[10px] rounded-lg px-2 py-1.5">
+                    <option value="all">All Time</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                </select>
+            </div>
+            <div class="space-y-2" id="homeworkList"></div>
+        </section>
+
+        <!-- MARKS TAB -->
+        <section id="tab-marks" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-purple-400">Enter Marks</h2>
+            <select id="marksStudentSelect" class="w-full bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5"></select>
+            <div id="marksStudentCard" class="flex items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2"></div>
+            <div id="marksGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]"></div>
+            <button onclick="saveMarks()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">↗ Open Grading Matrix</button>
+        </section>
+
+        <!-- NOTICES TAB -->
+        <section id="tab-notices" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-emerald-400">Send Notice to Your Class</h2>
+            <input id="noticeTitle" placeholder="Title" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+            <textarea id="noticeMessage" rows="3" placeholder="Message to parents / students..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"></textarea>
+            <button onclick="sendNotice()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">📢 Send</button>
+            <div class="border-t border-slate-800 pt-3 space-y-2" id="noticesList"></div>
+        </section>
+
+        <!-- PROMOTIONS TAB -->
+        <section id="tab-promote" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+            <h2 class="text-xs font-black uppercase text-purple-400">Promote Your Class</h2>
+            <p class="text-[10px] text-slate-500">Promotion requires administrator approval. Historical results are never erased.</p>
+            <div class="grid sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Promote To Class</label>
+                    <input id="promoteToClass" placeholder="e.g. 4" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">New Academic Session</label>
+                    <input id="promoteSession" placeholder="e.g. 2027-2028" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                </div>
+            </div>
+            <label class="flex items-center gap-2 text-[11px] text-slate-400">
+                <input type="checkbox" id="promoteClearMarks" disabled class="rounded">
+                Keep previous marks and results (historical records are never erased)
+            </label>
+            <div class="flex gap-2">
+                <button onclick="selectAllPassing()" class="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">✓ Select All Passing</button>
+                <button onclick="selectNonePromote()" class="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">Clear Selection</button>
+            </div>
+            <div id="promoteList" class="space-y-1.5"></div>
+            <button onclick="promoteMyClass()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition">
+                🎓 Promote Selected (<span id="promoteSelectedCount">0</span>)
+            </button>
+        </section>
+    </main>
+
+    <style>
+        .tab-btn { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 8px 14px; border-radius: 10px; background: #1e293b; color: #94a3b8; transition: all .15s; }
+        .tab-btn.active { background: #4f46e5; color: white; }
+    </style>
+
+    <script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s??'').trim().toLowerCase();
+const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
+function schoolMatch(r){return !r.schoolId || (!!me.schoolId && norm(r.schoolId)===norm(me.schoolId))}
+function classMatch(r){const assigned=norm(me.assignedClass||me.class);const section=norm(me.assignedSection||me.section);return !!assigned && norm(r.class||r.grade||r.className||r.assignedClass)===assigned && (!section||norm(r.section||r.classSection)===section)}
+function scope(r){return schoolMatch(r)&&classMatch(r)}
+function myStudent(id){return myStudents.find(s=>String(s.id)===String(id))}
+function mine(r){return norm(r.teacherId)===norm(me.teacherId||me.id)}
+function published(r){return r.isPublished===true||r.published===true||norm(r.status)==='published'||norm(r.status)==='sent'}
+function message(t){alert(t)}
+function switchTab(t){document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
+function handleLogout(){LamaAPI.logout();location.href='../../portal-login.html'}
+function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`Class ${me.assignedClass||'—'} ${me.section||''} · ${me.subject||'All subjects'}`;$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
+function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
+async function refresh(){const collections=['students','attendance','homework','notifications','results'];const data=await Promise.all(collections.map(async c=>{try{return await LamaAPI.list(c)}catch(e){if(c==='students')throw e;console.warn(c,e);return []}}));myStudents=data[0].filter(scope);if(!myStudents.length){const classes=[...new Set((data[0]||[]).map(s=>String(s.class||s.grade||s.className||'').trim()).filter(Boolean))];console.warn('No students matched teacher assignment. Teacher class:',me.assignedClass,'section:',me.section,'available classes:',classes);document.getElementById('attendanceEmpty').textContent='No students matched Class '+(me.assignedClass||'?')+(me.section?'-'+me.section:'')+'. Check the class and section in Teacher Management. Available classes: '+(classes.join(', ')||'none returned by API');}attendance=data[1].filter(a=>schoolMatch(a)&&!!myStudent(a.studentId));homework=data[2].filter(scope);notices=data[3].filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'));results=data[4].filter(r=>schoolMatch(r)&&!!myStudent(r.studentId));renderAll()}
+function renderAll(){loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+function loadAttendanceList(){const day=$('attDate').value;const el=$('attendanceList');$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);el.innerHTML=myStudents.map(s=>{const a=attendance.find(x=>String(x.studentId)===String(s.id)&&x.date===day);const status=a?.status||'';return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span></span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`}).join('')}
+function setAttStatus(btn,status){const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
+async function saveAttendance(){if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');const day=$('attDate').value;if(!day)return message('Choose date');let ok=0,fail=0;for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');if(!student||!btn)continue;const old=attendance.find(x=>String(x.studentId)===String(student.id)&&x.date===day);const record={schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',studentId:student.id,studentName:student.name,date:day,status:btn.dataset.status,teacherId:me.teacherId||me.id};try{if(old)await LamaAPI.update('attendance',old.id,record);else await LamaAPI.add('attendance',record);ok++}catch(e){fail++;console.error(e)}}await refresh();message(`Attendance saved: ${ok}. Failed: ${fail}. Unselected students were not changed.`)}
+function loadAbsentees(){const a=attendance.filter(x=>x.date===localDate()&&x.status==='Absent');$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
+function loadHomework(){let items=homework.filter(h=>mine(h));const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':'Draft'}</p></div><button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button></div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
+async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');if(me.subject&&norm(subject)!==norm(me.subject))return message('Use your assigned subject');try{await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();message('Published for your class')}catch(e){message('Save failed: '+e.message)}}
+async function deleteHomework(id){const x=homework.find(h=>String(h.id)===String(id));if(!x||!mine(x))return message('Only your entries can be removed');if(!confirm('Delete homework?'))return;try{await LamaAPI.remove('homework',id);await refresh()}catch(e){message(e.message)}}
+$('homeworkList').addEventListener('click',e=>{const b=e.target.closest('[data-delete-hw]');if(b)deleteHomework(b.dataset.deleteHw)});
+function populateMarksStudentSelect(){const sel=$('marksStudentSelect'),previous=sel.value;sel.innerHTML=myStudents.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.enrlNo||'—')})</option>`).join('');if(myStudent(previous))sel.value=previous;onMarksStudentChange()}
+function onMarksStudentChange(){const s=myStudent($('marksStudentSelect').value);$('marksStudentCard').textContent=s?`${s.name} · Class ${s.class} · ${s.enrlNo||'No enrollment number'}`:'No students assigned';$('marksGrid').innerHTML='<p class="text-slate-400 col-span-full">Marks are managed by examination and academic session in the Grading Matrix. Use the button below.</p>'}
+function saveMarks(){location.href='teacher-grades.html'}
+function loadNotices(){const items=notices.filter(n=>published(n)).sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('noticesList').innerHTML=items.length?items.map(n=>`<div class="bg-slate-950 rounded-xl p-3"><b class="text-xs">${esc(n.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(n.message)}</p></div>`).join(''):'<p class="text-xs text-slate-400">No notices.</p>'}
+async function sendNotice(){const title=$('noticeTitle').value.trim(),messageText=$('noticeMessage').value.trim();if(!title||!messageText)return message('Enter title and message');try{await LamaAPI.add('notifications',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,title,message:messageText,audience:`Class ${me.assignedClass}`,channel:'Portal',status:'Sent',isPublished:true,createdAt:new Date().toISOString()});$('noticeTitle').value='';$('noticeMessage').value='';await refresh();message('Notice published')}catch(e){message(e.message)}}
+function latestResult(s){return results.filter(r=>String(r.studentId)===String(s.id)).sort((a,b)=>String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')))[0]}
+function computeStudentResult(s){const r=latestResult(s);if(!r)return {percentage:null,passed:null};const p=Number(r.percentage);return {percentage:Number.isFinite(p)?p:null,passed:Number.isFinite(p)?p>=33:null}}
+function renderPromoteList(){const list=$('promoteList');list.innerHTML=myStudents.map(s=>{const r=computeStudentResult(s);return `<label class="flex justify-between bg-slate-950 p-3 rounded-lg gap-2"><span><input type="checkbox" class="promote-check-teacher" data-id="${esc(s.id)}" onchange="updatePromoteCount()"> <span class="text-xs">${esc(s.name)}</span></span><span class="text-xs text-slate-400">${r.percentage===null?'No result':r.percentage.toFixed(1)+'%'}</span></label>`}).join('');updatePromoteCount()}
+function updatePromoteCount(){$('promoteSelectedCount').textContent=document.querySelectorAll('.promote-check-teacher:checked').length}
+function selectAllPassing(){document.querySelectorAll('.promote-check-teacher').forEach(x=>{const s=myStudent(x.dataset.id);x.checked=computeStudentResult(s).passed===true});updatePromoteCount()}
+function selectNonePromote(){document.querySelectorAll('.promote-check-teacher').forEach(x=>x.checked=false);updatePromoteCount()}
+async function promoteMyClass(){message('Promotion is restricted to school administrators to protect enrollment history and prevent accidental record changes. Please use the admin promotion workflow.')}
+async function init(){if(!LamaAPI.requireLogin('teacher','../../portal-login.html'))return;me=LamaAPI.getSession('teacher')||{};me.section=me.assignedSection||me.section||'';header();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',loadAttendanceList);try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
+init();
+    </script>
+    <style>
+        .att-btn { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 8px; background: #1e293b; color: #94a3b8; }
+        .att-active-present { background: #059669; color: white; }
+        .att-active-absent { background: #dc2626; color: white; }
+        .att-active-leave { background: #d97706; color: white; }
+        .contact-icon { font-size: 13px; padding: 2px 4px; border-radius: 6px; background: #1e293b; text-decoration: none; }
+    </style>
+</body>
+</html>

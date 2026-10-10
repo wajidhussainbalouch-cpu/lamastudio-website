@@ -112,6 +112,16 @@
         #incomeChart{max-width:100%}
         @media(max-width:640px){.module-tile{min-height:92px}.finance-metric{padding:12px}.section-heading{font-size:19px}}
         @media(prefers-reduced-motion:reduce){.module-tile,.metric-card,.section-link{transition:none!important;transform:none!important}}
+
+        /* Dedicated student attendance command card */
+        .student-attendance-card{border:1px solid rgba(34,211,238,.24);background:linear-gradient(135deg,rgba(8,145,178,.10),rgba(15,23,42,.65));border-radius:24px;padding:22px}
+        .attendance-kpi{border:1px solid var(--border);border-radius:16px;padding:14px;background:rgba(148,163,184,.055)}
+        .attendance-kpi strong{font-size:clamp(20px,3vw,30px);display:block;line-height:1.3}
+        .attendance-track{height:10px;border-radius:99px;overflow:hidden;background:rgba(148,163,184,.20);display:flex}
+        .attendance-track span{height:100%;transition:width .25s}
+        .class-att-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+        html[data-theme="light"] .student-attendance-card{background:linear-gradient(135deg,#ecfeff,#ffffff);border-color:#a5f3fc}
+        @media(max-width:640px){.student-attendance-card{padding:15px}.attendance-kpi{padding:10px}}
     </style>
 
 </head>
@@ -171,6 +181,26 @@
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(99,102,241,.18)"><p class="section-kicker">This Year</p><p id="yearCollectionDisplay" class="text-xl font-black text-indigo-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
         </section>
 
+
+        <!-- Student attendance: dedicated daily operational card -->
+        <section class="student-attendance-card" aria-label="Student attendance today" id="studentAttendanceCard">
+          <div class="flex flex-wrap justify-between items-start gap-3 mb-5">
+            <div><p class="section-kicker text-cyan-300">Daily student register</p><h3 class="section-heading font-black text-white mt-1">🧑‍🎓 Student Attendance</h3><p id="studentAttDate" class="text-xs text-slate-400 mt-1">Loading today's attendance…</p></div>
+            <div class="flex flex-wrap gap-2"><button type="button" onclick="refreshDashboard()" class="section-link text-xs font-black border border-cyan-500/30 rounded-xl px-3 py-2 text-cyan-300">↻ Refresh</button><a href="student-attendance.html" class="section-link text-xs font-black bg-cyan-600 text-white rounded-xl px-4 py-2">Open Student Attendance →</a></div>
+          </div>
+          <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3">
+            <div class="attendance-kpi"><p class="section-kicker">Enrolled</p><strong id="studentAttEnrolled" class="text-purple-300">—</strong></div>
+            <div class="attendance-kpi"><p class="section-kicker">Present</p><strong id="studentAttPresent" class="text-emerald-300">—</strong></div>
+            <div class="attendance-kpi"><p class="section-kicker">Absent</p><strong id="studentAttAbsent" class="text-red-300">—</strong></div>
+            <div class="attendance-kpi"><p class="section-kicker">Leave</p><strong id="studentAttLeave" class="text-amber-300">—</strong></div>
+            <div class="attendance-kpi col-span-2 lg:col-span-1"><p class="section-kicker">Not marked</p><strong id="studentAttUnmarked" class="text-cyan-300">—</strong></div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily attendance rate</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
+            <div><div class="flex justify-between gap-2 items-center mb-1"><p class="text-xs font-black">Class-wise register</p><span id="studentAttClassCount" class="text-[10px] text-slate-400">—</span></div><div id="studentAttClasses" class="max-h-44 overflow-y-auto pr-1"><p class="text-xs text-slate-400">Loading…</p></div></div>
+          </div>
+        </section>
+
         <!-- Real database engine -->
         <section class="command-grid">
             <div class="span-8 neo-card rounded-3xl p-5">
@@ -221,7 +251,7 @@
                 <a href="manage-students.html" class="module-tile rounded-2xl p-3 bg-purple-500/5 border border-purple-500/10 hover:border-purple-400/40 transition"><b>🧑‍🎓</b><p>Students</p><small>360° records</small></a>
                 <a href="import-students.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>⇩</b><p>Import</p><small>safe bulk data</small></a>
                 <a href="manage-teachers.html" class="module-tile rounded-2xl p-3 bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-400/40 transition"><b>👩‍🏫</b><p>Teachers</p><small>staff records</small></a>
-                <a href="teacher-attendance.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>◷</b><p>Attendance</p><small>daily tracking</small></a>
+                <a href="student-attendance.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>◷</b><p>Student Attendance</p><small>daily register</small></a>
                 <a href="fees.html" class="module-tile rounded-2xl p-3 bg-amber-500/5 border border-amber-500/10 hover:border-amber-400/40 transition"><b>💰</b><p>Finance</p><small>fees & dues</small></a>
                 <a href="tests.html" class="module-tile rounded-2xl p-3 bg-pink-500/5 border border-pink-500/10 hover:border-pink-400/40 transition"><b>◈</b><p>Tests</p><small>assessments</small></a>
                 <a href="date-sheet.html" class="module-tile rounded-2xl p-3 bg-blue-500/5 border border-blue-500/10 hover:border-blue-400/40 transition"><b>🗓️</b><p>Date Sheet</p><small>exams schedule</small></a>
@@ -251,7 +281,7 @@
         let charts = {};
         const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
         const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
-        async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:[]; } catch(e){ return []; } }
+        async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:Array.isArray(r?.records)?r.records:[]; } catch(e){ console.warn('Unable to load '+key,e); return []; } }
         function handleLogout(){ LamaAPI.logout(); window.location.href='login.html'; }
         function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
         function chartDefaults(){const cs=getComputedStyle(document.documentElement);const text=cs.getPropertyValue('--chartText').trim()||'#cbd5e1',muted=cs.getPropertyValue('--muted').trim()||'#94a3b8',grid=cs.getPropertyValue('--grid').trim()||'rgba(148,163,184,.06)';return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:muted,font:{size:9}},grid:{color:grid}},y:{ticks:{color:muted,font:{size:9}},grid:{color:grid}}}};}
@@ -291,13 +321,40 @@
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText=`${stats.teachersPresentToday||0} / ${stats.totalTeachers||0}`;
             document.getElementById('notMarkedDisplay').innerText=`${(stats.teachersNotMarked||[]).length} not marked`;
             const [students,teachers,attendance,fees,notifications,tests]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[]};
-            renderEngineRows({students,teachers,attendance,fees,notifications,tests});
+            renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students);
             renderClassChart(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
+
+        function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+        function renderStudentAttendanceCard(attendance,students){
+          const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
+          students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
+          const current=new Map();
+          attendance.forEach(a=>{
+            if(String(a.date||'').slice(0,10)!==today)return;
+            const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
+            const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
+            if(!student)return; // exclude staff and unrelated records
+            const key=String(student.id??student._id??student.enrlNo??student.enrollmentNo??'');
+            if(key)current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});
+          });
+          const counts={present:0,absent:0,leave:0};const classMap=new Map();
+          students.forEach(s=>{const c=String(s.class??s.grade??'Unassigned').trim()||'Unassigned';if(!classMap.has(c))classMap.set(c,{total:0,marked:0,present:0});classMap.get(c).total++});
+          current.forEach(({student,status})=>{const c=String(student.class??student.grade??'Unassigned').trim()||'Unassigned';const r=classMap.get(c);if(['present','p'].includes(status)){counts.present++;if(r)r.present++}else if(['absent','a'].includes(status))counts.absent++;else if(['leave','l','on leave'].includes(status))counts.leave++;else return;if(r)r.marked++});
+          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),rate=marked?Math.round(100*counts.present/marked):null;
+          const set=(key,value)=>document.getElementById(key).textContent=value;
+          set('studentAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
+          set('studentAttEnrolled',total.toLocaleString());set('studentAttPresent',counts.present);set('studentAttAbsent',counts.absent);set('studentAttLeave',counts.leave);set('studentAttUnmarked',unmarked);
+          set('studentAttRate',rate===null?'—':rate+'%');set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
+          const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
+          const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
+          document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>`<div class="class-att-row"><span class="text-xs font-bold truncate">${esc(name)}</span><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span></div>`).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
+        }
+
         function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance',d.attendance.length,'attendance events'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
         function renderClassChart(students){ const counts={}; students.forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
         function renderGenderChart(students){ const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }
-        function renderAttendanceChart(attendance,students){ const today=new Date().toISOString().slice(0,10); const rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today); const present=rows.filter(a=>String(a.status||'').toLowerCase()==='present').length, absent=rows.filter(a=>String(a.status||'').toLowerCase()==='absent').length, leave=rows.length-present-absent; destroyChart('attendance'); charts.attendance=new Chart(document.getElementById('attendanceChart'),{type:'doughnut',data:{labels:['Present','Absent','Other'],datasets:[{data:[present,absent,leave],backgroundColor:['rgba(52,211,153,.75)','rgba(251,113,133,.78)','rgba(148,163,184,.45)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}}); document.getElementById('attendanceSummary').innerHTML=[['Present',present,'text-emerald-300'],['Absent',absent,'text-red-300']].map(x=>`<div class="rounded-xl bg-slate-950/50 border border-slate-800 p-2"><p class="text-[9px] text-slate-500">${x[0]}</p><p class="text-sm font-black ${x[2]}">${x[1]}</p></div>`).join(''); }
+        function renderAttendanceChart(attendance,students){ const today=localISODate(); const rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today); const present=rows.filter(a=>String(a.status||'').toLowerCase()==='present').length, absent=rows.filter(a=>String(a.status||'').toLowerCase()==='absent').length, leave=rows.length-present-absent; destroyChart('attendance'); charts.attendance=new Chart(document.getElementById('attendanceChart'),{type:'doughnut',data:{labels:['Present','Absent','Other'],datasets:[{data:[present,absent,leave],backgroundColor:['rgba(52,211,153,.75)','rgba(251,113,133,.78)','rgba(148,163,184,.45)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}}); document.getElementById('attendanceSummary').innerHTML=[['Present',present,'text-emerald-300'],['Absent',absent,'text-red-300']].map(x=>`<div class="rounded-xl bg-slate-950/50 border border-slate-800 p-2"><p class="text-[9px] text-slate-500">${x[0]}</p><p class="text-sm font-black ${x[2]}">${x[1]}</p></div>`).join(''); }
                  function renderFeeChart(series,fees){
              // Prefer server-calculated collection series; otherwise aggregate dated payments.
              let points=[];
@@ -327,7 +384,7 @@
          }
 function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
         function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
-        function renderAbsentees(attendance,students){const today=new Date().toISOString().slice(0,10), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }
+        function renderAbsentees(attendance,students){const today=localISODate(), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
         async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
         if(LamaAPI.requireLogin('school')) renderDashboard();

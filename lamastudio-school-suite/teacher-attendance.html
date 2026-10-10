@@ -1,172 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="root" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="pageTitle">Teacher Attendance</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/config.css">
-<script src="js/api-client.js"></script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title id="pageTitle">Teacher Attendance | Lama School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+<link rel="stylesheet" href="assets/css/config.css"><script src="js/api-client.js"></script>
 <style>
-    .att-btn { font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 8px; background: #1e293b; color: #94a3b8; }
-    .att-active-present { background: #059669; color: white; }
-    .att-active-absent { background: #dc2626; color: white; }
-    .att-active-leave { background: #d97706; color: white; }
+body{font-family:Inter,ui-sans-serif,system-ui,sans-serif}button,input,select{font:inherit}button:disabled{opacity:.45;cursor:not-allowed}.pill{border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;border:1px solid #475569;transition:.15s}.pill[data-status="Present"].selected{background:#047857;color:#fff;border-color:#059669}.pill[data-status="Absent"].selected{background:#b91c1c;color:#fff;border-color:#dc2626}.pill[data-status="Leave"].selected{background:#b45309;color:#fff;border-color:#d97706}.pill.selected{box-shadow:0 0 0 2px #fff3}.panel{border:1px solid #334155;border-radius:20px;background:#111c30;padding:20px}.light .panel{background:white;border-color:#e2e8f0}.field{background:#0b1220;color:#f8fafc;border:1px solid #475569;border-radius:12px;padding:10px 12px;min-width:0}.light .field{background:#fff;color:#0f172a;border-color:#cbd5e1}.light body{background:#f1f5f9;color:#0f172a}.light .rowitem{background:#f8fafc;border-color:#e2e8f0}.rowitem{border:1px solid #334155;background:#0b1220;border-radius:14px;padding:12px}.light .muted{color:#64748b}.muted{color:#94a3b8}.light .pill{border-color:#cbd5e1;color:#334155}.light .pill.selected{color:white}.light .navbtn{background:#e2e8f0;color:#0f172a}.navbtn{background:#1e293b;color:#f8fafc;border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700}.light .stat{background:#fff;border-color:#e2e8f0}.stat{border:1px solid #334155;background:#111c30;border-radius:16px;padding:15px}.toast{position:fixed;bottom:18px;right:18px;max-width:min(90vw,430px);z-index:80;padding:13px 18px;border-radius:12px;background:#065f46;color:white;box-shadow:0 12px 30px #0004}.toast.error{background:#991b1b}.light .text-white{color:inherit}.light .forcewhite{color:#fff!important}@media print{.noprint{display:none!important}body{background:white!important;color:black!important}.panel,.stat,.rowitem{background:white!important;color:black!important;border:1px solid #bbb!important;box-shadow:none!important}.muted{color:#444!important}.pill{color:black!important;border:1px solid #bbb!important}.pill.selected{font-weight:900!important}main{max-width:100%!important;padding:0!important}@page{size:A4;margin:12mm}}
 </style>
 </head>
-<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
-
-    <header class="max-w-4xl mx-auto px-4 pt-6 flex items-center justify-between gap-3 flex-wrap">
-        <div class="flex items-center gap-3">
-            <div id="schoolLogoBox" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-xs font-black text-white">SCH</div>
-            <div>
-                <h1 id="headerSchoolName" class="text-sm font-black tracking-wider text-white">School Name</h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Teacher Attendance</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-2">
-            <input type="date" id="attDate" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2">
-            <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
-            <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
-        </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto px-4 py-5 space-y-5">
-
-        <!-- Not-yet-marked-attendance alert -->
-        <section id="notMarkedSection" class="cyber-card-amber rounded-2xl p-5 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400 mb-3">⏰ Haven't Marked Student Attendance Today</h2>
-            <div id="notMarkedList" class="space-y-2"></div>
-        </section>
-
-        <!-- Teacher attendance marking -->
-        <section class="cyber-card rounded-2xl p-5 space-y-3">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xs font-black uppercase text-cyan-400">Mark Today's Teacher Attendance</h2>
-                <button onclick="saveTeacherAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
-            </div>
-            <div id="teacherAttList" class="space-y-2"></div>
-            <p id="teacherAttEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No teachers added yet — add some from Manage Teachers first.</p>
-        </section>
-    </main>
-
-    <script>
-
-        function handleLogout() {
-            LamaAPI.logout();
-            window.location.href = 'login.html';
-        }
-        const TEACHERS = 'teachers', TEACHER_ATTENDANCE = 'teacherAttendance', ATTENDANCE = 'attendance';
-        let allTeachers = [];
-
-        async function renderHeader() {
-            const school = await LamaAPI.getActiveSchool() || {};
-            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Teacher Attendance`;
-            document.getElementById('headerSchoolName').innerText = school.name || 'School';
-            const logoBox = document.getElementById('schoolLogoBox');
-            if (school.logo) {
-                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
-            } else {
-                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
-            }
-        }
-
-        async function renderNotMarked() {
-            let stats;
-            try {
-                stats = await LamaAPI.getDashboardStats();
-            } catch (e) {
-                return;
-            }
-            const notMarked = stats.teachersNotMarked || [];
-            document.getElementById('notMarkedSection').classList.toggle('hidden', notMarked.length === 0);
-            document.getElementById('notMarkedList').innerHTML = notMarked.map(t => `
-                <div class="flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
-                    <span class="text-xs font-semibold">${t.name} <span class="text-slate-500">— Class ${t.assignedClass}</span></span>
-                    <button onclick="pingTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg">🔔 Ping</button>
-                </div>
-            `).join('');
-        }
-
-        async function pingTeacher(teacherId, name) {
-            try {
-                await LamaAPI.pingTeacher(teacherId, "Please mark today's student attendance.");
-                alert(`Reminder sent to ${name}.`);
-            } catch (e) {
-                alert('Could not send the reminder: ' + e.message);
-            }
-        }
-
-        async function renderTeacherAttendance() {
-            const date = document.getElementById('attDate').value;
-            try {
-                allTeachers = await LamaAPI.list(TEACHERS);
-            } catch (e) {
-                alert('Could not load teachers: ' + e.message);
-                return;
-            }
-            document.getElementById('teacherAttEmpty').classList.toggle('hidden', allTeachers.length > 0);
-
-            let existing = [];
-            try {
-                existing = (await LamaAPI.list(TEACHER_ATTENDANCE)).filter(a => a.date === date);
-            } catch (e) { /* fine, treat as none marked yet */ }
-
-            document.getElementById('teacherAttList').innerHTML = allTeachers.map(t => {
-                const existingRecord = existing.find(a => a.teacherId === t.id);
-                const currentStatus = existingRecord ? existingRecord.status : 'Present';
-                return `
-                <div class="flex items-center justify-between bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2" data-teacher-id="${t.id}" data-existing-id="${existingRecord ? existingRecord.id : ''}">
-                    <span class="text-xs font-semibold">${t.name} <span class="text-slate-500">(${t.subject || '-'} • Class ${t.assignedClass || '-'})</span></span>
-                    <div class="flex gap-1">
-                        <button class="att-btn ${currentStatus === 'Present' ? 'att-active-present' : ''}" data-status="Present" onclick="setAttStatus(this, 'Present')">Present</button>
-                        <button class="att-btn ${currentStatus === 'Absent' ? 'att-active-absent' : ''}" data-status="Absent" onclick="setAttStatus(this, 'Absent')">Absent</button>
-                        <button class="att-btn ${currentStatus === 'Leave' ? 'att-active-leave' : ''}" data-status="Leave" onclick="setAttStatus(this, 'Leave')">Leave</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function setAttStatus(btn, status) {
-            const row = btn.closest('[data-teacher-id]');
-            row.querySelectorAll('.att-btn').forEach(b => b.className = 'att-btn');
-            btn.className = `att-btn att-active-${status.toLowerCase()}`;
-        }
-
-        async function saveTeacherAttendance() {
-            const date = document.getElementById('attDate').value;
-            const rows = document.querySelectorAll('#teacherAttList [data-teacher-id]');
-            for (const row of rows) {
-                const teacherId = row.dataset.teacherId;
-                const existingId = row.dataset.existingId;
-                const activeBtn = row.querySelector('.att-btn[class*="att-active"]');
-                const status = activeBtn ? activeBtn.dataset.status : 'Present';
-                const teacher = allTeachers.find(t => t.id === teacherId);
-                try {
-                    if (existingId) {
-                        await LamaAPI.update(TEACHER_ATTENDANCE, existingId, { status });
-                    } else {
-                        await LamaAPI.add(TEACHER_ATTENDANCE, { teacherId, teacherName: teacher.name, date, status });
-                    }
-                } catch (e) {
-                    alert(`Could not save attendance for ${teacher ? teacher.name : teacherId}: ` + e.message);
-                }
-            }
-            alert('Teacher attendance saved.');
-            renderTeacherAttendance();
-        }
-
-        async function init() {
-            await renderHeader();
-            document.getElementById('attDate').value = new Date().toISOString().split('T')[0];
-            await renderNotMarked();
-            await renderTeacherAttendance();
-            document.getElementById('attDate').addEventListener('change', renderTeacherAttendance);
-        }
-
-        if (LamaAPI.requireLogin('school', 'login.html')) {
-            init();
-        }
-    </script>
-</body>
-</html>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen transition-colors">
+<header class="noprint border-b border-slate-700/50 sticky top-0 z-30 bg-[#0b0f19]/95 backdrop-blur dark:bg-[#0b0f19]/95 light:bg-white">
+ <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+ <div class="flex items-center gap-3 min-w-0"><div id="schoolLogoBox" class="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center font-black forcewhite overflow-hidden">SCH</div><div class="min-w-0"><h1 id="headerSchoolName" class="font-extrabold text-sm sm:text-base truncate">School</h1><p class="text-[11px] muted">Teacher Attendance · Lama School Suite</p></div></div>
+ <div class="flex flex-wrap gap-2 items-center"><button id="themeBtn" class="navbtn" type="button" title="Toggle theme">☀️ Theme</button><a class="navbtn" href="dashboard.html">← Dashboard</a><button class="navbtn" id="logoutBtn" type="button">Logout</button></div></div>
+</header>
+<main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
+ <div class="flex flex-wrap items-end justify-between gap-4"><div><p class="text-cyan-500 font-black text-xs uppercase tracking-widest">Staff Management</p><h2 class="text-2xl sm:text-3xl font-black mt-1">Teacher Attendance</h2><p class="muted text-sm mt-1">Select a date, mark each teacher, review changes, then save.</p></div><div class="noprint flex flex-wrap gap-2"><button id="refreshBtn" class="navbtn">↻ Refresh</button><button id="printBtn" class="navbtn">🖨 Print</button><button id="csvBtn" class="navbtn">↓ Excel (CSV)</button></div></div>
+ <section class="panel noprint"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><label class="text-xs font-bold flex flex-col gap-2">Attendance date<input id="attDate" class="field" type="date"></label><label class="text-xs font-bold flex flex-col gap-2">Search teacher<input id="search" class="field" placeholder="Name, subject, class..."></label><label class="text-xs font-bold flex flex-col gap-2">Attendance filter<select id="filter" class="field"><option value="All">All teachers</option><option value="Unmarked">Not marked</option><option value="Present">Present</option><option value="Absent">Absent</option><option value="Leave">Leave</option></select></label><label class="text-xs font-bold flex flex-col gap-2">Class filter<select id="classFilter" class="field"><option value="All">All assigned classes</option></select></label></div></section>
+ <section class="grid grid-cols-2 md:grid-cols-5 gap-3" aria-label="Attendance totals"><div class="stat"><p class="muted text-xs">Total teachers</p><p id="totalCount" class="text-2xl font-black mt-1">0</p></div><div class="stat"><p class="muted text-xs">Present</p><p id="presentCount" class="text-2xl font-black text-emerald-500 mt-1">0</p></div><div class="stat"><p class="muted text-xs">Absent</p><p id="absentCount" class="text-2xl font-black text-red-500 mt-1">0</p></div><div class="stat"><p class="muted text-xs">Leave</p><p id="leaveCount" class="text-2xl font-black text-amber-500 mt-1">0</p></div><div class="stat col-span-2 md:col-span-1"><p class="muted text-xs">Not marked</p><p id="unmarkedCount" class="text-2xl font-black mt-1">0</p></div></section>
+ <section id="notMarkedSection" class="panel noprint hidden"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="text-sm font-black text-amber-500">⏰ Teachers who have not marked student attendance</h3><p class="text-xs muted mt-1">This reminder list is supplied by the school dashboard, not staff attendance records.</p></div><button id="reloadReminders" class="navbtn">Refresh reminders</button></div><div id="notMarkedList" class="mt-3 grid gap-2"></div></section>
+ <section class="panel space-y-4"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-black text-lg">Mark staff attendance</h3><p id="statusText" class="muted text-xs mt-1">Loading teachers...</p></div><div class="noprint flex flex-wrap gap-2"><button id="markAllPresent" class="navbtn">✓ Mark visible present</button><button id="clearVisible" class="navbtn">Clear visible</button><button id="saveBtn" class="bg-cyan-600 hover:bg-cyan-500 rounded-xl py-2.5 px-5 text-sm font-extrabold forcewhite">💾 Save changes</button></div></div><div id="teacherAttList" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div><div id="empty" class="hidden text-center muted py-8">No matching teachers found.</div><div class="noprint flex justify-end sm:hidden"><button id="saveBottom" class="bg-cyan-600 rounded-xl px-5 py-3 font-bold forcewhite w-full">💾 Save changes</button></div></section>
+ <p class="muted text-xs pb-4">Attendance is recorded per teacher and date. Unsaved changes are not uploaded. Student-attendance reminders are separate from teacher attendance.</p>
+</main><div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
+<script>
+'use strict';
+const T='teachers',TA='teacherAttendance';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const idOf=o=>String(o?.id??o?._id??o?.teacherId??'');
+const textOf=(o,...keys)=>{for(const k of keys){if(o?.[k]!==undefined&&o[k]!==null&&String(o[k]).trim())return String(o[k]);}return '';};
+const arr=v=>Array.isArray(v)?v:Array.isArray(v?.records)?v.records:Array.isArray(v?.data)?v.data:Array.isArray(v?.items)?v.items:[];
+let teachers=[], records=[], chosen=new Map(), dirty=new Set(), busy=false, loadToken=0;
+function notify(msg,error=false){const t=$('toast');t.textContent=msg;t.classList.toggle('error',error);t.classList.remove('hidden');clearTimeout(notify.timer);notify.timer=setTimeout(()=>t.classList.add('hidden'),4500)}
+function dateToday(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function setBusy(v){busy=v;for(const id of ['saveBtn','saveBottom','refreshBtn','markAllPresent','clearVisible'])$(id).disabled=v;$('saveBtn').textContent=v?'Saving...':'💾 Save changes';}
+function statusFor(t){return chosen.get(idOf(t))||''}
+function visible(){const q=$('search').value.trim().toLowerCase(),f=$('filter').value,c=$('classFilter').value;return teachers.filter(t=>{const st=statusFor(t);return (f==='All'||(f==='Unmarked'&&!st)||f===st)&&(c==='All'||textOf(t,'assignedClass','class','grade')===c)&&[t.name,t.subject,t.assignedClass,t.class,t.email].some(v=>String(v||'').toLowerCase().includes(q))})}
+function totals(){const n={Present:0,Absent:0,Leave:0,Unmarked:0};for(const t of teachers)n[statusFor(t)||'Unmarked']++;$('totalCount').textContent=teachers.length;$('presentCount').textContent=n.Present;$('absentCount').textContent=n.Absent;$('leaveCount').textContent=n.Leave;$('unmarkedCount').textContent=n.Unmarked;$('statusText').textContent=`${visible().length} displayed · ${dirty.size} unsaved change(s) · ${$('attDate').value}`}
+function render(){const list=visible();$('empty').classList.toggle('hidden',list.length!==0);$('teacherAttList').innerHTML=list.map(t=>{const id=idOf(t),st=statusFor(t);return `<article class="rowitem" data-id="${esc(id)}"><div class="flex items-center justify-between gap-3 flex-wrap"><div class="min-w-0"><h4 class="text-sm font-bold break-words">${esc(textOf(t,'name','teacherName')||'Unnamed teacher')}</h4><p class="muted text-xs mt-1">${esc(textOf(t,'subject')||'No subject')} · Class ${esc(textOf(t,'assignedClass','class','grade')||'—')}</p><p class="text-[11px] mt-1 ${dirty.has(id)?'text-amber-500':'muted'}">${dirty.has(id)?'● Unsaved change':st?'Saved: '+esc(st):'Not marked'}</p></div><div class="flex gap-1 flex-wrap" role="group" aria-label="Attendance for ${esc(t.name||'teacher')}">${['Present','Absent','Leave'].map(s=>`<button type="button" class="pill ${st===s?'selected':''}" data-status="${s}" data-teacher="${esc(id)}" aria-pressed="${st===s}">${s}</button>`).join('')}</div></div></article>`}).join('');totals()}
+function choose(id,status){if(busy)return;chosen.set(id,status);dirty.add(id);render()}
+function confirmDiscard(){return !dirty.size||confirm(`You have ${dirty.size} unsaved change(s). Discard them?`)}
+async function loadData(){if(!confirmDiscard())return;const token=++loadToken;setBusy(true);$('statusText').textContent='Loading...';try{const [t,r]=await Promise.all([LamaAPI.list(T),LamaAPI.list(TA)]);if(token!==loadToken)return;teachers=arr(t).filter(x=>idOf(x));records=arr(r).filter(x=>String(x.date||'').slice(0,10)===$('attDate').value);chosen.clear();dirty.clear();for(const teacher of teachers){const id=idOf(teacher);const match=records.find(x=>String(x.teacherId??x.teacherID??'')===id);if(match&&['Present','Absent','Leave'].includes(match.status))chosen.set(id,match.status)}const classes=[...new Set(teachers.map(t=>textOf(t,'assignedClass','class','grade')).filter(Boolean))].sort();const old=$('classFilter').value;$('classFilter').innerHTML='<option value="All">All assigned classes</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');$('classFilter').value=classes.includes(old)?old:'All';render();notify('Attendance loaded')}catch(e){$('statusText').textContent='Could not load attendance';notify('Load failed: '+e.message,true)}finally{setBusy(false)}}
+async function save(){if(busy||!dirty.size){if(!dirty.size)notify('No changes to save');return}const date=$('attDate').value;if(!date){notify('Choose a date',true);return}setBusy(true);const failures=[];let saved=0;for(const id of [...dirty]){const teacher=teachers.find(t=>idOf(t)===id),status=chosen.get(id);if(!teacher||!status){dirty.delete(id);continue}const prior=records.find(r=>String(r.teacherId??r.teacherID??'')===id);try{let response;if(prior&&idOf(prior)){response=await LamaAPI.update(TA,idOf(prior),{status,date,teacherId:id,teacherName:teacher.name||''});prior.status=status}else{response=await LamaAPI.add(TA,{teacherId:id,teacherName:teacher.name||'',date,status});records.push({id:response?.id||response?.record?.id||'',teacherId:id,teacherName:teacher.name||'',date,status})}if(response===false||response?.success===false)throw Error(response?.message||'Server rejected change');dirty.delete(id);saved++}catch(e){failures.push(`${teacher.name||id}: ${e.message}`)}}setBusy(false);render();notify(failures.length?`${saved} saved, ${failures.length} failed. ${failures.slice(0,2).join('; ')}`:`Saved attendance for ${saved} teacher(s)`,!!failures.length)}
+async function reminders(){try{const stats=await LamaAPI.getDashboardStats(),list=arr(stats?.teachersNotMarked);$('notMarkedSection').classList.toggle('hidden',!list.length);$('notMarkedList').innerHTML=list.map(t=>`<div class="rowitem flex flex-wrap items-center justify-between gap-2"><span class="text-sm font-semibold">${esc(t.name)} <span class="muted">— Class ${esc(t.assignedClass||'—')}</span></span><button class="navbtn ping" data-id="${esc(idOf(t))}" data-name="${esc(t.name)}">🔔 Send reminder</button></div>`).join('')}catch(e){console.warn('Reminder list unavailable:',e);$('notMarkedSection').classList.add('hidden')}}
+async function ping(id,name,button){if(!id)return notify('Teacher ID unavailable',true);button.disabled=true;try{await LamaAPI.pingTeacher(id,"Please mark today's student attendance.");notify(`Reminder requested for ${name}`)}catch(e){notify('Reminder failed: '+e.message,true)}finally{button.disabled=false}}
+function exportCsv(){const rows=[['Date','Teacher ID','Teacher Name','Subject','Assigned Class','Status'],...visible().map(t=>[$('attDate').value,idOf(t),textOf(t,'name','teacherName'),textOf(t,'subject'),textOf(t,'assignedClass','class','grade'),statusFor(t)||'Not marked'])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`teacher-attendance-${$('attDate').value}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function theme(){const light=$('root').classList.toggle('light');$('root').classList.toggle('dark',!light);localStorage.setItem('lama_theme',light?'light':'dark');$('themeBtn').textContent=light?'🌙 Theme':'☀️ Theme'}
+async function header(){try{const school=await LamaAPI.getActiveSchool()||{};$('headerSchoolName').textContent=school.name||'School';$('pageTitle').textContent=(school.name||'School')+' | Teacher Attendance';if(school.logo){const img=document.createElement('img');img.src=school.logo;img.alt='School logo';img.className='w-full h-full object-cover';img.onerror=()=>img.remove();$('schoolLogoBox').replaceChildren(img)}else $('schoolLogoBox').textContent=school.shortCode||(LamaAPI.deriveShortCode?.(school.name||'SCH'))||'SCH'}catch(e){console.warn('School header unavailable',e)}}
+function wire(){if(localStorage.getItem('lama_theme')==='light'){$('root').classList.add('light');$('root').classList.remove('dark');$('themeBtn').textContent='🌙 Theme'}$('attDate').value=dateToday();$('teacherAttList').addEventListener('click',e=>{const b=e.target.closest('button[data-status]');if(b)choose(b.dataset.teacher,b.dataset.status)});$('notMarkedList').addEventListener('click',e=>{const b=e.target.closest('.ping');if(b)ping(b.dataset.id,b.dataset.name,b)});for(const id of ['search','filter','classFilter'])$(id).addEventListener(id==='search'?'input':'change',render);$('attDate').addEventListener('change',loadData);$('refreshBtn').onclick=loadData;$('saveBtn').onclick=save;$('saveBottom').onclick=save;$('reloadReminders').onclick=reminders;$('csvBtn').onclick=exportCsv;$('printBtn').onclick=()=>window.print();$('themeBtn').onclick=theme;$('markAllPresent').onclick=()=>{if(!confirm(`Mark ${visible().length} visible teachers as present?`))return;for(const t of visible()){chosen.set(idOf(t),'Present');dirty.add(idOf(t))}render()};$('clearVisible').onclick=()=>{for(const t of visible()){const id=idOf(t);chosen.delete(id);dirty.delete(id)}render();notify('Selection cleared locally. Saved records remain unchanged until edited.')};$('logoutBtn').onclick=()=>{if(!confirmDiscard())return;LamaAPI.logout();location.href='login.html'};window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.returnValue=''}})}
+async function init(){if(typeof LamaAPI==='undefined'){notify('LamaAPI client is missing',true);return}wire();await header();await Promise.all([loadData(),reminders()])}
+if(typeof LamaAPI!=='undefined'&&LamaAPI.requireLogin('school','login.html'))init();
+</script>
+</body></html>

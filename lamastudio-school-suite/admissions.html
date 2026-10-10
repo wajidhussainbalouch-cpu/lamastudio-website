@@ -91,9 +91,10 @@
     </style>
 </head>
 <body class="py-8 px-4 flex flex-col items-center min-h-screen relative">
+<div id="admissionRoster" class="max-w-5xl w-full no-print bg-slate-900 border border-slate-700 rounded-2xl p-5 mb-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h2 class="text-xl font-black">Admissions · All Students</h2><p id="admissionRosterCount" class="text-xs text-slate-400">Loading registered students...</p></div><div class="flex gap-2 flex-wrap"><button type="button" onclick="newAdmission()" class="bg-lime-400 text-slate-950 px-4 py-3 rounded-xl text-xs font-black">＋ New Admission</button><a href="manage-students.html" class="bg-cyan-700 px-4 py-3 rounded-xl text-xs font-bold">Manage Students</a><button type="button" onclick="loadAdmissionRoster()" class="bg-slate-700 px-4 py-3 rounded-xl text-xs font-bold">↻ Refresh</button></div></div><input id="admissionSearch" oninput="drawAdmissionRoster()" placeholder="Search by name, class, enrollment, admission number..." class="mt-4 w-full p-3 rounded-lg bg-slate-800 text-white border border-slate-600 text-sm"><div id="admissionRosterRows" class="grid md:grid-cols-2 gap-2 mt-3"></div></div>
 
     <!-- Screen Control Bar (Hidden on Print) -->
-    <div class="max-w-3xl w-full mb-4 flex justify-between items-center bg-slate-900 border border-slate-800 text-white px-6 py-3.5 rounded-2xl shadow-xl no-print">
+    <div id="admissionControls" class="max-w-3xl w-full mb-4 flex justify-between items-center bg-slate-900 border border-slate-800 text-white px-6 py-3.5 rounded-2xl shadow-xl no-print">
         <div>
             <h2 class="text-xs font-black uppercase tracking-wider text-indigo-400">Universal Academic Portal</h2>
             <p class="text-[10px] text-slate-400">Optimized Full-Page A4 Admission Form</p>
@@ -116,7 +117,7 @@
     </div>
 
     <!-- UNIVERSAL A4 PRINT SHEET CONTAINER -->
-    <div class="print-sheet max-w-3xl w-full p-8 rounded-2xl space-y-4">
+    <div id="admissionSheet" class="print-sheet max-w-3xl w-full p-8 rounded-2xl space-y-4">
         
         <div class="space-y-4">
             <!-- CENTER ALIGNED SCHOOL HEADER, NAME, LOGO & ADDRESS -->
@@ -159,7 +160,7 @@
             </div>
 
             <!-- FORM SECTIONS -->
-            <form class="space-y-3.5">
+            <form class="space-y-3.5" onsubmit="event.preventDefault();saveStudent()">
                 
                 <!-- SECTION 1: STUDENT PERSONAL INFORMATION -->
                 <div class="print-card-bg rounded-xl p-3.5 space-y-2.5">
@@ -683,9 +684,18 @@
         }
 
         // Every protected page starts with this: no session -> straight to login.
-        if (LamaAPI.requireLogin('school')) {
-            renderAdmissionsForm();
-        }
+        if (LamaAPI.requireLogin('school','login.html')) {renderAdmissionsForm();setTimeout(loadAdmissionRoster,100);}
+
     </script>
-</body>
+<style id="admission-roster-first-style">#admissionSheet.roster-hidden,#admissionControls.roster-hidden{display:none!important}@media print{#admissionSheet.roster-hidden{display:flex!important}#admissionControls{display:none!important}}</style>
+<script id="admission-roster-first-script">
+let admissionStudents=[];
+const admissionEsc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function showAdmissionForm(){document.getElementById('admissionSheet').classList.remove('roster-hidden');document.getElementById('admissionControls').classList.remove('roster-hidden');document.getElementById('admissionSheet').scrollIntoView({behavior:'smooth',block:'start'})}
+function newAdmission(){savedStudentId=null;showAdmissionForm();document.getElementById('candidateName')?.focus()}
+async function loadAdmissionRoster(){try{const response=await LamaAPI.list('students');admissionStudents=Array.isArray(response)?response:Array.isArray(response?.records)?response.records:Array.isArray(response?.data)?response.data:[];document.getElementById('admissionRosterCount').textContent=admissionStudents.length+' registered student records';drawAdmissionRoster();const target=new URLSearchParams(location.search).get('studentId');if(target){const found=admissionStudents.find(s=>String(s.id??s._id)===target);if(found)openExistingAdmission(found)}}catch(e){document.getElementById('admissionRosterCount').textContent='Could not load students: '+e.message}}
+function drawAdmissionRoster(){const q=(document.getElementById('admissionSearch')?.value||'').toLowerCase();const rows=admissionStudents.filter(s=>[s.name,s.class,s.enrlNo,s.admissionNo,s.fatherGuardian].some(v=>String(v??'').toLowerCase().includes(q)));document.getElementById('admissionRosterRows').innerHTML=rows.length?rows.map(s=>`<div class="rounded-xl bg-slate-800 border border-slate-700 p-3 flex justify-between gap-2 items-center"><div class="min-w-0"><p class="font-bold text-sm">${admissionEsc(s.name||'Unnamed')}</p><p class="text-xs text-slate-400">${admissionEsc(s.class||'Class N/A')} · ${admissionEsc(s.enrlNo||s.admissionNo||'No number')} · ${admissionEsc(s.fatherGuardian||'')}</p></div><button type="button" data-admission-id="${admissionEsc(String(s.id??s._id??''))}" class="bg-cyan-700 text-white px-3 py-2 rounded-lg text-xs font-bold">Open</button></div>`).join(''):'<p class="text-slate-400 text-sm">No students found.</p>'}
+function openExistingAdmission(s){showAdmissionForm();savedStudentId=s.id??s._id??null;const fields={candidateName:'name',candidateCnic:'cnic',dobInput:'dob',candidateGender:'gender',candidateReligion:'religion',fatherName:'fatherGuardian',fatherCnic:'fatherCnic',contactCell:'contact',candidateCaste:'caste',fatherProfession:'profession',monthlyIncome:'monthlyIncome',residentialAddress:'address',guardianName:'guardianName',guardianCnic:'guardianCnic',guardianCell:'guardianCell',guardianRelation:'guardianRelation',guardianProfession:'guardianProfession',guardianAddress:'guardianAddress',distanceFromSchool:'distanceFromSchool',applyingClassSelect:'class',assignedSectionSelect:'section',admissionNoInput:'admissionNo',schoolAdmissionNo:'schoolAdmissionNo',academicSession:'academicSession',admissionTestMarks:'admissionTestMarks',interviewMarks:'interviewMarks',officialRemarks:'admissionRemarks'};for(const [id,key] of Object.entries(fields)){const el=document.getElementById(id);if(!el)continue;const v=s[key];if(v!==undefined&&v!==null){if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===String(v)))el.add(new Option(String(v),String(v)));el.value=String(v)}}for(const [id,key] of Object.entries({canWrite:'canWrite',canRead:'canRead',canCount:'canCount'})){const el=document.getElementById(id);if(el&&s[key]!=null)el.checked=String(s[key]).toLowerCase()==='yes'||s[key]===true}if(s.photo){pendingPhoto=s.photo;const p=document.getElementById('photoContainer');if(p)p.innerHTML='<img alt="Student" style="width:100%;height:100%;object-fit:cover" src="'+admissionEsc(s.photo)+'">'}document.getElementById('candidateName')?.focus()}
+document.addEventListener('DOMContentLoaded',()=>{document.getElementById('admissionSheet')?.classList.add('roster-hidden');document.getElementById('admissionControls')?.classList.add('roster-hidden');document.getElementById('admissionRosterRows')?.addEventListener('click',e=>{const b=e.target.closest('[data-admission-id]');if(!b)return;const s=admissionStudents.find(x=>String(x.id??x._id)===b.dataset.admissionId);if(s)openExistingAdmission(s)});});
+</script></body>
 </html>

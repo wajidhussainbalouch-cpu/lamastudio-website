@@ -78,8 +78,8 @@
 </div>
 <div class="flex flex-wrap items-center gap-2 my-3"><label for="facultyStyle" class="text-white font-semibold">Faculty display design</label><select id="facultyStyle" class="bg-slate-900 text-white border border-cyan-500 rounded-lg p-2"><option value="watercolor">🌸 Watercolor poster</option><option value="modern">✨ Modern cards</option><option value="classic">🏫 Professional profile</option></select><button type="button" id="facultyCopyLink" class="bg-cyan-700 text-white rounded-lg px-3 py-2">Copy public design link</button></div><script>document.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('facultyCopyLink');if(!b)return;b.addEventListener('click',async()=>{const s=document.getElementById('facultyStyle').value;const session=(window.LamaAPI&&LamaAPI.getSession&&LamaAPI.getSession())||{};const id=session.schoolId||session.school_id||new URLSearchParams(location.search).get('schoolId')||'';if(!id){alert('School ID unavailable. Open this page while logged in as School Admin.');return}const link=new URL('meet-the-teachers.html',location.href);link.searchParams.set('schoolId',id);link.searchParams.set('style',s);try{await navigator.clipboard.writeText(link.href);b.textContent='Link copied ✓'}catch(e){prompt('Copy public faculty link',link.href)}})})</script><a href="meet-the-teachers.html" target="_blank" class="inline-block bg-pink-600 px-4 py-3 rounded-xl font-bold">🌸 Preview Meet Our Teachers</a>
 <section style="background:#123047;border:1px solid #22d3ee;border-radius:14px;padding:16px;margin:16px 0;color:#fff"><h2 style="font-weight:800;font-size:19px">Faculty on Main Dashboard</h2><p style="font-size:14px;margin:7px 0">Only teachers individually approved for publication are shown.</p><label style="display:flex;gap:10px"><input id="facultyEnabled" type="checkbox"> Show Meet Our Teachers publicly</label><button id="facultySave" type="button" style="background:#0891b2;padding:11px;border-radius:10px">Save faculty visibility</button><p id="facultyStatus"></p></section><!-- Add Teacher Form -->
-        <section class="cyber-card rounded-2xl p-5 space-y-3">
-            <h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2>
+        <section id="addTeacherPanel" class="cyber-card rounded-2xl p-5 space-y-3 hidden">
+            <div class="flex justify-between items-center"><h2 class="text-xs font-black uppercase text-indigo-400">+ Add Teacher</h2><button type="button" onclick="closeTeacherAdd()" class="bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold">✕ Close</button></div>
             <div class="grid sm:grid-cols-2 gap-3 text-xs">
 <div class="sm:col-span-2 bg-slate-900/70 rounded-xl p-3">
 <label class="block text-sm font-bold mb-2">Teacher photo — Upload or use camera</label>
@@ -192,7 +192,7 @@
 
         <!-- Teachers List -->
         <section class="cyber-card rounded-2xl p-5 space-y-3">
-            <h2 class="text-xs font-black uppercase text-slate-300">Your Teachers</h2>
+            <div class="flex flex-wrap gap-3 justify-between items-center"><div><h2 class="text-lg font-black text-white">All Teachers</h2><p id="teacherCount" class="text-xs text-slate-400">Loading faculty...</p></div><div class="flex gap-2 flex-wrap"><button type="button" onclick="openTeacherAdd()" class="bg-lime-400 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-black">＋ Add New Teacher</button><button type="button" onclick="renderTeachers()" class="bg-slate-700 px-3 py-2 rounded-xl text-xs font-bold">↻ Refresh</button></div></div><input id="teacherSearch" oninput="filterTeacherRows()" placeholder="Search teacher, login, subject, class..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-sm text-white">
             <div id="teachersList" class="space-y-2"></div>
             <p id="teachersEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No teachers added yet.</p>
         </section>
@@ -366,12 +366,12 @@
 
         async function renderTeachers() {
             const teachers = await LamaAPI.list('teachers');
-            allTeachers = teachers;
+            allTeachers = teachers; document.getElementById("teacherCount").textContent = `${teachers.length} teacher records`;
             // Match newly created teacher by login ID if API generated the ID after saving.
             teachers.forEach(t=>{const fromLogin=localTeacherPhoto({loginId:t.loginId,email:t.email});if(fromLogin&&!localTeacherPhoto(t))storeTeacherPhoto(t,fromLogin)});
             document.getElementById('teachersEmpty').classList.toggle('hidden', teachers.length > 0);
             document.getElementById('teachersList').innerHTML = teachers.map(t => `
-                <div class="flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5">
+                <div class="teacher-roster-row flex justify-between items-center bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5">
                     <div>
                         <p class="text-xs font-bold">${t.name} <span class="text-cyan-300">[${t.loginId || t.email || "-"}]</span> <span class="text-slate-500 font-normal">— ${t.email}</span></p>
                         <p class="text-[10px] text-slate-400">${t.subject || 'No subject'} • Class ${t.assignedClass || '-'}${t.assignedSection ? '-' + t.assignedSection : ''} • ${t.contact || 'No contact'}</p>
@@ -384,7 +384,7 @@
                         <button onclick="deleteTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')" class="text-[10px] font-bold px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white">Delete</button>
                     </div>
                 </div>
-            `).join('');
+            `).join(''); filterTeacherRows();
         }
 
         async function openEdit(teacherId) {
@@ -619,5 +619,10 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  document.addEventListener('input',e=>{if(e.target.id==='editBio')e.target.dataset.autoBio='0';if(e.target.id==='editDesignation')suggest('edit')});
  document.addEventListener('change',e=>{if(e.target.id==='editDesignation')suggest('edit')});
 })();
+</script><script id="roster-first-teacher">
+function openTeacherAdd(){const p=document.getElementById('addTeacherPanel');p.classList.remove('hidden');p.scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('inName')?.focus()}
+function closeTeacherAdd(){document.getElementById('addTeacherPanel').classList.add('hidden')}
+function filterTeacherRows(){const q=(document.getElementById('teacherSearch')?.value||'').toLowerCase();document.querySelectorAll('.teacher-roster-row').forEach(el=>el.style.display=el.textContent.toLowerCase().includes(q)?'':'none')}
+document.addEventListener('DOMContentLoaded',()=>{const list=document.getElementById('teachersList')?.closest('section');const form=document.getElementById('addTeacherPanel');if(list&&form){form.parentElement.insertBefore(list,form)}const school=document.getElementById('schoolIdDisplay')?.closest('section');if(school&&form)form.parentElement.insertBefore(school,form);});
 </script></body>
 </html>

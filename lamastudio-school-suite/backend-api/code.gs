@@ -83,7 +83,7 @@ const COLLECTIONS = {
     },
     teacherAttendance: {
         tab: 'TeacherAttendance',
-        headers: ['id', 'teacherId', 'teacherName', 'date', 'status', 'markedBy', 'createdAt']
+        headers: ['id', 'teacherId', 'teacherName', 'date', 'status', 'markedBy', 'createdAt', 'remarks']
     },
     studentRequests: {
         tab: 'StudentRequests',
@@ -833,7 +833,7 @@ function getMainDashboardData(params) {
     notifications.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
 
     const actRows = getCollectionSheet(ctx, 'activities').sheet.getDataRange().getValues();
-    const actHeaders = getCollectionSheet(ctx, 'activities').headers;
+    const actHeaders = getCollectionSheet({role:'school',ss}, 'activities').headers;
     const activities = [];
     for (let i = 1; i < actRows.length; i++) {
         const r = rowToRecord(actHeaders, actRows[i]);
@@ -992,7 +992,7 @@ function getDashboardStats(schoolId, apiKey) {
     const actSheet = ss.getSheetByName(COLLECTIONS.activities.tab) || ss.insertSheet(COLLECTIONS.activities.tab);
     if (actSheet.getLastRow() === 0) { actSheet.appendRow(COLLECTIONS.activities.headers); actSheet.setFrozenRows(1); }
     const actRows = actSheet.getDataRange().getValues();
-    const actHeaders = getCollectionSheet(ctx, 'activities').headers;
+    const actHeaders = getCollectionSheet({role:'school',ss}, 'activities').headers;
     const activities = [];
     for (let i = 1; i < actRows.length; i++) {
         const r = rowToRecord(actHeaders, actRows[i]);

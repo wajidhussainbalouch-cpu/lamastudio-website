@@ -447,8 +447,8 @@ header#topOverview{background:var(--lama-header)!important}
             document.getElementById('absentTodayCount').innerText=`${stats.absentToday??0} absent today`;
             document.getElementById('attendanceRatioDisplay').innerText=stats.attendanceRatio!=null?`${stats.attendanceRatio}%`:'—';
             document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
-            document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText=`${stats.teachersPresentToday||0} / ${stats.totalTeachers||0}`;
-            document.getElementById('notMarkedDisplay').innerText=`${(stats.teachersNotMarked||[]).length} not marked`;
+            document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
+            document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
             const [students,teachers,attendance,fees,notifications,tests,teacherAttendance]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[],teacherAttendance};
             document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);
             renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
@@ -481,15 +481,23 @@ header#topOverview{background:var(--lama-header)!important}
         }
 
         
+function normalizeAttendanceDate(value){
+ if(value instanceof Date&&!isNaN(value))return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
+ const x=String(value??'').trim();
+ const iso=x.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return iso[0];
+ const dmy=x.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(dmy)return dmy[3]+'-'+dmy[2].padStart(2,'0')+'-'+dmy[1].padStart(2,'0');
+ return '';
+}
 function renderTeacherAttendanceAnalytics(teachers,records){
- const today=localISODate(),ids=new Set(teachers.map(t=>String(t.id??t._id??'')).filter(Boolean)),byDate=new Map();
- const teacherKey=t=>String(t.teacherId??t.teacher_id??t.staffId??'');
- for(const r of records){const date=String(r.date||'').slice(0,10),key=teacherKey(r);if(!date||!ids.has(key))continue;if(!byDate.has(date))byDate.set(date,new Map());byDate.get(date).set(key,String(r.status||'').trim().toLowerCase())}
+ const today=localISODate(),ids=new Set(teachers.map(t=>String(t.id??t._id??t.teacherId??'').trim()).filter(Boolean)),byDate=new Map();
+ const teacherKey=t=>String(t.teacherId??t.teacherID??t.teacher_id??t.staffId??'').trim();
+ for(const r of records){const date=normalizeAttendanceDate(r.date),key=teacherKey(r);if(!date||!ids.has(key))continue;if(!byDate.has(date))byDate.set(date,new Map());byDate.get(date).set(key,String(r.status||'').trim().toLowerCase())}
  const todayRows=byDate.get(today)||new Map(),vals=[...todayRows.values()];
  const count=(...names)=>vals.filter(x=>names.includes(x)).length;
  const present=count('present','p'),absent=count('absent','a'),leave=count('leave','l','on leave'),marked=present+absent+leave,total=teachers.length;
  const put=(k,v)=>{const el=document.getElementById(k);if(el)el.textContent=v};
  put('taTotal',total);put('taPresent',present);put('taAbsent',absent);put('taLeave',leave);put('taPending',Math.max(0,total-marked)+' teachers not marked today');
+ put('teacherAttDisplay',present+' / '+total);put('notMarkedDisplay',Math.max(0,total-marked)+' staff not marked today');
  put('taCoverage',marked+' / '+total+' marked · '+(total?Math.round(marked/total*100):0)+'% coverage');
  put('teacherAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'}));
  document.getElementById('taProgress').style.width=(total?100*marked/total:0)+'%';

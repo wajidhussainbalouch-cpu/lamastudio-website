@@ -4,7 +4,7 @@
 <div class="text-center"><div class="text-4xl">👩‍🏫</div><h1 class="text-2xl font-black mt-3">Teacher Login</h1><p class="text-sm text-slate-300 mt-2">Your private teacher portal · Lama School Suite</p></div>
 <div id="error" role="alert" class="hidden mt-5 rounded-xl bg-rose-950 border border-rose-700 p-3 text-sm text-rose-100"></div>
 <form id="form" class="space-y-4 mt-6" autocomplete="off">
-<label class="block text-sm font-bold">School ID <span class="text-lime-300">(required every login)</span><input id="schoolId" name="schoolId" required autocomplete="off" autocapitalize="off" spellcheck="false" class="w-full mt-2 rounded-xl bg-slate-950 border border-slate-600 p-3" placeholder="Enter your School ID" value=""></label>
+<label class="block text-sm font-bold">School ID <span class="text-lime-300">(remembered on this device)</span><input id="schoolId" name="schoolId" required autocomplete="off" autocapitalize="off" spellcheck="false" class="w-full mt-2 rounded-xl bg-slate-950 border border-slate-600 p-3" placeholder="Enter your School ID once" value=""></label>
 <label class="block text-sm font-bold">Teacher ID / Email<input id="identifier" name="identifier" required autocomplete="username" class="w-full mt-2 rounded-xl bg-slate-950 border border-slate-600 p-3" placeholder="Teacher ID or email"></label>
 <label class="block text-sm font-bold">Password<div class="relative mt-2"><input id="password" name="password" type="password" required autocomplete="current-password" class="w-full rounded-xl bg-slate-950 border border-slate-600 p-3 pr-20"><button type="button" id="show" class="absolute right-2 top-2 text-xs bg-slate-700 rounded-lg p-2">Show</button></div></label>
 <button id="submit" type="submit" class="w-full rounded-xl bg-[#bcd82c] text-[#12383b] p-3 font-black">Sign in</button></form>
@@ -12,10 +12,11 @@
 </main><script>
 'use strict';
 const $=id=>document.getElementById(id);
-// School ID is never prefilled from localStorage, sessionStorage or an earlier account.
-$('schoolId').value='';
+// Remember only the non-secret School ID, separately for each login role.
+const schoolKey='lama_teacher_remembered_school_id';
+try{$('schoolId').value=localStorage.getItem(schoolKey)||'';}catch(_e){}
 $('show').onclick=()=>{const x=$('password');x.type=x.type==='password'?'text':'password';$('show').textContent=x.type==='password'?'Show':'Hide'};
-$('form').onsubmit=async e=>{e.preventDefault();const btn=$('submit');btn.disabled=true;btn.textContent='Signing in…';$('error').classList.add('hidden');try{if(typeof LamaAPI==='undefined')throw Error('API client did not load.');const schoolId=$('schoolId').value.trim(),id=$('identifier').value.trim(),pw=$('password').value;if(!schoolId||!id||!pw)throw Error('Please complete all fields.');await LamaAPI.teacherLogin(schoolId,id,pw);location.replace('portals/teacher/index.html')}catch(err){$('error').textContent=err.message||'Login failed';$('error').classList.remove('hidden');btn.disabled=false;btn.textContent='Sign in'}};
+$('form').onsubmit=async e=>{e.preventDefault();const btn=$('submit');btn.disabled=true;btn.textContent='Signing in…';$('error').classList.add('hidden');try{if(typeof LamaAPI==='undefined')throw Error('API client did not load.');const schoolId=$('schoolId').value.trim(),id=$('identifier').value.trim(),pw=$('password').value;if(!schoolId||!id||!pw)throw Error('Please complete all fields.');await LamaAPI.teacherLogin(schoolId,id,pw);try{localStorage.setItem(schoolKey,schoolId)}catch(_e){}location.replace('portals/teacher/index.html')}catch(err){$('error').textContent=err.message||'Login failed';$('error').classList.remove('hidden');btn.disabled=false;btn.textContent='Sign in'}};
 // Existing teacher session still routes to the portal. To switch schools, log out first.
 if(typeof LamaAPI!=='undefined'&&LamaAPI.isLoggedIn('teacher'))location.replace('portals/teacher/index.html');
 </script></body></html>

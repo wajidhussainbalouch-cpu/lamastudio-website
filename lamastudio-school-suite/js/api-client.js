@@ -26,7 +26,7 @@ const LamaAPI = (() => {
     localStorage.removeItem(key(target));
     if (activeRole() === target) sessionStorage.removeItem(activeKey);
   }
-  function isLoggedIn(role) { return !!getSession(role || activeRole()); }
+  function isLoggedIn(role) { return !!getSession(role); }
   function authFieldsFor(session) {
     if (!session) return {};
     if (session.role === 'teacher') return { role:'teacher', schoolId:session.schoolId, teacherId:session.teacherId || session.id, apiKey:session.apiKey };
@@ -94,6 +94,7 @@ const LamaAPI = (() => {
     adminListSchools:async()=>(await callApi('adminListSchools',{},'GET')).schools,
     adminSetStatus:async(schoolId,newStatus)=>(await callApi('adminSetStatus',{schoolId,newStatus})).result,
     adminResetPassword:async schoolId=>(await callApi('adminResetPassword',{schoolId})).result,
+    bulkAttendance:async(date,records)=>(await callApi('bulkAttendance',{date,records})).result,
     list:async collection=>(await callApi('list',{collection},'GET')).records,
     get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,
     add:async(collection,record)=>(await callApi('add',{collection,record})).record,

@@ -7,6 +7,9 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="assets/css/config.css">
 <script src="js/api-client.js"></script>
+<style>
+:root{color-scheme:dark}body{background:#081221;color:#e7f0f8;font-family:Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1240px!important}section.cyber-card,section.cyber-card-emerald{background:linear-gradient(145deg,#122238,#0d1a2d);border:1px solid #29425a;box-shadow:0 14px 35px #02091440;border-radius:22px}input,select{min-height:40px}button{transition:filter .18s,transform .18s}button:hover{filter:brightness(1.12)}button:active{transform:scale(.99)}#classFeeGrid label{display:flex;flex-direction:column;gap:4px;background:#152b40;border:1px solid #33526c;padding:12px;border-radius:14px;font-weight:700}#classFeeGrid input{font-size:15px;font-weight:700}#bulkMessage{font-weight:650}.r3-sub{color:#9cb3c8;font-size:12px}.r3-top{background:linear-gradient(110deg,#065f56,#0e5678);border-radius:18px;padding:17px 20px;color:white}.r3-date{letter-spacing:.3px}body.light-mode{background:#f1f6fa;color:#172b40;color-scheme:light}body.light-mode section.cyber-card,body.light-mode section.cyber-card-emerald{background:#fff;border-color:#c9d9e5;box-shadow:0 10px 26px #233f5d14}body.light-mode input,body.light-mode select{background:#f8fbff!important;color:#13283e!important;border-color:#b7ccda!important}body.light-mode .text-slate-400,body.light-mode .text-slate-500,body.light-mode .text-slate-300{color:#4e6379!important}body.light-mode #classFeeGrid label{background:#f1f8fd;color:#24394f;border-color:#cadfe9}body.light-mode .bg-slate-900,body.light-mode .bg-slate-950{background:#edf4fa!important}body.light-mode .text-white{color:#17324a!important}body.light-mode .r3-top .text-white{color:#fff!important}body.light-mode header a,body.light-mode header button{color:#fff!important}body.light-mode #classFeeGrid input{color:#102d43!important}body.light-mode td{color:#1e364c}body.light-mode .text-amber-300{color:#9a5a04!important}@media(max-width:640px){section.cyber-card,section.cyber-card-emerald{padding:15px!important}#classFeeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen">
 
@@ -20,21 +23,24 @@
         </div>
         <div class="flex items-center gap-2">
             <a href="dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">&larr; Dashboard</a>
+            <button type="button" id="themeToggle" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition" aria-label="Toggle light and dark theme">☀ Light</button>
             <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-5 space-y-5">
 
+        <div class="r3-top"><h2 class="text-xl font-black text-white">Fee Management Workspace</h2><p class="text-xs text-white mt-1">1. Set class fees → 2. Generate list → 3. Edit student fees → 4. Save pending demands. Payments are recorded separately.</p></div>
         <!-- Bulk class billing -->
         <section class="cyber-card-emerald rounded-2xl p-5 space-y-3" aria-label="Class-wise bulk fee generation">
           <h2 class="text-sm font-black text-emerald-400">Class-wise Monthly Fee Generator</h2>
           <p class="text-xs text-slate-400">Set a different fee for each class, preview every student, edit individual amounts, then save. Existing entries for the same student and fee month are skipped by default. Preview does not save anything.</p>
           <div class="grid sm:grid-cols-3 gap-3 text-xs">
             <label>Fee month <input id="bulkMonth" type="month" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></label>
-            <label>Billing date <input id="bulkDate" type="date" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></label>
+            <label>Billing date <input id="bulkDate" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" class="r3-date" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></label>
             <label>Initial status <select id="bulkStatus" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option>Pending</option><option>Overdue</option></select></label>
           </div>
+          <p id="classSummary" class="r3-sub" aria-live="polite">Loading student classes…</p>
           <div id="classFeeGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2"></div>
           <div class="flex flex-wrap gap-2"><button type="button" id="buildBulk" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-xs font-bold">Generate editable class list</button><button type="button" id="selectBulkAll" class="bg-slate-800 px-3 py-2 rounded-lg text-xs">Select all</button><button type="button" id="selectBulkNone" class="bg-slate-800 px-3 py-2 rounded-lg text-xs">Select none</button></div>
           <p id="bulkMessage" class="text-xs text-amber-300" aria-live="polite"></p>
@@ -80,8 +86,8 @@
             <select id="filterClass" aria-label="Filter class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option value="">All classes</option></select>
             <select id="filterStatus" aria-label="Filter status" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option value="">All statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option></select>
             <select id="filterMethod" aria-label="Filter payment method" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option value="">All methods</option></select>
-            <input id="filterFrom" aria-label="From date" type="date" title="From date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
-            <input id="filterTo" aria-label="To date" type="date" title="To date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+            <input id="filterFrom" aria-label="From date" type="text" inputmode="numeric" placeholder="From DD/MM/YYYY" title="From date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
+            <input id="filterTo" aria-label="To date" type="text" inputmode="numeric" placeholder="To DD/MM/YYYY" title="To date" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
             <select id="filterSort" aria-label="Sort fee records" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="high">Highest amount first</option><option value="low">Lowest amount first</option><option value="name">Student name A–Z</option></select>
             <input id="filterMin" aria-label="Minimum amount" type="number" min="0" placeholder="Minimum Rs." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
             <input id="filterMax" aria-label="Maximum amount" type="number" min="0" placeholder="Maximum Rs." class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white" />
@@ -113,21 +119,25 @@
         const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         const norm = v => String(v ?? '').trim().toLowerCase();
         const dateDDMMYYYY = value => { if (!value) return '-'; const m=String(value).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(value); };
+        const toISODate = v => {const t=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(t))return t;const m=t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return '';const iso=`${m[3]}-${m[2]}-${m[1]}`;const d=new Date(`${iso}T12:00:00`);return !isNaN(d)&&d.getFullYear()===+m[3]&&d.getMonth()+1===+m[2]&&d.getDate()===+m[1]?iso:'';};
         const localDate = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-        const classes = () => [...new Set(allStudents.map(s=>String(s.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+        const studentClassValue = s => String(s.class ?? s.className ?? s.grade ?? s.gradeName ?? s.studentClass ?? '').trim();
+        const classes = () => [...new Set(allStudents.map(studentClassValue).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
         let bulkRows=[];
         function feeMonth(f){ return String(f.feeMonth || f.month || f.billingMonth || '').slice(0,7); }
         function existingMonthly(student,month){ return allFees.some(f => (String(f.studentId||'')===String(student.id||'') || (f.enrlNo && String(f.enrlNo)===String(student.enrlNo))) && (feeMonth(f)===month || (!feeMonth(f) && String(f.date||'').slice(0,7)===month))); }
         function updateStudentOptions(){
           const cls=$('inStudentClass').value, q=norm($('inStudentSearch').value),old=$('inStudent').value;
           $('inStudent').replaceChildren();
-          allStudents.filter(s=>(!cls||String(s.class||'').trim()===cls)&&(!q||norm(`${s.name} ${s.enrlNo}`).includes(q))).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).forEach(s=>$('inStudent').add(new Option(`${s.name||'Student'} — Class ${s.class||'-'} (${s.enrlNo||'N/A'})`,s.id)));
+          allStudents.filter(s=>(!cls||studentClassValue(s)===cls)&&(!q||norm(`${s.name} ${s.enrlNo}`).includes(q))).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''))).forEach(s=>$('inStudent').add(new Option(`${s.name||'Student'} — Class ${studentClassValue(s)||'-'} (${s.enrlNo||'N/A'})`,s.id)));
           if([...$('inStudent').options].some(o=>o.value===old))$('inStudent').value=old;
         }
         function initBulk(){
-          $('bulkDate').value=localDate();$('inDate').value=localDate();$('bulkMonth').value=localDate().slice(0,7);$('inMonth').value=localDate().slice(0,7);
+          $('bulkDate').value=dateDDMMYYYY(localDate());$('inDate').value=dateDDMMYYYY(localDate());$('bulkMonth').value=localDate().slice(0,7);$('inMonth').value=localDate().slice(0,7);
           fillSelect('inStudentClass',classes(),'All classes');
           const schoolKey=(LamaAPI.getSession?.('school')?.schoolId || 'school');
+          $('classFeeGrid').replaceChildren();
+          $('classSummary').textContent=`${allStudents.length} students loaded • ${classes().length} classes found. Enter an amount in at least one class to generate a list.`;
           classes().forEach(cls=>{
             const label=document.createElement('label');label.className='text-xs text-slate-300';label.textContent=`Class ${cls}`;
             const input=document.createElement('input');input.type='number';input.min='0';input.step='1';input.dataset.feeClass=cls;input.placeholder='Fee Rs.';input.className='mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white';
@@ -140,11 +150,12 @@
         function buildBulk(){
           const month=$('bulkMonth').value;if(!month){$('bulkMessage').textContent='Choose a fee month first.';return;}
           const amounts=new Map([...document.querySelectorAll('[data-fee-class]')].map(el=>[el.dataset.feeClass,Number(el.value)]));
-          bulkRows=allStudents.filter(s=>Number.isFinite(amounts.get(String(s.class||'').trim())) && amounts.get(String(s.class||'').trim())>0).map(s=>({student:s,amount:amounts.get(String(s.class||'').trim()),selected:!existingMonthly(s,month),existing:existingMonthly(s,month)}));
+          if(![...amounts.values()].some(v=>v>0)){$('bulkMessage').textContent='Enter a fee amount for one or more classes above, then generate the list.';return;}
+          bulkRows=allStudents.filter(s=>Number.isFinite(amounts.get(studentClassValue(s))) && amounts.get(studentClassValue(s))>0).map(s=>({student:s,amount:amounts.get(studentClassValue(s)),selected:!existingMonthly(s,month),existing:existingMonthly(s,month)}));
           $('bulkPreviewBody').replaceChildren();
           bulkRows.forEach((r,i)=>{const tr=document.createElement('tr');tr.className='border-t border-slate-800';
             const c=document.createElement('td');c.className='p-2';const check=document.createElement('input');check.type='checkbox';check.checked=r.selected;check.disabled=r.existing;check.addEventListener('change',()=>r.selected=check.checked);c.append(check);tr.append(c);
-            for(const value of [r.student.name,r.student.enrlNo,r.student.class]){const td=document.createElement('td');td.className='p-2';td.textContent=value||'-';tr.append(td)}
+            for(const value of [r.student.name,r.student.enrlNo,studentClassValue(r.student)]){const td=document.createElement('td');td.className='p-2';td.textContent=value||'-';tr.append(td)}
             const amountCell=document.createElement('td');amountCell.className='p-2';const inp=document.createElement('input');inp.type='number';inp.min='1';inp.value=r.amount;inp.className='w-24 bg-slate-950 border border-slate-700 rounded p-1';inp.addEventListener('input',()=>r.amount=Number(inp.value));amountCell.append(inp);tr.append(amountCell);
             const note=document.createElement('td');note.className='p-2 text-amber-300';note.textContent=r.existing?'Already recorded for month':'New entry';tr.append(note);$('bulkPreviewBody').append(tr);
           });
@@ -154,14 +165,14 @@
         async function saveBulk(){
           const rows=bulkRows.filter(r=>r.selected&&!r.existing);if(!rows.length){alert('No new entries selected.');return;}
           if(rows.some(r=>!Number.isFinite(r.amount)||r.amount<=0)){alert('All selected amounts must be positive.');return;}
-          const month=$('bulkMonth').value,date=$('bulkDate').value,status=$('bulkStatus').value;
+          const month=$('bulkMonth').value,date=toISODate($('bulkDate').value),status=$('bulkStatus').value; if(!date){alert('Enter a valid billing date DD/MM/YYYY.');return;}
           if(!confirm(`Create ${rows.length} ${status} fee entries for ${month}? Existing records are not changed.`))return;
           const btn=$('saveBulk');btn.disabled=true;let saved=0,failed=0;
           try{
             // Refresh before writes to reduce duplicate risk. True atomic idempotency needs backend support.
             await renderFees();
             for(const r of rows){if(existingMonthly(r.student,month))continue;
-              try{await LamaAPI.add(FEES,{studentId:r.student.id,studentName:r.student.name||'',enrlNo:r.student.enrlNo||'',class:r.student.class||'',amount:r.amount,date,feeMonth:month,status,method:''});saved++;}
+              try{await LamaAPI.add(FEES,{studentId:r.student.id,studentName:r.student.name||'',enrlNo:r.student.enrlNo||'',class:studentClassValue(r.student)||'',amount:r.amount,date,feeMonth:month,status,method:''});saved++;}
               catch(e){failed++;$('bulkMessage').textContent=`Saving: ${saved} saved, ${failed} failed. ${e.message||''}`;}
             }
             await renderFees();buildBulk();$('bulkMessage').textContent=`Finished: ${saved} saved, ${failed} failed. Verify records before retrying.`;
@@ -200,7 +211,7 @@
         }
         function renderFiltered() {
             const q=norm($('filterSearch').value), cls=$('filterClass').value, status=$('filterStatus').value, method=$('filterMethod').value;
-            const from=$('filterFrom').value, to=$('filterTo').value, min=$('filterMin').value, max=$('filterMax').value;
+            const from=toISODate($('filterFrom').value), to=toISODate($('filterTo').value), min=$('filterMin').value, max=$('filterMax').value;
             visibleFees=allFees.filter(f=>{
                 const search=[f.studentName, studentFor(f)?.name, studentEnrollment(f)].map(norm).join(' ');
                 const amt=Number(f.amount)||0, date=String(f.date||'').slice(0,10);
@@ -226,10 +237,11 @@
         async function addFee() {
             const studentId=$('inStudent').value, amount=Number($('inAmount').value);
             if(!studentId||!Number.isFinite(amount)||amount<=0){alert('Select a student and enter a positive amount.');return;}
+            if(!toISODate($('inDate').value)){alert('Enter a valid date DD/MM/YYYY.');return;}
             const student=allStudents.find(s=>String(s.id)===String(studentId));
             const btn=document.querySelector('button[onclick="addFee()"]'); btn.disabled=true;
             try {
-                await LamaAPI.add(FEES,{studentId,studentName:student?.name||'',enrlNo:student?.enrlNo||'',class:student?.class||'',amount,date:$('inDate').value||localDate(),feeMonth:$('inMonth').value,status:$('inStatus').value,method:$('inMethod').value});
+                await LamaAPI.add(FEES,{studentId,studentName:student?.name||'',enrlNo:student?.enrlNo||'',class:studentClassValue(student),amount,date:toISODate($('inDate').value),feeMonth:$('inMonth').value,status:$('inStatus').value,method:$('inMethod').value});
                 $('inAmount').value=''; await renderFees();
             }catch(e){alert('Could not save fee entry: '+(e?.message||'Please try again.'));}finally{btn.disabled=false;}
         }
@@ -246,10 +258,10 @@
         function printList() {
             const rows=visibleFees.map(f=>`<tr><td>${esc(f.studentName||studentFor(f)?.name||'')}</td><td>${esc(studentEnrollment(f))}</td><td>${esc(studentClass(f))}</td><td>${esc(money(f.amount))}</td><td>${esc(dateDDMMYYYY(f.date))}</td><td>${esc(f.status||'')}</td></tr>`).join('');
             const w=window.open('','_blank');if(!w){alert('Allow pop-ups to print.');return;}
-            w.document.write(`<!doctype html><html><head><title>Filtered Fee Register</title><style>@page{size:A4;margin:12mm}body{font:12px Arial,sans-serif}h1{font-size:17px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:6px;text-align:left}th{background:#eee}</style></head><body><h1>${esc($('headerSchoolName').textContent)} — Fee Register</h1><p>${visibleFees.length} records · Generated ${esc(new Date().toLocaleDateString())}</p><table><thead><tr><th>Student</th><th>Enrollment</th><th>Class</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);w.document.close();w.focus();w.print();
+            w.document.write(`<!doctype html><html><head><title>Filtered Fee Register</title><style>@page{size:A4;margin:12mm}body{font:12px Arial,sans-serif}h1{font-size:17px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:6px;text-align:left}th{background:#eee}</style></head><body><h1>${esc($('headerSchoolName').textContent)} — Fee Register</h1><p>${visibleFees.length} records · Generated ${esc(dateDDMMYYYY(localDate()))}</p><table><thead><tr><th>Student</th><th>Enrollment</th><th>Class</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);w.document.close();w.focus();w.print();
         }
         async function init(){
-            try {await renderHeader();await populateStudentSelect();initBulk();await renderFees();}
+            try {await renderHeader();await populateStudentSelect();initBulk();await renderFees(); if(!allStudents.length)$('classSummary').textContent='No student records returned. Check your School Admin session and Students API.';}
             catch(e){$('filterCount').textContent='Could not load fee records: '+(e?.message||'Unknown error');}
         }
         ['filterSearch','filterClass','filterStatus','filterMethod','filterFrom','filterTo','filterSort','filterMin','filterMax'].forEach(id=>$(id).addEventListener(id==='filterSearch'||id==='filterMin'||id==='filterMax'?'input':'change',renderFiltered));
@@ -264,6 +276,10 @@
         $('exportFiltered').addEventListener('click',exportCsv);
         $('printFiltered').addEventListener('click',printList);
         $('feesBody').addEventListener('click',e=>{const b=e.target.closest('button[data-delete-id]');if(b)deleteFee(b.dataset.deleteId);});
+        const themeKey='lama_fees_theme';
+        function applyTheme(mode){document.body.classList.toggle('light-mode',mode==='light');$('themeToggle').textContent=mode==='light'?'☾ Dark':'☀ Light';try{localStorage.setItem(themeKey,mode)}catch(e){}}
+        $('themeToggle').addEventListener('click',()=>applyTheme(document.body.classList.contains('light-mode')?'dark':'light'));
+        try{applyTheme(localStorage.getItem(themeKey)||'dark')}catch(e){applyTheme('dark')}
         if(LamaAPI.requireLogin('school','login.html'))init();
     </script>
 </body>

@@ -209,6 +209,26 @@ header#topOverview{background:var(--lama-header)!important}
 @media(max-width:1100px){.finance-command{grid-template-columns:1fr}}@media(max-width:600px){.finance-pane{padding:14px!important}.finance-tiles{grid-template-columns:1fr 1fr}.finance-tiles .finance-metric:last-child{grid-column:1/-1}.finance-chart{height:190px}}
 @media print{.finance-command{display:block}.finance-pane{break-inside:avoid;margin-bottom:14px}.finance-filters{display:none}}
 </style>
+<style id="lama-finance-r5-compact">
+/* Dense two-column finance workspace: readable within the existing sidebar. */
+#financeSection{margin-top:10px!important;padding-top:10px!important}
+.finance-command{gap:10px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch}
+.finance-pane{padding:14px!important;gap:10px!important;overflow:hidden}
+.finance-head h3{font-size:clamp(16px,1.35vw,21px)!important}.finance-head .finance-sub{font-size:10px}
+.finance-tiles{gap:6px!important}.finance-tiles .finance-metric{padding:9px!important;border-radius:10px}.finance-tiles strong{font-size:clamp(13px,1.2vw,18px)!important}
+.finance-chart-card{padding:10px!important;border-radius:11px}.finance-chart-card h4{font-size:12px}.finance-chart-card p{font-size:10px}
+.finance-chart,.finance-chart.short{height:155px!important;margin-top:6px!important}
+.finance-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.finance-chart-grid>.finance-chart-card{min-width:0}.finance-chart-grid>.finance-chart-card.wide{grid-column:1/-1}
+.finance-filters{gap:8px!important}.finance-filters select{min-width:115px;padding:6px!important}
+.fin-r5-insights{border:1px solid var(--border);background:var(--surface2);padding:10px;border-radius:11px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.fin-r5-insights .fin-detail{min-width:0;padding:7px;border-radius:9px;background:var(--surface);border:1px solid var(--border)}
+.fin-r5-insights small{display:block;font-size:10px;color:var(--muted)}.fin-r5-insights strong{display:block;font-size:clamp(12px,1.1vw,16px);color:var(--text);overflow-wrap:anywhere}
+.fin-r5-insights .fin-detail.wide{grid-column:1/-1}.fin-r5-note{font-size:10px;color:var(--muted);line-height:1.5}
+@media(max-width:1180px){.finance-command{grid-template-columns:1fr!important}}
+@media(max-width:660px){.finance-chart-grid{grid-template-columns:1fr}.finance-chart-grid>.finance-chart-card.wide{grid-column:auto}.finance-chart,.finance-chart.short{height:170px!important}.finance-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.finance-pane{padding:11px!important}}
+@media print{.finance-command{display:block!important}.finance-pane{break-inside:auto!important}.finance-chart-card{break-inside:avoid}}
+</style>
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
     <div class="scanline"></div>
@@ -346,24 +366,26 @@ header#topOverview{background:var(--lama-header)!important}
           <p id="academicClassNote" class="text-xs text-slate-400 mt-3" aria-live="polite"></p>
         </section>
 
-        <div id="financeSection" class="hub-section-heading"><div><p class="section-kicker text-amber-300">03 / Accounts</p><h2>Finance Intelligence</h2><p>Collections, fee trends and financial operations</p></div><a href="fees.html">Fee Management →</a></div>
+        <div id="financeSection" class="hub-section-heading"><div><p class="section-kicker text-amber-300">03 / Accounts</p><h2>Finance Intelligence</h2><p>Compact class-wise collections, dues, income and expenses</p></div><a href="fees.html">Fee Management →</a></div>
         <!-- Finance analytics: R4 read-only finance command center -->
         <section class="finance-command" aria-label="Finance command center">
           <div class="finance-pane neo-card p-5">
             <div class="finance-head"><div><p class="section-kicker">REVENUE PERFORMANCE</p><h3 class="section-heading font-black">Fee Collection Intelligence</h3><p class="finance-sub">Confirmed payments, class comparisons and collection trends</p></div><a class="hub-mini-link" href="fees.html">Manage fees →</a></div>
             <div class="finance-tiles"><div class="finance-metric"><small>Today collected</small><strong id="financeToday">—</strong></div><div class="finance-metric"><small>This month</small><strong id="financeMonth">—</strong></div><div class="finance-metric"><small>This year</small><strong id="financeYear">—</strong></div></div>
+            <div class="fin-r5-insights" aria-label="Fee details"><div class="fin-detail"><small>Paid entries</small><strong id="finPaidCount">—</strong></div><div class="fin-detail"><small>Unpaid / overdue entries</small><strong id="finDueCount">—</strong></div><div class="fin-detail"><small>Recorded outstanding</small><strong id="finDueAmount">—</strong></div><div class="fin-detail"><small>Collection share*</small><strong id="finCollectPct">—</strong></div></div>
             <div class="finance-filters"><label>Class <select id="finClassFilter"><option value="all">All classes</option></select></label><label>Period <select id="finPeriodFilter"><option value="month">This month</option><option value="year">This year</option><option value="all">All recorded dates</option></select></label></div>
-            <div class="finance-chart-card"><h4>Class-wise paid collection</h4><p>Amount actually received per class</p><div class="finance-chart"><canvas id="finClassPaidChart"></canvas></div></div>
+            <div class="finance-chart-grid"><div class="finance-chart-card wide"><h4>Class-wise paid collection</h4><p>Amount actually received per class</p><div class="finance-chart"><canvas id="finClassPaidChart"></canvas></div></div>
             <div class="finance-chart-card"><h4>Paid vs outstanding entries</h4><p>Recorded fee entries only; not a full invoice ledger</p><div class="finance-chart short"><canvas id="finStatusChart"></canvas></div></div>
-            <div class="finance-chart-card"><h4>Monthly collection trend</h4><p>Confirmed paid records by payment month</p><div class="finance-chart"><canvas id="incomeChart"></canvas></div></div>
+            <div class="finance-chart-card"><h4>Monthly collection trend</h4><p>Confirmed paid records by payment month</p><div class="finance-chart"><canvas id="incomeChart"></canvas></div></div></div>
             <p id="financeChartNote" class="finance-footnote">Loading fee records…</p>
           </div>
           <div class="finance-pane neo-card p-5">
             <div class="finance-head"><div><p class="section-kicker">SCHOOL ACCOUNTS</p><h3 class="section-heading font-black">Income & Expenses</h3><p class="finance-sub">Other income, expenses and recorded cash movement</p></div><a class="hub-mini-link" href="finance-center.html">Accounts →</a></div>
             <div class="finance-tiles"><div class="finance-metric"><small>Other income</small><strong id="finOtherIncome">—</strong></div><div class="finance-metric"><small>Expenses</small><strong id="finExpenses">—</strong></div><div class="finance-metric"><small>Cash movement*</small><strong id="finNet">—</strong></div></div>
-            <div class="finance-chart-card"><h4>Income vs expenses</h4><p>Fees + other income compared with expenses</p><div class="finance-chart"><canvas id="finInOutChart"></canvas></div></div>
+            <div class="fin-r5-insights" aria-label="Accounts details"><div class="fin-detail"><small>Fee receipts (selected)</small><strong id="finFeeReceipts">—</strong></div><div class="fin-detail"><small>Total inflow (recorded)</small><strong id="finTotalInflow">—</strong></div><div class="fin-detail"><small>Expense transactions</small><strong id="finExpenseCount">—</strong></div><div class="fin-detail"><small>Largest expense category</small><strong id="finTopExpense">—</strong></div></div>
+            <div class="finance-chart-grid"><div class="finance-chart-card wide"><h4>Income vs expenses</h4><p>Fees + other income compared with expenses</p><div class="finance-chart"><canvas id="finInOutChart"></canvas></div></div>
             <div class="finance-chart-card"><h4>Expenses by category</h4><p>Where recorded money was spent</p><div class="finance-chart short"><canvas id="finExpenseChart"></canvas></div></div>
-            <div class="finance-chart-card"><h4>Monthly finance movement</h4><p>Collection, other income and expenses by month</p><div class="finance-chart"><canvas id="finMovementChart"></canvas></div></div>
+            <div class="finance-chart-card"><h4>Monthly finance movement</h4><p>Collection, other income and expenses by month</p><div class="finance-chart"><canvas id="finMovementChart"></canvas></div></div></div>
             <p id="finAccountsNote" class="finance-footnote">Loading accounts…</p>
             <p class="finance-footnote">*Cash movement is not accounting profit or a reconciled bank balance. Missing or unverified records are not estimated.</p>
           </div>
@@ -628,6 +650,13 @@ function renderFinanceR4(d){
     const dateToday=new Date().toDateString();const today=paidFees.filter(f=>date(f)?.toDateString()===dateToday).reduce((a,f)=>a+feeAmount(f),0);
     const m=paidFees.filter(f=>key(f)===thisMonth).reduce((a,f)=>a+feeAmount(f),0),y=paidFees.filter(f=>key(f)?.startsWith(thisYear)).reduce((a,f)=>a+feeAmount(f),0);
     [['financeToday',today],['financeMonth',m],['financeYear',y],['finOtherIncome',incSum],['finExpenses',expSum],['finNet',paidSum+incSum-expSum]].forEach(([id,v])=>document.getElementById(id).textContent=money(v));
+    // R5 read-only indicators; counts are recorded entries, not unique invoices.
+    const dueEntries=validFees.filter(f=>['pending','unpaid','overdue','due'].includes(String(f.status??f.paymentStatus??'').toLowerCase()));
+    const expenseCats=new Map();e.forEach(x=>{const name=String(x.category||'Uncategorized');expenseCats.set(name,(expenseCats.get(name)||0)+otherAmount(x));});
+    const largest=[...expenseCats.entries()].sort((a,b)=>b[1]-a[1])[0];
+    const details={finPaidCount:String(paidFees.length),finDueCount:String(dueEntries.length),finDueAmount:money(pendingSum),finCollectPct:(paidSum+pendingSum>0?(100*paidSum/(paidSum+pendingSum)).toFixed(1)+'%':'—'),finFeeReceipts:money(paidSum),finTotalInflow:money(paidSum+incSum),finExpenseCount:String(e.length),finTopExpense:largest?largest[0]+' · '+money(largest[1]):'No expenses'};
+    Object.entries(details).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=value;});
+
     const colors=['#0f9691','#8c73d7','#e6a94c','#ed7792','#4b9bcb','#86af4c','#c78356','#5dbab0'];
     function chart(id,type,labels,datasets,extra={}){destroyChart(id);const canvas=document.getElementById(id);if(!canvas)return;const opts=chartDefaults();opts.plugins.tooltip={callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y??c.parsed)}};if(type==='doughnut'){delete opts.scales;opts.cutout='64%';opts.plugins.tooltip={callbacks:{label:c=>' '+c.label+': '+money(c.parsed)}};}else{opts.scales.y.beginAtZero=true;opts.scales.y.ticks.callback=v=>'Rs. '+Number(v).toLocaleString();opts.scales.x.ticks.maxRotation=40;}charts[id]=new Chart(canvas,{type,data:{labels,datasets},options:{...opts,...extra}});}
     const classTotals=new Map();paidFees.forEach(f=>{const c=cls(f);classTotals.set(c,(classTotals.get(c)||0)+feeAmount(f));});
@@ -642,7 +671,7 @@ function renderFinanceR4(d){
     const catMap=new Map();e.forEach(x=>{const c=String(x.category||'Uncategorized');catMap.set(c,(catMap.get(c)||0)+otherAmount(x));});
     chart('finExpenseChart','doughnut', [...catMap.keys()].length?[...catMap.keys()]:['No recorded expenses'],[{label:'Expense',data:catMap.size?[...catMap.values()]:[0],backgroundColor:colors,borderWidth:0}]);
     chart('finMovementChart','line',monthLabels,[{label:'Fee receipts',data:sums(paidFees,feeAmount),borderColor:'#0f9691',tension:.3},{label:'Other income',data:sums(i,otherAmount),borderColor:'#76a853',tension:.3},{label:'Expenses',data:sums(e,otherAmount),borderColor:'#ec8d66',tension:.3}]);
-    document.getElementById('financeChartNote').textContent=validFees.length+' recorded fee entries · '+paidFees.length+' marked Paid · '+(selected.value==='all'?'All classes':selected.value)+' · '+(period.options[period.selectedIndex].text)+'. Unassigned class records are excluded from class comparison.';
+    document.getElementById('financeChartNote').textContent=validFees.length+' recorded fee entries · '+paidFees.length+' marked Paid · '+(selected.value==='all'?'All classes':selected.value)+' · '+(period.options[period.selectedIndex].text)+'. *Collection share compares Paid and unpaid recorded entries, not all students billed. Unassigned class records are excluded from class comparison.';
     document.getElementById('finAccountsNote').textContent=e.length+' expense entries · '+i.length+' other-income entries. All figures are derived from loaded records; missing entries are not estimated.';
   }
   selected.onchange=draw;period.onchange=draw;draw();

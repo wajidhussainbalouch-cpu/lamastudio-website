@@ -199,6 +199,16 @@ header#topOverview{background:var(--lama-header)!important}
 .palette-swatch[aria-pressed="true"]{outline:3px solid #16494e}
 @media print{.palette-picker{display:none!important}}
 </style>
+<style id="lama-finance-r4-style">
+.finance-command{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.finance-pane{min-width:0;display:flex;flex-direction:column;gap:14px}
+.finance-head{display:flex;align-items:start;justify-content:space-between;gap:10px;flex-wrap:wrap}.finance-sub,.finance-chart-card p,.finance-footnote{font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px}
+.finance-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.finance-tiles .finance-metric{padding:12px;min-width:0}.finance-tiles small{display:block;font-size:10px;color:var(--muted);font-weight:750}.finance-tiles strong{font-size:clamp(14px,1.6vw,21px);overflow-wrap:anywhere;color:var(--text)}
+.finance-chart-card{background:var(--surface2);border:1px solid var(--border);border-radius:15px;padding:13px;min-width:0}.finance-chart-card h4{font-size:13px;font-weight:850;color:var(--text)}.finance-chart{position:relative;height:205px;margin-top:10px}.finance-chart.short{height:185px}
+.finance-filters{display:flex;gap:12px;flex-wrap:wrap}.finance-filters label{font-size:11px;color:var(--muted);font-weight:750}.finance-filters select{display:block;min-width:135px;margin-top:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:9px;padding:8px}
+@media(max-width:1100px){.finance-command{grid-template-columns:1fr}}@media(max-width:600px){.finance-pane{padding:14px!important}.finance-tiles{grid-template-columns:1fr 1fr}.finance-tiles .finance-metric:last-child{grid-column:1/-1}.finance-chart{height:190px}}
+@media print{.finance-command{display:block}.finance-pane{break-inside:avoid;margin-bottom:14px}.finance-filters{display:none}}
+</style>
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
     <div class="scanline"></div>
@@ -337,24 +347,27 @@ header#topOverview{background:var(--lama-header)!important}
         </section>
 
         <div id="financeSection" class="hub-section-heading"><div><p class="section-kicker text-amber-300">03 / Accounts</p><h2>Finance Intelligence</h2><p>Collections, fee trends and financial operations</p></div><a href="fees.html">Fee Management →</a></div>
-<!-- Finance analytics: dedicated container -->
-        <section class="command-grid" aria-label="Financial and attendance intelligence">
-            <div class="span-8 neo-card rounded-3xl p-5">
-                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-                    <div><p class="section-kicker text-purple-300">Financial Intelligence</p><h3 class="section-heading font-black text-white mt-1">Fee Collection Analytics</h3><p class="text-xs text-slate-400 mt-1">Live collection totals and monthly fee performance from your school records</p></div>
-                    <div class="flex gap-2 flex-wrap"><a href="fees.html" class="section-link text-xs font-black text-purple-300 border border-purple-500/20 rounded-xl px-3 py-2 hover:bg-purple-500/10">Fee Management →</a><a href="finance-center.html" class="section-link text-xs font-black text-amber-300 border border-amber-500/20 rounded-xl px-3 py-2 hover:bg-amber-500/10">Accounts →</a></div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                    <div class="finance-metric"><p class="section-kicker">Today</p><strong id="financeToday" class="text-lg text-amber-300 block mt-1">—</strong></div>
-                    <div class="finance-metric"><p class="section-kicker">This Month</p><strong id="financeMonth" class="text-lg text-pink-300 block mt-1">—</strong></div>
-                    <div class="finance-metric"><p class="section-kicker">This Year</p><strong id="financeYear" class="text-lg text-emerald-300 block mt-1">—</strong></div>
-                </div>
-                <div class="chart-shell"><canvas id="incomeChart" aria-label="Fee collection trend bar chart" role="img"></canvas></div>
-                <p id="financeChartNote" class="text-xs text-slate-400 mt-3" aria-live="polite">Loading fee collection data…</p>
-            </div>
-            
+        <!-- Finance analytics: R4 read-only finance command center -->
+        <section class="finance-command" aria-label="Finance command center">
+          <div class="finance-pane neo-card p-5">
+            <div class="finance-head"><div><p class="section-kicker">REVENUE PERFORMANCE</p><h3 class="section-heading font-black">Fee Collection Intelligence</h3><p class="finance-sub">Confirmed payments, class comparisons and collection trends</p></div><a class="hub-mini-link" href="fees.html">Manage fees →</a></div>
+            <div class="finance-tiles"><div class="finance-metric"><small>Today collected</small><strong id="financeToday">—</strong></div><div class="finance-metric"><small>This month</small><strong id="financeMonth">—</strong></div><div class="finance-metric"><small>This year</small><strong id="financeYear">—</strong></div></div>
+            <div class="finance-filters"><label>Class <select id="finClassFilter"><option value="all">All classes</option></select></label><label>Period <select id="finPeriodFilter"><option value="month">This month</option><option value="year">This year</option><option value="all">All recorded dates</option></select></label></div>
+            <div class="finance-chart-card"><h4>Class-wise paid collection</h4><p>Amount actually received per class</p><div class="finance-chart"><canvas id="finClassPaidChart"></canvas></div></div>
+            <div class="finance-chart-card"><h4>Paid vs outstanding entries</h4><p>Recorded fee entries only; not a full invoice ledger</p><div class="finance-chart short"><canvas id="finStatusChart"></canvas></div></div>
+            <div class="finance-chart-card"><h4>Monthly collection trend</h4><p>Confirmed paid records by payment month</p><div class="finance-chart"><canvas id="incomeChart"></canvas></div></div>
+            <p id="financeChartNote" class="finance-footnote">Loading fee records…</p>
+          </div>
+          <div class="finance-pane neo-card p-5">
+            <div class="finance-head"><div><p class="section-kicker">SCHOOL ACCOUNTS</p><h3 class="section-heading font-black">Income & Expenses</h3><p class="finance-sub">Other income, expenses and recorded cash movement</p></div><a class="hub-mini-link" href="finance-center.html">Accounts →</a></div>
+            <div class="finance-tiles"><div class="finance-metric"><small>Other income</small><strong id="finOtherIncome">—</strong></div><div class="finance-metric"><small>Expenses</small><strong id="finExpenses">—</strong></div><div class="finance-metric"><small>Cash movement*</small><strong id="finNet">—</strong></div></div>
+            <div class="finance-chart-card"><h4>Income vs expenses</h4><p>Fees + other income compared with expenses</p><div class="finance-chart"><canvas id="finInOutChart"></canvas></div></div>
+            <div class="finance-chart-card"><h4>Expenses by category</h4><p>Where recorded money was spent</p><div class="finance-chart short"><canvas id="finExpenseChart"></canvas></div></div>
+            <div class="finance-chart-card"><h4>Monthly finance movement</h4><p>Collection, other income and expenses by month</p><div class="finance-chart"><canvas id="finMovementChart"></canvas></div></div>
+            <p id="finAccountsNote" class="finance-footnote">Loading accounts…</p>
+            <p class="finance-footnote">*Cash movement is not accounting profit or a reconciled bank balance. Missing or unverified records are not estimated.</p>
+          </div>
         </section>
-
         <div id="assessmentSection" class="hub-section-heading"><div><p class="section-kicker text-pink-300">04 / Performance</p><h2>Assessment Intelligence</h2><p>Test scheduling, examination results and class-wise coverage</p></div><div class="flex flex-wrap gap-2"><a href="tests.html">Tests Manager →</a><a href="result-card.html">Results →</a></div></div>
 <section class="command-grid">
  <div class="span-4 neo-card rounded-3xl p-5"><p class="section-kicker text-pink-300">Assessment pipeline</p><h3 class="text-lg font-black mt-1">Tests & Assessments</h3>
@@ -427,7 +440,7 @@ header#topOverview{background:var(--lama-header)!important}
                 Object.keys(charts).forEach(k=>{try{charts[k].destroy()}catch(e){} charts[k]=null;});
                 if(window.__dashboardData){
                     const d=window.__dashboardData;
-                    renderClassChart(d.students);renderAcademicClasses(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
+                    renderClassChart(d.students);renderAcademicClasses(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderFinanceR4(d);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
                 }
             }
         }
@@ -450,9 +463,9 @@ header#topOverview{background:var(--lama-header)!important}
             document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
-            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,incomeSeries:stats.incomeSeries||[],teacherAttendance};
+            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
             document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);
-            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
+            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -587,6 +600,54 @@ function renderAssessmentAnalytics(tests){
              });
              document.getElementById('financeChartNote').textContent=points.length?'Monthly fee collections · '+points.length+' period(s) shown':'No dated fee collection data available yet.';
          }
+
+// R4 read-only finance dashboard. Never writes to school financial records.
+function renderFinanceR4(d){
+  if(typeof Chart==='undefined'){document.getElementById('financeChartNote').textContent='Charts unavailable: Chart.js did not load.';return;}
+  const fees=d.fees||[], expenses=d.expenses||[], income=d.income||[], students=d.students||[];
+  const normalizeClass=v=>{const s=String(v??'').trim();return !s||s==='0'?'Unassigned':s.toUpperCase().replace(/^CLASS\s+/,'');};
+  const byStudent=new Map();students.forEach(s=>{const key=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(key)byStudent.set(key,normalizeClass(s.class??s.grade??s.className));if(en)byStudent.set(en,normalizeClass(s.class??s.grade??s.className));});
+  const cls=f=>normalizeClass(f.class??f.grade??f.className??byStudent.get(String(f.studentId??f.student_id??f.enrlNo??f.enrollmentNo??'')));
+  const num=v=>{const n=Number(String(v??0).replace(/,/g,''));return Number.isFinite(n)&&n>0?n:0;};
+  const date=x=>{const raw=x.paymentDate??x.paidDate??x.date??x.createdAt;if(!raw)return null;const a=new Date(raw);return Number.isNaN(a.getTime())?null:a;};
+  const key=x=>{const dt=date(x);return dt?dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'):null;};
+  const now=new Date(),thisMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),thisYear=String(now.getFullYear());
+  const selected=document.getElementById('finClassFilter'),period=document.getElementById('finPeriodFilter');
+  const classes=[...new Set(students.map(s=>normalizeClass(s.class??s.grade??s.className)).concat(fees.map(cls)).filter(c=>c!=='Unassigned'))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+  const prev=selected.value;selected.innerHTML='<option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');selected.value=classes.includes(prev)?prev:'all';
+  function draw(){
+    const inPeriod=x=>{const k=key(x);return period.value==='all'||(k&& (period.value==='month'?k===thisMonth:k.startsWith(thisYear)));};
+    const paid=f=>String(f.status??f.paymentStatus??'').toLowerCase()==='paid';
+    const feeAmount=f=>num(f.paidAmount??f.amountPaid??f.receivedAmount??f.amount);
+    const otherAmount=x=>num(x.amount);
+    const validFees=fees.filter(f=>selected.value==='all'||cls(f)===selected.value).filter(inPeriod);
+    const paidFees=validFees.filter(paid);
+    const paidSum=paidFees.reduce((a,f)=>a+feeAmount(f),0);
+    const pendingSum=validFees.filter(f=>['pending','unpaid','overdue','due'].includes(String(f.status??f.paymentStatus??'').toLowerCase())).reduce((a,f)=>a+num(f.amount),0);
+    const e=expenses.filter(inPeriod),i=income.filter(inPeriod),expSum=e.reduce((a,x)=>a+otherAmount(x),0),incSum=i.reduce((a,x)=>a+otherAmount(x),0);
+    const dateToday=new Date().toDateString();const today=paidFees.filter(f=>date(f)?.toDateString()===dateToday).reduce((a,f)=>a+feeAmount(f),0);
+    const m=paidFees.filter(f=>key(f)===thisMonth).reduce((a,f)=>a+feeAmount(f),0),y=paidFees.filter(f=>key(f)?.startsWith(thisYear)).reduce((a,f)=>a+feeAmount(f),0);
+    [['financeToday',today],['financeMonth',m],['financeYear',y],['finOtherIncome',incSum],['finExpenses',expSum],['finNet',paidSum+incSum-expSum]].forEach(([id,v])=>document.getElementById(id).textContent=money(v));
+    const colors=['#0f9691','#8c73d7','#e6a94c','#ed7792','#4b9bcb','#86af4c','#c78356','#5dbab0'];
+    function chart(id,type,labels,datasets,extra={}){destroyChart(id);const canvas=document.getElementById(id);if(!canvas)return;const opts=chartDefaults();opts.plugins.tooltip={callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y??c.parsed)}};if(type==='doughnut'){delete opts.scales;opts.cutout='64%';opts.plugins.tooltip={callbacks:{label:c=>' '+c.label+': '+money(c.parsed)}};}else{opts.scales.y.beginAtZero=true;opts.scales.y.ticks.callback=v=>'Rs. '+Number(v).toLocaleString();opts.scales.x.ticks.maxRotation=40;}charts[id]=new Chart(canvas,{type,data:{labels,datasets},options:{...opts,...extra}});}
+    const classTotals=new Map();paidFees.forEach(f=>{const c=cls(f);classTotals.set(c,(classTotals.get(c)||0)+feeAmount(f));});
+    const classNames=[...new Set(classes.concat([...classTotals.keys()]))].filter(c=>selected.value==='all'||c===selected.value);
+    chart('finClassPaidChart','bar',classNames,[{label:'Paid fees',data:classNames.map(c=>classTotals.get(c)||0),backgroundColor:classNames.map((_,idx)=>colors[idx%colors.length]),borderRadius:7}]);
+    chart('finStatusChart','doughnut',['Paid','Pending / overdue'],[{label:'Recorded amount',data:[paidSum,pendingSum],backgroundColor:['#139f83','#f3b456'],borderWidth:0}]);
+    const months=[];for(let n=11;n>=0;n--){const dt=new Date(now.getFullYear(),now.getMonth()-n,1);months.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'));}
+    const sums=(records,amount)=>months.map(k=>records.filter(x=>key(x)===k).reduce((a,x)=>a+amount(x),0));
+    const monthLabels=months.map(k=>{const [yy,mm]=k.split('-');return new Date(+yy,+mm-1,1).toLocaleDateString('en-GB',{month:'short',year:'2-digit'});});
+    destroyChart('income');chart('incomeChart','line',monthLabels,[{label:'Fee collection',data:sums(paidFees,feeAmount),borderColor:'#0f9691',backgroundColor:'rgba(15,150,145,.12)',fill:true,tension:.28,pointRadius:2}]);
+    chart('finInOutChart','bar',['Selected period'],[{label:'Fees',data:[paidSum],backgroundColor:'#0f9691'},{label:'Other income',data:[incSum],backgroundColor:'#76a853'},{label:'Expenses',data:[expSum],backgroundColor:'#ec8d66'}]);
+    const catMap=new Map();e.forEach(x=>{const c=String(x.category||'Uncategorized');catMap.set(c,(catMap.get(c)||0)+otherAmount(x));});
+    chart('finExpenseChart','doughnut', [...catMap.keys()].length?[...catMap.keys()]:['No recorded expenses'],[{label:'Expense',data:catMap.size?[...catMap.values()]:[0],backgroundColor:colors,borderWidth:0}]);
+    chart('finMovementChart','line',monthLabels,[{label:'Fee receipts',data:sums(paidFees,feeAmount),borderColor:'#0f9691',tension:.3},{label:'Other income',data:sums(i,otherAmount),borderColor:'#76a853',tension:.3},{label:'Expenses',data:sums(e,otherAmount),borderColor:'#ec8d66',tension:.3}]);
+    document.getElementById('financeChartNote').textContent=validFees.length+' recorded fee entries · '+paidFees.length+' marked Paid · '+(selected.value==='all'?'All classes':selected.value)+' · '+(period.options[period.selectedIndex].text)+'. Unassigned class records are excluded from class comparison.';
+    document.getElementById('finAccountsNote').textContent=e.length+' expense entries · '+i.length+' other-income entries. All figures are derived from loaded records; missing entries are not estimated.';
+  }
+  selected.onchange=draw;period.onchange=draw;draw();
+}
+
 function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
         function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
         function renderAbsentees(attendance,students){const today=localISODate(), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }

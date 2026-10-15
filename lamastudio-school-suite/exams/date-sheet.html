@@ -370,11 +370,55 @@
 
         let currentPresetLevel = 'primary';
         let dateSheetEntries = [];
-        let activeSchoolName = "DS Model Public School";
+        let activeSchoolName = "School";
         let activeSchoolLogo = "";
+        let activeSchoolId = "";
+        let schoolAdminAuthorized = false;
         let rememberedGradeSelection = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
         let rememberedGradeMode = 'custom';
         let rememberedExamTitle = 'SBA First Term Examination 2026';
+
+        function setDateSheetAccess(enabled, message = '') {
+            schoolAdminAuthorized = enabled;
+            document.querySelectorAll('input, select, textarea, button').forEach(control => {
+                control.disabled = !enabled;
+            });
+            let notice = document.getElementById('dateSheetAccessNotice');
+            if (message) {
+                if (!notice) {
+                    notice = document.createElement('div');
+                    notice.id = 'dateSheetAccessNotice';
+                    notice.className = 'mx-auto max-w-7xl px-4 py-3 text-sm text-rose-700 dark:text-rose-200';
+                    document.querySelector('main')?.before(notice);
+                }
+                if (notice) notice.textContent = message;
+            } else if (notice) {
+                notice.remove();
+            }
+        }
+
+        function requireSchoolAdmin() {
+            const api = window.LamaAPI;
+            const required = ['requireLogin', 'getSession', 'getActiveSchool', 'list', 'add', 'update', 'remove'];
+            if (!api || required.some(method => typeof api[method] !== 'function')) {
+                setDateSheetAccess(false, 'Date sheets are unavailable because the LamaAPI client did not load. Existing local backups were left untouched.');
+                return false;
+            }
+            if (!api.requireLogin('school', '../login.html')) {
+                setDateSheetAccess(false, 'School administrator sign-in is required. Existing local backups were left untouched.');
+                return false;
+            }
+            const session = api.getSession('school');
+            if (!session?.schoolId) {
+                setDateSheetAccess(false, 'The school session has no school ID. Date sheet editing is disabled.');
+                return false;
+            }
+            activeSchoolId = String(session.schoolId);
+            schoolAdminAuthorized = true;
+            return true;
+        }
+
+        setDateSheetAccess(false, 'Checking school administrator access…');
 
         function initTheme() {
             const saved = localStorage.getItem('lama_theme') || 'dark';
@@ -418,37 +462,15 @@
         }
 
         async function fetchSchoolProfile() {
-            try {
-                if (typeof LamaAPI !== 'undefined') {
-                    if (typeof LamaAPI.getSchoolInfo === 'function') {
-                        const info = await LamaAPI.getSchoolInfo();
-                        if (info) {
-                            if (info.schoolName || info.name) activeSchoolName = info.schoolName || info.name;
-                            if (info.logo || info.cover) activeSchoolLogo = info.logo || info.cover;
-                        }
-                    } else if (typeof LamaAPI.getActiveSchool === 'function') {
-                        const sch = await LamaAPI.getActiveSchool();
-                        if (sch) {
-                            if (sch.name) activeSchoolName = sch.name;
-                            if (sch.logo) activeSchoolLogo = sch.logo;
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn('LamaAPI profile fetch error:', e);
+            const session = LamaAPI.getSession('school');
+            const school = await LamaAPI.getActiveSchool();
+            if (!school) throw Error('Active school profile is unavailable. Date sheet editing is disabled.');
+            const returnedSchoolId = school.schoolId;
+            if (returnedSchoolId && String(returnedSchoolId) !== activeSchoolId) {
+                throw Error('Active school profile does not match the authenticated school session.');
             }
-
-            if (!activeSchoolName || activeSchoolName === "School Board") {
-                activeSchoolName = localStorage.getItem('lama_school_name') ||
-                                   localStorage.getItem('active_school_name') ||
-                                   localStorage.getItem('schoolName') ||
-                                   "DS Model Public School";
-            }
-            if (!activeSchoolLogo) {
-                activeSchoolLogo = localStorage.getItem('lama_school_logo') ||
-                                   localStorage.getItem('active_school_logo') ||
-                                   localStorage.getItem('schoolLogo') || "";
-            }
+            activeSchoolName = school.name || school.schoolName || session.schoolName || 'School';
+            activeSchoolLogo = school.logo || school.cover || '';
 
             document.getElementById('schoolNameHeader').textContent = activeSchoolName;
             document.getElementById('sheetSchoolTitleDisplay').textContent = activeSchoolName;
@@ -600,41 +622,15 @@
         }
 
         async function loadEntries() {
-            try {
-                dateSheetEntries = [];
-                if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
-                    try {
-                        const apiData = await LamaAPI.list('datesheet');
-                        if (Array.isArray(apiData)) { dateSheetEntries = apiData; return; }
-                    } catch (apiErr) {
-                        console.warn('LamaAPI list error:', apiErr);
-                    }
-                }
-
-                if (dateSheetEntries.length === 0) {
-                    const saved = localStorage.getItem('lama_exams') || localStorage.getItem('exams') || localStorage.getItem('lama_matrix_datesheet_records');
-                    if (saved) {
-                        dateSheetEntries = JSON.parse(saved);
-                    }
-                }
-            } catch (e) {
-                dateSheetEntries = [];
-            }
-        }
-
-        function saveEntries() {
-            try {
-                const payload = JSON.stringify(dateSheetEntries);
-                localStorage.setItem('lama_exams', payload);
-                localStorage.setItem('exams', payload);
-                localStorage.setItem('lama_matrix_datesheet_records', payload);
-            } catch (e) {
-                console.error('Storage error:', e);
-            }
+            if (!schoolAdminAuthorized) throw Error('School administrator access is required.');
+            const apiData = await LamaAPI.list('datesheet');
+            if (!Array.isArray(apiData)) throw Error('Date Sheet API returned invalid data.');
+            dateSheetEntries = apiData.filter(entry => !entry.schoolId || String(entry.schoolId) === activeSchoolId);
         }
 
         document.getElementById('form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (!schoolAdminAuthorized) return alert('School administrator access is required.');
             const editId = document.getElementById('editId').value;
             const examTitle = document.getElementById('examTitle').value.trim() || rememberedExamTitle;
             rememberedExamTitle = examTitle;
@@ -667,24 +663,18 @@
 
             // Sync with Google Sheets / LamaAPI; never claim publication on a failed request.
             let savedRemote = null;
-            let syncError = null;
             try {
-                if (typeof LamaAPI !== 'undefined') {
-                    if (editId && typeof LamaAPI.update === 'function') {
-                        savedRemote = await LamaAPI.update('datesheet', editId, record);
-                    } else if (typeof LamaAPI.add === 'function') {
-                        savedRemote = await LamaAPI.add('datesheet', record);
-                    }
-                }
+                savedRemote = editId
+                    ? await LamaAPI.update('datesheet', editId, record)
+                    : await LamaAPI.add('datesheet', record);
+                if (!savedRemote || typeof savedRemote !== 'object') throw Error('Server did not confirm the save.');
             } catch (apiErr) {
-                syncError = apiErr; console.error('Google Sheets API sync failed:', apiErr); window.lastDateSheetServerError = apiErr.message;
+                console.error('Google Sheets API sync failed:', apiErr);
+                alert('Date sheet was NOT saved. Existing local backups were left untouched. Server error: ' + apiErr.message);
+                return;
             }
 
-            if (savedRemote && typeof savedRemote === 'object') record.id = savedRemote.id || savedRemote.record?.id || record.id;
-            if (isPublished && (syncError || !savedRemote)) {
-                record.isPublished = false; record.published = false; record.status = 'draft';
-                alert('Date sheet NOT published to Google Sheets. Server error: ' + (window.lastDateSheetServerError || 'No server confirmation') + '. Local backup only.');
-            }
+            record.id = savedRemote.id || savedRemote.record?.id || record.id;
             if (editId) {
                 const idx = dateSheetEntries.findIndex(item => String(item.id || item._id) === String(editId));
                 if (idx !== -1) {
@@ -696,11 +686,9 @@
                 dateSheetEntries.push(record);
             }
 
-            saveEntries();
             renderAll();
             resetForm();
-            if (!syncError && savedRemote) alert(isPublished ? 'Published to Google Sheets. Refresh the School Board to view it.' : 'Draft saved to server.');
-            else if (!isPublished) alert('Draft saved locally.');
+            alert(isPublished ? 'Published to Google Sheets. Refresh the School Board to view it.' : 'Draft saved to server.');
         });
 
         function resetForm() {
@@ -715,6 +703,7 @@
         }
 
         function editEntry(id) {
+            if (!schoolAdminAuthorized) return;
             const item = dateSheetEntries.find(e => String(e.id || e._id) === String(id));
             if (!item) return;
             document.getElementById('editId').value = item.id || item._id;
@@ -738,14 +727,15 @@
         }
 
         async function deleteEntry(id) {
+            if (!schoolAdminAuthorized) return;
             if (confirm('Are you sure you want to delete this date sheet schedule entry?')) {
-                dateSheetEntries = dateSheetEntries.filter(e => String(e.id || e._id) !== String(id));
-                saveEntries();
                 try {
-                    if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.remove === 'function') {
-                        await LamaAPI.remove('datesheet', id);
-                    }
-                } catch(e) {}
+                    await LamaAPI.remove('datesheet', id);
+                    dateSheetEntries = dateSheetEntries.filter(e => String(e.id || e._id) !== String(id));
+                } catch(e) {
+                    alert('Date sheet was not deleted. ' + e.message);
+                    return;
+                }
                 renderAll();
             }
         }
@@ -885,13 +875,19 @@
 
         window.onload = async function() {
             initTheme();
-            await fetchSchoolProfile();
-            initGradeCheckboxes();
-            initPresets();
-            await loadEntries();
-            document.getElementById('examTitle').value = rememberedExamTitle;
-            updateGradeInputs();
-            renderAll();
+            if (!requireSchoolAdmin()) return;
+            try {
+                await fetchSchoolProfile();
+                await loadEntries();
+                initGradeCheckboxes();
+                initPresets();
+                document.getElementById('examTitle').value = rememberedExamTitle;
+                updateGradeInputs();
+                renderAll();
+                setDateSheetAccess(true);
+            } catch (e) {
+                setDateSheetAccess(false, 'Date sheets could not be loaded for the authenticated school. Existing local backups were left untouched. ' + e.message);
+            }
         };
     </script>
 </body>

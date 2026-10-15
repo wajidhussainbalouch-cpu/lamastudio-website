@@ -492,6 +492,10 @@ function isPublished(item){
     return false;
 }
 
+function isSchoolWideNotice(item){
+    return String(item?.audience ?? '').trim().toLowerCase() === 'all classes';
+}
+
 function publishedOnly(value){
     return Array.isArray(value) ? value.filter(isPublished) : [];
 }
@@ -595,7 +599,7 @@ async function render(){
         }
     }
 
-    const notices = rawNotices.filter(n => n && isPublished(n) && sameSchool(n, schoolId));
+    const notices = rawNotices.filter(n => n && isPublished(n) && sameSchool(n, schoolId) && isSchoolWideNotice(n));
     const activities = rawActivities.filter(a => a && isPublished(a) && sameSchool(a, schoolId));
     
     // Display all saved exams and tests immediately without strict publication filters

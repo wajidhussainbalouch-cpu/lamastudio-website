@@ -17,9 +17,10 @@ and each school's own private Google Sheet.
    access **Anyone** → Deploy. Copy the URL ending in `/exec`.
 5. Open `js/api-client.js`, find `const API_URL = '...'` near the top, and
    replace the placeholder with that URL.
-6. Upload everything else in this folder to your web host, **keeping this
-   exact folder structure** — `assets/`, `js/`, `portals/` all need to stay
-   where they are relative to the root pages.
+6. Upload everything else in this folder to your web host, keeping the
+  directory structure: shared `assets/` and `js/` stay at the suite root,
+  Finance pages live in `finance/`, and role-specific pages stay in
+  `portals/`.
 
 To update the backend later: Apps Script → Deploy → Manage deployments →
 pencil icon → New version → Deploy. This keeps the same URL, so you never
@@ -59,7 +60,10 @@ need to touch `api-client.js` again after the first setup.
 | `notifications.html` | School Admin | Parent circulars/broadcasts |
 | `activities.html` | School Admin | Sports/extracurricular/plantation feed (shown on School Board) |
 | `resources.html` | School Admin | Free-category resources — syllabus, books, uniform, exam prep links, etc. (shown on School Board) |
-| `fees.html` | School Admin | Fee records per student |
+| `finance/fees.html` | School Admin | Fee records per student |
+| `finance/finance-center.html` | School Admin | Income, expenses, and daily finance ledger |
+| `finance/finance-import.html` | School Admin | Import and review finance documents and bank statements |
+| `finance/print-studio.html` | School Admin | Print fee records |
 | `teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
 | `promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
 | `import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |

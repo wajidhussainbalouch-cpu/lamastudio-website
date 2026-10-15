@@ -24,7 +24,7 @@ button:disabled{opacity:.5;cursor:not-allowed}.muted{color:#cbd5e1}.secondary{ba
 <p class="muted">Upload → Read → Correct → Save. Nothing is saved automatically.</p></header>
 <section class="panel">
 <label for="kind">Import for</label><select id="kind"><option value="students">Students</option><option value="teachers">Teachers</option></select>
-<a id="manageLink" class="btn mt-3" href="manage-students.html">Open Student Management</a>
+<a id="manageLink" class="btn mt-3" href="students/manage-students.html">Open Student Management</a>
 <label for="file" class="mt-4">Choose image, PDF, Word or spreadsheet</label>
 <input id="file" type="file" accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,.pdf,.docx,.doc,.csv,.xls,.xlsx,.xlsm">
 <p id="selected" class="muted mt-2" aria-live="polite">No document selected.</p>
@@ -52,7 +52,7 @@ const norm=s=>String(s??'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let rows=[],kind='students',objectUrl=null,busy=false;
 function status(message,error=false){$('status').textContent=message;$('status').className='notice mt-3 '+(error?'error':'');}
-function setKind(){kind=$('kind').value;rows=[];render();$('manageLink').href=kind==='teachers'?'manage-teachers.html':'manage-students.html';$('manageLink').textContent=kind==='teachers'?'Open Teacher Management':'Open Student Management';status('Selected '+kind+'. Choose a document, or add a record manually.');}
+function setKind(){kind=$('kind').value;rows=[];render();$('manageLink').href=kind==='teachers'?'manage-teachers.html':'students/manage-students.html';$('manageLink').textContent=kind==='teachers'?'Open Teacher Management':'Open Student Management';status('Selected '+kind+'. Choose a document, or add a record manually.');}
 function fieldFor(key){return F[kind].find(f=>[norm(f),...(ALIAS[f]||[])].includes(norm(key)))||null;}
 function fromMatrix(matrix){matrix=matrix.filter(row=>row.some(x=>String(x??'').trim()));if(!matrix.length)return[];
 const heads=matrix[0].map(x=>fieldFor(x));const header=heads.filter(Boolean).length>=2;return matrix.slice(header?1:0).map(row=>{const r={};F[kind].forEach((f,i)=>{const j=header?heads.indexOf(f):i;r[f]=j<0?'':String(row[j]??'').trim()});return r});}

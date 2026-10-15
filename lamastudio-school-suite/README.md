@@ -19,8 +19,8 @@ and each school's own private Google Sheet.
    replace the placeholder with that URL.
 6. Upload everything else in this folder to your web host, keeping the
   directory structure: shared `assets/` and `js/` stay at the suite root,
-  Finance pages live in `finance/`, and role-specific pages stay in
-  `portals/`.
+  student workflows live in `students/`, Finance pages live in `finance/`,
+  and role-specific pages stay in `portals/`.
 
 To update the backend later: Apps Script → Deploy → Manage deployments →
 pencil icon → New version → Deploy. This keeps the same URL, so you never
@@ -51,7 +51,10 @@ need to touch `api-client.js` again after the first setup.
 | `dashboard.html` | School Admin | Main control center — live stats, quick links |
 | `main-dashboard.html` | All three roles | Shared "School Board" — notices, activities, exams, tests, resources. No fees/HR data ever shown here |
 | `admissions.html` | School Admin | Printable official admission form — now actually saves to the student database |
-| `manage-students.html` | School Admin | Full roster: add/edit/delete any student |
+| `students/manage-students.html` | School Admin | Full roster: add/edit/delete any student |
+| `students/manage-students-enhanced.html` | School Admin | Alternate roster with historical results and bulk tools |
+| `students/student-login.html` | Student / Parent | Student portal login |
+| `students/student-attendance.html` | School Admin | Daily student attendance register |
 | `manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
 | `result-card.html` | School Admin | Official result card generator, per student |
 | `report-card.html` | School Admin | Behavioral/teacher evaluation report |
@@ -65,8 +68,8 @@ need to touch `api-client.js` again after the first setup.
 | `finance/finance-import.html` | School Admin | Import and review finance documents and bank statements |
 | `finance/print-studio.html` | School Admin | Print fee records |
 | `teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
-| `promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
-| `import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |
+| `students/promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
+| `students/import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |
 | `settings.html` | School Admin | Edit school profile, logo, cover photo |
 | `portals/teacher/index.html` | Teacher | Attendance, homework, marks, absentee alerts, promotions — own class only |
 | `portals/student/index.html` | Student/Parent | Own result, homework, attendance, notices |
@@ -104,10 +107,10 @@ need to touch `api-client.js` again after the first setup.
   browser's own back button, is exactly what made navigation feel like it
   randomly dumped you back at the homepage after several clicks. All 15
   admin pages are consistent now.
-- **`import-students.html` is now actually linked** — there's a "📤 Bulk
-  Import" button right in `manage-students.html`'s header, plus a card on
+- **`students/import-students.html` is now actually linked** — there's a "📤 Bulk
+  Import" button right in `students/manage-students.html`'s header, plus a card on
   the main dashboard. It had zero navigation entry points before this.
-- **`promote-students.html` confirmed present** in this package — it
+- **`students/promote-students.html` confirmed present** in this package — it
   wasn't on the live site before because it was never actually uploaded,
   not because of a code issue.
 

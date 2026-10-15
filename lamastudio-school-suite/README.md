@@ -19,8 +19,9 @@ and each school's own private Google Sheet.
    replace the placeholder with that URL.
 6. Upload everything else in this folder to your web host, keeping the
   directory structure: shared `assets/` and `js/` stay at the suite root,
-  student workflows live in `students/`, Finance pages live in `finance/`,
-  and role-specific pages stay in `portals/`.
+  student workflows live in `students/`, Attendance pages live in
+  `attendance/`, Finance pages live in `finance/`, and role-specific pages
+  stay in `portals/`.
 
 To update the backend later: Apps Script → Deploy → Manage deployments →
 pencil icon → New version → Deploy. This keeps the same URL, so you never
@@ -54,7 +55,7 @@ need to touch `api-client.js` again after the first setup.
 | `students/manage-students.html` | School Admin | Full roster: add/edit/delete any student |
 | `students/manage-students-enhanced.html` | School Admin | Alternate roster with historical results and bulk tools |
 | `students/student-login.html` | Student / Parent | Student portal login |
-| `students/student-attendance.html` | School Admin | Daily student attendance register |
+| `attendance/student-attendance.html` | School Admin | Daily student attendance register |
 | `manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
 | `result-card.html` | School Admin | Official result card generator, per student |
 | `report-card.html` | School Admin | Behavioral/teacher evaluation report |
@@ -67,7 +68,7 @@ need to touch `api-client.js` again after the first setup.
 | `finance/finance-center.html` | School Admin | Income, expenses, and daily finance ledger |
 | `finance/finance-import.html` | School Admin | Import and review finance documents and bank statements |
 | `finance/print-studio.html` | School Admin | Print fee records |
-| `teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
+| `attendance/teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
 | `students/promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
 | `students/import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |
 | `settings.html` | School Admin | Edit school profile, logo, cover photo |

@@ -19,9 +19,11 @@ and each school's own private Google Sheet.
    replace the placeholder with that URL.
 6. Upload everything else in this folder to your web host, keeping the
   directory structure: shared `assets/` and `js/` stay at the suite root,
-  student workflows live in `students/`, Attendance pages live in
-  `attendance/`, Finance pages live in `finance/`, and role-specific pages
-  stay in `portals/`.
+  student workflows live in `students/`, academic pages live in `academics/`,
+  examination pages live in `exams/`, Communications pages live in
+  `communications/`, Attendance pages live in `attendance/`, Staff pages live
+  in `staff/`, Finance pages live in `finance/`, and role-specific pages stay
+  in `portals/`.
 
 To update the backend later: Apps Script → Deploy → Manage deployments →
 pencil icon → New version → Deploy. This keeps the same URL, so you never
@@ -56,14 +58,15 @@ need to touch `api-client.js` again after the first setup.
 | `students/manage-students-enhanced.html` | School Admin | Alternate roster with historical results and bulk tools |
 | `students/student-login.html` | Student / Parent | Student portal login |
 | `attendance/student-attendance.html` | School Admin | Daily student attendance register |
-| `manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
-| `result-card.html` | School Admin | Official result card generator, per student |
-| `report-card.html` | School Admin | Behavioral/teacher evaluation report |
-| `date-sheet.html` | School Admin | Exam schedule |
-| `tests.html` | School Admin | Class tests & quizzes schedule |
-| `notifications.html` | School Admin | Parent circulars/broadcasts |
-| `activities.html` | School Admin | Sports/extracurricular/plantation feed (shown on School Board) |
-| `resources.html` | School Admin | Free-category resources — syllabus, books, uniform, exam prep links, etc. (shown on School Board) |
+| `staff/manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
+| `staff/meet-the-teachers.html` | Public / School | School-scoped faculty showcase, print and share |
+| `exams/result-card.html` | School Admin | Official result card generator, per student |
+| `academics/report-card.html` | School Admin | Behavioral/teacher evaluation report |
+| `exams/date-sheet.html` | School Admin | Exam schedule |
+| `exams/tests.html` | School Admin | Class tests & quizzes schedule |
+| `communications/notifications.html` | School Admin | Parent circulars/broadcasts |
+| `communications/activities.html` | School Admin | Sports/extracurricular/plantation feed (shown on School Board) |
+| `academics/resources.html` | School Admin | Free-category resources — syllabus, books, uniform, exam prep links, etc. (shown on School Board) |
 | `finance/fees.html` | School Admin | Fee records per student |
 | `finance/finance-center.html` | School Admin | Income, expenses, and daily finance ledger |
 | `finance/finance-import.html` | School Admin | Import and review finance documents and bank statements |

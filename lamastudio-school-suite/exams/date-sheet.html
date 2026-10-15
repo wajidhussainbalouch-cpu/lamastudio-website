@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Date Sheet Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="../js/api-client.js" onerror="console.warn('api-client.js missing');"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            body { background: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            
+            @page {
+                size: A4 portrait;
+                margin: 3mm;
+            }
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                height: 100% !important;
+                overflow: hidden !important;
+            }
+            main {
+                display: block !important;
+                padding: 0 !important;
+                max-width: none !important;
+                margin: 0 !important;
+            }
+            section.lg\:col-span-5 {
+                display: none !important;
+            }
+            .print-container {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .print-card {
+                box-shadow: none !important;
+                border: 1px dashed #cbd5e1 !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin: 0 !important;
+            }
+            
+            /* Print mode styling for 1x, 2x, and 3x tight packing on 1 page */
+            body.print-mode-1 .print-card {
+                max-height: 285mm !important;
+                padding: 12px !important;
+            }
+            
+            body.print-mode-2 .print-container {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: 288mm !important;
+                max-height: 288mm !important;
+                gap: 3mm !important;
+            }
+            body.print-mode-2 .print-card {
+                height: 140mm !important;
+                max-height: 140mm !important;
+                padding: 6px 10px !important;
+                font-size: 8px !important;
+                overflow: hidden !important;
+            }
+            body.print-mode-2 .print-card h1 { font-size: 11px !important; margin: 0 !important; }
+            body.print-mode-2 .print-card h2, body.print-mode-2 .print-card h3 { font-size: 8px !important; margin: 0 !important; }
+            body.print-mode-2 .print-card table th, body.print-mode-2 .print-card table td { padding: 1px 3px !important; font-size: 7.5px !important; }
+            body.print-mode-2 .print-card img { height: 18px !important; width: 18px !important; }
+
+            body.print-mode-3 .print-container {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: 288mm !important;
+                max-height: 288mm !important;
+                gap: 2mm !important;
+            }
+            body.print-mode-3 .print-card {
+                height: 93mm !important;
+                max-height: 93mm !important;
+                padding: 4px 8px !important;
+                font-size: 7px !important;
+                overflow: hidden !important;
+            }
+            body.print-mode-3 .print-card h1 { font-size: 9.5px !important; margin: 0 !important; }
+            body.print-mode-3 .print-card h2, body.print-mode-3 .print-card h3 { font-size: 7px !important; margin: 0 !important; }
+            body.print-mode-3 .print-card table th, body.print-mode-3 .print-card table td { padding: 0.5px 2px !important; font-size: 6.5px !important; }
+            body.print-mode-3 .print-card img { height: 16px !important; width: 16px !important; }
+            body.print-mode-3 .print-card .mt-2 { margin-top: 2px !important; }
+            body.print-mode-3 .print-card .pb-2 { padding-bottom: 2px !important; }
+        }
+
+/* Compact print layouts: no stretched whitespace, all copies on one A4 page when content fits. */
+@media print {
+ @page { size:A4 portrait; margin:4mm; }
+ html,body { height:auto!important; overflow:visible!important; }
+ .print-container { display:flex!important; flex-direction:column!important; justify-content:flex-start!important; gap:1mm!important; height:auto!important; max-height:none!important; }
+ .print-card { flex:0 0 auto!important; height:auto!important; min-height:0!important; max-height:none!important; overflow:visible!important; padding:2mm 2.5mm!important; margin:0!important; border:1px dashed #aaa!important; border-radius:0!important; box-shadow:none!important; break-inside:avoid!important; page-break-inside:avoid!important; }
+ .print-card .overflow-x-auto { overflow:visible!important; margin-top:1mm!important; }
+ .print-card table { width:100%!important; table-layout:auto!important; border-collapse:collapse!important; }
+ .print-card th,.print-card td { padding:1px 2px!important; line-height:1.12!important; overflow-wrap:anywhere!important; }
+ .print-card .pb-2 { padding-bottom:1mm!important; }
+ .print-card .mt-2 { margin-top:1mm!important; }
+ .print-card .pt-1 { padding-top:.5mm!important; }
+ body.print-mode-1 .print-card { font-size:9px!important; }
+ body.print-mode-2 .print-card { font-size:7.5px!important; }
+ body.print-mode-3 .print-card { font-size:6.5px!important; }
+ body.print-mode-4 .print-card { font-size:5.8px!important; }
+ body.print-mode-2 .print-card th,body.print-mode-2 .print-card td {font-size:7px!important;}
+ body.print-mode-3 .print-card th,body.print-mode-3 .print-card td {font-size:6px!important;}
+ body.print-mode-4 .print-card th,body.print-mode-4 .print-card td {font-size:5.3px!important; padding:.5px 1px!important;}
+ body.print-mode-2 .print-card h1 {font-size:10px!important;}
+ body.print-mode-3 .print-card h1 {font-size:9px!important;}
+ body.print-mode-4 .print-card h1 {font-size:8px!important;}
+ body.print-mode-4 .print-card img {width:15px!important;height:15px!important;}
+}
+@media screen { .print-copy { display:none!important; } }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-md dark:shadow-lg no-print">
+        <div class="flex items-center gap-3">
+            <div id="schoolLogoContainer" class="bg-sky-600 rounded-xl text-white font-black text-lg overflow-hidden flex items-center justify-center w-10 h-10 shadow">
+                <span id="schoolInitials">DS</span>
+            </div>
+            <div>
+                <h1 id="schoolNameHeader" class="font-bold text-lg text-slate-900 dark:text-white">Date Sheet Admin</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Manage grade-wise exam schedules & subjects</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleTheme()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 p-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center w-9 h-9" title="Toggle Light/Dark Theme">
+                <span id="themeIcon">☀️</span>
+            </button>
+            <button onclick="window.print()" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                🖨️ Print Matrix
+            </button>
+            <button onclick="location.href='../main-dashboard.html'" class="bg-sky-500/10 dark:bg-sky-900/40 hover:bg-sky-500/20 text-sky-600 dark:text-sky-300 px-3 py-2 rounded-xl text-xs font-bold transition">
+                Main Dashboard
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <section class="lg:col-span-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-xl no-print">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-base font-bold text-sky-600 dark:text-sky-400">Create / Edit Date Sheet Entry</h2>
+                <button type="button" onclick="resetForm()" class="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 underline">Clear</button>
+            </div>
+
+            <form id="form" class="space-y-4">
+                <input type="hidden" id="editId">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Exam Title / Term (Global)</label>
+                    <input type="text" id="examTitle" required placeholder="e.g., SBA First Term Examination 2026" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Date (DD/MM/YYYY)</label>
+                        <input type="text" id="date" required placeholder="DD/MM/YYYY" oninput="handleDateInput(this)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                        <p class="text-[10px] text-slate-400 mt-0.5">Format: DD/MM/YYYY</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Day</label>
+                        <input type="text" id="day" placeholder="e.g., Friday" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Timing / Shift</label>
+                        <input type="text" id="time" placeholder="e.g., 09:00 - 11:00" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Invigilator Notes</label>
+                        <input type="text" id="invigilator" placeholder="e.g., Room A" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold text-sky-600 dark:text-sky-300">Grade Selection Mode</label>
+                        <select id="gradeMode" onchange="onGradeModeChange()" class="bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-800 dark:text-slate-200">
+                            <option value="custom">Select Specific Grades</option>
+                            <option value="range">Range Selection</option>
+                        </select>
+                    </div>
+
+                    <div id="customGradesBox" class="space-y-2">
+                        <div id="gradeCheckboxes" class="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800"></div>
+                    </div>
+
+                    <div id="rangeGradesBox" class="hidden grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">From Grade</label>
+                            <select id="rangeStart" onchange="updateGradeInputs()" class="w-full bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-slate-800 dark:text-slate-200">
+                                <option value="PG">PG</option>
+                                <option value="KG">KG</option>
+                                <option value="Prep">Prep</option>
+                                <option value="ECCE">ECCE</option>
+                                <option value="Grade-1">Grade-1</option>
+                                <option value="Grade-2">Grade-2</option>
+                                <option value="Grade-3">Grade-3</option>
+                                <option value="Grade-4">Grade-4</option>
+                                <option value="Grade-5">Grade-5</option>
+                                <option value="Grade-6">Grade-6</option>
+                                <option value="Grade-7">Grade-7</option>
+                                <option value="Grade-8">Grade-8</option>
+                                <option value="Grade-9">Grade-9</option>
+                                <option value="Grade-10">Grade-10</option>
+                                <option value="Grade-11">Grade-11</option>
+                                <option value="Grade-12">Grade-12</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">To Grade</label>
+                            <select id="rangeEnd" onchange="updateGradeInputs()" class="w-full bg-white dark:bg-slate-800 text-xs border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-2 text-slate-800 dark:text-slate-200">
+                                <option value="PG">PG</option>
+                                <option value="KG">KG</option>
+                                <option value="Prep">Prep</option>
+                                <option value="ECCE">ECCE</option>
+                                <option value="Grade-1">Grade-1</option>
+                                <option value="Grade-2">Grade-2</option>
+                                <option value="Grade-3">Grade-3</option>
+                                <option value="Grade-4">Grade-4</option>
+                                <option value="Grade-5">Grade-5</option>
+                                <option value="Grade-6">Grade-6</option>
+                                <option value="Grade-7">Grade-7</option>
+                                <option value="Grade-8">Grade-8</option>
+                                <option value="Grade-9">Grade-9</option>
+                                <option value="Grade-10" selected>Grade-10</option>
+                                <option value="Grade-11">Grade-11</option>
+                                <option value="Grade-12">Grade-12</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Subject Presets by Level</label>
+                    </div>
+                    <div class="flex gap-1 mb-2">
+                        <button type="button" onclick="switchPresetLevel('primary')" id="tab-primary" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-sky-600 text-white transition">Primary</button>
+                        <button type="button" onclick="switchPresetLevel('middle')" id="tab-middle" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition">Middle</button>
+                        <button type="button" onclick="switchPresetLevel('high')" id="tab-high" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition">High</button>
+                        <button type="button" onclick="switchPresetLevel('higher')" id="tab-higher" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition">Higher</button>
+                    </div>
+                    <div id="presetChips" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-2 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-700"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Subject Assigned per Grade</label>
+                    <div id="gradesContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" id="isPublished" class="w-4 h-4 rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-sky-600 focus:ring-0">
+                    <label for="isPublished" class="text-xs font-bold text-slate-700 dark:text-slate-300">Publish immediately to Google Sheets & Dashboard</label>
+                </div>
+
+                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-lg shadow-sky-900/40">
+                    Save Schedule Entry
+                </button>
+            </form>
+        </section>
+
+        <section class="lg:col-span-7 space-y-6">
+            
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-xl no-print space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Filter Class:</label>
+                        <select id="filterClass" onchange="renderMatrixSheet()" class="bg-slate-50 dark:bg-slate-900 text-xs border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200">
+                            <option value="ALL">All Classes (Full Matrix)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Print Multi-Up:</label>
+                        <select id="printLayoutMode" onchange="updatePrintLayoutClass()" class="bg-slate-50 dark:bg-slate-900 text-xs border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-slate-800 dark:text-slate-200 font-bold text-sky-600 dark:text-sky-400">
+                            <option value="1">1x Standard View</option>
+                            <option value="2">2x Per Page (Half Card)</option>
+                            <option value="3">3x Per Page (Compact Card)</option>
+                             <option value="4">4x Per Page (Ultra Compact)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                    <span class="text-[11px] font-bold text-slate-400 mr-1">Export As:</span>
+                    <button onclick="exportAsPDF()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold rounded-lg transition flex items-center gap-1">📄 PDF / Print</button>
+                    <button onclick="exportAsWord()" class="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg transition flex items-center gap-1">📝 Word (DOC)</button>
+                    <button onclick="exportAsExcel()" class="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg transition flex items-center gap-1">📊 Excel (CSV)</button>
+                </div>
+            </div>
+
+            <!-- Matrix Live Printable Preview Card Container -->
+            <div id="printContainer" class="print-container">
+                <div id="matrixCardWrapper" class="bg-white text-slate-900 rounded-2xl p-6 shadow-2xl print-card overflow-hidden w-full transition-all">
+                    <div class="pb-2 border-b border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div id="printLogoWrapper" class="hidden shrink-0">
+                                <img id="printSchoolLogo" src="" alt="School Logo" class="h-8 w-8 object-contain rounded-lg border border-slate-200 p-0.5">
+                            </div>
+                            <div>
+                                <h2 id="sheetSchoolSub" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest leading-none">OFFICIAL EXAMINATION MATRIX</h2>
+                                <h1 id="sheetSchoolTitleDisplay" class="text-sm font-black tracking-wider text-slate-900 uppercase mt-0.5">SCHOOL NAME</h1>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <h3 id="sheetExamTitle" class="text-xs font-bold text-indigo-700 uppercase">EXAMINATION DATE SHEET</h3>
+                            <p id="sheetTimings" class="text-[9px] font-bold text-sky-700"></p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto mt-2">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead id="sheetTableHeader" class="bg-slate-100 text-slate-700 border-b border-slate-300"></thead>
+                            <tbody id="sheetRowsBody" class="divide-y divide-slate-200"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2 pt-1 border-t border-slate-200 flex justify-between items-center text-[8.5px] text-slate-500">
+                        <span>Note: Please report to exam hall 15 mins prior.</span>
+                        <span>Principal Sign: ___________________</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stored Entries Management List -->
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-xl no-print">
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4">Saved Date Sheet Records</h3>
+                <div id="list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        const ALL_GRADES = [
+            'PG', 'KG', 'Prep', 'ECCE',
+            'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5',
+            'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10',
+            'Grade-11', 'Grade-12'
+        ];
+
+        const SUBJECT_PRESETS_BY_LEVEL = {
+            primary: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Science', 'SSt', 'Nazra', 'Computer', 'Drawing', 'Dictation'],
+            middle: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'History', 'Geography', 'Arabic', 'Tarjama-tul-Quran', 'Computer', 'Drawing'],
+            high: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Computer Studies', 'Tarjama-tul-Quran'],
+            higher: ['English', 'Urdu', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Economics', 'Statistics', 'Islamic Education', 'Pakistan Studies']
+        };
+
+        let currentPresetLevel = 'primary';
+        let dateSheetEntries = [];
+        let activeSchoolName = "DS Model Public School";
+        let activeSchoolLogo = "";
+        let rememberedGradeSelection = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+        let rememberedGradeMode = 'custom';
+        let rememberedExamTitle = 'SBA First Term Examination 2026';
+
+        function initTheme() {
+            const saved = localStorage.getItem('lama_theme') || 'dark';
+            if(saved === 'light') {
+                document.getElementById('htmlRoot').classList.remove('dark');
+                document.getElementById('themeIcon').textContent = '🌙';
+            } else {
+                document.getElementById('htmlRoot').classList.add('dark');
+                document.getElementById('themeIcon').textContent = '☀️';
+            }
+        }
+
+        function toggleTheme() {
+            const root = document.getElementById('htmlRoot');
+            const isDark = root.classList.toggle('dark');
+            localStorage.setItem('lama_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeIcon').textContent = isDark ? '☀️' : '🌙';
+        }
+
+        function initFilterDropdown() {
+            const select = document.getElementById('filterClass');
+            select.innerHTML = `<option value="ALL">All Classes (Full Matrix)</option>` + 
+                ALL_GRADES.map(g => `<option value="${g}">${g}</option>`).join('');
+        }
+
+        function updatePrintLayoutClass() {
+            const mode = Number(document.getElementById('printLayoutMode').value) || 1;
+            document.body.classList.remove('print-mode-1','print-mode-2','print-mode-3','print-mode-4');
+            document.body.classList.add('print-mode-' + mode);
+            const container = document.getElementById('printContainer');
+            container.querySelectorAll('.print-copy').forEach(el => el.remove());
+            const original = document.getElementById('matrixCardWrapper');
+            if (!original) return;
+            for (let i=1; i<mode; i++) {
+                const copy=original.cloneNode(true);
+                copy.removeAttribute('id');
+                copy.classList.add('print-copy');
+                copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+                container.appendChild(copy);
+            }
+        }
+
+        async function fetchSchoolProfile() {
+            try {
+                if (typeof LamaAPI !== 'undefined') {
+                    if (typeof LamaAPI.getSchoolInfo === 'function') {
+                        const info = await LamaAPI.getSchoolInfo();
+                        if (info) {
+                            if (info.schoolName || info.name) activeSchoolName = info.schoolName || info.name;
+                            if (info.logo || info.cover) activeSchoolLogo = info.logo || info.cover;
+                        }
+                    } else if (typeof LamaAPI.getActiveSchool === 'function') {
+                        const sch = await LamaAPI.getActiveSchool();
+                        if (sch) {
+                            if (sch.name) activeSchoolName = sch.name;
+                            if (sch.logo) activeSchoolLogo = sch.logo;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('LamaAPI profile fetch error:', e);
+            }
+
+            if (!activeSchoolName || activeSchoolName === "School Board") {
+                activeSchoolName = localStorage.getItem('lama_school_name') || 
+                                   localStorage.getItem('active_school_name') || 
+                                   localStorage.getItem('schoolName') || 
+                                   "DS Model Public School";
+            }
+            if (!activeSchoolLogo) {
+                activeSchoolLogo = localStorage.getItem('lama_school_logo') || 
+                                   localStorage.getItem('active_school_logo') || 
+                                   localStorage.getItem('schoolLogo') || "";
+            }
+
+            document.getElementById('schoolNameHeader').textContent = activeSchoolName;
+            document.getElementById('sheetSchoolTitleDisplay').textContent = activeSchoolName;
+            const initials = activeSchoolName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('schoolInitials').textContent = initials || 'DS';
+
+            if (activeSchoolLogo) {
+                const logoContainer = document.getElementById('schoolLogoContainer');
+                logoContainer.innerHTML = `<img src="${activeSchoolLogo}" alt="Logo" class="w-full h-full object-cover">`;
+                
+                const printLogoWrap = document.getElementById('printLogoWrapper');
+                const printLogoImg = document.getElementById('printSchoolLogo');
+                if(printLogoWrap && printLogoImg) {
+                    printLogoImg.src = activeSchoolLogo;
+                    printLogoWrap.classList.remove('hidden');
+                }
+            }
+        }
+
+        function handleDateInput(input) {
+            let v = input.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.substring(0, 8);
+            
+            let formatted = '';
+            if (v.length > 0) formatted = v.substring(0, 2);
+            if (v.length >= 3) formatted += '/' + v.substring(2, 4);
+            else if (v.length > 2) formatted += '/' + v.substring(2);
+            if (v.length >= 5) formatted += '/' + v.substring(4, 8);
+            else if (v.length > 4) formatted += '/' + v.substring(4);
+            
+            input.value = formatted;
+
+            if (formatted.length === 10) {
+                const parts = formatted.split('/');
+                if (parts.length === 3) {
+                    const d = parseInt(parts[0], 10);
+                    const m = parseInt(parts[1], 10) - 1;
+                    const y = parseInt(parts[2], 10);
+                    const dateObj = new Date(y, m, d);
+                    if (!isNaN(dateObj.getTime()) && dateObj.getDate() === d && dateObj.getMonth() === m) {
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        document.getElementById('day').value = days[dateObj.getDay()];
+                    }
+                }
+            }
+        }
+
+        function initGradeCheckboxes() {
+            const container = document.getElementById('gradeCheckboxes');
+            container.innerHTML = ALL_GRADES.map(g => `
+                <label class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                    <input type="checkbox" value="${g}" class="grade-cb rounded border-slate-300 text-sky-600 focus:ring-0" ${rememberedGradeSelection.includes(g) ? 'checked' : ''} onchange="updateGradeInputs()">
+                    <span>${g}</span>
+                </label>
+            `).join('');
+        }
+
+        function switchPresetLevel(level) {
+            currentPresetLevel = level;
+            ['primary', 'middle', 'high', 'higher'].forEach(l => {
+                const btn = document.getElementById(`tab-${l}`);
+                if (l === level) {
+                    btn.className = 'flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-sky-600 text-white transition';
+                } else {
+                    btn.className = 'flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 transition';
+                }
+            });
+            initPresets();
+        }
+
+        function initPresets() {
+            const container = document.getElementById('presetChips');
+            const subjects = SUBJECT_PRESETS_BY_LEVEL[currentPresetLevel] || [];
+            container.innerHTML = subjects.map(sub => `
+                <button type="button" onclick="insertSubjectPreset('${sub}')" class="px-2 py-1 bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition">
+                    + ${sub}
+                </button>
+            `).join('');
+        }
+
+        function insertSubjectPreset(sub) {
+            const firstInput = document.querySelector('.grade-subject-input');
+            if (firstInput) {
+                firstInput.value = sub;
+                triggerAutoFill(firstInput);
+            }
+        }
+
+        function onGradeModeChange() {
+            const mode = document.getElementById('gradeMode').value;
+            rememberedGradeMode = mode;
+            if (mode === 'range') {
+                document.getElementById('customGradesBox').classList.add('hidden');
+                document.getElementById('rangeGradesBox').classList.remove('hidden');
+            } else {
+                document.getElementById('customGradesBox').classList.remove('hidden');
+                document.getElementById('rangeGradesBox').classList.add('hidden');
+            }
+            updateGradeInputs();
+        }
+
+        function getSelectedGrades() {
+            const mode = document.getElementById('gradeMode').value;
+            if (mode === 'range') {
+                const start = document.getElementById('rangeStart').value;
+                const end = document.getElementById('rangeEnd').value;
+                const sIdx = ALL_GRADES.indexOf(start);
+                const eIdx = ALL_GRADES.indexOf(end);
+                if (sIdx <= eIdx && sIdx !== -1 && eIdx !== -1) {
+                    return ALL_GRADES.slice(sIdx, eIdx + 1);
+                }
+                return [start];
+            } else {
+                const cbs = document.querySelectorAll('.grade-cb:checked');
+                const list = Array.from(cbs).map(cb => cb.value);
+                return list.length > 0 ? list : ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+            }
+        }
+
+        function updateGradeInputs(existingValues = {}) {
+            const grades = getSelectedGrades();
+            rememberedGradeSelection = grades;
+            const container = document.getElementById('gradesContainer');
+            
+            container.innerHTML = grades.map((g, idx) => {
+                const val = existingValues[g] || (idx === 0 ? (document.querySelector('.grade-subject-input')?.value || '') : '');
+                return `
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="w-24 text-xs font-bold text-slate-700 dark:text-slate-300 truncate">${g}</span>
+                        <input type="text" data-grade="${g}" value="${val}" placeholder="Subject name" oninput="triggerAutoFill(this)" class="grade-subject-input flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        let lastFirstVal = '';
+        function triggerAutoFill(input) {
+            const inputs = document.querySelectorAll('.grade-subject-input');
+            if (inputs.length > 0 && inputs[0] === input) {
+                const newVal = input.value;
+                for (let i = 1; i < inputs.length; i++) {
+                    if (!inputs[i].value || inputs[i].value === lastFirstVal) {
+                        inputs[i].value = newVal;
+                    }
+                }
+                lastFirstVal = newVal;
+            }
+            renderMatrixSheet();
+        }
+
+        async function loadEntries() {
+            try {
+                dateSheetEntries = [];
+                if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.list === 'function') {
+                    try {
+                        const apiData = await LamaAPI.list('datesheet');
+                        if (Array.isArray(apiData)) { dateSheetEntries = apiData; return; }
+                    } catch (apiErr) {
+                        console.warn('LamaAPI list error:', apiErr);
+                    }
+                }
+
+                if (dateSheetEntries.length === 0) {
+                    const saved = localStorage.getItem('lama_exams') || localStorage.getItem('exams') || localStorage.getItem('lama_matrix_datesheet_records');
+                    if (saved) {
+                        dateSheetEntries = JSON.parse(saved);
+                    }
+                }
+            } catch (e) {
+                dateSheetEntries = [];
+            }
+        }
+
+        function saveEntries() {
+            try {
+                const payload = JSON.stringify(dateSheetEntries);
+                localStorage.setItem('lama_exams', payload);
+                localStorage.setItem('exams', payload);
+                localStorage.setItem('lama_matrix_datesheet_records', payload);
+            } catch (e) {
+                console.error('Storage error:', e);
+            }
+        }
+
+        document.getElementById('form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editId').value;
+            const examTitle = document.getElementById('examTitle').value.trim() || rememberedExamTitle;
+            rememberedExamTitle = examTitle;
+            const date = document.getElementById('date').value.trim();
+            const day = document.getElementById('day').value.trim();
+            const time = document.getElementById('time').value.trim();
+            const invigilator = document.getElementById('invigilator').value.trim();
+            const isPublished = document.getElementById('isPublished').checked;
+
+            const subjects = {};
+            document.querySelectorAll('.grade-subject-input').forEach(inp => {
+                subjects[inp.dataset.grade] = inp.value.trim();
+            });
+
+            const record = {
+                id: editId || 'entry-' + Date.now(),
+                examTitle,
+                title: examTitle,
+                date,
+                day,
+                time,
+                invigilator,
+                isPublished,
+                published: isPublished,
+                status: isPublished ? 'published' : 'draft',
+                subjects,
+                class: Object.keys(subjects).join(', '),
+                subject: Object.values(subjects).filter(Boolean).join(', ')
+            };
+
+            // Sync with Google Sheets / LamaAPI; never claim publication on a failed request.
+            let savedRemote = null;
+            let syncError = null;
+            try {
+                if (typeof LamaAPI !== 'undefined') {
+                    if (editId && typeof LamaAPI.update === 'function') {
+                        savedRemote = await LamaAPI.update('datesheet', editId, record);
+                    } else if (typeof LamaAPI.add === 'function') {
+                        savedRemote = await LamaAPI.add('datesheet', record);
+                    }
+                }
+            } catch (apiErr) {
+                syncError = apiErr; console.error('Google Sheets API sync failed:', apiErr); window.lastDateSheetServerError = apiErr.message;
+            }
+
+            if (savedRemote && typeof savedRemote === 'object') record.id = savedRemote.id || savedRemote.record?.id || record.id;
+            if (isPublished && (syncError || !savedRemote)) {
+                record.isPublished = false; record.published = false; record.status = 'draft';
+                alert('Date sheet NOT published to Google Sheets. Server error: ' + (window.lastDateSheetServerError || 'No server confirmation') + '. Local backup only.');
+            }
+            if (editId) {
+                const idx = dateSheetEntries.findIndex(item => String(item.id || item._id) === String(editId));
+                if (idx !== -1) {
+                    dateSheetEntries[idx] = record;
+                } else {
+                    dateSheetEntries.push(record);
+                }
+            } else {
+                dateSheetEntries.push(record);
+            }
+
+            saveEntries();
+            renderAll();
+            resetForm();
+            if (!syncError && savedRemote) alert(isPublished ? 'Published to Google Sheets. Refresh the School Board to view it.' : 'Draft saved to server.');
+            else if (!isPublished) alert('Draft saved locally.');
+        });
+
+        function resetForm() {
+            document.getElementById('editId').value = '';
+            document.getElementById('date').value = '';
+            document.getElementById('day').value = '';
+            document.getElementById('time').value = '';
+            document.getElementById('invigilator').value = '';
+            document.getElementById('isPublished').checked = false;
+            document.getElementById('examTitle').value = rememberedExamTitle;
+            updateGradeInputs();
+        }
+
+        function editEntry(id) {
+            const item = dateSheetEntries.find(e => String(e.id || e._id) === String(id));
+            if (!item) return;
+            document.getElementById('editId').value = item.id || item._id;
+            document.getElementById('examTitle').value = item.examTitle || item.title || rememberedExamTitle;
+            document.getElementById('date').value = item.date || '';
+            document.getElementById('day').value = item.day || '';
+            document.getElementById('time').value = item.time || '';
+            document.getElementById('invigilator').value = item.invigilator || '';
+            document.getElementById('isPublished').checked = !!(item.isPublished || item.published || item.status === 'published');
+
+            const subjectsMap = item.subjects || {};
+            const grades = Object.keys(subjectsMap);
+            if (grades.length > 0) {
+                rememberedGradeSelection = grades;
+                document.querySelectorAll('.grade-cb').forEach(cb => {
+                    cb.checked = grades.includes(cb.value);
+                });
+                updateGradeInputs(subjectsMap);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteEntry(id) {
+            if (confirm('Are you sure you want to delete this date sheet schedule entry?')) {
+                dateSheetEntries = dateSheetEntries.filter(e => String(e.id || e._id) !== String(id));
+                saveEntries();
+                try {
+                    if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.remove === 'function') {
+                        await LamaAPI.remove('datesheet', id);
+                    }
+                } catch(e) {}
+                renderAll();
+            }
+        }
+
+        function renderAll() {
+            const currentFilter = document.getElementById('filterClass').value;
+            initFilterDropdown();
+            document.getElementById('filterClass').value = currentFilter;
+            renderMatrixSheet();
+            renderRecordsList();
+            updatePrintLayoutClass();
+        }
+
+        function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+        function renderMatrixSheet() {
+            const publishedEntries = dateSheetEntries.filter(e => e.isPublished || e.published || String(e.status) === 'published');
+            const filterClass = document.getElementById('filterClass').value;
+            
+            const titleToUse = publishedEntries.length > 0 && (publishedEntries[0].examTitle || publishedEntries[0].title) 
+                ? (publishedEntries[0].examTitle || publishedEntries[0].title) 
+                : rememberedExamTitle;
+            document.getElementById('sheetExamTitle').textContent = titleToUse.toUpperCase();
+            
+            const gradeSet = new Set();
+            publishedEntries.forEach(e => {
+                if (e.subjects) {
+                    Object.keys(e.subjects).forEach(g => gradeSet.add(g));
+                }
+            });
+            let activeGrades = ALL_GRADES.filter(g => gradeSet.has(g));
+            if (activeGrades.length === 0) {
+                activeGrades = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+            }
+
+            if (filterClass !== 'ALL') {
+                activeGrades = [filterClass];
+            }
+
+            const timings = publishedEntries.map(e => e.time).filter(Boolean);
+            document.getElementById('sheetTimings').textContent = timings.length > 0 ? `TIMING: ${timings[0]}` : 'TIMING: 09:00 - 11:00';
+
+            const thead = document.getElementById('sheetTableHeader');
+            thead.innerHTML = `
+                <tr class="text-[11px] font-black uppercase text-slate-700 border-b border-slate-300">
+                    <th class="py-2 px-3">DATE</th>
+                    <th class="py-2 px-3">DAY</th>
+                    ${activeGrades.map(g => `<th class="py-2 px-3">${escapeHtml(g)}</th>`).join('')}
+                </tr>
+            `;
+
+            const tbody = document.getElementById('sheetRowsBody');
+            if (publishedEntries.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${activeGrades.length + 2}" class="text-center py-6 text-slate-400 text-xs font-medium">No published date sheet records found. Check "Publish immediately" when saving entries.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = publishedEntries.map(e => {
+                if (filterClass !== 'ALL' && (!e.subjects || !e.subjects[filterClass])) {
+                    return '';
+                }
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td class="py-2 px-3 font-bold text-slate-900">${escapeHtml(e.date || '---')}</td>
+                        <td class="py-2 px-3 font-semibold text-slate-700">${escapeHtml(e.day || '---')}</td>
+                        ${activeGrades.map(g => `<td class="py-2 px-3 text-slate-800">${escapeHtml(e.subjects && e.subjects[g] ? e.subjects[g] : '---')}</td>`).join('')}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportAsPDF() { window.print(); }
+
+        function exportAsWord() {
+            const cardHtml = document.getElementById('matrixCardWrapper').outerHTML;
+            const blob = new Blob(['<!DOCTYPE html><html><head><meta charset="utf-8"><title>Date Sheet</title><style>body{font-family:Arial,sans-serif;}</style></head><body>' + cardHtml + '</body></html>'], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (activeSchoolName || 'DateSheet').replace(/\s+/g, '_') + '_Exam_Matrix.doc';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportAsExcel() {
+            const publishedEntries = dateSheetEntries.filter(e => e.isPublished || e.published || e.status === 'published');
+            if (publishedEntries.length === 0) {
+                alert('No published date sheet records available to export.');
+                return;
+            }
+
+            let csv = 'Date,Day,' + ALL_GRADES.join(',') + '\n';
+            publishedEntries.forEach(e => {
+                let row = `"${e.date || ''}","${e.day || ''}"`;
+                ALL_GRADES.forEach(g => {
+                    row += `,"${e.subjects && e.subjects[g] ? e.subjects[g] : ''}"`;
+                });
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (activeSchoolName || 'DateSheet').replace(/\s+/g, '_') + '_Date_Sheet.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function renderRecordsList() {
+            const listEl = document.getElementById('list');
+            if (dateSheetEntries.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">No date sheet records created yet.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = dateSheetEntries.map(e => `
+                <div class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-sky-600 dark:text-sky-400">${e.date || 'No Date'} (${e.day || 'Day'})</span>
+                            ${e.isPublished || e.published || e.status === 'published' ? '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">Published</span>' : '<span class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold">Draft</span>'}
+                        </div>
+                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1">${e.examTitle || e.title || rememberedExamTitle}</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">Grades: ${Object.keys(e.subjects || {}).join(', ')}</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button onclick="editEntry('${e.id || e._id}')" class="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-bold transition">Edit</button>
+                        <button onclick="deleteEntry('${e.id || e._id}')" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold transition">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = async function() {
+            initTheme();
+            await fetchSchoolProfile();
+            initGradeCheckboxes();
+            initPresets();
+            await loadEntries();
+            document.getElementById('examTitle').value = rememberedExamTitle;
+            updateGradeInputs();
+            renderAll();
+        };
+    </script>
+</body>
+</html>

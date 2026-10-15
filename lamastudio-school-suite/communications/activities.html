@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" id="root"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title id="pageTitle">Activities & Events | Lama School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../assets/css/config.css"><script src="../js/api-client.js"></script>
+<style>
+body{font-family:Inter,system-ui,sans-serif;background:#f1f5f9;color:#0f172a}.dark body{background:#07111f;color:#e2e8f0}
+.panel{background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 6px 24px #0f172a0a}.dark .panel{background:#111e33;border-color:#293b53}
+.field{width:100%;padding:10px 12px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;color:#0f172a;font-size:13px}.dark .field{background:#0b1527;border-color:#334155;color:#f8fafc}.field:focus{outline:2px solid #0284c7}
+.btn{padding:10px 14px;border-radius:10px;font-size:12px;font-weight:750;background:#e2e8f0;color:#0f172a}.dark .btn{background:#334155;color:white}.btn.blue{background:#0284c7;color:white}.btn.green{background:#047857;color:white}.btn.red{background:#be123c;color:white}
+.muted{color:#64748b}.dark .muted{color:#94a3b8}.badge{padding:4px 8px;border-radius:999px;font-size:10px;font-weight:800}.pub{background:#d1fae5;color:#065f46}.draft{background:#fef3c7;color:#92400e}
+.preview{aspect-ratio:16/9;object-fit:cover;width:100%;border-radius:12px;background:#cbd5e1}.dark .preview{background:#1e293b}
+@media print{.no-print{display:none!important}body{background:white!important;color:#111!important}.panel{box-shadow:none!important;border:0!important}.printable{display:block!important;width:100%!important} .printable article{break-inside:avoid;border:1px solid #ccc;padding:8px;margin:6px 0} @page{size:A4;margin:9mm}}
+</style></head><body class="min-h-screen">
+<header class="no-print max-w-7xl mx-auto px-4 py-5 flex flex-wrap justify-between items-center gap-4">
+ <div class="flex gap-3 items-center"><div id="schoolLogo" class="w-12 h-12 bg-sky-700 text-white rounded-xl grid place-items-center font-black overflow-hidden">LS</div><div><h1 id="brandTitle" class="font-black text-xl">Lama School Suite</h1><p class="text-xs muted">Activities & Events · Admin management</p></div></div>
+ <div class="flex gap-2 flex-wrap"><button class="btn" id="themeBtn">☾ Theme</button><a class="btn" href="../dashboard.html">Admin Dashboard</a><a class="btn" href="../main-dashboard.html">School Board</a><button class="btn" id="logoutBtn">Logout</button></div>
+</header>
+<main class="max-w-7xl mx-auto px-4 pb-12">
+<div id="message" class="no-print hidden mb-4 border border-sky-400 bg-sky-50 text-sky-950 p-3 rounded-xl text-sm" role="status"></div>
+<div class="no-print grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+ <div class="panel p-4"><div class="text-xs muted">Total activities</div><b id="statAll" class="text-2xl">0</b></div>
+ <div class="panel p-4"><div class="text-xs muted">Published</div><b id="statPub" class="text-2xl text-emerald-500">0</b></div>
+ <div class="panel p-4"><div class="text-xs muted">Drafts</div><b id="statDraft" class="text-2xl text-amber-500">0</b></div>
+ <div class="panel p-4"><div class="text-xs muted">Upcoming</div><b id="statUpcoming" class="text-2xl text-sky-500">0</b></div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+<section class="panel p-5 lg:col-span-5 no-print">
+ <div class="flex justify-between items-center"><h2 class="font-black text-lg text-sky-600" id="formHeading">Create activity</h2><button class="btn" type="button" id="clearBtn">Clear</button></div>
+ <p class="muted text-xs mt-1">Published records can be read by the School Board; drafts remain unpublished.</p>
+ <form id="form" class="space-y-3 mt-4">
+ <input id="editId" type="hidden">
+ <div class="grid grid-cols-2 gap-3"><label class="text-xs font-bold">Category<select id="type" class="field mt-1"><option>Sports</option><option>Cultural Event</option><option>Competition</option><option>Activity</option><option>Notice</option><option>Academic Event</option><option>Field Trip</option><option>Workshop</option><option>Celebration</option></select></label>
+ <label class="text-xs font-bold">Event date<input id="date" type="date" class="field mt-1"></label></div>
+ <label class="text-xs font-bold block">Title <span class="text-rose-500">*</span><input id="title" class="field mt-1" required maxlength="180" placeholder="Annual Sports Gala 2026"></label>
+ <label class="text-xs font-bold block">Description<textarea id="description" class="field mt-1" rows="4" placeholder="Event details, participants and instructions"></textarea></label>
+ <div class="grid grid-cols-2 gap-3"><label class="text-xs font-bold">Start time<input id="time" type="time" class="field mt-1"></label><label class="text-xs font-bold">Venue<input id="venue" class="field mt-1" placeholder="School playground"></label></div>
+ <label class="text-xs font-bold block">Photo URL<input id="photo" type="url" class="field mt-1" placeholder="https://example.com/photo.jpg"></label>
+ <label class="text-xs font-bold block">Optional registration / details URL<input id="link" type="url" class="field mt-1" placeholder="https://..."></label>
+ <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 flex items-center gap-3"><input id="isPublished" type="checkbox" class="w-5 h-5 accent-sky-600"><label for="isPublished" class="text-sm font-bold">Publish to School Board</label></div>
+ <div id="imageBox" class="hidden"><img id="imagePreview" class="preview" alt="Activity image preview"></div>
+ <div class="flex flex-wrap gap-2"><button class="btn blue flex-1" id="saveBtn" type="submit">Save activity</button><button class="btn" type="button" id="resetBtn">Reset</button></div>
+ <p class="text-xs muted">School logo is fetched from the active school settings. Images are referenced by URL; they are not uploaded to the server by this page.</p>
+ </form>
+</section>
+<section class="lg:col-span-7 min-w-0">
+ <div class="panel p-5">
+  <div class="flex flex-wrap justify-between items-center gap-2 no-print"><div><h2 class="font-black text-lg">Activities & Events</h2><p class="text-xs muted">Search, filter, publish, edit and export</p></div><div class="flex flex-wrap gap-2"><button id="refresh" class="btn">↻ Refresh</button><button id="export" class="btn">↓ CSV</button><button id="print" class="btn blue">🖨 Print</button></div></div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4 mb-4 no-print"><input id="search" class="field" placeholder="Search title / venue"><select id="statusFilter" class="field"><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option></select><select id="categoryFilter" class="field"><option value="all">All categories</option></select></div>
+  <div id="list" class="printable space-y-3"><p class="muted text-sm">Loading activities...</p></div>
+ </div>
+</section></div>
+</main>
+<script>
+'use strict';
+const COLLECTION='activities',$=id=>document.getElementById(id),FIELDS=['type','title','description','date','photo','time','venue','link'];
+let rows=[],dirty=false,school={},loading=false;
+const id=x=>String(x?.id??x?._id??'');
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const pub=x=>x?.isPublished===true||x?.published===true||String(x?.status||'').toLowerCase()==='published';
+const norm=x=>Array.isArray(x)?x:Array.isArray(x?.records)?x.records:Array.isArray(x?.data)?x.data:[];
+function message(t){$('message').textContent=t;$('message').classList.remove('hidden')}
+function theme(){const dark=document.documentElement.classList.toggle('dark');localStorage.setItem('lama_theme',dark?'dark':'light');$('themeBtn').textContent=dark?'☀ Light':'☾ Dark'}
+function initTheme(){if((localStorage.getItem('lama_theme')||'dark')==='dark')document.documentElement.classList.add('dark');$('themeBtn').textContent=document.documentElement.classList.contains('dark')?'☀ Light':'☾ Dark'}
+function assertAPI(){if(typeof LamaAPI==='undefined'||!['list','add','update','remove'].every(k=>typeof LamaAPI[k]==='function'))throw Error('LamaAPI is unavailable. Check ../js/api-client.js and login.')}
+async function initHeader(){try{school=await LamaAPI.getActiveSchool()||{};const name=school.name||school.schoolName||'Lama School';$('brandTitle').textContent=name;$('pageTitle').textContent=name+' — Activities & Events';const box=$('schoolLogo');box.textContent=school.shortCode||'SCH';if(school.logo){const img=document.createElement('img');img.src=school.logo;img.alt='School logo';img.className='w-full h-full object-contain';img.onerror=()=>img.remove();box.appendChild(img)}}catch(e){message('Could not load school profile: '+e.message)}}
+function resetForm(){if(dirty&&!confirm('Discard unsaved changes?'))return;$('form').reset();$('editId').value='';$('formHeading').textContent='Create activity';dirty=false;imagePreview()}
+function editRecord(key){const x=rows.find(r=>id(r)===key);if(!x)return;if(dirty&&!confirm('Discard unsaved changes?'))return;$('editId').value=key;FIELDS.forEach(k=>$(k).value=x[k]??'');$('isPublished').checked=pub(x);$('formHeading').textContent='Edit activity';dirty=false;imagePreview();window.scrollTo({top:0,behavior:'smooth'})}
+function imagePreview(){const url=$('photo').value.trim();$('imageBox').classList.toggle('hidden',!url);if(url)$('imagePreview').src=url}
+function visibleRows(){const q=$('search').value.trim().toLowerCase(),st=$('statusFilter').value,cat=$('categoryFilter').value;return rows.filter(x=>(st==='all'||(st==='published')===pub(x))&&(cat==='all'||x.type===cat)&&(!q||[x.title,x.description,x.venue,x.type].some(v=>String(v||'').toLowerCase().includes(q)))).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))}
+function render(){const today=new Date().toISOString().slice(0,10);$('statAll').textContent=rows.length;$('statPub').textContent=rows.filter(pub).length;$('statDraft').textContent=rows.filter(x=>!pub(x)).length;$('statUpcoming').textContent=rows.filter(x=>pub(x)&&x.date>=today).length;const cat=$('categoryFilter').value;const cats=[...new Set(rows.map(x=>x.type).filter(Boolean))].sort();$('categoryFilter').innerHTML='<option value="all">All categories</option>'+cats.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');if(cats.includes(cat))$('categoryFilter').value=cat;renderList()}
+function renderList(){const r=visibleRows();$('list').innerHTML=r.length?r.map(x=>`<article class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4"><div class="flex flex-col sm:flex-row gap-3">${x.photo?`<img src="${esc(x.photo)}" loading="lazy" alt="Event photo" class="w-full sm:w-32 h-28 rounded-xl object-cover" onerror="this.style.display='none'">`:''}<div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><span class="badge ${pub(x)?'pub':'draft'}">${pub(x)?'PUBLISHED':'DRAFT'}</span><span class="text-xs muted">${esc(x.type||'Event')}</span></div><h3 class="font-black mt-2">${esc(x.title||'Untitled')}</h3><p class="text-xs muted mt-1">${esc(x.date||'Date TBA')} ${x.time?' · '+esc(x.time):''} ${x.venue?' · '+esc(x.venue):''}</p><p class="text-sm muted mt-2 whitespace-pre-wrap">${esc(x.description||'')}</p>${x.link?`<a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer" class="text-xs text-sky-500 underline mt-2 inline-block">Details link ↗</a>`:''}</div></div><div class="no-print flex flex-wrap gap-2 mt-3 border-t border-slate-200 dark:border-slate-700 pt-3"><button class="btn" data-action="edit" data-id="${esc(id(x))}">Edit</button><button class="btn ${pub(x)?'red':'green'}" data-action="publish" data-id="${esc(id(x))}">${pub(x)?'Unpublish':'Publish'}</button><button class="btn red" data-action="delete" data-id="${esc(id(x))}">Delete</button></div></article>`).join(''):'<p class="muted text-center p-8 text-sm">No matching activities.</p>'}
+async function syncBoard(){try{localStorage.setItem('lama_main_dashboard_activities',JSON.stringify(rows.filter(pub)))}catch(e){console.warn('Local School Board cache unavailable',e)}}
+async function load(){if(loading)return;loading=true;try{assertAPI();rows=norm(await LamaAPI.list(COLLECTION));render();await syncBoard()}catch(e){message('Could not load activities: '+e.message);$('list').textContent='Load failed: '+e.message}finally{loading=false}}
+async function action(key,kind){const x=rows.find(r=>id(r)===key);if(!x)return;try{assertAPI();if(kind==='edit')return editRecord(key);if(kind==='delete'){if(!confirm('Permanently delete this activity?'))return;const res=await LamaAPI.remove(COLLECTION,key);if(res===false||res?.success===false)throw Error('Server rejected deletion');message('Activity deleted.')}else if(kind==='publish'){const p=!pub(x);const res=await LamaAPI.update(COLLECTION,key,{isPublished:p,published:p,status:p?'published':'draft',updatedAt:new Date().toISOString()});if(res===false||res?.success===false)throw Error('Server rejected status change');message(p?'Activity published.':'Activity unpublished.')}await load()}catch(e){message('Action failed: '+e.message)}}
+$('form').addEventListener('submit',async e=>{e.preventDefault();const b=$('saveBtn');b.disabled=true;b.textContent='Saving...';try{assertAPI();const r={};FIELDS.forEach(k=>r[k]=$(k).value.trim());if(!r.title)throw Error('Title is required');const p=$('isPublished').checked;Object.assign(r,{isPublished:p,published:p,status:p?'published':'draft',updatedAt:new Date().toISOString()});const key=$('editId').value;const res=key?await LamaAPI.update(COLLECTION,key,r):await LamaAPI.add(COLLECTION,{...r,createdAt:new Date().toISOString()});if(res===false||res?.success===false)throw Error(res?.message||'Server rejected save');dirty=false;$('form').reset();$('editId').value='';$('formHeading').textContent='Create activity';imagePreview();await load();message(p?'Activity saved as published.':'Activity saved as draft.')}catch(e){message('Save failed: '+e.message)}finally{b.disabled=false;b.textContent='Save activity'}});
+$('list').onclick=e=>{const b=e.target.closest('button[data-action]');if(b)action(b.dataset.id,b.dataset.action)};
+$('form').addEventListener('input',()=>dirty=true);$('photo').addEventListener('input',imagePreview);$('clearBtn').onclick=resetForm;$('resetBtn').onclick=resetForm;$('refresh').onclick=load;['search','statusFilter','categoryFilter'].forEach(k=>$(k).addEventListener('input',renderList));
+$('themeBtn').onclick=theme;$('logoutBtn').onclick=()=>{LamaAPI.logout();location.href='../login.html'};$('print').onclick=()=>window.print();
+$('export').onclick=()=>{const header=['Title','Category','Date','Time','Venue','Description','Photo URL','Details URL','Status'];const data=[header,...visibleRows().map(x=>[x.title,x.type,x.date,x.time,x.venue,x.description,x.photo,x.link,pub(x)?'Published':'Draft'])];const csv='\ufeff'+data.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Lama_Activities.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+(async()=>{initTheme();try{assertAPI();if(typeof LamaAPI.requireLogin==='function'&&!LamaAPI.requireLogin('school','../login.html'))return;await initHeader();await load()}catch(e){message(e.message)}})();
+</script></body></html>

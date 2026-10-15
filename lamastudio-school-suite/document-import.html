@@ -52,7 +52,7 @@ const norm=s=>String(s??'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let rows=[],kind='students',objectUrl=null,busy=false;
 function status(message,error=false){$('status').textContent=message;$('status').className='notice mt-3 '+(error?'error':'');}
-function setKind(){kind=$('kind').value;rows=[];render();$('manageLink').href=kind==='teachers'?'manage-teachers.html':'students/manage-students.html';$('manageLink').textContent=kind==='teachers'?'Open Teacher Management':'Open Student Management';status('Selected '+kind+'. Choose a document, or add a record manually.');}
+function setKind(){kind=$('kind').value;rows=[];render();$('manageLink').href=kind==='teachers'?'staff/manage-teachers.html':'students/manage-students.html';$('manageLink').textContent=kind==='teachers'?'Open Teacher Management':'Open Student Management';status('Selected '+kind+'. Choose a document, or add a record manually.');}
 function fieldFor(key){return F[kind].find(f=>[norm(f),...(ALIAS[f]||[])].includes(norm(key)))||null;}
 function fromMatrix(matrix){matrix=matrix.filter(row=>row.some(x=>String(x??'').trim()));if(!matrix.length)return[];
 const heads=matrix[0].map(x=>fieldFor(x));const header=heads.filter(Boolean).length>=2;return matrix.slice(header?1:0).map(row=>{const r={};F[kind].forEach((f,i)=>{const j=header?heads.indexOf(f):i;r[f]=j<0?'':String(row[j]??'').trim()});return r});}

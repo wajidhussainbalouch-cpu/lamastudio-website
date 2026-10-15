@@ -102,28 +102,6 @@
     </div>
 
     <script>
-        if (typeof window.LamaAPI === 'undefined') {
-            window.LamaAPI = {
-                logout: function() { localStorage.clear(); },
-                requireLogin: function() { return true; },
-                deriveShortCode: function(name) { return (name || 'SCH').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase(); },
-                getActiveSchool: async function() { return JSON.parse(localStorage.getItem('lama_active_school') || '{}'); },
-                list: async function(key) { return JSON.parse(localStorage.getItem('lama_' + key) || '[]'); },
-                add: async function(key, item) {
-                    const list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                    item.id = 'notif_' + Date.now() + Math.random().toString(36).substr(2, 4);
-                    list.push(item);
-                    localStorage.setItem('lama_' + key, JSON.stringify(list));
-                    return item;
-                },
-                remove: async function(key, id) {
-                    let list = JSON.parse(localStorage.getItem('lama_' + key) || '[]');
-                    list = list.filter(i => i.id !== id);
-                    localStorage.setItem('lama_' + key, JSON.stringify(list));
-                }
-            };
-        }
-
         function handleLogout() {
             LamaAPI.logout();
             window.location.href = '../login.html';
@@ -164,7 +142,7 @@
                 const allNotifs = await LamaAPI.list(NOTIFICATIONS);
                 // Save formatted list so main dashboard can directly consume it
                 localStorage.setItem('lama_main_dashboard_notices', JSON.stringify(allNotifs));
-                
+
                 // Also trigger storage event for cross-tab sync if needed
                 window.dispatchEvent(new Event('storage'));
             } catch (err) {
@@ -312,8 +290,22 @@
             await renderFeed();
         }
 
-        if (typeof LamaAPI.requireLogin === 'function' ? LamaAPI.requireLogin('school', '../login.html') : true) {
+        function failClosed(message) {
+            const notice = document.createElement('div');
+            notice.className = 'max-w-3xl w-full mb-4 rounded-xl border border-rose-500/40 bg-rose-950/50 p-4 text-sm text-rose-200';
+            notice.setAttribute('role', 'alert');
+            notice.textContent = message;
+            document.querySelector('header').after(notice);
+            document.querySelectorAll('button').forEach(button => { button.disabled = true; });
+        }
+
+        const requiredApiMethods = ['requireLogin', 'getActiveSchool', 'deriveShortCode', 'list', 'add', 'remove', 'logout'];
+        if (typeof LamaAPI === 'undefined' || requiredApiMethods.some(method => typeof LamaAPI[method] !== 'function')) {
+            failClosed('Notifications are unavailable because the LamaAPI client did not load. Sign in again or contact the administrator.');
+        } else if (LamaAPI.requireLogin('school', '../login.html')) {
             init();
+        } else {
+            failClosed('School administrator sign-in is required to manage notifications.');
         }
     </script>
 </body>

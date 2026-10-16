@@ -522,11 +522,35 @@ header#topOverview{background:var(--lama-header)!important}
 
         
 function normalizeAttendanceDate(value){
- if(value instanceof Date&&!isNaN(value))return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
- const x=String(value??'').trim();
- const iso=x.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return iso[0];
- const dmy=x.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(dmy)return dmy[3]+'-'+dmy[2].padStart(2,'0')+'-'+dmy[1].padStart(2,'0');
- return '';
+  if(value == null || value === '') return '';
+
+  const format = d =>
+    d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+
+  if(value instanceof Date)
+    return isNaN(value.getTime()) ? '' : format(value);
+
+  const x = String(value).trim();
+
+  // Date-only values represent a school calendar date.
+  if(/^\d{4}-\d{2}-\d{2}$/.test(x))
+    return x;
+
+  // UTC timestamps must be converted to local calendar dates.
+  if(/^\d{4}-\d{2}-\d{2}T/.test(x)){
+    const d = new Date(x);
+    return isNaN(d.getTime()) ? '' : format(d);
+  }
+
+  const dmy = x.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if(dmy)
+    return dmy[3] + '-' +
+      dmy[2].padStart(2,'0') + '-' +
+      dmy[1].padStart(2,'0');
+
+  return '';
 }
 function renderTeacherAttendanceAnalytics(teachers,records){
  const today=localISODate(), byDate=new Map();

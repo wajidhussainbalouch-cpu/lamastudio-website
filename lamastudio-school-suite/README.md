@@ -17,9 +17,13 @@ and each school's own private Google Sheet.
    access **Anyone** → Deploy. Copy the URL ending in `/exec`.
 5. Open `js/api-client.js`, find `const API_URL = '...'` near the top, and
    replace the placeholder with that URL.
-6. Upload everything else in this folder to your web host, **keeping this
-   exact folder structure** — `assets/`, `js/`, `portals/` all need to stay
-   where they are relative to the root pages.
+6. Upload everything else in this folder to your web host, keeping the
+  directory structure: shared `assets/` and `js/` stay at the suite root,
+  student workflows live in `students/`, academic pages live in `academics/`,
+  examination pages live in `exams/`, Communications pages live in
+  `communications/`, Attendance pages live in `attendance/`, Staff pages live
+  in `staff/`, Finance pages live in `finance/`, and role-specific pages stay
+  in `portals/`.
 
 To update the backend later: Apps Script → Deploy → Manage deployments →
 pencil icon → New version → Deploy. This keeps the same URL, so you never
@@ -50,19 +54,26 @@ need to touch `api-client.js` again after the first setup.
 | `dashboard.html` | School Admin | Main control center — live stats, quick links |
 | `main-dashboard.html` | All three roles | Shared "School Board" — notices, activities, exams, tests, resources. No fees/HR data ever shown here |
 | `admissions.html` | School Admin | Printable official admission form — now actually saves to the student database |
-| `manage-students.html` | School Admin | Full roster: add/edit/delete any student |
-| `manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
-| `result-card.html` | School Admin | Official result card generator, per student |
-| `report-card.html` | School Admin | Behavioral/teacher evaluation report |
-| `date-sheet.html` | School Admin | Exam schedule |
-| `tests.html` | School Admin | Class tests & quizzes schedule |
-| `notifications.html` | School Admin | Parent circulars/broadcasts |
-| `activities.html` | School Admin | Sports/extracurricular/plantation feed (shown on School Board) |
-| `resources.html` | School Admin | Free-category resources — syllabus, books, uniform, exam prep links, etc. (shown on School Board) |
-| `fees.html` | School Admin | Fee records per student |
-| `teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
-| `promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
-| `import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |
+| `students/manage-students.html` | School Admin | Full roster: add/edit/delete any student |
+| `students/manage-students-enhanced.html` | School Admin | Alternate roster with historical results and bulk tools |
+| `students/student-login.html` | Student / Parent | Student portal login |
+| `attendance/student-attendance.html` | School Admin | Daily student attendance register |
+| `staff/manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
+| `staff/meet-the-teachers.html` | Public / School | School-scoped faculty showcase, print and share |
+| `exams/result-card.html` | School Admin | Official result card generator, per student |
+| `academics/report-card.html` | School Admin | Behavioral/teacher evaluation report |
+| `exams/date-sheet.html` | School Admin | Exam schedule |
+| `exams/tests.html` | School Admin | Class tests & quizzes schedule |
+| `communications/notifications.html` | School Admin | Parent circulars/broadcasts |
+| `communications/activities.html` | School Admin | Sports/extracurricular/plantation feed (shown on School Board) |
+| `academics/resources.html` | School Admin | Free-category resources — syllabus, books, uniform, exam prep links, etc. (shown on School Board) |
+| `finance/fees.html` | School Admin | Fee records per student |
+| `finance/finance-center.html` | School Admin | Income, expenses, and daily finance ledger |
+| `finance/finance-import.html` | School Admin | Import and review finance documents and bank statements |
+| `finance/print-studio.html` | School Admin | Print fee records |
+| `attendance/teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
+| `students/promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
+| `students/import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |
 | `settings.html` | School Admin | Edit school profile, logo, cover photo |
 | `portals/teacher/index.html` | Teacher | Attendance, homework, marks, absentee alerts, promotions — own class only |
 | `portals/student/index.html` | Student/Parent | Own result, homework, attendance, notices |
@@ -100,10 +111,10 @@ need to touch `api-client.js` again after the first setup.
   browser's own back button, is exactly what made navigation feel like it
   randomly dumped you back at the homepage after several clicks. All 15
   admin pages are consistent now.
-- **`import-students.html` is now actually linked** — there's a "📤 Bulk
-  Import" button right in `manage-students.html`'s header, plus a card on
+- **`students/import-students.html` is now actually linked** — there's a "📤 Bulk
+  Import" button right in `students/manage-students.html`'s header, plus a card on
   the main dashboard. It had zero navigation entry points before this.
-- **`promote-students.html` confirmed present** in this package — it
+- **`students/promote-students.html` confirmed present** in this package — it
   wasn't on the live site before because it was never actually uploaded,
   not because of a code issue.
 

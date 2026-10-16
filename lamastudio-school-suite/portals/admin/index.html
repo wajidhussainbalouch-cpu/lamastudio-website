@@ -21,31 +21,12 @@
 </head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
 
-    <!-- SECURE ADMIN LOGIN MODAL -->
-    <div id="adminLoginModal" class="fixed inset-0 z-50 bg-[#0b0f19]/95 backdrop-blur-2xl flex items-center justify-center p-4">
-        <div class="cyber-card max-w-md w-full rounded-3xl p-8 border border-amber-500/30 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-3 text-amber-400 text-xl font-black">⚙️</div>
-                <h2 class="text-xl font-black text-white">Admin Master Authentication</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your school security passcodes or bypass for local testing.</p>
-            </div>
-            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-slate-400">Administrator Handle</label>
-                    <input type="text" id="adminUser" required value="admin@lamastudio.pk" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase font-bold text-slate-400">Master Security Key</label>
-                    <input type="password" id="adminPass" required value="12345" class="w-full mt-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-slate-950 font-black py-3 rounded-xl text-xs transition shadow-lg shadow-amber-600/30 mt-2 cursor-pointer">
-                    Authorize Master Command
-                </button>
-            </form>
-            <div class="mt-4 flex justify-between items-center text-[11px]">
-                <button onclick="goToDashboard()" class="text-slate-400 hover:text-amber-400 transition">&larr; Return to Home</button>
-                <button onclick="bypassLogin()" class="text-amber-400 hover:underline font-bold">Quick Bypass &rarr;</button>
-            </div>
+    <!-- Fail-closed school administrator access gate. Authentication is handled by LamaAPI. -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 bg-[#0b0f19] flex items-center justify-center p-4">
+        <div class="cyber-card max-w-md w-full rounded-3xl p-8 text-center">
+            <h2 class="text-xl font-black text-white">School Administrator Access</h2>
+            <p id="adminAccessMessage" class="text-sm text-slate-300 mt-3">Checking your school session…</p>
+            <a href="../../login.html" class="inline-block mt-5 bg-amber-500 text-slate-950 font-bold px-5 py-3 rounded-xl">Sign in to your school</a>
         </div>
     </div>
 
@@ -205,93 +186,82 @@
         <p>&copy; 2026 lamastudio.pk • Admin Master Telemetry Command</p>
     </footer>
 
-    <!-- Scripts Integration -->
-    <script src="../../js/school-store.js"></script>
+    <!-- Existing authenticated school API, not the missing legacy SchoolStore. -->
+    <script src="../../js/api-client.js"></script>
     <script>
-        window.onload = function() {
-            const isAdminLoggedIn = localStorage.getItem('adminLoggedIn');
-            if (isAdminLoggedIn === 'true') {
-                document.getElementById('adminLoginModal').style.display = 'none';
+        let activeSchool = null;
+        window.addEventListener('DOMContentLoaded', async () => {
+            const api = typeof LamaAPI !== 'undefined' ? LamaAPI : null;
+            const message = document.getElementById('adminAccessMessage');
+            if (!api || typeof api.requireLogin !== 'function' ||
+                typeof api.getSession !== 'function' || typeof api.getActiveSchool !== 'function') {
+                message.textContent = 'School API unavailable. Please sign in when the service is restored.';
+                return;
             }
-            loadActiveSchoolData();
-        };
+            if (!api.requireLogin('school', '../../login.html')) return;
+            const session = api.getSession('school');
+            if (!session || !session.schoolId) {
+                message.textContent = 'A valid school administrator session is required.';
+                return;
+            }
+            try {
+                const school = await api.getActiveSchool();
+                if (!school || String(school.schoolId || school.id || session.schoolId) !== String(session.schoolId)) {
+                    throw Error('School profile does not match the signed-in school.');
+                }
+                activeSchool = school;
+                loadActiveSchoolData();
+                document.getElementById('adminLoginModal').style.display = 'none';
+            } catch (err) {
+                console.error('School portal initialization failed:', err);
+                message.textContent = 'Unable to verify school profile. Please try again later.';
+            }
+        });
 
         function loadActiveSchoolData() {
-            if (typeof SchoolStore === 'undefined') return;
-            
-            const activeSchool = SchoolStore.getActive();
             if (!activeSchool) return;
-
-            // Populate Top Title & Badge with ONLY this school's data
-            document.getElementById('navSchoolTitle').textContent = `ADMIN COMMAND — ${activeSchool.name.toUpperCase()}`;
+            const name = String(activeSchool.name || activeSchool.schoolName || 'School');
+            document.getElementById('navSchoolTitle').textContent = `ADMIN COMMAND — ${name.toUpperCase()}`;
             document.getElementById('activeSchoolBadge').textContent = activeSchool.district ? `District: ${activeSchool.district}` : 'Active School';
-            document.getElementById('displaySchoolName').textContent = activeSchool.name;
-            
-            // Populate Metadata line
+            document.getElementById('displaySchoolName').textContent = name;
             const district = activeSchool.district || 'Not Specified';
-            const principal = activeSchool.principal || activeSchool.principalName || 'Admin';
-            const level = activeSchool.level || 'High';
+            const principal = activeSchool.principal || activeSchool.principalName || 'Not Specified';
+            const level = activeSchool.level || 'Not Specified';
             document.getElementById('displaySchoolMeta').textContent = `District: ${district} • Principal: ${principal} • Level: ${level}`;
-
-            // Populate Quick Stats
             if (activeSchool.enrollment || activeSchool.totalStrength) {
                 document.getElementById('adminTotalStudents').textContent = `${activeSchool.enrollment || activeSchool.totalStrength} ➔`;
             }
             if (activeSchool.package) {
-                document.getElementById('displayPackageTier').textContent = activeSchool.package.split('(')[0];
+                document.getElementById('displayPackageTier').textContent = String(activeSchool.package).split('(')[0];
                 document.getElementById('displayActivePackage').textContent = activeSchool.package;
             }
-            if (activeSchool.idPattern) {
-                document.getElementById('idPatternDisplay').textContent = `ID Pattern: ${activeSchool.idPattern}`;
-            }
-
-            // Render Logo if present
+            if (activeSchool.idPattern) document.getElementById('idPatternDisplay').textContent = `ID Pattern: ${activeSchool.idPattern}`;
             if (activeSchool.logo) {
-                document.getElementById('schoolLogoContainer').innerHTML = `<img src="${activeSchool.logo}" alt="Logo" class="w-full h-full object-cover rounded-2xl">`;
+                const image = document.createElement('img');
+                image.src = activeSchool.logo;
+                image.alt = 'School logo';
+                image.className = 'w-full h-full object-cover rounded-2xl';
+                document.getElementById('schoolLogoContainer').replaceChildren(image);
             }
-
-            // Check Verification Status for this specific school
-            if (activeSchool.verificationStatus && activeSchool.verificationStatus.includes('Pending')) {
-                document.getElementById('receiptVerificationBox').classList.remove('hidden');
-                document.getElementById('verificationBadge').textContent = 'Pending Fee Verification';
-                document.getElementById('verificationBadge').className = 'text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 px-3 py-1 rounded-full border border-amber-500/20';
-            } else {
-                document.getElementById('receiptVerificationBox').classList.add('hidden');
-                document.getElementById('verificationBadge').textContent = 'Verified Active';
-                document.getElementById('verificationBadge').className = 'text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20';
-            }
+            const pending = String(activeSchool.verificationStatus || '').toLowerCase().includes('pending');
+            document.getElementById('receiptVerificationBox').classList.toggle('hidden', !pending);
+            document.getElementById('verificationBadge').textContent = pending ? 'Pending Fee Verification' : 'Verification status unavailable';
         }
 
         function viewReceiptModal() {
-            const activeSchool = SchoolStore.getActive();
-            if (activeSchool && activeSchool.receiptPic) {
-                const win = window.open();
-                win.document.write(`<iframe src="${activeSchool.receiptPic}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
-            } else {
-                alert('No receipt image found in active school record.');
-            }
-        }
-
-        function handleAdminLogin(event) {
-            event.preventDefault();
-            localStorage.setItem('adminLoggedIn', 'true');
-            document.getElementById('adminLoginModal').style.display = 'none';
-            alert('Admin authentication verified!');
-        }
-
-        function bypassLogin() {
-            localStorage.setItem('adminLoggedIn', 'true');
-            document.getElementById('adminLoginModal').style.display = 'none';
+            if (!activeSchool) return;
+            if (!activeSchool.receiptPic) return alert('No receipt image found in active school record.');
+            const url = String(activeSchool.receiptPic);
+            if (!/^https:\/\//i.test(url)) return alert('Receipt URL is invalid.');
+            window.open(url, '_blank', 'noopener,noreferrer');
         }
 
         function logoutAdmin() {
-            localStorage.removeItem('adminLoggedIn');
-            location.reload();
+            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.logout === 'function') LamaAPI.logout('school');
+            window.location.replace('../../login.html');
         }
 
-        function goToDashboard() {
-            window.location.href = '../../index.html';
-        }
+        function goToDashboard() { window.location.href = '../../index.html'; }
     </script>
 </body>
 </html>

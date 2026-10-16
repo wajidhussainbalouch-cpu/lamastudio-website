@@ -492,6 +492,10 @@ function isPublished(item){
     return false;
 }
 
+function isSchoolWideNotice(item){
+    return String(item?.audience ?? '').trim().toLowerCase() === 'all classes';
+}
+
 function publishedOnly(value){
     return Array.isArray(value) ? value.filter(isPublished) : [];
 }
@@ -500,7 +504,7 @@ function publishedOnly(value){
 function sameSchool(item, id) {
     if (!id) return false;
     const recordId = item.schoolId || item.school_id || item.school?.id;
-    return !recordId || !id || String(recordId) === String(id); // Per-school private sheets have no schoolId field
+    return !recordId || String(recordId) === String(id); // Per-school private sheets have no schoolId field
 }
 async function resolveSchool(data) {
     let active = {};
@@ -510,7 +514,6 @@ async function resolveSchool(data) {
     return { id:String(id), name:active.name || active.schoolName || data.schoolName, logo:active.logo || active.schoolLogo || data.logo };
 }
 async function loadPublishedCollection(names, summary, schoolId) {
-    // A missing client-side school ID must not suppress the authenticated backend summary.
     for (const name of names) {
         try {
             const rows = await LamaAPI.list(name);
@@ -520,7 +523,7 @@ async function loadPublishedCollection(names, summary, schoolId) {
             }
         } catch (e) { console.warn(`Collection ${name} unavailable`, e); }
     }
-    return Array.isArray(summary) ? summary.filter(x => (!schoolId || sameSchool(x,schoolId)) && isPublished(x)) : [];
+    return Array.isArray(summary) ? summary.filter(x => sameSchool(x,schoolId) && isPublished(x)) : [];
 }
 function normalizeExamRows(records) {
     const rows = [];
@@ -571,22 +574,9 @@ async function render(){
     const rawTests = await loadPublishedCollection(['tests'], data.upcomingTests, schoolId);
     const rawExams = await loadPublishedCollection(['datesheet'], data.upcomingExams, schoolId);
 
-    // 3. Fetch Notices & Activities
-    let rawNotices = data.recentNotifications;
-    if (!rawNotices || rawNotices.length === 0) {
-        try { 
-            rawNotices = JSON.parse(
-                localStorage.getItem('lama_notifications') || 
-                localStorage.getItem('lama_main_dashboard_notices') || 
-                '[]'
-            ); 
-        } catch(e) {}
-    }
-
-    let rawActivities = data.recentActivities;
-    if (!rawActivities || rawActivities.length === 0) {
-        try { rawActivities = JSON.parse(localStorage.getItem('lama_activities') || '[]'); } catch(e) {}
-    }
+    // Public communications come only from this authenticated school's API response.
+    const rawNotices = Array.isArray(data.recentNotifications) ? data.recentNotifications : [];
+    const rawActivities = Array.isArray(data.recentActivities) ? data.recentActivities : [];
 
     const schoolName = school.name || data.schoolName || 'Lama School';
 
@@ -609,8 +599,8 @@ async function render(){
         }
     }
 
-    const notices = (rawNotices || []).filter(n => n && (isPublished(n) || n.title));
-    const activities = (rawActivities || []).filter(a => a && (isPublished(a) || a.title));
+    const notices = rawNotices.filter(n => n && isPublished(n) && sameSchool(n, schoolId) && isSchoolWideNotice(n));
+    const activities = rawActivities.filter(a => a && isPublished(a) && sameSchool(a, schoolId));
     
     // Display all saved exams and tests immediately without strict publication filters
     const exams = normalizeExamRows(rawExams || []);
@@ -698,5 +688,5 @@ async function render(){
 
 render();
 </script>
-<section id="facultyShowcase" class="hidden" style="max-width:1180px;margin:22px auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:20px"><h2 style="font-size:24px;font-weight:800">Meet Our Teachers</h2><div id="facultyShowcaseList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px"></div><a id="facultyShowcaseLink" style="color:#22d3ee;font-weight:800" href="meet-the-teachers.html">View all faculty →</a></section><script>(async()=>{try{let id='';for(let i=0;i<12&&!id;i++){id=window.currentSchoolId||LamaAPI.getSession('school')?.schoolId||'';if(!id)await new Promise(r=>setTimeout(r,250))}if(!id)return;const res=await fetch(API_URL+'?action=getPublicFaculty&schoolId='+encodeURIComponent(id));const d=await res.json();const data=d.data||{};if(d.status!=='success'||!data.enabled||!data.teachers?.length)return;const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));document.getElementById('facultyShowcaseList').innerHTML=data.teachers.slice(0,6).map(t=>'<article style="background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center">'+(t.photo&&/^data:image\/jpeg;base64,/.test(t.photo)?'<img alt="Teacher photo" style="height:130px;width:110px;object-fit:cover;border-radius:10px;margin:auto" src="'+esc(t.photo)+'">':'<div style="height:130px;display:grid;place-items:center">👩‍🏫</div>')+'<h3 style="font-weight:800">'+esc(t.name)+'</h3><p>'+esc(t.designation||'Teacher')+'</p><small>Lamastudio.pk</small></article>').join('');document.getElementById('facultyShowcaseLink').href='meet-the-teachers.html?schoolId='+encodeURIComponent(id);document.getElementById('facultyShowcase').classList.remove('hidden')}catch(e){console.warn('Faculty not available',e)}})();</script></body>
+<section id="facultyShowcase" class="hidden" style="max-width:1180px;margin:22px auto;padding:20px;background:var(--card);border:1px solid var(--line);border-radius:20px"><h2 style="font-size:24px;font-weight:800">Meet Our Teachers</h2><div id="facultyShowcaseList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px"></div><a id="facultyShowcaseLink" style="color:#22d3ee;font-weight:800" href="staff/meet-the-teachers.html">View all faculty →</a></section><script>(async()=>{try{let id='';for(let i=0;i<12&&!id;i++){id=window.currentSchoolId||LamaAPI.getSession('school')?.schoolId||'';if(!id)await new Promise(r=>setTimeout(r,250))}if(!id)return;const res=await fetch(API_URL+'?action=getPublicFaculty&schoolId='+encodeURIComponent(id));const d=await res.json();const data=d.data||{};if(d.status!=='success'||!data.enabled||!data.teachers?.length)return;const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));document.getElementById('facultyShowcaseList').innerHTML=data.teachers.slice(0,6).map(t=>'<article style="background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center">'+(t.photo&&/^data:image\/jpeg;base64,/.test(t.photo)?'<img alt="Teacher photo" style="height:130px;width:110px;object-fit:cover;border-radius:10px;margin:auto" src="'+esc(t.photo)+'">':'<div style="height:130px;display:grid;place-items:center">👩‍🏫</div>')+'<h3 style="font-weight:800">'+esc(t.name)+'</h3><p>'+esc(t.designation||'Teacher')+'</p><small>Lamastudio.pk</small></article>').join('');document.getElementById('facultyShowcaseLink').href='staff/meet-the-teachers.html?schoolId='+encodeURIComponent(id);document.getElementById('facultyShowcase').classList.remove('hidden')}catch(e){console.warn('Faculty not available',e)}})();</script></body>
 </html>

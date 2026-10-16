@@ -482,7 +482,7 @@ header#topOverview{background:var(--lama-header)!important}
             document.getElementById('totalStudentsCount').innerText=stats.totalStudents??'—';
             document.getElementById('absentTodayCount').innerText=`${stats.absentToday??0} absent today`;
             document.getElementById('attendanceRatioDisplay').innerText=stats.attendanceRatio!=null?`${stats.attendanceRatio}%`:'—';
-            document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
+            /* Collection headlines are populated from the saved fee records in renderFinanceR4(). */
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
             const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
@@ -496,7 +496,7 @@ header#topOverview{background:var(--lama-header)!important}
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
           const current=new Map();
           attendance.forEach(a=>{
-            if(String(a.date||'').slice(0,10)!==today)return;
+            if(normalizeAttendanceDate(a.date)!==today)return;
             const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
             const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
             if(!student)return; // exclude staff and unrelated records
@@ -510,7 +510,11 @@ header#topOverview{background:var(--lama-header)!important}
           const set=(key,value)=>document.getElementById(key).textContent=value;
           set('studentAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
           set('studentAttEnrolled',total.toLocaleString());set('studentAttPresent',counts.present);set('studentAttAbsent',counts.absent);set('studentAttLeave',counts.leave);set('studentAttUnmarked',unmarked);
-          set('studentAttRate',rate===null?'—':rate+'%');set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
+          set('studentAttRate',rate===null?'—':rate+'%');
+          document.getElementById('attendanceRatioDisplay').textContent =
+            rate===null?'—':rate+'%';
+          document.getElementById('absentTodayCount').textContent =
+            counts.absent+' absent today';set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>`<div class="class-att-row"><span class="text-xs font-bold truncate">${esc(name)}</span><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span></div>`).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
@@ -649,7 +653,7 @@ function renderFinanceR4(d){
     const e=expenses.filter(inPeriod),i=income.filter(inPeriod),expSum=e.reduce((a,x)=>a+otherAmount(x),0),incSum=i.reduce((a,x)=>a+otherAmount(x),0);
     const dateToday=new Date().toDateString();const today=paidFees.filter(f=>date(f)?.toDateString()===dateToday).reduce((a,f)=>a+feeAmount(f),0);
     const m=paidFees.filter(f=>key(f)===thisMonth).reduce((a,f)=>a+feeAmount(f),0),y=paidFees.filter(f=>key(f)?.startsWith(thisYear)).reduce((a,f)=>a+feeAmount(f),0);
-    [['financeToday',today],['financeMonth',m],['financeYear',y],['finOtherIncome',incSum],['finExpenses',expSum],['finNet',paidSum+incSum-expSum]].forEach(([id,v])=>document.getElementById(id).textContent=money(v));
+    [['todayCollectionDisplay',today],['monthCollectionDisplay',m],['yearCollectionDisplay',y],['financeToday',today],['financeMonth',m],['financeYear',y],['finOtherIncome',incSum],['finExpenses',expSum],['finNet',paidSum+incSum-expSum]].forEach(([id,v])=>document.getElementById(id).textContent=money(v));
     // R5 read-only indicators; counts are recorded entries, not unique invoices.
     const dueEntries=validFees.filter(f=>['pending','unpaid','overdue','due'].includes(String(f.status??f.paymentStatus??'').toLowerCase()));
     const expenseCats=new Map();e.forEach(x=>{const name=String(x.category||'Uncategorized');expenseCats.set(name,(expenseCats.get(name)||0)+otherAmount(x));});

@@ -3,707 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">Campus Command Hub</title>
+    <title>Admin Master Command | lamastudio.pk</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="assets/css/config.css">
-    <script src="js/api-client.js"></script>
     <style>
-        :root{--neon:#8b5cf6;--cyan:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#fb7185}
-        html{scroll-behavior:smooth}
-        body{background:#050816!important;background-image:radial-gradient(circle at 15% 10%,rgba(99,102,241,.14),transparent 28%),radial-gradient(circle at 85% 25%,rgba(34,211,238,.10),transparent 30%),linear-gradient(180deg,#050816 0%,#080b17 45%,#050816 100%);overflow-x:hidden}
-        .scanline{position:fixed;inset:0;pointer-events:none;z-index:1;background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px);background-size:100% 4px;opacity:.25;mix-blend-mode:screen}
-        .neo-card{background:linear-gradient(145deg,rgba(15,23,42,.88),rgba(7,12,28,.72));border:1px solid rgba(148,163,184,.13);box-shadow:0 18px 60px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.035);backdrop-filter:blur(18px)}
-        .neo-card:hover{border-color:rgba(139,92,246,.34);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 28px rgba(139,92,246,.06)}
-        .metric-card{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(15,23,42,.9),rgba(8,12,26,.8));border:1px solid rgba(148,163,184,.12)}
-        .metric-card:after{content:'';position:absolute;right:-25px;top:-35px;width:90px;height:90px;border-radius:999px;background:var(--glow,rgba(139,92,246,.16));filter:blur(22px)}
-        .data-dot{width:7px;height:7px;border-radius:999px;background:#34d399;box-shadow:0 0 12px #34d399;display:inline-block}
-        .section-kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:#94a3b8}
-        .chart-shell{height:270px;position:relative}
-        .mini-chart{height:220px;position:relative}
-        .engine-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem .75rem;border:1px solid rgba(148,163,184,.1);background:rgba(2,6,23,.38);border-radius:12px}
-        .pulse-ring{box-shadow:0 0 0 0 rgba(52,211,153,.45);animation:pulseRing 2s infinite}
-        @keyframes pulseRing{70%{box-shadow:0 0 0 10px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
-        .command-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
-        .span-8{grid-column:span 8}.span-4{grid-column:span 4}.span-6{grid-column:span 6}.span-12{grid-column:span 12}
-        @media(max-width:900px){.span-8,.span-4,.span-6{grid-column:span 12}}
-        @media(max-width:640px){.chart-shell{height:230px}.mini-chart{height:190px}.command-grid{gap:12px}}
-
-        .module-tile{min-width:0;display:block;position:relative;overflow:hidden}
-        .module-tile b{font-size:18px;line-height:1;display:block}
-        .module-tile p{font-size:11px;font-weight:900;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .module-tile small{display:block;font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .module-tile:after{content:'';position:absolute;width:45px;height:45px;right:-18px;bottom:-18px;border-radius:50%;background:rgba(99,102,241,.10);filter:blur(8px);pointer-events:none}
-        @media(max-width:420px){.module-tile{padding:10px!important}.module-tile b{font-size:16px}.module-tile p{font-size:10px;margin-top:6px}.module-tile small{font-size:8px}}
-
-        /* Theme system */
-        :root{--bg:#050816;--bg2:#080b17;--surface:rgba(15,23,42,.88);--surface2:rgba(7,12,28,.72);--text:#f8fafc;--muted:#94a3b8;--border:rgba(148,163,184,.13);--grid:rgba(148,163,184,.06);--chartText:#cbd5e1}
-        html[data-theme="light"]{--bg:#f4f7fb;--bg2:#eef3f9;--surface:rgba(255,255,255,.90);--surface2:rgba(248,250,252,.92);--text:#0f172a;--muted:#64748b;--border:rgba(100,116,139,.18);--grid:rgba(100,116,139,.10);--chartText:#334155}
-        html[data-theme="light"] body{background:var(--bg)!important;background-image:radial-gradient(circle at 15% 10%,rgba(99,102,241,.10),transparent 28%),radial-gradient(circle at 85% 25%,rgba(34,211,238,.08),transparent 30%),linear-gradient(180deg,#f8fafc 0%,#eef3f9 45%,#f8fafc 100%);color:var(--text)!important}
-        html[data-theme="light"] .scanline{opacity:.08;mix-blend-mode:multiply}
-        html[data-theme="light"] .neo-card,html[data-theme="light"] .metric-card{background:linear-gradient(145deg,var(--surface),var(--surface2));border-color:var(--border);box-shadow:0 14px 40px rgba(15,23,42,.08),inset 0 1px rgba(255,255,255,.8)}
-        html[data-theme="light"] .neo-card:hover{border-color:rgba(99,102,241,.28);box-shadow:0 18px 48px rgba(15,23,42,.12)}
-        html[data-theme="light"] header{background:rgba(248,250,252,.88)!important;border-color:var(--border)!important;box-shadow:0 10px 30px rgba(15,23,42,.07)}
-        html[data-theme="light"] .text-white{color:#0f172a!important}
-        html[data-theme="light"] .text-slate-100{color:#1e293b!important}
-        html[data-theme="light"] .text-slate-200{color:#334155!important}
-        html[data-theme="light"] .text-slate-300{color:#475569!important}
-        html[data-theme="light"] .text-slate-400{color:#64748b!important}
-        html[data-theme="light"] .text-slate-500{color:#64748b!important}
-        html[data-theme="light"] .bg-slate-800{background:#e2e8f0!important;color:#0f172a!important}
-        html[data-theme="light"] .bg-slate-950\/50,html[data-theme="light"] .bg-slate-950\/45{background:rgba(226,232,240,.52)!important}
-        html[data-theme="light"] .border-slate-800{border-color:#dbe3ee!important}
-        html[data-theme="light"] .border-slate-800\/80{border-color:#dbe3ee!important}
-        html[data-theme="light"] .bg-white\/5{background:rgba(15,23,42,.05)!important;color:#0f172a!important}
-        html[data-theme="light"] .bg-white\/10{background:rgba(15,23,42,.08)!important}
-        html[data-theme="light"] .text-cyan-300{color:#0891b2!important}
-        html[data-theme="light"] .text-purple-300{color:#7c3aed!important}
-        html[data-theme="light"] .text-emerald-300{color:#059669!important}
-        html[data-theme="light"] .text-amber-300{color:#d97706!important}
-        html[data-theme="light"] .text-pink-300{color:#db2777!important}
-        html[data-theme="light"] .text-indigo-300{color:#4f46e5!important}
-        .theme-toggle{width:42px;height:42px;border-radius:14px;border:1px solid rgba(148,163,184,.18);display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);transition:.2s;font-size:17px}
-        .theme-toggle:hover{transform:translateY(-1px);box-shadow:0 0 22px rgba(99,102,241,.18)}
-        .theme-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-        @media(max-width:700px){
-          body{font-size:14px}
-          header{padding:10px 12px!important}
-          header>div:first-child{min-width:0}
-          #navSchoolName{max-width:125px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-          header>div:last-child{gap:6px!important}
-          header>div:last-child a:not(.theme-toggle),header>div:last-child button:not(.theme-toggle){font-size:0!important;padding:9px!important;min-width:38px}
-          header>div:last-child a[href="main-dashboard.html"]::first-letter{font-size:16px}
-          .theme-toggle{width:38px;height:38px}
-          main{padding-left:10px!important;padding-right:10px!important;padding-top:12px!important;gap:12px!important}
-          .neo-card{border-radius:20px!important}
-          .command-grid{gap:10px}
-          .chart-shell{height:215px}
-          .mini-chart{height:175px}
-          .metric-card{padding:12px!important}
-          .metric-card .text-2xl{font-size:1.35rem}
-          .metric-card .text-xl{font-size:1rem}
-          footer{padding:14px 10px!important}
+        .cyber-card {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(69, 26, 3, 0.25) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 30px -10px rgba(245, 158, 11, 0.15);
         }
-        @media(max-width:420px){
-          #schoolShortCodeBadge{width:34px;height:34px}
-          #navSchoolName{max-width:95px}
-          .section-kicker{font-size:9px}
-          .chart-shell{height:195px}.mini-chart{height:160px}
-          .grid.grid-cols-2.md\:grid-cols-3.xl\:grid-cols-6{gap:7px}
+        .glow-text-amber {
+            text-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
         }
-
-        /* 2026 professional dashboard polish */
-        :root{--panel-radius:24px}
-        .neo-card{border-radius:var(--panel-radius);transition:border-color .2s ease,box-shadow .2s ease}
-        .metric-card{transition:transform .2s ease,border-color .2s ease}
-        .metric-card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.35)}
-        .module-tile{min-height:104px;display:flex;flex-direction:column;justify-content:center;gap:2px;transition:transform .18s ease,border-color .18s ease,background .18s ease}
-        .module-tile:hover{transform:translateY(-3px);background:rgba(99,102,241,.12)}
-        .module-tile:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid #22d3ee;outline-offset:3px}
-        .module-tile b{font-size:23px;line-height:1.25}
-        .module-tile p{font-size:12px;margin-top:5px;white-space:normal;line-height:1.35}
-        .module-tile small{font-size:10px;white-space:normal;line-height:1.4}
-        .finance-metric{border:1px solid rgba(148,163,184,.14);background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border-radius:17px;padding:16px}
-        .finance-metric strong{font-size:clamp(16px,2vw,22px);letter-spacing:-.03em}
-        .section-heading{font-size:clamp(19px,2vw,25px);letter-spacing:-.035em;line-height:1.2}
-        .section-description{line-height:1.6;max-width:62ch}
-        .section-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;text-decoration:none;transition:background .2s ease,transform .2s ease}
-        .section-link:hover{transform:translateY(-1px)}
-        #incomeChart{max-width:100%}
-        @media(max-width:640px){.module-tile{min-height:92px}.finance-metric{padding:12px}.section-heading{font-size:19px}}
-        @media(prefers-reduced-motion:reduce){.module-tile,.metric-card,.section-link{transition:none!important;transform:none!important}}
-
-        /* Dedicated student attendance command card */
-        .student-attendance-card{border:1px solid rgba(34,211,238,.24);background:linear-gradient(135deg,rgba(8,145,178,.10),rgba(15,23,42,.65));border-radius:24px;padding:22px}
-        .attendance-kpi{border:1px solid var(--border);border-radius:16px;padding:14px;background:rgba(148,163,184,.055)}
-        .attendance-kpi strong{font-size:clamp(20px,3vw,30px);display:block;line-height:1.3}
-        .attendance-track{height:10px;border-radius:99px;overflow:hidden;background:rgba(148,163,184,.20);display:flex}
-        .attendance-track span{height:100%;transition:width .25s}
-        .class-att-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
-        html[data-theme="light"] .student-attendance-card{background:linear-gradient(135deg,#ecfeff,#ffffff);border-color:#a5f3fc}
-        @media(max-width:640px){.student-attendance-card{padding:15px}.attendance-kpi{padding:10px}}
     </style>
-
-<style>
-.hub-nav{position:sticky;top:76px;z-index:20;scrollbar-width:thin}.hub-nav a{flex:0 0 auto;border:1px solid var(--border);padding:9px 13px;border-radius:11px;color:var(--text);font-size:12px;font-weight:800;text-decoration:none;background:rgba(99,102,241,.06)}.hub-nav a:hover{border-color:#22d3ee}
-.hub-section-heading{scroll-margin-top:150px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 4px 4px;border-bottom:1px solid var(--border)}.hub-section-heading h2{font-size:clamp(20px,2.6vw,27px);font-weight:900;letter-spacing:-.04em;color:var(--text)}.hub-section-heading p:not(.section-kicker){font-size:12px;color:var(--muted);margin-top:3px}.hub-section-heading a,.hub-mini-link{display:inline-flex;border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:11px;font-weight:850;color:var(--text);text-decoration:none;background:rgba(99,102,241,.07)}
-.hub-stat{border:1px solid var(--border);background:rgba(99,102,241,.055);border-radius:14px;padding:12px}.hub-stat small{display:block;font-size:10px;color:var(--muted)}.hub-stat b{font-size:24px;font-weight:900;display:block;margin-top:4px}
-@media(max-width:700px){.hub-nav{top:60px}.hub-nav a{padding:8px 10px;font-size:11px}.hub-section-heading{scroll-margin-top:125px}.hub-stat b{font-size:20px}}
-</style><style id="lamaReferenceTheme">
-:root{--lime:#b8d219;--teal:#0e6068;--deepteal:#0a505a;--mint:#168a81;--bg:#f3f7f6;--bg2:#eaf2ef;--surface:#ffffff;--surface2:#f9fcfa;--text:#19383e;--muted:#637f83;--border:#dbe8e4;--grid:#e2ece9;--chartText:#385b5f;--neon:#b8d219;--cyan:#158a88}
-html[data-theme="light"]{--bg:#f3f7f6;--bg2:#eaf2ef;--surface:#fff;--surface2:#f9fcfa;--text:#19383e;--muted:#637f83;--border:#dbe8e4;--grid:#e2ece9;--chartText:#385b5f}
-html[data-theme="dark"]{--bg:#071b20;--bg2:#0b252b;--surface:#102b32;--surface2:#15353a;--text:#ecf7f4;--muted:#9ab9b6;--border:#2b4b4e;--grid:#26474b;--chartText:#d6eae7}
-body,html[data-theme="light"] body{background:var(--bg)!important;background-image:none!important;color:var(--text)!important;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
-html[data-theme="dark"] body{background:var(--bg)!important;background-image:none!important;color:var(--text)!important}
-.scanline,body>div.fixed.pointer-events-none{display:none!important}
-.neo-card,.metric-card,html[data-theme="light"] .neo-card,html[data-theme="light"] .metric-card{background:var(--surface)!important;border:1px solid var(--border)!important;box-shadow:0 9px 28px rgba(10,80,90,.06)!important;backdrop-filter:none;border-radius:17px!important}
-.neo-card:hover,.metric-card:hover{box-shadow:0 14px 34px rgba(10,80,90,.11)!important;border-color:#9fc5bb!important}
-.section-kicker{color:var(--muted);letter-spacing:.095em}
-header,html[data-theme="light"] header{background:linear-gradient(95deg,#bdd20c,#9fc91c)!important;border:0!important;box-shadow:none!important;position:sticky;top:0;z-index:40;min-height:70px}
-header .text-white,html[data-theme="light"] header .text-white,header .text-slate-400,html[data-theme="light"] header .text-slate-400{color:#16494e!important}
-header a,header button:not(.theme-toggle){background:rgba(255,255,255,.24)!important;color:#15454b!important;box-shadow:none!important;border:1px solid rgba(12,85,83,.1)!important}
-header a:hover,header button:hover{background:rgba(255,255,255,.45)!important}
-#schoolShortCodeBadge{background:#0d6570!important;box-shadow:none!important}#navShortCode,html[data-theme="light"] #navShortCode{color:#fff!important}
-main{margin-left:244px!important;width:calc(100% - 244px)!important;max-width:none!important;padding:24px 30px!important}
-footer{margin-left:244px;background:var(--bg)!important;border-color:var(--border)!important}
-.lama-sidebar{position:fixed;top:0;bottom:0;left:0;width:244px;z-index:55;background:linear-gradient(180deg,#0d6169,#094a56);color:#fff;display:flex;flex-direction:column;overflow-y:auto;box-shadow:6px 0 25px rgba(10,60,67,.12)}
-.sidebar-brand{display:flex;align-items:center;gap:11px;padding:24px 17px 19px;border-bottom:1px solid #ffffff21}.sidebar-brand strong{font-size:12px;letter-spacing:.045em;display:block;line-height:1.4}.sidebar-brand small{display:block;font-size:9px;letter-spacing:.11em;color:#a5d6d3;margin-top:3px}.brand-symbol{width:40px;height:40px;background:var(--lime);color:#15585d;display:grid;place-items:center;font-size:23px;font-weight:900;border-radius:11px}
-.sidebar-school{display:flex;gap:10px;align-items:center;margin:16px 12px 19px;padding:12px;background:#ffffff12;border:1px solid #ffffff1c;border-radius:12px}.sidebar-school b{font-size:11px;line-height:1.4;display:block;overflow-wrap:anywhere}.sidebar-school small{font-size:10px;color:#a7d7d4}.school-avatar{background:#c5db3b;color:#15585d;border-radius:10px;min-width:35px;height:35px;display:grid;place-items:center;font-weight:900;font-size:11px}
-.side-label{padding:0 19px 8px;font-size:10px;letter-spacing:.13em;color:#a3d2ce;font-weight:900}.side-nav{display:flex;flex-direction:column;gap:3px;padding:0 10px 20px}.side-link{display:flex;align-items:center;gap:11px;border-radius:10px;padding:11px 13px;color:#e2f7f3;font-size:12px;font-weight:750;text-decoration:none;transition:.15s}.side-link>span{width:23px;font-size:17px;text-align:center}.side-link:hover,.side-link.active{background:#c0d826;color:#144b51}.side-sub{display:flex;flex-direction:column;margin:0 0 5px 44px;border-left:1px solid #ffffff45;padding:1px 0 1px 10px}.side-sub a{font-size:11px;color:#b9e3e0;padding:7px 2px;text-decoration:none}.side-sub a:hover{color:#d7e953}
-.sidebar-bottom{margin-top:auto;border-top:1px solid #ffffff24;padding:16px;display:flex;flex-direction:column;gap:11px}.sidebar-bottom a{font-size:11px;font-weight:700;color:#d9f0eb;text-decoration:none}.sidebar-bottom p{font-size:9px;color:#9bc7c4;margin-top:9px}.sidebar-close,.mobile-menu{display:none}
-.hub-nav{position:relative;top:auto!important;z-index:1;scrollbar-width:thin}.hub-nav a{background:#edf5e6!important;color:#21585d!important;border-color:#d8e8d2!important}.hub-nav a:hover{background:#d9ecac!important}
-.hub-section-heading{scroll-margin-top:90px;padding:20px 0 10px;border-color:var(--border)}.hub-section-heading h2{color:var(--text)}.hub-section-heading a,.hub-mini-link{background:#edf6e9;color:#145e60;border-color:#d5e9d7}
-.metric-card:nth-child(1){border-top:4px solid #bfd523!important}.metric-card:nth-child(2){border-top:4px solid #138a8a!important}.metric-card:nth-child(3){border-top:4px solid #4ea675!important}.metric-card:nth-child(4){border-top:4px solid #e7af3d!important}.metric-card:nth-child(5){border-top:4px solid #d9617c!important}.metric-card:nth-child(6){border-top:4px solid #547fba!important}
-.metric-card .text-purple-300{color:#7e9e1e!important}.metric-card .text-cyan-300{color:#087f86!important}.metric-card .text-emerald-300{color:#168663!important}.metric-card .text-amber-300{color:#bd841b!important}.metric-card .text-pink-300{color:#c04d72!important}.metric-card .text-indigo-300{color:#4c76aa!important}
-.student-attendance-card{background:var(--surface)!important;border:1px solid var(--border)!important;box-shadow:0 9px 28px rgba(10,80,90,.06)!important;border-radius:17px!important}
-.attendance-kpi,.hub-stat,.finance-metric,.engine-row{background:var(--surface2)!important;border-color:var(--border)!important;color:var(--text)}
-.module-tile{background:var(--surface2)!important;border-color:var(--border)!important;color:var(--text)!important}.module-tile:hover{background:#ecf7e2!important;border-color:#a8c950!important}
-html[data-theme="light"] .text-white{color:var(--text)!important}html[data-theme="light"] .text-slate-100{color:var(--text)!important}html[data-theme="light"] .bg-slate-950\/50,html[data-theme="light"] .bg-slate-950\/45{background:#f4f8f5!important}
-html[data-theme="dark"] .neo-card,html[data-theme="dark"] .metric-card{background:var(--surface)!important;border-color:var(--border)!important}html[data-theme="dark"] .text-white{color:#ecf7f4!important}html[data-theme="dark"] .hub-nav a,html[data-theme="dark"] .hub-section-heading a,html[data-theme="dark"] .hub-mini-link{background:#19484a!important;color:#dbf4e9!important;border-color:#315c5c!important}
-html[data-theme="dark"] .module-tile:hover{background:#1c4845!important}
-.hero-eyebrow{font-size:10px;color:#0b7d80;font-weight:900;letter-spacing:.15em;margin-bottom:9px}
-.mobile-menu{color:#16494e;font-size:22px;border:0;background:transparent!important;padding:7px 10px;cursor:pointer}.sidebar-overlay{display:none}
-@media(max-width:1050px){.lama-sidebar{transform:translateX(-100%);transition:transform .2s ease}.sidebar-open .lama-sidebar{transform:translateX(0)}.sidebar-open .sidebar-overlay{display:block;position:fixed;inset:0;background:#031c1f99;z-index:54}.sidebar-close{display:block;margin-left:auto;font-size:16px;color:#fff}.mobile-menu{display:inline-flex}main{margin-left:0!important;width:100%!important;padding:18px!important}footer{margin-left:0}}
-@media(max-width:700px){header{padding:10px 13px!important}.hub-nav{top:auto!important}.hero-eyebrow{font-size:9px}main{padding:12px!important}.lama-sidebar{width:258px}}
-@media print{.lama-sidebar,.sidebar-overlay,header,.hub-nav,footer,.mobile-menu{display:none!important}main{margin:0!important;width:100%!important}.neo-card{break-inside:avoid}}
-</style>
-
-<style id="lama-layout-palette-fix">
-/* Desktop sidebar is a separate column: header and content never slide underneath. */
-@media(min-width:1051px){
-  body>header#topOverview{margin-left:244px!important;width:calc(100% - 244px)!important;max-width:none!important;box-sizing:border-box;padding-left:24px!important;padding-right:24px!important}
-}
-#topOverview{min-width:0;gap:12px;z-index:45!important}
-#topOverview>div:first-child{min-width:0;flex:1 1 210px}
-#topOverview>div:first-child>div:last-child{min-width:0}
-#navSchoolName{display:block;overflow-wrap:anywhere;line-height:1.3;font-size:clamp(12px,1.2vw,17px)}
-#schoolShortCodeBadge{flex-shrink:0}
-#topOverview>div:last-child{flex-wrap:wrap;justify-content:flex-end;gap:6px;flex:0 1 auto}
-.lama-sidebar{z-index:55!important}
-@media(max-width:1050px){body>header#topOverview{margin-left:0!important;width:100%!important;box-sizing:border-box}}
-@media(max-width:680px){#topOverview{flex-wrap:wrap}#topOverview>div:last-child{width:100%;justify-content:flex-start}#navSchoolName{font-size:13px}}
-/* Palette variables change accent surfaces without changing layout or data. */
-html[data-palette="lime"]{--lama-accent:#b8d51e;--lama-deep:#0b5a63;--lama-header:#b4d20f;--lama-highlight:#eaf4c7}
-html[data-palette="ocean"]{--lama-accent:#24c8b7;--lama-deep:#074e67;--lama-header:#37c9c0;--lama-highlight:#d6f7f3}
-html[data-palette="blue"]{--lama-accent:#60a5fa;--lama-deep:#163b70;--lama-header:#76b8fb;--lama-highlight:#dceeff}
-html[data-palette="rose"]{--lama-accent:#f6a6b6;--lama-deep:#6e3555;--lama-header:#f4a1b6;--lama-highlight:#ffebf0}
-.lama-sidebar{background:linear-gradient(180deg,var(--lama-deep),color-mix(in srgb,var(--lama-deep),#001b23 24%))!important}
-header#topOverview{background:var(--lama-header)!important}
-.brand-symbol,.side-link.active,.side-link:hover{background:var(--lama-accent)!important}
-.hub-nav a:hover{background:var(--lama-highlight)!important}
-.palette-picker{position:relative;display:inline-flex;align-items:center}
-.palette-trigger{border-radius:11px!important;padding:8px 11px!important;font-size:12px!important;font-weight:800!important}
-.palette-menu{position:absolute;right:0;top:calc(100% + 8px);width:190px;padding:11px;border:1px solid #b9c9c8;border-radius:13px;background:#fff;box-shadow:0 15px 30px #123b3b30;z-index:100;color:#16494e}
-.palette-menu[hidden]{display:none!important}.palette-swatches{display:flex;gap:8px;margin-top:9px}
-.palette-swatch{height:30px;width:30px;border-radius:50%;border:2px solid #fff;outline:1px solid #ccd6d5;cursor:pointer;padding:0!important;min-width:30px!important}
-.palette-swatch[aria-pressed="true"]{outline:3px solid #16494e}
-@media print{.palette-picker{display:none!important}}
-</style>
-<style id="lama-finance-r4-style">
-.finance-command{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
-.finance-pane{min-width:0;display:flex;flex-direction:column;gap:14px}
-.finance-head{display:flex;align-items:start;justify-content:space-between;gap:10px;flex-wrap:wrap}.finance-sub,.finance-chart-card p,.finance-footnote{font-size:11px;color:var(--muted);line-height:1.6;margin-top:4px}
-.finance-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.finance-tiles .finance-metric{padding:12px;min-width:0}.finance-tiles small{display:block;font-size:10px;color:var(--muted);font-weight:750}.finance-tiles strong{font-size:clamp(14px,1.6vw,21px);overflow-wrap:anywhere;color:var(--text)}
-.finance-chart-card{background:var(--surface2);border:1px solid var(--border);border-radius:15px;padding:13px;min-width:0}.finance-chart-card h4{font-size:13px;font-weight:850;color:var(--text)}.finance-chart{position:relative;height:205px;margin-top:10px}.finance-chart.short{height:185px}
-.finance-filters{display:flex;gap:12px;flex-wrap:wrap}.finance-filters label{font-size:11px;color:var(--muted);font-weight:750}.finance-filters select{display:block;min-width:135px;margin-top:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:9px;padding:8px}
-@media(max-width:1100px){.finance-command{grid-template-columns:1fr}}@media(max-width:600px){.finance-pane{padding:14px!important}.finance-tiles{grid-template-columns:1fr 1fr}.finance-tiles .finance-metric:last-child{grid-column:1/-1}.finance-chart{height:190px}}
-@media print{.finance-command{display:block}.finance-pane{break-inside:avoid;margin-bottom:14px}.finance-filters{display:none}}
-</style>
-<style id="lama-finance-r5-compact">
-/* Dense two-column finance workspace: readable within the existing sidebar. */
-#financeSection{margin-top:10px!important;padding-top:10px!important}
-.finance-command{gap:10px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch}
-.finance-pane{padding:14px!important;gap:10px!important;overflow:hidden}
-.finance-head h3{font-size:clamp(16px,1.35vw,21px)!important}.finance-head .finance-sub{font-size:10px}
-.finance-tiles{gap:6px!important}.finance-tiles .finance-metric{padding:9px!important;border-radius:10px}.finance-tiles strong{font-size:clamp(13px,1.2vw,18px)!important}
-.finance-chart-card{padding:10px!important;border-radius:11px}.finance-chart-card h4{font-size:12px}.finance-chart-card p{font-size:10px}
-.finance-chart,.finance-chart.short{height:155px!important;margin-top:6px!important}
-.finance-chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.finance-chart-grid>.finance-chart-card{min-width:0}.finance-chart-grid>.finance-chart-card.wide{grid-column:1/-1}
-.finance-filters{gap:8px!important}.finance-filters select{min-width:115px;padding:6px!important}
-.fin-r5-insights{border:1px solid var(--border);background:var(--surface2);padding:10px;border-radius:11px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
-.fin-r5-insights .fin-detail{min-width:0;padding:7px;border-radius:9px;background:var(--surface);border:1px solid var(--border)}
-.fin-r5-insights small{display:block;font-size:10px;color:var(--muted)}.fin-r5-insights strong{display:block;font-size:clamp(12px,1.1vw,16px);color:var(--text);overflow-wrap:anywhere}
-.fin-r5-insights .fin-detail.wide{grid-column:1/-1}.fin-r5-note{font-size:10px;color:var(--muted);line-height:1.5}
-@media(max-width:1180px){.finance-command{grid-template-columns:1fr!important}}
-@media(max-width:660px){.finance-chart-grid{grid-template-columns:1fr}.finance-chart-grid>.finance-chart-card.wide{grid-column:auto}.finance-chart,.finance-chart.short{height:170px!important}.finance-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.finance-pane{padding:11px!important}}
-@media print{.finance-command{display:block!important}.finance-pane{break-inside:auto!important}.finance-chart-card{break-inside:avoid}}
-</style>
 </head>
-<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
-    <div class="scanline"></div>
+<body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-slate-950">
 
-    <div class="fixed top-0 left-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-    <div class="fixed bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+    <!-- Fail-closed school administrator access gate. Authentication is handled by LamaAPI. -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 bg-[#0b0f19] flex items-center justify-center p-4">
+        <div class="cyber-card max-w-md w-full rounded-3xl p-8 text-center">
+            <h2 class="text-xl font-black text-white">School Administrator Access</h2>
+            <p id="adminAccessMessage" class="text-sm text-slate-300 mt-3">Checking your school session…</p>
+            <a href="../../login.html" class="inline-block mt-5 bg-amber-500 text-slate-950 font-bold px-5 py-3 rounded-xl">Sign in to your school</a>
+        </div>
+    </div>
 
-<aside class="lama-sidebar" id="lamaSidebar" aria-label="Main navigation">
- <div class="sidebar-brand"><div class="brand-symbol">✦</div><div><strong>LAMA SCHOOL SUITE</strong><small>ADMIN CONTROL CENTER</small></div><button class="sidebar-close" type="button" onclick="toggleSidebar(false)" aria-label="Close menu">✕</button></div>
- <div class="sidebar-school"><span class="school-avatar" id="sideSchoolAvatar">LS</span><div><b id="sideSchoolName">Active School</b><small>School management</small></div></div>
- <div class="side-label">WORKSPACE</div>
- <nav class="side-nav">
- <a class="side-link" href="#topOverview" onclick="toggleSidebar(false)"><span>▦</span> Overview</a>
- <a class="side-link" href="#academicSection" onclick="toggleSidebar(false)"><span>🎓</span> Academic</a>
- <a class="side-link" href="#attendanceSection" onclick="toggleSidebar(false)"><span>▤</span> Attendance</a>
- <div class="side-sub"><a href="student-attendance.html">Student Attendance</a><a href="teacher-attendance.html">Teacher Attendance</a></div>
- <a class="side-link" href="#financeSection" onclick="toggleSidebar(false)"><span>◈</span> Finance</a>
- <a class="side-link" href="#assessmentSection" onclick="toggleSidebar(false)"><span>▧</span> Assessments</a>
- <a class="side-link" href="#operationsSection" onclick="toggleSidebar(false)"><span>⚙</span> Operations</a>
- <a class="side-link" href="#communicationSection" onclick="toggleSidebar(false)"><span>◉</span> Communications</a>
- </nav>
- <div class="sidebar-bottom"><a href="main-dashboard.html">↗ School Board</a><a href="settings.html">⚙ School Settings</a><p>Powered by lamastudio.pk</p></div>
- </aside><div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
-    <!-- Top Navigation Bar -->
-    <header id="topOverview" class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-50 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
+    <!-- Top Navbar -->
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/90 backdrop-blur-xl sticky top-0 z-40 py-3.5 px-6 md:px-12 flex justify-between items-center shadow-2xl">
         <div class="flex items-center space-x-3">
-            <button class="mobile-menu" onclick="toggleSidebar(true)" type="button" aria-label="Open navigation">☰</button>
-            <div id="schoolShortCodeBadge" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
-                <span id="navShortCode" class="text-xs font-black text-white">SCH</span>
-            </div>
-            <div>
-                <h1 class="text-sm font-black tracking-wider text-white"><span id="navSchoolName">Campus Command Hub</span></h1>
-                <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">School Admin Dashboard</p>
-            </div>
+            <button onclick="goToDashboard()" class="text-slate-400 hover:text-white transition text-xs flex items-center space-x-1 font-bold bg-slate-800/60 hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 cursor-pointer">
+                <span>&larr; Home</span>
+            </button>
+            <span class="text-slate-700">|</span>
+            <h1 class="text-xs font-black tracking-wider text-amber-400 glow-text-amber" id="navSchoolTitle">ADMIN MASTER COMMAND</h1>
         </div>
         <div class="flex items-center space-x-3">
-            <a href="main-dashboard.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition">🏫 School Board</a>
-            <a href="settings.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition">⚙️ Settings</a>
-            <div class="palette-picker" id="palettePicker"><button type="button" id="paletteTrigger" class="palette-trigger" aria-expanded="false" aria-controls="paletteMenu" title="Change dashboard colors">🎨 Colors</button><div class="palette-menu" id="paletteMenu" hidden><div style="font-size:12px;font-weight:900">Interface palette</div><div style="font-size:10px;color:#64748b">Choose a coordinated accent</div><div class="palette-swatches"><button class="palette-swatch" type="button" data-palette-choice="lime" style="background:#b8d51e" aria-label="Lime and teal"></button><button class="palette-swatch" type="button" data-palette-choice="ocean" style="background:#24c8b7" aria-label="Ocean teal"></button><button class="palette-swatch" type="button" data-palette-choice="blue" style="background:#60a5fa" aria-label="Ocean blue"></button><button class="palette-swatch" type="button" data-palette-choice="rose" style="background:#f6a6b6" aria-label="Soft rose"></button></div></div></div><button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Toggle light and dark theme" title="Toggle theme"><span id="themeIcon">☀️</span></button>
-            <button onclick="handleLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition">Logout</button>
-            <a href="admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
-                <span>⚡ New Admission Form</span>
-            </a>
+            <span class="text-[10px] bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-amber-300 font-bold hidden sm:inline-block">
+                Secure Tenant Session
+            </span>
+            <button onclick="logoutAdmin()" class="text-xs bg-slate-800 hover:bg-rose-600/20 text-slate-300 hover:text-rose-400 border border-slate-700 px-3 py-1.5 rounded-xl transition font-bold cursor-pointer">
+                Lock Panel
+            </button>
         </div>
     </header>
 
-    <main class="max-w-[1500px] w-full mx-auto px-3 sm:px-5 lg:px-7 py-5 flex-grow space-y-5 relative z-10">
-        <!-- Command header -->
-        <section class="neo-card rounded-[28px] p-5 md:p-7 overflow-hidden relative">
-            <div class="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl"></div>
-            <div class="absolute -left-20 -bottom-24 w-64 h-64 rounded-full bg-cyan-500/10 blur-3xl"></div>
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative">
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 flex-grow w-full space-y-6">
+        
+        <!-- Welcome Banner with Dynamic Institution Telemetry -->
+        <div class="cyber-card rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div class="flex items-start space-x-4">
+                <div id="schoolLogoContainer" class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center overflow-hidden shrink-0">
+                    <span class="text-2xl">🏫</span>
+                </div>
                 <div>
-                    <div class="flex items-center gap-2 mb-3"><span class="data-dot pulse-ring"></span><span class="section-kicker text-emerald-300">LIVE CAMPUS ANALYTICS</span><span id="engineState" class="text-[9px] text-slate-500">connecting...</span></div>
-                    <p class="hero-eyebrow">WELCOME TO YOUR SCHOOL WORKSPACE</p><h2 id="heroSchoolName" class="text-3xl md:text-5xl font-black tracking-[-.04em] text-white">Campus Command Hub</h2>
-                    <p class="text-xs md:text-sm text-slate-400 mt-2 max-w-2xl leading-relaxed">A complete overview of academic progress, attendance, finances, assessments and campus operations. Figures are sourced from the active school database.</p>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap lg:justify-end">
-                    <div class="neo-card rounded-2xl px-4 py-3 min-w-[180px]"><p class="section-kicker">Administrator</p><p id="principalDisplay" class="text-sm font-black text-cyan-300 mt-1">Principal / Admin</p><p id="todayDateDisplay" class="text-[10px] text-slate-500 mt-1">-</p></div>
-                    <button onclick="refreshDashboard()" class="rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-3 text-xs font-black transition">↻ Refresh Engine</button>
-                </div>
-            </div>
-        </section>
-
-        <nav class="hub-nav neo-card p-3 rounded-2xl flex gap-2 overflow-x-auto" aria-label="Dashboard sections">
-<a href="#academicSection">🎓 Academic</a><a href="#attendanceSection">📅 Attendance</a><a href="#financeSection">💰 Finance</a><a href="#assessmentSection">📝 Assessments</a><a href="#operationsSection">🏫 Operations</a><a href="#communicationSection">🔔 Communications</a>
-</nav>
-        <!-- KPI matrix -->
-        <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(139,92,246,.18)"><p class="section-kicker">Students</p><p id="totalStudentsCount" class="text-2xl font-black text-purple-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">active database records</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Attendance</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(52,211,153,.18)"><p class="section-kicker">Teachers</p><p id="teacherAttDisplay" class="text-2xl font-black text-emerald-300 mt-2">—</p><p id="notMarkedDisplay" class="text-[10px] text-slate-500 mt-1">— not marked</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(251,191,36,.18)"><p class="section-kicker">Today Collection</p><p id="todayCollectionDisplay" class="text-xl font-black text-amber-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">paid records today</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(236,72,153,.18)"><p class="section-kicker">This Month</p><p id="monthCollectionDisplay" class="text-xl font-black text-pink-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(99,102,241,.18)"><p class="section-kicker">This Year</p><p id="yearCollectionDisplay" class="text-xl font-black text-indigo-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
-        </section>
-
-
-        <div id="attendanceSection" class="hub-section-heading"><div><p class="section-kicker text-cyan-300">01 / Daily operations</p><h2>Attendance Intelligence</h2><p>Student and teacher registers, coverage and daily status</p></div><div class="flex gap-2 flex-wrap"><a href="student-attendance.html">Student Register →</a><a href="teacher-attendance.html">Teacher Register →</a></div></div>
-        <!-- Student attendance: dedicated daily operational card -->
-        <section class="student-attendance-card" aria-label="Student attendance today" id="studentAttendanceCard">
-          <div class="flex flex-wrap justify-between items-start gap-3 mb-5">
-            <div><p class="section-kicker text-cyan-300">Daily student register</p><h3 class="section-heading font-black text-white mt-1">🧑‍🎓 Student Attendance</h3><p id="studentAttDate" class="text-xs text-slate-400 mt-1">Loading today's attendance…</p></div>
-            <div class="flex flex-wrap gap-2"><button type="button" onclick="refreshDashboard()" class="section-link text-xs font-black border border-cyan-500/30 rounded-xl px-3 py-2 text-cyan-300">↻ Refresh</button><a href="student-attendance.html" class="section-link text-xs font-black bg-cyan-600 text-white rounded-xl px-4 py-2">Open Student Attendance →</a></div>
-          </div>
-          <div class="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3">
-            <div class="attendance-kpi"><p class="section-kicker">Enrolled</p><strong id="studentAttEnrolled" class="text-purple-300">—</strong></div>
-            <div class="attendance-kpi"><p class="section-kicker">Present</p><strong id="studentAttPresent" class="text-emerald-300">—</strong></div>
-            <div class="attendance-kpi"><p class="section-kicker">Absent</p><strong id="studentAttAbsent" class="text-red-300">—</strong></div>
-            <div class="attendance-kpi"><p class="section-kicker">Leave</p><strong id="studentAttLeave" class="text-amber-300">—</strong></div>
-            <div class="attendance-kpi col-span-2 lg:col-span-1"><p class="section-kicker">Not marked</p><strong id="studentAttUnmarked" class="text-cyan-300">—</strong></div>
-          </div>
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily attendance rate</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
-            <div><div class="flex justify-between gap-2 items-center mb-1"><p class="text-xs font-black">Class-wise register</p><span id="studentAttClassCount" class="text-[10px] text-slate-400">—</span></div><div id="studentAttClasses" class="max-h-44 overflow-y-auto pr-1"><p class="text-xs text-slate-400">Loading…</p></div></div>
-          </div>
-        </section>
-
-        <section class="command-grid" aria-label="Teacher attendance analytics">
-<div class="span-4 neo-card rounded-3xl p-5">
- <div class="flex justify-between items-start gap-3"><div><p class="section-kicker text-emerald-300">Staff daily register</p><h3 class="text-lg font-black mt-1">👩‍🏫 Teacher Attendance</h3><p id="teacherAttDate" class="text-xs text-slate-400 mt-1">Today</p></div><a class="hub-mini-link" href="teacher-attendance.html">Manage →</a></div>
- <div class="grid grid-cols-2 gap-2 mt-4">
- <div class="hub-stat"><small>Total teachers</small><b id="taTotal">—</b></div><div class="hub-stat"><small>Present</small><b class="text-emerald-300" id="taPresent">—</b></div>
- <div class="hub-stat"><small>Absent</small><b class="text-red-300" id="taAbsent">—</b></div><div class="hub-stat"><small>On leave</small><b class="text-amber-300" id="taLeave">—</b></div>
- </div><p id="taCoverage" class="text-xs text-slate-400 mt-3">Awaiting attendance records</p>
- <div class="h-2 rounded-full bg-slate-700/60 overflow-hidden mt-2"><div id="taProgress" class="h-full bg-emerald-400 rounded-full" style="width:0"></div></div>
- <p id="taPending" class="text-xs text-amber-300 mt-3"></p>
-</div>
-<div class="span-8 neo-card rounded-3xl p-5">
-<div class="flex justify-between gap-3 flex-wrap items-center"><div><p class="section-kicker text-emerald-300">Attendance analytics</p><h3 class="text-lg font-black mt-1">Staff Attendance · Last 7 Days</h3></div><span class="text-xs text-slate-400">Daily recorded statuses, not assumptions</span></div>
-<div class="chart-shell mt-4"><canvas id="teacherAttendanceChart" aria-label="Seven day teacher attendance trend" role="img"></canvas></div>
-<p class="text-xs text-slate-400 mt-2" id="teacherTrendNote">Awaiting teacher attendance records</p>
-</div></section>
-<section class="neo-card rounded-3xl p-5" aria-label="Class-wise student attendance"><div class="flex justify-between items-center gap-3 flex-wrap"><div><p class="section-kicker">Student attendance · Daily coverage</p><h3 class="text-lg font-black">Class-wise Attendance Bars</h3><p class="text-xs text-slate-400 mt-1" id="classBarsDate">Today · Saved records only</p></div><a href="student-attendance.html" class="hub-mini-link">Open Register →</a></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4" id="attendanceClassBars"><p class="text-xs text-slate-400">Loading classes…</p></div><div id="attendanceSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4"></div></section>
-<div id="academicSection" class="hub-section-heading"><div><p class="section-kicker text-purple-300">02 / Learning</p><h2>Academic Intelligence</h2><p>Enrollment distribution, gender mix and student population</p></div><a href="manage-students.html">Manage Students →</a></div>
-<!-- Real database engine -->
-        <section class="command-grid">
-            <div class="span-8 neo-card rounded-3xl p-5">
-                <div class="flex items-center justify-between gap-3 mb-4"><div><p class="section-kicker text-cyan-300">Database Intelligence</p><h3 class="text-lg font-black text-white mt-1">School Operations Overview</h3></div><span id="dbUpdated" class="text-[9px] text-slate-500">waiting for sync</span></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><p class="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-2">Students by class</p><div class="chart-shell"><canvas id="classChart"></canvas></div></div>
-                    <div><p class="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-2">Gender distribution</p><div class="mini-chart"><canvas id="genderChart"></canvas></div></div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="activeSchoolBadge" class="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 px-3 py-1 rounded-full border border-amber-500/20">
+                            Loading Tenant...
+                        </span>
+                        <span id="verificationBadge" class="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/20">
+                            Verified
+                        </span>
+                    </div>
+                    <h2 id="displaySchoolName" class="text-2xl md:text-3xl font-black text-white mt-2">Campus Telemetry & Student Command</h2>
+                    <p id="displaySchoolMeta" class="text-xs text-slate-300 mt-1">District: Loading • Principal: Loading • Level: Loading</p>
                 </div>
             </div>
-            <div class="span-4 neo-card rounded-3xl p-5">
-                <div class="flex items-center justify-between mb-4"><div><p class="section-kicker text-emerald-300">Engine Monitor</p><h3 class="text-lg font-black text-white mt-1">Live Records</h3></div><span class="data-dot"></span></div>
-                <div id="engineRows" class="space-y-2"></div>
-                <div class="mt-4 rounded-2xl border border-emerald-500/10 bg-emerald-500/5 p-3"><p class="text-[10px] font-black text-emerald-300">ACTIVE SCHOOL SCOPE</p><p id="scopeDisplay" class="text-[11px] text-slate-400 mt-1">Loading school database...</p></div>
+            
+            <!-- Quick Stat Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto shrink-0">
+                <a href="admin-students.html" class="bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 p-3 rounded-2xl text-center transition block group">
+                    <p class="text-[9px] uppercase font-bold text-slate-400 group-hover:text-amber-400">Total Enrolled</p>
+                    <p id="adminTotalStudents" class="text-lg font-black text-amber-400 mt-0.5">120 &rarr;</p>
+                </a>
+                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Package Tier</p>
+                    <p id="displayPackageTier" class="text-xs font-black text-emerald-400 mt-1 truncate">Professional</p>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-3 rounded-2xl text-center col-span-2 sm:col-span-1">
+                    <p class="text-[9px] uppercase font-bold text-slate-400">Absentee SMS System</p>
+                    <p class="text-lg font-black text-cyan-400 mt-0.5">Active</p>
+                </div>
             </div>
-        </section>
+        </div>
 
-        <section class="neo-card rounded-3xl p-5" aria-label="Current classes and enrollment">
-          <div class="flex flex-wrap items-center justify-between gap-3 mb-4"><div><p class="section-kicker text-cyan-300">Student records only</p><h3 class="text-lg font-black">Classes & Enrollment</h3><p class="text-xs text-slate-400 mt-1">Current students by class, excluding passed-out and left students. Select a class to open its roster.</p></div><a href="manage-students.html" class="hub-mini-link">Full Student Directory →</a></div>
-          <div id="academicClassSummary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"><p class="text-xs text-slate-400">Loading class records…</p></div>
-          <p id="academicClassNote" class="text-xs text-slate-400 mt-3" aria-live="polite"></p>
-        </section>
-
-        <div id="financeSection" class="hub-section-heading"><div><p class="section-kicker text-amber-300">03 / Accounts</p><h2>Finance Intelligence</h2><p>Compact class-wise collections, dues, income and expenses</p></div><a href="fees.html">Fee Management →</a></div>
-        <!-- Finance analytics: R4 read-only finance command center -->
-        <section class="finance-command" aria-label="Finance command center">
-          <div class="finance-pane neo-card p-5">
-            <div class="finance-head"><div><p class="section-kicker">REVENUE PERFORMANCE</p><h3 class="section-heading font-black">Fee Collection Intelligence</h3><p class="finance-sub">Confirmed payments, class comparisons and collection trends</p></div><a class="hub-mini-link" href="fees.html">Manage fees →</a></div>
-            <div class="finance-tiles"><div class="finance-metric"><small>Today collected</small><strong id="financeToday">—</strong></div><div class="finance-metric"><small>This month</small><strong id="financeMonth">—</strong></div><div class="finance-metric"><small>This year</small><strong id="financeYear">—</strong></div></div>
-            <div class="fin-r5-insights" aria-label="Fee details"><div class="fin-detail"><small>Paid entries</small><strong id="finPaidCount">—</strong></div><div class="fin-detail"><small>Unpaid / overdue entries</small><strong id="finDueCount">—</strong></div><div class="fin-detail"><small>Recorded outstanding</small><strong id="finDueAmount">—</strong></div><div class="fin-detail"><small>Collection share*</small><strong id="finCollectPct">—</strong></div></div>
-            <div class="finance-filters"><label>Class <select id="finClassFilter"><option value="all">All classes</option></select></label><label>Period <select id="finPeriodFilter"><option value="month">This month</option><option value="year">This year</option><option value="all">All recorded dates</option></select></label></div>
-            <div class="finance-chart-grid"><div class="finance-chart-card wide"><h4>Class-wise paid collection</h4><p>Amount actually received per class</p><div class="finance-chart"><canvas id="finClassPaidChart"></canvas></div></div>
-            <div class="finance-chart-card"><h4>Paid vs outstanding entries</h4><p>Recorded fee entries only; not a full invoice ledger</p><div class="finance-chart short"><canvas id="finStatusChart"></canvas></div></div>
-            <div class="finance-chart-card"><h4>Monthly collection trend</h4><p>Confirmed paid records by payment month</p><div class="finance-chart"><canvas id="incomeChart"></canvas></div></div></div>
-            <p id="financeChartNote" class="finance-footnote">Loading fee records…</p>
-          </div>
-          <div class="finance-pane neo-card p-5">
-            <div class="finance-head"><div><p class="section-kicker">SCHOOL ACCOUNTS</p><h3 class="section-heading font-black">Income & Expenses</h3><p class="finance-sub">Other income, expenses and recorded cash movement</p></div><a class="hub-mini-link" href="finance-center.html">Accounts →</a></div>
-            <div class="finance-tiles"><div class="finance-metric"><small>Other income</small><strong id="finOtherIncome">—</strong></div><div class="finance-metric"><small>Expenses</small><strong id="finExpenses">—</strong></div><div class="finance-metric"><small>Cash movement*</small><strong id="finNet">—</strong></div></div>
-            <div class="fin-r5-insights" aria-label="Accounts details"><div class="fin-detail"><small>Fee receipts (selected)</small><strong id="finFeeReceipts">—</strong></div><div class="fin-detail"><small>Total inflow (recorded)</small><strong id="finTotalInflow">—</strong></div><div class="fin-detail"><small>Expense transactions</small><strong id="finExpenseCount">—</strong></div><div class="fin-detail"><small>Largest expense category</small><strong id="finTopExpense">—</strong></div></div>
-            <div class="finance-chart-grid"><div class="finance-chart-card wide"><h4>Income vs expenses</h4><p>Fees + other income compared with expenses</p><div class="finance-chart"><canvas id="finInOutChart"></canvas></div></div>
-            <div class="finance-chart-card"><h4>Expenses by category</h4><p>Where recorded money was spent</p><div class="finance-chart short"><canvas id="finExpenseChart"></canvas></div></div>
-            <div class="finance-chart-card"><h4>Monthly finance movement</h4><p>Collection, other income and expenses by month</p><div class="finance-chart"><canvas id="finMovementChart"></canvas></div></div></div>
-            <p id="finAccountsNote" class="finance-footnote">Loading accounts…</p>
-            <p class="finance-footnote">*Cash movement is not accounting profit or a reconciled bank balance. Missing or unverified records are not estimated.</p>
-          </div>
-        </section>
-        <div id="assessmentSection" class="hub-section-heading"><div><p class="section-kicker text-pink-300">04 / Performance</p><h2>Assessment Intelligence</h2><p>Test scheduling, examination results and class-wise coverage</p></div><div class="flex flex-wrap gap-2"><a href="tests.html">Tests Manager →</a><a href="result-card.html">Results →</a></div></div>
-<section class="command-grid">
- <div class="span-4 neo-card rounded-3xl p-5"><p class="section-kicker text-pink-300">Assessment pipeline</p><h3 class="text-lg font-black mt-1">Tests & Assessments</h3>
- <div class="grid grid-cols-2 gap-2 mt-4"><div class="hub-stat"><small>Total tests</small><b id="asTotal">—</b></div><div class="hub-stat"><small>Published</small><b id="asPublished" class="text-emerald-300">—</b></div><div class="hub-stat"><small>Drafts</small><b id="asDraft" class="text-amber-300">—</b></div><div class="hub-stat"><small>Upcoming</small><b id="asUpcoming" class="text-cyan-300">—</b></div></div>
- <p id="asNote" class="text-xs text-slate-400 mt-3">Waiting for tests data</p><div class="mt-4 flex flex-wrap gap-2"><a class="hub-mini-link" href="date-sheet.html">Date Sheet →</a><a class="hub-mini-link" href="report-card.html">Report Cards →</a></div></div>
- <div class="span-8 neo-card rounded-3xl p-5"><p class="section-kicker text-pink-300">Class-wise assessment workload</p><h3 class="text-lg font-black mt-1">Tests by Class</h3><div class="chart-shell mt-4"><canvas id="assessmentChart" aria-label="Number of tests by class" role="img"></canvas></div><p class="text-xs text-slate-400 mt-2" id="assessmentNote">No assessment data loaded yet</p></div>
-</section>
-<div id="operationsSection" class="hub-section-heading"><div><p class="section-kicker text-indigo-300">05 / Administration</p><h2>Campus Operations</h2><p>Staff, admissions, documents, scheduling and school services</p></div></div>
-<!-- Independent administration tools: not part of finance -->
-        <section class="neo-card rounded-3xl p-5" aria-label="School administration tools">
-            <div class="mb-4"><p class="section-kicker text-cyan-300">Administration Tools</p><h3 class="section-heading font-black text-white mt-1">School Operations & Documents</h3><p class="text-xs text-slate-400 mt-1">Manage student and staff requests, import documents, and issue secure ID cards in separate workspaces</p></div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                <a href="leave-manager.html" class="module-tile rounded-2xl p-4 bg-teal-500/5 border border-teal-500/20 hover:border-teal-400/50 transition"><b>📝</b><p>Leave Requests</p><small>Student & teacher leave management</small></a>
-                <a href="document-import.html" class="module-tile rounded-2xl p-4 bg-cyan-500/5 border border-cyan-500/20 hover:border-cyan-400/50 transition"><b>📥</b><p>Document Import</p><small>PDF / Word / Excel documents</small></a>
-                <a href="identity-cards.html" class="module-tile rounded-2xl p-4 bg-violet-500/5 border border-violet-500/20 hover:border-violet-400/50 transition"><b>🪪</b><p>ID Cards</p><small>Authorized preview & printing</small></a>
+        <!-- FEE RECEIPT VERIFICATION ALERT WIDGET -->
+        <div id="receiptVerificationBox" class="cyber-card rounded-3xl p-6 border-amber-500/40 hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h3 class="text-sm font-black text-amber-400 uppercase tracking-wider">⚠️ Subscription Fee Receipt Pending Verification</h3>
+                    <p class="text-xs text-slate-300 mt-1">You have submitted your payment receipt. Platform administrators will verify it shortly to lift all restrictions.</p>
+                </div>
+                <div>
+                    <button onclick="viewReceiptModal()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold px-4 py-2 rounded-xl border border-amber-500/30 transition cursor-pointer">View Uploaded Receipt 🖼️</button>
+                </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Command actions -->
-        <section class="neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-4"><div><p class="section-kicker">Command Center</p><h3 class="text-lg font-black">Core School Modules</h3></div><span class="text-[9px] text-slate-500">DATABASE-AWARE NAVIGATION</span></div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-2.5">
-                <a href="manage-students.html" class="module-tile rounded-2xl p-3 bg-purple-500/5 border border-purple-500/10 hover:border-purple-400/40 transition"><b>🧑‍🎓</b><p>Students</p><small>360° records</small></a>
-                <a href="import-students.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>⇩</b><p>Import</p><small>safe bulk data</small></a>
-                <a href="manage-teachers.html" class="module-tile rounded-2xl p-3 bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-400/40 transition"><b>👩‍🏫</b><p>Teachers</p><small>staff records</small></a>
-                <a href="teacher-attendance.html" class="module-tile rounded-2xl p-3 bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-400/40 transition"><b>👩‍🏫</b><p>Teacher Attendance</p><small>staff daily register</small></a>
-                 <a href="student-attendance.html" class="module-tile rounded-2xl p-3 bg-cyan-500/5 border border-cyan-500/10 hover:border-cyan-400/40 transition"><b>◷</b><p>Student Attendance</p><small>daily register</small></a>
-                <a href="fees.html" class="module-tile rounded-2xl p-3 bg-amber-500/5 border border-amber-500/10 hover:border-amber-400/40 transition"><b>💰</b><p>Finance</p><small>fees & dues</small></a>
-                <a href="tests.html" class="module-tile rounded-2xl p-3 bg-pink-500/5 border border-pink-500/10 hover:border-pink-400/40 transition"><b>◈</b><p>Tests</p><small>assessments</small></a>
-                <a href="date-sheet.html" class="module-tile rounded-2xl p-3 bg-blue-500/5 border border-blue-500/10 hover:border-blue-400/40 transition"><b>🗓️</b><p>Date Sheet</p><small>exams schedule</small></a>
-                <a href="activities.html" class="module-tile rounded-2xl p-3 bg-orange-500/5 border border-orange-500/10 hover:border-orange-400/40 transition"><b>🎯</b><p>Activities</p><small>events & clubs</small></a>
-                <a href="promote-students.html" class="module-tile rounded-2xl p-3 bg-indigo-500/5 border border-indigo-500/10 hover:border-indigo-400/40 transition"><b>🎓</b><p>Promotion</p><small>year-end engine</small></a>
-                <a href="report-card.html" class="module-tile rounded-2xl p-3 bg-teal-500/5 border border-teal-500/10 hover:border-teal-400/40 transition"><b>📋</b><p>Report Card</p><small>print reports</small></a>
-                <a href="result-card.html" class="module-tile rounded-2xl p-3 bg-violet-500/5 border border-violet-500/10 hover:border-violet-400/40 transition"><b>🏆</b><p>Result Card</p><small>academic results</small></a>
-                <a href="portal-login.html" class="module-tile rounded-2xl p-3 bg-fuchsia-500/5 border border-fuchsia-500/10 hover:border-fuchsia-400/40 transition"><b>◉</b><p>Portal</p><small>student / parent</small></a>
-                <a href="notifications.html" class="module-tile rounded-2xl p-3 bg-rose-500/5 border border-rose-500/10 hover:border-rose-400/40 transition"><b>🔔</b><p>Notifications</p><small>messages & alerts</small></a>
-                <a href="resources.html" class="module-tile rounded-2xl p-3 bg-sky-500/5 border border-sky-500/10 hover:border-sky-400/40 transition"><b>📚</b><p>Resources</p><small>learning material</small></a>
-                <a href="register.html" class="module-tile rounded-2xl p-3 bg-lime-500/5 border border-lime-500/10 hover:border-lime-400/40 transition"><b>📝</b><p>Register</p><small>admission desk</small></a>
-                <a href="settings.html" class="module-tile rounded-2xl p-3 bg-slate-500/5 border border-slate-500/10 hover:border-slate-400/40 transition"><b>⚙️</b><p>Settings</p><small>school control</small></a>
+        <!-- MODULES GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- SECTION 1: Student Roster -->
+            <div class="cyber-card rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-amber-400">🎓 Student Directory & Roster Command</h3>
+                        <p class="text-[11px] text-slate-400">View, edit, delete, print files, and filter students.</p>
+                    </div>
+                    <a href="admin-students.html" class="text-[10px] bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-black px-3 py-1.5 rounded-xl border border-amber-500/30 transition shrink-0">
+                        Open Roster &rarr;
+                    </a>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="text-xs font-bold text-white">Full Student Management Hub</h4>
+                        <p id="idPatternDisplay" class="text-[10px] text-slate-400 mt-0.5">ID Pattern: SCH-2026-###</p>
+                    </div>
+                    <a href="admin-students.html" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-[11px] px-4 py-2 rounded-xl transition shadow-lg shadow-amber-600/20">
+                        Launch Manager
+                    </a>
+                </div>
             </div>
-        </section>
 
-        <div id="communicationSection" class="hub-section-heading"><div><p class="section-kicker text-rose-300">06 / Communications</p><h2>Alerts & Communications</h2><p>Student absences and important school notices</p></div><a href="notifications.html">Manage Notices →</a></div>
-<!-- Alerts + notices -->
-        <section class="command-grid">
-            <div class="span-8 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-red-300">Live Alerts</p><h3 class="text-lg font-black">Today's Absentees</h3></div><a href="student-attendance.html" class="text-[10px] text-red-300 font-black">OPEN STUDENT ATTENDANCE →</a></div><div id="absenteesList" class="space-y-2"></div><p id="absenteesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No absentees recorded for today yet.</p></div>
-            <div class="span-4 neo-card rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><div><p class="section-kicker text-indigo-300">Communications</p><h3 class="text-lg font-black">Recent Notices</h3></div><a href="notifications.html" class="text-[10px] text-indigo-300 font-black">MANAGE →</a></div><div id="recentNoticesList" class="space-y-2"></div><p id="noticesEmpty" class="text-center text-xs text-slate-500 py-6 hidden">No notices sent yet.</p></div>
-        </section>
+            <!-- SECTION 2: Teacher Audit -->
+            <div class="cyber-card rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-amber-400">👩‍🏫 Faculty Compliance & Activity Audit</h3>
+                        <p class="text-[11px] text-slate-400">Monitor whether instructors submit attendance and diaries on time.</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Faculty Lead In-Charge</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Attendance Logged: <span class="text-emerald-400 font-bold">On Time</span></p>
+                        </div>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded border border-emerald-500/30">Verified</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: Absentee Logs -->
+            <div class="cyber-card rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-cyan-400">📱 Automated Absentee SMS & Call Logs</h3>
+                        <p class="text-[11px] text-slate-400">Real-time alerts sent to parents when students are marked absent.</p>
+                    </div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl">
+                    <p class="text-xs font-bold text-white">SMS Gateway Status</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Automated dispatch is fully active for your school database.</p>
+                </div>
+            </div>
+
+            <!-- SECTION 4: Fee Slabs -->
+            <div class="cyber-card rounded-3xl p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3 gap-2">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-emerald-400">📊 Reports & Fee Slabs Control</h3>
+                        <p class="text-[11px] text-slate-400">Control class-wise fee structures and publish reports.</p>
+                    </div>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 p-3.5 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <p class="text-xs font-bold text-white" id="displayActivePackage">Subscription Tier Active</p>
+                        <p class="text-[10px] text-slate-400">Isolated database operational.</p>
+                    </div>
+                    <span class="text-xs text-emerald-400 font-bold">Operational</span>
+                </div>
+            </div>
+
+        </div>
+
     </main>
-    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500 relative z-10">
-        <p id="footerText">&copy; 2026 School Data Command Center</p>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-[#0b0f19] py-5 px-6 text-center text-xs text-slate-500">
+        <p>&copy; 2026 lamastudio.pk • Admin Master Telemetry Command</p>
     </footer>
 
+    <!-- Existing authenticated school API, not the missing legacy SchoolStore. -->
+    <script src="../../js/api-client.js"></script>
     <script>
-        let charts = {};
-        const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-        const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
-        async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:Array.isArray(r?.records)?r.records:Array.isArray(r?.data)?r.data:Array.isArray(r?.items)?r.items:[]; } catch(e){ console.warn('Unable to load '+key,e); return []; } }
-        function handleLogout(){ LamaAPI.logout(); window.location.href='login.html'; }
-        function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
-        function chartDefaults(){const cs=getComputedStyle(document.documentElement);const text=cs.getPropertyValue('--chartText').trim()||'#cbd5e1',muted=cs.getPropertyValue('--muted').trim()||'#94a3b8',grid=cs.getPropertyValue('--grid').trim()||'rgba(148,163,184,.06)';return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:muted,font:{size:9}},grid:{color:grid}},y:{ticks:{color:muted,font:{size:9}},grid:{color:grid}}}};}
-
-        function applyTheme(theme){
-            document.documentElement.setAttribute('data-theme',theme);
-            localStorage.setItem('lama_dashboard_theme',theme);localStorage.setItem('lama_theme',theme);
-            const icon=document.getElementById('themeIcon');
-            if(icon) icon.textContent=theme==='light'?'🌙':'☀️';
-            document.body.classList.toggle('text-slate-100',theme!=='light');
-            if(Object.keys(charts).length){
-                // Repaint existing charts so labels/grid/borders match the selected theme.
-                Object.keys(charts).forEach(k=>{try{charts[k].destroy()}catch(e){} charts[k]=null;});
-                if(window.__dashboardData){
-                    const d=window.__dashboardData;
-                    renderClassChart(d.students);renderAcademicClasses(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderFinanceR4(d);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
-                }
+        let activeSchool = null;
+        window.addEventListener('DOMContentLoaded', async () => {
+            const api = typeof LamaAPI !== 'undefined' ? LamaAPI : null;
+            const message = document.getElementById('adminAccessMessage');
+            if (!api || typeof api.requireLogin !== 'function' ||
+                typeof api.getSession !== 'function' || typeof api.getActiveSchool !== 'function') {
+                message.textContent = 'School API unavailable. Please sign in when the service is restored.';
+                return;
             }
+            if (!api.requireLogin('school', '../../login.html')) return;
+            const session = api.getSession('school');
+            if (!session || !session.schoolId) {
+                message.textContent = 'A valid school administrator session is required.';
+                return;
+            }
+            try {
+                const school = await api.getActiveSchool();
+                if (!school || String(school.schoolId || school.id || session.schoolId) !== String(session.schoolId)) {
+                    throw Error('School profile does not match the signed-in school.');
+                }
+                activeSchool = school;
+                loadActiveSchoolData();
+                document.getElementById('adminLoginModal').style.display = 'none';
+            } catch (err) {
+                console.error('School portal initialization failed:', err);
+                message.textContent = 'Unable to verify school profile. Please try again later.';
+            }
+        });
+
+        function loadActiveSchoolData() {
+            if (!activeSchool) return;
+            const name = String(activeSchool.name || activeSchool.schoolName || 'School');
+            document.getElementById('navSchoolTitle').textContent = `ADMIN COMMAND — ${name.toUpperCase()}`;
+            document.getElementById('activeSchoolBadge').textContent = activeSchool.district ? `District: ${activeSchool.district}` : 'Active School';
+            document.getElementById('displaySchoolName').textContent = name;
+            const district = activeSchool.district || 'Not Specified';
+            const principal = activeSchool.principal || activeSchool.principalName || 'Not Specified';
+            const level = activeSchool.level || 'Not Specified';
+            document.getElementById('displaySchoolMeta').textContent = `District: ${district} • Principal: ${principal} • Level: ${level}`;
+            if (activeSchool.enrollment || activeSchool.totalStrength) {
+                document.getElementById('adminTotalStudents').textContent = `${activeSchool.enrollment || activeSchool.totalStrength} ➔`;
+            }
+            if (activeSchool.package) {
+                document.getElementById('displayPackageTier').textContent = String(activeSchool.package).split('(')[0];
+                document.getElementById('displayActivePackage').textContent = activeSchool.package;
+            }
+            if (activeSchool.idPattern) document.getElementById('idPatternDisplay').textContent = `ID Pattern: ${activeSchool.idPattern}`;
+            if (activeSchool.logo) {
+                const image = document.createElement('img');
+                image.src = activeSchool.logo;
+                image.alt = 'School logo';
+                image.className = 'w-full h-full object-cover rounded-2xl';
+                document.getElementById('schoolLogoContainer').replaceChildren(image);
+            }
+            const pending = String(activeSchool.verificationStatus || '').toLowerCase().includes('pending');
+            document.getElementById('receiptVerificationBox').classList.toggle('hidden', !pending);
+            document.getElementById('verificationBadge').textContent = pending ? 'Pending Fee Verification' : 'Verification status unavailable';
         }
-        function toggleTheme(){applyTheme(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light');}
-        (function(){const saved=localStorage.getItem('lama_theme')||localStorage.getItem('lama_dashboard_theme');applyTheme(saved||'light');})();
 
-        async function renderDashboard(){
-            const school=await LamaAPI.getActiveSchool()||{}; const schoolName=school.name||'Campus Command Hub';
-            const shortCode=school.shortCode|| (LamaAPI.deriveShortCode?LamaAPI.deriveShortCode(schoolName):'SCH');
-            document.getElementById('pageTitle').innerText=`${schoolName} | School Data Command Center`;
-            document.getElementById('sideSchoolName').textContent=schoolName;document.getElementById('sideSchoolAvatar').textContent=shortCode.slice(0,3);document.getElementById('navSchoolName').innerText=schoolName; document.getElementById('navShortCode').innerText=shortCode;
-            document.getElementById('heroSchoolName').innerText=schoolName; document.getElementById('principalDisplay').innerText=school.principal||'Principal / Admin';
-            document.getElementById('scopeDisplay').innerText=`${schoolName} • ${school.id||school.schoolId||'active school context'}`;
-            document.getElementById('todayDateDisplay').innerText=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'short',day:'numeric'});
-            document.getElementById('engineState').innerText='loading'; document.getElementById('dbUpdated').innerText=`synced ${new Date().toLocaleTimeString()}`;
-            let stats={}; try{stats=await LamaAPI.getDashboardStats()||{};}catch(e){console.warn(e)}
-            document.getElementById('totalStudentsCount').innerText=stats.totalStudents??'—';
-            document.getElementById('absentTodayCount').innerText=`${stats.absentToday??0} absent today`;
-            document.getElementById('attendanceRatioDisplay').innerText=stats.attendanceRatio!=null?`${stats.attendanceRatio}%`:'—';
-            document.getElementById('todayCollectionDisplay').innerText=money(stats.todayCollection); document.getElementById('monthCollectionDisplay').innerText=money(stats.monthTotal);
-            document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
-            document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
-            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income')]); window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
-            document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);
-            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
+        function viewReceiptModal() {
+            if (!activeSchool) return;
+            if (!activeSchool.receiptPic) return alert('No receipt image found in active school record.');
+            const url = String(activeSchool.receiptPic);
+            if (!/^https:\/\//i.test(url)) return alert('Receipt URL is invalid.');
+            window.open(url, '_blank', 'noopener,noreferrer');
         }
 
-        function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-        function renderStudentAttendanceCard(attendance,students){
-          const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
-          students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
-          const current=new Map();
-          attendance.forEach(a=>{
-            if(String(a.date||'').slice(0,10)!==today)return;
-            const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
-            const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
-            if(!student)return; // exclude staff and unrelated records
-            const key=String(student.id??student._id??student.enrlNo??student.enrollmentNo??'');
-            if(key)current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});
-          });
-          const counts={present:0,absent:0,leave:0};const classMap=new Map();
-          students.forEach(s=>{const c=String(s.class??s.grade??'Unassigned').trim()||'Unassigned';if(!classMap.has(c))classMap.set(c,{total:0,marked:0,present:0});classMap.get(c).total++});
-          current.forEach(({student,status})=>{const c=String(student.class??student.grade??'Unassigned').trim()||'Unassigned';const r=classMap.get(c);if(['present','p'].includes(status)){counts.present++;if(r)r.present++}else if(['absent','a'].includes(status))counts.absent++;else if(['leave','l','on leave'].includes(status))counts.leave++;else return;if(r)r.marked++});
-          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),rate=marked?Math.round(100*counts.present/marked):null;
-          const set=(key,value)=>document.getElementById(key).textContent=value;
-          set('studentAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
-          set('studentAttEnrolled',total.toLocaleString());set('studentAttPresent',counts.present);set('studentAttAbsent',counts.absent);set('studentAttLeave',counts.leave);set('studentAttUnmarked',unmarked);
-          set('studentAttRate',rate===null?'—':rate+'%');set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
-          const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
-          const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
-          document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>`<div class="class-att-row"><span class="text-xs font-bold truncate">${esc(name)}</span><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span></div>`).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
+        function logoutAdmin() {
+            if (typeof LamaAPI !== 'undefined' && typeof LamaAPI.logout === 'function') LamaAPI.logout('school');
+            window.location.replace('../../login.html');
         }
 
-        
-function normalizeAttendanceDate(value){
- if(value instanceof Date&&!isNaN(value))return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
- const x=String(value??'').trim();
- const iso=x.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return iso[0];
- const dmy=x.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);if(dmy)return dmy[3]+'-'+dmy[2].padStart(2,'0')+'-'+dmy[1].padStart(2,'0');
- return '';
-}
-function renderTeacherAttendanceAnalytics(teachers,records){
- const today=localISODate(), byDate=new Map();
- const idOf=t=>String(t.id??t._id??t.teacherId??t.teacherID??t.staffId??'').trim();
- const recordId=r=>String(r.teacherId??r.teacherID??r.teacher_id??r.staffId??'').trim();
- const normStatus=r=>{const s=String(r.status||'').trim().toLowerCase();return ['present','p'].includes(s)?'present':['absent','a'].includes(s)?'absent':['leave','l','on leave'].includes(s)?'leave':''};
- const rosterIds=new Set(teachers.map(idOf).filter(Boolean));
- const todayRecords=records.filter(r=>normalizeAttendanceDate(r.date)===today&&normStatus(r));
- // If the teachers endpoint is unavailable, use the saved attendance roster rather than falsely displaying 0/0.
- const savedIds=new Set(todayRecords.map(recordId).filter(Boolean));
- const rosterMissing=rosterIds.size===0;
- const mismatch=rosterIds.size>0&&savedIds.size>0&&![...savedIds].some(id=>rosterIds.has(id));
- const allowed=rosterMissing||mismatch?null:rosterIds;
- for(const r of records){const date=normalizeAttendanceDate(r.date),key=recordId(r),status=normStatus(r);if(!date||!key||!status||(allowed&&!allowed.has(key)))continue;if(!byDate.has(date))byDate.set(date,new Map());byDate.get(date).set(key,status)}
- const todayRows=byDate.get(today)||new Map(), vals=[...todayRows.values()];
- const present=vals.filter(x=>x==='present').length,absent=vals.filter(x=>x==='absent').length,leave=vals.filter(x=>x==='leave').length;
- const marked=present+absent+leave,total=Math.max(rosterIds.size,todayRows.size),pending=Math.max(0,total-marked);
- const put=(k,v)=>{const el=document.getElementById(k);if(el)el.textContent=v};
- put('taTotal',total);put('taPresent',present);put('taAbsent',absent);put('taLeave',leave);
- put('teacherAttDisplay',present+' / '+total);put('notMarkedDisplay',pending+' not marked today');
- put('taPending',([0,6].includes(new Date(today+'T12:00:00').getDay())?'Weekend holiday · ':'')+pending+' teachers not marked today');
- put('taCoverage',marked+' / '+total+' marked · '+(total?Math.round(marked/total*100):0)+'% coverage');
- put('teacherAttDate',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}));
- const progress=document.getElementById('taProgress');if(progress)progress.style.width=(total?100*marked/total:0)+'%';
- const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(6-i));return {key:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),label:d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric'})}});
- const isWeekend=key=>{const day=new Date(key+'T12:00:00').getDay();return day===0||day===6};
- const series=days.map(d=>{const v=isWeekend(d.key)?[]:[...(byDate.get(d.key)||new Map()).values()];return {present:v.filter(x=>x==='present').length,absent:v.filter(x=>x==='absent').length,leave:v.filter(x=>x==='leave').length}});
- const weekendSaved=days.filter(d=>isWeekend(d.key)&&(byDate.get(d.key)?.size||0)>0).length;
- put('teacherTrendNote',weekendSaved?`${weekendSaved} weekend date(s) contain saved attendance; excluded from working-day chart (records preserved).`:rosterMissing&&todayRows.size?'Using saved teacher attendance records; teacher directory did not load.':mismatch?'Saved attendance teacher IDs differ from teacher directory IDs; check teacher data linkage.':records.length?'Seven-day trend from saved records; missing days are not absences.':'No saved teacher attendance records for this school.');
- destroyChart('teacherAttendance');if(typeof Chart==='undefined')return;
- charts.teacherAttendance=new Chart(document.getElementById('teacherAttendanceChart'),{type:'bar',data:{labels:days.map(d=>isWeekend(d.key)?d.label+' · Holiday':d.label),datasets:[{label:'Present',data:series.map(x=>x.present),backgroundColor:'rgba(52,211,153,.8)',borderRadius:5},{label:'Absent',data:series.map(x=>x.absent),backgroundColor:'rgba(251,113,133,.8)',borderRadius:5},{label:'Leave',data:series.map(x=>x.leave),backgroundColor:'rgba(251,191,36,.8)',borderRadius:5}]},options:{...chartDefaults(),scales:{x:{stacked:true,ticks:{color:'#94a3b8'},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
-}
-function renderAssessmentAnalytics(tests){
- const today=localISODate(),isPub=x=>x.isPublished===true||x.published===true||String(x.status||'').toLowerCase()==='published';
- const total=tests.length,published=tests.filter(isPub).length,upcoming=tests.filter(t=>String(t.date||'').slice(0,10)>=today).length;
- for(const [k,v] of Object.entries({asTotal:total,asPublished:published,asDraft:total-published,asUpcoming:upcoming}))document.getElementById(k).textContent=v;
- document.getElementById('asNote').textContent=total?Math.round(100*published/total)+'% of assessments published.':'No assessments added yet.';
- const counts=new Map();for(const t of tests){const c=String(t.class||t.grade||'Unassigned').trim();counts.set(c,(counts.get(c)||0)+1)}
- const entries=[...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
- document.getElementById('assessmentNote').textContent=total?entries.length+' class(es) with test records; counts include published and drafts.':'Add tests in Tests Manager to populate this chart.';
- destroyChart('assessment');if(typeof Chart==='undefined')return;
- charts.assessment=new Chart(document.getElementById('assessmentChart'),{type:'bar',data:{labels:entries.map(x=>x[0]),datasets:[{label:'Tests',data:entries.map(x=>x[1]),backgroundColor:'rgba(236,72,153,.72)',borderColor:'#f9a8d4',borderWidth:1,borderRadius:6}]},options:{...chartDefaults(),plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
-}
-
-        function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance',d.attendance.length,'attendance events'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
-        function renderAcademicClasses(students){
-          const container=document.getElementById('academicClassSummary'),note=document.getElementById('academicClassNote');
-          if(!container||!note)return;
-          const active=students.filter(s=>{const status=String(s.studentStatus||s.status||'Current').trim().toLowerCase();return s.active!==false&&!['passed','passed out','left','historical','withdrawn','inactive'].some(x=>status.includes(x))});
-          const classes=new Map();
-          for(const student of active){const label=String(student.class??student.grade??student.className??'Unassigned').trim()||'Unassigned';const entry=classes.get(label)||{total:0,boys:0,girls:0};entry.total++;const g=String(student.gender||'').trim().toLowerCase();if(['m','male','boy'].includes(g))entry.boys++;if(['f','female','girl'].includes(g))entry.girls++;classes.set(label,entry)}
-          const list=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
-          const max=Math.max(1,...list.map(([,v])=>v.total));
-          container.innerHTML=list.length?list.map(([name,r])=>`<a href="manage-students.html" class="rounded-2xl p-3 border border-cyan-500/20 bg-cyan-500/5 hover:border-cyan-400/60 transition block"><div class="flex items-center justify-between gap-2"><span class="text-xs font-black break-words">${esc(name==='Unassigned'?'Unassigned':'Class '+name)}</span><span class="text-xl font-black text-cyan-300">${r.total}</span></div><div class="h-1.5 rounded-full bg-slate-700/50 overflow-hidden mt-3"><div class="h-full rounded-full bg-lime-400" style="width:${100*r.total/max}%"></div></div><div class="text-[10px] text-slate-400 mt-2">${r.boys} boys · ${r.girls} girls${r.total-r.boys-r.girls?' · '+(r.total-r.boys-r.girls)+' unspecified':''}</div></a>`).join(''):'<p class="text-xs text-slate-400 col-span-full">No current student class records found.</p>';
-          note.textContent=`${active.length} current students across ${list.length} classes. ${students.length-active.length} non-current records excluded.`;
-        }
-        function renderClassChart(students){ if(typeof Chart==='undefined')return; const counts={}; students.filter(s=>s.active!==false&&!['passed','left','historical','withdrawn','inactive'].some(x=>String(s.studentStatus||s.status||'Current').toLowerCase().includes(x))).forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
-        function renderGenderChart(students){ if(typeof Chart==='undefined')return; const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }
-        function renderAttendanceChart(attendance,students){
-          const today=localISODate(),byId=new Map(),byEnrollment=new Map(),unique=new Map(),classes=new Map();
-          const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-          for(const st of students){const key=String(st.id??st._id??st.enrlNo??st.enrollmentNo??'').trim();if(!key)continue;const name=String(st.class??st.grade??st.className??'Unassigned').trim()||'Unassigned';if(!classes.has(name))classes.set(name,{total:0,present:0,absent:0,leave:0});classes.get(name).total++;if(st.id!=null||st._id!=null)byId.set(String(st.id??st._id),{key,name});if(st.enrlNo!=null||st.enrollmentNo!=null)byEnrollment.set(String(st.enrlNo??st.enrollmentNo),{key,name});}
-          for(const a of attendance){if(normalizeAttendanceDate(a.date)!==today)continue;const student=byId.get(String(a.studentId??a.student_id??''))||byEnrollment.get(String(a.enrlNo??a.enrollmentNo??''));if(student)unique.set(student.key,{name:student.name,status:String(a.status||'').trim().toLowerCase()})}
-          for(const {name,status} of unique.values()){const r=classes.get(name);if(!r)continue;if(['present','p'].includes(status))r.present++;else if(['absent','a'].includes(status))r.absent++;else if(['leave','l','on leave'].includes(status))r.leave++}
-          const weekend=[0,6].includes(new Date(today+'T12:00:00').getDay());
-          const totals={total:0,present:0,absent:0,leave:0,unmarked:0};
-          const rows=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
-          const holder=document.getElementById('attendanceClassBars');
-          holder.innerHTML=rows.map(([name,r])=>{const missing=Math.max(0,r.total-r.present-r.absent-r.leave);totals.total+=r.total;totals.present+=r.present;totals.absent+=r.absent;totals.leave+=r.leave;totals.unmarked+=missing;const width=n=>r.total?100*n/r.total:0;return `<div class="attendance-kpi"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(name==='Unassigned'?name:'Class '+name)}</span><span>${r.present} present / ${r.total}</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked</p></div>`}).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
-          document.getElementById('classBarsDate').textContent=new Date(today+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+(weekend?' · Weekend holiday (saved records shown for review)':' · Saved attendance');
-          document.getElementById('attendanceSummary').innerHTML=[['Present',totals.present],['Absent',totals.absent],['Leave',totals.leave],['Unmarked',totals.unmarked]].map(([label,n])=>`<div class="hub-stat"><small>${label}</small><b>${n}</b></div>`).join('');
-        }
-                 function renderFeeChart(series,fees){
-             // Prefer server-calculated collection series; otherwise aggregate dated payments.
-             let points=[];
-             if(Array.isArray(series)&&series.length){
-                 points=series.map(s=>({label:String(s.month||s.label||''),total:Number(s.total||0)})).filter(s=>s.label);
-             } else if(Array.isArray(fees)){
-                 const monthly=new Map();
-                 fees.forEach(f=>{
-                     const raw=f.paymentDate||f.paidDate||f.date||f.createdAt;
-                     const date=raw?new Date(raw):null;
-                     if(!date||Number.isNaN(date.getTime()))return;
-                     const status=String(f.status||f.paymentStatus||'').toLowerCase();
-                     if(status&&['unpaid','pending','due','overdue','cancelled','canceled'].includes(status))return;
-                     const amount=Number(f.paidAmount??f.amountPaid??f.receivedAmount??f.amount??0);
-                     if(!Number.isFinite(amount)||amount<=0)return;
-                     const key=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0');
-                     monthly.set(key,(monthly.get(key)||0)+amount);
-                 });
-                 points=[...monthly.entries()].sort(([a],[b])=>a.localeCompare(b)).slice(-12).map(([key,total])=>({label:new Date(key+'-01T12:00:00').toLocaleDateString(undefined,{month:'short',year:'2-digit'}),total}));
-             }
-             destroyChart('income');
-             if(typeof Chart==='undefined')return;charts.income=new Chart(document.getElementById('incomeChart'),{
-                 type:'bar',data:{labels:points.map(p=>p.label),datasets:[{label:'Fee Collection (PKR)',data:points.map(p=>p.total),backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1,borderRadius:7,maxBarThickness:44}]},
-                 options:{...chartDefaults(),plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>' '+money(context.parsed.y)}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#94a3b8',callback:v=>'Rs. '+Number(v).toLocaleString()},grid:{color:'rgba(148,163,184,.09)'}}}}
-             });
-             document.getElementById('financeChartNote').textContent=points.length?'Monthly fee collections · '+points.length+' period(s) shown':'No dated fee collection data available yet.';
-         }
-
-// R4 read-only finance dashboard. Never writes to school financial records.
-function renderFinanceR4(d){
-  if(typeof Chart==='undefined'){document.getElementById('financeChartNote').textContent='Charts unavailable: Chart.js did not load.';return;}
-  const fees=d.fees||[], expenses=d.expenses||[], income=d.income||[], students=d.students||[];
-  const normalizeClass=v=>{const s=String(v??'').trim();return !s||s==='0'?'Unassigned':s.toUpperCase().replace(/^CLASS\s+/,'');};
-  const byStudent=new Map();students.forEach(s=>{const key=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(key)byStudent.set(key,normalizeClass(s.class??s.grade??s.className));if(en)byStudent.set(en,normalizeClass(s.class??s.grade??s.className));});
-  const cls=f=>normalizeClass(f.class??f.grade??f.className??byStudent.get(String(f.studentId??f.student_id??f.enrlNo??f.enrollmentNo??'')));
-  const num=v=>{const n=Number(String(v??0).replace(/,/g,''));return Number.isFinite(n)&&n>0?n:0;};
-  const date=x=>{const raw=x.paymentDate??x.paidDate??x.date??x.createdAt;if(!raw)return null;const a=new Date(raw);return Number.isNaN(a.getTime())?null:a;};
-  const key=x=>{const dt=date(x);return dt?dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'):null;};
-  const now=new Date(),thisMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0'),thisYear=String(now.getFullYear());
-  const selected=document.getElementById('finClassFilter'),period=document.getElementById('finPeriodFilter');
-  const classes=[...new Set(students.map(s=>normalizeClass(s.class??s.grade??s.className)).concat(fees.map(cls)).filter(c=>c!=='Unassigned'))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
-  const prev=selected.value;selected.innerHTML='<option value="all">All classes</option>'+classes.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('');selected.value=classes.includes(prev)?prev:'all';
-  function draw(){
-    const inPeriod=x=>{const k=key(x);return period.value==='all'||(k&& (period.value==='month'?k===thisMonth:k.startsWith(thisYear)));};
-    const paid=f=>String(f.status??f.paymentStatus??'').toLowerCase()==='paid';
-    const feeAmount=f=>num(f.paidAmount??f.amountPaid??f.receivedAmount??f.amount);
-    const otherAmount=x=>num(x.amount);
-    const validFees=fees.filter(f=>selected.value==='all'||cls(f)===selected.value).filter(inPeriod);
-    const paidFees=validFees.filter(paid);
-    const paidSum=paidFees.reduce((a,f)=>a+feeAmount(f),0);
-    const pendingSum=validFees.filter(f=>['pending','unpaid','overdue','due'].includes(String(f.status??f.paymentStatus??'').toLowerCase())).reduce((a,f)=>a+num(f.amount),0);
-    const e=expenses.filter(inPeriod),i=income.filter(inPeriod),expSum=e.reduce((a,x)=>a+otherAmount(x),0),incSum=i.reduce((a,x)=>a+otherAmount(x),0);
-    const dateToday=new Date().toDateString();const today=paidFees.filter(f=>date(f)?.toDateString()===dateToday).reduce((a,f)=>a+feeAmount(f),0);
-    const m=paidFees.filter(f=>key(f)===thisMonth).reduce((a,f)=>a+feeAmount(f),0),y=paidFees.filter(f=>key(f)?.startsWith(thisYear)).reduce((a,f)=>a+feeAmount(f),0);
-    [['financeToday',today],['financeMonth',m],['financeYear',y],['finOtherIncome',incSum],['finExpenses',expSum],['finNet',paidSum+incSum-expSum]].forEach(([id,v])=>document.getElementById(id).textContent=money(v));
-    // R5 read-only indicators; counts are recorded entries, not unique invoices.
-    const dueEntries=validFees.filter(f=>['pending','unpaid','overdue','due'].includes(String(f.status??f.paymentStatus??'').toLowerCase()));
-    const expenseCats=new Map();e.forEach(x=>{const name=String(x.category||'Uncategorized');expenseCats.set(name,(expenseCats.get(name)||0)+otherAmount(x));});
-    const largest=[...expenseCats.entries()].sort((a,b)=>b[1]-a[1])[0];
-    const details={finPaidCount:String(paidFees.length),finDueCount:String(dueEntries.length),finDueAmount:money(pendingSum),finCollectPct:(paidSum+pendingSum>0?(100*paidSum/(paidSum+pendingSum)).toFixed(1)+'%':'—'),finFeeReceipts:money(paidSum),finTotalInflow:money(paidSum+incSum),finExpenseCount:String(e.length),finTopExpense:largest?largest[0]+' · '+money(largest[1]):'No expenses'};
-    Object.entries(details).forEach(([id,value])=>{const el=document.getElementById(id);if(el)el.textContent=value;});
-
-    const colors=['#0f9691','#8c73d7','#e6a94c','#ed7792','#4b9bcb','#86af4c','#c78356','#5dbab0'];
-    function chart(id,type,labels,datasets,extra={}){destroyChart(id);const canvas=document.getElementById(id);if(!canvas)return;const opts=chartDefaults();opts.plugins.tooltip={callbacks:{label:c=>' '+c.dataset.label+': '+money(c.parsed.y??c.parsed)}};if(type==='doughnut'){delete opts.scales;opts.cutout='64%';opts.plugins.tooltip={callbacks:{label:c=>' '+c.label+': '+money(c.parsed)}};}else{opts.scales.y.beginAtZero=true;opts.scales.y.ticks.callback=v=>'Rs. '+Number(v).toLocaleString();opts.scales.x.ticks.maxRotation=40;}charts[id]=new Chart(canvas,{type,data:{labels,datasets},options:{...opts,...extra}});}
-    const classTotals=new Map();paidFees.forEach(f=>{const c=cls(f);classTotals.set(c,(classTotals.get(c)||0)+feeAmount(f));});
-    const classNames=[...new Set(classes.concat([...classTotals.keys()]))].filter(c=>selected.value==='all'||c===selected.value);
-    chart('finClassPaidChart','bar',classNames,[{label:'Paid fees',data:classNames.map(c=>classTotals.get(c)||0),backgroundColor:classNames.map((_,idx)=>colors[idx%colors.length]),borderRadius:7}]);
-    chart('finStatusChart','doughnut',['Paid','Pending / overdue'],[{label:'Recorded amount',data:[paidSum,pendingSum],backgroundColor:['#139f83','#f3b456'],borderWidth:0}]);
-    const months=[];for(let n=11;n>=0;n--){const dt=new Date(now.getFullYear(),now.getMonth()-n,1);months.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'));}
-    const sums=(records,amount)=>months.map(k=>records.filter(x=>key(x)===k).reduce((a,x)=>a+amount(x),0));
-    const monthLabels=months.map(k=>{const [yy,mm]=k.split('-');return new Date(+yy,+mm-1,1).toLocaleDateString('en-GB',{month:'short',year:'2-digit'});});
-    destroyChart('income');chart('incomeChart','line',monthLabels,[{label:'Fee collection',data:sums(paidFees,feeAmount),borderColor:'#0f9691',backgroundColor:'rgba(15,150,145,.12)',fill:true,tension:.28,pointRadius:2}]);
-    chart('finInOutChart','bar',['Selected period'],[{label:'Fees',data:[paidSum],backgroundColor:'#0f9691'},{label:'Other income',data:[incSum],backgroundColor:'#76a853'},{label:'Expenses',data:[expSum],backgroundColor:'#ec8d66'}]);
-    const catMap=new Map();e.forEach(x=>{const c=String(x.category||'Uncategorized');catMap.set(c,(catMap.get(c)||0)+otherAmount(x));});
-    chart('finExpenseChart','doughnut', [...catMap.keys()].length?[...catMap.keys()]:['No recorded expenses'],[{label:'Expense',data:catMap.size?[...catMap.values()]:[0],backgroundColor:colors,borderWidth:0}]);
-    chart('finMovementChart','line',monthLabels,[{label:'Fee receipts',data:sums(paidFees,feeAmount),borderColor:'#0f9691',tension:.3},{label:'Other income',data:sums(i,otherAmount),borderColor:'#76a853',tension:.3},{label:'Expenses',data:sums(e,otherAmount),borderColor:'#ec8d66',tension:.3}]);
-    document.getElementById('financeChartNote').textContent=validFees.length+' recorded fee entries · '+paidFees.length+' marked Paid · '+(selected.value==='all'?'All classes':selected.value)+' · '+(period.options[period.selectedIndex].text)+'. *Collection share compares Paid and unpaid recorded entries, not all students billed. Unassigned class records are excluded from class comparison.';
-    document.getElementById('finAccountsNote').textContent=e.length+' expense entries · '+i.length+' other-income entries. All figures are derived from loaded records; missing entries are not estimated.';
-  }
-  selected.onchange=draw;period.onchange=draw;draw();
-}
-
-function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
-        function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
-        function renderAbsentees(attendance,students){const today=localISODate(), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }
-        function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
-        async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
-        if(LamaAPI.requireLogin('school')) renderDashboard();
+        function goToDashboard() { window.location.href = '../../index.html'; }
     </script>
-<script>
-function toggleSidebar(open){document.body.classList.toggle('sidebar-open',!!open);const nav=document.getElementById('lamaSidebar');if(nav)nav.setAttribute('aria-hidden',open?'false':(matchMedia('(max-width:1050px)').matches?'true':'false'));}
-window.addEventListener('keydown',e=>{if(e.key==='Escape')toggleSidebar(false)});
-const sectionObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){document.querySelectorAll('.side-link').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+entry.target.id))}}},{rootMargin:'-20% 0px -65% 0px'});
-document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserver.observe(el));
-</script>
-<script>
-(function(){
- const supported=['lime','ocean','blue','rose'];
- const key='lama_dashboard_palette';
- function apply(p){const palette=supported.includes(p)?p:'lime';document.documentElement.setAttribute('data-palette',palette);try{localStorage.setItem(key,palette)}catch(e){}document.querySelectorAll('[data-palette-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.paletteChoice===palette)))}
- apply(localStorage.getItem(key)||'lime');
- document.addEventListener('DOMContentLoaded',()=>{
-  const trigger=document.getElementById('paletteTrigger'),menu=document.getElementById('paletteMenu'),wrap=document.getElementById('palettePicker');
-  if(!trigger||!menu)return;
-  trigger.addEventListener('click',()=>{menu.hidden=!menu.hidden;trigger.setAttribute('aria-expanded',String(!menu.hidden))});
-  menu.addEventListener('click',e=>{const b=e.target.closest('[data-palette-choice]');if(!b)return;apply(b.dataset.paletteChoice);menu.hidden=true;trigger.setAttribute('aria-expanded','false')});
-  document.addEventListener('click',e=>{if(!wrap.contains(e.target)){menu.hidden=true;trigger.setAttribute('aria-expanded','false')}});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.hidden=true;trigger.setAttribute('aria-expanded','false')}});
- });
-})();
-</script></body>
+</body>
 </html>

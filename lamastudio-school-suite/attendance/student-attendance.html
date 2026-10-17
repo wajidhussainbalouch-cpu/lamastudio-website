@@ -29,7 +29,43 @@ const localDate=()=>{const d=new Date();return [d.getFullYear(),String(d.getMont
 const displayDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)?v.slice(8,10)+'/'+v.slice(5,7)+'/'+v.slice(0,4):'';
 const parseDate=v=>{const m=String(v).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return '';const iso=m[3]+'-'+m[2]+'-'+m[1],d=new Date(iso+'T12:00:00');return !Number.isNaN(d.getTime())&&d.getFullYear()===+m[3]&&d.getMonth()+1===+m[2]&&d.getDate()===+m[1]?iso:''};
 const norm=v=>Array.isArray(v)?v:Array.isArray(v?.records)?v.records:Array.isArray(v?.data)?v.data:[];
-const attendanceDate=v=>{if(v instanceof Date&&!isNaN(v))return [v.getFullYear(),String(v.getMonth()+1).padStart(2,'0'),String(v.getDate()).padStart(2,'0')].join('-');const t=String(v??'').trim();if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);const m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return ''}; const canonical=v=>{const x=String(v||'').trim().toLowerCase();return ['present','p'].includes(x)?'Present':['absent','a'].includes(x)?'Absent':['leave','l','on leave'].includes(x)?'Leave':''};
+const attendanceDate=v=>{
+  if(v==null||v==='')return '';
+
+  const format=d=>[
+    d.getFullYear(),
+    String(d.getMonth()+1).padStart(2,'0'),
+    String(d.getDate()).padStart(2,'0')
+  ].join('-');
+
+  if(v instanceof Date)
+    return isNaN(v.getTime())?'':format(v);
+
+  const t=String(v).trim();
+
+  if(/^\d{4}-\d{2}-\d{2}$/.test(t))
+    return t;
+
+  if(/^\d{4}-\d{2}-\d{2}T/.test(t)){
+    const d=new Date(t);
+    return isNaN(d.getTime())?'':format(d);
+  }
+
+  const m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if(m)
+    return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+
+  return '';
+};
+
+const canonical=v=>{
+  const x=String(v||'').trim().toLowerCase();
+  return ['present','p'].includes(x)?'Present':
+         ['absent','a'].includes(x)?'Absent':
+         ['leave','l','on leave'].includes(x)?'Leave':'';
+};
+
 function alertText(t){$('notice').textContent=t;$('notice').classList.remove('hidden')}
 function theme(){const next=document.documentElement.dataset.theme==='light'?'dark':'light';document.documentElement.dataset.theme=next;localStorage.setItem('lama_theme',next);$('theme').textContent=next==='dark'?'☀ Light':'☾ Dark'}
 function studentFor(r,byId,byEnr){return byId.get(String(r.studentId??r.student_id??'').trim())||byEnr.get(String(r.enrlNo??r.enrollmentNo??r.enrollment??'').trim())||null}

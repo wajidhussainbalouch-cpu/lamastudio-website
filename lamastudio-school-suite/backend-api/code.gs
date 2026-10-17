@@ -115,7 +115,7 @@ const COLLECTIONS = {
     },
     notifications: {
         tab: 'Notifications',
-        headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'createdAt']
+        headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'isPublished', 'createdAt']
     },
     resources: {
         tab: 'Resources',
@@ -874,8 +874,8 @@ function getMainDashboardData(params) {
 
     return {
         schoolId: params.schoolId, schoolName, logo, coverPhoto, address, level, type,
-        recentNotifications: notifications.slice(0, 5),
-        recentActivities: activities.slice(0, 5),
+        recentNotifications: notifications.filter(x => String(x.status || "").trim().toLowerCase() === "sent" && String(x.audience || "").trim().toLowerCase() === "all classes").slice(0, 5),
+        recentActivities: activities.filter(x => String(x.status || "").trim().toLowerCase() === "published" || String(x.isPublished).toLowerCase() === "true" || String(x.published).toLowerCase() === "true").slice(0, 5),
         upcomingExams: ctx.role === 'student' ? upcomingExams.filter(r => recordAppliesToClass(r, ctx.student.class)) : upcomingExams,
         upcomingTests: ctx.role === 'student' ? upcomingTests.filter(r => recordAppliesToClass(r, ctx.student.class)) : upcomingTests,
         resources

@@ -599,7 +599,15 @@ async function render(){
         }
     }
 
-    const notices = rawNotices.filter(n => n && isPublished(n) && sameSchool(n, schoolId) && isSchoolWideNotice(n));
+    const notices = rawNotices.filter(n =>
+        n &&
+        (String(n.status || '').trim().toLowerCase() === 'sent' ||
+         (String(n.status || '').trim().toLowerCase() !== 'draft' &&
+          String(n.status || '').trim().toLowerCase() !== 'scheduled' &&
+          isPublished(n))) &&
+        sameSchool(n, schoolId) &&
+        isSchoolWideNotice(n)
+    );
     const activities = rawActivities.filter(a => a && isPublished(a) && sameSchool(a, schoolId));
     
     // Display all saved exams and tests immediately without strict publication filters

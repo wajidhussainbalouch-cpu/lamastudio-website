@@ -15,6 +15,8 @@ const $ = id => document.getElementById(id);
 const schoolKey = 'lama_student_remembered_school_id';
 const schoolInput = $('schoolId');
 try { schoolInput.value = localStorage.getItem(schoolKey) || ''; } catch (_e) {}
+const requestedSchoolId = new URLSearchParams(location.search).get('schoolId');
+if (requestedSchoolId && requestedSchoolId.length <= 100) schoolInput.value = requestedSchoolId.trim();
 function rememberSchool() { try { localStorage.setItem(schoolKey, schoolInput.value.trim()); } catch (_e) {} }
 schoolInput.addEventListener('input', rememberSchool);
 schoolInput.addEventListener('change', rememberSchool);

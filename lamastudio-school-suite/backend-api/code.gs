@@ -1056,6 +1056,33 @@ function jsonOut(obj) {
     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+
+/** Student-only teacher directory. Never expose teacher credentials or contact data. */
+function getMyClassTeachers(params) {
+    const ctx = resolveContext(params);
+    if (ctx.role !== 'student') throw new Error('Student login required.');
+    const targetClass = ctx.student.class;
+    const targetSection = String(ctx.student.section || '').trim();
+    const sheet = ctx.ss.getSheetByName(COLLECTIONS.teachers.tab);
+    if (!sheet || sheet.getLastRow() < 2) return [];
+    const rows = sheet.getDataRange().getValues();
+    const headers = rows[0];
+    const result = [];
+    const seen = {};
+    for (let i = 1; i < rows.length; i++) {
+        const t = rowToRecord(headers, rows[i]);
+        if (!t.name || !sameClass(t.assignedClass, targetClass)) continue;
+        const assignedSection = String(t.assignedSection || '').trim();
+        if (targetSection && assignedSection && !sameClass(assignedSection, targetSection)) continue;
+        if (String(t.status || 'Active').trim().toLowerCase() !== 'active') continue;
+        const unique = String(t.id || t.name).toLowerCase();
+        if (seen[unique]) continue;
+        seen[unique] = true;
+        result.push({name:String(t.name), subject:String(t.subject || ''), assignedClass:String(t.assignedClass || ''), assignedSection:assignedSection});
+    }
+    return result;
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
@@ -1084,6 +1111,8 @@ function handleRequest(params) {
             case 'teacherLogin':
                 return { status: 'success', teacher: teacherLogin(params.schoolId, params.email, params.password) };
 
+            case 'getMyClassTeachers':
+                return { status: 'success', teachers: getMyClassTeachers(params) };
             case 'studentLogin':
                 return { status: 'success', student: studentLogin(params.schoolId, params.enrlNo, params.password) };
 

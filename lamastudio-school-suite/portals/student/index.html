@@ -1,1 +1,81 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Student & Parent Portal</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../assets/css/config.css"><script src="../../js/api-client.js"></script><style>body{background:radial-gradient(circle at 20% 0%,#312e8155,transparent 35%),radial-gradient(circle at 90% 20%,#0e749055,transparent 30%),#070b14}.glass{background:#0f172acc;backdrop-filter:blur(18px);border:1px solid #94a3b822}.gridbg{background-image:linear-gradient(#94a3b80b 1px,transparent 1px),linear-gradient(90deg,#94a3b80b 1px,transparent 1px);background-size:32px 32px}</style></head><body class="min-h-screen text-slate-100 gridbg"><header class="max-w-6xl mx-auto px-5 py-5 flex justify-between items-center"><div class="flex items-center gap-3"><div id="logo" class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 grid place-items-center font-black">SCH</div><div><b id="school">School Name</b><p class="text-[9px] uppercase tracking-[.25em] text-slate-500">Digital Student Portal</p></div></div><a href="../../main-dashboard.html" class="glass rounded-xl px-4 py-2 text-xs font-bold">🏫 School Board</a></header><main class="max-w-6xl mx-auto px-5 py-10 grid lg:grid-cols-2 gap-10 items-center"><section><span class="glass rounded-full px-3 py-1.5 text-[10px] uppercase tracking-widest text-cyan-300">● Secure school access</span><h1 class="mt-5 text-4xl sm:text-6xl font-black leading-tight">Your school life.<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-300">One portal.</span></h1><p class="mt-5 max-w-xl text-slate-400 leading-7">Secure access to results, homework, attendance, timetable, tests, notices, resources and teacher support.</p><div class="mt-8 flex flex-wrap gap-3"><a href="../../students/student-login.html" class="rounded-2xl px-6 py-3.5 bg-violet-600 font-black text-sm">🔐 Login to Portal</a><a href="../../main-dashboard.html" class="glass rounded-2xl px-6 py-3.5 font-bold text-sm">Explore School Board</a></div><div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8"><div class="glass rounded-2xl p-4">🎓<p class="text-xs mt-2 font-bold">Results</p></div><div class="glass rounded-2xl p-4">📝<p class="text-xs mt-2 font-bold">Homework</p></div><div class="glass rounded-2xl p-4">📅<p class="text-xs mt-2 font-bold">Timetable</p></div><div class="glass rounded-2xl p-4">👨‍🏫<p class="text-xs mt-2 font-bold">Teachers</p></div></div></section><section class="glass rounded-[2rem] p-6"><div class="rounded-3xl bg-slate-950/70 border border-slate-800 p-6"><p class="text-[10px] uppercase tracking-widest text-slate-500">Student overview</p><div class="mt-6 flex items-center gap-4"><div class="text-4xl">🎓</div><div><b>Personal Dashboard</b><p class="text-xs text-slate-500">Your secure academic space</p></div></div><div class="grid grid-cols-2 gap-3 mt-6"><div class="bg-slate-900 rounded-2xl p-4 text-xs font-bold">📊 Results & Tests</div><div class="bg-slate-900 rounded-2xl p-4 text-xs font-bold">📝 Homework & Diary</div><div class="bg-slate-900 rounded-2xl p-4 text-xs font-bold">💬 Ask Teacher</div><div class="bg-slate-900 rounded-2xl p-4 text-xs font-bold">📢 Notices & Events</div></div></div></section><section class="max-w-5xl mx-auto px-4 pb-8"><div class="grid sm:grid-cols-2 gap-3"><a href="../../identity-cards.html?role=student" class="block rounded-2xl bg-cyan-700 text-white p-4 font-bold">🪪 View / Print My Student ID Card →</a><a href="student.html" class="block rounded-2xl bg-violet-700 text-white p-4 font-bold">👩‍🏫 Teachers of My Class →</a></div></section></main><footer class="text-center text-[10px] text-slate-600 py-8">Powered by Lama School Suite</footer><script>try{let s=LamaAPI.getSession?.();if(s?.schoolName)school.textContent=s.schoolName;if(s?.schoolLogo)logo.innerHTML=`<img src="${s.schoolLogo}" class="w-full h-full object-cover rounded-2xl">`}catch(e){}</script><script>if(typeof LamaAPI!=="undefined" && LamaAPI.getSession("student")){location.replace("student.html")}</script></body></html>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Student Portal | Lama School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../../js/api-client.js"></script>
+<style>
+body{background:radial-gradient(circle at top left,#164e63 0%,#081923 42%,#070b14 100%);color:#f8fafc}
+.panel{background:#102a35;border:1px solid #335363;border-radius:22px}
+@media print{body{background:white;color:black}header,.no-print,#teacherPanel,#status{display:none!important}#cardPanel{border:2px solid #111!important;color:#111;background:white!important;max-width:440px;margin:25px auto}#cardPanel *{color:#111!important}}
+</style></head>
+<body class="min-h-screen">
+<header class="border-b border-slate-700/60"><div class="max-w-6xl mx-auto p-4 flex flex-wrap gap-3 items-center justify-between">
+<div><b id="schoolName">Lama School Suite</b><p class="text-xs text-slate-400">Student & Parent Home</p></div>
+<div class="flex gap-2"><a href="../../main-dashboard.html" class="rounded-xl bg-slate-700 px-3 py-2 text-sm">School Board</a>
+<button id="logout" class="rounded-xl bg-rose-800 px-3 py-2 text-sm">Log out</button></div></div></header>
+<main class="max-w-6xl mx-auto px-4 py-7 space-y-5">
+<div id="status" role="status" class="text-sm text-cyan-200">Loading your student information…</div>
+<section class="panel p-6"><p class="text-xs uppercase tracking-widest text-cyan-300">Welcome to your portal</p>
+<h1 id="welcome" class="text-3xl font-black mt-2">Student Home</h1>
+<p class="text-sm text-slate-300 mt-2">View your ID card, class teachers and academic dashboard.</p>
+<div class="no-print grid sm:grid-cols-3 gap-3 mt-6">
+<a href="student.html" class="rounded-xl bg-violet-700 p-4 font-bold">📊 My Academic Dashboard →</a>
+<a href="student-grades.html" class="rounded-xl bg-cyan-800 p-4 font-bold">📚 My Results →</a>
+<a href="student-diary.html" class="rounded-xl bg-teal-800 p-4 font-bold">📝 My Diary →</a></div></section>
+<div class="grid lg:grid-cols-2 gap-5">
+<section id="cardPanel" class="panel p-6" aria-label="Student identity card">
+<div class="flex justify-between items-start gap-3"><div><p class="text-xs tracking-widest text-cyan-300 font-bold">STUDENT IDENTITY CARD</p><h2 id="cardSchool" class="font-black text-lg mt-1">School</h2></div><span class="text-3xl">🎓</span></div>
+<div class="flex gap-4 mt-5 items-start"><div id="photo" class="w-24 h-28 shrink-0 bg-slate-800 rounded-xl grid place-items-center overflow-hidden text-3xl">👤</div>
+<div class="min-w-0 space-y-2 text-sm"><p><strong>Name:</strong> <span id="cardName">—</span></p><p><strong>Enrollment:</strong> <span id="enrl">—</span></p>
+<p><strong>Class:</strong> <span id="grade">—</span></p><p><strong>Section:</strong> <span id="section">—</span></p>
+<p><strong>Father / Guardian:</strong> <span id="guardian">—</span></p></div></div>
+<button id="print" class="no-print mt-5 rounded-xl bg-lime-400 text-slate-900 font-black px-5 py-3 w-full" type="button">🖨 Print My ID Card</button>
+</section>
+<section id="teacherPanel" class="panel p-6"><h2 class="font-black text-xl">👩‍🏫 My Class Teachers</h2>
+<p class="text-sm text-slate-400 mt-2">Teachers shown from your school's published timetable for your class and section.</p>
+<div id="teachers" class="mt-5 space-y-3 text-sm">Loading teachers…</div></section></div>
+<p class="no-print text-xs text-slate-400">Only your school can correct student details or teacher assignments. Do not share your login password.</p>
+</main>
+<script>
+'use strict';
+const el=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const loginPage='../../students/student-login.html';
+function validImage(v){try{const u=new URL(String(v),location.href);return ['https:','http:'].includes(u.protocol)||/^data:image\/(png|jpeg|webp);base64,/i.test(String(v));}catch{return /^data:image\/(png|jpeg|webp);base64,/i.test(String(v));}}
+el('logout').addEventListener('click',()=>{LamaAPI.logout('student');location.replace(loginPage)});
+el('print').addEventListener('click',()=>window.print());
+async function init(){
+ if(typeof LamaAPI==='undefined'||!LamaAPI.requireLogin('student',loginPage))return;
+ const s=LamaAPI.getSession('student');
+ if(!s?.studentId||!s?.schoolId){el('status').textContent='Session incomplete. Please sign in again.';return;}
+ try{
+  const st=await LamaAPI.get('students',s.studentId);
+  if(!st)throw Error('Your student record could not be found.');
+  if(st.schoolId&&String(st.schoolId)!==String(s.schoolId))throw Error('School record mismatch.');
+  el('schoolName').textContent=s.schoolName||'My School';
+  el('cardSchool').textContent=s.schoolName||'My School';
+  el('welcome').textContent='Welcome, '+(st.name||'Student');
+  el('cardName').textContent=st.name||'—';
+  el('enrl').textContent=st.enrlNo||s.enrlNo||'—';
+  el('grade').textContent=st.class||s.class||'—';
+  el('section').textContent=st.section||'—';
+  el('guardian').textContent=st.fatherGuardian||st.guardian||st.fatherName||'—';
+  if(st.photo&&validImage(st.photo)){
+   const img=document.createElement('img');img.src=st.photo;img.alt='Student photo';img.className='w-full h-full object-cover';el('photo').replaceChildren(img);
+  }
+  el('status').textContent='';
+  try{
+   const rows=await LamaAPI.list('timetable');
+   const matches=(Array.isArray(rows)?rows:[]).filter(x=>
+    (x.isPublished===true||x.published===true||['published','public','active'].includes(String(x.status||x.visibility||'').toLowerCase()))&&
+    (!x.schoolId||String(x.schoolId)===String(s.schoolId))&&
+    String(x.class||'')===String(st.class||'')&&
+    (!x.section||String(x.section).toLowerCase()===String(st.section||'').toLowerCase()));
+   const seen=new Set(),people=[];
+   for(const x of matches){const n=String(x.teacherName||x.teacher||'').trim();if(!n||seen.has(n.toLowerCase()))continue;seen.add(n.toLowerCase());people.push({name:n,subject:String(x.subject||'')});}
+   el('teachers').innerHTML=people.length?people.map(t=>'<div class="rounded-xl bg-slate-900/80 p-4"><b>'+esc(t.name)+'</b><p class="text-slate-400 mt-1">'+esc(t.subject||'Class teacher')+'</p></div>').join(''):'<p class="text-slate-400">No class teachers have been published in your timetable yet.</p>';
+  }catch(e){el('teachers').textContent='Teacher information is temporarily unavailable.';}
+ }catch(e){el('status').textContent=e.message||'Unable to load student information.';el('teachers').textContent='Please try again later.';}
+}
+init();
+</script></body></html>

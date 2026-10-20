@@ -95,7 +95,7 @@ const COLLECTIONS = {
     },
     attendance: {
         tab: 'Attendance',
-        headers: ['id', 'studentId', 'studentName', 'class', 'date', 'status', 'markedBy', 'createdAt']
+        headers: ['id', 'studentId', 'studentName', 'class', 'date', 'status', 'markedBy', 'createdAt', 'enrlNo', 'section']
     },
     homework: {
         tab: 'Homework',
@@ -307,7 +307,12 @@ function getSchoolConfig(schoolId, apiKey) {
 function updateSchoolConfig(schoolId, apiKey, patch) {
     const match = authorizeSchool(schoolId, apiKey);
     const registry = getRegistrySheet();
-    const updated = Object.assign({}, match.obj, patch, { schoolId: match.obj.schoolId, apiKey: match.obj.apiKey });
+    // Only school profile fields may be changed; never accept registry/security fields.
+    const allowed = ['name', 'address', 'phone', 'principal', 'type', 'level', 'logo', 'coverPhoto', 'shortCode'];
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Invalid school profile update.');
+    const invalid = Object.keys(patch).filter(k => allowed.indexOf(k) === -1);
+    if (invalid.length) throw new Error('Protected school settings cannot be changed: ' + invalid.join(', '));
+    const updated = Object.assign({}, match.obj, patch);
     const newRow = match.headers.map(h => (updated[h] !== undefined ? updated[h] : ''));
     registry.getRange(match.rowIndex, 1, 1, match.headers.length).setValues([newRow]);
     return getSchoolConfig(schoolId, apiKey);
@@ -1056,9 +1061,9 @@ function handleRequest(params) {
     try {
         switch (action) {
             case 'register':
-                return { status: 'success', school: registerSchool(params) };
+                return { status: 'success', school: registerTrialSchool(params) };
             case 'login':
-                return { status: 'success', school: loginSchool(params.email, params.password) };
+                return { status: 'success', school: loginSchoolTracked(params.email, params.password) };
             case 'getSchoolConfig':
                 return { status: 'success', school: getSchoolConfig(params.schoolId, params.apiKey) };
             case 'updateSchoolConfig':
@@ -1084,6 +1089,10 @@ function handleRequest(params) {
 
             case 'adminLogin':
                 return { status: 'success', admin: adminLogin(params.password) };
+            case 'adminTrialReport':
+                return { status: 'success', report: adminTrialReport(params.adminApiKey) };
+            case 'adminSetPlan':
+                return { status: 'success', result: adminSetPlan(params.adminApiKey, params.schoolId, params.plan) };
             case 'adminListSchools':
                 return { status: 'success', schools: adminListSchools(params.adminApiKey) };
             case 'adminSetStatus':
@@ -1124,49 +1133,10 @@ function doPost(e) {
 }
 
 function doGet(e) {
-    return jsonOut(handleRequest(e.parameter));
+    const params = e && e.parameter ? e.parameter : {};
+    if (!params.action || params.action === 'health') {
+        return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running' });
+    }
+    return jsonOut(handleRequest(params));
 }
 
-/** Optional addition to the existing Code.gs; DO NOT deploy this file alone. */
-function bulkAttendanceRecords(params) {
-  const ctx = resolveContext(params); // existing school-scoped authorization
-  checkPermission(ctx, 'add', 'attendance');
-  if (ctx.role !== 'school' && ctx.role !== 'teacher') throw new Error('Attendance write access denied');
-  const date = String(params.date || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('Invalid attendance date');
-  const incoming = params.records;
-  if (!Array.isArray(incoming) || incoming.length < 1 || incoming.length > 1500) throw new Error('Invalid attendance batch');
-  const lock = LockService.getScriptLock();
-  if (!lock.tryLock(20000)) throw new Error('Attendance is busy. Retry in a moment.');
-  try {
-    const data = getCollectionSheet(ctx, 'attendance');
-    const sheet = data.sheet, headers = data.headers;
-    const oldRows = sheet.getDataRange().getValues();
-    const dateCol = headers.indexOf('date'), studentCol = headers.indexOf('studentId'), enrCol = headers.indexOf('enrlNo');
-    if (dateCol < 0 || (studentCol < 0 && enrCol < 0)) throw new Error('Attendance columns missing');
-    const normalizeDate = value => value instanceof Date ? Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(value || '').slice(0,10);
-    const keyOf = rec => String(rec.studentId || rec.enrlNo || '').trim();
-    const indexes = {};
-    for (let i=1;i<oldRows.length;i++) {
-      if (normalizeDate(oldRows[i][dateCol]) !== date) continue;
-      const key = String(studentCol >= 0 ? oldRows[i][studentCol] : '').trim() || String(enrCol >= 0 ? oldRows[i][enrCol] : '').trim();
-      if (key) indexes[key] = i;
-    }
-    const updates = [], additions = [], seen = {};
-    incoming.forEach(rec => {
-      if (!rec || !['Present','Absent','Leave'].includes(rec.status)) throw new Error('Invalid attendance status');
-      const key = keyOf(rec);if (!key || seen[key]) throw new Error('Missing or duplicate student ID in batch');
-      seen[key] = true;
-      if (ctx.role === 'teacher' && (!sameClass(rec.class,ctx.teacher.assignedClass) || !sameSection(rec,ctx.teacher.assignedSection))) throw new Error('Teacher class/section access denied');
-      const existingIndex = indexes[key];
-      const old = existingIndex === undefined ? {} : rowToRecord(headers,oldRows[existingIndex]);
-      const full = Object.assign({},old,rec,{date,id:old.id || genId('att'),createdAt:old.createdAt || new Date().toISOString()});
-      const row = recordToRow(headers,full);
-      if (existingIndex === undefined) additions.push(row); else updates.push({index:existingIndex+1,row});
-    });
-    updates.forEach(x => sheet.getRange(x.index,1,1,headers.length).setValues([x.row]));
-    if (additions.length) sheet.getRange(sheet.getLastRow()+1,1,additions.length,headers.length).setValues(additions);
-    SpreadsheetApp.flush();
-    return { saved: incoming.length, inserted:additions.length, updated:updates.length };
-  } finally { lock.releaseLock(); }
-}

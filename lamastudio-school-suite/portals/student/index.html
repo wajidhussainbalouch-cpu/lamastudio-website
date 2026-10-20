@@ -29,11 +29,17 @@ body{background:radial-gradient(circle at top left,#164e63 0%,#081923 42%,#070b1
 <div class="min-w-0 space-y-2 text-sm"><p><strong>Name:</strong> <span id="cardName">—</span></p><p><strong>Enrollment:</strong> <span id="enrl">—</span></p>
 <p><strong>Class:</strong> <span id="grade">—</span></p><p><strong>Section:</strong> <span id="section">—</span></p>
 <p><strong>Father / Guardian:</strong> <span id="guardian">—</span></p></div></div>
-<button id="print" class="no-print mt-5 rounded-xl bg-lime-400 text-slate-900 font-black px-5 py-3 w-full" type="button">🖨 Print My ID Card</button>
+<button id="print" class="no-print mt-5 rounded-xl bg-lime-400 text-slate-900 font-black px-5 py-3 w-full" type="button">👁 Preview My ID Card</button>
 </section>
 <section id="teacherPanel" class="panel p-6"><h2 class="font-black text-xl">👩‍🏫 My Class Teachers</h2>
 <p class="text-sm text-slate-400 mt-2">Teachers shown from your school's published timetable for your class and section.</p>
 <div id="teachers" class="mt-5 space-y-3 text-sm">Loading teachers…</div></section></div>
+<div id="previewOverlay" class="fixed inset-0 z-50 bg-black/80 p-4 hidden items-center justify-center no-print" role="dialog" aria-modal="true" aria-label="Student ID preview">
+<div class="w-full max-w-xl rounded-2xl bg-[#102a35] p-5 border border-slate-500 max-h-[90vh] overflow-y-auto">
+<div class="flex justify-between items-center gap-3 mb-4"><h2 class="font-black text-xl">Student ID Card Preview</h2><button id="closePreview" class="rounded-lg bg-slate-700 px-3 py-2" type="button">Close</button></div>
+<div id="previewContent" class="rounded-xl bg-slate-950 p-4"></div>
+<div class="flex flex-wrap gap-2 mt-4"><button id="confirmPrint" class="rounded-xl bg-lime-400 text-slate-950 px-5 py-3 font-black" type="button">🖨 Print ID Card</button><button id="cancelPreview" class="rounded-xl bg-slate-700 px-5 py-3" type="button">Cancel</button></div>
+</div></div>
 <p class="no-print text-xs text-slate-400">Only your school can correct student details or teacher assignments. Do not share your login password.</p>
 </main>
 <script>
@@ -43,7 +49,18 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const loginPage='../../students/student-login.html';
 function validImage(v){try{const u=new URL(String(v),location.href);return ['https:','http:'].includes(u.protocol)||/^data:image\/(png|jpeg|webp);base64,/i.test(String(v));}catch{return /^data:image\/(png|jpeg|webp);base64,/i.test(String(v));}}
 el('logout').addEventListener('click',()=>{LamaAPI.logout('student');location.replace(loginPage)});
-el('print').addEventListener('click',()=>window.print());
+function closePreview(){el('previewOverlay').classList.add('hidden');el('previewOverlay').classList.remove('flex');el('print').focus();}
+el('print').addEventListener('click',()=>{
+ const original=el('cardPanel').cloneNode(true);
+ const printButton=original.querySelector('#print');if(printButton)printButton.remove();
+ el('previewContent').replaceChildren(original);
+ el('previewOverlay').classList.remove('hidden');el('previewOverlay').classList.add('flex');el('closePreview').focus();
+});
+el('closePreview').addEventListener('click',closePreview);
+el('cancelPreview').addEventListener('click',closePreview);
+el('previewOverlay').addEventListener('click',e=>{if(e.target===el('previewOverlay'))closePreview()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('previewOverlay').classList.contains('hidden'))closePreview()});
+el('confirmPrint').addEventListener('click',()=>{closePreview();window.print()});
 async function init(){
  if(typeof LamaAPI==='undefined'||!LamaAPI.requireLogin('student',loginPage))return;
  const s=LamaAPI.getSession('student');
@@ -64,17 +81,16 @@ async function init(){
    const img=document.createElement('img');img.src=st.photo;img.alt='Student photo';img.className='w-full h-full object-cover';el('photo').replaceChildren(img);
   }
   el('status').textContent='';
-  try{
-   const rows=await LamaAPI.list('timetable');
-   const matches=(Array.isArray(rows)?rows:[]).filter(x=>
-    (x.isPublished===true||x.published===true||['published','public','active'].includes(String(x.status||x.visibility||'').toLowerCase()))&&
-    (!x.schoolId||String(x.schoolId)===String(s.schoolId))&&
-    String(x.class||'')===String(st.class||'')&&
-    (!x.section||String(x.section).toLowerCase()===String(st.section||'').toLowerCase()));
-   const seen=new Set(),people=[];
-   for(const x of matches){const n=String(x.teacherName||x.teacher||'').trim();if(!n||seen.has(n.toLowerCase()))continue;seen.add(n.toLowerCase());people.push({name:n,subject:String(x.subject||'')});}
-   el('teachers').innerHTML=people.length?people.map(t=>'<div class="rounded-xl bg-slate-900/80 p-4"><b>'+esc(t.name)+'</b><p class="text-slate-400 mt-1">'+esc(t.subject||'Class teacher')+'</p></div>').join(''):'<p class="text-slate-400">No class teachers have been published in your timetable yet.</p>';
-  }catch(e){el('teachers').textContent='Teacher information is temporarily unavailable.';}
+  try {
+    if(typeof LamaAPI.getMyClassTeachers !== 'function') throw Error('Updated API client is not loaded.');
+    const people = await LamaAPI.getMyClassTeachers();
+    el('teachers').innerHTML = Array.isArray(people) && people.length
+      ? people.map(t=>'<div class="rounded-xl bg-slate-900/80 p-4"><b>'+esc(t.name)+'</b><p class="text-slate-400 mt-1">'+esc(t.subject||'Class teacher')+'</p></div>').join('')
+      : '<p class="text-slate-400">No active teacher is assigned to this class in the Teachers register. Ask your school administrator to check Assigned Class and Assigned Section.</p>';
+  } catch(e) {
+    console.warn('Teacher directory request failed:',e);
+    el('teachers').textContent='Unable to load teachers: '+(e.message||'Please try again.');
+  }
  }catch(e){el('status').textContent=e.message||'Unable to load student information.';el('teachers').textContent='Please try again later.';}
 }
 init();

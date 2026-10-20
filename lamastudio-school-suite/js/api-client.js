@@ -82,6 +82,7 @@ const LamaAPI = (() => {
     register:data=>loginResult('register',data,'school','school'),
     login:(email,password)=>loginResult('login',{email,password},'school','school'),
     teacherLogin:(schoolId,email,password)=>loginResult('teacherLogin',{schoolId,email,password},'teacher','teacher'),
+    getMyClassTeachers:async()=> (await callApi('getMyClassTeachers')).teachers,
     studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
     getActiveSchool,updateSchoolConfig,deriveShortCode,

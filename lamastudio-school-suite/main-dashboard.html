@@ -216,7 +216,7 @@ body:before{
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <a href="portals/student/index.html" class="portal-card-student rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
+            <a id="studentPortalLink" href="students/student-login.html" class="portal-card-student rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
                 <div>
                     <div class="portal-icon-student">🎓</div>
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-[9px] font-black uppercase tracking-widest text-purple-300 mt-4">
@@ -571,6 +571,8 @@ async function render(){
     document.getElementById('schoolIdDisplay').textContent = schoolId || 'Not configured';
     document.getElementById('navSchoolId').textContent = schoolId ? `ID: ${schoolId}` : '';
     window.currentSchoolId = schoolId;
+    const studentPortalLink = document.getElementById('studentPortalLink');
+    if (studentPortalLink) studentPortalLink.href = 'students/student-login.html' + (schoolId ? '?schoolId=' + encodeURIComponent(schoolId) : '');
     const rawTests = await loadPublishedCollection(['tests'], data.upcomingTests, schoolId);
     const rawExams = await loadPublishedCollection(['datesheet'], data.upcomingExams, schoolId);
 

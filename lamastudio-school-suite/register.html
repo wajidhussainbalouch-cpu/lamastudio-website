@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Your School | LamaStudio School Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/config.css">
+<script src="js/api-client.js"></script>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 font-sans min-h-screen flex items-center justify-center p-4">
+
+    <div class="cyber-card max-w-lg w-full rounded-2xl p-8 space-y-5">
+        <div class="text-center space-y-1">
+            <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-black text-lg">LS</div>
+            <h1 class="text-lg font-black uppercase tracking-wide glow-text-purple">Register Your School</h1>
+            <p class="text-[11px] text-slate-400">Free digital records for private &amp; government schools — powered by lamastudio.pk</p>
+        </div>
+
+        <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 text-red-300 text-xs rounded-xl px-4 py-2.5"></div>
+
+        <form id="registerForm" class="space-y-3 text-xs">
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">School Name *</label>
+                <input required id="inName" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="e.g. Govt Primary School Shah Sadar Din">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">School Type *</label>
+                    <select id="inType" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
+                        <option value="Government">Government</option>
+                        <option value="Private">Private</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Level *</label>
+                    <select id="inLevel" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white">
+                        <option value="Primary">Primary</option>
+                        <option value="Middle">Middle</option>
+                        <option value="High">High / Secondary</option>
+                        <option value="Higher Secondary">Higher Secondary</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Address</label>
+                <input id="inAddress" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Village / Tehsil / District">
+            </div>
+            <div>
+                <label class="block text-[10px] text-slate-400 mb-1">Contact / UAN Number</label>
+                <input id="inPhone" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="+92 300 0000000">
+            </div>
+            <div class="border-t border-slate-800 pt-3">
+                <label class="block text-[10px] text-slate-400 mb-1">Admin Email * <span class="text-slate-600">(used to log in)</span></label>
+                <input required type="email" id="inEmail" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500" placeholder="principal@school.edu.pk">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Password * <span class="text-slate-600">(min 6 chars)</span></label>
+                    <input required type="password" minlength="6" id="inPassword" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Confirm Password *</label>
+                    <input required type="password" minlength="6" id="inPasswordConfirm" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 text-white outline-none focus:border-purple-500">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black text-xs px-4 py-3 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] mt-2">
+                Create My School's Account
+            </button>
+        </form>
+
+        <p class="text-center text-[11px] text-slate-400">
+            Already registered? <a href="login.html" class="text-purple-400 font-bold hover:underline">Log in here</a>
+        </p>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const errorBanner = document.getElementById('errorBanner');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function showError(message) {
+            errorBanner.textContent = message;
+            errorBanner.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorBanner.classList.add('hidden');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+
+            const password = document.getElementById('inPassword').value;
+            const passwordConfirm = document.getElementById('inPasswordConfirm').value;
+            if (password !== passwordConfirm) {
+                showError('Passwords do not match.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating your school\'s account...';
+
+            try {
+                await LamaAPI.register({
+                    name: document.getElementById('inName').value.trim(),
+                    type: document.getElementById('inType').value,
+                    level: document.getElementById('inLevel').value,
+                    address: document.getElementById('inAddress').value.trim(),
+                    phone: document.getElementById('inPhone').value.trim(),
+                    adminEmail: document.getElementById('inEmail').value.trim(),
+                    password: password
+                });
+                window.location.replace('main-dashboard.html');
+            } catch (err) {
+                showError(err.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create My School's Account";
+            }
+        });
+
+        // If already logged in, skip straight to the dashboard.
+        if (LamaAPI.isLoggedIn()) {
+            window.location.replace('main-dashboard.html');
+        }
+    </script>
+</body>
+</html>

@@ -36,6 +36,7 @@ const LamaAPI = (() => {
   }
   async function callApi(action, payload = {}, method = 'POST') {
     const body = Object.assign({action}, authFieldsFor(getSession()), payload);
+    try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
     let response;
     try {
       if (method === 'GET') {

@@ -617,11 +617,11 @@ function resolveContext(p) {
     const role = p.role || 'school';
     if (role === 'school') {
         const match = authorizeSchool(p.schoolId, p.apiKey);
-        return { role, schoolId:p.schoolId, ss: SpreadsheetApp.openById(match.obj.sheetId) };
+        return { role, schoolId:p.schoolId, ss: SpreadsheetApp.openById(match.obj.sheetId), auditActor:p._auditActor };
     }
     if (role === 'teacher') {
         const ctx = authorizeTeacher(p.schoolId, p.teacherId, p.apiKey);
-        return { role, schoolId:p.schoolId, ss: ctx.ss, teacher: ctx.teacher };
+        return { role, schoolId:p.schoolId, ss: ctx.ss, teacher: ctx.teacher, auditActor:{id:ctx.teacher.id,name:ctx.teacher.name,role:'teacher'} };
     }
     if (role === 'student') {
         const ctx = authorizeStudent(p.schoolId, p.studentId, p.apiKey);
@@ -758,6 +758,7 @@ function addRecord(ctx, collection, record) {
     if (collection === 'students' && !full.apiKey) full.apiKey = Utilities.getUuid();
     if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
     sheet.appendRow(recordToRow(headers, full));
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add',collection,id,null,full);
     return full;
 }
 
@@ -799,6 +800,7 @@ function updateRecord(ctx, collection, id, patch) {
             }
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
+            if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'update',collection,id,existing,updated);
             return updated;
         }
     }
@@ -814,6 +816,8 @@ function removeRecord(ctx, collection, id) {
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
             if(ctx.role==='teacher' && !teacherOwns(ctx,rowToRecord(headers,data[i]))) throw new Error('Record outside assigned class/section.');
+            const previous=rowToRecord(headers,data[i]);
+            if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'remove',collection,id,previous,null);
             sheet.deleteRow(i + 1);
             return true;
         }
@@ -1108,35 +1112,104 @@ function jsonOut(obj) {
 // Per-school administrator authentication; distinct from the school account and platform Super Admin.
 // The owner must prove their original school credentials ONCE to create a separate admin account.
 function schoolAdminPropertyKey(schoolId) { return 'SCHOOL_ADMIN_' + String(schoolId || '').replace(/[^A-Za-z0-9_-]/g,'_'); }
-function schoolAdminSetup(p) {
-    if (!p.schoolId || !p.ownerEmail || !p.ownerPassword || !p.adminUsername || !p.adminPassword) throw new Error('All setup fields are required.');
-    if (String(p.adminPassword).length < 12) throw new Error('Use an administrator password of at least 12 characters.');
-    const owner = loginSchool(p.ownerEmail, p.ownerPassword);
-    if (String(owner.schoolId) !== String(p.schoolId)) throw new Error('Owner credentials do not belong to this school.');
-    const props = PropertiesService.getScriptProperties(), key = schoolAdminPropertyKey(p.schoolId);
-    if (props.getProperty(key)) throw new Error('Admin account already configured. Contact the school owner to reset it securely.');
-    const salt = Utilities.getUuid();
-    props.setProperty(key, JSON.stringify({username:String(p.adminUsername).trim().toLowerCase(), salt:salt, hash:hashPassword(String(p.adminPassword),salt)}));
-    return {configured:true};
+function schoolAdminSetup(p){throw new Error('Public admin setup is disabled. Contact the Platform Super Admin.');}
+function schoolAdminLogin(p){
+  const u=adminUsers(p.schoolId),username=String(p.adminUsername||'').trim().toLowerCase();
+  const entry=u.items.find(x=>x.obj.username===username);
+  if(!entry||entry.obj.status!=='Active'||hashPassword(String(p.adminPassword||''),entry.obj.salt)!==entry.obj.passwordHash)throw new Error('Invalid administrator credentials.');
+  const token=Utilities.getUuid()+'-'+Utilities.getUuid();
+  CacheService.getScriptCache().put('SADMIN_'+String(p.schoolId)+'_'+token,JSON.stringify({id:entry.obj.id,version:entry.obj.version}),21600);
+  return {schoolId:String(p.schoolId),token,adminId:entry.obj.id,adminName:entry.obj.displayName,expiresInSeconds:21600};
 }
-function schoolAdminLogin(p) {
-    const key=schoolAdminPropertyKey(p.schoolId), raw=PropertiesService.getScriptProperties().getProperty(key);
-    if (!raw) throw new Error('Admin account not configured. Select First-time setup.');
-    const saved=JSON.parse(raw);
-    if (saved.username!==String(p.adminUsername||'').trim().toLowerCase() || saved.hash!==hashPassword(String(p.adminPassword||''),saved.salt)) throw new Error('Incorrect administrator credentials.');
-    const token=Utilities.getUuid()+'-'+Utilities.getUuid();
-    CacheService.getScriptCache().put('SADMIN_'+String(p.schoolId)+'_'+token,'1',21600);
-    return {schoolId:String(p.schoolId),token:token,expiresInSeconds:21600};
+function schoolAdminVerify(p){const a=verifySchoolAdminToken(p);return {valid:true,adminId:a.id,adminName:a.name};}
+
+// ==== SECURITY / ACCOUNTABILITY EXTENSION (2026-10-25) ====
+const ADMIN_USERS_TAB = 'SchoolAdmins';
+const AUDIT_TAB = 'AuditLog';
+const ADMIN_USERS_HEADERS = ['id','username','displayName','passwordHash','salt','status','version','createdAt','updatedAt'];
+const AUDIT_HEADERS = ['id','timestamp','schoolId','actorId','actorName','actorRole','operation','collection','recordId','beforeJson','afterJson'];
+function secureTab(ss,name,headers) {
+  let sh=ss.getSheetByName(name);
+  if(!sh){sh=ss.insertSheet(name);sh.appendRow(headers);sh.setFrozenRows(1);}
+  else ensureSheetHeaders(sh,headers);
+  return sh;
 }
-function schoolAdminVerify(p) {
-    if (!p.schoolId || !p.token || CacheService.getScriptCache().get('SADMIN_'+String(p.schoolId)+'_'+String(p.token))!=='1') throw new Error('Administrator session expired. Please log in.');
-    return {valid:true};
+function adminUsers(schoolId){
+  const r=findSchoolRow(getRegistrySheet(),x=>String(x.schoolId)===String(schoolId));
+  if(!r)throw new Error('School not found.');
+  const ss=SpreadsheetApp.openById(r.obj.sheetId);
+  const sh=secureTab(ss,ADMIN_USERS_TAB,ADMIN_USERS_HEADERS);
+  const rows=sh.getDataRange().getValues(), headers=rows[0];
+  return {ss,sh,headers,items:rows.slice(1).map((row,i)=>({rowIndex:i+2,obj:rowToRecord(headers,row)})).filter(x=>x.obj.id)};
 }
+function adminListSchoolUsers(p){
+  authorizeAdmin(p.adminApiKey);
+  const u=adminUsers(p.schoolId);
+  return u.items.map(x=>({id:x.obj.id,username:x.obj.username,displayName:x.obj.displayName,status:x.obj.status,createdAt:x.obj.createdAt,updatedAt:x.obj.updatedAt}));
+}
+function adminSaveSchoolUser(p){
+  authorizeAdmin(p.adminApiKey);
+  const username=String(p.username||'').trim().toLowerCase(),displayName=String(p.displayName||'').trim();
+  if(!/^[a-z0-9._-]{3,40}$/.test(username))throw new Error('Username must be 3-40 characters: letters, numbers, dot, underscore or dash.');
+  if(!displayName||displayName.length>100)throw new Error('Display name is required (maximum 100 characters).');
+  const lock=LockService.getScriptLock();lock.waitLock(20000);
+  try {
+    const u=adminUsers(p.schoolId),found=u.items.find(x=>String(x.obj.id)===String(p.id||''));
+    if(u.items.some(x=>x!==found&&x.obj.username===username))throw new Error('Username already used at this school.');
+    const status=String(p.status||'Active');
+    if(!['Active','Disabled'].includes(status))throw new Error('Invalid status.');
+    if(status==='Active'&&u.items.filter(x=>x!==found&&x.obj.status==='Active').length>=5)throw new Error('Maximum five active School Admins per school. Disable one first.');
+    const password=String(p.password||'');
+    if((!found||password)&&password.length<12)throw new Error('Password must contain at least 12 characters.');
+    const now=new Date().toISOString(),old=found?found.obj:null,salt=password?Utilities.getUuid():old.salt;
+    const record={id:old?old.id:genId('adm'),username,displayName,passwordHash:password?hashPassword(password,salt):old.passwordHash,salt,status,version:(old?Number(old.version)||1:0)+1,createdAt:old?old.createdAt:now,updatedAt:now};
+    if(found)u.sh.getRange(found.rowIndex,1,1,u.headers.length).setValues([recordToRow(u.headers,record)]);
+    else u.sh.appendRow(recordToRow(u.headers,record));
+    writeAudit(u.ss,p.schoolId,{id:'superadmin',name:'Super Admin',role:'superadmin'},old?'update':'add','schoolAdmins',record.id,old?{username:old.username,displayName:old.displayName,status:old.status}:null,{username,displayName,status});
+    return {id:record.id,username,displayName,status};
+  }finally{lock.releaseLock();}
+}
+function verifySchoolAdminToken(p){
+  if(!p.schoolId||!p.token)throw new Error('School Admin login required.');
+  const key='SADMIN_'+String(p.schoolId)+'_'+String(p.token);
+  const raw=CacheService.getScriptCache().get(key);
+  if(!raw)throw new Error('School Admin session expired. Log in again.');
+  const info=JSON.parse(raw),u=adminUsers(p.schoolId),entry=u.items.find(x=>x.obj.id===info.id);
+  if(!entry||entry.obj.status!=='Active'||Number(entry.obj.version)!==Number(info.version))throw new Error('Administrator account changed or disabled. Log in again.');
+  return {id:entry.obj.id,name:entry.obj.displayName,role:'schoolAdmin'};
+}
+function requireSchoolAdminWrite(p){
+  const actor=verifySchoolAdminToken(p);
+  authorizeSchool(p.schoolId,p.apiKey);
+  assertSchoolWritable(p.schoolId);
+  return actor;
+}
+function writeAudit(ss,schoolId,actor,operation,collection,recordId,before,after){
+  const sh=secureTab(ss,AUDIT_TAB,AUDIT_HEADERS);
+  const scrub=o=>{if(!o)return '';const copy=JSON.parse(JSON.stringify(o));['password','passwordHash','apiKey','token','salt'].forEach(k=>delete copy[k]);return JSON.stringify(copy).slice(0,25000);};
+  sh.appendRow([genId('audit'),new Date().toISOString(),schoolId,actor.id,actor.name,actor.role,operation,collection,recordId||'',scrub(before),scrub(after)]);
+}
+function adminGetAudit(p){
+  let ss,actor;
+  if(p.adminApiKey){authorizeAdmin(p.adminApiKey);const u=adminUsers(p.schoolId);ss=u.ss;}
+  else{actor=requireSchoolAdminWrite(p);ss=adminUsers(p.schoolId).ss;}
+  const sh=secureTab(ss,AUDIT_TAB,AUDIT_HEADERS);
+  const values=sh.getDataRange().getValues(),headers=values[0];
+  return values.slice(1).filter(r=>r[0]).slice(-Math.min(Math.max(Number(p.limit)||200,1),1000)).reverse().map(r=>rowToRecord(headers,r));
+}
+// ==== END SECURITY EXTENSION ====
 
 function handleRequest(params) {
     const action = params.action;
     try {
+        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','add','update','remove'];
+        if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
+          params._auditActor=requireSchoolAdminWrite(params);
+        }
         switch (action) {
+            case 'adminListSchoolUsers': return {status:'success',users:adminListSchoolUsers(params)};
+            case 'adminSaveSchoolUser': return {status:'success',user:adminSaveSchoolUser(params)};
+            case 'adminGetAudit': return {status:'success',records:adminGetAudit(params)};
             case 'schoolAdminSetup':
                 return {status:'success',result:schoolAdminSetup(params)};
             case 'schoolAdminLogin':
@@ -1159,13 +1232,17 @@ function handleRequest(params) {
                 return { status: 'success', summary: getStudentFeeSummary(params.schoolId, params.apiKey, params.studentId) };
             case 'pingTeacher':
                 assertSchoolWritable(params.schoolId);
-                return { status: 'success', ping: pingTeacher(params.schoolId, params.apiKey, params.teacherId, params.message) };
+                const ping=pingTeacher(params.schoolId, params.apiKey, params.teacherId, params.message);
+                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'add','teacherPings',ping.id,null,ping);
+                return {status:'success',ping};
             case 'acknowledgePing':
                 assertSchoolWritable(params.schoolId);
                 return { status: 'success', ping: acknowledgePing(params.schoolId, params.teacherId, params.apiKey, params.pingId) };
 
             case 'addTeacher':
-                return { status: 'success', teacher: addTeacher(params.schoolId, params.apiKey, params.teacher || {}) };
+                const t=addTeacher(params.schoolId, params.apiKey, params.teacher || {});
+                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'add','teachers',t.id,null,t);
+                return {status:'success',teacher:t};
             case 'teacherLogin':
                 return { status: 'success', teacher: teacherLogin(params.schoolId, params.email, params.password) };
 
@@ -1187,7 +1264,9 @@ function handleRequest(params) {
 
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
-                return { status: 'success', result: bulkAttendanceRecords(params) };
+                const result=bulkAttendanceRecords(params);
+                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'bulkAttendance','attendance','',null,{count:Array.isArray(result)?result.length:undefined});
+                return {status:'success',result};
             case 'list':
                 return { status: 'success', records: listRecords(resolveContext(params), params.collection) };
             case 'get':
@@ -1223,6 +1302,9 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
+    const blocked=['schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','add','update','remove'];
+    if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
+
 

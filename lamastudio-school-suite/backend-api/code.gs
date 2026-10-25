@@ -139,20 +139,18 @@ function setup() {
 
 /**
  * First-time initialization or intentional password reset.
- * In Apps Script > Project Settings > Script Properties, add:
- *   SUPERADMIN_SETUP_PASSWORD = your NEW strong password (at least 12 characters)
- * Run setupSuperAdmin() from the editor, then remove the setup property.
+ * Run setupSuperAdmin() once from the editor. Remove the embedded password
+ * after setup to avoid keeping plaintext credentials in source control.
  * Existing Master Registry and school data are NOT modified.
  */
 function setupSuperAdmin() {
+    // WARNING: Embedded password is visible to anyone with source access.
+    // Run this once, then remove the literal password from this file.
+    const password = 'W@jidhussain12345';
     const props = PropertiesService.getScriptProperties();
-    const password = props.getProperty('SUPERADMIN_SETUP_PASSWORD');
-    if (!password || password.length < 12) {
-        throw new Error('Set SUPERADMIN_SETUP_PASSWORD (12+ characters) in Project Settings > Script Properties, then run setupSuperAdmin().');
-    }
     props.setProperty('SUPERADMIN_PASSWORD_HASH', hashPassword(password, 'SUPERADMIN'));
     props.deleteProperty('SUPERADMIN_SETUP_PASSWORD');
-    Logger.log('SUCCESS: Super Admin password configured. Setup password property removed.');
+    Logger.log('SUCCESS: Super Admin password configured.');
 }
 
 /** Safe diagnostic: run from Apps Script editor to verify configuration. */

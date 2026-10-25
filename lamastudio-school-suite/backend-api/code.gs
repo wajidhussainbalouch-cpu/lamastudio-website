@@ -1221,7 +1221,7 @@ function doPost(e) {
 function doGet(e) {
     const params = e && e.parameter ? e.parameter : {};
     if (!params.action || params.action === 'health') {
-        return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running' });
+        return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
     return jsonOut(handleRequest(params));
 }

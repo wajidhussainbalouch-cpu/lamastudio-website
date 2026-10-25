@@ -20,18 +20,13 @@
  * ----------------------------------------------------------------------------
  * ONE-TIME SETUP (do this once, in order):
  * ----------------------------------------------------------------------------
- * 1. Go to https://script.google.com -> New project.
- * 2. Delete the placeholder code, paste this ENTIRE file in.
- * 3. In the toolbar function dropdown, select "setup", then click Run.
- *    Approve the permissions Google asks for. This creates your
- *    "LamaStudio Master Registry" spreadsheet.
- * 4. Open this file, find SUPER_ADMIN_PASSWORD_PLAINTEXT near the top,
- *    change 'change-this-password' to whatever you want your own super
- *    admin password to be. Select "setupSuperAdmin" in the function
- *    dropdown, click Run. This hashes and stores it — the plaintext in
- *    the code is never used again after this, so you can leave it (or
- *    blank it out) once it's run.
- * 5. Click Deploy -> New deployment.
+ * 1. For EXISTING installations, do NOT create a new project or run setup().
+ * 2. In Project Settings > Script Properties, add SUPERADMIN_SETUP_PASSWORD
+ *    with a NEW password (12+ characters).
+ * 3. Select setupSuperAdmin from the editor function menu and click Run.
+ *    This saves the hash and deletes the temporary setup password property.
+ * 4. Run checkSuperAdminSetup to verify both settings are configured.
+ * 5. For a first deployment only, click Deploy -> New deployment.
  *      Select type: Web app
  *      Execute as: Me
  *      Who has access: Anyone
@@ -54,7 +49,8 @@ const REGISTRY_HEADERS = [
     'schoolId', 'name', 'address', 'phone', 'principal', 'type', 'level', 'adminEmail',
     'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt', 'subscriptionType', 'subscriptionStart', 'subscriptionEnd', 'subscriptionPrice', 'subscriptionPaidAt', 'subscriptionReference', 'subscriptionNotes'
 ];
-const SUPER_ADMIN_PASSWORD_PLAINTEXT = 'W@jid12345'; // edit, then run setupSuperAdmin() once
+// Super Admin password is initialized securely through Script Properties.
+// Never place a plaintext password in this source file.
 
 // Every collection listed here automatically gets full CRUD via the generic
 // list/get/add/update/remove functions further down. Field names ending in
@@ -103,7 +99,7 @@ const COLLECTIONS = {
     },
     fees: {
         tab: 'Fees',
-        headers: ['id', 'studentId', 'studentName', 'class', 'amount', 'date', 'status', 'method', 'createdAt']
+        headers: ['id', 'studentId', 'studentName', 'class', 'amount', 'date', 'status', 'method', 'createdAt', 'receivedByAdminId', 'receivedByAdminName']
     },
     datesheet: {
         tab: 'DateSheet',
@@ -141,12 +137,30 @@ function setup() {
     Logger.log('Setup complete. Master Registry: ' + ss.getUrl());
 }
 
-/** Run once (after editing SUPER_ADMIN_PASSWORD_PLAINTEXT above) to set your super admin password. */
+/**
+ * First-time initialization or intentional password reset.
+ * In Apps Script > Project Settings > Script Properties, add:
+ *   SUPERADMIN_SETUP_PASSWORD = your NEW strong password (at least 12 characters)
+ * Run setupSuperAdmin() from the editor, then remove the setup property.
+ * Existing Master Registry and school data are NOT modified.
+ */
 function setupSuperAdmin() {
     const props = PropertiesService.getScriptProperties();
-    const hash = hashPassword(SUPER_ADMIN_PASSWORD_PLAINTEXT, 'SUPERADMIN');
-    props.setProperty('SUPERADMIN_PASSWORD_HASH', hash);
-    Logger.log('Super admin password set. You can now log in from super-admin-login.html.');
+    const password = props.getProperty('SUPERADMIN_SETUP_PASSWORD');
+    if (!password || password.length < 12) {
+        throw new Error('Set SUPERADMIN_SETUP_PASSWORD (12+ characters) in Project Settings > Script Properties, then run setupSuperAdmin().');
+    }
+    props.setProperty('SUPERADMIN_PASSWORD_HASH', hashPassword(password, 'SUPERADMIN'));
+    props.deleteProperty('SUPERADMIN_SETUP_PASSWORD');
+    Logger.log('SUCCESS: Super Admin password configured. Setup password property removed.');
+}
+
+/** Safe diagnostic: run from Apps Script editor to verify configuration. */
+function checkSuperAdminSetup() {
+    const props = PropertiesService.getScriptProperties();
+    Logger.log('Master Registry configured: ' + Boolean(props.getProperty('MASTER_SHEET_ID')));
+    Logger.log('Super Admin password configured: ' + Boolean(props.getProperty('SUPERADMIN_PASSWORD_HASH')));
+    Logger.log('Do not share passwords, hashes, or API keys.');
 }
 
 function getRegistrySheet() {
@@ -190,13 +204,11 @@ function deriveShortCode(name) {
 }
 
 /**
- * Passwords are never stored in plain text for school admins or teachers.
+ * School administrator and teacher passwords are hashed.
  * This is a lightweight hash (SHA-256, salted) suitable for a small free
  * tool — it is NOT the same bar as a bank or hospital system. Student
- * portal passwords are stored as plain text by design (low-sensitivity
- * data — homework/attendance, not financial or health records — and it
- * keeps the "add a student" flow simple for school staff). If this suite
- * ever handles more sensitive data, swap in a real auth provider.
+ * portal passwords are currently stored as plain text (legacy behavior).
+ * Migrate them to hashed passwords before treating this as production-grade security.
  */
 function hashPassword(password, salt) {
     const raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password + '::' + salt);
@@ -755,6 +767,10 @@ function addRecord(ctx, collection, record) {
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
+    if (collection === 'fees' && ctx.role === 'school' && ctx.auditActor) {
+        full.receivedByAdminId = ctx.auditActor.id;
+        full.receivedByAdminName = ctx.auditActor.name;
+    }
     if (collection === 'students' && !full.apiKey) full.apiKey = Utilities.getUuid();
     if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
     sheet.appendRow(recordToRow(headers, full));
@@ -798,6 +814,11 @@ function updateRecord(ctx, collection, id, patch) {
                     patch = Object.assign({},patch,{reviewedBy:'School Admin',updatedAt:new Date().toISOString()});
                 }
             }
+            if (collection === 'fees' && ctx.role === 'school') {
+                // Receipt attribution belongs to the original collector; corrections remain in AuditLog.
+                delete patch.receivedByAdminId;
+                delete patch.receivedByAdminName;
+            }
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
             if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'update',collection,id,existing,updated);
@@ -810,6 +831,7 @@ function updateRecord(ctx, collection, id, patch) {
 function removeRecord(ctx, collection, id) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'remove', collection);
+    if (collection === 'fees') throw new Error('Fee receipts cannot be deleted. Correct the status or amount; the change is audited.');
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     const idCol = headers.indexOf('id');
@@ -1085,7 +1107,7 @@ function getStudentFeeSummary(schoolId, apiKey, studentId) {
     const feesSheet = ss.getSheetByName(COLLECTIONS.fees.tab) || ss.insertSheet(COLLECTIONS.fees.tab);
     if (feesSheet.getLastRow() === 0) { feesSheet.appendRow(COLLECTIONS.fees.headers); feesSheet.setFrozenRows(1); }
     const rows = feesSheet.getDataRange().getValues();
-    const headers = COLLECTIONS.fees.headers;
+    const headers = feesSheet.getRange(1,1,1,feesSheet.getLastColumn()).getValues()[0];
     const records = [];
     let totalPaid = 0, totalPending = 0, totalOverdue = 0;
     for (let i = 1; i < rows.length; i++) {
@@ -1114,6 +1136,8 @@ function jsonOut(obj) {
 function schoolAdminPropertyKey(schoolId) { return 'SCHOOL_ADMIN_' + String(schoolId || '').replace(/[^A-Za-z0-9_-]/g,'_'); }
 function schoolAdminSetup(p){throw new Error('Public admin setup is disabled. Contact the Platform Super Admin.');}
 function schoolAdminLogin(p){
+  const school=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===String(p.schoolId));
+  if(!school||school.obj.status!=='Active')throw new Error('School not found or blocked.');
   const u=adminUsers(p.schoolId),username=String(p.adminUsername||'').trim().toLowerCase();
   const entry=u.items.find(x=>x.obj.username===username);
   if(!entry||entry.obj.status!=='Active'||hashPassword(String(p.adminPassword||''),entry.obj.salt)!==entry.obj.passwordHash)throw new Error('Invalid administrator credentials.');
@@ -1174,6 +1198,8 @@ function verifySchoolAdminToken(p){
   const key='SADMIN_'+String(p.schoolId)+'_'+String(p.token);
   const raw=CacheService.getScriptCache().get(key);
   if(!raw)throw new Error('School Admin session expired. Log in again.');
+  const school=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===String(p.schoolId));
+  if(!school||school.obj.status!=='Active')throw new Error('School not found or blocked.');
   const info=JSON.parse(raw),u=adminUsers(p.schoolId),entry=u.items.find(x=>x.obj.id===info.id);
   if(!entry||entry.obj.status!=='Active'||Number(entry.obj.version)!==Number(info.version))throw new Error('Administrator account changed or disabled. Log in again.');
   return {id:entry.obj.id,name:entry.obj.displayName,role:'schoolAdmin'};
@@ -1186,7 +1212,7 @@ function requireSchoolAdminWrite(p){
 }
 function writeAudit(ss,schoolId,actor,operation,collection,recordId,before,after){
   const sh=secureTab(ss,AUDIT_TAB,AUDIT_HEADERS);
-  const scrub=o=>{if(!o)return '';const copy=JSON.parse(JSON.stringify(o));['password','passwordHash','apiKey','token','salt'].forEach(k=>delete copy[k]);return JSON.stringify(copy).slice(0,25000);};
+  const scrub=o=>{if(!o)return '';const redact=(v)=>{if(Array.isArray(v))return v.map(redact);if(v&&typeof v==='object'){const out={};Object.keys(v).forEach(k=>{if(/password|apikey|token|salt|secret|cnic/i.test(k))return;out[k]=redact(v[k]);});return out;}return v;};return JSON.stringify(redact(o)).slice(0,25000);};
   sh.appendRow([genId('audit'),new Date().toISOString(),schoolId,actor.id,actor.name,actor.role,operation,collection,recordId||'',scrub(before),scrub(after)]);
 }
 function adminGetAudit(p){
@@ -1306,5 +1332,6 @@ function doGet(e) {
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
+
 
 

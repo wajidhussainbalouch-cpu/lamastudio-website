@@ -52,7 +52,7 @@
 const REGISTRY_SHEET_NAME = 'Schools';
 const REGISTRY_HEADERS = [
     'schoolId', 'name', 'address', 'phone', 'principal', 'type', 'level', 'adminEmail',
-    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt'
+    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt', 'subscriptionType', 'subscriptionStart', 'subscriptionEnd', 'subscriptionPrice', 'subscriptionPaidAt', 'subscriptionReference', 'subscriptionNotes'
 ];
 const SUPER_ADMIN_PASSWORD_PLAINTEXT = 'change-this-password'; // edit, then run setupSuperAdmin() once
 
@@ -260,7 +260,7 @@ function registerSchool(p) {
     registry.appendRow([
         schoolId, p.name.trim(), p.address || '', p.phone || '', p.principal || '', p.type || 'Private',
         p.level || 'High', p.adminEmail.trim(), passwordHash, apiKey, sheetId,
-        p.logo || '', p.coverPhoto || '', shortCode, 'Free', 'Active', new Date().toISOString()
+        p.logo || '', p.coverPhoto || '', shortCode, 'Trial', 'Active', new Date().toISOString(), 'Trial', new Date().toISOString(), new Date(Date.now()+30*86400000).toISOString(), '', '', '', ''
     ]);
 
     return {
@@ -305,6 +305,7 @@ function getSchoolConfig(schoolId, apiKey) {
 }
 
 function updateSchoolConfig(schoolId, apiKey, patch) {
+    assertSchoolWritable(schoolId);
     const match = authorizeSchool(schoolId, apiKey);
     const registry = getRegistrySheet();
     // Only school profile fields may be changed; never accept registry/security fields.
@@ -370,10 +371,52 @@ function adminListSchools(adminApiKey) {
         out.push({
             schoolId: row.schoolId, name: row.name, adminEmail: row.adminEmail, phone: row.phone,
             type: row.type, level: row.level, status: row.status, plan: row.plan,
-            createdAt: row.createdAt, studentCount, teacherCount
+            createdAt: row.createdAt, subscription: subscriptionView(row), studentCount, teacherCount
         });
     }
     return out;
+}
+
+/** Subscription: legacy rows stay Unclassified with unrestricted access until explicitly assigned. */
+function subscriptionView(row) {
+    const type = String(row.subscriptionType || '').trim();
+    const end = String(row.subscriptionEnd || '').trim();
+    const expiry = end ? Date.parse(end) : NaN;
+    const expired = (type === 'Trial' || type === 'Paid') && Number.isFinite(expiry) && Date.now() >= expiry;
+    return {type: type || 'Unclassified', start: String(row.subscriptionStart || ''), end,
+        expired, readOnly: expired, price: row.subscriptionPrice || '',
+        paidAt: row.subscriptionPaidAt || '', reference: row.subscriptionReference || '', notes: row.subscriptionNotes || ''};
+}
+function assertSchoolWritable(schoolId) {
+    const match = findSchoolRow(getRegistrySheet(), r => String(r.schoolId) === String(schoolId));
+    if (!match) throw new Error('School not found.');
+    if (subscriptionView(match.obj).readOnly) throw new Error('Subscription expired. This school is read-only; records are preserved. Contact LamaStudio to renew.');
+}
+function adminSetSubscription(adminApiKey, schoolId, details) {
+    authorizeAdmin(adminApiKey);
+    const registry = getRegistrySheet();
+    const match = findSchoolRow(registry, r => String(r.schoolId) === String(schoolId));
+    if (!match) throw new Error('School not found.');
+    const type = String(details.type || '');
+    if (!['Trial','Paid','Free','Unclassified'].includes(type)) throw new Error('Invalid subscription type.');
+    const start = String(details.start || '');
+    const end = String(details.end || '');
+    const dateOk = d => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d+'T00:00:00Z'));
+    if ((type === 'Trial' || type === 'Paid') && (!dateOk(start) || !dateOk(end) || end < start)) throw new Error('Provide valid start and end dates.');
+    if (start && !dateOk(start) || end && !dateOk(end)) throw new Error('Invalid date.');
+    const values = {
+      subscriptionType:type, subscriptionStart:(type==='Trial'||type==='Paid')?start:'',
+      subscriptionEnd:(type==='Trial'||type==='Paid')?end+'T23:59:59.999Z':'',
+      subscriptionPrice: String(details.price || ''), subscriptionPaidAt: String(details.paidAt || ''),
+      subscriptionReference: String(details.reference || ''), subscriptionNotes: String(details.notes || ''),
+      plan: type === 'Unclassified' ? (match.obj.plan || 'Free') : type
+    };
+    Object.keys(values).forEach(k => {const col=match.headers.indexOf(k)+1;if(col)registry.getRange(match.rowIndex,col).setValue(values[k]);});
+    return {schoolId, subscription:subscriptionView(Object.assign({},match.obj,values))};
+}
+function getSubscriptionStatus(schoolId, apiKey) {
+    const match=authorizeSchool(schoolId,apiKey);
+    return subscriptionView(match.obj);
 }
 
 function adminSetStatus(adminApiKey, schoolId, status) {
@@ -411,6 +454,7 @@ function adminResetPassword(adminApiKey, schoolId) {
 
 /** School Admin action: create a teacher account inside their own school's sheet. */
 function addTeacher(schoolId, apiKey, p) {
+    assertSchoolWritable(schoolId);
     if (!p.name || !p.email || !p.password || p.password.length < 6) {
         throw new Error('Name, email, and a password of at least 6 characters are required.');
     }
@@ -573,15 +617,15 @@ function resolveContext(p) {
     const role = p.role || 'school';
     if (role === 'school') {
         const match = authorizeSchool(p.schoolId, p.apiKey);
-        return { role, ss: SpreadsheetApp.openById(match.obj.sheetId) };
+        return { role, schoolId:p.schoolId, ss: SpreadsheetApp.openById(match.obj.sheetId) };
     }
     if (role === 'teacher') {
         const ctx = authorizeTeacher(p.schoolId, p.teacherId, p.apiKey);
-        return { role, ss: ctx.ss, teacher: ctx.teacher };
+        return { role, schoolId:p.schoolId, ss: ctx.ss, teacher: ctx.teacher };
     }
     if (role === 'student') {
         const ctx = authorizeStudent(p.schoolId, p.studentId, p.apiKey);
-        return { role, ss: ctx.ss, student: ctx.student };
+        return { role, schoolId:p.schoolId, ss: ctx.ss, student: ctx.student };
     }
     throw new Error('Unknown role: ' + role);
 }
@@ -694,6 +738,7 @@ function getRecord(ctx, collection, id) {
 }
 
 function addRecord(ctx, collection, record) {
+    assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
     if (collection === 'studentRequests' && ctx.role === 'student') {
         const type = String(record.requestType || 'help');
@@ -717,6 +762,7 @@ function addRecord(ctx, collection, record) {
 }
 
 function updateRecord(ctx, collection, id, patch) {
+    assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
@@ -760,6 +806,7 @@ function updateRecord(ctx, collection, id, patch) {
 }
 
 function removeRecord(ctx, collection, id) {
+    assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'remove', collection);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
@@ -776,6 +823,7 @@ function removeRecord(ctx, collection, id) {
 
 /** Admin sends a one-tap reminder to a teacher who hasn't marked attendance yet. */
 function pingTeacher(schoolId, apiKey, teacherId, message) {
+    assertSchoolWritable(schoolId);
     const match = authorizeSchool(schoolId, apiKey);
     const ss = SpreadsheetApp.openById(match.obj.sheetId);
     const ctx = { role: 'school', ss };
@@ -788,6 +836,7 @@ function pingTeacher(schoolId, apiKey, teacherId, message) {
 
 /** Teacher dismisses their own ping after seeing it. */
 function acknowledgePing(schoolId, teacherId, apiKey, pingId) {
+    assertSchoolWritable(schoolId);
     const ctx = authorizeTeacher(schoolId, teacherId, apiKey);
     const teacherCtx = { role: 'teacher', ss: ctx.ss, teacher: ctx.teacher };
     const { sheet, headers } = getCollectionSheet(teacherCtx, 'teacherPings');
@@ -1056,41 +1105,14 @@ function jsonOut(obj) {
     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
-
-/** Student-only teacher directory. Never expose teacher credentials or contact data. */
-function getMyClassTeachers(params) {
-    const ctx = resolveContext(params);
-    if (ctx.role !== 'student') throw new Error('Student login required.');
-    const targetClass = ctx.student.class;
-    const targetSection = String(ctx.student.section || '').trim();
-    const sheet = ctx.ss.getSheetByName(COLLECTIONS.teachers.tab);
-    if (!sheet || sheet.getLastRow() < 2) return [];
-    const rows = sheet.getDataRange().getValues();
-    const headers = rows[0];
-    const result = [];
-    const seen = {};
-    for (let i = 1; i < rows.length; i++) {
-        const t = rowToRecord(headers, rows[i]);
-        if (!t.name || !sameClass(t.assignedClass, targetClass)) continue;
-        const assignedSection = String(t.assignedSection || '').trim();
-        if (targetSection && assignedSection && !sameClass(assignedSection, targetSection)) continue;
-        if (String(t.status || 'Active').trim().toLowerCase() !== 'active') continue;
-        const unique = String(t.id || t.name).toLowerCase();
-        if (seen[unique]) continue;
-        seen[unique] = true;
-        result.push({name:String(t.name), subject:String(t.subject || ''), assignedClass:String(t.assignedClass || ''), assignedSection:assignedSection});
-    }
-    return result;
-}
-
 function handleRequest(params) {
     const action = params.action;
     try {
         switch (action) {
             case 'register':
-                return { status: 'success', school: registerTrialSchool(params) };
+                return { status: 'success', school: registerSchool(params) };
             case 'login':
-                return { status: 'success', school: loginSchoolTracked(params.email, params.password) };
+                return { status: 'success', school: loginSchool(params.email, params.password) };
             case 'getSchoolConfig':
                 return { status: 'success', school: getSchoolConfig(params.schoolId, params.apiKey) };
             case 'updateSchoolConfig':
@@ -1102,8 +1124,10 @@ function handleRequest(params) {
             case 'getStudentFeeSummary':
                 return { status: 'success', summary: getStudentFeeSummary(params.schoolId, params.apiKey, params.studentId) };
             case 'pingTeacher':
+                assertSchoolWritable(params.schoolId);
                 return { status: 'success', ping: pingTeacher(params.schoolId, params.apiKey, params.teacherId, params.message) };
             case 'acknowledgePing':
+                assertSchoolWritable(params.schoolId);
                 return { status: 'success', ping: acknowledgePing(params.schoolId, params.teacherId, params.apiKey, params.pingId) };
 
             case 'addTeacher':
@@ -1111,17 +1135,15 @@ function handleRequest(params) {
             case 'teacherLogin':
                 return { status: 'success', teacher: teacherLogin(params.schoolId, params.email, params.password) };
 
-            case 'getMyClassTeachers':
-                return { status: 'success', teachers: getMyClassTeachers(params) };
             case 'studentLogin':
                 return { status: 'success', student: studentLogin(params.schoolId, params.enrlNo, params.password) };
 
             case 'adminLogin':
                 return { status: 'success', admin: adminLogin(params.password) };
-            case 'adminTrialReport':
-                return { status: 'success', report: adminTrialReport(params.adminApiKey) };
-            case 'adminSetPlan':
-                return { status: 'success', result: adminSetPlan(params.adminApiKey, params.schoolId, params.plan) };
+            case 'adminSetSubscription':
+                return { status: 'success', result: adminSetSubscription(params.adminApiKey, params.schoolId, params.details || {}) };
+            case 'getSubscriptionStatus':
+                return { status: 'success', subscription: getSubscriptionStatus(params.schoolId, params.apiKey) };
             case 'adminListSchools':
                 return { status: 'success', schools: adminListSchools(params.adminApiKey) };
             case 'adminSetStatus':
@@ -1130,6 +1152,7 @@ function handleRequest(params) {
                 return { status: 'success', result: adminResetPassword(params.adminApiKey, params.schoolId) };
 
             case 'bulkAttendance':
+                assertSchoolWritable(params.schoolId);
                 return { status: 'success', result: bulkAttendanceRecords(params) };
             case 'list':
                 return { status: 'success', records: listRecords(resolveContext(params), params.collection) };

@@ -126,7 +126,14 @@ const COLLECTIONS = {
 function setup() {
     const props = PropertiesService.getScriptProperties();
     if (props.getProperty('MASTER_SHEET_ID')) {
-        Logger.log('Already set up. Master Registry ID: ' + props.getProperty('MASTER_SHEET_ID'));
+        Logger.log('Existing Master Registry preserved.');
+        // The editor has repeatedly run setup() instead of setupSuperAdmin().
+        // Initialize the missing login hash once, without changing school data.
+        if (!props.getProperty('SUPERADMIN_PASSWORD_HASH')) {
+            setupSuperAdmin();
+        }
+        Logger.log('Super Admin configured: ' +
+            Boolean(props.getProperty('SUPERADMIN_PASSWORD_HASH')));
         return;
     }
     const ss = SpreadsheetApp.create('LamaStudio Master Registry');
@@ -134,6 +141,7 @@ function setup() {
     sheet.setName(REGISTRY_SHEET_NAME);
     sheet.appendRow(REGISTRY_HEADERS);
     props.setProperty('MASTER_SHEET_ID', ss.getId());
+    if (!props.getProperty('SUPERADMIN_PASSWORD_HASH')) setupSuperAdmin();
     Logger.log('Setup complete. Master Registry: ' + ss.getUrl());
 }
 

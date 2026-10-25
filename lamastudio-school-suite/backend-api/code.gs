@@ -1105,10 +1105,44 @@ function jsonOut(obj) {
     return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
 
+// Per-school administrator authentication; distinct from the school account and platform Super Admin.
+// The owner must prove their original school credentials ONCE to create a separate admin account.
+function schoolAdminPropertyKey(schoolId) { return 'SCHOOL_ADMIN_' + String(schoolId || '').replace(/[^A-Za-z0-9_-]/g,'_'); }
+function schoolAdminSetup(p) {
+    if (!p.schoolId || !p.ownerEmail || !p.ownerPassword || !p.adminUsername || !p.adminPassword) throw new Error('All setup fields are required.');
+    if (String(p.adminPassword).length < 12) throw new Error('Use an administrator password of at least 12 characters.');
+    const owner = loginSchool(p.ownerEmail, p.ownerPassword);
+    if (String(owner.schoolId) !== String(p.schoolId)) throw new Error('Owner credentials do not belong to this school.');
+    const props = PropertiesService.getScriptProperties(), key = schoolAdminPropertyKey(p.schoolId);
+    if (props.getProperty(key)) throw new Error('Admin account already configured. Contact the school owner to reset it securely.');
+    const salt = Utilities.getUuid();
+    props.setProperty(key, JSON.stringify({username:String(p.adminUsername).trim().toLowerCase(), salt:salt, hash:hashPassword(String(p.adminPassword),salt)}));
+    return {configured:true};
+}
+function schoolAdminLogin(p) {
+    const key=schoolAdminPropertyKey(p.schoolId), raw=PropertiesService.getScriptProperties().getProperty(key);
+    if (!raw) throw new Error('Admin account not configured. Select First-time setup.');
+    const saved=JSON.parse(raw);
+    if (saved.username!==String(p.adminUsername||'').trim().toLowerCase() || saved.hash!==hashPassword(String(p.adminPassword||''),saved.salt)) throw new Error('Incorrect administrator credentials.');
+    const token=Utilities.getUuid()+'-'+Utilities.getUuid();
+    CacheService.getScriptCache().put('SADMIN_'+String(p.schoolId)+'_'+token,'1',21600);
+    return {schoolId:String(p.schoolId),token:token,expiresInSeconds:21600};
+}
+function schoolAdminVerify(p) {
+    if (!p.schoolId || !p.token || CacheService.getScriptCache().get('SADMIN_'+String(p.schoolId)+'_'+String(p.token))!=='1') throw new Error('Administrator session expired. Please log in.');
+    return {valid:true};
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
         switch (action) {
+            case 'schoolAdminSetup':
+                return {status:'success',result:schoolAdminSetup(params)};
+            case 'schoolAdminLogin':
+                return {status:'success',result:schoolAdminLogin(params)};
+            case 'schoolAdminVerify':
+                return {status:'success',result:schoolAdminVerify(params)};
             case 'register':
                 return { status: 'success', school: registerSchool(params) };
             case 'login':

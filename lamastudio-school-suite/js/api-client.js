@@ -1,5 +1,5 @@
 /** Lama School Suite — role-isolated Google Apps Script API client */
-const API_URL = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz8Num29Df94i-TNlX4ggN6nveyVLpoPDo4feStMXV3DuAx-JoRD3nZH1Q90kVuEH57/exec';
 const LamaAPI = (() => {
   const ROLES = ['school','teacher','student','admin'];
   const legacyKey = 'lamastudio_session';

@@ -231,7 +231,7 @@ body:before{
                 </div>
             </a>
 
-            <a href="teacher-login.html" class="portal-card-teacher rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
+            <a href="portals/teacher/index.html" class="portal-card-teacher rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
                 <div>
                     <div class="portal-icon-teacher">👩‍🏫</div>
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-black uppercase tracking-widest text-emerald-300 mt-4">
@@ -246,17 +246,17 @@ body:before{
                 </div>
             </a>
 
-            <a href="dashboard.html" class="portal-card-admin rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
+            <a href="school-admin-login.html" class="portal-card-admin rounded-[26px] p-6 sm:p-7 flex flex-col justify-between">
                 <div>
                     <div class="portal-icon-admin">🏛</div>
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-black uppercase tracking-widest text-cyan-300 mt-4">
                         <span>Administration</span>
                     </div>
                     <h3 class="text-2xl font-black mt-3 text-cyan-300">Admin Portal</h3>
-                    <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Manage this school’s students, teachers, notices, attendance and records.</p>
+                    <p class="text-xs text-[color:var(--muted)] mt-2.5 leading-relaxed">Full master control: manage student accounts, configure school data, publish board notices and date sheets.</p>
                 </div>
                 <div class="mt-6 pt-4 border-t border-cyan-500/20 flex items-center justify-between">
-                    <span class="text-xs font-black text-cyan-300">Open Admin Portal</span>
+                    <span class="text-xs font-black text-cyan-300">Admin Login</span>
                     <span class="w-8 h-8 rounded-full bg-cyan-500/20 grid place-items-center text-cyan-300 font-bold">→</span>
                 </div>
             </a>
@@ -459,7 +459,6 @@ function closeModal(id){
 }
 
 /* Dark / Light theme synchronization */
-if (typeof LamaAPI === 'undefined' || !LamaAPI.requireLogin('school', 'login.html')) { throw new Error('School login required.'); }
 const savedTheme = localStorage.getItem('lama-main-dashboard-theme') || localStorage.getItem('lama_theme') || 'dark';
 document.documentElement.dataset.theme = savedTheme;
 
@@ -510,7 +509,7 @@ function sameSchool(item, id) {
 async function resolveSchool(data) {
     let active = {};
     try { if (typeof LamaAPI?.getActiveSchool === 'function') active = await LamaAPI.getActiveSchool() || {}; } catch (_) {}
-    const session = typeof LamaAPI !== 'undefined' && typeof LamaAPI.getSession === 'function' ? (LamaAPI.getSession('school') || {}) : {};
+    const session = typeof LamaAPI !== 'undefined' && typeof LamaAPI.getSession === 'function' ? (LamaAPI.getSession() || {}) : {};
     const id = active.id || active.schoolId || session.schoolId || data.schoolId || data.school?.id || '';
     return { id:String(id), name:active.name || active.schoolName || data.schoolName, logo:active.logo || active.schoolLogo || data.logo };
 }

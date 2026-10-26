@@ -127,11 +127,7 @@ function setup() {
     const props = PropertiesService.getScriptProperties();
     if (props.getProperty('MASTER_SHEET_ID')) {
         Logger.log('Existing Master Registry preserved.');
-        // The editor has repeatedly run setup() instead of setupSuperAdmin().
-        // Initialize the missing login hash once, without changing school data.
-        if (!props.getProperty('SUPERADMIN_PASSWORD_HASH')) {
-            setupSuperAdmin();
-        }
+        // Super Admin credentials are configured separately using Script Properties.
         Logger.log('Super Admin configured: ' +
             Boolean(props.getProperty('SUPERADMIN_PASSWORD_HASH')));
         return;
@@ -141,24 +137,25 @@ function setup() {
     sheet.setName(REGISTRY_SHEET_NAME);
     sheet.appendRow(REGISTRY_HEADERS);
     props.setProperty('MASTER_SHEET_ID', ss.getId());
-    if (!props.getProperty('SUPERADMIN_PASSWORD_HASH')) setupSuperAdmin();
+    // Configure super-admin credentials separately; never embed them in source.
     Logger.log('Setup complete. Master Registry: ' + ss.getUrl());
 }
 
 /**
- * First-time initialization or intentional password reset.
- * Run setupSuperAdmin() once from the editor. Remove the embedded password
- * after setup to avoid keeping plaintext credentials in source control.
- * Existing Master Registry and school data are NOT modified.
+ * Initialize or intentionally rotate the super-admin password.
+ * Set SUPERADMIN_SETUP_PASSWORD in Apps Script > Project Settings > Script
+ * Properties, run this function, then verify with checkSuperAdminSetup().
+ * No registry rows or school databases are modified.
  */
 function setupSuperAdmin() {
-    // WARNING: Embedded password is visible to anyone with source access.
-    // Run this once, then remove the literal password from this file.
-    const password = 'W@jidhussain12345';
     const props = PropertiesService.getScriptProperties();
+    const password = props.getProperty('SUPERADMIN_SETUP_PASSWORD');
+    if (!password || password.length < 12) {
+        throw new Error('Set SUPERADMIN_SETUP_PASSWORD (12+ characters) in Script Properties before running setupSuperAdmin().');
+    }
     props.setProperty('SUPERADMIN_PASSWORD_HASH', hashPassword(password, 'SUPERADMIN'));
     props.deleteProperty('SUPERADMIN_SETUP_PASSWORD');
-    Logger.log('SUCCESS: Super Admin password configured.');
+    Logger.log('Super Admin password configured. Rotate any previously exposed password.');
 }
 
 /** Safe diagnostic: run from Apps Script editor to verify configuration. */

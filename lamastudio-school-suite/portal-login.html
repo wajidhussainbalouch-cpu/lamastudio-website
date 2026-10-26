@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#081923">
 <title>Choose Portal | Lama School Suite</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script><script src="js/api-client.js"></script><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#081923">
 <style>
 body{background:radial-gradient(circle at 10% 0%,#16465b 0,transparent 40%),#081923;color:#fff;font-family:system-ui,sans-serif}
 .portal{display:flex;align-items:center;gap:15px;padding:19px;border:1px solid #37546a;border-radius:18px;background:#102a35;text-decoration:none;color:white;transition:.15s}
@@ -16,16 +16,24 @@ body{background:radial-gradient(circle at 10% 0%,#16465b 0,transparent 40%),#081
 <body class="min-h-screen grid place-items-center p-5">
 <main class="w-full max-w-lg">
 <a href="main-dashboard.html" class="text-cyan-300 text-sm font-semibold">← Main School Board</a>
-<div class="mt-5 mb-7"><div class="text-xs tracking-[.25em] text-cyan-400 font-black">LAMA SCHOOL SUITE</div><h1 class="text-3xl font-black mt-2">Choose your portal</h1><p class="text-slate-300 text-sm mt-2">Three school portals. Platform Super Admin is not part of this page.</p></div>
+<div class="mt-5 mb-7"><div class="flex items-center gap-4 mb-5"><div id="schoolLogo" class="w-16 h-16 rounded-2xl border border-cyan-500/30 bg-cyan-900/40 grid place-items-center font-black text-2xl overflow-hidden" aria-label="School logo">🏫</div><div><div id="schoolName" class="font-bold text-lg">Lama School Suite</div><div class="text-xs text-cyan-300">Your school, your secure portal</div></div></div><div class="text-xs tracking-[.25em] text-cyan-400 font-black">LAMA SCHOOL SUITE</div><h1 class="text-3xl font-black mt-2">Choose your portal</h1><p class="text-slate-300 text-sm mt-2">Three school portals. Platform Super Admin is not part of this page.</p></div>
 <nav class="grid gap-4" aria-label="School portal logins">
 <a class="portal" href="students/student-login.html"><span class="emoji">🎓</span><span><strong>Student & Parent</strong><small>Enrollment and student password</small></span><span class="ml-auto text-cyan-300">→</span></a>
 <a class="portal" href="teacher-login.html"><span class="emoji">👩‍🏫</span><span><strong>Teacher</strong><small>Teacher account credentials</small></span><span class="ml-auto text-cyan-300">→</span></a>
 <a class="portal" href="school-admin-login.html"><span class="emoji">🏫</span><span><strong>School Admin</strong><small>Separate administrator username and password</small></span><span class="ml-auto text-cyan-300">→</span></a>
 </nav>
-<p class="text-slate-400 text-xs mt-6">School administrators use separate credentials. First-time setup requires school owner verification.</p>
+<div class="mt-6 rounded-2xl border border-slate-700 p-4 bg-slate-900/60"><p class="text-sm font-bold">New school? / نیا اسکول؟</p><p class="text-xs text-slate-300 mt-1">Register your school first. Existing users choose their portal above.</p><div class="flex gap-3 mt-3 flex-wrap"><a href="register.html" class="text-cyan-300 font-bold text-sm underline">Create school account</a><a href="login.html" class="text-cyan-300 font-bold text-sm underline">School owner login</a></div></div><p class="text-slate-400 text-xs mt-4">The school logo is managed by the school owner in Settings after registration. Portal permissions are enforced separately by the backend.</p>
 </main>
 <script>
 (function(){
+ const session=typeof LamaAPI!=='undefined'?LamaAPI.getSession('school'):null;
+ if(session){
+   const name=document.getElementById('schoolName'),logo=document.getElementById('schoolLogo');
+   name.textContent=session.name||'Your School';
+   if(typeof session.logo==='string' && /^(https:\/\/|data:image\/(png|jpeg|webp);base64,)/i.test(session.logo)){
+     const img=document.createElement('img');img.alt='School logo';img.src=session.logo;img.className='w-full h-full object-contain';img.onerror=()=>{logo.textContent='🏫'};logo.textContent='';logo.appendChild(img);
+   }
+ }
  const role=(new URLSearchParams(location.search).get('role')||'').toLowerCase();
  const routes={student:'students/student-login.html',parent:'students/student-login.html',teacher:'teacher-login.html',admin:'school-admin-login.html'};
  if(Object.prototype.hasOwnProperty.call(routes,role))location.replace(routes[role]);

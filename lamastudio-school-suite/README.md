@@ -1,132 +1,135 @@
-[README.md](https://github.com/user-attachments/files/32550460/README.md)
-# LamaStudio School Suite — Complete Package
+# LamaStudio School Suite — Project Operations Guide
 
-Every file needed to run the full system: Super Admin, School Admin, Teacher,
-and Student & Parent portals, all backed by one Google Apps Script Web App
-and each school's own private Google Sheet.
+> Last reviewed: 2026-10-26. This guide describes the GitHub source and safe maintenance procedure. **A GitHub commit is not an Apps Script deployment.** Production functionality must be tested before release.
 
-## Setup (do this first)
+## Project ownership and scope
 
-1. [script.google.com](https://script.google.com) → New project → paste in
-   `backend-api/code.gs`.
-2. Run `setup` once (top toolbar → function dropdown → `setup` → Run).
-   Approve permissions. This creates your **Master Registry** spreadsheet.
-3. Near the top of the file, change `SUPER_ADMIN_PASSWORD_PLAINTEXT` to your
-   own password, then run `setupSuperAdmin` once.
-4. Deploy → New deployment → **Web app** → Execute as **Me** → Who has
-   access **Anyone** → Deploy. Copy the URL ending in `/exec`.
-5. Open `js/api-client.js`, find `const API_URL = '...'` near the top, and
-   replace the placeholder with that URL.
-6. Upload everything else in this folder to your web host, keeping the
-  directory structure: shared `assets/` and `js/` stay at the suite root,
-  student workflows live in `students/`, academic pages live in `academics/`,
-  examination pages live in `exams/`, Communications pages live in
-  `communications/`, Attendance pages live in `attendance/`, Staff pages live
-  in `staff/`, Finance pages live in `finance/`, and role-specific pages stay
-  in `portals/`.
+- Public website: https://lamastudio.pk
+- GitHub source: https://github.com/wajidhussainbalouch-cpu/lamastudio-website
+- School Suite root: `lamastudio-school-suite/`
+- Backend source: `backend-api/code.gs` plus additive Apps Script modules in `backend-api/`
+- Shared frontend API: `js/api-client.js`
+- Intended architecture: one Apps Script web-app deployment, one Master Registry, separate Google Sheets for each school.
+- Primary data-safety rule: **never overwrite, truncate, delete, or re-create an existing school spreadsheet or Master Registry during a code update.**
 
-To update the backend later: Apps Script → Deploy → Manage deployments →
-pencil icon → New version → Deploy. This keeps the same URL, so you never
-need to touch `api-client.js` again after the first setup.
+## Source of truth and backups
 
-## The four panels
+1. Use the current GitHub `main` branch as the reference for production source, but verify the actual deployed Apps Script version before changing it.
+2. Make changes in a dedicated feature/audit branch; review the diff and test before merging.
+3. Before changing the live backend, back up the Apps Script project, Master Registry, and affected school databases. Preserve spreadsheet IDs, Script Properties, and the existing web-app deployment ID/URL.
+4. Never delete an HTML, JS, CSS, or Apps Script file just because it looks duplicated or unused. First check inbound links, imports, dynamic navigation, Apps Script references, and published URLs. Prefer temporary deprecation and redirects.
+5. Do not commit credentials, OAuth callback URLs, session tokens, API keys, or personal student data.
 
-- **Super Admin** — `portals/superadmin/superadmin-login.html`. Sees every
-  registered school, total students/teachers, can block/unblock a school or
-  reset its password.
-- **School Admin** — `login.html` → `dashboard.html`. Full control center:
-  students, teachers, fees, attendance monitoring, activities, resources,
-  promotions — everything.
-- **Teacher** — `portal-login.html` → `portals/teacher/index.html`.
-  Attendance, homework, marks, one-tap absentee alerts, class promotion —
-  scoped to their own assigned class only.
-- **Student & Parent** — `portal-login.html` → `portals/student/index.html`.
-  Read-only: their own result, homework, attendance history, notices.
+## Google Drive organization
 
-## Every page, at a glance
+The intended master workspace is [LAMA STUDIO — MASTER](https://drive.google.com/drive/folders/1BRvvC_byN89huaARPuL0SJx6rdSreSnV):
 
-| File | Who uses it | What it does |
-|---|---|---|
-| `index.html` | Public | Marketing homepage, pricing, login modal |
-| `register.html` | Public | School self-signup |
-| `login.html` | School Admin | Login |
-| `portal-login.html` | Teacher / Student | Combined login, routes by role |
-| `dashboard.html` | School Admin | Main control center — live stats, quick links |
-| `main-dashboard.html` | All three roles | Shared "School Board" — notices, activities, exams, tests, resources. No fees/HR data ever shown here |
-| `admissions.html` | School Admin | Printable official admission form — now actually saves to the student database |
-| `students/manage-students.html` | School Admin | Full roster: add/edit/delete any student |
-| `students/manage-students-enhanced.html` | School Admin | Alternate roster with historical results and bulk tools |
-| `students/student-login.html` | Student / Parent | Student portal login |
-| `attendance/student-attendance.html` | School Admin | Daily student attendance register |
-| `staff/manage-teachers.html` | School Admin | Add/edit/delete teacher accounts |
-| `staff/meet-the-teachers.html` | Public / School | School-scoped faculty showcase, print and share |
-| `exams/result-card.html` | School Admin | Official result card generator, per student |
-| `academics/report-card.html` | School Admin | Behavioral/teacher evaluation report |
-| `exams/date-sheet.html` | School Admin | Exam schedule |
-| `exams/tests.html` | School Admin | Class tests & quizzes schedule |
-| `communications/notifications.html` | School Admin | Parent circulars/broadcasts |
-| `communications/activities.html` | School Admin | Sports/extracurricular/plantation feed (shown on School Board) |
-| `academics/resources.html` | School Admin | Free-category resources — syllabus, books, uniform, exam prep links, etc. (shown on School Board) |
-| `finance/fees.html` | School Admin | Fee records per student |
-| `finance/finance-center.html` | School Admin | Income, expenses, and daily finance ledger |
-| `finance/finance-import.html` | School Admin | Import and review finance documents and bank statements |
-| `finance/print-studio.html` | School Admin | Print fee records |
-| `attendance/teacher-attendance.html` | School Admin | Mark teacher attendance, ping anyone who hasn't marked their class yet |
-| `students/promote-students.html` | School Admin | Year-end bulk/individual class promotion, with automatic pass/fail detection |
-| `students/import-students.html` | School Admin | Bulk-import an existing roster from Excel/CSV **or a standard Punjab EMIS/SIS PDF export** |
-| `settings.html` | School Admin | Edit school profile, logo, cover photo |
-| `portals/teacher/index.html` | Teacher | Attendance, homework, marks, absentee alerts, promotions — own class only |
-| `portals/student/index.html` | Student/Parent | Own result, homework, attendance, notices |
-| `portals/superadmin/*.html` | Super Admin | Platform-wide login and dashboard |
+| Folder | Purpose |
+| --- | --- |
+| [01 — Apps Script Projects](https://drive.google.com/drive/folders/1tG-vUnE6HswBiK74nAKWGrmsu5Kg-hDe) | Script project documentation and exports |
+| [02 — School Databases](https://drive.google.com/drive/folders/1H9U1a1fbNewbpQMwr8AGbQ3xLC27Tq02) | Master Registry and school database files |
+| [03 — LamaSky and Android Apps](https://drive.google.com/drive/folders/19vu9kg7y9w7luPkawVwTttiMJHyoaWin) | Android app-related assets |
+| [04 — Backups and Archives](https://drive.google.com/drive/folders/14dAGIeGsJR97KfCU62JklPLXjQ6xOyPO) | Timestamped backups |
+| [05 — Documentation](https://drive.google.com/drive/folders/14oAOfTZXMy7WtrOuB44aBl_tN2iNet5x) | Operations notes and architecture |
 
-## Known open items (by design, not oversights)
+**Important:** The existing `createSchoolSheet()` implementation uses `SpreadsheetApp.create()`. This creates a spreadsheet but **does not explicitly move it to folder 02**. Folder placement must be implemented and tested separately. Do not assume that a spreadsheet found in Drive is already wired to the registry. The registry's `sheetId` must refer to the actual native Google Sheet, not an exported `.xlsx` copy.
 
-- **Bulk SMS/WhatsApp** is one-tap-per-parent, not one-tap-for-everyone —
-  true bulk sending needs a paid gateway (Twilio, Meta's WhatsApp Business
-  API, or a local Pakistani SMS provider).
-- **Teacher password reset** isn't wired into the edit form yet — the
-  generic update endpoint can't hash a new password; would need a small
-  dedicated backend action.
-- **One class per teacher account** — a teacher who teaches multiple
-  classes currently needs one account per class.
-- **Promotion's "Fail" rule is a soft default**, not a hard lock: failing
-  students are unchecked and flagged red automatically, but the checkbox
-  can still be manually checked to promote them anyway (schools sometimes
-  do this on discretion). Say the word if you want it to be a true hard
-  block instead — it's a small change.
-- **Embedded photos in spreadsheets/PDFs** (an actual floating image
-  object, not a URL or base64 text) can't be extracted automatically by
-  the bulk importer — add those per-student afterward.
-- **Pricing tiers** on the homepage (`?tier=Standard` etc.) aren't
-  currently read by `register.html` — every school gets the same account
-  regardless of which pricing card they clicked.
+## Current application entry points
 
-## Fixed this round
+| Role or area | Path | Responsibility |
+| --- | --- | --- |
+| LamaStudio public website | repository-root `index.html` | Public marketing and product navigation |
+| School Suite public entry | `index.html` | Suite information and login entry |
+| New school registration | `register.html` | Create a school account and school database |
+| Existing school owner | `login.html` | Log in to existing school; **must not create a new sheet** |
+| School administration | `dashboard.html` | School-scoped administration |
+| School Board | `main-dashboard.html` | Display published school information; not a public editing surface |
+| Teacher/student sign-in | `portal-login.html` | Role-specific authentication |
+| Teacher portal | `portals/teacher/index.html` | Assigned-class workflows |
+| Student portal | `portals/student/index.html` | Student-specific records |
+| Super Admin | `portals/superadmin/` | Platform-wide administration |
+| Student roster | `students/manage-students.html` | Student records |
+| Student import | `students/import-students.html` | Preview and controlled import |
+| Teacher management | `staff/manage-teachers.html` | Teacher records |
+| Attendance | `attendance/` | Student and teacher attendance |
+| Academic materials | `academics/` | Resources and reports |
+| Exams and results | `exams/` | Tests, datesheets, results |
+| Notices and events | `communications/` | Published notices and activities |
+| Fees and finance | `finance/` | School finance records |
 
-- **Every admin page now has a working Logout button.** Previously, 12
-  pages (`activities`, `date-sheet`, `import-students`, `main-dashboard`,
-  `manage-students`, `notifications`, `promote-students`, `report-card`,
-  `resources`, `settings`, `teacher-attendance`, `tests`) had no logout at
-  all — clicking around trying to find one, then falling back to the
-  browser's own back button, is exactly what made navigation feel like it
-  randomly dumped you back at the homepage after several clicks. All 15
-  admin pages are consistent now.
-- **`students/import-students.html` is now actually linked** — there's a "📤 Bulk
-  Import" button right in `students/manage-students.html`'s header, plus a card on
-  the main dashboard. It had zero navigation entry points before this.
-- **`students/promote-students.html` confirmed present** in this package — it
-  wasn't on the live site before because it was never actually uploaded,
-  not because of a code issue.
+Some older portal filenames and alternate pages also exist. **They are not authorized for deletion** until link/dependency checks are complete.
 
-## On your live site specifically
+## Backend database contract
 
-A few cleanup items were flagged during earlier fixes that only you can
-verify/complete on the live repo:
-- Old disconnected demo files that never call the real backend
-  (`portals/admin/*`, `portals/teacher/teacher-diary.html`,
-  `teacher-grades.html`, `portals/student/student.html`, `student-diary.html`,
-  `student-grades.html`) — recommended for deletion.
-- A stray capitalized `Index.html` — should be lowercase `index.html` for
-  reliable auto-serving on most hosts.
-- A `setting.html`/`settings.html` filename mismatch — every link in this
-  package points to `settings.html` (plural).
+- `REGISTRY_SHEET_NAME = 'Schools'`; `REGISTRY_HEADERS` defines required registry columns.
+- `MASTER_SHEET_ID` is held in Apps Script Script Properties. Preserve it.
+- Each registry row maps `schoolId` to `sheetId` and school credentials/status.
+- `COLLECTIONS` in `backend-api/code.gs` defines the per-school tabs and headers. Append missing headers without reordering or dropping existing data.
+- Registration currently calls `registerSchool()` -> `createSchoolSheet()` -> registry append.
+- Existing school login calls `loginSchool()` and should reuse the stored `sheetId`.
+- Registration folder placement, concurrent signup handling, and recovery from partially completed signup require additional verification before being called production-ready.
+- School data must be isolated by authorized `schoolId` and role. Client-side hiding is not authorization; enforce permissions in Apps Script.
+- Existing student records with missing enrollment numbers must not be silently dropped during import. Show a preview, detect duplicates, preserve original source rows, and report counts.
+
+## Safe Apps Script setup and updates
+
+### Existing installation (normal case)
+
+1. **Do not create another Apps Script project or run `setup()` as an update step.**
+2. In Apps Script > Project Settings > Script Properties, confirm that `MASTER_SHEET_ID` points to the correct existing native Google Sheet. Do not paste or expose its secret values publicly.
+3. To configure or rotate super-admin credentials, set a temporary Script Property `SUPERADMIN_SETUP_PASSWORD` to a new unique password of **at least 12 characters**. Run `setupSuperAdmin()`; the function stores its hash and deletes the temporary property. Run `checkSuperAdminSetup()` to verify configuration. **A previously committed plaintext password must be considered exposed and rotated.**
+4. Confirm all additive `.gs` modules are in the **same Apps Script project** and that there is only one intended `doGet`/`doPost` entry-point pair.
+5. Update the **existing** deployment: Deploy > Manage deployments > Edit > New version > Deploy. Preserve the existing `/exec` URL.
+6. Verify `js/api-client.js` still points to the correct `/exec` endpoint.
+7. Test an existing school login and read-only queries before attempting new registration or any write.
+
+### Brand-new installation only
+
+A brand-new installation may run `setup()` once to create a Master Registry. Do **not** do this for the existing LamaStudio environment. Set up super-admin credentials separately via Script Properties as above. New deployments should use the approved access and execution configuration after reviewing security and data privacy.
+
+## Registration acceptance checks (not yet certified)
+
+- [ ] New school creates **exactly one** native Google Sheet.
+- [ ] The new sheet contains all required collection tabs.
+- [ ] The registry receives exactly one row with the correct `schoolId` and `sheetId`.
+- [ ] The new sheet is stored in the intended Drive school-database folder.
+- [ ] Repeat signup with the same email does not create another sheet.
+- [ ] Existing school login never creates or replaces a sheet.
+- [ ] Partial failure can be recovered without losing data or creating duplicates.
+- [ ] Simultaneous registration requests do not create duplicate accounts.
+- [ ] Existing schools retain their original sheet IDs and records.
+- [ ] School A cannot access School B's private records.
+- [ ] Published School Board data can be viewed without exposing admin-only editing.
+
+## Pre-deployment verification
+
+- [ ] Compare current branch to `main` and review every changed file.
+- [ ] Run link checks for relative paths, scripts, styles, and assets.
+- [ ] Check mobile navigation and every role's login/logout behavior.
+- [ ] Confirm `main-dashboard.html` is display-only for published content.
+- [ ] Verify school registration and role permissions against a **test school**.
+- [ ] Test import preview, missing enrollment numbers, duplicate prevention, and repeat uploads.
+- [ ] Verify subscriptions, blocked accounts, and non-destructive expiration handling.
+- [ ] Back up production registry and school Sheets; record a rollback point.
+- [ ] Merge approved changes, then separately deploy Apps Script using its existing deployment.
+- [ ] Record date, commit SHA, Apps Script version, and test results.
+
+## Known risks and pending audit
+
+- Historical README instructions about editing `SUPER_ADMIN_PASSWORD_PLAINTEXT` were outdated and unsafe; do not follow them.
+- Older backend source exposed a hard-coded super-admin password. The source fix alone does **not** rotate a deployed credential.
+- Backend comments identify legacy student portal passwords as plaintext; review and migrate securely before claiming production-grade authentication.
+- Teacher password-reset workflow, pricing-tier registration mapping, and multi-class teacher support need independent verification.
+- Embedded images in some uploaded PDFs/spreadsheets may not be importable automatically.
+- A full navigation and unused-file audit is still pending. No old portal or demo file is approved for deletion.
+- Never assume that the GitHub `main` branch, Codespaces working tree, and currently deployed Apps Script are identical.
+
+## Change log
+
+| Date | Area | Change | Status |
+| --- | --- | --- | --- |
+| 2026-10-26 | Documentation | Replaced outdated setup instructions with source map, Drive folder map, safety policy, and deployment checklist | GitHub review branch |
+| 2026-10-26 | Backend authentication | Removed embedded super-admin password from `code.gs`; setup now reads temporary Script Property | GitHub review branch; **not deployed** |
+| 2026-10-26 | School registration | Documented folder-placement and idempotency requirements | Audit pending; **not claimed fixed** |
+
+**Production rule:** no destructive cleanup, registry replacement, school database reset, or deployment without review and verification.

@@ -12,6 +12,15 @@
 - Intended architecture: one Apps Script web-app deployment, one Master Registry, separate Google Sheets for each school.
 - Primary data-safety rule: **never overwrite, truncate, delete, or re-create an existing school spreadsheet or Master Registry during a code update.**
 
+## Android home-screen app entry and school branding
+
+- One installable **Lama School Suite** PWA icon, not separate Android apps for each module.
+- Manifest `start_url` points to `portal-login.html`, which offers **Student & Parent**, **Teacher**, and **School Admin** choices, plus school registration and school-owner login.
+- After school-owner login, the chooser displays the school's saved name and logo when available. Upload/change the school logo through `settings.html`. A generic icon is shown when no school has been selected.
+- The home-screen app icon is **the platform Lama School Suite icon**. A per-school dynamic Android launcher icon is **not implemented**; the selected school's logo is shown **inside the app**. This distinction is important because a single PWA manifest cannot automatically switch installed icons for different accounts.
+- Role pages retain their existing authentication. Simply choosing a role does not create an account or grant access.
+- **Not yet deployed or verified on Chrome Android.** Test the manifest, icon assets, installation, start URL, and post-login logo rendering on the live site after approval.
+
 ## Source of truth and backups
 
 1. Use the current GitHub `main` branch as the reference for production source, but verify the actual deployed Apps Script version before changing it.

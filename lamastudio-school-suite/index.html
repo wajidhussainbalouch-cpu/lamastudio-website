@@ -369,20 +369,23 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   });
 }
 </script>
-<aside id="suiteInstallPrompt" role="dialog" aria-label="Install Lama School Suite" hidden><h2>Install Lama School Suite</h2><p id="suiteInstallMessage">Add Lama School Suite to your phone for quick access.</p><div class="suite-install-actions"><button id="suiteInstallNow" type="button">Install App</button><button id="suiteInstallLater" type="button">Not now</button></div></aside>
+<aside id="suiteInstallPrompt" role="dialog" aria-label="Install Lama School Suite" hidden><button type="button" id="suiteInstallPromptClose" aria-label="Close installation message" title="Close" style="position:absolute;top:8px;right:9px;border:0;background:transparent;color:#fff;font-size:24px;line-height:1;padding:6px 10px;cursor:pointer">×</button><h2>Install Lama School Suite</h2><p id="suiteInstallMessage">Add Lama School Suite to your phone for quick access.</p><div class="suite-install-actions"><button id="suiteInstallNow" type="button">Install App</button><button id="suiteInstallLater" type="button">Not now</button></div></aside>
 <script>
 (function(){
  if(!window.matchMedia('(max-width:767px) and (pointer:coarse)').matches)return;
  if(window.matchMedia('(display-mode:standalone)').matches||navigator.standalone===true)return;
  const key='lama_suite_install_prompt_dismissed';
- try{if(sessionStorage.getItem(key))return;}catch(_){}
+ const cooldown=5*60*1000;
+ function recentlyDismissed(){try{return Date.now()-Number(localStorage.getItem(key)||0)<cooldown;}catch(_){return false;}}
+ function dismiss(){try{localStorage.setItem(key,String(Date.now()));}catch(_){}hide();setTimeout(()=>{if(!recentlyDismissed()&&!window.matchMedia('(display-mode:standalone)').matches)show();},cooldown+200);}
  const box=document.getElementById('suiteInstallPrompt'),install=document.getElementById('suiteInstallNow'),later=document.getElementById('suiteInstallLater'),message=document.getElementById('suiteInstallMessage');
  let eventToPrompt=null;const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
- const show=()=>{box.hidden=false;};const hide=()=>{box.hidden=true;};
+ const show=()=>{if(!recentlyDismissed())box.hidden=false;};const hide=()=>{box.hidden=true;};
  function instructions(){install.hidden=true;message.textContent=ios?'In Safari, tap Share, then Add to Home Screen.':'Open the browser menu (⋮), then tap Install app or Add to Home screen.';show();}
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();eventToPrompt=e;install.hidden=false;message.textContent='Add Lama School Suite to your phone for quick access.';show();});
  install.addEventListener('click',async()=>{if(!eventToPrompt){instructions();return;}const e=eventToPrompt;eventToPrompt=null;hide();try{await e.prompt();await e.userChoice;}catch(_){instructions();}});
- later.addEventListener('click',()=>{try{sessionStorage.setItem(key,'1');}catch(_){}hide();});
+ later.addEventListener('click',dismiss);
+ document.getElementById('suiteInstallPromptClose').addEventListener('click',dismiss);
  window.addEventListener('appinstalled',hide);
  setTimeout(()=>{if(!eventToPrompt)instructions();},1600);
 })();

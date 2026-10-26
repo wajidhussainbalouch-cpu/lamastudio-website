@@ -21,6 +21,10 @@
     <meta name="apple-mobile-web-app-title" content="Lama School">
     <link rel="apple-touch-icon" href="assets/icons/lama-school-192.png">
     <link rel="icon" type="image/png" href="assets/icons/lama-school-192.png">
+<style>
+#suiteInstallPrompt{position:fixed;z-index:99999;left:14px;right:14px;bottom:18px;max-width:460px;margin:0 auto;background:#112d33;color:#fff;border:1px solid #72c4b4;border-radius:18px;padding:19px;box-shadow:0 15px 60px #0008;font-family:system-ui,-apple-system,sans-serif}
+#suiteInstallPrompt[hidden]{display:none!important}#suiteInstallPrompt h2{font-size:19px;font-weight:800;margin:0 0 8px}#suiteInstallPrompt p{font-size:14px;line-height:1.5;color:#d1e5e1;margin:0 0 14px}#suiteInstallPrompt .suite-install-actions{display:flex;gap:9px;flex-wrap:wrap}#suiteInstallPrompt button{border:1px solid #789e99;border-radius:10px;padding:11px 16px;background:transparent;color:white;font-weight:700;cursor:pointer}#suiteInstallPrompt #suiteInstallNow{background:#e9c47a;border-color:#e9c47a;color:#17312e}@media(min-width:768px){#suiteInstallPrompt{display:none!important}}
+</style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white transition-colors duration-300">
 
@@ -342,6 +346,24 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
       .catch(err => console.warn('Lama School Suite app registration:', err));
   });
 }
+</script>
+<aside id="suiteInstallPrompt" role="dialog" aria-label="Install Lama School Suite" hidden><h2>Install Lama School Suite</h2><p id="suiteInstallMessage">Add Lama School Suite to your phone for quick access.</p><div class="suite-install-actions"><button id="suiteInstallNow" type="button">Install App</button><button id="suiteInstallLater" type="button">Not now</button></div></aside>
+<script>
+(function(){
+ if(!window.matchMedia('(max-width:767px) and (pointer:coarse)').matches)return;
+ if(window.matchMedia('(display-mode:standalone)').matches||navigator.standalone===true)return;
+ const key='lama_suite_install_prompt_dismissed';
+ try{if(sessionStorage.getItem(key))return;}catch(_){}
+ const box=document.getElementById('suiteInstallPrompt'),install=document.getElementById('suiteInstallNow'),later=document.getElementById('suiteInstallLater'),message=document.getElementById('suiteInstallMessage');
+ let eventToPrompt=null;const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+ const show=()=>{box.hidden=false;};const hide=()=>{box.hidden=true;};
+ function instructions(){install.hidden=true;message.textContent=ios?'In Safari, tap Share, then Add to Home Screen.':'Open the browser menu (⋮), then tap Install app or Add to Home screen.';show();}
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();eventToPrompt=e;install.hidden=false;message.textContent='Add Lama School Suite to your phone for quick access.';show();});
+ install.addEventListener('click',async()=>{if(!eventToPrompt){instructions();return;}const e=eventToPrompt;eventToPrompt=null;hide();try{await e.prompt();await e.userChoice;}catch(_){instructions();}});
+ later.addEventListener('click',()=>{try{sessionStorage.setItem(key,'1');}catch(_){}hide();});
+ window.addEventListener('appinstalled',hide);
+ setTimeout(()=>{if(!eventToPrompt)instructions();},1600);
+})();
 </script>
 </body>
 </html>

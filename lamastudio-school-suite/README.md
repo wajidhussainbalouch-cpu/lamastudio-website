@@ -101,6 +101,17 @@ A brand-new installation may run `setup()` once to create a Master Registry. Do 
 - [ ] School A cannot access School B's private records.
 - [ ] Published School Board data can be viewed without exposing admin-only editing.
 
+
+## Question Paper Studio (review branch feature)
+
+- Page: `exams/question-paper-studio.html`, linked from `exams/tests.html`.
+- Paper setup: school, class, subject, date, title, time, marks, language (English/Urdu), syllabus chapters and division (chapter-wise, selected, half-book, full-book, custom).
+- Question types: MCQ, true/false, fill-in-the-blank, short and long; per-question marks and optional answer key.
+- Output: A4 printable paper, answer key, individual result preview and participation/achievement certificate.
+- Draft storage: **browser session only**; export JSON for durable backup and import later. **Not yet connected to Google Sheets, student result records, certificate verification, or automated grading.** No backend schema migration is needed for this draft feature.
+- Urdu output depends on available device fonts; verify print rendering on a printer/PDF viewer before production use.
+- Release checklist: verify school-admin login, navigation, mobile layout, Urdu RTL, paper printing, JSON import/export, and isolation from existing Tests records.
+
 ## Pre-deployment verification
 
 - [ ] Compare current branch to `main` and review every changed file.

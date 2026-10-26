@@ -1,0 +1,30 @@
+name: School Suite pre-deployment checks
+
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/**'
+      - '.github/workflows/school-suite-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Apps Script syntax (parse only; do not execute)
+        run: |
+          for file in lamastudio-school-suite/backend-api/*.gs; do
+            node --check <(cat "$file") || exit 1
+          done
+        shell: bash
+      - name: Validate API client JavaScript
+        run: node --check lamastudio-school-suite/js/api-client.js
+      - name: Ensure no deployment or database writes
+        run: echo "Validation only. No Apps Script push, no registry modifications, no production deploy."

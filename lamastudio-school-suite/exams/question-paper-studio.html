@@ -12,7 +12,7 @@ body{font-family:system-ui,sans-serif}.field{width:100%;padding:10px;border:1px 
 <label class="block text-sm">School<input id="school" class="field" maxlength="130"></label>
 <div class="grid grid-cols-2 gap-2"><label class="text-sm">Class<input id="grade" class="field" placeholder="Class 6"></label><label class="text-sm">Subject<input id="subject" class="field" placeholder="Science"></label></div>
 <label class="block text-sm">Paper title<input id="paperTitle" class="field" value="Assessment"></label>
-<div class="grid grid-cols-2 gap-2"><label class="text-sm">Language<select id="language" class="field"><option value="en">English</option><option value="ur">اردو</option></select></label><label class="text-sm">Coverage<select id="coverage" class="field"><option>Chapter wise</option><option>Selected chapters</option><option>Half book</option><option>Full book</option><option>Custom syllabus</option></select></label></div>
+<div class="grid grid-cols-2 gap-2"><label class="text-sm">Language<select id="language" class="field"><option value="en">English</option><option value="ur">اردو</option></select></label><label class="text-sm">Coverage<select id="coverage" class="field"><option>Chapter wise</option><option>Half chapter</option><option>Full chapter</option><option>Selected chapters</option><option>Half book</option><option>Full book</option><option>Custom syllabus</option></select></label></div>
 <label class="block text-sm">Syllabus division / chapters<textarea id="syllabus" class="field" rows="3" placeholder="Chapter 1: Cells&#10;Chapter 2: Matter"></textarea></label>
 <div class="grid grid-cols-3 gap-2"><label class="text-sm">Time (min)<input id="minutes" type="number" min="1" class="field" value="45"></label><label class="text-sm">Total marks<input id="marks" type="number" min="1" class="field" value="50"></label><label class="text-sm">Date<input id="date" type="date" class="field"></label></div>
 </div>
@@ -21,7 +21,7 @@ body{font-family:system-ui,sans-serif}.field{width:100%;padding:10px;border:1px 
 <label class="text-sm block">Chapter<input id="chapter" class="field" placeholder="Chapter 1"></label><label class="text-sm block">Question<textarea id="question" class="field" rows="3" placeholder="Type English or Urdu question"></textarea></label>
 <label class="text-sm block">Options (MCQ: one option per line)<textarea id="options" class="field" rows="3" placeholder="Option A&#10;Option B&#10;Option C&#10;Option D"></textarea></label>
 <label class="text-sm block">Answer / marking key<textarea id="answer" class="field" rows="2" placeholder="Correct option or model answer"></textarea></label>
-<button id="addQuestion" class="btn w-full">Add question</button><p class="text-xs text-slate-500">Questions are kept in this browser until exported. Nothing is uploaded to school records.</p>
+<button id="addQuestion" class="btn w-full">Add question</button><div class="border-t pt-3"><label class="block text-sm font-bold mb-2">Model & sample papers</label><div class="flex gap-2 flex-wrap"><button id="loadModel" class="btn" type="button">Load model paper</button><button id="loadSample" class="btn" type="button">Load sample paper</button></div><p class="text-xs text-slate-500 mt-2">Demonstration questions only. Review against the actual syllabus before using.</p></div><p class="text-xs text-slate-500">Questions are kept in this browser until exported. Nothing is uploaded to school records.</p>
 </div>
 <div class="card space-y-3"><h2 class="font-black text-lg">3. Preview and export</h2><div class="grid grid-cols-2 gap-2"><button id="paperMode" class="btn">Question paper</button><button id="keyMode" class="btn">Answer key</button><button id="resultMode" class="btn">Result sheet</button><button id="certMode" class="btn">Certificate</button></div>
 <div class="grid grid-cols-2 gap-2"><label class="text-sm">Student<input id="student" class="field" placeholder="Student name"></label><label class="text-sm">Obtained marks<input id="obtained" type="number" min="0" class="field" placeholder="0"></label></div>
@@ -61,6 +61,22 @@ html+='<div style="text-align:center;padding:55px 10px"><h2 style="font-size:32p
 html+='</div>';$('preview').innerHTML=html;$('count').textContent='('+questions.length+')';
 $('bank').innerHTML=questions.map((q,i)=>'<div class="border rounded-lg p-2 flex justify-between gap-3 items-center"><div><b>'+escapeHtml(q.category)+'</b> · '+escapeHtml(q.chapter)+' · '+escapeHtml(q.text).slice(0,130)+'</div><button class="text-rose-700 underline" data-remove="'+i+'">Remove</button></div>').join('')||'<p class="text-sm text-slate-500">No questions added.</p>';
 }
+const demoPapers={
+model:{title:'Model Paper — General Science',subject:'General Science',grade:'Class 6',syllabus:'Chapter 1: Living Things (first half)\\nChapter 2: Materials (full chapter)',coverage:'Selected chapters',questions:[
+{category:'mcq',chapter:'Chapter 1',text:'Which part of a plant usually absorbs water from the soil?',options:['Flower','Root','Fruit','Leaf'],answer:'B. Root',marks:1},
+{category:'mcq',chapter:'Chapter 2',text:'Which material is usually attracted to a magnet?',options:['Wood','Plastic','Iron','Glass'],answer:'C. Iron',marks:1},
+{category:'truefalse',chapter:'Chapter 1',text:'Plants need water for growth.',options:[],answer:'True',marks:1},
+{category:'short',chapter:'Chapter 1',text:'Write two functions of roots.',options:[],answer:'Absorb water and minerals; anchor the plant.',marks:3},
+{category:'long',chapter:'Chapter 2',text:'Describe three differences between solids, liquids and gases.',options:[],answer:'Compare shape, volume and particle arrangement.',marks:5}]},
+sample:{title:'نمونہ پرچہ — اردو',subject:'اردو',grade:'جماعت پنجم',syllabus:'سبق ۱: پہلا نصف\\nسبق ۲: مکمل سبق',coverage:'Selected chapters',questions:[
+{category:'mcq',chapter:'سبق ۱',text:'لفظ "کتاب" کی جمع کیا ہے؟',options:['کتابیں','کتابی','کتابچہ','مکتب'],answer:'الف: کتابیں',marks:1},
+{category:'fill',chapter:'سبق ۱',text:'علم ایک بڑی ______ ہے۔',options:[],answer:'دولت',marks:1},
+{category:'short',chapter:'سبق ۲',text:'اپنے اسکول کے بارے میں تین جملے لکھیں۔',options:[],answer:'طالب علم کے درست اور بامعنی جملے',marks:3},
+{category:'long',chapter:'سبق ۲',text:'صفائی کی اہمیت پر ایک مختصر مضمون لکھیں۔',options:[],answer:'موضوع، زبان اور ترتیب کے مطابق جانچیں',marks:5}]}
+};
+function loadDemo(kind){const p=demoPapers[kind];if(questions.length&&!confirm('Replace the current draft with the '+kind+' paper? Export it first if needed.'))return;questions=p.questions.map(q=>({...q,id:Date.now().toString(36)+Math.random().toString(36).slice(2)}));$('paperTitle').value=p.title;$('subject').value=p.subject;$('grade').value=p.grade;$('syllabus').value=p.syllabus.replace(/\\n/g,'\\n');$('coverage').value=p.coverage;$('language').value=kind==='sample'?'ur':'en';$('marks').value=questions.reduce((n,q)=>n+q.marks,0);mode='paper';render();status('Demonstration '+kind+' paper loaded; verify curriculum and marking key.')}
+$('loadModel').onclick=()=>loadDemo('model');
+$('loadSample').onclick=()=>loadDemo('sample');
 $('addQuestion').onclick=()=>{const text=$('question').value.trim(),marks=Number($('questionMarks').value),category=$('category').value,options=$('options').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!text||!Number.isFinite(marks)||marks<=0){status('Enter a question and positive marks.');return}if(category==='mcq'&&options.length<2){status('MCQs need at least two options.');return}questions.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2),text,marks,category,chapter:$('chapter').value.trim(),options,answer:$('answer').value.trim()});$('question').value='';$('options').value='';$('answer').value='';status('Question added.');render()};
 $('bank').onclick=e=>{const b=e.target.closest('[data-remove]');if(b&&confirm('Remove this question?')){questions.splice(Number(b.dataset.remove),1);render()}};
 $('clearQuestions').onclick=()=>{if(confirm('Clear all questions from this draft?')){questions=[];render()}};

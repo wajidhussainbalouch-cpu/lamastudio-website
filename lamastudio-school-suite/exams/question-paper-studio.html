@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Question Paper Studio | Lama School Suite</title><script src="https://cdn.tailwindcss.com"></script><script src="../js/api-client.js"></script>
+<style>
+body{font-family:system-ui,sans-serif}.field{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#0f172a}.btn{padding:10px 14px;border-radius:10px;font-weight:700;background:#0f766e;color:white}.btn:disabled{opacity:.5}.card{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:18px}.rtl{direction:rtl;text-align:right;font-family:"Noto Nastaliq Urdu","Noto Naskh Arabic",serif}.paper{max-width:210mm;margin:auto;padding:14mm;background:white;color:#111827}.paper h1{font-size:22px;font-weight:800}.paper .question{break-inside:avoid;margin:13px 0}.paper .options{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:8px 0}.answer-space{border-bottom:1px dotted #94a3b8;height:23px;margin:6px 0}@media print{@page{size:A4;margin:8mm}.no-print{display:none!important}body{background:white!important}.paper{padding:2mm;max-width:none;box-shadow:none}.question{break-inside:avoid}}
+</style></head>
+<body class="bg-slate-100 text-slate-900">
+<header class="no-print bg-slate-950 text-white px-4 py-4"><div class="max-w-7xl mx-auto flex justify-between items-center gap-3 flex-wrap"><div><p class="text-teal-300 text-xs font-bold">LAMA SCHOOL SUITE · ADMIN</p><h1 class="text-xl font-black">Question Paper Studio / سوالیہ پرچہ</h1><p class="text-xs text-slate-300">Syllabus division, question bank, printable papers, answer keys, results and certificates</p></div><div class="flex gap-2"><a class="btn" href="tests.html">Tests</a><a class="btn" href="../dashboard.html">Dashboard</a><button class="btn" id="logout">Logout</button></div></div></header>
+<main class="max-w-7xl mx-auto p-4 grid lg:grid-cols-[420px_1fr] gap-5">
+<section class="no-print space-y-4">
+<div class="card space-y-3"><h2 class="font-black text-lg">1. Paper and syllabus</h2>
+<label class="block text-sm">School<input id="school" class="field" maxlength="130"></label>
+<div class="grid grid-cols-2 gap-2"><label class="text-sm">Class<input id="grade" class="field" placeholder="Class 6"></label><label class="text-sm">Subject<input id="subject" class="field" placeholder="Science"></label></div>
+<label class="block text-sm">Paper title<input id="paperTitle" class="field" value="Assessment"></label>
+<div class="grid grid-cols-2 gap-2"><label class="text-sm">Language<select id="language" class="field"><option value="en">English</option><option value="ur">اردو</option></select></label><label class="text-sm">Coverage<select id="coverage" class="field"><option>Chapter wise</option><option>Selected chapters</option><option>Half book</option><option>Full book</option><option>Custom syllabus</option></select></label></div>
+<label class="block text-sm">Syllabus division / chapters<textarea id="syllabus" class="field" rows="3" placeholder="Chapter 1: Cells&#10;Chapter 2: Matter"></textarea></label>
+<div class="grid grid-cols-3 gap-2"><label class="text-sm">Time (min)<input id="minutes" type="number" min="1" class="field" value="45"></label><label class="text-sm">Total marks<input id="marks" type="number" min="1" class="field" value="50"></label><label class="text-sm">Date<input id="date" type="date" class="field"></label></div>
+</div>
+<div class="card space-y-3"><h2 class="font-black text-lg">2. Question categories</h2>
+<div class="grid grid-cols-2 gap-2"><label class="text-sm">Category<select id="category" class="field"><option value="mcq">MCQ / معروضی</option><option value="short">Short / مختصر</option><option value="long">Long / تفصیلی</option><option value="truefalse">True / False</option><option value="fill">Fill in the blank</option></select></label><label class="text-sm">Marks<input id="questionMarks" type="number" min=".5" step=".5" class="field" value="1"></label></div>
+<label class="text-sm block">Chapter<input id="chapter" class="field" placeholder="Chapter 1"></label><label class="text-sm block">Question<textarea id="question" class="field" rows="3" placeholder="Type English or Urdu question"></textarea></label>
+<label class="text-sm block">Options (MCQ: one option per line)<textarea id="options" class="field" rows="3" placeholder="Option A&#10;Option B&#10;Option C&#10;Option D"></textarea></label>
+<label class="text-sm block">Answer / marking key<textarea id="answer" class="field" rows="2" placeholder="Correct option or model answer"></textarea></label>
+<button id="addQuestion" class="btn w-full">Add question</button><p class="text-xs text-slate-500">Questions are kept in this browser until exported. Nothing is uploaded to school records.</p>
+</div>
+<div class="card space-y-3"><h2 class="font-black text-lg">3. Preview and export</h2><div class="grid grid-cols-2 gap-2"><button id="paperMode" class="btn">Question paper</button><button id="keyMode" class="btn">Answer key</button><button id="resultMode" class="btn">Result sheet</button><button id="certMode" class="btn">Certificate</button></div>
+<div class="grid grid-cols-2 gap-2"><label class="text-sm">Student<input id="student" class="field" placeholder="Student name"></label><label class="text-sm">Obtained marks<input id="obtained" type="number" min="0" class="field" placeholder="0"></label></div>
+<div class="flex gap-2 flex-wrap"><button id="print" class="btn">Print / Save PDF</button><button id="export" class="btn">Export JSON</button><label class="btn cursor-pointer">Import JSON<input id="import" type="file" accept=".json,application/json" hidden></label></div>
+<button id="clearQuestions" class="text-rose-700 underline text-sm">Clear questions (confirm)</button><p id="status" role="status" class="text-sm text-slate-600"></p>
+</div></section>
+<section><div id="preview" class="paper shadow-xl min-h-[700px]"></div><div class="no-print mt-4 card"><h2 class="font-bold">Current question bank <span id="count"></span></h2><div id="bank" class="space-y-2 mt-3"></div></div></section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const settings=['school','grade','subject','paperTitle','language','coverage','syllabus','minutes','marks','date','student','obtained'];
+let questions=[],mode='paper';
+const saved=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_paper_studio')||'null')}catch(e){return null}})();
+if(saved){questions=Array.isArray(saved.questions)?saved.questions:[];settings.forEach(k=>{if(saved.settings&&saved.settings[k]!==undefined)$(k).value=saved.settings[k]})}
+function persist(){sessionStorage.setItem('lama_paper_studio',JSON.stringify({questions,settings:Object.fromEntries(settings.map(k=>[k,$(k).value]))}))}
+function status(msg){$('status').textContent=msg}
+function questionHtml(q,i,key=false){let body='<div class="question"><b>'+(i+1)+'. '+escapeHtml(q.text)+'</b> <small>('+escapeHtml(q.marks)+' marks)</small>';
+if(q.category==='mcq'){body+='<div class="options">'+q.options.map((v,j)=>'<span>'+String.fromCharCode(65+j)+'. '+escapeHtml(v)+'</span>').join('')+'</div>'}
+if(key){body+='<p><b>Answer:</b> '+escapeHtml(q.answer||'Not supplied')+'</p>'}else if(q.category!=='mcq'){body+='<div class="answer-space"></div>'.repeat(q.category==='long'?5:2)}
+return body+'</div>'}
+function render(){
+persist();const ur=$('language').value==='ur';const school=escapeHtml($('school').value||'School'),grade=escapeHtml($('grade').value),subject=escapeHtml($('subject').value),title=escapeHtml($('paperTitle').value);
+let html='<div class="'+(ur?'rtl':'')+'"><div style="text-align:center;border-bottom:2px solid #0f766e;padding-bottom:12px"><h1>'+school+'</h1><h2 style="font-size:18px;font-weight:700">'+title+'</h2><p>'+grade+' · '+subject+' · '+escapeHtml($('coverage').value)+'</p></div>';
+if(mode==='paper'||mode==='key'){
+html+='<div style="display:flex;justify-content:space-between;gap:10px;margin:12px 0"><span>'+ (ur?'وقت':'Time')+': '+escapeHtml($('minutes').value)+' min</span><span>'+(ur?'کل نمبر':'Total marks')+': '+escapeHtml($('marks').value)+'</span><span>'+escapeHtml($('date').value)+'</span></div>';
+html+='<p><b>'+(ur?'نصاب':'Syllabus')+':</b> '+escapeHtml($('syllabus').value).replace(/\n/g,' · ')+'</p>';
+if(mode==='paper')html+='<p>'+(ur?'نام: __________________ رول نمبر: __________':'Name: __________________ Roll No: __________')+'</p>';
+['mcq','truefalse','fill','short','long'].forEach(type=>{const subset=questions.filter(q=>q.category===type);if(subset.length){const names={mcq:'Multiple Choice / معروضی',truefalse:'True / False',fill:'Fill in the blanks',short:'Short Questions / مختصر سوالات',long:'Long Questions / تفصیلی سوالات'};html+='<h3 style="font-weight:800;margin-top:18px;border-bottom:1px solid #ddd">'+names[type]+'</h3>'+subset.map((q,i)=>questionHtml(q,i,mode==='key')).join('')}});
+if(!questions.length)html+='<p style="padding:40px;text-align:center">Add questions to build a printable paper.</p>';
+}else if(mode==='result'){
+const obtained=Number($('obtained').value),total=Number($('marks').value),valid=$('obtained').value!==''&&total>0&&obtained>=0&&obtained<=total;
+html+='<h2 style="font-size:20px;margin:28px 0">Individual Result / نتیجہ</h2><p><b>Student:</b> '+escapeHtml($('student').value)+'</p><p><b>Obtained:</b> '+(valid?obtained:'—')+' / '+total+'</p><p><b>Percentage:</b> '+(valid?(100*obtained/total).toFixed(1)+'%':'—')+'</p><p><b>Result:</b> '+(valid?(obtained/total>=.4?'Pass':'Needs improvement'):'Enter valid marks')+'</p>';
+}else{
+html+='<div style="text-align:center;padding:55px 10px"><h2 style="font-size:32px;font-weight:800">Certificate of Achievement</h2><p style="margin-top:40px">This certificate is presented to</p><h3 style="font-size:28px;margin:20px 0">'+escapeHtml($('student').value||'Student Name')+'</h3><p>for participation / achievement in '+title+'</p><p style="margin-top:30px">'+grade+' · '+subject+'</p><div style="display:flex;justify-content:space-between;margin-top:90px"><span>_________________<br>Teacher</span><span>_________________<br>Head Teacher</span></div></div>';
+}
+html+='</div>';$('preview').innerHTML=html;$('count').textContent='('+questions.length+')';
+$('bank').innerHTML=questions.map((q,i)=>'<div class="border rounded-lg p-2 flex justify-between gap-3 items-center"><div><b>'+escapeHtml(q.category)+'</b> · '+escapeHtml(q.chapter)+' · '+escapeHtml(q.text).slice(0,130)+'</div><button class="text-rose-700 underline" data-remove="'+i+'">Remove</button></div>').join('')||'<p class="text-sm text-slate-500">No questions added.</p>';
+}
+$('addQuestion').onclick=()=>{const text=$('question').value.trim(),marks=Number($('questionMarks').value),category=$('category').value,options=$('options').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!text||!Number.isFinite(marks)||marks<=0){status('Enter a question and positive marks.');return}if(category==='mcq'&&options.length<2){status('MCQs need at least two options.');return}questions.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2),text,marks,category,chapter:$('chapter').value.trim(),options,answer:$('answer').value.trim()});$('question').value='';$('options').value='';$('answer').value='';status('Question added.');render()};
+$('bank').onclick=e=>{const b=e.target.closest('[data-remove]');if(b&&confirm('Remove this question?')){questions.splice(Number(b.dataset.remove),1);render()}};
+$('clearQuestions').onclick=()=>{if(confirm('Clear all questions from this draft?')){questions=[];render()}};
+[['paperMode','paper'],['keyMode','key'],['resultMode','result'],['certMode','certificate']].forEach(([id,m])=>$(id).onclick=()=>{mode=m;render()});
+settings.forEach(k=>$(k).addEventListener('input',render));
+$('print').onclick=()=>window.print();
+$('export').onclick=()=>{const data=JSON.stringify({format:'lama-question-paper-v1',questions,settings:Object.fromEntries(settings.map(k=>[k,$(k).value]))},null,2);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/json'}));a.download='lama-question-paper.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(data.format!=='lama-question-paper-v1'||!Array.isArray(data.questions)||data.questions.length>1000)throw Error('Unsupported file');if(!confirm('Replace current draft with this imported question paper?'))return;questions=data.questions.filter(q=>q&&typeof q.text==='string'&&['mcq','short','long','truefalse','fill'].includes(q.category)).map(q=>({text:q.text.slice(0,5000),marks:Number(q.marks)||1,category:q.category,chapter:String(q.chapter||''),options:Array.isArray(q.options)?q.options.map(String).slice(0,8):[],answer:String(q.answer||'')}));settings.forEach(k=>{if(data.settings&&data.settings[k]!==undefined)$(k).value=String(data.settings[k]).slice(0,3000)});render();status('Imported '+questions.length+' questions.')}catch(err){status('Import failed: '+err.message)}e.target.value=''};
+$('logout').onclick=()=>{LamaAPI.logout('school');location.href='../login.html'};
+if(typeof LamaAPI==='undefined'||!LamaAPI.requireLogin('school','../login.html')){document.querySelector('main').hidden=true}else{LamaAPI.getActiveSchool().then(s=>{if(s&&!$('school').value){$('school').value=s.name||'';render()}})}
+render();
+</script></body></html>

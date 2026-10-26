@@ -1,0 +1,6 @@
+/* Lama School Suite: cache only static shell assets; never cache API responses or personal school data. */
+const CACHE='lama-school-static-v1';
+const STATIC=['./portal-login.html','./manifest.webmanifest','./assets/icons/lama-school.svg'];
+self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC)).then(()=>self.skipWaiting()))});
+self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('lama-school-static-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+self.addEventListener('fetch',event=>{const req=event.request;if(req.method!=='GET'||new URL(req.url).origin!==self.location.origin)return;const url=new URL(req.url);if(!url.pathname.startsWith('/lamastudio-school-suite/'))return;if(url.pathname.includes('/backend-api/')||url.pathname.includes('/api/')||req.headers.has('authorization'))return;if(req.mode==='navigate'){event.respondWith(fetch(req).catch(()=>caches.match('./portal-login.html')));return;}if(/\.(?:svg|png|webp|css|js|webmanifest)$/.test(url.pathname)){event.respondWith(fetch(req).then(response=>{if(response.ok){const clone=response.clone();caches.open(CACHE).then(cache=>cache.put(req,clone))}return response}).catch(()=>caches.match(req)));}});

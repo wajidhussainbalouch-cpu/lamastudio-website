@@ -113,6 +113,36 @@ A brand-new installation may run `setup()` once to create a Master Registry. Do 
 - Release checklist: verify school-admin login, navigation, mobile layout, Urdu RTL, paper printing, JSON import/export, and isolation from existing Tests records.
 
 
+## Admissions, syllabus planning and assessment roadmap
+
+This is a **broader school academic workflow**, not only admission testing. All teacher capabilities are **default-deny** and individually granted/revoked by the school's administrator. Backend enforcement is mandatory before exposing teacher actions.
+
+| Module | Administrator responsibilities | Optional teacher permissions |
+| --- | --- | --- |
+| New admissions | Configure admission form, eligibility, required documents, applicant status, approval and enrollment | `admissions.viewApplicants`, `admissions.enterApplication`, `admissions.review`; **final approval remains admin-only** |
+| Syllabus | Define academic session, class, subject, book, chapters, units, learning outcomes | `syllabus.plan`, `syllabus.divide`, `syllabus.view` |
+| Syllabus division | Divide into chapter, half-chapter, full-chapter, selected chapters, half-book, full-book, weekly/monthly/term segments | `syllabus.divide`, `syllabus.assign` |
+| Assessments | Configure admission, chapter-wise, half-chapter, full-chapter, half-book, full-book, weekly, monthly, term and practice papers | `assessments.create`, `assessments.edit`, `assessments.print` |
+| Question bank | Curate syllabus-tagged MCQ, true/false, fill-in, short and long questions; set difficulty and marks | `questions.create`, `questions.edit`, `questions.view` |
+| Results | Approve grades, final results, admissions decisions and published reports | `results.enterMarks`, `results.viewAssigned`; publishing is admin-only |
+| Certificates | Approve templates, issuance and revocation | `certificates.prepare`, `certificates.printDraft`; issuance is admin-only |
+
+### Proposed persistent records (additive only; not yet implemented)
+
+- `Applicants`: application ID, school ID, applicant details, guardian, applied class, submitted date, status, admission decision and reviewer.
+- `TeacherPermissions`: school ID, teacher ID, permission key, grant/revoke state, administrator ID, timestamp.
+- `SyllabusPlans`: school ID, academic session, class, subject, book, chapter/unit, portion (first half, second half, full), learning outcomes, scheduled date and assigned teacher.
+- `QuestionBank`: school ID, syllabus plan/chapter ID, language, category, difficulty, question, options, answer key, marks, author and review state.
+- `ExamPapers`: school ID, purpose, coverage, selected question IDs, version, publication status, creator and approver.
+- `ExamResults`: school ID, paper ID, applicant/student ID, obtained marks, examiner, moderation and publication status.
+- `Certificates`: school ID, recipient ID, certificate type, issuer, unique verification code and revocation state.
+
+**Safety:** Do not store applicant records in `Students` until administrator approval. Do not migrate or overwrite existing `Tests`, `DateSheet` or `Students` data. Only append new tabs/columns after a reviewed migration and backup. Never trust client-supplied teacher permission flags.
+
+### Example papers
+
+The review-branch `exams/question-paper-studio.html` includes two optional **demonstration-only** paper templates: an English General Science model paper and an Urdu sample paper. It now supports half-chapter and full-chapter coverage in addition to half-book/full-book. These are illustrative questions, **not verified against a particular Punjab textbook edition**. The teacher-permission backend, admissions records, persistent question bank and school-wide result ledger are still pending.
+
 ### Admission-test teacher permissions (required before teacher rollout)
 
 - School administrators own admission-test settings and decide which individual teachers may create, edit, preview, print, or manage admission tests for newly applying students.

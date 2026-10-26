@@ -112,6 +112,17 @@ A brand-new installation may run `setup()` once to create a Master Registry. Do 
 - Urdu output depends on available device fonts; verify print rendering on a printer/PDF viewer before production use.
 - Release checklist: verify school-admin login, navigation, mobile layout, Urdu RTL, paper printing, JSON import/export, and isolation from existing Tests records.
 
+
+### Admission-test teacher permissions (required before teacher rollout)
+
+- School administrators own admission-test settings and decide which individual teachers may create, edit, preview, print, or manage admission tests for newly applying students.
+- **Default deny:** teachers have no admission-test permission until the school administrator explicitly grants it. Revocation takes effect for subsequent requests.
+- Scope every grant by `schoolId` and `teacherId`; never infer permission from a teacher's ability to log in, an assigned class, or a hidden/shown frontend button.
+- Backend must verify authenticated role, school ownership, and explicit permission on every protected admission-test API action. Teacher requests must never alter another school's tests or permissions.
+- Suggested permission keys: `admissionTests.create`, `admissionTests.edit`, `admissionTests.print`, `admissionTests.viewResults`. Admin-only actions include granting/revoking permissions and publishing final admission decisions.
+- Keep admissions applicants and admission-test results separate from enrolled student records until an administrator explicitly approves admission. No automatic student creation.
+- **Current implementation status:** specification only. The existing Question Paper Studio is school-admin-only and browser-session-based. Do not expose it to teachers or claim backend enforcement is live until the backend, permission-management UI, and tests are implemented and verified.
+
 ## Pre-deployment verification
 
 - [ ] Compare current branch to `main` and review every changed file.

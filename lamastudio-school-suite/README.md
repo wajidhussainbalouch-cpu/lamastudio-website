@@ -5,29 +5,30 @@ Every file needed to run the full system: Super Admin, School Admin, Teacher,
 and Student & Parent portals, all backed by one Google Apps Script Web App
 and each school's own private Google Sheet.
 
-## Setup (do this first)
+## Existing production installation — safety first
 
-1. [script.google.com](https://script.google.com) → New project → paste in
-   `backend-api/code.gs`.
-2. Run `setup` once (top toolbar → function dropdown → `setup` → Run).
-   Approve permissions. This creates your **Master Registry** spreadsheet.
-3. Near the top of the file, change `SUPER_ADMIN_PASSWORD_PLAINTEXT` to your
-   own password, then run `setupSuperAdmin` once.
-4. Deploy → New deployment → **Web app** → Execute as **Me** → Who has
-   access **Anyone** → Deploy. Copy the URL ending in `/exec`.
-5. Open `js/api-client.js`, find `const API_URL = '...'` near the top, and
-   replace the placeholder with that URL.
-6. Upload everything else in this folder to your web host, keeping the
-  directory structure: shared `assets/` and `js/` stay at the suite root,
-  student workflows live in `students/`, academic pages live in `academics/`,
-  examination pages live in `exams/`, Communications pages live in
-  `communications/`, Attendance pages live in `attendance/`, Staff pages live
-  in `staff/`, Finance pages live in `finance/`, and role-specific pages stay
-  in `portals/`.
+This repository already has a live Google Apps Script backend, a Master Registry,
+and an existing Vercel deployment. **Do not create a new Apps Script project,
+run `setup()` or `setupSuperAdmin()`, or deploy a new Web App** when maintaining
+the production installation. These operations can create a different registry,
+reset credentials, or change the API URL.
 
-To update the backend later: Apps Script → Deploy → Manage deployments →
-pencil icon → New version → Deploy. This keeps the same URL, so you never
-need to touch `api-client.js` again after the first setup.
+- Preserve the current Apps Script script ID, deployment ID, and script properties.
+- Back up the entire live Apps Script project, including the bulk-attendance and
+  trial-monitor modules, before considering a backend push.
+- Never run `clasp push` from a partial source directory; missing live modules
+  can be removed from the Apps Script project.
+- Keep passwords and OAuth credentials out of the repository and documentation.
+  Use protected secrets and rotate any credentials previously committed or shared.
+- The suite uses `js/api-client.js` to reach the existing deployed API. Do not
+  replace that URL without a controlled migration.
+- The root-level short HTML files are compatibility redirects to the module pages.
+  Do not delete them without checking inbound links and bookmarks.
+- Run `node scripts/audit-school-suite.cjs` from the repository root to inspect
+  duplicate content, redirects, and unresolved local links before cleanup.
+
+The full application is organized into `students/`, `staff/`, `attendance/`,
+`academics/`, `exams/`, `communications/`, `finance/`, and `portals/`.
 
 ## The four panels
 

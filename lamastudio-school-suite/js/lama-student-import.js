@@ -48,7 +48,76 @@ function docxTables(html){const doc=new DOMParser().parseFromString(html,'text/h
 async function readExcel(f){if(typeof XLSX==='undefined')throw Error('Excel library not available. Connect to internet.');const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:false});let output=[];for(const sheetName of wb.SheetNames){const table=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false});const start=Math.max(0,Number($('headerRow').value||1)-1);output.push(...parseTable(table.slice(start)))}return output}
 async function readWord(f){if(f.name.toLowerCase().endsWith('.doc'))throw Error('Binary .doc is not supported directly. Save it as DOCX first.');if(typeof mammoth==='undefined')throw Error('Word reader not loaded.');const buf=await f.arrayBuffer();const html=await mammoth.convertToHtml({arrayBuffer:buf});const text=await mammoth.extractRawText({arrayBuffer:buf});const parsed=docxTables(html.value);return parsed.length?parsed:parseLinesAsTable(text.value).concat(parseLabelLines(text.value))}
 async function ocrCanvas(canvas){if(typeof Tesseract==='undefined')throw Error('OCR engine not loaded. Internet connection required.');const res=await Tesseract.recognize(canvas,'eng');return res.data.text||''}
-async function readPDF(f){if(typeof pdfjsLib==='undefined')throw Error('PDF reader not loaded.');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let all=[];const limit=Math.min(doc.numPages,Math.min(50,Math.max(1,Number($('maxPages').value)||10)));for(let i=1;i<=limit;i++){status('Reading PDF page '+i+' / '+limit+'...');const page=await doc.getPage(i),tc=await page.getTextContent();let text=tc.items.map(it=>it.str+(it.hasEOL?'\n':' ')).join('');let parsed=parseLinesAsTable(text).concat(parseLabelLines(text));if(parsed.length===0 && text.replace(/\s/g,'').length<40){status('Page '+i+' / '+limit+': scanned image — recognizing text (slower)…');const viewport=page.getViewport({scale:1.7});const canvas=document.createElement('canvas');canvas.width=viewport.width;canvas.height=viewport.height;await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;text=await ocrCanvas(canvas);parsed=parseLinesAsTable(text).concat(parseLabelLines(text))}if(parsed.length===0 && text.replace(/\s/g,'').length>=40)throw Error('Page '+i+' has readable text but no recognized student table. Import stopped to prevent missing records. Use Excel/CSV or a supported table layout.');all.push(...parsed);$('progressBar').style.width=Math.round(i/limit*100)+'%';status('PDF page '+i+' / '+limit+' complete · '+all.length+' student rows found'+(parsed.length?'':' · no recognized student table on this page'));await new Promise(resolve=>setTimeout(resolve,0))}return all}
+
+/**
+ * Read the fixed-column EMIS student report by PDF text coordinates, not by
+ * concatenating words. A wrapped student name remains part of its numbered row.
+ * Refuse partial / inconsistent extraction rather than inventing student data.
+ */
+function parseEmisPositionedTable(items,pageWidth){
+ const cells=items.filter(t=>t&&typeof t.str==='string'&&t.str.trim()&&Array.isArray(t.transform))
+   .map(t=>({x:t.transform[4],y:t.transform[5],text:clean(t.str)}));
+ const header=cells.filter(t=>/^(ENRL\s*#|F\s*\/\s*M|FATHER\s*\/\s*GUARDIAN|FORM-B)$/i.test(t.text));
+ if(!header.some(t=>/ENRL/i.test(t.text))||!header.some(t=>/FORM-B/i.test(t.text)))return null;
+ // Column starts are percentages of the official EMIS report's page width.
+ // Validate row numbers and mandatory fields below to reject other layouts.
+ const starts=[.037,.088,.154,.326,.375,.467,.510,.605,.814,.928].map(n=>n*pageWidth);
+ const rows=[];
+ const numbered=cells.filter(t=>t.x>=starts[0]-5&&t.x<starts[1]-5&&/^\d{1,4}$/.test(t.text))
+   .sort((a,b)=>b.y-a.y);
+ for(let k=0;k<numbered.length;k++){
+  const current=numbered[k],next=numbered[k+1];
+  const group=cells.filter(t=>t.y<=current.y+2.5&&(next?t.y>next.y+2.5:true)&&t.y<current.y+30);
+  const cols=starts.map((left,j)=>group.filter(t=>t.x>=left-3&&t.x<(starts[j+1]??pageWidth+5)-3&&!(j===0&&t===current))
+    .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
+  const serial=Number(current.text);
+  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|PREP|[1-9]|10)$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably. Nothing was imported.');
+  rows.push({__serial:serial,'ENRL #':cols[1],NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
+ }
+ if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');
+ return rows;
+}
+
+async function readPDF(f){
+ if(typeof pdfjsLib==='undefined')throw Error('PDF reader not loaded.');
+ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+ const limit=Math.min(doc.numPages,Math.min(50,Math.max(1,Number($('maxPages').value)||50)));
+ if(limit<doc.numPages)throw Error('Only '+limit+' of '+doc.numPages+' pages selected. Increase the page limit before analyzing to avoid missing students.');
+ const all=[];let reportMode=null;
+ for(let i=1;i<=limit;i++){
+  status('Reading PDF page '+i+' / '+limit+'…');
+  const page=await doc.getPage(i),tc=await page.getTextContent();
+  const text=tc.items.map(it=>it.str+(it.hasEOL?'\\n':' ')).join('');
+  const positioned=parseEmisPositionedTable(tc.items,page.view[2]-page.view[0]);
+  let parsed=[];
+  if(positioned!==null){reportMode='emis';parsed=positioned;}
+  else {
+   if(reportMode==='emis')throw Error('EMIS report layout was not recognized on page '+i+'. No records saved.');
+   parsed=parseLinesAsTable(text).concat(parseLabelLines(text));
+   if(!parsed.length&&text.replace(/\\s/g,'').length<40){
+    status('Page '+i+' / '+limit+': scanning image with OCR…');
+    const viewport=page.getViewport({scale:1.7}),canvas=document.createElement('canvas');
+    canvas.width=viewport.width;canvas.height=viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    const ocr=await ocrCanvas(canvas);
+    parsed=parseLinesAsTable(ocr).concat(parseLabelLines(ocr));
+   }
+  }
+  if(!parsed.length)throw Error('No reliable student rows found on page '+i+'. Import stopped without saving.');
+  all.push(...parsed);
+  $('progressBar').style.width=Math.round(i/limit*100)+'%';
+  status('Page '+i+' / '+limit+' checked · '+all.length+' student rows recognized');
+  await new Promise(resolve=>setTimeout(resolve,0));
+ }
+ if(reportMode==='emis'){
+  const serials=all.map(r=>r.__serial),unique=new Set(serials);
+  if(unique.size!==serials.length||serials[0]!==1||serials.some((n,i)=>n!==i+1))
+   throw Error('Student row numbering is incomplete or repeated. Expected consecutive rows from 1; found '+serials.length+'. No data saved.');
+ }
+ if(!all.length)throw Error('No student records recognized. Nothing was saved.');
+ return all;
+}
 async function readImage(f){if($('imagePurpose').value==='photos'){const id=f.name.replace(/\.[^.]+$/,'').trim();const data=await imageData(f);return [{__photo:id,__data:data}]}const text=await ocrCanvas(f);return parseLinesAsTable(text).concat(parseLabelLines(text))}
 function imageData(f){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>{const im=new Image();im.onerror=reject;im.onload=()=>{const c=document.createElement('canvas');const scale=Math.min(1,800/Math.max(im.width,im.height));c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.72))};im.src=reader.result};reader.readAsDataURL(f)})}
 function deriveMapping(){const keys=[...new Set(rows.flatMap(Object.keys))].filter(k=>!k.startsWith('__'));mapping=Object.fromEntries(keys.map(k=>[k,detect(k)]));$('mapping').innerHTML=keys.map((k,i)=>'<label>'+escapeHTML(k)+'<select class="field" data-map="'+i+'"><option value="">Skip column</option>'+Object.keys(fieldDefs).map(f=>'<option value="'+f+'" '+(mapping[k]===f?'selected':'')+'>'+escapeHTML(fieldLabels[f])+'</option>').join('')+'</select></label>').join('');$('mapping').querySelectorAll('select').forEach((sel,i)=>sel.onchange=()=>{mapping[keys[i]]=sel.value;makePreview()})}

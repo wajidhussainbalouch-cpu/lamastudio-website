@@ -200,7 +200,27 @@ function makePreview(){
   else if(form&&form!=='0'&&sourceForm.has(form))reason='Duplicate Form-B in source — review';
   if(id)sourceId.set(id,i);if(form&&form!=='0')sourceForm.set(form,i);
   return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method,sourceClass:cls};
- });renderPreview();
+ });
+ // A repeated identifier in the uploaded file makes BOTH records uncertain,
+ // including the first occurrence. Never silently approve either row.
+ const idCounts=new Map(),formCounts=new Map(),personCounts=new Map();
+ const bump=(map,key)=>{if(key)map.set(key,(map.get(key)||0)+1)};
+ for(const entry of preview){
+  const v=entry.values;
+  bump(idCounts,normalize(v.enrlNo));
+  const form=normalize(v.cnic);if(form&&form!=='0')bump(formCounts,form);
+  const name=personKey(v.name),father=personKey(v.fatherGuardian);
+  if(name&&father)bump(personCounts,name+'|'+father);
+ }
+ for(const entry of preview){
+  if(entry.reason==='Already enrolled — skip')continue;
+  const v=entry.values,id=normalize(v.enrlNo),form=normalize(v.cnic);
+  const name=personKey(v.name),father=personKey(v.fatherGuardian);
+  if(id&&(idCounts.get(id)||0)>1)entry.reason='Duplicate enrollment in uploaded file — review';
+  else if(form&&form!=='0'&&(formCounts.get(form)||0)>1)entry.reason='Duplicate Form-B in uploaded file — review';
+  else if(name&&father&&(personCounts.get(name+'|'+father)||0)>1)entry.reason='Repeated student and father in uploaded file — review';
+ }
+ renderPreview();
 }
 function renderPreview(){
  const fresh=preview.filter(x=>x.reason==='New student'),existing=preview.filter(x=>x.reason==='Already enrolled — skip'),review=preview.filter(x=>x.reason!=='New student'&&x.reason!=='Already enrolled — skip');
@@ -208,7 +228,7 @@ function renderPreview(){
  $('preview').innerHTML='<table><thead><tr><th>#</th><th>Enrollment</th><th>Student / Father</th><th>Class</th><th>Decision</th></tr></thead><tbody>'+preview.slice(0,700).map(x=>'<tr><td>'+x.index+'</td><td>'+escapeHTML(x.values.enrlNo||'—')+'</td><td>'+escapeHTML(x.values.name||'—')+'<div class="muted tiny">'+escapeHTML(x.values.fatherGuardian||'')+'</div></td><td>'+escapeHTML(x.values.class||x.sourceClass||'—')+'</td><td class="'+(x.reason==='New student'?'good':x.reason.startsWith('Already')?'muted':'warn')+'">'+escapeHTML(x.reason)+'</td></tr>').join('')+'</tbody></table>';
  $('apply').disabled=STUDENT_IMPORT_READ_ONLY||busy||!fresh.length;
 }
-async function analyze(){if(!files.length){status('Choose one or more files first.');return}setBusy(true);clearPreview();try{if(typeof LamaAPI==='undefined')throw Error('LamaAPI not found.');if(LamaAPI.requireLogin&&!LamaAPI.requireLogin('school','login.html'))return;const loaded=await LamaAPI.list('students');students=Array.isArray(loaded)?loaded:Array.isArray(loaded?.records)?loaded.records:Array.isArray(loaded?.data)?loaded.data:[];rows=[];for(let i=0;i<files.length;i++){const f=files[i];status('Processing '+(i+1)+' / '+files.length+': '+f.name);const ext=f.name.split('.').pop().toLowerCase();let part;if(['xlsx','xls','xlsm','csv'].includes(ext))part=await readExcel(f);else if(['docx','doc'].includes(ext))part=await readWord(f);else if(ext==='pdf')part=await readPDF(f);else if(['png','jpg','jpeg','webp'].includes(ext))part=await readImage(f);else throw Error('Unsupported format: '+ext);const sourceClass=fileClass(f.name);part.forEach(r=>{r.__sourceClass=sourceClass});rows.push(...part)}if(!rows.length)throw Error('No student records were recognized. Check the file layout; no changes were made.');deriveMapping();makePreview();status('Analysis complete: '+rows.length+' rows found. Review the table: new students may be added, existing students will be skipped, and uncertain rows need manual review. Nothing has been saved.');$('progressBar').style.width='100%';$('loadCount').textContent=students.length+' existing students loaded.'}catch(e){status('Could not finish analysis: '+e.message+'. No students were added. Try a digital-text PDF or Excel/CSV if the PDF layout is not recognized.')}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||!preview.some(x=>x.reason==='New student')}}
+async function analyze(){if(!files.length){status('Choose one or more files first.');return}setBusy(true);clearPreview();try{if(typeof LamaAPI==='undefined')throw Error('LamaAPI not found.');if(LamaAPI.requireLogin&&!LamaAPI.requireLogin('school','login.html'))return;const loaded=await LamaAPI.list('students');students=Array.isArray(loaded)?loaded:Array.isArray(loaded?.records)?loaded.records:Array.isArray(loaded?.data)?loaded.data:[];rows=[];for(let i=0;i<files.length;i++){const f=files[i];status('Processing '+(i+1)+' / '+files.length+': '+f.name);const ext=f.name.split('.').pop().toLowerCase();let part;if(['xlsx','xls','xlsm','csv'].includes(ext))part=await readExcel(f);else if(['docx','doc'].includes(ext))part=await readWord(f);else if(ext==='pdf')part=await readPDF(f);else if(['png','jpg','jpeg','webp'].includes(ext))part=await readImage(f);else throw Error('Unsupported format: '+ext);const sourceClass=fileClass(f.name);part.forEach(r=>{r.__sourceClass=sourceClass});rows.push(...part)}if(!rows.length)throw Error('No student records were recognized. Check the file layout; no changes were made.');deriveMapping();makePreview();status('Analysis complete: '+rows.length+' rows found. Review the table: new students may be added, existing students will be skipped, and uncertain rows need manual review. Nothing has been saved.');$('progressBar').style.width='100%';$('loadCount').textContent=students.length+' existing students loaded.'}catch(e){clearPreview();status('Could not finish analysis: '+e.message+'. No students were added. Try a digital-text PDF or Excel/CSV if the PDF layout is not recognized.')}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||!preview.some(x=>x.reason==='New student')}}
 async function apply(){
  if(STUDENT_IMPORT_READ_ONLY){status('Preview-only release: saving student records is disabled until validation is complete. No changes were made.');return;}
 

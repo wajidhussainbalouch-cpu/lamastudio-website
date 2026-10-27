@@ -123,6 +123,30 @@
         .class-att-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
         html[data-theme="light"] .student-attendance-card{background:linear-gradient(135deg,#ecfeff,#ffffff);border-color:#a5f3fc}
         @media(max-width:640px){.student-attendance-card{padding:15px}.attendance-kpi{padding:10px}}
+
+        /* Tablet and phone header accessibility: never hide navigation labels. */
+        #topOverview .header-action{display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;font-size:12px!important;min-height:38px;padding:8px 10px!important}
+        #topOverview .header-action .action-icon{font-size:16px!important;line-height:1}
+        #topOverview .header-action .action-label{font-size:11px!important;line-height:1.2}
+        #topOverview .palette-trigger{font-size:11px!important;min-height:38px;white-space:nowrap}
+        #topOverview #themeToggle{font-size:17px!important}
+        #navSchoolName{max-width:none!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere}
+        #topOverview>div:first-child{min-width:0;flex:1 1 240px}
+        #topOverview>div:last-child{min-width:0}
+        @media(max-width:1050px){
+          #topOverview{flex-wrap:wrap!important;align-items:flex-start}
+          #topOverview>div:first-child{flex:1 1 100%;width:100%}
+          #topOverview>div:last-child{width:100%;flex:1 1 100%;justify-content:flex-start!important;gap:7px!important}
+          #topOverview .header-action{font-size:12px!important}
+        }
+        @media(max-width:700px){
+          #topOverview>div:last-child a.header-action,#topOverview>div:last-child button.header-action{font-size:12px!important;padding:8px 10px!important;min-width:auto!important}
+          #topOverview #navSchoolName{font-size:14px!important;max-width:none!important}
+        }
+        @media(max-width:420px){
+          #topOverview .header-action .action-label{font-size:10px!important}
+          #topOverview .header-action{padding:7px 8px!important}
+        }
     </style>
 
 <style>
@@ -266,12 +290,12 @@ header#topOverview{background:var(--lama-header)!important}
             </div>
         </div>
         <div class="flex items-center space-x-3">
-            <a href="main-dashboard.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition">🏫 School Board</a>
-            <a href="settings.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition">⚙️ Settings</a>
+            <a href="main-dashboard.html" class="header-action text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition"><span class="action-icon" aria-hidden="true">🏫</span><span class="action-label">School Board</span></a>
+            <a href="settings.html" class="header-action text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition"><span class="action-icon" aria-hidden="true">⚙️</span><span class="action-label">Settings</span></a>
             <div class="palette-picker" id="palettePicker"><button type="button" id="paletteTrigger" class="palette-trigger" aria-expanded="false" aria-controls="paletteMenu" title="Change dashboard colors">🎨 Colors</button><div class="palette-menu" id="paletteMenu" hidden><div style="font-size:12px;font-weight:900">Interface palette</div><div style="font-size:10px;color:#64748b">Choose a coordinated accent</div><div class="palette-swatches"><button class="palette-swatch" type="button" data-palette-choice="lime" style="background:#b8d51e" aria-label="Lime and teal"></button><button class="palette-swatch" type="button" data-palette-choice="ocean" style="background:#24c8b7" aria-label="Ocean teal"></button><button class="palette-swatch" type="button" data-palette-choice="blue" style="background:#60a5fa" aria-label="Ocean blue"></button><button class="palette-swatch" type="button" data-palette-choice="rose" style="background:#f6a6b6" aria-label="Soft rose"></button></div></div></div><button id="themeToggle" class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Toggle light and dark theme" title="Toggle theme"><span id="themeIcon">☀️</span></button>
-            <button onclick="handleLogout()" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition">Logout</button>
-            <a href="admissions.html" class="text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
-                <span>⚡ New Admission Form</span>
+            <button onclick="handleLogout()" class="header-action text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3.5 py-2 rounded-xl transition"><span class="action-icon" aria-hidden="true">↪</span><span class="action-label">Logout</span></button>
+            <a href="admissions.html" class="header-action text-xs bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-90 text-white font-black px-4 py-2 rounded-xl transition shadow-[0_0_20px_rgba(168,85,247,0.3)] flex items-center space-x-1.5">
+                <span class="action-icon" aria-hidden="true">⚡</span><span class="action-label">Admission</span>
             </a>
         </div>
     </header>
@@ -478,7 +502,7 @@ header#topOverview{background:var(--lama-header)!important}
             const school=await LamaAPI.getActiveSchool()||{}; const schoolName=school.name||'Campus Command Hub';
             const shortCode=school.shortCode|| (LamaAPI.deriveShortCode?LamaAPI.deriveShortCode(schoolName):'SCH');
             document.getElementById('pageTitle').innerText=`${schoolName} | School Data Command Center`;
-            document.getElementById('sideSchoolName').textContent=schoolName;document.getElementById('sideSchoolAvatar').textContent=shortCode.slice(0,3);document.getElementById('navSchoolName').innerText=schoolName; document.getElementById('navShortCode').innerText=shortCode;
+            document.getElementById('sideSchoolName').textContent=schoolName;document.getElementById('sideSchoolAvatar').textContent=shortCode.slice(0,3);document.getElementById('navSchoolName').innerText=schoolName; document.getElementById('navSchoolName').title=schoolName; document.getElementById('navShortCode').innerText=shortCode;
             document.getElementById('heroSchoolName').innerText=schoolName; document.getElementById('principalDisplay').innerText=school.principal||'Principal / Admin';
             document.getElementById('scopeDisplay').innerText=`${schoolName} • ${school.id||school.schoolId||'active school context'}`;
             document.getElementById('todayDateDisplay').innerText=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'short',day:'numeric'});

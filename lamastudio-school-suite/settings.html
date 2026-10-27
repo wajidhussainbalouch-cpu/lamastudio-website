@@ -69,6 +69,7 @@
             </div>
         </div>
 
+        <div class="rounded-xl border border-cyan-500/50 bg-cyan-950/40 p-4 text-xs text-cyan-100"><strong>Phone review preview — safe demonstration.</strong> No changes on this preview page are saved to the live school database. <a class="underline font-bold" href="finance/fee-categories-preview.html">Open Fee &amp; Government Finance Preview →</a></div>
         <!-- Settings Form -->
         <form id="settingsForm" class="space-y-4 text-xs">
             <div>
@@ -199,7 +200,7 @@
         }
 
         function handleLogout() {
-            LamaAPI.logout();
+            // Preview: do not log out or modify the live school session.
             window.location.href = 'main-dashboard.html';
         }
 
@@ -224,9 +225,9 @@
         }
 
         async function loadSettings() {
-            let school = {};
+            let school = {name:'Government Primary School Shah Sadar Din',type:'Government',level:'Primary',address:'Shah Sadar Din'};
             try {
-                school = await LamaAPI.getActiveSchool() || {};
+                // Review build: do not read or modify real school sessions.
             } catch(e) {}
             
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
@@ -253,6 +254,8 @@
 
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            showMessage('successBanner', 'Preview only — no changes were saved. Please review the class, subject and fee configuration before final deployment.');
+            return;
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Broadcasting to Dashboard...';
@@ -328,9 +331,7 @@
         $s('previewConfig').addEventListener('click',()=>{const summary={institutionType:$s('inType').value,level:$s('inLevel').value,classes:[...selectedClasses],subjects:Object.fromEntries([...selectedClasses].map(cl=>[cl,classSubjects[cl]||[]])),tuitionEnabled:$s('tuitionEnabled').checked,feeCategories:[...feeCategories].filter(s=>$s('tuitionEnabled').checked||s!=='Tuition Fee'),governmentFinance:$s('inType').value==='Government'?['NSB','FTF','Roznamcha','Bank reconciliation']:[]};$s('previewSummary').textContent=JSON.stringify(summary,null,2);$s('previewSummary').classList.remove('hidden')});
         renderClasses();renderFees();
 
-        if (typeof LamaAPI.requireLogin === 'function' ? LamaAPI.requireLogin('school') : true) {
-            loadSettings();
-        }
+        loadSettings();
     </script>
 </body>
 </html>

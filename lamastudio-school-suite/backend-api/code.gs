@@ -31,6 +31,12 @@
  *      Execute as: Me
  *      Who has access: Anyone
  *    Click Deploy, authorize again if asked.
+ * IMPORTANT FOR FRESH MASTER REGISTRY (do not run setup()): In Apps Script
+ * Project Settings > Script Properties set MASTER_SHEET_ID to
+ * 1_STA5SaL3RMNQeAp6EuW00kkVE7H9yGi7d-o8uHWQeg ONLY after checking
+ * that the old live registry has no school accounts to preserve.
+ * The new spreadsheet already has the Schools tab and required headers.
+ * DriveApp permissions may need re-authorization after this code change.
  * 6. Copy the "Web app URL" (it ends in /exec). Paste it into api-client.js
  *    as the API_URL constant — that's the only thing that file needs from you.
  *
@@ -246,8 +252,17 @@ function findSchoolRow(sheet, matcherFn) {
 // SCHOOL REGISTRATION, LOGIN & PROFILE  (role: 'school' — unchanged behavior)
 // ============================================================================
 
-/** Creates a brand-new private Google Sheet for a school, with all tabs pre-built. */
+/** Destination of school databases in the connected LamaStudio master Drive workspace. */
+const SCHOOL_DATABASE_FOLDER_ID = '1H9U1a1fbNewbpQMwr8AGbQ3xLC27Tq02';
+
+/**
+ * Creates a brand-new private Google Sheet for a school, with all tabs pre-built.
+ * Keep each school's spreadsheet in the central School Databases folder.
+ * Validate folder access before creating the spreadsheet to avoid orphaned files.
+ */
 function createSchoolSheet(schoolName) {
+    const folder = DriveApp.getFolderById(SCHOOL_DATABASE_FOLDER_ID);
+    if (folder.isTrashed()) throw new Error('School database folder is in Trash.');
     const ss = SpreadsheetApp.create(schoolName + ' - LamaStudio Data');
     const defaultSheet = ss.getSheets()[0];
     Object.keys(COLLECTIONS).forEach(key => {
@@ -257,6 +272,9 @@ function createSchoolSheet(schoolName) {
         sh.setFrozenRows(1);
     });
     ss.deleteSheet(defaultSheet);
+    // Move only the newly created school file; never touch existing school data.
+    const file = DriveApp.getFileById(ss.getId());
+    file.moveTo(folder);
     return ss.getId();
 }
 

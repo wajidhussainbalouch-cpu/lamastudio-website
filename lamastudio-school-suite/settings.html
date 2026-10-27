@@ -196,7 +196,8 @@
             }
             const govt=type==='Government';
             document.getElementById('governmentFinance').classList.toggle('hidden',!govt);
-            if(govt)document.getElementById('tuitionEnabled').checked=false;
+            document.getElementById('tuitionEnabled').checked=!govt && type!=='PEF';
+            if(typeof renderFees==='function')renderFees();
         }
 
         function handleLogout() {
@@ -320,13 +321,14 @@
           $s('subjectTags').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{classSubjects[cl]=classSubjects[cl].filter(s=>s!==b.dataset.subject);renderSubjects()}));
         }
         function renderFees(){
-          $s('feeTags').innerHTML=[...feeCategories].map(s=>'<button type="button" data-fee="'+esc(s)+'" class="rounded-lg px-3 py-2 bg-emerald-900/50 border border-emerald-700/40">'+esc(s)+' ×</button>').join('');
+          $s('feeTags').innerHTML=[...feeCategories].filter(s=>s!=='Tuition Fee'||$s('tuitionEnabled').checked).map(s=>'<button type="button" data-fee="'+esc(s)+'" class="rounded-lg px-3 py-2 bg-emerald-900/50 border border-emerald-700/40">'+esc(s)+' ×</button>').join('');
           $s('feeTags').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{feeCategories.delete(b.dataset.fee);renderFees()}));
         }
         $s('suggestClasses').addEventListener('click',()=>{const level=$s('inLevel').value;const max={'Primary':5,'Middle':8,'High':10,'Higher Secondary':12}[level]||0;selectedClasses.clear();if(max){selectedClasses.add('ECE / Kachi');for(let i=1;i<=max;i++)selectedClasses.add('Class '+i)}renderClasses()});
         $s('clearClasses').addEventListener('click',()=>{selectedClasses.clear();renderClasses()});
         $s('subjectClass').addEventListener('change',renderSubjects);
         $s('addSubject').addEventListener('click',()=>{const cl=$s('subjectClass').value,s=($s('newSubject').value||$s('subjectPreset').value).trim();if(!cl||!s)return;const list=classSubjects[cl]||(classSubjects[cl]=[]);if(!list.some(x=>x.toLowerCase()===s.toLowerCase()))list.push(s);$s('newSubject').value='';renderSubjects()});
+        $s('tuitionEnabled').addEventListener('change',renderFees);
         $s('addFeeCategory').addEventListener('click',()=>{const s=$s('newFeeCategory').value.trim();if(!s)return;if(![...feeCategories].some(x=>x.toLowerCase()===s.toLowerCase()))feeCategories.add(s);$s('newFeeCategory').value='';renderFees()});
         $s('previewConfig').addEventListener('click',()=>{const summary={institutionType:$s('inType').value,level:$s('inLevel').value,classes:[...selectedClasses],subjects:Object.fromEntries([...selectedClasses].map(cl=>[cl,classSubjects[cl]||[]])),tuitionEnabled:$s('tuitionEnabled').checked,feeCategories:[...feeCategories].filter(s=>$s('tuitionEnabled').checked||s!=='Tuition Fee'),governmentFinance:$s('inType').value==='Government'?['NSB','FTF','Roznamcha','Bank reconciliation']:[]};$s('previewSummary').textContent=JSON.stringify(summary,null,2);$s('previewSummary').classList.remove('hidden')});
         renderClasses();renderFees();

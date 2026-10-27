@@ -119,6 +119,10 @@ const COLLECTIONS = {
         tab: 'Notifications',
         headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'isPublished', 'createdAt']
     },
+    certificates: {
+        tab: 'Certificates',
+        headers: ['id','studentId','studentName','enrlNo','class','kind','title','template','primaryColor','accentColor','introText','wording','sealText','signatureLeft','signatureRight','issuedAt','reference','issuedBy','status','createdAt']
+    },
     resources: {
         tab: 'Resources',
         headers: ['id', 'category', 'title', 'description', 'link', 'createdAt']
@@ -668,7 +672,7 @@ function resolveContext(p) {
 
 const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework'];
 const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings', 'resources'];
-const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources', 'timetable'];
+const STUDENT_READ_COLLECTIONS = ['certificates', 'homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources', 'timetable'];
 function normalizeSchoolClass(value) {
     return String(value == null ? '' : value).trim().toLowerCase()
       .replace(/^(grade|class|standard|std)[\s._-]*/i, '')
@@ -691,6 +695,7 @@ function teacherOwns(ctx,r){ return sameClass(r.class,ctx.teacher.assignedClass)
 function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
+        if (collection === 'certificates') throw new Error('Certificate register is restricted to school administrators and the certificate owner.');
         if (collection === 'studentRequests' && ['list','get','update'].indexOf(action) !== -1) return;
         if (TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) return; // class-scoped writes
         if (collection === 'students' && (action === 'list' || action === 'get' || action === 'update')) return;
@@ -736,6 +741,9 @@ function listRecords(ctx, collection) {
         if (!data[i][headers.indexOf('id')]) continue;
         records.push(rowToRecord(headers, data[i]));
     }
+    if (collection === 'certificates' && ctx.role === 'student') {
+        records = records.filter(r => String(r.studentId) === String(ctx.student.id) && String(r.status).toLowerCase() === 'issued');
+    }
     if (collection === 'studentRequests') {
         if (ctx.role === 'student') records = records.filter(r => String(r.studentId) === String(ctx.student.id));
         if (ctx.role === 'teacher') records = records.filter(r => teacherOwns(ctx,r));
@@ -776,6 +784,7 @@ function getRecord(ctx, collection, id) {
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
+    if (collection === 'certificates') return issueSchoolCertificate(ctx, record);
     if (collection === 'studentRequests' && ctx.role === 'student') {
         const type = String(record.requestType || 'help');
         if (['help','sick_leave'].indexOf(type) === -1) throw new Error('Invalid request type.');
@@ -802,7 +811,40 @@ function addRecord(ctx, collection, record) {
     return full;
 }
 
+/** Issue an immutable school-scoped certificate for an existing enrolled student. */
+function issueSchoolCertificate(ctx, input) {
+    if (ctx.role !== 'school' || !ctx.auditActor) throw new Error('Verified school administrator required.');
+    if (!input || typeof input !== 'object') throw new Error('Certificate details required.');
+    const lock=LockService.getScriptLock();
+    lock.waitLock(20000);
+    try {
+        const {sheet:students,headers:studentHeaders}=getCollectionSheet(ctx,'students');
+        const rows=students.getDataRange().getValues();
+        const idIndex=studentHeaders.indexOf('id');
+        const studentRow=rows.slice(1).find(row=>String(row[idIndex])===String(input.studentId||''));
+        if(!studentRow) throw new Error('Student is not enrolled in this school.');
+        const student=rowToRecord(studentHeaders,studentRow);
+        const kind=String(input.kind||'achievement');
+        if(['achievement','performance','sports','participation','conduct','leaving'].indexOf(kind)===-1)throw new Error('Invalid certificate type.');
+        const template=String(input.template||'executive');
+        if(['classic','royal','executive'].indexOf(template)===-1)throw new Error('Invalid certificate template.');
+        const ref=String(input.reference||'').trim();
+        if(!ref || ref.length>60)throw new Error('School certificate reference required (max 60 characters).');
+        const {sheet,headers}=getCollectionSheet(ctx,'certificates');
+        const existing=sheet.getDataRange().getValues();
+        const refIndex=headers.indexOf('reference');
+        if(existing.slice(1).some(row=>String(row[refIndex]).trim().toLowerCase()===ref.toLowerCase()))throw new Error('Certificate reference already issued by this school.');
+        const clean=(v,max)=>String(v==null?'':v).trim().slice(0,max);
+        const color=(v,def)=>/^#[0-9a-f]{6}$/i.test(String(v||''))?String(v):def;
+        const full={id:genId('crt'),studentId:student.id,studentName:student.name,enrlNo:student.enrlNo,class:student.class,kind,title:clean(input.title,100)||'Certificate of Achievement',template,primaryColor:color(input.primaryColor,'#142d49'),accentColor:color(input.accentColor,'#d6a33b'),introText:clean(input.introText,200),wording:clean(input.wording,1000),sealText:clean(input.sealText,40),signatureLeft:clean(input.signatureLeft,80),signatureRight:clean(input.signatureRight,80),issuedAt:new Date().toISOString(),reference:ref,issuedBy:ctx.auditActor.name||ctx.auditActor.id,status:'issued',createdAt:new Date().toISOString()};
+        sheet.appendRow(recordToRow(headers,full));
+        writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'issue','certificates',full.id,null,full);
+        return full;
+    } finally {lock.releaseLock()}
+}
+
 function updateRecord(ctx, collection, id, patch) {
+    if (collection === 'certificates') throw new Error('Issued certificates are immutable; use an audited revocation workflow.');
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
@@ -853,6 +895,7 @@ function updateRecord(ctx, collection, id, patch) {
 }
 
 function removeRecord(ctx, collection, id) {
+    if (collection === 'certificates') throw new Error('Issued certificates cannot be deleted.');
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'remove', collection);
     if (collection === 'fees') throw new Error('Fee receipts cannot be deleted. Correct the status or amount; the change is audited.');

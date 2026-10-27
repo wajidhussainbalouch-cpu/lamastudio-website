@@ -45,7 +45,18 @@ function parseTable(table){if(!table.length)return[];let header=table[0].map(cle
 function parseLabelLines(text){const records=[],blocks=text.split(/\n\s*\n|(?=Enrollment\s*(?:No|Number|ID)\s*[:#])/i);for(const block of blocks){const item={};for(const line of block.split(/\n/)){const m=line.match(/^\s*([^:：]{2,42})\s*[:：]\s*(.{1,160})\s*$/);if(m)item[clean(m[1])]=clean(m[2])}if(Object.keys(item).length>=2)records.push(item)}return records}
 function parseLinesAsTable(text){const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);const delimiters=['\t','|',','];for(const delim of delimiters){const matrix=lines.filter(x=>x.includes(delim)).map(x=>x.split(delim).map(clean));if(matrix.length>1){const parsed=parseTable(matrix);if(parsed.length)return parsed}}return[]}
 function docxTables(html){const doc=new DOMParser().parseFromString(html,'text/html');const results=[];for(const table of doc.querySelectorAll('table')){const matrix=[...table.querySelectorAll('tr')].map(tr=>[...tr.querySelectorAll('th,td')].map(td=>clean(td.textContent)));const parsed=parseTable(matrix);if(parsed.length)results.push(...parsed);else for(const row of matrix){if(row.length===2&&detect(row[0])){const obj={};for(const r of matrix)if(r.length===2)obj[r[0]]=r[1];if(Object.keys(obj).length>=2){results.push(obj);break}}}}return results}
-async function readExcel(f){if(typeof XLSX==='undefined')throw Error('Excel library not available. Connect to internet.');const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:false});let output=[];for(const sheetName of wb.SheetNames){const table=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false});const start=Math.max(0,Number($('headerRow').value||1)-1);output.push(...parseTable(table.slice(start)))}return output}
+async function readExcel(f){if(typeof XLSX==='undefined')throw Error('Excel library not available. Connect to internet.');const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:false});let output=[];for(const sheetName of wb.SheetNames){const table=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:'',raw:false});const requested=Math.max(0,Number($('headerRow').value||1)-1);
+ const candidates=[requested,...Array.from({length:Math.min(25,table.length)},(_,i)=>i)].filter((v,i,a)=>a.indexOf(v)===i);
+ let best=[],bestScore=-1;
+ for(const index of candidates){
+  const header=table[index]||[],matched=new Set(header.map(detect).filter(Boolean));
+  if(!matched.has('name')||matched.size<2)continue;
+  const parsed=parseTable(table.slice(index));
+  const score=parsed.length*10+matched.size;
+  if(score>bestScore){best=parsed;bestScore=score}
+ }
+ if(bestScore<0)throw Error('No recognizable student headings in sheet '+sheetName+'. Please check the source file or choose its header row.');
+ output.push(...best)}return output}
 async function readWord(f){if(f.name.toLowerCase().endsWith('.doc'))throw Error('Binary .doc is not supported directly. Save it as DOCX first.');if(typeof mammoth==='undefined')throw Error('Word reader not loaded.');const buf=await f.arrayBuffer();const html=await mammoth.convertToHtml({arrayBuffer:buf});const text=await mammoth.extractRawText({arrayBuffer:buf});const parsed=docxTables(html.value);return parsed.length?parsed:parseLinesAsTable(text.value).concat(parseLabelLines(text.value))}
 async function ocrCanvas(canvas){if(typeof Tesseract==='undefined')throw Error('OCR engine not loaded. Internet connection required.');const res=await Tesseract.recognize(canvas,'eng');return res.data.text||''}
 
@@ -78,6 +89,52 @@ function parseEmisPositionedTable(items,pageWidth){
  return rows;
 }
 
+/**
+ * Format-independent PDF table recognition: find a header row by its actual
+ * positions, then use header column boundaries to extract subsequent rows.
+ * Only accept a table when both student name and class can be identified.
+ * Incomplete/unrecognized pages fail closed; nothing is written to Sheets.
+ */
+function parseGenericPositionedTable(items){
+ const cells=items.filter(t=>t&&typeof t.str==='string'&&t.str.trim()&&Array.isArray(t.transform))
+  .map(t=>({x:t.transform[4],y:t.transform[5],text:clean(t.str)}))
+  .sort((a,b)=>b.y-a.y||a.x-b.x);
+ const lines=[];
+ for(const cell of cells){
+  let line=lines.find(l=>Math.abs(l.y-cell.y)<3);
+  if(!line){line={y:cell.y,cells:[]};lines.push(line)}
+  line.cells.push(cell);
+ }
+ lines.sort((a,b)=>b.y-a.y);
+ let headerIndex=-1,headers=[];
+ for(let i=0;i<Math.min(35,lines.length);i++){
+  const h=lines[i].cells.sort((a,b)=>a.x-b.x);
+  const fields=h.map(x=>detect(x.text));
+  if(fields.includes('name')&&fields.includes('class')&&new Set(fields.filter(Boolean)).size>=3){
+   headerIndex=i;headers=h;break;
+  }
+ }
+ if(headerIndex<0)return null;
+ const boundaries=headers.map((h,i)=>i?((headers[i-1].x+h.x)/2):-Infinity);
+ const columnFor=x=>{let k=0;for(let i=1;i<boundaries.length;i++)if(x>=boundaries[i])k=i;return k};
+ const output=[];
+ for(const line of lines.slice(headerIndex+1)){
+  if(line.cells.length<2)continue;
+  const record={};
+  for(const cell of line.cells){
+   const k=columnFor(cell.x),key=headers[k].text;
+   record[key]=clean((record[key]||'')+' '+cell.text);
+  }
+  const keys=Object.keys(record),nameKey=keys.find(k=>detect(k)==='name'),classKeyName=keys.find(k=>detect(k)==='class');
+  if(!nameKey||!classKeyName)continue;
+  if(!record[nameKey]||!record[classKeyName])continue;
+  // Reject header repetitions and obvious totals/footers.
+  if(/^(total|summary|student name|name)$/i.test(record[nameKey]))continue;
+  output.push(record);
+ }
+ return output.length?output:null;
+}
+
 async function readPDF(f){
  if(typeof pdfjsLib==='undefined')throw Error('PDF reader not loaded.');
  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -89,11 +146,13 @@ async function readPDF(f){
   status('Reading PDF page '+i+' / '+limit+'…');
   const page=await doc.getPage(i),tc=await page.getTextContent();
   const text=tc.items.map(it=>it.str+(it.hasEOL?'\\n':' ')).join('');
-  const positioned=parseEmisPositionedTable(tc.items,page.view[2]-page.view[0]);
+  const generic=parseGenericPositionedTable(tc.items);
+  const positioned=generic?null:parseEmisPositionedTable(tc.items,page.view[2]-page.view[0]);
   let parsed=[];
-  if(positioned!==null){reportMode='emis';parsed=positioned;}
+  if(generic!==null){reportMode='generic';parsed=generic;}
+  else if(positioned!==null){reportMode='emis';parsed=positioned;}
   else {
-   if(reportMode==='emis')throw Error('EMIS report layout was not recognized on page '+i+'. No records saved.');
+   if(reportMode==='emis'||reportMode==='generic')throw Error('Student table layout was not recognized on page '+i+'. No records saved.');
    parsed=parseLinesAsTable(text).concat(parseLabelLines(text));
    if(!parsed.length&&text.replace(/\\s/g,'').length<40){
     status('Page '+i+' / '+limit+': scanning image with OCR…');

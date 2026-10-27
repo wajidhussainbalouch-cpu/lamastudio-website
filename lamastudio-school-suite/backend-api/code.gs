@@ -692,6 +692,7 @@ function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
         if (collection === 'studentRequests' && ['list','get','update'].indexOf(action) !== -1) return;
+        if (collection === 'teachers' && action === 'get') return;
         if (TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) return; // class-scoped writes
         if (collection === 'students' && (action === 'list' || action === 'get' || action === 'update')) return;
         if (collection === 'students' && action === 'add' && (ctx.teacher.canEnrollStudents === true || String(ctx.teacher.canEnrollStudents).toLowerCase() === 'true') && (!ctx.teacher.enrollmentPermissionUntil || String(ctx.teacher.enrollmentPermissionUntil).slice(0,10) >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'))) return;
@@ -755,6 +756,7 @@ function listRecords(ctx, collection) {
 
 function getRecord(ctx, collection, id) {
     checkPermission(ctx, 'get', collection);
+    if (ctx.role === 'teacher' && collection === 'teachers' && String(id) !== String(ctx.teacher.id)) throw new Error('Teachers may only view their own permission settings.');
     if (ctx.role === 'student' && collection === 'students' && id !== ctx.student.id) {
         throw new Error('Students can only view their own record.');
     }

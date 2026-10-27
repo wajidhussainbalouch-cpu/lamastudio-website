@@ -770,6 +770,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
+            if(ctx.role==='teacher' && collection==='teachers') return {id:r.id,name:r.name,assignedClass:r.assignedClass,assignedSection:r.assignedSection,canEnrollStudents:r.canEnrollStudents,enrollmentPermissionUntil:r.enrollmentPermissionUntil};
             return r;
         }
     }
@@ -867,6 +868,20 @@ function updateRecord(ctx, collection, id, patch) {
                 } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
                     if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');
                     patch=Object.assign({},patch,{class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||''});
+                }
+            }
+            if (collection === 'teachers' && ctx.role === 'school' && (Object.prototype.hasOwnProperty.call(patch,'canEnrollStudents') || Object.prototype.hasOwnProperty.call(patch,'enrollmentPermissionUntil'))) {
+                var granting = patch.canEnrollStudents === true || String(patch.canEnrollStudents).toLowerCase() === 'true' || (!Object.prototype.hasOwnProperty.call(patch,'canEnrollStudents') && (existing.canEnrollStudents === true || String(existing.canEnrollStudents).toLowerCase() === 'true'));
+                if (granting) {
+                    if (!existing.assignedClass) throw new Error('Assign a class before granting enrollment authority.');
+                    var activeGrants=0, teacherIdIndex=headers.indexOf('id'), grantIndex=headers.indexOf('canEnrollStudents'), expiryIndex=headers.indexOf('enrollmentPermissionUntil');
+                    var today=Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyyy-MM-dd');
+                    for(var g=1;g<data.length;g++){
+                        if(String(data[g][teacherIdIndex])===String(id))continue;
+                        var hasGrant=String(data[g][grantIndex]).toLowerCase()==='true', expiry=expiryIndex>=0?String(data[g][expiryIndex]||'').slice(0,10):'';
+                        if(hasGrant && (!expiry || expiry>=today))activeGrants++;
+                    }
+                    if(activeGrants>=2)throw new Error('Maximum two enrollment officers per school. Revoke an existing grant first.');
                 }
             }
             if (collection === 'studentRequests') {

@@ -36,13 +36,17 @@ The owner's institutions include Government Primary School Shah Sadar Din and Al
 
 No school records were deliberately migrated or deleted by PR #16.
 
+**PR #17 — tablet header fix:** merged, commit `62f7ce64ca6113cde78a2b4a93f01b5b9b5724bf`. Restored visible School Board, Settings, Colors, Logout and Admission labels on tablet; full school name now wraps instead of truncating. Vercel READY, user screenshot confirmed improved display.
+
+**PR #18 — dashboard polish and Certificate Center:** merged, commit `672e77313c476ab3909a3359856c06eacf517fc4`, Vercel deployment `dpl_M7ZGri3votJ6678oHiWA1yDVjMwJ` READY and aliased to production. Refined dashboard module cards and added Certificate Center links. `certificates/index.html` is administrator-gated, preview/print only: academic excellence, good performance, sports, participation, conduct and leaving/transfer drafts. **No issuance register, audit trail, official verification, or backend writes.** Test admin login and A4 printing in live browser. Earlier draft PR #13 still exists separately and should not be assumed merged wholesale.
+
 ## 4. Work in GitHub but NOT deployed
 
 **PR #15 — delegated enrollment**: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/pull/15, branch `feature/teacher-delegated-enrollment-20261027`, **DRAFT / NOT MERGED / NOT LIVE**. Proposed backend additions: administrator-granted `canEnrollStudents` and optional expiry on teacher/staff accounts; at most two active enrollment officers per school; assigned class/section enforcement; school-wide enrollment number and B-Form duplicate checks with lock; enrollment notification; admin permission page; teacher enrollment form. Subsequent development added `canCompleteStudentProfiles` permission and an admin checkbox. **Incomplete**: class-teacher profile completion page/script, field-specific backend tests, proper staff-account model for non-teachers, and safe live Apps Script deployment. An attempted incomplete profile page creation was not reliably completed. Check branch contents before continuing. Do not merge until backend and frontend are coordinated and tested. WhatsApp delivery is **not implemented**.
 
 **PR #10 — student importer**: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/pull/10, draft `feature/universal-import-detection-20261027`. Read-only Excel/PDF header detection, preview and duplicate flags. `STUDENT_IMPORT_READ_ONLY=true`; safe bulk-save backend and validation still required. Related PR #9 PDF extraction is also draft.
 
-**PR #13 — certificate center**: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/pull/13, draft `feature/certificate-center-20261027`. Printable certificate templates, not an audited issuance register; not deployed. Rebase/check dashboard conflicts before merge.
+**PR #13 — earlier certificate-center draft (partially superseded by deployed PR #18)**: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/pull/13, draft `feature/certificate-center-20261027`. Printable certificate templates, not an audited issuance register; not deployed. Rebase/check dashboard conflicts before merge.
 
 **PR #11**: audit/documentation draft, not merged.
 

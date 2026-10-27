@@ -25,12 +25,39 @@
 #paper .cert-leaving p{margin:2px 0}
 .cert-color{width:100%!important;height:42px;padding:3px!important;cursor:pointer}
 @media print{html,body{width:297mm;height:210mm;margin:0!important;padding:0!important;background:white!important}main{display:block!important;max-width:none!important;margin:0!important;padding:0!important}#paper{width:297mm!important;height:210mm!important;aspect-ratio:auto!important;box-shadow:none!important;page-break-inside:avoid!important}#paper .cert-top h3{font-size:34pt}#paper .cert-body #outStudent{font-size:37pt}#paper .cert-body #narrative{font-size:13pt}#paper .cert-medal{font-size:14pt}#paper .cert-school{font-size:17pt}#paper .cert-footer{font-size:9pt}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}
+
+/* Render the certificate on a fixed landscape canvas; scale only its screen preview. */
+#previewFrame{position:relative;width:100%;min-width:0;overflow:hidden;background:#e2e8f0;border-radius:12px}
+#paper{width:1122px!important;height:794px!important;aspect-ratio:auto!important;transform-origin:top left;flex:none;max-width:none!important}
+#paper .cert-top{height:235px;padding:36px 65px}
+#paper .cert-top h3{font-size:36px;max-width:900px;line-height:1.08}
+#paper .cert-school{font-size:21px}
+#paper .cert-address{font-size:12px}
+#paper .cert-ribbon{top:190px}
+#paper .cert-medal{top:420px;width:140px;height:140px;font-size:15px;line-height:1.3;word-break:normal;overflow-wrap:normal;border-width:6px}
+#paper .cert-body{position:absolute;top:235px;left:295px;right:65px;margin:0}
+#paper .cert-prelude{font-size:15px;margin:16px 0}
+#paper .cert-body #outStudent{font-size:48px;line-height:1.2;margin-top:16px}
+#paper .cert-body #narrative{font-size:17px;line-height:1.7;margin-top:24px;max-height:175px;overflow:hidden}
+#paper .cert-footer{bottom:55px;left:295px;right:65px;font-size:12px}
+#paper .cert-footer .cert-sign{margin-top:26px}
+#paper .cert-footer .line{min-height:25px}
+#paper .cert-watermark{bottom:10px;left:20px}
+@media print{
+  #previewFrame{width:297mm!important;height:210mm!important;overflow:visible!important;border-radius:0!important;background:white!important}
+  #paper{width:297mm!important;height:210mm!important;transform:none!important;min-height:0!important}
+  #paper .cert-top{height:29.6%;padding:3.2% 5.8%}
+  #paper .cert-ribbon{top:24%}
+  #paper .cert-medal{top:53%;width:12.5%;height:auto;aspect-ratio:1}
+  #paper .cert-body{top:29.6%;left:26.3%;right:5.8%}
+  #paper .cert-footer{bottom:7%;left:26.3%;right:5.8%}
+}
 </style></head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 md:p-8">
 <header class="no-print max-w-6xl mx-auto flex flex-wrap gap-3 justify-between items-center mb-6"><div><a href="../dashboard.html" class="text-cyan-300 text-sm">← School administration</a><h1 class="text-3xl font-black mt-2">Certificate Center</h1><p class="text-slate-400 text-sm">Design landscape certificates · Editable colors and text · No database changes</p></div><span class="text-amber-300 text-sm">Preview-only release</span></header>
 <main class="max-w-6xl mx-auto grid lg:grid-cols-[360px_1fr] gap-5">
 <section class="no-print bg-slate-900 border border-slate-700 rounded-2xl p-5">
-<p id="state" class="text-amber-300 text-sm" role="status">Checking administrator access…</p>
+<p id="state" class="text-amber-300 text-sm" role="status">Checking administrator access…</p><a id="adminLoginLink" href="../school-admin-login.html" class="hidden inline-block mt-3 px-4 py-3 rounded-xl bg-cyan-500 text-slate-950 font-bold">Sign in as School Administrator</a>
 <form id="editor" class="space-y-1 hidden">
 <label for="kind">Certificate type</label><select id="kind"><option value="achievement">Academic Excellence</option><option value="performance">Good Performance</option><option value="sports">Sports Achievement</option><option value="participation">Participation</option><option value="character">Character / Conduct</option><option value="leaving">School Leaving / Transfer</option></select>
 <div class="border-t border-slate-700 mt-4 pt-4"><h2 class="font-bold text-amber-300">Certificate appearance &amp; custom text</h2><p class="text-xs text-slate-400 mb-3">Edit colors and wording. Preview changes before printing.</p><label for="primaryColor">Main color</label><input class="cert-color" id="primaryColor" type="color" value="#142d49"><label for="accentColor">Accent / gold color</label><input class="cert-color" id="accentColor" type="color" value="#d6a33b"><label for="customSchoolName">School name on certificate</label><input id="customSchoolName" maxlength="150" placeholder="Use school profile name"><label for="customSchoolAddress">School address / subtitle</label><input id="customSchoolAddress" maxlength="200" placeholder="Use school profile address"><label for="customTitle">Certificate heading</label><input id="customTitle" maxlength="90" placeholder="Certificate of Achievement"><label for="introText">Presentation line</label><input id="introText" maxlength="180" value="This certificate is proudly presented to"><label for="customWording">Custom certificate wording (optional)</label><textarea id="customWording" rows="4" maxlength="700" placeholder="Leave blank to use the suggested wording for the selected certificate type."></textarea><label for="sealText">Award seal text</label><input id="sealText" maxlength="40" value="EXCELLENCE"><label for="signatureLeft">Left signature label</label><input id="signatureLeft" maxlength="70" value="Class Teacher"><label for="signatureRight">Right signature label</label><input id="signatureRight" maxlength="70" value="Principal / Head Teacher"></div><label for="student">Student full name</label><input id="student" required maxlength="120" placeholder="Name as per school record">
@@ -45,19 +72,20 @@
 <div class="flex gap-2 pt-4"><button type="button" id="preview" class="flex-1 bg-cyan-500 text-slate-950 font-bold p-3 rounded-xl">Preview</button><button type="button" id="print" class="flex-1 bg-slate-700 font-bold p-3 rounded-xl">Print / PDF</button></div>
 <p class="text-xs text-amber-200 pt-2">This page does not issue, verify, or store certificates. A school leaving certificate is a draft until formally approved and entered in the school's register. Printing never changes enrollment status.</p>
 </form></section>
-<section id="paper" aria-label="Landscape certificate preview">
+<div id="previewFrame"><section id="paper" aria-label="Landscape certificate preview">
 <div class="cert-top"><p class="text-xs uppercase tracking-widest">Lama School Suite</p><h3 id="certificateTitle">Certificate of Achievement</h3><h2 id="schoolName" class="cert-school">School Name</h2><p id="schoolAddress" class="cert-address"></p></div>
 <div class="cert-ribbon" aria-hidden="true"></div><div class="cert-medal" id="outSeal">EXCELLENCE</div>
 <div class="cert-body"><p id="outIntro" class="cert-prelude">This certificate is proudly presented to</p><p id="outStudent">Student Name</p><p id="narrative" class="mt-4">This certificate recognizes outstanding academic achievement.</p><div id="exitDetails" class="cert-leaving hidden"><p>Admission date: <strong id="outAdmission"></strong> · Leaving date: <strong id="outLeaving"></strong></p><p>Reason: <strong id="outReason"></strong></p></div></div>
 <div class="cert-footer"><div class="cert-meta"><div>Enrollment No.<p class="line font-semibold" id="outEnrollment"></p></div><div>Class / Grade<p class="line font-semibold" id="outGrade"></p></div><div>Issue Date<p class="line font-semibold" id="outDate"></p></div><div>Certificate Reference<p class="line font-semibold" id="outReference"></p></div></div><div class="cert-sign"><div id="outSignatureLeft">Class Teacher</div><div id="outSignatory">Principal / Head Teacher</div></div></div>
-<div class="cert-watermark">DRAFT PREVIEW · Verify official school records before issuing</div></section></main>
+<div class="cert-watermark">DRAFT PREVIEW · Verify official school records before issuing</div></section></div></main>
 <script>
 const $=id=>document.getElementById(id),session=LamaAPI.getSession('school');
 let admin=null;try{admin=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}
 let valid=false;const hasCredentials=!!(session?.schoolId&&session?.apiKey&&admin?.token&&admin?.schoolId===session.schoolId);
-if(!hasCredentials){$('state').textContent='School administrator login is required. Please sign in through the school administration dashboard.'}
-else{LamaAPI.schoolAdminVerify(session.schoolId,admin.token).then(()=>{valid=true;$('state').textContent='Verified administrator · '+(session.name||session.schoolId);$('editor').classList.remove('hidden');$('schoolName').textContent=session.name||'School';$('schoolAddress').textContent=session.address||'';update()}).catch(()=>{$('state').textContent='Administrator session expired. Sign in again through the administration dashboard.'})}
+if(!hasCredentials){$('state').textContent='Administrator access is required to edit or print. Sign in with your school administrator account, then open Certificate Center from the dashboard.';$('adminLoginLink').classList.remove('hidden')}
+else{LamaAPI.schoolAdminVerify(session.schoolId,admin.token).then(()=>{valid=true;$('state').textContent='Verified administrator · '+(session.name||session.schoolId);$('editor').classList.remove('hidden');$('schoolName').textContent=session.name||'School';$('schoolAddress').textContent=session.address||'';update()}).catch(()=>{$('state').textContent='Administrator session expired. Please sign in again.';$('adminLoginLink').classList.remove('hidden')})}
 $('date').value=new Date().toLocaleDateString('en-CA');
+function sizePreview(){const frame=$('previewFrame'),paper=$('paper');const width=frame.clientWidth;if(!width)return;const scale=Math.min(1,width/1122);paper.style.transform='scale('+scale+')';frame.style.height=(794*scale)+'px'}window.addEventListener('resize',sizePreview);window.addEventListener('load',sizePreview);if(window.ResizeObserver)new ResizeObserver(sizePreview).observe($('previewFrame'));sizePreview();
 const titles={achievement:'Academic Excellence',performance:'Good Performance',sports:'Sports Achievement',participation:'Participation',character:'Character / Conduct',leaving:'School Leaving / Transfer'};
 $('kind').addEventListener('change',()=>{$('leavingFields').classList.toggle('hidden',$('kind').value!=='leaving');if(valid)update()});
 function update(){if(!valid)return;const val=id=>$(id).value.trim(),kind=val('kind');$('schoolName').textContent=val('customSchoolName')||session.name||'School';$('schoolAddress').textContent=val('customSchoolAddress')||session.address||'';$('certificateTitle').textContent=val('customTitle')||'Certificate of '+titles[kind];$('paper').style.setProperty('--cert-primary',$('primaryColor').value);$('paper').style.setProperty('--cert-accent',$('accentColor').value);$('outIntro').textContent=val('introText')||'This certificate is proudly presented to';$('outSeal').textContent=val('sealText')||'EXCELLENCE';$('outSignatureLeft').textContent=val('signatureLeft')||'Class Teacher';$('outStudent').textContent=val('student')||'Student Name';$('outEnrollment').textContent=val('enrollment');$('outGrade').textContent=val('grade');$('outDate').textContent=val('date');$('outReference').textContent=val('reference')||'Not assigned';$('outSignatory').textContent=val('signatureRight')||val('signatory')||'Authorized signatory';$('exitDetails').classList.toggle('hidden',kind!=='leaving');$('outAdmission').textContent=val('admission')||'Not provided';$('outLeaving').textContent=val('leaving')||'Not provided';$('outReason').textContent=val('reason')||'Not provided';

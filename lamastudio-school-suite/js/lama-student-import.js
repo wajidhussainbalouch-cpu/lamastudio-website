@@ -84,33 +84,46 @@ async function readPDF(f){
  const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
  const limit=Math.min(doc.numPages,Math.min(50,Math.max(1,Number($('maxPages').value)||50)));
  if(limit<doc.numPages)throw Error('Only '+limit+' of '+doc.numPages+' pages selected. Increase the page limit before analyzing to avoid missing students.');
- const all=[];let reportMode=null;
- for(let i=1;i<=limit;i++){
-  status('Reading PDF page '+i+' / '+limit+'…');
+ // Process up to three pages simultaneously, but always combine results in PDF page order.
+ // Each worker stops taking pages after the first failure; no partial results are returned.
+ const pageResults=new Array(limit);let nextPage=1,completed=0,failure=null;
+ async function processPage(i){
   const page=await doc.getPage(i),tc=await page.getTextContent();
   const text=tc.items.map(it=>it.str+(it.hasEOL?'\\n':' ')).join('');
   const positioned=parseEmisPositionedTable(tc.items,page.view[2]-page.view[0]);
-  let parsed=[];
-  if(positioned!==null){reportMode='emis';parsed=positioned;}
-  else {
-   if(reportMode==='emis')throw Error('EMIS report layout was not recognized on page '+i+'. No records saved.');
+  let parsed=positioned;
+  if(parsed===null){
    parsed=parseLinesAsTable(text).concat(parseLabelLines(text));
    if(!parsed.length&&text.replace(/\\s/g,'').length<40){
-    status('Page '+i+' / '+limit+': scanning image with OCR…');
+    status('Recognizing scanned PDF page '+i+' / '+limit+' (OCR may take longer)…');
     const viewport=page.getViewport({scale:1.7}),canvas=document.createElement('canvas');
-    canvas.width=viewport.width;canvas.height=viewport.height;
+    canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
     await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
     const ocr=await ocrCanvas(canvas);
     parsed=parseLinesAsTable(ocr).concat(parseLabelLines(ocr));
    }
   }
-  if(!parsed.length)throw Error('No reliable student rows found on page '+i+'. Import stopped without saving.');
-  all.push(...parsed);
-  $('progressBar').style.width=Math.round(i/limit*100)+'%';
-  status('Page '+i+' / '+limit+' checked · '+all.length+' student rows recognized');
-  await new Promise(resolve=>setTimeout(resolve,0));
+  if(!parsed.length)throw Error('No reliable student rows found on page '+i+'. Nothing was saved.');
+  return {rows:parsed,emis:positioned!==null};
  }
- if(reportMode==='emis'){
+ async function worker(){
+  while(!failure){
+   const i=nextPage++;
+   if(i>limit)return;
+   try{
+    pageResults[i-1]=await processPage(i);
+    completed++;
+    $('progressBar').style.width=Math.round(completed/limit*100)+'%';
+    status('Checked '+completed+' / '+limit+' PDF pages ('+Math.round(completed/limit*100)+'%). No records saved.');
+   }catch(e){failure=e;return;}
+  }
+ }
+ await Promise.all(Array.from({length:Math.min(3,limit)},()=>worker()));
+ if(failure)throw failure;
+ const emisPages=pageResults.filter(p=>p.emis).length;
+ if(emisPages>0&&emisPages!==limit)throw Error('PDF uses inconsistent student table layouts across pages. No data saved.');
+ const all=pageResults.flatMap(p=>p.rows);
+ if(emisPages===limit){
   const serials=all.map(r=>r.__serial),unique=new Set(serials);
   if(unique.size!==serials.length||serials[0]!==1||serials.some((n,i)=>n!==i+1))
    throw Error('Student row numbering is incomplete or repeated. Expected consecutive rows from 1; found '+serials.length+'. No data saved.');

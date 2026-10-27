@@ -55,26 +55,27 @@ async function ocrCanvas(canvas){if(typeof Tesseract==='undefined')throw Error('
  * Refuse partial / inconsistent extraction rather than inventing student data.
  */
 function parseEmisPositionedTable(items,pageWidth){
+ // EMIS PDF landscape report: use column origins measured from a real 304-student
+ // school report, scaled by page width. Headers are often split into PDF fragments.
+ const scale=pageWidth/841.89;
  const cells=items.filter(t=>t&&typeof t.str==='string'&&t.str.trim()&&Array.isArray(t.transform))
-   .map(t=>({x:t.transform[4],y:t.transform[5],text:clean(t.str)}));
- const header=cells.filter(t=>/^(ENRL\s*#|F\s*\/\s*M|FATHER\s*\/\s*GUARDIAN|FORM-B)$/i.test(t.text));
- if(!header.some(t=>/ENRL/i.test(t.text))||!header.some(t=>/FORM-B/i.test(t.text)))return null;
- // Column starts are percentages of the official EMIS report's page width.
- // Validate row numbers and mandatory fields below to reject other layouts.
- const starts=[.037,.088,.154,.326,.375,.467,.510,.605,.814,.928].map(n=>n*pageWidth);
+   .map(t=>({x:t.transform[4]/scale,y:t.transform[5]/scale,text:clean(t.str)}));
+ const labels=cells.map(t=>t.text.toUpperCase());
+ if(!labels.some(t=>t.includes('ENRL'))||!labels.some(t=>t.includes('FORM-B'))||!labels.some(t=>t.includes('GUARDIAN')))return null;
+ const starts=[20,65,115,260,300,375,410,480,650,745];
+ const serials=cells.filter(t=>t.x>=25&&t.x<47&&/^\\d{1,4}$/.test(t.text))
+  .sort((a,b)=>b.y-a.y);
  const rows=[];
- const numbered=cells.filter(t=>t.x>=starts[0]-5&&t.x<starts[1]-5&&/^\d{1,4}$/.test(t.text))
-   .sort((a,b)=>b.y-a.y);
- for(let k=0;k<numbered.length;k++){
-  const current=numbered[k],next=numbered[k+1];
-  const group=cells.filter(t=>t.y<=current.y+2.5&&(next?t.y>next.y+2.5:true)&&t.y<current.y+30);
-  const cols=starts.map((left,j)=>group.filter(t=>t.x>=left-3&&t.x<(starts[j+1]??pageWidth+5)-3&&!(j===0&&t===current))
-    .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
-  const serial=Number(current.text);
-  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|PREP|[1-9]|10)$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably. Nothing was imported.');
+ for(const anchor of serials){
+  const group=cells.filter(t=>Math.abs(t.y-anchor.y)<5.5);
+  const cols=starts.map((left,j)=>group.filter(t=>t.x>=left&&t.x<(starts[j+1]??850))
+   .sort((a,b)=>a.x-b.x).map(t=>t.text).join(' ').trim());
+  const serial=Number(anchor.text);
+  if(cols[0]!==String(serial)||!cols[2]||!/^\\d{2}-[A-Z]{3}-\\d{2}$/i.test(cols[4])||!cols[7]||! /^(ECE|ECCE|NURSERY|KG|PREP|[1-9]|10)$/i.test(cols[9]))
+   throw Error('PDF student row '+serial+' has missing or misaligned fields. No data was saved.');
   rows.push({__serial:serial,'ENRL #':cols[1],NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
  }
- if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');
+ if(!rows.length)throw Error('EMIS headings found but no student rows were recognized.');
  return rows;
 }
 

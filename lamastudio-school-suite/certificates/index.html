@@ -33,9 +33,9 @@
 <script>
 const $=id=>document.getElementById(id),session=LamaAPI.getSession('school');
 let admin=null;try{admin=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}
-const valid=!!(session?.schoolId&&session?.token&&admin?.token&&admin?.schoolId===session.schoolId);
-if(!valid){$('state').textContent='School administrator login is required. Please sign in through the school administration dashboard.'}
-else{$('state').textContent='Authorized school: '+(session.name||session.schoolId);$('editor').classList.remove('hidden');$('schoolName').textContent=session.name||'School';$('schoolAddress').textContent=session.address||''}
+let valid=false;const hasCredentials=!!(session?.schoolId&&session?.token&&admin?.token&&admin?.schoolId===session.schoolId);
+if(!hasCredentials){$('state').textContent='School administrator login is required. Please sign in through the school administration dashboard.'}
+else{LamaAPI.schoolAdminVerify(session.schoolId,admin.token).then(()=>{valid=true;$('state').textContent='Verified administrator · '+(session.name||session.schoolId);$('editor').classList.remove('hidden');$('schoolName').textContent=session.name||'School';$('schoolAddress').textContent=session.address||''}).catch(()=>{$('state').textContent='Administrator session expired. Sign in again through the administration dashboard.'})}
 $('date').value=new Date().toLocaleDateString('en-CA');
 const titles={achievement:'Academic Excellence',performance:'Good Performance',sports:'Sports Achievement',participation:'Participation',character:'Character / Conduct',leaving:'School Leaving / Transfer'};
 $('kind').addEventListener('change',()=>{$('leavingFields').classList.toggle('hidden',$('kind').value!=='leaving')});

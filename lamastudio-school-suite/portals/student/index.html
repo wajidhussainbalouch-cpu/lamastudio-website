@@ -35,6 +35,7 @@ body{background:radial-gradient(circle at top left,#164e63 0%,#081923 42%,#070b1
 <p class="mt-3"><a href="../../planning/index.html?role=student" class="inline-block rounded-xl bg-cyan-600 px-4 py-2 text-white font-bold">📅 My subject timetable &amp; academic calendar</a></p>
 <p class="text-sm text-slate-400 mt-2">Teachers shown from your school's published timetable for your class and section.</p>
 <div id="teachers" class="mt-5 space-y-3 text-sm">Loading teachers…</div></section></div>
+<section class="panel p-6 no-print" aria-labelledby="myCertificatesTitle"><div class="flex flex-wrap justify-between items-center gap-3"><div><h2 id="myCertificatesTitle" class="text-xl font-black">🏅 My Certificates</h2><p class="text-sm text-slate-300 mt-1">Certificates officially issued to you by your school.</p></div><button id="reloadCertificates" type="button" class="rounded-xl bg-amber-400 text-slate-900 font-bold px-4 py-2">Refresh</button></div><p id="certificateStatus" class="mt-3 text-sm text-amber-200" role="status">Checking your certificates…</p><div id="myCertificates" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div></section>
 <div id="previewOverlay" class="fixed inset-0 z-50 bg-black/80 p-4 hidden items-center justify-center no-print" role="dialog" aria-modal="true" aria-label="Student ID preview">
 <div class="w-full max-w-xl rounded-2xl bg-[#102a35] p-5 border border-slate-500 max-h-[90vh] overflow-y-auto">
 <div class="flex justify-between items-center gap-3 mb-4"><h2 class="font-black text-xl">Student ID Card Preview</h2><button id="closePreview" class="rounded-lg bg-slate-700 px-3 py-2" type="button">Close</button></div>
@@ -62,13 +63,14 @@ el('cancelPreview').addEventListener('click',closePreview);
 el('previewOverlay').addEventListener('click',e=>{if(e.target===el('previewOverlay'))closePreview()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('previewOverlay').classList.contains('hidden'))closePreview()});
 el('confirmPrint').addEventListener('click',()=>{closePreview();window.print()});
+async function loadMyCertificates(studentId){const status=el('certificateStatus'),list=el('myCertificates');list.replaceChildren();status.textContent='Checking school certificate register…';try{const rows=await LamaAPI.list('certificates');if(!Array.isArray(rows))throw Error('Unexpected response');const own=rows.filter(r=>String(r.studentId)===String(studentId));status.textContent=own.length?own.length+' issued certificate(s) found.':'No certificates have been issued to your account yet.';for(const r of own){const article=document.createElement('article');article.className='rounded-xl border border-amber-400/30 bg-slate-900/80 p-4';const title=document.createElement('h3');title.className='text-lg font-bold text-amber-300';title.textContent=r.title||r.kind||'School Certificate';const meta=document.createElement('p');meta.className='text-sm text-slate-300 mt-2';meta.textContent=(r.issuedAt||r.createdAt||'')+' · '+(r.reference||'');article.append(title,meta);list.append(article)}}catch(e){status.textContent='Your school has not enabled secure digital certificate delivery yet.'}}let myStudentId='';el('reloadCertificates').addEventListener('click',()=>{if(myStudentId)loadMyCertificates(myStudentId)});
 async function init(){
  if(typeof LamaAPI==='undefined'||!LamaAPI.requireLogin('student',loginPage))return;
  const s=LamaAPI.getSession('student');
  if(!s?.studentId||!s?.schoolId){el('status').textContent='Session incomplete. Please sign in again.';return;}
  try{
   const st=await LamaAPI.get('students',s.studentId);
-  if(!st)throw Error('Your student record could not be found.');
+  if(!st)throw Error('Your student record could not be found.');myStudentId=s.studentId;loadMyCertificates(s.studentId);
   if(st.schoolId&&String(st.schoolId)!==String(s.schoolId))throw Error('School record mismatch.');
   el('schoolName').textContent=s.schoolName||'My School';
   el('cardSchool').textContent=s.schoolName||'My School';

@@ -31,6 +31,7 @@
     <main class="max-w-5xl mx-auto px-4 py-5 space-y-5">
 
         <div class="r3-top"><h2 class="text-xl font-black text-white">Fee Management Workspace</h2><p class="text-xs text-white mt-1">1. Set class fees → 2. Generate list → 3. Edit student fees → 4. Save pending demands. Payments are recorded separately.</p></div>
+<section class="cyber-card rounded-2xl p-5 space-y-3" aria-labelledby="feeCatalogTitle"><div class="flex flex-wrap justify-between items-center gap-3"><div><h2 id="feeCatalogTitle" class="font-black text-lg text-emerald-300">Fee Category Designer</h2><p class="text-xs text-slate-400">For private schools, academies and institutions with permitted collections. Preview only until the school-wide configuration backend is released.</p></div><a href="../settings.html" class="text-xs bg-slate-700 rounded-xl px-4 py-2">Open School Settings</a></div><div class="grid sm:grid-cols-2 gap-3"><label class="text-xs">School category<select id="previewInstitutionType" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2"><option>Private</option><option>Academy</option><option>Government</option><option>PEF</option><option>Semi-Government</option></select></label><label class="text-xs">New category<input id="previewFeeName" maxlength="70" placeholder="e.g. Library Fee" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2"></label></div><button type="button" id="previewAddFee" class="bg-emerald-700 px-4 py-2 rounded-xl text-xs font-bold">Add category to preview</button><div id="previewFeeCategories" class="flex flex-wrap gap-2"></div><p id="previewFinancePolicy" class="text-xs text-amber-300" role="status"></p><p class="text-xs text-slate-400">Categories here are a visual demonstration only; they do not yet affect live billing, payment records, or the school database.</p></section>
         <!-- Bulk class billing -->
         <section class="cyber-card-emerald rounded-2xl p-5 space-y-3" aria-label="Class-wise bulk fee generation">
           <h2 class="text-sm font-black text-emerald-400">Class-wise Monthly Fee Generator</h2>
@@ -258,7 +259,18 @@
         function printList() {
             const rows=visibleFees.map(f=>`<tr><td>${esc(f.studentName||studentFor(f)?.name||'')}</td><td>${esc(studentEnrollment(f))}</td><td>${esc(studentClass(f))}</td><td>${esc(money(f.amount))}</td><td>${esc(dateDDMMYYYY(f.date))}</td><td>${esc(f.status||'')}</td></tr>`).join('');
             const w=window.open('','_blank');if(!w){alert('Allow pop-ups to print.');return;}
-            w.document.write(`<!doctype html><html><head><title>Filtered Fee Register</title><style>@page{size:A4;margin:12mm}body{font:12px Arial,sans-serif}h1{font-size:17px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:6px;text-align:left}th{background:#eee}</style></head><body><h1>${esc($('headerSchoolName').textContent)} — Fee Register</h1><p>${visibleFees.length} records · Generated ${esc(dateDDMMYYYY(localDate()))}</p><table><thead><tr><th>Student</th><th>Enrollment</th><th>Class</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);w.document.close();w.focus();w.print();
+            w.document.write(`<!doctype html><html><head><title>Filtered Fee Register</title><style>@page{size:A4;margin:12mm}body{font:12px Arial,sans-serif}h1{font-size:17px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:6px;text-align:left}th{background:#eee}</style></head><body><h1>${esc($('headerSchoolName').textContent)} — Fee Register</h1><p>${visibleFees.length} records · Generated ${esc(dateDDMMYYYY(localDate()))}</p><table><thead><tr><th>Student</th><th>Enrollment</th><th>Class</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table><script>
+(function(){
+const items=new Set(['Tuition Fee','Admission Fee','Examination Fee','Uniform Fee','Books Fee','Student Card Fee','Parking Fee','Transport Fee','Computer / Lab Fee']);
+const $=id=>document.getElementById(id);
+function render(){
+$('previewFeeCategories').replaceChildren();
+for(const name of items){const b=document.createElement('button');b.type='button';b.className='bg-slate-800 border border-slate-600 rounded-xl px-3 py-2 text-xs';b.textContent=name+' ×';b.title='Remove from preview';b.addEventListener('click',()=>{items.delete(name);render()});$('previewFeeCategories').append(b)}
+const gov=$('previewInstitutionType').value==='Government';$('previewFinancePolicy').textContent=gov?'Government preview: tuition collection should be disabled; use NSB, FTF and Roznamcha (accounting backend pending).':'Choose the categories permitted for this institution. Tuition and other charges are not automatically enabled.';}
+$('previewAddFee').addEventListener('click',()=>{const s=$('previewFeeName').value.trim();if(s&&!Array.from(items).some(x=>x.toLowerCase()===s.toLowerCase()))items.add(s);$('previewFeeName').value='';render()});$('previewInstitutionType').addEventListener('change',render);render();
+})();
+</script>
+</body></html>`);w.document.close();w.focus();w.print();
         }
         async function init(){
             try {await renderHeader();await populateStudentSelect();initBulk();await renderFees(); if(!allStudents.length)$('classSummary').textContent='No student records returned. Check your School Admin session and Students API.';}

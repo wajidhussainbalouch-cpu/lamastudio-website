@@ -77,7 +77,7 @@ const COLLECTIONS = {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
-                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'canEnrollStudents', 'enrollmentPermissionUntil']
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'canEnrollStudents', 'enrollmentPermissionUntil', 'canCompleteStudentProfiles']
     },
     activities: {
         tab: 'Activities',
@@ -770,7 +770,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
-            if(ctx.role==='teacher' && collection==='teachers') return {id:r.id,name:r.name,assignedClass:r.assignedClass,assignedSection:r.assignedSection,canEnrollStudents:r.canEnrollStudents,enrollmentPermissionUntil:r.enrollmentPermissionUntil};
+            if(ctx.role==='teacher' && collection==='teachers') return {id:r.id,name:r.name,assignedClass:r.assignedClass,assignedSection:r.assignedSection,canEnrollStudents:r.canEnrollStudents,enrollmentPermissionUntil:r.enrollmentPermissionUntil,canCompleteStudentProfiles:r.canCompleteStudentProfiles};
             return r;
         }
     }
@@ -863,7 +863,7 @@ function updateRecord(ctx, collection, id, patch) {
             if(ctx.role==='teacher') {
                 if(collection==='students') {
                     if(!teacherOwns(ctx,existing)) throw new Error('Student outside assigned class/section.');
-                    const allowed=['subjects','teacherRemarks'];
+                    const allowed=['subjects','teacherRemarks']; if(ctx.teacher.canCompleteStudentProfiles===true || String(ctx.teacher.canCompleteStudentProfiles).toLowerCase()==='true') allowed.push('address','photo','contact','whatsapp','guardianName','guardianCell','guardianRelation','guardianAddress','guardianProfession','fatherGuardian','dob','gender','distanceFromSchool');
                     if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1)) throw new Error('Teachers may only update student marks and teacher remarks.');
                 } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
                     if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');

@@ -67,9 +67,8 @@ function parseEmisPositionedTable(items,pageWidth){
   .sort((a,b)=>b.y-a.y);
  const rows=[];
  for(const anchor of serials){
-  const group=cells.filter(t=>Math.abs(t.y-anchor.y)<5.5);
-  const cols=starts.map((left,j)=>group.filter(t=>t.x>=left&&t.x<(starts[j+1]??850))
-   .sort((a,b)=>a.x-b.x).map(t=>t.text).join(' ').trim());
+  const cols=starts.map((left,j)=>cells.filter(t=>t.x>=left&&t.x<(starts[j+1]??850)&&Math.abs(t.y-anchor.y)<(j===2?9:5.5))
+   .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
   const serial=Number(anchor.text);
   if(cols[0]!==String(serial)||!cols[2]||!/^\\d{2}-[A-Z]{3}-\\d{2}$/i.test(cols[4])||!cols[7]||! /^(ECE|ECCE|NURSERY|KG|PREP|[1-9]|10)$/i.test(cols[9]))
    throw Error('PDF student row '+serial+' has missing or misaligned fields. No data was saved.');

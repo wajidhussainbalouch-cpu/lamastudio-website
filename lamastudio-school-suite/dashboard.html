@@ -452,7 +452,7 @@ header#topOverview{background:var(--lama-header)!important}
         const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
         const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
         async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:Array.isArray(r?.records)?r.records:Array.isArray(r?.data)?r.data:Array.isArray(r?.items)?r.items:[]; } catch(e){ console.warn('Unable to load '+key,e); return []; } }
-        function handleLogout(){ LamaAPI.logout(); window.location.href='login.html'; }
+        function handleLogout(){ LamaAPI.logout('school'); sessionStorage.removeItem('lama_school_admin_auth'); window.location.replace('main-dashboard.html'); }
         function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
         function chartDefaults(){const cs=getComputedStyle(document.documentElement);const text=cs.getPropertyValue('--chartText').trim()||'#cbd5e1',muted=cs.getPropertyValue('--muted').trim()||'#94a3b8',grid=cs.getPropertyValue('--grid').trim()||'rgba(148,163,184,.06)';return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:muted,font:{size:9}},grid:{color:grid}},y:{ticks:{color:muted,font:{size:9}},grid:{color:grid}}}};}
 

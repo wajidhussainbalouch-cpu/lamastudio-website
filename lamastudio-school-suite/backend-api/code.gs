@@ -799,6 +799,11 @@ function addRecord(ctx, collection, record) {
     if (collection === 'students') {
         record = Object.assign({}, record);
         if (ctx.role === 'teacher') {
+            // Ignore untrusted teacher-supplied fields, especially credentials and privileged flags.
+            var permittedStudentFields = ['enrlNo','name','fatherGuardian','class','section','contact','whatsapp','cnic','admissionDate'];
+            var submitted = record;
+            record = {};
+            permittedStudentFields.forEach(function(k){if(submitted[k] !== undefined)record[k]=submitted[k];});
             if (!ctx.teacher.assignedClass) throw new Error('Teacher has no assigned class.');
             if (!sameClass(record.class, ctx.teacher.assignedClass) || String(record.section || '').trim().toLowerCase() !== String(ctx.teacher.assignedSection || '').trim().toLowerCase()) throw new Error('Enrollment is limited to your assigned class and section.');
             record.class = ctx.teacher.assignedClass;

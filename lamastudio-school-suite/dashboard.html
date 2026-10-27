@@ -751,7 +751,7 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
         async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
         (async()=>{
-  if(!LamaAPI.requireLogin('school','login.html'))return;
+  if(!LamaAPI.requireLogin('school','school-admin-login.html'))return;
   const school=LamaAPI.getSession('school');
   let auth=null;try{auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){}
   if(!auth||auth.schoolId!==school.schoolId||!auth.token){location.replace('school-admin-login.html');return}

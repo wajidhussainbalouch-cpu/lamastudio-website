@@ -69,6 +69,7 @@
             </div>
         </div>
 
+        <div class="rounded-xl border border-cyan-500/50 bg-cyan-950/40 p-4 text-xs text-cyan-100"><strong>Phone review preview — safe demonstration.</strong> No changes on this preview page are saved to the live school database. <a class="underline font-bold" href="finance/fee-categories-preview.html">Open Fee &amp; Government Finance Preview →</a></div>
         <!-- Settings Form -->
         <form id="settingsForm" class="space-y-4 text-xs">
             <div>
@@ -81,7 +82,7 @@
                     <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">School Type</label>
                     <select id="inType" onchange="handleSchoolTypeChange()" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 transition shadow-inner cursor-pointer">
                         <option value="Government" class="bg-slate-900">Government</option>
-                        <option value="Private" class="bg-slate-900">Private</option>
+                        <option value="Private" class="bg-slate-900">Private</option><option value="Semi-Government">Semi-Government</option><option value="PEF">PEF / Foundation Partner</option><option value="Academy">Evening Academy / Coaching Center</option><option value="Other">Other Institution</option>
                     </select>
                 </div>
                 <div>
@@ -90,7 +91,7 @@
                         <option value="Primary" class="bg-slate-900">Primary</option>
                         <option value="Middle" class="bg-slate-900">Middle</option>
                         <option value="High" class="bg-slate-900">High / Secondary</option>
-                        <option value="Higher Secondary" class="bg-slate-900">Higher Secondary</option>
+                        <option value="Higher Secondary" class="bg-slate-900">Higher Secondary</option><option value="Custom">Custom / Mixed Levels</option>
                     </select>
                 </div>
             </div>
@@ -131,6 +132,22 @@
                 </div>
             </div>
 
+<section id="academicSetup" class="space-y-4 border-t border-white/10 pt-5" aria-labelledby="academicTitle">
+<div><h2 id="academicTitle" class="text-base font-black text-purple-200">🏫 Academic Structure</h2><p class="text-slate-400 mt-1">Choose your actual classes, from Playgroup to Grade 12. Academies may select only the grades they teach. Subjects are mapped separately for each class.</p></div>
+<div class="flex flex-wrap gap-2"><button type="button" id="suggestClasses" class="bg-purple-700 rounded-xl px-4 py-2 font-bold">Suggest classes from level</button><button type="button" id="clearClasses" class="bg-slate-800 rounded-xl px-4 py-2">Clear selection</button></div>
+<div id="classChecks" class="grid grid-cols-2 sm:grid-cols-3 gap-2" role="group" aria-label="Classes offered"></div>
+<div class="grid sm:grid-cols-2 gap-3"><label class="block">Choose class to map subjects<select id="subjectClass" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3"></select></label><label class="block">Subject suggestions<select id="subjectPreset" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-3"><option value="">Choose a subject</option></select></label></div>
+<div class="flex gap-2"><input id="newSubject" maxlength="80" placeholder="Or enter a custom subject" class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-3"><button type="button" id="addSubject" class="bg-purple-700 rounded-xl px-4 py-2 font-bold">Add</button></div>
+<div id="subjectTags" class="flex flex-wrap gap-2" aria-live="polite"></div>
+</section>
+<section id="feeSetup" class="space-y-4 border-t border-white/10 pt-5" aria-labelledby="feeTitle">
+<div><h2 id="feeTitle" class="text-base font-black text-emerald-200">💳 Fee &amp; Finance Configuration</h2><p class="text-slate-400 mt-1">Configure applicable fee categories. Government institutions can keep tuition disabled while tracking NSB, FTF and daily expenditure.</p></div>
+<label class="flex items-center gap-3 bg-slate-900 rounded-xl p-3"><input id="tuitionEnabled" type="checkbox" class="w-5 h-5 accent-emerald-500"><span>Enable tuition fee collection for this institution</span></label>
+<div class="flex gap-2"><input id="newFeeCategory" maxlength="70" placeholder="New fee category (e.g. Lab Fee)" class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-3"><button id="addFeeCategory" type="button" class="bg-emerald-700 rounded-xl px-4 py-2 font-bold">Add</button></div>
+<div id="feeTags" class="flex flex-wrap gap-2" aria-live="polite"></div>
+<div id="governmentFinance" class="hidden rounded-xl border border-emerald-700/40 bg-emerald-950/20 p-4 space-y-2"><h3 class="font-bold text-emerald-300">Government funds and Roznamcha</h3><p class="text-slate-300">NSB · FTF (where applicable) · Daily income/expenses · Vouchers · Bank reconciliation</p><p class="text-slate-400">Planned accounting modules; not active in the live backend.</p></div>
+</section>
+<div class="rounded-xl bg-amber-950/40 border border-amber-600/40 p-4 space-y-2" role="note"><p class="font-bold text-amber-200">Preview build — please review before production release</p><p class="text-slate-300">Class, subject and fee-category changes are a <strong>local preview only</strong> in this build. They are not written to Google Sheets or applied to date sheets, tests, result cards, or invoices yet. The existing school profile save is separate.</p><button id="previewConfig" type="button" class="rounded-lg bg-amber-500 text-slate-950 font-black px-4 py-2">Preview configuration summary</button><pre id="previewSummary" class="hidden text-xs whitespace-pre-wrap break-words bg-slate-950 p-3 rounded-xl max-h-72 overflow-auto"></pre></div>
             <button type="submit" id="submitBtn" class="neon-glow w-full custom-gradient hover:opacity-95 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl transition shadow-xl mt-4 cursor-pointer">
                 Save & Broadcast to Dashboard
             </button>
@@ -173,14 +190,19 @@
                 }
             } else {
                 wrapper.classList.add('hidden');
-                policyTitle.innerText = 'Fee Structure Policy: Government Institution';
-                policyDesc.innerText = 'Government schools provide free education with zero mandatory tuition fees. Fee collection is hidden on dashboards.';
+                const government=type==='Government';
+                policyTitle.innerText=government?'Government Institution: NSB / FTF / Roznamcha':type==='Academy'?'Evening Academy: Flexible Fees':'Institution Fee Policy';
+                policyDesc.innerText=government?'Tuition disabled by default; NSB, FTF and daily expense accounting should replace tuition dashboards.':type==='Academy'?'Configure only taught classes and fee categories such as monthly tuition, admission and tests.':'Fee policy and subjects are configurable for each institution.';
             }
+            const govt=type==='Government';
+            document.getElementById('governmentFinance').classList.toggle('hidden',!govt);
+            document.getElementById('tuitionEnabled').checked=!govt && type!=='PEF';
+            if(typeof renderFees==='function')renderFees();
         }
 
         function handleLogout() {
-            LamaAPI.logout();
-            window.location.href = 'login.html';
+            // Preview: do not log out or modify the live school session.
+            window.location.href = 'main-dashboard.html';
         }
 
         let pendingLogo = null;
@@ -204,9 +226,9 @@
         }
 
         async function loadSettings() {
-            let school = {};
+            let school = {name:'Government Primary School Shah Sadar Din',type:'Government',level:'Primary',address:'Shah Sadar Din'};
             try {
-                school = await LamaAPI.getActiveSchool() || {};
+                // Review build: do not read or modify real school sessions.
             } catch(e) {}
             
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
@@ -233,6 +255,8 @@
 
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            showMessage('successBanner', 'Preview only — no changes were saved. Please review the class, subject and fee configuration before final deployment.');
+            return;
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.textContent = 'Broadcasting to Dashboard...';
@@ -248,11 +272,9 @@
             };
 
             if (schoolType === 'Private') {
-                patch.privateSub = document.getElementById('inPrivateSub').value;
-                patch.feeOptional = patch.privateSub.includes('PEF');
+                // Protected subscription and fee-policy fields must never be submitted.
             } else {
-                patch.privateSub = null;
-                patch.feeOptional = true;
+                // Keep protected subscription and fee-policy fields unchanged.
             }
 
             if (pendingLogo) patch.logo = pendingLogo;
@@ -268,9 +290,50 @@
             }
         });
 
-        if (typeof LamaAPI.requireLogin === 'function' ? LamaAPI.requireLogin('school') : true) {
-            loadSettings();
+
+        // Preview-only school structure: no backend mutation or cross-school localStorage.
+        const classOptions=['Playgroup','Nursery','Prep','ECCE','Kachi',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
+        const subjectDefaults={
+          early:['Early Literacy','Early Numeracy','Art','General Knowledge','English','Urdu'],
+          primary:['English','Urdu','Mathematics','General Knowledge','General Science','Islamiat','Social Studies','Computer'],
+          middle:['English','Urdu','Mathematics','General Science','Islamiat','Pakistan Studies','Computer','Social Studies'],
+          secondary:['English','Urdu','Mathematics','Physics','Chemistry','Biology','Computer Science','Islamiat','Pakistan Studies'],
+          higher:['English','Urdu','Mathematics','Physics','Chemistry','Biology','Computer Science','Statistics','Economics','Accounting','Commerce','Civics','Islamiat']
+        };
+        const selectedClasses=new Set();
+        const classSubjects={};
+        const feeCategories=new Set(['Admission Fee','Tuition Fee','Examination Fee','Books Fee','Uniform Fee','Student Card Fee','Parking Fee','Transport Fee','Computer / Lab Fee','Other Fee']);
+        const $s=id=>document.getElementById(id);
+        const esc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        function gradeGroup(cls){const n=Number((cls.match(/\d+/)||[])[0]);return !n?'early':n<=5?'primary':n<=8?'middle':n<=10?'secondary':'higher'}
+        function renderClasses(){
+          $s('classChecks').innerHTML=classOptions.map(cl=>'<label class="flex items-center gap-2 rounded-xl bg-slate-900 p-2"><input type="checkbox" data-class="'+esc(cl)+'" '+(selectedClasses.has(cl)?'checked':'')+' class="accent-purple-500"> <span>'+esc(cl)+'</span></label>').join('');
+          $s('classChecks').querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>{el.checked?selectedClasses.add(el.dataset.class):selectedClasses.delete(el.dataset.class);renderClasses()}));
+          const prev=$s('subjectClass').value;
+          $s('subjectClass').innerHTML=[...selectedClasses].map(cl=>'<option value="'+esc(cl)+'">'+esc(cl)+'</option>').join('');
+          if(selectedClasses.has(prev))$s('subjectClass').value=prev;
+          renderSubjects();
         }
+        function renderSubjects(){
+          const cl=$s('subjectClass').value,subjects=classSubjects[cl]||[];
+          $s('subjectPreset').innerHTML='<option value="">Choose a suggested subject</option>'+(subjectDefaults[gradeGroup(cl)]||[]).map(s=>'<option>'+esc(s)+'</option>').join('');
+          $s('subjectTags').innerHTML=cl?subjects.map(s=>'<button type="button" class="bg-purple-900/70 border border-purple-500/30 rounded-lg px-3 py-2" data-subject="'+esc(s)+'">'+esc(s)+' ×</button>').join('')||'<span class="text-slate-400">No subjects assigned yet.</span>':'<span class="text-amber-300">Select at least one class.</span>';
+          $s('subjectTags').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{classSubjects[cl]=classSubjects[cl].filter(s=>s!==b.dataset.subject);renderSubjects()}));
+        }
+        function renderFees(){
+          $s('feeTags').innerHTML=[...feeCategories].filter(s=>s!=='Tuition Fee'||$s('tuitionEnabled').checked).map(s=>'<button type="button" data-fee="'+esc(s)+'" class="rounded-lg px-3 py-2 bg-emerald-900/50 border border-emerald-700/40">'+esc(s)+' ×</button>').join('');
+          $s('feeTags').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{feeCategories.delete(b.dataset.fee);renderFees()}));
+        }
+        $s('suggestClasses').addEventListener('click',()=>{const level=$s('inLevel').value;const max={'Primary':5,'Middle':8,'High':10,'Higher Secondary':12}[level]||0;selectedClasses.clear();if(max){selectedClasses.add('ECCE','Kachi');for(let i=1;i<=max;i++)selectedClasses.add('Class '+i)}renderClasses()});
+        $s('clearClasses').addEventListener('click',()=>{selectedClasses.clear();renderClasses()});
+        $s('subjectClass').addEventListener('change',renderSubjects);
+        $s('addSubject').addEventListener('click',()=>{const cl=$s('subjectClass').value,s=($s('newSubject').value||$s('subjectPreset').value).trim();if(!cl||!s)return;const list=classSubjects[cl]||(classSubjects[cl]=[]);if(!list.some(x=>x.toLowerCase()===s.toLowerCase()))list.push(s);$s('newSubject').value='';renderSubjects()});
+        $s('tuitionEnabled').addEventListener('change',renderFees);
+        $s('addFeeCategory').addEventListener('click',()=>{const s=$s('newFeeCategory').value.trim();if(!s)return;if(![...feeCategories].some(x=>x.toLowerCase()===s.toLowerCase()))feeCategories.add(s);$s('newFeeCategory').value='';renderFees()});
+        $s('previewConfig').addEventListener('click',()=>{const summary={institutionType:$s('inType').value,level:$s('inLevel').value,classes:[...selectedClasses],subjects:Object.fromEntries([...selectedClasses].map(cl=>[cl,classSubjects[cl]||[]])),tuitionEnabled:$s('tuitionEnabled').checked,feeCategories:[...feeCategories].filter(s=>$s('tuitionEnabled').checked||s!=='Tuition Fee'),governmentFinance:$s('inType').value==='Government'?['NSB','FTF','Roznamcha','Bank reconciliation']:[]};$s('previewSummary').textContent=JSON.stringify(summary,null,2);$s('previewSummary').classList.remove('hidden')});
+        renderClasses();renderFees();
+
+        loadSettings();
     </script>
 </body>
 </html>

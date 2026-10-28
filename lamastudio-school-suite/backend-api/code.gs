@@ -326,8 +326,10 @@ function loginSchool(email, password) {
 function authorizeSchool(schoolId, apiKey) {
     if (!schoolId || !apiKey) throw new Error('Missing session — please log in again.');
     const registry = getRegistrySheet();
-    const match = findSchoolRow(registry, r => r.schoolId === schoolId);
-    if (!match || match.obj.apiKey !== apiKey) throw new Error('Invalid session. Please log in again.');
+    const match = findSchoolRow(registry, r => String(r.schoolId) === String(schoolId));
+    // Administrator session tokens are short-lived and school-scoped. They never reveal the registry API key.
+    if (match && match.obj.apiKey !== apiKey) verifySchoolAdminToken({schoolId:schoolId,token:apiKey});
+    if (!match) throw new Error('Invalid session. Please log in again.');
     if (match.obj.status !== 'Active') throw new Error('This account is blocked.');
     return match;
 }
@@ -1160,14 +1162,30 @@ function jsonOut(obj) {
 function schoolAdminPropertyKey(schoolId) { return 'SCHOOL_ADMIN_' + String(schoolId || '').replace(/[^A-Za-z0-9_-]/g,'_'); }
 function schoolAdminSetup(p){throw new Error('Public admin setup is disabled. Contact the Platform Super Admin.');}
 function schoolAdminLogin(p){
-  const school=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===String(p.schoolId));
-  if(!school||school.obj.status!=='Active')throw new Error('School not found or blocked.');
-  const u=adminUsers(p.schoolId),username=String(p.adminUsername||'').trim().toLowerCase();
-  const entry=u.items.find(x=>x.obj.username===username);
-  if(!entry||entry.obj.status!=='Active'||hashPassword(String(p.adminPassword||''),entry.obj.salt)!==entry.obj.passwordHash)throw new Error('Invalid administrator credentials.');
+  const username=String(p.adminUsername||'').trim().toLowerCase();
+  const password=String(p.adminPassword||'');
+  if(!username||!password)throw new Error('Administrator username and password are required.');
+  const registry=getRegistrySheet();
+  // If a school is already known, check only that tenant. Otherwise resolve by credentials
+  // without exposing school names, IDs, or administrator existence to unauthenticated callers.
+  const rows=registry.getDataRange().getValues(),headers=rows[0];
+  const candidates=rows.slice(1).map(row=>rowToRecord(headers,row))
+    .filter(s=>s.schoolId&&s.status==='Active'&&(!p.schoolId||String(s.schoolId)===String(p.schoolId)));
+  let verified=null;
+  for(const school of candidates){
+    const u=adminUsers(school.schoolId);
+    const entry=u.items.find(x=>String(x.obj.username).toLowerCase()===username);
+    if(!entry||entry.obj.status!=='Active')continue;
+    if(hashPassword(password,entry.obj.salt)!==entry.obj.passwordHash)continue;
+    if(verified)throw new Error('This administrator username is used at multiple schools. Contact your Super Admin for a school-specific login link.');
+    verified={school,entry};
+  }
+  if(!verified)throw new Error('Invalid administrator credentials.');
+  const school=verified.school,entry=verified.entry;
   const token=Utilities.getUuid()+'-'+Utilities.getUuid();
-  CacheService.getScriptCache().put('SADMIN_'+String(p.schoolId)+'_'+token,JSON.stringify({id:entry.obj.id,version:entry.obj.version}),21600);
-  return {schoolId:String(p.schoolId),token,adminId:entry.obj.id,adminName:entry.obj.displayName,expiresInSeconds:21600};
+  CacheService.getScriptCache().put('SADMIN_'+String(school.schoolId)+'_'+token,JSON.stringify({id:entry.obj.id,version:entry.obj.version}),21600);
+  return {schoolId:String(school.schoolId),token,adminId:entry.obj.id,adminName:entry.obj.displayName,expiresInSeconds:21600,
+    school:{schoolId:String(school.schoolId),name:school.name,address:school.address,phone:school.phone,principal:school.principal,type:school.type,level:school.level,logo:school.logo,coverPhoto:school.coverPhoto||'',shortCode:school.shortCode}};
 }
 function schoolAdminVerify(p){const a=verifySchoolAdminToken(p);return {valid:true,adminId:a.id,adminName:a.name};}
 

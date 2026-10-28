@@ -77,7 +77,7 @@ const COLLECTIONS = {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
-                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact']
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'canEnrollStudents', 'enrollmentPermissionUntil', 'canCompleteStudentProfiles']
     },
     activities: {
         tab: 'Activities',
@@ -692,8 +692,10 @@ function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
         if (collection === 'studentRequests' && ['list','get','update'].indexOf(action) !== -1) return;
+        if (collection === 'teachers' && action === 'get') return;
         if (TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) return; // class-scoped writes
         if (collection === 'students' && (action === 'list' || action === 'get' || action === 'update')) return;
+        if (collection === 'students' && action === 'add' && (ctx.teacher.canEnrollStudents === true || String(ctx.teacher.canEnrollStudents).toLowerCase() === 'true') && (!ctx.teacher.enrollmentPermissionUntil || String(ctx.teacher.enrollmentPermissionUntil).slice(0,10) >= Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'))) return;
         if (collection === 'notifications' && (action === 'list' || action === 'get' || action === 'add')) return;
         if (TEACHER_READ_COLLECTIONS.indexOf(collection) !== -1 && (action === 'list' || action === 'get')) return;
         throw new Error('Teachers do not have permission for this action.');
@@ -754,6 +756,7 @@ function listRecords(ctx, collection) {
 
 function getRecord(ctx, collection, id) {
     checkPermission(ctx, 'get', collection);
+    if (ctx.role === 'teacher' && collection === 'teachers' && String(id) !== String(ctx.teacher.id)) throw new Error('Teachers may only view their own permission settings.');
     if (ctx.role === 'student' && collection === 'students' && id !== ctx.student.id) {
         throw new Error('Students can only view their own record.');
     }
@@ -767,6 +770,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
+            if(ctx.role==='teacher' && collection==='teachers') return {id:r.id,name:r.name,assignedClass:r.assignedClass,assignedSection:r.assignedSection,canEnrollStudents:r.canEnrollStudents,enrollmentPermissionUntil:r.enrollmentPermissionUntil,canCompleteStudentProfiles:r.canCompleteStudentProfiles};
             return r;
         }
     }
@@ -788,6 +792,39 @@ function addRecord(ctx, collection, record) {
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
+    // Enforce uniqueness at the school database, not only in the browser.
+    // A class is not a unique identity: students can change classes or sessions.
+    var enrollmentLock = collection === 'students' ? LockService.getScriptLock() : null;
+    if (enrollmentLock && !enrollmentLock.tryLock(15000)) throw new Error('Enrollment is busy. Please retry.');
+    try {
+    if (collection === 'students') {
+        record = Object.assign({}, record);
+        if (ctx.role === 'teacher') {
+            // Ignore untrusted teacher-supplied fields, especially credentials and privileged flags.
+            var permittedStudentFields = ['enrlNo','name','fatherGuardian','class','section','contact','whatsapp','cnic','admissionDate'];
+            var submitted = record;
+            record = {};
+            permittedStudentFields.forEach(function(k){if(submitted[k] !== undefined)record[k]=submitted[k];});
+            if (!ctx.teacher.assignedClass) throw new Error('Teacher has no assigned class.');
+            if (!sameClass(record.class, ctx.teacher.assignedClass) || String(record.section || '').trim().toLowerCase() !== String(ctx.teacher.assignedSection || '').trim().toLowerCase()) throw new Error('Enrollment is limited to your assigned class and section.');
+            record.class = ctx.teacher.assignedClass;
+            record.section = ctx.teacher.assignedSection || '';
+            record.enrolledByTeacherId = ctx.teacher.id;
+            record.enrolledByTeacherName = ctx.teacher.name;
+        }
+        record.enrlNo = String(record.enrlNo || '').trim();
+        record.name = String(record.name || '').trim();
+        if (!record.enrlNo || !record.name || !String(record.class || '').trim()) throw new Error('Enrollment number, name and class are required.');
+        var existingSheet = getCollectionSheet(ctx, 'students');
+        var existingData = existingSheet.sheet.getDataRange().getValues();
+        var eCol = existingSheet.headers.indexOf('enrlNo'), bCol = existingSheet.headers.indexOf('cnic');
+        var normalizeId = function(v){return String(v || '').replace(/[\s-]/g,'').toLowerCase();};
+        var wantedId = normalizeId(record.enrlNo), wantedB = normalizeId(record.cnic);
+        for (var si=1;si<existingData.length;si++){
+            if (normalizeId(existingData[si][eCol]) === wantedId) throw new Error('Enrollment number already exists at this school.');
+            if (wantedB && bCol >= 0 && normalizeId(existingData[si][bCol]) === wantedB) throw new Error('B-Form number already exists at this school.');
+        }
+    }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
@@ -799,7 +836,16 @@ function addRecord(ctx, collection, record) {
     if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
     sheet.appendRow(recordToRow(headers, full));
     if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add',collection,id,null,full);
+    if (collection === 'students') {
+        // Notification is non-blocking: never duplicate an enrollment because a message failed.
+        try {
+            var nSheet = getCollectionSheet(ctx, 'notifications');
+            var notification = {id:genId('not'),title:'New student enrolled',message:'Student '+full.name+' (Enrollment '+full.enrlNo+') joined Class '+full.class+(full.section?' / '+full.section:'')+'.',audience:'school',status:'Published',isPublished:true,createdAt:new Date().toISOString()};
+            nSheet.sheet.appendRow(recordToRow(nSheet.headers,notification));
+        } catch(notifyError){console.error('Enrollment notification failed: '+notifyError.message);}
+    }
     return full;
+    } finally {if(enrollmentLock)enrollmentLock.releaseLock();}
 }
 
 function updateRecord(ctx, collection, id, patch) {
@@ -817,11 +863,25 @@ function updateRecord(ctx, collection, id, patch) {
             if(ctx.role==='teacher') {
                 if(collection==='students') {
                     if(!teacherOwns(ctx,existing)) throw new Error('Student outside assigned class/section.');
-                    const allowed=['subjects','teacherRemarks'];
+                    const allowed=['subjects','teacherRemarks']; if(ctx.teacher.canCompleteStudentProfiles===true || String(ctx.teacher.canCompleteStudentProfiles).toLowerCase()==='true') allowed.push('address','photo','contact','whatsapp','guardianName','guardianCell','guardianRelation','guardianAddress','guardianProfession','fatherGuardian','dob','gender','distanceFromSchool');
                     if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1)) throw new Error('Teachers may only update student marks and teacher remarks.');
                 } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
                     if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');
                     patch=Object.assign({},patch,{class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||''});
+                }
+            }
+            if (collection === 'teachers' && ctx.role === 'school' && (Object.prototype.hasOwnProperty.call(patch,'canEnrollStudents') || Object.prototype.hasOwnProperty.call(patch,'enrollmentPermissionUntil'))) {
+                var granting = patch.canEnrollStudents === true || String(patch.canEnrollStudents).toLowerCase() === 'true' || (!Object.prototype.hasOwnProperty.call(patch,'canEnrollStudents') && (existing.canEnrollStudents === true || String(existing.canEnrollStudents).toLowerCase() === 'true'));
+                if (granting) {
+                    if (!existing.assignedClass) throw new Error('Assign a class before granting enrollment authority.');
+                    var activeGrants=0, teacherIdIndex=headers.indexOf('id'), grantIndex=headers.indexOf('canEnrollStudents'), expiryIndex=headers.indexOf('enrollmentPermissionUntil');
+                    var today=Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyyy-MM-dd');
+                    for(var g=1;g<data.length;g++){
+                        if(String(data[g][teacherIdIndex])===String(id))continue;
+                        var hasGrant=String(data[g][grantIndex]).toLowerCase()==='true', expiry=expiryIndex>=0?String(data[g][expiryIndex]||'').slice(0,10):'';
+                        if(hasGrant && (!expiry || expiry>=today))activeGrants++;
+                    }
+                    if(activeGrants>=2)throw new Error('Maximum two enrollment officers per school. Revoke an existing grant first.');
                 }
             }
             if (collection === 'studentRequests') {

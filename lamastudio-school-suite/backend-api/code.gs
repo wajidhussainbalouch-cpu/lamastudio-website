@@ -1255,11 +1255,13 @@ function adminGetAudit(p){
 function handleRequest(params) {
     const action = params.action;
     try {
-        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','add','update','remove'];
+        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
         switch (action) {
+            case 'importStudentsBatch':
+                return {status:'success',result:importStudentsBatch(params)};
             case 'adminListSchoolUsers': return {status:'success',users:adminListSchoolUsers(params)};
             case 'adminSaveSchoolUser': return {status:'success',user:adminSaveSchoolUser(params)};
             case 'adminGetAudit': return {status:'success',records:adminGetAudit(params)};
@@ -1355,10 +1357,100 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','add','update','remove'];
+    const blocked=['schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
 
 
 
+
+/**
+ * Authenticated, duplicate-aware student import.
+ * This function is integrated into the existing Master Backend, not a second
+ * Apps Script file. The existing deployment URL and spreadsheets are retained.
+ */
+function importStudentsBatch(params) {
+    if (!params || (params.role || 'school') !== 'school' || !params._auditActor) {
+        throw new Error('School administrator authorization required.');
+    }
+    const incoming = params.records;
+    if (!Array.isArray(incoming) || incoming.length < 1 || incoming.length > 400) {
+        throw new Error('Submit between 1 and 400 students.');
+    }
+    const ctx = resolveContext(params);
+    assertSchoolWritable(ctx.schoolId);
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(30000)) throw new Error('Import is busy. Please retry.');
+    try {
+        const info = getCollectionSheet(ctx, 'students');
+        const sheet = info.sheet, headers = info.headers;
+        const ei = headers.indexOf('enrlNo');
+        const ni = headers.indexOf('name');
+        const fi = headers.indexOf('fatherGuardian');
+        const ci = headers.indexOf('cnic');
+        if (ei < 0 || ni < 0 || fi < 0) throw new Error('Students sheet is missing required columns.');
+        const idKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/[\\s-]/g, '');
+        const nameKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/\\s+/g, ' ');
+        const existing = sheet.getDataRange().getValues();
+        const enrollmentSet = new Set(), formSet = new Set(), personSet = new Set();
+        for (let i = 1; i < existing.length; i++) {
+            const r = existing[i], enrl = idKey(r[ei]), form = ci >= 0 ? idKey(r[ci]) : '';
+            const name = nameKey(r[ni]), father = nameKey(r[fi]);
+            if (enrl) enrollmentSet.add(enrl);
+            if (form && form !== '0') formSet.add(form);
+            if (name && father) personSet.add(name + '|' + father);
+        }
+        const protectedFields = new Set(['id','apiKey','password','createdAt']);
+        const allowedFields = new Set(headers.filter(h => !protectedFields.has(h)));
+        const rows = [], details = [];
+        let skipped = 0, rejected = 0;
+        const now = new Date().toISOString();
+        incoming.forEach((source, i) => {
+            const row = i + 1;
+            if (!source || typeof source !== 'object' || Array.isArray(source)) {
+                rejected++;
+                details.push({row:row,status:'rejected',reason:'Invalid record'});
+                return;
+            }
+            const enrl = idKey(source.enrlNo), name = nameKey(source.name);
+            const father = nameKey(source.fatherGuardian), form = idKey(source.cnic);
+            const cls = String(source.class == null ? '' : source.class).trim();
+            if (!enrl || !name || !cls || !/^[A-Z0-9]{1,40}$/.test(enrl) || cls.length > 40) {
+                rejected++;
+                details.push({row:row,enrollment:enrl,status:'rejected',reason:'Invalid enrollment, name or class'});
+                return;
+            }
+            const person = father ? name + '|' + father : '';
+            if (enrollmentSet.has(enrl) || (form && form !== '0' && formSet.has(form)) || (person && personSet.has(person))) {
+                skipped++;
+                details.push({row:row,enrollment:enrl,status:'skipped',reason:'Already exists or duplicate in batch'});
+                return;
+            }
+            const record = {};
+            Object.keys(source).forEach(k => { if (allowedFields.has(k)) record[k] = source[k]; });
+            record.enrlNo = enrl;
+            record.name = String(source.name).trim();
+            record.class = cls;
+            record.id = genId('stu');
+            record.apiKey = Utilities.getUuid();
+            record.password = enrl; // Preserve existing student-login convention.
+            record.createdAt = now;
+            rows.push(recordToRow(headers, record));
+            enrollmentSet.add(enrl);
+            if (form && form !== '0') formSet.add(form);
+            if (person) personSet.add(person);
+            details.push({row:row,enrollment:enrl,status:'added'});
+        });
+        if (rows.length) {
+            sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, headers.length).setValues(rows);
+            SpreadsheetApp.flush();
+        }
+        writeAudit(ctx.ss,ctx.schoolId,params._auditActor,'import','students','',null,
+            {submitted:incoming.length,added:rows.length,skipped:skipped,rejected:rejected});
+        return {success:true,schoolId:ctx.schoolId,total:incoming.length,added:rows.length,
+            skipped:skipped,rejected:rejected,details:details};
+    } finally {
+        lock.releaseLock();
+    }
+}

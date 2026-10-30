@@ -30,7 +30,7 @@ medicalNotes:['medicalnotes'],remarks:['admissionremarks','remarks','comments','
 const fieldLabels=Object.fromEntries(Object.keys(fieldDefs).map(k=>[k,k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase())]));
 const ignored=new Set(['historicalResults','marks','result','testMarks','interviewMarks','grade','password','portalLoginId','id','_id']);
 let mode='excel',files=[],students=[],rows=[],mapping={},preview=[],busy=false;
-const STUDENT_IMPORT_READ_ONLY = true;
+const STUDENT_IMPORT_READ_ONLY = false;
 const personKey=v=>normalize(String(v||'').replace(/^\s*\(f\)\s*/i,'').replace(/\b(muhammad|mohammad|muhamad|muhammed|muhamnmad|muhammand)\b/ig,'muhammad').replace(/\b(ghulam|gulam|ghulsm)\b/ig,'ghulam').replace(/\b(bakhsh|bukhsh|box)\b/ig,'bakhsh'));
 function classKey(v){let n=normalize(v);if(['nursery','preprimary','katchi','kg'].includes(n))return 'katchi';if(['ecce','ece','earlychildhood'].includes(n))return 'ecce';return n.replace(/^class/,'')}
 function fileClass(name){const n=String(name||'').toLowerCase();const m=n.match(/class[\s_-]*(ecce|ece|katchi|nursery|\d+)/i);return m?classKey(m[1]):''}
@@ -178,30 +178,39 @@ function renderPreview(){
 }
 async function analyze(){if(!files.length){status('Choose one or more files first.');return}setBusy(true);clearPreview();try{if(typeof LamaAPI==='undefined')throw Error('LamaAPI not found.');if(LamaAPI.requireLogin&&!LamaAPI.requireLogin('school','login.html'))return;const loaded=await LamaAPI.list('students');students=Array.isArray(loaded)?loaded:Array.isArray(loaded?.records)?loaded.records:Array.isArray(loaded?.data)?loaded.data:[];rows=[];for(let i=0;i<files.length;i++){const f=files[i];status('Processing '+(i+1)+' / '+files.length+': '+f.name);const ext=f.name.split('.').pop().toLowerCase();let part;if(['xlsx','xls','xlsm','csv'].includes(ext))part=await readExcel(f);else if(['docx','doc'].includes(ext))part=await readWord(f);else if(ext==='pdf')part=await readPDF(f);else if(['png','jpg','jpeg','webp'].includes(ext))part=await readImage(f);else throw Error('Unsupported format: '+ext);const sourceClass=fileClass(f.name);part.forEach(r=>{r.__sourceClass=sourceClass});rows.push(...part)}if(!rows.length)throw Error('No student records were recognized. Check the file layout; no changes were made.');deriveMapping();makePreview();status('Analysis complete: '+rows.length+' rows found. Review the table: new students may be added, existing students will be skipped, and uncertain rows need manual review. Nothing has been saved.');$('progressBar').style.width='100%';$('loadCount').textContent=students.length+' existing students loaded.'}catch(e){status('Could not finish analysis: '+e.message+'. No students were added. Try a digital-text PDF or Excel/CSV if the PDF layout is not recognized.')}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||!preview.some(x=>x.reason==='New student')}}
 async function apply(){
- if(STUDENT_IMPORT_READ_ONLY){status('Preview-only release: saving student records is disabled until validation is complete. No changes were made.');return;}
-
- const todo=preview.filter(x=>x.reason==='New student');if(!todo.length)return;
+ if(STUDENT_IMPORT_READ_ONLY){status('Student saving is not enabled.');return;}
+ const todo=preview.filter(x=>x.reason==='New student');
+ if(!todo.length)return status('No approved new students to save.');
  if(!$('confirmReview').checked)return status('Review the preview and confirm first.');
- if(!confirm('Create '+todo.length+' NEW student records? Existing enrolled students will be skipped. Make sure you have backed up the school sheet.'))return;
- setBusy(true);let done=0,skipped=0,failed=0;
+ if(typeof LamaAPI.importStudentsBatch!=='function')return status('Batch import API unavailable. Refresh the page; no records saved.');
+ if(!confirm('Save up to '+todo.length+' NEW students to this school? Existing records will be skipped. Make sure you have a backup.'))return;
+ setBusy(true);
  try{
-  const live=await LamaAPI.list('students');const current=Array.isArray(live)?live:live?.records||[];
-  const usedId=new Set(current.map(s=>normalize(enroll(s))).filter(Boolean));
-  const usedForm=new Set(current.map(s=>normalize(s.cnic||s.formB||s.bForm||'')).filter(x=>x&&x!=='0'));
-  const usedPerson=new Set(current.map(s=>personKey(s.name)+'|'+personKey(s.fatherGuardian||s.fatherName||s.father||'')));
-  for(let i=0;i<todo.length;i++){
-   const v=todo[i].values,id=normalize(v.enrlNo),form=normalize(v.cnic),person=personKey(v.name)+'|'+personKey(v.fatherGuardian);
-   if((id&&usedId.has(id))||(form&&form!=='0'&&usedForm.has(form))||(v.fatherGuardian&&usedPerson.has(person))){skipped++;continue}
-   const record={...v,class:v.class||todo[i].sourceClass};
-   // Missing fields stay empty; do not invent enrollment, Form-B, contact, dates, or credentials.
-   delete record.photo;
-   try{const result=await LamaAPI.add('students',record);if(result===false||result?.success===false)throw Error(result?.message||'API rejected record');done++;if(id)usedId.add(id);if(form&&form!=='0')usedForm.add(form);usedPerson.add(person)}
-   catch(e){failed++;status('Save error at source row '+todo[i].index+': '+e.message)}
-   $('progressBar').style.width=Math.round((i+1)/todo.length*100)+'%';$('saveCount').textContent=(i+1)+' / '+todo.length;
+  // Recheck the live student register; never trust a stale PDF preview.
+  const live=await LamaAPI.list('students');
+  if(!Array.isArray(live))throw Error('Could not verify current students. No import attempted.');
+  const usedId=new Set(live.map(s=>normalize(enroll(s))).filter(Boolean));
+  const usedForm=new Set(live.map(s=>normalize(s.cnic||s.formB||s.bForm||'')).filter(x=>x&&x!=='0'));
+  const usedPerson=new Set(live.filter(s=>s.name&&s.fatherGuardian).map(s=>personKey(s.name)+'|'+personKey(s.fatherGuardian)));
+  const unique=[],seen=new Set();let preSkipped=0;
+  for(const item of todo){
+   const v=item.values,id=normalize(v.enrlNo),form=normalize(v.cnic),person=personKey(v.name)+'|'+personKey(v.fatherGuardian);
+   if(!id||!v.name||!(v.class||item.sourceClass)){preSkipped++;continue;}
+   if(usedId.has(id)||(form&&form!=='0'&&usedForm.has(form))||(v.fatherGuardian&&usedPerson.has(person))||seen.has(id)){preSkipped++;continue;}
+   const record={...v,class:v.class||item.sourceClass};delete record.photo;
+   unique.push(record);seen.add(id);
+   usedId.add(id);if(form&&form!=='0')usedForm.add(form);if(v.fatherGuardian)usedPerson.add(person);
   }
-  status('Finished: '+done+' new students added, '+skipped+' duplicates skipped, '+failed+' failed. Reload and verify the student register.');
-  $('confirmReview').checked=false;$('apply').disabled=true;
- }catch(e){status('Import stopped: '+e.message)}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=true}
+  if(!unique.length){status('No new eligible students. '+preSkipped+' skipped; nothing written.');return;}
+  const result=await LamaAPI.importStudentsBatch(unique);
+  if(!result||result.success!==true)throw Error('Import did not return a verified success response. Check the school register before retrying.');
+  $('progressBar').style.width='100%';
+  $('saveCount').textContent=result.added+' added · '+(result.skipped+preSkipped)+' skipped · '+result.rejected+' rejected';
+  status('Import completed: '+result.added+' added, '+(result.skipped+preSkipped)+' duplicates skipped, '+result.rejected+' rejected. Verify the student register before importing another file.');
+  $('confirmReview').checked=false;
+  await analyze();
+ }catch(e){status('Import stopped: '+e.message+' Check the student register before retrying.');}
+ finally{busy=false;$('analyze').disabled=false;$('apply').disabled=true;}
 }
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function downloadReport(){

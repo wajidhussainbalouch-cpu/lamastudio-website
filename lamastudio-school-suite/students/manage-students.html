@@ -121,15 +121,47 @@ function updateStudentSelectionUI(){
  $('deleteSelectedBtn').disabled=selectedStudentIds.size===0||deleteInProgress;
  const all=$('selectAllStudents');if(all){all.checked=ids.length>0&&selected===ids.length;all.indeterminate=selected>0&&selected<ids.length}
 }
+function confirmStudentBulkDelete(count){
+ return new Promise(resolve=>{
+  const shade=document.createElement('div');shade.setAttribute('role','dialog');shade.setAttribute('aria-modal','true');
+  shade.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px';
+  const panel=document.createElement('div');panel.style.cssText='background:#111827;color:white;border:1px solid #64748b;border-radius:18px;padding:22px;width:100%;max-width:460px';
+  const title=document.createElement('h2');title.textContent='Delete '+count+' student records?';title.style.cssText='font-size:20px;font-weight:800;margin-bottom:12px';
+  const note=document.createElement('p');note.textContent='Export a backup first. Type DELETE '+count+' below to confirm permanent removal of selected students.';note.style.cssText='font-size:14px;line-height:1.6;margin-bottom:14px';
+  const field=document.createElement('input');field.type='text';field.autocomplete='off';field.placeholder='DELETE '+count;field.style.cssText='width:100%;padding:12px;border-radius:9px;color:#111827;background:white;margin-bottom:14px';
+  const actions=document.createElement('div');actions.style.cssText='display:flex;gap:10px;justify-content:flex-end';
+  const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.style.cssText='padding:12px 16px;background:#475569;border-radius:9px;font-weight:bold';
+  const yes=document.createElement('button');yes.type='button';yes.textContent='Delete '+count;yes.disabled=true;yes.style.cssText='padding:12px 16px;background:#be123c;border-radius:9px;font-weight:bold;opacity:.4';
+  const esc=e=>{if(e.key==='Escape')finish(false)};
+  function finish(value){document.removeEventListener('keydown',esc);shade.remove();resolve(value)}
+  cancel.onclick=()=>finish(false);yes.onclick=()=>finish(true);
+  field.oninput=()=>{yes.disabled=field.value.trim()!=='DELETE '+count;yes.style.opacity=yes.disabled?'.4':'1'};
+  actions.append(cancel,yes);panel.append(title,note,field,actions);shade.append(panel);document.body.append(shade);document.addEventListener('keydown',esc);field.focus();
+ });
+}
 async function deleteSelectedStudents(){
- if(deleteInProgress)return;const targets=allStudents.filter(s=>selectedStudentIds.has(String(s.id??s._id??'')));
+ if(deleteInProgress)return;
+ const targets=allStudents.filter(s=>selectedStudentIds.has(String(s.id??s._id??'')));
  if(!targets.length){clearStudentSelection();return}
  const count=targets.length;
- if(!confirm(`Permanently delete ${count} selected student record${count===1?'':'s'}? This cannot be undone.`))return;
- const phrase=prompt(`To confirm deletion of ${count} student records, type DELETE ${count}`);
- if(phrase!==`DELETE ${count}`){$('bulkStatus').textContent='Bulk deletion cancelled.';return}
+ const approved=await confirmStudentBulkDelete(count);
+ if(!approved){$('bulkStatus').textContent='Bulk deletion cancelled; no records changed.';return}
  deleteInProgress=true;updateStudentSelectionUI();let ok=0;const failures=[];
- try{for(const s of targets){const id=String(s.id??s._id??'');try{const r=await LamaAPI.remove(STUDENTS,id);if(r===false||r?.success===false)throw Error(r?.message||'API rejected deletion');selectedStudentIds.delete(id);ok++}catch(e){failures.push(`${s.name||id}: ${e.message}`)}}await loadStudents();$('bulkStatus').textContent=`${ok} deleted; ${failures.length} failed.`;if(failures.length)alert('Some records could not be deleted:\n'+failures.slice(0,10).join('\n'))}finally{deleteInProgress=false;updateStudentSelectionUI()}
+ $('bulkStatus').textContent='Deleting 0 of '+count+' students… Keep this page open.';
+ try{
+  for(const s of targets){
+   const id=String(s.id??s._id??'');
+   try{
+    const result=await LamaAPI.remove(STUDENTS,id);
+    if(result===false||result?.success===false)throw Error(result?.message||'API rejected deletion');
+    selectedStudentIds.delete(id);ok++;
+   }catch(e){failures.push((s.name||id)+': '+e.message)}
+   $('bulkStatus').textContent='Deleting '+(ok+failures.length)+' of '+count+'… '+ok+' deleted, '+failures.length+' failed. Keep this page open.';
+  }
+  await loadStudents();
+  $('bulkStatus').textContent='Completed: '+ok+' deleted, '+failures.length+' failed.';
+  if(failures.length)alert('Some records could not be deleted:\\n'+failures.slice(0,10).join('\\n'));
+ }finally{deleteInProgress=false;updateStudentSelectionUI()}
 }
 
 function compressPhoto(data){return new Promise(resolve=>{const im=new Image();im.onload=()=>{const max=1000,sc=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*sc));c.height=Math.max(1,Math.round(im.height*sc));c.getContext('2d').drawImage(im,0,0,c.width,c.height);let q=.82,r;for(let i=0;i<12;i++){r=c.toDataURL('image/jpeg',q);if(r.length<45000||q<=.2)break;q-=.06;}resolve(r)};im.onerror=()=>resolve('');im.src=data;});}

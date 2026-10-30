@@ -67,7 +67,7 @@ async function ocrCanvas(canvas){if(typeof Tesseract==='undefined')throw Error('
 function parseEmisPositionedTable(items,pageWidth){
  const cells=items.filter(t=>t&&typeof t.str==='string'&&t.str.trim()&&Array.isArray(t.transform))
    .map(t=>({x:t.transform[4],y:t.transform[5],text:clean(t.str)}));
- const header=cells.filter(t=>/^(ENRL\s*#|F\s*\/\s*M|FATHER\s*\/\s*GUARDIAN|FORM-B)$/i.test(t.text));
+ const header=cells.filter(t=>/^(ENRL|FORM-B|FATHER|CLASS)$/i.test(t.text));
  if(!header.some(t=>/ENRL/i.test(t.text))||!header.some(t=>/FORM-B/i.test(t.text)))return null;
  // Column starts are percentages of the official EMIS report's page width.
  // Validate row numbers and mandatory fields below to reject other layouts.

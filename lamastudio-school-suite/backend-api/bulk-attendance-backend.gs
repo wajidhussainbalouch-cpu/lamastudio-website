@@ -149,8 +149,67 @@ function bulkAttendanceRecords(params) {
         .setValues(additions);
     }
     SpreadsheetApp.flush();
-    return { saved: incoming.length, inserted: additions.length, updated: updates.length };
+    // Notification delivery is separate from attendance persistence. A failure
+    // here must not make the client retry an already-saved attendance batch.
+    let notificationResult = {created:0,updated:0,error:''};
+    try {
+      notificationResult = syncAttendanceParentNotifications(ctx, date, incoming, byStudentId);
+    } catch (notificationError) {
+      notificationResult.error = String(notificationError.message || notificationError);
+      console.error('Attendance saved, notification sync failed: '+notificationResult.error);
+    }
+    return { saved: incoming.length, inserted: additions.length, updated: updates.length, notifications: notificationResult };
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * One private, idempotent parent-portal notification per student/date.
+ * Uses the existing school Notifications tab; never sends WhatsApp.
+ * The master Code.gs must include studentId/date/notificationType in
+ * the notifications schema and restrict student reads to their own records.
+ */
+function syncAttendanceParentNotifications(ctx, date, incoming, byStudentId) {
+  const result = {created:0,updated:0,error:''};
+  const data = getCollectionSheet(ctx, 'notifications');
+  const sheet = data.sheet, headers = data.headers;
+  const required = ['id','studentId','date','notificationType','title','message','status','isPublished'];
+  if (required.some(h => headers.indexOf(h) < 0)) {
+    throw new Error('Notification schema not upgraded: '+required.filter(h=>headers.indexOf(h)<0).join(','));
+  }
+  const rows = sheet.getDataRange().getValues();
+  const existing = new Map();
+  for (let i=1;i<rows.length;i++) {
+    const n=rowToRecord(headers,rows[i]);
+    if (String(n.notificationType)==='attendanceAbsence' && String(n.date).slice(0,10)===date && n.studentId) {
+      existing.set(String(n.studentId),{row:i+1,record:n});
+    }
+  }
+  const append=[];
+  const now=new Date().toISOString();
+  incoming.forEach(rec=>{
+    const student=byStudentId.get(String(rec.studentId||'').trim());
+    if (!student) return;
+    const sid=String(student.id), previous=existing.get(sid);
+    const absent=rec.status==='Absent';
+    if (!absent && !previous) return;
+    const next=Object.assign({},previous?previous.record:{},{
+      id:previous?previous.record.id:genId('not'),
+      studentId:sid,date:date,notificationType:'attendanceAbsence',
+      audience:'student',channel:'in-app',status:absent?'Active':'Resolved',
+      isPublished:absent,
+      title:absent?'Attendance alert — '+date:'Attendance corrected — '+date,
+      message:absent?'Your child '+String(student.name||'')+' was marked absent on '+date+'. Contact the school if this is incorrect.':'The absence for '+date+' has been corrected.',
+      createdAt:previous?previous.record.createdAt:now
+    });
+    if(previous) {
+      sheet.getRange(previous.row,1,1,headers.length).setValues([recordToRow(headers,next)]);
+      result.updated++;
+    } else {
+      append.push(recordToRow(headers,next));result.created++;
+    }
+  });
+  if(append.length)sheet.getRange(sheet.getLastRow()+1,1,append.length,headers.length).setValues(append);
+  return result;
 }

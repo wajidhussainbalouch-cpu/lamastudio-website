@@ -46,10 +46,10 @@ function setMode(v){
  $('headerRow').parentElement.classList.remove('hidden');
  $('files').accept='.xlsx,.xls,.xlsm,.csv,.docx,.doc,.pdf,.png,.jpg,.jpeg,.webp';
  $('acceptHint').textContent='Excel, CSV, Word, PDF, JPG, PNG or WebP — automatically detected';
- files=[];$('files').value='';$('selectedFiles').textContent='';clearPreview();
+ files=[];$('files').value='';$('selectedFiles').textContent='No file selected yet.';clearPreview();
 }
 function clearPreview(){rows=[];preview=[];mapping={};$('mapping').textContent='';$('preview').innerHTML='<div style="padding:20px" class="muted tiny">No preview yet.</div>';$('stats').textContent='No preview yet';$('apply').disabled=true;$('progressBar').style.width='0';$('confirmReview').checked=false}
-function setFiles(list){files=Array.from(list||[]);$('selectedFiles').innerHTML=files.map(f=>'<span class="badge">'+escapeHTML(f.name)+' ('+Math.ceil(f.size/1024)+' KB)</span>').join('')}
+function setFiles(list){files=Array.from(list||[]);$('selectedFiles').innerHTML=files.length?'<strong>✓ '+files.length+' file(s) selected</strong><div>'+files.map(f=>'<span class="badge">'+escapeHTML(f.name)+' ('+Math.ceil(f.size/1024)+' KB)</span>').join(' ')+'</div><div class="muted tiny">Now tap Check Student Records to read and preview this file.</div>':'No file selected yet.';if(files.length)status('File selected: '+files.map(f=>f.name).join(', ')+'. Tap Check Student Records.');}
 function detect(header){const n=normalize(header);if(!n)return'';for(const [key,aliases] of Object.entries(fieldDefs))if(aliases.some(a=>n===a))return key;for(const [key,aliases] of Object.entries(fieldDefs))if(aliases.some(a=>n.includes(a)&&a.length>=5))return key;return''}
 function parseTable(table){if(!table.length)return[];let header=table[0].map(clean);let count=0;for(const h of header)if(detect(h))count++;if(count<2)return[];return table.slice(1).filter(r=>r.some(x=>!empty(x))).map(r=>Object.fromEntries(header.map((h,i)=>[h,clean(r[i])]).filter(([h])=>h)))}
 function parseLabelLines(text){const records=[],blocks=text.split(/\n\s*\n|(?=Enrollment\s*(?:No|Number|ID)\s*[:#])/i);for(const block of blocks){const item={};for(const line of block.split(/\n/)){const m=line.match(/^\s*([^:：]{2,42})\s*[:：]\s*(.{1,160})\s*$/);if(m)item[clean(m[1])]=clean(m[2])}if(Object.keys(item).length>=2)records.push(item)}return records}

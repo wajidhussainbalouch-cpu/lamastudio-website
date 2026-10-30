@@ -64,7 +64,7 @@
         <div class="flex items-center gap-4 border-b border-white/10 pb-5">
             <div id="logoPreview" class="w-16 h-16 rounded-2xl custom-gradient flex items-center justify-center text-white font-black text-base flex-shrink-0 shadow-lg border-2 border-white/10 overflow-hidden">SCH</div>
             <div class="flex-grow space-y-1.5">
-                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">School Logo <span class="text-slate-500 font-normal">(small image, e.g. under 100KB)</span></label>
+                <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">School Logo <span class="text-slate-500 font-normal">(automatically optimized to under 30 KB)</span></label>
                 <input type="file" accept="image/*" id="inLogo" onchange="previewLogo(this)" class="w-full text-xs text-slate-300 file:bg-purple-600 file:hover:bg-purple-500 file:text-white file:font-semibold file:border-0 file:rounded-xl file:px-3 file:py-2 file:cursor-pointer transition">
             </div>
         </div>
@@ -185,14 +185,54 @@
 
         let pendingLogo = null;
 
-        function previewLogo(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    pendingLogo = e.target.result;
-                    document.getElementById('logoPreview').innerHTML = `<img src="${pendingLogo}" class="w-full h-full object-cover rounded-2xl">`;
-                };
-                reader.readAsDataURL(input.files[0]);
+        async function previewLogo(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const previousLogo = pendingLogo;
+            if (!file.type.startsWith('image/')) {
+                showMessage('errorBanner', 'Choose a valid school logo image.');
+                input.value = '';
+                return;
+            }
+            try {
+                const image = await createImageBitmap(file);
+                let result = null;
+                // JPEG gives predictable, compact data URLs that fit in a Sheets cell.
+                // Use a white canvas for logos with transparent backgrounds.
+                for (const side of [256, 192, 160, 128, 96, 80, 64]) {
+                    const scale = Math.min(1, side / Math.max(image.width, image.height));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.max(1, Math.round(image.width * scale));
+                    canvas.height = Math.max(1, Math.round(image.height * scale));
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    for (const quality of [0.84, 0.72, 0.58, 0.42]) {
+                        const candidate = canvas.toDataURL('image/jpeg', quality);
+                        const bytes = Math.ceil((candidate.length - candidate.indexOf(',') - 1) * 3 / 4);
+                        if (bytes < 30 * 1024 && candidate.length < 48000) {
+                            result = candidate;
+                            break;
+                        }
+                    }
+                    if (result) break;
+                }
+                image.close?.();
+                if (!result) throw new Error('This logo could not be reduced below 30 KB. Try a simpler image.');
+                pendingLogo = result;
+                const preview = document.getElementById('logoPreview');
+                preview.replaceChildren();
+                const img = document.createElement('img');
+                img.src = result;
+                img.alt = 'Optimized school logo';
+                img.className = 'w-full h-full object-contain rounded-2xl';
+                preview.appendChild(img);
+                showMessage('successBanner', 'Logo optimized below 30 KB. Press Save to apply it.');
+            } catch (err) {
+                pendingLogo = previousLogo;
+                input.value = '';
+                showMessage('errorBanner', err.message || 'Could not process the logo.');
             }
         }
 

@@ -31,12 +31,6 @@
  *      Execute as: Me
  *      Who has access: Anyone
  *    Click Deploy, authorize again if asked.
- * IMPORTANT FOR FRESH MASTER REGISTRY (do not run setup()): In Apps Script
- * Project Settings > Script Properties set MASTER_SHEET_ID to
- * 1_STA5SaL3RMNQeAp6EuW00kkVE7H9yGi7d-o8uHWQeg ONLY after checking
- * that the old live registry has no school accounts to preserve.
- * The new spreadsheet already has the Schools tab and required headers.
- * DriveApp permissions may need re-authorization after this code change.
  * 6. Copy the "Web app URL" (it ends in /exec). Paste it into api-client.js
  *    as the API_URL constant — that's the only thing that file needs from you.
  *
@@ -53,7 +47,7 @@
 const REGISTRY_SHEET_NAME = 'Schools';
 const REGISTRY_HEADERS = [
     'schoolId', 'name', 'address', 'phone', 'principal', 'type', 'level', 'adminEmail',
-    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt', 'subscriptionType', 'subscriptionStart', 'subscriptionEnd', 'subscriptionPrice', 'subscriptionPaidAt', 'subscriptionReference', 'subscriptionNotes'
+    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt', 'subscriptionType', 'subscriptionStart', 'subscriptionEnd', 'subscriptionPrice', 'subscriptionPaidAt', 'subscriptionReference', 'subscriptionNotes', 'privateSub', 'feeOptional'
 ];
 // Super Admin password is initialized securely through Script Properties.
 // Never place a plaintext password in this source file.
@@ -153,18 +147,23 @@ function setup() {
 
 /**
  * First-time initialization or intentional password reset.
- * Run setupSuperAdmin() once from the editor. Remove the embedded password
- * after setup to avoid keeping plaintext credentials in source control.
+ * Run setupSuperAdmin() once from the editor after setting the temporary
+ * SUPERADMIN_SETUP_PASSWORD property. Existing hashes are preserved.
  * Existing Master Registry and school data are NOT modified.
  */
 function setupSuperAdmin() {
-    // WARNING: Embedded password is visible to anyone with source access.
-    // Run this once, then remove the literal password from this file.
-    const password = 'W@jidhussain12345';
     const props = PropertiesService.getScriptProperties();
+    if (props.getProperty('SUPERADMIN_PASSWORD_HASH')) {
+        Logger.log('Super Admin already configured. Existing credentials preserved.');
+        return;
+    }
+    const password = props.getProperty('SUPERADMIN_SETUP_PASSWORD');
+    if (!password || password.length < 12) {
+        throw new Error('Set SUPERADMIN_SETUP_PASSWORD (12+ characters) in Script Properties first.');
+    }
     props.setProperty('SUPERADMIN_PASSWORD_HASH', hashPassword(password, 'SUPERADMIN'));
     props.deleteProperty('SUPERADMIN_SETUP_PASSWORD');
-    Logger.log('SUCCESS: Super Admin password configured.');
+    Logger.log('Super Admin initialized successfully.');
 }
 
 /** Safe diagnostic: run from Apps Script editor to verify configuration. */
@@ -252,17 +251,11 @@ function findSchoolRow(sheet, matcherFn) {
 // SCHOOL REGISTRATION, LOGIN & PROFILE  (role: 'school' — unchanged behavior)
 // ============================================================================
 
-/** Destination of school databases in the connected LamaStudio master Drive workspace. */
-const SCHOOL_DATABASE_FOLDER_ID = '1H9U1a1fbNewbpQMwr8AGbQ3xLC27Tq02';
-
-/**
- * Creates a brand-new private Google Sheet for a school, with all tabs pre-built.
- * Keep each school's spreadsheet in the central School Databases folder.
- * Validate folder access before creating the spreadsheet to avoid orphaned files.
- */
+/** Creates a brand-new private Google Sheet for a school, with all tabs pre-built. */
 function createSchoolSheet(schoolName) {
-    const folder = DriveApp.getFolderById(SCHOOL_DATABASE_FOLDER_ID);
-    if (folder.isTrashed()) throw new Error('School database folder is in Trash.');
+    const folderId = '1H9U1a1fbNewbpQMwr8AGbQ3xLC27Tq02';
+    const folder = DriveApp.getFolderById(folderId);
+    if (folder.isTrashed()) throw new Error('School Databases folder is in Trash.');
     const ss = SpreadsheetApp.create(schoolName + ' - LamaStudio Data');
     const defaultSheet = ss.getSheets()[0];
     Object.keys(COLLECTIONS).forEach(key => {
@@ -272,9 +265,7 @@ function createSchoolSheet(schoolName) {
         sh.setFrozenRows(1);
     });
     ss.deleteSheet(defaultSheet);
-    // Move only the newly created school file; never touch existing school data.
-    const file = DriveApp.getFileById(ss.getId());
-    file.moveTo(folder);
+    DriveApp.getFileById(ss.getId()).moveTo(folder);
     return ss.getId();
 }
 
@@ -336,7 +327,8 @@ function getSchoolConfig(schoolId, apiKey) {
     const o = authorizeSchool(schoolId, apiKey).obj;
     return {
         schoolId: o.schoolId, name: o.name, address: o.address, phone: o.phone, principal: o.principal,
-        type: o.type, level: o.level, logo: o.logo, coverPhoto: o.coverPhoto || '', shortCode: o.shortCode
+        type: o.type, level: o.level, logo: o.logo, coverPhoto: o.coverPhoto || '', shortCode: o.shortCode,
+        privateSub: o.privateSub || '', feeOptional: o.feeOptional === true || String(o.feeOptional).toLowerCase() === 'true'
     };
 }
 
@@ -345,13 +337,24 @@ function updateSchoolConfig(schoolId, apiKey, patch) {
     const match = authorizeSchool(schoolId, apiKey);
     const registry = getRegistrySheet();
     // Only school profile fields may be changed; never accept registry/security fields.
-    const allowed = ['name', 'address', 'phone', 'principal', 'type', 'level', 'logo', 'coverPhoto', 'shortCode'];
+    const allowed = ['name', 'address', 'phone', 'principal', 'type', 'level', 'logo', 'coverPhoto', 'shortCode', 'privateSub', 'feeOptional'];
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Invalid school profile update.');
     const invalid = Object.keys(patch).filter(k => allowed.indexOf(k) === -1);
     if (invalid.length) throw new Error('Protected school settings cannot be changed: ' + invalid.join(', '));
+    if (Object.prototype.hasOwnProperty.call(patch, 'privateSub') &&
+        patch.privateSub !== null && typeof patch.privateSub !== 'string') {
+        throw new Error('Invalid private school sub-category.');
+    }
+    if (Object.prototype.hasOwnProperty.call(patch, 'feeOptional') &&
+        typeof patch.feeOptional !== 'boolean') {
+        throw new Error('Invalid fee optional setting.');
+    }
     const updated = Object.assign({}, match.obj, patch);
-    const newRow = match.headers.map(h => (updated[h] !== undefined ? updated[h] : ''));
-    registry.getRange(match.rowIndex, 1, 1, match.headers.length).setValues([newRow]);
+    if (updated.privateSub == null) updated.privateSub = '';
+    ensureSheetHeaders(registry, REGISTRY_HEADERS);
+    const latestHeaders = registry.getRange(1, 1, 1, registry.getLastColumn()).getValues()[0];
+    const newRow = latestHeaders.map(h => updated[h] !== undefined ? updated[h] : '');
+    registry.getRange(match.rowIndex, 1, 1, latestHeaders.length).setValues([newRow]);
     return getSchoolConfig(schoolId, apiKey);
 }
 

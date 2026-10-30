@@ -82,9 +82,17 @@ function parseEmisPositionedTable(items,pageWidth){
     .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
   const serial=Number(current.text);
   if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|KATCHI|PREP|(?:CLASS\s*)?(?:[1-9]|1[0-2]))$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably (student name, date or class missing). No records saved. Please provide this PDF for layout review.');
-  rows.push({__serial:serial,'ENRL #':cols[1],NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
+  // ENRL # is printed between the row number and student name. Some PDFs
+  // place its text item just outside the hard-coded enrollment cell boundary.
+  // Recover only an unambiguous 3–7 digit token from that narrow region.
+  const enrollmentTokens=group.filter(t=>t!==current&&/^\\d{3,7}$/.test(t.text)&&t.x>=starts[0]&&t.x<starts[2]-3).sort((a,b)=>a.x-b.x);
+  const enrollment= /^\\d{3,7}$/.test(cols[1]) ? cols[1] : enrollmentTokens.length===1 ? enrollmentTokens[0].text : '';
+  rows.push({__serial:serial,'ENRL #':enrollment,NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
  }
  if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');
+ // A whole report losing its enrollment column indicates a layout/parser fault,
+ // not hundreds of missing IDs. Block that misleading preview.
+ if(rows.length>=3 && rows.every(r=>!r['ENRL #']))throw Error('Enrollment column could not be recognized in this PDF layout. No records saved. Please send the report for review.');
  return rows;
 }
 

@@ -37,7 +37,17 @@ function fileClass(name){const n=String(name||'').toLowerCase();const m=n.match(
 
 function status(t){$('status').textContent=t}
 function setBusy(v){busy=v;$('analyze').disabled=v;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||v||!preview.some(x=>x.reason==='New student')}
-function setMode(v){mode=v;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===v));$('imagePurpose').parentElement.classList.toggle('hidden',v!=='photos');$('maxPages').parentElement.classList.toggle('hidden',v!=='pdf');$('headerRow').parentElement.classList.toggle('hidden',v!=='excel');const accepts={excel:'.xlsx,.xls,.xlsm,.csv',word:'.docx,.doc',pdf:'.pdf',photos:'image/png,image/jpeg,image/webp'};$('files').accept=accepts[v];$('acceptHint').textContent={excel:'Excel .xlsx, .xls, .xlsm or .csv',word:'Word .docx (legacy .doc: convert to .docx)',pdf:'PDF with selectable text or scanned pages',photos:'JPG, PNG, WebP scanned forms or student photographs'}[v];files=[];$('files').value='';$('selectedFiles').textContent='';clearPreview()}
+function setMode(v){
+ mode=v;
+ document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===v));
+ // One simple file picker accepts every supported format. Keep advanced options optional.
+ $('imagePurpose').parentElement.classList.remove('hidden');
+ $('maxPages').parentElement.classList.remove('hidden');
+ $('headerRow').parentElement.classList.remove('hidden');
+ $('files').accept='.xlsx,.xls,.xlsm,.csv,.docx,.doc,.pdf,.png,.jpg,.jpeg,.webp';
+ $('acceptHint').textContent='Excel, CSV, Word, PDF, JPG, PNG or WebP — automatically detected';
+ files=[];$('files').value='';$('selectedFiles').textContent='';clearPreview();
+}
 function clearPreview(){rows=[];preview=[];mapping={};$('mapping').textContent='';$('preview').innerHTML='<div style="padding:20px" class="muted tiny">No preview yet.</div>';$('stats').textContent='No preview yet';$('apply').disabled=true;$('progressBar').style.width='0';$('confirmReview').checked=false}
 function setFiles(list){files=Array.from(list||[]);$('selectedFiles').innerHTML=files.map(f=>'<span class="badge">'+escapeHTML(f.name)+' ('+Math.ceil(f.size/1024)+' KB)</span>').join('')}
 function detect(header){const n=normalize(header);if(!n)return'';for(const [key,aliases] of Object.entries(fieldDefs))if(aliases.some(a=>n===a))return key;for(const [key,aliases] of Object.entries(fieldDefs))if(aliases.some(a=>n.includes(a)&&a.length>=5))return key;return''}
@@ -187,4 +197,4 @@ $('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('drag');setFi
 $('analyze').onclick=analyze;$('apply').onclick=apply;$('clear').onclick=clearPreview;$('downloadReport').onclick=downloadReport;
 $('includeNoEnrollment').onchange=()=>{if(rows.length)makePreview()};
 (async()=>{try{if(typeof LamaAPI!=='undefined'){const school=await LamaAPI.getActiveSchool();$('schoolName').textContent=(school?.name||'School')+' · add new students safely'}}catch(e){status('School name unavailable: '+e.message)}})();
-setMode(new URLSearchParams(location.search).get('type')==='word'?'word':new URLSearchParams(location.search).get('type')==='pdf'?'pdf':new URLSearchParams(location.search).get('type')==='photos'?'photos':'excel');
+setMode('auto');

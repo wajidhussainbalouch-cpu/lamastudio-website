@@ -8,7 +8,7 @@ const empty=v=>v==null||String(v).trim()===''||String(v).trim().toLowerCase()===
 const sid=s=>String(s.id??s._id??'');
 const enroll=s=>clean(s.enrlNo??s.enrollmentNo??s.enrollment??'');
 const fieldDefs={
-enrlNo:['enrlno','enrollmentno','enrollmentnumber','admissionid','studentid','rollnumber','enrollno','enrollment'],
+enrlNo:['enrl','enrlno','enrollmentno','enrollmentnumber','admissionid','studentid','rollnumber','enrollno','enrollment'],
 name:['studentname','nameofstudent','fullname','name','student'],
 class:['class','grade','studentclass'],
 section:['section','sec'],

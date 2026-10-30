@@ -22,6 +22,7 @@ body{background:radial-gradient(circle at top left,#164e63 0%,#081923 42%,#070b1
 <a href="student.html" class="rounded-xl bg-violet-700 p-4 font-bold">📊 My Academic Dashboard →</a>
 <a href="student-grades.html" class="rounded-xl bg-cyan-800 p-4 font-bold">📚 My Results →</a>
 <a href="student-diary.html" class="rounded-xl bg-teal-800 p-4 font-bold">📝 My Diary →</a></div></section>
+<section class="panel p-6 no-print" aria-label="Private attendance notifications"><div class="flex items-center justify-between gap-3"><h2 class="font-black text-xl">🔔 My Attendance Alerts</h2><button id="reloadAlerts" type="button" class="rounded-lg bg-cyan-700 px-3 py-2 text-sm">Refresh</button></div><p id="alertsStatus" class="text-sm text-slate-300 mt-2">Checking attendance alerts…</p><div id="alertsList" class="mt-3 space-y-2"></div></section>
 <div class="grid lg:grid-cols-2 gap-5">
 <section id="cardPanel" class="panel p-6" aria-label="Student identity card">
 <div class="flex justify-between items-start gap-3"><div><p class="text-xs tracking-widest text-cyan-300 font-bold">STUDENT IDENTITY CARD</p><h2 id="cardSchool" class="font-black text-lg mt-1">School</h2></div><span class="text-3xl">🎓</span></div>
@@ -64,13 +65,24 @@ el('previewOverlay').addEventListener('click',e=>{if(e.target===el('previewOverl
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('previewOverlay').classList.contains('hidden'))closePreview()});
 el('confirmPrint').addEventListener('click',()=>{closePreview();window.print()});
 async function loadMyCertificates(studentId){const status=el('certificateStatus'),list=el('myCertificates');list.replaceChildren();status.textContent='Checking school certificate register…';try{const rows=await LamaAPI.list('certificates');if(!Array.isArray(rows))throw Error('Unexpected response');const own=rows.filter(r=>String(r.studentId)===String(studentId));status.textContent=own.length?own.length+' issued certificate(s) found.':'No certificates have been issued to your account yet.';for(const r of own){const article=document.createElement('article');article.className='rounded-xl border border-amber-400/30 bg-slate-900/80 p-4';const title=document.createElement('h3');title.className='text-lg font-bold text-amber-300';title.textContent=r.title||r.kind||'School Certificate';const meta=document.createElement('p');meta.className='text-sm text-slate-300 mt-2';meta.textContent=(r.issuedAt||r.createdAt||'')+' · '+(r.reference||'');article.append(title,meta);list.append(article)}}catch(e){status.textContent='Your school has not enabled secure digital certificate delivery yet.'}}let myStudentId='';el('reloadCertificates').addEventListener('click',()=>{if(myStudentId)loadMyCertificates(myStudentId)});
+async function loadMyAttendanceAlerts(){
+ const list=el('alertsList'),status=el('alertsStatus');list.replaceChildren();status.textContent='Checking your private attendance alerts…';
+ try{
+  const rows=await LamaAPI.list('notifications');
+  const own=Array.isArray(rows)?rows.filter(n=>n.notificationType==='attendanceAbsence'&&String(n.studentId)===String(myStudentId)&&String(n.status)!=='Resolved'&&String(n.isPublished).toLowerCase()!=='false'):[];
+  own.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  status.textContent=own.length?own.length+' attendance alert(s)':'No attendance alerts for your account.';
+  own.slice(0,40).forEach(n=>{const card=document.createElement('article');card.className='rounded-xl bg-rose-950/40 border border-rose-500/40 p-4';const heading=document.createElement('strong');heading.textContent=n.title||'Attendance alert';const msg=document.createElement('p');msg.className='text-sm text-slate-200 mt-2';msg.textContent=n.message||'';card.append(heading,msg);list.append(card)});
+ }catch(e){status.textContent='Unable to load attendance alerts. Please refresh later.'}
+}
+el('reloadAlerts').addEventListener('click',()=>{if(myStudentId)loadMyAttendanceAlerts()});
 async function init(){
  if(typeof LamaAPI==='undefined'||!LamaAPI.requireLogin('student',loginPage))return;
  const s=LamaAPI.getSession('student');
  if(!s?.studentId||!s?.schoolId){el('status').textContent='Session incomplete. Please sign in again.';return;}
  try{
   const st=await LamaAPI.get('students',s.studentId);
-  if(!st)throw Error('Your student record could not be found.');myStudentId=s.studentId;loadMyCertificates(s.studentId);
+  if(!st)throw Error('Your student record could not be found.');myStudentId=s.studentId;loadMyCertificates(s.studentId);loadMyAttendanceAlerts();
   if(st.schoolId&&String(st.schoolId)!==String(s.schoolId))throw Error('School record mismatch.');
   el('schoolName').textContent=s.schoolName||'My School';
   el('cardSchool').textContent=s.schoolName||'My School';

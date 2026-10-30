@@ -1393,10 +1393,11 @@ function importStudentsBatch(params) {
         const idKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/[\\s-]/g, '');
         const nameKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/\\s+/g, ' ');
         const existing = sheet.getDataRange().getValues();
-        const enrollmentSet = new Set();
+        const enrollmentSet = new Set(), blankPersonSet = new Set();
         for (let i = 1; i < existing.length; i++) {
             const enrl = idKey(existing[i][ei]);
             if (enrl) enrollmentSet.add(enrl);
+            else {const name=nameKey(existing[i][ni]),father=nameKey(existing[i][fi]);if(name&&father)blankPersonSet.add(name+'|'+father);}
         }
         const protectedFields = new Set(['id','apiKey','password','createdAt']);
         const allowedFields = new Set(headers.filter(h => !protectedFields.has(h)));
@@ -1413,12 +1414,13 @@ function importStudentsBatch(params) {
             const enrl = idKey(source.enrlNo), name = nameKey(source.name);
             const father = nameKey(source.fatherGuardian), form = idKey(source.cnic);
             const cls = String(source.class == null ? '' : source.class).trim();
-            if (!enrl || !name || !/^[A-Z0-9]{1,40}$/.test(enrl) || cls.length > 40) {
+            if (!name || (enrl && !/^[A-Z0-9]{1,40}$/.test(enrl)) || cls.length > 40) {
                 rejected++;
                 details.push({row:row,enrollment:enrl,status:'rejected',reason:'Invalid enrollment, name or class'});
                 return;
             }
-            if (enrollmentSet.has(enrl)) {
+            const person=father ? name+'|'+father : '';
+            if ((enrl && enrollmentSet.has(enrl)) || (!enrl && person && blankPersonSet.has(person))) {
                 skipped++;
                 details.push({row:row,enrollment:enrl,status:'skipped',reason:'Already exists or duplicate in batch'});
                 return;
@@ -1430,11 +1432,12 @@ function importStudentsBatch(params) {
             record.class = cls;
             record.id = genId('stu');
             record.apiKey = Utilities.getUuid();
-            record.password = enrl; // Preserve existing student-login convention.
+            record.password = enrl || ''; // Blank enrollment records require later review before student login.
             record.createdAt = now;
             rows.push(recordToRow(headers, record));
-            enrollmentSet.add(enrl);
-            details.push({row:row,enrollment:enrl,status:'added'});
+            if(enrl)enrollmentSet.add(enrl);
+            else if(person)blankPersonSet.add(person);
+            details.push({row:row,enrollment:enrl,status:'added',reviewRequired:!enrl,reason:enrl?'':'Missing enrollment — update required'});
         });
         if (rows.length) {
             sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, headers.length).setValues(rows);

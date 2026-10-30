@@ -36,7 +36,7 @@ function classKey(v){let n=normalize(v);if(['nursery','preprimary','katchi','kg'
 function fileClass(name){const n=String(name||'').toLowerCase();const m=n.match(/class[\s_-]*(ecce|ece|katchi|nursery|\d+)/i);return m?classKey(m[1]):''}
 
 function status(t){$('status').textContent=t}
-function setBusy(v){busy=v;$('analyze').disabled=v;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||v||!preview.some(x=>x.reason==='New student')}
+function setBusy(v){busy=v;$('analyze').disabled=v;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||v||!preview.some(x=>x.reason.startsWith('New student'))}
 function setMode(v){
  mode=v;
  document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===v));
@@ -148,7 +148,7 @@ function makePreview(){
   const cls=classKey(values.class||r.__sourceClass||'');
   const matches=id?(byId.get(id)||[]):[];
   let reason='New student';
-  if(!id)reason='Missing enrollment — review';
+  if(!id)reason='New student — ✱ Missing enrollment';
   else if(matches.length)reason='Already enrolled — skip';
   else if(sourceId.has(id))reason='Duplicate enrollment in source — review';
   else if(!values.name)reason='Missing student name — review';
@@ -166,21 +166,21 @@ function previewColumns(){
  return [...new Set([...mandatory,...present,...additional])];
 }
 function renderPreview(){
- const fresh=preview.filter(x=>x.reason==='New student'),existing=preview.filter(x=>x.reason==='Already enrolled — skip'),review=preview.filter(x=>x.reason!=='New student'&&x.reason!=='Already enrolled — skip');
+ const fresh=preview.filter(x=>x.reason.startsWith('New student')),existing=preview.filter(x=>x.reason==='Already enrolled — skip'),review=preview.filter(x=>!x.reason.startsWith('New student')&&x.reason!=='Already enrolled — skip');
  $('stats').textContent=preview.length+' source rows · '+fresh.length+' new · '+existing.length+' already enrolled · '+review.length+' review';
  const columns=previewColumns();
  const headers=['#',...columns.map(k=>fieldLabels[k]||k),'Decision'];
  $('preview').innerHTML='<div class="muted tiny" style="padding:8px">Swipe left or right to see all fields. Blank cells mean the source did not provide a recognized value.</div><table style="min-width:1050px"><thead><tr>'+headers.map(label=>'<th>'+escapeHTML(label)+'</th>').join('')+'</tr></thead><tbody>'+preview.slice(0,700).map(x=>'<tr><td>'+x.index+'</td>'+columns.map(k=>'<td>'+escapeHTML(x.values[k]||((k==='class'&&x.sourceClass)||'—'))+'</td>').join('')+'<td class="'+(x.reason==='New student'?'good':x.reason.startsWith('Already')?'muted':'warn')+'">'+escapeHTML(x.reason)+'</td></tr>').join('')+'</tbody></table>';
  $('apply').disabled=STUDENT_IMPORT_READ_ONLY||busy||!fresh.length;
 }
-async function analyze(){if(!files.length){status('Choose one or more files first.');return}setBusy(true);clearPreview();try{if(typeof LamaAPI==='undefined')throw Error('LamaAPI not found.');if(LamaAPI.requireLogin&&!LamaAPI.requireLogin('school','login.html'))return;const loaded=await LamaAPI.list('students');students=Array.isArray(loaded)?loaded:Array.isArray(loaded?.records)?loaded.records:Array.isArray(loaded?.data)?loaded.data:[];rows=[];for(let i=0;i<files.length;i++){const f=files[i];status('Processing '+(i+1)+' / '+files.length+': '+f.name);const ext=f.name.split('.').pop().toLowerCase();let part;if(['xlsx','xls','xlsm','csv'].includes(ext))part=await readExcel(f);else if(['docx','doc'].includes(ext))part=await readWord(f);else if(ext==='pdf')part=await readPDF(f);else if(['png','jpg','jpeg','webp'].includes(ext))part=await readImage(f);else throw Error('Unsupported format: '+ext);const sourceClass=fileClass(f.name);part.forEach(r=>{r.__sourceClass=sourceClass});rows.push(...part)}if(!rows.length)throw Error('No student records were recognized. Check the file layout; no changes were made.');deriveMapping();makePreview();status('Analysis complete: '+rows.length+' rows found. Review the table: new students may be added, existing students will be skipped, and uncertain rows need manual review. Nothing has been saved.');$('progressBar').style.width='100%';$('loadCount').textContent=students.length+' existing students loaded.'}catch(e){status('Could not finish analysis: '+e.message+'. No students were added. Try a digital-text PDF or Excel/CSV if the PDF layout is not recognized.')}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||!preview.some(x=>x.reason==='New student')}}
+async function analyze(){if(!files.length){status('Choose one or more files first.');return}setBusy(true);clearPreview();try{if(typeof LamaAPI==='undefined')throw Error('LamaAPI not found.');if(LamaAPI.requireLogin&&!LamaAPI.requireLogin('school','login.html'))return;const loaded=await LamaAPI.list('students');students=Array.isArray(loaded)?loaded:Array.isArray(loaded?.records)?loaded.records:Array.isArray(loaded?.data)?loaded.data:[];rows=[];for(let i=0;i<files.length;i++){const f=files[i];status('Processing '+(i+1)+' / '+files.length+': '+f.name);const ext=f.name.split('.').pop().toLowerCase();let part;if(['xlsx','xls','xlsm','csv'].includes(ext))part=await readExcel(f);else if(['docx','doc'].includes(ext))part=await readWord(f);else if(ext==='pdf')part=await readPDF(f);else if(['png','jpg','jpeg','webp'].includes(ext))part=await readImage(f);else throw Error('Unsupported format: '+ext);const sourceClass=fileClass(f.name);part.forEach(r=>{r.__sourceClass=sourceClass});rows.push(...part)}if(!rows.length)throw Error('No student records were recognized. Check the file layout; no changes were made.');deriveMapping();makePreview();status('Analysis complete: '+rows.length+' rows found. Review the table: new students may be added, existing students will be skipped, and uncertain rows need manual review. Nothing has been saved.');$('progressBar').style.width='100%';$('loadCount').textContent=students.length+' existing students loaded.'}catch(e){status('Could not finish analysis: '+e.message+'. No students were added. Try a digital-text PDF or Excel/CSV if the PDF layout is not recognized.')}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||!preview.some(x=>x.reason.startsWith('New student'))}}
 async function apply(){
  if(STUDENT_IMPORT_READ_ONLY){status('Student saving is not enabled.');return;}
- const todo=preview.filter(x=>x.reason==='New student');
+ const todo=preview.filter(x=>x.reason.startsWith('New student'));
  if(!todo.length)return status('No approved new students to save.');
  if(!$('confirmReview').checked)return status('Review the preview and confirm first.');
  if(typeof LamaAPI.importStudentsBatch!=='function')return status('Batch import API unavailable. Refresh the page; no records saved.');
- if(!confirm('Save up to '+todo.length+' NEW enrollment numbers to this school? Existing enrollment numbers will be skipped. Make sure you have a backup.'))return;
+ if(!confirm('Import up to '+todo.length+' students? Existing enrollment numbers will be skipped; blank enrollment records will be flagged for later review. Make sure you have a backup.'))return;
  setBusy(true);
  try{
   // Recheck the live student register; never trust a stale PDF preview.
@@ -190,11 +190,11 @@ async function apply(){
   const unique=[],seen=new Set();let preSkipped=0;
   for(const item of todo){
    const v=item.values,id=normalize(v.enrlNo);
-   if(!id||!v.name){preSkipped++;continue;}
-   if(usedId.has(id)||seen.has(id)){preSkipped++;continue;}
+   if(!v.name){preSkipped++;continue;}
+   if(id&&(usedId.has(id)||seen.has(id))){preSkipped++;continue;}
    const record={...v,class:v.class||item.sourceClass};delete record.photo;
-   unique.push(record);seen.add(id);
-   usedId.add(id);
+   unique.push(record);if(id)seen.add(id);
+   if(id)usedId.add(id);
   }
   if(!unique.length){status('No new eligible students. '+preSkipped+' skipped; nothing written.');return;}
   const result=await LamaAPI.importStudentsBatch(unique);

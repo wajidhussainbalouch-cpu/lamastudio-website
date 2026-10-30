@@ -111,7 +111,7 @@ const COLLECTIONS = {
     },
     notifications: {
         tab: 'Notifications',
-        headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'isPublished', 'createdAt']
+        headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'isPublished', 'createdAt', 'studentId', 'date', 'notificationType']
     },
     resources: {
         tab: 'Resources',
@@ -738,6 +738,13 @@ function listRecords(ctx, collection) {
     for (let i = 1; i < data.length; i++) {
         if (!data[i][headers.indexOf('id')]) continue;
         records.push(rowToRecord(headers, data[i]));
+    }
+    if (collection === 'notifications' && ctx.role === 'student') {
+        records = records.filter(r => {
+            const target = String(r.studentId || '').trim();
+            if (target) return target === String(ctx.student.id) && String(r.isPublished).toLowerCase() !== 'false' && String(r.status) !== 'Resolved';
+            return String(r.audience || '').toLowerCase() !== 'student' && String(r.isPublished).toLowerCase() !== 'false';
+        });
     }
     if (collection === 'studentRequests') {
         if (ctx.role === 'student') records = records.filter(r => String(r.studentId) === String(ctx.student.id));

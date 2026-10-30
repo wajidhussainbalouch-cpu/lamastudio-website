@@ -189,12 +189,12 @@ async function apply(){
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
 function downloadReport(){if(!preview.length)return status('Analyze files first.');const lines=[['Row','Source Enrollment','Source Name','Matched Student','Match Method','Fields To Fill','Status'],...preview.map(x=>[x.index,x.values.enrlNo||'',x.values.name||'',x.target?.name||'',x.method,'',x.reason])];const blob=new Blob(['\ufeff'+lines.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='student-import-preview.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
-document.querySelectorAll('[data-upload-kind]').forEach(button=>{
- button.onclick=()=>{
-  const accept={pdf:'.pdf,application/pdf',word:'.docx,.doc',image:'.jpg,.jpeg,.png,.webp,image/*',excel:'.xlsx,.xls,.xlsm,.csv'}[button.dataset.uploadKind];
-  $('files').accept=accept;
-  $('files').click();
- };
+document.querySelectorAll('[data-kind-file]').forEach(input=>{
+ input.addEventListener('change',()=>{
+  setFiles(input.files);
+  $('files').value='';
+  // Keep the native all-format picker available as a fallback.
+ });
 });
 $('files').onchange=e=>setFiles(e.target.files);
 $('drop').onclick=e=>{if(e.target!==$('files'))$('files').click()};

@@ -1262,11 +1262,15 @@ function adminGetAudit(p){
 function handleRequest(params) {
     const action = params.action;
     try {
-        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+        const protectedActions=['waConnect','waDisconnect','waSendTemplates','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
         switch (action) {
+            case 'waSettings': return {status:'success',settings:waSettings_(params)};
+            case 'waConnect': return {status:'success',settings:waConnect_(params)};
+            case 'waDisconnect': return {status:'success',settings:waDisconnect_(params)};
+            case 'waSendTemplates': return {status:'success',result:waSendTemplates_(params)};
             case 'previewStudentIds':
                 return {status:'success',result:manageStudentCodes(params,false)};
             case 'applyStudentIds':
@@ -1368,7 +1372,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

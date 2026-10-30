@@ -85,8 +85,8 @@ function parseEmisPositionedTable(items,pageWidth){
   // ENRL # is printed between the row number and student name. Some PDFs
   // place its text item just outside the hard-coded enrollment cell boundary.
   // Recover only an unambiguous 3–7 digit token from that narrow region.
-  const enrollmentTokens=group.filter(t=>t!==current&&/^\\d{3,7}$/.test(t.text)&&t.x>=starts[0]&&t.x<starts[2]-3).sort((a,b)=>a.x-b.x);
-  const enrollment= /^\\d{3,7}$/.test(cols[1]) ? cols[1] : enrollmentTokens.length===1 ? enrollmentTokens[0].text : '';
+  const enrollmentTokens=group.filter(t=>t!==current&&/^\d{3,7}$/.test(t.text)&&t.x>=starts[0]&&t.x<starts[2]-3).sort((a,b)=>a.x-b.x);
+  const enrollment= /^\d{3,7}$/.test(cols[1]) ? cols[1] : enrollmentTokens.length===1 ? enrollmentTokens[0].text : '';
   rows.push({__serial:serial,'ENRL #':enrollment,NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
  }
  if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');

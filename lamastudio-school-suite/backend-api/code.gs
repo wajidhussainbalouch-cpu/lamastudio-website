@@ -1255,11 +1255,13 @@ function adminGetAudit(p){
 function handleRequest(params) {
     const action = params.action;
     try {
-        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','add','update','remove'];
+        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
         switch (action) {
+            case 'importStudentsBatch':
+                return {status:'success',result:importStudentsBatch(params)};
             case 'adminListSchoolUsers': return {status:'success',users:adminListSchoolUsers(params)};
             case 'adminSaveSchoolUser': return {status:'success',user:adminSaveSchoolUser(params)};
             case 'adminGetAudit': return {status:'success',records:adminGetAudit(params)};
@@ -1362,3 +1364,109 @@ function doGet(e) {
 
 
 
+
+
+/**
+ * Import NEW students into the authenticated school's Students tab.
+ * Existing rows are never edited. School-admin authorization is enforced by
+ * handleRequest's protectedActions before this function is called.
+ * Duplicate checks happen inside a script lock immediately before the write.
+ */
+function importStudentsBatch(params) {
+    if ((params.role || 'school') !== 'school') throw new Error('Only a school administrator may import students.');
+    if (!params._auditActor) throw new Error('School administrator authorization required.');
+    const records = params.records;
+    if (!Array.isArray(records) || !records.length || records.length > 400) {
+        throw new Error('Submit 1 to 400 students per batch.');
+    }
+    const ctx = resolveContext(params);
+    assertSchoolWritable(ctx.schoolId);
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(30000)) throw new Error('Another operation is in progress. Please retry.');
+    try {
+        const collection = getCollectionSheet(ctx, 'students');
+        const sheet = collection.sheet;
+        const headers = collection.headers;
+        const enrlIndex = headers.indexOf('enrlNo');
+        const nameIndex = headers.indexOf('name');
+        const fatherIndex = headers.indexOf('fatherGuardian');
+        const formIndex = headers.indexOf('cnic');
+        if (enrlIndex < 0 || nameIndex < 0 || fatherIndex < 0) {
+            throw new Error('Students sheet is missing required columns.');
+        }
+        const idKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/[\\s-]/g, '');
+        const personKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/\\s+/g, ' ');
+        const existing = sheet.getDataRange().getValues();
+        const byEnrollment = new Set();
+        const byForm = new Set();
+        const byPerson = new Set();
+        for (let i = 1; i < existing.length; i++) {
+            const r = existing[i], enrl = idKey(r[enrlIndex]);
+            const form = formIndex >= 0 ? idKey(r[formIndex]) : '';
+            const name = personKey(r[nameIndex]), father = personKey(r[fatherIndex]);
+            if (enrl) byEnrollment.add(enrl);
+            if (form && form !== '0') byForm.add(form);
+            if (name && father) byPerson.add(name + '|' + father);
+        }
+        const safeFields = new Set(headers.filter(h => ['id','apiKey','password','createdAt'].indexOf(h) === -1));
+        const rows = [], details = [];
+        let skipped = 0, rejected = 0;
+        const now = new Date().toISOString();
+        for (let i = 0; i < records.length; i++) {
+            const source = records[i];
+            if (!source || typeof source !== 'object' || Array.isArray(source)) {
+                rejected++;
+                details.push({row:i + 1,status:'rejected',reason:'Invalid record'});
+                continue;
+            }
+            const enrl = idKey(source.enrlNo);
+            const name = personKey(source.name);
+            const father = personKey(source.fatherGuardian);
+            const form = idKey(source.cnic);
+            const cls = String(source.class == null ? '' : source.class).trim();
+            if (!enrl || !name || !cls) {
+                rejected++;
+                details.push({row:i + 1,enrollment:enrl,status:'rejected',reason:'Missing enrollment number, name or class'});
+                continue;
+            }
+            if (!/^[A-Z0-9]{1,40}$/.test(enrl) || cls.length > 40) {
+                rejected++;
+                details.push({row:i + 1,enrollment:enrl,status:'rejected',reason:'Invalid enrollment number or class'});
+                continue;
+            }
+            const person = father ? name + '|' + father : '';
+            if (byEnrollment.has(enrl) || (form && form !== '0' && byForm.has(form)) || (person && byPerson.has(person))) {
+                skipped++;
+                details.push({row:i + 1,enrollment:enrl,status:'skipped',reason:'Already enrolled or duplicate in batch'});
+                continue;
+            }
+            const record = {};
+            Object.keys(source).forEach(k => { if (safeFields.has(k)) record[k] = source[k]; });
+            record.enrlNo = enrl;
+            record.name = String(source.name).trim();
+            record.class = cls;
+            record.id = genId('stu');
+            record.apiKey = Utilities.getUuid();
+            record.password = enrl;
+            record.createdAt = now;
+            rows.push(recordToRow(headers, record));
+            byEnrollment.add(enrl);
+            if (form && form !== '0') byForm.add(form);
+            if (person) byPerson.add(person);
+            details.push({row:i + 1,enrollment:enrl,status:'added'});
+        }
+        if (rows.length) {
+            const first = sheet.getLastRow() + 1;
+            sheet.getRange(first, 1, rows.length, headers.length).setValues(rows);
+            SpreadsheetApp.flush();
+        }
+        if (ctx.auditActor) {
+            writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'import','students','',null,
+                {submitted:records.length,added:rows.length,skipped:skipped,rejected:rejected});
+        }
+        return {success:true,schoolId:ctx.schoolId,total:records.length,added:rows.length,
+            skipped:skipped,rejected:rejected,details:details};
+    } finally {
+        lock.releaseLock();
+    }
+}

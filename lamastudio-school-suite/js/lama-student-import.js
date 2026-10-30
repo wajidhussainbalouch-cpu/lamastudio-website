@@ -153,10 +153,19 @@ function makePreview(){
   return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method,sourceClass:cls};
  });renderPreview();
 }
+const importDisplayFields=['enrlNo','name','fatherGuardian','gender','dob','admissionDate','cnic','class','section','contact','address'];
+function previewColumns(){
+ const present=importDisplayFields.filter(k=>preview.some(x=>!empty(x.values[k])));
+ const mandatory=['enrlNo','name','fatherGuardian','class'];
+ const additional=Object.keys(fieldDefs).filter(k=>!mandatory.includes(k)&&!present.includes(k)&&preview.some(x=>!empty(x.values[k])));
+ return [...new Set([...mandatory,...present,...additional])];
+}
 function renderPreview(){
  const fresh=preview.filter(x=>x.reason==='New student'),existing=preview.filter(x=>x.reason==='Already enrolled — skip'),review=preview.filter(x=>x.reason!=='New student'&&x.reason!=='Already enrolled — skip');
  $('stats').textContent=preview.length+' source rows · '+fresh.length+' new · '+existing.length+' already enrolled · '+review.length+' review';
- $('preview').innerHTML='<table><thead><tr><th>#</th><th>Enrollment</th><th>Student / Father</th><th>Class</th><th>Decision</th></tr></thead><tbody>'+preview.slice(0,700).map(x=>'<tr><td>'+x.index+'</td><td>'+escapeHTML(x.values.enrlNo||'—')+'</td><td>'+escapeHTML(x.values.name||'—')+'<div class="muted tiny">'+escapeHTML(x.values.fatherGuardian||'')+'</div></td><td>'+escapeHTML(x.values.class||x.sourceClass||'—')+'</td><td class="'+(x.reason==='New student'?'good':x.reason.startsWith('Already')?'muted':'warn')+'">'+escapeHTML(x.reason)+'</td></tr>').join('')+'</tbody></table>';
+ const columns=previewColumns();
+ const headers=['#',...columns.map(k=>fieldLabels[k]||k),'Decision'];
+ $('preview').innerHTML='<div class="muted tiny" style="padding:8px">Swipe left or right to see all fields. Blank cells mean the source did not provide a recognized value.</div><table style="min-width:1050px"><thead><tr>'+headers.map(label=>'<th>'+escapeHTML(label)+'</th>').join('')+'</tr></thead><tbody>'+preview.slice(0,700).map(x=>'<tr><td>'+x.index+'</td>'+columns.map(k=>'<td>'+escapeHTML(x.values[k]||((k==='class'&&x.sourceClass)||'—'))+'</td>').join('')+'<td class="'+(x.reason==='New student'?'good':x.reason.startsWith('Already')?'muted':'warn')+'">'+escapeHTML(x.reason)+'</td></tr>').join('')+'</tbody></table>';
  $('apply').disabled=STUDENT_IMPORT_READ_ONLY||busy||!fresh.length;
 }
 async function analyze(){if(!files.length){status('Choose one or more files first.');return}setBusy(true);clearPreview();try{if(typeof LamaAPI==='undefined')throw Error('LamaAPI not found.');if(LamaAPI.requireLogin&&!LamaAPI.requireLogin('school','login.html'))return;const loaded=await LamaAPI.list('students');students=Array.isArray(loaded)?loaded:Array.isArray(loaded?.records)?loaded.records:Array.isArray(loaded?.data)?loaded.data:[];rows=[];for(let i=0;i<files.length;i++){const f=files[i];status('Processing '+(i+1)+' / '+files.length+': '+f.name);const ext=f.name.split('.').pop().toLowerCase();let part;if(['xlsx','xls','xlsm','csv'].includes(ext))part=await readExcel(f);else if(['docx','doc'].includes(ext))part=await readWord(f);else if(ext==='pdf')part=await readPDF(f);else if(['png','jpg','jpeg','webp'].includes(ext))part=await readImage(f);else throw Error('Unsupported format: '+ext);const sourceClass=fileClass(f.name);part.forEach(r=>{r.__sourceClass=sourceClass});rows.push(...part)}if(!rows.length)throw Error('No student records were recognized. Check the file layout; no changes were made.');deriveMapping();makePreview();status('Analysis complete: '+rows.length+' rows found. Review the table: new students may be added, existing students will be skipped, and uncertain rows need manual review. Nothing has been saved.');$('progressBar').style.width='100%';$('loadCount').textContent=students.length+' existing students loaded.'}catch(e){status('Could not finish analysis: '+e.message+'. No students were added. Try a digital-text PDF or Excel/CSV if the PDF layout is not recognized.')}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=STUDENT_IMPORT_READ_ONLY||!preview.some(x=>x.reason==='New student')}}
@@ -187,7 +196,14 @@ async function apply(){
  }catch(e){status('Import stopped: '+e.message)}finally{busy=false;$('analyze').disabled=false;$('apply').disabled=true}
 }
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
-function downloadReport(){if(!preview.length)return status('Analyze files first.');const lines=[['Row','Source Enrollment','Source Name','Matched Student','Match Method','Fields To Fill','Status'],...preview.map(x=>[x.index,x.values.enrlNo||'',x.values.name||'',x.target?.name||'',x.method,'',x.reason])];const blob=new Blob(['\ufeff'+lines.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='student-import-preview.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+function downloadReport(){
+ if(!preview.length)return status('Analyze files first.');
+ const columns=[...new Set([...Object.keys(fieldDefs),...preview.flatMap(x=>Object.keys(x.values))])].filter(k=>preview.some(x=>!empty(x.values[k])));
+ const headings=['Row',...columns.map(k=>fieldLabels[k]||k),'Match Method','Matched Student','Decision'];
+ const lines=[headings,...preview.map(x=>[x.index,...columns.map(k=>x.values[k]||''),x.method,x.target?.name||'',x.reason])];
+ const blob=new Blob(['\\ufeff'+lines.map(r=>r.map(csvCell).join(',')).join('\\r\\n')],{type:'text/csv;charset=utf-8'});
+ const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='student-import-full-review.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 document.querySelectorAll('[data-kind-file]').forEach(input=>{
  input.addEventListener('change',()=>{

@@ -67,7 +67,7 @@ async function ocrCanvas(canvas){if(typeof Tesseract==='undefined')throw Error('
 function parseEmisPositionedTable(items,pageWidth){
  const cells=items.filter(t=>t&&typeof t.str==='string'&&t.str.trim()&&Array.isArray(t.transform))
    .map(t=>({x:t.transform[4],y:t.transform[5],text:clean(t.str)}));
- const header=cells.filter(t=>/^(ENRL(?:\\s*#)?|FORM-B|FATHER(?:\\s*\\/\\s*GUARDIAN)?|CLASS)$/i.test(t.text));
+  const header=cells.filter(t=>/^(ENRL(?:\s*#)?|FORM-B|FATHER(?:\s*\/\s*GUARDIAN)?|CLASS)$/i.test(t.text));
  if(!header.some(t=>/ENRL/i.test(t.text))||!header.some(t=>/FORM-B/i.test(t.text)))return null;
  // Column starts are percentages of the official EMIS report's page width.
  // Validate row numbers and mandatory fields below to reject other layouts.
@@ -81,7 +81,7 @@ function parseEmisPositionedTable(items,pageWidth){
   const cols=starts.map((left,j)=>group.filter(t=>t.x>=left-3&&t.x<(starts[j+1]??pageWidth+5)-3&&!(j===0&&t===current))
     .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
   const serial=Number(current.text);
-  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|KATCHI|PREP|(?:CLASS\\s*)?(?:[1-9]|1[0-2]))$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably (student name, date or class missing). No records saved. Please provide this PDF for layout review.');
+  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|KATCHI|PREP|(?:CLASS\s*)?(?:[1-9]|1[0-2]))$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably (student name, date or class missing). No records saved. Please provide this PDF for layout review.');
   rows.push({__serial:serial,'ENRL #':cols[1],NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
  }
  if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');

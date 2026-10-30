@@ -67,11 +67,11 @@ async function ocrCanvas(canvas){if(typeof Tesseract==='undefined')throw Error('
 function parseEmisPositionedTable(items,pageWidth){
  const cells=items.filter(t=>t&&typeof t.str==='string'&&t.str.trim()&&Array.isArray(t.transform))
    .map(t=>({x:t.transform[4],y:t.transform[5],text:clean(t.str)}));
- const header=cells.filter(t=>/^(ENRL|FORM-B|FATHER|CLASS)$/i.test(t.text));
+ const header=cells.filter(t=>/^(ENRL(?:\\s*#)?|FORM-B|FATHER(?:\\s*\\/\\s*GUARDIAN)?|CLASS)$/i.test(t.text));
  if(!header.some(t=>/ENRL/i.test(t.text))||!header.some(t=>/FORM-B/i.test(t.text)))return null;
  // Column starts are percentages of the official EMIS report's page width.
  // Validate row numbers and mandatory fields below to reject other layouts.
- const starts=[.036,.087,.148,.319,.355,.449,.489,.577,.789,.900].map(n=>n*pageWidth);
+ const starts=[.030,.078,.138,.318,.354,.447,.485,.574,.779,.894].map(n=>n*pageWidth);
  const rows=[];
  const numbered=cells.filter(t=>t.x>=starts[0]-5&&t.x<starts[1]-5&&/^\d{1,4}$/.test(t.text))
    .sort((a,b)=>b.y-a.y);

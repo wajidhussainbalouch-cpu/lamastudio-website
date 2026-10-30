@@ -202,10 +202,14 @@ async function apply(){
   const result=await LamaAPI.importStudentsBatch(unique);
   if(!result||result.success!==true)throw Error('Import did not return a verified success response. Check the school register before retrying.');
   $('progressBar').style.width='100%';
-  $('saveCount').textContent=result.added+' added · '+(result.skipped+preSkipped)+' skipped · '+result.rejected+' rejected';
+  const added=Number(result.added)||0,skipped=(Number(result.skipped)||0)+preSkipped,rejected=Number(result.rejected)||0;
+  $('saveCount').textContent=added+' added · '+skipped+' skipped · '+rejected+' rejected';
+  const banner=$('importSuccess');
+  if(banner){banner.hidden=false;banner.textContent=added>0?'✓ Student import successful! '+added+' student(s) saved. '+skipped+' skipped; '+rejected+' rejected.':'✓ Import check completed. No new students added; '+skipped+' skipped; '+rejected+' rejected.';}
+  if(added>0)banner?.scrollIntoView({behavior:'smooth',block:'center'});
   status('Import completed: '+result.added+' added, '+(result.skipped+preSkipped)+' duplicates skipped, '+result.rejected+' rejected. Verify the student register before importing another file.');
   $('confirmReview').checked=false;
-  await analyze();
+  // Do not re-analyze here: it would clear the verified success message.
  }catch(e){status('Import stopped: '+e.message+' Check the student register before retrying.');}
  finally{busy=false;$('analyze').disabled=false;$('apply').disabled=true;}
 }

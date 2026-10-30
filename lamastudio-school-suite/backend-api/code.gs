@@ -1393,13 +1393,10 @@ function importStudentsBatch(params) {
         const idKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/[\\s-]/g, '');
         const nameKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/\\s+/g, ' ');
         const existing = sheet.getDataRange().getValues();
-        const enrollmentSet = new Set(), formSet = new Set(), personSet = new Set();
+        const enrollmentSet = new Set();
         for (let i = 1; i < existing.length; i++) {
-            const r = existing[i], enrl = idKey(r[ei]), form = ci >= 0 ? idKey(r[ci]) : '';
-            const name = nameKey(r[ni]), father = nameKey(r[fi]);
+            const enrl = idKey(existing[i][ei]);
             if (enrl) enrollmentSet.add(enrl);
-            if (form && form !== '0') formSet.add(form);
-            if (name && father) personSet.add(name + '|' + father);
         }
         const protectedFields = new Set(['id','apiKey','password','createdAt']);
         const allowedFields = new Set(headers.filter(h => !protectedFields.has(h)));
@@ -1416,13 +1413,12 @@ function importStudentsBatch(params) {
             const enrl = idKey(source.enrlNo), name = nameKey(source.name);
             const father = nameKey(source.fatherGuardian), form = idKey(source.cnic);
             const cls = String(source.class == null ? '' : source.class).trim();
-            if (!enrl || !name || !cls || !/^[A-Z0-9]{1,40}$/.test(enrl) || cls.length > 40) {
+            if (!enrl || !name || !/^[A-Z0-9]{1,40}$/.test(enrl) || cls.length > 40) {
                 rejected++;
                 details.push({row:row,enrollment:enrl,status:'rejected',reason:'Invalid enrollment, name or class'});
                 return;
             }
-            const person = father ? name + '|' + father : '';
-            if (enrollmentSet.has(enrl) || (form && form !== '0' && formSet.has(form)) || (person && personSet.has(person))) {
+            if (enrollmentSet.has(enrl)) {
                 skipped++;
                 details.push({row:row,enrollment:enrl,status:'skipped',reason:'Already exists or duplicate in batch'});
                 return;
@@ -1438,8 +1434,6 @@ function importStudentsBatch(params) {
             record.createdAt = now;
             rows.push(recordToRow(headers, record));
             enrollmentSet.add(enrl);
-            if (form && form !== '0') formSet.add(form);
-            if (person) personSet.add(person);
             details.push({row:row,enrollment:enrl,status:'added'});
         });
         if (rows.length) {

@@ -58,7 +58,7 @@ const REGISTRY_HEADERS = [
 const COLLECTIONS = {
     students: {
         tab: 'Students',
-        headers: ['id', 'enrlNo', 'name', 'gender', 'dob', 'fatherGuardian', 'contact', 'whatsapp', 'class', 'section',
+        headers: ['id', 'studentCode', 'enrlNo', 'name', 'gender', 'dob', 'fatherGuardian', 'contact', 'whatsapp', 'class', 'section',
                   'subjectsJson', 'position', 'photo', 'behavioralJson', 'attendance',
                   'teacherRemarks', 'principalRemarks', 'remarks', 'password', 'apiKey', 'createdAt',
                   'cnic', 'religion', 'category', 'fatherCnic', 'caste', 'profession', 'monthlyIncome',
@@ -1255,11 +1255,15 @@ function adminGetAudit(p){
 function handleRequest(params) {
     const action = params.action;
     try {
-        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','add','update','remove'];
+        const protectedActions=['updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
         switch (action) {
+            case 'previewStudentIds':
+                return {status:'success',result:manageStudentCodes(params,false)};
+            case 'applyStudentIds':
+                return {status:'success',result:manageStudentCodes(params,true)};
             case 'importStudentsBatch':
                 return {status:'success',result:importStudentsBatch(params)};
             case 'adminListSchoolUsers': return {status:'success',users:adminListSchoolUsers(params)};
@@ -1357,7 +1361,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','add','update','remove'];
+    const blocked=['schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -1428,6 +1432,8 @@ function importStudentsBatch(params) {
             const record = {};
             Object.keys(source).forEach(k => { if (allowedFields.has(k)) record[k] = source[k]; });
             record.enrlNo = enrl;
+            const prefix = PropertiesService.getScriptProperties().getProperty('STUDENT_CODE_PREFIX_' + ctx.schoolId) || '';
+            record.studentCode = enrl && prefix ? prefix + enrl : '';
             record.name = String(source.name).trim();
             record.class = cls;
             record.id = genId('stu');
@@ -1450,4 +1456,49 @@ function importStudentsBatch(params) {
     } finally {
         lock.releaseLock();
     }
+}
+
+/**
+ * School-admin-controlled display Student ID: PREFIX + original enrollment.
+ * The internal immutable id is never changed because attendance, fees and
+ * student sessions reference it. Only studentCode is changed.
+ * Preview is read-only; apply is an explicit separate authenticated action.
+ */
+function manageStudentCodes(params, apply) {
+    if (!params || (params.role || 'school') !== 'school' || !params._auditActor) {
+        throw new Error('School administrator authorization required.');
+    }
+    const prefix = String(params.prefix == null ? '' : params.prefix).trim().toUpperCase();
+    if (!/^[A-Z0-9][A-Z0-9_-]{0,24}-$/.test(prefix)) {
+        throw new Error('Prefix must end with a hyphen, e.g. AIMS-STU-.');
+    }
+    const ctx = resolveContext(params);
+    assertSchoolWritable(ctx.schoolId);
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(30000)) throw new Error('Student ID update busy; retry.');
+    try {
+        const info = getCollectionSheet(ctx, 'students');
+        const sh=info.sheet, headers=info.headers;
+        const idCol=headers.indexOf('studentCode')+1, enrlCol=headers.indexOf('enrlNo')+1;
+        if(!idCol||!enrlCol)throw new Error('Student columns missing.');
+        const data=sh.getDataRange().getValues(), proposed=[], used=new Set();
+        let pending=0,changed=0;
+        for(let i=1;i<data.length;i++){
+            const original=String(data[i][enrlCol-1] == null ? '' : data[i][enrlCol-1]).trim();
+            const code=original ? prefix+original : '';
+            if(code && used.has(code))throw new Error('Duplicate enrollment numbers found. Correct duplicates before applying IDs.');
+            if(code)used.add(code);else pending++;
+            if(String(data[i][idCol-1]||'')!==code)changed++;
+            proposed.push({row:i+1,enrollment:original,studentCode:code||'PENDING ENROLLMENT'});
+        }
+        if(apply){
+            if(proposed.length)sh.getRange(2,idCol,proposed.length,1).setValues(proposed.map(x=>[x.studentCode==='PENDING ENROLLMENT'?'':x.studentCode]));
+            PropertiesService.getScriptProperties().setProperty('STUDENT_CODE_PREFIX_'+ctx.schoolId,prefix);
+            SpreadsheetApp.flush();
+            writeAudit(ctx.ss,ctx.schoolId,params._auditActor,'bulkUpdate','students','',null,
+                {field:'studentCode',prefix:prefix,count:proposed.length,changed:changed,pending:pending});
+        }
+        return {success:true,applied:apply,prefix:prefix,total:proposed.length,changed:changed,
+            pendingEnrollment:pending,preview:proposed.slice(0,400)};
+    }finally{lock.releaseLock();}
 }

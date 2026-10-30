@@ -81,7 +81,7 @@ function parseEmisPositionedTable(items,pageWidth){
   const cols=starts.map((left,j)=>group.filter(t=>t.x>=left-3&&t.x<(starts[j+1]??pageWidth+5)-3&&!(j===0&&t===current))
     .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
   const serial=Number(current.text);
-  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|PREP|[1-9]|10)$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably. Nothing was imported.');
+  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|KATCHI|PREP|(?:CLASS\\s*)?(?:[1-9]|1[0-2]))$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably (student name, date or class missing). No records saved. Please provide this PDF for layout review.');
   rows.push({__serial:serial,'ENRL #':cols[1],NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
  }
  if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');

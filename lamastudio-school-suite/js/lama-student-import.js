@@ -81,13 +81,15 @@ function parseEmisPositionedTable(items,pageWidth){
   const cols=starts.map((left,j)=>group.filter(t=>t.x>=left-3&&t.x<(starts[j+1]??pageWidth+5)-3&&!(j===0&&t===current))
     .sort((a,b)=>b.y-a.y||a.x-b.x).map(t=>t.text).join(' ').trim());
   const serial=Number(current.text);
-  if(!cols[2]||!cols[4]||!cols[9]||!/^(ECE|ECCE|NURSERY|KG|KATCHI|PREP|(?:CLASS\s*)?(?:[1-9]|1[0-2]))$/i.test(cols[9]))throw Error('PDF row '+serial+' could not be read reliably (student name, date or class missing). No records saved. Please provide this PDF for layout review.');
+  // Preserve rows with missing optional DOB/class; flag incomplete identity in preview.
+  const name=cols[2]||'';
+  const studentClass=/^(ECE|ECCE|NURSERY|KG|KATCHI|PREP|(?:CLASS\\s*)?(?:[1-9]|1[0-2]))$/i.test(cols[9])?cols[9]:'';
   // ENRL # is printed between the row number and student name. Some PDFs
   // place its text item just outside the hard-coded enrollment cell boundary.
   // Recover only an unambiguous 3–7 digit token from that narrow region.
   const enrollmentTokens=group.filter(t=>t!==current&&/^\d{3,7}$/.test(t.text)&&t.x>=starts[0]&&t.x<starts[2]-3).sort((a,b)=>a.x-b.x);
   const enrollment= /^\d{3,7}$/.test(cols[1]) ? cols[1] : enrollmentTokens.length===1 ? enrollmentTokens[0].text : '';
-  rows.push({__serial:serial,'ENRL #':enrollment,NAME:cols[2],'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:cols[9]});
+  rows.push({__serial:serial,'ENRL #':enrollment,NAME:name,'F / M':cols[3],DOB:cols[4],'ADM. DATE':cols[6],'FATHER / GUARDIAN':cols[7],'FORM-B':cols[8],CLASS:studentClass});
  }
  if(!rows.length)throw Error('EMIS table headings were found but no numbered student rows were read.');
  // A whole report losing its enrollment column indicates a layout/parser fault,
@@ -148,10 +150,10 @@ function makePreview(){
   const cls=classKey(values.class||r.__sourceClass||'');
   const matches=id?(byId.get(id)||[]):[];
   let reason='New student';
-  if(!id)reason='New student — ✱ Missing enrollment';
+  if(!values.name)reason='Missing student name — review';
+  else if(!id)reason='New student — ✱ Missing enrollment';
   else if(matches.length)reason='Already enrolled — skip';
   else if(sourceId.has(id))reason='Duplicate enrollment in source — review';
-  else if(!values.name)reason='Missing student name — review';
   // Other source columns are optional and may be completed later.
   if(id)sourceId.add(id);
   return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method:matches.length?'Enrollment number':'',sourceClass:cls};

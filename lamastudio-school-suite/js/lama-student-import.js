@@ -71,7 +71,7 @@ function parseEmisPositionedTable(items,pageWidth){
  if(!header.some(t=>/ENRL/i.test(t.text))||!header.some(t=>/FORM-B/i.test(t.text)))return null;
  // Column starts are percentages of the official EMIS report's page width.
  // Validate row numbers and mandatory fields below to reject other layouts.
- const starts=[.037,.088,.154,.326,.375,.467,.510,.605,.814,.928].map(n=>n*pageWidth);
+ const starts=[.036,.087,.148,.319,.355,.449,.489,.577,.789,.900].map(n=>n*pageWidth);
  const rows=[];
  const numbered=cells.filter(t=>t.x>=starts[0]-5&&t.x<starts[1]-5&&/^\d{1,4}$/.test(t.text))
    .sort((a,b)=>b.y-a.y);

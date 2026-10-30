@@ -106,6 +106,10 @@ const LamaAPI = (() => {
     importStudentsBatch:async records=>(await callApi('importStudentsBatch',{records})).result,
     list:async collection=>(await callApi('list',{collection},'GET')).records,
     get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,
+    whatsappSettings:async()=>(await callApi('waSettings')).settings,
+    whatsappConnect:async configuration=>(await callApi('waConnect',{configuration})).settings,
+    whatsappDisconnect:async()=>(await callApi('waDisconnect')).settings,
+    whatsappSendTemplates:async(recipients,templateName,language)=>(await callApi('waSendTemplates',{recipients,templateName,language})).result,
     add:async(collection,record)=>(await callApi('add',{collection,record})).record,
     update:async(collection,id,patch)=>(await callApi('update',{collection,id,patch})).record,
     remove:async(collection,id)=>{await callApi('remove',{collection,id});}

@@ -101,6 +101,8 @@ const LamaAPI = (() => {
     adminSetStatus:async(schoolId,newStatus)=>(await callApi('adminSetStatus',{schoolId,newStatus})).result,
     adminResetPassword:async schoolId=>(await callApi('adminResetPassword',{schoolId})).result,
     bulkAttendance:async(date,records)=>(await callApi('bulkAttendance',{date,records})).result,
+    previewStudentIds:async prefix=>(await callApi('previewStudentIds',{prefix})).result,
+    applyStudentIds:async prefix=>(await callApi('applyStudentIds',{prefix})).result,
     importStudentsBatch:async records=>(await callApi('importStudentsBatch',{records})).result,
     list:async collection=>(await callApi('list',{collection},'GET')).records,
     get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,

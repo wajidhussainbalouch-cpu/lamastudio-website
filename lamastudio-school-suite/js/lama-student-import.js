@@ -141,25 +141,22 @@ function imageData(f){return new Promise((resolve,reject)=>{const reader=new Fil
 function deriveMapping(){const keys=[...new Set(rows.flatMap(Object.keys))].filter(k=>!k.startsWith('__'));mapping=Object.fromEntries(keys.map(k=>[k,detect(k)]));$('mapping').innerHTML=keys.map((k,i)=>'<label>'+escapeHTML(k)+'<select class="field" data-map="'+i+'"><option value="">Skip column</option>'+Object.keys(fieldDefs).map(f=>'<option value="'+f+'" '+(mapping[k]===f?'selected':'')+'>'+escapeHTML(fieldLabels[f])+'</option>').join('')+'</select></label>').join('');$('mapping').querySelectorAll('select').forEach((sel,i)=>sel.onchange=()=>{mapping[keys[i]]=sel.value;makePreview()})}
 function rowFields(r){if(r.__photo)return{enrlNo:r.__photo,photo:r.__data};const out={};for(const [k,v] of Object.entries(r)){const dest=mapping[k];if(dest&&!ignored.has(dest)&&!empty(v)&&empty(out[dest]))out[dest]=clean(v)}return out}
 function makePreview(){
- const byId=new Map(),byForm=new Map(),byPerson=new Map(),sourceId=new Map(),sourceForm=new Map();
- const put=(m,k,s)=>{if(!k)return;const a=m.get(k)||[];a.push(s);m.set(k,a)};
- for(const s of students){put(byId,normalize(enroll(s)),s);const form=normalize(s.cnic||s.formB||s.bForm||'');if(form&&form!=='0')put(byForm,form,s);const n=personKey(s.name),f=personKey(s.fatherGuardian||s.fatherName||s.father||'');if(n&&f)put(byPerson,n+'|'+f,s)}
+ const byId=new Map(),sourceId=new Set();
+ for(const s of students){const id=normalize(enroll(s));if(id){const matches=byId.get(id)||[];matches.push(s);byId.set(id,matches)}}
  preview=rows.map((r,i)=>{
-  const values=rowFields(r),id=normalize(values.enrlNo),form=normalize(values.cnic),n=personKey(values.name),f=personKey(values.fatherGuardian);
-  const cls=classKey(values.class||r.__sourceClass||'');let matches=[],method='';
-  if(id&&byId.has(id)){matches=byId.get(id);method='Enrollment number'}
-  else if(form&&form!=='0'&&byForm.has(form)){matches=byForm.get(form);method='Form-B'}
-  else if(n&&f&&byPerson.has(n+'|'+f)){matches=byPerson.get(n+'|'+f);method='Student + father'}
+  const values=rowFields(r),id=normalize(values.enrlNo);
+  const cls=classKey(values.class||r.__sourceClass||'');
+  const matches=id?(byId.get(id)||[]):[];
   let reason='New student';
-  if(matches.length===1)reason='Already enrolled — skip';
-  else if(matches.length>1)reason='Ambiguous existing match — review';
-  else if(!values.name||!cls||cls==='0')reason='Missing name or valid class — review';
-  else if(!id&&!(document.getElementById('includeNoEnrollment')?.checked&&f&&values.dob))reason='Missing enrollment — review';
-  else if(id&&sourceId.has(id))reason='Duplicate enrollment in source — review';
-  else if(form&&form!=='0'&&sourceForm.has(form))reason='Duplicate Form-B in source — review';
-  if(id)sourceId.set(id,i);if(form&&form!=='0')sourceForm.set(form,i);
-  return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method,sourceClass:cls};
- });renderPreview();
+  if(!id)reason='Missing enrollment — review';
+  else if(matches.length)reason='Already enrolled — skip';
+  else if(sourceId.has(id))reason='Duplicate enrollment in source — review';
+  else if(!values.name)reason='Missing student name — review';
+  // Other source columns are optional and may be completed later.
+  if(id)sourceId.add(id);
+  return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method:matches.length?'Enrollment number':'',sourceClass:cls};
+ });
+ renderPreview();
 }
 const importDisplayFields=['enrlNo','name','fatherGuardian','gender','dob','admissionDate','cnic','class','section','contact','address'];
 function previewColumns(){
@@ -183,23 +180,21 @@ async function apply(){
  if(!todo.length)return status('No approved new students to save.');
  if(!$('confirmReview').checked)return status('Review the preview and confirm first.');
  if(typeof LamaAPI.importStudentsBatch!=='function')return status('Batch import API unavailable. Refresh the page; no records saved.');
- if(!confirm('Save up to '+todo.length+' NEW students to this school? Existing records will be skipped. Make sure you have a backup.'))return;
+ if(!confirm('Save up to '+todo.length+' NEW enrollment numbers to this school? Existing enrollment numbers will be skipped. Make sure you have a backup.'))return;
  setBusy(true);
  try{
   // Recheck the live student register; never trust a stale PDF preview.
   const live=await LamaAPI.list('students');
   if(!Array.isArray(live))throw Error('Could not verify current students. No import attempted.');
   const usedId=new Set(live.map(s=>normalize(enroll(s))).filter(Boolean));
-  const usedForm=new Set(live.map(s=>normalize(s.cnic||s.formB||s.bForm||'')).filter(x=>x&&x!=='0'));
-  const usedPerson=new Set(live.filter(s=>s.name&&s.fatherGuardian).map(s=>personKey(s.name)+'|'+personKey(s.fatherGuardian)));
   const unique=[],seen=new Set();let preSkipped=0;
   for(const item of todo){
-   const v=item.values,id=normalize(v.enrlNo),form=normalize(v.cnic),person=personKey(v.name)+'|'+personKey(v.fatherGuardian);
-   if(!id||!v.name||!(v.class||item.sourceClass)){preSkipped++;continue;}
-   if(usedId.has(id)||(form&&form!=='0'&&usedForm.has(form))||(v.fatherGuardian&&usedPerson.has(person))||seen.has(id)){preSkipped++;continue;}
+   const v=item.values,id=normalize(v.enrlNo);
+   if(!id||!v.name){preSkipped++;continue;}
+   if(usedId.has(id)||seen.has(id)){preSkipped++;continue;}
    const record={...v,class:v.class||item.sourceClass};delete record.photo;
    unique.push(record);seen.add(id);
-   usedId.add(id);if(form&&form!=='0')usedForm.add(form);if(v.fatherGuardian)usedPerson.add(person);
+   usedId.add(id);
   }
   if(!unique.length){status('No new eligible students. '+preSkipped+' skipped; nothing written.');return;}
   const result=await LamaAPI.importStudentsBatch(unique);

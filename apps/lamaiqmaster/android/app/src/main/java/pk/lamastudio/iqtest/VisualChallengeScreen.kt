@@ -1,8 +1,6 @@
 package pk.lamastudio.iqtest
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,7 +20,7 @@ fun VisualChallengeScreen(level: Int, onExit: () -> Unit) {
     var score by remember(level) { mutableIntStateOf(0) }
     val puzzles = remember(level) { VisualPuzzleFactory.create(level, count = 10, seed = 1207) }
     val tr: (String) -> String = { GameText.get(it, language) }
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+    Column(Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(tr("language"), color = Color.LightGray)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

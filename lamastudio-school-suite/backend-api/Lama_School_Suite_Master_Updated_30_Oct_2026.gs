@@ -1411,83 +1411,93 @@ function doGet(e) {
  * Apps Script file. The existing deployment URL and spreadsheets are retained.
  */
 function importStudentsBatch(params) {
-  if (!params || (params.role || 'school') !== 'school' || !params._auditActor)
+  if(!params||(params.role||'school')!=='school'||!params._auditActor)
     throw new Error('School administrator authorization required.');
   const incoming=params.records;
-  if (!Array.isArray(incoming)||incoming.length<1||incoming.length>400)
+  if(!Array.isArray(incoming)||!incoming.length||incoming.length>400)
     throw new Error('Submit between 1 and 400 students.');
   const ctx=resolveContext(params);assertSchoolWritable(ctx.schoolId);
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(30000))throw new Error('Import is busy. Please retry.');
-  try {
+  try{
     const info=getCollectionSheet(ctx,'students'),sheet=info.sheet,headers=info.headers;
-    const ei=headers.indexOf('enrlNo'),ni=headers.indexOf('name'),fi=headers.indexOf('fatherGuardian');
-    if(ei<0||ni<0||fi<0)throw new Error('Students sheet is missing required columns.');
-    const key=v=>String(v==null?'':v).trim().toUpperCase().replace(/[\\s-]/g,'');
-    const personKey=(name,father,cls)=>[name,father,cls].map(key).join('|');
-    const isBlank=v=>v==null||String(v).trim()==='';
-    const original=sheet.getDataRange().getValues(),working=original.map(r=>r.slice());
-    const byEnrollment=new Map(),byPerson=new Map();
-    const addIndex=(map,k,row)=>{if(!k)return;const a=map.get(k)||[];a.push(row);map.set(k,a)};
-    for(let i=1;i<working.length;i++){
-      const row=working[i],enrl=key(row[ei]),cls=String(row[headers.indexOf('class')]||'');
-      addIndex(byEnrollment,enrl,i);
-      if(key(row[ni])&&key(row[fi]))addIndex(byPerson,personKey(row[ni],row[fi],cls),i);
-    }
+    const ei=headers.indexOf('enrlNo'),ni=headers.indexOf('name'),fi=headers.indexOf('fatherGuardian'),ci=headers.indexOf('class');
+    if([ei,ni,fi].some(x=>x<0))throw new Error('Students sheet is missing required columns.');
+    const key=v=>String(v==null?'':v).trim().toUpperCase().replace(/[\s-]/g,'');
+    const person=(n,f,c)=>[n,f,c].map(key).join('|');
+    const blank=v=>v==null||String(v).trim()==='';
+    const original=sheet.getDataRange().getValues(),working=original.map(row=>row.slice()),baseLength=working.length;
+    const enrollmentMap=new Map(),personMap=new Map();
+    const put=(map,k,i)=>{if(!k)return;const a=map.get(k)||[];if(a.indexOf(i)<0)a.push(i);map.set(k,a)};
+    const addIndexes=(row,i)=>{
+      put(enrollmentMap,key(row[ei]),i);
+      if(key(row[ni])&&key(row[fi]))put(personMap,person(row[ni],row[fi],ci>=0?row[ci]:''),i);
+    };
+    for(let i=1;i<working.length;i++)addIndexes(working[i],i);
     const protectedFields=new Set(['id','apiKey','password','createdAt','studentCode','portalLoginId']);
     const allowed=headers.filter(h=>!protectedFields.has(h));
-    const additions=[],updates=new Map(),details=[];
-    let skipped=0,rejected=0,updated=0,unchanged=0;
+    const changed=new Set(),details=[];
+    let added=0,updated=0,unchanged=0,skipped=0,rejected=0;
     const now=new Date().toISOString();
-    incoming.forEach((source,i)=>{
-      const n=i+1;
-      if(!source||typeof source!=='object'||Array.isArray(source)){rejected++;details.push({row:n,status:'rejected',reason:'Invalid record'});return}
-      const name=String(source.name||'').trim(),enrl=key(source.enrlNo),father=String(source.fatherGuardian||'').trim();
-      const cls=String(source.class||'').trim();
-      if(!name||cls.length>40||enrl.length>40){rejected++;details.push({row:n,status:'rejected',reason:'Missing name or invalid class/enrollment'});return}
-      const enrollmentMatches=enrl?(byEnrollment.get(enrl)||[]):[];
-      const peopleMatches=father?(byPerson.get(personKey(name,father,cls))||[]):[];
-      let candidates=enrollmentMatches.length?enrollmentMatches:peopleMatches;
-      // Never merge two different people just because their enrollment numbers collide.
-      if(enrollmentMatches.length===1){
-        const target=working[enrollmentMatches[0]];
-        if(key(target[ni])!==key(name)||(father&&key(target[fi])&&key(target[fi])!==key(father))){
-          candidates=[]; // duplicate enrollment belonging to a different student
-          source={...source,enrlNo:''};
+    incoming.forEach((input,i)=>{
+      const number=i+1;
+      if(!input||typeof input!=='object'||Array.isArray(input)){rejected++;details.push({row:number,status:'rejected',reason:'Invalid record'});return}
+      const source={...input},name=String(source.name||'').trim(),father=String(source.fatherGuardian||'').trim(),cls=String(source.class||'').trim(),enrl=key(source.enrlNo);
+      if(!name||cls.length>40||enrl.length>40){rejected++;details.push({row:number,status:'rejected',reason:'Missing name or invalid class/enrollment'});return}
+      const byId=enrl?(enrollmentMap.get(enrl)||[]):[];
+      const byPerson=father?(personMap.get(person(name,father,cls))||[]):[];
+      let matches=byId.length?byId:byPerson;
+      // Enrollment collisions with different people must never overwrite a record.
+      if(byId.length===1){
+        const row=working[byId[0]];
+        if(key(row[ni])!==key(name)||(father&&key(row[fi])&&key(row[fi])!==key(father))){
+          matches=byPerson.filter(j=>j!==byId[0]);
+          source.enrlNo='';
         }
       }
-      if(candidates.length>1){skipped++;details.push({row:n,status:'review',reason:'Ambiguous match; no change'});return}
-      if(candidates.length===1){
-        const idx=candidates[0],row=working[idx];let count=0;
+      if(matches.length>1){skipped++;details.push({row:number,status:'review',reason:'Multiple possible students; manual review required'});return}
+      if(matches.length===1){
+        const index=matches[0],row=working[index];
+        // An enrollment number already owned by someone else is never copied.
+        if(source.enrlNo&&key(row[ei])&&key(row[ei])!==key(source.enrlNo))source.enrlNo='';
+        let filled=0;
         allowed.forEach(h=>{
-          const col=headers.indexOf(h),v=source[h];
-          if(col>=0&&!isBlank(v)&&isBlank(row[col])){row[col]=v;count++}
+          const col=headers.indexOf(h),value=source[h];
+          if(col>=0&&!blank(value)&&blank(row[col])){
+            if(h==='enrlNo'&&(enrollmentMap.get(key(value))||[]).some(j=>j!==index))return;
+            row[col]=value;filled++;
+          }
         });
-        if(count){updates.set(idx,row);updated++;details.push({row:n,status:'updated',filled:count})}
-        else{unchanged++;details.push({row:n,status:'unchanged'})}
+        if(filled){
+          if(index<baseLength)changed.add(index);
+          updated++;
+          // A formerly blank enrollment is now available for subsequent matches.
+          addIndexes(row,index);
+          details.push({row:number,status:'updated',filled});
+        }else{unchanged++;details.push({row:number,status:'unchanged'})}
         return;
       }
+      // A duplicate enrollment is kept blank, not assigned to another person.
+      if(source.enrlNo&&(enrollmentMap.get(key(source.enrlNo))||[]).length)source.enrlNo='';
       const record={};
-      allowed.forEach(h=>{if(!isBlank(source[h]))record[h]=source[h]});
+      allowed.forEach(h=>{if(!blank(source[h]))record[h]=source[h]});
       record.enrlNo=source.enrlNo||'';
       record.id=genId('stu');record.apiKey=Utilities.getUuid();record.createdAt=now;
       record.password=record.enrlNo||'';
       const prefix=PropertiesService.getScriptProperties().getProperty('STUDENT_CODE_PREFIX_'+ctx.schoolId)||'';
       record.studentCode=record.enrlNo&&prefix?prefix+record.enrlNo:'';
-      additions.push(recordToRow(headers,record));
-      const newIndex=working.length;working.push(recordToRow(headers,record));
-      if(key(record.enrlNo))addIndex(byEnrollment,key(record.enrlNo),newIndex);
-      if(father)addIndex(byPerson,personKey(name,father,cls),newIndex);
-      details.push({row:n,status:'added',reviewRequired:!record.enrlNo});
+      const row=recordToRow(headers,record),index=working.length;
+      working.push(row);addIndexes(row,index);added++;
+      details.push({row:number,status:'added',reviewRequired:!record.enrlNo});
     });
-    // Update only changed rows, preserving all other columns and existing values.
-    for(const [index,row] of updates)sheet.getRange(index+1,1,1,headers.length).setValues([row]);
-    if(additions.length)sheet.getRange(sheet.getLastRow()+1,1,additions.length,headers.length).setValues(additions);
+    // Write only rows whose blank fields were completed; never rewrite other records.
+    const sorted=[...changed].sort((a,b)=>a-b);
+    for(const index of sorted)sheet.getRange(index+1,1,1,headers.length).setValues([working[index]]);
+    if(added)sheet.getRange(sheet.getLastRow()+1,1,added,headers.length).setValues(working.slice(baseLength));
     SpreadsheetApp.flush();
     writeAudit(ctx.ss,ctx.schoolId,params._auditActor,'import','students','',null,
-      {submitted:incoming.length,added:additions.length,updated,unchanged,skipped,rejected});
-    return {success:true,schoolId:ctx.schoolId,total:incoming.length,added:additions.length,
-      updated,unchanged,skipped,rejected,details};
+      {submitted:incoming.length,added,updated,unchanged,skipped,rejected});
+    return {success:true,schoolId:ctx.schoolId,total:incoming.length,added,updated,unchanged,skipped,rejected,details};
   }finally{lock.releaseLock()}
 }
 

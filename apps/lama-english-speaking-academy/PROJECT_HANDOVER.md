@@ -10,11 +10,11 @@ No production merge, Vercel deployment or Play publication without authorization
 
 ## Verified source inventory
 - Native Kotlin, Jetpack Compose starter Android application.
-- Four original A1 lessons (greetings, daily routine, classroom, shopping), with Urdu explanations and two quiz questions each.
+- Four original A1 lessons (greetings, daily routine, classroom, shopping), with Urdu explanations and TEN quiz questions each (40 total).
 - JSON lesson parser, basic local SharedPreferences completion tracking and >=70% pass rule.
 - Android TextToSpeech dialogue playback source; not device-tested.
 - Microphone permission declared; speech recognition UI is not implemented.
-- LessonValidator and three tests; AcademyPolicy and four policy tests.
+- LessonValidator and three tests; AcademyPolicy and four policy tests; RewardPolicy and three reward tests.
 - GitHub Actions workflow source exists, but successful build and APK have not been verified.
 
 ## Deep audit findings
@@ -22,7 +22,7 @@ No production merge, Vercel deployment or Play publication without authorization
 2. Current level selector and data model do not provide a full A1-C2 course map.
 3. Vocabulary now appears in the lesson UI; speaker labels are still lost in the parser.
 4. Dialogues lose speaker labels in the parser.
-5. No robust offline speech recognition, proficiency assessment, spaced repetition or Room database.
+5. No robust offline speech recognition, proficiency assessment, spaced repetition or Room database. Reward coins use local SharedPreferences, not a tamper-resistant server ledger.
 6. No AdMob SDK, real ad placements, subscription billing or verified premium entitlements.
 7. TTS initialization/device availability and lifecycle need build/device validation.
 8. CI pins Gradle 8.9 and installs Android SDK 35; Gradle wrapper and successful CI run are outstanding.
@@ -41,6 +41,12 @@ No production merge, Vercel deployment or Play publication without authorization
 - No hardcoded real ad IDs, billing secrets or cloud AI keys.
 
 ## Latest committed changes
+- Expanded question bank from 8 to 40 original A1 multiple-choice questions (10 per lesson); editorial and build validation still required.
+- Added one-time 25-coin rewards for first successful lesson completion; repeated passes do not mint extra coins.
+- Added certificate eligibility after all four A1 lessons are passed; current UI is a completion preview, NOT an issued personalized certificate or PDF.
+- Added three unit tests for passing threshold, coin awards and certificate eligibility.
+- Build cannot be verified in the current local environment (no Gradle or Android SDK available); CI workflow source exists, but no successful run was confirmed.
+
 - Parsed vocabulary items and CEFR level into the lesson data model, preserving backwards-compatible constructor defaults for existing tests.
 - Displayed vocabulary words, Urdu meanings and usage examples in lesson cards.
 - Added beginner course completion progress bar.

@@ -180,21 +180,29 @@ function imageData(f){return new Promise((resolve,reject)=>{const reader=new Fil
 function deriveMapping(){const keys=[...new Set(rows.flatMap(Object.keys))].filter(k=>!k.startsWith('__'));mapping=Object.fromEntries(keys.map(k=>[k,detect(k)]));$('mapping').innerHTML=keys.map((k,i)=>'<label>'+escapeHTML(k)+'<select class="field" data-map="'+i+'"><option value="">Skip column</option>'+Object.keys(fieldDefs).map(f=>'<option value="'+f+'" '+(mapping[k]===f?'selected':'')+'>'+escapeHTML(fieldLabels[f])+'</option>').join('')+'</select></label>').join('');$('mapping').querySelectorAll('select').forEach((sel,i)=>sel.onchange=()=>{mapping[keys[i]]=sel.value;makePreview()})}
 function rowFields(r){if(r.__photo)return{enrlNo:r.__photo,photo:r.__data};const out={};for(const [k,v] of Object.entries(r)){const dest=mapping[k];if(dest&&!ignored.has(dest)&&!empty(v)&&empty(out[dest]))out[dest]=clean(v)}return out}
 function makePreview(){
- const byId=new Map(),sourceId=new Set();
- for(const s of students){const id=normalize(enroll(s));if(id){const matches=byId.get(id)||[];matches.push(s);byId.set(id,matches)}}
+ const byId=new Map(),byPerson=new Map(),sourceId=new Set();
+ const personKey=(name,father,cls)=>[name,father,cls].map(normalize).join('|');
+ for(const student of students){
+  const id=normalize(enroll(student));
+  if(id){const found=byId.get(id)||[];found.push(student);byId.set(id,found)}
+  const name=student.name,father=student.fatherGuardian,cls=student.class;
+  if(name&&father){const k=personKey(name,father,cls);const found=byPerson.get(k)||[];found.push(student);byPerson.set(k,found)}
+ }
  preview=rows.map((r,i)=>{
-  const values=rowFields(r),id=normalize(values.enrlNo);
-  const cls=classKey(values.class||r.__sourceClass||'');
-  const matches=id?(byId.get(id)||[]):[];
+  const values=rowFields(r),id=normalize(values.enrlNo),cls=classKey(values.class||r.__sourceClass||'');
+  const identity=values.name&&values.fatherGuardian?personKey(values.name,values.fatherGuardian,values.class||cls):'';
+  const idMatches=id?(byId.get(id)||[]):[];
+  const personMatches=identity?(byPerson.get(identity)||[]):[];
+  const samePerson=s=>normalize(s.name)===normalize(values.name)&&(!values.fatherGuardian||!s.fatherGuardian||normalize(s.fatherGuardian)===normalize(values.fatherGuardian));
+  const matches=idMatches.length===1&&samePerson(idMatches[0])?idMatches:personMatches;
   let reason='New student';
   if(!values.name)reason='Missing student name — review';
-  else if(!id)reason='New student — ✱ Missing enrollment';
+  else if(matches.length>1)reason='Ambiguous student match — review';
   else if(matches.length===1)reason='Complete missing fields — existing student';
-  else if(matches.length>1)reason='Ambiguous enrollment — review';
-  else if(sourceId.has(id))reason='New student — duplicate enrollment; save with blank enrollment';
-  // Other source columns are optional and may be completed later.
+  else if(!id)reason='New student — ✱ Missing enrollment';
+  else if(sourceId.has(id)||idMatches.length)reason='New student — duplicate enrollment; save with blank enrollment';
   if(id)sourceId.add(id);
-  return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method:matches.length?'Enrollment number':'',sourceClass:cls};
+  return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method:matches.length?'Verified identity':'',sourceClass:cls};
  });
  renderPreview();
 }

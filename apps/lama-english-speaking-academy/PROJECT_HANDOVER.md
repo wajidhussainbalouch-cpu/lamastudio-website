@@ -1,5 +1,5 @@
 # Lama English Speaking Academy — Project Handover
-Updated: 2026-10-31
+Updated: 2026-10-31 (curriculum UI and CI refinement)
 Status: Development prototype; no verified APK or revenue integration.
 
 ## Isolation
@@ -20,12 +20,12 @@ No production merge, Vercel deployment or Play publication without authorization
 ## Deep audit findings
 1. Only four lessons and eight quiz questions; insufficient for production curriculum.
 2. Current level selector and data model do not provide a full A1-C2 course map.
-3. Vocabulary is present in JSON but is not displayed by the UI.
+3. Vocabulary now appears in the lesson UI; speaker labels are still lost in the parser.
 4. Dialogues lose speaker labels in the parser.
 5. No robust offline speech recognition, proficiency assessment, spaced repetition or Room database.
 6. No AdMob SDK, real ad placements, subscription billing or verified premium entitlements.
 7. TTS initialization/device availability and lifecycle need build/device validation.
-8. CI relies on runner-installed Gradle; Gradle wrapper and successful CI run are outstanding.
+8. CI pins Gradle 8.9 and installs Android SDK 35; Gradle wrapper and successful CI run are outstanding.
 9. UI needs accessibility, responsive layout and commercial design review.
 10. Existing lessons require editorial expansion and review for progression, accuracy and variety.
 
@@ -39,6 +39,12 @@ No production merge, Vercel deployment or Play publication without authorization
 - Advertising must remain disabled until consent, age suitability, real SDK integration, testing and policy review are complete.
 - Google Play Billing required for digital subscriptions; entitlement validation must not rely on a local toggle.
 - No hardcoded real ad IDs, billing secrets or cloud AI keys.
+
+## Latest committed changes
+- Parsed vocabulary items and CEFR level into the lesson data model, preserving backwards-compatible constructor defaults for existing tests.
+- Displayed vocabulary words, Urdu meanings and usage examples in lesson cards.
+- Added beginner course completion progress bar.
+- Pinned CI Gradle 8.9 and Android SDK platform 35. Builds and tests remain unverified.
 
 ## Next engineering gates
 1. Establish reproducible Gradle build, run JVM tests, fix failures and verify debug APK.

@@ -550,6 +550,14 @@ header#topOverview{background:var(--lama-header)!important}
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+        document.getElementById('studentAttClasses')?.addEventListener('click',event=>{
+          const button=event.target.closest('[data-ping-class]');if(!button)return;
+          const className=button.getAttribute('data-ping-class');
+          const schoolName=document.getElementById('heroSchoolName')?.textContent||'School';
+          const message=`Attendance reminder — ${schoolName}\nClass: ${className}\nPlease complete and save today's student attendance as soon as possible. Thank you.\n\nحاضری کی یاد دہانی: کلاس ${className} کی آج کی طلبہ حاضری جلد مکمل کر کے محفوظ کریں۔ شکریہ۔`;
+          if(navigator.clipboard?.writeText){navigator.clipboard.writeText(message).then(()=>alert('Teacher reminder copied. Send it to the assigned class teacher.')).catch(()=>prompt('Copy this reminder and send it to the class teacher:',message));}
+          else prompt('Copy this reminder and send it to the class teacher:',message);
+        });
         function renderStudentAttendanceCard(attendance,students){
           const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
@@ -593,7 +601,13 @@ header#topOverview{background:var(--lama-header)!important}
             counts.absent+' absent today';set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
-          document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>`<div class="class-att-row"><span class="text-xs font-bold truncate">${esc(name)}</span><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span></div>`).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
+          document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>{
+ const complete=r.total>0&&r.marked===r.total,partial=r.marked>0&&!complete;
+ const color=complete?'bg-emerald-500':partial?'bg-amber-500':'bg-red-500';
+ const label=complete?'✓ Completed':partial?'◐ Incomplete':'● Not marked';
+ const width=r.total?Math.round(r.marked/r.total*100):0;
+ return `<div class="py-2 border-b border-slate-700/30"><div class="flex items-center justify-between gap-2"><span class="text-xs font-bold">${esc(name)}</span><span class="text-[11px] ${complete?'text-emerald-500':partial?'text-amber-500':'text-red-500'}">${label}</span></div><div class="flex items-center justify-between gap-2 mt-1"><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span>${!complete?`<button type="button" class="hub-mini-link" data-ping-class="${esc(name)}">Ping teacher →</button>`:''}</div><div class="h-1.5 rounded-full bg-slate-700/40 overflow-hidden mt-2"><div class="h-full ${color}" style="width:${complete?100:Math.max(5,width)}%"></div></div></div>`;
+ }).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
         }
 
         

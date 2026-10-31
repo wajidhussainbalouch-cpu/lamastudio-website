@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
         val prefs = getSharedPreferences("iq_progress", MODE_PRIVATE)
         setContent {
             var level by remember { mutableIntStateOf(0) }
+            var visualMode by remember { mutableStateOf(false) }
             var question by remember { mutableIntStateOf(0) }
             var score by remember { mutableIntStateOf(0) }
             var selected by remember { mutableIntStateOf(-1) }
@@ -53,8 +54,10 @@ class MainActivity : ComponentActivity() {
                     Text("Lama IQ Test", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Bold)
                     Text("Brain training • Logic • Patterns", color = Color(0xFFC7C9DD))
                     when {
+                        visualMode -> VisualChallengeScreen(level = if (level == 0) 1 else level, onExit = { visualMode = false; level = 0 })
                         level == 0 -> {
                             Text("Choose a level", color = Color.White, fontSize = 22.sp)
+                            Button(onClick = { visualMode = true }, modifier = Modifier.fillMaxWidth()) { Text("Play visual pattern challenges • 5 languages") }
                             Text("Score at least 7 of 10 to unlock the next level. Your progress is saved offline.", color = Color.LightGray)
                             (1..5).forEach { i ->
                                 val best = prefs.getInt("best_$i", 0)

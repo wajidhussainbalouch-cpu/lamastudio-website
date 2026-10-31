@@ -14,6 +14,6 @@ class CurriculumCatalogTest {
  @Test fun coverageCannotExceedTotal() {
   val (ready,total) = CurriculumCatalog.coverage(LearningContent.lessons)
   assertTrue(ready in 0..total)
-  assertTrue(ready < total)
+  assertEquals(total, ready)
  }
 }

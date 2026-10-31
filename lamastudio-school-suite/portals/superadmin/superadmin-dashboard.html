@@ -40,6 +40,9 @@
             <a href="school-admin-accounts.html" class="inline-flex items-center justify-center rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-3 whitespace-nowrap">Manage School Admins</a>
         </section>
 
+<section class="cyber-card rounded-xl p-4 space-y-3" aria-label="School registration requests">
+<div class="flex items-center justify-between gap-3"><div><h2 class="font-black text-base">School Registration Requests <span id="requestCount" class="text-amber-300">0</span></h2><p class="text-slate-400 text-xs">Review principal applications before sending a one-time activation email.</p></div><button onclick="loadApplications()" class="bg-indigo-700 text-xs rounded-xl px-4 py-2">Refresh</button></div>
+<div id="applicationList" class="space-y-3 text-xs text-slate-300">Loading requests...</div></section>
         <!-- Filter -->
         <div class="flex gap-2 flex-wrap">
             <input id="searchBox" oninput="renderSchools()" placeholder="Search schools by name or email..." class="flex-grow bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 outline-none focus:border-indigo-500 min-w-[220px]">
@@ -180,9 +183,39 @@
             document.getElementById('resetModal').classList.remove('hidden');
         }
 
+
+        function escapeApplicationText(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+        let pendingApplications=[];
+        async function loadApplications(){
+          const el=document.getElementById('applicationList');el.textContent='Loading requests...';
+          try{
+            const requests=await LamaAPI.adminApplications();
+            pendingApplications=requests.filter(x=>x.status==='Pending Approval');
+            document.getElementById('requestCount').textContent=pendingApplications.length;
+            if(!requests.length){el.textContent='No registration requests yet.';return;}
+            el.innerHTML=requests.slice().reverse().map(x=>`<div class="bg-slate-950 border border-slate-700 rounded-xl p-3 space-y-2">
+              <div class="flex justify-between gap-3"><strong>${escapeApplicationText(x.name)}</strong><span class="text-amber-300">${escapeApplicationText(x.status)}</span></div>
+              <div>${escapeApplicationText(x.adminEmail)} · ${escapeApplicationText(x.type)} · ${escapeApplicationText(x.level)} · ${escapeApplicationText(x.plan)}</div>
+              <div>${escapeApplicationText(x.principal)} · ${escapeApplicationText(x.phone)} · ${escapeApplicationText(x.address)}</div>
+              <p class="text-slate-400">${escapeApplicationText(x.requirements)}</p>
+              ${x.status==='Pending Approval'?`<div class="flex gap-2"><button data-review="${escapeApplicationText(x.requestId)}" data-decision="Approve" class="bg-emerald-700 rounded-lg px-3 py-2 font-bold">Approve & Email Activation</button><button data-review="${escapeApplicationText(x.requestId)}" data-decision="Reject" class="bg-red-800 rounded-lg px-3 py-2">Reject</button></div>`:''}
+              ${x.notification?'<p class="text-amber-300">'+escapeApplicationText(x.notification)+'</p>':''}
+            </div>`).join('');
+          }catch(err){el.textContent='Unable to load applications: '+err.message;}
+        }
+        document.getElementById('applicationList').addEventListener('click',async e=>{
+          const btn=e.target.closest('button[data-review]');if(!btn)return;
+          const decision=btn.dataset.decision,id=btn.dataset.review;
+          if(!confirm(decision+' this school application?'))return;
+          btn.disabled=true;
+          try{await LamaAPI.reviewSchoolApplication(id,decision);await loadApplications();}
+          catch(err){alert('Approval failed: '+err.message);btn.disabled=false;}
+        });
+
         async function init() {
             await loadStats();
             renderSchools();
+            await loadApplications();
         }
 
         if (LamaAPI.requireLogin('admin', 'superadmin-login.html')) {

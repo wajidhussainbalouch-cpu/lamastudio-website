@@ -98,10 +98,47 @@ function parseEmisPositionedTable(items,pageWidth){
  return rows;
 }
 
+// Load PDF.js on demand with a second trusted CDN if the initial script
+// was blocked, timed out or failed during mobile page startup.
+const PDFJS_VERSION='3.11.174';
+const PDFJS_SOURCES=[
+ {script:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+PDFJS_VERSION+'/pdf.min.js',worker:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/'+PDFJS_VERSION+'/pdf.worker.min.js'},
+ {script:'https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/build/pdf.min.js',worker:'https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/build/pdf.worker.min.js'}
+];
+let pdfLoaderPromise=null;
+function loadPdfScript_(src){
+ return new Promise((resolve,reject)=>{
+  const el=document.createElement('script');el.src=src;el.async=true;
+  const timeout=setTimeout(()=>{el.remove();reject(Error('PDF library request timed out'))},12000);
+  el.onload=()=>{clearTimeout(timeout);resolve()};
+  el.onerror=()=>{clearTimeout(timeout);el.remove();reject(Error('PDF library network error'))};
+  document.head.appendChild(el);
+ });
+}
+async function ensurePdfReader_(){
+ if(window.pdfjsLib&&typeof window.pdfjsLib.getDocument==='function'){
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_SOURCES[0].worker;
+  return window.pdfjsLib;
+ }
+ if(pdfLoaderPromise)return pdfLoaderPromise;
+ pdfLoaderPromise=(async()=>{
+  for(const source of PDFJS_SOURCES){
+   status('Loading PDF reader…');
+   try{
+    await loadPdfScript_(source.script);
+    if(window.pdfjsLib&&typeof window.pdfjsLib.getDocument==='function'){
+     window.pdfjsLib.GlobalWorkerOptions.workerSrc=source.worker;
+     return window.pdfjsLib;
+    }
+   }catch(err){console.warn('PDF reader source unavailable:',err.message)}
+  }
+  throw Error('PDF reader could not load from either provider. Check internet access, disable content blockers for this site, then retry. No students were saved.');
+ })();
+ try{return await pdfLoaderPromise}finally{pdfLoaderPromise=null}
+}
 async function readPDF(f){
- if(typeof pdfjsLib==='undefined')throw Error('PDF reader not loaded.');
- pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
- const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+ const reader=await ensurePdfReader_();
+ const doc=await reader.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;
  const limit=Math.min(doc.numPages,Math.min(50,Math.max(1,Number($('maxPages').value)||50)));
  if(limit<doc.numPages)throw Error('Only '+limit+' of '+doc.numPages+' pages selected. Increase the page limit before analyzing to avoid missing students.');
  const all=[];let reportMode=null;

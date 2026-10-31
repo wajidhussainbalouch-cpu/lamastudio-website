@@ -73,3 +73,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Updated main screen to display the actual number of grade/subject combinations containing starter lessons; avoids implying the entire curriculum is complete.
 - Remain on development branch; no Vercel, production merge or publication.
 - Blocker: obtain Actions run logs or an Android SDK-enabled build environment; fix any errors based on real output before declaring APK ready.
+
+## Content expansion — 31 October 2026
+- Added 29 original starter lessons, bringing the source list to 40 (one per Nursery/KG/Class 1–8 × English/Urdu/Mathematics/Science pair).
+- Updated curriculum test source to require at least one lesson in each of 40 grade-subject combinations.
+- This is baseline sample coverage, NOT complete age-appropriate courses or an educator-reviewed curriculum. Most lessons have only one question. Review and expansion are required before release.
+- Android build, GitHub Actions result and APK remain unverified. No publishing or production merge.

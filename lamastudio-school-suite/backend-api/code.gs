@@ -536,7 +536,7 @@ function addTeacher(schoolId, apiKey, p) {
     const email = String(p.email||'').trim().toLowerCase();
     const loginId = String(p.loginId||'').trim().toLowerCase();
     if(!email&&!loginId)throw new Error('Enter a Teacher Login ID when no email is provided.');
-    if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))throw new Error('Enter a valid email or leave it blank.');
+    if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error('Enter a valid email or leave it blank.');
     if(loginId&&!/^[a-z0-9._-]{3,40}$/.test(loginId))throw new Error('Teacher Login ID must be 3–40 letters, digits, dots, underscores or dashes.');
     const identifierSet=new Set([email,loginId].filter(Boolean));
     for (let i = 1; i < existing.length; i++) {

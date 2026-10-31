@@ -1411,98 +1411,84 @@ function doGet(e) {
  * Apps Script file. The existing deployment URL and spreadsheets are retained.
  */
 function importStudentsBatch(params) {
-    if (!params || (params.role || 'school') !== 'school' || !params._auditActor) {
-        throw new Error('School administrator authorization required.');
+  if (!params || (params.role || 'school') !== 'school' || !params._auditActor)
+    throw new Error('School administrator authorization required.');
+  const incoming=params.records;
+  if (!Array.isArray(incoming)||incoming.length<1||incoming.length>400)
+    throw new Error('Submit between 1 and 400 students.');
+  const ctx=resolveContext(params);assertSchoolWritable(ctx.schoolId);
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(30000))throw new Error('Import is busy. Please retry.');
+  try {
+    const info=getCollectionSheet(ctx,'students'),sheet=info.sheet,headers=info.headers;
+    const ei=headers.indexOf('enrlNo'),ni=headers.indexOf('name'),fi=headers.indexOf('fatherGuardian');
+    if(ei<0||ni<0||fi<0)throw new Error('Students sheet is missing required columns.');
+    const key=v=>String(v==null?'':v).trim().toUpperCase().replace(/[\\s-]/g,'');
+    const personKey=(name,father,cls)=>[name,father,cls].map(key).join('|');
+    const isBlank=v=>v==null||String(v).trim()==='';
+    const original=sheet.getDataRange().getValues(),working=original.map(r=>r.slice());
+    const byEnrollment=new Map(),byPerson=new Map();
+    const addIndex=(map,k,row)=>{if(!k)return;const a=map.get(k)||[];a.push(row);map.set(k,a)};
+    for(let i=1;i<working.length;i++){
+      const row=working[i],enrl=key(row[ei]),cls=String(row[headers.indexOf('class')]||'');
+      addIndex(byEnrollment,enrl,i);
+      if(key(row[ni])&&key(row[fi]))addIndex(byPerson,personKey(row[ni],row[fi],cls),i);
     }
-    const incoming = params.records;
-    if (!Array.isArray(incoming) || incoming.length < 1 || incoming.length > 400) {
-        throw new Error('Submit between 1 and 400 students.');
-    }
-    const ctx = resolveContext(params);
-    assertSchoolWritable(ctx.schoolId);
-    const lock = LockService.getScriptLock();
-    if (!lock.tryLock(30000)) throw new Error('Import is busy. Please retry.');
-    try {
-        const info = getCollectionSheet(ctx, 'students');
-        const sheet = info.sheet, headers = info.headers;
-        const ei = headers.indexOf('enrlNo');
-        const ni = headers.indexOf('name');
-        const fi = headers.indexOf('fatherGuardian');
-        const ci = headers.indexOf('cnic');
-        if (ei < 0 || ni < 0 || fi < 0) throw new Error('Students sheet is missing required columns.');
-        const idKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/[\\s-]/g, '');
-        const nameKey = v => String(v == null ? '' : v).trim().toUpperCase().replace(/\\s+/g, ' ');
-        const existing = sheet.getDataRange().getValues();
-        // Compare student identity before enrollment conflicts; a repeated number
-        // may belong to a different pupil, who must not be discarded.
-        const enrollmentSet = new Set(), personSet = new Set();
-        const dobKey = v => String(v == null ? '' : v).trim().toUpperCase();
-        const personKey = (name, father, dob) => name && father && dob ? name + '|' + father + '|' + dob : '';
-        const di = headers.indexOf('dob');
-        for (let i = 1; i < existing.length; i++) {
-            const enrl = idKey(existing[i][ei]);
-            if (enrl) enrollmentSet.add(enrl);
-            const person = personKey(nameKey(existing[i][ni]), nameKey(existing[i][fi]), di < 0 ? '' : dobKey(existing[i][di]));
-            if (person) personSet.add(person);
+    const protectedFields=new Set(['id','apiKey','password','createdAt','studentCode','portalLoginId']);
+    const allowed=headers.filter(h=>!protectedFields.has(h));
+    const additions=[],updates=new Map(),details=[];
+    let skipped=0,rejected=0,updated=0,unchanged=0;
+    const now=new Date().toISOString();
+    incoming.forEach((source,i)=>{
+      const n=i+1;
+      if(!source||typeof source!=='object'||Array.isArray(source)){rejected++;details.push({row:n,status:'rejected',reason:'Invalid record'});return}
+      const name=String(source.name||'').trim(),enrl=key(source.enrlNo),father=String(source.fatherGuardian||'').trim();
+      const cls=String(source.class||'').trim();
+      if(!name||cls.length>40||enrl.length>40){rejected++;details.push({row:n,status:'rejected',reason:'Missing name or invalid class/enrollment'});return}
+      const enrollmentMatches=enrl?(byEnrollment.get(enrl)||[]):[];
+      const peopleMatches=father?(byPerson.get(personKey(name,father,cls))||[]):[];
+      let candidates=enrollmentMatches.length?enrollmentMatches:peopleMatches;
+      // Never merge two different people just because their enrollment numbers collide.
+      if(enrollmentMatches.length===1){
+        const target=working[enrollmentMatches[0]];
+        if(key(target[ni])!==key(name)||(father&&key(target[fi])&&key(target[fi])!==key(father))){
+          candidates=[]; // duplicate enrollment belonging to a different student
+          source={...source,enrlNo:''};
         }
-        const protectedFields = new Set(['id','apiKey','password','createdAt']);
-        const allowedFields = new Set(headers.filter(h => !protectedFields.has(h)));
-        const rows = [], details = [];
-        let skipped = 0, rejected = 0;
-        const now = new Date().toISOString();
-        incoming.forEach((source, i) => {
-            const row = i + 1;
-            if (!source || typeof source !== 'object' || Array.isArray(source)) {
-                rejected++;
-                details.push({row:row,status:'rejected',reason:'Invalid record'});
-                return;
-            }
-            const enrl = idKey(source.enrlNo), name = nameKey(source.name);
-            const father = nameKey(source.fatherGuardian), form = idKey(source.cnic);
-            const cls = String(source.class == null ? '' : source.class).trim();
-            if (!name || (enrl && !/^[A-Z0-9]{1,40}$/.test(enrl)) || cls.length > 40) {
-                rejected++;
-                details.push({row:row,enrollment:enrl,status:'rejected',reason:'Invalid enrollment, name or class'});
-                return;
-            }
-            const person = personKey(name, father, dobKey(source.dob));
-            if (person && personSet.has(person)) {
-                skipped++;
-                details.push({row:row,enrollment:enrl,status:'skipped',reason:'Same student identity already exists; manual review if incorrect'});
-                return;
-            }
-            const collision = !!enrl && enrollmentSet.has(enrl);
-            const record = {};
-            Object.keys(source).forEach(k => { if (allowedFields.has(k)) record[k] = source[k]; });
-            record.enrlNo = collision ? '' : enrl;
-            const prefix = PropertiesService.getScriptProperties().getProperty('STUDENT_CODE_PREFIX_' + ctx.schoolId) || '';
-            record.studentCode = !collision && enrl && prefix ? prefix + enrl : '';
-            record.name = String(source.name).trim();
-            record.class = cls;
-            record.id = genId('stu');
-            record.apiKey = Utilities.getUuid();
-            record.password = collision ? '' : (enrl || '');
-            record.createdAt = now;
-            if (collision || !enrl) {
-                const warning = collision ? 'REVIEW REQUIRED: source enrollment ' + enrl + ' conflicts with an existing student' : 'REVIEW REQUIRED: missing enrollment number';
-                record.remarks = [String(source.remarks || '').trim(), warning].filter(Boolean).join(' | ');
-            }
-            rows.push(recordToRow(headers, record));
-            if (enrl && !collision) enrollmentSet.add(enrl);
-            if (person) personSet.add(person);
-            details.push({row:row,enrollment:collision?'':enrl,status:'added',reviewRequired:collision||!enrl,reason:collision?'Enrollment conflict — blank enrollment; review required':(!enrl?'Missing enrollment — update required':'')});
+      }
+      if(candidates.length>1){skipped++;details.push({row:n,status:'review',reason:'Ambiguous match; no change'});return}
+      if(candidates.length===1){
+        const idx=candidates[0],row=working[idx];let count=0;
+        allowed.forEach(h=>{
+          const col=headers.indexOf(h),v=source[h];
+          if(col>=0&&!isBlank(v)&&isBlank(row[col])){row[col]=v;count++}
         });
-        if (rows.length) {
-            sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, headers.length).setValues(rows);
-            SpreadsheetApp.flush();
-        }
-        writeAudit(ctx.ss,ctx.schoolId,params._auditActor,'import','students','',null,
-            {submitted:incoming.length,added:rows.length,skipped:skipped,rejected:rejected});
-        return {success:true,schoolId:ctx.schoolId,total:incoming.length,added:rows.length,
-            skipped:skipped,rejected:rejected,details:details};
-    } finally {
-        lock.releaseLock();
-    }
+        if(count){updates.set(idx,row);updated++;details.push({row:n,status:'updated',filled:count})}
+        else{unchanged++;details.push({row:n,status:'unchanged'})}
+        return;
+      }
+      const record={};
+      allowed.forEach(h=>{if(!isBlank(source[h]))record[h]=source[h]});
+      record.enrlNo=source.enrlNo||'';
+      record.id=genId('stu');record.apiKey=Utilities.getUuid();record.createdAt=now;
+      record.password=record.enrlNo||'';
+      const prefix=PropertiesService.getScriptProperties().getProperty('STUDENT_CODE_PREFIX_'+ctx.schoolId)||'';
+      record.studentCode=record.enrlNo&&prefix?prefix+record.enrlNo:'';
+      additions.push(recordToRow(headers,record));
+      const newIndex=working.length;working.push(recordToRow(headers,record));
+      if(key(record.enrlNo))addIndex(byEnrollment,key(record.enrlNo),newIndex);
+      if(father)addIndex(byPerson,personKey(name,father,cls),newIndex);
+      details.push({row:n,status:'added',reviewRequired:!record.enrlNo});
+    });
+    // Update only changed rows, preserving all other columns and existing values.
+    for(const [index,row] of updates)sheet.getRange(index+1,1,1,headers.length).setValues([row]);
+    if(additions.length)sheet.getRange(sheet.getLastRow()+1,1,additions.length,headers.length).setValues(additions);
+    SpreadsheetApp.flush();
+    writeAudit(ctx.ss,ctx.schoolId,params._auditActor,'import','students','',null,
+      {submitted:incoming.length,added:additions.length,updated,unchanged,skipped,rejected});
+    return {success:true,schoolId:ctx.schoolId,total:incoming.length,added:additions.length,
+      updated,unchanged,skipped,rejected,details};
+  }finally{lock.releaseLock()}
 }
 
 /**

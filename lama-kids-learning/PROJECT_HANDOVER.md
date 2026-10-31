@@ -58,3 +58,10 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Workflow is validation only: it does not deploy, merge, sign a release AAB or publish to Google Play.
 - A successful workflow run and downloadable APK have not yet been confirmed. Do not claim release-ready until build, device testing, content review and policy audit pass.
 - Next: inspect Actions run, fix compilation failures, finish curriculum and accessibility/parent protections, then request approval before distribution.
+
+## Build verification preparation — 31 Oct 2026
+- Added root GitHub Actions workflow `.github/workflows/lama-kids-android.yml` for JDK 17, Android SDK 35, Gradle 8.9, unit tests and debug APK artifact on branch push. GitHub Actions is independent of Vercel.
+- Added parent arithmetic model unit test.
+- There is also a non-executing reference copy at `lama-kids-learning/.github/workflows/android-ci.yml`; only the repository-root workflow is recognized by GitHub Actions.
+- The current environment has no Android SDK or Gradle installation, so no local Android compilation or APK verification was possible. Workflow execution result has not been checked. No release approval requested and no publishing performed.
+- Critical next step: inspect Actions run and resolve any compilation/test failures; only then declare a testable debug APK. Full content and premium features remain incomplete.

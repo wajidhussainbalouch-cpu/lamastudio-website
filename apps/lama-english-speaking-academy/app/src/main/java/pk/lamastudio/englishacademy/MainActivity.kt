@@ -32,6 +32,8 @@ class MainActivity : ComponentActivity() {
    var questionIndex by remember { mutableIntStateOf(0) }
    var correct by remember { mutableIntStateOf(0) }
    var finished by remember { mutableStateOf(false) }
+   var feedback by remember { mutableStateOf("") }
+   var practiceIndex by remember { mutableIntStateOf(0) }
    var coinBalance by remember { mutableIntStateOf(progress.coins()) }
    var completed by remember { mutableStateOf(lessons.filter { progress.completed(it.id) }.map { it.id }.toSet()) }
    MaterialTheme {
@@ -42,7 +44,8 @@ class MainActivity : ComponentActivity() {
        Text("Easy • A1–A2 • Beginner")
        LinearProgressIndicator(progress = { if (lessons.isEmpty()) 0f else completed.size.toFloat() / lessons.size }, modifier = Modifier.fillMaxWidth())
        Text("Completed: ${completed.count { it }} / ${lessons.size}")
-       Text("Reward coins: $coinBalance", style = MaterialTheme.typography.titleMedium)
+       Text("Daily learning goal: listen, repeat, and complete one lesson.")
+       Text("Reward coins: $coinBalance", style = MaterialTheme.typography.bodySmall)
        if (RewardPolicy.certificateEligible(completed.size, lessons.size)) {
         ElevatedCard(modifier = Modifier.fillMaxWidth()) {
          Column(Modifier.padding(16.dp)) {
@@ -53,7 +56,7 @@ class MainActivity : ComponentActivity() {
         }
        }
        lessons.forEach { lesson ->
-        OutlinedButton(onClick = { selected = lesson; questionIndex = 0; correct = 0; finished = false }, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = { selected = lesson; questionIndex = 0; correct = 0; finished = false; feedback = "" }, modifier = Modifier.fillMaxWidth()) {
          Text(lesson.title + if (lesson.id in completed) " ✓" else "")
         }
        }
@@ -72,7 +75,8 @@ class MainActivity : ComponentActivity() {
          }
         }
        }
-       Text("Conversation", style = MaterialTheme.typography.titleMedium)
+       Text("Listen and Repeat", style = MaterialTheme.typography.titleMedium)
+       Text("1. Listen to each line. 2. Repeat it aloud. 3. Practice the dialogue before taking the quiz.")
        lesson.dialogue.forEach { line ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
          Text(line, modifier = Modifier.weight(1f))
@@ -81,11 +85,10 @@ class MainActivity : ComponentActivity() {
        }
        if (!finished) {
         val q = lesson.questions[questionIndex]
-        Text("Question ${questionIndex + 1} / ${lesson.questions.size}", style = MaterialTheme.typography.titleMedium)
-        Text(q.text)
-        q.options.forEachIndexed { index, answer ->
-         OutlinedButton(onClick = {
-          if (index == q.answer) correct++
+        if (feedback.isNotEmpty()) {
+         Text(feedback, color = MaterialTheme.colorScheme.primary)
+         Button(onClick = {
+          feedback = ""
           if (questionIndex + 1 == lesson.questions.size) {
            finished = true
            if (RewardPolicy.passed(correct, lesson.questions.size)) {
@@ -93,7 +96,16 @@ class MainActivity : ComponentActivity() {
             completed = completed + lesson.id
            }
           } else questionIndex++
+         }) { Text("Next question") }
+        } else {
+        Text("Question ${questionIndex + 1} / ${lesson.questions.size}", style = MaterialTheme.typography.titleMedium)
+        Text(q.text)
+        q.options.forEachIndexed { index, answer ->
+         OutlinedButton(onClick = {
+          if (index == q.answer) correct++
+          feedback = if (index == q.answer) "Correct! Well done." else "Review this answer: ${q.options[q.answer]}"
          }, modifier = Modifier.fillMaxWidth()) { Text(answer) }
+        }
         }
        } else {
         Text("Quiz completed: $correct / ${lesson.questions.size}")

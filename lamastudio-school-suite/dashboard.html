@@ -374,7 +374,7 @@ header#topOverview{background:var(--lama-header)!important}
             <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily attendance rate</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
             <div><div class="flex justify-between gap-2 items-center mb-1"><p class="text-xs font-black">Class-wise register</p><span id="studentAttClassCount" class="text-[10px] text-slate-400">—</span></div><div id="studentAttClasses" class="max-h-44 overflow-y-auto pr-1"><p class="text-xs text-slate-400">Loading…</p></div></div>
           </div>
-          <div class="mt-4 border-t border-slate-700/40 pt-4"><div class="flex flex-wrap justify-between items-center gap-2"><div><p class="text-xs font-black">Absent / Leave — Parent follow-up</p><p class="text-[11px] text-slate-400">Recognize students and contact parents from the attendance register.</p></div><a class="hub-mini-link" href="attendance/student-attendance.html#outreachPanel">Open follow-up →</a></div><div id="dashboardAbsentFollowup" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"><p class="text-xs text-slate-400">Loading attendance follow-up…</p></div></div>
+          <div class="mt-4 border-t border-slate-700/40 pt-4"><div class="flex flex-wrap justify-between items-center gap-2"><div><p class="text-xs font-black">Absent / Leave — Parent follow-up</p><p class="text-[11px] text-slate-400">Recognize students and contact parents from the attendance register.</p></div><div class="flex gap-2 flex-wrap"><a class="hub-mini-link" href="attendance/student-attendance.html#outreachPanel">Open follow-up →</a><a class="hub-mini-link" href="attendance/student-attendance.html#outreachPanel">Bulk portal notification →</a></div></div><div id="dashboardAbsentFollowup" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"><p class="text-xs text-slate-400">Loading attendance follow-up…</p></div></div>
         </section>
 
         <section class="command-grid" aria-label="Teacher attendance analytics">
@@ -568,7 +568,7 @@ header#topOverview{background:var(--lama-header)!important}
           const followup=document.getElementById('dashboardAbsentFollowup');
           if(followup){
             const list=[...current.values()].filter(x=>['absent','a','leave','l','on leave'].includes(x.status));
-            followup.innerHTML=list.length?list.map(({student,status})=>{
+            followup.innerHTML=list.length?('<p class="text-xs text-slate-400 col-span-full">'+list.length+' students absent or on leave today · showing first 3</p>')+list.slice(0,3).map(({student,status})=>{
               const name=String(student.name||'Student'),className=String(student.class||student.grade||'Unassigned'),enrl=String(student.enrlNo||student.enrollmentNo||'—');
               const parent=String(student.fatherGuardian||student.guardianName||'Not recorded'),photo=student.photo||student.photoUrl||student.studentPhoto||'';
               const raw=String(student.whatsapp||student.contact||student.guardianCell||student.emergencyContact||'');

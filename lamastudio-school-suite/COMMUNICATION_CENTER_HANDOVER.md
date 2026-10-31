@@ -1,3 +1,12 @@
+## Student roster UI improvement — 31 October 2026
+User supplied a screenshot of the student list ending in oversized cards with Edit/Delete buttons, requested compact consistent views, filters and a separate detailed view. GitHub main commit `9bf4bed` updates `students/manage-students.html`:
+- Hide desktop table on mobile (previously desktop table and mobile cards both rendered).
+- Compact mobile rows showing serial, student name, enrollment, class and View button.
+- Separate student detail dialog with Edit action; Delete remains in existing bulk management controls, not on every mobile row.
+- Paginate rendered list at 25 students per page; existing search, class, section, gender, status and photo filters retained.
+- No student data or backend changed. Vercel/mobile runtime testing still needed.
+- Future check: verify filters reset pagination to page 1 if desired, print/export all filtered records still work, and ensure selection across pages behaves as intended.
+
 # Lama School Suite — Communication Center handover
 Updated 30 October 2026. **Read this in the next chat.** Owner requests this MD be updated after each development session. Existing data must never be erased.
 

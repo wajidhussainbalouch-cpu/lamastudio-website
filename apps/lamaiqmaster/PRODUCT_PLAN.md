@@ -67,3 +67,11 @@ Workflow: `.github/workflows/lama-iq-test-android.yml`
 - IMPORTANT: these are generated drafts, not 5,000 independently reviewed unique brain puzzles. Several are formula variations; visual patterns can be semantically repetitive. Memory prompts need a separate concealed recall screen. All question bank records currently English-only.
 - The bank is not yet integrated into the Android gameplay. No APK or successful build verified.
 - See `question-bank/README.md` for validation gaps and release gates.
+
+## 2026-10-31 — APK-first delivery sequence
+1. **Build verification:** `QuestionValidationTest.kt` now tests fixed bank invariants, generated visual question validity, reproducibility and access rules. CI workflow now runs `:app:testDebugUnitTest` before `:app:assembleDebug`.
+2. **First debug APK:** Trigger cloud build, inspect job logs, fix Kotlin/Gradle errors and obtain an actual successful APK artifact.
+3. **Phone acceptance test:** Install on Android, verify navigation, 7/10 progression, visual puzzles, language display and offline scores.
+4. **Content integration:** Validate generated JSON content and wire approved question packs into app. The 5,000 generated records are drafts and are NOT yet player-facing.
+5. **Commercial release:** Complete full language support, AdMob rewarded flow, billing, signing, privacy and Play Store review.
+Status: source/tests/workflow committed; **no successful cloud build or verified APK yet**. PR creation attempt was blocked, so do not claim GitHub Actions has run.

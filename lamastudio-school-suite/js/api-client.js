@@ -95,6 +95,7 @@ const LamaAPI = (() => {
     pingTeacher:async(teacherId,message)=>(await callApi('pingTeacher',{teacherId,message})).ping,
     acknowledgePing:async pingId=>(await callApi('acknowledgePing',{pingId})).ping,
     addTeacher:async teacher=>(await callApi('addTeacher',{teacher})).teacher,
+    getSchoolClassOptions:async()=>(await callApi('getSchoolClassOptions',{},'GET')).classes,
     adminListSchools:async()=>(await callApi('adminListSchools',{},'GET')).schools,
     adminSetSubscription:async(schoolId,details)=>(await callApi('adminSetSubscription',{schoolId,details})).result,
     getSubscriptionStatus:async()=>(await callApi('getSubscriptionStatus',{},'GET')).subscription,

@@ -59,3 +59,6 @@ No production merge, Vercel deployment or Play publication without authorization
 4. Add AdMob test-mode integration and age-appropriate consent architecture.
 5. Add Play Billing integration with entitlement verification, then professional curriculum and speaking improvements.
 6. Record build/test outcomes here; do not declare release ready until verified.
+
+## Product direction reaffirmed
+The core product is a professional English-speaking academy, not a certificate or reward-coin app. Prioritize Android build verification, learner experience, A1-C2 structured curriculum, listening and speaking practice, vocabulary and grammar, meaningful assessments, then ad-supported Free and optional Premium monetization. Certificates and reward coins are optional finishing features after real learning outcomes and quality gates. Do not divert engineering priority to certificate artwork or issuance before the core app is working. Continue on this isolated development branch only; no merge, deployment or publishing without approval.

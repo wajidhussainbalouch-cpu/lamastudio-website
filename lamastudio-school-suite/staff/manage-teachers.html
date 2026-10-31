@@ -153,6 +153,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
 <label class="text-xs font-bold">Assigned Section (optional)<input id="inSection" list="teacherSectionOptions" placeholder="e.g. A, 1, Pink, Lily" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><datalist id="teacherSectionOptions"></datalist><small class="block mt-1 text-slate-300">Choose an existing section or enter your school’s own name.</small></label>
 <label class="text-xs font-bold">Teacher Login ID *<input id="inLoginId" required autocomplete="off" placeholder="e.g. T-001" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="text-xs font-bold">Email (optional)<input id="inEmail" type="email" placeholder="Email if available" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
+<label class="text-xs font-bold">Teacher Contact Number (optional)<input id="inContact" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 03001234567" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="sm:col-span-2 text-xs font-bold">Teacher Password * (8+ characters)
 <div class="flex gap-2 mt-1"><input id="inPassword" type="password" required minlength="8" autocomplete="new-password" placeholder="Set a strong password" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><button type="button" onclick="togglePassword('inPassword',this)" class="px-3 rounded-lg bg-slate-700" aria-label="Show password">👁 Show</button></div></label>
 <p class="sm:col-span-2 text-xs text-slate-300">Email is not required. Teachers can sign in using School ID, Teacher Login ID and password. Attendance is restricted to the assigned class.</p>
@@ -576,6 +577,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  const loginId=document.getElementById('inLoginId').value.trim();
  const email=document.getElementById('inEmail').value.trim();
  const assignedSection=document.getElementById('inSection').value.trim();
+ const contact=document.getElementById('inContact').value.trim();
  const password=document.getElementById('inPassword').value;
  const result=document.getElementById('teacherCreateResult');
  if(!name||!assignedClass||!loginId||password.length<8){alert('Enter name, assigned class, Teacher Login ID, and password (8+ characters).');return;}
@@ -583,7 +585,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  button.disabled=true;button.textContent='Creating account…';
  result.classList.add('hidden');
  try{
-  const created=await LamaAPI.addTeacher({name,assignedClass,assignedSection,loginId,email,password});
+  const created=await LamaAPI.addTeacher({name,assignedClass,assignedSection,loginId,email,password,contact});
   if(!created||!created.id)throw Error('Account creation was not confirmed by the server. Please check the roster before retrying.');
   result.classList.remove('hidden');
   result.replaceChildren();
@@ -603,12 +605,13 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
 
         let teacherClassRoster=[],teacherClassLoad=null;
         const teacherClassKey=()=> 'lama_teacher_class_options_'+String(currentSchool?.schoolId||LamaAPI.getSession?.()?.schoolId||'school');
+        const standardClassNames=['ECE','Nursery','Prep','KG','1','2','3','4','5','6','7','8','9','10','11','12'];
         function populateTeacherClasses(rows){
           teacherClassRoster=rows;
-          const classes=[...new Set(rows.map(x=>String(x.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+          const classes=[...new Set([...standardClassNames,...rows.map(x=>String(x.class||'').trim()).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
           for(const id of ['inClass','editClass']){
             const el=document.getElementById(id),previous=el.value;
-            el.replaceChildren(new Option(classes.length?'Select assigned class':'No classes found — import students first',''));
+            el.replaceChildren(new Option('Select assigned class',''));
             for(const name of classes)el.add(new Option(name,name));
             if(classes.includes(previous))el.value=previous;
           }
@@ -627,13 +630,14 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           input.placeholder=options.length?'Select or type section ('+options.join(', ')+')':'Optional — A, B, 1, 2, Pink, Lily…';
         }
         async function loadTeacherClassOptions(){
+          if(!teacherClassRoster.length)populateTeacherClasses([]);
           try{
             const cached=JSON.parse(localStorage.getItem(teacherClassKey())||'null');
             if(Array.isArray(cached?.rows)&&cached.rows.length)populateTeacherClasses(cached.rows);
           }catch(_){}
           if(teacherClassLoad)return teacherClassLoad;
           teacherClassLoad=(async()=>{
-            const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Class lookup timed out')),10000));
+            const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Class lookup timed out')),5000));
             try{
               const students=await Promise.race([LamaAPI.list('students'),timeout]);
               const rows=(Array.isArray(students)?students:[]).map(x=>({class:String(x.class||'').trim(),section:String(x.section||'').trim()})).filter(x=>x.class);
@@ -642,7 +646,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
               else if(!teacherClassRoster.length)populateTeacherClasses([]);
             }catch(err){
               console.warn('Class lookup:',err);
-              if(!teacherClassRoster.length)for(const id of ['inClass','editClass'])document.getElementById(id).options[0].text='Class lookup unavailable — tap Refresh classes';
+              console.warn('Using standard and cached class options; school roster lookup unavailable');
             }finally{teacherClassLoad=null}
           })();
           return teacherClassLoad;

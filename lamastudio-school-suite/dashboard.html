@@ -700,18 +700,42 @@ function renderAssessmentAnalytics(tests){
 }
 
         function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance today',new Set(d.attendance.filter(r=>normalizeAttendanceDate(r.date)===localISODate()).map(r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??r.id??'')).filter(Boolean)).size,'students with saved attendance today'],['Attendance this month',new Set(d.attendance.map(r=>normalizeAttendanceDate(r.date)).filter(day=>day&&day.startsWith(localISODate().slice(0,7)))).size,'days with saved student attendance'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
+        function normalizeDashboardClass(value){
+          const raw=String(value??'').trim().replace(/\\s+/g,' ').toLowerCase();
+          const withoutPrefix=raw.replace(/^(?:class|grade|standard|std)\\s*[-:.#]?\\s*/i,'').trim();
+          if(/^0*[1-9][0-9]*$/.test(withoutPrefix))return String(Number(withoutPrefix));
+          return withoutPrefix.replace(/[^a-z0-9]/g,'');
+        }
         function renderAcademicClasses(students){
           const container=document.getElementById('academicClassSummary'),note=document.getElementById('academicClassNote');
           if(!container||!note)return;
           const active=students.filter(s=>{const status=String(s.studentStatus||s.status||'Current').trim().toLowerCase();return s.active!==false&&!['passed','passed out','left','historical','withdrawn','inactive'].some(x=>status.includes(x))});
           const classes=new Map();
           const options=window.__schoolClassOptions;
-          if(Array.isArray(options)){for(const item of options){const name=String(item.class||'').trim();if(name&&!classes.has(name))classes.set(name,{total:0,boys:0,girls:0});}}
-          for(const student of active){const label=String(student.class??student.grade??student.className??'Unassigned').trim()||'Unassigned';if(Array.isArray(options)&&!classes.has(label))continue;const entry=classes.get(label)||{total:0,boys:0,girls:0};entry.total++;const g=String(student.gender||'').trim().toLowerCase();if(['m','male','boy'].includes(g))entry.boys++;if(['f','female','girl'].includes(g))entry.girls++;classes.set(label,entry)}
-          const list=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
-          const max=Math.max(1,...list.map(([,v])=>v.total));
-          container.innerHTML=list.length?list.map(([name,r])=>`<a href="students/manage-students.html?class=${encodeURIComponent(name)}" class="rounded-2xl p-3 border border-cyan-500/20 bg-cyan-500/5 hover:border-cyan-400/60 transition block"><div class="flex items-center justify-between gap-2"><span class="text-xs font-black break-words">${esc(name==='Unassigned'?'Unassigned':/^(class|grade|ece|nursery|prep|playgroup)/i.test(name)?name:'Class '+name)}</span><span class="text-xl font-black text-cyan-300">${r.total}</span></div><div class="h-1.5 rounded-full bg-slate-700/50 overflow-hidden mt-3"><div class="h-full rounded-full bg-lime-400" style="width:${100*r.total/max}%"></div></div><div class="text-[10px] text-slate-400 mt-2">${r.total===0?'No students · ':''}${r.boys} boys · ${r.girls} girls${r.total-r.boys-r.girls?' · '+(r.total-r.boys-r.girls)+' unspecified':''}</div></a>`).join(''):'<p class="text-xs text-slate-400 col-span-full">No current student class records found.</p>';
-          note.textContent=`${active.length} current students; ${list.length} ${Array.isArray(options)?'configured':'recorded'} classes shown. ${students.length-active.length} non-current records excluded.`;
+          const configured=Array.isArray(options);
+          if(configured){
+            for(const item of options){
+              const name=String(item.class||'').trim(),key=normalizeDashboardClass(name);
+              if(key&&!classes.has(key))classes.set(key,{name,total:0,boys:0,girls:0});
+            }
+          }
+          let unmatched=0;
+          for(const student of active){
+            const label=String(student.class??student.grade??student.className??'').trim();
+            const key=normalizeDashboardClass(label);
+            if(!key){unmatched++;continue;}
+            if(configured&&!classes.has(key)){unmatched++;continue;}
+            const entry=classes.get(key)||{name:label,total:0,boys:0,girls:0};
+            entry.total++;
+            const g=String(student.gender||'').trim().toLowerCase();
+            if(['m','male','boy'].includes(g))entry.boys++;
+            if(['f','female','girl'].includes(g))entry.girls++;
+            classes.set(key,entry);
+          }
+          const list=[...classes.values()].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+          const max=Math.max(1,...list.map(v=>v.total));
+          container.innerHTML=list.length?list.map(r=>`<a href="students/manage-students.html?class=${encodeURIComponent(r.name)}" class="rounded-2xl p-3 border border-cyan-500/20 bg-cyan-500/5 hover:border-cyan-400/60 transition block"><div class="flex items-center justify-between gap-2"><span class="text-xs font-black break-words">${esc(r.name==='Unassigned'?'Unassigned':/^(class|grade|ece|nursery|prep|playgroup)/i.test(r.name)?r.name:'Class '+r.name)}</span><span class="text-xl font-black text-cyan-300">${r.total}</span></div><div class="h-1.5 rounded-full bg-slate-700/50 overflow-hidden mt-3"><div class="h-full rounded-full bg-lime-400" style="width:${100*r.total/max}%"></div></div><div class="text-[10px] text-slate-400 mt-2">${r.total===0?'No students · ':''}${r.boys} boys · ${r.girls} girls${r.total-r.boys-r.girls?' · '+(r.total-r.boys-r.girls)+' unspecified':''}</div></a>`).join(''):'<p class="text-xs text-slate-400 col-span-full">No classes configured. Select offered classes in School Settings.</p>';
+          note.textContent=`${active.length-unmatched} current students matched across ${list.length} ${configured?'configured':'recorded'} classes. ${unmatched?unmatched+' current student(s) have a class not in Settings or no class assigned. ':''}${students.length-active.length} non-current records excluded.`;
         }
         function renderClassChart(students){ if(typeof Chart==='undefined')return; const counts={}; students.filter(s=>s.active!==false&&!['passed','left','historical','withdrawn','inactive'].some(x=>String(s.studentStatus||s.status||'Current').toLowerCase().includes(x))).forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
         function renderGenderChart(students){ if(typeof Chart==='undefined')return; const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }

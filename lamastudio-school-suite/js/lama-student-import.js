@@ -190,7 +190,7 @@ function makePreview(){
   if(!values.name)reason='Missing student name — review';
   else if(!id)reason='New student — ✱ Missing enrollment';
   else if(matches.length)reason='Already enrolled — skip';
-  else if(sourceId.has(id))reason='Duplicate enrollment in source — review';
+  else if(sourceId.has(id))reason='New student — duplicate enrollment; save with blank enrollment';
   // Other source columns are optional and may be completed later.
   if(id)sourceId.add(id);
   return{index:i+1,values,target:matches.length===1?matches[0]:null,patch:{},reason,method:matches.length?'Enrollment number':'',sourceClass:cls};
@@ -219,19 +219,21 @@ async function apply(){
  if(!todo.length)return status('No approved new students to save.');
  if(!$('confirmReview').checked)return status('Review the preview and confirm first.');
  if(typeof LamaAPI.importStudentsBatch!=='function')return status('Batch import API unavailable. Refresh the page; no records saved.');
- if(!confirm('Import up to '+todo.length+' students? Existing enrollment numbers will be skipped; blank enrollment records will be flagged for later review. Make sure you have a backup.'))return;
+ if(!confirm('Import up to '+todo.length+' students? Duplicate enrollment numbers in this PDF will be saved blank for later correction; records already in the school register will not be overwritten. Make sure you have a backup.'))return;
  setBusy(true);
  try{
   // Recheck the live student register; never trust a stale PDF preview.
   const live=await LamaAPI.list('students');
   if(!Array.isArray(live))throw Error('Could not verify current students. No import attempted.');
   const usedId=new Set(live.map(s=>normalize(enroll(s))).filter(Boolean));
-  const unique=[],seen=new Set();let preSkipped=0;
+  const unique=[],seen=new Set();let preSkipped=0,blankedEnrollment=0;
   for(const item of todo){
    const v=item.values,id=normalize(v.enrlNo);
    if(!v.name){preSkipped++;continue;}
-   if(id&&(usedId.has(id)||seen.has(id))){preSkipped++;continue;}
+   // Keep the source student, but never submit a duplicate enrollment as a real identifier.
+   const duplicateEnrollment=!!id&&(usedId.has(id)||seen.has(id));
    const record={...v,class:v.class||item.sourceClass};delete record.photo;
+   if(duplicateEnrollment){record.enrlNo='';blankedEnrollment++;}
    unique.push(record);if(id)seen.add(id);
    if(id)usedId.add(id);
   }
@@ -240,11 +242,11 @@ async function apply(){
   if(!result||result.success!==true)throw Error('Import did not return a verified success response. Check the school register before retrying.');
   $('progressBar').style.width='100%';
   const added=Number(result.added)||0,skipped=(Number(result.skipped)||0)+preSkipped,rejected=Number(result.rejected)||0;
-  $('saveCount').textContent=added+' added · '+skipped+' skipped · '+rejected+' rejected';
+  $('saveCount').textContent=added+' added · '+skipped+' skipped · '+rejected+' rejected · '+blankedEnrollment+' duplicate enrollments cleared for review';
   const banner=$('importSuccess');
   if(banner){banner.hidden=false;banner.textContent=added>0?'✓ Student import successful! '+added+' student(s) saved. '+skipped+' skipped; '+rejected+' rejected.':'✓ Import check completed. No new students added; '+skipped+' skipped; '+rejected+' rejected.';}
   if(added>0)banner?.scrollIntoView({behavior:'smooth',block:'center'});
-  status('Import completed: '+result.added+' added, '+(result.skipped+preSkipped)+' duplicates skipped, '+result.rejected+' rejected. Verify the student register before importing another file.');
+  status('Import completed: '+result.added+' added, '+(result.skipped+preSkipped)+' skipped, '+result.rejected+' rejected. Verify the student register before importing another file.');
   $('confirmReview').checked=false;
   // Do not re-analyze here: it would clear the verified success message.
  }catch(e){status('Import stopped: '+e.message+' Check the student register before retrying.');}

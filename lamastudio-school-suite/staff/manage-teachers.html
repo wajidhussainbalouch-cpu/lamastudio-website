@@ -149,7 +149,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
 <div class="sm:col-span-2 bg-indigo-950/60 border border-indigo-600/50 rounded-xl p-4 grid sm:grid-cols-2 gap-3">
 <h3 class="sm:col-span-2 text-sm font-black text-indigo-200">1. Teacher Login & Assigned Class — complete first</h3>
 <label class="text-xs font-bold">Teacher Full Name *<input id="inName" required placeholder="Full name" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
-<label class="text-xs font-bold">Assigned Class *<input id="inClass" required placeholder="e.g. ECE, Nursery, 5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
+<label class="text-xs font-bold">Assigned Class *<select id="inClass" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Loading school classes…</option></select></label>
 <label class="text-xs font-bold">Teacher Login ID *<input id="inLoginId" required autocomplete="off" placeholder="e.g. T-001" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="text-xs font-bold">Email (optional)<input id="inEmail" type="email" placeholder="Email if available" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="sm:col-span-2 text-xs font-bold">Teacher Password * (8+ characters)
@@ -191,7 +191,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
  <label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="editIsPublic" type="checkbox" class="w-5 h-5"> Show teacher on School Dashboard</label><label class="sm:col-span-2 flex items-center gap-3 text-sm"><input id="editPublishPhoto" type="checkbox" class="w-5 h-5"> Allow photo on School Dashboard (with consent)</label>
  </div></div>
                 <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="editClass" placeholder="Assigned Class" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <select id="editClass" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option value="">Select assigned class</option></select>
                 <input id="editSectionInput" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editCnic" placeholder="CNIC No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
@@ -428,6 +428,8 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
         async function openEdit(teacherId) {
             const t = allTeachers.find(x => x.id === teacherId);
             if (!t) return;
+            const editSelect=document.getElementById('editClass');
+            if(t.assignedClass&&!Array.from(editSelect.options).some(o=>o.value===t.assignedClass))editSelect.add(new Option(t.assignedClass+' (previous assignment)',t.assignedClass));
             document.getElementById('editId').value = t.id;
             document.getElementById('editLoginId').value = t.loginId || t.email || '';
             document.getElementById('editEmail').value = t.email || '';
@@ -596,8 +598,28 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  }finally{button.disabled=false;button.textContent='+ Create Teacher Account';}
 }
 
+        async function loadTeacherClassOptions() {
+            const selects=[document.getElementById('inClass'),document.getElementById('editClass')];
+            try {
+                const students=await LamaAPI.list('students');
+                const names=[...new Set((Array.isArray(students)?students:[]).map(x=>String(x.class||'').trim()).filter(Boolean))];
+                // Preserve exact class names from the school's saved roster.
+                names.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+                for(const el of selects){
+                    const old=el.value;
+                    el.replaceChildren(new Option('Select a school class',''));
+                    names.forEach(n=>el.add(new Option(n,n)));
+                    if(old&&names.includes(old))el.value=old;
+                }
+                if(!names.length)selects[0].options[0].text='No student classes found — import students first';
+            }catch(err){
+                console.warn('Unable to load class list',err);
+                selects.forEach(el=>el.replaceChildren(new Option('Class list unavailable — retry refresh','')));
+            }
+        }
         async function init() {
             try{await renderHeader()}catch(err){console.warn('School header unavailable:',err)}
+            try{await loadTeacherClassOptions()}catch(err){console.warn(err)}
             try{await renderTeachers()}catch(err){console.error(err);document.getElementById('teacherCount').textContent='Unable to load teacher records';document.getElementById('teachersEmpty').textContent='Teacher records could not load: '+err.message;document.getElementById('teachersEmpty').classList.remove('hidden');}
         }
 

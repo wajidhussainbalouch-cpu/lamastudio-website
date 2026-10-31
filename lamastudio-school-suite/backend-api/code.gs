@@ -136,10 +136,16 @@ function setup() {
             Boolean(props.getProperty('SUPERADMIN_PASSWORD_HASH')));
         return;
     }
+    const folder = getSchoolDatabaseFolder_();
     const ss = SpreadsheetApp.create('LamaStudio Master Registry');
-    const sheet = ss.getActiveSheet();
-    sheet.setName(REGISTRY_SHEET_NAME);
-    sheet.appendRow(REGISTRY_HEADERS);
+    try {
+        const sheet = ss.getActiveSheet();
+        sheet.setName(REGISTRY_SHEET_NAME);
+        sheet.appendRow(REGISTRY_HEADERS);
+        DriveApp.getFileById(ss.getId()).moveTo(folder);
+    } catch (e) {
+        throw new Error('Master Registry could not be moved into School Databases. Check Drive permissions and move the newly created spreadsheet out of My Drive manually. Registry ID was not changed. '+e.message);
+    }
     props.setProperty('MASTER_SHEET_ID', ss.getId());
     if (!props.getProperty('SUPERADMIN_PASSWORD_HASH')) setupSuperAdmin();
     Logger.log('Setup complete. Master Registry: ' + ss.getUrl());
@@ -252,10 +258,20 @@ function findSchoolRow(sheet, matcherFn) {
 // ============================================================================
 
 /** Creates a brand-new private Google Sheet for a school, with all tabs pre-built. */
-function createSchoolSheet(schoolName) {
-    const folderId = '1H9U1a1fbNewbpQMwr8AGbQ3xLC27Tq02';
-    const folder = DriveApp.getFolderById(folderId);
+function getSchoolDatabaseFolder_() {
+    // Set SCHOOL_DATABASE_FOLDER_ID in Script Properties to the ID of
+    // LAMA STUDIO — MASTER / 02 — School Databases.
+    // The existing folder ID is retained for backward compatibility.
+    const folderId = PropertiesService.getScriptProperties().getProperty('SCHOOL_DATABASE_FOLDER_ID') || '1H9U1a1fbNewbpQMwr8AGbQ3xLC27Tq02';
+    let folder;
+    try { folder = DriveApp.getFolderById(folderId); }
+    catch (e) { throw new Error('Cannot access School Databases folder. Verify SCHOOL_DATABASE_FOLDER_ID and Drive access. '+e.message); }
     if (folder.isTrashed()) throw new Error('School Databases folder is in Trash.');
+    return folder;
+}
+
+function createSchoolSheet(schoolName) {
+    const folder = getSchoolDatabaseFolder_();
     const ss = SpreadsheetApp.create(schoolName + ' - LamaStudio Data');
     const defaultSheet = ss.getSheets()[0];
     Object.keys(COLLECTIONS).forEach(key => {
@@ -265,7 +281,10 @@ function createSchoolSheet(schoolName) {
         sh.setFrozenRows(1);
     });
     ss.deleteSheet(defaultSheet);
-    DriveApp.getFileById(ss.getId()).moveTo(folder);
+    try { DriveApp.getFileById(ss.getId()).moveTo(folder); }
+    catch (e) {
+        throw new Error('School spreadsheet was created but could not be moved to School Databases. Registration was stopped; find the unregistered spreadsheet in My Drive and move it manually. '+e.message);
+    }
     return ss.getId();
 }
 

@@ -120,3 +120,7 @@ Updated 30 October 2026. **Read this in the next chat.** Owner requests this MD 
 - Contact confirmations are written as notification records and loaded from the school notification list; opening WhatsApp or dialer is not itself proof of delivery.
 - Production deployment initiated on Vercel: `dpl_6Mo3b2EbXp6nf4it3rmKV9rHdqsS` (verify READY and production alias before reporting live).
 - Follow-up testing: verify badge persistence after reload, that each channel is independent, and portal badge semantics for bulk publication. No Apps Script changes in this commit.
+
+## 31 October 2026 — Follow-up-only refresh behavior
+- Commit `97144f3` updates `attendance/student-attendance.html`: `?followup=1` or `#outreachPanel` explicitly selects absentee/leave-only mode; hash entry canonicalizes the URL to `?followup=1` to survive refresh. Full register link uses `?register=1`.
+- Production Vercel deployment initiated `dpl_EEhMSkk2yMThdZk6GsmEfam5LM3h`; verify READY. Follow-up lists only absent/leave students from selected date after attendance loads.

@@ -148,3 +148,7 @@ Screenshot showed follow-up-only layout correctly but perpetual loading. Inspect
 - Commits: `fdd1cbb`, `7230a82`, `e3f4281`.
 - The staff/manage-teachers.html creation form already has optional email and required Teacher Login ID. No real teacher credentials were created or changed during this source-code update.
 - IMPORTANT: Commit does not publish Apps Script. Replace/redeploy the master script and verify actual teacher login, assigned-class roster, authorized attendance saves, and cross-class denial before declaring end-to-end success.
+
+## 31 October 2026 — Account-first teacher creation
+- Staff/manage-teachers.html commit `19ba6f5`: only essential teacher name, class, Login ID, optional email, password in initial creation panel; optional profile data entered later via existing Edit interface. Successful creation offers Edit button; errors explicitly explain stale Apps Script backend.
+- **Deployment dependency:** Google Apps Script master `backend-api/code.gs` must be manually published to remove old mandatory-email check. No real teacher was created and no existing data was changed.

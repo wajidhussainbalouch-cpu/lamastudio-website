@@ -736,6 +736,7 @@ function teacherStudentAccess_(ctx,record){
    (studentId&&String(r.id||'').trim()===studentId)||(enrollment&&String(r.enrlNo||r.enrollmentNo||'').trim()===enrollment));
  if(!student||!teacherOwns(ctx,student))throw new Error('Attendance denied: student is not in your assigned class and section.');
  if(studentId&&String(student.id)!==studentId)throw new Error('Student ID does not match enrollment.');
+ if(enrollment&&String(student.enrlNo||student.enrollmentNo||'').trim()!==enrollment)throw new Error('Enrollment does not match student ID.');
  if(record.class&&!sameClass(record.class,student.class))throw new Error('Attendance class does not match the student.');
  return student;
 }
@@ -825,7 +826,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'student' && String(r.studentId) !== String(ctx.student.id)) throw new Error('Request not found.');
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
-            if(ctx.role==='teacher' && collection==='students' && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class.');
+            if(ctx.role==='teacher' && ['students','attendance','homework'].indexOf(collection)!==-1 && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class/section.');
             return r;
         }
     }

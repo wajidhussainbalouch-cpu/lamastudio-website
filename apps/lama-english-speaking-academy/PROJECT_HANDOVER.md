@@ -62,3 +62,10 @@ No production merge, Vercel deployment or Play publication without authorization
 
 ## Product direction reaffirmed
 The core product is a professional English-speaking academy, not a certificate or reward-coin app. Prioritize Android build verification, learner experience, A1-C2 structured curriculum, listening and speaking practice, vocabulary and grammar, meaningful assessments, then ad-supported Free and optional Premium monetization. Certificates and reward coins are optional finishing features after real learning outcomes and quality gates. Do not divert engineering priority to certificate artwork or issuance before the core app is working. Continue on this isolated development branch only; no merge, deployment or publishing without approval.
+
+## Speaking-first usability increment
+- Lesson screen now explicitly guides learners through Listen, Repeat, and Quiz.
+- Quiz now shows answer feedback before the learner advances; incorrect answers reveal the expected response for revision.
+- Learning dashboard includes a daily practice goal. These are source changes, not verified on a device.
+- Speech recognition, pronunciation assessment, broader A1-C2 curriculum, AdMob and billing remain pending.
+- APK build and unit tests remain unverified.

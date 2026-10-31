@@ -38,7 +38,8 @@ class MainActivity : ComponentActivity() {
      Column(Modifier.padding(inset).fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
       if (selected == null) {
        Text("Learn English • انگریزی سیکھیں", style = MaterialTheme.typography.headlineSmall)
-       Text("Offline A1 lessons — Beginner")
+       Text("Easy • A1–A2 • Beginner")
+       LinearProgressIndicator(progress = { if (lessons.isEmpty()) 0f else completed.size.toFloat() / lessons.size }, modifier = Modifier.fillMaxWidth())
        Text("Completed: ${completed.count { it }} / ${lessons.size}")
        lessons.forEach { lesson ->
         OutlinedButton(onClick = { selected = lesson; questionIndex = 0; correct = 0; finished = false }, modifier = Modifier.fillMaxWidth()) {
@@ -50,6 +51,16 @@ class MainActivity : ComponentActivity() {
        Text(lesson.title, style = MaterialTheme.typography.headlineSmall)
        Text(lesson.urduTitle)
        Text(lesson.explanation)
+       Text("Vocabulary", style = MaterialTheme.typography.titleMedium)
+       lesson.vocabulary.forEach { word ->
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+         Column(Modifier.padding(12.dp)) {
+          Text(word.word, style = MaterialTheme.typography.titleSmall)
+          Text(word.urdu)
+          Text(word.example, style = MaterialTheme.typography.bodySmall)
+         }
+        }
+       }
        Text("Conversation", style = MaterialTheme.typography.titleMedium)
        lesson.dialogue.forEach { line ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

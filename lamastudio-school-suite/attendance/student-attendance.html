@@ -17,7 +17,7 @@ body.followup-only main>section:not(#outreachPanel){display:none!important}body.
 </section>
 <section class="panel p-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h3 class="font-black text-lg">Daily Attendance Register</h3><p id="summary" class="muted text-xs mt-1">Loading...</p></div><div class="no-print flex flex-wrap gap-2"><button id="markVisible" class="btn lime">✓ Mark visible present</button><button id="enableEdit" class="btn" style="display:none">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button></div></div><div class="bar mt-4"><div id="progress"></div></div><div id="list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4"><p class="muted text-sm">Loading student records...</p></div></section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
-<section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation.</span></div><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
+<section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation. Keep this tab open until completed; true background sending is not yet available.</span></div><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
 <script>
 'use strict';
 if(new URLSearchParams(location.search).get('followup')==='1'||location.hash==='#outreachPanel')document.body.classList.add('followup-only');
@@ -183,16 +183,24 @@ $('bulkPortalNotify').addEventListener('click',async()=>{
  if(!recipients.length){label.textContent='No absent or leave students selected for this date.';return}
  if(recipients.some(s=>dirty.has(sid(s)))){label.textContent='Save attendance before publishing follow-up notifications.';return}
  if(!confirm('Publish '+recipients.length+' individual student follow-up notifications and one staff/admin attendance summary for '+displayDate(date)+'? This saves portal records, not verified push delivery or WhatsApp messages.'))return;
- button.disabled=true;let saved=0,failed=0;
+ button.disabled=true;let saved=0,failed=0,processed=0;
+ const started=Date.now(),total=recipients.length;
+ const duration=ms=>{const sec=Math.max(0,Math.ceil(ms/1000));return Math.floor(sec/60)+'m '+String(sec%60).padStart(2,'0')+'s'};
+ const progress=()=>{const elapsed=Date.now()-started,remaining=processed?Math.max(0,(elapsed/processed)*(total-processed)):null;label.textContent='Publishing: '+processed+'/'+total+' processed · '+saved+' saved · '+failed+' failed · elapsed '+duration(elapsed)+' · estimated remaining '+(remaining===null?'calculating…':duration(remaining));};
+ progress();
  try{
-  for(const s of recipients){
-   const status=selected.get(sid(s)).status;
-   try{
-    await LamaAPI.add('notifications',{title:'Attendance follow-up — '+displayDate(date),message:followupMessage(s,status),studentId:sid(s),enrlNo:enr(s),class:cls(s),section:s.section||'',date,attendanceStatus:status,notificationType:'attendanceFollowup',channel:'Portal',status:'Published',isPublished:true,createdAt:new Date().toISOString()});
-    saved++;
-   }catch(err){failed++;console.warn('Portal follow-up failed for student',sid(s),err)}
-   label.textContent='Publishing student portal records: '+saved+' saved · '+failed+' failed · '+recipients.length+' total';
-  }
+  let cursor=0;
+  const worker=async()=>{
+   while(cursor<total){
+    const s=recipients[cursor++],status=selected.get(sid(s)).status;
+    try{
+     await LamaAPI.add('notifications',{title:'Attendance follow-up — '+displayDate(date),message:followupMessage(s,status),studentId:sid(s),enrlNo:enr(s),class:cls(s),section:s.section||'',date,attendanceStatus:status,notificationType:'attendanceFollowup',channel:'Portal',status:'Published',isPublished:true,createdAt:new Date().toISOString()});
+     saved++;
+    }catch(err){failed++;console.warn('Portal follow-up failed for student',sid(s),err)}
+    processed++;progress();
+   }
+  };
+  await Promise.all(Array.from({length:Math.min(3,total)},()=>worker()));
   let staffSummary=false;
   try{
    const abs=recipients.filter(s=>selected.get(sid(s)).status==='Absent').length;

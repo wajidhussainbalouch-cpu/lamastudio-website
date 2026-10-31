@@ -150,6 +150,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
 <h3 class="sm:col-span-2 text-sm font-black text-indigo-200">1. Teacher Login & Assigned Class — complete first</h3>
 <label class="text-xs font-bold">Teacher Full Name *<input id="inName" required placeholder="Full name" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="text-xs font-bold">Assigned Class *<select id="inClass" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Loading school classes…</option></select></label>
+<label class="text-xs font-bold">Assigned Section (optional)<input id="inSection" list="teacherSectionOptions" placeholder="e.g. A, 1, Pink, Lily" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><datalist id="teacherSectionOptions"></datalist><small class="block mt-1 text-slate-300">Choose an existing section or enter your school’s own name.</small></label>
 <label class="text-xs font-bold">Teacher Login ID *<input id="inLoginId" required autocomplete="off" placeholder="e.g. T-001" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="text-xs font-bold">Email (optional)<input id="inEmail" type="email" placeholder="Email if available" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="sm:col-span-2 text-xs font-bold">Teacher Password * (8+ characters)
@@ -192,8 +193,8 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
  </div></div>
                 <input id="editSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <select id="editClass" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"><option value="">Select assigned class</option></select>
-                <input id="editSectionInput" placeholder="Assigned Section" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="editContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="editSectionInput" list="teacherEditSectionOptions" placeholder="Assigned Section (e.g. A, 1, Pink, Lily)" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <datalist id="teacherEditSectionOptions"></datalist><input id="editContact" placeholder="Contact No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="editCnic" placeholder="CNIC No" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
                 <input type="date" id="editDob" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <select id="editGender" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
@@ -437,6 +438,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
             document.getElementById('editName').value = t.name || '';
             document.getElementById('editSubject').value = t.subject || '';
             document.getElementById('editClass').value = t.assignedClass || '';
+            updateTeacherSections('edit');
             document.getElementById('editSectionInput').value = t.assignedSection || '';
             document.getElementById('editContact').value = t.contact || '';
             document.getElementById('editCnic').value = t.cnic || '';
@@ -573,6 +575,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  const assignedClass=document.getElementById('inClass').value.trim();
  const loginId=document.getElementById('inLoginId').value.trim();
  const email=document.getElementById('inEmail').value.trim();
+ const assignedSection=document.getElementById('inSection').value.trim();
  const password=document.getElementById('inPassword').value;
  const result=document.getElementById('teacherCreateResult');
  if(!name||!assignedClass||!loginId||password.length<8){alert('Enter name, assigned class, Teacher Login ID, and password (8+ characters).');return;}
@@ -580,7 +583,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  button.disabled=true;button.textContent='Creating account…';
  result.classList.add('hidden');
  try{
-  const created=await LamaAPI.addTeacher({name,assignedClass,loginId,email,password});
+  const created=await LamaAPI.addTeacher({name,assignedClass,assignedSection,loginId,email,password});
   if(!created||!created.id)throw Error('Account creation was not confirmed by the server. Please check the roster before retrying.');
   result.classList.remove('hidden');
   result.replaceChildren();
@@ -598,31 +601,60 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
  }finally{button.disabled=false;button.textContent='+ Create Teacher Account';}
 }
 
-        async function loadTeacherClassOptions() {
-            const selects=[document.getElementById('inClass'),document.getElementById('editClass')];
-            try {
-                const students=await LamaAPI.list('students');
-                const names=[...new Set((Array.isArray(students)?students:[]).map(x=>String(x.class||'').trim()).filter(Boolean))];
-                // Preserve exact class names from the school's saved roster.
-                names.sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
-                for(const el of selects){
-                    const old=el.value;
-                    el.replaceChildren(new Option('Select a school class',''));
-                    names.forEach(n=>el.add(new Option(n,n)));
-                    if(old&&names.includes(old))el.value=old;
-                }
-                if(!names.length)selects[0].options[0].text='No student classes found — import students first';
+        let teacherClassRoster=[],teacherClassLoad=null;
+        const teacherClassKey=()=> 'lama_teacher_class_options_'+String(currentSchool?.schoolId||LamaAPI.getSession?.()?.schoolId||'school');
+        function populateTeacherClasses(rows){
+          teacherClassRoster=rows;
+          const classes=[...new Set(rows.map(x=>String(x.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+          for(const id of ['inClass','editClass']){
+            const el=document.getElementById(id),previous=el.value;
+            el.replaceChildren(new Option(classes.length?'Select assigned class':'No classes found — import students first',''));
+            for(const name of classes)el.add(new Option(name,name));
+            if(classes.includes(previous))el.value=previous;
+          }
+          updateTeacherSections('in');
+          updateTeacherSections('edit');
+        }
+        function updateTeacherSections(which){
+          const cl=document.getElementById(which==='in'?'inClass':'editClass').value;
+          const input=document.getElementById(which==='in'?'inSection':'editSectionInput');
+          const data=document.getElementById(which==='in'?'teacherSectionOptions':'teacherEditSectionOptions');
+          const old=input.value;
+          const options=[...new Set(teacherClassRoster.filter(r=>String(r.class||'').trim()===cl).map(r=>String(r.section||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+          data.replaceChildren(...options.map(n=>new Option(n,n)));
+          // Custom section names remain permitted; do not erase the teacher's saved section.
+          if(old)input.value=old;
+          input.placeholder=options.length?'Select or type section ('+options.join(', ')+')':'Optional — A, B, 1, 2, Pink, Lily…';
+        }
+        async function loadTeacherClassOptions(){
+          try{
+            const cached=JSON.parse(localStorage.getItem(teacherClassKey())||'null');
+            if(Array.isArray(cached?.rows)&&cached.rows.length)populateTeacherClasses(cached.rows);
+          }catch(_){}
+          if(teacherClassLoad)return teacherClassLoad;
+          teacherClassLoad=(async()=>{
+            const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Class lookup timed out')),10000));
+            try{
+              const students=await Promise.race([LamaAPI.list('students'),timeout]);
+              const rows=(Array.isArray(students)?students:[]).map(x=>({class:String(x.class||'').trim(),section:String(x.section||'').trim()})).filter(x=>x.class);
+              const unique=[...new Map(rows.map(x=>[x.class+'|'+x.section,x])).values()];
+              if(unique.length){populateTeacherClasses(unique);try{localStorage.setItem(teacherClassKey(),JSON.stringify({rows:unique,at:Date.now()}))}catch(_){}}
+              else if(!teacherClassRoster.length)populateTeacherClasses([]);
             }catch(err){
-                console.warn('Unable to load class list',err);
-                selects.forEach(el=>el.replaceChildren(new Option('Class list unavailable — retry refresh','')));
-            }
+              console.warn('Class lookup:',err);
+              if(!teacherClassRoster.length)for(const id of ['inClass','editClass'])document.getElementById(id).options[0].text='Class lookup unavailable — tap Refresh classes';
+            }finally{teacherClassLoad=null}
+          })();
+          return teacherClassLoad;
         }
         async function init() {
             try{await renderHeader()}catch(err){console.warn('School header unavailable:',err)}
-            try{await loadTeacherClassOptions()}catch(err){console.warn(err)}
+            loadTeacherClassOptions().catch(err=>console.warn(err));
             try{await renderTeachers()}catch(err){console.error(err);document.getElementById('teacherCount').textContent='Unable to load teacher records';document.getElementById('teachersEmpty').textContent='Teacher records could not load: '+err.message;document.getElementById('teachersEmpty').classList.remove('hidden');}
         }
 
+        document.getElementById('inClass').addEventListener('change',()=>{document.getElementById('inSection').value='';updateTeacherSections('in')});
+        document.getElementById('editClass').addEventListener('change',()=>{document.getElementById('editSectionInput').value='';updateTeacherSections('edit')});
         if (LamaAPI.requireLogin('school', '../login.html')) {
             init();
         }

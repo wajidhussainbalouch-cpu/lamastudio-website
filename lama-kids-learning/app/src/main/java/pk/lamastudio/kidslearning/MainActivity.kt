@@ -26,6 +26,9 @@ class MainActivity : ComponentActivity() {
     var unlocked by remember { mutableStateOf(false) }
     var challenge by remember { mutableStateOf(ParentChallenge.generate()) }
     var parentInput by remember { mutableStateOf("") }
+    var game by remember { mutableStateOf<MathChallenge?>(null) }
+    var gameInput by remember { mutableStateOf("") }
+    var gameFeedback by remember { mutableStateOf("") }
     Scaffold(topBar = { Surface(tonalElevation = 3.dp) { Text("Lama Kids Learning - Stars: " + stars, Modifier.fillMaxWidth().padding(18.dp), style = MaterialTheme.typography.titleLarge) } }) { padding ->
      LazyColumn(Modifier.fillMaxSize().padding(padding).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
       if (parentOpen) {
@@ -42,6 +45,15 @@ class MainActivity : ComponentActivity() {
         item { Text("Progress stays on this device. No child account or internet access.") }
        }
        item { OutlinedButton(onClick = { parentOpen = false; unlocked = false; parentInput = ""; challenge = ParentChallenge.generate() }) { Text("Back") } }
+      } else if (game != null) {
+       val currentGame = game!!
+       item { Text("Math Challenge", style = MaterialTheme.typography.headlineSmall) }
+       item { Text(currentGame.question(), style = MaterialTheme.typography.titleLarge) }
+       item { OutlinedTextField(gameInput, { gameInput = it.filter(Char::isDigit).take(5) }, label = { Text("Your answer") }) }
+       item { Button(onClick = { gameFeedback = if (MathGames.isCorrect(currentGame,gameInput)) "Great work!" else "Try again!" }) { Text("Check answer") } }
+       if (gameFeedback.isNotBlank()) item { Text(gameFeedback) }
+       item { Button(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }) { Text("Next challenge") } }
+       item { OutlinedButton(onClick = { game = null; gameInput = ""; gameFeedback = "" }) { Text("Back") } }
       } else if (lesson != null) {
        val current = lesson!!
        val question = current.questions.first()
@@ -72,6 +84,7 @@ class MainActivity : ComponentActivity() {
         val current = available[i]
         Button(onClick = { lesson = current; answer = -1 }, Modifier.fillMaxWidth()) { Text(current.title + " - Stars: " + store.stars(current.id)) }
        }
+       item { Button(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }, Modifier.fillMaxWidth()) { Text("Play Math Challenge") } }
        item { OutlinedButton(onClick = { parentOpen = true }, Modifier.fillMaxWidth()) { Text("Parent area") } }
       }
      }

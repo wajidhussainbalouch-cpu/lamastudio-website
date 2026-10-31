@@ -697,7 +697,7 @@ function recordAppliesToClass(record, studentClass) {
     return classes.length ? classes.some(function(k){return sameClass(k,studentClass);}) : true;
 }
 function sameSection(record,section){ return !section || !record.section || sameClass(record.section,section); }
-function teacherOwns(ctx,r){ return !!String(ctx.teacher.assignedClass||'').trim() && sameClass(r.class,ctx.teacher.assignedClass) && sameSection(r,ctx.teacher.assignedSection); }
+function teacherOwns(ctx,r){ return !!String(ctx.teacher.assignedClass||'').trim() && sameClass(r.class,ctx.teacher.assignedClass) && (!String(ctx.teacher.assignedSection||'').trim() || sameClass(r.section,ctx.teacher.assignedSection)); }
 function teacherStudentAccess_(ctx,record){
  if(!String(ctx.teacher.assignedClass||'').trim())throw new Error('No assigned class. Contact school administrator.');
  const studentId=String(record.studentId||'').trim(),enrollment=String(record.enrlNo||'').trim();
@@ -817,7 +817,7 @@ function addRecord(ctx, collection, record) {
     }
     if (ctx.role === 'teacher' && collection === 'attendance') { const student=teacherStudentAccess_(ctx,record);record=Object.assign({},record,{studentId:student.id,enrlNo:student.enrlNo||'',class:student.class,section:student.section||'',studentName:student.name||''}); }
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {
-        record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
+        record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || record.section || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const id = genId(collection.slice(0, 3));

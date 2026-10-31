@@ -1,7 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style id="adminAccessGate">html:not(.admin-verified) body{visibility:hidden}</style>
+<style id="adminAccessGate">html:not(.admin-verified) body{visibility:hidden}
+/* Mobile-first admin workspace: compact school identity and tidy action grid. */
+@media(max-width:640px){
+ html,body{max-width:100%;overflow-x:hidden}
+ #topOverview{position:relative!important;top:auto!important;padding:12px 14px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:12px!important;min-width:0}
+ #topOverview>div:first-child{display:grid!important;grid-template-columns:44px 42px minmax(0,1fr);gap:10px!important;align-items:center;min-width:0}
+ #topOverview>div:first-child .mobile-menu{width:44px!important;height:44px!important;min-width:44px!important;padding:0!important}
+ #topOverview>div:first-child>div:last-child{min-width:0;overflow-wrap:anywhere}
+ #navSchoolName{display:block;font-size:14px!important;line-height:1.3!important;overflow-wrap:anywhere}
+ #topOverview>div:nth-child(2){display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important;align-items:stretch!important;min-width:0}
+ #topOverview>div:nth-child(2)>*{min-width:0!important;width:100%!important;margin:0!important}
+ #topOverview .header-action,#topOverview .palette-trigger,#topOverview .theme-toggle{display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;min-height:43px!important;padding:8px 5px!important;border-radius:12px!important;font-size:11px!important;white-space:normal!important;text-align:center!important}
+ #topOverview .header-action .action-label{display:inline!important;font-size:11px!important}
+ #topOverview .palette-picker{width:100%!important}
+ #topOverview .palette-trigger{width:100%!important}
+ #topOverview .theme-toggle{width:100%!important}
+ #topOverview .palette-menu{right:0;left:auto;max-width:calc(100vw - 32px)}
+ #academicClassSummary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ #academicClassSummary>a{min-width:0;padding:13px 11px!important;overflow-wrap:anywhere}
+ #academicClassSummary>a span{line-height:1.3}
+ .hub-section-heading,.neo-card{min-width:0}
+}
+@media(max-width:365px){#topOverview>div:nth-child(2){grid-template-columns:repeat(2,minmax(0,1fr))!important}#academicClassSummary{gap:8px!important}}
+</style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Campus Command Hub</title>
@@ -721,7 +744,7 @@ function renderAssessmentAnalytics(tests){
           }
           let unmatched=0;
           for(const student of active){
-            const label=String(student.class??student.grade??student.className??'').trim();
+            const label=String(student.class??student.grade??student.className??student.classLevel??'').trim();
             const key=normalizeDashboardClass(label);
             if(!key){unmatched++;continue;}
             if(configured&&!classes.has(key)){unmatched++;continue;}

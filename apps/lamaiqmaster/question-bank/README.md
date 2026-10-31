@@ -28,3 +28,14 @@ GitHub JSON is the source of truth. Release builds can bundle validated question
 
 ## Access
 Target: first 100 free questions, ten-question batches, 7/10 progression. Additional packs via verified rewarded ads or optional Pro subscription. AccessPolicy.kt currently defines policy only and is not wired to this JSON bank.
+
+## Offline quality gate (31 October 2026)
+
+Run `python3 apps/lamaiqmaster/question-bank/validate_bank.py` from the repository root.
+The validator checks the five 1,000-record packs, field/level counts, unique IDs,
+option validity, answer-index bounds, missing explanations, and repeated substantive
+prompts after stripping artificial trial/pattern suffixes. It also warns when memory
+questions require hiding the stimulus before answers are shown. The validator exits
+nonzero on any warning or error. Passing structural checks alone would **not**
+establish educational correctness or 5,000 conceptually unique questions; those
+require independent answer checking and editorial review. No deployment was run.

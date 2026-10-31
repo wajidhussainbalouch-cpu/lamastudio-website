@@ -114,3 +114,9 @@ Updated 30 October 2026. **Read this in the next chat.** Owner requests this MD 
 3. Add idempotent queued broadcast, logs, webhooks, delivery statuses and retry limits.
 4. Verify Vercel production dashboard/mobile design and school isolation.
 5. Keep this handover Markdown current after each substantive development session.
+
+## 31 October 2026 — Attendance follow-up confirmation UI
+- Commit `99db57c` updates `attendance/student-attendance.html` with mobile-friendly green indicators for portal, WhatsApp and phone contact confirmations.
+- Contact confirmations are written as notification records and loaded from the school notification list; opening WhatsApp or dialer is not itself proof of delivery.
+- Production deployment initiated on Vercel: `dpl_6Mo3b2EbXp6nf4it3rmKV9rHdqsS` (verify READY and production alias before reporting live).
+- Follow-up testing: verify badge persistence after reload, that each channel is independent, and portal badge semantics for bulk publication. No Apps Script changes in this commit.

@@ -95,14 +95,15 @@ function bulkAttendanceRecords(params) {
       const requestedId = String(rec.studentId || '').trim();
       const requestedEnrl = String(rec.enrlNo || '').trim();
       if (!requestedId && !requestedEnrl) throw new Error('Student ID or enrollment number required');
-      if (requestedEnrl && ambiguousEnrollment.has(requestedEnrl)) {
-        throw new Error('Duplicate enrollment number in student register: ' + requestedEnrl);
+      if (requestedEnrl && ambiguousEnrollment.has(requestedEnrl) && !requestedId) {
+        throw new Error('Duplicate enrollment number: provide the unique student ID for this attendance record.');
       }
       const byId = requestedId ? byStudentId.get(requestedId) : null;
       const byEnrl = requestedEnrl ? byEnrollment.get(requestedEnrl) : null;
       if (requestedId && !byId) throw new Error('Student not found: ' + requestedId);
-      if (requestedEnrl && !byEnrl) throw new Error('Enrollment not found: ' + requestedEnrl);
-      if (byId && byEnrl && byId.id !== byEnrl.id) throw new Error('Student ID and enrollment mismatch');
+      if (requestedEnrl && !byEnrl && !byId) throw new Error('Enrollment not found: ' + requestedEnrl);
+      if (byId && requestedEnrl && String(byId.enrlNo || '').trim() !== requestedEnrl) throw new Error('Student ID and enrollment mismatch');
+      if (byId && byEnrl && byId.id !== byEnrl.id && !ambiguousEnrollment.has(requestedEnrl)) throw new Error('Student ID and enrollment mismatch');
       const student = byId || byEnrl;
       const sid = String(student.id).trim();
       const enrl = String(student.enrlNo || '').trim();

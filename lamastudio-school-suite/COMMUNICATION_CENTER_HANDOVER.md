@@ -1,3 +1,12 @@
+## Student detail dialog redesign — 31 October 2026
+Owner shared two photos: screenshot 2 is the preferred dense roster with photo, name, enrollment, class, father, and actions in aligned rows; screenshot 1 shows a low-contrast dark-text student View modal. GitHub commit `f7783da` updates `students/manage-students.html`:
+- Retains the current detailed student roster with View/Edit/Delete actions and batch size choices.
+- View dialog now uses a consistent high-contrast dark panel regardless of light/dark page theme, bright readable labels and values, larger name, spacious rows.
+- Displays a full 3:4 portrait image (up to 230px wide desktop, 170px mobile), or a clear no-photo placeholder.
+- Responsive two-column photo/details layout on larger screens and stacked layout on mobile; Edit/Delete buttons in dialog.
+- Formats admission date for readability; no student data or backend modifications.
+- Need to verify actual Vercel deployment and mobile screen rendering; no live verification completed.
+
 ## Student list batch-view and inline actions — 31 October 2026
 Owner requested View, Edit, Delete buttons together in each row (desktop and mobile), and one-click choice to show all students or display batches. Commit `028381f` updates `students/manage-students.html`: inline actions on every row; Show 25/50/100/All students selector; retains Select all filtered, student photos/details, search and filters. Permanent Delete still requires confirmation. No backend or student data changed. Live mobile visual QA remains necessary, especially on narrow screens and for large All-students selections.
 

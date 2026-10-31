@@ -1,3 +1,6 @@
+## 31 Oct 2026 — larger student identity in absent/leave follow-up
+Updated `attendance/student-attendance.html` commit `8b96992`: photo enlarged from 64×64 to responsive ~96×112 / 112×128, larger student name and details, compact flex-wrapped WhatsApp/Call/Record notification controls, less wasted card height. Frontend-only change; no Apps Script deployment or student data migration. Verify on mobile and desktop after Vercel deployment.
+
 ## 31 Oct 2026 — bulk portal notification ETA and limited concurrency
 `attendance/student-attendance.html` commit `afeb7f4` replaces sequential 23+ student notification writes with max 3 concurrent `LamaAPI.add('notifications')` workers and live processed/saved/failed/elapsed/estimated-remaining progress. This is still browser-managed, **not durable background processing**: keep page open, and don't promise it survives navigation or closing browser. A proper solution requires a secure authenticated school-scoped Apps Script queued job with persisted status, resumable worker/trigger, idempotent per-student/date keys, delivery audit, and polling from dashboard. Current action may create duplicate notifications on retries. Test server quotas and verify recipient visibility before increasing concurrency. No Apps Script changed and no school data modified by code commit.
 

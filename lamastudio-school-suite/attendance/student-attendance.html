@@ -132,6 +132,31 @@ window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.r
 
 function waNumber(raw){let n=String(raw||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.startsWith('0')&&n.length===11)n='92'+n.slice(1);if(n.length===10&&n.startsWith('3'))n='92'+n;return /^\d{10,15}$/.test(n)?n:''}
 function followupMessage(s,kind){const who=s.name||'your child',date=displayDate($('date').value),school='the school';return kind==='Absent'?`Dear Parent/Guardian, ${who} was marked absent from ${school} on ${date}. We hope everything is well. Could you kindly let us know if there is a health concern, family matter, or another reason for the absence? Please contact us if support is needed. Thank you for your cooperation.`:`Dear Parent/Guardian, ${who} is recorded as on leave on ${date}. We hope all is well. Kindly let us know if any support is needed and, if possible, confirm the expected return date. Thank you for keeping us informed.`}
-function renderOutreach(){const target=$('outreachRows');if(!target)return;const rows=currentStudents().filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));target.innerHTML=rows.map(s=>{const k=sid(s),v=selected.get(k),n=waNumber(s.whatsapp||s.contact||s.guardianCell||s.emergencyContact),msg=followupMessage(s,v.status);return `<div class="student-row flex flex-wrap items-center justify-between gap-2"><span><b>${esc(s.name||'Student')}</b> <small class="muted">${esc(v.status)} · ${esc(displayDate($('date').value))}</small></span><span class="flex gap-2 flex-wrap">${n?`<a class="btn" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer">WhatsApp parent ↗</a>`:'<span class="muted mini">No valid WhatsApp number</span>'}<button class="btn" data-contact-student="${esc(k)}" type="button">Record notification</button></span></div>`}).join('')||'<p class="muted mini">No absent or leave students for the selected date.</p>'}
+function renderOutreach(){
+ const target=$('outreachRows');if(!target)return;
+ const rows=currentStudents().filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));
+ target.innerHTML=rows.map(s=>{
+  const k=sid(s),v=selected.get(k),raw=s.whatsapp||s.contact||s.guardianCell||s.emergencyContact||'';
+  const n=waNumber(raw),phone=String(raw).replace(/[^\d+]/g,'');
+  const msg=followupMessage(s,v.status);
+  const photo=s.photo||s.photoUrl||s.studentPhoto||'';
+  const avatar=photo?`<img src="${esc(photo)}" alt="Student photo" class="w-16 h-16 rounded-xl object-cover border border-slate-700" loading="lazy" onerror="this.style.display='none'">`:`<div class="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-400">No photo</div>`;
+  return `<article class="student-row rounded-2xl border border-slate-700/60 p-3 sm:p-4">
+   <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+    <div class="flex gap-3 items-start flex-1 min-w-0">${avatar}
+     <div class="min-w-0 flex-1"><div class="flex flex-wrap gap-2 items-center"><strong class="text-sm break-words">${esc(s.name||'Student')}</strong><span class="text-xs rounded-lg px-2 py-1 ${v.status==='Absent'?'bg-red-500/15 text-red-300':'bg-amber-500/15 text-amber-300'}">${esc(v.status)}</span></div>
+      <p class="muted text-xs mt-1">Class: ${esc(cls(s))} ${s.section?'· Section: '+esc(s.section):''} · Enrollment: ${esc(enr(s)||'Not assigned')}</p>
+      <p class="muted text-xs mt-1">Parent/Guardian: ${esc(s.fatherGuardian||s.guardianName||'Not recorded')}</p>
+      <p class="muted text-xs mt-1">Contact: ${esc(raw||'Not recorded')} · ${esc(displayDate($('date').value))}</p>
+     </div>
+    </div>
+    <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:justify-end sm:max-w-sm">
+     ${n?`<a class="btn text-center" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:`<span class="muted mini self-center">No WhatsApp number</span>`}
+     ${phone?`<a class="btn text-center" href="tel:${esc(phone)}">Call parent</a>`:`<span class="muted mini self-center">No phone number</span>`}
+     <button class="btn col-span-2 sm:flex-auto" data-contact-student="${esc(k)}" type="button">Record notification</button>
+    </div>
+   </div></article>`;
+ }).join('')||'<p class="muted mini">No absent or leave students for the selected date.</p>';
+}
 $('outreachRows').addEventListener('click',async e=>{const b=e.target.closest('[data-contact-student]');if(!b)return;const s=students.find(x=>sid(x)===b.dataset.contactStudent),v=s&&selected.get(sid(s));if(!s||!v||!['Absent','Leave'].includes(v.status))return;if(dirty.has(sid(s))){alertText('Save attendance before recording contact.');return}if(!confirm('Only continue if you actually contacted the parent. This records a contact note in the student portal; it does not send WhatsApp automatically.'))return;b.disabled=true;try{const d=$('date').value;await LamaAPI.add('notifications',{title:'Attendance follow-up — '+d,message:followupMessage(s,v.status),studentId:sid(s),class:cls(s),section:s.section||'',date:d,attendanceStatus:v.status,notificationType:'attendanceFollowup',channel:'WhatsApp (user confirmed)',status:'Sent',isPublished:true,createdAt:new Date().toISOString()});alertText('Contact recorded for '+s.name+'. The student portal can now show this notification.')}catch(err){alertText('Could not record notification: '+err.message)}finally{b.disabled=false}});
 </script></body></html>

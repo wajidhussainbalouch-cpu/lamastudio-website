@@ -1,3 +1,12 @@
+## Bulk student deletion performance — 31 October 2026
+User reports slow bulk deletion and requests live calculated time.
+- `backend-api/code.gs`: added `bulkDeleteStudents` POST-only school-admin action, up to 75 unique student IDs per batch, single sheet read, descending contiguous row deletions, per-record audit, script lock, deleted/not-found IDs.
+- `js/api-client.js`: added `bulkDeleteStudents(ids)`.
+- `students/manage-students.html`: sends 75-record batches, displays elapsed time, progress, and estimated remaining time calculated from observed throughput; falls back to slower one-by-one removal ONLY if backend explicitly says unknown action, and reports errors.
+- **Critical deployment:** user's single master Apps Script file has NOT been patched with this new action. Fast batch deletion will not work until the new `bulkDeleteStudents_` function, dispatch case, protected-actions and GET blocked-actions changes are integrated into master and deployed. The frontend currently uses compatibility mode with an ETA on older master deployments.
+- Safety: deletion is irreversible, requires existing confirmation; no other collections are intentionally deleted. Verify audit and permissions on a test school before production rollout.
+- Potential follow-up: compare runtime and review sheet row deletion performance for larger schools, and confirm the user wants permanent deletion rather than archive.
+---
 ## Student roster UI improvement — 31 October 2026
 User supplied a screenshot of the student list ending in oversized cards with Edit/Delete buttons, requested compact consistent views, filters and a separate detailed view. GitHub main commit `9bf4bed` updates `students/manage-students.html`:
 - Hide desktop table on mobile (previously desktop table and mobile cards both rendered).

@@ -701,8 +701,8 @@ function renderAssessmentAnalytics(tests){
 
         function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance today',new Set(d.attendance.filter(r=>normalizeAttendanceDate(r.date)===localISODate()).map(r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??r.id??'')).filter(Boolean)).size,'students with saved attendance today'],['Attendance this month',new Set(d.attendance.map(r=>normalizeAttendanceDate(r.date)).filter(day=>day&&day.startsWith(localISODate().slice(0,7)))).size,'days with saved student attendance'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
         function normalizeDashboardClass(value){
-          const raw=String(value??'').trim().replace(/\\s+/g,' ').toLowerCase();
-          const withoutPrefix=raw.replace(/^(?:class|grade|standard|std)\\s*[-:.#]?\\s*/i,'').trim();
+          const raw=String(value??'').trim().replace(/\s+/g,' ').toLowerCase();
+          const withoutPrefix=raw.replace(/^(?:class|grade|standard|std)\s*[-:.#]?\s*/i,'').trim();
           if(/^0*[1-9][0-9]*$/.test(withoutPrefix))return String(Number(withoutPrefix));
           return withoutPrefix.replace(/[^a-z0-9]/g,'');
         }

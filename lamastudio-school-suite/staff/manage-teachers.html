@@ -149,7 +149,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
 <div class="sm:col-span-2 bg-indigo-950/60 border border-indigo-600/50 rounded-xl p-4 grid sm:grid-cols-2 gap-3">
 <h3 class="sm:col-span-2 text-sm font-black text-indigo-200">1. Teacher Login & Assigned Class — complete first</h3>
 <label class="text-xs font-bold">Teacher Full Name *<input id="inName" required placeholder="Full name" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
-<label class="text-xs font-bold">Assigned Class *<select id="inClass" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Select assigned class</option><option>ECE</option><option>Nursery</option><option>Prep</option><option>KG</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label>
+<label class="text-xs font-bold">Assigned Class *<select id="inClass" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Loading this school’s classes…</option></select></label>
 <label class="text-xs font-bold">Assigned Section (optional)<input id="inSection" list="teacherSectionOptions" placeholder="e.g. A, 1, Pink, Lily" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><datalist id="teacherSectionOptions"></datalist><small class="block mt-1 text-slate-300">Choose an existing section or enter your school’s own name.</small></label>
 <label class="text-xs font-bold">Teacher Login ID *<input id="inLoginId" required autocomplete="off" placeholder="e.g. T-001" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="text-xs font-bold">Email (optional)<input id="inEmail" type="email" placeholder="Email if available" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
@@ -605,13 +605,13 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
 
         let teacherClassRoster=[],teacherClassLoad=null;
         const teacherClassKey=()=> 'lama_teacher_class_options_'+String(currentSchool?.schoolId||LamaAPI.getSession?.()?.schoolId||'school');
-        const standardClassNames=['ECE','Nursery','Prep','KG','1','2','3','4','5','6','7','8','9','10','11','12'];
+
         function populateTeacherClasses(rows){
           teacherClassRoster=rows;
-          const classes=[...new Set([...standardClassNames,...rows.map(x=>String(x.class||'').trim()).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+          const classes=[...new Set(rows.map(x=>String(x.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
           for(const id of ['inClass','editClass']){
             const el=document.getElementById(id),previous=el.value;
-            el.replaceChildren(new Option('Select assigned class',''));
+            el.replaceChildren(new Option(classes.length?'Select assigned class':'No classes found for this school',''));
             for(const name of classes)el.add(new Option(name,name));
             if(classes.includes(previous))el.value=previous;
           }
@@ -630,7 +630,6 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           input.placeholder=options.length?'Select or type section ('+options.join(', ')+')':'Optional — A, B, 1, 2, Pink, Lily…';
         }
         async function loadTeacherClassOptions(){
-          if(!teacherClassRoster.length)populateTeacherClasses([]);
           try{
             const cached=JSON.parse(localStorage.getItem(teacherClassKey())||'null');
             if(Array.isArray(cached?.rows)&&cached.rows.length)populateTeacherClasses(cached.rows);
@@ -646,7 +645,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
               else if(!teacherClassRoster.length)populateTeacherClasses([]);
             }catch(err){
               console.warn('Class lookup:',err);
-              console.warn('Using standard and cached class options; school roster lookup unavailable');
+              if(!teacherClassRoster.length)for(const id of ['inClass','editClass'])document.getElementById(id).replaceChildren(new Option('Unable to load school classes — retry',''));
             }finally{teacherClassLoad=null}
           })();
           return teacherClassLoad;

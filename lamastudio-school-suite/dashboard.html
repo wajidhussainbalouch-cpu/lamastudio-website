@@ -24,6 +24,17 @@
  .hub-section-heading,.neo-card{min-width:0}
 }
 @media(max-width:365px){#topOverview>div:nth-child(2){grid-template-columns:repeat(2,minmax(0,1fr))!important}#academicClassSummary{gap:8px!important}}
+
+@media(max-width:640px){
+ #topOverview{position:relative!important}
+ #topOverview>div:first-child{padding:0!important}
+ #topOverview>div:nth-child(2){grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #topOverview .header-action{box-shadow:none!important}
+ #topOverview #schoolShortCodeBadge{width:42px!important;height:42px!important;overflow:hidden}
+ #heroSchoolName{font-size:clamp(23px,7vw,34px)!important;line-height:1.14!important;letter-spacing:-.03em!important}
+ #topOverview~main .neo-card{padding:14px!important}
+ #topOverview~main .hub-section-heading{margin-top:20px!important}
+}
 </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -329,7 +340,7 @@ header#topOverview{background:var(--lama-header)!important}
         <div class="flex items-center space-x-3">
             <button class="mobile-menu" onclick="toggleSidebar(true)" type="button" aria-label="Open navigation">☰</button>
             <div id="schoolShortCodeBadge" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.4)]">
-                <span id="navShortCode" class="text-xs font-black text-white">SCH</span>
+                <img id="navSchoolLogo" alt="School logo" class="hidden w-full h-full object-contain rounded-xl" referrerpolicy="no-referrer"><span id="navShortCode" class="text-xs font-black text-white">SCH</span>
             </div>
             <div>
                 <h1 class="text-sm font-black tracking-wider text-white"><span id="navSchoolName">Campus Command Hub</span></h1>
@@ -555,7 +566,7 @@ header#topOverview{background:var(--lama-header)!important}
             const school=await LamaAPI.getActiveSchool()||{}; const schoolName=school.name||'Campus Command Hub';
             const shortCode=school.shortCode|| (LamaAPI.deriveShortCode?LamaAPI.deriveShortCode(schoolName):'SCH');
             document.getElementById('pageTitle').innerText=`${schoolName} | School Data Command Center`;
-            document.getElementById('sideSchoolName').textContent=schoolName;document.getElementById('sideSchoolAvatar').textContent=shortCode.slice(0,3);document.getElementById('navSchoolName').innerText=schoolName; document.getElementById('navSchoolName').title=schoolName; document.getElementById('navShortCode').innerText=shortCode;
+            document.getElementById('sideSchoolName').textContent=schoolName;document.getElementById('sideSchoolAvatar').textContent=shortCode.slice(0,3);document.getElementById('navSchoolName').innerText=schoolName; document.getElementById('navSchoolName').title=schoolName; document.getElementById('navShortCode').innerText=shortCode; const logo=document.getElementById('navSchoolLogo'); const logoUrl=String(school.logo||school.logoUrl||'').trim(); if(/^https:\/\//i.test(logoUrl)){logo.src=logoUrl;logo.classList.remove('hidden');document.getElementById('navShortCode').classList.add('hidden');logo.onerror=()=>{logo.classList.add('hidden');document.getElementById('navShortCode').classList.remove('hidden');};}else{logo.removeAttribute('src');logo.classList.add('hidden');document.getElementById('navShortCode').classList.remove('hidden');}
             document.getElementById('heroSchoolName').innerText=schoolName; document.getElementById('principalDisplay').innerText=school.principal||'Principal / Admin';
             document.getElementById('scopeDisplay').innerText=`${schoolName} • ${school.id||school.schoolId||'active school context'}`;
             document.getElementById('todayDateDisplay').innerText=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'short',day:'numeric'});
@@ -726,7 +737,7 @@ function renderAssessmentAnalytics(tests){
         function normalizeDashboardClass(value){
           const raw=String(value??'').trim().replace(/\s+/g,' ').toLowerCase();
           const withoutPrefix=raw.replace(/^(?:class|grade|standard|std)\s*[-:.#]?\s*/i,'').trim();
-          if(/^0*[1-9][0-9]*$/.test(withoutPrefix))return String(Number(withoutPrefix));
+          const numeric=withoutPrefix.match(/^0*([1-9][0-9]*)(?:st|nd|rd|th)?(?:\\s*(?:class|grade))?$/);if(numeric)return String(Number(numeric[1]));
           return withoutPrefix.replace(/[^a-z0-9]/g,'');
         }
         function renderAcademicClasses(students){
@@ -744,10 +755,10 @@ function renderAssessmentAnalytics(tests){
           }
           let unmatched=0;
           for(const student of active){
-            const label=String(student.class??student.grade??student.className??student.classLevel??'').trim();
+            const label=String(student.class||student.grade||student.className||student.classLevel||student.currentClass||student.studentClass||'').trim();
             const key=normalizeDashboardClass(label);
-            if(!key){unmatched++;continue;}
-            if(configured&&!classes.has(key)){unmatched++;continue;}
+            if(!key){unmatched++;const other=classes.get('legacy:unassigned')||{name:'Unassigned',total:0,boys:0,girls:0};other.total++;classes.set('legacy:unassigned',other);continue;}
+            if(configured&&!classes.has(key)){unmatched++;const otherKey='legacy:'+key;const other=classes.get(otherKey)||{name:label+' (not in Settings)',total:0,boys:0,girls:0};other.total++;classes.set(otherKey,other);continue;}
             const entry=classes.get(key)||{name:label,total:0,boys:0,girls:0};
             entry.total++;
             const g=String(student.gender||'').trim().toLowerCase();

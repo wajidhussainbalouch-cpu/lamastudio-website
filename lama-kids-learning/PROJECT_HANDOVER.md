@@ -28,3 +28,11 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Gradle/Android SDK build not yet executed in connected GitHub environment; APK not available.
 - Verify SDK/Gradle compatibility and compile in Android build environment; then test on emulator/device.
 - Audit Families policy, target audience and any future billing/ads before release.
+
+
+## Continuation — 31 October 2026
+- Committed original starter lessons for Nursery, KG and Classes 1–8, with selected English, Urdu, Mathematics and Science examples. Coverage is NOT yet complete across all grade/subject combinations.
+- Added quiz scoring engine and unit-test source, local SharedPreferences progress store, parent arithmetic challenge model, and privacy/release checklist.
+- IMPORTANT: MainActivity remains the original selection-screen scaffold; new engines are not yet wired into UI.
+- Build not run, APK not generated, Gradle wrapper not yet committed. No deployment or Vercel usage.
+- Next: connect lesson and quiz UI, add unit-test dependencies, wrapper, curriculum coverage, then compile and verify on Android SDK.

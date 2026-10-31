@@ -403,7 +403,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
         }
 
         async function renderTeachers() {
-            const teachers = await LamaAPI.list('teachers');
+            const teachers = await Promise.race([LamaAPI.list('teachers'),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Teacher directory request timed out. Check Apps Script deployment and retry.')),12000))]);
             allTeachers = teachers; document.getElementById("teacherCount").textContent = `${teachers.length} teacher records`;
             document.getElementById('teacherStatTotal').textContent=teachers.length;
             document.getElementById('teacherStatAssigned').textContent=new Set(teachers.map(t=>String(t.assignedClass||'').trim().toLowerCase()).filter(Boolean)).size;
@@ -642,7 +642,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           teacherClassLoad=(async()=>{
             let error;
             try{
-              const rows=await withTimeout(LamaAPI.getSchoolClassOptions(),6500);
+              const rows=await withTimeout(LamaAPI.getSchoolClassOptions(),4500);
               if(!Array.isArray(rows))throw Error('Invalid school class response');
               populateTeacherClasses(rows);
               try{localStorage.setItem(cacheKey,JSON.stringify({rows,at:Date.now()}))}catch(_){}
@@ -650,7 +650,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
               return;
             }catch(err){error=err;console.warn('Fast school class lookup failed; trying student roster:',err)}
             try{
-              const students=await withTimeout(LamaAPI.list('students'),9500);
+              const students=await withTimeout(LamaAPI.list('students'),6500);
               if(!Array.isArray(students))throw Error('Invalid student roster response');
               const rows=[...new Map(students.map(x=>({class:String(x.class||'').trim(),section:String(x.section||'').trim()})).filter(x=>x.class).map(x=>[x.class.toLowerCase()+'|'+x.section.toLowerCase(),x])).values()];
               populateTeacherClasses(rows);

@@ -65,3 +65,11 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - There is also a non-executing reference copy at `lama-kids-learning/.github/workflows/android-ci.yml`; only the repository-root workflow is recognized by GitHub Actions.
 - The current environment has no Android SDK or Gradle installation, so no local Android compilation or APK verification was possible. Workflow execution result has not been checked. No release approval requested and no publishing performed.
 - Critical next step: inspect Actions run and resolve any compilation/test failures; only then declare a testable debug APK. Full content and premium features remain incomplete.
+
+## Build investigation and UI transparency — 31 Oct 2026
+- Checked GitHub connector for workflow runs associated with commit ac9dc509: returned no pull-request workflow runs. This endpoint does not list normal push runs, so it does NOT establish that the build passed or failed.
+- Public Actions page could not be retrieved in this environment; no CI logs or artifacts were verified.
+- Checked local runtime: Java 21 available, but no Gradle executable or Android SDK found; local Android compilation cannot be performed here.
+- Updated main screen to display the actual number of grade/subject combinations containing starter lessons; avoids implying the entire curriculum is complete.
+- Remain on development branch; no Vercel, production merge or publication.
+- Blocker: obtain Actions run logs or an Android SDK-enabled build environment; fix any errors based on real output before declaring APK ready.

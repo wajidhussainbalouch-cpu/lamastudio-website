@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
    var questionIndex by remember { mutableIntStateOf(0) }
    var correct by remember { mutableIntStateOf(0) }
    var finished by remember { mutableStateOf(false) }
+   var coinBalance by remember { mutableIntStateOf(progress.coins()) }
    var completed by remember { mutableStateOf(lessons.filter { progress.completed(it.id) }.map { it.id }.toSet()) }
    MaterialTheme {
     Scaffold(topBar = { Surface(tonalElevation = 3.dp) { Text("Lama English Speaking Academy", modifier = Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium) } }) { inset ->
@@ -41,6 +42,16 @@ class MainActivity : ComponentActivity() {
        Text("Easy • A1–A2 • Beginner")
        LinearProgressIndicator(progress = { if (lessons.isEmpty()) 0f else completed.size.toFloat() / lessons.size }, modifier = Modifier.fillMaxWidth())
        Text("Completed: ${completed.count { it }} / ${lessons.size}")
+       Text("Reward coins: $coinBalance", style = MaterialTheme.typography.titleMedium)
+       if (RewardPolicy.certificateEligible(completed.size, lessons.size)) {
+        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+         Column(Modifier.padding(16.dp)) {
+          Text("Certificate of Course Completion", style = MaterialTheme.typography.titleMedium)
+          Text("Congratulations! You have completed the Easy A1 course.")
+          Text("Certificate preview only — personalized PDF issuance is not yet available.")
+         }
+        }
+       }
        lessons.forEach { lesson ->
         OutlinedButton(onClick = { selected = lesson; questionIndex = 0; correct = 0; finished = false }, modifier = Modifier.fillMaxWidth()) {
          Text(lesson.title + if (lesson.id in completed) " ✓" else "")
@@ -77,8 +88,8 @@ class MainActivity : ComponentActivity() {
           if (index == q.answer) correct++
           if (questionIndex + 1 == lesson.questions.size) {
            finished = true
-           if (correct >= lesson.questions.size * 0.7) {
-            progress.markCompleted(lesson.id)
+           if (RewardPolicy.passed(correct, lesson.questions.size)) {
+            coinBalance += progress.markCompleted(lesson.id)
             completed = completed + lesson.id
            }
           } else questionIndex++
@@ -86,6 +97,7 @@ class MainActivity : ComponentActivity() {
         }
        } else {
         Text("Quiz completed: $correct / ${lesson.questions.size}")
+        if (RewardPolicy.passed(correct, lesson.questions.size)) Text("Lesson passed! First completion earns 25 coins.")
         Text(if (lesson.id in completed) "Passed! Lesson saved on this device." else "Try again to pass with at least 70%.")
         if (lesson.id !in completed) Button(onClick = { questionIndex = 0; correct = 0; finished = false }) { Text("Retry quiz") }
        }

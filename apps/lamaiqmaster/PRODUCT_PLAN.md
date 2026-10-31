@@ -59,3 +59,11 @@ Workflow: `.github/workflows/lama-iq-test-android.yml`
 - Pro: subscription for unrestricted content and no ads, subject to Google Play Billing implementation and verification.
 - Added `AccessPolicy.kt` with access constants and pure rule functions. NOT integrated into existing UI, not persisted, and no AdMob SDK or Play Billing is yet connected.
 - Current content remains 50 fixed text questions plus generated visual puzzles; the full curated 100 free questions are not yet built and verified.
+
+## 2026-10-31 — Five generated question-bank batches
+- Added five JSON files in `question-bank/`: number_logic, visual_patterns, memory, attention, advanced.
+- Exactly 1,000 records per file, 10 levels x 100 records; total 5,000 distinct IDs and literal prompts generated.
+- Commits: number 0a7afe34, visual 4cc91398, memory 3b37b83d, attention dc7fa5f8, advanced 8c3dd58e.
+- IMPORTANT: these are generated drafts, not 5,000 independently reviewed unique brain puzzles. Several are formula variations; visual patterns can be semantically repetitive. Memory prompts need a separate concealed recall screen. All question bank records currently English-only.
+- The bank is not yet integrated into the Android gameplay. No APK or successful build verified.
+- See `question-bank/README.md` for validation gaps and release gates.

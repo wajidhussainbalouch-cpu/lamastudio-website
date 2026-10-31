@@ -4,7 +4,8 @@ import android.content.Context
 import org.json.JSONObject
 
 data class Question(val text: String, val options: List<String>, val answer: Int)
-data class Lesson(val id: String, val title: String, val urduTitle: String, val explanation: String, val dialogue: List<String>, val questions: List<Question>)
+data class VocabularyItem(val word: String, val urdu: String, val example: String)
+data class Lesson(val id: String, val title: String, val urduTitle: String, val explanation: String, val dialogue: List<String>, val questions: List<Question>, val level: String = "A1", val vocabulary: List<VocabularyItem> = emptyList())
 
 object LessonRepository {
  fun load(context: Context): List<Lesson> {
@@ -21,7 +22,12 @@ object LessonRepository {
      val q = quiz.getJSONObject(j)
      val opts = q.getJSONArray("options")
      Question(q.getString("question"), (0 until opts.length()).map { opts.getString(it) }, q.getInt("correctIndex"))
-    })
+    }),
+    item.optString("level", "A1"),
+    item.getJSONArray("vocabulary").let { words -> (0 until words.length()).map { k ->
+     val v = words.getJSONObject(k)
+     VocabularyItem(v.getString("word"), v.getString("urdu"), v.getString("example"))
+    } })
   }
  }
 }

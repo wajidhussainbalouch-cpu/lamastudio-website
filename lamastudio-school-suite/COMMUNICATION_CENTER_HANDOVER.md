@@ -1,3 +1,6 @@
+## Student roster final layout request — 31 October 2026
+User confirms the new full-photo, high-contrast View modal is excellent and must remain unchanged, but wants the **All Students** list to match their original screenshot: a compact horizontal table on mobile and desktop, one student per row with checkbox, serial, photo, name, enrollment, class, father/guardian, and View/Edit/Delete. Commit `c4f165e` switches the desktop table to render at ALL viewport sizes with horizontal swipe/scroll on phones; hides mobile stacked cards, adds consistent row heights, readable column widths and sticky table header. Search, filters, select-all-filtered, batch size 25/50/100/All, and modal are retained. No student records changed. Still requires live mobile QA after Vercel deployment.
+
 ## Student detail dialog redesign — 31 October 2026
 Owner shared two photos: screenshot 2 is the preferred dense roster with photo, name, enrollment, class, father, and actions in aligned rows; screenshot 1 shows a low-contrast dark-text student View modal. GitHub commit `f7783da` updates `students/manage-students.html`:
 - Retains the current detailed student roster with View/Edit/Delete actions and batch size choices.

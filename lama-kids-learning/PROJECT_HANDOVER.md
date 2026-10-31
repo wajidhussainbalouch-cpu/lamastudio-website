@@ -52,3 +52,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added CurriculumCatalog for all 40 Nursery/KG/Class 1–8 × four-subject combinations with provisional topic outlines, not completed lessons.
 - Added catalog tests and README with build prerequisites, limitations and explicit commands.
 - No Gradle wrapper, SDK build or APK verification yet. Next: fill reviewed original content, finish parent controls, build in Android environment.
+
+## Release preparation: GitHub Actions
+- Added `.github/workflows/lama-kids-android-check.yml` on development branch. It configures Java 17, Android SDK 35 and Gradle 8.9, runs JUnit tests, assembles debug APK, and uploads a 7-day artifact if successful.
+- Workflow is validation only: it does not deploy, merge, sign a release AAB or publish to Google Play.
+- A successful workflow run and downloadable APK have not yet been confirmed. Do not claim release-ready until build, device testing, content review and policy audit pass.
+- Next: inspect Actions run, fix compilation failures, finish curriculum and accessibility/parent protections, then request approval before distribution.

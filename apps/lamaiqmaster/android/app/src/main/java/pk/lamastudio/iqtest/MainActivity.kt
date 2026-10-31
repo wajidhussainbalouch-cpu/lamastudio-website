@@ -5,6 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,81 +14,104 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-data class Puzzle(val prompt: String, val options: List<String>, val answer: Int, val explanation: String)
-
-private val puzzles = listOf(
-    Puzzle("Which number completes the sequence? 2, 4, 8, 16, ?", listOf("24", "30", "32", "36"), 2, "Each number doubles."),
-    Puzzle("Which item is different?", listOf("Square", "Triangle", "Circle", "Cube"), 3, "A cube is three-dimensional."),
-    Puzzle("If all Zibs are Loms and all Loms are Nars, are all Zibs Nars?", listOf("Yes", "No", "Not enough information", "Only sometimes"), 0, "The group relationships are transitive."),
-    Puzzle("What comes next? A, C, F, J, O, ?", listOf("S", "T", "U", "V"), 2, "Letter positions increase by 2, 3, 4, 5, then 6."),
-    Puzzle("Which number is missing? 3, 6, 11, 18, ?", listOf("25", "27", "29", "31"), 1, "Differences increase by two: 3, 5, 7, 9.")
-)
-
-private val navy = Color(0xFF0C1023)
-private val violet = Color(0xFF9B79FF)
+private val bg = Color(0xFF0C1023)
+private val accent = Color(0xFFAB8BFF)
+private val card = Color(0xFF1B2140)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { IQApp() }
-    }
-}
-
-@Composable
-fun IQApp() {
-    var started by remember { mutableStateOf(false) }
-    var index by remember { mutableIntStateOf(0) }
-    var score by remember { mutableIntStateOf(0) }
-    var selected by remember { mutableIntStateOf(-1) }
-    val complete = started && index >= puzzles.size
-    MaterialTheme(colorScheme = darkColorScheme(primary = violet, background = navy, surface = Color(0xFF1B2140))) {
-        Column(
-            Modifier.fillMaxSize().background(navy).padding(22.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Spacer(Modifier.height(18.dp))
-            Text("LAMA STUDIO", color = violet, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text("Lama IQ Test", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
-            Text("Train your brain. Challenge your speed.", color = Color(0xFFBFC4DC))
-            when {
-                !started -> {
-                    Surface(shape = RoundedCornerShape(24.dp), color = Color(0xFF1B2140)) {
-                        Column(Modifier.fillMaxWidth().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Text("BRAIN CHALLENGE", color = violet, fontWeight = FontWeight.Bold)
-                            Text("5 quick reasoning puzzles", fontSize = 24.sp, color = Color.White)
-                            Text("Practice patterns, logic and attention. Scores reflect only this in-app challenge, not clinical IQ.", color = Color(0xFFCED2E5))
-                            Button(onClick = { started = true; index = 0; score = 0; selected = -1 }, modifier = Modifier.fillMaxWidth()) { Text("Start challenge") }
+        val prefs = getSharedPreferences("iq_progress", MODE_PRIVATE)
+        setContent {
+            var level by remember { mutableIntStateOf(0) }
+            var question by remember { mutableIntStateOf(0) }
+            var score by remember { mutableIntStateOf(0) }
+            var selected by remember { mutableIntStateOf(-1) }
+            var unlocked by remember { mutableIntStateOf(prefs.getInt("unlocked", 1)) }
+            val questions = remember(level) { ChallengeBank.forLevel(level) }
+            val finished = level != 0 && question >= questions.size
+            LaunchedEffect(finished) {
+                if (finished) {
+                    val previous = prefs.getInt("best_$level", 0)
+                    if (score > previous) prefs.edit().putInt("best_$level", score).apply()
+                    if (score >= 7 && level < 5 && unlocked <= level) {
+                        unlocked = level + 1
+                        prefs.edit().putInt("unlocked", unlocked).apply()
+                    }
+                }
+            }
+            MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = bg, surface = card)) {
+                Column(
+                    Modifier.fillMaxSize().background(bg).verticalScroll(rememberScrollState()).padding(22.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Spacer(Modifier.height(10.dp))
+                    Text("LAMA STUDIO", color = accent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("Lama IQ Test", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Bold)
+                    Text("Brain training • Logic • Patterns", color = Color(0xFFC7C9DD))
+                    when {
+                        level == 0 -> {
+                            Text("Choose a level", color = Color.White, fontSize = 22.sp)
+                            Text("Score at least 7 of 10 to unlock the next level. Your progress is saved offline.", color = Color.LightGray)
+                            (1..5).forEach { i ->
+                                val best = prefs.getInt("best_$i", 0)
+                                Button(
+                                    enabled = i <= unlocked,
+                                    onClick = { level = i; question = 0; score = 0; selected = -1 },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(16.dp)
+                                ) {
+                                    Column(Modifier.fillMaxWidth().padding(8.dp)) {
+                                        Text("Level $i  •  " + listOf("Starter","Explorer","Thinker","Expert","Master")[i-1], fontWeight = FontWeight.Bold)
+                                        Text(if (i <= unlocked) "Best: $best / 10" else "Locked — complete previous level")
+                                    }
+                                }
+                            }
+                            Text("Practice scores are not standardized or clinical IQ measurements.", color = Color.Gray, fontSize = 12.sp)
                         }
-                    }
-                }
-                complete -> {
-                    Text("Challenge complete!", fontSize = 25.sp, color = Color.White)
-                    Text("Your score: $score / ${puzzles.size}", fontSize = 22.sp, color = violet)
-                    Text("This is a practice score, not a standardized IQ result.", color = Color.LightGray)
-                    Button(onClick = { started = false; index = 0; score = 0; selected = -1 }) { Text("Play again") }
-                }
-                else -> {
-                    val puzzle = puzzles[index]
-                    LinearProgressIndicator(progress = { index.toFloat() / puzzles.size }, modifier = Modifier.fillMaxWidth())
-                    Text("QUESTION ${index + 1} OF ${puzzles.size}", color = violet)
-                    Text(puzzle.prompt, color = Color.White, fontSize = 23.sp, lineHeight = 30.sp)
-                    puzzle.options.forEachIndexed { i, option ->
-                        OutlinedButton(
-                            onClick = { if (selected == -1) { selected = i; if (i == puzzle.answer) score++ } },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = selected == -1,
-                            shape = RoundedCornerShape(12.dp)
-                        ) { Text(option, modifier = Modifier.padding(6.dp), textAlign = TextAlign.Center) }
-                    }
-                    if (selected != -1) {
-                        Text(if (selected == puzzle.answer) "Correct!" else "Not quite.", color = violet, fontWeight = FontWeight.Bold)
-                        Text(puzzle.explanation, color = Color.LightGray)
-                        Button(onClick = { index++; selected = -1 }, modifier = Modifier.align(Alignment.End)) {
-                            Text(if (index == puzzles.lastIndex) "See results" else "Next")
+                        finished -> {
+                            Surface(color = card, shape = RoundedCornerShape(20.dp)) {
+                                Column(Modifier.fillMaxWidth().padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text("Level $level complete", color = Color.White, fontSize = 24.sp)
+                                    Text("$score / ${questions.size}", color = accent, fontSize = 36.sp, fontWeight = FontWeight.Bold)
+                                    Text(if (score >= 7) "Great work! Next level unlocked (if available)." else "Keep practicing. You need 7 correct answers to advance.", color = Color.White)
+                                    Button(onClick = { level = 0; question = 0; score = 0; selected = -1 }, modifier = Modifier.fillMaxWidth()) { Text("Back to levels") }
+                                    OutlinedButton(onClick = { question = 0; score = 0; selected = -1 }, modifier = Modifier.fillMaxWidth()) { Text("Try again") }
+                                }
+                            }
+                        }
+                        else -> {
+                            val item = questions[question]
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                TextButton(onClick = { level = 0; selected = -1 }) { Text("‹ Levels") }
+                                Text("Level $level • ${question + 1}/${questions.size}", color = Color.White)
+                            }
+                            LinearProgressIndicator(progress = { question.toFloat() / questions.size }, modifier = Modifier.fillMaxWidth())
+                            Text(item.category.uppercase(), color = accent, fontWeight = FontWeight.Bold)
+                            Text(item.question, color = Color.White, fontSize = 23.sp, lineHeight = 30.sp)
+                            item.choices.forEachIndexed { index, answer ->
+                                OutlinedButton(
+                                    enabled = selected == -1,
+                                    onClick = {
+                                        if (selected == -1) {
+                                            selected = index
+                                            if (index == item.correct) score++
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp)
+                                ) { Text(answer, modifier = Modifier.padding(vertical = 6.dp)) }
+                            }
+                            if (selected >= 0) {
+                                Text(if (selected == item.correct) "Correct!" else "Incorrect — the correct answer is ${item.choices[item.correct]}.", color = accent, fontWeight = FontWeight.Bold)
+                                Text(item.explanation, color = Color.LightGray)
+                                Button(onClick = { question++; selected = -1 }, modifier = Modifier.align(Alignment.End)) {
+                                    Text(if (question == questions.lastIndex) "See results" else "Next question")
+                                }
+                            }
                         }
                     }
                 }

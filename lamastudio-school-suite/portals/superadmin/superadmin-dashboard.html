@@ -213,9 +213,10 @@
         });
 
         async function init() {
-            await loadStats();
-            renderSchools();
+            // Approval inbox must remain accessible even if school statistics fail.
             await loadApplications();
+            try { await loadStats(); renderSchools(); }
+            catch (err) { console.warn('School statistics unavailable:',err); }
         }
 
         if (LamaAPI.requireLogin('admin', 'superadmin-login.html')) {

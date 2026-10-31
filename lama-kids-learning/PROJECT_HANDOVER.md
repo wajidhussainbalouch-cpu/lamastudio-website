@@ -36,3 +36,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - IMPORTANT: MainActivity remains the original selection-screen scaffold; new engines are not yet wired into UI.
 - Build not run, APK not generated, Gradle wrapper not yet committed. No deployment or Vercel usage.
 - Next: connect lesson and quiz UI, add unit-test dependencies, wrapper, curriculum coverage, then compile and verify on Android SDK.
+
+## Continuation: UI integration
+- MainActivity now connects available lessons, answer feedback, local star progress and arithmetic parent gate.
+- JUnit test dependency added.
+- Compilation and tests have NOT been run; app remains unverified. Curriculum coverage incomplete, premium and games pending. No Vercel use or deployment.

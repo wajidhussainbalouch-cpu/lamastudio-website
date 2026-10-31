@@ -5,7 +5,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
 .date-control{display:flex;align-items:center;gap:7px;position:relative}.date-control .field{flex:1;min-width:0}.date-control .native-date{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
 @media print{.no-print{display:none!important}body{background:#fff;color:#111}.panel{box-shadow:none;border:0}.student-row{break-inside:avoid}header{display:none!important}@page{size:A4;margin:10mm}}
 .completed-lock{opacity:.6;pointer-events:none}.done-overlay{position:fixed;inset:0;background:#071b22a8;display:none;align-items:center;justify-content:center;z-index:999;padding:16px}.done-overlay.show{display:flex}.done-dialog{background:var(--card);color:var(--text);border-radius:20px;padding:26px;max-width:450px;width:100%;box-shadow:0 20px 65px #0004}.done-dialog h2{font-size:23px;font-weight:900}.done-dialog p{margin:12px 0 20px;color:var(--muted)}
-body.followup-only main>section:not(#outreachPanel){display:none!important}body.followup-only #outreachPanel{margin-top:0!important}body.followup-only main{padding-top:16px}#outreachPanel{scroll-margin-top:16px}</style></head><body class="min-h-screen">
+body.followup-only main>section:not(#outreachPanel){display:none!important}body.followup-only #outreachPanel{margin-top:0!important}body.followup-only main{padding-top:16px}#outreachPanel{scroll-margin-top:16px}.followup-done{display:inline-flex;align-items:center;border:1px solid #86efac;border-radius:999px;background:#dcfce7;color:#166534;padding:5px 10px;font-weight:800;font-size:12px}@media(max-width:640px){#outreachRows article{padding:12px}#outreachRows .btn{min-height:40px}}\n</style></head><body class="min-h-screen">
 <header class="no-print" style="background:#b8d51e;color:#17474c"><div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center flex-wrap gap-3"><div class="flex items-center gap-3"><div id="logo" class="w-12 h-12 bg-[#0b6570] text-white rounded-xl grid place-items-center font-black overflow-hidden">LS</div><div><h1 id="schoolName" class="font-black text-lg">School</h1><p class="text-xs font-bold">Student Attendance · Daily Register</p></div></div><div class="flex gap-2 flex-wrap"><a class="btn" href="../dashboard.html">← Dashboard</a><button id="theme" class="btn">☾ Theme</button><button id="logout" class="btn">Logout</button></div></div></header>
 <div id="doneOverlay" class="done-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="doneTitle"><div class="done-dialog"><h2 id="doneTitle">✓ Today's attendance is complete</h2><p id="doneMessage">All student attendance records are saved for the selected date. Editing is locked to prevent accidental changes.</p><div class="flex gap-2 flex-wrap"><button class="btn primary" id="doneClose">View register</button><button class="btn" id="doneEdit">✎ Enable editing</button></div></div></div><main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
 <div id="notice" class="hidden no-print p-3 rounded-xl border border-amber-400 bg-amber-50 text-amber-950 text-sm" role="status"></div>
@@ -150,6 +150,12 @@ function followupMessage(s,kind){
   'محترم والدین / سرپرست،','امید ہے آپ خیریت سے ہوں گے۔ '+name+' آج ('+date+') رخصت پر درج ہے۔ ہم بچے کی خیریت دریافت کرنا چاہتے ہیں۔ براہِ کرم بتائیں کہ کیا کسی مدد کی ضرورت ہے اور ممکن ہو تو واپسی کی متوقع تاریخ بھی بتا دیں۔ شکریہ۔',urduInfo
  ].join('\n');
 }
+const followupChecks=new Map();
+const followupKey=(id,date)=>date+'|'+id;
+function addFollowupCheck(id,date,channel){const key=followupKey(id,date);if(!followupChecks.has(key))followupChecks.set(key,new Set());followupChecks.get(key).add(channel);renderOutreach()}
+async function refreshFollowupChecks(){
+ try{const result=await LamaAPI.list('notifications');followupChecks.clear();for(const n of norm(result)){if(!n.studentId||!n.date||!String(n.notificationType||'').startsWith('attendanceFollowup'))continue;const channel=String(n.channel||'').toLowerCase();const kind=channel.includes('whatsapp')?'WhatsApp':channel.includes('call')?'Call':channel.includes('portal')?'Portal':'';if(kind){const key=followupKey(String(n.studentId),String(n.date));if(!followupChecks.has(key))followupChecks.set(key,new Set());followupChecks.get(key).add(kind)}}renderOutreach()}catch(err){console.warn('Could not load follow-up confirmations',err)}
+}
 function renderOutreach(){
  const target=$('outreachRows');if(!target)return;
  const rows=students.filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));
@@ -158,7 +164,7 @@ function renderOutreach(){
   const k=sid(s),v=selected.get(k),raw=s.whatsapp||s.contact||s.guardianCell||s.emergencyContact||'';
   const n=waNumber(raw),phone=String(raw).replace(/[^\d+]/g,'');
   const msg=followupMessage(s,v.status);
-  const photo=s.photo||s.photoUrl||s.studentPhoto||'';
+  const photo=s.photo||s.photoUrl||s.studentPhoto||'';\n  const checks=followupChecks.get(followupKey(k,$('date').value))||new Set();\n  const check=ch=>checks.has(ch)?'<span class="followup-done">✓ '+ch+' recorded</span>':'';
   const avatar=photo?`<img src="${esc(photo)}" alt="Student photo" class="w-24 h-28 sm:w-28 sm:h-32 shrink-0 rounded-xl object-cover border border-slate-700" loading="lazy" onerror="this.style.display='none'">`:`<div class="w-24 h-28 sm:w-28 sm:h-32 shrink-0 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-400">No photo</div>`;
   return `<article class="student-row rounded-2xl border border-slate-700/60 p-3 sm:p-4">
    <div class="flex flex-col lg:flex-row lg:items-center gap-3">
@@ -170,9 +176,9 @@ function renderOutreach(){
      </div>
     </div>
     <div class="flex flex-wrap items-center gap-2 lg:justify-end lg:max-w-xs">
-     ${n?`<a class="btn text-center" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:`<span class="muted text-xs">WhatsApp unavailable</span>`}
-     ${phone?`<a class="btn text-center" href="tel:${esc(phone)}">Call parent</a>`:`<span class="muted text-xs">Phone unavailable</span>`}
-     <button class="btn" data-contact-student="${esc(k)}" type="button">Record notification</button>
+     ${n?`<a class="btn text-center" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer" data-followup-link="WhatsApp" data-student-id="${esc(k)}">WhatsApp</a>`:`<span class="muted text-xs">WhatsApp unavailable</span>`}
+     ${phone?`<a class="btn text-center" href="tel:${esc(phone)}" data-followup-link="Call" data-student-id="${esc(k)}">Call parent</a>`:`<span class="muted text-xs">Phone unavailable</span>`}
+     <button class="btn" data-contact-student="${esc(k)}" type="button">${checks.has("Portal")?"✓ Portal recorded":"Record notification"}</button>
     </div>
    </div></article>`;
  }).join('')||'<p class="muted mini">No absent or leave students for the selected date.</p>';
@@ -212,5 +218,17 @@ $('bulkPortalNotify').addEventListener('click',async()=>{
  }finally{button.disabled=false}
 });
 
-$('outreachRows').addEventListener('click',async e=>{const b=e.target.closest('[data-contact-student]');if(!b)return;const s=students.find(x=>sid(x)===b.dataset.contactStudent),v=s&&selected.get(sid(s));if(!s||!v||!['Absent','Leave'].includes(v.status))return;if(dirty.has(sid(s))){alertText('Save attendance before recording contact.');return}if(!confirm('Only continue if you actually contacted the parent. This records a contact note in the student portal; it does not send WhatsApp automatically.'))return;b.disabled=true;try{const d=$('date').value;await LamaAPI.add('notifications',{title:'Attendance follow-up — '+d,message:followupMessage(s,v.status),studentId:sid(s),class:cls(s),section:s.section||'',date:d,attendanceStatus:v.status,notificationType:'attendanceFollowup',channel:'WhatsApp (user confirmed)',status:'Sent',isPublished:true,createdAt:new Date().toISOString()});alertText('Contact recorded for '+s.name+'. The student portal can now show this notification.')}catch(err){alertText('Could not record notification: '+err.message)}finally{b.disabled=false}});
+$('outreachRows').addEventListener('click',async e=>{const b=e.target.closest('[data-contact-student]');if(!b)return;const s=students.find(x=>sid(x)===b.dataset.contactStudent),v=s&&selected.get(sid(s));if(!s||!v||!['Absent','Leave'].includes(v.status))return;if(dirty.has(sid(s))){alertText('Save attendance before recording contact.');return}if(!confirm('Only continue if you actually contacted the parent. This records a contact note in the student portal; it does not send WhatsApp automatically.'))return;b.disabled=true;try{const d=$('date').value;await LamaAPI.add('notifications',{title:'Attendance follow-up — '+d,message:followupMessage(s,v.status),studentId:sid(s),class:cls(s),section:s.section||'',date:d,attendanceStatus:v.status,notificationType:'attendanceFollowup',channel:'WhatsApp (user confirmed)',status:'Sent',isPublished:true,createdAt:new Date().toISOString()});addFollowupCheck(sid(s),d,'Portal');alertText('Contact recorded for '+s.name+'. The student portal can now show this notification.')}catch(err){alertText('Could not record notification: '+err.message)}finally{b.disabled=false}});
+
+// A link opens the external app only; it never marks a message or call as completed.
+$('outreachRows').addEventListener('click',async e=>{
+ const link=e.target.closest('[data-followup-link]');if(!link)return;
+ const student=students.find(x=>sid(x)===link.dataset.studentId);if(!student)return;
+ const channel=link.dataset.followupLink;
+ // Confirmation is separate from opening the app, because opening does not prove delivery.
+ setTimeout(async()=>{if(!confirm('Did you complete the '+channel+' contact with the parent of '+student.name+'? Select OK only after actual contact.'))return;
+ try{const date=$('date').value;await LamaAPI.add('notifications',{title:'Parent follow-up contact — '+date,message:'School staff confirmed parent contact using '+channel+'.',studentId:sid(student),class:cls(student),date,notificationType:'attendanceFollowupContact',channel,status:'Contact confirmed',createdAt:new Date().toISOString()});addFollowupCheck(sid(student),date,channel)}catch(err){alertText('Contact confirmation could not be saved: '+err.message)}
+ },1000);
+});
+refreshFollowupChecks();
 </script></body></html>

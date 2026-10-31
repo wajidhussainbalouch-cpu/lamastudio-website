@@ -1292,10 +1292,53 @@ function adminGetAudit(p){
 }
 // ==== END SECURITY EXTENSION ====
 
+
+/** Admin-only, school-scoped attendance cleanup with an independent recoverable snapshot. */
+function clearStudentAttendanceDate_(p) {
+  const actor=requireSchoolAdminWrite(p);
+  assertSchoolWritable(p.schoolId);
+  const date=String(p.date||'');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid YYYY-MM-DD date required.');
+  const classFilter=String(p.className||'').trim().toLowerCase();
+  const ctx=resolveContext(p);
+  const info=getCollectionSheet(ctx,'attendance'),sheet=info.sheet,headers=info.headers;
+  const data=sheet.getDataRange().getValues();
+  const dateCol=headers.indexOf('date'),classCol=headers.indexOf('class');
+  if(dateCol<0)throw Error('Attendance date column is missing.');
+  const toDate=v=>{
+    if(v instanceof Date)return Utilities.formatDate(v,Session.getScriptTimeZone(),'yyyy-MM-dd');
+    const t=String(v||'').trim();
+    if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);
+    const m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    return m?m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2):'';
+  };
+  const matches=[];
+  for(let i=1;i<data.length;i++){
+    if(toDate(data[i][dateCol])!==date)continue;
+    if(classFilter&&(classCol<0||String(data[i][classCol]||'').trim().toLowerCase()!==classFilter))continue;
+    matches.push(i);
+  }
+  if(p.previewOnly)return {count:matches.length,date:date,className:p.className||'',previewOnly:true};
+  if(String(p.confirmText||'')!=='REMOVE '+date)throw Error('Confirmation phrase is required.');
+  if(!matches.length)return {count:0,date:date};
+  const lock=LockService.getScriptLock();lock.waitLock(30000);
+  try{
+    // The archive is created before any deletion. Rows are retained with original column order.
+    const backupName='Attendance_Backup_'+Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyMMdd_HHmmss');
+    const backup=ctx.ss.insertSheet(backupName);
+    backup.getRange(1,1,1,headers.length).setValues([headers]);
+    backup.getRange(2,1,matches.length,headers.length).setValues(matches.map(i=>data[i]));
+    backup.setFrozenRows(1);
+    for(let j=matches.length-1;j>=0;j--)sheet.deleteRow(matches[j]+1);
+    writeAudit(ctx.ss,p.schoolId,actor,'clearAttendanceDate','attendance',date,{count:matches.length,className:p.className||'',backupSheet:backupName},null);
+    return {count:matches.length,date:date,backupSheet:backupName};
+  }finally{lock.releaseLock()}
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
-        const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+        const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
@@ -1365,6 +1408,7 @@ function handleRequest(params) {
             case 'adminResetPassword':
                 return { status: 'success', result: adminResetPassword(params.adminApiKey, params.schoolId) };
 
+            case 'clearStudentAttendanceDate': return {status:'success',result:clearStudentAttendanceDate_(params)};
             case 'bulkDeleteStudents': return {status:'success',result:bulkDeleteStudents_(params)};
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);

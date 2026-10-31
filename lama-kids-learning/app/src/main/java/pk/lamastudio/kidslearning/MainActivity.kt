@@ -79,6 +79,7 @@ class MainActivity : ComponentActivity() {
        items(subjects.size) { i -> OutlinedButton(onClick = { subject = subjects[i] }, Modifier.fillMaxWidth()) { Text((if (subject == subjects[i]) "Selected: " else "") + subjects[i]) } }
        val available = LearningContent.forGradeAndSubject(grade,subject)
        item { Text("Lessons", style = MaterialTheme.typography.titleLarge) }
+       item { Text("Curriculum coverage: " + CurriculumCatalog.coverage(LearningContent.lessons).first + " of " + CurriculumCatalog.units.size + " class-subject areas have starter lessons.") }
        if (available.isEmpty()) item { Text("Lessons for this selection are being prepared.") }
        items(available.size) { i ->
         val current = available[i]

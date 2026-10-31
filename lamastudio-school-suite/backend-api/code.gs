@@ -328,8 +328,6 @@ function getSchoolClassOptions(schoolId,apiKey){
   const match=authorizeSchool(schoolId,apiKey);
   const cache=CacheService.getScriptCache();
   const key='school_classes_'+String(schoolId).replace(/[^a-zA-Z0-9_-]/g,'_');
-  const saved=cache.get(key);
-  if(saved){try{return JSON.parse(saved)}catch(_){}}
   // Administrator-configured offerings take priority over inferred student classes.
   const configured=String(match.obj.offeredClassesJson||'').trim();
   if(configured){
@@ -342,6 +340,8 @@ function getSchoolClassOptions(schoolId,apiKey){
       return name?(sections.length?sections.map(section=>({class:name,section:String(section||'').trim()})):[{class:name,section:''}]):[];
     });
   }
+  const saved=cache.get(key);
+  if(saved){try{return JSON.parse(saved)}catch(_){}}
   const ss=SpreadsheetApp.openById(match.obj.sheetId);
   const sheet=ss.getSheetByName(COLLECTIONS.students.tab);
   if(!sheet||sheet.getLastRow()<2)return [];

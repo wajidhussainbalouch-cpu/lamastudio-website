@@ -149,7 +149,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
 <div class="sm:col-span-2 bg-indigo-950/60 border border-indigo-600/50 rounded-xl p-4 grid sm:grid-cols-2 gap-3">
 <h3 class="sm:col-span-2 text-sm font-black text-indigo-200">1. Teacher Login & Assigned Class — complete first</h3>
 <label class="text-xs font-bold">Teacher Full Name *<input id="inName" required placeholder="Full name" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
-<label class="text-xs font-bold">Assigned Class *<select id="inClass" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Loading this school’s classes…</option></select></label>
+<label class="text-xs font-bold">Assigned Class *<select id="inClass" required class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><option value="">Loading this school’s classes…</option></select><button type="button" onclick="retryTeacherClasses()" class="mt-2 text-xs font-bold underline text-cyan-100">↻ Refresh school classes</button><span id="teacherClassLoadStatus" role="status" class="hidden block text-xs mt-1 text-amber-100"></span></label>
 <label class="text-xs font-bold">Assigned Section (optional)<input id="inSection" list="teacherSectionOptions" placeholder="e.g. A, 1, Pink, Lily" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"><datalist id="teacherSectionOptions"></datalist><small class="block mt-1 text-slate-300">Choose an existing section or enter your school’s own name.</small></label>
 <label class="text-xs font-bold">Teacher Login ID *<input id="inLoginId" required autocomplete="off" placeholder="e.g. T-001" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
 <label class="text-xs font-bold">Email (optional)<input id="inEmail" type="email" placeholder="Email if available" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-3 text-white"></label>
@@ -630,29 +630,40 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           input.placeholder=options.length?'Select or type section ('+options.join(', ')+')':'Optional — A, B, 1, 2, Pink, Lily…';
         }
         async function loadTeacherClassOptions(){
+          const session=LamaAPI.getSession('school')||{};
+          const cacheKey='lama_school_class_options_v2_'+String(session.schoolId||'unknown');
           try{
-            const cached=JSON.parse(localStorage.getItem(teacherClassKey())||'null');
-            if(Array.isArray(cached?.rows)&&cached.rows.length)populateTeacherClasses(cached.rows);
+            const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
+            if(Array.isArray(saved?.rows)&&saved.rows.length)populateTeacherClasses(saved.rows);
           }catch(_){}
           if(teacherClassLoad)return teacherClassLoad;
           teacherClassLoad=(async()=>{
-            const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('Class lookup timed out')),5000));
             try{
-              const students=await Promise.race([LamaAPI.list('students'),timeout]);
-              const rows=(Array.isArray(students)?students:[]).map(x=>({class:String(x.class||'').trim(),section:String(x.section||'').trim()})).filter(x=>x.class);
-              const unique=[...new Map(rows.map(x=>[x.class+'|'+x.section,x])).values()];
-              if(unique.length){populateTeacherClasses(unique);try{localStorage.setItem(teacherClassKey(),JSON.stringify({rows:unique,at:Date.now()}))}catch(_){}}
-              else if(!teacherClassRoster.length)populateTeacherClasses([]);
+              const rows=await LamaAPI.getSchoolClassOptions();
+              if(!Array.isArray(rows))throw Error('Invalid school class response');
+              populateTeacherClasses(rows);
+              try{localStorage.setItem(cacheKey,JSON.stringify({rows,at:Date.now()}))}catch(_){}
             }catch(err){
-              console.warn('Class lookup:',err);
-              if(!teacherClassRoster.length)for(const id of ['inClass','editClass'])document.getElementById(id).replaceChildren(new Option('Unable to load school classes — retry',''));
+              console.warn('School class lookup failed:',err);
+              if(!teacherClassRoster.length){
+                for(const id of ['inClass','editClass']){
+                  document.getElementById(id).replaceChildren(new Option('Could not load classes — tap Retry',''));
+                }
+                const msg=document.getElementById('teacherClassLoadStatus');
+                if(msg){msg.textContent='School classes unavailable: '+err.message+' — retry below.';msg.classList.remove('hidden');}
+              }
             }finally{teacherClassLoad=null}
           })();
           return teacherClassLoad;
         }
+        function retryTeacherClasses(){
+          const msg=document.getElementById('teacherClassLoadStatus');
+          if(msg){msg.textContent='Refreshing school classes…';msg.classList.remove('hidden');}
+          loadTeacherClassOptions().finally(()=>{if(msg&&teacherClassRoster.length)msg.classList.add('hidden')});
+        }
         async function init() {
-            try{await renderHeader()}catch(err){console.warn('School header unavailable:',err)}
             loadTeacherClassOptions().catch(err=>console.warn(err));
+            renderHeader().catch(err=>console.warn('School header unavailable:',err));
             try{await renderTeachers()}catch(err){console.error(err);document.getElementById('teacherCount').textContent='Unable to load teacher records';document.getElementById('teachersEmpty').textContent='Teacher records could not load: '+err.message;document.getElementById('teachersEmpty').classList.remove('hidden');}
         }
 

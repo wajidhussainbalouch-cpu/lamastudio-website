@@ -1,3 +1,6 @@
+## Student roster follow-up — 31 October 2026
+User screenshot shows mobile roster missing Select All and previous student details. Commit `04881de` adds a visible **Select all filtered** checkbox (works across all filtered pages, not just 25 visible), restores student photo, enrollment, name, class/section, father/guardian, contact, status on mobile compact rows, retains separate View action. Existing confirmation and bulk-delete flow unchanged. Production browser test remains outstanding.
+
 ## Bulk student deletion performance — 31 October 2026
 User reports slow bulk deletion and requests live calculated time.
 - `backend-api/code.gs`: added `bulkDeleteStudents` POST-only school-admin action, up to 75 unique student IDs per batch, single sheet read, descending contiguous row deletions, per-record audit, script lock, deleted/not-found IDs.

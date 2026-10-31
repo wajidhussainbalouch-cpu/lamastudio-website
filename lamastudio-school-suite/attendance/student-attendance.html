@@ -17,7 +17,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
 </section>
 <section class="panel p-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h3 class="font-black text-lg">Daily Attendance Register</h3><p id="summary" class="muted text-xs mt-1">Loading...</p></div><div class="no-print flex flex-wrap gap-2"><button id="markVisible" class="btn lime">✓ Mark visible present</button><button id="enableEdit" class="btn" style="display:none">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button></div></div><div class="bar mt-4"><div id="progress"></div></div><div id="list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4"><p class="muted text-sm">Loading student records...</p></div></section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
-<section class="panel p-5 mt-5" id="outreachPanel"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
+<section class="panel p-5 mt-5" id="outreachPanel"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Notify all absent/leave students via portal</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation.</span></div><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
 <script>
 'use strict';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -175,5 +175,32 @@ function renderOutreach(){
    </div></article>`;
  }).join('')||'<p class="muted mini">No absent or leave students for the selected date.</p>';
 }
+$('bulkPortalNotify').addEventListener('click',async()=>{
+ const button=$('bulkPortalNotify'),label=$('bulkPortalStatus'),date=$('date').value;
+ const recipients=currentStudents().filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));
+ if(!recipients.length){label.textContent='No absent or leave students selected for this date.';return}
+ if(recipients.some(s=>dirty.has(sid(s)))){label.textContent='Save attendance before publishing follow-up notifications.';return}
+ if(!confirm('Publish '+recipients.length+' individual student follow-up notifications and one staff/admin attendance summary for '+displayDate(date)+'? This saves portal records, not verified push delivery or WhatsApp messages.'))return;
+ button.disabled=true;let saved=0,failed=0;
+ try{
+  for(const s of recipients){
+   const status=selected.get(sid(s)).status;
+   try{
+    await LamaAPI.add('notifications',{title:'Attendance follow-up — '+displayDate(date),message:followupMessage(s,status),studentId:sid(s),enrlNo:enr(s),class:cls(s),section:s.section||'',date,attendanceStatus:status,notificationType:'attendanceFollowup',channel:'Portal',status:'Published',isPublished:true,createdAt:new Date().toISOString()});
+    saved++;
+   }catch(err){failed++;console.warn('Portal follow-up failed for student',sid(s),err)}
+   label.textContent='Publishing student portal records: '+saved+' saved · '+failed+' failed · '+recipients.length+' total';
+  }
+  let staffSummary=false;
+  try{
+   const abs=recipients.filter(s=>selected.get(sid(s)).status==='Absent').length;
+   const leave=recipients.length-abs;
+   await LamaAPI.add('notifications',{title:'Student attendance follow-up summary — '+displayDate(date),message:'Attendance follow-up for '+displayDate(date)+': '+abs+' absent and '+leave+' on leave. '+saved+' individual student follow-up records published. Please review the attendance register and contact guardians where appropriate.',date,notificationType:'attendanceStaffSummary',audience:'teachers,admins',channel:'Portal',status:'Published',isPublished:true,createdAt:new Date().toISOString()});
+   staffSummary=true;
+  }catch(err){console.warn('Staff summary could not be saved',err)}
+  label.textContent='Finished: '+saved+' student records saved, '+failed+' failed. Staff/admin summary: '+(staffSummary?'saved':'failed')+'. Portal visibility and push delivery must be verified.';
+ }finally{button.disabled=false}
+});
+
 $('outreachRows').addEventListener('click',async e=>{const b=e.target.closest('[data-contact-student]');if(!b)return;const s=students.find(x=>sid(x)===b.dataset.contactStudent),v=s&&selected.get(sid(s));if(!s||!v||!['Absent','Leave'].includes(v.status))return;if(dirty.has(sid(s))){alertText('Save attendance before recording contact.');return}if(!confirm('Only continue if you actually contacted the parent. This records a contact note in the student portal; it does not send WhatsApp automatically.'))return;b.disabled=true;try{const d=$('date').value;await LamaAPI.add('notifications',{title:'Attendance follow-up — '+d,message:followupMessage(s,v.status),studentId:sid(s),class:cls(s),section:s.section||'',date:d,attendanceStatus:v.status,notificationType:'attendanceFollowup',channel:'WhatsApp (user confirmed)',status:'Sent',isPublished:true,createdAt:new Date().toISOString()});alertText('Contact recorded for '+s.name+'. The student portal can now show this notification.')}catch(err){alertText('Could not record notification: '+err.message)}finally{b.disabled=false}});
 </script></body></html>

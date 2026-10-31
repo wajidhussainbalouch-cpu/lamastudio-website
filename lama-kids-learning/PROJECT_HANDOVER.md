@@ -41,3 +41,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - MainActivity now connects available lessons, answer feedback, local star progress and arithmetic parent gate.
 - JUnit test dependency added.
 - Compilation and tests have NOT been run; app remains unverified. Curriculum coverage incomplete, premium and games pending. No Vercel use or deployment.
+
+## Continuation: math game and content QA
+- Added MathGames generator (grade-adjusted addition and subtraction), Android UI entry and answer checking.
+- Added content validation rules and unit test sources for game and lesson data.
+- Tests not executed and Android build not verified; Gradle wrapper and SDK environment remain outstanding.
+- Important: game does not yet award stars, content coverage is partial, and parental gate is not a strong age-verification mechanism. No deployment.

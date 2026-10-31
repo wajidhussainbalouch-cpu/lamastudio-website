@@ -15,13 +15,14 @@ class MainActivity : ComponentActivity() {
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   val lessons = LessonRepository.load(this)
+  require(LessonValidator.errors(lessons).isEmpty()) { "Invalid bundled lesson content" }
   val progress = ProgressStore(this)
   setContent {
    var selected by remember { mutableStateOf<Lesson?>(null) }
    var questionIndex by remember { mutableIntStateOf(0) }
    var correct by remember { mutableIntStateOf(0) }
    var finished by remember { mutableStateOf(false) }
-   var completed by remember { mutableStateOf(lessons.map { progress.completed(it.id) }.toSet()) }
+   var completed by remember { mutableStateOf(lessons.filter { progress.completed(it.id) }.map { it.id }.toSet()) }
    MaterialTheme {
     Scaffold(topBar = { Surface(tonalElevation = 3.dp) { Text("Lama English Speaking Academy", modifier = Modifier.padding(20.dp), style = MaterialTheme.typography.titleMedium) } }) { inset ->
      Column(Modifier.padding(inset).fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -50,14 +51,17 @@ class MainActivity : ComponentActivity() {
           if (index == q.answer) correct++
           if (questionIndex + 1 == lesson.questions.size) {
            finished = true
-           progress.markCompleted(lesson.id)
-           completed = completed + lesson.id
+           if (correct >= lesson.questions.size * 0.7) {
+            progress.markCompleted(lesson.id)
+            completed = completed + lesson.id
+           }
           } else questionIndex++
          }, modifier = Modifier.fillMaxWidth()) { Text(answer) }
         }
        } else {
         Text("Quiz completed: $correct / ${lesson.questions.size}")
-        Text("Lesson saved on this device.")
+        Text(if (lesson.id in completed) "Passed! Lesson saved on this device." else "Try again to pass with at least 70%.")
+        if (lesson.id !in completed) Button(onClick = { questionIndex = 0; correct = 0; finished = false }) { Text("Retry quiz") }
        }
        TextButton(onClick = { selected = null }) { Text("Back to lessons") }
       }

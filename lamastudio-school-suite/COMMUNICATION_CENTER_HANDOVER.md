@@ -139,3 +139,12 @@ Screenshot showed follow-up-only layout correctly but perpetual loading. Inspect
 - IMPORTANT: Master `backend-api/code.gs` must be manually pasted and redeployed to Google Apps Script before the removal button works. GitHub/Vercel frontend deployment alone is insufficient.
 - IMPORTANT: The history currently excludes Saturdays/Sundays only; official Punjab holidays, Eid dates, school-specific closures, and the teacher attendance cleanup/calendar have NOT yet been implemented. Do not treat this as a fully working official school calendar.
 - No live/test attendance records were deleted by this code change.
+
+
+## 31 October 2026 — Teacher credentials and assigned-class attendance
+- Master Apps Script `backend-api/code.gs`: teacher creation now allows a blank email when a unique Teacher Login ID is provided; requires a password and assigned class, validates unique login IDs/emails, and stores `loginId` in the self-healing Teachers sheet header. Login already supports email, loginId, or internal teacher ID.
+- Server checks teacher attendance student identity against the Students sheet and enforces the authenticated teacher's assigned class and section. Teachers cannot reassign an existing attendance record to a different student/class through an update.
+- Teacher dashboard attendance edits now send only date and status for existing records; new records continue to include student identity.
+- Commits: `fdd1cbb`, `7230a82`, `e3f4281`.
+- The staff/manage-teachers.html creation form already has optional email and required Teacher Login ID. No real teacher credentials were created or changed during this source-code update.
+- IMPORTANT: Commit does not publish Apps Script. Replace/redeploy the master script and verify actual teacher login, assigned-class roster, authorized attendance saves, and cross-class denial before declaring end-to-end success.

@@ -1,3 +1,6 @@
+## Student list batch-view and inline actions — 31 October 2026
+Owner requested View, Edit, Delete buttons together in each row (desktop and mobile), and one-click choice to show all students or display batches. Commit `028381f` updates `students/manage-students.html`: inline actions on every row; Show 25/50/100/All students selector; retains Select all filtered, student photos/details, search and filters. Permanent Delete still requires confirmation. No backend or student data changed. Live mobile visual QA remains necessary, especially on narrow screens and for large All-students selections.
+
 ## Student roster follow-up — 31 October 2026
 User screenshot shows mobile roster missing Select All and previous student details. Commit `04881de` adds a visible **Select all filtered** checkbox (works across all filtered pages, not just 25 visible), restores student photo, enrollment, name, class/section, father/guardian, contact, status on mobile compact rows, retains separate View action. Existing confirmation and bulk-delete flow unchanged. Production browser test remains outstanding.
 

@@ -632,28 +632,38 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
         async function loadTeacherClassOptions(){
           const session=LamaAPI.getSession('school')||{};
           const cacheKey='lama_school_class_options_v2_'+String(session.schoolId||'unknown');
+          const msg=document.getElementById('teacherClassLoadStatus');
           try{
             const saved=JSON.parse(localStorage.getItem(cacheKey)||'null');
             if(Array.isArray(saved?.rows)&&saved.rows.length)populateTeacherClasses(saved.rows);
           }catch(_){}
           if(teacherClassLoad)return teacherClassLoad;
+          const withTimeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(Error('Request exceeded '+Math.round(ms/1000)+' seconds')),ms))]);
           teacherClassLoad=(async()=>{
+            let error;
             try{
-              const rows=await LamaAPI.getSchoolClassOptions();
+              const rows=await withTimeout(LamaAPI.getSchoolClassOptions(),6500);
               if(!Array.isArray(rows))throw Error('Invalid school class response');
               populateTeacherClasses(rows);
               try{localStorage.setItem(cacheKey,JSON.stringify({rows,at:Date.now()}))}catch(_){}
+              if(msg)msg.classList.add('hidden');
+              return;
+            }catch(err){error=err;console.warn('Fast school class lookup failed; trying student roster:',err)}
+            try{
+              const students=await withTimeout(LamaAPI.list('students'),9500);
+              if(!Array.isArray(students))throw Error('Invalid student roster response');
+              const rows=[...new Map(students.map(x=>({class:String(x.class||'').trim(),section:String(x.section||'').trim()})).filter(x=>x.class).map(x=>[x.class.toLowerCase()+'|'+x.section.toLowerCase(),x])).values()];
+              populateTeacherClasses(rows);
+              try{localStorage.setItem(cacheKey,JSON.stringify({rows,at:Date.now()}))}catch(_){}
+              if(msg)msg.classList.add('hidden');
             }catch(err){
-              console.warn('School class lookup failed:',err);
+              console.warn('Student roster class fallback failed:',err);
               if(!teacherClassRoster.length){
-                for(const id of ['inClass','editClass']){
-                  document.getElementById(id).replaceChildren(new Option('Could not load classes — tap Retry',''));
-                }
-                const msg=document.getElementById('teacherClassLoadStatus');
-                if(msg){msg.textContent='School classes unavailable: '+err.message+' — retry below.';msg.classList.remove('hidden');}
+                for(const id of ['inClass','editClass'])document.getElementById(id).replaceChildren(new Option('Class lookup failed — Retry',''));
               }
-            }finally{teacherClassLoad=null}
-          })();
+              if(msg){msg.textContent='Could not load school classes: '+(error?.message||err.message)+'. Retry or check the deployed Apps Script.';msg.classList.remove('hidden')}
+            }
+          })().finally(()=>{teacherClassLoad=null});
           return teacherClassLoad;
         }
         function retryTeacherClasses(){

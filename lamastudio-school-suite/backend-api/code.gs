@@ -323,6 +323,26 @@ function authorizeSchool(schoolId, apiKey) {
     return match;
 }
 
+/** Lightweight, school-scoped class/section choices; never returns student personal data. */
+function getSchoolClassOptions(schoolId,apiKey){
+  const match=authorizeSchool(schoolId,apiKey);
+  const sheet=SpreadsheetApp.openById(match.obj.sheetId).getSheetByName('Students');
+  if(!sheet||sheet.getLastRow()<2)return [];
+  const heads=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
+  const ci=heads.indexOf('class'),si=heads.indexOf('section');
+  if(ci<0)throw Error('Students sheet is missing class column.');
+  const count=sheet.getLastRow()-1;
+  const cls=sheet.getRange(2,ci+1,count,1).getDisplayValues();
+  const sec=si<0?[]:sheet.getRange(2,si+1,count,1).getDisplayValues();
+  const pairs=new Map();
+  for(let i=0;i<count;i++){
+    const name=String(cls[i][0]||'').trim(),section=si<0?'':String(sec[i][0]||'').trim();
+    if(!name)continue;
+    const key=name.toLocaleLowerCase()+'|'+section.toLocaleLowerCase();
+    if(!pairs.has(key))pairs.set(key,{class:name,section});
+  }
+  return Array.from(pairs.values());
+}
 function getSchoolConfig(schoolId, apiKey) {
     const o = authorizeSchool(schoolId, apiKey).obj;
     return {
@@ -1388,6 +1408,7 @@ function handleRequest(params) {
                 return { status: 'success', school: registerSchool(params) };
             case 'login':
                 return { status: 'success', school: loginSchool(params.email, params.password) };
+            case 'getSchoolClassOptions': return {status:'success',classes:getSchoolClassOptions(params.schoolId,params.apiKey)};
             case 'getSchoolConfig':
                 return { status: 'success', school: getSchoolConfig(params.schoolId, params.apiKey) };
             case 'updateSchoolConfig':

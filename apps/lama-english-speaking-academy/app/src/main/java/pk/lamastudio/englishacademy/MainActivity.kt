@@ -14,14 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
+ private var speaker: TextToSpeech? = null
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
   val lessons = LessonRepository.load(this)
   require(LessonValidator.errors(lessons).isEmpty()) { "Invalid bundled lesson content" }
   val progress = ProgressStore(this)
   var speechReady by mutableStateOf(false)
-  val speaker = TextToSpeech(this) { status -> speechReady = status == TextToSpeech.SUCCESS }
-  speaker.setLanguage(Locale.ENGLISH)
+  speaker = TextToSpeech(this) { status ->
+   if (status == TextToSpeech.SUCCESS) {
+    val availability = speaker?.setLanguage(Locale.ENGLISH)
+    speechReady = availability != TextToSpeech.LANG_MISSING_DATA && availability != TextToSpeech.LANG_NOT_SUPPORTED
+   }
+  }
   setContent {
    var selected by remember { mutableStateOf<Lesson?>(null) }
    var questionIndex by remember { mutableIntStateOf(0) }
@@ -49,7 +54,7 @@ class MainActivity : ComponentActivity() {
        lesson.dialogue.forEach { line ->
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
          Text(line, modifier = Modifier.weight(1f))
-         TextButton(enabled = speechReady, onClick = { speaker.speak(line, TextToSpeech.QUEUE_FLUSH, null, "dialogue") }) { Text("Listen") }
+         TextButton(enabled = speechReady, onClick = { speaker?.speak(line, TextToSpeech.QUEUE_FLUSH, null, "dialogue") }) { Text("Listen") }
         }
        }
        if (!finished) {
@@ -81,6 +86,9 @@ class MainActivity : ComponentActivity() {
   }
  }
  override fun onDestroy() {
+  speaker?.stop()
+  speaker?.shutdown()
+  speaker = null
   super.onDestroy()
  }
 }

@@ -80,7 +80,11 @@ const LamaAPI = (() => {
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
     getSession,setSession,clearSession,logout:clearSession,isLoggedIn,requireLogin,requireAnyLogin,
-    register:data=>loginResult('register',data,'school','school'),
+    register:()=>Promise.reject(Error('Use the school application and activation process.')),
+    requestSchoolRegistration:async data=>(await callApi('requestSchoolRegistration',data)).result,
+    activateSchoolApplication:async data=>(await callApi('activateSchoolApplication',data)).result,
+    adminApplications:async()=>(await callApi('adminApplications',{},'GET')).requests,
+    reviewSchoolApplication:async(requestId,decision)=>(await callApi('reviewSchoolApplication',{requestId,decision})).result,
     login:(email,password)=>loginResult('login',{email,password},'school','school'),
     teacherLogin:(schoolId,email,password)=>loginResult('teacherLogin',{schoolId,email,password},'teacher','teacher'),
     studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),

@@ -49,3 +49,13 @@ Workflow: `.github/workflows/lama-iq-test-android.yml`
 - Original 50 fixed logic/pattern questions remain in English; they are NOT yet fully translated. RTL layout, native-speaker translation review, image assets and advanced visual reasoning modes require further work.
 - The generator currently repeats finite cyclic patterns; expand templates and add uniqueness testing before claiming a large nonrepeating question bank.
 - Build still unverified; no installable APK or Play-ready release has been confirmed.
+
+## 2026-10-31 — Approved monetization rules
+- Free entitlement target: 100 questions in ten batches of ten.
+- Progression threshold: at least seven correct answers per batch to unlock the next normal batch.
+- Optional rewarded ads: proposed one bonus batch (10 questions) for a standard completed rewarded ad; two bonus batches (20 questions) for a distinct supported rewarded experience. Ad length is controlled by Google and cannot be promised as exactly 5 or 30 seconds.
+- Reward only on verified SDK earned-reward callbacks; no ad availability guarantee; no mandatory ad to access the original 100 free questions.
+- Proposed daily cap: six rewarded bonus batches per day, adjustable after testing.
+- Pro: subscription for unrestricted content and no ads, subject to Google Play Billing implementation and verification.
+- Added `AccessPolicy.kt` with access constants and pure rule functions. NOT integrated into existing UI, not persisted, and no AdMob SDK or Play Billing is yet connected.
+- Current content remains 50 fixed text questions plus generated visual puzzles; the full curated 100 free questions are not yet built and verified.

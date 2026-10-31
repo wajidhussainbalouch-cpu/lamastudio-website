@@ -47,3 +47,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added content validation rules and unit test sources for game and lesson data.
 - Tests not executed and Android build not verified; Gradle wrapper and SDK environment remain outstanding.
 - Important: game does not yet award stars, content coverage is partial, and parental gate is not a strong age-verification mechanism. No deployment.
+
+## Continuation: curriculum framework
+- Added CurriculumCatalog for all 40 Nursery/KG/Class 1–8 × four-subject combinations with provisional topic outlines, not completed lessons.
+- Added catalog tests and README with build prerequisites, limitations and explicit commands.
+- No Gradle wrapper, SDK build or APK verification yet. Next: fill reviewed original content, finish parent controls, build in Android environment.

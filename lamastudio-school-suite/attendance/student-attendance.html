@@ -15,9 +15,9 @@ html.followup-only main>section:not(#outreachPanel),body.followup-only main>sect
 <section class="grid grid-cols-2 md:grid-cols-5 gap-3">
 <div class="stat"><span class="mini muted">Enrolled</span><strong id="total">—</strong></div><div class="stat"><span class="mini muted">Present</span><strong id="present" class="text-emerald-500">—</strong></div><div class="stat"><span class="mini muted">Absent</span><strong id="absent" class="text-rose-500">—</strong></div><div class="stat"><span class="mini muted">Leave</span><strong id="leave" class="text-amber-500">—</strong></div><div class="stat"><span class="mini muted">Unmarked</span><strong id="unmarked">—</strong></div>
 </section>
-<section class="panel p-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h3 class="font-black text-lg">Daily Attendance Register</h3><p id="summary" class="muted text-xs mt-1">Loading...</p></div><div class="no-print flex flex-wrap gap-2"><button id="markVisible" class="btn lime">✓ Mark visible present</button><button id="enableEdit" class="btn" style="display:none">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button></div></div><div class="bar mt-4"><div id="progress"></div></div><div id="list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4"><p class="muted text-sm">Loading student records...</p></div></section>
+<section class="panel p-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h3 class="font-black text-lg">Daily Attendance Register</h3><p id="summary" class="muted text-xs mt-1">Loading...</p></div><div class="no-print flex flex-wrap gap-2"><button id="markVisible" class="btn lime">✓ Mark visible present</button><button id="enableEdit" class="btn" style="display:none">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button><button id="clearDate" type="button" class="btn" style="border:1px solid #dc2626;color:#dc2626">🗑 Remove date attendance (Admin)</button></div></div><div class="bar mt-4"><div id="progress"></div></div><div id="list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4"><p class="muted text-sm">Loading student records...</p></div></section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
-<section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html?register=1" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation. Keep this tab open until completed; true background sending is not yet available.</span></div><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
+<section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html?register=1" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation. Keep this tab open until completed; true background sending is not yet available.</span></div><p class="muted mini mt-2">History: last seven weekdays from saved records. Official holidays and school closures will be excluded once the school calendar is configured.</p><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
 <script>
 'use strict';
 // Follow-up mode is URL-addressable and survives refresh; the full register is an explicit exit.
@@ -136,6 +136,21 @@ $('enableEdit').onclick=()=>{editEnabled=true;render();alertText('Editing enable
 function csv(){const rows=[['Date','Class','Enrollment','Student','Father / Guardian','Status'],...currentStudents().map(s=>[$('date').value,cls(s),enr(s),s.name,s.fatherGuardian||s.fatherName||'',selected.get(sid(s))?.status||'Unmarked'])];const str='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const u=URL.createObjectURL(new Blob([str],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='Student_Attendance_'+$('date').value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 $('list').addEventListener('click',e=>{const b=e.target.closest('button[data-status]');if(b)choose(b.dataset.id,b.dataset.status)});
 $('markVisible').onclick=()=>{if(!editEnabled||pendingVerification)return alertText('Bulk marking is blocked until saved statuses are verified.');for(const s of visible()){const k=sid(s),old=selected.get(k)||{};if(!old.status){selected.set(k,{...old,status:'Present'});dirty.add(k)}}render()};
+$('clearDate').onclick=async()=>{
+ if(dirty.size)return alertText('Save or discard unsaved attendance changes before removing a date.');
+ if(typeof LamaAPI.clearStudentAttendanceDate!=='function')return alertText('Update the API client and deploy the new Apps Script master before using this control.');
+ const date=$('date').value,klass=$('class').value;
+ try{
+  const preview=await LamaAPI.clearStudentAttendanceDate(date,klass,true,'');
+  if(!preview.count)return alertText('No saved attendance records found for '+date+(klass?' / '+klass:'')+'.');
+  if(!confirm('ADMIN ONLY: Remove '+preview.count+' attendance records for '+date+(klass?' / '+klass:' / all classes')+'? A backup sheet and audit entry will be created. Students are not deleted.'))return;
+  const phrase=prompt('To confirm removal, enter exactly: REMOVE '+date);
+  if(phrase!=='REMOVE '+date)return alertText('Cancelled. No records removed.');
+  const result=await LamaAPI.clearStudentAttendanceDate(date,klass,false,phrase);
+  alertText('Removed '+result.count+' attendance records. Backup: '+result.backupSheet+'.');
+  await load({force:true,silent:true});
+ }catch(err){alertText('Attendance removal failed: '+err.message)}
+};
 $('save').onclick=save;$('reload').onclick=load;$('csv').onclick=csv;$('print').onclick=()=>window.print();$('class').onchange=render;$('search').oninput=render;$('filter').onchange=render;$('date').onchange=()=>{$('dateDisplay').value=displayDate($('date').value);load()};$('dateDisplay').onchange=()=>{const iso=parseDate($('dateDisplay').value);if(!iso){alertText('Enter a valid date in DD/MM/YYYY format.');$('dateDisplay').value=displayDate($('date').value);return}if(iso!==$('date').value){$('date').value=iso;load()}};$('pickDate').onclick=()=>{const el=$('date');if(el.showPicker)el.showPicker();else el.focus()};$('theme').onclick=theme;$('logout').onclick=()=>{LamaAPI.logout();location.href='../login.html'};
 window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.returnValue=''}});
 (async()=>{const theme=localStorage.getItem('lama_theme')||'light';document.documentElement.dataset.theme=theme;$('theme').textContent=theme==='dark'?'☀ Light':'☾ Dark';$('date').value=localDate();$('dateDisplay').value=displayDate($('date').value);loadedDate=$('date').value;if(typeof LamaAPI==='undefined'){alertText('LamaAPI is unavailable. Check ../js/api-client.js');return}if(!LamaAPI.requireLogin('school','../login.html'))return;try{school=await LamaAPI.getActiveSchool()||{};$('schoolName').textContent=school.name||school.schoolName||'School';const box=$('logo');if(school.logo){box.textContent='';const img=document.createElement('img');img.src=school.logo;img.alt='School logo';img.className='w-full h-full object-contain';img.onerror=()=>box.textContent='SCH';box.appendChild(img)}else box.textContent=school.shortCode||'SCH'}catch(e){alertText('School profile: '+e.message)}})();load();
@@ -165,11 +180,28 @@ function addFollowupCheck(id,date,channel){const key=followupKey(id,date);if(!fo
 async function refreshFollowupChecks(){
  try{const result=await LamaAPI.list('notifications');followupChecks.clear();for(const n of norm(result)){if(!n.studentId||!n.date||!String(n.notificationType||'').startsWith('attendanceFollowup'))continue;const channel=String(n.channel||'').toLowerCase();const kind=channel.includes('whatsapp')?'WhatsApp':channel.includes('call')?'Call':channel.includes('portal')?'Portal':'';if(kind){const key=followupKey(String(n.studentId),String(n.date));if(!followupChecks.has(key))followupChecks.set(key,new Set());followupChecks.get(key).add(kind)}}renderOutreach()}catch(err){console.warn('Could not load follow-up confirmations',err)}
 }
+function recentWorkingDays(date,count=7){
+ const result=[];let d=new Date(date+'T12:00:00');
+ for(let n=0;n<40&&result.length<count;n++,d.setDate(d.getDate()-1)){
+  if(d.getDay()===0||d.getDay()===6)continue;
+  result.push([d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'));
+ }
+ return result.reverse();
+}
+function studentHistory(student){
+ const days=recentWorkingDays($('date').value),byDate=new Map(),key=sid(student),enrollment=enr(student);
+ for(const r of records){
+  if(String(r.studentId??r.student_id??'').trim()!==key&&String(r.enrlNo??r.enrollmentNo??r.enrollment??'').trim()!==enrollment)continue;
+  const date=attendanceDate(r.date);if(days.includes(date))byDate.set(date,canonical(r.status));
+ }
+ return days.map(date=>({date,status:byDate.get(date)||''}));
+}
 function renderOutreach(){
  const target=$('outreachRows');if(!target)return;
  const rows=students.filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));
  const count=$('outreachCount');if(count)count.textContent=rows.length+' absent / on-leave students for '+displayDate($('date').value)+' · all classes · only these students are listed below.';
  target.innerHTML=rows.map(s=>{
+  const history=studentHistory(s),absentDays=history.filter(x=>x.status==='Absent').length;
   const k=sid(s),v=selected.get(k),raw=s.whatsapp||s.contact||s.guardianCell||s.emergencyContact||'';
   const n=waNumber(raw),phone=String(raw).replace(/[^\d+]/g,'');
   const msg=followupMessage(s,v.status);
@@ -182,6 +214,7 @@ function renderOutreach(){
     <div class="flex gap-4 items-start flex-1 min-w-0">${avatar}
      <div class="min-w-0 flex-1"><div class="flex flex-wrap gap-2 items-center"><strong class="text-lg sm:text-xl leading-tight break-words">${esc(s.name||'Student')}</strong><span class="text-xs rounded-lg px-2 py-1 ${v.status==='Absent'?'bg-red-500/15 text-red-300':'bg-amber-500/15 text-amber-300'}">${esc(v.status)}</span></div>
       <p class="muted text-xs mt-1">Class: ${esc(cls(s))} ${s.section?'· Section: '+esc(s.section):''} · Enrollment: ${esc(enr(s)||'Not assigned')}</p>
+      <p class="muted text-xs mt-2">Last 7 weekdays: ${history.map(h=>'<span title="'+esc(h.date)+'" style="display:inline-block;padding:2px 5px;margin:2px;border-radius:5px;background:'+(h.status==='Absent'?'#7f1d1d':h.status==='Present'?'#14532d':h.status==='Leave'?'#78350f':'#334155')+';color:white">'+esc(h.date.slice(5))+' '+esc(h.status||'—')+'</span>').join('')} · <strong>${absentDays} absent</strong></p>
       <p class="muted text-xs mt-1">Parent/Guardian: ${esc(s.fatherGuardian||s.guardianName||'Not recorded')}</p>
       <p class="muted text-xs mt-1">Contact: ${esc(raw||'Not recorded')} · ${esc(displayDate($('date').value))}</p>
      </div>

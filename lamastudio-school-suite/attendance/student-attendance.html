@@ -9,7 +9,7 @@ body.followup-only main>section:not(#outreachPanel){display:none!important}body.
 <header class="no-print" style="background:#b8d51e;color:#17474c"><div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center flex-wrap gap-3"><div class="flex items-center gap-3"><div id="logo" class="w-12 h-12 bg-[#0b6570] text-white rounded-xl grid place-items-center font-black overflow-hidden">LS</div><div><h1 id="schoolName" class="font-black text-lg">School</h1><p class="text-xs font-bold">Student Attendance · Daily Register</p></div></div><div class="flex gap-2 flex-wrap"><a class="btn" href="../dashboard.html">← Dashboard</a><button id="theme" class="btn">☾ Theme</button><button id="logout" class="btn">Logout</button></div></div></header>
 <div id="doneOverlay" class="done-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="doneTitle"><div class="done-dialog"><h2 id="doneTitle">✓ Today's attendance is complete</h2><p id="doneMessage">All student attendance records are saved for the selected date. Editing is locked to prevent accidental changes.</p><div class="flex gap-2 flex-wrap"><button class="btn primary" id="doneClose">View register</button><button class="btn" id="doneEdit">✎ Enable editing</button></div></div></div><main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
 <div id="notice" class="hidden no-print p-3 rounded-xl border border-amber-400 bg-amber-50 text-amber-950 text-sm" role="status"></div>
-<section class="panel p-5 no-print"><div class="flex flex-wrap justify-between items-center gap-3"><div><p class="text-xs font-black uppercase tracking-wider" style="color:var(--primary)">Academic operations</p><h2 class="text-2xl font-black">Student Attendance</h2><p class="muted text-xs mt-1">Unmarked students remain unmarked until saved.</p></div><div class="flex gap-2 flex-wrap"><button id="reload" class="btn">↻ Refresh</button><button id="csv" class="btn">↓ CSV</button><button id="print" class="btn">🖨 Print</button></div></div>
+<section class="panel p-5 no-print"><div class="flex flex-wrap justify-between items-center gap-3"><div><p class="text-xs font-black uppercase tracking-wider" style="color:var(--primary)">Academic operations</p><h2 class="text-2xl font-black">Student Attendance</h2><p class="muted text-sm mt-1">Unmarked students remain unmarked until saved.</p></div><div class="flex gap-2 flex-wrap"><button id="reload" class="btn">↻ Refresh</button><button id="csv" class="btn">↓ CSV</button><button id="print" class="btn">🖨 Print</button></div></div>
 <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5"><label class="text-xs font-bold">Attendance date<div class="date-control mt-1"><input id="dateDisplay" type="text" class="field" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" aria-label="Attendance date day month year"><button id="pickDate" type="button" class="btn" aria-label="Open date calendar">📅</button><input id="date" type="date" aria-label="Native calendar date" class="native-date"></div></label><label class="text-xs font-bold">Class<select id="class" class="field mt-1"><option value="">All classes</option></select></label><label class="text-xs font-bold">Search<input id="search" class="field mt-1" placeholder="Name / enrollment"></label><label class="text-xs font-bold">Status filter<select id="filter" class="field mt-1"><option value="">All statuses</option><option value="Unmarked">Unmarked</option><option value="Present">Present</option><option value="Absent">Absent</option><option value="Leave">Leave</option></select></label></div>
 </section>
 <section class="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -159,20 +159,20 @@ function renderOutreach(){
   const n=waNumber(raw),phone=String(raw).replace(/[^\d+]/g,'');
   const msg=followupMessage(s,v.status);
   const photo=s.photo||s.photoUrl||s.studentPhoto||'';
-  const avatar=photo?`<img src="${esc(photo)}" alt="Student photo" class="w-16 h-16 rounded-xl object-cover border border-slate-700" loading="lazy" onerror="this.style.display='none'">`:`<div class="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-400">No photo</div>`;
+  const avatar=photo?`<img src="${esc(photo)}" alt="Student photo" class="w-24 h-28 sm:w-28 sm:h-32 shrink-0 rounded-xl object-cover border border-slate-700" loading="lazy" onerror="this.style.display='none'">`:`<div class="w-24 h-28 sm:w-28 sm:h-32 shrink-0 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-400">No photo</div>`;
   return `<article class="student-row rounded-2xl border border-slate-700/60 p-3 sm:p-4">
-   <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-    <div class="flex gap-3 items-start flex-1 min-w-0">${avatar}
-     <div class="min-w-0 flex-1"><div class="flex flex-wrap gap-2 items-center"><strong class="text-sm break-words">${esc(s.name||'Student')}</strong><span class="text-xs rounded-lg px-2 py-1 ${v.status==='Absent'?'bg-red-500/15 text-red-300':'bg-amber-500/15 text-amber-300'}">${esc(v.status)}</span></div>
+   <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+    <div class="flex gap-4 items-start flex-1 min-w-0">${avatar}
+     <div class="min-w-0 flex-1"><div class="flex flex-wrap gap-2 items-center"><strong class="text-lg sm:text-xl leading-tight break-words">${esc(s.name||'Student')}</strong><span class="text-xs rounded-lg px-2 py-1 ${v.status==='Absent'?'bg-red-500/15 text-red-300':'bg-amber-500/15 text-amber-300'}">${esc(v.status)}</span></div>
       <p class="muted text-xs mt-1">Class: ${esc(cls(s))} ${s.section?'· Section: '+esc(s.section):''} · Enrollment: ${esc(enr(s)||'Not assigned')}</p>
       <p class="muted text-xs mt-1">Parent/Guardian: ${esc(s.fatherGuardian||s.guardianName||'Not recorded')}</p>
       <p class="muted text-xs mt-1">Contact: ${esc(raw||'Not recorded')} · ${esc(displayDate($('date').value))}</p>
      </div>
     </div>
-    <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:justify-end sm:max-w-sm">
-     ${n?`<a class="btn text-center" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:`<span class="muted mini self-center">No WhatsApp number</span>`}
-     ${phone?`<a class="btn text-center" href="tel:${esc(phone)}">Call parent</a>`:`<span class="muted mini self-center">No phone number</span>`}
-     <button class="btn col-span-2 sm:flex-auto" data-contact-student="${esc(k)}" type="button">Record notification</button>
+    <div class="flex flex-wrap items-center gap-2 lg:justify-end lg:max-w-xs">
+     ${n?`<a class="btn text-center" href="https://wa.me/${n}?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:`<span class="muted text-xs">WhatsApp unavailable</span>`}
+     ${phone?`<a class="btn text-center" href="tel:${esc(phone)}">Call parent</a>`:`<span class="muted text-xs">Phone unavailable</span>`}
+     <button class="btn" data-contact-student="${esc(k)}" type="button">Record notification</button>
     </div>
    </div></article>`;
  }).join('')||'<p class="muted mini">No absent or leave students for the selected date.</p>';

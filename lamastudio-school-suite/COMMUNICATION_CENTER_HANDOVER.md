@@ -130,3 +130,12 @@ User screenshot from installed Android PWA showed full attendance register contr
 
 ## 31 Oct 2026 — Root cause of attendance blank loading resolved
 Screenshot showed follow-up-only layout correctly but perpetual loading. Inspection of `attendance/student-attendance.html` found **literal backslash-n sequences inside JavaScript source** after `const photo=...;` and `const checks=...;` in `renderOutreach()`, causing a fatal JavaScript parse error before any attendance load could run. Replaced both with real line breaks in commit `4817de1`. No backend or student data changes. Confirm Vercel production READY for commit and retest PWA. If stale PWA persists, investigate service-worker cache/version; do not assume Apps Script is responsible.
+
+
+## 31 October 2026 — Attendance testing controls
+- GitHub main: backend `858ce34`, API client `b126617`, student attendance UI `f2d3dad`.
+- School-admin-only `clearStudentAttendanceDate` action supports preview count, selected YYYY-MM-DD and optional class, explicit typed confirmation, a timestamped backup worksheet before row removal, and audit logging. It does NOT delete students.
+- Attendance UI offers "Remove date attendance (Admin)" and a seven-weekday saved-attendance history for absent/on-leave students. Unmarked weekdays are shown as unmarked, not absent.
+- IMPORTANT: Master `backend-api/code.gs` must be manually pasted and redeployed to Google Apps Script before the removal button works. GitHub/Vercel frontend deployment alone is insufficient.
+- IMPORTANT: The history currently excludes Saturdays/Sundays only; official Punjab holidays, Eid dates, school-specific closures, and the teacher attendance cleanup/calendar have NOT yet been implemented. Do not treat this as a fully working official school calendar.
+- No live/test attendance records were deleted by this code change.

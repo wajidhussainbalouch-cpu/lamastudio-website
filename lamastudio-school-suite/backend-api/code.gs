@@ -47,7 +47,7 @@
 const REGISTRY_SHEET_NAME = 'Schools';
 const REGISTRY_HEADERS = [
     'schoolId', 'name', 'address', 'phone', 'principal', 'type', 'level', 'adminEmail',
-    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt', 'subscriptionType', 'subscriptionStart', 'subscriptionEnd', 'subscriptionPrice', 'subscriptionPaidAt', 'subscriptionReference', 'subscriptionNotes', 'privateSub', 'feeOptional'
+    'passwordHash', 'apiKey', 'sheetId', 'logo', 'coverPhoto', 'shortCode', 'plan', 'status', 'createdAt', 'subscriptionType', 'subscriptionStart', 'subscriptionEnd', 'subscriptionPrice', 'subscriptionPaidAt', 'subscriptionReference', 'subscriptionNotes', 'privateSub', 'feeOptional', 'offeredClassesJson', 'feeCategoriesJson'
 ];
 // Super Admin password is initialized securely through Script Properties.
 // Never place a plaintext password in this source file.
@@ -330,6 +330,18 @@ function getSchoolClassOptions(schoolId,apiKey){
   const key='school_classes_'+String(schoolId).replace(/[^a-zA-Z0-9_-]/g,'_');
   const saved=cache.get(key);
   if(saved){try{return JSON.parse(saved)}catch(_){}}
+  // Administrator-configured offerings take priority over inferred student classes.
+  const configured=String(match.obj.offeredClassesJson||'').trim();
+  if(configured){
+    let offerings;
+    try{offerings=JSON.parse(configured)}catch(_){throw Error('Invalid saved class configuration. Open School Settings and save it again.')}
+    if(!Array.isArray(offerings))throw Error('Invalid saved class configuration.');
+    return offerings.flatMap(item=>{
+      const name=String(item.name||'').trim();
+      const sections=Array.isArray(item.sections)?item.sections:[];
+      return name?(sections.length?sections.map(section=>({class:name,section:String(section||'').trim()})):[{class:name,section:''}]):[];
+    });
+  }
   const ss=SpreadsheetApp.openById(match.obj.sheetId);
   const sheet=ss.getSheetByName(COLLECTIONS.students.tab);
   if(!sheet||sheet.getLastRow()<2)return [];
@@ -357,7 +369,7 @@ function getSchoolConfig(schoolId, apiKey) {
     return {
         schoolId: o.schoolId, name: o.name, address: o.address, phone: o.phone, principal: o.principal,
         type: o.type, level: o.level, logo: o.logo, coverPhoto: o.coverPhoto || '', shortCode: o.shortCode,
-        privateSub: o.privateSub || '', feeOptional: o.feeOptional === true || String(o.feeOptional).toLowerCase() === 'true'
+        privateSub: o.privateSub || '', offeredClassesJson:o.offeredClassesJson||'', feeCategoriesJson:o.feeCategoriesJson||'', feeOptional: o.feeOptional === true || String(o.feeOptional).toLowerCase() === 'true'
     };
 }
 
@@ -366,7 +378,7 @@ function updateSchoolConfig(schoolId, apiKey, patch) {
     const match = authorizeSchool(schoolId, apiKey);
     const registry = getRegistrySheet();
     // Only school profile fields may be changed; never accept registry/security fields.
-    const allowed = ['name', 'address', 'phone', 'principal', 'type', 'level', 'logo', 'coverPhoto', 'shortCode', 'privateSub', 'feeOptional'];
+    const allowed = ['name', 'address', 'phone', 'principal', 'type', 'level', 'logo', 'coverPhoto', 'shortCode', 'privateSub', 'feeOptional', 'offeredClassesJson', 'feeCategoriesJson'];
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) throw new Error('Invalid school profile update.');
     const invalid = Object.keys(patch).filter(k => allowed.indexOf(k) === -1);
     if (invalid.length) throw new Error('Protected school settings cannot be changed: ' + invalid.join(', '));
@@ -377,6 +389,27 @@ function updateSchoolConfig(schoolId, apiKey, patch) {
     if (Object.prototype.hasOwnProperty.call(patch, 'feeOptional') &&
         typeof patch.feeOptional !== 'boolean') {
         throw new Error('Invalid fee optional setting.');
+    }
+    if(Object.prototype.hasOwnProperty.call(patch,'offeredClassesJson')){
+      if(typeof patch.offeredClassesJson!=='string'||patch.offeredClassesJson.length>12000)throw Error('Invalid class settings.');
+      let entries;try{entries=JSON.parse(patch.offeredClassesJson)}catch(_){throw Error('Invalid class settings JSON.')}
+      if(!Array.isArray(entries)||entries.length>60)throw Error('Select up to 60 classes.');
+      const seen=new Set();
+      entries.forEach(item=>{
+        if(!item||typeof item.name!=='string'||!item.name.trim()||item.name.length>80||!Array.isArray(item.sections)||item.sections.length>30)throw Error('Invalid class or section.');
+        const key=item.name.trim().toLowerCase();if(seen.has(key))throw Error('Duplicate class: '+item.name);seen.add(key);
+        if(item.sections.some(v=>typeof v!=='string'||v.length>60))throw Error('Invalid section.');
+      });
+    }
+    if(Object.prototype.hasOwnProperty.call(patch,'feeCategoriesJson')){
+      if(typeof patch.feeCategoriesJson!=='string'||patch.feeCategoriesJson.length>12000)throw Error('Invalid fee settings.');
+      let entries;try{entries=JSON.parse(patch.feeCategoriesJson)}catch(_){throw Error('Invalid fee settings JSON.')}
+      if(!Array.isArray(entries)||entries.length>60)throw Error('Select up to 60 fee types.');
+      const seen=new Set();
+      entries.forEach(item=>{
+        if(!item||typeof item.name!=='string'||!item.name.trim()||item.name.length>80||typeof item.enabled!=='boolean')throw Error('Invalid fee type.');
+        const key=item.name.trim().toLowerCase();if(seen.has(key))throw Error('Duplicate fee type: '+item.name);seen.add(key);
+      });
     }
     const updated = Object.assign({}, match.obj, patch);
     if (updated.privateSub == null) updated.privateSub = '';

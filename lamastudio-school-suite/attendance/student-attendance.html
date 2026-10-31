@@ -131,7 +131,24 @@ window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.r
 (async()=>{const theme=localStorage.getItem('lama_theme')||'light';document.documentElement.dataset.theme=theme;$('theme').textContent=theme==='dark'?'☀ Light':'☾ Dark';$('date').value=localDate();$('dateDisplay').value=displayDate($('date').value);loadedDate=$('date').value;if(typeof LamaAPI==='undefined'){alertText('LamaAPI is unavailable. Check ../js/api-client.js');return}if(!LamaAPI.requireLogin('school','../login.html'))return;try{school=await LamaAPI.getActiveSchool()||{};$('schoolName').textContent=school.name||school.schoolName||'School';const box=$('logo');if(school.logo){box.textContent='';const img=document.createElement('img');img.src=school.logo;img.alt='School logo';img.className='w-full h-full object-contain';img.onerror=()=>box.textContent='SCH';box.appendChild(img)}else box.textContent=school.shortCode||'SCH'}catch(e){alertText('School profile: '+e.message)}await load()})();
 
 function waNumber(raw){let n=String(raw||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.startsWith('0')&&n.length===11)n='92'+n.slice(1);if(n.length===10&&n.startsWith('3'))n='92'+n;return /^\d{10,15}$/.test(n)?n:''}
-function followupMessage(s,kind){const who=s.name||'your child',date=displayDate($('date').value),school='the school';return kind==='Absent'?`Dear Parent/Guardian, ${who} was marked absent from ${school} on ${date}. We hope everything is well. Could you kindly let us know if there is a health concern, family matter, or another reason for the absence? Please contact us if support is needed. Thank you for your cooperation.`:`Dear Parent/Guardian, ${who} is recorded as on leave on ${date}. We hope all is well. Kindly let us know if any support is needed and, if possible, confirm the expected return date. Thank you for keeping us informed.`}
+function followupMessage(s,kind){
+ const name=String(s.name||'your child').trim(),date=displayDate($('date').value),schoolName=String(school.name||'School Administration').trim();
+ const grade=cls(s),enrollment=enr(s)||'Not assigned';
+ const info='Student: '+name+' | Class: '+grade+' | Enrollment: '+enrollment+' | Date: '+date;
+ const urduInfo='طالب علم: '+name+' | جماعت: '+grade+' | داخلہ نمبر: '+enrollment+' | تاریخ: '+date;
+ if(kind==='Absent')return [
+  '*'+schoolName+' — Attendance Follow-up*','',
+  'Dear Parent/Guardian,','We hope you and your family are well. Our attendance record shows that your child, '+name+', is absent from school today ('+date+'). We are concerned about their well-being. May we kindly ask whether you are aware of the absence and whether your child is unwell (for example, has a fever) or there is another reason? Please let us know when convenient so we can offer any support needed. Thank you for your cooperation.',info,'',
+  '*'+schoolName+' — حاضری کے متعلق اطلاع*','',
+  'محترم والدین / سرپرست،','امید ہے آپ اور آپ کے اہلِ خانہ خیریت سے ہوں گے۔ ہمارے حاضری ریکارڈ کے مطابق آپ کا بچہ '+name+' آج ('+date+') سکول میں غیر حاضر ہے۔ ہمیں بچے کی خیریت کی فکر ہے۔ براہِ کرم آگاہ فرمائیں کہ کیا آپ کو اس غیر حاضری کا علم ہے؟ کیا بچہ بیمار ہے، مثلاً بخار ہے، یا کوئی دوسری وجہ ہے؟ اپنی سہولت کے مطابق ہمیں مطلع کر دیں تاکہ ضرورت پڑنے پر سکول آپ کی مدد کر سکے۔ آپ کے تعاون کا شکریہ۔',urduInfo
+ ].join('\n');
+ return [
+  '*'+schoolName+' — Leave Follow-up*','',
+  'Dear Parent/Guardian,','We hope your family is well. '+name+' is recorded as on leave today ('+date+'). We are checking on your child’s well-being. Kindly confirm whether any assistance is needed and, if known, the expected return date. Thank you.',info,'',
+  '*'+schoolName+' — رخصت کے متعلق اطلاع*','',
+  'محترم والدین / سرپرست،','امید ہے آپ خیریت سے ہوں گے۔ '+name+' آج ('+date+') رخصت پر درج ہے۔ ہم بچے کی خیریت دریافت کرنا چاہتے ہیں۔ براہِ کرم بتائیں کہ کیا کسی مدد کی ضرورت ہے اور ممکن ہو تو واپسی کی متوقع تاریخ بھی بتا دیں۔ شکریہ۔',urduInfo
+ ].join('\n');
+}
 function renderOutreach(){
  const target=$('outreachRows');if(!target)return;
  const rows=currentStudents().filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));

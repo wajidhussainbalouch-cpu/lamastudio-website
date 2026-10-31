@@ -326,22 +326,31 @@ function authorizeSchool(schoolId, apiKey) {
 /** Lightweight, school-scoped class/section choices; never returns student personal data. */
 function getSchoolClassOptions(schoolId,apiKey){
   const match=authorizeSchool(schoolId,apiKey);
-  const sheet=SpreadsheetApp.openById(match.obj.sheetId).getSheetByName('Students');
+  const cache=CacheService.getScriptCache();
+  const key='school_classes_'+String(schoolId).replace(/[^a-zA-Z0-9_-]/g,'_');
+  const saved=cache.get(key);
+  if(saved){try{return JSON.parse(saved)}catch(_){}}
+  const ss=SpreadsheetApp.openById(match.obj.sheetId);
+  const sheet=ss.getSheetByName(COLLECTIONS.students.tab);
   if(!sheet||sheet.getLastRow()<2)return [];
-  const heads=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0];
-  const ci=heads.indexOf('class'),si=heads.indexOf('section');
-  if(ci<0)throw Error('Students sheet is missing class column.');
-  const count=sheet.getLastRow()-1;
-  const cls=sheet.getRange(2,ci+1,count,1).getDisplayValues();
-  const sec=si<0?[]:sheet.getRange(2,si+1,count,1).getDisplayValues();
-  const pairs=new Map();
-  for(let i=0;i<count;i++){
-    const name=String(cls[i][0]||'').trim(),section=si<0?'':String(sec[i][0]||'').trim();
+  const heads=sheet.getRange(1,1,1,sheet.getLastColumn()).getDisplayValues()[0].map(v=>String(v).trim().toLowerCase().replace(/[\s_-]/g,''));
+  const ci=heads.findIndex(v=>['class','classname','grade'].includes(v));
+  const si=heads.findIndex(v=>['section','sectionname'].includes(v));
+  if(ci<0)throw Error('Students sheet has no class column.');
+  const n=sheet.getLastRow()-1;
+  const classes=sheet.getRange(2,ci+1,n,1).getDisplayValues();
+  const sections=si<0?null:sheet.getRange(2,si+1,n,1).getDisplayValues();
+  const result=new Map();
+  for(let i=0;i<n;i++){
+    const name=String(classes[i][0]||'').trim();
     if(!name)continue;
-    const key=name.toLocaleLowerCase()+'|'+section.toLocaleLowerCase();
-    if(!pairs.has(key))pairs.set(key,{class:name,section});
+    const section=sections?String(sections[i][0]||'').trim():'';
+    const key=name.toLowerCase()+'|'+section.toLowerCase();
+    if(!result.has(key))result.set(key,{class:name,section});
   }
-  return Array.from(pairs.values());
+  const rows=Array.from(result.values());
+  try{cache.put(key,JSON.stringify(rows),300)}catch(_){}
+  return rows;
 }
 function getSchoolConfig(schoolId, apiKey) {
     const o = authorizeSchool(schoolId, apiKey).obj;

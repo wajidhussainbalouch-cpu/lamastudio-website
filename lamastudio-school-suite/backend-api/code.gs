@@ -1467,7 +1467,11 @@ function handleRequest(params) {
             case 'schoolAdminVerify':
                 return {status:'success',result:schoolAdminVerify(params)};
             case 'register':
-                return { status: 'success', school: registerSchool(params) };
+                throw new Error('Direct registration is disabled. Submit a school application for Super Admin approval.');
+            case 'requestSchoolRegistration': return {status:'success',result:requestSchoolRegistration_(params)};
+            case 'adminApplications': return {status:'success',requests:adminApplications_(params.adminApiKey)};
+            case 'reviewSchoolApplication': return {status:'success',result:reviewApplication_(params.adminApiKey,params.requestId,params.decision)};
+            case 'activateSchoolApplication': return {status:'success',result:activateSchoolApplication_(params)};
             case 'login':
                 return { status: 'success', school: loginSchool(params.email, params.password) };
             case 'getSchoolClassOptions': return {status:'success',classes:getSchoolClassOptions(params.schoolId,params.apiKey)};
@@ -1555,7 +1559,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -1702,4 +1706,88 @@ function manageStudentCodes(params, apply) {
         return {success:true,applied:apply,prefix:prefix,total:proposed.length,changed:changed,
             pendingEnrollment:pending,preview:proposed.slice(0,400)};
     }finally{lock.releaseLock();}
+}
+
+
+/** Invitation-only school onboarding. Existing registered schools are not modified. */
+const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification'];
+function applicationSheet_(){
+  const ss=SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_ID'));
+  let sh=ss.getSheetByName('SchoolApplications');
+  if(!sh){sh=ss.insertSheet('SchoolApplications');sh.appendRow(APPLICATION_HEADERS_);sh.setFrozenRows(1);}
+  ensureSheetHeaders(sh,APPLICATION_HEADERS_);
+  return sh;
+}
+function applicationRows_(){
+  const sh=applicationSheet_(),values=sh.getDataRange().getValues(),headers=values[0];
+  return {sh,rows:values.slice(1).map((values,i)=>({index:i+2,obj:Object.fromEntries(headers.map((h,j)=>[h,values[j]]))})).filter(x=>x.obj.requestId),headers};
+}
+function setApplication_(sh,headers,row,patch){
+  Object.entries(patch).forEach(([k,v])=>{const col=headers.indexOf(k)+1;if(col>0)sh.getRange(row,col).setValue(v);});
+}
+function hashInvitation_(token){
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,token).map(b=>('0'+(b&255).toString(16)).slice(-2)).join('');
+}
+function requestSchoolRegistration_(p){
+  const name=String(p.name||'').trim(),email=String(p.adminEmail||'').trim().toLowerCase();
+  if(name.length<3||name.length>140||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('Valid school name and principal email are required.');
+  const type=['Private','Government'].includes(p.type)?p.type:'Private';
+  const level=['Primary','Middle','High','Higher Secondary'].includes(p.level)?p.level:'Primary';
+  const plan=['Trial','Monthly','Annual'].includes(p.plan)?p.plan:'Trial';
+  const clean=v=>String(v||'').trim().slice(0,400);
+  const lock=LockService.getScriptLock();if(!lock.tryLock(15000))throw Error('Registration is busy. Retry.');
+  let requestId;
+  try{
+    if(findSchoolRow(getRegistrySheet(),r=>String(r.adminEmail).toLowerCase()===email))throw Error('This email already has a school account. Please log in.');
+    const a=applicationRows_();
+    if(a.rows.some(x=>String(x.obj.adminEmail).toLowerCase()===email&&['Pending Approval','Pending Activation'].includes(x.obj.status)))throw Error('An application with this email is already pending.');
+    requestId=Utilities.getUuid();
+    a.sh.appendRow([requestId,name,type,level,clean(p.address),clean(p.phone),clean(p.principal),email,plan,clean(p.requirements),'Pending Approval',new Date().toISOString(),'','','','','','']);
+  }finally{lock.releaseLock();}
+  try{
+    MailApp.sendEmail({to:PropertiesService.getScriptProperties().getProperty('SUPERADMIN_NOTIFICATION_EMAIL')||'wajidhussainbalouch@gmail.com',subject:'LamaStudio: New school approval request',body:'A school has requested registration.\nSchool: '+name+'\nEmail: '+email+'\nPlan: '+plan+'\nOpen the Super Admin dashboard to approve or reject.\nRequest ID: '+requestId});
+  }catch(e){
+    const a=applicationRows_(),row=a.rows.find(x=>x.obj.requestId===requestId);
+    if(row)setApplication_(a.sh,a.headers,row.index,{notification:'Admin email failed: '+e.message});
+  }
+  return {requestId,status:'Pending Approval'};
+}
+function adminApplications_(key){
+  authorizeAdmin(key);
+  return applicationRows_().rows.map(({obj})=>({requestId:obj.requestId,name:obj.name,type:obj.type,level:obj.level,address:obj.address,phone:obj.phone,principal:obj.principal,adminEmail:obj.adminEmail,plan:obj.plan,requirements:obj.requirements,status:obj.status,requestedAt:obj.requestedAt,reviewedAt:obj.reviewedAt,activatedAt:obj.activatedAt,schoolId:obj.schoolId,notification:obj.notification}));
+}
+function reviewApplication_(key,id,decision){
+  authorizeAdmin(key);
+  if(!['Approve','Reject'].includes(decision))throw Error('Invalid decision.');
+  const lock=LockService.getScriptLock();if(!lock.tryLock(15000))throw Error('Approval is busy.');
+  try{
+    const a=applicationRows_(),row=a.rows.find(x=>x.obj.requestId===id);
+    if(!row||row.obj.status!=='Pending Approval')throw Error('Request is not pending.');
+    if(decision==='Reject'){
+      setApplication_(a.sh,a.headers,row.index,{status:'Rejected',reviewedAt:new Date().toISOString()});
+      return {status:'Rejected'};
+    }
+    if(findSchoolRow(getRegistrySheet(),r=>String(r.adminEmail).toLowerCase()===String(row.obj.adminEmail).toLowerCase()))throw Error('This school email is already registered.');
+    const token=Utilities.getUuid()+Utilities.getUuid();
+    const hash=hashInvitation_(token),expires=new Date(Date.now()+48*3600000).toISOString();
+    const url='https://www.lamastudio.pk/lamastudio-school-suite/activate-school.html?requestId='+encodeURIComponent(id)+'&token='+encodeURIComponent(token);
+    // Email first. A failed email leaves the request pending, without an unusable approval.
+    MailApp.sendEmail({to:row.obj.adminEmail,subject:'Activate your LamaStudio School Suite account',body:'Your school registration has been approved. Open this private link within 48 hours to set your own administrator password:\n'+url+'\n\nDo not share this link. If you did not apply, ignore this message.'});
+    setApplication_(a.sh,a.headers,row.index,{status:'Pending Activation',reviewedAt:new Date().toISOString(),tokenHash:hash,expiresAt:expires,notification:'Activation email sent'});
+    return {status:'Pending Activation'};
+  }finally{lock.releaseLock();}
+}
+function activateSchoolApplication_(p){
+  const token=String(p.token||''),id=String(p.requestId||''),password=String(p.password||'');
+  if(token.length<50||password.length<12)throw Error('Activation token or password invalid. Use a password of at least 12 characters.');
+  const lock=LockService.getScriptLock();if(!lock.tryLock(30000))throw Error('Activation is busy.');
+  try{
+    const a=applicationRows_(),row=a.rows.find(x=>x.obj.requestId===id);
+    if(!row||row.obj.status!=='Pending Activation'||new Date(row.obj.expiresAt).getTime()<Date.now()||row.obj.tokenHash!==hashInvitation_(token))throw Error('Activation link invalid, expired, or already used. Contact LamaStudio.');
+    const o=row.obj;
+    if(findSchoolRow(getRegistrySheet(),r=>String(r.adminEmail).toLowerCase()===String(o.adminEmail).toLowerCase()))throw Error('School account already exists. Please log in.');
+    const school=registerSchool({name:o.name,type:o.type,level:o.level,address:o.address,phone:o.phone,principal:o.principal,adminEmail:o.adminEmail,password});
+    setApplication_(a.sh,a.headers,row.index,{status:'Active',activatedAt:new Date().toISOString(),schoolId:school.schoolId,tokenHash:'',expiresAt:''});
+    return {schoolId:school.schoolId,status:'Active'};
+  }finally{lock.releaseLock();}
 }

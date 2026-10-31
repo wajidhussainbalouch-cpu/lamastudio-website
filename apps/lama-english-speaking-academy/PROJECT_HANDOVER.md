@@ -31,7 +31,7 @@ No child-directed ads or unnecessary personal data; age-appropriate design, pare
 ## Current verified progress
 - GitHub account repository list reviewed: lamastudio-website, lamaSky, lamaPhotoResizer.
 - Dedicated branch created from main.
-- Initial Android Gradle project, manifest and Compose activity committed.\n- Two original A1 lessons, JSON asset parser, offline quiz UI and local completion tracking committed.\n- Branch-scoped GitHub Actions APK build workflow committed at repository root; now invokes testDebugUnitTest before assembleDebug.\n- Added lesson-content validator and three JVM unit tests. These tests are committed but not yet executed.\n- This handover remains the canonical status file.
+- Initial Android Gradle project, manifest and Compose activity committed.\n- Four original A1 lessons, JSON asset parser, offline quiz UI and local completion tracking committed.\n- Branch-scoped GitHub Actions APK build workflow committed at repository root; now invokes testDebugUnitTest before assembleDebug.\n- Added lesson-content validator and three JVM unit tests. These tests are committed but not yet executed.\n- Added Classroom and Shopping A1 lessons.\n- Lesson completion now requires >=70% quiz score; unsuccessful attempts can be retried.\n- Existing local progress remains in SharedPreferences, not Room.\n- APK build and tests remain unverified.\n- This handover remains the canonical status file.
 - No Gradle compilation, automated tests, APK or deployment has been performed yet.
 
 ## Next work

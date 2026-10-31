@@ -69,7 +69,7 @@ const COLLECTIONS = {
     },
     teachers: {
         tab: 'Teachers',
-        headers: ['id', 'name', 'email', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
+        headers: ['id', 'name', 'email', 'loginId', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
                   'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact']
     },
@@ -494,8 +494,8 @@ function adminResetPassword(adminApiKey, schoolId) {
 /** School Admin action: create a teacher account inside their own school's sheet. */
 function addTeacher(schoolId, apiKey, p) {
     assertSchoolWritable(schoolId);
-    if (!p.name || !p.email || !p.password || p.password.length < 6) {
-        throw new Error('Name, email, and a password of at least 6 characters are required.');
+    if (!p.name || !p.password || p.password.length < 6 || !String(p.assignedClass||'').trim()) {
+        throw new Error('Name, assigned class, and a password of at least 6 characters are required.');
     }
     const match = authorizeSchool(schoolId, apiKey);
     const ss = SpreadsheetApp.openById(match.obj.sheetId);
@@ -503,15 +503,23 @@ function addTeacher(schoolId, apiKey, p) {
     const { sheet, headers } = getCollectionSheet(ctx, 'teachers');
     const existing = sheet.getDataRange().getValues();
     const emailCol = headers.indexOf('email');
+    const loginCol = headers.indexOf('loginId');
+    const email = String(p.email||'').trim().toLowerCase();
+    const loginId = String(p.loginId||'').trim().toLowerCase();
+    if(!email&&!loginId)throw new Error('Enter a Teacher Login ID when no email is provided.');
+    if(email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))throw new Error('Enter a valid email or leave it blank.');
+    if(loginId&&!/^[a-z0-9._-]{3,40}$/.test(loginId))throw new Error('Teacher Login ID must be 3–40 letters, digits, dots, underscores or dashes.');
+    const identifierSet=new Set([email,loginId].filter(Boolean));
     for (let i = 1; i < existing.length; i++) {
-        if (String(existing[i][emailCol]).toLowerCase() === p.email.toLowerCase()) {
-            throw new Error('A teacher with this email already exists at this school.');
-        }
+        const otherEmail=String(existing[i][emailCol]||'').trim().toLowerCase();
+        const otherLogin=loginCol>=0?String(existing[i][loginCol]||'').trim().toLowerCase():'';
+        const otherId=String(existing[i][headers.indexOf('id')]||'').trim().toLowerCase();
+        if([otherEmail,otherLogin,otherId].some(v=>v&&identifierSet.has(v)))throw new Error('Teacher email or Login ID already exists at this school.');
     }
     const id = genId('tch');
     const teacherApiKey = Utilities.getUuid();
     const record = {
-        id, name: p.name.trim(), email: p.email.trim().toLowerCase(),
+        id, name: p.name.trim(), email, loginId:loginId||id,
         passwordHash: hashPassword(p.password, id), apiKey: teacherApiKey,
         subject: p.subject || '', assignedClass: p.assignedClass || '', assignedSection: p.assignedSection || '',
         contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString(),
@@ -524,7 +532,7 @@ function addTeacher(schoolId, apiKey, p) {
 }
 
 function teacherLogin(schoolId, email, password) {
-    if (!schoolId || !email || !password) throw new Error('School ID, email, and password are required.');
+    if (!schoolId || !email || !password) throw new Error('School ID, Teacher Login ID or email, and password are required.');
     const registry = getRegistrySheet();
     const schoolMatch = findSchoolRow(registry, r => r.schoolId === schoolId);
     if (!schoolMatch) throw new Error('School not found. Check your School ID.');
@@ -541,7 +549,7 @@ function teacherLogin(schoolId, email, password) {
             if (hashPassword(password, row.id) !== row.passwordHash) throw new Error('Incorrect password.');
             return {
                 schoolId, teacherId: row.id, apiKey: row.apiKey, name: row.name,
-                subject: row.subject, assignedClass: row.assignedClass, assignedSection: row.assignedSection || '',
+                subject: row.subject, loginId:row.loginId||row.id, assignedClass: row.assignedClass, assignedSection: row.assignedSection || '',
                 schoolName: schoolMatch.obj.name, schoolLogo: schoolMatch.obj.logo
             };
         }
@@ -689,7 +697,19 @@ function recordAppliesToClass(record, studentClass) {
     return classes.length ? classes.some(function(k){return sameClass(k,studentClass);}) : true;
 }
 function sameSection(record,section){ return !section || !record.section || sameClass(record.section,section); }
-function teacherOwns(ctx,r){ return sameClass(r.class,ctx.teacher.assignedClass) && sameSection(r,ctx.teacher.assignedSection); }
+function teacherOwns(ctx,r){ return !!String(ctx.teacher.assignedClass||'').trim() && sameClass(r.class,ctx.teacher.assignedClass) && sameSection(r,ctx.teacher.assignedSection); }
+function teacherStudentAccess_(ctx,record){
+ if(!String(ctx.teacher.assignedClass||'').trim())throw new Error('No assigned class. Contact school administrator.');
+ const studentId=String(record.studentId||'').trim(),enrollment=String(record.enrlNo||'').trim();
+ if(!studentId&&!enrollment)throw new Error('Student ID or enrollment number required.');
+ const data=getCollectionSheet(ctx,'students'),rows=data.sheet.getDataRange().getValues();
+ const student=rows.slice(1).map(r=>rowToRecord(data.headers,r)).find(r=>
+   (studentId&&String(r.id||'').trim()===studentId)||(enrollment&&String(r.enrlNo||r.enrollmentNo||'').trim()===enrollment));
+ if(!student||!teacherOwns(ctx,student))throw new Error('Attendance denied: student is not in your assigned class and section.');
+ if(studentId&&String(student.id)!==studentId)throw new Error('Student ID does not match enrollment.');
+ if(record.class&&!sameClass(record.class,student.class))throw new Error('Attendance class does not match the student.');
+ return student;
+}
 
 function checkPermission(ctx, action, collection) {
     if (ctx.role === 'school') return; // full access, unchanged
@@ -795,6 +815,7 @@ function addRecord(ctx, collection, record) {
         if (type === 'sick_leave' && (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to)) throw new Error('Enter a valid sick leave date range.');
         record = {studentId:ctx.student.id,studentName:ctx.student.name || '',enrlNo:ctx.student.enrlNo || '',class:ctx.student.class || '',section:ctx.student.section || '',requestType:type,subject:String(record.subject || '').slice(0,120),message:message,leaveFrom:type==='sick_leave'?from:'',leaveTo:type==='sick_leave'?to:'',status:'Pending',teacherReply:'',adminReply:'',assignedTeacherId:'',updatedAt:new Date().toISOString(),reviewedBy:''};
     }
+    if (ctx.role === 'teacher' && collection === 'attendance') { const student=teacherStudentAccess_(ctx,record);record=Object.assign({},record,{studentId:student.id,enrlNo:student.enrlNo||'',class:student.class,section:student.section||'',studentName:student.name||''}); }
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
@@ -831,6 +852,7 @@ function updateRecord(ctx, collection, id, patch) {
                     if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1)) throw new Error('Teachers may only update student marks and teacher remarks.');
                 } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
                     if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');
+                    if(collection==='attendance') { if(patch.studentId||patch.enrlNo||patch.class||patch.section)throw new Error('Teacher cannot reassign an attendance record.');teacherStudentAccess_(ctx,existing); }
                     patch=Object.assign({},patch,{class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||''});
                 }
             }

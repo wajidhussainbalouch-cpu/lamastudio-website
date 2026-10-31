@@ -1,6 +1,8 @@
 package pk.lamastudio.englishacademy
 
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -17,6 +19,9 @@ class MainActivity : ComponentActivity() {
   val lessons = LessonRepository.load(this)
   require(LessonValidator.errors(lessons).isEmpty()) { "Invalid bundled lesson content" }
   val progress = ProgressStore(this)
+  var speechReady by mutableStateOf(false)
+  val speaker = TextToSpeech(this) { status -> speechReady = status == TextToSpeech.SUCCESS }
+  speaker.setLanguage(Locale.ENGLISH)
   setContent {
    var selected by remember { mutableStateOf<Lesson?>(null) }
    var questionIndex by remember { mutableIntStateOf(0) }
@@ -41,7 +46,12 @@ class MainActivity : ComponentActivity() {
        Text(lesson.urduTitle)
        Text(lesson.explanation)
        Text("Conversation", style = MaterialTheme.typography.titleMedium)
-       lesson.dialogue.forEach { Text(it) }
+       lesson.dialogue.forEach { line ->
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+         Text(line, modifier = Modifier.weight(1f))
+         TextButton(enabled = speechReady, onClick = { speaker.speak(line, TextToSpeech.QUEUE_FLUSH, null, "dialogue") }) { Text("Listen") }
+        }
+       }
        if (!finished) {
         val q = lesson.questions[questionIndex]
         Text("Question ${questionIndex + 1} / ${lesson.questions.size}", style = MaterialTheme.typography.titleMedium)
@@ -69,5 +79,8 @@ class MainActivity : ComponentActivity() {
     }
    }
   }
+ }
+ override fun onDestroy() {
+  super.onDestroy()
  }
 }

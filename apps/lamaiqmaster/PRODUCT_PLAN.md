@@ -41,3 +41,11 @@ Workflow: `.github/workflows/lama-iq-test-android.yml`
 - Do not repeatedly present downloadable handover MD/ZIP links; create a packaged handover only when the user asks to close/transfer the chat.
 - Preserve all other apps, school suite, student data and production deployment.
 - Do not claim an APK, production deployment or release until verified.
+
+## 2026-10-31 — Multilingual and visual reasoning increment
+- Added `VisualPuzzleFactory.kt`: deterministic, seed-based offline shape/color/arrow/size sequence generator; up to 1,000 generated instances per invocation (not 1,000 guaranteed unique puzzles).
+- Added `GameText.kt`: explicit UI translations for English, Urdu, Arabic, Hindi and Spanish.
+- Added `VisualChallengeScreen.kt`: visual multiple-choice sequence screen, translated prompts, answers and explanations, integrated into Android home.
+- Original 50 fixed logic/pattern questions remain in English; they are NOT yet fully translated. RTL layout, native-speaker translation review, image assets and advanced visual reasoning modes require further work.
+- The generator currently repeats finite cyclic patterns; expand templates and add uniqueness testing before claiming a large nonrepeating question bank.
+- Build still unverified; no installable APK or Play-ready release has been confirmed.

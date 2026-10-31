@@ -26,10 +26,15 @@ fun VisualChallengeScreen(level: Int, onExit: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(tr("language"), color = Color.LightGray)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            GameLanguage.entries.forEach { lang ->
+            GameLanguage.entries.take(3).forEach { lang ->
                 TextButton(onClick = { language = lang }, contentPadding = PaddingValues(horizontal = 4.dp)) {
                     Text(lang.label, fontSize = 11.sp, color = if (language == lang) Color(0xFFAB8BFF) else Color.LightGray)
                 }
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            GameLanguage.entries.drop(3).forEach { lang ->
+                TextButton(onClick = { language = lang }) { Text(lang.label, fontSize = 12.sp, color = if (language == lang) Color(0xFFAB8BFF) else Color.LightGray) }
             }
         }
         if (index >= puzzles.size) {

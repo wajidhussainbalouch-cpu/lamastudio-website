@@ -83,7 +83,7 @@ const LamaAPI = (() => {
     register:()=>Promise.reject(Error('Use the school application and activation process.')),
     requestSchoolRegistration:async data=>(await callApi('requestSchoolRegistration',data)).result,
     activateSchoolApplication:async data=>(await callApi('activateSchoolApplication',data)).result,
-    adminApplications:async()=>(await callApi('adminApplications',{},'GET')).requests,
+    adminApplications:async()=>(await callApi('adminApplications')).requests,
     reviewSchoolApplication:async(requestId,decision)=>(await callApi('reviewSchoolApplication',{requestId,decision})).result,
     login:(email,password)=>loginResult('login',{email,password},'school','school'),
     teacherLogin:(schoolId,email,password)=>loginResult('teacherLogin',{schoolId,email,password},'teacher','teacher'),

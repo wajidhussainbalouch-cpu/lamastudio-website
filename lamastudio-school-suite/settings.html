@@ -131,6 +131,18 @@
                 </div>
             </div>
 
+<section class="rounded-2xl border border-cyan-500/30 bg-slate-900/70 p-4 space-y-3">
+ <h2 class="text-base font-black text-cyan-300">Classes & Sections Offered</h2>
+ <p class="text-slate-400">Choose exactly the classes your school offers. School level does not automatically add classes. Sections are optional and separated by commas.</p>
+ <div id="offeredClasses" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+ <div class="flex gap-2"><input id="customClass" maxlength="80" placeholder="Custom class (e.g. Montessori)" class="flex-1 min-w-0 bg-slate-950 border border-white/20 rounded-xl p-3"><button type="button" onclick="addCustomClass()" class="bg-cyan-700 px-4 rounded-xl font-bold">Add</button></div>
+</section>
+<section class="rounded-2xl border border-emerald-500/30 bg-slate-900/70 p-4 space-y-3">
+ <h2 class="text-base font-black text-emerald-300">Fee Categories</h2>
+ <p class="text-slate-400">Enable only the fees your school collects. Add your own fee names. This defines categories; it does not create charges or change existing fee records.</p>
+ <div id="feeCategories" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+ <div class="flex gap-2"><input id="customFee" maxlength="80" placeholder="Other fee type" class="flex-1 min-w-0 bg-slate-950 border border-white/20 rounded-xl p-3"><button type="button" onclick="addCustomFee()" class="bg-emerald-700 px-4 rounded-xl font-bold">Add</button></div>
+</section>
             <button type="submit" id="submitBtn" class="neon-glow w-full custom-gradient hover:opacity-95 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl transition shadow-xl mt-4 cursor-pointer">
                 Save & Broadcast to Dashboard
             </button>
@@ -154,6 +166,46 @@
                 return updated;
             }
         };
+
+
+        const standardClasses=['ECE','Nursery','Playgroup','Prep',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
+        const standardFees=['Tuition Fee','Admission Fee','Examination Fee','Parking Fee','Uniform Fee','Books Fee'];
+        let classSettings=[],feeSettings=[];
+        function escapeText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+        function renderClassSettings(){
+          document.getElementById('offeredClasses').innerHTML=classSettings.map((item,i)=>`
+            <div class="bg-slate-950/80 border border-white/10 rounded-xl p-3 space-y-2">
+              <label class="flex items-center gap-2"><input type="checkbox" data-class-index="${i}" ${item.enabled?'checked':''} onchange="classSettings[${i}].enabled=this.checked"><span class="font-semibold">${escapeText(item.name)}</span></label>
+              <input data-sections-index="${i}" value="${escapeText(item.sections.join(', '))}" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings[${i}].sections=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
+            </div>`).join('');
+        }
+        function renderFeeSettings(){
+          document.getElementById('feeCategories').innerHTML=feeSettings.map((item,i)=>`
+            <label class="flex gap-2 items-center bg-slate-950/80 border border-white/10 rounded-xl p-3"><input type="checkbox" ${item.enabled?'checked':''} onchange="feeSettings[${i}].enabled=this.checked"><span>${escapeText(item.name)}</span></label>`).join('');
+        }
+        function addCustomClass(){
+          const input=document.getElementById('customClass'),name=input.value.trim();
+          if(!name||classSettings.some(x=>x.name.toLowerCase()===name.toLowerCase()))return;
+          classSettings.push({name,sections:[],enabled:true});input.value='';renderClassSettings();
+        }
+        function addCustomFee(){
+          const input=document.getElementById('customFee'),name=input.value.trim();
+          if(!name||feeSettings.some(x=>x.name.toLowerCase()===name.toLowerCase()))return;
+          feeSettings.push({name,enabled:true});input.value='';renderFeeSettings();
+        }
+        function initializeChoices(school){
+          let storedClasses=[],storedFees=[];
+          try{storedClasses=JSON.parse(school.offeredClassesJson||'[]')}catch(_){}
+          try{storedFees=JSON.parse(school.feeCategoriesJson||'[]')}catch(_){}
+          if(!Array.isArray(storedClasses))storedClasses=[];
+          if(!Array.isArray(storedFees))storedFees=[];
+          const configured=Boolean(school.offeredClassesJson);
+          classSettings=standardClasses.map(name=>{const old=storedClasses.find(x=>x.name===name);return {name,sections:Array.isArray(old?.sections)?old.sections:[],enabled:!!old};});
+          for(const item of storedClasses)if(item?.name&&!classSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))classSettings.push({name:item.name,sections:Array.isArray(item.sections)?item.sections:[],enabled:true});
+          feeSettings=standardFees.map(name=>({name,enabled:!!storedFees.find(x=>x.name===name&&x.enabled)}));
+          for(const item of storedFees)if(item?.name&&!feeSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))feeSettings.push({name:item.name,enabled:!!item.enabled});
+          renderClassSettings();renderFeeSettings();
+        }
 
         function handleSchoolTypeChange() {
             const type = document.getElementById('inType').value;
@@ -262,6 +314,7 @@
             }
 
             handleSchoolTypeChange();
+            initializeChoices(school);
 
             const preview = document.getElementById('logoPreview');
             if (school.logo) {
@@ -295,6 +348,8 @@
                 patch.feeOptional = true;
             }
 
+            patch.offeredClassesJson=JSON.stringify(classSettings.filter(x=>x.enabled).map(x=>({name:x.name,sections:x.sections})));
+            patch.feeCategoriesJson=JSON.stringify(feeSettings.filter(x=>x.enabled));
             if (pendingLogo) patch.logo = pendingLogo;
 
             try {

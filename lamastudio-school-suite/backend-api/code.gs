@@ -881,6 +881,39 @@ function removeRecord(ctx, collection, id) {
     return false;
 }
 
+/**
+ * School-admin-only batched student deletion. One sheet read per batch and
+ * descending contiguous row deletes, avoiding one HTTP request per student.
+ * A maximum of 75 IDs keeps Apps Script executions bounded.
+ */
+function bulkDeleteStudents_(p){
+ const ctx=resolveContext(p);
+ if(ctx.role!=='school')throw Error('Only a school administrator may bulk delete students.');
+ assertSchoolWritable(ctx.schoolId);
+ checkPermission(ctx,'remove','students');
+ const ids=Array.isArray(p.ids)?p.ids.map(x=>String(x||'').trim()):[];
+ if(!ids.length||ids.length>75||ids.some(x=>!x))throw Error('Select 1–75 valid student IDs per batch.');
+ const unique=new Set(ids);
+ if(unique.size!==ids.length)throw Error('Duplicate student IDs in deletion request.');
+ const lock=LockService.getScriptLock();
+ if(!lock.tryLock(20000))throw Error('Another school operation is running. Please retry.');
+ try{
+  const info=getCollectionSheet(ctx,'students'),sheet=info.sheet,headers=info.headers;
+  const idCol=headers.indexOf('id'),data=sheet.getDataRange().getValues();
+  const matches=[];
+  for(let i=1;i<data.length;i++)if(unique.has(String(data[i][idCol])))matches.push({row:i+1,id:String(data[i][idCol]),record:rowToRecord(headers,data[i])});
+  // Audit all records before destructive row operations.
+  if(ctx.auditActor)for(const item of matches)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'remove','students',item.id,item.record,null);
+  const rows=matches.map(x=>x.row).sort((a,b)=>b-a);
+  for(let i=0;i<rows.length;){
+   let low=rows[i],high=low;i++;
+   while(i<rows.length&&rows[i]===low-1){low=rows[i];i++;}
+   sheet.deleteRows(low,high-low+1);
+  }
+  return {requested:ids.length,deleted:matches.length,deletedIds:matches.map(x=>x.id),notFound:ids.filter(id=>!matches.some(m=>m.id===id))};
+ }finally{lock.releaseLock();}
+}
+
 /** Admin sends a one-tap reminder to a teacher who hasn't marked attendance yet. */
 function pingTeacher(schoolId, apiKey, teacherId, message) {
     assertSchoolWritable(schoolId);
@@ -1262,7 +1295,7 @@ function adminGetAudit(p){
 function handleRequest(params) {
     const action = params.action;
     try {
-        const protectedActions=['waConnect','waDisconnect','waSendTemplates','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+        const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
@@ -1332,6 +1365,7 @@ function handleRequest(params) {
             case 'adminResetPassword':
                 return { status: 'success', result: adminResetPassword(params.adminApiKey, params.schoolId) };
 
+            case 'bulkDeleteStudents': return {status:'success',result:bulkDeleteStudents_(params)};
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
                 const result=bulkAttendanceRecords(params);
@@ -1372,7 +1406,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

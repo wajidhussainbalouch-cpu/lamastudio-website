@@ -35,7 +35,9 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const body = Object.assign({action}, authFieldsFor(getSession()), payload);
+    const schoolScoped = action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || (['list','get','create','update','delete'].includes(action) && payload.collection === 'teachers');
+    const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
+    const body = Object.assign({action}, authFieldsFor(session), payload);
     try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
     let response;
     try {
@@ -72,8 +74,8 @@ const LamaAPI = (() => {
     return true;
   }
   async function getActiveSchool() {
-    const session = getSession(); if (!session) return null;
-    try { const d=await callApi('getSchoolConfig',{},'POST'); const merged=Object.assign({},session,d.school); setSession(merged); return merged; }
+    const session = getSession('school'); if (!session) return null;
+    try { const d=await callApi('getSchoolConfig',{},'POST'); const merged=Object.assign({},session,d.school); localStorage.setItem(key('school'),JSON.stringify(merged)); return merged; }
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }

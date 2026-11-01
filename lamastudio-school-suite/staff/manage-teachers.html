@@ -696,7 +696,16 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
         async function init() {
             const session=LamaAPI.getSession('school');
             if(!session?.schoolId || !session?.apiKey){
-                document.getElementById('teacherCount').textContent='School session missing — sign in again';
+                const reason='School login is incomplete. Sign out and sign in again from the School portal to refresh the school ID and secure API key.';
+                document.getElementById('teacherCount').textContent=reason;
+                document.getElementById('teachersEmpty').textContent=reason;
+                document.getElementById('teachersEmpty').classList.remove('hidden');
+                const msg=document.getElementById('teacherClassLoadStatus');
+                if(msg){msg.textContent=reason;msg.classList.remove('hidden')}
+                for(const id of ['inClass','editClass']){
+                    const select=document.getElementById(id);
+                    if(select)select.replaceChildren(new Option('Sign in again to load classes',''));
+                }
                 return;
             }
             // One server request prevents the identity/classes/teachers race on mobile.
@@ -756,6 +765,41 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
             init();
         }
     </script>
+<script id="teacher-load-diagnostics">
+(function(){
+  // Independent of the large teacher-page script: report initialization failures
+  // instead of leaving the school name and dropdown stuck on placeholders.
+  window.addEventListener('error',function(event){
+    const message=String(event.message||'Unexpected JavaScript error');
+    const count=document.getElementById('teacherCount');
+    if(count && /Loading faculty/i.test(count.textContent||'')){
+      count.textContent='Teacher page error: '+message;
+      const empty=document.getElementById('teachersEmpty');
+      if(empty){empty.textContent='Teacher page could not start: '+message;empty.classList.remove('hidden')}
+    }
+  });
+  window.addEventListener('load',function(){
+    setTimeout(function(){
+      const count=document.getElementById('teacherCount');
+      if(!count || !/Loading faculty/i.test(count.textContent||''))return;
+      let school=null;
+      try{school=window.LamaAPI?.getSession?.('school')}catch(_){}
+      const message=!school?.schoolId||!school?.apiKey
+        ? 'School login details are missing. Sign out and sign in again through the School portal.'
+        : 'Teacher page did not initialize. Refresh once; if this continues, report the browser error.';
+      count.textContent=message;
+      const empty=document.getElementById('teachersEmpty');
+      if(empty){empty.textContent=message;empty.classList.remove('hidden')}
+      const status=document.getElementById('teacherClassLoadStatus');
+      if(status){status.textContent=message;status.classList.remove('hidden')}
+      for(const id of ['inClass','editClass']){
+        const el=document.getElementById(id);
+        if(el && /Loading this school/i.test(el.options[0]?.textContent||''))el.replaceChildren(new Option(message,''));
+      }
+    },23000);
+  });
+})();
+</script>
 <script id="designation-bio-helper">
 (function(){
  const roles=[[/head\s*(master|teacher)|principal|headmistress|administrator|director|coordinator|vice principal/i,['Administration','Responsible for school leadership, academic planning, teacher support and student development.']],[/librarian/i,['Library','Supports reading, research and responsible use of library resources.']],[/account|finance|bursar/i,['Finance','Supports accurate financial records and school administrative operations.']],[/clerk|office|assistant/i,['Administration','Supports school office services, records and communication.']],[/teacher|instructor|lecturer|educator/i,['Teaching','Supports student learning through engaging lessons, assessment and individual guidance.']]];

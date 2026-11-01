@@ -388,7 +388,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
             navigator.clipboard.writeText(text).then(() => alert('School ID copied.'));
         }
 
-        async function renderHeader() {
+        async function renderHeader(knownSchool) {
             // Paint known school identity immediately, before any network request.
             const session=LamaAPI.getSession('school')||{};
             const paint=school=>{
@@ -405,12 +405,13 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
             };
             paint(session);
             if(!session.schoolId||!session.apiKey)console.warn('School session identity incomplete; requesting school configuration');
+            if(knownSchool){paint({...session,...knownSchool});return;}
             const school=await Promise.race([LamaAPI.getActiveSchool(),new Promise((_,reject)=>setTimeout(()=>reject(Error('School settings request timed out')),12000))]);
             if(school)paint({...session,...school});
         }
 
-        async function renderTeachers() {
-            const teachers = await Promise.race([LamaAPI.list('teachers'),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Teacher directory request timed out. Check Apps Script deployment and retry.')),12000))]);
+        async function renderTeachers(knownTeachers) {
+            const teachers = Array.isArray(knownTeachers) ? knownTeachers : await Promise.race([LamaAPI.list('teachers'),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Teacher directory request timed out. Check Apps Script deployment and retry.')),12000))]);
             allTeachers = teachers; document.getElementById("teacherCount").textContent = `${teachers.length} teacher records`;
             document.getElementById('teacherStatTotal').textContent=teachers.length;
             document.getElementById('teacherStatAssigned').textContent=new Set(teachers.map(t=>String(t.assignedClass||'').trim().toLowerCase()).filter(Boolean)).size;
@@ -693,9 +694,41 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           loadTeacherClassOptions().finally(()=>{if(msg&&teacherClassRoster.length)msg.classList.add('hidden')});
         }
         async function init() {
-            renderHeader().catch(err=>console.warn('School header unavailable:',err));
-            loadTeacherClassOptions().catch(err=>console.warn(err));
-            try{await renderTeachers()}catch(err){console.error(err);document.getElementById('teacherCount').textContent='Unable to load teacher records';document.getElementById('teachersEmpty').textContent='Teacher records could not load: '+err.message;document.getElementById('teachersEmpty').classList.remove('hidden');}
+            const session=LamaAPI.getSession('school');
+            if(!session?.schoolId || !session?.apiKey){
+                document.getElementById('teacherCount').textContent='School session missing — sign in again';
+                return;
+            }
+            // One server request prevents the identity/classes/teachers race on mobile.
+            // Legacy endpoints remain as a fallback until the existing Apps Script
+            // deployment has been updated to include the bootstrap operation.
+            try{
+                const data=await Promise.race([
+                    LamaAPI.getTeacherManagementBootstrap(),
+                    new Promise((_,reject)=>setTimeout(()=>reject(Error('Teacher management request timed out after 18 seconds')),18000))
+                ]);
+                if(!data?.school || !Array.isArray(data.classes) || !Array.isArray(data.records))
+                    throw Error('Incomplete teacher management response');
+                await renderHeader(data.school);
+                populateTeacherClasses(data.classes);
+                const msg=document.getElementById('teacherClassLoadStatus');
+                if(msg){msg.textContent=data.classes.length?'Classes loaded from School Settings.':'No classes configured. Set up offered classes in School Settings.';msg.classList.remove('hidden')}
+                await renderTeachers(data.records);
+                return;
+            }catch(err){
+                console.warn('Combined teacher endpoint unavailable; trying existing API:',err);
+                const msg=document.getElementById('teacherClassLoadStatus');
+                if(msg){msg.textContent='Using compatibility loading: '+err.message;msg.classList.remove('hidden')}
+            }
+            const results=await Promise.allSettled([renderHeader(),loadTeacherClassOptions(),renderTeachers()]);
+            const failures=results.filter(x=>x.status==='rejected');
+            if(failures.length){
+                const reason=failures.map(x=>x.reason?.message||String(x.reason)).join('; ');
+                console.error('Teacher management loading errors:',reason);
+                document.getElementById('teacherCount').textContent='Teacher management partially unavailable';
+                document.getElementById('teachersEmpty').textContent='Unable to load teacher records or settings: '+reason;
+                document.getElementById('teachersEmpty').classList.remove('hidden');
+            }
         }
 
         document.getElementById('inClass').addEventListener('change',()=>{document.getElementById('inSection').value='';updateTeacherSections('in')});

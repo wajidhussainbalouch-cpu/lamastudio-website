@@ -83,3 +83,11 @@ The core product is a professional English-speaking academy, not a certificate o
 - After every create/update, read the exact file back from GitHub using the same branch and verify its expected content and blob SHA before reporting success.
 - Distinguish GitHub file commit confirmation from successful Android CI and APK verification.
 - Do not merge to main, trigger production deployments or publish without explicit approval.
+
+## APK readiness checkpoint — 2026-11-01
+- Debug APK is NOT verified and NOT yet available for installation.
+- Updated Android CI to run tests with stack traces and assert that app-debug.apk exists and is nonempty before uploading it.
+- Added explicit androidx.core:core-ktx dependency for permission handling.
+- Both changes were committed and read back successfully from GitHub.
+- GitHub commit-associated workflow lookup returned no runs for the updated workflow commit; cannot claim compilation passed.
+- Do not merge to main or publish. Next gate: run Android Actions workflow on dev/lama-english-speaking-academy, inspect errors, fix and confirm artifact.

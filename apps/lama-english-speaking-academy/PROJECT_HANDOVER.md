@@ -77,3 +77,9 @@ The core product is a professional English-speaking academy, not a certificate o
 - This is transcript practice, NOT validated pronunciation scoring.
 - Local environment inspection: Java is installed; neither gradle nor an Android SDK was found. No local APK compilation or successful CI run has been confirmed. Do not claim a verified APK.
 - Next: obtain a successful Android CI run and resolve compilation failures, then build a sentence-by-sentence dialogue practice flow and device tests.
+
+## GitHub-first verification protocol — 2026-11-01
+- GitHub development branch is the sole source of truth; Vercel is not involved in Android development.
+- After every create/update, read the exact file back from GitHub using the same branch and verify its expected content and blob SHA before reporting success.
+- Distinguish GitHub file commit confirmation from successful Android CI and APK verification.
+- Do not merge to main, trigger production deployments or publish without explicit approval.

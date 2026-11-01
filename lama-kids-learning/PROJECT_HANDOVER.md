@@ -79,3 +79,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Updated curriculum test source to require at least one lesson in each of 40 grade-subject combinations.
 - This is baseline sample coverage, NOT complete age-appropriate courses or an educator-reviewed curriculum. Most lessons have only one question. Review and expansion are required before release.
 - Android build, GitHub Actions result and APK remain unverified. No publishing or production merge.
+
+## 1 November 2026 — Quiz and rewards development
+- MainActivity now progresses through every question, shows question count, locks answer selection after choosing, and saves the cumulative score when finishing a lesson.
+- ProgressStore.completeWithScore awards 0–3 stars based on correctness and retains the best prior result.
+- Added a generic second subject-review question to each of the 40 starter lessons. These are repeated across grades, are not differentiated by age, and must be replaced with grade-specific, educator-reviewed exercises before release.
+- Build and tests remain unverified; no release-ready APK. Further work: age-appropriate content depth, parental controls, game progression, accessibility, privacy and Play policy verification.

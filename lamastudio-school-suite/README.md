@@ -266,3 +266,9 @@ verify/complete on the live repo:
 - Owner works on Android mobile. For copying code, give the **exact GitHub file page** URL, not only a raw URL. Android may redirect GitHub links into its app; suggest copying the website URL and pasting it into Chrome manually if needed.
 - Do not delete or overwrite existing school records, spreadsheets, student/teacher rows, attendance, settings, registry, Apps Script properties, or deployments. Keep one master registry and school-specific databases.
 - Owner requests this Markdown handover be updated after meaningful changes so a new chat can continue from the latest verified state.
+
+
+### 1 November 2026 follow-up: teacher-management frontend connected
+- Commit `6658d0f7c34a83577ee1efb45f69bd1fbac5eb3d`: `js/api-client.js` now exposes `getTeacherManagementBootstrap` and explicitly selects the school session for it.
+- Commit `846f949b9d2139a30de5f34344778fa57aa3940e`: `staff/manage-teachers.html` first requests the combined backend result, paints the authenticated school name/logo, fills classes (including empty offerings when configured), and renders existing teacher records. If the live backend is still old, it falls back to the previous endpoints with visible error handling.
+- **Important status**: GitHub changes are committed; not yet confirmed live in Vercel or deployed in Apps Script. No live school credentials were available for end-to-end verification. Update the existing Apps Script deployment with `backend-api/code.gs`, retaining the same URL, and verify the authenticated page on mobile. Do not claim the issue is resolved until this succeeds.

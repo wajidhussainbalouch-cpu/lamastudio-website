@@ -181,13 +181,21 @@ body:before{
         </div>
         <div class="flex items-center gap-2">
             <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀️</button>
-            <a id="dashboardSubscriptionLink" href="index.html#pricing" class="nav-btn" title="View subscription plans and account subscription">Subscription</a>
+            <button id="dashboardSubscriptionLink" type="button" class="nav-btn" title="View subscription">Subscription</button>
             <a id="dashboardAuthLink" href="login.html" class="nav-btn">School Login</a>
             <button id="dashboardLogoutButton" type="button" class="nav-btn" style="display:none" aria-label="Sign out of school account">Logout</button>
             <a id="backLink" href="index.html" class="nav-btn hide-mobile">← Back</a>
         </div>
     </div>
 </header>
+
+<div id="dashboardSubscriptionDialog" hidden role="dialog" aria-modal="true" aria-label="School subscription" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);padding:24px;overflow:auto">
+  <div style="background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:18px;max-width:480px;margin:12vh auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 style="font-weight:800;font-size:22px">School Subscription</h2><button type="button" class="nav-btn" onclick="document.getElementById('dashboardSubscriptionDialog').hidden=true">Close</button></div>
+    <div id="dashboardSubscriptionContent" style="margin-top:16px">Loading…</div>
+    <p style="margin-top:18px"><a href="index.html#pricing" style="color:var(--cyan);text-decoration:underline">Compare subscription plans</a></p>
+  </div>
+</div>
 
 <section class="banner-wrap">
     <div class="banner">
@@ -520,8 +528,28 @@ function updateSchoolBoardAccountControls(){
     if(logout)logout.style.display=authenticated?'inline-flex':'none';
     const sub=document.getElementById('dashboardSubscriptionLink');
     if(sub){
-      sub.href='index.html#pricing';
-      sub.title=authenticated?'View plans; account-specific subscription information requires a verified school profile':'View available subscription plans';
+      sub.title=authenticated?'View your school subscription':'View subscription plans';
+      sub.onclick=async()=>{
+        const dialog=document.getElementById('dashboardSubscriptionDialog');
+        const content=document.getElementById('dashboardSubscriptionContent');
+        if(!dialog||!content)return;
+        dialog.hidden=false;
+        if(!authenticated){
+          content.textContent='Sign in to the School account to view your own subscription status.';
+          return;
+        }
+        content.textContent='Checking your subscription…';
+        try{
+          const details=await LamaAPI.getSubscriptionStatus();
+          content.replaceChildren();
+          for(const [label,value] of [['Plan',details.type],['Start',details.start],['End',details.end],['Price',details.price],['Status',details.expired?'Expired — read only':'Active / not expired']]){
+            const line=document.createElement('p');
+            line.style.margin='8px 0';
+            line.textContent=label+': '+(value||'Not specified');
+            content.appendChild(line);
+          }
+        }catch(err){content.textContent='Unable to retrieve subscription: '+err.message}
+      };
     }
     if(logout)logout.onclick=()=>{
       if(typeof LamaAPI!=='undefined')LamaAPI.clearSession('school');

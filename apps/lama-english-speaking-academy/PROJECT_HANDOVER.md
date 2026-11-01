@@ -69,3 +69,11 @@ The core product is a professional English-speaking academy, not a certificate o
 - Learning dashboard includes a daily practice goal. These are source changes, not verified on a device.
 - Speech recognition, pronunciation assessment, broader A1-C2 curriculum, AdMob and billing remain pending.
 - APK build and unit tests remain unverified.
+
+## Speech recognition implementation — 2026-11-01
+- Added SpeakingPractice.kt with Android RecognizerIntent, runtime RECORD_AUDIO permission request, transcript display, cancellation/no-result handling, and no-recognizer fallback.
+- Embedded speaking practice in lesson UI with listen, repeat and compare steps.
+- Speech recognition is device-dependent and may use cloud processing; no local audio recording/storage is implemented.
+- This is transcript practice, NOT validated pronunciation scoring.
+- Local environment inspection: Java is installed; neither gradle nor an Android SDK was found. No local APK compilation or successful CI run has been confirmed. Do not claim a verified APK.
+- Next: obtain a successful Android CI run and resolve compilation failures, then build a sentence-by-sentence dialogue practice flow and device tests.

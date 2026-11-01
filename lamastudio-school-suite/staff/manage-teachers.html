@@ -389,17 +389,24 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
         }
 
         async function renderHeader() {
-            const school = await LamaAPI.getActiveSchool() || {};
-            currentSchool=school;
-            document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Manage Teachers`;
-            document.getElementById('headerSchoolName').innerText = school.name || 'School';
-            document.getElementById('schoolIdDisplay').innerText = school.schoolId || '-';
-            const logoBox = document.getElementById('schoolLogoBox');
-            if (school.logo) {
-                logoBox.innerHTML = `<img src="${school.logo}" class="w-full h-full object-cover rounded-xl">`;
-            } else {
-                logoBox.innerText = school.shortCode || LamaAPI.deriveShortCode(school.name || 'SCH');
-            }
+            // Paint known school identity immediately, before any network request.
+            const session=LamaAPI.getSession('school')||{};
+            const paint=school=>{
+                currentSchool=school;
+                document.getElementById('pageTitle').innerText=(school.name||'School')+' | Manage Teachers';
+                document.getElementById('headerSchoolName').innerText=school.name||'School';
+                document.getElementById('schoolIdDisplay').innerText=school.schoolId||'Session unavailable';
+                const box=document.getElementById('schoolLogoBox');
+                const logo=String(school.logo||school.logoUrl||'');
+                if(/^(https:\/\/|data:image\/)/i.test(logo)){
+                    box.replaceChildren();
+                    const img=document.createElement('img');img.src=logo;img.alt='School logo';img.className='w-full h-full object-contain rounded-xl';box.appendChild(img);
+                }else{box.textContent=school.shortCode||LamaAPI.deriveShortCode(school.name||'SCH')}
+            };
+            paint(session);
+            if(!session.schoolId||!session.apiKey)throw Error('School admin session missing. Please sign in again from the School Login page.');
+            const school=await Promise.race([LamaAPI.getActiveSchool(),new Promise((_,reject)=>setTimeout(()=>reject(Error('School settings request timed out')),12000))]);
+            if(school)paint(school);
         }
 
         async function renderTeachers() {
@@ -686,8 +693,8 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           loadTeacherClassOptions().finally(()=>{if(msg&&teacherClassRoster.length)msg.classList.add('hidden')});
         }
         async function init() {
-            loadTeacherClassOptions().catch(err=>console.warn(err));
             renderHeader().catch(err=>console.warn('School header unavailable:',err));
+            loadTeacherClassOptions().catch(err=>console.warn(err));
             try{await renderTeachers()}catch(err){console.error(err);document.getElementById('teacherCount').textContent='Unable to load teacher records';document.getElementById('teachersEmpty').textContent='Teacher records could not load: '+err.message;document.getElementById('teachersEmpty').classList.remove('hidden');}
         }
 

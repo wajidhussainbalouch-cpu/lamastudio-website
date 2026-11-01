@@ -272,3 +272,10 @@ verify/complete on the live repo:
 - Commit `6658d0f7c34a83577ee1efb45f69bd1fbac5eb3d`: `js/api-client.js` now exposes `getTeacherManagementBootstrap` and explicitly selects the school session for it.
 - Commit `846f949b9d2139a30de5f34344778fa57aa3940e`: `staff/manage-teachers.html` first requests the combined backend result, paints the authenticated school name/logo, fills classes (including empty offerings when configured), and renders existing teacher records. If the live backend is still old, it falls back to the previous endpoints with visible error handling.
 - **Important status**: GitHub changes are committed; not yet confirmed live in Vercel or deployed in Apps Script. No live school credentials were available for end-to-end verification. Update the existing Apps Script deployment with `backend-api/code.gs`, retaining the same URL, and verify the authenticated page on mobile. Do not claim the issue is resolved until this succeeds.
+
+
+### 1 November 2026: authorized teacher-test-data replacement, defensive loading fix
+- Owner explicitly authorizes replacement/loss of **test teacher records** across testing schools if required to restore the teacher-management feature; prioritize functioning software. **No data was actually deleted or reset in this update**, and this authorization does not extend to student records, master registry, or other school data.
+- Backend commit `f226bae450bd1ee83d18aa67745c9ce53e4cc7f5`: bootstrap now authorizes school first and independently reads school profile, configured class options, and teachers. It returns `warnings` for failures so one broken data source cannot blank the entire page.
+- Frontend commit `d3d01314733016a24068b0fa5aca8095d28289fa`: show backend warnings explicitly; do not falsely report zero teachers when their sheet could not be read.
+- **Next**: update existing Apps Script Web app deployment with latest `backend-api/code.gs`, verify GitHub/Vercel production build, then test school name, class list, teacher list, create teacher, reload. Still not confirmed end-to-end. Avoid `setup()` and any registry reset.

@@ -404,9 +404,9 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
                 }else{box.textContent=school.shortCode||LamaAPI.deriveShortCode(school.name||'SCH')}
             };
             paint(session);
-            if(!session.schoolId||!session.apiKey)throw Error('School admin session missing. Please sign in again from the School Login page.');
+            if(!session.schoolId||!session.apiKey)console.warn('School session identity incomplete; requesting school configuration');
             const school=await Promise.race([LamaAPI.getActiveSchool(),new Promise((_,reject)=>setTimeout(()=>reject(Error('School settings request timed out')),12000))]);
-            if(school)paint(school);
+            if(school)paint({...session,...school});
         }
 
         async function renderTeachers() {
@@ -435,7 +435,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
         }
 
         async function openEdit(teacherId) {
-            const t = allTeachers.find(x => x.id === teacherId);
+            const t = allTeachers.find(x => String(x.id??x._id??'') === String(teacherId));
             if (!t) return;
             const editSelect=document.getElementById('editClass');
             if(t.assignedClass&&!Array.from(editSelect.options).some(o=>o.value===t.assignedClass))editSelect.add(new Option(t.assignedClass+' (previous assignment)',t.assignedClass));
@@ -487,7 +487,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
             document.getElementById('editAccountLast4').value=t.accountLast4||'';
 document.getElementById('editHeightCm').value=t.heightCm||'';document.getElementById('editWeightKg').value=t.weightKg||'';document.getElementById('editEyeVision').value=t.eyeVision||'';document.getElementById('editMedicalConditions').value=t.medicalConditions||'';document.getElementById('editBloodPressure').value=t.bloodPressure||'';document.getElementById('editRbs').value=t.rbs||'';document.getElementById('editBloodGroup').value=t.bloodGroup||'';document.getElementById('editDisabilityType').value=t.disabilityType||'';document.getElementById('editCovidVaccination').value=t.covidVaccination||'';document.getElementById('editOtherVaccinations').value=t.otherVaccinations||''; calculateMedical_edit();
             teacherPhotos.edit=t.photo||t.photoData||t.photoUrl||localTeacherPhoto(t)||null;
-            if(!teacherPhotos.edit && LamaAPI.getTeacherPhoto){try{const remote=await LamaAPI.getTeacherPhoto(t.id);if(remote.photo){teacherPhotos.edit=remote.photo;storeTeacherPhoto(t,remote.photo)}}catch(e){console.warn('Photo fetch failed',e)}}
+            // Do not block Edit on a slow or unavailable photo endpoint.\n            if(!teacherPhotos.edit && LamaAPI.getTeacherPhoto){LamaAPI.getTeacherPhoto(t.id).then(remote=>{if(remote?.photo){teacherPhotos.edit=remote.photo;storeTeacherPhoto(t,remote.photo);document.getElementById('editPhotoPreview').src=remote.photo;document.getElementById('editPhotoStatus').textContent='Existing photo loaded'}}).catch(e=>console.warn('Photo fetch failed',e));}
             document.getElementById('editPhotoPreview').src=teacherPhotos.edit||'';
             document.getElementById('editPhotoStatus').textContent=teacherPhotos.edit?'Existing photo loaded':'No photo saved';
             document.getElementById('editSection').classList.remove('hidden');
@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const list=document.getElementById('teachersList')?.closest('section'),form=document.getElementById('addTeacherPanel');if(list&&form)form.parentElement.insertBefore(list,form);
  const school=document.getElementById('schoolIdDisplay')?.closest('section');if(school&&form)form.parentElement.insertBefore(school,form);
  document.getElementById('teachersList')?.addEventListener('click',e=>{const b=e.target.closest('button[data-teacher-action]');if(!b)return;const key=b.dataset.key,t=allTeachers.find(x=>String(x.id??x._id??'')===key);if(!t)return;
- if(b.dataset.teacherAction==='edit')openEdit(t.id);
+ if(b.dataset.teacherAction==='edit')openEdit(t.id??t._id).catch(err=>{console.error(err);alert('Unable to open teacher editor: '+err.message)});
  if(b.dataset.teacherAction==='print')printTeachers([t.id]);
  if(b.dataset.teacherAction==='delete')deleteTeacher(t.id,t.name);
  });

@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -30,7 +31,9 @@ fun SpeakingPractice(context: Context, sample: String) {
  ElevatedCard(modifier = Modifier.fillMaxWidth()) {
   Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
    Text("Speaking practice", style = MaterialTheme.typography.titleMedium)
-   Text("Say: $sample")
+   Text("Exercise 1: Listen to the model sentence.")
+   Text("Exercise 2: Repeat aloud: $sample")
+   Text("Exercise 3: Tap Speak English and compare the recognized words.")
    Text("Speech recognition may use an online service depending on your device. Do not speak private information.")
    Button(onClick = {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {

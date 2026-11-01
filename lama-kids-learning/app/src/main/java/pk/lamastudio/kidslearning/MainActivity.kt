@@ -21,6 +21,8 @@ class MainActivity : ComponentActivity() {
     var subject by remember { mutableStateOf("English") }
     var lesson by remember { mutableStateOf<Lesson?>(null) }
     var answer by remember { mutableIntStateOf(-1) }
+    var questionIndex by remember { mutableIntStateOf(0) }
+    var correctCount by remember { mutableIntStateOf(0) }
     var stars by remember { mutableIntStateOf(store.totalStars()) }
     var parentOpen by remember { mutableStateOf(false) }
     var unlocked by remember { mutableStateOf(false) }
@@ -56,21 +58,27 @@ class MainActivity : ComponentActivity() {
        item { OutlinedButton(onClick = { game = null; gameInput = ""; gameFeedback = "" }) { Text("Back") } }
       } else if (lesson != null) {
        val current = lesson!!
-       val question = current.questions.first()
+       val question = current.questions[questionIndex]
        item { Text(current.title, style = MaterialTheme.typography.headlineSmall) }
        item { Text(current.explanation) }
+       item { Text("Question " + (questionIndex + 1) + " of " + current.questions.size) }
        item { Text(question.prompt, style = MaterialTheme.typography.titleMedium) }
        items(question.answers.size) { i ->
-        OutlinedButton(onClick = { answer = i }, Modifier.fillMaxWidth()) { Text((if (answer == i) "Selected: " else "") + question.answers[i]) }
+        OutlinedButton(onClick = { if (answer == -1) answer = i }, Modifier.fillMaxWidth()) { Text((if (answer == i) "Selected: " else "") + question.answers[i]) }
        }
        if (answer >= 0) {
         item { Text((if (QuizEngine.isCorrect(question,answer)) "Correct! " else "Review: ") + question.explanation) }
         item { Button(onClick = {
-         store.complete(current.id, QuizEngine.isCorrect(question,answer))
-         stars = store.totalStars(); lesson = null; answer = -1
-        }) { Text("Save progress") } }
+         val newCorrect = correctCount + (if (QuizEngine.isCorrect(question, answer)) 1 else 0)
+         if (questionIndex + 1 < current.questions.size) {
+          correctCount = newCorrect; questionIndex += 1; answer = -1
+         } else {
+          store.completeWithScore(current.id, newCorrect, current.questions.size)
+          stars = store.totalStars(); lesson = null; answer = -1; questionIndex = 0; correctCount = 0
+         }
+        }) { Text(if (questionIndex + 1 < current.questions.size) "Next question" else "Finish lesson") } }
        }
-       item { OutlinedButton(onClick = { lesson = null; answer = -1 }) { Text("Back") } }
+       item { OutlinedButton(onClick = { lesson = null; answer = -1; questionIndex = 0; correctCount = 0 }) { Text("Back") } }
       } else {
        item { Text("Learn, play and grow!", style = MaterialTheme.typography.headlineSmall) }
        item { Text("Choose class") }
@@ -83,7 +91,7 @@ class MainActivity : ComponentActivity() {
        if (available.isEmpty()) item { Text("Lessons for this selection are being prepared.") }
        items(available.size) { i ->
         val current = available[i]
-        Button(onClick = { lesson = current; answer = -1 }, Modifier.fillMaxWidth()) { Text(current.title + " - Stars: " + store.stars(current.id)) }
+        Button(onClick = { lesson = current; answer = -1; questionIndex = 0; correctCount = 0 }, Modifier.fillMaxWidth()) { Text(current.title + " - Stars: " + store.stars(current.id)) }
        }
        item { Button(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }, Modifier.fillMaxWidth()) { Text("Play Math Challenge") } }
        item { OutlinedButton(onClick = { parentOpen = true }, Modifier.fillMaxWidth()) { Text("Parent area") } }

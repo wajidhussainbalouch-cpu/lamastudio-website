@@ -184,8 +184,7 @@ function getRegistrySheet() {
     const props = PropertiesService.getScriptProperties();
     let id = props.getProperty('MASTER_SHEET_ID');
     if (!id) {
-        setup();
-        id = props.getProperty('MASTER_SHEET_ID');
+        throw new Error('MASTER_SHEET_ID is not configured in this Apps Script deployment. Restore the existing Master Registry spreadsheet ID in Script Properties; do not run setup() or create a replacement registry.');
     }
     const sheet = SpreadsheetApp.openById(id).getSheetByName(REGISTRY_SHEET_NAME);
     ensureSheetHeaders(sheet, REGISTRY_HEADERS);

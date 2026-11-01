@@ -21,16 +21,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Configure Android SDK from GitHub runner
+      - name: Inspect Android SDK environment
         shell: bash
         run: |
-          set -euo pipefail
           echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
           echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-unset}"
-          command -v sdkmanager
-          yes | sdkmanager --licenses > /dev/null || test "${PIPESTATUS[1]}" -eq 0
-          sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
-          sdkmanager --list_installed
+          if [ -d "${ANDROID_HOME:-/nonexistent}" ]; then ls "${ANDROID_HOME}/platforms" || true; fi
       - name: Build debug APK
         run: gradle --no-daemon --stacktrace testDebugUnitTest assembleDebug
       - name: Check APK exists

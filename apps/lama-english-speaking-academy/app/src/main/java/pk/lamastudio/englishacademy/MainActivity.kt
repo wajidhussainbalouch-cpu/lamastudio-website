@@ -33,7 +33,6 @@ class MainActivity : ComponentActivity() {
    var correct by remember { mutableIntStateOf(0) }
    var finished by remember { mutableStateOf(false) }
    var feedback by remember { mutableStateOf("") }
-   var practiceIndex by remember { mutableIntStateOf(0) }
    var coinBalance by remember { mutableIntStateOf(progress.coins()) }
    var completed by remember { mutableStateOf(lessons.filter { progress.completed(it.id) }.map { it.id }.toSet()) }
    MaterialTheme {
@@ -83,6 +82,7 @@ class MainActivity : ComponentActivity() {
          TextButton(enabled = speechReady, onClick = { speaker?.speak(line, TextToSpeech.QUEUE_FLUSH, null, "dialogue") }) { Text("Listen") }
         }
        }
+       if (lesson.dialogue.isNotEmpty()) SpeakingPractice(this@MainActivity, lesson.dialogue.first())
        if (!finished) {
         val q = lesson.questions[questionIndex]
         if (feedback.isNotEmpty()) {
@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
         Text("Quiz completed: $correct / ${lesson.questions.size}")
         if (RewardPolicy.passed(correct, lesson.questions.size)) Text("Lesson passed! First completion earns 25 coins.")
         Text(if (lesson.id in completed) "Passed! Lesson saved on this device." else "Try again to pass with at least 70%.")
-        if (lesson.id !in completed) Button(onClick = { questionIndex = 0; correct = 0; finished = false }) { Text("Retry quiz") }
+        if (lesson.id !in completed) Button(onClick = { questionIndex = 0; correct = 0; finished = false; feedback = "" }) { Text("Retry quiz") }
        }
        TextButton(onClick = { selected = null }) { Text("Back to lessons") }
       }

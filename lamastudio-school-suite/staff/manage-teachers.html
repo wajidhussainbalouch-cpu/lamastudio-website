@@ -631,53 +631,52 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
         }
         async function loadTeacherClassOptions(){
           const session=LamaAPI.getSession('school')||{};
-          const cacheKey='lama_school_class_options_v3_'+String(session.schoolId||'unknown');
+          const schoolId=String(session.schoolId||'').trim();
           const msg=document.getElementById('teacherClassLoadStatus');
           if(teacherClassLoad)return teacherClassLoad;
-          const normalize=(raw)=>{
-            const entries=Array.isArray(raw)?raw:[];
-            return entries.flatMap(item=>{
-              const name=String(item?.class||item?.name||'').trim();
-              if(!name)return [];
-              const sections=Array.isArray(item.sections)?item.sections:[item.section||''];
-              return sections.map(section=>({class:name,section:String(section||'').trim()}));
-            });
-          };
-          const configuredFromSettings=(school)=>{
-            if(!school?.offeredClassesJson)return null;
-            const data=typeof school.offeredClassesJson==='string'?JSON.parse(school.offeredClassesJson):school.offeredClassesJson;
-            if(!Array.isArray(data))throw Error('Saved class settings are invalid');
-            return normalize(data);
+          const normalize=(items)=>Array.isArray(items)?items.flatMap(item=>{
+            const name=String(typeof item==='string'?item:(item?.class||item?.name||'')).trim();
+            if(!name)return [];
+            const sections=Array.isArray(item?.sections)&&item.sections.length?item.sections:[item?.section||''];
+            return sections.map(section=>({class:name,section:String(section||'').trim()}));
+          }):[];
+          const settingsRows=(obj)=>{
+            const raw=obj?.offeredClassesJson;
+            if(raw===undefined||raw===null||raw==='')return null;
+            const items=typeof raw==='string'?JSON.parse(raw):raw;
+            if(!Array.isArray(items))throw Error('Invalid saved class settings');
+            return normalize(items);
           };
           const show=(rows)=>{
             populateTeacherClasses(rows);
-            try{localStorage.setItem(cacheKey,JSON.stringify({rows,at:Date.now()}))}catch(_){}
-            if(msg){msg.classList.add('hidden');msg.textContent='';}
+            if(msg){msg.textContent=rows.length?'Classes loaded from School Settings.':'No classes configured. Open School Settings to select classes.';msg.classList.remove('hidden');}
           };
-          try{
-            const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
-            if(Array.isArray(cached?.rows))show(cached.rows);
-          }catch(_){}
-          if(msg&&!teacherClassRoster.length){msg.textContent='Loading classes from School Settings…';msg.classList.remove('hidden');}
-          const timeout=(p,ms)=>Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(Error('Class request timed out')),ms))]);
+          // Render saved settings immediately; do not block the dropdown on a network request.
+          try{const rows=settingsRows(session);if(rows!==null)show(rows)}catch(err){console.warn('Cached settings invalid',err)}
+          const timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(Error('School class request timed out')),ms))]);
           teacherClassLoad=(async()=>{
-            let failure;
+            let lastError=null;
+            // Dedicated endpoint is the canonical class source, including empty classes.
             try{
-              const school=await timeout(LamaAPI.getActiveSchool(),9000);
-              const configured=configuredFromSettings(school);
-              if(configured!==null){show(configured);return;}
-            }catch(err){failure=err;console.warn('School Settings class lookup failed',err);}
-            try{
-              const rows=normalize(await timeout(LamaAPI.getSchoolClassOptions(),9000));
-              show(rows);return;
-            }catch(err){failure=err;console.warn('Class options API unavailable',err);}
-            if(!teacherClassRoster.length){
-              for(const id of ['inClass','editClass']){
-                const select=document.getElementById(id);
-                if(select)select.replaceChildren(new Option('Unable to load classes — Retry',''));
+              if(typeof LamaAPI.getSchoolClassOptions==='function'){
+                const rows=normalize(await timeout(LamaAPI.getSchoolClassOptions(),12000));
+                show(rows);return;
               }
+            }catch(err){lastError=err;console.warn('School class endpoint:',err)}
+            try{
+              const school=await timeout(LamaAPI.getActiveSchool(),10000);
+              const rows=settingsRows(school);
+              if(rows!==null){show(rows);return}
+            }catch(err){lastError=err;console.warn('School settings endpoint:',err)}
+            if(teacherClassRoster.length){
+              if(msg){msg.textContent='Showing saved school classes; live refresh unavailable. '+(lastError?.message||'');msg.classList.remove('hidden')}
+              return;
             }
-            if(msg){msg.textContent='Could not load saved school classes: '+(failure?.message||'Unknown error')+'. Tap Retry. No school records were changed.';msg.classList.remove('hidden');}
+            for(const id of ['inClass','editClass']){
+              const select=document.getElementById(id);
+              if(select)select.replaceChildren(new Option('Could not load classes — tap Retry',''));
+            }
+            if(msg){msg.textContent='Unable to load classes. Check school login and Apps Script deployment, then tap Retry. '+(lastError?.message||'');msg.classList.remove('hidden')}
           })().finally(()=>{teacherClassLoad=null});
           return teacherClassLoad;
         }

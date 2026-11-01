@@ -391,12 +391,31 @@ function getSchoolClassOptions(schoolId,apiKey){
 function getTeacherManagementBootstrap_(params) {
     const schoolId = String(params.schoolId || '').trim();
     const apiKey = String(params.apiKey || '').trim();
+    // Authorize once before reading any school-scoped information.
     const match = authorizeSchool(schoolId, apiKey);
-    const school = getSchoolConfig(schoolId, apiKey);
-    const classes = getSchoolClassOptions(schoolId, apiKey);
-    const ctx = {role:'school', schoolId:schoolId, ss:SpreadsheetApp.openById(match.obj.sheetId)};
-    const teachers = listRecords(ctx, 'teachers');
-    return {status:'success', school:school, classes:classes, records:teachers, teacherCount:teachers.length};
+    const warnings = [];
+    // The registry already contains the school's identity. If the full
+    // profile fails, teacher management must still show the correct school.
+    let school = {schoolId:schoolId, name:match.obj.name || 'School', shortCode:match.obj.shortCode || '', logo:match.obj.logo || '', offeredClassesJson:match.obj.offeredClassesJson || ''};
+    try {
+        school = Object.assign({}, school, getSchoolConfig(schoolId, apiKey));
+    } catch (err) {
+        warnings.push('School profile: ' + err.message);
+    }
+    let classes = [];
+    try {
+        classes = getSchoolClassOptions(schoolId, apiKey);
+    } catch (err) {
+        warnings.push('School classes: ' + err.message);
+    }
+    let teachers = [];
+    try {
+        const ctx = {role:'school', schoolId:schoolId, ss:SpreadsheetApp.openById(match.obj.sheetId)};
+        teachers = listRecords(ctx, 'teachers');
+    } catch (err) {
+        warnings.push('Teacher records: ' + err.message);
+    }
+    return {status:'success', school:school, classes:classes, records:teachers, teacherCount:teachers.length, warnings:warnings};
 }
 
 function getSchoolConfig(schoolId, apiKey) {

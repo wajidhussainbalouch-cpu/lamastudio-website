@@ -693,6 +693,13 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
 
         document.getElementById('inClass').addEventListener('change',()=>{document.getElementById('inSection').value='';updateTeacherSections('in')});
         document.getElementById('editClass').addEventListener('change',()=>{document.getElementById('editSectionInput').value='';updateTeacherSections('edit')});
+        // This is a SCHOOL ADMIN page. API calls otherwise inherit the last
+        // active role (teacher/student) in this browser tab, which makes both
+        // the faculty list and class endpoint fail despite valid school login.
+        const schoolSession=LamaAPI.getSession('school');
+        if(schoolSession?.schoolId && schoolSession?.apiKey){
+            sessionStorage.setItem('lamastudio_active_role','school');
+        }
         if (LamaAPI.requireLogin('school', '../login.html')) {
             init();
         }

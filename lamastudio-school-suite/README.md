@@ -236,3 +236,33 @@ verify/complete on the live repo:
   reliable auto-serving on most hosts.
 - A `setting.html`/`settings.html` filename mismatch — every link in this
   package points to `settings.html` (plural).
+
+
+---
+
+## CURRENT PROJECT HANDOVER — 1 November 2026 (teacher management / Apps Script)
+
+**Read this section first in the next chat.** This is the current continuation point, not proof that the production bug is fixed.
+
+### Canonical code and deployment
+- Repository: `wajidhussainbalouch-cpu/lamastudio-website`, branch `main`.
+- Backend source: `lamastudio-school-suite/backend-api/code.gs`.
+- Apps Script editor contains the existing `Master-backend-code.gs` plus other project files. Do not delete them, create duplicate master declarations, run `setup()`, or reset the master registry.
+- Current website-configured Apps Script endpoint (verified against `js/api-client.js`):
+  `https://script.google.com/macros/s/AKfycbz8Num29Df94i-TNlX4ggN6nveyVLpoPDo4feStMXV3DuAx-JoRD3nZH1Q90kVuEH57/exec`.
+- User stated backend API was deployed 31 October 2026. The deployment selected in their Apps Script UI appeared to be version 38; **the live deployed source/version has not been independently verified**.
+- Latest confirmed backend commit: `6173f3db8ac0428fb844fe06414e22d127b58708` on 1 November 2026. It adds authenticated `getTeacherManagementBootstrap`, returning `school`, `classes`, `records` (teachers), and `teacherCount` in one school-scoped call. It is a read-only operation and does not change spreadsheet data.
+
+### Outstanding production issue and requirements
+- `staff/manage-teachers.html` has shown school name as "School Name", school ID as a dash, a teacher directory that sometimes hangs, and an assigned-class dropdown stuck on "Loading this school's classes…".
+- A teacher named Zahid assigned Class 4 and one Class 4 student were seen in other pages; never interpret the failing page as proof records are absent.
+- Class choices must come from classes/sections saved in School Settings, **including classes with zero students**. Existing `getSchoolClassOptions` prefers `offeredClassesJson` but falls back to student-derived classes when configuration is empty; verify whether this fallback complies with the owner's latest requirement before release.
+- The current teacher-management HTML still invokes `LamaAPI.list('teachers')` and `LamaAPI.getSchoolClassOptions()` separately; it **has not yet been wired to** `getTeacherManagementBootstrap`.
+- Next engineering tasks: inspect `js/api-client.js` and `staff/manage-teachers.html`; wire a school-scoped API wrapper and the teacher page to the bootstrap response, with explicit session errors and bounded retries; validate school identity, existing teacher list, offered classes (including empty classes), teacher assignment, and mobile layout. Avoid changing unrelated modules.
+- Check that Apps Script editor has the latest backend source and **update the existing Web app deployment version**, preserving the current /exec URL. A GitHub commit alone does not deploy Apps Script. Test live authenticated API results using a legitimate school session without exposing passwords/API keys in chat.
+- Status: **backend source committed; Apps Script deployment unverified; frontend integration pending; live end-to-end test pending**. Do not claim success prematurely.
+
+### Owner workflow and data protection
+- Owner works on Android mobile. For copying code, give the **exact GitHub file page** URL, not only a raw URL. Android may redirect GitHub links into its app; suggest copying the website URL and pasting it into Chrome manually if needed.
+- Do not delete or overwrite existing school records, spreadsheets, student/teacher rows, attendance, settings, registry, Apps Script properties, or deployments. Keep one master registry and school-specific databases.
+- Owner requests this Markdown handover be updated after meaningful changes so a new chat can continue from the latest verified state.

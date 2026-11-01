@@ -47,6 +47,8 @@ object VisualPuzzleFactory {
     }
     fun validate(items: List<VisualPuzzle>): Boolean = items.all {
         it.sequence.size == 4 && it.choices.size == 4 &&
-        it.choices.distinct().size == 4 && it.answer in 0..3
+        it.choices.distinct().size == 4 && it.answer in 0..3 &&
+        it.sequence.all { symbol -> symbol.isNotBlank() } &&
+        it.choices.all { symbol -> symbol.isNotBlank() }
     }
 }

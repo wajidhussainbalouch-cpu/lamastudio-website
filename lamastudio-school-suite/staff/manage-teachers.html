@@ -714,6 +714,18 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
                 const msg=document.getElementById('teacherClassLoadStatus');
                 if(msg){msg.textContent=data.classes.length?'Classes loaded from School Settings.':'No classes configured. Set up offered classes in School Settings.';msg.classList.remove('hidden')}
                 await renderTeachers(data.records);
+                if(Array.isArray(data.warnings) && data.warnings.length){
+                    const warning=data.warnings.join('; ');
+                    console.warn('Teacher management backend warnings:',warning);
+                    if(data.warnings.some(x=>x.startsWith('Teacher records:'))){
+                        document.getElementById('teacherCount').textContent='Teacher records unavailable';
+                        document.getElementById('teachersEmpty').textContent='Teacher records could not be read: '+warning;
+                        document.getElementById('teachersEmpty').classList.remove('hidden');
+                    }
+                    if(data.warnings.some(x=>x.startsWith('School classes:'))){
+                        if(msg){msg.textContent='Classes could not be loaded: '+warning;msg.classList.remove('hidden')}
+                    }
+                }
                 return;
             }catch(err){
                 console.warn('Combined teacher endpoint unavailable; trying existing API:',err);

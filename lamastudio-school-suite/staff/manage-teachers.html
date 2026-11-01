@@ -696,7 +696,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
         async function init() {
             const session=LamaAPI.getSession('school');
             if(!session?.schoolId || !session?.apiKey){
-                const reason='School login is incomplete. Sign out and sign in again from the School portal to refresh the school ID and secure API key.';
+                const reason='School session is incomplete (missing '+(!session?.schoolId?'school ID':'API key')+'). Verify the School Registry and deployed Apps Script loginSchool response; repeated sign-outs alone will not repair missing server credentials.';
                 document.getElementById('teacherCount').textContent=reason;
                 document.getElementById('teachersEmpty').textContent=reason;
                 document.getElementById('teachersEmpty').classList.remove('hidden');
@@ -785,7 +785,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
       let school=null;
       try{school=window.LamaAPI?.getSession?.('school')}catch(_){}
       const message=!school?.schoolId||!school?.apiKey
-        ? 'School login details are missing. Sign out and sign in again through the School portal.'
+        ? 'School session is missing its school ID or API key. Verify the School Registry and Apps Script login response if signing in again does not help.'
         : 'Teacher page did not initialize. Refresh once; if this continues, report the browser error.';
       count.textContent=message;
       const empty=document.getElementById('teachersEmpty');

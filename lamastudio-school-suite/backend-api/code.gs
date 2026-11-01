@@ -382,6 +382,23 @@ function getSchoolClassOptions(schoolId,apiKey){
   try{cache.put(key,JSON.stringify(rows),300)}catch(_){}
   return rows;
 }
+/**
+ * One authenticated school-scoped request for teacher management.
+ * Returns the school identity, saved class choices and existing teacher records
+ * together so the UI cannot mix sessions from independent API requests.
+ * Does not create, migrate, update or delete any records.
+ */
+function getTeacherManagementBootstrap_(params) {
+    const schoolId = String(params.schoolId || '').trim();
+    const apiKey = String(params.apiKey || '').trim();
+    const match = authorizeSchool(schoolId, apiKey);
+    const school = getSchoolConfig(schoolId, apiKey);
+    const classes = getSchoolClassOptions(schoolId, apiKey);
+    const ctx = {role:'school', schoolId:schoolId, ss:SpreadsheetApp.openById(match.obj.sheetId)};
+    const teachers = listRecords(ctx, 'teachers');
+    return {status:'success', school:school, classes:classes, records:teachers, teacherCount:teachers.length};
+}
+
 function getSchoolConfig(schoolId, apiKey) {
     const o = authorizeSchool(schoolId, apiKey).obj;
     return {
@@ -1474,6 +1491,7 @@ function handleRequest(params) {
             case 'login':
                 return { status: 'success', school: loginSchool(params.email, params.password) };
             case 'getSchoolClassOptions': return {status:'success',classes:getSchoolClassOptions(params.schoolId,params.apiKey)};
+            case 'getTeacherManagementBootstrap': return getTeacherManagementBootstrap_(params);
             case 'getSchoolConfig':
                 return { status: 'success', school: getSchoolConfig(params.schoolId, params.apiKey) };
             case 'updateSchoolConfig':

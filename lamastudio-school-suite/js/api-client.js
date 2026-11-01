@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || (['list','get','create','update','delete'].includes(action) && payload.collection === 'teachers');
+    const schoolScoped = action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || (['list','get','create','update','delete'].includes(action) && payload.collection === 'teachers');
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
@@ -102,6 +102,7 @@ const LamaAPI = (() => {
     acknowledgePing:async pingId=>(await callApi('acknowledgePing',{pingId})).ping,
     addTeacher:async teacher=>(await callApi('addTeacher',{teacher})).teacher,
     getSchoolClassOptions:async()=>{ const d=await callApi('getSchoolClassOptions',{},'POST'); return d.classes; },
+    getTeacherManagementBootstrap:async()=>callApi('getTeacherManagementBootstrap',{},'POST'),
     adminListSchools:async()=>(await callApi('adminListSchools',{},'GET')).schools,
     adminSetSubscription:async(schoolId,details)=>(await callApi('adminSetSubscription',{schoolId,details})).result,
     getSubscriptionStatus:async()=>(await callApi('getSubscriptionStatus',{},'GET')).subscription,

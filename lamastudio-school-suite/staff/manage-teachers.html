@@ -694,7 +694,16 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           loadTeacherClassOptions().finally(()=>{if(msg&&teacherClassRoster.length)msg.classList.add('hidden')});
         }
         async function init() {
-            const session=LamaAPI.getSession('school');
+            const session=LamaAPI.getSession('school') || {};
+            // Restore school context from the existing authenticated admin session when
+            // the teacher page was opened after a role switch in the same browser.
+            let adminAuth=null;
+            try { adminAuth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); } catch(_) {}
+            if(!session.schoolId && adminAuth?.schoolId) session.schoolId=adminAuth.schoolId;
+            if(!session.apiKey && adminAuth?.apiKey) session.apiKey=adminAuth.apiKey;
+            if(session.schoolId && session.apiKey && !LamaAPI.getSession('school')?.apiKey){
+                try { localStorage.setItem('lamastudio_school_session',JSON.stringify(session)); } catch(_) {}
+            }
             if(!session?.schoolId || !session?.apiKey){
                 const reason='School session is incomplete (missing '+(!session?.schoolId?'school ID':'API key')+'). Verify the School Registry and deployed Apps Script loginSchool response; repeated sign-outs alone will not repair missing server credentials.';
                 document.getElementById('teacherCount').textContent=reason;

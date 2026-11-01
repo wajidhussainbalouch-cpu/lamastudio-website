@@ -279,3 +279,9 @@ verify/complete on the live repo:
 - Backend commit `f226bae450bd1ee83d18aa67745c9ce53e4cc7f5`: bootstrap now authorizes school first and independently reads school profile, configured class options, and teachers. It returns `warnings` for failures so one broken data source cannot blank the entire page.
 - Frontend commit `d3d01314733016a24068b0fa5aca8095d28289fa`: show backend warnings explicitly; do not falsely report zero teachers when their sheet could not be read.
 - **Next**: update existing Apps Script Web app deployment with latest `backend-api/code.gs`, verify GitHub/Vercel production build, then test school name, class list, teacher list, create teacher, reload. Still not confirmed end-to-end. Avoid `setup()` and any registry reset.
+
+
+### 1 November 2026 19:10 PKT: user mobile screenshots show unresolved teacher loading
+- Screenshots: placeholder 'School Name' / SCH, school ID '-', 'Loading faculty...' and 'Loading this school's classes...' after user updated Apps Script. These symptoms point to missing school session/initialization or unreachable backend; do **not** assume empty teacher rows caused it.
+- Commit `fa26cc07c9fafbbb42a6f6fec3083f5803d5df59` improves missing school ID/API key feedback and adds independent browser error/watchdog diagnostics so placeholders cannot spin forever without a reason.
+- Next: verify fresh School portal login yields a valid school session, then retest teacher page. Obtain the exact displayed error; if school identity remains missing, inspect school login response/session persistence and browser script errors. No student or teacher data deleted. Live Apps Script deployment remains unverified.

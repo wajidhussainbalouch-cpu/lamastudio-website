@@ -25,8 +25,11 @@ jobs:
       - name: Install Android SDK platform
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Build debug APK
-        run: gradle --no-daemon testDebugUnitTest assembleDebug
+        run: gradle --no-daemon --stacktrace testDebugUnitTest assembleDebug
+      - name: Check APK exists
+        run: test -s app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: lama-english-academy-debug
           path: apps/lama-english-speaking-academy/app/build/outputs/apk/debug/*.apk

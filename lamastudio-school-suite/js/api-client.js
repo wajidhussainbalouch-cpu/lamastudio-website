@@ -73,7 +73,7 @@ const LamaAPI = (() => {
   }
   async function getActiveSchool() {
     const session = getSession(); if (!session) return null;
-    try { const d=await callApi('getSchoolConfig',{},'GET'); const merged=Object.assign({},session,d.school); setSession(merged); return merged; }
+    try { const d=await callApi('getSchoolConfig',{},'POST'); const merged=Object.assign({},session,d.school); setSession(merged); return merged; }
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }

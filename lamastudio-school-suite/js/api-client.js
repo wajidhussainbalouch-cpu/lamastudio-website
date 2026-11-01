@@ -59,6 +59,9 @@ const LamaAPI = (() => {
     const data = await callApi(action,payload);
     if (!data[property]) throw Error('Login response is missing ' + property);
     const session = Object.assign({},data[property],{role});
+    if (role === 'school' && (!String(session.schoolId||'').trim() || !String(session.apiKey||'').trim())) {
+      throw Error('School login response is missing school ID or API key. Check the School Registry row and deployed Apps Script loginSchool endpoint.');
+    }
     setSession(session);
     return session;
   };
@@ -75,7 +78,7 @@ const LamaAPI = (() => {
   }
   async function getActiveSchool() {
     const session = getSession('school'); if (!session) return null;
-    try { const d=await callApi('getSchoolConfig',{},'POST'); const merged=Object.assign({},session,d.school); localStorage.setItem(key('school'),JSON.stringify(merged)); return merged; }
+    try { const d=await callApi('getSchoolConfig',{},'POST'); const merged=Object.assign({},session,d.school); merged.schoolId=session.schoolId; merged.apiKey=session.apiKey; localStorage.setItem(key('school'),JSON.stringify(merged)); return merged; }
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }

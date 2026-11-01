@@ -47,5 +47,15 @@ object LearningContent {
         Lesson("supp-28","Class 8","Urdu","تشبیہ","تشبیہ میں ایک چیز کو کسی دوسری چیز سے مشابہ قرار دیا جاتا ہے۔",listOf(Question("کون سی مثال تشبیہ ہے؟",listOf("وہ شیر کی طرح بہادر ہے۔","وہ گھر گیا۔","کتاب میز پر ہے۔"),0,"کی طرح تشبیہ ظاہر کرتا ہے۔"))),
         Lesson("supp-29","Class 8","Mathematics","Linear equations","Solve an equation by keeping both sides balanced.",listOf(Question("If x + 7 = 12, x = ?",listOf("5","7","19"),0,"Subtract 7 from both sides.")))
     )
-    fun forGradeAndSubject(grade: String, subject: String): List<Lesson> = lessons.filter { it.grade == grade && it.subject == subject }
+    private val reviewQuestions: Map<String, Question> = mapOf(
+        "English" to Question("Which sentence ends with a question mark?", listOf("Where are you?", "I am reading.", "Please sit."), 0, "A question asks for information."),
+        "Urdu" to Question("سوالیہ جملے کے آخر میں کیا آتا ہے؟", listOf("؟", "۔", "،"), 0, "سوالیہ جملے کے آخر میں سوالیہ نشان آتا ہے۔"),
+        "Mathematics" to Question("What is 3 + 4?", listOf("6", "7", "8"), 1, "Three and four make seven."),
+        "Science" to Question("Which of these is a source of light?", listOf("Sun", "Stone", "Book"), 0, "The Sun produces light.")
+    )
+    val practiceLessons: List<Lesson> = lessons.map { lesson ->
+        val extra = reviewQuestions.getValue(lesson.subject)
+        lesson.copy(questions = lesson.questions + extra)
+    }
+    fun forGradeAndSubject(grade: String, subject: String): List<Lesson> = practiceLessons.filter { it.grade == grade && it.subject == subject }
 }

@@ -181,7 +181,10 @@ body:before{
         </div>
         <div class="flex items-center gap-2">
             <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀️</button>
-            <a id="backLink" href="login.html" class="nav-btn hide-mobile">← Back</a>
+            <a id="dashboardSubscriptionLink" href="index.html#pricing" class="nav-btn" title="View subscription plans and account subscription">Subscription</a>
+            <a id="dashboardAuthLink" href="login.html" class="nav-btn">School Login</a>
+            <button id="dashboardLogoutButton" type="button" class="nav-btn" style="display:none" aria-label="Sign out of school account">Logout</button>
+            <a id="backLink" href="index.html" class="nav-btn hide-mobile">← Back</a>
         </div>
     </div>
 </header>
@@ -508,10 +511,30 @@ function sameSchool(item, id) {
     const recordId = item.schoolId || item.school_id || item.school?.id;
     return !recordId || String(recordId) === String(id); // Per-school private sheets have no schoolId field
 }
+function updateSchoolBoardAccountControls(){
+    const session=typeof LamaAPI!=='undefined' ? LamaAPI.getSession('school') : null;
+    const authenticated=!!(session?.schoolId && session?.apiKey);
+    const login=document.getElementById('dashboardAuthLink');
+    const logout=document.getElementById('dashboardLogoutButton');
+    if(login)login.style.display=authenticated?'none':'inline-flex';
+    if(logout)logout.style.display=authenticated?'inline-flex':'none';
+    const sub=document.getElementById('dashboardSubscriptionLink');
+    if(sub){
+      sub.href='index.html#pricing';
+      sub.title=authenticated?'View plans; account-specific subscription information requires a verified school profile':'View available subscription plans';
+    }
+    if(logout)logout.onclick=()=>{
+      if(typeof LamaAPI!=='undefined')LamaAPI.clearSession('school');
+      try{sessionStorage.removeItem('lama_school_admin_auth')}catch(_){}
+      window.location.href='login.html';
+    };
+}
+updateSchoolBoardAccountControls();
+
 async function resolveSchool(data) {
     let active = {};
     try { if (typeof LamaAPI?.getActiveSchool === 'function') active = await LamaAPI.getActiveSchool() || {}; } catch (_) {}
-    const session = typeof LamaAPI !== 'undefined' && typeof LamaAPI.getSession === 'function' ? (LamaAPI.getSession() || {}) : {};
+    const session = typeof LamaAPI !== 'undefined' && typeof LamaAPI.getSession === 'function' ? (LamaAPI.getSession('school') || {}) : {};
     const id = active.id || active.schoolId || session.schoolId || data.schoolId || data.school?.id || '';
     return { id:String(id), name:active.name || active.schoolName || data.schoolName, logo:active.logo || active.schoolLogo || data.logo };
 }

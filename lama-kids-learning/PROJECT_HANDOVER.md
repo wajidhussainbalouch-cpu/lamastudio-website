@@ -85,3 +85,10 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - ProgressStore.completeWithScore awards 0–3 stars based on correctness and retains the best prior result.
 - Added a generic second subject-review question to each of the 40 starter lessons. These are repeated across grades, are not differentiated by age, and must be replaced with grade-specific, educator-reviewed exercises before release.
 - Build and tests remain unverified; no release-ready APK. Further work: age-appropriate content depth, parental controls, game progression, accessibility, privacy and Play policy verification.
+
+## 1 November 2026 — User-tested UI redesign
+- User confirmed the previous debug APK installed and ran on a real Android device, and reported oversized class controls and an unattractive single-column interface.
+- Replaced MainActivity with compact class chips, 2-column subject cards, navigation drawer, topic cards, quiz progress, rewards and settings screens.
+- Added optional short built-in Android feedback tones; these are NOT background music or a soundtrack. Sound setting persists locally.
+- Current topic screen lists authored lesson titles; the 40 grade-subject combinations still have sparse content. Grade-specific topic libraries and many varied questions remain to be authored and reviewed.
+- Important: redesigned code is committed but new Android CI build/device test not yet verified. No publishing, Vercel or production merge.

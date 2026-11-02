@@ -1556,6 +1556,20 @@ function handleRequest(params) {
                 return { status: 'success', result: adminSetSubscription(params.adminApiKey, params.schoolId, params.details || {}) };
             case 'getSubscriptionStatus':
                 return { status: 'success', subscription: getSubscriptionStatus(params.schoolId, params.apiKey) };
+            case 'adminSchoolRecords': {
+                authorizeAdmin(params.adminApiKey);
+                const allowed = ['teachers','students'];
+                if (allowed.indexOf(params.collection) === -1) throw new Error('Unsupported collection.');
+                const school = findSchoolRow(getRegistrySheet(), r => String(r.schoolId) === String(params.schoolId));
+                if (!school) throw new Error('School not found.');
+                const ctx = {role:'school', schoolId:String(params.schoolId), ss:SpreadsheetApp.openById(school.obj.sheetId)};
+                const records = listRecords(ctx, params.collection).slice(0,500).map(item => {
+                    const clean = {};
+                    Object.keys(item).forEach(k => {if (!/password|hash|salt|secret|apiKey|token|cnic/i.test(k)) clean[k]=item[k];});
+                    return clean;
+                });
+                return {status:'success',records:records};
+            }
             case 'adminListSchools':
                 return { status: 'success', schools: adminListSchools(params.adminApiKey) };
             case 'adminSetStatus':

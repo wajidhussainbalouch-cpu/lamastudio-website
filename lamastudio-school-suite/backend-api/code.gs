@@ -1756,7 +1756,7 @@ function manageStudentCodes(params, apply) {
 
 
 /** Invitation-only school onboarding. Existing registered schools are not modified. */
-const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification'];
+const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification','adminUsername','adminDisplayName','adminPasswordHash','adminPasswordSalt'];
 function applicationSheet_(){
   const ss=SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_ID'));
   let sh=ss.getSheetByName('SchoolApplications');
@@ -1777,6 +1777,10 @@ function hashInvitation_(token){
 function requestSchoolRegistration_(p){
   const name=String(p.name||'').trim(),email=String(p.adminEmail||'').trim().toLowerCase();
   if(name.length<3||name.length>140||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('Valid school name and principal email are required.');
+  const adminUsername=String(p.adminUsername||'').trim().toLowerCase(),adminDisplayName=String(p.adminDisplayName||p.principal||'').trim(),adminPassword=String(p.adminPassword||'');
+  if(!/^[a-z0-9._-]{3,40}$/.test(adminUsername))throw Error('Admin ID must be 3–40 letters, numbers, dots, underscores or dashes.');
+  if(!adminDisplayName||adminDisplayName.length>100)throw Error('Administrator name is required (maximum 100 characters).');
+  if(adminPassword.length<12)throw Error('Administrator password must contain at least 12 characters.');
   const type=['Private','Government'].includes(p.type)?p.type:'Private';
   const level=['Primary','Middle','High','Higher Secondary'].includes(p.level)?p.level:'Primary';
   const plan=['Trial','Monthly','Annual'].includes(p.plan)?p.plan:'Trial';
@@ -1788,7 +1792,9 @@ function requestSchoolRegistration_(p){
     const a=applicationRows_();
     if(a.rows.some(x=>String(x.obj.adminEmail).toLowerCase()===email&&['Pending Approval','Pending Activation'].includes(x.obj.status)))throw Error('An application with this email is already pending.');
     requestId=Utilities.getUuid();
-    a.sh.appendRow([requestId,name,type,level,clean(p.address),clean(p.phone),clean(p.principal),email,plan,clean(p.requirements),'Pending Approval',new Date().toISOString(),'','','','','','']);
+    const salt=Utilities.getUuid();
+    const pending={requestId,name,type,level,address:clean(p.address),phone:clean(p.phone),principal:clean(p.principal),adminEmail:email,plan,requirements:clean(p.requirements),status:'Pending Approval',requestedAt:new Date().toISOString(),adminUsername,adminDisplayName,adminPasswordHash:hashPassword(adminPassword,salt),adminPasswordSalt:salt};
+    a.sh.appendRow(a.headers.map(h=>pending[h]===undefined?'':pending[h]));
   }finally{lock.releaseLock();}
   try{
     MailApp.sendEmail({to:PropertiesService.getScriptProperties().getProperty('SUPERADMIN_NOTIFICATION_EMAIL')||'wajidhussainbalouch@gmail.com',subject:'LamaStudio: New school approval request',body:'A school has requested registration.\nSchool: '+name+'\nEmail: '+email+'\nPlan: '+plan+'\nOpen the Super Admin dashboard to approve or reject.\nRequest ID: '+requestId});
@@ -1814,6 +1820,18 @@ function reviewApplication_(key,id,decision){
       return {status:'Rejected'};
     }
     if(findSchoolRow(getRegistrySheet(),r=>String(r.adminEmail).toLowerCase()===String(row.obj.adminEmail).toLowerCase()))throw Error('This school email is already registered.');
+    // New registrations already have securely hashed administrator credentials.
+    // Legacy pending applications retain the existing email activation flow.
+    if(row.obj.adminPasswordHash&&row.obj.adminPasswordSalt&&row.obj.adminUsername){
+      const o=row.obj,randomLegacyPassword=Utilities.getUuid()+Utilities.getUuid();
+      const school=registerSchool({name:o.name,type:o.type,level:o.level,address:o.address,phone:o.phone,principal:o.principal,adminEmail:o.adminEmail,password:randomLegacyPassword});
+      const users=adminUsers(school.schoolId),now=new Date().toISOString();
+      const admin={id:genId('adm'),username:String(o.adminUsername).toLowerCase(),displayName:String(o.adminDisplayName),passwordHash:String(o.adminPasswordHash),salt:String(o.adminPasswordSalt),status:'Active',version:1,createdAt:now,updatedAt:now};
+      users.sh.appendRow(recordToRow(users.headers,admin));
+      setApplication_(a.sh,a.headers,row.index,{status:'Active',reviewedAt:now,activatedAt:now,schoolId:school.schoolId,adminPasswordHash:'',adminPasswordSalt:'',notification:'School and administrator activated'});
+      try{MailApp.sendEmail({to:o.adminEmail,subject:'LamaStudio School Suite: Account approved',body:'Your school account is active. Sign in using your School ID '+school.schoolId+' and the administrator ID and password you chose during registration. Never share your password.'});}catch(emailError){setApplication_(a.sh,a.headers,row.index,{notification:'Activated; approval email failed: '+emailError.message});}
+      return {status:'Active',schoolId:school.schoolId};
+    }
     const token=Utilities.getUuid()+Utilities.getUuid();
     const hash=hashInvitation_(token),expires=new Date(Date.now()+48*3600000).toISOString();
     const url='https://www.lamastudio.pk/lamastudio-school-suite/activate-school.html?requestId='+encodeURIComponent(id)+'&token='+encodeURIComponent(token);

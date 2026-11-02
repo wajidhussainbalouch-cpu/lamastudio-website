@@ -71,7 +71,7 @@ const COLLECTIONS = {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'loginId', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
-                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact']
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'experience', 'photo', 'medicalNotes', 'designation']
     },
     activities: {
         tab: 'Activities',
@@ -632,6 +632,7 @@ function addTeacher(schoolId, apiKey, p) {
         const otherId=String(existing[i][headers.indexOf('id')]||'').trim().toLowerCase();
         if([otherEmail,otherLogin,otherId].some(v=>v&&identifierSet.has(v)))throw new Error('Teacher email or Login ID already exists at this school.');
     }
+    validateTeacherAssignment_(sheet,headers,'',p.assignedClass,p.assignedSection,'Active');
     const id = genId('tch');
     const teacherApiKey = Utilities.getUuid();
     const record = {
@@ -953,6 +954,19 @@ function addRecord(ctx, collection, record) {
     return full;
 }
 
+function validateTeacherAssignment_(sheet,headers,teacherId,assignedClass,assignedSection,status){
+  const cls=String(assignedClass||'').trim().toLowerCase();
+  if(!cls||String(status||'Active').toLowerCase()!=='active')return;
+  const sec=String(assignedSection||'').trim().toLowerCase();
+  const data=sheet.getDataRange().getValues();
+  for(let i=1;i<data.length;i++){
+    const t=rowToRecord(headers,data[i]);
+    if(String(t.id)===String(teacherId)||String(t.status||'Active').toLowerCase()!=='active')continue;
+    if(String(t.assignedClass||'').trim().toLowerCase()===cls && String(t.assignedSection||'').trim().toLowerCase()===sec)
+      throw Error('This class and section are already assigned to '+(t.name||'another active teacher')+'. Change that assignment first.');
+  }
+}
+
 function updateRecord(ctx, collection, id, patch) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
@@ -994,6 +1008,15 @@ function updateRecord(ctx, collection, id, patch) {
                 // Receipt attribution belongs to the original collector; corrections remain in AuditLog.
                 delete patch.receivedByAdminId;
                 delete patch.receivedByAdminName;
+            }
+            if(collection==='teachers'){
+                const allowed=['name','email','subject','assignedClass','assignedSection','contact','status','cnic','dob','gender','qualification','joiningDate','address','emergencyContact','experience','photo','medicalNotes','designation'];
+                if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1))throw Error('Invalid teacher profile field.');
+                if(patch.status&&!['Active','Suspended','Deleted'].includes(String(patch.status)))throw Error('Invalid teacher status.');
+                if(patch.name!==undefined&&!String(patch.name).trim())throw Error('Teacher name cannot be empty.');
+                if(patch.email!==undefined&&patch.email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(patch.email)))throw Error('Invalid email.');
+                const next=Object.assign({},existing,patch);
+                validateTeacherAssignment_(sheet,headers,id,next.assignedClass,next.assignedSection,next.status);
             }
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);

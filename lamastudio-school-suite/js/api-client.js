@@ -38,6 +38,15 @@ const LamaAPI = (() => {
     const schoolScoped = action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers');
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
+    if (schoolScoped) {
+      let adminAuth = null;
+      try { adminAuth = parse(sessionStorage.getItem('lama_school_admin_auth')); } catch (_) {}
+      if (adminAuth?.schoolId && adminAuth?.token && (!body.schoolId || body.schoolId === adminAuth.schoolId)) {
+        body.role = 'school';
+        body.schoolId = adminAuth.schoolId;
+        body.token = adminAuth.token;
+      }
+    }
     try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
     let response;
     try {

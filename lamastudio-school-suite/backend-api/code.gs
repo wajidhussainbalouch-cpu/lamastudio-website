@@ -1756,7 +1756,7 @@ function manageStudentCodes(params, apply) {
 
 
 /** Invitation-only school onboarding. Existing registered schools are not modified. */
-const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification','adminUsername','adminDisplayName','adminPasswordHash','adminPasswordSalt'];
+const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification','adminUsername','adminDisplayName','adminPasswordHash','adminPasswordSalt','classes','sections','teacherCount','studentCount'];
 function applicationSheet_(){
   const ss=SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_ID'));
   let sh=ss.getSheetByName('SchoolApplications');
@@ -1784,6 +1784,13 @@ function requestSchoolRegistration_(p){
   const type=['Private','Government'].includes(p.type)?p.type:'Private';
   const level=['Primary','Middle','High','Higher Secondary'].includes(p.level)?p.level:'Primary';
   const plan=['Trial','Monthly','Annual'].includes(p.plan)?p.plan:'Trial';
+  const validClasses=['Playgroup','Nursery','Prep','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
+  const classes=Array.isArray(p.classes)?[...new Set(p.classes.map(String))].filter(c=>validClasses.includes(c)):[];
+  if(!classes.length)throw Error('Select at least one class.');
+  const teacherCount=Number(p.teacherCount),studentCount=p.studentCount===''||p.studentCount==null?'':Number(p.studentCount);
+  if(!Number.isInteger(teacherCount)||teacherCount<0||teacherCount>5000)throw Error('Invalid teacher count.');
+  if(studentCount!==''&&(!Number.isInteger(studentCount)||studentCount<0||studentCount>100000))throw Error('Invalid student count.');
+  const sections=String(p.sections||'').trim().slice(0,100);
   const clean=v=>String(v||'').trim().slice(0,400);
   const lock=LockService.getScriptLock();if(!lock.tryLock(15000))throw Error('Registration is busy. Retry.');
   let requestId;
@@ -1793,7 +1800,7 @@ function requestSchoolRegistration_(p){
     if(a.rows.some(x=>String(x.obj.adminEmail).toLowerCase()===email&&['Pending Approval','Pending Activation'].includes(x.obj.status)))throw Error('An application with this email is already pending.');
     requestId=Utilities.getUuid();
     const salt=Utilities.getUuid();
-    const pending={requestId,name,type,level,address:clean(p.address),phone:clean(p.phone),principal:clean(p.principal),adminEmail:email,plan,requirements:clean(p.requirements),status:'Pending Approval',requestedAt:new Date().toISOString(),adminUsername,adminDisplayName,adminPasswordHash:hashPassword(adminPassword,salt),adminPasswordSalt:salt};
+    const pending={requestId,name,type,level,address:clean(p.address),phone:clean(p.phone),principal:clean(p.principal),adminEmail:email,plan,requirements:clean(p.requirements),status:'Pending Approval',requestedAt:new Date().toISOString(),adminUsername,adminDisplayName,adminPasswordHash:hashPassword(adminPassword,salt),adminPasswordSalt:salt,classes:classes.join(', '),sections,teacherCount,studentCount};
     a.sh.appendRow(a.headers.map(h=>pending[h]===undefined?'':pending[h]));
   }finally{lock.releaseLock();}
   try{
@@ -1806,7 +1813,7 @@ function requestSchoolRegistration_(p){
 }
 function adminApplications_(key){
   authorizeAdmin(key);
-  return applicationRows_().rows.map(({obj})=>({requestId:obj.requestId,name:obj.name,type:obj.type,level:obj.level,address:obj.address,phone:obj.phone,principal:obj.principal,adminEmail:obj.adminEmail,plan:obj.plan,requirements:obj.requirements,status:obj.status,requestedAt:obj.requestedAt,reviewedAt:obj.reviewedAt,activatedAt:obj.activatedAt,schoolId:obj.schoolId,notification:obj.notification}));
+  return applicationRows_().rows.map(({obj})=>({requestId:obj.requestId,name:obj.name,type:obj.type,level:obj.level,address:obj.address,phone:obj.phone,principal:obj.principal,adminEmail:obj.adminEmail,plan:obj.plan,requirements:obj.requirements,classes:obj.classes,sections:obj.sections,teacherCount:obj.teacherCount,studentCount:obj.studentCount,status:obj.status,requestedAt:obj.requestedAt,reviewedAt:obj.reviewedAt,activatedAt:obj.activatedAt,schoolId:obj.schoolId,notification:obj.notification}));
 }
 function reviewApplication_(key,id,decision){
   authorizeAdmin(key);

@@ -411,11 +411,11 @@ function getTeacherManagementBootstrap_(params) {
     let teachers = [];
     try {
         const ctx = {role:'school', schoolId:schoolId, ss:SpreadsheetApp.openById(match.obj.sheetId)};
-        teachers = listRecords(ctx, 'teachers');
+        teachers = listRecords(ctx, 'teachers').map(function(t){ var safe=Object.assign({},t); delete safe.passwordHash; delete safe.apiKey; delete safe.password; delete safe.salt; return safe; });
     } catch (err) {
         warnings.push('Teacher records: ' + err.message);
     }
-    return {status:'success', school:school, classes:classes, records:teachers, teacherCount:teachers.length, warnings:warnings};
+    return {status:'success', school:school, classes:classes, records:teachers, teacherCount:teachers.length, warnings:warnings, diagnostics:{schoolResolved:true,classesLoaded:!warnings.some(function(w){return w.indexOf('School classes:')===0;}),teachersLoaded:!warnings.some(function(w){return w.indexOf('Teacher records:')===0;})}};
 }
 
 function getSchoolConfig(schoolId, apiKey) {

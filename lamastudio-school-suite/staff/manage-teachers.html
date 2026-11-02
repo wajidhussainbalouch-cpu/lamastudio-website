@@ -696,6 +696,8 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
           loadTeacherClassOptions().finally(()=>{if(msg&&teacherClassRoster.length)msg.classList.add('hidden')});
         }
         async function init() {
+            // Always render school identity before awaiting the backend; a slow API must not blank the header.
+            await renderHeader({...(LamaAPI.getSession('school')||{}),schoolId:(LamaAPI.getSession('school')||{}).schoolId||(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')?.schoolId}catch(_){return ''}})()});
             const session=LamaAPI.getSession('school') || {};
             const adminContext=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
             if(!session.schoolId && adminContext?.schoolId) session.schoolId=adminContext.schoolId;
@@ -774,7 +776,15 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
             sessionStorage.setItem('lamastudio_active_role','school');
         }
         if (LamaAPI.requireLogin('school', '../login.html')) {
-            init();
+            window.teacherInitStarted=true;
+            init().catch(err=>{
+                window.teacherInitError=err?.message||String(err);
+                console.error('Teacher management initialization:',err);
+                for(const id of ['teacherCount','teacherClassLoadStatus','teachersEmpty']){
+                    const el=document.getElementById(id);
+                    if(el){el.textContent='Teacher initialization error: '+window.teacherInitError;el.classList.remove('hidden')}
+                }
+            });
         }
     </script>
 <script id="teacher-load-diagnostics">
@@ -799,7 +809,7 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
       const adminAuth=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
       const message=!(school?.schoolId||adminAuth?.schoolId)||!(school?.apiKey||adminAuth?.token)
         ? 'School authentication is missing or expired. Sign in again from the school dashboard.'
-        : 'Teacher page did not initialize. Refresh once; if this continues, report the browser error.';
+        : window.teacherInitError ? 'Teacher initialization error: '+window.teacherInitError : window.teacherInitStarted ? 'Teacher data request did not finish. Check Apps Script deployment and network connection.' : 'Teacher script did not start. Verify API client loading.';
       count.textContent=message;
       const empty=document.getElementById('teachersEmpty');
       if(empty){empty.textContent=message;empty.classList.remove('hidden')}

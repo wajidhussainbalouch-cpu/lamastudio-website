@@ -353,8 +353,8 @@ function getSchoolClassOptions(schoolId,apiKey){
     try{offerings=JSON.parse(configured)}catch(_){throw Error('Invalid saved class configuration. Open School Settings and save it again.')}
     if(!Array.isArray(offerings))throw Error('Invalid saved class configuration.');
     return offerings.flatMap(item=>{
-      const name=String(item.name||'').trim();
-      const sections=Array.isArray(item.sections)?item.sections:[];
+      const name=String(typeof item==='string'?item:(item&& (item.name||item.class||item.className))||'').trim();
+      const sections=item&&typeof item==='object'&&Array.isArray(item.sections)?item.sections:[];
       return name?(sections.length?sections.map(section=>({class:name,section:String(section||'').trim()})):[{class:name,section:''}]):[];
     });
   }

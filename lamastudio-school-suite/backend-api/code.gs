@@ -1423,7 +1423,9 @@ function ownerSaveCampus(p){
 }
 // Campus data is deliberately stored in distinct tabs with campus-ID suffixes.
 // This owner-only API never exposes legacy main-campus records or credentials.
-const CAMPUS_COLLECTIONS_=['students','teachers','attendance','fees','homework','tests','datesheet','timetable'];
+const CAMPUS_COLLECTIONS_=['students','attendance','fees','homework','tests','datesheet','timetable'];
+// Teacher credentials and logins require dedicated campus-aware authentication.
+// Never allow generic record writes to create accounts that cannot log in securely.
 function ownerCampusRecords_(p,operation){
   authorizeSchoolOwner_(p);
   const campusId=String(p.campusId||'');
@@ -1446,20 +1448,35 @@ function ownerCampusRecords_(p,operation){
   if(operation==='list')return entries.map(x=>scrub(x.obj));
   if(operation==='save'){
     assertSchoolWritable(p.schoolId);
+    // Serialize campus writes so concurrent requests cannot overwrite a row.
+    const writeLock=LockService.getScriptLock();writeLock.waitLock(20000);
+    try {
+    return saveCampusRecordLocked_(p,ss,sh,headers,collection,campusId,scrub);
+    } finally {writeLock.releaseLock();}
+  }
+  throw Error('Unknown campus operation.');
+}
+function saveCampusRecordLocked_(p,ss,sh,headers,collection,campusId,scrub){
+    const values=sh.getDataRange().getValues();
+    const entries=values.slice(1).map((v,i)=>({row:i+2,obj:rowToRecord(headers,v)})).filter(x=>x.obj.id);
     if(!p.record||typeof p.record!=='object'||Array.isArray(p.record))throw Error('A valid campus record is required.');
     const requestedId=String(p.record.id||'');
     const existing=requestedId?entries.find(x=>String(x.obj.id)===requestedId):null;
     if(requestedId&&!existing)throw Error('Campus record not found.');
     const allowed=headers.filter(h=>!['id','createdAt','passwordHash','apiKey','salt','token'].includes(h));
-    const patch={};allowed.forEach(h=>{if(Object.prototype.hasOwnProperty.call(p.record,h))patch[h]=p.record[h]});
+    const patch={};allowed.forEach(h=>{if(Object.prototype.hasOwnProperty.call(p.record,h)){
+      const value=p.record[h];
+      if(value!==null && typeof value==='object' && !h.endsWith('Json'))throw Error('Invalid value for '+h);
+      if(typeof value==='string' && value.length>20000)throw Error('Field is too long: '+h);
+      if(typeof value==='string' && /^[=+@]/.test(value.trim()))throw Error('Spreadsheet formula input is not allowed: '+h);
+      patch[h]=value;
+    }});
     const now=new Date().toISOString();
     const result=Object.assign({},existing?existing.obj:{},patch,{id:existing?existing.obj.id:genId(collection.slice(0,3)),createdAt:existing?existing.obj.createdAt:now,updatedAt:now});
     if(existing)sh.getRange(existing.row,1,1,headers.length).setValues([recordToRow(headers,result)]);
     else sh.appendRow(recordToRow(headers,result));
     writeAudit(ss,p.schoolId,{id:'owner:'+p.schoolId,name:'School Owner',role:'schoolOwner'},existing?'update':'add','campus:'+campusId+':'+collection,result.id,existing?existing.obj:null,result);
     return scrub(result);
-  }
-  throw Error('Unknown campus operation.');
 }
 function ownerListSchoolUsers(p){
   authorizeSchoolOwner_(p);

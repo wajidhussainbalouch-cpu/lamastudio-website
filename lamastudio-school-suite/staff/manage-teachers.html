@@ -391,6 +391,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
         async function renderHeader(knownSchool) {
             // Paint known school identity immediately, before any network request.
             const session=LamaAPI.getSession('school')||{};
+            const adminAuth=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
             const paint=school=>{
                 currentSchool=school;
                 document.getElementById('pageTitle').innerText=(school.name||'School')+' | Manage Teachers';
@@ -403,7 +404,7 @@ html[data-lama-theme="light"] body>main button[class*="bg-lime"]{color:#173f43!i
                     const img=document.createElement('img');img.src=logo;img.alt='School logo';img.className='w-full h-full object-contain rounded-xl';box.appendChild(img);
                 }else{box.textContent=school.shortCode||LamaAPI.deriveShortCode(school.name||'SCH')}
             };
-            paint(session);
+            paint({...session,schoolId:session.schoolId||adminAuth?.schoolId,name:session.name||adminAuth?.schoolName||adminAuth?.name||'School'});
             if(!session.schoolId||!session.apiKey)console.warn('School session identity incomplete; requesting school configuration');
             if(knownSchool){paint({...session,...knownSchool});return;}
             const school=await Promise.race([LamaAPI.getActiveSchool(),new Promise((_,reject)=>setTimeout(()=>reject(Error('School settings request timed out')),12000))]);
@@ -639,7 +640,8 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
         }
         async function loadTeacherClassOptions(){
           const session=LamaAPI.getSession('school')||{};
-          const schoolId=String(session.schoolId||'').trim();
+          const adminAuth=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
+          const schoolId=String(session.schoolId||adminAuth?.schoolId||'').trim();
           const msg=document.getElementById('teacherClassLoadStatus');
           if(teacherClassLoad)return teacherClassLoad;
           const normalize=(items)=>Array.isArray(items)?items.flatMap(item=>{
@@ -697,18 +699,16 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
             const session=LamaAPI.getSession('school') || {};
             const adminContext=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
             if(!session.schoolId && adminContext?.schoolId) session.schoolId=adminContext.schoolId;
-            if(!session.apiKey && adminContext?.token) session.apiKey='ADMIN_TOKEN_AUTH';
+            // Token-only administrator sessions are authenticated by the backend; do not fabricate API keys.
             // Restore school context from the existing authenticated admin session when
             // the teacher page was opened after a role switch in the same browser.
             let adminAuth=null;
             try { adminAuth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); } catch(_) {}
             if(!session.schoolId && adminAuth?.schoolId) session.schoolId=adminAuth.schoolId;
             if(!session.apiKey && adminAuth?.apiKey) session.apiKey=adminAuth.apiKey;
-            if(session.schoolId && session.apiKey && !LamaAPI.getSession('school')?.apiKey){
-                try { localStorage.setItem('lamastudio_school_session',JSON.stringify(session)); } catch(_) {}
-            }
-            if(!session?.schoolId || !session?.apiKey){
-                const reason='School session is incomplete (missing '+(!session?.schoolId?'school ID':'API key')+'). Verify the School Registry and deployed Apps Script loginSchool response; repeated sign-outs alone will not repair missing server credentials.';
+            // Keep temporary administrator credentials in sessionStorage, never in localStorage.
+            if(!session?.schoolId || (!session?.apiKey && !adminContext?.token)){
+                const reason='School authentication is unavailable. Open the School Dashboard and sign in as the school owner or an active administrator. If the problem continues, check the deployed Apps Script version.';
                 document.getElementById('teacherCount').textContent=reason;
                 document.getElementById('teachersEmpty').textContent=reason;
                 document.getElementById('teachersEmpty').classList.remove('hidden');
@@ -796,8 +796,9 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
       if(!count || !/Loading faculty/i.test(count.textContent||''))return;
       let school=null;
       try{school=window.LamaAPI?.getSession?.('school')}catch(_){}
-      const message=!school?.schoolId||!school?.apiKey
-        ? 'School session is missing its school ID or API key. Verify the School Registry and Apps Script login response if signing in again does not help.'
+      const adminAuth=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
+      const message=!(school?.schoolId||adminAuth?.schoolId)||!(school?.apiKey||adminAuth?.token)
+        ? 'School authentication is missing or expired. Sign in again from the school dashboard.'
         : 'Teacher page did not initialize. Refresh once; if this continues, report the browser error.';
       count.textContent=message;
       const empty=document.getElementById('teachersEmpty');

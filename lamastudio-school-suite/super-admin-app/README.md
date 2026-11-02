@@ -1,0 +1,2 @@
+# LAMA Super Admin PWA
+Private, installable PWA in the existing School Suite website. Uses existing Apps Script super-admin login, school listing, and status mutation endpoints. Password and admin key are held in memory only; sign-out and hiding the app clear the key. The URL is not secret: server-side authorization protects data. **Not deployed or live-tested.** Additional full-management modules (subscriptions, users, reports) remain to be implemented.

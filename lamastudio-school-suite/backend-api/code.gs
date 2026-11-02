@@ -1378,6 +1378,43 @@ function authorizeSchoolOwner_(p){
   if(String(school.schoolId)!==String(p.schoolId))throw new Error('This owner account does not belong to the selected school.');
   return {id:'owner:'+school.schoolId,name:school.name,role:'schoolOwner'};
 }
+// Campus directory is metadata-only. Existing student/teacher/finance records remain
+// in the original school spreadsheet until separate campus storage is provisioned.
+const OWNER_CAMPUS_HEADERS_=['campusId','campusName','address','status','createdAt','updatedAt'];
+function ownerCampusDirectory_(schoolId){
+  const u=adminUsers(schoolId);
+  const sh=secureTab(u.ss,'Campuses',OWNER_CAMPUS_HEADERS_);
+  const rows=sh.getDataRange().getValues();
+  const items=rows.slice(1).map((row,i)=>({rowIndex:i+2,obj:rowToRecord(rows[0],row)})).filter(x=>x.obj.campusId);
+  return {sh,items};
+}
+function ownerListCampuses(p){
+  authorizeSchoolOwner_(p);
+  const directory=ownerCampusDirectory_(p.schoolId);
+  const main={campusId:'main',campusName:'Main Campus',address:'',status:'Active',isLegacy:true};
+  return [main].concat(directory.items.map(x=>Object.assign({},x.obj,{isLegacy:false})));
+}
+function ownerSaveCampus(p){
+  authorizeSchoolOwner_(p);
+  const campusName=String(p.campusName||'').trim();
+  if(!campusName||campusName.length>100)throw Error('Campus name is required (maximum 100 characters).');
+  const status=String(p.status||'Active');
+  if(!['Active','Disabled'].includes(status))throw Error('Invalid campus status.');
+  const campusId=String(p.campusId||'').trim();
+  if(campusId==='main')throw Error('The existing main campus cannot be changed through this action.');
+  const lock=LockService.getScriptLock();lock.waitLock(20000);
+  try{
+    const directory=ownerCampusDirectory_(p.schoolId);
+    const found=directory.items.find(x=>String(x.obj.campusId)===campusId);
+    if(campusId&&!found)throw Error('Campus not found.');
+    if(directory.items.some(x=>x!==found&&String(x.obj.campusName).toLowerCase()===campusName.toLowerCase()))throw Error('Campus name already exists.');
+    const now=new Date().toISOString();
+    const item={campusId:found?found.obj.campusId:genId('campus'),campusName,address:String(p.address||'').trim().slice(0,300),status,createdAt:found?found.obj.createdAt:now,updatedAt:now};
+    if(found)directory.sh.getRange(found.rowIndex,1,1,OWNER_CAMPUS_HEADERS_.length).setValues([OWNER_CAMPUS_HEADERS_.map(h=>item[h])]);
+    else directory.sh.appendRow(OWNER_CAMPUS_HEADERS_.map(h=>item[h]));
+    return item;
+  }finally{lock.releaseLock()}
+}
 function ownerListSchoolUsers(p){
   authorizeSchoolOwner_(p);
   const u=adminUsers(p.schoolId);
@@ -1520,6 +1557,8 @@ function handleRequest(params) {
                 return {status:'success',result:manageStudentCodes(params,true)};
             case 'importStudentsBatch':
                 return {status:'success',result:importStudentsBatch(params)};
+            case 'ownerListCampuses': return {status:'success',campuses:ownerListCampuses(params)};
+            case 'ownerSaveCampus': return {status:'success',campus:ownerSaveCampus(params)};
             case 'ownerListSchoolUsers': return {status:'success',users:ownerListSchoolUsers(params)};
             case 'ownerSaveSchoolUser': return {status:'success',user:ownerSaveSchoolUser(params)};
             case 'adminListSchoolUsers': throw new Error('Use the School Owner dashboard to manage administrators.');

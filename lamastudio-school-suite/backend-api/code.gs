@@ -1756,7 +1756,7 @@ function manageStudentCodes(params, apply) {
 
 
 /** Invitation-only school onboarding. Existing registered schools are not modified. */
-const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification','adminUsername','adminDisplayName','adminPasswordHash','adminPasswordSalt','classes','sections','teacherCount','studentCount','institutionType','campusCount','campusDetails','adminCount'];
+const APPLICATION_HEADERS_=['requestId','name','type','level','address','phone','principal','adminEmail','plan','requirements','status','requestedAt','reviewedAt','activatedAt','tokenHash','expiresAt','schoolId','notification','adminUsername','adminDisplayName','adminPasswordHash','adminPasswordSalt','classes','sections','teacherCount','studentCount','institutionType','campusCount','campusDetails','adminCount','logoData'];
 function applicationSheet_(){
   const ss=SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('MASTER_SHEET_ID'));
   let sh=ss.getSheetByName('SchoolApplications');
@@ -1790,6 +1790,12 @@ function requestSchoolRegistration_(p){
   const teacherCount=Number(p.teacherCount),studentCount=p.studentCount===''||p.studentCount==null?'':Number(p.studentCount);
   if(!Number.isInteger(teacherCount)||teacherCount<0||teacherCount>5000)throw Error('Invalid teacher count.');
   if(studentCount!==''&&(!Number.isInteger(studentCount)||studentCount<0||studentCount>100000))throw Error('Invalid student count.');
+  const logoData=String(p.logoData||'');
+  if(logoData){
+    if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(logoData)||logoData.length>43000)throw Error('Invalid logo. Upload a JPEG under 30 KB.');
+    const bytes=Utilities.base64Decode(logoData.split(',')[1]);
+    if(bytes.length>30*1024||bytes.length<100)throw Error('Logo must be no larger than 30 KB.');
+  }
   const sections=String(p.sections||'').trim().slice(0,100);
   const institutionType=String(p.institutionType||'School');
   if(!['School','Academy','College','Training Institute','Other Educational Institute'].includes(institutionType))throw Error('Invalid institution type.');
@@ -1806,7 +1812,7 @@ function requestSchoolRegistration_(p){
     if(a.rows.some(x=>String(x.obj.adminEmail).toLowerCase()===email&&['Pending Approval','Pending Activation'].includes(x.obj.status)))throw Error('An application with this email is already pending.');
     requestId=Utilities.getUuid();
     const salt=Utilities.getUuid();
-    const pending={requestId,name,type,level,address:clean(p.address),phone:clean(p.phone),principal:clean(p.principal),adminEmail:email,plan,requirements:clean(p.requirements),status:'Pending Approval',requestedAt:new Date().toISOString(),adminUsername,adminDisplayName,adminPasswordHash:hashPassword(adminPassword,salt),adminPasswordSalt:salt,classes:classes.join(', '),sections,teacherCount,studentCount,institutionType,campusCount,campusDetails,adminCount};
+    const pending={requestId,name,type,level,address:clean(p.address),phone:clean(p.phone),principal:clean(p.principal),adminEmail:email,plan,requirements:clean(p.requirements),status:'Pending Approval',requestedAt:new Date().toISOString(),adminUsername,adminDisplayName,adminPasswordHash:hashPassword(adminPassword,salt),adminPasswordSalt:salt,classes:classes.join(', '),sections,teacherCount,studentCount,institutionType,campusCount,campusDetails,adminCount,logoData};
     a.sh.appendRow(a.headers.map(h=>pending[h]===undefined?'':pending[h]));
   }finally{lock.releaseLock();}
   try{
@@ -1820,6 +1826,16 @@ function requestSchoolRegistration_(p){
 function adminApplications_(key){
   authorizeAdmin(key);
   return applicationRows_().rows.map(({obj})=>({requestId:obj.requestId,name:obj.name,type:obj.type,level:obj.level,address:obj.address,phone:obj.phone,principal:obj.principal,adminEmail:obj.adminEmail,plan:obj.plan,requirements:obj.requirements,classes:obj.classes,sections:obj.sections,teacherCount:obj.teacherCount,studentCount:obj.studentCount,institutionType:obj.institutionType,campusCount:obj.campusCount,campusDetails:obj.campusDetails,adminCount:obj.adminCount,status:obj.status,requestedAt:obj.requestedAt,reviewedAt:obj.reviewedAt,activatedAt:obj.activatedAt,schoolId:obj.schoolId,notification:obj.notification}));
+}
+function saveApplicationLogo_(data,requestId){
+  if(!data)return '';
+  const encoded=String(data).split(',')[1];
+  const bytes=Utilities.base64Decode(encoded);
+  if(bytes.length>30*1024)throw Error('Logo exceeds 30 KB.');
+  const blob=Utilities.newBlob(bytes,'image/jpeg','school-logo-'+String(requestId).replace(/[^a-zA-Z0-9-]/g,'')+'.jpg');
+  const file=getSchoolDatabaseFolder_().createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);
+  return 'https://drive.google.com/uc?export=view&id='+encodeURIComponent(file.getId());
 }
 function reviewApplication_(key,id,decision){
   authorizeAdmin(key);
@@ -1837,11 +1853,12 @@ function reviewApplication_(key,id,decision){
     // Legacy pending applications retain the existing email activation flow.
     if(row.obj.adminPasswordHash&&row.obj.adminPasswordSalt&&row.obj.adminUsername){
       const o=row.obj,randomLegacyPassword=Utilities.getUuid()+Utilities.getUuid();
-      const school=registerSchool({name:o.name,type:o.type,level:o.level,address:o.address,phone:o.phone,principal:o.principal,adminEmail:o.adminEmail,password:randomLegacyPassword});
+      const logoUrl=saveApplicationLogo_(o.logoData,o.requestId);
+      const school=registerSchool({name:o.name,type:o.type,level:o.level,address:o.address,phone:o.phone,principal:o.principal,adminEmail:o.adminEmail,password:randomLegacyPassword,logo:logoUrl});
       const users=adminUsers(school.schoolId),now=new Date().toISOString();
       const admin={id:genId('adm'),username:String(o.adminUsername).toLowerCase(),displayName:String(o.adminDisplayName),passwordHash:String(o.adminPasswordHash),salt:String(o.adminPasswordSalt),status:'Active',version:1,createdAt:now,updatedAt:now};
       users.sh.appendRow(recordToRow(users.headers,admin));
-      setApplication_(a.sh,a.headers,row.index,{status:'Active',reviewedAt:now,activatedAt:now,schoolId:school.schoolId,adminPasswordHash:'',adminPasswordSalt:'',notification:'School and administrator activated'});
+      setApplication_(a.sh,a.headers,row.index,{status:'Active',reviewedAt:now,activatedAt:now,schoolId:school.schoolId,adminPasswordHash:'',adminPasswordSalt:'',logoData:'',notification:'School and administrator activated'});
       try{MailApp.sendEmail({to:o.adminEmail,subject:'LamaStudio School Suite: Account approved',body:'Your school account is active. Sign in using your School ID '+school.schoolId+' and the administrator ID and password you chose during registration. Never share your password.'});}catch(emailError){setApplication_(a.sh,a.headers,row.index,{notification:'Activated; approval email failed: '+emailError.message});}
       return {status:'Active',schoolId:school.schoolId};
     }

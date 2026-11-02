@@ -1784,7 +1784,7 @@ function requestSchoolRegistration_(p){
   const type=['Private','Government'].includes(p.type)?p.type:'Private';
   const level=['Primary','Middle','High','Higher Secondary'].includes(p.level)?p.level:'Primary';
   const plan=['Trial','Monthly','Annual'].includes(p.plan)?p.plan:'Trial';
-  const validClasses=['Playgroup','Nursery','Prep','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
+  const validClasses=['ECCE','Playgroup','Nursery','Prep','Class 1','Class 2','Class 3','Class 4','Class 5','Class 6','Class 7','Class 8','Class 9','Class 10','Class 11','Class 12'];
   const classes=Array.isArray(p.classes)?[...new Set(p.classes.map(String))].filter(c=>validClasses.includes(c)):[];
   if(!classes.length)throw Error('Select at least one class.');
   const teacherCount=Number(p.teacherCount),studentCount=p.studentCount===''||p.studentCount==null?'':Number(p.studentCount);

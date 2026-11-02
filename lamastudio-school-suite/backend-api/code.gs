@@ -1421,6 +1421,46 @@ function ownerSaveCampus(p){
     return item;
   }finally{lock.releaseLock()}
 }
+// Campus data is deliberately stored in distinct tabs with campus-ID suffixes.
+// This owner-only API never exposes legacy main-campus records or credentials.
+const CAMPUS_COLLECTIONS_=['students','teachers','attendance','fees','homework','tests','datesheet','timetable'];
+function ownerCampusRecords_(p,operation){
+  authorizeSchoolOwner_(p);
+  const campusId=String(p.campusId||'');
+  if(!campusId||campusId==='main')throw Error('Select a separate campus. Main-campus data uses existing school operations.');
+  const directory=ownerCampusDirectory_(p.schoolId);
+  const campus=directory.items.find(x=>String(x.obj.campusId)===campusId);
+  if(!campus||campus.obj.status!=='Active')throw Error('Campus is missing or disabled.');
+  const collection=String(p.collection||'');
+  if(CAMPUS_COLLECTIONS_.indexOf(collection)<0)throw Error('Unsupported campus collection.');
+  const cfg=COLLECTIONS[collection];
+  const ss=adminUsers(p.schoolId).ss;
+  const tab='Campus_'+campusId.replace(/[^a-zA-Z0-9_-]/g,'_')+'_'+collection;
+  const sh=secureTab(ss,tab,cfg.headers);
+  const headers=sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  const idCol=headers.indexOf('id');
+  if(idCol<0)throw Error('Campus record ID column is missing.');
+  const values=sh.getDataRange().getValues();
+  const entries=values.slice(1).map((v,i)=>({row:i+2,obj:rowToRecord(headers,v)})).filter(x=>x.obj.id);
+  const scrub=x=>{const o=Object.assign({},x);['apiKey','password','passwordHash','salt','token'].forEach(k=>delete o[k]);return o};
+  if(operation==='list')return entries.map(x=>scrub(x.obj));
+  if(operation==='save'){
+    assertSchoolWritable(p.schoolId);
+    if(!p.record||typeof p.record!=='object'||Array.isArray(p.record))throw Error('A valid campus record is required.');
+    const requestedId=String(p.record.id||'');
+    const existing=requestedId?entries.find(x=>String(x.obj.id)===requestedId):null;
+    if(requestedId&&!existing)throw Error('Campus record not found.');
+    const allowed=headers.filter(h=>!['id','createdAt','passwordHash','apiKey','salt','token'].includes(h));
+    const patch={};allowed.forEach(h=>{if(Object.prototype.hasOwnProperty.call(p.record,h))patch[h]=p.record[h]});
+    const now=new Date().toISOString();
+    const result=Object.assign({},existing?existing.obj:{},patch,{id:existing?existing.obj.id:genId(collection.slice(0,3)),createdAt:existing?existing.obj.createdAt:now,updatedAt:now});
+    if(existing)sh.getRange(existing.row,1,1,headers.length).setValues([recordToRow(headers,result)]);
+    else sh.appendRow(recordToRow(headers,result));
+    writeAudit(ss,p.schoolId,{id:'owner:'+p.schoolId,name:'School Owner',role:'schoolOwner'},existing?'update':'add','campus:'+campusId+':'+collection,result.id,existing?existing.obj:null,result);
+    return scrub(result);
+  }
+  throw Error('Unknown campus operation.');
+}
 function ownerListSchoolUsers(p){
   authorizeSchoolOwner_(p);
   const u=adminUsers(p.schoolId);
@@ -1540,7 +1580,7 @@ function handleRequest(params) {
     try {
         // Campus-directory actions are owner-only. Other operations must not
         // accidentally fall back to the main campus for a different campus.
-        if (params.campusId && String(params.campusId) !== 'main' && ['ownerListCampuses','ownerSaveCampus'].indexOf(action) === -1) {
+        if (params.campusId && String(params.campusId) !== 'main' && ['ownerListCampuses','ownerSaveCampus','ownerListCampusRecords','ownerSaveCampusRecord'].indexOf(action) === -1) {
             throw new Error('Campus-specific operations are not enabled yet. Existing main-campus records were not accessed.');
         }
         // Authenticate school administrators before resolving teacher-management credentials.
@@ -1568,6 +1608,8 @@ function handleRequest(params) {
                 return {status:'success',result:manageStudentCodes(params,true)};
             case 'importStudentsBatch':
                 return {status:'success',result:importStudentsBatch(params)};
+            case 'ownerListCampusRecords': return {status:'success',records:ownerCampusRecords_(params,'list')};
+            case 'ownerSaveCampusRecord': return {status:'success',record:ownerCampusRecords_(params,'save')};
             case 'ownerListCampuses': return {status:'success',campuses:ownerListCampuses(params)};
             case 'ownerSaveCampus': return {status:'success',campus:ownerSaveCampus(params)};
             case 'ownerListSchoolUsers': return {status:'success',users:ownerListSchoolUsers(params)};

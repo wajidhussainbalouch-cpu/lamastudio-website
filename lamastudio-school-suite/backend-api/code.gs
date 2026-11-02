@@ -641,7 +641,8 @@ function addTeacher(schoolId, apiKey, p) {
         subject: p.subject || '', assignedClass: p.assignedClass || '', assignedSection: p.assignedSection || '',
         contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString(),
         cnic: p.cnic || '', dob: p.dob || '', gender: p.gender || '', qualification: p.qualification || '',
-        joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || ''
+        joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || '',
+        experience:p.experience||'',designation:p.designation||'',photo:p.photo||''
     };
     sheet.appendRow(recordToRow(headers, record));
     const safe = Object.assign({}, record); delete safe.passwordHash; delete safe.apiKey;
@@ -1021,6 +1022,7 @@ function updateRecord(ctx, collection, id, patch) {
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
             if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'update',collection,id,existing,updated);
+            if(collection==='teachers'){const safe=Object.assign({},updated);delete safe.passwordHash;delete safe.apiKey;delete safe.password;return safe;}
             return updated;
         }
     }

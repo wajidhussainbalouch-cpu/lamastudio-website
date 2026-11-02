@@ -695,6 +695,9 @@ document.getElementById('editHeightCm').value=t.heightCm||'';document.getElement
         }
         async function init() {
             const session=LamaAPI.getSession('school') || {};
+            const adminContext=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
+            if(!session.schoolId && adminContext?.schoolId) session.schoolId=adminContext.schoolId;
+            if(!session.apiKey && adminContext?.token) session.apiKey='ADMIN_TOKEN_AUTH';
             // Restore school context from the existing authenticated admin session when
             // the teacher page was opened after a role switch in the same browser.
             let adminAuth=null;

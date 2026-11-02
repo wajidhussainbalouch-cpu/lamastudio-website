@@ -41,6 +41,10 @@ nav{background:#102b32;border-color:#ffffff24;overflow-x:auto;flex-wrap:nowrap!i
 button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #e9c876;outline-offset:3px}
 @media(max-width:750px){header{align-items:flex-start}header>div:first-child{min-width:0;flex:1}#headerSchoolName{overflow-wrap:anywhere}main{padding-top:18px!important}.teacher-hero{border-radius:23px;padding:27px 23px}.overview-grid{gap:12px}.overview-tile{padding:17px;min-height:139px}.overview-tile strong{font-size:clamp(20px,6vw,28px)}.overview-tile:has(#statClass) strong{font-size:clamp(16px,4.8vw,22px)}nav{position:relative;top:auto;margin-left:16px;margin-right:16px;padding:8px!important}.hero-actions>*{min-height:46px}}
 @media(max-width:390px){.overview-grid{gap:9px}.overview-tile{padding:13px;min-height:133px}.tile-icon{right:11px;top:12px;font-size:19px}.overview-tile strong{font-size:23px}.overview-tile:has(#statClass) strong{font-size:18px}.hero-actions>*{width:100%}}
+
+/* Student records, weekly history and non-obstructive mobile controls. */
+.student-directory{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px}.student-directory-item{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;background:#142c35;border:1px solid #537c7b66;border-radius:16px;color:#f6ffff;min-width:0}.student-directory-item:hover,.student-directory-item:focus-visible{border-color:#69d4ba;background:#1a3b40}.student-directory-item span:nth-child(2){min-width:0;flex:1}.student-directory-item strong,.student-directory-item small{display:block;overflow-wrap:anywhere}.student-directory-item small{color:#b7cbcd;margin-top:4px;font-size:12px}.student-avatar{width:52px;height:52px;border-radius:13px;background:#285c63;display:grid;place-items:center;flex-shrink:0;overflow:hidden;font-size:24px}.student-avatar img{width:100%;height:100%;object-fit:cover}.student-view{font-size:12px;color:#b9e8db;white-space:nowrap}.student-details{margin-top:16px;padding:20px;background:#10242e;border:1px solid #5e999060;border-radius:18px}.student-details h3{font-weight:850;font-size:20px}.student-details h4{font-weight:800;margin:20px 0 12px}.student-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:15px}.student-facts>div{padding:12px;border-radius:11px;background:#ffffff0a;border:1px solid #ffffff16}.student-facts small,.student-facts strong{display:block}.student-facts small{color:#a7c1c5;font-size:11px}.student-facts strong{margin-top:5px;overflow-wrap:anywhere}.week-attendance{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.week-day{padding:10px 4px;border-radius:10px;background:#ffffff0b;text-align:center;border:1px solid #ffffff17}.week-day small,.week-day strong{display:block;font-size:11px}.week-day strong{font-size:10px;margin-top:6px;overflow-wrap:anywhere;color:#bccbd0}.week-day strong[data-status="Present"]{color:#70e0ac}.week-day strong[data-status="Absent"]{color:#ff8e9d}.week-day strong[data-status="Leave"]{color:#ffd08a}.student-note{font-size:12px;color:#b3c8cb;margin-top:12px}.leave-request-link{display:inline-flex;align-items:center;justify-content:center;min-height:45px;margin:16px 16px 24px auto;padding:11px 17px;border-radius:13px;background:#168a81;color:white;text-decoration:none;font-weight:800;box-shadow:0 8px 18px #0003;width:max-content;max-width:calc(100% - 32px)}.leave-request-link:focus-visible{outline:3px solid #ffd68c;outline-offset:3px}
+@media(max-width:620px){.week-attendance{grid-template-columns:repeat(4,minmax(0,1fr))}.student-directory{grid-template-columns:1fr}.student-details{padding:14px}.student-view{font-size:11px}}
 </style></head>
 <body class="bg-[#081425] text-slate-100 font-sans min-h-screen">
 
@@ -64,6 +68,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 
     <!-- Tab Bar -->
     <nav class="max-w-6xl mx-auto px-4 mt-5 flex gap-2 flex-wrap">
+        <button class="tab-btn" data-tab="students" onclick="switchTab('students')">👥 My Students</button>
         <button class="tab-btn" data-tab="attendance" onclick="switchTab('attendance')">📋 Attendance</button>
         <button class="tab-btn" data-tab="absentees" onclick="switchTab('absentees')">🔔 Absentee Alerts</button>
         <button class="tab-btn" data-tab="homework" onclick="switchTab('homework')">📝 Homework</button>
@@ -111,7 +116,13 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 </section>
 
 
-        <!-- ATTENDANCE TAB -->
+        <section id="tab-students" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
+<h2 class="text-lg font-black">My Class · Student Directory</h2>
+<p class="text-sm text-slate-300">Students in your assigned class only. Select a student to view their basic profile and the last seven calendar days of recorded attendance. Attendance marking remains separate.</p>
+<div id="studentDirectory" class="student-directory"></div>
+<div id="studentDetails" class="student-details hidden" aria-live="polite"></div>
+</section>
+<!-- ATTENDANCE TAB -->
         <section id="tab-attendance" class="tab-panel cyber-card rounded-2xl p-5 space-y-4">
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <h2 class="text-xs font-black uppercase text-cyan-400">Mark Attendance</h2>
@@ -246,7 +257,32 @@ function updateStats(){
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`Class ${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 async function refresh(){const collections=['students','attendance','homework','notifications','results'];const data=await Promise.all(collections.map(async c=>{try{return await LamaAPI.list(c)}catch(e){if(c==='students')throw e;console.warn(c,e);return []}}));myStudents=data[0].filter(scope);attendance=data[1].filter(a=>schoolMatch(a)&&!!myStudent(a.studentId));homework=data[2].filter(scope);notices=data[3].filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'));results=data[4].filter(r=>schoolMatch(r)&&!!myStudent(r.studentId));renderAll()}
-function renderAll(){updateStats();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+function renderAll(){updateStats();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+function renderStudentDirectory(){
+ const el=$('studentDirectory');if(!el)return;
+ if(!myStudents.length){el.innerHTML='<p class="text-slate-300">No students found in your assigned class.</p>';$('studentDetails').classList.add('hidden');return}
+ el.replaceChildren();
+ myStudents.forEach(st=>{
+ const button=document.createElement('button');button.type='button';button.className='student-directory-item';
+ const photo=st.photo||st.photoUrl||st.studentPhoto||'';
+ const avatar=document.createElement('span');avatar.className='student-avatar';
+ if(photo&&/^https:\/\//i.test(String(photo))){const img=document.createElement('img');img.src=photo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>avatar.replaceChildren(document.createTextNode('👤'));avatar.append(img)}else avatar.textContent='👤';
+ const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=st.name||'Student';const info=document.createElement('small');info.textContent='Enrollment: '+(st.enrlNo||st.enrollmentNo||'—')+' · '+(st.class||me.assignedClass||'');copy.append(name,info);
+ const arrow=document.createElement('span');arrow.textContent='View record ›';arrow.className='student-view';button.append(avatar,copy,arrow);button.onclick=()=>showStudentRecord(st.id);el.append(button)
+ })
+}
+function showStudentRecord(id){
+ const st=myStudent(id);if(!st)return;
+ const el=$('studentDetails');el.replaceChildren();el.classList.remove('hidden');
+ const heading=document.createElement('h3');heading.textContent=(st.name||'Student')+' · Class record';el.append(heading);
+ const grid=document.createElement('div');grid.className='student-facts';
+ const facts=[['Enrollment',st.enrlNo||st.enrollmentNo],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Father / Guardian',st.fatherName||st.father||st.guardianName],['Gender',st.gender],['Roll number',st.rollNo||st.rollNumber]];
+ for(const [label,value] of facts){if(!value)continue;const cell=document.createElement('div');const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=String(value);cell.append(l,v);grid.append(cell)}el.append(grid);
+ const h=document.createElement('h4');h.textContent='Last 7 days · Attendance history';el.append(h);
+ const strip=document.createElement('div');strip.className='week-attendance';
+ for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const a=attendance.find(x=>String(x.studentId)===String(st.id)&&String(x.date).slice(0,10)===date);const item=document.createElement('div');item.className='week-day';const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=a?.status||'Not marked';status.dataset.status=a?.status||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
+ const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows saved records only. To mark or change attendance, open the Attendance tab.';el.append(note);el.scrollIntoView({behavior:'smooth',block:'nearest'})
+}
 function loadAttendanceList(){const day=$('attDate').value;const el=$('attendanceList');$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);el.innerHTML=myStudents.map(s=>{const a=attendance.find(x=>String(x.studentId)===String(s.id)&&x.date===day);const status=a?.status||'';return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span></span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`}).join('')}
 function setAttStatus(btn,status){const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
 async function saveAttendance(){if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');const day=$('attDate').value;if(!day)return message('Choose date');let ok=0,fail=0;for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');if(!student||!btn)continue;const old=attendance.find(x=>String(x.studentId)===String(student.id)&&x.date===day);const record={schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',studentId:student.id,studentName:student.name,date:day,status:btn.dataset.status,teacherId:me.teacherId||me.id};try{if(old)await LamaAPI.update('attendance',old.id,record);else await LamaAPI.add('attendance',record);ok++}catch(e){fail++;console.error(e)}}await refresh();message(`Attendance saved: ${ok}. Failed: ${fail}. Unselected students were not changed.`)}
@@ -277,5 +313,5 @@ init();
         .att-active-leave { background: #d97706; color: white; }
         .contact-icon { font-size: 13px; padding: 2px 4px; border-radius: 6px; background: #1e293b; text-decoration: none; }
     </style>
-<a href="leave-request.html" style="position:fixed;bottom:20px;right:20px;z-index:999;background:#0891b2;color:white;padding:12px 18px;border-radius:12px;text-decoration:none;font-weight:bold;box-shadow:0 6px 24px #0008">📝 Leave Request</a></body>
+<a href="leave-request.html" class="leave-request-link">📝 Leave Request</a></body>
 </html>

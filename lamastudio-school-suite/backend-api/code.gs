@@ -777,6 +777,9 @@ function recordToRow(headers, record) {
 
 /** Resolves { role, schoolId, apiKey, teacherId?, studentId? } into a working Spreadsheet + role context. */
 function resolveContext(p) {
+    // Until each campus has independent storage and role grants, never let a
+    // request for a new campus silently read or write the legacy main database.
+    if (p.campusId && String(p.campusId) !== 'main') throw new Error('Campus-specific records are not enabled yet. No data was changed.');
     const role = p.role || 'school';
     if (role === 'school') {
         const match = authorizeSchool(p.schoolId, p.apiKey);
@@ -1535,6 +1538,11 @@ function clearStudentAttendanceDate_(p) {
 function handleRequest(params) {
     const action = params.action;
     try {
+        // Campus-directory actions are owner-only. Other operations must not
+        // accidentally fall back to the main campus for a different campus.
+        if (params.campusId && String(params.campusId) !== 'main' && ['ownerListCampuses','ownerSaveCampus'].indexOf(action) === -1) {
+            throw new Error('Campus-specific operations are not enabled yet. Existing main-campus records were not accessed.');
+        }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
         const teacherScoped = action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||

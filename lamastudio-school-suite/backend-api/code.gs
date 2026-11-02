@@ -1477,6 +1477,16 @@ function clearStudentAttendanceDate_(p) {
 function handleRequest(params) {
     const action = params.action;
     try {
+        // Authenticate school administrators before resolving teacher-management credentials.
+        // The API key remains server-side and is never returned to the browser.
+        const teacherScoped = action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+            (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers');
+        if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
+            verifySchoolAdminToken(params);
+            const schoolRecord = findSchoolRow(getRegistrySheet(), r => String(r.schoolId) === String(params.schoolId));
+            if (!schoolRecord || schoolRecord.obj.status !== 'Active') throw new Error('School is not active.');
+            params.apiKey = schoolRecord.obj.apiKey;
+        }
         const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);

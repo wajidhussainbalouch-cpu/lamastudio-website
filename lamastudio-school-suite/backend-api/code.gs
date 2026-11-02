@@ -1402,6 +1402,8 @@ function ownerSaveCampus(p){
   if(!['Active','Disabled'].includes(status))throw Error('Invalid campus status.');
   const campusId=String(p.campusId||'').trim();
   if(campusId==='main')throw Error('The existing main campus cannot be changed through this action.');
+  // Reject spreadsheet formulas in user-controlled labels rather than evaluating them.
+  if(/^[=+@-]/.test(campusName)||/^[=+@-]/.test(String(p.address||'').trim()))throw Error('Campus names and addresses cannot begin with spreadsheet formula characters.');
   const lock=LockService.getScriptLock();lock.waitLock(20000);
   try{
     const directory=ownerCampusDirectory_(p.schoolId);
@@ -1412,6 +1414,7 @@ function ownerSaveCampus(p){
     const item={campusId:found?found.obj.campusId:genId('campus'),campusName,address:String(p.address||'').trim().slice(0,300),status,createdAt:found?found.obj.createdAt:now,updatedAt:now};
     if(found)directory.sh.getRange(found.rowIndex,1,1,OWNER_CAMPUS_HEADERS_.length).setValues([OWNER_CAMPUS_HEADERS_.map(h=>item[h])]);
     else directory.sh.appendRow(OWNER_CAMPUS_HEADERS_.map(h=>item[h]));
+    writeAudit(adminUsers(p.schoolId).ss,p.schoolId,{id:'owner:'+p.schoolId,name:'School Owner',role:'schoolOwner'},found?'update':'add','campuses',item.campusId,found?found.obj:null,item);
     return item;
   }finally{lock.releaseLock()}
 }

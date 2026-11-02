@@ -1372,13 +1372,31 @@ function adminUsers(schoolId){
   const rows=sh.getDataRange().getValues(), headers=rows[0];
   return {ss,sh,headers,items:rows.slice(1).map((row,i)=>({rowIndex:i+2,obj:rowToRecord(headers,row)})).filter(x=>x.obj.id)};
 }
+function authorizeSchoolOwner_(p){
+  if(!p||!p.schoolId||!p.ownerEmail||!p.ownerPassword)throw new Error('School owner email and password are required.');
+  const school=loginSchool(String(p.ownerEmail).trim(),String(p.ownerPassword));
+  if(String(school.schoolId)!==String(p.schoolId))throw new Error('This owner account does not belong to the selected school.');
+  return {id:'owner:'+school.schoolId,name:school.name,role:'schoolOwner'};
+}
+function ownerListSchoolUsers(p){
+  authorizeSchoolOwner_(p);
+  const u=adminUsers(p.schoolId);
+  return u.items.map(x=>({id:x.obj.id,username:x.obj.username,displayName:x.obj.displayName,status:x.obj.status,createdAt:x.obj.createdAt,updatedAt:x.obj.updatedAt}));
+}
+function ownerSaveSchoolUser(p){
+  const actor=authorizeSchoolOwner_(p);
+  return saveSchoolUserAuthorized_(p,actor);
+}
 function adminListSchoolUsers(p){
   authorizeAdmin(p.adminApiKey);
   const u=adminUsers(p.schoolId);
   return u.items.map(x=>({id:x.obj.id,username:x.obj.username,displayName:x.obj.displayName,status:x.obj.status,createdAt:x.obj.createdAt,updatedAt:x.obj.updatedAt}));
 }
 function adminSaveSchoolUser(p){
-  authorizeAdmin(p.adminApiKey);
+  throw new Error('Administrator management belongs to the School Owner.');
+}
+function saveSchoolUserAuthorized_(p,actor){
+  if(!actor||actor.role!=='schoolOwner')throw new Error('School Owner authorization required.');
   const username=String(p.username||'').trim().toLowerCase(),displayName=String(p.displayName||'').trim();
   if(!/^[a-z0-9._-]{3,40}$/.test(username))throw new Error('Username must be 3-40 characters: letters, numbers, dot, underscore or dash.');
   if(!displayName||displayName.length>100)throw new Error('Display name is required (maximum 100 characters).');
@@ -1395,7 +1413,7 @@ function adminSaveSchoolUser(p){
     const record={id:old?old.id:genId('adm'),username,displayName,passwordHash:password?hashPassword(password,salt):old.passwordHash,salt,status,version:(old?Number(old.version)||1:0)+1,createdAt:old?old.createdAt:now,updatedAt:now};
     if(found)u.sh.getRange(found.rowIndex,1,1,u.headers.length).setValues([recordToRow(u.headers,record)]);
     else u.sh.appendRow(recordToRow(u.headers,record));
-    writeAudit(u.ss,p.schoolId,{id:'superadmin',name:'Super Admin',role:'superadmin'},old?'update':'add','schoolAdmins',record.id,old?{username:old.username,displayName:old.displayName,status:old.status}:null,{username,displayName,status});
+    writeAudit(u.ss,p.schoolId,actor,old?'update':'add','schoolAdmins',record.id,old?{username:old.username,displayName:old.displayName,status:old.status}:null,{username,displayName,status});
     return {id:record.id,username,displayName,status};
   }finally{lock.releaseLock();}
 }
@@ -1502,7 +1520,9 @@ function handleRequest(params) {
                 return {status:'success',result:manageStudentCodes(params,true)};
             case 'importStudentsBatch':
                 return {status:'success',result:importStudentsBatch(params)};
-            case 'adminListSchoolUsers': return {status:'success',users:adminListSchoolUsers(params)};
+            case 'ownerListSchoolUsers': return {status:'success',users:ownerListSchoolUsers(params)};
+            case 'ownerSaveSchoolUser': return {status:'success',user:ownerSaveSchoolUser(params)};
+            case 'adminListSchoolUsers': throw new Error('Use the School Owner dashboard to manage administrators.');
             case 'adminSaveSchoolUser': return {status:'success',user:adminSaveSchoolUser(params)};
             case 'adminGetAudit': return {status:'success',records:adminGetAudit(params)};
             case 'schoolAdminSetup':

@@ -38,6 +38,13 @@ const LamaAPI = (() => {
     const schoolScoped = action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers');
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
+    // Administrator login can be token-only: never require or fabricate a school API key.
+    // The backend verifies the admin token and resolves the real key server-side.
+    if (schoolScoped && (!body.schoolId || !body.apiKey)) {
+      let auth=null;
+      try { auth=parse(sessionStorage.getItem('lama_school_admin_auth')); } catch (_) {}
+      if(auth?.schoolId && auth?.token){body.role='school';body.schoolId=auth.schoolId;body.token=auth.token;}
+    }
     if (schoolScoped) {
       let adminAuth = null;
       try { adminAuth = parse(sessionStorage.getItem('lama_school_admin_auth')); } catch (_) {}

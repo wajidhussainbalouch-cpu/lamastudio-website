@@ -610,8 +610,8 @@ function adminResetPassword(adminApiKey, schoolId) {
 /** School Admin action: create a teacher account inside their own school's sheet. */
 function addTeacher(schoolId, apiKey, p) {
     assertSchoolWritable(schoolId);
-    if (!p.name || !p.password || p.password.length < 6 || !String(p.assignedClass||'').trim()) {
-        throw new Error('Name, assigned class, and a password of at least 6 characters are required.');
+    if (!String(p.name||'').trim() || !p.password || String(p.password).length < 6) {
+        throw new Error('Teacher name and a password of at least 6 characters are required. Assign a class now or later.');
     }
     const match = authorizeSchool(schoolId, apiKey);
     const ss = SpreadsheetApp.openById(match.obj.sheetId);
@@ -627,7 +627,7 @@ function addTeacher(schoolId, apiKey, p) {
     if(loginId&&!/^[a-z0-9._-]{3,40}$/.test(loginId))throw new Error('Teacher Login ID must be 3–40 letters, digits, dots, underscores or dashes.');
     const identifierSet=new Set([email,loginId].filter(Boolean));
     for (let i = 1; i < existing.length; i++) {
-        const otherEmail=String(existing[i][emailCol]||'').trim().toLowerCase();
+        const otherEmail=emailCol>=0?String(existing[i][emailCol]||'').trim().toLowerCase():'';
         const otherLogin=loginCol>=0?String(existing[i][loginCol]||'').trim().toLowerCase():'';
         const otherId=String(existing[i][headers.indexOf('id')]||'').trim().toLowerCase();
         if([otherEmail,otherLogin,otherId].some(v=>v&&identifierSet.has(v)))throw new Error('Teacher email or Login ID already exists at this school.');
@@ -643,7 +643,7 @@ function addTeacher(schoolId, apiKey, p) {
         joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || ''
     };
     sheet.appendRow(recordToRow(headers, record));
-    const safe = Object.assign({}, record); delete safe.passwordHash;
+    const safe = Object.assign({}, record); delete safe.passwordHash; delete safe.apiKey;
     return safe;
 }
 

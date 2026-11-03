@@ -5,7 +5,16 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
 .date-control{display:flex;align-items:center;gap:7px;position:relative}.date-control .field{flex:1;min-width:0}.date-control .native-date{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
 @media print{.no-print{display:none!important}body{background:#fff;color:#111}.panel{box-shadow:none;border:0}.student-row{break-inside:avoid}header{display:none!important}@page{size:A4;margin:10mm}}
 .completed-lock{opacity:.6;pointer-events:none}.done-overlay{position:fixed;inset:0;background:#071b22a8;display:none;align-items:center;justify-content:center;z-index:999;padding:16px}.done-overlay.show{display:flex}.done-dialog{background:var(--card);color:var(--text);border-radius:20px;padding:26px;max-width:450px;width:100%;box-shadow:0 20px 65px #0004}.done-dialog h2{font-size:23px;font-weight:900}.done-dialog p{margin:12px 0 20px;color:var(--muted)}
-html.followup-only main>section:not(#outreachPanel),body.followup-only main>section:not(#outreachPanel){display:none!important}html.followup-only #outreachPanel,body.followup-only #outreachPanel{margin-top:0!important}html.followup-only main,body.followup-only main{padding-top:16px}#outreachPanel{scroll-margin-top:16px}.followup-done{display:inline-flex;align-items:center;border:1px solid #86efac;border-radius:999px;background:#dcfce7;color:#166534;padding:5px 10px;font-weight:800;font-size:12px}@media(max-width:640px){#outreachRows article{padding:12px}#outreachRows .btn{min-height:40px}}\n</style></head><body class="min-h-screen">
+html.followup-only main>section:not(#outreachPanel),body.followup-only main>section:not(#outreachPanel){display:none!important}html.followup-only #outreachPanel,body.followup-only #outreachPanel{margin-top:0!important}html.followup-only main,body.followup-only main{padding-top:16px}#outreachPanel{scroll-margin-top:16px}.followup-done{display:inline-flex;align-items:center;border:1px solid #86efac;border-radius:999px;background:#dcfce7;color:#166534;padding:5px 10px;font-weight:800;font-size:12px}@media(max-width:640px){#outreachRows article{padding:12px}#outreachRows .btn{min-height:40px}}\n</style><style>
+[data-qr-scanner].qr-immersive{position:fixed!important;inset:0!important;z-index:99999!important;overflow-y:auto!important;overscroll-behavior:contain;background:#071d25!important;color:#fff!important;border:0!important;border-radius:0!important;padding:max(14px,env(safe-area-inset-top)) 14px max(18px,env(safe-area-inset-bottom))!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:12px}
+[data-qr-scanner].qr-immersive>h3{font-size:20px!important;color:#fff!important}
+[data-qr-scanner].qr-immersive>p{color:#d0e4e7!important}
+[data-qr-scanner].qr-immersive video{display:block!important;width:100%!important;max-width:none!important;flex:1 1 auto;min-height:220px;max-height:calc(100dvh - 270px);aspect-ratio:auto!important;object-fit:cover;border:2px solid #4ca9a8;border-radius:16px!important;margin:0!important}
+[data-qr-scanner].qr-immersive .qr-close{display:inline-flex!important;align-items:center;justify-content:center;align-self:flex-end;min-height:44px;padding:8px 18px;border-radius:12px;border:1px solid #9bc8cc;background:#173d47;color:white;font-weight:800}
+[data-qr-scanner] .qr-close{display:none}
+body.qr-scanning{overflow:hidden!important}
+@media(orientation:landscape){[data-qr-scanner].qr-immersive video{max-height:calc(100dvh - 200px);min-height:130px}}
+</style></head><body class="min-h-screen">
 <header class="no-print" style="background:#b8d51e;color:#17474c"><div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center flex-wrap gap-3"><div class="flex items-center gap-3"><div id="logo" class="w-12 h-12 bg-[#0b6570] text-white rounded-xl grid place-items-center font-black overflow-hidden">LS</div><div><h1 id="schoolName" class="font-black text-lg">School</h1><p class="text-xs font-bold">Student Attendance · Daily Register</p></div></div><div class="flex gap-2 flex-wrap"><a class="btn" href="../dashboard.html">← Dashboard</a><button id="theme" class="btn">☾ Theme</button><button id="logout" class="btn">Logout</button></div></div></header>
 <div id="doneOverlay" class="done-overlay no-print" role="dialog" aria-modal="true" aria-labelledby="doneTitle"><div class="done-dialog"><h2 id="doneTitle">✓ Today's attendance is complete</h2><p id="doneMessage">All student attendance records are saved for the selected date. Editing is locked to prevent accidental changes.</p><div class="flex gap-2 flex-wrap"><button class="btn primary" id="doneClose">View register</button><button class="btn" id="doneEdit">✎ Enable editing</button></div></div></div><main class="max-w-7xl mx-auto px-4 py-6 space-y-5">
 <div id="notice" class="hidden no-print p-3 rounded-xl border border-amber-400 bg-amber-50 text-amber-950 text-sm" role="status"></div>
@@ -16,13 +25,13 @@ html.followup-only main>section:not(#outreachPanel),body.followup-only main>sect
 <div class="stat"><span class="mini muted">Enrolled</span><strong id="total">—</strong></div><div class="stat"><span class="mini muted">Present</span><strong id="present" class="text-emerald-500">—</strong></div><div class="stat"><span class="mini muted">Absent</span><strong id="absent" class="text-rose-500">—</strong></div><div class="stat"><span class="mini muted">Leave</span><strong id="leave" class="text-amber-500">—</strong></div><div class="stat"><span class="mini muted">Unmarked</span><strong id="unmarked">—</strong></div>
 </section>
 <section class="panel p-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h3 class="font-black text-lg">Daily Attendance Register</h3><p id="summary" class="muted text-xs mt-1">Loading...</p></div><div class="no-print flex flex-wrap gap-2"><button id="markVisible" class="btn lime">✓ Mark visible present</button><button id="enableEdit" class="btn" style="display:none">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button><button id="clearDate" type="button" class="btn" style="border:1px solid #dc2626;color:#dc2626">🗑 Remove date attendance (Admin)</button></div></div><div class="bar mt-4"><div id="progress"></div></div><div id="list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4"><p class="muted text-sm">Loading student records...</p></div></section>
-<section class="panel p-5 no-print" id="qrAttendancePanel" aria-label="QR student attendance">
+<section class="panel p-5 no-print" id="qrAttendancePanel" data-qr-scanner="true" aria-label="QR student attendance">
 <h3 class="font-black text-xl">▣ QR Card Attendance <span class="text-xs font-normal muted">Optional</span></h3>
 <p class="muted text-sm mt-2">Scan a student ID card with this device. A scan selects Present in the existing register; press Save changes to write attendance. Manual marking remains available.</p>
 <div class="flex gap-2 flex-wrap mt-3"><button class="btn primary" type="button" id="qrStart">📷 Start QR scanner</button><button class="btn" type="button" id="qrStop" disabled>Stop camera</button></div>
 <video id="qrVideo" playsinline muted style="display:none;width:100%;max-width:440px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-top:12px;background:#081b23"></video>
 <div id="qrIndicator" role="status" aria-live="polite" style="margin-top:12px;padding:12px;border-radius:12px;border:2px solid #b8c9cb;font-weight:800"><span id="qrSymbol" style="font-size:28px">○</span> <span id="qrState">Ready to scan</span></div><p id="qrResult" aria-live="polite" class="muted text-sm mt-3">Camera access requires HTTPS and browser permission. QR cards must be issued by the school.</p>
-</section>
+<button class="qr-close" id="qrAttendancePanelClose" type="button">✕ Close scanner · Save attendance</button></section>
 <section class="panel p-5 no-print" id="arrivalPanel">
 <div class="flex flex-wrap justify-between gap-3 items-start"><div><h3 class="font-black text-lg">Class Attendance & Parent Arrival Messages</h3><p class="muted text-xs mt-1">Live class status from the selected attendance date. Pending edits are shown separately from saved records.</p></div><span id="arrivalSummary" class="muted text-sm" role="status">Loading class status…</span></div>
 <label class="flex gap-2 items-center text-sm mt-3"><input id="arrivalConsent" type="checkbox"> I confirm the school has permission to contact these parents through WhatsApp.</label><div id="arrivalClasses" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
@@ -338,7 +347,7 @@ function qrFeedback(kind,message){
  $('qrSymbol').textContent=symbol;$('qrState').textContent=message;qrResult.textContent=message;qrSignal(kind);
 }
 const qrVideo=$('qrVideo'),qrResult=$('qrResult');
-function qrStop(){qrLoopActive=false;if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}qrVideo.pause();qrVideo.srcObject=null;qrVideo.style.display='none';$('qrStart').disabled=false;$('qrStop').disabled=true}
+function qrStop(){document.getElementById('qrAttendancePanel')?.classList.remove('qr-immersive');document.body.classList.remove('qr-scanning');qrLoopActive=false;if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}qrVideo.pause();qrVideo.srcObject=null;qrVideo.style.display='none';$('qrStart').disabled=false;$('qrStop').disabled=true}
 async function qrStart(){
  if(qrLoopActive)return;
  if(!editEnabled||pendingVerification){qrResult.textContent='Enable attendance editing before scanning.';return}
@@ -347,7 +356,7 @@ async function qrStart(){
   const detector=new BarcodeDetector({formats:['qr_code']});
   qrStudentIndex=new Map(students.map(student=>[sid(student),student]));
   qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
-  qrVideo.srcObject=qrStream;await qrVideo.play();qrVideo.style.display='block';qrLoopActive=true;$('qrStart').disabled=true;$('qrStop').disabled=false;
+  qrVideo.srcObject=qrStream;await qrVideo.play();qrVideo.style.display='block';document.getElementById('qrAttendancePanel').classList.add('qr-immersive');document.body.classList.add('qr-scanning');qrLoopActive=true;$('qrStart').disabled=true;$('qrStop').disabled=false;
   qrResult.textContent='Point the camera at a student ID card.';
   async function frame(){
    if(!qrLoopActive)return;
@@ -370,4 +379,7 @@ async function qrStart(){
 }
 $('qrStart').addEventListener('click',qrStart);$('qrStop').addEventListener('click',qrStop);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)qrStop()});window.addEventListener('pagehide',qrStop);
+document.getElementById('qrAttendancePanelClose').addEventListener('click',()=>{qrStop();if(location.hash==='#qrAttendancePanel')history.replaceState(null,'',location.pathname+location.search);});
+window.addEventListener('hashchange',()=>{if(location.hash==='#qrAttendancePanel')qrStart();});
+window.addEventListener('load',()=>{if(location.hash==='#qrAttendancePanel')qrStart();});
 </script></body></html>

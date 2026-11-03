@@ -1617,6 +1617,39 @@ function clearStudentAttendanceDate_(p) {
   }finally{lock.releaseLock()}
 }
 
+
+const SUPPORT_HEADERS_=['ticketId','schoolId','schoolName','category','subject','description','status','reply','createdAt','updatedAt','submittedBy'];
+function supportDirectory_(){
+ const sheet=secureTab(getRegistrySheet().getParent(),'SupportTickets',SUPPORT_HEADERS_);
+ const rows=sheet.getDataRange().getValues();
+ return {sheet,items:rows.slice(1).map((row,i)=>({row:i+2,obj:rowToRecord(rows[0],row)})).filter(x=>x.obj.ticketId)};
+}
+function schoolSupport_(p){
+ const actor=verifySchoolAdminToken(p);
+ const school=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===String(p.schoolId));
+ if(!school)throw Error('School not found.');
+ const directory=supportDirectory_();
+ if(p.action==='supportList')return directory.items.filter(x=>String(x.obj.schoolId)===String(p.schoolId)).map(x=>x.obj).reverse();
+ const category=String(p.category||'General').trim().slice(0,60);
+ const subject=String(p.subject||'').trim().slice(0,120);
+ const description=String(p.description||'').trim().slice(0,3000);
+ if(subject.length<5||description.length<10)throw Error('Enter a subject (5+ characters) and details (10+ characters).');
+ const now=new Date().toISOString(),ticket={ticketId:genId('help'),schoolId:p.schoolId,schoolName:school.obj.name,category,subject,description,status:'Open',reply:'',createdAt:now,updatedAt:now,submittedBy:actor.name};
+ directory.sheet.appendRow(SUPPORT_HEADERS_.map(k=>ticket[k]));return ticket;
+}
+function adminSupport_(p){
+ authorizeAdmin(p.adminApiKey);
+ const directory=supportDirectory_();
+ if(p.action==='adminSupportList')return directory.items.map(x=>x.obj).reverse();
+ const entry=directory.items.find(x=>String(x.obj.ticketId)===String(p.ticketId));
+ if(!entry)throw Error('Ticket not found.');
+ const status=String(p.status||'In Progress');
+ if(!['Open','In Progress','Resolved'].includes(status))throw Error('Invalid ticket status.');
+ const reply=String(p.reply||'').trim().slice(0,3000);
+ const ticket=Object.assign({},entry.obj,{status,reply,updatedAt:new Date().toISOString()});
+ directory.sheet.getRange(entry.row,1,1,SUPPORT_HEADERS_.length).setValues([SUPPORT_HEADERS_.map(k=>ticket[k])]);return ticket;
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
@@ -1640,6 +1673,10 @@ function handleRequest(params) {
           params._auditActor=requireSchoolAdminWrite(params);
         }
         switch (action) {
+            case 'supportList': return {status:'success',tickets:schoolSupport_(params)};
+            case 'supportCreate': return {status:'success',ticket:schoolSupport_(params)};
+            case 'adminSupportList': return {status:'success',tickets:adminSupport_(params)};
+            case 'adminSupportReply': return {status:'success',ticket:adminSupport_(params)};
             case 'waSettings': return {status:'success',settings:waSettings_(params)};
             case 'waConnect': return {status:'success',settings:waConnect_(params)};
             case 'waDisconnect': return {status:'success',settings:waDisconnect_(params)};

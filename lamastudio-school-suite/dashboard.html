@@ -455,12 +455,19 @@ header#topOverview{background:var(--lama-header)!important}
 #adminLoginRecovery .lama-loading-content{width:min(100%,360px);margin:auto}
 #adminLoginRecovery .lama-loading-title{font-size:21px;font-weight:850;margin:0 0 8px}
 #adminLoginRecovery .lama-loading-message{font-size:14px;line-height:1.5;color:#d0e5e5;margin:0 auto 12px}
-#adminLoginRecovery .lama-walk-stage{height:106px;width:180px;margin:0 auto 16px;position:relative;display:flex;align-items:center;justify-content:center}
-#adminLoginRecovery .lama-walker{display:block;font-size:68px;line-height:1;animation:lamaWalking 1.15s ease-in-out infinite;transform-origin:center bottom}
-#adminLoginRecovery .lama-walk-track{position:absolute;bottom:4px;width:118px;height:4px;background:linear-gradient(90deg,transparent,#5cc5c6,transparent);border-radius:50%}
+#adminLoginRecovery .lama-walk-stage{height:145px;width:min(100%,300px);margin:0 auto 12px;position:relative;overflow:hidden}
+#adminLoginRecovery .lama-terminator{position:absolute;left:50%;bottom:12px;width:175px;height:125px;transform:translateX(-50%);animation:lamaStride 5s linear infinite;filter:drop-shadow(0 5px 5px #0007)}
+#adminLoginRecovery .lama-terminator svg{width:100%;height:100%;overflow:visible}
+#adminLoginRecovery .lama-leg{transform-box:fill-box;transform-origin:50% 10%;animation:lamaStep .58s ease-in-out infinite alternate}
+#adminLoginRecovery .lama-leg.front-alt,#adminLoginRecovery .lama-leg.back-alt{animation-delay:-.58s}
+#adminLoginRecovery .lama-terminator .lama-eye{animation:lamaEye 2.3s steps(1) infinite}
+#adminLoginRecovery .lama-walk-track{position:absolute;bottom:10px;left:0;right:0;height:3px;background:repeating-linear-gradient(90deg,transparent 0 20px,#45c6c4 20px 44px,transparent 44px 64px);opacity:.7;animation:lamaTrack .55s linear infinite}
 #adminLoginRecovery .lama-loading-retry:not([hidden]){display:inline-block;background:#20c7d8;color:#06212b;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800}
-@keyframes lamaWalking{0%,100%{transform:translate(-10px,0) rotate(-4deg)}50%{transform:translate(10px,-9px) rotate(4deg)}}
-@media(prefers-reduced-motion:reduce){#adminLoginRecovery .lama-walker{animation:none}}
+@keyframes lamaStep{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}
+@keyframes lamaStride{0%{transform:translateX(-56%) translateY(0)}25%{transform:translateX(-48%) translateY(-3px)}50%{transform:translateX(-44%) translateY(0)}75%{transform:translateX(-48%) translateY(-3px)}100%{transform:translateX(-56%) translateY(0)}}
+@keyframes lamaTrack{to{background-position:-64px 0}}
+@keyframes lamaEye{0%,90%,100%{fill:#39f7f1}92%,97%{fill:#ff3b51}}
+@media(prefers-reduced-motion:reduce){#adminLoginRecovery .lama-terminator,#adminLoginRecovery .lama-leg,#adminLoginRecovery .lama-walk-track,#adminLoginRecovery .lama-eye{animation:none}}
 </style></head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
     <div class="scanline"></div>
@@ -1179,7 +1186,19 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
   },8000);
 })();
 </script>
-<div id="adminLoginRecovery" role="status" aria-live="polite"><div class="lama-loading-content"><div class="lama-walk-stage" aria-hidden="true"><span class="lama-walker">🦙</span><span class="lama-walk-track"></span></div><h2 class="lama-loading-title">LAMA School Suite</h2><p id="adminLoginRecoveryText" class="lama-loading-message">Checking your administrator session…</p><a id="adminLoginRecoveryLink" href="school-admin-login.html" class="lama-loading-retry" hidden>Return to administrator login</a></div></div>
+<div id="adminLoginRecovery" role="status" aria-live="polite"><div class="lama-loading-content"><div class="lama-walk-stage" aria-hidden="true"><span class="lama-walk-track"></span><span class="lama-terminator"><svg viewBox="0 0 180 135" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Walking robotic llama">
+<g class="lama-leg back-alt"><path d="M119 86 L126 113 L122 128" fill="none" stroke="#6d8f94" stroke-width="12" stroke-linecap="round"/><path d="M119 126h14" stroke="#2dd4d0" stroke-width="6" stroke-linecap="round"/></g>
+<g class="lama-leg back"><path d="M95 86 L100 112 L94 128" fill="none" stroke="#668b94" stroke-width="12" stroke-linecap="round"/><path d="M93 126h15" stroke="#2dd4d0" stroke-width="6" stroke-linecap="round"/></g>
+<path d="M40 67 Q48 49 77 49 L121 51 Q145 54 143 80 Q140 94 114 94 L65 92 Q43 91 40 67Z" fill="#c5d6d8" stroke="#46c6c6" stroke-width="3"/>
+<path d="M45 65 L31 46 L24 23 L16 23 L16 8 L28 8 L36 22 L45 41 L53 57" fill="#bdcdd1" stroke="#48d6d3" stroke-width="3" stroke-linejoin="round"/>
+<path d="M15 24 L3 27 L4 35 L24 36 L30 27Z" fill="#9ab2b8" stroke="#43d4d0" stroke-width="2"/>
+<path d="M16 9 L13 0 L20 4 L26 9 L27 1 L33 4 L32 15" fill="#9ab2b8" stroke="#43d4d0" stroke-width="2"/>
+<circle class="lama-eye" cx="15" cy="22" r="4" fill="#39f7f1"/><path d="M60 62h58M65 72h45M55 81h56" stroke="#678c96" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M137 61 Q154 55 158 69" fill="none" stroke="#42c9c6" stroke-width="7" stroke-linecap="round"/>
+<g class="lama-leg front-alt"><path d="M64 87 L70 111 L64 128" fill="none" stroke="#adc5ca" stroke-width="12" stroke-linecap="round"/><path d="M64 126h14" stroke="#2dd4d0" stroke-width="6" stroke-linecap="round"/></g>
+<g class="lama-leg front"><path d="M45 82 L47 110 L41 128" fill="none" stroke="#d1e2e3" stroke-width="12" stroke-linecap="round"/><path d="M41 126h15" stroke="#2dd4d0" stroke-width="6" stroke-linecap="round"/></g>
+<path d="M75 54l8 7-8 7-8-7z" fill="#20c7d8"/><circle cx="114" cy="63" r="5" fill="#20c7d8"/>
+</svg></span></div><h2 class="lama-loading-title">LAMA School Suite</h2><p id="adminLoginRecoveryText" class="lama-loading-message">Checking your administrator session…</p><a id="adminLoginRecoveryLink" href="school-admin-login.html" class="lama-loading-retry" hidden>Return to administrator login</a></div></div>
 <script id="lama-daily-checklist-script">
 (function(){
  function init(){

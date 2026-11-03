@@ -287,7 +287,7 @@ $('outreachRows').addEventListener('click',async e=>{
 refreshFollowupChecks();
 
 // QR scan is a staff-side input method only: never trust a scanned URL or automatically save.
-let qrStream=null,qrLoopActive=false,qrLast='',qrLastAt=0,qrQueued=new Set();
+let qrStream=null,qrLoopActive=false,qrLast='',qrLastAt=0,qrQueued=new Set(),qrStudentIndex=new Map();
 function qrFeedback(kind,message){
  const palette={success:['#dcfce7','#166534','✓'],error:['#fee2e2','#991b1b','✕'],pending:['#fef3c7','#92400e','◷'],ready:['#e8f4f6','#155e75','○']};
  const [bg,fg,symbol]=palette[kind]||palette.ready;
@@ -302,6 +302,7 @@ async function qrStart(){
  if(!navigator.mediaDevices?.getUserMedia||!('BarcodeDetector' in window)){qrResult.textContent='This browser does not support camera QR scanning. Use manual attendance or a supported Chrome browser.';return}
  try{
   const detector=new BarcodeDetector({formats:['qr_code']});
+  qrStudentIndex=new Map(students.map(student=>[sid(student),student]));
   qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
   qrVideo.srcObject=qrStream;await qrVideo.play();qrVideo.style.display='block';qrLoopActive=true;$('qrStart').disabled=true;$('qrStop').disabled=false;
   qrResult.textContent='Point the camera at a student ID card.';
@@ -311,7 +312,9 @@ async function qrStart(){
      const session=LamaAPI.getSession?.('school')||LamaAPI.getSession?.('teacher')||{};
      const schoolId=String(session.schoolId||school.schoolId||'');
      if(!card||card.type!=='lama-student-card'||String(card.schoolId)!==schoolId||!card.studentId){qrFeedback('error','Invalid or different-school card. Nothing saved; try again.')}
-     else{const student=students.find(x=>sid(x)===String(card.studentId));if(!student){qrFeedback('error','Student not found. Nothing saved; try again.')}
+     else{const student=qrStudentIndex.get(String(card.studentId));if(!student){qrFeedback('error','Student not found. Nothing saved; try again.')}
+      else if(card.enrlNo&&String(card.enrlNo).trim()!==String(enr(student)).trim()){qrFeedback('error','Card enrollment number does not match school records. Nothing saved.')}
+      else if(card.class&&String(card.class).trim().toLowerCase()!==String(cls(student)).trim().toLowerCase()){qrFeedback('error','Card class does not match the current student record. Nothing saved.')}
       else if(selected.get(sid(student))?.status==='Present'){qrFeedback(dirty.has(sid(student))?'pending':'success',student.name+': already marked Present'+(dirty.has(sid(student))?' (not saved yet)':' in loaded register'))}
       else if(selected.get(sid(student))?.status==='Absent'||selected.get(sid(student))?.status==='Leave'){qrFeedback('error',student.name+': existing Absent/Leave status; change manually if needed.')}
       else{choose(sid(student),'Present');qrQueued.add(sid(student));qrFeedback('pending',student.name+' — scanned; press Save changes. Not saved yet.')}

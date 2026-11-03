@@ -556,13 +556,13 @@ header#topOverview{background:var(--lama-header)!important}
 
 
         <!-- Daily checklist: manual completion is device-local, never a substitute for saved school records. -->
-        <section class="neo-card rounded-3xl p-5 mb-5" aria-labelledby="dailyChecklistTitle"><div class="mb-4"><p class="section-kicker text-cyan-300">Daily workspace</p><h2 id="dailyChecklistTitle" class="text-xl font-black">Today's school checklist</h2><p class="text-sm text-slate-400 mt-1">Student and teacher attendance check automatically when all saved register entries are confirmed. Other tasks remain manual reminders on this device.</p><p id="dailyChecklistProgress" class="text-sm font-bold mt-2" aria-live="polite">0 of 5 completed</p></div><div class="daily-checklist" id="dailyChecklist">
+        <section class="neo-card rounded-3xl p-5 mb-5" aria-labelledby="dailyChecklistTitle"><div class="mb-4"><p class="section-kicker text-cyan-300">Daily workspace</p><h2 id="dailyChecklistTitle" class="text-xl font-black">Today's school checklist</h2><p class="text-sm text-slate-400 mt-1">Student and teacher attendance can be checked manually or completed automatically when saved registers are confirmed. Other tasks remain manual reminders on this device.</p><p id="dailyChecklistProgress" class="text-sm font-bold mt-2" aria-live="polite">0 of 5 completed</p></div><div class="daily-checklist" id="dailyChecklist">
 <div class="daily-checklist-item" data-daily-task="attendance"><label class="daily-check"><input type="checkbox" data-task-check="attendance" aria-label="Mark Student attendance completed"><span class="daily-check-title">📋 Student attendance</span><small>Mark the daily student register</small></label><a href="attendance/student-attendance.html" aria-label="Open Student attendance">Open →</a></div>
 <div class="daily-checklist-item" data-daily-task="teachers"><label class="daily-check"><input type="checkbox" data-task-check="teachers" aria-label="Mark Teacher attendance completed"><span class="daily-check-title">👩‍🏫 Teacher attendance</span><small>Confirm staff presence or leave</small></label><a href="attendance/teacher-attendance.html" aria-label="Open Teacher attendance">Open →</a></div>
 <div class="daily-checklist-item" data-daily-task="students"><label class="daily-check"><input type="checkbox" data-task-check="students" aria-label="Mark Student records completed"><span class="daily-check-title">🎓 Student records</span><small>Review admissions and update records</small></label><a href="students/manage-students.html" aria-label="Open Student records">Open →</a></div>
 <div class="daily-checklist-item" data-daily-task="parents"><label class="daily-check"><input type="checkbox" data-task-check="parents" aria-label="Mark Parent follow-up completed"><span class="daily-check-title">📣 Parent follow-up</span><small>Contact parents when follow-up is needed</small></label><a href="communication-center.html" aria-label="Open Parent follow-up">Open →</a></div>
 <div class="daily-checklist-item" data-daily-task="notices"><label class="daily-check"><input type="checkbox" data-task-check="notices" aria-label="Mark Notices and messages completed"><span class="daily-check-title">🔔 Notices and messages</span><small>Review important messages and notices</small></label><a href="communications/notifications.html" aria-label="Open Notices and messages">Open →</a></div>
-</div><p class="text-xs text-slate-400 mt-3">Checklist resets each day. Attendance completion uses saved school records; other tasks are personal reminders.</p></section>
+</div><p class="text-xs text-slate-400 mt-3">Checklist resets each day. Automatic attendance checks use saved school records; manual checks are reminders, not proof of saving.</p></section>
 <section class="hub-role-workspaces" aria-label="Student and teacher attendance and management">
  <div id="studentWorkspace" class="neo-card rounded-3xl p-5"><p class="section-kicker">STUDENT WORKSPACE</p><h2 class="text-xl font-black mt-2">🎓 Students</h2><p class="text-sm mt-2 mb-4">Daily attendance, QR scanning and student records.</p><div class="hub-workspace-actions"><a class="hub-mini-link" href="attendance/student-attendance.html">📋 Take attendance →</a><a class="hub-mini-link" href="attendance/student-attendance.html#qrAttendancePanel">▣ QR attendance →</a><a class="hub-mini-link" href="students/manage-students.html">👥 Manage students →</a><a class="hub-mini-link" href="admissions.html">➕ Add student →</a></div></div>
  <div id="teacherWorkspace" class="neo-card rounded-3xl p-5"><p class="section-kicker">TEACHER WORKSPACE</p><h2 class="text-xl font-black mt-2">👩‍🏫 Teachers</h2><p class="text-sm mt-2 mb-4">Daily attendance, QR scanning and teacher records.</p><div class="hub-workspace-actions"><a class="hub-mini-link" href="attendance/teacher-attendance.html">📋 Take attendance →</a><a class="hub-mini-link" href="attendance/teacher-attendance.html#qrTeacherPanel">▣ QR attendance →</a><a class="hub-mini-link" href="staff/manage-teachers.html">👥 Manage teachers →</a><a class="hub-mini-link" href="staff/manage-teachers.html">➕ Add teacher →</a></div></div>
@@ -1199,31 +1199,42 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
   const key='lama-admin-daily-checklist:'+schoolId+':'+day;
   let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(e){}
   const boxes=Array.from(root.querySelectorAll('input[data-task-check]'));
-  function paint(){let done=0;boxes.forEach(box=>{if(box.checked)done++;box.closest('.daily-checklist-item').classList.toggle('is-complete',box.checked)});document.getElementById('dailyChecklistProgress').textContent=done+' of '+boxes.length+' completed · '+day}
+  const attendanceTasks=new Set(['attendance','teachers']);
   const normDate=v=>typeof normalizeAttendanceDate==='function'?normalizeAttendanceDate(v):String(v||'').slice(0,10);
   const validStatus=r=>['present','absent','leave','p','a','l','on leave'].includes(String(r.status||'').trim().toLowerCase());
+  function persist(){try{localStorage.setItem(key,JSON.stringify(saved))}catch(e){}}
+  function paint(){let done=0;boxes.forEach(box=>{if(box.checked)done++;box.closest('.daily-checklist-item').classList.toggle('is-complete',box.checked)});const progress=document.getElementById('dailyChecklistProgress');if(progress)progress.textContent=done+' of '+boxes.length+' completed · '+day}
   function updateFromSavedRecords(){
    const data=window.__dashboardData;if(!data)return;
    for(const [task,people,records,personId,recordId] of [
-    ['attendance',data.students,data.attendance,p=>String(p.id??p._id??p.enrlNo??p.enrollmentNo??'').trim(),r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??'').trim()],
+    ['attendance',data.students,data.attendance,p=>String(p.id??p._id??p.enrlNo??p.enrollmentNo??'').trim(),r=>String(r.studentId??r.student_id??r.studentID??r.enrlNo??r.enrollmentNo??'').trim()],
     ['teachers',data.teachers,data.teacherAttendance,p=>String(p.id??p._id??p.teacherId??p.teacherID??p.staffId??'').trim(),r=>String(r.teacherId??r.teacherID??r.teacher_id??r.staffId??'').trim()]
    ]){
     const box=root.querySelector('input[data-task-check="'+task+'"]');
-    if(!box||!Array.isArray(people)||!Array.isArray(records))continue;
+    if(!box)continue;
+    const hint=box.closest('.daily-checklist-item').querySelector('small');
+    if(!Array.isArray(people)||!Array.isArray(records)){
+     box.checked=saved[task]===true;
+     if(hint)hint.textContent=saved[task]?'✓ Manually completed · records not available':'Manual check available · records not available';
+     continue;
+    }
     const roster=new Set(people.map(personId).filter(Boolean));
     const marked=new Set(records.filter(r=>normDate(r.date)===day&&validStatus(r)).map(recordId).filter(Boolean));
-    const complete=roster.size>0&&[...roster].every(id=>marked.has(id));
-    box.checked=complete;box.disabled=true;
-    box.closest('.daily-checklist-item').title=complete?'Automatically confirmed from saved attendance records':'Waiting for every roster member to have saved attendance';
-    const hint=box.closest('.daily-checklist-item').querySelector('small');
-    if(hint)hint.textContent=complete?'✓ All '+roster.size+' attendance records saved':'Auto-check: '+[...roster].filter(id=>marked.has(id)).length+' / '+roster.size+' saved';
+    const matched=[...roster].filter(id=>marked.has(id)).length;
+    const complete=roster.size>0&&matched===roster.size;
+    box.checked=complete||saved[task]===true;
+    if(hint)hint.textContent=complete?'✓ Automatically completed · '+matched+' / '+roster.size+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.size+' saved':'Auto progress: '+matched+' / '+roster.size+' saved · or check manually';
+    box.closest('.daily-checklist-item').title=complete?'All roster attendance entries saved': 'You can complete manually or wait for saved records to auto-check';
    }
    paint();
   }
   boxes.forEach(box=>{
    const task=box.dataset.taskCheck;
-   if(task==='attendance'||task==='teachers'){box.disabled=true;box.checked=false}
-   else{box.checked=saved[task]===true;box.addEventListener('change',()=>{saved[task]=box.checked;try{localStorage.setItem(key,JSON.stringify(saved))}catch(e){}paint()})}
+   box.disabled=false;box.checked=saved[task]===true;
+   box.addEventListener('change',()=>{
+    saved[task]=box.checked;persist();
+    if(attendanceTasks.has(task))updateFromSavedRecords();else paint();
+   });
   });
   paint();
   window.lamaRefreshDailyChecklist=updateFromSavedRecords;

@@ -661,18 +661,30 @@ header#topOverview{background:var(--lama-header)!important}
 @media(max-width:1150px){.assessment-workspaces{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:780px){.assessment-compact{grid-template-columns:1fr}.assessment-workspaces{gap:9px}.assessment-workspaces .assessment-tile{padding:12px!important}.assessment-tile .assessment-title{font-size:14px}.assessment-tile .assessment-desc{font-size:11px}.assessment-compact .chart-shell{height:160px!important;max-height:160px!important}.assessment-compact .chart-shell canvas{max-height:160px!important}}
 </style>
-<section class="assessment-workspaces" aria-label="Assessment management dashboards">
- <article class="neo-card rounded-2xl assessment-tile"><div class="assessment-title">📝 Tests</div><p class="assessment-desc">Schedule, prepare and publish assessments.</p><a class="assessment-open" href="exams/tests.html">Open Tests →</a></article>
- <article class="neo-card rounded-2xl assessment-tile"><div class="assessment-title">📊 Grade Sheets</div><p class="assessment-desc">Enter and review marks by student.</p><a class="assessment-open" href="portals/teacher/teacher-grades.html">Open Grades →</a></article>
- <article class="neo-card rounded-2xl assessment-tile"><div class="assessment-title">📄 Report Cards</div><p class="assessment-desc">Review and print student reports.</p><a class="assessment-open" href="academics/report-card.html">Open Reports →</a></article>
- <article class="neo-card rounded-2xl assessment-tile"><div class="assessment-title">🏅 Certificates</div><p class="assessment-desc">Performance and achievement certificates.</p><a class="assessment-open" href="certificates/index.html">Open Certificates →</a></article>
+<section class="assessment-overview-grid" aria-label="Compact assessment overview dashboards">
+ <article class="neo-card assessment-overview-card"><div class="assessment-head"><span>📝</span><h3>Tests Overview</h3></div><div class="assessment-metrics"><div><small>Total</small><b id="asTotal">—</b></div><div><small>Published</small><b id="asPublished">—</b></div><div><small>Drafts</small><b id="asDraft">—</b></div><div><small>Upcoming</small><b id="asUpcoming">—</b></div></div><p id="asNote" class="assessment-hint">Loading tests…</p><a class="assessment-open" href="exams/tests.html">Tests Manager →</a></article>
+ <article class="neo-card assessment-overview-card"><div class="assessment-head"><span>📊</span><h3>Grade Sheets Overview</h3></div><div class="assessment-metrics"><div><small>Marks records</small><b id="asGradeRecords">—</b></div><div><small>Students graded</small><b id="asGradeStudents">—</b></div></div><p id="asGradeNote" class="assessment-hint">Loading grade records…</p><a class="assessment-open" href="portals/teacher/teacher-grades.html">Grade Sheets →</a></article>
+ <article class="neo-card assessment-overview-card"><div class="assessment-head"><span>📄</span><h3>Report Cards Overview</h3></div><div class="assessment-metrics"><div><small>Students with results</small><b id="asReportStudents">—</b></div><div><small>Result entries</small><b id="asReportRecords">—</b></div></div><p id="asReportNote" class="assessment-hint">Results available for report preparation; issued cards are not separately tracked.</p><a class="assessment-open" href="academics/report-card.html">Report Cards →</a></article>
+ <article class="neo-card assessment-overview-card"><div class="assessment-head"><span>🏅</span><h3>Certificates Overview</h3></div><div class="assessment-metrics"><div><small>Saved records</small><b id="asCertificates">—</b></div><div><small>Performance</small><b id="asPerformanceCertificates">—</b></div></div><p id="asCertificateNote" class="assessment-hint">Loading certificate records…</p><a class="assessment-open" href="certificates/index.html">Certificates →</a></article>
 </section>
-<section class="assessment-compact">
- <div class="neo-card rounded-3xl"><p class="section-kicker text-pink-300">Assessment pipeline</p><h3 class="text-lg font-black mt-1">Tests Overview</h3>
- <div class="grid grid-cols-2 gap-2 mt-3"><div class="hub-stat"><small>Total tests</small><b id="asTotal">—</b></div><div class="hub-stat"><small>Published</small><b id="asPublished" class="text-emerald-300">—</b></div><div class="hub-stat"><small>Drafts</small><b id="asDraft" class="text-amber-300">—</b></div><div class="hub-stat"><small>Upcoming</small><b id="asUpcoming" class="text-cyan-300">—</b></div></div>
- <p id="asNote" class="text-xs text-slate-400 mt-3">Waiting for tests data</p><div class="mt-3 flex flex-wrap gap-2"><a class="hub-mini-link" href="exams/date-sheet.html">Date Sheet →</a><a class="hub-mini-link" href="exams/result-card.html">Exam Results →</a></div></div>
- <div class="neo-card rounded-3xl"><p class="section-kicker text-pink-300">Class-wise assessment workload</p><h3 class="text-lg font-black mt-1">Tests by Class</h3><div class="chart-shell mt-3"><canvas id="assessmentChart" aria-label="Number of tests by class" role="img"></canvas></div><p class="text-xs text-slate-400 mt-2" id="assessmentNote">No assessment data loaded yet</p></div>
-</section>
+<details class="assessment-details"><summary>View tests by class chart</summary><div class="neo-card assessment-chart-compact"><div class="assessment-head"><h3>Tests by Class</h3></div><div class="chart-shell"><canvas id="assessmentChart" aria-label="Number of tests by class" role="img"></canvas></div><p class="assessment-hint" id="assessmentNote">No assessment data loaded yet</p><div class="assessment-extra"><a href="exams/date-sheet.html">Date Sheet →</a><a href="exams/result-card.html">Exam Results →</a></div></div></details>
+<style>
+.assessment-overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.assessment-overview-grid .assessment-overview-card{min-width:0;padding:13px!important;border-radius:16px;display:flex;flex-direction:column;gap:10px}
+.assessment-head{display:flex;align-items:center;gap:7px;min-width:0}
+.assessment-head h3{font-size:15px;font-weight:850;line-height:1.3;margin:0}
+.assessment-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.assessment-metrics>div{border:1px solid #cddedc;border-radius:10px;padding:8px;min-width:0;background:rgba(133,166,165,.07)}
+.assessment-metrics small{display:block;font-size:10px;line-height:1.3;opacity:.78;overflow-wrap:anywhere}
+.assessment-metrics b{display:block;font-size:22px;line-height:1.2;margin-top:3px;font-variant-numeric:tabular-nums}
+.assessment-hint{font-size:11px;line-height:1.4;opacity:.78;margin:0;flex:1}
+.assessment-overview-card .assessment-open{display:flex;align-items:center;justify-content:center;text-align:center;min-height:38px;border-radius:10px;background:#e5f4f0;color:#124e51;font-size:12px;font-weight:800;padding:7px 8px;text-decoration:none}
+.assessment-details{margin:8px 0 18px}.assessment-details>summary{cursor:pointer;font-size:12px;font-weight:800;padding:8px 4px}.assessment-chart-compact{max-width:680px;padding:14px!important}.assessment-chart-compact .chart-shell{height:160px!important;min-height:0!important;max-height:160px!important;margin-top:8px}.assessment-chart-compact canvas{max-height:160px!important}
+.assessment-extra{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;font-weight:750}
+@media(max-width:1200px){.assessment-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.assessment-overview-grid{gap:8px}.assessment-overview-grid .assessment-overview-card{padding:10px!important;gap:7px}.assessment-head h3{font-size:12px}.assessment-metrics>div{padding:6px}.assessment-metrics b{font-size:19px}.assessment-metrics small{font-size:10px}.assessment-hint{font-size:10px}.assessment-overview-card .assessment-open{min-height:36px;font-size:11px}}
+@media(max-width:350px){.assessment-overview-grid{grid-template-columns:1fr}}
+</style>
 <div id="operationsSection" class="hub-section-heading"><div><p class="section-kicker text-indigo-300">05 / Administration</p><h2>Campus Operations</h2><p>Staff, admissions, documents, scheduling and school services</p></div></div>
 <!-- Independent administration tools: not part of finance -->
         <style>.hub-compact-admin .module-tile{min-height:0!important;padding:12px 14px!important;display:grid!important;grid-template-columns:34px minmax(0,1fr);column-gap:10px;align-items:center}.hub-compact-admin .module-tile>b{grid-row:span 2;font-size:23px!important}.hub-compact-admin .module-tile>p{margin:0!important}.hub-compact-admin .module-tile>small{margin:0!important}@media(max-width:640px){.hub-compact-admin .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}.hub-compact-admin .module-tile{grid-template-columns:1fr!important;gap:3px!important;min-height:110px!important}.hub-compact-admin .module-tile>b{grid-row:auto!important;font-size:22px!important}.hub-compact-admin .module-tile>p{font-size:14px!important}.hub-compact-admin .module-tile>small{font-size:11px!important}}</style>
@@ -784,7 +796,7 @@ header#topOverview{background:var(--lama-header)!important}
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
             const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})]); window.__schoolClassOptions=schoolClassOptions; window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
-            document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);
+            document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();
             renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
@@ -941,6 +953,28 @@ function renderTeacherAttendanceAnalytics(teachers,records){
  put('teacherTrendNote',weekendSaved?`${weekendSaved} weekend date(s) contain saved attendance; excluded from working-day chart (records preserved).`:rosterMissing&&todayRows.size?'Using saved teacher attendance records; teacher directory did not load.':mismatch?'Saved attendance teacher IDs differ from teacher directory IDs; check teacher data linkage.':records.length?'Seven-day trend from saved records; missing days are not absences.':'No saved teacher attendance records for this school.');
  destroyChart('teacherAttendance');if(typeof Chart==='undefined')return;
  charts.teacherAttendance=new Chart(document.getElementById('teacherAttendanceChart'),{type:'bar',data:{labels:days.map(d=>isWeekend(d.key)?d.label+' · Holiday':d.label),datasets:[{label:'Present',data:series.map(x=>x.present),backgroundColor:'rgba(52,211,153,.8)',borderRadius:5},{label:'Absent',data:series.map(x=>x.absent),backgroundColor:'rgba(251,113,133,.8)',borderRadius:5},{label:'Leave',data:series.map(x=>x.leave),backgroundColor:'rgba(251,191,36,.8)',borderRadius:5}]},options:{...chartDefaults(),scales:{x:{stacked:true,ticks:{color:'#94a3b8'},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
+}
+async function renderAssessmentExtraOverview(){
+ const set=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+ const setNote=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+ const fetchRecords=async key=>{try{const result=await LamaAPI.list(key);if(Array.isArray(result))return result;if(Array.isArray(result?.records))return result.records;if(Array.isArray(result?.data))return result.data;throw Error('Unexpected response')}catch(e){console.warn('Assessment overview '+key,e);return null}};
+ const [results,certificates]=await Promise.all([fetchRecords('results'),fetchRecords('certificates')]);
+ if(results){
+  const students=new Set(results.map(r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??'').trim()).filter(Boolean));
+  set('asGradeRecords',results.length);set('asGradeStudents',students.size);
+  set('asReportStudents',students.size);set('asReportRecords',results.length);
+  setNote('asGradeNote',results.length?'Saved marks and result records.':'No grade records yet.');
+  setNote('asReportNote','Results available for report preparation; issued cards are not tracked separately.');
+ }else{
+  for(const id of ['asGradeRecords','asGradeStudents','asReportStudents','asReportRecords'])set(id,'—');
+  setNote('asGradeNote','Grade data unavailable; retry later.');setNote('asReportNote','Result data unavailable; retry later.');
+ }
+ if(certificates){
+  set('asCertificates',certificates.length);
+  const performance=certificates.filter(c=>/performance/i.test(String(c.type||c.certificateType||c.category||''))).length;
+  set('asPerformanceCertificates',performance);
+  setNote('asCertificateNote',certificates.length?'Saved certificate records.':'No certificate records yet.');
+ }else{set('asCertificates','—');set('asPerformanceCertificates','—');setNote('asCertificateNote','Certificate data unavailable; retry later.')}
 }
 function renderAssessmentAnalytics(tests){
  const today=localISODate(),isPub=x=>x.isPublished===true||x.published===true||String(x.status||'').toLowerCase()==='published';

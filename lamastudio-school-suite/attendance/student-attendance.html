@@ -16,6 +16,13 @@ html.followup-only main>section:not(#outreachPanel),body.followup-only main>sect
 <div class="stat"><span class="mini muted">Enrolled</span><strong id="total">—</strong></div><div class="stat"><span class="mini muted">Present</span><strong id="present" class="text-emerald-500">—</strong></div><div class="stat"><span class="mini muted">Absent</span><strong id="absent" class="text-rose-500">—</strong></div><div class="stat"><span class="mini muted">Leave</span><strong id="leave" class="text-amber-500">—</strong></div><div class="stat"><span class="mini muted">Unmarked</span><strong id="unmarked">—</strong></div>
 </section>
 <section class="panel p-5"><div class="flex flex-wrap justify-between items-center gap-3"><div><h3 class="font-black text-lg">Daily Attendance Register</h3><p id="summary" class="muted text-xs mt-1">Loading...</p></div><div class="no-print flex flex-wrap gap-2"><button id="markVisible" class="btn lime">✓ Mark visible present</button><button id="enableEdit" class="btn" style="display:none">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button><button id="clearDate" type="button" class="btn" style="border:1px solid #dc2626;color:#dc2626">🗑 Remove date attendance (Admin)</button></div></div><div class="bar mt-4"><div id="progress"></div></div><div id="list" class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4"><p class="muted text-sm">Loading student records...</p></div></section>
+<section class="panel p-5 no-print" id="qrAttendancePanel" aria-label="QR student attendance">
+<h3 class="font-black text-xl">▣ QR Card Attendance <span class="text-xs font-normal muted">Optional</span></h3>
+<p class="muted text-sm mt-2">Scan a student ID card with this device. A scan selects Present in the existing register; press Save changes to write attendance. Manual marking remains available.</p>
+<div class="flex gap-2 flex-wrap mt-3"><button class="btn primary" type="button" id="qrStart">📷 Start QR scanner</button><button class="btn" type="button" id="qrStop" disabled>Stop camera</button></div>
+<video id="qrVideo" playsinline muted style="display:none;width:100%;max-width:440px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-top:12px;background:#081b23"></video>
+<p id="qrResult" role="status" aria-live="polite" class="muted text-sm mt-3">Camera access requires HTTPS and browser permission. QR cards must be issued by the school.</p>
+</section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
 <section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html?register=1" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation. Keep this tab open until completed; true background sending is not yet available.</span></div><p class="muted mini mt-2">History: last seven weekdays from saved records. Official holidays and school closures will be excluded once the school calendar is configured.</p><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
 <script>
@@ -275,4 +282,37 @@ $('outreachRows').addEventListener('click',async e=>{
  },1000);
 });
 refreshFollowupChecks();
+
+// QR scan is a staff-side input method only: never trust a scanned URL or automatically save.
+let qrStream=null,qrLoopActive=false,qrLast='';
+const qrVideo=$('qrVideo'),qrResult=$('qrResult');
+function qrStop(){qrLoopActive=false;if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}qrVideo.pause();qrVideo.srcObject=null;qrVideo.style.display='none';$('qrStart').disabled=false;$('qrStop').disabled=true}
+async function qrStart(){
+ if(qrLoopActive)return;
+ if(!editEnabled||pendingVerification){qrResult.textContent='Enable attendance editing before scanning.';return}
+ if(!navigator.mediaDevices?.getUserMedia||!('BarcodeDetector' in window)){qrResult.textContent='This browser does not support camera QR scanning. Use manual attendance or a supported Chrome browser.';return}
+ try{
+  const detector=new BarcodeDetector({formats:['qr_code']});
+  qrStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+  qrVideo.srcObject=qrStream;await qrVideo.play();qrVideo.style.display='block';qrLoopActive=true;$('qrStart').disabled=true;$('qrStop').disabled=false;
+  qrResult.textContent='Point the camera at a student ID card.';
+  async function frame(){
+   if(!qrLoopActive)return;
+   try{const codes=await detector.detect(qrVideo);if(codes.length){const raw=String(codes[0].rawValue||'').trim();if(raw!==qrLast){qrLast=raw;let card;try{card=JSON.parse(raw)}catch(_){card=null}
+     const session=LamaAPI.getSession?.('school')||LamaAPI.getSession?.('teacher')||{};
+     const schoolId=String(session.schoolId||school.schoolId||'');
+     if(!card||card.type!=='lama-student-card'||String(card.schoolId)!==schoolId||!card.studentId){qrResult.textContent='Invalid or different-school QR card. No attendance changed.'}
+     else{const student=students.find(x=>sid(x)===String(card.studentId));if(!student){qrResult.textContent='Student not found in this school register. No attendance changed.'}
+      else if(selected.get(sid(student))?.status==='Present'){qrResult.textContent=student.name+': already marked Present.'}
+      else if(selected.get(sid(student))?.status==='Absent'||selected.get(sid(student))?.status==='Leave'){qrResult.textContent=student.name+': already has an attendance status. Change it manually if necessary.'}
+      else{choose(sid(student),'Present');qrResult.textContent=student.name+' — Present selected. Press Save changes to confirm.'}
+     }
+    }}
+   }catch(e){qrResult.textContent='Scanner error: '+e.message}
+   if(qrLoopActive)setTimeout(frame,350);
+  }frame();
+ }catch(e){qrResult.textContent='Camera unavailable: '+e.message;qrStop()}
+}
+$('qrStart').addEventListener('click',qrStart);$('qrStop').addEventListener('click',qrStop);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)qrStop()});window.addEventListener('pagehide',qrStop);
 </script></body></html>

@@ -1675,7 +1675,7 @@ function communityPublic_(p){
  const name=String(school.obj.name||'School').replace(/^[=+@\-]/,'').slice(0,150);
  if(p.action==='communityCreate'){
    const category=communityText_(p.category,50,'Category');
-   if(['General','Teaching','School Management','Examinations','Technology','Collaboration'].indexOf(category)<0)throw Error('Invalid category.');
+   if(['General','Teaching','School Management','Examinations','Technology','Collaboration','Feedback'].indexOf(category)<0)throw Error('Invalid category.');
    const title=communityText_(p.title,120,'Title',5),body=communityText_(p.body,3000,'Post',10);
    const now=new Date().toISOString(),post={postId:genId('community'),schoolId:actor.schoolId,schoolName:name,author:actor.author,category,title,body,status:'Published',createdAt:now,updatedAt:now};
    communitySheet_('CommunityPosts',COMMUNITY_POST_HEADERS_).appendRow(COMMUNITY_POST_HEADERS_.map(k=>post[k]));return post;

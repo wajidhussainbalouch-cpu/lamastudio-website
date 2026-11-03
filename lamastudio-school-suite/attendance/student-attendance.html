@@ -25,7 +25,7 @@ html.followup-only main>section:not(#outreachPanel),body.followup-only main>sect
 </section>
 <section class="panel p-5 no-print" id="arrivalPanel">
 <div class="flex flex-wrap justify-between gap-3 items-start"><div><h3 class="font-black text-lg">Class Attendance & Parent Arrival Messages</h3><p class="muted text-xs mt-1">Live class status from the selected attendance date. Pending edits are shown separately from saved records.</p></div><span id="arrivalSummary" class="muted text-sm" role="status">Loading class status…</span></div>
-<div id="arrivalClasses" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
+<label class="flex gap-2 items-center text-sm mt-3"><input id="arrivalConsent" type="checkbox"> I confirm the school has permission to contact these parents through WhatsApp.</label><div id="arrivalClasses" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
 <p class="muted text-xs mt-3">WhatsApp opens a prepared message only after Present is verified in the saved register. Sending is manual and requires parent consent. Opening a message does not confirm delivery.</p>
 </section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
@@ -217,6 +217,7 @@ function renderArrivalClasses(){
  for(const student of students){const name=cls(student);if(!groups.has(name))groups.set(name,[]);groups.get(name).push(student)}
  let savedTotal=0,pendingTotal=0,unmarkedTotal=0;
  const today=$('date').value;
+ const consent=$('arrivalConsent')?.checked===true;
  target.innerHTML=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).map(([name,items])=>{
   let present=0,absent=0,leave=0,pending=0,unmarked=0;
   const arrivals=[];
@@ -227,7 +228,7 @@ function renderArrivalClasses(){
     present++;savedTotal++;
     const raw=student.whatsapp||student.contact||student.guardianCell||student.emergencyContact||'';
     const phone=waNumber(raw);
-    if(phone){
+    if(phone&&consent){
      const schoolName=String(school.name||school.schoolName||'School');
      const message='Dear Parent, attendance for '+String(student.name||'your child')+' has been marked Present at '+schoolName+' on '+displayDate(today)+'. — School Administration';
      arrivals.push('<a class="btn text-xs" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+encodeURIComponent(phone)+'?text='+encodeURIComponent(message)+'">WhatsApp: '+esc(student.name||id)+'</a>');
@@ -241,6 +242,7 @@ function renderArrivalClasses(){
  }).join('')||'<p class="muted text-sm">No students available.</p>';
  $('arrivalSummary').textContent=savedTotal+' saved Present · '+pendingTotal+' pending · '+unmarkedTotal+' unmarked';
 }
+$('arrivalConsent')?.addEventListener('change',renderArrivalClasses);
 function renderOutreach(){
  const target=$('outreachRows');if(!target)return;
  const rows=students.filter(s=>['Absent','Leave'].includes(selected.get(sid(s))?.status));

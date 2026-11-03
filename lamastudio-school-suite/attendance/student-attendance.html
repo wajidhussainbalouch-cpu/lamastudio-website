@@ -288,11 +288,17 @@ refreshFollowupChecks();
 
 // QR scan is a staff-side input method only: never trust a scanned URL or automatically save.
 let qrStream=null,qrLoopActive=false,qrLast='',qrLastAt=0,qrQueued=new Set(),qrStudentIndex=new Map();
+function qrSignal(kind){
+ // Short tactile confirmation, without requiring sound permissions.
+ if(typeof navigator.vibrate==='function'){
+  try{navigator.vibrate(kind==='success'?70:kind==='error'?[90,60,90]:kind==='pending'?35:0)}catch(_){}
+ }
+}
 function qrFeedback(kind,message){
  const palette={success:['#dcfce7','#166534','✓'],error:['#fee2e2','#991b1b','✕'],pending:['#fef3c7','#92400e','◷'],ready:['#e8f4f6','#155e75','○']};
  const [bg,fg,symbol]=palette[kind]||palette.ready;
  const el=$('qrIndicator');el.style.background=bg;el.style.color=fg;el.style.borderColor=fg;
- $('qrSymbol').textContent=symbol;$('qrState').textContent=message;qrResult.textContent=message;
+ $('qrSymbol').textContent=symbol;$('qrState').textContent=message;qrResult.textContent=message;qrSignal(kind);
 }
 const qrVideo=$('qrVideo'),qrResult=$('qrResult');
 function qrStop(){qrLoopActive=false;if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}qrVideo.pause();qrVideo.srcObject=null;qrVideo.style.display='none';$('qrStart').disabled=false;$('qrStop').disabled=true}
@@ -311,7 +317,7 @@ async function qrStart(){
    try{const codes=await detector.detect(qrVideo);if(codes.length){const raw=String(codes[0].rawValue||'').trim();if(raw!==qrLast||Date.now()-qrLastAt>2500){qrLast=raw;qrLastAt=Date.now();let card;try{card=JSON.parse(raw)}catch(_){card=null}
      const session=LamaAPI.getSession?.('school')||LamaAPI.getSession?.('teacher')||{};
      const schoolId=String(session.schoolId||school.schoolId||'');
-     if(!card||card.type!=='lama-student-card'||String(card.schoolId)!==schoolId||!card.studentId){qrFeedback('error','Invalid or different-school card. Nothing saved; try again.')}
+     if(!card||card.type!=='lama-student-card'||card.v!==1||String(card.schoolId)!==schoolId||!card.studentId||!String(card.enrlNo||'').trim()||!String(card.class||'').trim()){qrFeedback('error','Invalid or different-school card. Nothing saved; try again.')}
      else{const student=qrStudentIndex.get(String(card.studentId))||students.find(x=>String(x.id||x._id||x.studentId||'')===String(card.studentId));if(!student){qrFeedback('error','Student not found. Nothing saved; try again.')}
       else if(card.enrlNo&&String(card.enrlNo).trim()!==String(enr(student)).trim()){qrFeedback('error','Card enrollment number does not match school records. Nothing saved.')}
       else if(card.class&&String(card.class).trim().toLowerCase()!==String(cls(student)).trim().toLowerCase()){qrFeedback('error','Card class does not match the current student record. Nothing saved.')}

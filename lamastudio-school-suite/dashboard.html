@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <style id="adminAccessGate">html:not(.admin-verified) body{visibility:hidden}
-html:not(.admin-verified) #adminLoginRecovery{visibility:visible}
+html:not(.admin-verified) #adminLoginRecovery,html:not(.admin-verified) #adminLoginRecovery *{visibility:visible}
 #adminLoginRecovery{display:none;position:fixed;inset:0;z-index:99999;background:#071c22;color:#fff;padding:24px;align-items:center;justify-content:center;text-align:center}
 html:not(.admin-verified) #adminLoginRecovery{display:flex}
 html.admin-verified #adminLoginRecovery{display:none}
@@ -1041,8 +1041,9 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
         async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
         (async()=>{
-  const status=document.getElementById('adminLoginRecoveryText');
-  const fail=(message)=>{if(status)status.textContent=message;console.error('School dashboard startup:',message)};
+  const recovery=()=>document.getElementById('adminLoginRecoveryText');
+  const setStatus=(message)=>{const el=recovery();if(el)el.textContent=message};
+  const fail=(message)=>{setStatus(message);console.error('School dashboard startup:',message)};
   try{
     if(!window.LamaAPI)throw Error('The School Suite API client did not load.');
     const school=LamaAPI.getSession('school');
@@ -1050,15 +1051,17 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
     let auth=null;
     try{auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){}
     if(!auth||auth.schoolId!==school.schoolId||!auth.token){location.replace('school-admin-login.html');return}
-    if(status)status.textContent='Verifying administrator access…';
-    try{await LamaAPI.schoolAdminVerify(school.schoolId,auth.token)}
-    catch(error){
-      sessionStorage.removeItem('lama_school_admin_auth');
-      fail('Administrator verification failed: '+(error.message||error)+'. Please sign in again.');
+    setStatus('Verifying administrator access…');
+    try{
+      await Promise.race([
+        LamaAPI.schoolAdminVerify(school.schoolId,auth.token),
+        new Promise((_,reject)=>setTimeout(()=>reject(Error('Verification timed out. Check your internet connection and Apps Script service.')),18000))
+      ]);
+    }catch(error){
+      fail('Administrator verification failed: '+(error.message||error)+'. Please return to administrator login.');
       return;
     }
     document.documentElement.classList.add('admin-verified');
-    if(status)status.textContent='Loading school records…';
     try{await renderDashboard()}
     catch(error){
       console.error('Dashboard data loading failed',error);
@@ -1066,7 +1069,7 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
       if(engine)engine.textContent='Unable to sync: '+(error.message||error);
     }
   }catch(error){fail('Unable to open dashboard: '+(error.message||error))}
-})();
+})();;
     </script>
 <script>
 function toggleSidebar(open){document.body.classList.toggle('sidebar-open',!!open);const nav=document.getElementById('lamaSidebar');if(nav)nav.setAttribute('aria-hidden',open?'false':(matchMedia('(max-width:1050px)').matches?'true':'false'));}
@@ -1088,6 +1091,22 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
   document.addEventListener('click',e=>{if(!wrap.contains(e.target)){menu.hidden=true;trigger.setAttribute('aria-expanded','false')}});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.hidden=true;trigger.setAttribute('aria-expanded','false')}});
  });
+})();
+</script>
+<script>
+(function(){
+  const report=(message)=>{
+    if(document.documentElement.classList.contains('admin-verified'))return;
+    const status=document.getElementById('adminLoginRecoveryText');
+    if(status)status.textContent=message;
+  };
+  window.addEventListener('error',event=>report('Dashboard JavaScript error: '+(event.message||'Unable to start')+'. Please return to administrator login.'));
+  window.addEventListener('unhandledrejection',event=>report('Dashboard startup failed: '+(event.reason?.message||'A request failed')+'. Please return to administrator login.'));
+  setTimeout(()=>{
+    if(document.documentElement.classList.contains('admin-verified'))return;
+    const status=document.getElementById('adminLoginRecoveryText');
+    if(status && status.textContent.includes('Checking your administrator session'))report('The dashboard did not start. Please return to administrator login. If this repeats, the dashboard scripts need checking.');
+  },8000);
 })();
 </script>
 <div id="adminLoginRecovery" role="status"><div style="max-width:420px"><h2 style="font-size:24px;font-weight:800;margin-bottom:14px">Opening School Dashboard</h2><p id="adminLoginRecoveryText" style="line-height:1.6;margin-bottom:20px">Checking your administrator session…</p><a href="school-admin-login.html" style="display:inline-block;background:#20c7d8;color:#06212b;padding:12px 20px;border-radius:12px;font-weight:700">Return to administrator login</a></div></div>

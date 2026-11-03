@@ -1087,6 +1087,10 @@ function pingTeacher(schoolId, apiKey, teacherId, message) {
     const match = authorizeSchool(schoolId, apiKey);
     const ss = SpreadsheetApp.openById(match.obj.sheetId);
     const ctx = { role: 'school', ss };
+    const teacherSheet=getCollectionSheet(ctx,'teachers');
+    const teacherRows=teacherSheet.sheet.getDataRange().getValues();
+    const target=teacherRows.slice(1).map(row=>rowToRecord(teacherSheet.headers,row)).find(t=>String(t.id)===String(teacherId));
+    if(!target || String(target.status||'Active').toLowerCase()!=='active') throw new Error('Assigned teacher is not active or does not exist.');
     return addRecord(ctx, 'teacherPings', {
         teacherId,
         message: message || 'Please mark today\'s student attendance.',
@@ -1717,7 +1721,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
             verifySchoolAdminToken(params);

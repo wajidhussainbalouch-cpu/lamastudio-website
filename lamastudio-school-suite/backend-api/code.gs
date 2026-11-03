@@ -1650,6 +1650,63 @@ function adminSupport_(p){
  directory.sheet.getRange(entry.row,1,1,SUPPORT_HEADERS_.length).setValues([SUPPORT_HEADERS_.map(k=>ticket[k])]);return ticket;
 }
 
+
+const COMMUNITY_POST_HEADERS_=['postId','schoolId','schoolName','author','category','title','body','status','createdAt','updatedAt'];
+const COMMUNITY_REPLY_HEADERS_=['replyId','postId','schoolId','schoolName','author','body','status','createdAt'];
+const COMMUNITY_REPORT_HEADERS_=['reportId','postId','replyId','schoolId','reason','createdAt'];
+function communitySheet_(name,headers){return secureTab(getRegistrySheet().getParent(),name,headers);}
+function communityRows_(sheet){const rows=sheet.getDataRange().getValues();return rows.slice(1).map((r,i)=>({row:i+2,obj:rowToRecord(rows[0],r)})).filter(x=>x.obj.postId||x.obj.reportId||x.obj.replyId);}
+function communityText_(value,max,label,min){const v=String(value||'').trim();if(v.length<(min||1)||v.length>max||/^[=+@\-]/.test(v))throw Error(label+' must be '+(min||1)+'-'+max+' characters and must not begin with a spreadsheet formula character.');return v;}
+function communityActor_(p){
+ if(p.ownerEmail||p.ownerPassword){const actor=authorizeSchoolOwner_(p);return {schoolId:String(p.schoolId),author:actor.name+' (Owner)'};}
+ const actor=verifySchoolAdminToken(p);return {schoolId:String(p.schoolId),author:actor.name+' (Administrator)'};
+}
+function communityData_(){
+ const posts=communityRows_(communitySheet_('CommunityPosts',COMMUNITY_POST_HEADERS_));
+ const replies=communityRows_(communitySheet_('CommunityReplies',COMMUNITY_REPLY_HEADERS_));
+ return {posts,replies};
+}
+function communityPublic_(p){
+ const actor=communityActor_(p),data=communityData_();
+ const visible=data.posts.filter(x=>x.obj.status==='Published');
+ if(p.action==='communityList')return visible.slice(-100).reverse().map(x=>Object.assign({},x.obj,{replies:data.replies.filter(r=>r.obj.postId===x.obj.postId&&r.obj.status==='Published').map(r=>r.obj)}));
+ const school=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===actor.schoolId);
+ if(!school||school.obj.status!=='Active')throw Error('School not active.');
+ const name=String(school.obj.name||'School').replace(/^[=+@\-]/,'').slice(0,150);
+ if(p.action==='communityCreate'){
+   const category=communityText_(p.category,50,'Category');
+   if(['General','Teaching','School Management','Examinations','Technology','Collaboration'].indexOf(category)<0)throw Error('Invalid category.');
+   const title=communityText_(p.title,120,'Title',5),body=communityText_(p.body,3000,'Post',10);
+   const now=new Date().toISOString(),post={postId:genId('community'),schoolId:actor.schoolId,schoolName:name,author:actor.author,category,title,body,status:'Published',createdAt:now,updatedAt:now};
+   communitySheet_('CommunityPosts',COMMUNITY_POST_HEADERS_).appendRow(COMMUNITY_POST_HEADERS_.map(k=>post[k]));return post;
+ }
+ const post=data.posts.find(x=>x.obj.postId===String(p.postId)&&x.obj.status==='Published');
+ if(!post)throw Error('Discussion unavailable.');
+ if(p.action==='communityReply'){
+   const body=communityText_(p.body,1500,'Reply',2),reply={replyId:genId('reply'),postId:post.obj.postId,schoolId:actor.schoolId,schoolName:name,author:actor.author,body,status:'Published',createdAt:new Date().toISOString()};
+   communitySheet_('CommunityReplies',COMMUNITY_REPLY_HEADERS_).appendRow(COMMUNITY_REPLY_HEADERS_.map(k=>reply[k]));return reply;
+ }
+ if(p.action==='communityReport'){
+   const replyId=String(p.replyId||'');
+   if(replyId&&!data.replies.some(x=>x.obj.replyId===replyId&&x.obj.postId===post.obj.postId&&x.obj.status==='Published'))throw Error('Reply unavailable.');
+   const reason=communityText_(p.reason,500,'Reason',5),report={reportId:genId('report'),postId:post.obj.postId,replyId,schoolId:actor.schoolId,reason,createdAt:new Date().toISOString()};
+   communitySheet_('CommunityReports',COMMUNITY_REPORT_HEADERS_).appendRow(COMMUNITY_REPORT_HEADERS_.map(k=>report[k]));return {reportId:report.reportId};
+ }
+ throw Error('Unknown community action.');
+}
+function communityModerate_(p){
+ authorizeAdmin(p.adminApiKey);
+ const data=communityData_(),reports=communityRows_(communitySheet_('CommunityReports',COMMUNITY_REPORT_HEADERS_));
+ if(p.action==='adminCommunityList')return {posts:data.posts.map(x=>Object.assign({},x.obj,{replies:data.replies.filter(r=>r.obj.postId===x.obj.postId).map(r=>r.obj)})).reverse(),reports:reports.map(x=>x.obj).reverse()};
+ const kind=String(p.kind||''),id=String(p.id||''),status=String(p.status||'');
+ if(!['post','reply'].includes(kind)||!['Published','Hidden'].includes(status))throw Error('Invalid moderation action.');
+ const headers=kind==='post'?COMMUNITY_POST_HEADERS_:COMMUNITY_REPLY_HEADERS_,name=kind==='post'?'CommunityPosts':'CommunityReplies';
+ const item=(kind==='post'?data.posts:data.replies).find(x=>String(x.obj[kind==='post'?'postId':'replyId'])===id);
+ if(!item)throw Error('Community item not found.');
+ const updated=Object.assign({},item.obj,{status});if(kind==='post')updated.updatedAt=new Date().toISOString();
+ communitySheet_(name,headers).getRange(item.row,1,1,headers.length).setValues([headers.map(k=>updated[k])]);return {id,status};
+}
+
 function handleRequest(params) {
     const action = params.action;
     try {
@@ -1673,6 +1730,12 @@ function handleRequest(params) {
           params._auditActor=requireSchoolAdminWrite(params);
         }
         switch (action) {
+            case 'communityList': return {status:'success',posts:communityPublic_(params)};
+            case 'communityCreate': return {status:'success',post:communityPublic_(params)};
+            case 'communityReply': return {status:'success',reply:communityPublic_(params)};
+            case 'communityReport': return {status:'success',report:communityPublic_(params)};
+            case 'adminCommunityList': return {status:'success',community:communityModerate_(params)};
+            case 'adminCommunityModerate': return {status:'success',result:communityModerate_(params)};
             case 'supportList': return {status:'success',tickets:schoolSupport_(params)};
             case 'supportCreate': return {status:'success',ticket:schoolSupport_(params)};
             case 'adminSupportList': return {status:'success',tickets:adminSupport_(params)};

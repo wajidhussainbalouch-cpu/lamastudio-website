@@ -1145,7 +1145,41 @@ function renderFinanceR4(d){
 
 function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/g,'');return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;}
         function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
-        function renderAbsentees(attendance,students){const today=localISODate(), rows=attendance.filter(a=>String(a.date||'').slice(0,10)===today&&String(a.status||'').toLowerCase()==='absent');document.getElementById('absenteesEmpty').classList.toggle('hidden',rows.length>0);document.getElementById('absenteesList').innerHTML=rows.map(a=>{const s=students.find(x=>String(x.id)===String(a.studentId))||{};const name=a.studentName||s.name||'Unknown';const number=s.whatsapp||s.contact||'';const msg=`Dear Parent, your child ${name} (Class ${a.class||s.class||''}) was marked absent from school today. Please contact the school office if this is unexpected.`;return `<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">${esc(name)} <span class="text-slate-500">— Class ${esc(a.class||s.class||'-')}</span></span><div class="flex gap-1.5">${number?`<a href="${waLink(number,msg)}" target="_blank" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="${smsLink(number,msg)}" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>`:'<span class="text-[10px] text-slate-500 italic">No contact number</span>'}</div></div>`}).join(''); }
+        function renderAbsentees(attendance,students){
+ const today=localISODate(),list=document.getElementById('absenteesList'),empty=document.getElementById('absenteesEmpty');
+ if(!list||!empty)return;
+ const normalize=v=>String(v??'').trim();
+ const byId=new Map(),byEnrollment=new Map();
+ (Array.isArray(students)?students:[]).forEach(student=>{
+  const sid=normalize(student.id??student._id??student.studentId);
+  const en=normalize(student.enrlNo??student.enrollmentNo??student.enrollment);
+  if(sid)byId.set(sid,student);
+  if(en)byEnrollment.set(en,student);
+ });
+ const latest=new Map();
+ (Array.isArray(attendance)?attendance:[]).forEach((record,index)=>{
+  if(normalizeAttendanceDate(record.date)!==today)return;
+  const sid=normalize(record.studentId??record.student_id??record.studentID);
+  const en=normalize(record.enrlNo??record.enrollmentNo??record.enrollment);
+  const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
+  if(!student)return;
+  const key=normalize(student.id??student._id??student.studentId??student.enrlNo??student.enrollmentNo);
+  if(!key)return;
+  const stamp=Date.parse(record.updatedAt??record.markedAt??record.createdAt??'')||0;
+  const previous=latest.get(key);
+  if(!previous||stamp>previous.stamp||(stamp===previous.stamp&&index>previous.index))latest.set(key,{record,student,stamp,index});
+ });
+ const rows=[...latest.values()].filter(({record})=>normalize(record.status).toLowerCase()==='absent');
+ empty.classList.toggle('hidden',rows.length>0);
+ empty.textContent=latest.size===0?'No saved student attendance found for today. Refresh the dashboard after saving.':'No students marked absent today.';
+ list.innerHTML=rows.map(({record:a,student:student})=>{
+  const name=student.name||student.studentName||a.studentName||'Student';
+  const className=student.class||student.grade||a.class||'-';
+  const number=student.whatsapp||student.parentWhatsApp||student.contact||student.phone||'';
+  const msg='Dear Parent, your child '+name+' (Class '+className+') was marked absent from school today. Please contact the school office if this is unexpected.';
+  return '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">'+esc(name)+' <span class="text-slate-500">— Class '+esc(className)+'</span></span><div class="flex gap-1.5">'+(number?'<a href="'+waLink(number,msg)+'" target="_blank" rel="noopener noreferrer" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="'+smsLink(number,msg)+'" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>':'<span class="text-[10px] text-slate-500 italic">No contact number</span>')+'</div></div>';
+ }).join('');
+}
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
         async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
 ;

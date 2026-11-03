@@ -21,7 +21,7 @@ html.followup-only main>section:not(#outreachPanel),body.followup-only main>sect
 <p class="muted text-sm mt-2">Scan a student ID card with this device. A scan selects Present in the existing register; press Save changes to write attendance. Manual marking remains available.</p>
 <div class="flex gap-2 flex-wrap mt-3"><button class="btn primary" type="button" id="qrStart">📷 Start QR scanner</button><button class="btn" type="button" id="qrStop" disabled>Stop camera</button></div>
 <video id="qrVideo" playsinline muted style="display:none;width:100%;max-width:440px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-top:12px;background:#081b23"></video>
-<p id="qrResult" role="status" aria-live="polite" class="muted text-sm mt-3">Camera access requires HTTPS and browser permission. QR cards must be issued by the school.</p>
+<div id="qrIndicator" role="status" aria-live="polite" style="margin-top:12px;padding:12px;border-radius:12px;border:2px solid #b8c9cb;font-weight:800"><span id="qrSymbol" style="font-size:28px">○</span> <span id="qrState">Ready to scan</span></div><p id="qrResult" aria-live="polite" class="muted text-sm mt-3">Camera access requires HTTPS and browser permission. QR cards must be issued by the school.</p>
 </section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
 <section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html?register=1" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation. Keep this tab open until completed; true background sending is not yet available.</span></div><p class="muted mini mt-2">History: last seven weekdays from saved records. Official holidays and school closures will be excluded once the school calendar is configured.</p><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
@@ -116,21 +116,24 @@ async function save(){
    }
  }catch(e){errors.push(e.message)}
  saving=false;b.textContent='💾 Save changes';editEnabled=true;render();alertText(`${saved.length} saved. ${errors.length?errors.length+' failed: '+errors.slice(0,3).join('; '):'All changes saved.'}`);
+ if(errors.length&&qrQueued.size)qrFeedback('error','Save failed. Attendance not confirmed; retry saving.');
  if(!errors.length){
   alertText('Server confirmed '+saved.length+' saved. Checking Google Sheets register…');
   const serverConfirmed=new Map([...selected].map(([k,v])=>[k,{...v}]));savePending();
   const verified=await load({force:true,silent:true});
-  if(!verified){for(const [key,marked] of serverConfirmed)selected.set(key,marked);editEnabled=false;render();alertText('Server accepted the attendance. Verification could not load; statuses are retained on this screen. Refresh to check Google Sheets before retrying.');return}
+  if(!verified){if(qrQueued.size)qrFeedback('pending','Server accepted attendance, but register verification failed. Refresh to verify; do not resubmit.');for(const [key,marked] of serverConfirmed)selected.set(key,marked);editEnabled=false;render();alertText('Server accepted the attendance. Verification could not load; statuses are retained on this screen. Refresh to check Google Sheets before retrying.');return}
   let awaitingVerification=0;
   for(const [key,marked] of serverConfirmed){
     if(selected.get(key)?.status!==marked.status){selected.set(key,marked);awaitingVerification++;}
   }
   if(awaitingVerification){
+    if(qrQueued.size)qrFeedback('pending','Server accepted scan; register verification pending. Do not scan again.');
     pendingVerification=true;editEnabled=false;
     render();
     alertText('✓ Server accepted '+saved.length+' attendance records. '+awaitingVerification+' records are not yet visible in the register API. Saved statuses are shown temporarily; refresh to verify. Do not submit again.');
     return;
   }
+  if(qrQueued.size){qrFeedback('success','✓ Scanned attendance saved and verified in the register.');qrQueued.clear()}
   pendingVerification=false;try{localStorage.removeItem(cacheKey())}catch(_){}
   const allMarked=students.length>0&&students.every(s=>!!selected.get(sid(s))?.status);
   const st=stats();
@@ -284,7 +287,13 @@ $('outreachRows').addEventListener('click',async e=>{
 refreshFollowupChecks();
 
 // QR scan is a staff-side input method only: never trust a scanned URL or automatically save.
-let qrStream=null,qrLoopActive=false,qrLast='';
+let qrStream=null,qrLoopActive=false,qrLast='',qrLastAt=0,qrQueued=new Set();
+function qrFeedback(kind,message){
+ const palette={success:['#dcfce7','#166534','✓'],error:['#fee2e2','#991b1b','✕'],pending:['#fef3c7','#92400e','◷'],ready:['#e8f4f6','#155e75','○']};
+ const [bg,fg,symbol]=palette[kind]||palette.ready;
+ const el=$('qrIndicator');el.style.background=bg;el.style.color=fg;el.style.borderColor=fg;
+ $('qrSymbol').textContent=symbol;$('qrState').textContent=message;qrResult.textContent=message;
+}
 const qrVideo=$('qrVideo'),qrResult=$('qrResult');
 function qrStop(){qrLoopActive=false;if(qrStream){qrStream.getTracks().forEach(t=>t.stop());qrStream=null}qrVideo.pause();qrVideo.srcObject=null;qrVideo.style.display='none';$('qrStart').disabled=false;$('qrStop').disabled=true}
 async function qrStart(){
@@ -298,20 +307,20 @@ async function qrStart(){
   qrResult.textContent='Point the camera at a student ID card.';
   async function frame(){
    if(!qrLoopActive)return;
-   try{const codes=await detector.detect(qrVideo);if(codes.length){const raw=String(codes[0].rawValue||'').trim();if(raw!==qrLast){qrLast=raw;let card;try{card=JSON.parse(raw)}catch(_){card=null}
+   try{const codes=await detector.detect(qrVideo);if(codes.length){const raw=String(codes[0].rawValue||'').trim();if(raw!==qrLast||Date.now()-qrLastAt>2500){qrLast=raw;qrLastAt=Date.now();let card;try{card=JSON.parse(raw)}catch(_){card=null}
      const session=LamaAPI.getSession?.('school')||LamaAPI.getSession?.('teacher')||{};
      const schoolId=String(session.schoolId||school.schoolId||'');
-     if(!card||card.type!=='lama-student-card'||String(card.schoolId)!==schoolId||!card.studentId){qrResult.textContent='Invalid or different-school QR card. No attendance changed.'}
-     else{const student=students.find(x=>sid(x)===String(card.studentId));if(!student){qrResult.textContent='Student not found in this school register. No attendance changed.'}
-      else if(selected.get(sid(student))?.status==='Present'){qrResult.textContent=student.name+': already marked Present.'}
-      else if(selected.get(sid(student))?.status==='Absent'||selected.get(sid(student))?.status==='Leave'){qrResult.textContent=student.name+': already has an attendance status. Change it manually if necessary.'}
-      else{choose(sid(student),'Present');qrResult.textContent=student.name+' — Present selected. Press Save changes to confirm.'}
+     if(!card||card.type!=='lama-student-card'||String(card.schoolId)!==schoolId||!card.studentId){qrFeedback('error','Invalid or different-school card. Nothing saved; try again.')}
+     else{const student=students.find(x=>sid(x)===String(card.studentId));if(!student){qrFeedback('error','Student not found. Nothing saved; try again.')}
+      else if(selected.get(sid(student))?.status==='Present'){qrFeedback(dirty.has(sid(student))?'pending':'success',student.name+': already marked Present'+(dirty.has(sid(student))?' (not saved yet)':' in loaded register'))}
+      else if(selected.get(sid(student))?.status==='Absent'||selected.get(sid(student))?.status==='Leave'){qrFeedback('error',student.name+': existing Absent/Leave status; change manually if needed.')}
+      else{choose(sid(student),'Present');qrQueued.add(sid(student));qrFeedback('pending',student.name+' — scanned; press Save changes. Not saved yet.')}
      }
     }}
-   }catch(e){qrResult.textContent='Scanner error: '+e.message}
+   }catch(e){qrFeedback('error','Scanner error: '+e.message)}
    if(qrLoopActive)setTimeout(frame,350);
   }frame();
- }catch(e){qrResult.textContent='Camera unavailable: '+e.message;qrStop()}
+ }catch(e){qrFeedback('error','Camera unavailable: '+e.message);qrStop()}
 }
 $('qrStart').addEventListener('click',qrStart);$('qrStop').addEventListener('click',qrStop);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)qrStop()});window.addEventListener('pagehide',qrStop);

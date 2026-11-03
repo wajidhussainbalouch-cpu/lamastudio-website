@@ -730,15 +730,31 @@ header#topOverview{background:var(--lama-header)!important}
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-        document.getElementById('studentAttClasses')?.addEventListener('click',event=>{
-          const button=event.target.closest('[data-ping-class]');if(!button)return;
+        document.getElementById('studentAttClasses')?.addEventListener('click',async event=>{
+          const button=event.target.closest('[data-ping-class]');if(!button||button.disabled)return;
           const className=button.getAttribute('data-ping-class');
+          const normalizeClass=value=>String(value||'').trim().toLowerCase().replace(/^class\\s+/,'').replace(/\\s+/g,' ');
+          const teachers=window.__dashboardData?.teachers||[];
+          const matches=teachers.filter(t=>normalizeClass(t.assignedClass||t.classAssigned||t.className||t.class)===normalizeClass(className)&&String(t.status||'Active').toLowerCase()==='active');
+          if(matches.length!==1){
+            const message=matches.length?'More than one teacher is assigned to this class. Please correct the assignments first.':'No active class teacher is assigned to '+className+'. Assign a teacher before sending a reminder.';
+            button.textContent=message;button.title=message;return;
+          }
+          const teacher=matches[0];
           const schoolName=document.getElementById('heroSchoolName')?.textContent||'School';
-          const message=`Attendance reminder — ${schoolName}\nClass: ${className}\nPlease complete and save today's student attendance as soon as possible. Thank you.\n\nحاضری کی یاد دہانی: کلاس ${className} کی آج کی طلبہ حاضری جلد مکمل کر کے محفوظ کریں۔ شکریہ۔`;
-          if(navigator.clipboard?.writeText){navigator.clipboard.writeText(message).then(()=>alert('Teacher reminder copied. Send it to the assigned class teacher.')).catch(()=>prompt('Copy this reminder and send it to the class teacher:',message));}
-          else prompt('Copy this reminder and send it to the class teacher:',message);
+          const message='Attendance reminder — '+schoolName+'\\nClass: '+className+'\\nPlease mark and save today\\'s student attendance. Thank you.';
+          button.disabled=true;button.textContent='Sending…';
+          try{
+            await LamaAPI.pingTeacher(teacher.id,message);
+            button.textContent='✓ Reminder sent';
+            button.title='Saved to '+(teacher.name||'the assigned teacher')+'\\'s portal notifications.';
+          }catch(error){
+            button.disabled=false;button.textContent='Retry reminder →';
+            button.title=String(error.message||error);
+            const notice=document.createElement('span');notice.className='text-xs text-red-600';notice.textContent='Could not notify teacher: '+(error.message||error);button.after(notice);
+          }
         });
-        function renderStudentAttendanceCard(attendance,students){
+                function renderStudentAttendanceCard(attendance,students){
           const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
           const current=new Map();

@@ -23,6 +23,11 @@ html.followup-only main>section:not(#outreachPanel),body.followup-only main>sect
 <video id="qrVideo" playsinline muted style="display:none;width:100%;max-width:440px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-top:12px;background:#081b23"></video>
 <div id="qrIndicator" role="status" aria-live="polite" style="margin-top:12px;padding:12px;border-radius:12px;border:2px solid #b8c9cb;font-weight:800"><span id="qrSymbol" style="font-size:28px">○</span> <span id="qrState">Ready to scan</span></div><p id="qrResult" aria-live="polite" class="muted text-sm mt-3">Camera access requires HTTPS and browser permission. QR cards must be issued by the school.</p>
 </section>
+<section class="panel p-5 no-print" id="arrivalPanel">
+<div class="flex flex-wrap justify-between gap-3 items-start"><div><h3 class="font-black text-lg">Class Attendance & Parent Arrival Messages</h3><p class="muted text-xs mt-1">Live class status from the selected attendance date. Pending edits are shown separately from saved records.</p></div><span id="arrivalSummary" class="muted text-sm" role="status">Loading class status…</span></div>
+<div id="arrivalClasses" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4"></div>
+<p class="muted text-xs mt-3">WhatsApp opens a prepared message only after Present is verified in the saved register. Sending is manual and requires parent consent. Opening a message does not confirm delivery.</p>
+</section>
 <section class="panel p-5 no-print"><h3 class="font-black">Class-wise attendance coverage</h3><p class="muted text-xs mt-1">Present rate is based on marked records, not on unmarked students.</p><div id="classSummary" class="mt-4 grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div></section>
 <section class="panel p-5 mt-5" id="outreachPanel"><div class="flex flex-wrap justify-between items-center gap-2"><h3 class="font-black">Absent / Leave — Parent follow-up</h3><a href="student-attendance.html?register=1" class="btn no-print">Full attendance register →</a></div><p id="outreachCount" class="muted text-sm mt-2" role="status">Loading absent and on-leave students…</p><p class="muted mini">Choose WhatsApp to prepare a respectful message. Send it yourself in WhatsApp, then select Record notification to log the contact in the student portal. Opening WhatsApp does not send a message.</p><div class="flex flex-wrap items-center gap-2 mt-3"><button id="bulkPortalNotify" type="button" class="btn">Send one bulk portal notification to all absent/leave students</button><span id="bulkPortalStatus" class="muted mini" role="status" aria-live="polite">Creates individual student follow-up records and a school-wide staff summary after confirmation. Keep this tab open until completed; true background sending is not yet available.</span></div><p class="muted mini mt-2">History: last seven weekdays from saved records. Official holidays and school closures will be excluded once the school calendar is configured.</p><div id="outreachRows" class="mt-3 space-y-2"></div></section></main>
 <script>
@@ -92,7 +97,7 @@ function restorePending(){try{const saved=JSON.parse(localStorage.getItem(cacheK
 function currentStudents(){const c=$('class').value;return students.filter(s=>!c||cls(s)===c)}
 function visible(){const q=$('search').value.trim().toLowerCase(),f=$('filter').value;return currentStudents().filter(s=>(!q||[s.name,enr(s),s.fatherGuardian,s.fatherName].some(x=>String(x||'').toLowerCase().includes(q)))&&(!f||(selected.get(sid(s))?.status||'Unmarked')===f))}
 function stats(){const list=currentStudents(),cnt={Present:0,Absent:0,Leave:0};for(const s of list){const x=selected.get(sid(s))?.status;if(x in cnt)cnt[x]++}const marked=cnt.Present+cnt.Absent+cnt.Leave;return {total:list.length,marked,unmarked:list.length-marked,...cnt}}
-function render(){renderOutreach();const st=stats();const completed=st.total>0&&st.unmarked===0&&dirty.size===0;document.getElementById('enableEdit').style.display=completed&&!editEnabled?'inline-flex':'none';document.getElementById('markVisible').disabled=!editEnabled;document.getElementById('save').disabled=!editEnabled;document.getElementById('list').classList.toggle('completed-lock',!editEnabled);const stLabel=completed&&!editEnabled?' · COMPLETE — view only; select Enable editing to change':'';for(const [k,v] of Object.entries({total:st.total,present:st.Present,absent:st.Absent,leave:st.Leave,unmarked:st.unmarked}))$(k).textContent=v;$('progress').style.width=(st.total?100*st.marked/st.total:0)+'%';$('summary').textContent=`${st.marked} of ${st.total} students marked · ${st.marked?Math.round(100*st.Present/st.marked):0}% present among marked · ${dirty.size} unsaved changes${stLabel}`;
+function render(){renderOutreach();renderArrivalClasses();const st=stats();const completed=st.total>0&&st.unmarked===0&&dirty.size===0;document.getElementById('enableEdit').style.display=completed&&!editEnabled?'inline-flex':'none';document.getElementById('markVisible').disabled=!editEnabled;document.getElementById('save').disabled=!editEnabled;document.getElementById('list').classList.toggle('completed-lock',!editEnabled);const stLabel=completed&&!editEnabled?' · COMPLETE — view only; select Enable editing to change':'';for(const [k,v] of Object.entries({total:st.total,present:st.Present,absent:st.Absent,leave:st.Leave,unmarked:st.unmarked}))$(k).textContent=v;$('progress').style.width=(st.total?100*st.marked/st.total:0)+'%';$('summary').textContent=`${st.marked} of ${st.total} students marked · ${st.marked?Math.round(100*st.Present/st.marked):0}% present among marked · ${dirty.size} unsaved changes${stLabel}`;
 const rows=visible();$('list').innerHTML=rows.length?rows.map(s=>{const key=sid(s),status=selected.get(key)?.status||'';return `<article class="student-row"><div class="min-w-0"><div class="font-black text-sm">${esc(s.name||'Unnamed student')}</div><p class="muted mini">${esc(cls(s))} · Enrl: ${esc(enr(s)||'—')} ${dirty.has(key)?'· <b class="text-amber-500">Unsaved</b>':''}</p></div><div class="flex flex-wrap gap-1.5">${['Present','Absent','Leave'].map(v=>`<button type="button" data-id="${esc(key)}" data-status="${v}" class="status-btn ${status===v?'active':''}" aria-pressed="${status===v}">${v}</button>`).join('')}</div></article>`}).join(''):'<p class="muted text-sm p-4">No matching students.</p>';
 const classes=new Map();for(const s of students){const c=cls(s),o=classes.get(c)||{total:0,marked:0,present:0};o.total++;const status=selected.get(sid(s))?.status;if(status){o.marked++;if(status==='Present')o.present++}classes.set(c,o)}
 $('classSummary').innerHTML=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).map(([name,x])=>`<div class="p-3 rounded-xl border" style="border-color:var(--line)"><div class="flex justify-between text-xs font-bold"><span>${esc(name)}</span><span>${x.marked}/${x.total} marked</span></div><div class="bar mt-2"><div style="width:${x.total?100*x.marked/x.total:0}%"></div></div><p class="mini muted mt-2">${x.present} present · ${x.marked?Math.round(100*x.present/x.marked):0}% of marked</p></div>`).join('')}
@@ -205,6 +210,36 @@ function studentHistory(student){
   const date=attendanceDate(r.date);if(days.includes(date))byDate.set(date,canonical(r.status));
  }
  return days.map(date=>({date,status:byDate.get(date)||''}));
+}
+function renderArrivalClasses(){
+ const target=$('arrivalClasses');if(!target)return;
+ const groups=new Map();
+ for(const student of students){const name=cls(student);if(!groups.has(name))groups.set(name,[]);groups.get(name).push(student)}
+ let savedTotal=0,pendingTotal=0,unmarkedTotal=0;
+ const today=$('date').value;
+ target.innerHTML=[...groups.entries()].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).map(([name,items])=>{
+  let present=0,absent=0,leave=0,pending=0,unmarked=0;
+  const arrivals=[];
+  for(const student of items){
+   const id=sid(student),status=selected.get(id)?.status||'',unsaved=dirty.has(id)||pendingVerification;
+   if(unsaved){pending++;pendingTotal++;continue}
+   if(status==='Present'){
+    present++;savedTotal++;
+    const raw=student.whatsapp||student.contact||student.guardianCell||student.emergencyContact||'';
+    const phone=waNumber(raw);
+    if(phone){
+     const schoolName=String(school.name||school.schoolName||'School');
+     const message='Dear Parent, attendance for '+String(student.name||'your child')+' has been marked Present at '+schoolName+' on '+displayDate(today)+'. — School Administration';
+     arrivals.push('<a class="btn text-xs" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+encodeURIComponent(phone)+'?text='+encodeURIComponent(message)+'">WhatsApp: '+esc(student.name||id)+'</a>');
+    }
+   }else if(status==='Absent')absent++;
+   else if(status==='Leave')leave++;
+   else{unmarked++;unmarkedTotal++}
+  }
+  const done=present+absent+leave;
+  return '<article class="rounded-xl border p-4"><h4 class="font-black">'+esc(name)+'</h4><p class="muted text-xs mt-1">'+done+' of '+items.length+' saved · '+pending+' pending · '+unmarked+' unmarked</p><div class="bar mt-2"><div style="width:'+Math.round(done/Math.max(1,items.length)*100)+'%"></div></div><p class="text-sm mt-2">✓ '+present+' Present · ✕ '+absent+' Absent · '+leave+' Leave</p><details class="mt-3"><summary class="cursor-pointer font-bold text-sm">Parent arrival messages ('+arrivals.length+')</summary><div class="flex flex-wrap gap-2 mt-3">'+(arrivals.join('')||'<span class="muted text-xs">No verified Present students with a WhatsApp number.</span>')+'</div></details></article>';
+ }).join('')||'<p class="muted text-sm">No students available.</p>';
+ $('arrivalSummary').textContent=savedTotal+' saved Present · '+pendingTotal+' pending · '+unmarkedTotal+' unmarked';
 }
 function renderOutreach(){
  const target=$('outreachRows');if(!target)return;

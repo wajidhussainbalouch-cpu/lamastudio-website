@@ -1,0 +1,37 @@
+name: Syllabus Planner Tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'examination-system/syllabus-*.js'
+      - 'examination-system/test-syllabus-*.js'
+      - '.github/workflows/syllabus-planner-tests.yml'
+  pull_request:
+    paths:
+      - 'examination-system/syllabus-*.js'
+      - 'examination-system/test-syllabus-*.js'
+      - '.github/workflows/syllabus-planner-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  syllabus-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scheduler
+        run: node examination-system/test-syllabus-scheduler.js
+      - name: Progress
+        run: node examination-system/test-syllabus-progress.js
+      - name: Catalog
+        run: node examination-system/test-syllabus-catalog.js
+      - name: Calendar
+        run: node examination-system/test-syllabus-calendar.js
+      - name: Integrated preview
+        run: node examination-system/test-syllabus-planner.js
+      - name: Approval workflow
+        run: node examination-system/test-syllabus-workflow.js

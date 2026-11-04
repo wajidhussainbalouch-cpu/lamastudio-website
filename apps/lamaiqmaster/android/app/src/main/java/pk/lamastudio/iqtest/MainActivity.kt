@@ -10,6 +10,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +35,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             var level by remember { mutableIntStateOf(0) }
             var visualMode by remember { mutableStateOf(false) }
+            var selectedModule by remember { mutableStateOf("Number Logic") }
+            var infoPage by remember { mutableStateOf("") }
+            val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+            val scope = rememberCoroutineScope()
+            val uriHandler = LocalUriHandler.current
             var question by remember { mutableIntStateOf(0) }
             var score by remember { mutableIntStateOf(0) }
             var selected by remember { mutableIntStateOf(-1) }
@@ -45,17 +57,52 @@ class MainActivity : ComponentActivity() {
                 }
             }
             MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = bg, surface = card)) {
+              ModalNavigationDrawer(drawerState = drawerState, drawerContent = {
+                ModalDrawerSheet(drawerContainerColor = card) {
+                    Text("LAMA IQ TEST", color = accent, modifier = Modifier.padding(20.dp), fontWeight = FontWeight.Bold)
+                    listOf("Number Logic", "Visual Patterns", "Memory", "Attention", "Advanced Reasoning").forEach { module ->
+                        NavigationDrawerItem(label = { Text(module) }, selected = selectedModule == module && infoPage.isEmpty(),
+                            onClick = {
+                                selectedModule = module; infoPage = ""; visualMode = module == "Visual Patterns";
+                                level = 0; question = 0; selected = -1; score = 0
+                                scope.launch { drawerState.close() }
+                            })
+                    }
+                    HorizontalDivider()
+                    listOf("Privacy", "About", "Version", "Lama Studio Website").forEach { item ->
+                        NavigationDrawerItem(label = { Text(item) }, selected = infoPage == item, onClick = {
+                            if (item == "Lama Studio Website") uriHandler.openUri("https://www.lamastudio.pk/")
+                            else { infoPage = item; visualMode = false; level = 0 }
+                            scope.launch { drawerState.close() }
+                        })
+                    }
+                }
+              }) {
                 Column(
                     Modifier.fillMaxSize().background(bg).verticalScroll(rememberScrollState()).padding(22.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    TextButton(onClick = { scope.launch { drawerState.open() } }) { Text("☰  Modules & Settings", color = accent) }
                     Spacer(Modifier.height(10.dp))
                     Text("LAMA STUDIO", color = accent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     Text("Lama IQ Test", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Bold)
                     Text("Brain training • Logic • Patterns", color = Color(0xFFC7C9DD))
                     when {
+                        infoPage.isNotEmpty() -> {
+                            Text(infoPage, color = Color.White, fontSize = 25.sp)
+                            Text(when(infoPage) {
+                                "Privacy" -> "This offline test build stores level progress on your device. It does not require an account or upload answers. No advertising SDK is included in this build. A full public privacy policy is required before release."
+                                "About" -> "Lama IQ Test is an educational brain-training practice app from Lama Studio. Scores are not clinical or standardized IQ measurements."
+                                else -> "Version 0.1.0 • Debug testing build. App updates are provided through verified GitHub builds until an official release."
+                            }, color = Color.LightGray)
+                            Button(onClick = { infoPage = "" }) { Text("Back to modules") }
+                        }
                         visualMode -> VisualChallengeScreen(level = if (level == 0) 1 else level, onExit = { visualMode = false; level = 0 })
                         level == 0 -> {
+                            Text(selectedModule, color = accent, fontSize = 20.sp)
+                            if (selectedModule != "Number Logic") {
+                                Text("This module is being prepared with reviewed, non-repeating questions. It is not yet available in this testing build.", color = Color.LightGray)
+                            } else {
                             Text("Choose a level", color = Color.White, fontSize = 22.sp)
                             Button(onClick = { visualMode = true }, modifier = Modifier.fillMaxWidth()) { Text("Play visual pattern challenges • 5 languages") }
                             Text("Score at least 7 of 10 to unlock the next level. Your progress is saved offline.", color = Color.LightGray)
@@ -74,6 +121,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                             Text("Practice scores are not standardized or clinical IQ measurements.", color = Color.Gray, fontSize = 12.sp)
+                            }
                         }
                         finished -> {
                             Surface(color = card, shape = RoundedCornerShape(20.dp)) {
@@ -118,6 +166,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+              }
             }
         }
     }

@@ -18,8 +18,9 @@ function lamaModuleAccess_(schoolId,module){
  if(rows.length>1&&Number(rows[0][5])===Number(rows[1][5]))return {allowed:false,reason:'GRANT_CONFLICT'};
  var g=rows[0],now=Date.now();
  if(g[2]!=='active')return {allowed:false,reason:'ENTITLEMENT_'+String(g[2]).toUpperCase()};
- if(g[3]&&now<Date.parse(g[3]))return {allowed:false,reason:'NOT_STARTED'};
- if(g[4]&&now>=Date.parse(g[4]))return {allowed:false,reason:'EXPIRED'};
+ if(!g[3]||!g[4]||!Number.isFinite(Date.parse(g[3]))||!Number.isFinite(Date.parse(g[4])))return {allowed:false,reason:'INVALID_GRANT_DATES'};
+ if(now<Date.parse(g[3]))return {allowed:false,reason:'NOT_STARTED'};
+ if(now>=Date.parse(g[4]))return {allowed:false,reason:'EXPIRED'};
  return {allowed:true,revision:Number(g[5])};
 }
 function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){

@@ -79,3 +79,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added `test-syllabus-planner.js` with cases for holiday exclusion, make-up scheduling, draft approval flags, unverified catalog rejection and insufficient subject capacity.
 - Existing scheduler remains unchanged for backward compatibility. This is preview-only; no Apps Script writes, tenant access, entitlement enforcement or teacher diary synchronization. Test file committed but integrated test execution has not been verified.
 - Next: run the complete Node suite and CI; implement school-specific authenticated plan persistence, approval/replan audit, subscription enforcement, and management/teacher portal wiring. No Vercel deployment.
+
+
+## Versioned approval workflow continuation — 2026-11-04
+- Added `syllabus-workflow.js`, a pure state machine for draft -> submitted -> approved -> published -> archived; submitted/approved plans can return to draft with a reason. Includes expected-version conflict checks, actor IDs, tenant identity matching helper and audit-event payloads.
+- Added `test-syllabus-workflow.js` with success transitions, diary publication gate, stale version rejection, reason validation, tenant mismatch and invalid preview checks. Tests are committed; execution is not confirmed.
+- **Security boundary:** these client-callable helpers do not authorize operations. Backend must derive actor/school from authenticated sessions, check subscription and role, write plans and events atomically, and use trusted server timestamps. Do not rely on supplied actor IDs or client tenant IDs for authorization.
+- Published-plan diary integration and UI/backend persistence remain outstanding. No production school data modified and no Vercel deployment.

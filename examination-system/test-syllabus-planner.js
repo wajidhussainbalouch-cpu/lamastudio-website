@@ -9,4 +9,8 @@ assert.equal(plan.metadata.requiresApproval,true);
 assert.equal(plan.metadata.previewOnly,true);
 assert.throws(()=>p.preview({...base,verifiedCatalog:{...base.verifiedCatalog,reviewStatus:'draft'}}),/textbook-verified/);
 assert.throws(()=>p.preview({...base,subjectWeekdays:[0]}),/Insufficient/);
+const noOff=p.preview({...base,schoolCalendar:{startDate:'2027-03-01',endDate:'2027-03-14'},subjectWeekdays:[1,3],periodsPerDay:2,revisionDays:1});
+assert.deepEqual(noOff.calendar.weeklyOffDays,[]);
+assert.equal(noOff.scheduled.filter(x=>x.kind==='revision').length,2);
+assert.equal(noOff.scheduled.filter(x=>x.lessonId).length,2);
 console.log('Syllabus integrated preview tests passed');

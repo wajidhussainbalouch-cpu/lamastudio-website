@@ -57,5 +57,6 @@ object LearningContent {
         val extra = reviewQuestions.getValue(lesson.subject)
         lesson.copy(questions = lesson.questions + extra)
     }
-    fun forGradeAndSubject(grade: String, subject: String): List<Lesson> = practiceLessons.filter { it.grade == grade && it.subject == subject }
+    val allLessons: List<Lesson> get() = practiceLessons + TopicLibrary.lessons
+    fun forGradeAndSubject(grade: String, subject: String): List<Lesson> = allLessons.filter { it.grade == grade && it.subject == subject }
 }

@@ -127,12 +127,28 @@ async function load(){
  });
  try{
   // Keep the teacher roster available even if the separate attendance-history request fails.
-  const roster=await deadline(LamaAPI.list('teachers'),'Teacher list');
+  const rosterStart=performance.now();
+  let roster;
+  try{
+   roster=await deadline(LamaAPI.list('teachers'),'Teacher list');
+   console.info('[LAMA attendance] Teacher roster loaded in '+Math.round(performance.now()-rosterStart)+' ms');
+  }catch(error){
+   console.warn('[LAMA attendance] Teacher roster request failed after '+Math.round(performance.now()-rosterStart)+' ms:',error.message);
+   throw error;
+  }
   if(!Array.isArray(roster)&&!Array.isArray(roster?.records)&&!Array.isArray(roster?.data))throw Error('Teacher list returned an unexpected response. Retry without changing attendance.');
   teachers=arr(roster).filter(t=>id(t));
   historyAvailable=true;
   try{
-   const attendance=await deadline(LamaAPI.list('teacherAttendance'),'Teacher attendance');
+   const historyStart=performance.now();
+   let attendance;
+   try{
+    attendance=await deadline(LamaAPI.list('teacherAttendance'),'Teacher attendance');
+    console.info('[LAMA attendance] Teacher history loaded in '+Math.round(performance.now()-historyStart)+' ms');
+   }catch(error){
+    console.warn('[LAMA attendance] Teacher history request failed after '+Math.round(performance.now()-historyStart)+' ms:',error.message);
+    throw error;
+   }
    if(!Array.isArray(attendance)&&!Array.isArray(attendance?.records)&&!Array.isArray(attendance?.data))throw Error('Unexpected attendance response');
    records=arr(attendance);
   }catch(e){

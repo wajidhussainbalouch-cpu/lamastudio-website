@@ -15,4 +15,8 @@ assert.throws(()=>policy.authorize({session,resource,action:'manualEdit',entitle
 assert.equal(policy.authorize({session,resource,action:'manualEdit',entitlements:{schoolId:'s1',management:true}}).allowed,true);
 assert.equal(policy.authorize({session,resource,action:'previewAutomatic',entitlements:{schoolId:'s1',examination:true}}).allowed,true);
 assert.throws(()=>policy.authorize({session,resource,action:'manualEdit',entitlements:{schoolId:'s1',examination:true}}),/Management entitlement/);
+assert.equal(policy.authorize({session,resource,action:'view',entitlements:{schoolId:'s1',examination:true}}).allowed,true);
+assert.equal(policy.authorize({session,resource,action:'markProgress',entitlements:{schoolId:'s1',examination:true}}).allowed,true);
+assert.throws(()=>policy.authorize({session,resource,action:'markProgress',entitlements:{schoolId:'s1',management:true}}),/Examination entitlement/);
+assert.throws(()=>policy.authorize({session,resource,action:'view',entitlements:{schoolId:'s1'}}),/Management or Examination entitlement/);
 console.log('Syllabus policy tests passed');

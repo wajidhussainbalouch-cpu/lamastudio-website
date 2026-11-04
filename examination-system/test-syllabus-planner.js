@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const p=require('./syllabus-planner.js');
+const base={schoolCalendar:{startDate:'2027-03-01',endDate:'2027-03-14',weeklyOffDays:[0,6],holidays:[{date:'2027-03-03',name:'Holiday'}],closures:[],makeupDays:['2027-03-06']},verifiedCatalog:{curriculumId:'punjab',classId:'1',subjectId:'math',sourceVersion:'v1',reviewStatus:'verified',chapters:[{id:'ch1',title:'Numbers',lessons:[{id:'l1',title:'Count',periods:2}]}]},subjectWeekdays:[1,3,6],revisionDays:1};
+const plan=p.preview(base);
+assert.equal(plan.scheduled.filter(x=>x.lessonId).length,2);
+assert(plan.scheduled.some(x=>x.date==='2027-03-06'));
+assert(!plan.scheduled.some(x=>x.date==='2027-03-03'));
+assert.equal(plan.metadata.requiresApproval,true);
+assert.equal(plan.metadata.previewOnly,true);
+assert.throws(()=>p.preview({...base,verifiedCatalog:{...base.verifiedCatalog,reviewStatus:'draft'}}),/textbook-verified/);
+assert.throws(()=>p.preview({...base,subjectWeekdays:[0]}),/Insufficient/);
+console.log('Syllabus integrated preview tests passed');

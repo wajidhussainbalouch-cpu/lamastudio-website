@@ -92,3 +92,11 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added optional short built-in Android feedback tones; these are NOT background music or a soundtrack. Sound setting persists locally.
 - Current topic screen lists authored lesson titles; the 40 grade-subject combinations still have sparse content. Grade-specific topic libraries and many varied questions remain to be authored and reviewed.
 - Important: redesigned code is committed but new Android CI build/device test not yet verified. No publishing, Vercel or production merge.
+
+## 4 November 2026 — Topic library expansion
+- Added `TopicLibrary.kt`: 120 supplemental offline topic lessons (3 per each of 40 grade-subject combinations), each with three multiple-choice practice questions. Existing 40 starter lessons remain available; total 160 topic entries.
+- Wired topic library to subject topic selection and included all lessons in reward counts.
+- Added `TopicLibraryTest.kt` to verify topic coverage, unique IDs and question structure.
+- LIMITATION: English, Urdu and Science question banks are reused across grades and therefore are not yet fully age differentiated. Mathematics problems scale by grade but need teacher review for early grades. This is a development milestone, not complete curriculum content.
+- The user confirmed GitHub Actions CI #14 passed for the PREVIOUS UI redesign and installed the earlier build. The new topic-library commits have NOT yet been verified by CI or on a device. Do not claim a new APK or release readiness.
+- Still required: editorial review and deeper curriculum, robust parental controls, privacy/policy review, accessibility, original background music if desired, release signing/AAB, new CI green, hands-on device QA.

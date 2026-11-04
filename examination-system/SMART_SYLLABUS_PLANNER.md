@@ -106,3 +106,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Rejects changed lesson-period catalogs, duplicate lesson identities, conflicting slots and insufficient future teaching capacity. Returns draft flags requiring approval and a reason on eventual save; original plan is not mutated.
 - Added `test-syllabus-replan.js` and included it in `.github/workflows/syllabus-planner-tests.yml` (seven test scripts total). Test execution and CI result are not yet verified.
 - Next: authorized backend persistence, audit-safe replan approval, teacher diary integration, browser testing and eventual live deployment only after release readiness. No Vercel deployment or school record changes.
+
+
+## Backend access policy continuation — 2026-11-04
+- Located actual School Suite frontend in `lamastudio-school-suite/` and Apps Script backend in `lamastudio-school-suite/backend-api/code.gs`; previous guesses at root admin/teacher paths were not correct.
+- Added `syllabus-policy.js` as a pure backend authorization **contract** with verified session requirement, same-school checks, role rules, Management entitlement for basic features, and Examination entitlement for automated scheduling/exam scope. It does not authenticate requests or modify Apps Script.
+- Added `test-syllabus-policy.js` and wired it into the GitHub Actions syllabus test workflow (eight suites total). Execution and CI success remain unverified.
+- **Critical next integration:** inspect actual Apps Script auth/session/entitlement code and implement checks server-side; do not expose this helper as client-only security. Add authenticated plan CRUD, atomic version checks, audit events, admin/teacher UI and browser tests. No Vercel deployment.

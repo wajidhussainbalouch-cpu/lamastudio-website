@@ -104,3 +104,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 
 
 
+
+## Live GitHub audit — 2026-11-04
+
+- Inspected `main` directory `examination-system/data/`: 27 JSON files, comprising 26 intake metadata files and one Class 1 Mathematics Unit 1 draft file. Directory inventory is not a full-repository question-file search.
+- Open textbook registration PRs: #64 (Class 2 General Knowledge) and #71 (Class 4 Urdu). Neither intake file is currently present in the `main` data directory. Do not mark merged until verified.
+- Class 5 Urdu and Class 5 Mathematics intake files are also absent from this directory; source registration remains unresolved.
+- Verified Class 1 Mathematics Unit 1 draft: 100 question records, 100 unique IDs, 100 distinct normalized question texts, 0 approved, 0 online-ready, 0 missing answer fields. Question types: short_answer, mcq. These checks are structural only, not textbook correctness or pedagogical approval.
+- Next: resolve PR #64/#71 safely after mergeability checks; confirm Class 5 source links; visually review textbook chapters and draft answers before approving questions. Do not deploy.

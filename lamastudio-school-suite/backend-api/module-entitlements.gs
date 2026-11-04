@@ -28,7 +28,9 @@ function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){
  if(['schoolManagement','examination','smartMarker'].indexOf(module)<0||['active','suspended','revoked'].indexOf(status)<0)throw Error('Invalid grant');
  function iso(s){if(!s)return '';if(typeof s!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(s)||!Number.isFinite(Date.parse(s)))throw Error('Invalid UTC timestamp');return s}
  start=iso(start);end=iso(end);
+ if(status==='active'&&(!start||!end))throw Error('Active module grants require start and expiry dates');
  if(start&&end&&Date.parse(end)<=Date.parse(start))throw Error('Invalid interval');
+ if(status==='active'&&Date.parse(end)<=Date.now())throw Error('Cannot activate an already expired grant');
  var lock=LockService.getScriptLock();lock.waitLock(20000);
  try{
   var s=lamaGrantSheet_(true),rows=s.getDataRange().getValues().slice(1).filter(function(r){return String(r[0])===String(schoolId)&&r[1]===module});

@@ -173,3 +173,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Committed `test-syllabus-scheduler.js` with Node assertions for government/private weekend differences, holiday skipping, divisions, diary output, cross-year dates and capacity/overlap failures. **Tests are committed, not yet executed in a CI environment.**
 - Committed `SMART_SYLLABUS_PLANNER.md`: basic manual syllabus planning belongs to Management; automated plan and teacher diary suggestions belong to Examination entitlement; Smart Marker remains separately licensed. Includes future APIs, permissions, persistence, approvals, audit and replan rules.
 - **Not yet live:** no teacher diary UI integration, no school settings UI, no verified textbook lesson catalog, no backend persistence, no deployment. Existing student/school data untouched.
+
+
+## Syllabus planner development continuation — 2026-11-04
+- Added `syllabus-progress.js` as a standalone read-only companion to the existing scheduler. Tracks completed, pending and delayed lesson periods using stable composite schedule-entry keys; provides diary suggestions and chapter coverage for exam scoping.
+- Added `test-syllabus-progress.js` covering completion/delay classification, diary suggestions, chapter coverage, invalid keys and invalid dates.
+- Coverage is advisory only: chapter tests still require teacher approval and separately verified question-bank questions. This helper does not publish papers or modify grades.
+- Existing scheduling engine, textbook metadata, school records, portals and Apps Script were not modified. New files committed directly to `main`.
+- **Still outstanding:** execute tests in CI, connect real verified chapter/lesson catalogs, manual Management UI, automated Examination UI, backend tenant/entitlement checks, versioned persistence, teacher diary writeback, calendar exceptions/make-up days, and approved exam scope. No Vercel deployment.

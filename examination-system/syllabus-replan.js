@@ -16,8 +16,10 @@ function previewReplan({originalPlan,updates=[],replacementPlan,asOf}){
  const done=oldLessons.filter(x=>x.status==='completed');
  const fixedSlots=new Set(done.map(slot));
  const pending=oldLessons.filter(x=>x.status!=='completed');
- const available=newLessons.filter(x=>x.date>=asOf&&!fixedSlots.has(slot(x)));
- const freeSlots=available.map(x=>({date:x.date,slot:x.slot,periodId:x.periodId}));
+ // Future revision/assessment slots must never be used for lessons.
+ const reservedSlots=new Set(replacementPlan.scheduled.filter(x=>!x.lessonId).map(slot));
+ const available=newLessons.filter(x=>x.date>=asOf&&!fixedSlots.has(slot(x))&&!reservedSlots.has(slot(x)));
+ const freeSlots=available.map(x=>({date:x.date,slot:x.slot,periodId:x.periodId})).sort((a,b)=>a.date.localeCompare(b.date)||a.slot-b.slot);
  const used=new Set();
  const reassigned=[];
  for(const item of pending){
@@ -26,7 +28,7 @@ function previewReplan({originalPlan,updates=[],replacementPlan,asOf}){
   used.add(slot(next));
   reassigned.push({...item,...next,status:'planned',replannedFrom:{date:item.date,slot:item.slot}});
  }
- const scheduled=[...done.map(x=>({...x,status:'completed'})),...reassigned].sort((a,b)=>a.date.localeCompare(b.date)||a.slot-b.slot);
+ const scheduled=[...done.map(x=>({...x,status:'completed'})),...reassigned,...replacementPlan.scheduled.filter(x=>!x.lessonId&&!fixedSlots.has(slot(x)))].sort((a,b)=>a.date.localeCompare(b.date)||a.slot-b.slot);
  if(new Set(scheduled.map(slot)).size!==scheduled.length)throw Error('Conflicting teaching slots');
  return {scheduled,unchangedCompleted:done.length,rescheduled:reassigned.length,requiresApproval:true,previewOnly:true,originalPlanUnchanged:true,reasonRequiredOnSave:true};
 }

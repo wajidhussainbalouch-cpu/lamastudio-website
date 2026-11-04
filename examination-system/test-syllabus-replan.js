@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const r=require('./syllabus-replan.js'),p=require('./syllabus-progress.js');
+const original={scheduled:[{date:'2027-03-01',slot:1,chapterId:'c',lessonId:'l',period:1},{date:'2027-03-02',slot:1,chapterId:'c',lessonId:'l',period:2}]};
+const replacement={scheduled:[{date:'2027-03-03',slot:1,chapterId:'c',lessonId:'l',period:1},{date:'2027-03-04',slot:1,chapterId:'c',lessonId:'l',period:2}]};
+const before=JSON.stringify(original);
+const result=r.previewReplan({originalPlan:original,replacementPlan:replacement,asOf:'2027-03-02',updates:[{key:p.lessonKey(original.scheduled[0]),status:'completed',completedAt:'2027-03-01'}]});
+assert.equal(result.unchangedCompleted,1);
+assert.equal(result.rescheduled,1);
+assert.equal(result.scheduled[0].date,'2027-03-01');
+assert.equal(result.scheduled[1].date,'2027-03-03');
+assert.equal(JSON.stringify(original),before);
+assert.equal(result.requiresApproval,true);
+assert.throws(()=>r.previewReplan({originalPlan:original,replacementPlan:{scheduled:[]},asOf:'2027-03-02'}),/Catalog lesson periods changed/);
+assert.throws(()=>r.previewReplan({originalPlan:original,replacementPlan:{scheduled:[{...replacement.scheduled[0],date:'2027-03-01'}, {...replacement.scheduled[1],date:'2027-03-01'}]},asOf:'2027-03-05'}),/Insufficient future slots/);
+console.log('Syllabus replan tests passed');

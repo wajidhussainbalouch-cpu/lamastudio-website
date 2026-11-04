@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
        Text("Learn English • انگریزی سیکھیں", style = MaterialTheme.typography.headlineSmall)
        Text("Easy • A1–A2 • Beginner")
        LinearProgressIndicator(progress = { if (lessons.isEmpty()) 0f else completed.size.toFloat() / lessons.size }, modifier = Modifier.fillMaxWidth())
-       Text("Completed: ${completed.count { it }} / ${lessons.size}")
+       Text("Completed: ${completed.size} / ${lessons.size}")
        Text("Daily learning goal: listen, repeat, and complete one lesson.")
        Text("Reward coins: $coinBalance", style = MaterialTheme.typography.bodySmall)
        if (RewardPolicy.certificateEligible(completed.size, lessons.size)) {

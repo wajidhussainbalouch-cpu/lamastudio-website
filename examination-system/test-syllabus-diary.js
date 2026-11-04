@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict');
+const diary=require('./syllabus-diary.js');
+const plan={schoolId:'s1',sessionId:'2027',classId:'1',subjectId:'math',planId:'p1',status:'published',version:4,scheduled:[{date:'2027-03-01',slot:1,chapterId:'c1',lessonId:'l1',lessonTitle:'Numbers',period:1}]};
+const args={plan,schoolId:'s1',classId:'1',subjectId:'math',date:'2027-03-01'};
+const result=diary.suggestions(args);
+assert.equal(result.suggestions.length,1);
+assert.equal(result.suggestions[0].title,'Numbers');
+assert.equal(result.suggestions[0].readOnly,true);
+assert.equal(result.requiresTeacherConfirmation,true);
+assert.equal(result.planVersion,4);
+assert.throws(()=>diary.suggestions({...args,schoolId:'s2'}),/School scope mismatch/);
+assert.throws(()=>diary.suggestions({...args,classId:'2'}),/Class or subject mismatch/);
+assert.throws(()=>diary.suggestions({...args,plan:{...plan,status:'approved'}}),/Only published/);
+assert.equal(diary.suggestions({...args,date:'2027-03-02'}).suggestions.length,0);
+console.log('Syllabus diary tests passed');

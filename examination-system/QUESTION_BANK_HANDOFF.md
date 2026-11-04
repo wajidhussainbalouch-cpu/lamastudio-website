@@ -47,7 +47,7 @@ Targets are NOT completed question counts.
 | 4 | Urdu | `1lmfd019QlRWK-ZBJr0Ze7eLPU1PxIbfs` | 158 | `data/class4-urdu-intake.json` | committed to feature branch, PR #71; **merge not verified on main**; no questions generated |
 | 4 | English | `1YxAHOKvHXjdzQVy_RvoZeuugrHL3t0_e` | 138 | `data/class4-english-intake.json` | registered, merged PR #72; no questions generated |
 | 4 | Mathematics | `1fpvfnz1sb6arKs8fcumu-Hgl4LjM34eh` | 186 | `data/class4-mathematics-intake.json` | registered, merged PR #73; no questions generated |
-| 4 | Islamiat | `13HfdenXkBOLf_3kHQHV_VH4MzoalQqXX` | 68 | `data/class4-islamiat-intake.json` | registered, merged PR #74; no questions generated |
+| 4 | Islamiat | `13HfdenXkBOLf_3kHQHV_VH4MzoalQqXX` | 88 | `data/class4-islamiat-intake.json` | registered, merged PR #74; no questions generated |
 
 Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 5 subjects × 1,500 = **7,500**; Class 4 = 4 subjects × 1,500 = **6,000**; total **30,000 planned**, not generated/approved. Do not imply 30,000 questions exist.
 
@@ -56,7 +56,7 @@ Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 s
 - Class 1 Islamiat source is on main.
 - Class 1 Tajweedi Qaida source PR #60, then assignment corrected to Class 1 on main.
 - Class 2 Urdu PR #61; English PR #62; Mathematics PR #63.
-- Class 4 Islamiat PR #74: merged on main; 68-page source registered once despite repeated links; 0 questions generated.
+- Class 4 Islamiat PR #74: merged on main; 88-page source registered once despite repeated links; 0 questions generated.
 - Class 4 Mathematics PR #73: merged on main; 186-page scanned source registered, 0 questions generated.
 - Class 4 English PR #72: merged on main; 138-page scanned source registered, 0 questions generated.
 - Class 4 Urdu PR #71: feature branch committed, merge attempt timed out and GitHub returned 'Merge already in progress'; **not verified on main**. Recheck before claiming merged.

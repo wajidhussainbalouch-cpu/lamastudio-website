@@ -1,0 +1,39 @@
+/** Additive Apps Script module entitlement backend. Not deployed or routed yet.
+ * Install alongside existing code.gs after live backend review. */
+var LAMA_MODULE_GRANT_HEADERS_=['schoolId','module','status','startsAt','expiresAt','revision','updatedAt'];
+function lamaGrantSheet_(create){
+ var ss=getRegistrySheet().getParent(),s=ss.getSheetByName('ModuleEntitlements');
+ if(!s&&create){s=ss.insertSheet('ModuleEntitlements');s.appendRow(LAMA_MODULE_GRANT_HEADERS_)}
+ if(!s)return null;
+ var h=s.getRange(1,1,1,7).getValues()[0];
+ if(h.join('|')!==LAMA_MODULE_GRANT_HEADERS_.join('|'))throw Error('Module grant schema mismatch');
+ return s;
+}
+function lamaModuleAccess_(schoolId,module){
+ if(['schoolManagement','examination','smartMarker'].indexOf(module)<0)throw Error('Unknown module');
+ var s=lamaGrantSheet_(false);if(!s)return {allowed:false,reason:'ENTITLEMENT_REQUIRED'};
+ var rows=s.getDataRange().getValues().slice(1).filter(function(r){return String(r[0])===String(schoolId)&&r[1]===module});
+ if(!rows.length)return {allowed:false,reason:'ENTITLEMENT_REQUIRED'};
+ rows.sort(function(a,b){return Number(b[5])-Number(a[5])});
+ if(rows.length>1&&Number(rows[0][5])===Number(rows[1][5]))return {allowed:false,reason:'GRANT_CONFLICT'};
+ var g=rows[0],now=Date.now();
+ if(g[2]!=='active')return {allowed:false,reason:'ENTITLEMENT_'+String(g[2]).toUpperCase()};
+ if(g[3]&&now<Date.parse(g[3]))return {allowed:false,reason:'NOT_STARTED'};
+ if(g[4]&&now>=Date.parse(g[4]))return {allowed:false,reason:'EXPIRED'};
+ return {allowed:true,revision:Number(g[5])};
+}
+function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){
+ authorizeAdmin(adminApiKey);
+ if(!findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(schoolId)}))throw Error('School not found');
+ if(['schoolManagement','examination','smartMarker'].indexOf(module)<0||['active','suspended','revoked'].indexOf(status)<0)throw Error('Invalid grant');
+ function iso(s){if(!s)return '';if(typeof s!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(s)||!Number.isFinite(Date.parse(s)))throw Error('Invalid UTC timestamp');return s}
+ start=iso(start);end=iso(end);
+ if(start&&end&&Date.parse(end)<=Date.parse(start))throw Error('Invalid interval');
+ var lock=LockService.getScriptLock();lock.waitLock(20000);
+ try{
+  var s=lamaGrantSheet_(true),rows=s.getDataRange().getValues().slice(1).filter(function(r){return String(r[0])===String(schoolId)&&r[1]===module});
+  var rev=rows.reduce(function(n,r){return Math.max(n,Number(r[5])||0)},0)+1;
+  s.appendRow([schoolId,module,status,start,end,rev,new Date().toISOString()]);
+  return {schoolId:schoolId,module:module,status:status,revision:rev};
+ }finally{lock.releaseLock()}
+}

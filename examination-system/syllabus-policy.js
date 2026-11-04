@@ -17,7 +17,8 @@ const permissions={
  diarySuggest:['school','teacher','admin'],
  examScope:['school','teacher','admin']
 };
-const premium=new Set(['previewAutomatic','submit','approve','publish','replan','diarySuggest','examScope']);
+const premium=new Set(['previewAutomatic','submit','approve','publish','markProgress','replan','diarySuggest','examScope']);
+const shared=new Set(['view']);
 function authorize({session,resource,action,entitlements}){
  if(!session||session.verified!==true||!session.actorId||!session.schoolId)throw Error('Authenticated server session required');
  if(!resource||!resource.schoolId||session.schoolId!==resource.schoolId)throw Error('School scope denied');
@@ -25,6 +26,7 @@ function authorize({session,resource,action,entitlements}){
  if(!permissions[action].includes(session.role))throw Error('Role not permitted');
  if(!entitlements||(entitlements.schoolId&&entitlements.schoolId!==session.schoolId))throw Error('Entitlement school scope denied');
  if(premium.has(action)){if(entitlements.examination!==true)throw Error('Examination entitlement required');}
+ else if(shared.has(action)){if(entitlements.management!==true&&entitlements.examination!==true)throw Error('Management or Examination entitlement required');}
  else if(entitlements.management!==true)throw Error('Management entitlement required');
  return {allowed:true,actorId:session.actorId,schoolId:session.schoolId,action};
 }

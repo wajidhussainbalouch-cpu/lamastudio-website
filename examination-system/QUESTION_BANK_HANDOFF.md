@@ -145,3 +145,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Inspected the 500-item bulk batch: ten `learningOutcome` families, **50 records in each**, all based on related question constructions. Unique text/ID is **not evidence of 500 distinct pedagogical ideas**. These records remain drafts pending semantic and textbook review.
 - No further bulk batch was added in this step: generating another 500 by changing names and numbers would violate the user's explicit non-duplication requirement. Continue with chapter/source-grounded, genuinely distinct content after scope verification; do not approve or publish any unverified answers.
 - Draft inventory remains **630 records** for Class 1 Mathematics, zero approved and zero online-ready. No deployment.
+
+## Second 500-question batch — 2026-11-04
+
+- Committed `data/class1-mathematics-batch2-500-draft.json` with 500 additional Class 1 Mathematics practice draft records and 500 unique record IDs. GitHub commit `fbf87f879cba03f6b77120b453537fe0f97f9f97`.
+- 25 skill categories represented, including number names, order, place value, number bonds, addition/subtraction, skip-counting, doubles and halves. Some questions repeat mathematical structures and some include practice-card suffixes for distinct text; **do not equate unique text with non-duplicate learning content**. Remove repeated templates and any out-of-scope items before approval.
+- Class 1 Mathematics inventory: 100 original drafts + 30 varied drafts + 500 first bulk drafts + 500 second bulk drafts = **1,130 draft records**; **0 approved, 0 online-ready**. 370 records to the numeric 1,500 draft target, but quality-reviewed count remains zero.
+- Textbook-page verification, semantic deduplication, independent answer checking, age appropriateness, and safe answer-key storage remain outstanding. No deployment.

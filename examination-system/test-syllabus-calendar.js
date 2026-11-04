@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const c=require('./syllabus-calendar.js');
+const base={startDate:'2027-03-01',endDate:'2027-03-14',weeklyOffDays:[0,6],holidays:[{date:'2027-03-03',name:'Public holiday'}],closures:[{date:'2027-03-04',name:'Flood closure'}],makeupDays:['2027-03-06']};
+const result=c.schoolDays(base);
+assert(result.days.includes('2027-03-06'));
+assert(!result.days.includes('2027-03-03'));
+assert(!result.days.includes('2027-03-04'));
+assert(!result.days.includes('2027-03-07'));
+assert.equal(c.teachingSlots(base,[1,2,3,4,5,6],2).length,result.days.length*2);
+assert.throws(()=>c.schoolDays({...base,makeupDays:['2027-03-03']}),/conflicts/);
+assert.throws(()=>c.schoolDays({...base,makeupDays:['2027-03-20']}),/outside/);
+assert.throws(()=>c.schoolDays({...base,startDate:'2027-02-30'}),/Invalid ISO/);
+assert.throws(()=>c.teachingSlots(base,[8]),/weekdays/);
+console.log('Syllabus calendar tests passed');

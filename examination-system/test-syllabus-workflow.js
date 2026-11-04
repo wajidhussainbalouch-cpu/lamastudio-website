@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const w=require('./syllabus-workflow.js');
+const preview={metadata:{previewOnly:true,requiresApproval:true},scheduled:[{date:'2027-03-01',slot:1,lessonId:'l1',chapterId:'c1'}],catalog:{sourceVersion:'v1'},calendar:{startDate:'2027-03-01'},division:'monthly'};
+const draft=w.createDraft({schoolId:'s1',sessionId:'2027',classId:'1',subjectId:'math',planId:'p1',preview});
+assert.equal(draft.status,'draft');
+assert.equal(w.canSuggestDiary(draft),false);
+const submitted=w.transition(draft,{to:'submitted',expectedVersion:1,actorId:'teacher'});
+assert.equal(submitted.event.fromVersion,1);
+const approved=w.transition(submitted.plan,{to:'approved',expectedVersion:2,actorId:'admin'});
+const published=w.transition(approved.plan,{to:'published',expectedVersion:3,actorId:'admin'});
+assert.equal(w.canSuggestDiary(published.plan),true);
+assert.equal(published.plan.version,4);
+assert.throws(()=>w.transition(published.plan,{to:'draft',expectedVersion:4,actorId:'admin'}),/Invalid transition/);
+assert.throws(()=>w.transition(submitted.plan,{to:'approved',expectedVersion:1,actorId:'admin'}),/Version conflict/);
+assert.throws(()=>w.transition(submitted.plan,{to:'draft',expectedVersion:2,actorId:'admin'}),/Reason required/);
+assert.throws(()=>w.assertSameTenant(draft,'s2'),/School scope mismatch/);
+assert.throws(()=>w.createDraft({schoolId:'s1',sessionId:'2027',classId:'1',subjectId:'math',planId:'p2',preview:{...preview,metadata:{previewOnly:false,requiresApproval:true}}}),/Approved preview input/);
+console.log('Syllabus workflow tests passed');

@@ -75,3 +75,8 @@ Workflow: `.github/workflows/lama-iq-test-android.yml`
 4. **Content integration:** Validate generated JSON content and wire approved question packs into app. The 5,000 generated records are drafts and are NOT yet player-facing.
 5. **Commercial release:** Complete full language support, AdMob rewarded flow, billing, signing, privacy and Play Store review.
 Status: source/tests/workflow committed; **no successful cloud build or verified APK yet**. PR creation attempt was blocked, so do not claim GitHub Actions has run.
+
+## 2026-11-04 — Mobile tester feedback and next build
+User confirmed the 0.1.0 debug APK installs and opens on Android; visual-pattern UI renders. Requested: five-module drawer, per-module questions with no substantive repetition, green tick for correct answers, retry hints without answer reveal, privacy/about/version, app icon, LamaStudio website integration, and future policy-compliant ads.
+
+Committed implementation on development branch: drawer lists Number Logic, Visual Patterns, Memory, Attention, Advanced Reasoning; visual and text practice use green correct feedback and hints/retry; in-app privacy/about/version and external LamaStudio link; original vector launcher icon; app listing on the development branch website homepage. **Memory, Attention, Advanced Reasoning remain explicitly marked under development, not falsely populated with unrelated questions.** Existing 5,000 draft questions remain unapproved; do not promise uniqueness. No AdMob SDK, Google Play Billing, or production deployment was added. A new GitHub Actions build is required to validate these changes. Mobile smoke test of this new build has not happened.

@@ -1812,6 +1812,14 @@ function handleRequest(params) {
                 return { status: 'success', admin: adminLogin(params.password) };
             case 'adminSetSubscription':
                 return { status: 'success', result: adminSetSubscription(params.adminApiKey, params.schoolId, params.details || {}) };
+            case 'adminGetModuleGrant':
+                authorizeAdmin(params.adminApiKey);
+                if (typeof lamaAdminGetModuleGrant_ !== 'function') throw new Error('Module grant adapter not installed in Apps Script deployment.');
+                return {status:'success',grant:lamaAdminGetModuleGrant_(params.adminApiKey,params.schoolId,params.module)};
+            case 'adminSetModuleGrant':
+                authorizeAdmin(params.adminApiKey);
+                if (typeof lamaAdminSetModuleGrant_ !== 'function') throw new Error('Module grant adapter not installed in Apps Script deployment.');
+                return {status:'success',result:lamaAdminSetModuleGrant_(params.adminApiKey,params.schoolId,params.module,params.status,params.startsAt||'',params.expiresAt||'')};
             case 'getSubscriptionStatus':
                 return { status: 'success', subscription: getSubscriptionStatus(params.schoolId, params.apiKey) };
             case 'adminListSchools':

@@ -1,5 +1,5 @@
 # LAMA Examination System — Question Bank Project Handoff
-Last updated: 2026-11-04 (Class 3 English source intake)
+Last updated: 2026-11-04 (Class 3 Mathematics source intake)
 Status: Living project document. **Read this first in every new chat.**
 
 ## Mission and scope
@@ -41,14 +41,16 @@ Targets are NOT completed question counts.
 | 2 | Islamiat | `1Z6_q9lf4H2zdXw_VInOMIUZRLFG_QL8X` | 48 | `data/class2-islamiat-intake.json` | registered, merged PR #65; no questions generated |
 | 3 | Urdu | `1LNXCmSfpIBA2OgHSx1wn_FeOzvr-MKbn` | 166 | `data/class3-urdu-intake.json` | registered, merged PR #66; no questions generated |
 | 3 | English | `11xsJrNr0ONZO8wJUSIq8p0SiK7tLyWZP` | 126 | `data/class3-english-intake.json` | registered, merged PR #67; no questions generated |
+| 3 | Mathematics | `1C69gAPjeD2yKfyvDG97kZIiTGJwCbTr2` | 174 | `data/class3-mathematics-intake.json` | registered, merged PR #68; no questions generated |
 
-Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 2 subjects × 1,500 = **3,000**; total **19,500 planned**, not generated/approved. Do not imply 19,500 questions exist.
+Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 3 subjects × 1,500 = **4,500**; total **21,000 planned**, not generated/approved. Do not imply 21,000 questions exist.
 
 ## Known milestones
 - Class 1 Urdu source: PR #55; Mathematics source PR #56; 100 Unit 1 math draft questions PR #57; General Knowledge source PR #58.
 - Class 1 Islamiat source is on main.
 - Class 1 Tajweedi Qaida source PR #60, then assignment corrected to Class 1 on main.
 - Class 2 Urdu PR #61; English PR #62; Mathematics PR #63.
+- Class 3 Mathematics PR #68: merged on main; 174-page source registered, 0 questions generated.
 - Class 3 English PR #67: merged on main; 126-page scanned source registered, 0 questions generated.
 - Class 3 Urdu PR #66: merged on main; 166-page source registered, 0 questions generated.
 - Class 2 Islamiat PR #65: merged successfully on main; 48-page source registered, 0 questions generated.

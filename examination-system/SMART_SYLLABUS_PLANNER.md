@@ -49,3 +49,11 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 4. Handle date-aware replan without rewriting taught lessons; add cross-year tests, timezone/term edge tests.
 5. Run automated tests and browser/print/PDF validation; confirm online exam and Smart Marker integration.
 6. No deployment without user approval.
+
+
+## Syllabus planner development continuation — 2026-11-04
+- Added `syllabus-progress.js` as a standalone read-only companion to the existing scheduler. Tracks completed, pending and delayed lesson periods using stable composite schedule-entry keys; provides diary suggestions and chapter coverage for exam scoping.
+- Added `test-syllabus-progress.js` covering completion/delay classification, diary suggestions, chapter coverage, invalid keys and invalid dates.
+- Coverage is advisory only: chapter tests still require teacher approval and separately verified question-bank questions. This helper does not publish papers or modify grades.
+- Existing scheduling engine, textbook metadata, school records, portals and Apps Script were not modified. New files committed directly to `main`.
+- **Still outstanding:** execute tests in CI, connect real verified chapter/lesson catalogs, manual Management UI, automated Examination UI, backend tenant/entitlement checks, versioned persistence, teacher diary writeback, calendar exceptions/make-up days, and approved exam scope. No Vercel deployment.

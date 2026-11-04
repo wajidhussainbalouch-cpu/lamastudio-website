@@ -72,3 +72,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added `test-syllabus-calendar.js`; local Node test run **passed** for make-up day, holiday/closure exclusion, subject slots, invalid dates, conflicting and out-of-range overrides.
 - Integration still required: existing `syllabus-scheduler.js` does not yet consume the new calendar adapter, and no teacher/admin UI or Apps Script endpoint has been connected. Public holiday dates must be approved by school administrators, not guessed.
 - No Vercel deployment.
+
+
+## Integrated preview continuation — 2026-11-04
+- Added `syllabus-planner.js`: additive pure preview adapter joining `syllabus-catalog.js`, `syllabus-calendar.js`, and `syllabus-scheduler.js`. It validates verified chapter/lesson catalogs, uses subject-specific teaching slots, respects closures and make-up days, supports monthly/quarterly/two-term/three-term/custom divisions, and reserves subject teaching days for revision and assessment.
+- Added `test-syllabus-planner.js` with cases for holiday exclusion, make-up scheduling, draft approval flags, unverified catalog rejection and insufficient subject capacity.
+- Existing scheduler remains unchanged for backward compatibility. This is preview-only; no Apps Script writes, tenant access, entitlement enforcement or teacher diary synchronization. Test file committed but integrated test execution has not been verified.
+- Next: run the complete Node suite and CI; implement school-specific authenticated plan persistence, approval/replan audit, subscription enforcement, and management/teacher portal wiring. No Vercel deployment.

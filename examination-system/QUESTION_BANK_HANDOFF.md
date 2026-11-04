@@ -1,5 +1,5 @@
 # LAMA Examination System — Question Bank Project Handoff
-Last updated: 2026-11-04 (Qaida Primer intake; PR #83 merged, class assignment pending)
+Last updated: 2026-11-04 (primary source intake complete; pre-primary structure agreed; handoff repaired)
 Status: Living project document. **Read this first in every new chat.**
 
 ## Mission and scope
@@ -51,7 +51,15 @@ Targets are NOT completed question counts.
 | 4 | Social Studies (SST) | `1EFPSWwGq32iIT-eDGKqtVjMsOeoMHUAD` | 108 | `data/class4-social-studies-intake.json` | registered, merged PR #75; no questions generated |
 | 5 | English | `1jsODAQskQsmY_SUp_4xJS7_4VB2lEfat` | 154 | `data/class5-english-intake.json` | registered, merged PR #76; no questions generated |
 
-Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 5 subjects × 1,500 = **7,500**; Class 4 = 5 subjects × 1,500 = **7,500**; Class 5 = 1 subject × 1,500 = **1,500**; total **33,000 planned**, not generated/approved. Do not imply 33,000 questions exist.
+| 5 | General Science | `1dwl4glSoZ2c1AYVKXH1IIkTSC4B3s97E` | 134 | `data/class5-general-science-intake.json` | registered, merged PR #77; no questions generated |
+| 5 | Islamiat | `1xvIrc83nySxsysX5g6u7YN-yFeGe3QLb` | 96 | `data/class5-islamiat-intake.json` | registered, merged PR #78; no questions generated |
+| 5 | Social Studies (SST) | `1FOp-kWZ_Z7hLcMsFaVxAkuzIdWVO56oe` | 114 | `data/class5-social-studies-intake.json` | registered, merged PR #79; no questions generated |
+| Unassigned (primer) | Mathematics Primer | `19m8yrU20whmA7vVkEf6i6Ej7rbkPJBbv` | 64 | `data/mathematics-primer-intake.json` | registered, merged PR #80; class assignment pending; no questions generated |
+| Unassigned (primer) | English Primer | `1G1H_iVUiKOmAY1MUWr4wSVJISbeoUB0Z` | 64 | `data/english-primer-intake.json` | registered, merged PR #81; class assignment pending; no questions generated |
+| Unassigned (primer) | Urdu Primer | `1ZOzM3hFOXkTLzfbTJ3JSLnWcftxZ0mg3` | 64 | `data/urdu-primer-intake.json` | registered, merged PR #82; class assignment pending; no questions generated |
+| Unassigned (primer) | Qaida Primer | `12eVQL6knNPkA3CVpJvNIXOYmeYK21Aws` | 32 | `data/qaida-primer-intake.json` | registered, merged PR #83; class assignment pending; no questions generated |
+
+Current planned totals: Classes 1–5 = **27 subjects / 40,500 planned**; four primer sources = **6,000 planned**; grand total **31 sources / 46,500 planned**. These are targets, not completed or approved question counts. Class 2 GK, Class 4 Urdu, Class 5 Urdu and Class 5 Mathematics main-branch intake status remains unresolved.
 
 ## Known milestones
 - Class 1 Urdu source: PR #55; Mathematics source PR #56; 100 Unit 1 math draft questions PR #57; General Knowledge source PR #58.
@@ -72,9 +80,17 @@ Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 s
 - Class 2 Islamiat PR #65: merged successfully on main; 48-page source registered, 0 questions generated.
 - Class 2 General Knowledge PR #64: merge attempt timed out; later GitHub said "Merge already in progress"; file was **not** on main when checked. **Recheck and resolve before claiming merged.**
 
+## Pre-primary and primary structure — decision 2026-11-04
+- Primary level: Classes 1–5. Textbook source intake considered complete by user, subject to unresolved GitHub merges and a final audit.
+- Pre-primary sequence: Playgroup/Basic → Nursery/KG → Prep → Class 1. The user associates the primer books with early childhood education and suggests English and Mathematics Primer for Nursery/KG, with Prep as the next stage. **Exact allocation of Urdu Primer and Qaida Primer, and whether all primers span more than one level, remains to be confirmed.** Do not silently assign them to a class.
+- Pre-primary 1,500 items per primer is a **maximum content-development target, not a student workload or requirement**. Prioritize small visual/oral/teacher-graded sets, developmentally appropriate activities and quality over quantity.
+- GitHub Free can hold text question banks and version history within applicable size and usage limits. Store PDFs on Drive, not GitHub; never expose protected answer keys or student records in public repository files. Use an access-controlled database/API for live assessments.
+- **Important**: source metadata is saved for most subjects, but 46,500 questions have NOT been authored. Only the reported 100 Class 1 Mathematics Unit 1 draft items are known; audit before claiming counts.
+- Handoff rows and summary were reconciled after earlier updates appended table rows below the new-chat instructions.
+
 ## Immediate next steps
-1. When the user pastes another textbook URL, identify its real class/subject and register it safely.
-2. Verify Class 2 GK PR #64 merge and main branch state.
+1. Resolve outstanding intake merges for Class 2 GK, Class 4 Urdu, Class 5 Urdu and Class 5 Mathematics, and verify the full source inventory.
+2. Confirm pre-primary primer-to-stage mapping, then implement age-appropriate question specifications.
 3. Audit existing question files and actual approved/draft counts before making progress claims.
 4. Begin substantive lesson-by-lesson, visually verified question development and automated QA; commit batches with truthful draft/approval status.
 5. Keep this handoff current with new links, completed batches, unresolved issues, and decisions.
@@ -82,10 +98,9 @@ Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 s
 ## How to resume in a new chat
 User can say: **"Continue LAMA Examination System question bank. Read examination-system/QUESTION_BANK_HANDOFF.md in my GitHub repository first, then process the next textbook link. Update the handoff file after each substantive step. No deployment."**
 
-| 5 | General Science | `1dwl4glSoZ2c1AYVKXH1IIkTSC4B3s97E` | 134 | `data/class5-general-science-intake.json` | registered, merged PR #77; no questions generated |
-| 5 | Islamiat | `1xvIrc83nySxsysX5g6u7YN-yFeGe3QLb` | 96 | `data/class5-islamiat-intake.json` | registered, merged PR #78; no questions generated |
-| 5 | Social Studies (SST) | `1FOp-kWZ_Z7hLcMsFaVxAkuzIdWVO56oe` | 114 | `data/class5-social-studies-intake.json` | registered, merged PR #79; no questions generated |
-| Unassigned (primer) | Mathematics Primer | `19m8yrU20whmA7vVkEf6i6Ej7rbkPJBbv` | 64 | `data/mathematics-primer-intake.json` | registered, merged PR #80; class assignment pending; no questions generated |
-| Unassigned (primer) | English Primer | `1G1H_iVUiKOmAY1MUWr4wSVJISbeoUB0Z` | 64 | `data/english-primer-intake.json` | registered, merged PR #81; class assignment pending; no questions generated |
-| Unassigned (primer) | Urdu Primer | `1ZOzM3hFOXkTLzfbTJ3JSLnWcftxZ0mg3` | 64 | `data/urdu-primer-intake.json` | registered, merged PR #82; class assignment pending; no questions generated |
-| Unassigned (primer) | Qaida Primer | `12eVQL6knNPkA3CVpJvNIXOYmeYK21Aws` | 32 | `data/qaida-primer-intake.json` | registered, merged PR #83; class assignment pending; no questions generated |
+
+
+
+
+
+

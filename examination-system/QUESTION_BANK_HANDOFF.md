@@ -112,3 +112,9 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Class 5 Urdu and Class 5 Mathematics intake files are also absent from this directory; source registration remains unresolved.
 - Verified Class 1 Mathematics Unit 1 draft: 100 question records, 100 unique IDs, 100 distinct normalized question texts, 0 approved, 0 online-ready, 0 missing answer fields. Question types: short_answer, mcq. These checks are structural only, not textbook correctness or pedagogical approval.
 - Next: resolve PR #64/#71 safely after mergeability checks; confirm Class 5 source links; visually review textbook chapters and draft answers before approving questions. Do not deploy.
+
+## Category specification — 2026-11-04
+
+- Added `examination-system/QUESTION_CATEGORY_SPEC.md` with a 1,500-question primary-subject allocation (350 MCQ, 200 blanks, 150 true/false, 250 short answer, 150 matching/ordering, 250 application/comprehension/numerical, 150 picture/oral/teacher-reviewed), adaptable by subject.
+- This is a development specification, **not 1,500 generated questions**. Existing verified baseline remains 100 Class 1 Mathematics Unit 1 drafts, zero approved. Remaining content requires source-by-source generation and independent answer review.
+- Do not deploy or publish; keep answer keys access-controlled before any online release.

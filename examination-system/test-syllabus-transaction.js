@@ -9,4 +9,14 @@ assert.throws(()=>tx.prepareTransition({...args,session:{...session,role:'teache
 assert.throws(()=>tx.prepareTransition({...args,entitlements:{schoolId:'s1',management:true}}),/Examination entitlement/);
 assert.throws(()=>tx.prepareTransition({...args,serverTime:'bad'}),/timestamp/);
 assert.throws(()=>tx.prepareTransition({...args,to:'published'}),/Invalid transition/);
+
+const approved={...current,status:'approved',version:3};
+const returned=tx.prepareTransition({...args,current:approved,to:'draft',expectedVersion:3,reason:'Revised school calendar'});
+assert.equal(returned.plan.status,'draft');
+assert.equal(returned.plan.version,4);
+assert.equal(returned.audit.reason,'Revised school calendar');
+assert.equal(returned.plan.approvedBy,null);
+assert.throws(()=>tx.prepareTransition({...args,current:approved,to:'draft',expectedVersion:3,reason:'  '}),/Reason required/);
+assert.throws(()=>tx.prepareTransition({...args,current:approved,to:'draft',expectedVersion:3,session:{...session,role:'teacher'},reason:'Fix'}),/Role/);
+assert.throws(()=>tx.prepareTransition({...args,current:approved,to:'draft',expectedVersion:3,entitlements:{schoolId:'s2',examination:true},reason:'Fix'}),/Entitlement school scope/);
 console.log('Syllabus transaction tests passed');

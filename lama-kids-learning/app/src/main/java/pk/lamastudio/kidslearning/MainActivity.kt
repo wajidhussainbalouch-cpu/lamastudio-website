@@ -153,7 +153,7 @@ class MainActivity : ComponentActivity() {
           }
          }
         }
-        item { Text("More grade-specific topics are being developed.", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Topic practice is available offline. More age-specific activities are in development.", style = MaterialTheme.typography.bodySmall) }
         item { OutlinedButton(onClick = { page = "home" }) { Text("← Classes and subjects") } }
        } else if (page == "quiz") {
         val lesson = currentLesson
@@ -204,7 +204,7 @@ class MainActivity : ComponentActivity() {
         item { Hero("🏆 My rewards", "Every lesson is a new achievement!") }
         item { Section("⭐ " + stars + " stars collected") }
         item { Text("Stars are saved on this device. Replay topics to improve your best score.") }
-        item { Text("Completed topics: " + LearningContent.lessons.count { store.stars(it.id) > 0 }) }
+        item { Text("Completed topics: " + LearningContent.allLessons.count { store.stars(it.id) > 0 }) }
        } else if (page == "settings") {
         item { Hero("⚙ Settings", "Make learning comfortable") }
         item {
@@ -232,7 +232,7 @@ class MainActivity : ComponentActivity() {
         } else {
          item { Section("Learning overview") }
          item { Text("Total stars: " + stars) }
-         item { Text("Completed topics: " + LearningContent.lessons.count { store.stars(it.id) > 0 }) }
+         item { Text("Completed topics: " + LearningContent.allLessons.count { store.stars(it.id) > 0 }) }
          item { Text("Progress is stored only on this device. This arithmetic gate is not a secure adult identity check.") }
         }
         item { OutlinedButton(onClick = { goHome() }) { Text("← Home") } }

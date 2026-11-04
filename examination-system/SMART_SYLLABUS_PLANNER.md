@@ -134,3 +134,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added regression assertions to `test-syllabus-replan.js` that revision slots remain present and cannot be assigned a lesson.
 - Test execution remains unverified. GitHub repository access works through connector, but direct container Git access is unavailable due to DNS resolution failure. Do not claim a passing local suite or live website readiness.
 - Still required before live testing: authenticated tenant-scoped persistence and approval audit trail, school admin/teacher portal UI, browser end-to-end QA and deployment authorization. No Vercel deployment initiated.
+
+
+## Published teacher diary adapter — 2026-11-04
+- Added `syllabus-diary.js` exposing read-only `suggestions({plan,schoolId,classId,subjectId,date,updates})` from published plans only, with school/class/subject scope checks, plan ID/version and teacher-confirmation metadata.
+- Added `test-syllabus-diary.js` covering published suggestions, wrong tenant, wrong class, unpublished plans and empty days. Included in syllabus GitHub Actions workflow.
+- **Not yet wired into the actual teacher diary page or backend.** The backend must authorize school/teacher and Examination entitlement, fetch the trusted published plan and progress updates, and never auto-mark suggested lessons complete.
+- Test run verification, portal integration, audit-safe persistence and live website testing remain pending. No Vercel deployment initiated.

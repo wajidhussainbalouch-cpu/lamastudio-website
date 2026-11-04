@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const policy=require('./syllabus-policy.js');
+const session={verified:true,actorId:'t1',schoolId:'s1',role:'teacher'};
+const resource={schoolId:'s1'};
+assert.equal(policy.authorize({session,resource,action:'manualEdit',entitlements:{management:true}}).allowed,true);
+assert.throws(()=>policy.authorize({session,resource,action:'approve',entitlements:{management:true}}),/Role not permitted/);
+assert.throws(()=>policy.authorize({session,resource,action:'previewAutomatic',entitlements:{management:true}}),/Examination entitlement/);
+assert.throws(()=>policy.authorize({session:{...session,verified:false},resource,action:'view',entitlements:{management:true}}),/Authenticated/);
+assert.throws(()=>policy.authorize({session,resource:{schoolId:'s2'},action:'view',entitlements:{management:true}}),/School scope denied/);
+assert.equal(policy.authorize({session:{...session,role:'school'},resource,action:'publish',entitlements:{management:true}}).allowed,true);
+assert.equal(policy.authorize({session,resource,action:'examScope',entitlements:{management:true,examination:true}}).allowed,true);
+console.log('Syllabus policy tests passed');

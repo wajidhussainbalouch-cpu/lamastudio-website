@@ -1,5 +1,5 @@
 # LAMA Examination System — Question Bank Project Handoff
-Last updated: 2026-11-04 (Class 5 Social Studies source intake; PR #79 merged)
+Last updated: 2026-11-04 (Mathematics Primer intake; PR #80 merged, class assignment pending)
 Status: Living project document. **Read this first in every new chat.**
 
 ## Mission and scope
@@ -85,3 +85,4 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 | 5 | General Science | `1dwl4glSoZ2c1AYVKXH1IIkTSC4B3s97E` | 134 | `data/class5-general-science-intake.json` | registered, merged PR #77; no questions generated |
 | 5 | Islamiat | `1xvIrc83nySxsysX5g6u7YN-yFeGe3QLb` | 96 | `data/class5-islamiat-intake.json` | registered, merged PR #78; no questions generated |
 | 5 | Social Studies (SST) | `1FOp-kWZ_Z7hLcMsFaVxAkuzIdWVO56oe` | 114 | `data/class5-social-studies-intake.json` | registered, merged PR #79; no questions generated |
+| Unassigned (primer) | Mathematics Primer | `19m8yrU20whmA7vVkEf6i6Ej7rbkPJBbv` | 64 | `data/mathematics-primer-intake.json` | registered, merged PR #80; class assignment pending; no questions generated |

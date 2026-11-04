@@ -162,3 +162,9 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - `syllabus-policy.js`: plan `view` now accepts either Management or Examination entitlement, while `markProgress` requires Examination. This supports Examination-only schools and prevents Management-only users from writing premium syllabus progress.
 - `test-syllabus-policy.js`: added cases for Examination-only view and progress, Management-only progress denial and unlicensed view denial.
 - Tests committed but CI results not verified; backend must still enforce this policy using trusted server-side entitlements. No backend deployment, production website deployment or school data writes performed.
+
+
+## Release verification — 2026-11-04
+- Added explicit reason validation to `syllabus-transaction.js` when returning a submitted/approved plan to draft (workflow also checks this).
+- Checked GitHub combined commit status for `39968ad5eb29c2fe060f39fd71a03eda2292d801`: Vercel context reports `failure` with build-rate-limit URL. This does **not** verify GitHub Actions unit test outcome. No deliberate Vercel deployment initiated.
+- Production readiness remains blocked by unverified deployed Apps Script modules, absent persistent syllabus storage and live admin/teacher integration. Preserve existing school Sheets and production backend until verified and backed up.

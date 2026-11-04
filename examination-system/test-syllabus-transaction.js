@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');const tx=require('./syllabus-transaction.js');
+const current={schoolId:'s1',sessionId:'2027',classId:'1',subjectId:'math',planId:'p1',status:'submitted',version:2,scheduled:[{date:'2027-03-01',slot:1,lessonId:'l1'}]};
+const session={verified:true,actorId:'a1',schoolId:'s1',role:'school'};
+const args={current,session,entitlements:{schoolId:'s1',examination:true},to:'approved',expectedVersion:2,serverTime:'2027-03-01T10:00:00Z'};
+const result=tx.prepareTransition(args);assert.equal(result.plan.status,'approved');assert.equal(result.audit.actorId,'a1');assert.equal(result.audit.serverTime,args.serverTime);assert.equal(result.expectedVersion,2);assert.equal(result.atomicCommitRequired,true);assert.equal(current.status,'submitted');
+assert.throws(()=>tx.prepareTransition({...args,expectedVersion:1}),/Version conflict/);
+assert.throws(()=>tx.prepareTransition({...args,session:{...session,schoolId:'s2'}}),/School scope/);
+assert.throws(()=>tx.prepareTransition({...args,session:{...session,role:'teacher'}}),/Role/);
+assert.throws(()=>tx.prepareTransition({...args,entitlements:{schoolId:'s1',management:true}}),/Examination entitlement/);
+assert.throws(()=>tx.prepareTransition({...args,serverTime:'bad'}),/timestamp/);
+assert.throws(()=>tx.prepareTransition({...args,to:'published'}),/Invalid transition/);
+console.log('Syllabus transaction tests passed');

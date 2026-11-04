@@ -156,3 +156,9 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added `syllabus-transaction.js`: prepares a version-checked approval transition with verified session, tenant and Examination entitlement checks, backend-supplied timestamp and audit payload. **It does not persist data or acquire a lock.** Backend must use `LockService`, re-read current row, compare expected version, and persist both plan and audit safely, with recovery strategy if multiple sheet writes fail.
 - Added `test-syllabus-transaction.js` and CI step covering success, version conflict, wrong school, unauthorized teacher, missing Examination entitlement, invalid timestamp and invalid transition.
 - Next: verify live Apps Script source/modules and backend schema, implement isolated syllabus collections and endpoint without replacing current deployed modules, then integrate active admin/teacher pages. CI and live browser verification pending; no Vercel deployment.
+
+
+## Module authorization correction — 2026-11-04
+- `syllabus-policy.js`: plan `view` now accepts either Management or Examination entitlement, while `markProgress` requires Examination. This supports Examination-only schools and prevents Management-only users from writing premium syllabus progress.
+- `test-syllabus-policy.js`: added cases for Examination-only view and progress, Management-only progress denial and unlicensed view denial.
+- Tests committed but CI results not verified; backend must still enforce this policy using trusted server-side entitlements. No backend deployment, production website deployment or school data writes performed.

@@ -154,7 +154,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(14.dp)
+                                    shape = RoundedCornerShape(14.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(containerColor = if (selected == index) Color(0xFF14532D) else Color.Transparent)
                                 ) { Text((if (selected == index) "✓  " else "") + answer, modifier = Modifier.padding(vertical = 6.dp), color = if (selected == index) Color(0xFF86EFAC) else Color.White) }
                             }

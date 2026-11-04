@@ -120,3 +120,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Corrected the premium action set to include automatic preview, submit, approve, publish, replan, automatic diary suggestions and exam scope. Manual editing and calendar editing remain Management actions.
 - Added optional `entitlements.schoolId` mismatch rejection and regression assertions in `test-syllabus-policy.js`. Existing GitHub Actions workflow already includes this policy test.
 - **Security caution:** this is a pure policy helper, not an authenticated backend. Production endpoints must use trusted session and server-loaded entitlement records, and must check every read/write. Test execution and live browser deployment remain unverified. No Vercel deployment.
+
+
+## Planner slot reservation fixes — 2026-11-04
+- `syllabus-planner.js`: optional `schoolCalendar.weeklyOffDays` now defaults to `[]` when returning calendar metadata, matching `syllabus-calendar.js` default behavior.
+- Revision and assessment days now reserve **every subject period** on each reserved date, not just slot 1. This avoids treating extra subject periods as available on assessment days.
+- Added multi-period reservation and missing-weekly-off-day regression assertions in `test-syllabus-planner.js`. CI outcome still requires verification.
+- This is code-only development. Authenticated persistence, school portal integration, live browser QA and production deployment remain outstanding. No Vercel deployment initiated.

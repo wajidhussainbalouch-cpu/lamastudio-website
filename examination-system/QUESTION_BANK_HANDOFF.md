@@ -1,5 +1,5 @@
 # LAMA Examination System — Question Bank Project Handoff
-Last updated: 2026-11-04 (Class 3 Islamiat source intake)
+Last updated: 2026-11-04 (Class 4 Urdu source intake; PR #71 merge pending)
 Status: Living project document. **Read this first in every new chat.**
 
 ## Mission and scope
@@ -44,14 +44,16 @@ Targets are NOT completed question counts.
 | 3 | Mathematics | `1C69gAPjeD2yKfyvDG97kZIiTGJwCbTr2` | 174 | `data/class3-mathematics-intake.json` | registered, merged PR #68; no questions generated |
 | 3 | General Knowledge | `120tl2Vz_PhCAAqtivosUlnh9DOiQ3Fs8` | 114 | `data/class3-general-knowledge-intake.json` | registered, merged PR #69; no questions generated |
 | 3 | Islamiat | `1aqVKG8-2-AIG3Y2K65C1KWZWB1R7XisG` | 68 | `data/class3-islamiat-intake.json` | registered, merged PR #70; no questions generated |
+| 4 | Urdu | `1lmfd019QlRWK-ZBJr0Ze7eLPU1PxIbfs` | 158 | `data/class4-urdu-intake.json` | committed to feature branch, PR #71; **merge not verified on main**; no questions generated |
 
-Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 5 subjects × 1,500 = **7,500**; total **24,000 planned**, not generated/approved. Do not imply 24,000 questions exist.
+Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 5 subjects × 1,500 = **7,500**; Class 4 = 1 subject × 1,500 = **1,500**; total **25,500 planned**, not generated/approved. Do not imply 25,500 questions exist.
 
 ## Known milestones
 - Class 1 Urdu source: PR #55; Mathematics source PR #56; 100 Unit 1 math draft questions PR #57; General Knowledge source PR #58.
 - Class 1 Islamiat source is on main.
 - Class 1 Tajweedi Qaida source PR #60, then assignment corrected to Class 1 on main.
 - Class 2 Urdu PR #61; English PR #62; Mathematics PR #63.
+- Class 4 Urdu PR #71: feature branch committed, merge attempt timed out and GitHub returned 'Merge already in progress'; **not verified on main**. Recheck before claiming merged.
 - Class 3 Islamiat PR #70: merged on main; 68-page source registered, 0 questions generated.
 - Class 3 General Knowledge PR #69: merged on main; 114-page source registered, 0 questions generated.
 - Class 3 Mathematics PR #68: merged on main; 174-page source registered, 0 questions generated.

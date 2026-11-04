@@ -65,3 +65,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - **Important:** textbook intake registration is not equivalent to a verified chapter/lesson catalog. Automatic scheduling must not invent chapter names or lesson content; verified lesson metadata remains a prerequisite.
 - The catalog/checklist functions are pure and read-only; no school data or production portal changes. Tests are committed but execution not confirmed.
 - Pending: integration with real school settings and teacher diary, authenticated backend persistence and entitlement enforcement, approved chapter-wise exam scope, live catalog verification and end-to-end testing. No Vercel deployment.
+
+
+## Calendar continuation — 2026-11-04
+- Added `syllabus-calendar.js` with strict ISO date validation, weekly holidays, dated public holidays, custom closures, make-up day overrides, and subject weekday/period slots. This is an additive pure module and does not replace the existing scheduler or write school records.
+- Added `test-syllabus-calendar.js`; local Node test run **passed** for make-up day, holiday/closure exclusion, subject slots, invalid dates, conflicting and out-of-range overrides.
+- Integration still required: existing `syllabus-scheduler.js` does not yet consume the new calendar adapter, and no teacher/admin UI or Apps Script endpoint has been connected. Public holiday dates must be approved by school administrators, not guessed.
+- No Vercel deployment.

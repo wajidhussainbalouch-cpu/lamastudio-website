@@ -1,0 +1,13 @@
+const assert=require("node:assert/strict");
+const scheduler=require("./syllabus-scheduler.js");
+const p=require("./syllabus-progress.js");
+const plan=scheduler.buildPlan({calendar:{startDate:"2027-03-01",durationMonths:1,weeklyOffDays:[0,6],holidays:[{date:"2027-03-03",name:"Holiday"}]},chapters:[{id:"ch1",lessons:[{id:"l1",title:"Numbers",periods:2}]},{id:"ch2",lessons:[{id:"l2",title:"Shapes",periods:1}]}]});
+const items=plan.scheduled.filter(x=>x.lessonId);
+const updates=[{key:p.lessonKey(items[0]),status:"completed",completedAt:"2027-03-01"},{key:p.lessonKey(items[1]),status:"delayed"}];
+assert.deepEqual(p.progress(plan,updates,"2027-03-05").totals,{completed:1,pending:0,delayed:2});
+assert.equal(p.diarySuggestions(plan,"2027-03-01",updates)[0].status,"completed");
+assert.deepEqual(p.examCoverage(plan,updates,"2027-03-05").chapterIds,["ch1"]);
+assert.equal(p.examCoverage(plan,updates,"2027-03-05").chapters[0].fullyCovered,false);
+assert.throws(()=>p.progress(plan,[{key:"unknown",status:"completed"}],"2027-03-05"),/Unknown/);
+assert.throws(()=>p.progress(plan,[],"2027-02-30"),/Valid asOf/);
+console.log("Syllabus progress tests passed");

@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
             var question by remember { mutableIntStateOf(0) }
             var score by remember { mutableIntStateOf(0) }
             var selected by remember { mutableIntStateOf(-1) }
+            var showHint by remember { mutableStateOf(false) }
             var unlocked by remember { mutableIntStateOf(prefs.getInt("unlocked", 1)) }
             val questions = remember(level) { ChallengeBank.forLevel(level) }
             val finished = level != 0 && question >= questions.size
@@ -148,18 +149,20 @@ class MainActivity : ComponentActivity() {
                                     enabled = selected == -1,
                                     onClick = {
                                         if (selected == -1) {
-                                            selected = index
-                                            if (index == item.correct) score++
+                                            if (index == item.correct) { selected = index; score++ }
+                                            else showHint = true
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(14.dp)
-                                ) { Text(answer, modifier = Modifier.padding(vertical = 6.dp)) }
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = if (selected == index) Color(0xFF14532D) else Color.Transparent)
+                                ) { Text((if (selected == index) "✓  " else "") + answer, modifier = Modifier.padding(vertical = 6.dp), color = if (selected == index) Color(0xFF86EFAC) else Color.White) }
                             }
+                            if (showHint && selected == -1) Text("Hint: consider the relationship between the clues, then try another choice.", color = Color(0xFFFDE68A))
                             if (selected >= 0) {
-                                Text(if (selected == item.correct) "Correct!" else "Incorrect — the correct answer is ${item.choices[item.correct]}.", color = accent, fontWeight = FontWeight.Bold)
+                                Text("✓ Correct!", color = Color(0xFF86EFAC), fontWeight = FontWeight.Bold)
                                 Text(item.explanation, color = Color.LightGray)
-                                Button(onClick = { question++; selected = -1 }, modifier = Modifier.align(Alignment.End)) {
+                                Button(onClick = { question++; selected = -1; showHint = false }, modifier = Modifier.align(Alignment.End)) {
                                     Text(if (question == questions.lastIndex) "See results" else "Next question")
                                 }
                             }

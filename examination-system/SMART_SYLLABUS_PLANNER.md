@@ -141,3 +141,11 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added `test-syllabus-diary.js` covering published suggestions, wrong tenant, wrong class, unpublished plans and empty days. Included in syllabus GitHub Actions workflow.
 - **Not yet wired into the actual teacher diary page or backend.** The backend must authorize school/teacher and Examination entitlement, fetch the trusted published plan and progress updates, and never auto-mark suggested lessons complete.
 - Test run verification, portal integration, audit-safe persistence and live website testing remain pending. No Vercel deployment initiated.
+
+
+## Actual School Suite integration audit — 2026-11-04
+- Located actual teacher diary at `lamastudio-school-suite/portals/teacher/teacher-diary.html`; it currently uses `LamaAPI.list('homework')` and generic `add/update/remove('homework')`, authenticated via `LamaAPI.requireLogin('teacher')`. It does not yet consume published syllabus suggestions. Do not repurpose homework as a syllabus-plan store.
+- Located backend repository source `lamastudio-school-suite/backend-api/code.gs` and the current handoff `lamastudio-school-suite/README.md`. The live Apps Script deployment may differ from this file and include other modules. **Do not overwrite or redeploy backend until live source, authorization and sheet schemas are verified and backed up.**
+- Located warning in School Suite README that old teacher diary may be disconnected demo; confirm canonical active teacher diary route before editing or linking it.
+- Fixed `syllabus-policy.js`: Examination-only schools can use automated planning without a Management subscription; manual Management features still require Management entitlement. Added tests in `test-syllabus-policy.js`.
+- Remaining: identify active portal route, verify live backend version, implement dedicated school-scoped syllabus storage/approval API with trusted entitlements and append-only audit, then wire teacher/admin UI and verify browser E2E. No Vercel deployment.

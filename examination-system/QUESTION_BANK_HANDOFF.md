@@ -181,3 +181,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Coverage is advisory only: chapter tests still require teacher approval and separately verified question-bank questions. This helper does not publish papers or modify grades.
 - Existing scheduling engine, textbook metadata, school records, portals and Apps Script were not modified. New files committed directly to `main`.
 - **Still outstanding:** execute tests in CI, connect real verified chapter/lesson catalogs, manual Management UI, automated Examination UI, backend tenant/entitlement checks, versioned persistence, teacher diary writeback, calendar exceptions/make-up days, and approved exam scope. No Vercel deployment.
+
+## Subject transition gate — 2026-11-04
+
+- User authorized moving to the next subject **only after** Class 1 Mathematics manual papers and online examinations are complete.
+- Current status: 1,500 **draft** records, zero approved/online-ready; chapter mapping, semantic deduplication, independent answer checks, secure online attempts, actual printable papers, and PDF visual QA are outstanding. Do not label subject complete.
+- Added `check_math_release.py`, a read-only fail-closed structural readiness check for all five Mathematics draft files. It checks count, IDs, exact texts, answer presence, chapter mapping and approval flags; it is not a replacement for pedagogical or runtime validation. Script committed, execution not yet verified.
+- Next subject once Maths is genuinely ready: Class 1 Urdu (source intake registered); verify textbook chapters before drafting. No new Urdu questions added this turn, no deployment.

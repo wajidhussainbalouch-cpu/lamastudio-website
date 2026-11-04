@@ -1,5 +1,5 @@
 # LAMA Examination System — Question Bank Project Handoff
-Last updated: 2026-11-04
+Last updated: 2026-11-04 (Class 2 Islamiat source intake)
 Status: Living project document. **Read this first in every new chat.**
 
 ## Mission and scope
@@ -37,15 +37,17 @@ Targets are NOT completed question counts.
 | 2 | Urdu | `1cWaeH4aUC0xJi2kbYkmrENXmU-NnBx6L` | 146 | `data/class2-urdu-intake.json` | registered, merged PR #61 |
 | 2 | English | `1mDTFzH_fwjl-ZA7peQpVAxE00C3GQ2MX` | 126 | `data/class2-english-intake.json` | registered, merged PR #62 |
 | 2 | Mathematics | `11SMlZk9Z3mdAG49ewxxK0ge1DnvyKViZ` | 154 | `data/class2-mathematics-intake.json` | registered, merged PR #63 |
-| 2 | General Knowledge | `1zcFk3RFMgOqGpsZWtJi67kSAyDgC9kw_` | 96 | `data/class2-general-knowledge-intake.json` | committed to feature branch; PR #64 merge was reported in progress, **not yet verified on main** |
+| 2 | General Knowledge | `1zcFk3RFMgOqGpsZWtJi67kSAyDgC9kw_` | 96 | `data/class2-general-knowledge-intake.json` | PR #64 merge unresolved; **not on main** at latest check |
+| 2 | Islamiat | `1Z6_q9lf4H2zdXw_VInOMIUZRLFG_QL8X` | 48 | `data/class2-islamiat-intake.json` | registered, merged PR #65; no questions generated |
 
-Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 4 subjects × 1,500 = **6,000**; total **15,000 planned**, not generated/approved. Do not imply 15,000 questions exist.
+Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; total **16,500 planned**, not generated/approved. Do not imply 16,500 questions exist.
 
 ## Known milestones
 - Class 1 Urdu source: PR #55; Mathematics source PR #56; 100 Unit 1 math draft questions PR #57; General Knowledge source PR #58.
 - Class 1 Islamiat source is on main.
 - Class 1 Tajweedi Qaida source PR #60, then assignment corrected to Class 1 on main.
 - Class 2 Urdu PR #61; English PR #62; Mathematics PR #63.
+- Class 2 Islamiat PR #65: merged successfully on main; 48-page source registered, 0 questions generated.
 - Class 2 General Knowledge PR #64: merge attempt timed out; later GitHub said "Merge already in progress"; file was **not** on main when checked. **Recheck and resolve before claiming merged.**
 
 ## Immediate next steps

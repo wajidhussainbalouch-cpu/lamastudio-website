@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LAMA Mathematics — Practice Preview</title>
+<style>
+:root{font-family:system-ui,Arial,sans-serif;color:#173026;background:#f2f7f3}*{box-sizing:border-box}
+main{max-width:850px;margin:30px auto;padding:18px}header{background:#123d2b;color:white;padding:22px;border-radius:16px}h1{margin:0 0 8px;font-size:1.6rem}.notice{background:#fff4d7;border-left:5px solid #b7791f;padding:13px;margin:15px 0;border-radius:7px}.panel{background:white;border-radius:14px;padding:18px;margin:15px 0;box-shadow:0 3px 12px #143d2910}label{display:block;margin:10px 0}input,select,button{font:inherit;padding:10px;border:1px solid #9aafa2;border-radius:8px;max-width:100%}button{background:#155b3b;color:white;border:0;cursor:pointer;margin:8px 8px 0 0}button:disabled{opacity:.5;cursor:not-allowed}.option{display:block;padding:9px;border:1px solid #ddd;border-radius:8px;margin:7px 0}.option input{margin-right:8px}.muted{color:#52645b}.result{font-weight:700;font-size:1.2rem}footer{margin-top:25px;font-size:.85rem;color:#52645b}
+</style></head><body><main>
+<header><h1>LAMA Mathematics Practice</h1><div>Class 1 · Question &amp; answer preview</div></header>
+<div class="notice"><strong>Development preview only.</strong> Questions are unapproved drafts. This page is not a secure examination system; do not use for grading or student records.</div>
+<section class="panel"><label for="source">Question batch</label><select id="source">
+<option value="class1-mathematics-unit1-varied-draft.json">30 varied draft questions</option>
+<option value="class1-mathematics-batch3-370-draft.json">370 new draft questions</option>
+<option value="class1-mathematics-unit1-batch500-draft.json">First 500 draft questions</option>
+<option value="class1-mathematics-batch2-500-draft.json">Second 500 draft questions</option>
+<option value="class1-mathematics-unit1-draft.json">Original 100 draft questions</option>
+</select><label for="count">Questions in practice session</label><select id="count"><option>5</option><option selected>10</option><option>20</option></select>
+<button id="start">Start practice</button><p id="status" role="status" class="muted"></p></section>
+<section id="quiz" class="panel" hidden><h2 id="progress"></h2><p id="question"></p><div id="answers"></div><button id="submit">Check answer</button><button id="next" hidden>Next question</button><p id="feedback" role="status"></p></section>
+<section id="summary" class="panel" hidden><h2>Practice result</h2><p id="score" class="result"></p><p class="muted">Scores are not stored or sent to school records.</p><button id="restart">Try again</button></section>
+<footer>No student login, tracking, school-grade submission or secure answer-key handling is included in this preview.</footer></main>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let questions=[],position=0,correct=0,answered=false;
+const normalize=v=>String(v??"").trim().toLocaleLowerCase().replace(/\s+/g," ");
+const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
+async function start(){
+ $("status").textContent="Loading draft questions…";$("start").disabled=true;$("quiz").hidden=true;$("summary").hidden=true;
+ try{
+  const file=$("source").value;
+  if(!/^[a-z0-9-]+\.json$/.test(file))throw Error("Invalid question source");
+  const response=await fetch("./data/"+file,{cache:"no-store"});
+  if(!response.ok)throw Error("Could not load questions (HTTP "+response.status+")");
+  const data=await response.json();
+  const valid=(data.questions||[]).filter(q=>q.questionText&&q.correctAnswer!==undefined&&q.correctAnswer!==null&&q.questionId);
+  if(!valid.length)throw Error("No usable draft questions in this file");
+  questions=shuffle(valid).slice(0,Number($("count").value));position=0;correct=0;
+  $("status").textContent=questions.length+" draft questions loaded";$("quiz").hidden=false;render();
+ }catch(e){$("status").textContent="Unable to start: "+e.message;}finally{$("start").disabled=false;}
+}
+function render(){
+ answered=false;$("submit").disabled=false;$("submit").hidden=false;$("next").hidden=true;$("feedback").textContent="";
+ const q=questions[position];$("progress").textContent="Question "+(position+1)+" of "+questions.length;
+ $("question").textContent=q.questionText;$("answers").replaceChildren();
+ if(Array.isArray(q.options)&&q.options.length>1){
+  for(const option of q.options){const label=document.createElement("label");label.className="option";const input=document.createElement("input");input.type="radio";input.name="answer";input.value=String(option);label.append(input,document.createTextNode(String(option)));$("answers").append(label);}
+ }else{const input=document.createElement("input");input.id="freeanswer";input.type="text";input.autocomplete="off";input.placeholder="Type your answer";input.setAttribute("aria-label","Your answer");$("answers").append(input);}
+}
+function check(){
+ if(answered)return;
+ const q=questions[position];const selected=document.querySelector('input[name="answer"]:checked');const free=$("freeanswer");
+ const raw=selected?selected.value:free?free.value:"";
+ if(!normalize(raw)){$("feedback").textContent="Please enter or select an answer.";return;}
+ answered=true;const ok=normalize(raw)===normalize(q.correctAnswer);if(ok)correct++;
+ $("feedback").textContent=(ok?"Correct! ":"Not quite. ")+"Expected answer: "+String(q.correctAnswer)+(q.explanation?" — "+q.explanation:"");
+ $("submit").disabled=true;$("submit").hidden=true;$("next").hidden=false;
+ $("next").textContent=position===questions.length-1?"Show result":"Next question";
+}
+function next(){if(!answered)return;position++;if(position>=questions.length){$("quiz").hidden=true;$("summary").hidden=false;$("score").textContent=correct+" correct out of "+questions.length;}else render();}
+$("start").addEventListener("click",start);$("submit").addEventListener("click",check);$("next").addEventListener("click",next);$("restart").addEventListener("click",start);
+</script></body></html>

@@ -92,3 +92,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added `.github/workflows/syllabus-planner-tests.yml` on `main` (commit `51f0ccab9c30a10adf7cf89c5313a62970679b9b`). On relevant JS changes and PRs, GitHub Actions is configured to run all six Node suites: scheduler, progress, catalog, calendar, integrated preview, workflow.
 - This commit creates the CI configuration; a completed successful Actions run is **not yet verified**. Check Actions logs and fix failures before claiming release readiness.
 - Next: backend tenant/entitlement authorization, atomic plan and event persistence, teacher/admin UI integration, and diary sync. No Vercel deployment.
+
+
+## Browser preview development — 2026-11-04
+- Added `examination-system/syllabus-planner-preview.html`: mobile-responsive standalone browser page loading the four pure JS planner dependencies. School can enter academic dates, weekly off days, subject weekdays, dated closures/holidays/make-up dates, revision/assessment days, and paste a verified catalog JSON to calculate a draft timetable.
+- The included catalog is explicitly synthetic demonstration data, not official textbook chapters. User-supplied JSON is rendered with HTML escaping; no student data or backend calls are made.
+- **Not live-ready:** page is not wired into School Suite navigation or authenticated portal, cannot save/approve/synchronize plans, and has not undergone browser/end-to-end testing. A GitHub commit does not prove a Vercel production deployment. Do not invite user to test live until the full feature is integrated and deployed with approval.
+- Next: inspect existing school portal/auth and Apps Script contracts, add authenticated tenant-isolated plan CRUD, subscription gates, teacher/admin screens, verify browser and CI tests. No Vercel deployment requested or performed.

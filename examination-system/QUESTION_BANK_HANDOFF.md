@@ -138,3 +138,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - **Caution:** Unique text does not mean non-repetitive pedagogy: each skill family uses related templates. These are generated **drafts**, not independently textbook-verified, semantically deduplicated, teacher-approved, or online-ready. Page references intentionally null. Check whether all skill families belong in the actual Unit 1; reassign or reject out-of-scope items.
 - Class 1 Mathematics total now **630 draft records** (100 original + 30 varied + 500 bulk), **0 approved**, **0 online-ready**; 870 remain to the 1,500 draft target. Count is file-record total; cross-file semantic uniqueness and correctness have not been certified.
 - No deployment. Never serve public-repository answer keys as secure live assessment data.
+
+## Next-step quality gate — 2026-11-04
+
+- Added `examination-system/audit_semantic_templates.py` to detect repeated numerical patterns even when object/context nouns change. This supplements `audit_questions.py`; both are read-only and use the Python standard library.
+- Inspected the 500-item bulk batch: ten `learningOutcome` families, **50 records in each**, all based on related question constructions. Unique text/ID is **not evidence of 500 distinct pedagogical ideas**. These records remain drafts pending semantic and textbook review.
+- No further bulk batch was added in this step: generating another 500 by changing names and numbers would violate the user's explicit non-duplication requirement. Continue with chapter/source-grounded, genuinely distinct content after scope verification; do not approve or publish any unverified answers.
+- Draft inventory remains **630 records** for Class 1 Mathematics, zero approved and zero online-ready. No deployment.

@@ -37,3 +37,16 @@ function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){
   return {schoolId:schoolId,module:module,status:status,revision:rev};
  }finally{lock.releaseLock()}
 }
+
+function lamaAdminGetModuleGrant_(adminApiKey,schoolId,module){
+ authorizeAdmin(adminApiKey);
+ if(['schoolManagement','examination','smartMarker'].indexOf(module)<0)throw Error('Unknown module');
+ if(!findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(schoolId)}))throw Error('School not found');
+ var sheet=lamaGrantSheet_(false);
+ if(!sheet)return null;
+ var rows=sheet.getDataRange().getValues().slice(1).filter(function(r){return String(r[0])===String(schoolId)&&String(r[1])===module});
+ rows.sort(function(a,b){return Number(b[5])-Number(a[5])});
+ if(!rows.length)return null;
+ if(rows.length>1&&Number(rows[0][5])===Number(rows[1][5]))throw Error('Conflicting grant revisions');
+ var r=rows[0];return {schoolId:String(r[0]),module:String(r[1]),status:String(r[2]),startsAt:r[3]||'',expiresAt:r[4]||'',revision:Number(r[5])};
+}

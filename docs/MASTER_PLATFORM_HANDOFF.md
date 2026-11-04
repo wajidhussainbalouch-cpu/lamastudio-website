@@ -38,3 +38,18 @@ Added platform-core/subscriptions/entitlements.js and test-entitlements.js; loca
 
 ## 2026-11-04 backend route milestone
 Added guarded `adminGetModuleGrant` and `adminSetModuleGrant` routes to `lamastudio-school-suite/backend-api/code.gs`, plus authenticated `lamaAdminGetModuleGrant_` to `module-entitlements.gs`. The UI already calls these actions. All writes remain disabled until the matching adapter is included in the actual deployed Apps Script project; no deployment performed. GitHub code changes alone do not change the live Apps Script version. Pending: confirm script bundling/deployment, test read/write against a disposable test school, validate header compatibility, concurrency and auditing, then connect tenant-side enforcement. The present adapter is NOT production security complete. Vercel preview previously failed due to deployment quota.
+
+## 2026-11-04 — Module grant hardening and operational next steps
+**Changed:** `lamastudio-school-suite/backend-api/module-entitlements.gs` now denies module access when persisted grant start or expiry dates are missing or malformed. Previously, old or manually edited active rows with empty dates could have been treated as perpetual grants. Existing grant records were not modified.
+
+**Important:** The new grant adapter and Super Admin UI remain source-only until the matching Apps Script project is updated and its deployment version changed. This is a fail-closed check for future integration, NOT proof that live exam/marker endpoints enforce it. GitHub source inspection performed; automated tests for this exact change and end-to-end backend tests still pending. No Vercel deployment.
+
+**Safe implementation order:**
+1. Identify the live Apps Script project/deployment and inspect installed files, script properties, and registry header names without revealing secrets. Confirm `module-entitlements.gs` is installed alongside `code.gs`.
+2. Write mocked Apps Script tests for schema creation, missing/expired grants, revision conflicts, date validation, admin authorization, and concurrent writes. Do not run test writes against production registry.
+3. Add explicit module checks to each examination and marker server action after verifying the authenticated tenant context. Never accept a browser-supplied schoolId as sole proof of tenant ownership.
+4. Add audit fields and immutable grant history, then test the Super Admin UI on a disposable test school.
+5. Implement exam snapshots, attempt lifecycle, answer-key isolation, marker verification, and idempotent result sync before a production release.
+6. Reconcile the ZIP against GitHub main and update this document with tested commits and remaining risks.
+
+**Known integration gap:** Module grant storage currently lacks an independently verified audit trail, tenant-side server authorization, and production deployment. Keep all release checklist security gates unchecked.

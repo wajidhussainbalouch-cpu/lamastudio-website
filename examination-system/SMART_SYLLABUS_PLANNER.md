@@ -1,8 +1,8 @@
 # LAMA Smart Syllabus Planner — Architecture and Integration
-Status: Scheduling engine committed; not connected to production portals or Google Apps Script.
+Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transaction-preparation modules committed. Not yet integrated with production portals or live Google Apps Script. CI results and end-to-end tests unverified.
 
 ## Product placement and licensing
-- **Management entitlement:** Basic manual syllabus division, calendar configuration, chapter checklist, printable plan and teacher progress entry. Schools can use these without Examination subscription.
+- **Management entitlement:** Basic manual syllabus division, calendar configuration, chapter checklist and printable plan. Premium lesson-progress tracking requires Examination entitlement. Schools can use these without Examination subscription.
 - **Examination entitlement:** Automated scheduling and recalculation, suggested teacher diary lessons by date, chapter/term test scope, automated progress forecasts, exam-linked revision and assessment days.
 - **Smart Marker entitlement:** Optional separate OMR and handwritten paper marking; no dependency for basic syllabus planning.
 - Super Admin controls entitlements per school; backend must verify school/tenant and entitlement on every action. Do not rely on client-only checks.
@@ -168,3 +168,11 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Added explicit reason validation to `syllabus-transaction.js` when returning a submitted/approved plan to draft (workflow also checks this).
 - Checked GitHub combined commit status for `39968ad5eb29c2fe060f39fd71a03eda2292d801`: Vercel context reports `failure` with build-rate-limit URL. This does **not** verify GitHub Actions unit test outcome. No deliberate Vercel deployment initiated.
 - Production readiness remains blocked by unverified deployed Apps Script modules, absent persistent syllabus storage and live admin/teacher integration. Preserve existing school Sheets and production backend until verified and backed up.
+
+
+## Approval regression coverage update — 2026-11-04
+- Expanded `test-syllabus-transaction.js` with return-to-draft tests: administrator supplies a meaningful reason, plan version increments, prior approval is cleared, and audit reason is retained.
+- Added negative cases for whitespace-only reason, teacher attempting approval reset, and mismatched entitlement school.
+- Reconciled this handoff's licensing summary with the current policy: automated lesson progress (`markProgress`) requires Examination; Management-only permits manual planning/checklist but not premium progress updates.
+- **Verification status:** GitHub commit created, but the tests have not been executed/verified in this session. A successful commit does not imply a successful Actions run or deployed feature.
+- **Release blockers:** Confirm live Apps Script source and authorization; implement dedicated tenant-scoped syllabus plan storage with locked version checks and durable audit; connect actual school-admin and teacher portals; validate role isolation, school data safety and mobile flows. No production deployment or school data writes.

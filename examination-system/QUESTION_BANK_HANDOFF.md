@@ -166,3 +166,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added `print-preview.html`: A4 school-header print/Save-as-PDF prototype with student details, paper fields and QR placeholder. **No working QR, real PDF generator or OMR layout yet.**
 - Added `EXAM_SMART_MARKER_INTEGRATION.md`: secure online exam lifecycle, Super Admin entitlement controls, teacher/admin publish workflow, student portal access, server-side grading, signed paper IDs, Smart Marker OMR/handwritten review, idempotent result posting and release blockers.
 - Existing 1,500 Class 1 Mathematics records remain **draft/unapproved** and lack verified chapter mapping. The new generator deliberately cannot treat them as live exam-ready questions. No production portal integration, deploy or data mutation performed.
+
+## Smart Syllabus Planner — 2026-11-04
+
+- Committed `syllabus-scheduler.js` (pure JS, no backend mutation): configurable start date/duration, weekly-off-day policies, school/public holiday exclusions, monthly/two-term/three-term/quarterly/custom divisions, lesson-period scheduling, capacity validation, revision/assessment reserves and date-specific teacher diary suggestions.
+- Committed `test-syllabus-scheduler.js` with Node assertions for government/private weekend differences, holiday skipping, divisions, diary output, cross-year dates and capacity/overlap failures. **Tests are committed, not yet executed in a CI environment.**
+- Committed `SMART_SYLLABUS_PLANNER.md`: basic manual syllabus planning belongs to Management; automated plan and teacher diary suggestions belong to Examination entitlement; Smart Marker remains separately licensed. Includes future APIs, permissions, persistence, approvals, audit and replan rules.
+- **Not yet live:** no teacher diary UI integration, no school settings UI, no verified textbook lesson catalog, no backend persistence, no deployment. Existing student/school data untouched.

@@ -124,3 +124,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added read-only `examination-system/audit_questions.py` to check missing fields, duplicate IDs/text, MCQ answer membership, approval-state consistency, and numeric-template repetition. Script does not change student records or publish questions.
 - Existing Class 1 Mathematics Unit 1 draft has 100 items, but structural uniqueness alone is insufficient. Numeric-template repetition audit identified 9 patterns with at least five variants; most repeated: `what number comes immediately after #?` (10); `what number comes immediately before #?` (10); `write # as tens and ones.` (10); `which digit is in the tens place of #?` (10). These are review flags, not confirmed invalid questions.
 - No additional questions were generated in this audit step; total remains 100 drafts, zero approved. Next content authoring must use verified textbook page images and varied learning outcomes, rather than inflate counts with number substitutions.
+
+## New question content batch — 2026-11-04
+
+- Added `data/class1-mathematics-unit1-varied-draft.json` containing **30 additional original supplementary drafts** (7 MCQ, 11 short answer, 5 fill-blank, 4 true/false, 3 matching). The questions cover counting, number order, place value, patterns, contextual arithmetic, and equal grouping.
+- These 30 are **not textbook-page verified**, and page fields are deliberately null rather than invented. They remain draft, unapproved, offline-only. Some outcomes (e.g. odd/even and sharing) require scope confirmation against the actual Unit 1 textbook pages before inclusion in Unit 1.
+- Verified repository file counts now: **130 draft questions** across two Class 1 Mathematics Unit 1 files; **0 approved**, **0 online-ready**. The 46,500 overall target remains unfinished.
+- Before publication: visually confirm textbook learning outcomes, review each answer and marking rubric, screen for near duplicates, and move protected answer keys out of public repository assets.

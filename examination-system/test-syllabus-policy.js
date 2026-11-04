@@ -7,6 +7,10 @@ assert.throws(()=>policy.authorize({session,resource,action:'approve',entitlemen
 assert.throws(()=>policy.authorize({session,resource,action:'previewAutomatic',entitlements:{management:true}}),/Examination entitlement/);
 assert.throws(()=>policy.authorize({session:{...session,verified:false},resource,action:'view',entitlements:{management:true}}),/Authenticated/);
 assert.throws(()=>policy.authorize({session,resource:{schoolId:'s2'},action:'view',entitlements:{management:true}}),/School scope denied/);
-assert.equal(policy.authorize({session:{...session,role:'school'},resource,action:'publish',entitlements:{management:true}}).allowed,true);
+assert.equal(policy.authorize({session:{...session,role:'school'},resource,action:'publish',entitlements:{management:true,examination:true}}).allowed,true);
 assert.equal(policy.authorize({session,resource,action:'examScope',entitlements:{management:true,examination:true}}).allowed,true);
+assert.throws(()=>policy.authorize({session:{...session,role:'school'},resource,action:'publish',entitlements:{management:true}}),/Examination entitlement/);
+assert.throws(()=>policy.authorize({session,resource,action:'diarySuggest',entitlements:{management:true}}),/Examination entitlement/);
+assert.throws(()=>policy.authorize({session,resource,action:'manualEdit',entitlements:{schoolId:'s2',management:true}}),/Management entitlement/);
+assert.equal(policy.authorize({session,resource,action:'manualEdit',entitlements:{schoolId:'s1',management:true}}).allowed,true);
 console.log('Syllabus policy tests passed');

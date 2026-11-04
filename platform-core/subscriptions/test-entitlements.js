@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict'),e=require('./entitlements.js');
+const t=Date.parse('2026-11-04T12:00:00Z'),g={schoolId:'s1',module:'examination',status:'active',revision:1,startsAt:'2026-11-01T00:00:00Z',expiresAt:'2026-12-01T00:00:00Z'};
+assert.equal(e.evaluate([g],'s1','examination',t).allowed,true);
+assert.equal(e.evaluate([g],'s2','examination',t).reason,'ENTITLEMENT_REQUIRED');
+assert.equal(e.evaluate([g],'s1','smartMarker',t).reason,'ENTITLEMENT_REQUIRED');
+assert.equal(e.evaluate([g],'s1','examination',Date.parse(g.expiresAt)).reason,'EXPIRED');
+assert.equal(e.evaluate([g],'s1','examination',Date.parse(g.startsAt)-1).reason,'NOT_STARTED');
+assert.equal(e.evaluate([g,{...g,status:'revoked',revision:2}],'s1','examination',t).reason,'ENTITLEMENT_REVOKED');
+assert.equal(e.evaluate([g,{...g,status:'suspended'}],'s1','examination',t).reason,'CONFLICTING_GRANTS');
+assert.equal(e.evaluate([{...g,expiresAt:'invalid'}],'s1','examination',t).reason,'INVALID_GRANT');
+assert.throws(()=>e.validateGrant({...g,revision:0}));
+console.log('Entitlement tests passed');

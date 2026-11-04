@@ -20,9 +20,9 @@ function preview({schoolCalendar,verifiedCatalog,subjectWeekdays,periodsPerDay=1
  const segments=scheduler.periods({startDate:cal.startDate,endDate:cal.endDate,mode:division,terms:customTerms});
  const periodId=date=>segments.find(p=>p.startDate<=date&&p.endDate>=date)?.id||null;
  const scheduled=lessons.map((l,i)=>({...l,...available[i],periodId:periodId(available[i].date),status:'planned'}));
- for(let i=0;i<reserved;i++){const date=dates[teachingDates.length+i];scheduled.push({date,slot:1,kind:i<revisionDays?'revision':'assessment',periodId:periodId(date),status:'planned'});}
+ for(let i=0;i<reserved;i++){const date=dates[teachingDates.length+i];for(const s of slots.filter(x=>x.date===date))scheduled.push({...s,kind:i<revisionDays?'revision':'assessment',periodId:periodId(date),status:'planned'});}
  const periods=segments.map(p=>({...p,lessonPeriods:scheduled.filter(x=>x.lessonId&&x.periodId===p.id).length,teachingDays:teachingDates.filter(d=>d>=p.startDate&&d<=p.endDate).length}));
- return {calendar:{startDate:cal.startDate,endDate:cal.endDate,weeklyOffDays:[...schoolCalendar.weeklyOffDays]},catalog:{curriculumId:c.curriculumId,classId:c.classId,subjectId:c.subjectId,sourceVersion:c.sourceVersion},division,periods,scheduled,skipped:cal.skipped,unscheduledSlots:available.length-lessons.length,metadata:{lessonPeriods:lessons.length,teachingDays:teachingDates.length,capacity:available.length,generatedAt:null,requiresApproval:true,previewOnly:true}};
+ return {calendar:{startDate:cal.startDate,endDate:cal.endDate,weeklyOffDays:[...(schoolCalendar.weeklyOffDays||[])]},catalog:{curriculumId:c.curriculumId,classId:c.classId,subjectId:c.subjectId,sourceVersion:c.sourceVersion},division,periods,scheduled,skipped:cal.skipped,unscheduledSlots:available.length-lessons.length,metadata:{lessonPeriods:lessons.length,teachingDays:teachingDates.length,capacity:available.length,generatedAt:null,requiresApproval:true,previewOnly:true}};
 }
 return {preview};
 });

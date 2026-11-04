@@ -22,7 +22,7 @@ object LessonRepository {
      val q = quiz.getJSONObject(j)
      val opts = q.getJSONArray("options")
      Question(q.getString("question"), (0 until opts.length()).map { opts.getString(it) }, q.getInt("correctIndex"))
-    }),
+    },
     item.optString("level", "A1"),
     item.getJSONArray("vocabulary").let { words -> (0 until words.length()).map { k ->
      val v = words.getJSONObject(k)

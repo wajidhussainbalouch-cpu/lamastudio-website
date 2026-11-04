@@ -196,3 +196,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - **Important:** textbook intake registration is not equivalent to a verified chapter/lesson catalog. Automatic scheduling must not invent chapter names or lesson content; verified lesson metadata remains a prerequisite.
 - The catalog/checklist functions are pure and read-only; no school data or production portal changes. Tests are committed but execution not confirmed.
 - Pending: integration with real school settings and teacher diary, authenticated backend persistence and entitlement enforcement, approved chapter-wise exam scope, live catalog verification and end-to-end testing. No Vercel deployment.
+
+## Class 1 Urdu started — 2026-11-04
+
+- User explicitly authorized moving question-content work to Class 1 Urdu; system integration remains in separate master chat.
+- Verified Google Drive source metadata: `urdu 1  2024 water mark.pdf` (application/pdf, 76,959,624 bytes), ID `17o-AGE3z00m-z8Kih389pmAeWolTxA2N`; repository intake reports 168 pages and 0 questions.
+- Retrieved source text via Drive connector; Urdu text extraction is badly garbled and cannot ground chapter titles, quotations or exact page mappings. **Visual PDF review required before drafting textbook-grounded questions.**
+- Added `examination-system/CLASS1_URDU_QUESTION_PLAN.md` with source review workflow, question schema, Urdu-specific marking rules, duplicate checks and release criteria.
+- Current Urdu counts: 0 drafted, 0 approved, 0 online-ready. Do not imply 1,500 questions have been generated. No deployment or production database changes.

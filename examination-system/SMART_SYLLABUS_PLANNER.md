@@ -127,3 +127,10 @@ Status: Scheduling engine committed; not connected to production portals or Goog
 - Revision and assessment days now reserve **every subject period** on each reserved date, not just slot 1. This avoids treating extra subject periods as available on assessment days.
 - Added multi-period reservation and missing-weekly-off-day regression assertions in `test-syllabus-planner.js`. CI outcome still requires verification.
 - This is code-only development. Authenticated persistence, school portal integration, live browser QA and production deployment remain outstanding. No Vercel deployment initiated.
+
+
+## Replan reserved-slot correction — 2026-11-04
+- Updated `syllabus-replan.js` to retain non-lesson revision/assessment slots from replacement previews and exclude those reserved slots from reassignment; sorts future candidate slots by date/slot.
+- Added regression assertions to `test-syllabus-replan.js` that revision slots remain present and cannot be assigned a lesson.
+- Test execution remains unverified. GitHub repository access works through connector, but direct container Git access is unavailable due to DNS resolution failure. Do not claim a passing local suite or live website readiness.
+- Still required before live testing: authenticated tenant-scoped persistence and approval audit trail, school admin/teacher portal UI, browser end-to-end QA and deployment authorization. No Vercel deployment initiated.

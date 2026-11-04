@@ -23,8 +23,9 @@ function authorize({session,resource,action,entitlements}){
  if(!resource||!resource.schoolId||session.schoolId!==resource.schoolId)throw Error('School scope denied');
  if(!Object.prototype.hasOwnProperty.call(permissions,action))throw Error('Unknown syllabus action');
  if(!permissions[action].includes(session.role))throw Error('Role not permitted');
- if(!entitlements||entitlements.management!==true|| (entitlements.schoolId&&entitlements.schoolId!==session.schoolId))throw Error('Management entitlement required for this school');
- if(premium.has(action)&&entitlements.examination!==true)throw Error('Examination entitlement required');
+ if(!entitlements||(entitlements.schoolId&&entitlements.schoolId!==session.schoolId))throw Error('Entitlement school scope denied');
+ if(premium.has(action)){if(entitlements.examination!==true)throw Error('Examination entitlement required');}
+ else if(entitlements.management!==true)throw Error('Management entitlement required');
  return {allowed:true,actorId:session.actorId,schoolId:session.schoolId,action};
 }
 return {authorize};

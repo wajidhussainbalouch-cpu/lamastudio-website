@@ -188,3 +188,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Current status: 1,500 **draft** records, zero approved/online-ready; chapter mapping, semantic deduplication, independent answer checks, secure online attempts, actual printable papers, and PDF visual QA are outstanding. Do not label subject complete.
 - Added `check_math_release.py`, a read-only fail-closed structural readiness check for all five Mathematics draft files. It checks count, IDs, exact texts, answer presence, chapter mapping and approval flags; it is not a replacement for pedagogical or runtime validation. Script committed, execution not yet verified.
 - Next subject once Maths is genuinely ready: Class 1 Urdu (source intake registered); verify textbook chapters before drafting. No new Urdu questions added this turn, no deployment.
+
+
+## Continuation — verified catalog and manual checklist (2026-11-04)
+- Added `examination-system/syllabus-catalog.js`: standalone verified textbook lesson catalog normalization, globally unique lesson IDs, positive teaching-period validation and basic manual lesson checklist output.
+- Added `examination-system/test-syllabus-catalog.js`: Node assertions for verified catalog normalization, completed manual checklist, rejection of unverified catalogs, unknown lesson IDs and duplicate chapter IDs.
+- **Important:** textbook intake registration is not equivalent to a verified chapter/lesson catalog. Automatic scheduling must not invent chapter names or lesson content; verified lesson metadata remains a prerequisite.
+- The catalog/checklist functions are pure and read-only; no school data or production portal changes. Tests are committed but execution not confirmed.
+- Pending: integration with real school settings and teacher diary, authenticated backend persistence and entitlement enforcement, approved chapter-wise exam scope, live catalog verification and end-to-end testing. No Vercel deployment.

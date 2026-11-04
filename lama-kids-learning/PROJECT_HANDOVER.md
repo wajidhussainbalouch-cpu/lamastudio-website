@@ -100,3 +100,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - LIMITATION: English, Urdu and Science question banks are reused across grades and therefore are not yet fully age differentiated. Mathematics problems scale by grade but need teacher review for early grades. This is a development milestone, not complete curriculum content.
 - The user confirmed GitHub Actions CI #14 passed for the PREVIOUS UI redesign and installed the earlier build. The new topic-library commits have NOT yet been verified by CI or on a device. Do not claim a new APK or release readiness.
 - Still required: editorial review and deeper curriculum, robust parental controls, privacy/policy review, accessibility, original background music if desired, release signing/AAB, new CI green, hands-on device QA.
+
+## 4 November 2026 — Math game improvement
+- Math Challenge now tracks correct/attempted puzzles in the current app session, locks an answered puzzle to prevent repeated scoring, and reveals the correct result on an incorrect attempt. Next puzzle is enabled only after an attempt.
+- Code committed on the development branch. GitHub CI and real-device verification for this commit are pending; no APK or release readiness claimed.
+- Still pending: age-appropriate editorial content, child UX review, background music, accessibility, robust parental controls, release signing, privacy review and Play Console requirements.

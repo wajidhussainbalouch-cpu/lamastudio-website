@@ -1,5 +1,5 @@
 # LAMA Examination System — Question Bank Project Handoff
-Last updated: 2026-11-04 (Class 4 Islamiat source intake; PR #74 merged)
+Last updated: 2026-11-04 (Class 4 Social Studies source intake; PR #75 merged)
 Status: Living project document. **Read this first in every new chat.**
 
 ## Mission and scope
@@ -48,14 +48,16 @@ Targets are NOT completed question counts.
 | 4 | English | `1YxAHOKvHXjdzQVy_RvoZeuugrHL3t0_e` | 138 | `data/class4-english-intake.json` | registered, merged PR #72; no questions generated |
 | 4 | Mathematics | `1fpvfnz1sb6arKs8fcumu-Hgl4LjM34eh` | 186 | `data/class4-mathematics-intake.json` | registered, merged PR #73; no questions generated |
 | 4 | Islamiat | `13HfdenXkBOLf_3kHQHV_VH4MzoalQqXX` | 88 | `data/class4-islamiat-intake.json` | registered, merged PR #74; no questions generated |
+| 4 | Social Studies (SST) | `1EFPSWwGq32iIT-eDGKqtVjMsOeoMHUAD` | 108 | `data/class4-social-studies-intake.json` | registered, merged PR #75; no questions generated |
 
-Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 5 subjects × 1,500 = **7,500**; Class 4 = 4 subjects × 1,500 = **6,000**; total **30,000 planned**, not generated/approved. Do not imply 30,000 questions exist.
+Current planned totals: Class 1 = 6 subjects × 1,500 = **9,000**; Class 2 = 5 subjects × 1,500 = **7,500**; Class 3 = 5 subjects × 1,500 = **7,500**; Class 4 = 5 subjects × 1,500 = **7,500**; total **31,500 planned**, not generated/approved. Do not imply 31,500 questions exist.
 
 ## Known milestones
 - Class 1 Urdu source: PR #55; Mathematics source PR #56; 100 Unit 1 math draft questions PR #57; General Knowledge source PR #58.
 - Class 1 Islamiat source is on main.
 - Class 1 Tajweedi Qaida source PR #60, then assignment corrected to Class 1 on main.
 - Class 2 Urdu PR #61; English PR #62; Mathematics PR #63.
+- Class 4 Social Studies PR #75: merged on main; 108-page scanned source registered, 0 questions generated.
 - Class 4 Islamiat PR #74: merged on main; 88-page source registered once despite repeated links; 0 questions generated.
 - Class 4 Mathematics PR #73: merged on main; 186-page scanned source registered, 0 questions generated.
 - Class 4 English PR #72: merged on main; 138-page scanned source registered, 0 questions generated.

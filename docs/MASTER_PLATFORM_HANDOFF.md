@@ -23,3 +23,6 @@ For each milestone update this handoff with changed paths, tests, commit SHA and
 
 ## Coordination
 Question content: examination-system/QUESTION_BANK_HANDOFF.md. Planner: examination-system/SMART_SYLLABUS_PLANNER.md. Marker: examination-system/EXAM_SMART_MARKER_INTEGRATION.md. Integration: examination-system/SYSTEM_INTEGRATION_HANDOFF.md. Do not duplicate question content or unreviewed datasets.
+
+## 2026-11-04 incremental implementation
+Added platform-core/permissions/policy.js and test-policy.js on main. This is a pure reference policy; no live Apps Script API or existing UI is wired to it. Tests were authored but have NOT yet been executed against GitHub content. Its student-safe projection is defense-in-depth only; the server must not transmit the underlying key. The ZIP predates concurrent main commits; full ZIP/main comparison is still pending. No production data or Vercel deployment changed. Next: validate tests, inspect Apps Script implementation, connect backend checks and create immutable exam result ledger.

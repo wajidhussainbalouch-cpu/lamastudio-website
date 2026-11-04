@@ -12,15 +12,18 @@ const permissions={
  approve:['school','admin'],
  publish:['school','admin'],
  markProgress:['school','teacher','admin'],
+ calendarEdit:['school','admin'],
+ replan:['school','admin'],
+ diarySuggest:['school','teacher','admin'],
  examScope:['school','teacher','admin']
 };
-const premium=new Set(['previewAutomatic','examScope']);
+const premium=new Set(['previewAutomatic','submit','approve','publish','replan','diarySuggest','examScope']);
 function authorize({session,resource,action,entitlements}){
  if(!session||session.verified!==true||!session.actorId||!session.schoolId)throw Error('Authenticated server session required');
  if(!resource||!resource.schoolId||session.schoolId!==resource.schoolId)throw Error('School scope denied');
  if(!Object.prototype.hasOwnProperty.call(permissions,action))throw Error('Unknown syllabus action');
  if(!permissions[action].includes(session.role))throw Error('Role not permitted');
- if(!entitlements||entitlements.management!==true)throw Error('Management entitlement required');
+ if(!entitlements||entitlements.management!==true|| (entitlements.schoolId&&entitlements.schoolId!==session.schoolId))throw Error('Management entitlement required for this school');
  if(premium.has(action)&&entitlements.examination!==true)throw Error('Examination entitlement required');
  return {allowed:true,actorId:session.actorId,schoolId:session.schoolId,action};
 }

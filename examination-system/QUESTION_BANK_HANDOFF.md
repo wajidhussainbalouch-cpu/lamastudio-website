@@ -131,3 +131,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - These 30 are **not textbook-page verified**, and page fields are deliberately null rather than invented. They remain draft, unapproved, offline-only. Some outcomes (e.g. odd/even and sharing) require scope confirmation against the actual Unit 1 textbook pages before inclusion in Unit 1.
 - Verified repository file counts now: **130 draft questions** across two Class 1 Mathematics Unit 1 files; **0 approved**, **0 online-ready**. The 46,500 overall target remains unfinished.
 - Before publication: visually confirm textbook learning outcomes, review each answer and marking rubric, screen for near duplicates, and move protected answer keys out of public repository assets.
+
+## Bulk 500-question generation — 2026-11-04
+
+- Created `data/class1-mathematics-unit1-batch500-draft.json` in one GitHub commit with 500 unique IDs and 500 distinct question texts, across ten learning-skill families (50 each): addition, subtraction, number bonds, comparison, place value, counting on, counting back, ordering, skip-counting, part-whole.
+- **Caution:** Unique text does not mean non-repetitive pedagogy: each skill family uses related templates. These are generated **drafts**, not independently textbook-verified, semantically deduplicated, teacher-approved, or online-ready. Page references intentionally null. Check whether all skill families belong in the actual Unit 1; reassign or reject out-of-scope items.
+- Class 1 Mathematics total now **630 draft records** (100 original + 30 varied + 500 bulk), **0 approved**, **0 online-ready**; 870 remain to the 1,500 draft target. Count is file-record total; cross-file semantic uniqueness and correctness have not been certified.
+- No deployment. Never serve public-repository answer keys as secure live assessment data.

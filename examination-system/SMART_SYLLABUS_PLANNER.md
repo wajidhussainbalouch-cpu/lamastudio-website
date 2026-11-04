@@ -176,3 +176,11 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Reconciled this handoff's licensing summary with the current policy: automated lesson progress (`markProgress`) requires Examination; Management-only permits manual planning/checklist but not premium progress updates.
 - **Verification status:** GitHub commit created, but the tests have not been executed/verified in this session. A successful commit does not imply a successful Actions run or deployed feature.
 - **Release blockers:** Confirm live Apps Script source and authorization; implement dedicated tenant-scoped syllabus plan storage with locked version checks and durable audit; connect actual school-admin and teacher portals; validate role isolation, school data safety and mobile flows. No production deployment or school data writes.
+
+
+## Tenant-scoped storage orchestration — 2026-11-05
+- Added `syllabus-store.js`, a fail-closed backend-only orchestrator for plan state changes. It requires a verified server session and trusted callbacks: `loadEntitlements`, `withLock`, `readPlan`, `commitPlanAndAudit`, and `now`.
+- The exclusive lock spans the current plan read, expected-version validation and the persistence callback. Plan ID and school ID must match the stored record; entitlement data must be server-loaded and scoped to the same school. Commit acknowledgement must match school, plan and new version.
+- Added `test-syllabus-store.js` for successful approval, stale versions, tenant mismatch, untrusted entitlements, wrong-school plan and missing commit confirmation; wired into GitHub Actions.
+- **Not yet a production endpoint:** Apps Script adapters for `LockService`, durable plan/audit storage, trusted session verification and atomic recovery are not implemented or deployed. The callback named `commitPlanAndAudit` must guarantee all-or-nothing behavior or use a recoverable journal, since separate Sheets writes are not atomic.
+- Next: reconcile the live Apps Script deployment with repository source, back up school registries, implement a dedicated server-side adapter and test failure recovery, then connect admin/teacher UI. No Vercel deployment or school-data modification.

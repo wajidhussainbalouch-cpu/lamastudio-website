@@ -14,6 +14,7 @@ function prepareTransition({current,session,entitlements,to,expectedVersion,reas
  const action=actionByState[to];if(!action)throw Error('Unsupported target state');
  policy.authorize({session,resource:{schoolId:current.schoolId},action,entitlements});
  if(to==='draft'&&current.status!=='submitted'&&current.status!=='approved')throw Error('Cannot return this plan to draft');
+ if(to==='draft'&&(!reason||!String(reason).trim()))throw Error('Reason required when returning to draft');
  const result=workflow.transition(current,{to,expectedVersion,actorId:session.actorId,reason});
  return {plan:result.plan,audit:{...result.event,serverTime,sessionRole:session.role},expectedVersion:current.version,schoolId:current.schoolId,planId:current.planId,atomicCommitRequired:true};
 }

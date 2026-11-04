@@ -18,6 +18,7 @@ fun VisualChallengeScreen(level: Int, onExit: () -> Unit) {
     var index by remember(level) { mutableIntStateOf(0) }
     var selected by remember(level) { mutableIntStateOf(-1) }
     var score by remember(level) { mutableIntStateOf(0) }
+    var hint by remember(level) { mutableStateOf(false) }
     val puzzles = remember(level) { VisualPuzzleFactory.create(level, count = 10, seed = 1207) }
     val tr: (String) -> String = { GameText.get(it, language) }
     Column(Modifier.fillMaxWidth(),
@@ -49,15 +50,26 @@ fun VisualChallengeScreen(level: Int, onExit: () -> Unit) {
                 Text("?", color = Color(0xFFAB8BFF), fontSize = 32.sp)
             }
             p.choices.forEachIndexed { i, choice ->
-                OutlinedButton(onClick = { if (selected == -1) { selected = i; if (i == p.answer) score++ } },
-                    enabled = selected == -1, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) {
-                    Text(choice, fontSize = 28.sp, textAlign = TextAlign.Center)
+                val isCorrect = selected == i && i == p.answer
+                val isWrong = selected == i && i != p.answer
+                OutlinedButton(onClick = {
+                    if (selected == -1) {
+                        if (i == p.answer) { selected = i; score++ } else { hint = true }
+                    }
+                },
+                    enabled = selected == -1, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = if (isCorrect) Color(0xFF14532D) else Color.Transparent)) {
+                    Text((if (isCorrect) "✓  " else "") + choice, fontSize = 28.sp, textAlign = TextAlign.Center,
+                        color = if (isCorrect) Color(0xFF86EFAC) else Color.White)
                 }
             }
+            if (hint && selected == -1) {
+                Text("Hint: look for the order, direction or repeating cycle. Try again.", color = Color(0xFFFDE68A))
+            }
             if (selected >= 0) {
-                Text(tr(if (selected == p.answer) "correct" else "wrong"), color = Color(0xFFAB8BFF))
+                Text("✓ " + tr("correct"), color = Color(0xFF86EFAC))
                 Text(tr(p.explanationKey), color = Color.LightGray)
-                Button(onClick = { index++; selected = -1 }, modifier = Modifier.align(Alignment.End)) { Text(tr("continue")) }
+                Button(onClick = { index++; selected = -1; hint = false }, modifier = Modifier.align(Alignment.End)) { Text(tr("continue")) }
             }
             TextButton(onClick = onExit) { Text(tr("back")) }
         }

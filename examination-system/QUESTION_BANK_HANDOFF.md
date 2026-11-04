@@ -118,3 +118,9 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added `examination-system/QUESTION_CATEGORY_SPEC.md` with a 1,500-question primary-subject allocation (350 MCQ, 200 blanks, 150 true/false, 250 short answer, 150 matching/ordering, 250 application/comprehension/numerical, 150 picture/oral/teacher-reviewed), adaptable by subject.
 - This is a development specification, **not 1,500 generated questions**. Existing verified baseline remains 100 Class 1 Mathematics Unit 1 drafts, zero approved. Remaining content requires source-by-source generation and independent answer review.
 - Do not deploy or publish; keep answer keys access-controlled before any online release.
+
+## Question QA development — 2026-11-04
+
+- Added read-only `examination-system/audit_questions.py` to check missing fields, duplicate IDs/text, MCQ answer membership, approval-state consistency, and numeric-template repetition. Script does not change student records or publish questions.
+- Existing Class 1 Mathematics Unit 1 draft has 100 items, but structural uniqueness alone is insufficient. Numeric-template repetition audit identified 9 patterns with at least five variants; most repeated: `what number comes immediately after #?` (10); `what number comes immediately before #?` (10); `write # as tens and ones.` (10); `which digit is in the tens place of #?` (10). These are review flags, not confirmed invalid questions.
+- No additional questions were generated in this audit step; total remains 100 drafts, zero approved. Next content authoring must use verified textbook page images and varied learning outcomes, rather than inflate counts with number substitutions.

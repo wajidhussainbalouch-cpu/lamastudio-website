@@ -49,6 +49,9 @@ class MainActivity : ComponentActivity() {
    var game by remember { mutableStateOf<MathChallenge?>(null) }
    var gameInput by remember { mutableStateOf("") }
    var gameFeedback by remember { mutableStateOf("") }
+   var gameAnswered by remember { mutableStateOf(false) }
+   var gameCorrect by remember { mutableIntStateOf(0) }
+   var gameAttempts by remember { mutableIntStateOf(0) }
    val drawer = rememberDrawerState(DrawerValue.Closed)
    val scope = rememberCoroutineScope()
    fun goHome() { page = "home"; currentLesson = null; answer = -1; questionIndex = 0; correctCount = 0; parentUnlocked = false }
@@ -68,7 +71,7 @@ class MainActivity : ComponentActivity() {
        listOf("🏠 Home" to "home", "📚 Topics" to "topics", "🎮 Math game" to "game", "🏆 My rewards" to "rewards", "⚙ Settings" to "settings", "👨‍👩‍👧 Parent area" to "parent").forEach { (label, destination) ->
         NavigationDrawerItem(label = { Text(label) }, selected = page == destination, onClick = {
          page = destination
-         if (destination == "game") { game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }
+         if (destination == "game") { game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }
          if (destination == "parent") { parentUnlocked = false; challenge = ParentChallenge.generate(); parentInput = "" }
          scope.launch { drawer.close() }
         }, modifier = Modifier.padding(horizontal = 12.dp, vertical = 3.dp))
@@ -192,12 +195,18 @@ class MainActivity : ComponentActivity() {
        } else if (page == "game") {
         val current = game ?: MathGames.generate(grade).also { game = it }
         item { Hero("🎮 Math Challenge", "Solve a new puzzle at your own pace!") }
+        item { Text("Round score: " + gameCorrect + " correct out of " + gameAttempts + " attempted", color = ink) }
         item { Section(current.question()) }
-        item { OutlinedTextField(gameInput, { gameInput = it.filter(Char::isDigit).take(5) }, label = { Text("Your answer") }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
+        item { OutlinedTextField(gameInput, { if (!gameAnswered) gameInput = it.filter(Char::isDigit).take(5) }, label = { Text("Your answer") }, singleLine = true, modifier = Modifier.fillMaxWidth(), enabled = !gameAnswered) }
         item { Button(onClick = {
-         val correct = MathGames.isCorrect(current, gameInput)
-         feedback(correct); gameFeedback = if (correct) "🎉 Well done!" else "💡 Try another answer."
-        }, modifier = Modifier.fillMaxWidth()) { Text("Check answer") } }
+         if (!gameAnswered && gameInput.isNotBlank()) {
+          val correct = MathGames.isCorrect(current, gameInput)
+          feedback(correct); gameFeedback = if (correct) "🎉 Well done!" else "💡 The correct answer is " + current.answer
+          gameAttempts += 1
+          if (correct) gameCorrect += 1
+          gameAnswered = true
+         }
+        }, modifier = Modifier.fillMaxWidth(), enabled = !gameAnswered && gameInput.isNotBlank()) { Text("Check answer") } }
         if (gameFeedback.isNotBlank()) item { Text(gameFeedback) }
         item { OutlinedButton(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }, modifier = Modifier.fillMaxWidth()) { Text("Next puzzle →") } }
        } else if (page == "rewards") {

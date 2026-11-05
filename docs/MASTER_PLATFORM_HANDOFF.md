@@ -53,3 +53,9 @@ Added guarded `adminGetModuleGrant` and `adminSetModuleGrant` routes to `lamastu
 6. Reconcile the ZIP against GitHub main and update this document with tested commits and remaining risks.
 
 **Known integration gap:** Module grant storage currently lacks an independently verified audit trail, tenant-side server authorization, and production deployment. Keep all release checklist security gates unchecked.
+
+## 2026-11-05 — Grant validation and mock test harness
+- Hardened `lamastudio-school-suite/backend-api/module-entitlements.gs` to deny invalid stored revision numbers and reject impossible normalized UTC dates on new grants. Commit `2ca2d57d`.
+- Added `lamastudio-school-suite/backend-api/test-module-entitlements.js` with isolated Node/VM mocks for authorization, module isolation, expiry, suspension, revision and invalid dates. Commit `8c8327cf`.
+- **Validation status:** tests committed but execution in this milestone is not confirmed; do not mark test pass until run in CI or Node. No Apps Script production deployment or live grant write.
+- Next: run the mock test, inspect and fix failures, then connect server-side entitlement enforcement to examination and marker endpoints with verified principal identity. Keep read-only historical data after expiry.

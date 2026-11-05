@@ -2,9 +2,9 @@
 (()=>{const $=id=>document.getElementById(id),menu=$('academyMenu'),open=$('openMenu'),teaching=$('teachingAcademy'),detail=$('jobDetail'),list=$('jobCategories');const jobs=window.LAMA_PPSC_JOBS||[];
 function setMenu(show){menu.hidden=!show;open.setAttribute('aria-expanded',String(show))}
 open.addEventListener('click',()=>setMenu(menu.hidden));$('closeMenu').addEventListener('click',()=>setMenu(false));menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
-function showTeaching(scroll=true){teaching.hidden=false;detail.hidden=true;list.hidden=false;if(scroll)teaching.scrollIntoView({behavior:'smooth',block:'start'})}
+function showTeaching(scroll=true){teaching.hidden=false;detail.hidden=true;list.hidden=true;if(scroll)teaching.scrollIntoView({behavior:'smooth',block:'start'})}
 function showCategories(){if(!$('examStatusBar').hidden&&!confirm('An examination is active. Its timer continues while you browse. Continue?'))return;teaching.hidden=true;detail.hidden=true;list.hidden=false;list.scrollIntoView({behavior:'smooth',block:'start'})}
-$('backToJobs').addEventListener('click',showCategories);$('quickTeaching').addEventListener('click',()=>openJob('teaching'));$('backToJobList').addEventListener('click',showCategories);
+$('backToJobs').addEventListener('click',showCategories);$('backToJobList').addEventListener('click',showCategories);
 document.querySelectorAll('.track-nav a').forEach(a=>a.addEventListener('click',()=>{if(a.getAttribute('href')!=='#performance')showTeaching(false)}));$('menuJobs').addEventListener('click',e=>{e.preventDefault();setMenu(false);showCategories()});$('menuScore').addEventListener('click',e=>{e.preventDefault();setMenu(false);$('performance').scrollIntoView({behavior:'smooth',block:'start'})});
 const esc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const categories=[...new Set(jobs.map(j=>j.category))].sort();$('jobFilter').innerHTML='<option value="">All categories</option>'+categories.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');

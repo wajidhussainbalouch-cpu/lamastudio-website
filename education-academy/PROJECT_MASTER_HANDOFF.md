@@ -58,6 +58,7 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 | `sw.js` | Offline shell cache and service worker; review scope/security |
 | `validate-papers.cjs` | Paper structure, repetition and generic-explanation checks |
 | `check-links.cjs` | HTML anchors, duplicate IDs, required controls |
+| `check-exam-contract.cjs` | Exam start/submit guards, migration, flag persistence, public cache contract checks |
 | `README.md` | Technical implementation and release gates |
 | `.github/workflows/ppsc-academy-checks.yml` | GitHub Actions syntax and QA checks |
 
@@ -101,7 +102,7 @@ Mobile-first installable PWA, offline access to already authorized material wher
 
 ## 10. Immediate priorities (do these before polishing more cards)
 1. **Verify GitHub Actions checks actually pass**, fix failures; run syntax and question-bank validators. Inspect the 100-MCQ bank and confirm every answer and explanation; replace generic/repetitive items with verified originals.
-2. **Fix exam integrity and usability**: restore/resume, timeout, answer migration, flag persistence, accidental submission, print layout, local results; test on Android Chrome and offline PWA.
+2. **Fix exam integrity and usability**: restore/resume, timeout, answer migration, flag persistence, rejection of answers before exam start, accidental submission, print layout, local results; test on Android Chrome and offline PWA.
 3. **Choose and securely configure auth/database** with owner consent; implement registration, verified email, login, reset, per-user storage. Do not put secrets in GitHub.
 4. **Cloud sync** attempts, scores, topic breakdowns, planner and progress.
 5. **Payment request + manual approval** with audit log and server-enforced annual entitlement.

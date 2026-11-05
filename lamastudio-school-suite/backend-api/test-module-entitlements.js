@@ -21,4 +21,7 @@ set('examination','suspended','','');
 assert.equal(context.lamaModuleAccess_('school1','examination').reason,'ENTITLEMENT_SUSPENDED');
 clock=Date.parse('2027-01-01T00:00:00Z');
 assert.equal(context.lamaModuleAccess_('school1','examination').allowed,false);
+assert.throws(()=>context.lamaRequireModuleForVerifiedSchool_('', 'examination'),/UNAUTHORIZED/);
+assert.throws(()=>context.lamaRequireModuleForVerifiedSchool_('school1', 'examination'),/ENTITLEMENT_REQUIRED/);
+assert.throws(()=>context.lamaRequireModuleForVerifiedSchool_('school1', 'smartMarker'),/ENTITLEMENT_REQUIRED/);
 console.log('Mock Apps Script grant tests passed');

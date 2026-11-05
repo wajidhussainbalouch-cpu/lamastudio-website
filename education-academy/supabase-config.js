@@ -1,10 +1,8 @@
-/* Safe default: no live Supabase project configured.
- * When the owner creates a free Supabase project, set URL and publishable key
- * via an approved public build-time configuration, not a private service key.
- * Keep enabled=false until migrations, email delivery, RLS and tests pass.
+/* Public browser configuration. This is a publishable key, NEVER a service-role secret.
+ * Supabase email confirmation and redirect allow-list must be verified before public rollout.
  */
 window.LAMA_PPSC_SUPABASE=Object.freeze({
- enabled:false,
- url:'',
- publishableKey:''
+ enabled:true,
+ url:'https://cqoeokovxuimbltskuze.supabase.co',
+ publishableKey:'sb_publishable_cOU363jIke8oGqGsG2TSkQ_xJZVdNL6'
 });

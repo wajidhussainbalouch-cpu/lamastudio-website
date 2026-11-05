@@ -68,3 +68,12 @@ function lamaRequireModuleForVerifiedSchool_(verifiedSchoolId,module){
  if(!access.allowed)throw Error('ENTITLEMENT_REQUIRED: '+access.reason);
  return access;
 }
+
+/**
+ * Compatibility for the existing syllabusPublishedPlans handler.
+ * IMPORTANT: this helper only checks entitlement; caller MUST first authenticate
+ * the teacher and enforce tenant, class and subject scope.
+ */
+function lamaSchoolHasModuleGrant_(verifiedSchoolId,module){
+ return lamaRequireModuleForVerifiedSchool_(verifiedSchoolId,module).allowed===true;
+}

@@ -50,3 +50,13 @@ All endpoints below are **planned**, not live. Serve over HTTPS. Authenticate on
 
 ## Owner decision required
 Choose the secure authentication/database provider (for example, managed Postgres + identity service). This draft is deliberately provider-neutral and cannot be turned into working signup by committing static frontend code.
+
+## Owner decision: zero-cost infrastructure only (2026-11-05)
+
+The owner explicitly requires **no paid plan, no paid trial, no automatic upgrade, and no chargeable infrastructure**. Selected initial candidate: **Supabase Free** (managed PostgreSQL + Auth), subject to account/project creation and current free quotas. The application must remain disabled for live registration and payment until the free project is securely configured and tested. No Supabase account, project, secrets, or database have been created by this GitHub commit.
+
+Free-plan caveats: free projects can pause after insufficient activity for roughly seven days; the free plan has resource limits and lacks included automatic backups. Use manual verified exports/backups and a recovery procedure; do not promise production uptime. Monitor limits, and stop onboarding or switch to a zero-cost alternative rather than enabling billing. Never introduce a credit-card requirement without the owner's approval.
+
+**School Suite remains unchanged.** Its existing Apps Script/Sheets school registration is not evidence that the PPSC Academy can safely store candidate passwords or protect premium papers in Sheets. Supabase is an architectural choice for this new module, not a requirement for all LAMA Studio projects. If Supabase Free ceases to be suitable, evaluate a free identity provider with a separate secure server-side storage solution, not homemade password hashing in Apps Script.
+
+**Next concrete implementation:** create a Supabase-specific migration and explicit RLS policies tied to `auth.uid()` in a dedicated academy project; then build a verified-email candidate signup/login UI behind a disabled-by-default configuration gate. Require real integration and security testing before enabling it.

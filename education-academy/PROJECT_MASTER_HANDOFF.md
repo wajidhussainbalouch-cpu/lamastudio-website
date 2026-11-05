@@ -135,3 +135,7 @@ Mobile-first installable PWA, offline access to already authorized material wher
 
 ### New-chat starter prompt
 > Continue development of **LAMA PPSC Preparation Academy** in GitHub `wajidhussainbalouch-cpu/lamastudio-website` on `main`. Read `education-academy/PROJECT_MASTER_HANDOFF.md`, `README.md` and current implementation first. Follow the first-priority BS-17/BS-18 Headmaster/Headmistress requirements, preserve all existing website and School Suite data, verify changes and tests, commit meaningful improvements, update the handoff, and **do not deploy to Vercel without my explicit approval**. Prioritize working exams, question quality, secure registration, cloud records, subscription verification and Super Admin over cosmetic UI changes.
+
+
+### Mobile live-test issue (2026-11-05)
+User confirmed the public academy page displays the free Paper 1 and Start Examination button, but reported that tapping Start does not open the exam. Removed the JavaScript `confirm()` start gate so a single tap starts immediately; updated the public PWA cache to v24. This is a candidate fix, **not yet confirmed on the live production site**. Test that `examWorkspace` opens, Question 1 renders, timer counts down and answers persist on refresh. If the button still fails, inspect browser console for runtime errors, verify `papers.js` and `engine.js` network loads, and verify production deployment SHA. Do not deploy without authorization.

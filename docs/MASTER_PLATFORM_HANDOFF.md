@@ -59,3 +59,8 @@ Added guarded `adminGetModuleGrant` and `adminSetModuleGrant` routes to `lamastu
 - Added `lamastudio-school-suite/backend-api/test-module-entitlements.js` with isolated Node/VM mocks for authorization, module isolation, expiry, suspension, revision and invalid dates. Commit `8c8327cf`.
 - **Validation status:** tests committed but execution in this milestone is not confirmed; do not mark test pass until run in CI or Node. No Apps Script production deployment or live grant write.
 - Next: run the mock test, inspect and fix failures, then connect server-side entitlement enforcement to examination and marker endpoints with verified principal identity. Keep read-only historical data after expiry.
+
+## 2026-11-05 — Executed mock tests and verified-school guard
+Executed the existing `lamastudio-school-suite/backend-api/test-module-entitlements.js` locally on Node v22.16.0 against a matching copy of the committed module adapter: PASS. This test uses mock Apps Script services and **does not access live Sheets**. Added `lamaRequireModuleForVerifiedSchool_(verifiedSchoolId,module)` to the backend adapter; it denies missing verified context and disallowed grants, intended for Examination and Smart Marker server handlers. Added guard-denial assertions to the repository test file, but **those new assertions have not been executed in this milestone**.
+
+**Integration status:** guard function is committed but is NOT yet invoked from existing examination/marker handlers. It must be called only after deriving school identity from an authenticated server session; passing a client-supplied schoolId is insecure. Live Apps Script not deployed; no Vercel deployment; no production data modified.

@@ -1,0 +1,33 @@
+/* Run: node education-academy/validate-papers.cjs
+ * No third-party dependencies. Validates structure and flags repetition for academic review.
+ */
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const src=fs.readFileSync(path.join(__dirname,'papers.js'),'utf8');
+const sandbox={window:{}};vm.runInNewContext(src,sandbox,{timeout:2000});
+const papers=sandbox.window.LAMA_PPSC_PAPERS;
+const errors=[],warnings=[],normalize=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+if(!Array.isArray(papers)||!papers.length)errors.push('No paper collection');
+for(const paper of papers||[]){
+ const ids=new Set(),texts=new Map(),subjects=new Map();
+ if(!Array.isArray(paper.questions)||paper.questions.length!==100)errors.push(paper.id+': expected 100 questions');
+ if(paper.minutes!==90)errors.push(paper.id+': expected 90-minute exam');
+ for(const [i,q] of (paper.questions||[]).entries()){
+  const tag=paper.id+' Q'+(i+1);
+  if(!q.id||ids.has(q.id))errors.push(tag+': missing/duplicate question id');ids.add(q.id);
+  if(!q.subject||!q.q||!q.explanation)errors.push(tag+': missing subject/question/explanation');
+  if(!Array.isArray(q.options)||q.options.length!==4||q.options.some(x=>!String(x).trim()))errors.push(tag+': four non-empty options required');
+  if(!Number.isInteger(q.answer)||q.answer<0||q.answer>3)errors.push(tag+': answer index must be 0-3');
+  if(Array.isArray(q.options)&&new Set(q.options.map(normalize)).size!==q.options.length)errors.push(tag+': duplicate answer options');
+  const n=normalize(q.q);if(texts.has(n))errors.push(tag+': duplicate question text with '+texts.get(n));texts.set(n,tag);
+  const stem=n.split(' ').slice(0,9).join(' ');if(stem.length>40){const count=subjects.get(stem)||0;subjects.set(stem,count+1)}
+  if(/foundational concept in .*consult standard teacher education references/i.test(q.explanation))warnings.push(tag+': generic explanation; replace with subject-specific reasoning');
+  if(String(q.q).length<22)warnings.push(tag+': short question; check difficulty and context');
+ }
+ for(const [stem,n] of subjects)if(n>=4)warnings.push(paper.id+': repeated question opening '+n+' times: '+stem);
+}
+console.log('PPSC bank validation:',errors.length,'errors,',warnings.length,'academic-review warnings');
+for(const x of errors)console.error('ERROR',x);
+for(const x of warnings.slice(0,35))console.warn('REVIEW',x);
+if(warnings.length>35)console.warn('...and',warnings.length-35,'more review warnings');
+if(errors.length)process.exitCode=1;

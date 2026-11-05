@@ -160,3 +160,7 @@ Applied and verified in the live Supabase database:
 - Supabase security advisor returned **zero findings** after changes. Both public tables verified RLS enabled; currently empty.
 
 **Not yet done:** integrate web UI with Supabase Auth and profile/attempt sync, verify signup email confirmation and session refresh, secure server-side grading for authoritative results, verified payment/subscription workflows, end-to-end browser tests. Existing website registration remains disabled. Keep academy separate from School Suite and do not deploy Vercel without explicit approval.
+
+
+### Supabase subscription ledger (2026-11-05, continuation)
+Applied migration `create_private_write_ppsc_subscription_ledger` to project `cqoeokovxuimbltskuze`: `public.ppsc_subscriptions` with candidate FK, pending/active/expired/rejected/cancelled statuses, approval and date fields, and validity constraints. RLS enabled. Authenticated candidates have **SELECT only** for their own rows; anon and authenticated have no INSERT/UPDATE/DELETE grants. SQL grants inspection verified authenticated SELECT only, and security advisor reported zero findings. There is **no trusted admin payment approval workflow yet**; no subscription can be activated from browser. Keep payment collection and premium gates disabled until verified admin-only backend and end-to-end tests are completed. Do not confuse this table with self-reported `ppsc_practice_attempts`.

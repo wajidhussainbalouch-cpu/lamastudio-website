@@ -8,7 +8,7 @@ const read=name=>fs.readFileSync(path.join(root,name),'utf8');
 const html=read('index.html'),engine=read('engine.js'),worker=read('sw.js');
 const errors=[];
 function requireMatch(ok,message){if(!ok)errors.push(message)}
-for(const id of ['startExam','submitExam','restartExam','examStatusBar','examProgress','nextUnanswered','nextFlagged','candidateHistory']){
+for(const id of ['backupResults','restoreResults','startExam','submitExam','restartExam','examStatusBar','examProgress','nextUnanswered','nextFlagged','candidateHistory']){
  requireMatch(html.includes('id="'+id+'"'),'Missing exam UI control: '+id);
 }
 requireMatch(engine.includes("if(!attempt.startedAt||attempt.submitted)return"),'Submit must reject unstarted and completed attempts');
@@ -16,6 +16,8 @@ requireMatch(engine.includes("if(attempt.submitted||!attempt.startedAt)return"),
 requireMatch(engine.includes("if(remaining()===0){finish();return}"),'Answer/submit must check expired timer');
 requireMatch(engine.includes('schemaVersion:2'),'Saved answer option migration version missing');
 requireMatch(engine.includes('attempt.flags[q.id]'),'Review flags must persist');
+requireMatch(engine.includes("Math.max(0,Math.ceil((paper.minutes*60000-(Date.now()-attempt.startedAt))/1000))"),'Exam timer remaining-time expression must be syntactically valid');
+requireMatch(engine.includes("format:'lama-ppsc-score-backup'"),'Local score backup format missing');
 requireMatch(engine.includes('recordAttempt()'),'Completed attempts must be recorded');
 requireMatch(html.includes('disabled>Create Account'),'Preview registration must remain disabled until backend exists');
 requireMatch(worker.includes('const allowed=new Set('),'Service worker must use public asset allowlist');

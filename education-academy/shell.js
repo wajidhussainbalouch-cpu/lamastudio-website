@@ -4,7 +4,7 @@ function setMenu(show){menu.hidden=!show;open.setAttribute('aria-expanded',Strin
 open.addEventListener('click',()=>setMenu(menu.hidden));$('closeMenu').addEventListener('click',()=>setMenu(false));menu.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>setMenu(false)));document.addEventListener('keydown',e=>{if(e.key==='Escape')setMenu(false)});
 function showTeaching(scroll=true){teaching.hidden=false;if(scroll)teaching.scrollIntoView({behavior:'smooth',block:'start'})}
 function showCategories(){if(!$('examStatusBar').hidden&&!confirm('An examination is active. Its timer continues while you browse. Continue?'))return;teaching.hidden=true;detail.hidden=true;list.hidden=false;list.scrollIntoView({behavior:'smooth',block:'start'})}
-$('backToJobs').addEventListener('click',showCategories);$('backToJobList').addEventListener('click',showCategories);
+$('backToJobs').addEventListener('click',showCategories);$('quickTeaching').addEventListener('click',()=>openJob('teaching'));$('backToJobList').addEventListener('click',showCategories);
 document.querySelectorAll('[data-teacher-link]').forEach(a=>a.addEventListener('click',()=>showTeaching(false)));
 const esc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const categories=[...new Set(jobs.map(j=>j.category))].sort();$('jobFilter').innerHTML='<option value="">All categories</option>'+categories.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');

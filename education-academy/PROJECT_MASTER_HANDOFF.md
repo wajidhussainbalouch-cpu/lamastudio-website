@@ -29,7 +29,7 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 3. General sidebar: Job Categories, My Scores & Progress, Membership, New User Registration, Install Academy App. Remove redundant or nonfunctional entries.
 4. Select Headmaster/Headmistress BS-17/18: open dedicated preparation track, with syllabus/materials, paper list, planner, exam and scores.
 5. One **complete free trial paper**, **100 original MCQs**, **90 minutes**, explicit **Start Examination** (never auto-start on entering/scrolling), visible sticky countdown and paper position, remaining time, unanswered count, jump-to-unanswered, persistent **Flag for review** checkboxes and next-flagged navigation, confirmation before submission, automatic submission at timeout.
-6. Results: score, correct/wrong/blank, explanations, subject strengths/weaknesses, saved attempt history, score trends, recommended revision, printable paper and CSV export. Candidate should be able to see performance across Paper 1, Paper 2, etc., once more papers exist.
+6. Results: score, correct/wrong/blank, explanations, subject strengths/weaknesses, saved attempt history, score trends, recommended revision, printable paper and CSV export and optional validated JSON score backup/restore (manual file transfer only, **not** cloud sync). Candidate should be able to see performance across Paper 1, Paper 2, etc., once more papers exist.
 7. New registration: name, email, occupation and other strictly necessary details, password with show/hide, verified account, login and password reset. **Current form is not operational.**
 8. Subscription: **PKR 1,000 for 12 months per verified candidate**, intended to grant academy-wide access to all published job tracks during active membership. Show the plan only once prominently, not repeated in several sections.
 9. Manual payment flow (future): candidate submits transaction reference and optional screenshot via private secure upload; Super Admin independently verifies receipt, then approves/rejects. Do not activate based on screenshot alone.
@@ -51,7 +51,7 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 | `jobs.js` | Job catalog; only teaching track marked ready |
 | `shell.js` | Menu, job selection, route visibility, PWA install controls |
 | `papers.js` | 100-question educational practice paper, explanations, stable option rotation |
-| `engine.js` | 90-minute timed exam, answer persistence, flagged-question review navigation, submission, local history, topic scores, revision plan, trend, CSV export |
+| `engine.js` | 90-minute timed exam, answer persistence, flagged-question review navigation, submission, local history, topic scores, revision plan, trend, CSV export, validated JSON score backup/restore |
 | `app.js` | Older planner/sample interactions; inspect before removing or refactoring |
 | `print.html` | Printable question paper |
 | `manifest.webmanifest` | PWA metadata; currently lacks real install icons |
@@ -62,7 +62,7 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 | `README.md` | Technical implementation and release gates |
 | `.github/workflows/ppsc-academy-checks.yml` | GitHub Actions syntax and QA checks |
 
-Existing exam records are stored **locally in the current browser**. This is not an account or cloud record. Browser clearing/device change can lose history. The study plan and revision recommendations are guidance, not official syllabus verification or a guarantee of passing.
+Existing exam records are stored **locally in the current browser**. This is not an account or cloud record. Browser clearing/device change can lose history unless the candidate has explicitly exported and safely retained a JSON score backup. Backup files contain personal performance data; restoring them is not identity verification. The study plan and revision recommendations are guidance, not official syllabus verification or a guarantee of passing.
 
 ## 6. Visual design and image inventory
 **Approved appearance based on the owner's screenshots and feedback:**

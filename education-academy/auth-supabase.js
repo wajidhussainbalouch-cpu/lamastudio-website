@@ -61,6 +61,13 @@ window.LamaAcademyAuth=(()=>{
   }finally{clearTimeout(timeout)}
  }
  async function profile(){return dataRequest('ppsc_candidates?select=id,display_name,occupation,created_at&limit=1','GET')}
+ async function ensureProfile(){
+  const existing=await profile();if(existing.length)return existing[0];
+  const name=String(currentUser?.user_metadata?.full_name||'').trim();
+  if(name.length<2||name.length>120)throw Error('Your profile name is missing. Please contact support to complete your profile.');
+  try{const rows=await createProfile({displayName:name,occupation:String(currentUser?.user_metadata?.occupation||'').slice(0,120)});return rows[0]||null}
+  catch(error){const again=await profile();if(again.length)return again[0];throw error}
+ }
  async function createProfile({displayName,occupation}){
   if(typeof displayName!=='string'||displayName.trim().length<2||displayName.trim().length>120)throw Error('Enter a valid name.');
   const bearer=await token();if(!bearer||!currentUser)throw Error('Sign in first.');
@@ -75,5 +82,5 @@ window.LamaAcademyAuth=(()=>{
  async function subscriptions(){return dataRequest('ppsc_subscriptions?select=status,starts_at,expires_at,approved_at&order=created_at.desc&limit=10','GET')}
 
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,signUp,signIn,signOut,resetPassword,profile,createProfile,practiceHistory,savePracticeAttempt,subscriptions});
+ return Object.freeze({state,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions});
 })();

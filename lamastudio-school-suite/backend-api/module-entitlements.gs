@@ -54,3 +54,17 @@ function lamaAdminGetModuleGrant_(adminApiKey,schoolId,module){
  if(rows.length>1&&Number(rows[0][5])===Number(rows[1][5]))throw Error('Conflicting grant revisions');
  var r=rows[0];return {schoolId:String(r[0]),module:String(r[1]),status:String(r[2]),startsAt:r[3]||'',expiresAt:r[4]||'',revision:Number(r[5])};
 }
+
+/**
+ * Server-side entitlement guard for trusted examination / marking handlers.
+ * Call only AFTER the handler has authenticated its principal and resolved
+ * the schoolId from that verified session (never from request body alone).
+ * No existing handler is automatically protected merely by adding this file.
+ */
+function lamaRequireModuleForVerifiedSchool_(verifiedSchoolId,module){
+ if(typeof verifiedSchoolId!=='string'||!verifiedSchoolId.trim())throw Error('UNAUTHORIZED: Verified school context required');
+ if(['examination','smartMarker','schoolManagement'].indexOf(module)<0)throw Error('INVALID_MODULE');
+ var access=lamaModuleAccess_(verifiedSchoolId,module);
+ if(!access.allowed)throw Error('ENTITLEMENT_REQUIRED: '+access.reason);
+ return access;
+}

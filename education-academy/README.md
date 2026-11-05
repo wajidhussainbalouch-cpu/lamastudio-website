@@ -28,6 +28,10 @@ Priority: Headmaster / Headmistress BS-17 and Senior Headmaster / Headmistress B
 
 PKR 1,000 per verified candidate for 12 months, academy-wide access to all published job-specific tracks during the active period. This is a planned policy, not a currently purchasable product.
 
+## Backend groundwork (not deployed)
+
+A provider-neutral, isolated PostgreSQL draft is available at [`backend/schema.sql`](./backend/schema.sql), with the proposed API and security rules at [`backend/README.md`](./backend/README.md). These are **design files only**. No database was created, no candidate registration was activated, and no payments can be accepted.
+
 ## Secure backend acceptance requirements
 
 1. Choose the academy's authentication and storage service and configure secrets outside the public GitHub repository.

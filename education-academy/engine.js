@@ -18,6 +18,6 @@ function remaining(){return Math.max(0,Math.ceil((paper.minutes*60000-(Date.now(
 function tick(){if(attempt.submitted){$('timer').textContent='Completed';return}const n=remaining();$('timer').textContent=Math.floor(n/60)+':'+String(n%60).padStart(2,'0');if(!n)finish()}
 $('submitExam').addEventListener('click',()=>{if(confirm('Submit this sample paper? You cannot change answers afterward.'))finish()});
 $('restartExam').addEventListener('click',()=>{if(!confirm('Restart and clear this local attempt?'))return;localStorage.removeItem(key);location.reload()});
-$('printPaper').addEventListener('click',()=>window.print());
+$('printPaper').addEventListener('click',()=>{window.location.href='./print.html'});
 $('examTitle').textContent=paper.title+' • '+paper.questions.length+' MCQs';updateProgress();if(attempt.submitted){recordAttempt();renderResult();$('submitExam').disabled=true}renderHistory();tick();setInterval(tick,1000);
 })();

@@ -36,7 +36,7 @@ body.qr-scanning{overflow:hidden!important}
 </style></head><body class="min-h-screen"><header class="no-print border-b" style="border-color:var(--line)"><div class="max-w-7xl mx-auto px-4 py-4 flex justify-between gap-3 flex-wrap items-center"><div class="flex items-center gap-3"><div id="logo" class="w-12 h-12 rounded-xl bg-teal-700 text-white font-black grid place-items-center overflow-hidden">LS</div><div><h1 id="school" class="font-black text-lg">School</h1><p class="muted text-xs">Teacher Attendance & Payroll History</p></div></div><div class="flex flex-wrap gap-2"><a href="../dashboard.html" class="btn">← Dashboard</a><button id="theme" class="btn">Theme</button><button id="logout" class="btn">Logout</button></div></div></header>
 <main class="max-w-7xl mx-auto px-4 py-6 space-y-5"><div class="no-print"><h2 class="text-2xl font-black">Teacher Attendance Register</h2><p class="muted text-sm">Daily marking, absence/leave reasons, weekly and monthly history, and salary attendance totals.</p></div>
 <section class="panel no-print"><div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><label class="text-xs font-bold">Attendance date <span class="muted">(DD/MM/YYYY)</span><input id="date" type="date" class="field mt-1"><span id="dateText" class="mini muted"></span></label><label class="text-xs font-bold">Search teacher<input id="search" class="field mt-1" placeholder="Name / subject / class"></label><label class="text-xs font-bold">Status<select id="filter" class="field mt-1"><option value="">All</option><option>Present</option><option>Absent</option><option>Leave</option><option value="Unmarked">Unmarked</option></select></label><label class="text-xs font-bold">Class<select id="classFilter" class="field mt-1"><option value="">All classes</option></select></label></div><div class="flex flex-wrap gap-2 mt-4"><button id="refresh" class="btn">↻ Refresh</button><button id="markAll" class="btn">✓ Mark visible present</button><button id="edit" class="btn" type="button">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button></div></section>
-<section class="panel no-print"><p id="completion" class="font-bold" role="status">Loading attendance register…</p></section><section class="grid grid-cols-2 md:grid-cols-5 gap-3"><div class="panel stat"><span class="muted mini">Teachers</span><strong id="total">0</strong></div><div class="panel stat"><span class="muted mini">Present</span><strong id="present" class="statusP">0</strong></div><div class="panel stat"><span class="muted mini">Absent</span><strong id="absent" class="statusA">0</strong></div><div class="panel stat"><span class="muted mini">Leave</span><strong id="leave" class="statusL">0</strong></div><div class="panel stat"><span class="muted mini">Unmarked</span><strong id="unmarked">0</strong></div></section>
+<section class="panel no-print"><p id="completion" class="font-bold" role="status">Loading attendance register…</p><div id="teacherLoadBox" class="mt-3" role="status" aria-live="polite"><div class="flex justify-between text-xs font-bold"><span id="teacherLoadStage">Connecting…</span><span id="teacherLoadPercent">0%</span></div><div style="height:9px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px"><div id="teacherLoadBar" style="height:100%;width:0%;background:var(--brand);transition:width .2s"></div></div><p id="teacherLoadElapsed" class="muted mini mt-2">Elapsed: 0s · Remaining time unknown</p></div></section><section class="grid grid-cols-2 md:grid-cols-5 gap-3"><div class="panel stat"><span class="muted mini">Teachers</span><strong id="total">0</strong></div><div class="panel stat"><span class="muted mini">Present</span><strong id="present" class="statusP">0</strong></div><div class="panel stat"><span class="muted mini">Absent</span><strong id="absent" class="statusA">0</strong></div><div class="panel stat"><span class="muted mini">Leave</span><strong id="leave" class="statusL">0</strong></div><div class="panel stat"><span class="muted mini">Unmarked</span><strong id="unmarked">0</strong></div></section>
 <section class="panel" id="dailySection"><div class="flex justify-between items-center flex-wrap gap-3"><div><h3 class="font-black text-lg">Daily Attendance</h3><p id="summary" class="muted text-xs">Loading...</p></div></div><div id="holidayNotice" class="holiday-banner mt-3 hidden"></div><div class="print-only" id="dailyPrintHeader"></div><div id="list" class="screen-daily grid lg:grid-cols-2 gap-3 mt-4"></div><table class="print-only daily-print-table mt-3"><thead><tr><th>#</th><th>Photo</th><th>Teacher / Details</th><th>Status</th><th>Leave / absence details</th></tr></thead><tbody id="dailyPrintRows"></tbody></table></section>
 <section class="panel no-print" id="qrTeacherPanel" data-qr-scanner="true"><h3 class="font-black text-lg">▣ Teacher QR Attendance <span class="mini muted">Optional</span></h3><p class="muted text-sm mt-2">Scan school-issued teacher ID cards. Scans select Present; use Save changes to submit. A green tick is displayed only after saved attendance is reloaded and verified.</p><div class="flex flex-wrap gap-2 mt-4"><button class="btn primary" id="teacherQrStart" type="button">📷 Start QR scanner</button><button class="btn" id="teacherQrStop" type="button" disabled>Stop camera</button></div><video id="teacherQrVideo" playsinline muted style="display:none;width:100%;max-width:440px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-top:12px;background:#081b23"></video><div id="teacherQrFeedback" role="status" aria-live="polite" style="border:2px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;font-weight:800">○ Ready to scan</div><p class="mini muted mt-2">Requires HTTPS, camera permission and a browser supporting BarcodeDetector. Manual attendance remains available.</p><button class="qr-close" id="qrTeacherPanelClose" type="button">✕ Close scanner · Save attendance</button></section>
 <section class="panel no-print"><h3 class="font-black text-base mb-3">Daily register tools</h3><div class="flex flex-wrap gap-3"><button id="printDaily" class="btn">🖨 Print daily register</button><button id="csvDaily" class="btn">↓ Daily CSV</button></div></section>
@@ -147,11 +147,19 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)teacherQrSt
 window.addEventListener('pagehide',teacherQrStop);
 $('date').addEventListener('change',teacherQrStop);
 function discard(){return !dirty.size||confirm(`Discard ${dirty.size} unsaved changes?`)}
+let teacherLoadTimer=null;
+function teacherLoadUpdate(percent,stage,started){
+ $('teacherLoadBox').style.display='block';$('teacherLoadPercent').textContent=percent+'%';$('teacherLoadBar').style.width=percent+'%';$('teacherLoadStage').textContent=stage;
+ $('teacherLoadElapsed').textContent='Elapsed: '+Math.floor((performance.now()-started)/1000)+'s · Remaining time unknown';
+}
 async function load(){
  if(busy||!discard()){$('date').value=loadedDate;return}
  teacherQrStop();
  setBusy(true);
  attendanceHistoryLoaded=false;
+ const started=performance.now();let rosterReady=false,historyReady=false;
+ teacherLoadUpdate(0,'Connecting to teacher records…',started);
+ clearInterval(teacherLoadTimer);teacherLoadTimer=setInterval(()=>teacherLoadUpdate(rosterReady&&historyReady?85:rosterReady||historyReady?45:10,rosterReady&&historyReady?'Preparing teacher register…':rosterReady?'Waiting for saved attendance…':historyReady?'Waiting for teacher list…':'Waiting for teacher and attendance records…',started),500);
  let historyAvailable=false;
  const deadline=(promise,label)=>new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>reject(new Error(label+' did not respond within 40 seconds. Check Apps Script connection and retry.')),40000);
@@ -173,8 +181,8 @@ async function load(){
    }
   };
   const [rosterResult,historyResult]=await Promise.allSettled([
-   timedList('teachers','Teacher list'),
-   timedList('teacherAttendance','Teacher attendance')
+   timedList('teachers','Teacher list').then(v=>{rosterReady=true;return v}),
+   timedList('teacherAttendance','Teacher attendance').then(v=>{historyReady=true;return v})
   ]);
   if(rosterResult.status==='rejected')throw rosterResult.reason;
   teachers=rosterResult.value.filter(t=>id(t));
@@ -208,7 +216,7 @@ async function load(){
   teacherQrStop();
   $('date').value=loadedDate;
   toast('Loading failed: '+e.message,true);
- }finally{setBusy(false);render();
+ }finally{clearInterval(teacherLoadTimer);teacherLoadTimer=null;teacherLoadUpdate(attendanceHistoryLoaded?100:85,attendanceHistoryLoaded?'Teacher register ready':'Attendance history unavailable — refresh to retry',started);if(attendanceHistoryLoaded)$('teacherLoadElapsed').textContent='Loaded in '+((performance.now()-started)/1000).toFixed(1)+'s';setBusy(false);render();
   if(!attendanceHistoryLoaded){$('edit').disabled=true;$('markAll').disabled=true;$('save').disabled=true;$('completion').textContent='Attendance history unavailable. Refresh to retry.';}
  }
 }

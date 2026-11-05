@@ -15,6 +15,8 @@ assert.throws(()=>set('examination','active','2026-11-01T00:00:00Z','2026-02-30T
 assert.throws(()=>context.lamaAdminSetModuleGrant_('wrong','school1','examination','active','',''));
 set('examination','active','2026-11-01T00:00:00Z','2026-12-01T00:00:00Z');
 assert.equal(context.lamaModuleAccess_('school1','examination').allowed,true);
+assert.equal(context.lamaSchoolHasModuleGrant_('school1','examination'),true);
+assert.throws(()=>context.lamaSchoolHasModuleGrant_('school1','smartMarker'),/ENTITLEMENT_REQUIRED/);
 assert.equal(context.lamaModuleAccess_('school1','smartMarker').allowed,false);
 assert.equal(context.lamaAdminGetModuleGrant_('secret','school1','examination').revision,1);
 set('examination','suspended','','');

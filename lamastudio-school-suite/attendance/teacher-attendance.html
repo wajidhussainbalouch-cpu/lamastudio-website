@@ -66,6 +66,37 @@ function teacherQrStop(){document.getElementById('qrTeacherPanel')?.classList.re
  const video=$('teacherQrVideo');video.pause();video.srcObject=null;video.style.display='none';
  $('teacherQrStart').disabled=false;$('teacherQrStop').disabled=true;
 }
+let teacherQrSaving=false;
+async function teacherQrSaveVerified(teacher){
+ if(teacherQrSaving)return;
+ const k=id(teacher),when=$('date').value;
+ if(busy||!attendanceHistoryLoaded||when!==loadedDate||holidayReason(when)){teacherQrFeedback('error','Attendance register unavailable. Nothing saved.');return}
+ if(dirty.size){teacherQrFeedback('error','Unsaved manual changes exist. Save or discard them before QR auto-attendance.');return}
+ const existing=records.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
+ if(existing.length){teacherQrFeedback('error','Existing attendance found. QR will not overwrite it.');return}
+ teacherQrSaving=true;
+ teacherQrFeedback('pending',name(teacher)+' scanned. Saving attendance and verifying…');
+ try{
+  const patch={teacherId:k,teacherName:name(teacher),date:when,status:'Present',remarks:''};
+  const result=await LamaAPI.add('teacherAttendance',patch);
+  if(result===false||result?.success===false||result?.error)throw Error(result?.message||result?.error||'Server rejected save');
+  const response=await LamaAPI.list('teacherAttendance');
+  if(!Array.isArray(response)&&!Array.isArray(response?.records)&&!Array.isArray(response?.data))throw Error('Verification response invalid');
+  const fresh=arr(response);
+  const matches=fresh.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
+  records=fresh;
+  if(matches.length===1&&status(matches[0])==='Present'){
+   selected.set(k,{status:'Present',remarks:'',recordId:String(matches[0].id??matches[0]._id??'')});
+   teacherQrPending.delete(k);
+   render();renderHistory();
+   teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified.');
+  }else{
+   teacherQrFeedback('pending','Save submitted but verification is incomplete. Do not rescan; refresh to check the register.');
+  }
+ }catch(error){
+  teacherQrFeedback('pending','Could not confirm save: '+error.message+'. Check register before retrying to prevent duplicates.');
+ }finally{teacherQrSaving=false}
+}
 async function teacherQrStart(){
  if(teacherQrActive||busy)return;
  if(!attendanceHistoryLoaded||$('date').value!==loadedDate){teacherQrFeedback('error','Saved teacher attendance for this date has not loaded. Refresh before scanning.');return;}
@@ -97,8 +128,8 @@ async function teacherQrStart(){
         else{
          const k=id(teacher),state=selected.get(k)?.status;
          if(state==='Absent'||state==='Leave')teacherQrFeedback('error',name(teacher)+' has an existing Absent/Leave status. Change manually.');
-         else if(state==='Present')teacherQrFeedback(dirty.has(k)?'pending':'ready',name(teacher)+(dirty.has(k)?' is selected, not saved yet.':' is already marked Present.'));
-         else{choose(k,'Present');teacherQrPending.add(k);teacherQrFeedback('pending',name(teacher)+' scanned. Press Save changes; not saved yet.')}
+         else if(state==='Present')teacherQrFeedback(dirty.has(k)?'pending':'success',name(teacher)+(dirty.has(k)?' has unsaved manual changes.':' ✓ Present is saved in the register.'));
+         else{await teacherQrSaveVerified(teacher)}
         }
        }
       }

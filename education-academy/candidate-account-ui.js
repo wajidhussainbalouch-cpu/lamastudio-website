@@ -34,7 +34,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   await auth.signIn(data);
   try{
    const profiles=await auth.profile();
-   if(!profiles.length)setStatus('Signed in. Your profile can be completed after verification.');
+   if(!profiles.length){
+    const details=auth.state().user;
+    const meta=details&&details.user_metadata||{};
+    const fullName=String(meta.full_name||'').trim();
+    if(fullName.length>=2&&fullName.length<=120)await auth.createProfile({displayName:fullName,occupation:String(meta.occupation||'').slice(0,120)});
+   }
   }catch(e){/* Sign-in remains valid if profile read is temporarily unavailable. */}
  },'Signed in successfully. Your cloud practice history is available below.');
  handle('candidateReset',data=>auth.resetPassword(data.email),'If this email is registered, password recovery instructions will be sent.');

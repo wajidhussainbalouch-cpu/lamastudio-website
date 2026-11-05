@@ -148,3 +148,15 @@ User screenshot showed empty job category grid, no Start Examination button and 
 
 ### Mobile load diagnostics (2026-11-05)
 Added a visible non-invasive load-status banner in `index.html` that appears **only if** the dynamic job catalog, 100-question paper bank, exam question controls or static job cards fail to initialize. It reports which component is unavailable and offers Refresh Academy. Does not clear saved scores or attempts. Public cache v27. This is a diagnostic, not proof of a live fix. **GitHub-only; no deployment.** Next inspect live banner after approved deployment and fix exact script failure; ensure job-specific exams are independently authored and validated before activation.
+
+
+### Connected Supabase Free database implementation (2026-11-05)
+Supabase project **LAMA PPSC Academy**, project ref `cqoeokovxuimbltskuze`, is ACTIVE_HEALTHY. Connected Supabase tools verified access. No database password or service-role key belongs in GitHub.
+
+Applied and verified in the live Supabase database:
+- `public.ppsc_candidates`: primary key `id` references `auth.users(id)`; `display_name`, optional `occupation`, timestamps. RLS enabled, own-row SELECT/INSERT/UPDATE policies, UPDATE column grants limited to `display_name` and `occupation`.
+- `public.ppsc_practice_attempts`: UUID attempt ID, `candidate_id` references `auth.users`, job/paper IDs, total and correct counts, duration, completion timestamp, fixed `source='client_practice'`. RLS enabled; authenticated users can SELECT and INSERT only their own attempts; no client UPDATE/DELETE grants. Index on candidate and completion date. **Client-submitted practice scores are unverified** and must never be used as authoritative graded results, payment confirmation or premium entitlement.
+- Revoked PUBLIC/anon/authenticated EXECUTE on pre-existing `public.rls_auto_enable()` privileged function after security advisor identified exposed execution.
+- Supabase security advisor returned **zero findings** after changes. Both public tables verified RLS enabled; currently empty.
+
+**Not yet done:** integrate web UI with Supabase Auth and profile/attempt sync, verify signup email confirmation and session refresh, secure server-side grading for authoritative results, verified payment/subscription workflows, end-to-end browser tests. Existing website registration remains disabled. Keep academy separate from School Suite and do not deploy Vercel without explicit approval.

@@ -60,6 +60,8 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 | `check-links.cjs` | HTML anchors, duplicate IDs, required controls |
 | `check-exam-contract.cjs` | Exam start/submit guards, migration, flag persistence, public cache contract checks |
 | `README.md` | Technical implementation and release gates |
+| `backend/schema.sql` | Unapplied isolated PostgreSQL schema draft with deny-by-default RLS enabled |
+| `backend/README.md` | Proposed authenticated API contract and payment-approval security rules |
 | `.github/workflows/ppsc-academy-checks.yml` | GitHub Actions syntax and QA checks |
 
 Existing exam records are stored **locally in the current browser**. This is not an account or cloud record. Browser clearing/device change can lose history unless the candidate has explicitly exported and safely retained a JSON score backup. Backup files contain personal performance data; restoring them is not identity verification. The study plan and revision recommendations are guidance, not official syllabus verification or a guarantee of passing.
@@ -79,7 +81,7 @@ Existing exam records are stored **locally in the current browser**. This is not
 **Visual acceptance checklist:** header/menu aligned at 320–430 px; no horizontal scrolling; legible exam timer; accessible touch targets; cards have adequate contrast; PWA icons load; two-column print works on A4; header/footer/watermark do not obscure questions; no dated Independence Day banner.
 
 ## 7. Data architecture (required before paid launch)
-Use a secure, separate academy backend. No backend/provider has been approved/configured yet; do not assume Google Apps Script or Sheets can securely handle passwords or premium authorization.
+Use a secure, separate academy backend. An **unapplied** provider-neutral PostgreSQL schema draft and API contract are in `backend/`; they are not live endpoints or registration. No backend/provider has been approved/configured yet; do not assume Google Apps Script or Sheets can securely handle passwords or premium authorization.
 
 Suggested entities:
 - `candidate`: uid, verified email, display name, occupation, createdAt, status.
@@ -103,7 +105,7 @@ Mobile-first installable PWA, offline access to already authorized material wher
 ## 10. Immediate priorities (do these before polishing more cards)
 1. **Verify GitHub Actions checks actually pass**, fix failures; run syntax and question-bank validators. Inspect the 100-MCQ bank and confirm every answer and explanation; replace generic/repetitive items with verified originals.
 2. **Fix exam integrity and usability**: restore/resume, timeout, answer migration, flag persistence, rejection of answers before exam start, accidental submission, print layout, local results; test on Android Chrome and offline PWA.
-3. **Choose and securely configure auth/database** with owner consent; implement registration, verified email, login, reset, per-user storage. Do not put secrets in GitHub.
+3. **Choose and securely configure auth/database** (review `backend/schema.sql` and `backend/README.md`; neither is deployed) with owner consent; implement registration, verified email, login, reset, per-user storage. Do not put secrets in GitHub.
 4. **Cloud sync** attempts, scores, topic breakdowns, planner and progress.
 5. **Payment request + manual approval** with audit log and server-enforced annual entitlement.
 6. Super Admin dashboard and end-to-end security tests.

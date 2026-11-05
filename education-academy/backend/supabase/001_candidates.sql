@@ -16,7 +16,7 @@ GRANT SELECT, INSERT, UPDATE ON TABLE public.ppsc_candidates TO authenticated;
 DROP POLICY IF EXISTS ppsc_candidate_select_self ON public.ppsc_candidates;
 CREATE POLICY ppsc_candidate_select_self ON public.ppsc_candidates FOR SELECT TO authenticated USING ((select auth.uid())=id);
 DROP POLICY IF EXISTS ppsc_candidate_insert_self ON public.ppsc_candidates;
-CREATE POLICY ppsc_candidate_insert_self ON public.ppsc_candidates FOR INSERT TO authenticated WITH CHECK ((select auth.uid())=id AND (select auth.jwt()->>'email') IS NOT NULL AND (select auth.jwt()->>'email')=(select auth.jwt()->>'email'));
+CREATE POLICY ppsc_candidate_insert_self ON public.ppsc_candidates FOR INSERT TO authenticated WITH CHECK ((select auth.uid())=id);
 DROP POLICY IF EXISTS ppsc_candidate_update_self ON public.ppsc_candidates;
 CREATE POLICY ppsc_candidate_update_self ON public.ppsc_candidates FOR UPDATE TO authenticated USING ((select auth.uid())=id) WITH CHECK ((select auth.uid())=id);
 -- Prevent client updates to the identity/creation fields.

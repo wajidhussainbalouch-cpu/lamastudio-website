@@ -100,3 +100,16 @@ window.LAMA_PPSC_PAPERS=[{id:"DEMO-01",title:"Free Full-Length Practice Paper",m
 {"id":"full-078","q":"15 percent of 200 equals?","options":["30","20","15","40"],"answer":0,"subject":"Mathematics","explanation":"Fifteen percent of 200 is 0.15 multiplied by 200, which equals 30."},
 {"id":"full-079","q":"A 20 percent discount on Rs 1000 is?","options":["Rs 200","Rs 100","Rs 500","Rs 800"],"answer":0,"subject":"Mathematics","explanation":"Twenty percent of Rs 1,000 is Rs 200; the price after the discount would be Rs 800."},
 {"id":"full-080","q":"The synonym of concise is?","options":["Brief","Lengthy","Unclear","Complex"],"answer":0,"subject":"English","explanation":"Concise means brief and expressed clearly in relatively few words."}]}];
+/* Deterministic per-question option rotation: prevents an answer-position pattern
+   while keeping option order stable across reloads, printouts and offline sessions. */
+for(const paper of window.LAMA_PPSC_PAPERS){
+  for(const q of paper.questions){
+    const original=q.options.map((text,index)=>({text,index}));
+    let hash=2166136261;
+    for(const ch of q.id){hash=Math.imul(hash^ch.charCodeAt(0),16777619)>>>0}
+    const offset=hash%4;
+    const reordered=original.map((_,i)=>original[(i+offset)%4]);
+    q.answer=reordered.findIndex(item=>item.index===q.answer);
+    q.options=reordered.map(item=>item.text);
+  }
+}

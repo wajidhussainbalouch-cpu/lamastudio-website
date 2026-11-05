@@ -1,26 +1,52 @@
-# LAMA PPSC Academy — development handoff
-Status: **preview only; NOT production ready**. This directory is isolated from the School Suite. No deployment authorized.
+# LAMA PPSC Preparation Academy — development handoff
 
-## Commercial requirements
-- One account per verified email; PKR 1,000 for 12 months; academy-only entitlement, separate from school subscriptions.
-- Secure server-side email verification, password handling, roles, payment verification, subscription lifecycle and audit logs.
-- Super Admin: subscriber counts, pending payments, approvals, expirations, gross/net receipts, refunds, CSV export, paper review and content management.
-- Premium papers: 500 full papers of 100 MCQs each (50,000 question slots), 80 professional education / 20 general ability, validated questions with provenance, non-repetition checks and explanations.
-- BS-17 and BS-18 separately; provisional subject weighting pending official PPSC notification.
-- Timed exam engine, printable PDF questions, answer sheets and optional answer keys; watermarked downloads.
-- Offline PWA: downloaded authorized packs, IndexedDB attempts and sync conflict handling; server-validated time-limited offline entitlements. Cached public demo is not premium security.
-- Planner: date-driven study phases, daily tasks, missed-day recovery, weak-topic revision, persistent sync.
+Status: **working public practice preview; NOT ready for paid memberships**.
+This module belongs to the LAMA Studio website, not the School Suite. Keep school data, user roles, payment records, and subscriptions separate.
 
-## Implemented now
-- Standalone mobile-friendly preview page, three original sample MCQs with results, printable question page, local study planner, PWA shell cache and manifest.
-- No backend, no payment collection, no subscriber registration, no admin portal, no 500-paper content. Do not advertise as completed.
-- PWA installation quality needs proper icon assets and browser/device testing.
+## First release scope
 
-## Release gates
-1. Select and configure production auth, database and payment provider; keep secrets server-side.
-2. Implement server-validated roles and payment webhook/manual verification with transaction reconciliation.
-3. Implement content ingestion/review, 500-paper generation and answer-key access controls.
-4. Build offline pack encryption/entitlement expiration strategy and device sync.
-5. Test accessibility, print layout, installation, offline behavior, security and backups.
-6. Verify official PPSC vacancy, eligibility, exam pattern and date; only then publish claims.
-7. Explicit owner approval before any Vercel deployment or public launch.
+Priority: Headmaster / Headmistress BS-17 and Senior Headmaster / Headmistress BS-18 educational administration preparation. Other PPSC posts appear as future preparation tracks; they are **not** currently supplied with full question banks. The job catalog references historical results, not currently open vacancies.
+
+## Implemented
+
+- Mobile-first academy entry, separate job cards and per-job preparation roadmaps.
+- Teaching administration free paper with 100 MCQs, 90-minute timer, explicit start and submit, countdown pinned to the page, answer persistence on this browser, unanswered-question navigation, and automatic submission at timeout.
+- Correct-answer explanations, question-option rotation and migration of earlier saved answer indices.
+- Per-attempt local scores, weak-subject breakdown, recent score trend, suggested five-day revision plan, CSV export and confirmed local-history deletion.
+- Print layout, basic study planner, and offline PWA shell. Offline installation and cross-browser behavior still require device testing.
+- Automated GitHub Actions checks for JavaScript syntax, navigation IDs, and paper structure; see `validate-papers.cjs` and `check-links.cjs`.
+
+## Not implemented — must not be advertised as active
+
+- Candidate signup, verified email/password login, password reset, and persistent user identity. The visible registration form is **disabled** until a secure backend is configured.
+- Cloud score history and cross-device synchronization.
+- Payment screenshot/transaction reference submission, payment reconciliation, manual Super Admin approval, and subscription activation.
+- Premium access authorization and 500 validated 100-MCQ papers. The 500-paper figure is a **target**, not current content.
+- Official syllabus verification for each recruitment case; current study topics are educational guidance, not confirmed case weightings.
+
+## Proposed paid access policy
+
+PKR 1,000 per verified candidate for 12 months, academy-wide access to all published job-specific tracks during the active period. This is a planned policy, not a currently purchasable product.
+
+## Secure backend acceptance requirements
+
+1. Choose the academy's authentication and storage service and configure secrets outside the public GitHub repository.
+2. Server verifies email ownership; passwords must be processed by the authentication provider, never stored in localStorage, Google Sheets or public code.
+3. Server checks every protected request for user identity, role, and active subscription. Hiding buttons is **not** access control.
+4. Payment submission creates a pending record with transaction reference, claimed amount, optional private evidence upload and audit timestamps. Do not grant access from a screenshot alone.
+5. Super Admin approves only after independent transaction reconciliation. Approval must be idempotent and recorded in an audit log.
+6. Start and expiry times are server-generated; expiration is enforced server-side for premium papers.
+7. Scores and answers are associated with the authenticated candidate; provide access control, export/deletion rules, and backup/restore procedures.
+8. Verify question provenance, originality, difficulty, non-repetition, and official PPSC case-specific syllabus before premium publication.
+9. Run integration tests for authentication, payment review, unauthorized access, expired membership, data recovery, and mobile PWA behavior.
+10. Obtain explicit approval before deploying new changes to Vercel. GitHub commits do not themselves prove production publication.
+
+## Developer checks
+
+```bash
+node education-academy/validate-papers.cjs
+node education-academy/check-links.cjs
+for f in education-academy/*.js education-academy/*.cjs; do node --check "$f"; done
+```
+
+These checks detect structural issues but **do not establish academic accuracy or production security**.

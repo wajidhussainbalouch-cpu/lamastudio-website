@@ -61,6 +61,9 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 | `check-exam-contract.cjs` | Exam start/submit guards, migration, flag persistence, public cache contract checks |
 | `README.md` | Technical implementation and release gates |
 | `backend/schema.sql` | Unapplied isolated PostgreSQL schema draft with deny-by-default RLS enabled |
+| `backend/supabase/001_candidates.sql` | Unapplied Supabase Free candidate profile migration with auth.uid() owner RLS |
+| `supabase-config.js` | Disabled-by-default public Supabase configuration placeholder |
+| `auth-supabase.js` | Inert candidate auth adapter; no live sign-up, no persistent session |
 | `backend/README.md` | Proposed authenticated API contract and payment-approval security rules |
 | `.github/workflows/ppsc-academy-checks.yml` | GitHub Actions syntax and QA checks |
 
@@ -81,7 +84,7 @@ Existing exam records are stored **locally in the current browser**. This is not
 **Visual acceptance checklist:** header/menu aligned at 320–430 px; no horizontal scrolling; legible exam timer; accessible touch targets; cards have adequate contrast; PWA icons load; two-column print works on A4; header/footer/watermark do not obscure questions; no dated Independence Day banner.
 
 ## 7. Data architecture (required before paid launch)
-Use a secure, separate academy backend. An **unapplied** provider-neutral PostgreSQL schema draft and API contract are in `backend/`; they are not live endpoints or registration. **Owner decision 2026-11-05:** Supabase **Free** is the initial preferred backend, strictly $0 with no paid trial, upgrade or chargeable resources; provider account/project and credentials have NOT been configured. Free projects may pause and have resource limits. School Suite must remain on its existing Apps Script/Sheets architecture.  do not assume Google Apps Script or Sheets can securely handle passwords or premium authorization.
+Use a secure, separate academy backend. An **unapplied** provider-neutral PostgreSQL schema draft, Supabase candidate RLS migration, and API contract are in `backend/`; the disabled configuration and initial auth adapter are in `supabase-config.js` and `auth-supabase.js`. The registration UI is still disabled, and the adapter has no production-ready session refresh or profile sync.  they are not live endpoints or registration. **Owner decision 2026-11-05:** Supabase **Free** is the initial preferred backend, strictly $0 with no paid trial, upgrade or chargeable resources; provider account/project and credentials have NOT been configured. Free projects may pause and have resource limits. School Suite must remain on its existing Apps Script/Sheets architecture.  do not assume Google Apps Script or Sheets can securely handle passwords or premium authorization.
 
 Suggested entities:
 - `candidate`: uid, verified email, display name, occupation, createdAt, status.

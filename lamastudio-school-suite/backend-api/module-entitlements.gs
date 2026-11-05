@@ -17,6 +17,7 @@ function lamaModuleAccess_(schoolId,module){
  rows.sort(function(a,b){return Number(b[5])-Number(a[5])});
  if(rows.length>1&&Number(rows[0][5])===Number(rows[1][5]))return {allowed:false,reason:'GRANT_CONFLICT'};
  var g=rows[0],now=Date.now();
+ if(!Number.isSafeInteger(Number(g[5]))||Number(g[5])<1)return {allowed:false,reason:'INVALID_REVISION'};
  if(g[2]!=='active')return {allowed:false,reason:'ENTITLEMENT_'+String(g[2]).toUpperCase()};
  if(!g[3]||!g[4]||!Number.isFinite(Date.parse(g[3]))||!Number.isFinite(Date.parse(g[4])))return {allowed:false,reason:'INVALID_GRANT_DATES'};
  if(now<Date.parse(g[3]))return {allowed:false,reason:'NOT_STARTED'};
@@ -27,7 +28,7 @@ function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){
  authorizeAdmin(adminApiKey);
  if(!findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(schoolId)}))throw Error('School not found');
  if(['schoolManagement','examination','smartMarker'].indexOf(module)<0||['active','suspended','revoked'].indexOf(status)<0)throw Error('Invalid grant');
- function iso(s){if(!s)return '';if(typeof s!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(s)||!Number.isFinite(Date.parse(s)))throw Error('Invalid UTC timestamp');return s}
+ function iso(s){if(!s)return '';if(typeof s!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(s)||!Number.isFinite(Date.parse(s))||new Date(Date.parse(s)).toISOString()!==s.replace('Z','.000Z'))throw Error('Invalid UTC timestamp');return s}
  start=iso(start);end=iso(end);
  if(status==='active'&&(!start||!end))throw Error('Active module grants require start and expiry dates');
  if(start&&end&&Date.parse(end)<=Date.parse(start))throw Error('Invalid interval');

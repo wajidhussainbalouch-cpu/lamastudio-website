@@ -1733,6 +1733,20 @@ function handleRequest(params) {
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
+        if (action === 'syllabusPublishedPlans') {
+            if (typeof LamaSyllabusSheetStore === 'undefined') throw new Error('Syllabus storage adapter not installed.');
+            if (typeof lamaAdminGetModuleGrant_ !== 'function') throw new Error('Server-side Examination grant verification unavailable.');
+            if (params.role !== 'teacher') throw new Error('Teacher session required.');
+            const ctx = authorizeTeacher(params.schoolId, params.teacherId, params.apiKey);
+            const grant = lamaAdminGetModuleGrant_(null, params.schoolId, 'examination');
+            if (!grant || grant.status !== 'active') throw new Error('Examination module is not active for this school.');
+            if (!params.planId || typeof params.planId !== 'string') throw new Error('Plan ID required.');
+            const record = LamaSyllabusSheetStore.read(ctx.ss.getId(), params.schoolId, params.planId);
+            if (!record || record.plan.status !== 'published') throw new Error('Published syllabus plan not found.');
+            if (normalizeSchoolClass(record.plan.classId) !== normalizeSchoolClass(ctx.teacher.assignedClass)) throw new Error('Class scope denied.');
+            if (String(record.plan.subjectId).trim().toLowerCase() !== String(ctx.teacher.subject).trim().toLowerCase()) throw new Error('Subject scope denied.');
+            return {status:'success',plan:record.plan};
+        }
         switch (action) {
             case 'communityList': return {status:'success',posts:communityPublic_(params)};
             case 'communityCreate': return {status:'success',post:communityPublic_(params)};

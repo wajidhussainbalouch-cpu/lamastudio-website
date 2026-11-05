@@ -12,8 +12,11 @@ window.LamaAcademyAuth=(()=>{
  let currentUser=null;
  let refreshToken=null;
  let expiresAt=0;
+ const sessionKey='lama_ppsc_candidate_session_v1';
+ function persistSession(){try{if(refreshToken&&currentUser)sessionStorage.setItem(sessionKey,JSON.stringify({refreshToken,user:currentUser}));else sessionStorage.removeItem(sessionKey)}catch(e){/* Private browsing may block storage */}}
+ try{const cached=JSON.parse(sessionStorage.getItem(sessionKey)||'null');if(cached&&cached.refreshToken&&cached.user){refreshToken=cached.refreshToken;currentUser=cached.user}}catch(e){/* Ignore malformed stored session */}
  const state=()=>({configured,authenticated:Boolean(accessToken&&currentUser&&Date.now()<expiresAt),user:currentUser&&{id:currentUser.id,email:currentUser.email,user_metadata:{full_name:currentUser.user_metadata&&currentUser.user_metadata.full_name||'',occupation:currentUser.user_metadata&&currentUser.user_metadata.occupation||''}}});
- function saveSession(result){if(!result.access_token||!result.user)throw Error('Invalid authentication response.');accessToken=result.access_token;refreshToken=result.refresh_token||null;currentUser=result.user;expiresAt=Date.now()+Math.max(0,Number(result.expires_in||3600)-30)*1000;}
+ function saveSession(result){if(!result.access_token||!result.user)throw Error('Invalid authentication response.');accessToken=result.access_token;refreshToken=result.refresh_token||null;currentUser=result.user;expiresAt=Date.now()+Math.max(0,Number(result.expires_in||3600)-30)*1000;persistSession();}
  async function request(endpoint,body,token){
   if(!configured)throw Error('Candidate accounts are not enabled.');
   const controller=new AbortController();
@@ -35,6 +38,7 @@ window.LamaAcademyAuth=(()=>{
   const result=await request('signup',{email:email.trim().toLowerCase(),password,data:{full_name:fullName.trim(),occupation:(occupation||'').trim()}});
   return {emailVerificationRequired:!result.access_token,created:Boolean(result.user)};
  }
+ async function restoreSession(){if(!configured||!refreshToken)return state();try{await token()}catch(e){/* Expired sessions remain signed out */}return state()}
  async function signIn({email,password}){
   if(!configured)throw Error('Login is not enabled.');
   const result=await request('token?grant_type=password',{email,password});
@@ -42,13 +46,13 @@ window.LamaAcademyAuth=(()=>{
   saveSession(result);
   return state();
  }
- async function signOut(){try{if(accessToken)await request('logout',{},accessToken)}finally{accessToken=null;refreshToken=null;currentUser=null;expiresAt=0}return state()}
+ async function signOut(){try{if(accessToken)await request('logout',{},accessToken)}finally{accessToken=null;refreshToken=null;currentUser=null;expiresAt=0;persistSession()}return state()}
  async function token(){
-  if(!configured||!accessToken||!currentUser)throw Error('Please sign in first.');
-  if(Date.now()<expiresAt)return accessToken;
+  if(!configured||!currentUser||(!accessToken&&!refreshToken))throw Error('Please sign in first.');
+  if(accessToken&&Date.now()<expiresAt)return accessToken;
   if(!refreshToken){await signOut();throw Error('Your session has expired. Please sign in again.');}
   try{const result=await request('token?grant_type=refresh_token',{refresh_token:refreshToken});saveSession(result);return accessToken}
-  catch(e){accessToken=null;refreshToken=null;currentUser=null;expiresAt=0;throw Error('Session expired. Please sign in again.')}
+  catch(e){accessToken=null;refreshToken=null;currentUser=null;expiresAt=0;persistSession();throw Error('Session expired. Please sign in again.')}
  }
  async function dataRequest(table,method,payload){
   const bearer=await token();
@@ -82,5 +86,5 @@ window.LamaAcademyAuth=(()=>{
  async function subscriptions(){return dataRequest('ppsc_subscriptions?select=status,starts_at,expires_at,approved_at&order=created_at.desc&limit=10','GET')}
 
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions});
+ return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions});
 })();

@@ -10,7 +10,10 @@ window.LamaAcademyAuth=(()=>{
  const key=configured?settings.publishableKey:'';
  let accessToken=null;
  let currentUser=null;
- const state=()=>({configured,authenticated:Boolean(accessToken&&currentUser),user:currentUser&&{id:currentUser.id,email:currentUser.email}});
+ let refreshToken=null;
+ let expiresAt=0;
+ const state=()=>({configured,authenticated:Boolean(accessToken&&currentUser&&Date.now()<expiresAt),user:currentUser&&{id:currentUser.id,email:currentUser.email}});
+ function saveSession(result){if(!result.access_token||!result.user)throw Error('Invalid authentication response.');accessToken=result.access_token;refreshToken=result.refresh_token||null;currentUser=result.user;expiresAt=Date.now()+Math.max(0,Number(result.expires_in||3600)-30)*1000;}
  async function request(endpoint,body,token){
   if(!configured)throw Error('Candidate accounts are not enabled.');
   const controller=new AbortController();
@@ -36,10 +39,41 @@ window.LamaAcademyAuth=(()=>{
   if(!configured)throw Error('Login is not enabled.');
   const result=await request('token?grant_type=password',{email,password});
   if(!result.access_token||!result.user||!result.user.email_confirmed_at)throw Error('Confirm your email before signing in.');
-  accessToken=result.access_token;currentUser=result.user;
+  saveSession(result);
   return state();
  }
- async function signOut(){if(accessToken){try{await request('logout',{},accessToken)}finally{accessToken=null;currentUser=null}}return state()}
+ async function signOut(){try{if(accessToken)await request('logout',{},accessToken)}finally{accessToken=null;refreshToken=null;currentUser=null;expiresAt=0}return state()}
+ async function token(){
+  if(!configured||!accessToken||!currentUser)throw Error('Please sign in first.');
+  if(Date.now()<expiresAt)return accessToken;
+  if(!refreshToken){await signOut();throw Error('Your session has expired. Please sign in again.');}
+  try{const result=await request('token?grant_type=refresh_token',{refresh_token:refreshToken});saveSession(result);return accessToken}
+  catch(e){accessToken=null;refreshToken=null;currentUser=null;expiresAt=0;throw Error('Session expired. Please sign in again.')}
+ }
+ async function dataRequest(table,method,payload){
+  const bearer=await token();
+  const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),15000);
+  try{
+   const response=await fetch(base+'/rest/v1/'+table,{method,headers:{apikey:key,Authorization:'Bearer '+bearer,'Content-Type':'application/json',Prefer:'return=representation'},...(payload?{body:JSON.stringify(payload)}:{}),signal:controller.signal,cache:'no-store'});
+   const result=await response.json().catch(()=>null);
+   if(!response.ok)throw Error(result&&result.message||'Unable to load your account data.');
+   return result;
+  }finally{clearTimeout(timeout)}
+ }
+ async function profile(){return dataRequest('ppsc_candidates?select=id,display_name,occupation,created_at&limit=1','GET')}
+ async function createProfile({displayName,occupation}){
+  if(typeof displayName!=='string'||displayName.trim().length<2||displayName.trim().length>120)throw Error('Enter a valid name.');
+  const bearer=await token();if(!bearer||!currentUser)throw Error('Sign in first.');
+  return dataRequest('ppsc_candidates','POST',{id:currentUser.id,display_name:displayName.trim(),occupation:(occupation||'').trim()});
+ }
+ async function practiceHistory(){return dataRequest('ppsc_practice_attempts?select=id,job_id,paper_id,total_questions,correct_answers,duration_seconds,completed_at&order=completed_at.desc&limit=100','GET')}
+ async function savePracticeAttempt({jobId,paperId,totalQuestions,correctAnswers,durationSeconds}){
+  if(!/^[a-zA-Z0-9_-]{2,80}$/.test(jobId)||!/^[a-zA-Z0-9_-]{2,100}$/.test(paperId))throw Error('Invalid paper identifier.');
+  if(!Number.isInteger(totalQuestions)||totalQuestions<1||totalQuestions>500||!Number.isInteger(correctAnswers)||correctAnswers<0||correctAnswers>totalQuestions||!Number.isInteger(durationSeconds)||durationSeconds<0||durationSeconds>86400)throw Error('Invalid practice attempt.');
+  return dataRequest('ppsc_practice_attempts','POST',{candidate_id:currentUser.id,job_id:jobId,paper_id:paperId,total_questions:totalQuestions,correct_answers:correctAnswers,duration_seconds:durationSeconds});
+ }
+ async function subscriptions(){return dataRequest('ppsc_subscriptions?select=status,starts_at,expires_at,approved_at&order=created_at.desc&limit=10','GET')}
+
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,signUp,signIn,signOut,resetPassword});
+ return Object.freeze({state,signUp,signIn,signOut,resetPassword,profile,createProfile,practiceHistory,savePracticeAttempt,subscriptions});
 })();

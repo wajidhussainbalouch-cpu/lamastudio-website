@@ -12,7 +12,7 @@ window.LamaAcademyAuth=(()=>{
  let currentUser=null;
  let refreshToken=null;
  let expiresAt=0;
- const state=()=>({configured,authenticated:Boolean(accessToken&&currentUser&&Date.now()<expiresAt),user:currentUser&&{id:currentUser.id,email:currentUser.email}});
+ const state=()=>({configured,authenticated:Boolean(accessToken&&currentUser&&Date.now()<expiresAt),user:currentUser&&{id:currentUser.id,email:currentUser.email,user_metadata:{full_name:currentUser.user_metadata&&currentUser.user_metadata.full_name||'',occupation:currentUser.user_metadata&&currentUser.user_metadata.occupation||''}}});
  function saveSession(result){if(!result.access_token||!result.user)throw Error('Invalid authentication response.');accessToken=result.access_token;refreshToken=result.refresh_token||null;currentUser=result.user;expiresAt=Date.now()+Math.max(0,Number(result.expires_in||3600)-30)*1000;}
  async function request(endpoint,body,token){
   if(!configured)throw Error('Candidate accounts are not enabled.');

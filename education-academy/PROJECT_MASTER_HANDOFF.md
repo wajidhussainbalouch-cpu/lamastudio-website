@@ -28,7 +28,7 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 2. Academy welcome: logo, benefit cards with distinct complementary colors, mobile-left three-line hamburger icon (no “Menu” text), Install App control, and job cards.
 3. General sidebar: Job Categories, My Scores & Progress, Membership, New User Registration, Install Academy App. Remove redundant or nonfunctional entries.
 4. Select Headmaster/Headmistress BS-17/18: open dedicated preparation track, with syllabus/materials, paper list, planner, exam and scores.
-5. One **complete free trial paper**, **100 original MCQs**, **90 minutes**, explicit **Start Examination** (never auto-start on entering/scrolling), visible sticky countdown and paper position, remaining time, unanswered count, jump-to-unanswered, confirmation before submission, automatic submission at timeout.
+5. One **complete free trial paper**, **100 original MCQs**, **90 minutes**, explicit **Start Examination** (never auto-start on entering/scrolling), visible sticky countdown and paper position, remaining time, unanswered count, jump-to-unanswered, persistent **Flag for review** checkboxes and next-flagged navigation, confirmation before submission, automatic submission at timeout.
 6. Results: score, correct/wrong/blank, explanations, subject strengths/weaknesses, saved attempt history, score trends, recommended revision, printable paper and CSV export. Candidate should be able to see performance across Paper 1, Paper 2, etc., once more papers exist.
 7. New registration: name, email, occupation and other strictly necessary details, password with show/hide, verified account, login and password reset. **Current form is not operational.**
 8. Subscription: **PKR 1,000 for 12 months per verified candidate**, intended to grant academy-wide access to all published job tracks during active membership. Show the plan only once prominently, not repeated in several sections.
@@ -51,7 +51,7 @@ Other PPSC job cards are **future tracks**, based partly on a historical PPSC re
 | `jobs.js` | Job catalog; only teaching track marked ready |
 | `shell.js` | Menu, job selection, route visibility, PWA install controls |
 | `papers.js` | 100-question educational practice paper, explanations, stable option rotation |
-| `engine.js` | 90-minute timed exam, answer persistence, submission, local history, topic scores, revision plan, trend, CSV export |
+| `engine.js` | 90-minute timed exam, answer persistence, flagged-question review navigation, submission, local history, topic scores, revision plan, trend, CSV export |
 | `app.js` | Older planner/sample interactions; inspect before removing or refactoring |
 | `print.html` | Printable question paper |
 | `manifest.webmanifest` | PWA metadata; currently lacks real install icons |
@@ -101,7 +101,7 @@ Mobile-first installable PWA, offline access to already authorized material wher
 
 ## 10. Immediate priorities (do these before polishing more cards)
 1. **Verify GitHub Actions checks actually pass**, fix failures; run syntax and question-bank validators. Inspect the 100-MCQ bank and confirm every answer and explanation; replace generic/repetitive items with verified originals.
-2. **Fix exam integrity and usability**: restore/resume, timeout, answer migration, accidental submission, print layout, local results; test on Android Chrome and offline PWA.
+2. **Fix exam integrity and usability**: restore/resume, timeout, answer migration, flag persistence, accidental submission, print layout, local results; test on Android Chrome and offline PWA.
 3. **Choose and securely configure auth/database** with owner consent; implement registration, verified email, login, reset, per-user storage. Do not put secrets in GitHub.
 4. **Cloud sync** attempts, scores, topic breakdowns, planner and progress.
 5. **Payment request + manual approval** with audit log and server-enforced annual entitlement.

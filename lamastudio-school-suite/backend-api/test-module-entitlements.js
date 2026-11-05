@@ -1,0 +1,24 @@
+'use strict';
+/* Node mock tests; does not access Google Sheets or production Apps Script. */
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const rows=[['schoolId','module','status','startsAt','expiresAt','revision','updatedAt']];
+let authorized=false,clock=Date.parse('2026-11-05T00:00:00Z');
+const sheet={getDataRange:()=>({getValues:()=>rows.map(r=>r.slice())}),getRange:()=>({getValues:()=>[rows[0].slice()]}),appendRow:r=>rows.push(r.slice())};
+const spreadsheet={getSheetByName:n=>n==='ModuleEntitlements'?sheet:null};
+const context={Date:class extends Date{static now(){return clock}},getRegistrySheet:()=>({getParent:()=>spreadsheet}),authorizeAdmin:k=>{if(k!=='secret')throw Error('Invalid admin')},findSchoolRow:(_s,p)=>p({schoolId:'school1'})?{}:null,LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})}};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'module-entitlements.gs'),'utf8'),context);
+const set=(...args)=>context.lamaAdminSetModuleGrant_('secret','school1',...args);
+assert.equal(context.lamaModuleAccess_('school1','examination').allowed,false);
+assert.throws(()=>set('examination','active','',''));
+assert.throws(()=>set('examination','active','2026-11-01T00:00:00Z','2026-02-30T00:00:00Z'));
+assert.throws(()=>context.lamaAdminSetModuleGrant_('wrong','school1','examination','active','',''));
+set('examination','active','2026-11-01T00:00:00Z','2026-12-01T00:00:00Z');
+assert.equal(context.lamaModuleAccess_('school1','examination').allowed,true);
+assert.equal(context.lamaModuleAccess_('school1','smartMarker').allowed,false);
+assert.equal(context.lamaAdminGetModuleGrant_('secret','school1','examination').revision,1);
+set('examination','suspended','','');
+assert.equal(context.lamaModuleAccess_('school1','examination').reason,'ENTITLEMENT_SUSPENDED');
+clock=Date.parse('2027-01-01T00:00:00Z');
+assert.equal(context.lamaModuleAccess_('school1','examination').allowed,false);
+console.log('Mock Apps Script grant tests passed');

@@ -1,7 +1,7 @@
 /* Candidate discovery catalog. Screenshot-sourced examples; not a live official vacancy feed.
    Never treat historical result-list entries as currently open vacancies or confirmed syllabi. */
 window.LAMA_PPSC_JOBS=[
-{id:"teaching",title:"Education & Teaching Jobs",post:"Headmaster / Headmistress BS-17; Senior Headmaster / Headmistress BS-18",caseNo:"",date:"",category:"Education",subjects:["Pedagogy","Educational Psychology","Assessment","School Leadership","Curriculum","English & General Ability"],ready:true},
+{id:"teaching",title:"Headmaster / Headmistress · BS-17 & BS-18",post:"Headmaster / Headmistress BS-17; Senior Headmaster / Headmistress BS-18",caseNo:"",date:"",category:"Education",subjects:["Pedagogy","Educational Psychology","Assessment","School Leadership","Curriculum","English & General Ability"],ready:true},
 {id:"information-officer",title:"Information Officer (BS-17)",post:"Information & Culture Department",caseNo:"09H2026",date:"26-10-2026",category:"Information & Media",subjects:["Communication","Media Studies","English","General Knowledge","Computer Literacy"]},
 {id:"water-management",title:"Water Management Officer (BS-17)",post:"Agriculture Department — Water Management Wing",caseNo:"57G2026",date:"26-10-2026",category:"Agriculture",subjects:["Irrigation Principles","Water Management","Agriculture","Basic Mathematics","General Ability"]},
 {id:"assistant-registrar",title:"Assistant Registrar Cooperative Societies (BS-17)",post:"Cooperatives Department",caseNo:"8K2025",date:"19-10-2026",category:"Administration",subjects:["Cooperative Principles","Public Administration","English","General Knowledge","Basic Law"]},

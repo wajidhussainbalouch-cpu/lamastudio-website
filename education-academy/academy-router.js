@@ -5,6 +5,8 @@
  const toView=()=>{
   const hash=decodeURIComponent(location.hash.slice(1));
   const view=views.has(hash)?hash:'jobs';
+  const detail=document.getElementById('jobDetail');
+  if(view==='jobDetail'&&detail&&detail.hidden){document.body.dataset.view='jobs';return;}
   document.body.classList.add('academy-routed');
   document.body.dataset.view=view;
   const menu=document.getElementById('academyMenu');
@@ -14,7 +16,7 @@
   if(view==='paper'){
    const workspace=document.getElementById('examWorkspace');
    const entry=document.querySelector('#paper .exam-entry');
-   if(workspace&&!workspace.hidden&&entry)entry.hidden=true;
+   if(entry)entry.hidden=Boolean(workspace&&!workspace.hidden);
   }
   if(view!=='jobs'){
    const section=document.getElementById(view);

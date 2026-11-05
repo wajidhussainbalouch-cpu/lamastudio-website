@@ -14,7 +14,7 @@ Priority: Headmaster / Headmistress BS-17 and Senior Headmaster / Headmistress B
 - Correct-answer explanations, question-option rotation and migration of earlier saved answer indices.
 - Per-attempt local scores, weak-subject breakdown, recent score trend, suggested five-day revision plan, CSV export and confirmed local-history deletion.
 - Print layout, basic study planner, and offline PWA shell. Offline installation and cross-browser behavior still require device testing.
-- Automated GitHub Actions checks for JavaScript syntax, navigation IDs, and paper structure; see `validate-papers.cjs` and `check-links.cjs`.
+- Automated GitHub Actions checks for JavaScript syntax, navigation IDs, and paper structure; see `validate-papers.cjs`, `check-links.cjs`, and `check-exam-contract.cjs`.
 
 ## Not implemented — must not be advertised as active
 
@@ -46,6 +46,7 @@ PKR 1,000 per verified candidate for 12 months, academy-wide access to all publi
 ```bash
 node education-academy/validate-papers.cjs
 node education-academy/check-links.cjs
+node education-academy/check-exam-contract.cjs
 for f in education-academy/*.js education-academy/*.cjs; do node --check "$f"; done
 ```
 

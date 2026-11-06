@@ -235,3 +235,9 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Connected the school administrator draft form submit handler to LamaAPI.createSyllabusDraft, including lesson-line parsing, saving feedback, and refreshed plan discovery. Removed the deliberately disabled Save Draft state.
 - Added backend-api/test-syllabus-draft.js to cover draft defaults, tenant-injection rejection, duplicate slots, invalid dates and invalid slots. Added the test to the syllabus CI workflow. GitHub Actions execution has not been verified.
 - The browser form is repository-only, not live; school class configuration mapping, Apps Script deployment and end-to-end tests must be checked before production use. Teacher progress recording and safe editing of drafts remain pending.
+
+## Teacher lesson progress — 2026-11-06
+- Added separate Apps Script worksheet adapter syllabus-progress-store.gs using `_LAMA_SYLLABUS_PROGRESS`, a script lock, exact published-plan lesson-key validation, and tenant-scoped reads. Progress is independent of the approved plan and existing homework/attendance.
+- Added POST-only syllabusTeacherProgress route in code.gs; authenticates teacher, checks Examination entitlement and matches class/subject against published plan. Supports list/save operations.
+- Added LamaAPI.listSyllabusProgress and LamaAPI.saveSyllabusProgress. Teacher diary now displays per-lesson progress controls and feedback when loading a published plan.
+- Caveats: teacher completion dates currently use the browser's UTC date; server-side trusted date policy and progress ownership/section policy need review. No live Apps Script deployment, runtime verification or test execution was performed. School admin progress reporting is not yet integrated.

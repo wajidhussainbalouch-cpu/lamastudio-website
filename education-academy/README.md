@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest Headmaster/Headmistress practice batch — Paper 8 (6 November 2026)
+
+**Paper 8 completed in GitHub source:** `HM-2026-P08`, questions `HM08-001`–`HM08-100`, with a separate 90-minute exam, candidate answer/explanation review after submission, printable question-only paper and printable answer key. This raises the public school-head preparation library to **8 independent free practice papers / 800 MCQ positions** while preserving Papers 1–7 and their saved attempts.
+
+**Supabase private editorial bank verified:** 100 new records added with `review_status='draft'` to the school-head `teaching` collection, now **730 unique private question stems / 730 draft records** and **0 independently human-approved**. The new questions were compared to 630 older private stems and Paper 1; two overlapping English questions were replaced, and structural, duplicate-screening, answer-key, job-specific and PWA tests passed in GitHub Actions. Public free JavaScript contains answer keys; the post-submission gating is for study usability, **not premium/proctored security**. Do not claim official PPSC syllabus endorsement or completed academic review.
+
+Read **[PAPER_08_RELEASE.md](./PAPER_08_RELEASE.md)** for the full release verification and the next **Paper 9** plan (`HM09-001`–`HM09-100`). Follow the existing **GitHub-only / no manual Vercel deployment** rule and independently verify actual live production and mobile browser behavior.
+
+
 ## Paper 7 completed — verified 6 November 2026
 
 **Headmaster/Headmistress Paper 7** (`HM-2026-P07`) is registered in GitHub `main`: 100 original MCQs (`HM07-001`–`HM07-100`) with an independent 90-minute exam, saved attempt, candidate score and post-submission explanation/printable answer key. **Seven complete school-head papers / 700 free-practice questions** now exist in the public source, and Papers 1–6 plus existing candidate records are preserved.

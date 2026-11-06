@@ -1,11 +1,19 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Smart Syllabus Planner | School Admin</title><script src="../../js/api-client.js"></script>
 <style>body{margin:0;background:#0b1725;color:#e9f5f1;font:15px system-ui}main{max-width:960px;margin:auto;padding:24px}section{background:#14283a;border:1px solid #335364;border-radius:16px;padding:20px;margin:16px 0}input,button{font:inherit;padding:12px;border-radius:9px}input{background:#0b1725;color:white;border:1px solid #587282;max-width:360px;width:100%}button{background:#27c4a0;color:#08252b;border:0;font-weight:700;cursor:pointer}table{border-collapse:collapse;width:100%}td,th{padding:10px;border-bottom:1px solid #355267;text-align:left;vertical-align:top}small,.muted{color:#adc5ca}a{color:#6de1c1}#status{min-height:22px} .scroll{overflow-x:auto}</style></head>
-<body><main><a href="../../index.html">← School Suite</a><h1>Smart Syllabus Planner</h1><p class="muted">School administrator · published plans, approval status and audit history</p><section><label for="planId">Plan ID</label><p><input id="planId" autocomplete="off" placeholder="Enter your school's plan ID"> <button id="load">Open plan</button></p><p id="status" role="status">This page requires an active school administrator session and Examination subscription.</p></section><section id="details" hidden><h2 id="heading">Plan</h2><p id="meta"></p><h3>Scheduled lessons</h3><div class="scroll"><table><thead><tr><th>Date</th><th>Slot</th><th>Chapter</th><th>Lesson</th></tr></thead><tbody id="lessons"></tbody></table></div><h3>Approval history</h3><div class="scroll"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Reason</th></tr></thead><tbody id="audit"></tbody></table></div></section></main>
+<body><main><a href="../../index.html">← School Suite</a><h1>Smart Syllabus Planner</h1><p class="muted">School administrator · published plans, approval status and audit history</p><section><label for="planId">Plan ID</label><p><select id="planId" aria-label="Syllabus plan"><option value="">Select a school syllabus plan</option></select> <button id="load">Open plan</button></p><p id="status" role="status">This page requires an active school administrator session and Examination subscription.</p></section><section id="details" hidden><h2 id="heading">Plan</h2><p id="meta"></p><h3>Scheduled lessons</h3><div class="scroll"><table><thead><tr><th>Date</th><th>Slot</th><th>Chapter</th><th>Lesson</th></tr></thead><tbody id="lessons"></tbody></table></div><h3>Approval history</h3><div class="scroll"><table><thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Reason</th></tr></thead><tbody id="audit"></tbody></table></div></section></main>
 <script>
 const el=id=>document.getElementById(id);
 function cell(row,value){const td=document.createElement('td');td.textContent=String(value??'—');row.append(td)}
 function showRows(id,records,fields){const body=el(id);body.replaceChildren();for(const record of records){const tr=document.createElement('tr');for(const field of fields)cell(tr,field(record));body.append(tr)}if(!records.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=fields.length;td.textContent='No records';tr.append(td);body.append(tr)}}
+async function discoverPlans(){
+ try{
+  const plans=await LamaAPI.listSyllabusPlans(),select=el('planId');
+  select.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent='Select a school syllabus plan';select.append(empty);
+  plans.forEach(p=>{const option=document.createElement('option');option.value=p.planId;option.textContent=[p.classId,p.subjectId,p.sessionId,p.status,'v'+p.version].join(' · ');select.append(option)});
+  el('status').textContent=plans.length?plans.length+' plan(s) found. Select a plan to inspect.':'No syllabus plans yet. Creation and approval are not enabled in this page.';
+ }catch(e){el('status').textContent='Plan discovery unavailable: '+e.message}
+}
 el('load').onclick=async()=>{
  el('details').hidden=true;
  const planId=el('planId').value.trim();if(!planId){el('status').textContent='Enter a plan ID.';return}
@@ -20,4 +28,5 @@ el('load').onclick=async()=>{
  }catch(e){el('status').textContent='Unable to open plan: '+e.message}
  finally{el('load').disabled=false}
 };
+discoverPlans();
 </script></body></html>

@@ -139,15 +139,15 @@ window.LAMA_PPSC_HM02_4=[
   "id": "HM02-085",
   "subject": "English",
   "topic": "Economy of language",
-  "q": "Which revision most clearly improves this sentence: 'Due to the fact that the meeting was delayed, it started late'?",
+  "q": "A memo reads, 'Due to the fact that the inspection team arrived after the scheduled time, the meeting commenced at a later hour.' Which revision is clearest?",
   "options": [
-   "The meeting started late because it was delayed.",
-   "Due to the fact of the meeting, it started late because of that.",
-   "The meeting, which was delayed, in point of fact was late.",
-   "The meeting was started in a late manner due to the delay."
+   "The meeting began late because the inspection team arrived after the scheduled time.",
+   "Due to the fact of the late inspection team, a later-hour commencement was made.",
+   "The team having been later caused a meeting later than scheduled in time.",
+   "At a later hour a commencement occurred due to matters of arrival time."
   ],
   "answer": 0,
-  "explanation": "Removing inflated wording preserves the causal meaning. Although the information is somewhat repetitive, the simpler sentence is clearer and more direct than the alternatives.",
+  "explanation": "A concise revision replaces wordy expressions such as 'due to the fact that' and 'commenced at a later hour' with direct, specific language while preserving the cause and event.",
   "difficulty": "foundation"
  },
  {

@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Latest Headmaster / Headmistress milestone — Paper 15 (6 November 2026)
+
+**Paper 15 complete:** `HM-2026-P15` adds 100 original educational-practice MCQs (`HM15-001`–`HM15-100`), with a separate 90-minute exam, unique saved candidate attempt, question-only print page and post-submission printable explanations. The academy GitHub source now contains **15 papers / 1,500 public MCQ positions**, retaining all previous papers, candidate accounts, memberships and results. Offline cache `lama-ppsc-preview-v70`.
+
+**Protected Supabase editorial bank:** 100 new draft records inserted without overwriting existing records; **1,430 unique private questions**, all awaiting independent human academic approval. Automated source screening compared new stems against the previous 1,330 private records and legacy Paper 1, and corrected five overlaps. Strong token-overlap flags are now clear at the screening threshold. Automatic QA does **not** establish official PPSC syllabus approval or absence of subtle substantive repetition. Free public JavaScript contains answer keys, so the client review gate is educational only, not secure paid/proctored scoring.
+
+**Policy:** Keep the existing **20-paper maximum independently per job family**; Headmaster/Senior Headmaster teaching variants share twenty slots. Next `Continue` begins **Paper 16** with `HM16-001`–`HM16-100`, if not already built. See [PAPER_15_RELEASE.md](./PAPER_15_RELEASE.md) for complete QA, security cautions and next instructions. GitHub success is not proof of the exact version on the live domain; inspect Vercel READY production SHA and Android Chrome behavior separately. Respect the previous Vercel deployment quota restriction.
+
+
 ## Latest school-head practice — Paper 14 (6 November 2026)
 
 **Paper 14 is complete in GitHub:** `HM-2026-P14` contains 100 original free-practice MCQs (`HM14-001`–`HM14-100`) across four 25-question source files. Separate 90-minute timed exam, question-only printing, post-submission answer explanations and result history are integrated. The academy now registers **14 Headmaster/Headmistress papers / 1,400 public practice questions**, with earlier 13 papers and candidate data retained. The offline PWA version is `lama-ppsc-preview-v69`.

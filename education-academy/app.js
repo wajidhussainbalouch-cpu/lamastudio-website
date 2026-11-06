@@ -128,7 +128,7 @@
   render();
  });
  window.addEventListener('lama:jobs-updated',()=>{
-  const selected=post.value;catalog.populate(post,{value:selected});switchJob();
+  const selected=catalog.fromUrl()?.id||post.value;catalog.populate(post,{value:selected});switchJob();
  });
  render();
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});

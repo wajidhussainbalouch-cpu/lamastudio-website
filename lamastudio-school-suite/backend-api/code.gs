@@ -676,6 +676,12 @@ function teacherLogin(schoolId, email, password) {
 }
 
 /** Every teacher-authenticated call goes through here. Returns the school context + the teacher's own row. */
+function lamaSyllabusTeacherScope_(plan,teacher) {
+    if (normalizeSchoolClass(plan.classId) !== normalizeSchoolClass(teacher.assignedClass) ||
+        String(plan.subjectId).trim().toLowerCase() !== String(teacher.subject).trim().toLowerCase()) return false;
+    return String(plan.sectionId||'').trim().toLowerCase() ===
+        String(teacher.assignedSection||teacher.section||'').trim().toLowerCase();
+}
 function authorizeTeacher(schoolId, teacherId, apiKey) {
     if (!schoolId || !teacherId || !apiKey) throw new Error('Missing session — please log in again.');
     const registry = getRegistrySheet();
@@ -1824,8 +1830,7 @@ function handleRequest(params) {
             if (typeof params.planId !== 'string' || !params.planId.trim()) throw new Error('Plan ID required.');
             const record = LamaSyllabusSheetStore.read(ctx.ss.getId(), params.schoolId, params.planId);
             if (!record || record.plan.status !== 'published') throw new Error('Published plan not found.');
-            if (normalizeSchoolClass(record.plan.classId) !== normalizeSchoolClass(ctx.teacher.assignedClass) ||
-                String(record.plan.subjectId).trim().toLowerCase() !== String(ctx.teacher.subject).trim().toLowerCase())
+            if (!lamaSyllabusTeacherScope_(record.plan,ctx.teacher))
                 throw new Error('Teacher class or subject scope denied.');
             if (params.operation === 'list') return {status:'success',updates:LamaSyllabusProgressStore.list(ctx.ss.getId(),params.schoolId,params.planId)};
             if (params.operation !== 'save') throw new Error('Unsupported progress operation.');
@@ -1844,7 +1849,8 @@ function handleRequest(params) {
             const plan = LamaSyllabusDraft.create(params.schoolId, params.draft);
             const offered = getSchoolClassOptions(params.schoolId, params.apiKey);
             if (!Array.isArray(offered) || !offered.some(function(entry) {
-                return normalizeSchoolClass(entry.class) === normalizeSchoolClass(plan.classId);
+                return normalizeSchoolClass(entry.class) === normalizeSchoolClass(plan.classId) &&
+                    String(entry.section||'').trim().toLowerCase() === String(plan.sectionId||'').trim().toLowerCase();
             })) throw new Error('Class is not configured for this school.');
             LamaSyllabusSheetStore.initialize(school.obj.sheetId);
             return {status:'success', result:LamaSyllabusSheetStore.create(school.obj.sheetId, plan, true)};

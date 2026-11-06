@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'apps/lamaiqmaster/android/**'
+      - 'apps/lamaiqmaster/question-bank/**'
       - '.github/workflows/lama-iq-test-android.yml'
   push:
     paths:
@@ -28,6 +29,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Validate 5000 question bank drafts before release packaging
+        run: python3 ../question-bank/validate_bank.py
       - name: Validate question rules
         run: gradle :app:testDebugUnitTest --no-daemon
       - name: Compile debug APK

@@ -320,7 +320,34 @@ function showStudentRecord(id){
 }
 function loadAttendanceList(){const day=$('attDate').value;const el=$('attendanceList');$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);el.innerHTML=myStudents.map(s=>{const a=attendance.find(x=>String(x.studentId)===String(s.id)&&x.date===day);const status=a?.status||'';return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span></span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`}).join('')}
 function setAttStatus(btn,status){const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
-async function saveAttendance(){if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');const day=$('attDate').value;if(!day)return message('Choose date');let ok=0,fail=0;for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');if(!student||!btn)continue;const old=attendance.find(x=>String(x.studentId)===String(student.id)&&x.date===day);const record={schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',studentId:student.id,studentName:student.name,date:day,status:btn.dataset.status,teacherId:me.teacherId||me.id};try{if(old)await LamaAPI.update('attendance',old.id,record);else await LamaAPI.add('attendance',record);ok++}catch(e){fail++;console.error(e)}}try{await refresh();message(`Attendance saved: ${ok}. Failed: ${fail}. Dashboard synchronized. Unselected students were not changed.`)}catch(e){message(`Attendance saved: ${ok}. Failed: ${fail}. Dashboard refresh failed: ${e.message}. Please refresh to verify totals.`)}}
+async function saveAttendance(){
+ if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');
+ const day=$('attDate').value;if(!day)return message('Choose date');
+ const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
+ if(saveButton?.disabled)return;
+ if(saveButton){saveButton.disabled=true;saveButton.dataset.previousText=saveButton.textContent;saveButton.textContent='Saving attendance…'}
+ let ok=0,fail=0;const errors=[];
+ try{
+  for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){
+   const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');
+   if(!student||!btn)continue;
+   const old=attendance.find(x=>String(x.studentId)===String(student.id)&&String(x.date).slice(0,10)===day);
+   const status=btn.dataset.status;
+   try{
+    if(old){
+     // Existing records must only receive editable fields; the server rejects reassignment keys.
+     await LamaAPI.update('attendance',old.id,{status,date:day,teacherId:me.teacherId||me.id});
+    }else{
+     await LamaAPI.add('attendance',{schoolId:me.schoolId,class:me.assignedClass,section:me.assignedSection||me.section||'',studentId:student.id,enrlNo:student.enrlNo||student.enrollmentNo||'',studentName:student.name,date:day,status,teacherId:me.teacherId||me.id});
+    }
+    ok++;
+   }catch(e){fail++;errors.push(student.name+': '+(e.message||'Unknown error'));console.error('Attendance save failed',e)}
+  }
+  try{await refresh()}catch(e){errors.push('Reload failed: '+e.message)}
+  const detail=errors.length?'\n'+errors.slice(0,3).join('\n')+(errors.length>3?'\nAnd '+(errors.length-3)+' more errors.':''):'';
+  message('Attendance saved: '+ok+'. Failed: '+fail+'.'+(fail?' Review errors below.':'')+detail);
+ }finally{if(saveButton){saveButton.disabled=false;saveButton.textContent=saveButton.dataset.previousText||'Save'}}
+}
 function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
 function loadHomework(){let items=homework.filter(h=>mine(h));const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':'Draft'}</p></div><button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button></div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
 async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');if(me.subject&&norm(subject)!==norm(me.subject))return message('Use your assigned subject');try{await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();message('Published for your class')}catch(e){message('Save failed: '+e.message)}}

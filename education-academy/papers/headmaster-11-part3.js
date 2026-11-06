@@ -48,16 +48,16 @@ window.LAMA_PPSC_HM11_3=[
  {
   "id": "HM11-054",
   "subject": "Probability",
-  "topic": "Exactly two successes",
-  "q": "Three independent fair coin tosses are made. What is the probability of obtaining exactly two heads?",
+  "topic": "Combinations without replacement",
+  "q": "A committee has four science teachers and five arts teachers. If three members are selected uniformly at random without replacement, what is the probability all three are science teachers?",
   "options": [
-   "1/8",
-   "1/4",
-   "1/2",
-   "3/8"
+   "1/9",
+   "3/9",
+   "4/9",
+   "1/21"
   ],
   "answer": 3,
-  "explanation": "Exactly two heads occur in HHT, HTH and THH, three of the eight equally likely outcomes, giving 3/8.",
+  "explanation": "There are C(9,3)=84 possible groups of three and C(4,3)=4 all-science groups. The probability is 4/84 = 1/21.",
   "difficulty": "foundation"
  },
  {

@@ -105,3 +105,11 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Math Challenge now tracks correct/attempted puzzles in the current app session, locks an answered puzzle to prevent repeated scoring, and reveals the correct result on an incorrect attempt. Next puzzle is enabled only after an attempt.
 - Code committed on the development branch. GitHub CI and real-device verification for this commit are pending; no APK or release readiness claimed.
 - Still pending: age-appropriate editorial content, child UX review, background music, accessibility, robust parental controls, release signing, privacy review and Play Console requirements.
+
+## 6 November 2026 — SDK, content, navigation and launcher icon
+- Upgraded compileSdk/targetSdk to API 36 (Google Play minimum for new mobile apps as of Aug 2026); AGP 8.9.2 and CI Gradle 8.11.1. CI installs Android 36 SDK. This toolchain change has NOT been verified by a green run yet.
+- Added 40 grade-scaled math practice topics with 10 questions each (400 generated, deterministic offline arithmetic/comparison questions). Questions must undergo educator review; early-grade multiplication and subtraction topics are not always age-appropriate.
+- Added About, Help and an in-app Privacy Policy screen. Privacy wording covers the CURRENT offline test build only. A public hosted policy and child-safety/data-safety review are required for Google Play.
+- Added a simplified native vector llama launcher icon in drawable and manifest. A separate illustrated logo concept was generated in chat; it is NOT the same asset as the vector icon committed to Android source.
+- Added MathPracticeBankTest. No Vercel deployment, production merge, or publishing.
+- Still pending: rich original graded content for other subjects, audio/music licensed for redistribution, accessibility, Families policy checks, final signing and new CI/device verification.

@@ -82,6 +82,9 @@ assert.equal(registry.activePaper().id,'HM-2026-P12','Senior Headmaster also see
 context.location.search='?job=teaching:0&paper=HM-2026-P13';
 assert.equal(registry.activePaper().id,'HM-2026-P13');
 assert.equal(registry.activePaper().questions.length,100);
+context.location.search='?job=teaching:0&paper=HM-2026-P14';
+assert.equal(registry.activePaper().id,'HM-2026-P14','Paper 14 must have a separate direct link');
+assert.equal(registry.activePaper().questions.length,100);
 context.location.search='?job=information-officer&paper=DEMO-01';
 assert.equal(registry.activePaper(),null,'cross-job paper link must be rejected');
 const base=context.window.LAMA_PPSC_PAPERS[0];

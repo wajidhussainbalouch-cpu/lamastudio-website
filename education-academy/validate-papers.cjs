@@ -5,7 +5,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const src=fs.readFileSync(path.join(__dirname,'papers.js'),'utf8');
 const sandbox={window:{}};vm.runInNewContext(src,sandbox,{timeout:2000});
-for(const name of ['headmaster-02-part1.js','headmaster-02-part2.js','headmaster-02-part3.js','headmaster-02-part4.js','headmaster-02-register.js','headmaster-03-part1.js','headmaster-03-part2.js','headmaster-03-part3.js','headmaster-03-part4.js','headmaster-03-register.js','headmaster-04-part1.js','headmaster-04-part2.js','headmaster-04-part3.js','headmaster-04-part4.js','headmaster-04-register.js','headmaster-05-part1.js','headmaster-05-part2.js','headmaster-05-part3.js','headmaster-05-part4.js','headmaster-05-register.js']){
+for(const name of ['headmaster-02-part1.js','headmaster-02-part2.js','headmaster-02-part3.js','headmaster-02-part4.js','headmaster-02-register.js','headmaster-03-part1.js','headmaster-03-part2.js','headmaster-03-part3.js','headmaster-03-part4.js','headmaster-03-register.js','headmaster-04-part1.js','headmaster-04-part2.js','headmaster-04-part3.js','headmaster-04-part4.js','headmaster-04-register.js','headmaster-05-part1.js','headmaster-05-part2.js','headmaster-05-part3.js','headmaster-05-part4.js','headmaster-05-register.js','headmaster-06-part1.js','headmaster-06-part2.js','headmaster-06-part3.js','headmaster-06-part4.js','headmaster-06-register.js']){
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'papers',name),'utf8'),sandbox,{timeout:2000,filename:name});
 }
 const papers=sandbox.window.LAMA_PPSC_PAPERS;

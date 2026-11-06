@@ -1,3 +1,5 @@
+> **Superseding status (6 Nov 2026):** The provider-neutral draft below is historical; an isolated Supabase project with candidate tables, Admin membership, and a Super Admin job catalog now exists. Read ../ADMIN_JOB_MANAGEMENT.md and EMAIL_SETUP.md before making changes. Payment and premium entitlement are not active. Do not run this old schema.sql as if it were the current production migration.
+
 # Academy secure backend — implementation contract
 
 **Status: schema and API design only. NO backend deployed, NO signup or payment accepted.**

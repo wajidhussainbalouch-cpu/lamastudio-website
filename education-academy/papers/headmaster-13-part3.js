@@ -197,17 +197,17 @@ window.LAMA_PPSC_HM13_3=[
  },
  {
   "id": "HM13-064",
-  "subject": "Probability",
-  "topic": "Expected count in repeated trials",
-  "q": "A candidate independently answers 12 difficult true-false questions by guessing. What is the expected number of wrong answers?",
+  "subject": "Combinatorics",
+  "topic": "Permutations without repetition",
+  "q": "An examination access code uses three different digits selected from 1, 2, 3 and 4, with order mattering and no digit repeated. How many distinct codes are possible?",
   "options": [
-   "3",
-   "4",
-   "6",
-   "9"
+   "12 codes",
+   "24 codes",
+   "36 codes",
+   "64 codes"
   ],
-  "answer": 2,
-  "explanation": "Each guessed true-false item has expected wrong probability 0.5. Across 12 independent items, expected wrong count is 12×0.5=6.",
+  "answer": 1,
+  "explanation": "There are four choices for the first digit, three for the second and two for the third. Multiplying 4×3×2 gives 24 ordered codes.",
   "difficulty": "foundation"
  },
  {
@@ -216,13 +216,13 @@ window.LAMA_PPSC_HM13_3=[
   "topic": "Price elasticity interpretation",
   "q": "A fee rises by 10% and registrations fall by approximately 20%, with other conditions stable. What is the rough price elasticity of demand using percentage changes?",
   "options": [
-   "Approximately −2",
-   "Approximately −0.5",
-   "Approximately +2",
-   "Approximately zero"
+   "An elasticity of about negative two",
+   "An elasticity of about negative one-half",
+   "An elasticity of about positive two",
+   "An elasticity of approximately zero"
   ],
   "answer": 0,
-  "explanation": "Using the simple percentage-change ratio, elasticity≈−20%/10%=−2. This descriptive estimate does not prove fee change caused all the drop.",
+  "explanation": "Dividing the approximate percentage change in registrations (−20%) by the change in fee (+10%) gives a price elasticity around −2 under the simplified model.",
   "difficulty": "advanced"
  },
  {
@@ -276,13 +276,13 @@ window.LAMA_PPSC_HM13_3=[
   "topic": "Algebraic expansion",
   "q": "Which expression is equal to (x+4)(x−4) for all real numbers x?",
   "options": [
-   "x²−16",
-   "x²+16",
-   "2x−16",
-   "x²−8x+16"
+   "x squared minus sixteen",
+   "x squared plus sixteen",
+   "twice x minus sixteen",
+   "x squared minus eight x plus sixteen"
   ],
   "answer": 0,
-  "explanation": "The product of conjugates follows the difference-of-squares identity: (x+a)(x−a)=x²−a², giving x²−16.",
+  "explanation": "By the difference-of-squares identity, (x+4)(x−4)=x²−4²=x²−16, or x squared minus sixteen, for all real x.",
   "difficulty": "foundation"
  },
  {

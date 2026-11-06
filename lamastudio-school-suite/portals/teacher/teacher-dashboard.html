@@ -144,8 +144,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
-function schoolMatch(r){return !!me.schoolId && norm(r.schoolId)===norm(me.schoolId)}
-function classMatch(r){return norm(r.class||r.assignedClass)===norm(me.assignedClass)&&(!me.section||norm(r.section)===norm(me.section))}
+function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
+function classMatch(r){return norm(r.class||r.className||r.grade||r.assignedClass)===norm(me.assignedClass)&&(!me.section&&!me.assignedSection||norm(r.section||'')===norm(me.section||me.assignedSection))}
 function scope(r){return schoolMatch(r)&&classMatch(r)}
 function myStudent(id){return myStudents.find(s=>String(s.id)===String(id))}
 function mine(r){return norm(r.teacherId)===norm(me.teacherId||me.id)}

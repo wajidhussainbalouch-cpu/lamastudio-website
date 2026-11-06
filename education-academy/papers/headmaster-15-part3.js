@@ -3,16 +3,16 @@ window.LAMA_PPSC_HM15_3=[
  {
   "id": "HM15-051",
   "subject": "Mathematics",
-  "topic": "Remainder and divisibility",
-  "q": "A school packs 218 pencils into bundles of 9. How many full bundles can be made, and how many pencils remain?",
+  "topic": "Greatest integer under fixed area",
+  "q": "A school has a 72-metre fence to enclose a square animal-care enclosure. If all four sides use equal lengths, what is the enclosed area?",
   "options": [
-   "23 bundles and 8 remaining",
-   "24 bundles and 2 remaining",
-   "25 bundles and 3 remaining",
-   "22 bundles and 20 remaining"
+   "324 m²",
+   "72 m²",
+   "144 m²",
+   "288 m²"
   ],
-  "answer": 1,
-  "explanation": "Dividing 218 by 9 gives 24 full bundles because 9×24=216, leaving two pencils outside complete bundles.",
+  "answer": 0,
+  "explanation": "Each side of the square uses 72/4=18 metres. Its area is 18²=324 square metres, with no allowance needed for a gate.",
   "difficulty": "foundation"
  },
  {
@@ -197,17 +197,17 @@ window.LAMA_PPSC_HM15_3=[
  },
  {
   "id": "HM15-064",
-  "subject": "Financial Numeracy",
-  "topic": "Present value of delayed fee",
-  "q": "A school will receive Rs 121,000 two years from now. At a 10% annual discount rate compounded yearly, what is its present value?",
+  "subject": "Quantitative Reasoning",
+  "topic": "Annual sinking fund target",
+  "q": "A school plans to replace playground equipment costing Rs 96,000 in four years and wants to save equal amounts each year without interest. How much should it set aside annually?",
   "options": [
-   "Rs 90,000",
-   "Rs 110,000",
-   "Rs 100,000",
-   "Rs 121,000"
+   "Rs 18,000",
+   "Rs 21,000",
+   "Rs 24,000",
+   "Rs 32,000"
   ],
   "answer": 2,
-  "explanation": "Present value is 121,000 divided by 1.1²=1.21. The result equals Rs 100,000 under the stated annual rate.",
+  "explanation": "Without interest or inflation, equal annual contributions total the goal. Dividing Rs 96,000 by four years gives Rs 24,000 per year.",
   "difficulty": "intermediate"
  },
  {

@@ -20,8 +20,8 @@ object MathPracticeBank {
     fun questions(grade: String, topic: Int): List<Question> {
         require(grade in grades && topic in 0..3)
         val scale = difficulty(grade)
-        return (1..10).map { index ->
-            val first = 1 + (scale * index) / 10
+        return (1..20).map { index ->
+            val first = 1 + (scale * index) / 20
             val second = 1 + (index * 3) % maxOf(2, scale)
             val result = when (topic) {
                 0 -> first + second
@@ -49,7 +49,7 @@ object MathPracticeBank {
     val lessons: List<Lesson> = grades.flatMap { grade ->
         titles.mapIndexed { topic, title ->
             Lesson("math-bank-${grade.replace(" ", "-")}-$topic", grade, "Mathematics", title,
-                "Solve ten number challenges to practice your skills.", questions(grade, topic))
+                "Solve twenty number challenges to practice your skills.", questions(grade, topic))
         }
     }
 }

@@ -280,3 +280,10 @@ Validation and release gate:
 - Added mocked Apps Script regression tests for tenant isolation, missing-sheet read behavior, malformed completion dates and cross-teacher overwrite rejection. Registered in syllabus CI.
 - Malformed completion dates now return a controlled validation error.
 - Section-aware reverse teacher reassignment with administrator audit remains NOT implemented. Full workflow tests, GitHub Actions success and production Apps Script deployment are NOT verified. No live release has been performed.
+
+## Audited teacher progress reassignment — 6 Nov 2026
+- Added POST-only `syllabusReassignProgress` for verified school administrators with Examination entitlement. The backend verifies both teachers are active members of the school and checks the destination teacher's class, subject and section against the published plan.
+- Added `LamaSyllabusProgressStore.reassign` with script lock, duplicate lesson detection, source ownership checks and transfer-intent audit in `_LAMA_SYLLABUS_TRANSFERS`. Existing completion status and dates are preserved; only teacher ownership and update timestamp change.
+- Added admin transfer form and `LamaAPI.reassignSyllabusProgress`, with a confirmation prompt and mandatory reason. Added `test-syllabus-reassign.js` and CI step.
+- **Important limitation:** Google Sheets cannot atomically commit audit and multiple progress rows. The transfer logs intent before updates, so an interruption can leave a partially transferred set. A recovery/reconciliation workflow and failure-injection tests are mandatory before production release.
+- Live Apps Script deployment, GitHub Actions results, real teacher registry verification and complete end-to-end tests remain unverified. Do not release to live School Suite yet.

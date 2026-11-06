@@ -257,3 +257,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added 28 new page-grounded draft questions and activities to `data/class1-islamiat-batch1-source-verified-starter.json`; now **72 total**, commit `f4ed26ca4ff232d533cd8ad03976b611f1b8457f`. Some are variations of the same core concept, not independent facts.
 - Questions are **not approved or online-ready**. Arabic transcription, teacher rubrics, age suitability, and correctness need editorial review. The first 4 records and later records have slightly different fields; normalize schema before importing.
 - Next: inspect further textbook pages and create meaningful, varied questions. 72/500 batch 1; 72/1500 target. No deployment.
+
+
+## User-directed subject switch — 2026-11-06
+- User explicitly instructed: **skip Class 1 Islamiat and move to the next subject**. Preserve its 72 existing unapproved drafts; do not generate more Islamiat questions until requested.
+- Next subject is **Class 1 Tajweedi Qaida**. Existing intake: `data/tajweedi-qaida-intake.json`, source `tajwedi qaida.pdf`, Drive ID `1ohWq-zOojLu0vPut9zBqUUqoiyY1gFGF`, 38 pages, Arabic/Urdu. Successfully retrieved source PDF from Drive on this turn.
+- Source metadata reports only PDF page 3 previously visually inspected. No new page inspection or question generation has yet been completed. Count remains 0 drafts for Tajweedi Qaida.
+- Develop lesson-by-lesson from actual pages. Assess letter and harakat identification with verified diacritics; recitation, articulation, and tajweed require teacher assessment. Preserve `approved=false`, `onlineReady=false` for drafts. Do not invent textbook references, inflate counts through repetition, or deploy.

@@ -51,7 +51,7 @@
   const filtered=rows.filter(r=>r.job_id===selected);
   const approved=filtered.filter(r=>r.review_status==='approved').length;
   const inReview=filtered.filter(r=>r.review_status==='in_review').length;
-  $('qStats').textContent=filtered.length+' loaded · '+approved+' academically reviewed · '+inReview+' in review · '+(filtered.length-approved-inReview)+' draft (latest 200 overall)';
+  $('qStats').textContent=filtered.length+' loaded · '+approved+' academically reviewed · '+inReview+' in review · '+(filtered.length-approved-inReview)+' draft (all authorized records loaded)';
   if(!visible.length){root.append(node('p','No questions matching this filter. Add a draft using the form above.'));return}
   for(const r of visible){
    const card=node('article',undefined,'job-item');
@@ -113,13 +113,14 @@
  $('qExport')?.addEventListener('click',()=>{
   if(!authorized){message('Sign in before exporting questions.');return}
   if(!rows.length){message('No questions currently loaded.');return}
+  if(!confirm('Export '+rows.length+' confidential questions with their answer keys? Keep the file securely.'))return;
   const backup={format:'lama-ppsc-questions-v1',version:1,exported_at:new Date().toISOString(),
-   partial:rows.length===200,questions:rows.map(q=>Object.fromEntries(exportedFields.map(k=>[k,q[k]])))};
+   partial:false,questions:rows.map(q=>Object.fromEntries(exportedFields.map(k=>[k,q[k]])))};
   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='lama-ppsc-private-questions-'+Date.now()+'.json';document.body.append(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  message('Downloaded '+rows.length+' privately managed questions. Keep the file secure; answers are included.'+(backup.partial?' Only the latest 200 loaded records were exported.':''));
+  message('Downloaded '+rows.length+' privately managed questions. Keep the file secure; answers are included.'+' The export contains all currently loaded authorized records.');
  });
  $('qImportFile')?.addEventListener('change',async e=>{
   const input=e.target,file=input.files&&input.files[0];input.value='';

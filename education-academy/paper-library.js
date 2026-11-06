@@ -16,6 +16,11 @@
   return assigned.some(value=>jobId(value)===jobId(id));
  });
  const find=id=>list().find(paper=>paper.id===id)||null;
+ function coverage(id){
+  const counts=new Map();
+  for(const paper of forJob(id))for(const q of paper.questions){const subject=String(q.subject||'General').trim()||'General';counts.set(subject,(counts.get(subject)||0)+1)}
+  return [...counts.entries()].map(([subject,count])=>({subject,count})).sort((a,b)=>b.count-a.count||a.subject.localeCompare(b.subject));
+ }
  function selectedJob(){
   const params=new URLSearchParams(location.search);
   return jobs()?.resolve(params.get('job'))||jobs()?.resolve('teaching:0')||variants()[0]||null;
@@ -40,13 +45,13 @@
   if(latest||attempt&&attempt.submitted)return {state:'completed',last:latest,attempts:rows.length};
   return {state:'not-started',last:null,attempts:0};
  }
- const api=Object.freeze({list,forJob,find,selectedJob,activePaper,history,progress});
+ const api=Object.freeze({list,forJob,find,coverage,selectedJob,activePaper,history,progress});
  window.LamaPpscPaperLibrary=api;
  if(typeof document==='undefined')return;
  const select=document.getElementById('paperJob'),filter=document.getElementById('paperStateFilter');
  const root=document.getElementById('jobPaperList'),summary=document.getElementById('paperSummary');
- const stats=document.getElementById('paperStats'),helper=document.getElementById('paperHelp');
- if(!select||!filter||!root||!summary||!stats||!helper)return;
+ const stats=document.getElementById('paperStats'),helper=document.getElementById('paperHelp'),coverageArea=document.getElementById('paperCoverage');
+ if(!select||!filter||!root||!summary||!stats||!helper||!coverageArea)return;
  const element=(tag,text,css)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=String(text);if(css)el.className=css;return el};
  const urlFor=(view,selected,paper)=>{
   const url=new URL('./index.html',location.href);
@@ -75,9 +80,12 @@
  function render(){
   const job=jobs()?.resolve(selected),available=job?forJob(job.id):[];
   const details=available.map(p=>({paper:p,state:progress(p)}));
-  const completed=details.filter(p=>p.state.state==='completed').length;
+  const completed=details.filter(p=>p.state.state==='completed'||p.state.last).length;
   const started=details.filter(p=>['in-progress','expired'].includes(p.state.state)).length;
-  stats.replaceChildren();
+  stats.replaceChildren();coverageArea.replaceChildren();
+  const subjects=job?coverage(job.id):[];
+  if(subjects.length)for(const entry of subjects)coverageArea.append(element('span',entry.subject+' · '+entry.count+' MCQs','paper-topic-chip'));
+  else coverageArea.append(element('p','No published questions for this job yet. Preparation topics are available below.','muted'));
   for(const [value,label] of [[available.length,'Published papers'],[completed,'Completed'],[started,'In progress'],[available.length-completed-started,'Not started']]){
    const cell=element('div',undefined,'paper-stat');cell.append(element('strong',value),element('span',label));stats.append(cell);
   }
@@ -97,7 +105,7 @@
     card.append(element('p','Last result: '+state.last.correct+'/'+state.last.total+' ('+Math.round(state.last.correct/state.last.total*100)+'%) · '+state.attempts+' completed attempt(s)','paper-score'));
    }else if(state.state==='expired')card.append(element('p','Your previous timer has expired. Open the paper to finalise the attempt.','paper-score'));
    const actions=element('div',undefined,'library-actions');
-   const primary=state.state==='completed'?'Review completed paper':state.state==='in-progress'?'Resume examination':state.state==='expired'?'Finalise timed paper':'Open Paper '+(i+1);
+   const primary=state.state==='completed'?'Review completed paper':state.state==='in-progress'?'Resume examination':state.state==='expired'?'Finalise timed paper':'Open Paper '+(available.indexOf(paper)+1);
    actions.append(makeLink(primary,urlFor('paper',job,paper),false));
    actions.append(makeLink('My scores',urlFor('performance',job),true));
    card.append(actions);root.append(card);

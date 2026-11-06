@@ -271,3 +271,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Begin **Class 2 Urdu**. Existing intake `data/class2-urdu-intake.json`, book `urdu 2.pdf`, Drive ID `1cWaeH4aUC0xJi2kbYkmrENXmU-NnBx6L`, 146 pages. Retrieved source successfully via Drive. Intake notes only PDF page 3 inspected, with 2020 national curriculum alignment; **lesson pages not yet visually verified**.
 - Class 2 Urdu target: 1,500 questions in three 500-question batches. **0 questions generated for Class 2 Urdu at this checkpoint.** Source retrieval does not mean question authoring is complete.
 - Next: visually inspect actual Urdu lesson pages and contents; map source pages; author and QA original questions. Keep drafts unapproved and offline. No Vercel deployment.
+
+
+## Class 2 Urdu — first 30 supplemental drafts (2026-11-06)
+- Source `urdu 2.pdf`, Drive ID `1cWaeH4aUC0xJi2kbYkmrENXmU-NnBx6L` (146 pages). Visually reviewed PDF contents/learning-outcomes pages 5–8; lesson prose itself has not been verified.
+- Added `data/class2-urdu-supplemental-starter-30-draft.json` with 30 original literacy-practice drafts, commit `bec94fa73de84dbf519e9cec7c9c3adbdd5979d2`. Skills: noun/verb, singular/plural, masculine/feminine, antonyms, spelling, sentence writing, comprehension. **These are supplemental, not lesson/page-grounded questions.**
+- 30/500 initial batch; 30/1500 target. All `approved=false`, `onlineReady=false`; free-text responses require teacher review. Check editorial quality and ambiguous items before approval.
+- Next: inspect actual first lessons and construct chapter-grounded exercises; keep accurate source PDF page mapping. No deployment.

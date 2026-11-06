@@ -47,7 +47,24 @@ visual.innerHTML='<div class="score-metrics"><div class="metric"><strong>'+accur
 
 root.innerHTML='<h3>Paper-by-paper scores</h3><ol>'+all.slice(0,30).map(r=>'<li><strong>'+esc(r.title)+'</strong> — '+new Date(r.submittedAt).toLocaleDateString()+' — '+r.correct+'/'+r.total+' correct ('+Math.round(r.correct/r.total*100)+'%), '+r.wrong+' wrong, '+r.blank+' unanswered</li>').join('')+'</ol><h3>Areas for improvement</h3><p class="muted">Subjects are ranked by accuracy. Results based on very few questions are preliminary.</p><ul>'+weak.slice(0,8).map(([name,t])=>'<li><strong>'+esc(name)+'</strong>: '+t.correct+'/'+t.total+' ('+Math.round(t.correct/t.total*100)+'%). Review concepts and practise new questions.</li>').join('')+'</ul><h3>Recommended revision plan</h3><p class="muted">Personal practice guidance, not an official PPSC syllabus or prediction.</p><ol>'+recommended+'</ol><p class="muted">Scores are stored on this device. Sign-in cloud synchronization is still being tested.</p>'}
 
-function renderResult(){if(!attempt.submitted)return;let correct=0;const details=paper.questions.map((q,i)=>{const a=attempt.answers[q.id];if(a===q.answer)correct++;return '<li>Q'+(i+1)+': '+(a===q.answer?'Correct':'Incorrect or unanswered')+' — '+escapeHTML(q.options[q.answer])+'. '+escapeHTML(q.explanation)+'</li>'}).join('');$('examResult').innerHTML='<h3>Score: '+correct+'/'+paper.questions.length+' ('+Math.round(correct/paper.questions.length*100)+'%)</h3><details><summary>Review explanations</summary><ol>'+details+'</ol></details>'}
+function renderResult(){
+ if(!attempt.submitted)return;
+ let correct=0;
+ const details=paper.questions.map((q,i)=>{
+  const a=attempt.answers[q.id];
+  if(a===q.answer)correct++;
+  const chosen=Number.isInteger(a)&&a>=0&&a<4?String.fromCharCode(65+a)+'. '+q.options[a]:'Not answered';
+  const right=String.fromCharCode(65+q.answer)+'. '+q.options[q.answer];
+  return '<li><strong>Q'+(i+1)+': '+(a===q.answer?'Correct':'Incorrect or unanswered')+'</strong> — '+escapeHTML(q.q)+
+   '<p>Your answer: '+escapeHTML(chosen)+'</p><p><strong>Correct answer:</strong> '+escapeHTML(right)+'</p>'+
+   '<p>Explanation: '+escapeHTML(q.explanation)+'</p></li>';
+ }).join('');
+ const keyUrl='./answer-key.html?paper='+encodeURIComponent(paper.id);
+ const score='<h3>Score: '+correct+'/'+paper.questions.length+' ('+Math.round(correct/paper.questions.length*100)+'%)</h3>';
+ $('examResult').innerHTML=score+'<p>Answers and explanations are available after submission. This is original LAMA Academy practice, not an official PPSC key.</p>'+
+ '<p><a class="btn" href="'+keyUrl+'">View / Print Answer Key (PDF)</a></p>'+
+ '<details><summary>Review all '+paper.questions.length+' answers and explanations here</summary><ol>'+details+'</ol></details>';
+}
 function remaining(){return attempt.startedAt?Math.max(0,Math.ceil((paper.minutes*60000-(Date.now()-attempt.startedAt))/1000)):paper.minutes*60}
 function formatDuration(seconds){const n=Math.max(0,Math.floor(seconds));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
 function elapsedSeconds(){return attempt.startedAt?Math.max(0,Math.min(paper.minutes*60,Math.floor(((attempt.submitted?attempt.submittedAt:Date.now())-attempt.startedAt)/1000))):0}

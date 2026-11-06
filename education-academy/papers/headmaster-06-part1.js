@@ -36,12 +36,12 @@ window.LAMA_PPSC_HM06_1=[
   "topic": "Principle of proportionality",
   "q": "A student damages a classroom poster accidentally while moving a desk. Which administrative response most clearly follows proportionality?",
   "options": [
-   "Determine the circumstances, offer a suitable restorative response and apply consistent school rules",
-   "Expel the student immediately without considering intent or damage",
    "Publish the student's personal details online",
+   "Expel the student immediately without considering intent or damage",
+   "Determine the circumstances, offer a suitable restorative response and apply consistent school rules",
    "Punish the entire grade regardless of involvement"
   ],
-  "answer": 0,
+  "answer": 2,
   "explanation": "Proportional decisions reflect seriousness, intent, prior context and relevant policy. Repairing harm and learning from an accident are more defensible than extreme or collective penalties.",
   "difficulty": "intermediate"
  },
@@ -96,12 +96,12 @@ window.LAMA_PPSC_HM06_1=[
   "topic": "Incident command",
   "q": "A gas smell is reported near a school kitchen during lunch preparation. Which immediate response is most appropriate for school management?",
   "options": [
-   "Move people away, avoid ignition sources and contact the appropriate emergency or utility service using the safety plan",
-   "Switch on every electric fan and light to investigate quickly",
    "Ask pupils to identify the smell by entering the kitchen",
+   "Switch on every electric fan and light to investigate quickly",
+   "Move people away, avoid ignition sources and contact the appropriate emergency or utility service using the safety plan",
    "Keep the kitchen open until a written inspection arrives"
   ],
-  "answer": 0,
+  "answer": 2,
   "explanation": "Suspected gas leaks require avoiding ignition and protecting occupants. Trained emergency responders should assess the hazard before normal operations resume.",
   "difficulty": "advanced"
  },
@@ -187,11 +187,11 @@ window.LAMA_PPSC_HM06_1=[
   "q": "A teacher covers many exam duties because their timetable has fewer teaching periods, yet they also manage extensive individual learning plans. What is the fairest workload analysis?",
   "options": [
    "Count only scheduled classroom periods",
-   "Include direct teaching, supervision, administrative responsibilities and the intensity of specialized tasks",
+   "Assume staff with the same title have identical available time",
    "Ignore individual learning-plan preparation because it happens outside class",
-   "Assume staff with the same title have identical available time"
+   "Include direct teaching, supervision, administrative responsibilities and the intensity of specialized tasks"
   ],
-  "answer": 1,
+  "answer": 3,
   "explanation": "Fair allocation accounts for total responsibilities and task intensity, not just a single visible measure such as teaching periods or duty count.",
   "difficulty": "intermediate"
  },
@@ -247,11 +247,11 @@ window.LAMA_PPSC_HM06_1=[
   "q": "A construction estimate relies on steel prices that may rise by 20 percent before purchase. What does sensitivity analysis ask?",
   "options": [
    "Whether every building has the same architecture",
-   "How the planned cost and feasibility change under plausible alternative steel prices",
+   "How to conceal cost uncertainty from the school board",
    "Whether teachers prefer steel furniture",
-   "How to conceal cost uncertainty from the school board"
+   "How the planned cost and feasibility change under plausible alternative steel prices"
   ],
-  "answer": 1,
+  "answer": 3,
   "explanation": "Sensitivity analysis varies uncertain assumptions and shows their effect on budgets or decisions. It helps leaders identify where contingency or redesign may be necessary.",
   "difficulty": "advanced"
  },

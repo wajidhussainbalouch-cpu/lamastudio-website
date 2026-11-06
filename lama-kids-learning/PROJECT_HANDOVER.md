@@ -161,3 +161,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Each passage is shown in the lesson explanation, with questions about explicit details and, in higher grades, interpretation and evidence. Added to LearningContent.allLessons.
 - Added ReadingComprehensionBankTest for grade coverage, question counts and answer structure. Latest Android build and unit tests remain unverified; editorial/reading-level review still required, especially Nursery/KG where adult reading support may be needed.
 - No Vercel deployment, production merge or Google Play publication.
+
+## 6 November 2026 — Digital skills expansion
+- Added DigitalSkillsBank.kt with 100 distinct, manually specified computer/digital literacy concept prompts: ten per grade across Nursery, KG, Classes 1–8, divided into two five-question lessons per grade.
+- Topics progress from basic devices and keyboard skills through documents, networks, coding, online safety, databases, and introductory AI concepts. Each has three choices and an explanation. This is in addition to the existing 100-question structured program per grade.
+- Added DigitalSkillsBankTest and connected lessons to LearningContent.allLessons. Tests and Android build have not yet been confirmed green; grade suitability and educational proofreading required.
+- No Vercel deployment, production merge or Play Store publication.

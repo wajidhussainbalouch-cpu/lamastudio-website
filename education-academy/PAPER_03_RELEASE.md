@@ -1,5 +1,8 @@
 # LAMA PPSC Academy — Headmaster / Headmistress Paper 3
 
+**Private-bank usability fix:** With 230 stored records, the Super Admin editor formerly loaded only the newest 200. `auth-supabase.js` now requests successive RLS-protected pages of 250, retaining all authorized rows up to 5,000 (and reporting an error instead of silently truncating beyond that limit). The editor's search, review and explicit private JSON export can therefore reach earlier items. Private answer-key export requires user confirmation. For larger banks, replace whole-bank loading with server-side search and cursor pagination.
+
+
 **Batch completed:** 6 November 2026  
 **Paper ID:** `HM-2026-P03`  
 **Status:** 100 new original FREE educational-practice MCQs, automated quality checks passed; academic subject-matter review pending. It is NOT an official PPSC examination and is not represented as a verified case-specific syllabus.

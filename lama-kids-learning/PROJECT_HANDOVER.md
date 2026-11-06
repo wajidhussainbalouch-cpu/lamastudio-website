@@ -125,3 +125,10 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - MathPracticeBank currently provides 800 deterministic questions across all ten grades. Previous starter and supplemental content remain available.
 - Added GradeQuestionBankTest for lesson coverage and answer validation. Changes committed to development branch only. Android CI and device validation pending.
 - Important educational limitation: these are age-tiered introductory questions, not complete grade-by-grade syllabuses. Content requires editorial review, including Urdu language accuracy, difficulty, curriculum mapping and repeated questions across grades. No publication or Vercel deployment.
+
+## 6 November 2026 — Class-specific question bank
+- Added `ClassSpecificBank.kt`: 60 offline lessons (2 per class per non-Math subject) with 180 authored class-specific vocabulary/concept questions, six per class and subject for Nursery, KG, Classes 1–8.
+- Each class uses its own six-term set in English, Urdu and Science, rather than reusing an entire age-tier question list. Some concepts may overlap across subjects and some previous banks still repeat by tier.
+- Added `ClassSpecificBankTest.kt` to verify class/subject coverage, prompt uniqueness within each class/subject, answer indices, explanations and unique lesson IDs. Tests are written but not confirmed executed.
+- All new lessons are connected to LearningContent.allLessons and therefore topic menus and saved star totals.
+- LIMITATIONS: These are short vocabulary/definition drills, not complete textbook chapters. More question formats, original age-appropriate lessons, teacher review, accessibility, CI and device QA are still required. No deployment, production merge or publication.

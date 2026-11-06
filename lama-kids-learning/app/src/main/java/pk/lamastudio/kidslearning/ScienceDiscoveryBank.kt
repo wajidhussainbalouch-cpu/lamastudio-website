@@ -1,0 +1,35 @@
+package pk.lamastudio.kidslearning
+
+/** 100 grade-specific science concept questions, ten per grade, entirely offline. */
+object ScienceDiscoveryBank {
+ private val entries = listOf(
+  listOf("Which body part helps us hear?" to "Ears","Which body part helps us smell?" to "Nose","What do we use to see colors?" to "Eyes","Which animal lives in water and has fins?" to "Fish","What do plants grow from?" to "Seeds","Which animal has feathers?" to "Bird","What gives us daylight?" to "Sun","What falls from clouds during rain?" to "Water","What do we call very cold frozen water?" to "Ice","Which body part helps us walk?" to "Legs"),
+  listOf("Which sense uses the tongue?" to "Taste","What do we call a young frog?" to "Tadpole","Which plant part grows underground?" to "Roots","What do leaves usually need for making food?" to "Sunlight","Which animal changes from a caterpillar?" to "Butterfly","Which weather condition brings falling water?" to "Rain","Which material can a magnet attract?" to "Iron","What do we call moving air?" to "Wind","Which sense uses our skin?" to "Touch","Which part of a plant holds leaves up?" to "Stem"),
+  listOf("What is the main source of energy for Earth?" to "Sun","Which organ pumps blood?" to "Heart","What gas do people breathe in to survive?" to "Oxygen","What do roots absorb from soil?" to "Water","Which state of matter keeps its own shape?" to "Solid","What is water vapor?" to "Gas","Which part of a flower often attracts pollinators?" to "Petals","What is the process of ice becoming water?" to "Melting","Which force pulls objects toward Earth?" to "Gravity","Which sense detects sound?" to "Hearing"),
+  listOf("What do we call water turning into vapor?" to "Evaporation","What do we call vapor turning into liquid?" to "Condensation","Which body system includes the lungs?" to "Respiratory system","What do herbivores mainly eat?" to "Plants","Which material usually conducts electricity well?" to "Copper","What do we call a path electricity flows through?" to "Circuit","What does a thermometer measure?" to "Temperature","Which force opposes sliding?" to "Friction","What is a habitat?" to "Natural home of an organism","Which plant part makes most food?" to "Leaves"),
+  listOf("What process lets plants make sugars using light?" to "Photosynthesis","What is an organism that eats both plants and animals?" to "Omnivore","What carries water from roots toward leaves?" to "Xylem","Which organ filters blood to form urine?" to "Kidney","What is the center of an atom called?" to "Nucleus","What do we call a push or pull?" to "Force","Which type of rock forms from cooled magma?" to "Igneous","What is the movement of water through nature called?" to "Water cycle","Which instrument measures air pressure?" to "Barometer","What is an example of renewable energy?" to "Wind energy"),
+  listOf("What are organisms that make their own food called?" to "Producers","What do decomposers break down?" to "Dead organic matter","What is the unit of force?" to "Newton","What is the unit of energy?" to "Joule","Which blood cells transport oxygen?" to "Red blood cells","What is the process of solid becoming gas directly?" to "Sublimation","What is the Earth's outermost solid layer?" to "Crust","What is the function of stomata?" to "Gas exchange","What does an electrical insulator resist?" to "Electric current","What is the main function of a skeleton?" to "Support and protection"),
+  listOf("What organelle releases usable energy from food?" to "Mitochondrion","What is a chemical element?" to "Substance made of one kind of atom","What is the symbol for oxygen?" to "O","What is the SI unit of electric current?" to "Ampere","What is the role of chlorophyll?" to "Absorb light energy","What do we call the transfer of heat by direct contact?" to "Conduction","Which process forms sedimentary rock layers?" to "Deposition and compaction","What does a food web show?" to "Connected feeding relationships","What is the smallest unit of life?" to "Cell","Which gas is most abundant in air?" to "Nitrogen"),
+  listOf("What is a balanced chemical equation based on?" to "Conservation of atoms","Which particle has a negative charge?" to "Electron","What is a gene?" to "Segment of DNA with biological information","What is osmosis?" to "Water movement across a selectively permeable membrane","What is the role of the small intestine?" to "Absorbing nutrients","What is the SI unit of power?" to "Watt","What is the speed of an object per unit time called?" to "Speed","Which type of heat transfer can occur through vacuum?" to "Radiation","What is the main cause of seasons?" to "Earth's axial tilt","What does pH measure?" to "Acidity or alkalinity"),
+  listOf("What is an isotope?" to "Atoms of one element with different neutron numbers","What is acceleration?" to "Rate of change of velocity","What is a catalyst?" to "Substance that speeds a reaction without being consumed","What does natural selection favor?" to "Inherited traits that improve reproductive success","What is the function of ribosomes?" to "Protein synthesis","What is a covalent bond?" to "Sharing of electron pairs","What is the unit of frequency?" to "Hertz","What is refraction?" to "Change in direction of light between media","What is biodiversity?" to "Variety of living organisms","What is a greenhouse gas?" to "Gas that absorbs infrared radiation"),
+  listOf("What does homeostasis mean?" to "Maintaining stable internal conditions","What is transcription in cells?" to "Making RNA from a DNA template","What is a limiting reagent?" to "Reactant used up first","What is momentum?" to "Mass multiplied by velocity","What is the law of conservation of energy?" to "Energy cannot be created or destroyed","What is an ecosystem?" to "Organisms interacting with their environment","What is electrolysis?" to "Using electricity to drive a chemical reaction","What is a mutation?" to "Change in genetic sequence","What is the role of antibodies?" to "Recognizing specific antigens","What is an ecological niche?" to "An organism's role and resource use")
+ )
+ private fun makeQuestions(items: List<Pair<String,String>>): List<Question> = items.mapIndexed { index, item ->
+  val correct = item.second
+  val wrongA = items[(index + 3) % items.size].second
+  val wrongB = items[(index + 6) % items.size].second
+  val options = listOf(correct, wrongA, wrongB)
+  val shift = index % 3
+  val rotated = options.drop(shift) + options.take(shift)
+  Question(item.first, rotated, rotated.indexOf(correct), "Correct: $correct.")
+ }
+ val lessons: List<Lesson> = CurriculumCatalog.grades.flatMapIndexed { index, grade ->
+  val qs = makeQuestions(entries[index])
+  listOf(
+   Lesson("science-discovery-${grade.replace(" ", "-")}-1", grade, "Science",
+    "Science discovery 1", "Explore science concepts and check your understanding.", qs.take(5)),
+   Lesson("science-discovery-${grade.replace(" ", "-")}-2", grade, "Science",
+    "Science discovery 2", "Explore more scientific ideas with explanations.", qs.drop(5))
+  )
+ }
+}

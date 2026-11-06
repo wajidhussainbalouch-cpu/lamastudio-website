@@ -81,8 +81,8 @@ object FinalMilestoneBank {
  private fun math(gradeIndex: Int): List<Question> = (1..3).map { i ->
   val a = (gradeIndex + 2) * (i + 3)
   val b = gradeIndex + i + 1
-  val answer = if (i == 1) a + b else if (i == 2) a - b else a * b
-  val symbol = if (i == 1) "+" else if (i == 2) "−" else "×"
+  val answer = if (i == 1 || gradeIndex < 2) a + b else if (i == 2) a - b else a * b
+  val symbol = if (i == 1 || gradeIndex < 2) "+" else if (i == 2) "−" else "×"
   val options = listOf(answer + 1, answer, answer - 1).map { it.toString() }
   Question("Calculate: $a $symbol $b = ?", options, 1, "$a $symbol $b = $answer.")
  }

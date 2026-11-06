@@ -109,9 +109,17 @@ object TenQuestionSets {
   subjects.mapIndexed { setIndex, subject ->
    val questions = when (subject) {
     "General Knowledge" -> if (setIndex == 8) gk[tier(gradeIndex)] else
-     GeneralKnowledgeExpansion.lessons.filter { it.grade == grade }.flatMap { it.questions }
+     (GeneralKnowledgeExpansion.lessons.filter { it.grade == grade }.flatMap { it.questions } +
+      GeneralKnowledgeExpansion.lessons.flatMap { it.questions })
+      .distinctBy { it.prompt.trim() }.filterNot { candidate ->
+       gk[tier(gradeIndex)].any { it.prompt.trim() == candidate.prompt.trim() }
+      }.take(10)
     "Computer Basics" -> if (setIndex == 10) computer[tier(gradeIndex)] else
-     DigitalSkillsBank.lessons.filter { it.grade == grade }.flatMap { it.questions }
+     (DigitalSkillsBank.lessons.filter { it.grade == grade }.flatMap { it.questions } +
+      DigitalSkillsBank.lessons.flatMap { it.questions })
+      .distinctBy { it.prompt.trim() }.filterNot { candidate ->
+       computer[tier(gradeIndex)].any { it.prompt.trim() == candidate.prompt.trim() }
+      }.take(10)
     else -> from(grade, subject, if (setIndex % 2 == 0) 0 else 10)
    }
    require(questions.size == 10) { "Expected ten questions for $grade / $subject / $setIndex" }

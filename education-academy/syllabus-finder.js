@@ -50,5 +50,5 @@
  button.addEventListener('click',render);
  query.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();render()}});
  render();
- window.addEventListener('lama:jobs-updated',()=>{const current=select.value;catalog.populate(select,{allowEmpty:true,emptyLabel:'Choose a preparation job',value:current});render()});
+ window.addEventListener('lama:jobs-updated',()=>{const current=catalog.fromUrl()?.id||select.value;catalog.populate(select,{allowEmpty:true,emptyLabel:'Choose a preparation job',value:current});render()});
 })();

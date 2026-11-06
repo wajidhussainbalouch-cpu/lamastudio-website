@@ -79,6 +79,9 @@ assert.equal(registry.activePaper().id,'HM-2026-P12','Paper 12 must be selectabl
 assert.equal(registry.activePaper().questions.length,100);
 context.location.search='?job=teaching:1&paper=HM-2026-P12';
 assert.equal(registry.activePaper().id,'HM-2026-P12','Senior Headmaster also sees Paper 12');
+context.location.search='?job=teaching:0&paper=HM-2026-P13';
+assert.equal(registry.activePaper().id,'HM-2026-P13');
+assert.equal(registry.activePaper().questions.length,100);
 context.location.search='?job=information-officer&paper=DEMO-01';
 assert.equal(registry.activePaper(),null,'cross-job paper link must be rejected');
 const base=context.window.LAMA_PPSC_PAPERS[0];

@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest academy practice set — Paper 7 (6 November 2026)
+
+The new **Headmaster / Headmistress Paper 7** (`HM-2026-P07`, `HM07-001`–`HM07-100`) has been added to the public free-practice registry, bringing the school-head preparation library to **seven separate 100-question papers / 700 questions**. Both Headmaster and Senior Headmaster variants select the same `teaching` question library; **other jobs still have no dedicated exam** until their own papers are written and reviewed. Earlier paper records and local attempt keys remain separate.
+
+Paper 7 includes an independent 90-minute attempt, score, print-ready question sheet and post-submission answer key. The PWA offline assets have been bumped to **v62**. Automated source checks for structure, answer distribution, duplicates against the earlier public questions and available private fingerprints found no obvious collisions; however, **independent academic review, full private-bank semantic comparison, GitHub Actions success and deployed Android Chrome testing are not yet confirmed**. These are **original educational-practice questions**, not an officially verified PPSC syllabus or past paper.
+
+Developer release notes: [Paper 7 release and QA boundaries](./PAPER_07_RELEASE.md). The question files are `papers/headmaster-07-part1.js` through `part4.js`; registration is `papers/headmaster-07-register.js`. The workflow runs `test-headmaster-paper7.cjs` alongside the existing checks. **Do not deploy or enable subscriptions without explicit user approval.**
+
+
 ## Latest Academy question bank — Paper 6 (6 November 2026)
 
 **Paper 6 is complete in GitHub source:** `HM-2026-P06`, original MCQs `HM06-001`–`HM06-100`, across teaching, school leadership, educational research, English, ICT and science. It has a **separate 90-minute attempt**, marks, post-submission explanation/answer key and printable PDF review. The earlier five papers remain available with their original history: **6 free Headmaster/Headmistress practice papers / 600 questions**.

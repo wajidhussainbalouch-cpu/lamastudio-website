@@ -119,3 +119,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Expanded MathPracticeBank from 10 to 20 questions per lesson: 40 math lessons now contain 800 deterministic questions. Updated MathPracticeBankTest expected count.
 - English, Urdu and Science still have limited grade-specific content and reuse some questions; DO NOT claim these are complete. New Android CI build and device testing for these commits remain pending.
 - No production merge, Vercel deployment or publishing.
+
+## 6 November 2026 — More questions in every level and category
+- Added GradeQuestionBank with 90 additional topic lessons and 360 instantiated questions across English, Urdu and Science, for all ten grade levels (Nursery, KG, Classes 1–8). Questions are drawn from 108 authored prompts (12 per subject per age tier, three age tiers); the same tier's questions are reused across its grades. Each grade/subject gains three new topics of four questions.
+- MathPracticeBank currently provides 800 deterministic questions across all ten grades. Previous starter and supplemental content remain available.
+- Added GradeQuestionBankTest for lesson coverage and answer validation. Changes committed to development branch only. Android CI and device validation pending.
+- Important educational limitation: these are age-tiered introductory questions, not complete grade-by-grade syllabuses. Content requires editorial review, including Urdu language accuracy, difficulty, curriculum mapping and repeated questions across grades. No publication or Vercel deployment.

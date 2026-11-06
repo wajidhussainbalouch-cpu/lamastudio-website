@@ -109,7 +109,7 @@ window.LAMA_PPSC_HM10_4=[
   "id": "HM10-083",
   "subject": "English Grammar",
   "topic": "Each of agreement",
-  "q": "Which formal instruction is grammatically correct?",
+  "q": "A school notice uses the singular subject 'each' to describe completion of examiner reports. Which sentence has the correct formal subject–verb agreement?",
   "options": [
    "Each of the examiners have signed their report.",
    "Each of the examiners were signed a report.",

@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const enabled=Boolean(state&&state.configured);
   byId('accountForms').hidden=!enabled||state.authenticated;
   byId('candidateSignedIn').hidden=!enabled||!state.authenticated;
-  byId('accountAvailability').textContent=enabled?'Candidate accounts are available. Please verify your email before signing in.':'Secure registration is not enabled yet. Free practice remains available without an account.';
+  byId('accountAvailability').textContent=enabled?'Candidate signup connects to Supabase Auth. Confirm your email before signing in. Public email delivery and LAMA-branded sender configuration are still being verified.':'Secure registration is not enabled yet. Free practice remains available without an account.';
   byId('candidateIdentity').textContent=state&&state.user?'Signed in as '+state.user.email:'';
  };
  async function handle(formId,action,success){

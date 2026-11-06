@@ -149,3 +149,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - The 80 English/Urdu/Math/Science questions per grade are selected from existing question banks and are not all newly authored; prompts are deduplicated within each subject's 20-question selection. General Knowledge and Computer Basics each have 30 authored questions divided into three age bands and reused across grades within each band. Therefore do not claim 1,000 wholly unique questions.
 - Both new subjects are exposed in MainActivity subject selection; lessons are available through LearningContent.allLessons. Added TenQuestionSetsTest to assert count, uniqueness within each set and answer structure.
 - Tests are written but GitHub Actions results and installation of this revision have not been checked. Educational accuracy, Urdu proofreading, accessibility and grade-by-grade curriculum alignment still require review. No deployment, merge or publication.
+
+## 6 November 2026 — Applied mathematics word problems
+- Added WordProblemBank.kt: two additional Mathematics topics per level (addition stories and subtraction stories), each with ten questions. 20 questions per grade, 200 new deterministic story question placements across Nursery, KG and Classes 1–8.
+- Each problem uses real-world objects, grade-scaled quantities and a worked explanation. The 100-question structured sets per level remain unchanged; these 20 are EXTRA topics outside those ten sets.
+- Added WordProblemBankTest for counts, unique prompts within grade and answer integrity. Tests have not been executed or verified via GitHub Actions yet. Early grade reading level and difficulty require educator review.
+- No Vercel deployment, production merge or publishing.

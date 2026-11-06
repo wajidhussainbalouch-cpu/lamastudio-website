@@ -63,16 +63,16 @@ window.LAMA_PPSC_HM12_4=[
  {
   "id": "HM12-080",
   "subject": "English Grammar",
-  "topic": "Subjunctive after demand",
-  "q": "Choose the formal sentence with a correct mandative subjunctive following a committee recommendation.",
+  "topic": "Future in the past reporting",
+  "q": "Which sentence correctly reports a coordinator's earlier promise to announce a revised examination venue the following day?",
   "options": [
-   "The committee recommended that every candidate be informed of the change.",
-   "The committee recommended that every candidate is informed yesterday.",
-   "The committee recommended that every candidate was informing.",
-   "The committee recommended every candidate being inform."
+   "The coordinator said the venue will announcing yesterday.",
+   "The coordinator said the venue would be announced the following day.",
+   "The coordinator said the venue had announce tomorrow.",
+   "The coordinator said the venue is would announced later."
   ],
-  "answer": 0,
-  "explanation": "Formal mandative constructions can use the base verb 'be' after 'recommended that' to express the recommended action.",
+  "answer": 1,
+  "explanation": "In reported speech from a past viewpoint, 'would be announced' appropriately expresses a future passive event relative to the coordinator's earlier statement.",
   "difficulty": "intermediate"
  },
  {

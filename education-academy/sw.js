@@ -1,6 +1,6 @@
 /* Public academy shell only. Never cache credentials, private APIs or payment evidence. */
-const CACHE='lama-ppsc-preview-v52';
-const ASSETS=['./','./index.html','./section.html','./app.js','./supabase-config.js','./auth-supabase.js','./candidate-account-ui.js','./membership-status.js','./academy-router.js','./syllabus-finder.js','./jobs.js','./shell.js','./print.html','./papers.js','./engine.js','./manifest.webmanifest','./academy-logo.png','./academy-logo.svg','./question-bank.html','./advanced-bank.js','./bank-ui.js'];
+const CACHE='lama-ppsc-preview-v53';
+const ASSETS=['./','./index.html','./section.html','./app.js','./supabase-config.js','./auth-supabase.js','./candidate-account-ui.js','./membership-status.js','./academy-router.js','./job-catalog-ui.js','./syllabus-finder.js','./jobs.js','./shell.js','./print.html','./papers.js','./engine.js','./manifest.webmanifest','./academy-logo.png','./academy-logo.svg','./question-bank.html','./advanced-bank.js','./bank-ui.js'];
 const allowed=new Set(ASSETS.map(path=>new URL(path,self.registration.scope).pathname));
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(Promise.all([

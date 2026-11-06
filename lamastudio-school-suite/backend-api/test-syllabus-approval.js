@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const context={};vm.createContext(context);
+vm.runInContext(fs.readFileSync(path.join(__dirname,'syllabus-approval.gs'),'utf8'),context);
+const approve=context.LamaSyllabusApproval.prepare;
+const plan={schoolId:'s1',planId:'p1',sessionId:'2027',classId:'1',subjectId:'math',status:'submitted',version:2,scheduled:[{lessonId:'l1',date:'2027-03-01'}]};
+const a=approve(plan,'approved',2,'admin','', '2027-03-01T10:00:00Z');
+assert.equal(a.plan.status,'approved');assert.equal(a.plan.version,3);assert.equal(a.audit.actorId,'admin');assert.equal(plan.status,'submitted');
+const p=approve(a.plan,'published',3,'admin','', '2027-03-01T11:00:00Z');
+assert.equal(p.plan.publishedBy,'admin');
+const back=approve(a.plan,'draft',3,'admin','Calendar changed','2027-03-01T12:00:00Z');
+assert.equal(back.plan.approvedBy,null);assert.equal(back.audit.reason,'Calendar changed');
+assert.throws(()=>approve(plan,'published',2,'admin','','2027-03-01T10:00:00Z'),/Invalid syllabus status/);
+assert.throws(()=>approve(plan,'approved',1,'admin','','2027-03-01T10:00:00Z'),/Version conflict/);
+assert.throws(()=>approve(a.plan,'draft',3,'admin',' ','2027-03-01T10:00:00Z'),/Reason required/);
+assert.throws(()=>approve(plan,'approved',2,'','','2027-03-01T10:00:00Z'),/Verified administrator/);
+console.log('Syllabus Apps Script approval rules passed');

@@ -1,5 +1,8 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+**Private-bank usability fix:** With 230 stored records, the Super Admin editor formerly loaded only the newest 200. `auth-supabase.js` now requests successive RLS-protected pages of 250, retaining all authorized rows up to 5,000 (and reporting an error instead of silently truncating beyond that limit). The editor's search, review and explicit private JSON export can therefore reach earlier items. Private answer-key export requires user confirmation. For larger banks, replace whole-bank loading with server-side search and cursor pagination.
+
+
 ## Paper 3 completed — 6 November 2026 (newest academy question-bank status)
 
 **Headmaster / Headmistress Paper 3** (`HM-2026-P03`) now contains **100 new original free-practice questions** (HM03-001–HM03-100), a separate 90-minute exam state, post-submission marks, per-question answer/explanation review and printable answer key. Papers 1 and 2 remain intact: **3 free school-head papers / 300 public practice questions** in the GitHub source.

@@ -293,3 +293,9 @@ Validation and release gate:
 - Added a failure-injection regression scenario to `test-syllabus-reassign.js` that forces a later row write to fail and checks earlier rows are restored.
 - **This is not an atomic transaction.** An Apps Script timeout, process termination or failed rollback may still leave an audit intent and partially reassigned rows. Such cases must be manually reconciled before another transfer; a durable resumable journal is still required for production readiness.
 - Current code is committed to GitHub; CI execution and live end-to-end verification are not confirmed. Do not deploy to live school records yet.
+
+## Release hardening update — 6 Nov 2026
+- Corrected a pre-existing storage orchestration regression test: its missing-commit-confirmation scenario now supplies a matching plan version, allowing the intended assertion to execute rather than failing earlier with a version conflict.
+- Verified in repository source that `doGet` blocks syllabus mutation and private syllabus read endpoints, including `syllabusReassignProgress`; teacher plan discovery uses the exact section-aware scope helper.
+- Added transfer rollback and failure-injection tests in previous changes. Test execution and a production Apps Script deployment have **not** been confirmed; commits alone do not establish correctness.
+- Outstanding before release: execute and fix CI failures; verify teacher registry schema/status fields and the actual configured-section representation; implement durable transfer recovery for interruptions; test school administrator and teacher journeys against a disposable test school; obtain verified production Apps Script deployment and smoke-test. Do not use production school data for unverified transfer tests.

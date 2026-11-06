@@ -264,3 +264,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Next subject is **Class 1 Tajweedi Qaida**. Existing intake: `data/tajweedi-qaida-intake.json`, source `tajwedi qaida.pdf`, Drive ID `1ohWq-zOojLu0vPut9zBqUUqoiyY1gFGF`, 38 pages, Arabic/Urdu. Successfully retrieved source PDF from Drive on this turn.
 - Source metadata reports only PDF page 3 previously visually inspected. No new page inspection or question generation has yet been completed. Count remains 0 drafts for Tajweedi Qaida.
 - Develop lesson-by-lesson from actual pages. Assess letter and harakat identification with verified diacritics; recitation, articulation, and tajweed require teacher assessment. Preserve `approved=false`, `onlineReady=false` for drafts. Do not invent textbook references, inflate counts through repetition, or deploy.
+
+
+## User-directed switch to Class 2 — 2026-11-06
+- User requested moving to **next class** rather than continuing Class 1 Tajweedi Qaida. Preserve all Class 1 drafts; no deletion.
+- Begin **Class 2 Urdu**. Existing intake `data/class2-urdu-intake.json`, book `urdu 2.pdf`, Drive ID `1cWaeH4aUC0xJi2kbYkmrENXmU-NnBx6L`, 146 pages. Retrieved source successfully via Drive. Intake notes only PDF page 3 inspected, with 2020 national curriculum alignment; **lesson pages not yet visually verified**.
+- Class 2 Urdu target: 1,500 questions in three 500-question batches. **0 questions generated for Class 2 Urdu at this checkpoint.** Source retrieval does not mean question authoring is complete.
+- Next: visually inspect actual Urdu lesson pages and contents; map source pages; author and QA original questions. Keep drafts unapproved and offline. No Vercel deployment.

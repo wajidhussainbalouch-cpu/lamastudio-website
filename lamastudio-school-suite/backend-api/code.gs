@@ -1734,6 +1734,25 @@ function handleRequest(params) {
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
+        if (action === 'syllabusTeacherProgress') {
+            if (params.role !== 'teacher') throw new Error('Teacher session required.');
+            if (typeof LamaSyllabusProgressStore === 'undefined' ||
+                typeof LamaSyllabusSheetStore === 'undefined' ||
+                typeof lamaRequireModuleForVerifiedSchool_ !== 'function') throw new Error('Syllabus progress components unavailable.');
+            const ctx = authorizeTeacher(params.schoolId, params.teacherId, params.apiKey);
+            lamaRequireModuleForVerifiedSchool_(params.schoolId, 'examination');
+            if (typeof params.planId !== 'string' || !params.planId.trim()) throw new Error('Plan ID required.');
+            const record = LamaSyllabusSheetStore.read(ctx.ss.getId(), params.schoolId, params.planId);
+            if (!record || record.plan.status !== 'published') throw new Error('Published plan not found.');
+            if (normalizeSchoolClass(record.plan.classId) !== normalizeSchoolClass(ctx.teacher.assignedClass) ||
+                String(record.plan.subjectId).trim().toLowerCase() !== String(ctx.teacher.subject).trim().toLowerCase())
+                throw new Error('Teacher class or subject scope denied.');
+            if (params.operation === 'list') return {status:'success',updates:LamaSyllabusProgressStore.list(ctx.ss.getId(),params.schoolId,params.planId)};
+            if (params.operation !== 'save') throw new Error('Unsupported progress operation.');
+            const saved = LamaSyllabusProgressStore.save(ctx.ss.getId(),params.schoolId,record.plan,
+                String(params.teacherId),params.lessonKey,params.progressStatus,params.completedAt);
+            return {status:'success',result:saved};
+        }
         if (action === 'syllabusCreateDraft') {
             if ((params.role || 'school') !== 'school') throw new Error('Administrator required.');
             if (typeof LamaSyllabusDraft === 'undefined' || typeof LamaSyllabusSheetStore === 'undefined' ||
@@ -1954,7 +1973,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

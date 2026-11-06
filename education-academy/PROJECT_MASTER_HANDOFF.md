@@ -1,4 +1,12 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
+
+## Current release note — 6 November 2026
+
+**The dedicated Supabase project is active and the frontend has an enabled publishable-key configuration; old preview text below is historical where it states registration or backend do not exist.** The database currently has 2 Auth users (1 confirmed email), but 0 candidate profiles and 0 provisioned Super Admin accounts. Signup email delivery, branded sender and full mobile confirmation have **not** been verified. Candidate profiles are created after verified sign-in; payment and premium entitlement are still inactive.
+
+The private **Super Admin Job Manager** has an RLS-protected Supabase job table and a source-code UI. Published admin jobs load automatically into dashboard/job dropdowns, planner, syllabus and paper library after the updated website is deployed. **No account can manage jobs until independently provisioned as Super Admin.** See [ADMIN_JOB_MANAGEMENT.md](./ADMIN_JOB_MANAGEMENT.md) and [backend/EMAIL_SETUP.md](./backend/EMAIL_SETUP.md). The existing School Suite is unchanged.
+
+
 **Last updated:** 2026-11-05  
 **Status:** Development preview, NOT ready for paid launch  
 **Canonical repository:** `wajidhussainbalouch-cpu/lamastudio-website`  

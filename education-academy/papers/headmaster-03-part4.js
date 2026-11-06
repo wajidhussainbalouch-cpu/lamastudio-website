@@ -36,7 +36,7 @@ window.LAMA_PPSC_HM03_4=[
   "topic": "Restrictive relative clause",
   "q": "Which sentence clearly identifies the particular teachers required to attend a workshop, rather than implying that every teacher must attend?",
   "options": [
-   "The teachers, who teach science, must attend the workshop.",
+   "All science teachers and all non-science teachers must attend the workshop.",
    "The teachers; who teach science must attend the workshop.",
    "The teachers whom science teach must attend the workshop.",
    "The teachers who teach science must attend the workshop."
@@ -96,7 +96,7 @@ window.LAMA_PPSC_HM03_4=[
   "topic": "Comma splice",
   "q": "Which revision correctly joins these ideas: 'The final report was ready, the committee postponed its review'?",
   "options": [
-   "The final report was ready, the committee postponed its review.",
+   "Because the final report was ready, and the committee postponed its review.",
    "The final report was ready the committee postponed its review.",
    "The final report was ready, postponing committee its review.",
    "The final report was ready, but the committee postponed its review."

@@ -108,6 +108,44 @@
   message('Editing '+q.id+'. Examine the explanation and answer before setting status to Academically reviewed.');
   form.scrollIntoView({behavior:'smooth',block:'start'});
  });
+
+ const exportedFields=['id','job_id','subject','topic','question_text','options','answer_index','explanation','difficulty','source_notes'];
+ $('qExport')?.addEventListener('click',()=>{
+  if(!authorized){message('Sign in before exporting questions.');return}
+  if(!rows.length){message('No questions currently loaded.');return}
+  const backup={format:'lama-ppsc-questions-v1',version:1,exported_at:new Date().toISOString(),
+   partial:rows.length===200,questions:rows.map(q=>Object.fromEntries(exportedFields.map(k=>[k,q[k]])))};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='lama-ppsc-private-questions-'+Date.now()+'.json';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  message('Downloaded '+rows.length+' privately managed questions. Keep the file secure; answers are included.'+(backup.partial?' Only the latest 200 loaded records were exported.':''));
+ });
+ $('qImportFile')?.addEventListener('change',async e=>{
+  const input=e.target,file=input.files&&input.files[0];input.value='';
+  if(!file||!authorized)return;
+  if(file.size>1024*1024){message('Import exceeds 1 MB. Split into smaller batches.');return}
+  try{
+   const data=JSON.parse(await file.text());
+   if(!data||data.format!=='lama-ppsc-questions-v1'||data.version!==1||!Array.isArray(data.questions)||!data.questions.length||data.questions.length>100)throw Error('Expected 1–100 questions in a LAMA JSON backup.');
+   const clean=data.questions.map(raw=>{
+    if(!raw||!/^[A-Z0-9][A-Z0-9-]{4,79}$/.test(raw.id)||!jobs.some(j=>j.id===raw.job_id))throw Error('Invalid question ID or unmanaged job.');
+    if(typeof raw.question_text!=='string'||raw.question_text.trim().length<30||raw.question_text.length>1500)throw Error('A question has invalid wording.');
+    if(!Array.isArray(raw.options)||raw.options.length!==4||raw.options.some(x=>typeof x!=='string'||x.trim().length===0||x.length>400)||new Set(raw.options.map(x=>x.trim().toLowerCase())).size!==4)throw Error('Every question requires four distinct options.');
+    if(!Number.isInteger(raw.answer_index)||raw.answer_index<0||raw.answer_index>3||typeof raw.explanation!=='string'||raw.explanation.trim().length<40)throw Error('A correct answer or explanation is invalid.');
+    if(typeof raw.subject!=='string'||raw.subject.trim().length<3||typeof raw.topic!=='string'||raw.topic.trim().length<3)throw Error('Missing subject or topic.');
+    return {id:raw.id,job_id:raw.job_id,subject:raw.subject.trim(),topic:raw.topic.trim(),
+     question_text:raw.question_text.trim(),options:raw.options.map(x=>x.trim()),answer_index:raw.answer_index,
+     explanation:raw.explanation.trim(),difficulty:['foundation','intermediate','advanced'].includes(raw.difficulty)?raw.difficulty:'intermediate',
+     source_notes:String(raw.source_notes||'Imported private draft').slice(0,800),review_status:'draft'};
+   });
+   if(new Set(clean.map(q=>q.id)).size!==clean.length)throw Error('Duplicate IDs within the file.');
+   if(!confirm('Import '+clean.length+' questions as private drafts? Existing records will not be overwritten.'))return;
+   await auth.adminImportQuestions(clean);
+   await refresh();
+   message('Imported '+clean.length+' new private drafts. Academic review is still required.');
+  }catch(err){message('Import failed without publishing: '+(err.message||'Invalid file'))}
+ });
  window.addEventListener('lama:admin-authorized',()=>{authorized=true;refresh()});
  $('refresh')?.addEventListener('click',()=>{if(authorized)refresh()});
  $('logout')?.addEventListener('click',()=>{authorized=false;rows=[];jobs=[];root.replaceChildren();message('Sign in to access the private question bank.')});

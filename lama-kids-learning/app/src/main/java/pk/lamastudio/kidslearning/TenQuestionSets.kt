@@ -94,10 +94,15 @@ object TenQuestionSets {
    .flatMap { it.questions.asSequence() }.distinctBy { it.prompt.trim() }.toList()
 
  private fun from(grade: String, subject: String, offset: Int): List<Question> {
-  val pool = if (subject == "Mathematics")
-   (MathPracticeBank.questions(grade, 0) + MathPracticeBank.questions(grade, 1))
-   .distinctBy { it.prompt }
-  else existing(grade, subject)
+  val additional = when (subject) {
+   "Mathematics" -> MathPracticeBank.lessons + WordProblemBank.lessons
+   "Science" -> ScienceDiscoveryBank.lessons
+   "English" -> ReadingComprehensionBank.lessons
+   else -> emptyList()
+  }
+  val pool = (existing(grade, subject) +
+   additional.filter { it.grade == grade && it.subject == subject }.flatMap { it.questions })
+   .distinctBy { it.prompt.trim() }
   require(pool.size >= 20) { "Not enough unique $subject questions for $grade: ${pool.size}" }
   return pool.drop(offset).take(10)
  }

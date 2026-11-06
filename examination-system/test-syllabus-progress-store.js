@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const rows=[];let writes=0;
 const sheet={
- getRange(r,c,n,m){return {getValues(){if(r===1)return [['schoolId','planId','lessonKey','status','completedAt','teacherId','updatedAt']];return rows.slice(r-2,r-2+n).map(x=>x.slice(c-1,c-1+m))},setValues(values){writes++;values.forEach((v,i)=>rows[r-2+i]=v)},setValue(v){throw Error('Unexpected write')}}},
+ getRange(r,c,n,m){return {getValues(){if(r===1)return [['schoolId','planId','lessonKey','status','completedAt','teacherId','updatedAt']];return rows.slice(r-2,r-2+n).map(x=>x.slice(c-1,c-1+m))},setValues(values){writes++;if(r>1)values.forEach((v,i)=>rows[r-2+i]=v)},setValue(v){throw Error('Unexpected write')}}},
  getLastRow(){return rows.length+1},setFrozenRows(){}
 };
 let exists=false,created=0;

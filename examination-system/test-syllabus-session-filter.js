@@ -9,6 +9,7 @@ const plans=[
 ];
 assert.deepEqual(select(plans,'2026-27').map(x=>x.planId),['a','b']);
 assert.equal(select(plans,'2027-28').length,0);
+assert.equal(select(plans.concat([{...plans[0],planId:'section-b',sectionId:'B'}]),'2026-27').length,3);
 assert.throws(()=>select(plans.concat([{...plans[0],planId:'e',subjectId:'math'}]),'2026-27'),/Overlapping/);
 assert.throws(()=>select(plans,''),/Academic session/);
 console.log('Academic session filtering tests passed');

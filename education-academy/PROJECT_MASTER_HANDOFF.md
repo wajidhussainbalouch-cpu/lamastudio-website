@@ -1,5 +1,16 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Latest Headmaster / Headmistress paper and maximum-per-job policy — Paper 12 (6 November 2026)
+
+**Paper 12 completed in GitHub source:** `HM-2026-P12` contains 100 new original educational practice MCQs (`HM12-001`–`HM12-100`) with four options and explanation per question, a dedicated 90-minute exam, preserved candidate scores and attempts, printable question paper and post-submission printable answer review. This brings the school-head public practice collection to **12 distinct papers / 1,200 MCQs**, including its senior school-head variant. PWA cache is `lama-ppsc-preview-v67`.
+
+**New owner-defined ceiling:** **Maximum 20 published full-length papers per job family.** The library enforces the cap separately by job ID (e.g., both `teaching:0` and `teaching:1` use the same teaching quota), shows **12 / 20**, prevents a 21st paper from appearing through the library or deep links, and does not delete existing results. Unrelated jobs have independent limits and must not receive school-head papers as substitutes. The Paper 12 register also refuses to exceed the teaching quota.
+
+**Supabase private editorial bank:** 100 Paper 12 rows added with `review_status='draft'`. The `teaching` bank now holds **1,130 records / 1,130 distinct normalized stems**, with 0 human-approved and anonymous SELECT/INSERT blocked by permissions and RLS. Three overlapping draft questions were replaced before final checks. These are **original free practice questions, not official PPSC questions**, with independent academic review still outstanding. Public JavaScript contains answer keys, so local answer-review gating is not secure premium examination access control.
+
+Read **[PAPER_12_RELEASE.md](./PAPER_12_RELEASE.md)** for source/test details, the 20-paper-per-job policy, production release verification instructions and next **Paper 13 (`HM13-001`–`HM13-100`)**. GitHub CI passing is separate from Vercel/custom-domain release and real mobile Chrome testing.
+
+
 ## Latest Headmaster/Headmistress question-bank milestone — Paper 11 (6 November 2026)
 
 **Paper 11 completed:** `HM-2026-P11` contains 100 original Headmaster/Headmistress free practice MCQs (`HM11-001`–`HM11-100`), each with four choices and explanations, in four 25-question files. The Academy source registers **11 separate papers, 1,100 public practice questions**, 90-minute individual attempts, score/history tracking and post-submission answer explanations/printable answer key. Papers 1–10 and all existing candidate records are preserved. The exam, print, review and PWA source files are integrated; offline cache is `lama-ppsc-preview-v66`.

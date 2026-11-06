@@ -7,11 +7,11 @@ window.LAMA_PPSC_HM10_1=[
   "q": "A principal discovers that a school council approved a new bus route but its meeting minutes record only 'transport discussed.' Which improvement most directly supports accountability?",
   "options": [
    "Replace the minutes with a photograph of the meeting",
-   "Record the exact decision, votes or consensus method, responsible officer and effective date",
+   "Omit all disputed decisions from future minutes",
    "Ask the transport vendor to describe the decision informally",
-   "Omit all disputed decisions from future minutes"
+   "Record the exact decision, votes or consensus method, responsible officer and effective date"
   ],
-  "answer": 1,
+  "answer": 3,
   "explanation": "A decision log captures what was actually authorized, when and by whom. Recording the resolution and responsibility helps staff implement and later review it accurately.",
   "difficulty": "intermediate"
  },
@@ -67,11 +67,11 @@ window.LAMA_PPSC_HM10_1=[
   "q": "A school says it will accept no exposure of student identity documents but permits brief noncritical library-system outages. Which principle is illustrated?",
   "options": [
    "All organizational risks must have identical limits",
-   "Risk acceptance differs by the nature and consequences of the activity",
+   "Risk policies are determined only by the cost of computers",
    "A library outage is the same as a personal-data breach",
-   "Risk policies are determined only by the cost of computers"
+   "Risk acceptance differs by the nature and consequences of the activity"
   ],
-  "answer": 1,
+  "answer": 3,
   "explanation": "Risk appetite and tolerance can differ across objectives. Schools may accept manageable service interruptions while setting very strict boundaries for sensitive-data exposure.",
   "difficulty": "advanced"
  },
@@ -127,11 +127,11 @@ window.LAMA_PPSC_HM10_1=[
   "q": "Two campuses interpret 'three consecutive school days' differently because one counts weekend closures. Which clarification would resolve the ambiguity?",
   "options": [
    "Replace all day counts with verbal reminders",
-   "Define school days against the approved campus calendar and give worked examples",
+   "Remove the calendar from policy implementation",
    "Allow each office to use a preferred interpretation without documentation",
-   "Remove the calendar from policy implementation"
+   "Define school days against the approved campus calendar and give worked examples"
   ],
-  "answer": 1,
+  "answer": 3,
   "explanation": "An operational definition tied to the school calendar ensures that the same threshold is applied consistently despite weekends or approved holidays.",
   "difficulty": "intermediate"
  },
@@ -156,12 +156,12 @@ window.LAMA_PPSC_HM10_1=[
   "topic": "Barrier integrity",
   "q": "A school closes a damaged corridor with tape, but pupils can easily walk around it through an unlocked side passage. What should the safety check examine?",
   "options": [
-   "Whether the entire access route is effectively blocked and supervised until repairs are complete",
-   "Whether the warning tape matches the wall color",
    "Only the cost of the original tape",
+   "Whether the warning tape matches the wall color",
+   "Whether the entire access route is effectively blocked and supervised until repairs are complete",
    "Whether damaged areas appear in publicity photographs"
   ],
-  "answer": 0,
+  "answer": 2,
   "explanation": "A control must work in actual movement patterns. Tape that can be bypassed does not adequately prevent exposure to the hazard.",
   "difficulty": "intermediate"
  },

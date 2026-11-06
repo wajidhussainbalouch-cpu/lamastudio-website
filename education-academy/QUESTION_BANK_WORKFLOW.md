@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Latest content release — Paper 4 (6 November 2026)
+
+**Headmaster / Headmistress Paper 4** (`HM-2026-P04`) adds **100 unique original free-practice MCQs** (`HM04-001` through `HM04-100`), complete with four choices, answer keys, explanations, difficulty and subject tags. Source registration, selected-job card, 90-minute attempt, independent saved score, question-only printing and post-submission answer-review/PDF printing are integrated. **Four school-head free practice papers / 400 public MCQ slots** now exist in GitHub source; previous papers and attempts are preserved.
+
+**Supabase private draft bank** now has **330 unique school-head question records** (30 original drafts + 100 from each Paper 2, Paper 3 and Paper 4). All 330 remain drafts pending independent human academic review. SQL and GitHub automated checks passed; this is not a verified official PPSC paper or secure premium examination. Public practice answer keys are client-inspectable; the post-submission interface gate only guides practice.
+
+**Read `PAPER_04_RELEASE.md` before the next `Continue`.** Next Paper 5 should add 100 original questions with IDs `HM05-001`–`HM05-100`, compare against every previous source and Supabase draft, retain all candidate data, update tests and PWA cache, and commit to GitHub `main`. Source commits and Supabase storage are **not proof of live Vercel deployment** or mobile-browser testing. No manual deployment is authorized.
+
+
 **Private-bank usability fix:** With 230 stored records, the Super Admin editor formerly loaded only the newest 200. `auth-supabase.js` now requests successive RLS-protected pages of 250, retaining all authorized rows up to 5,000 (and reporting an error instead of silently truncating beyond that limit). The editor's search, review and explicit private JSON export can therefore reach earlier items. Private answer-key export requires user confirmation. For larger banks, replace whole-bank loading with server-side search and cursor pagination.
 
 

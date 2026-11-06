@@ -6,10 +6,10 @@ window.LAMA_PPSC_HM04_3=[
   "topic": "Geometric mean",
   "q": "A reading-club membership multiplies by 1.2 in the first term and by 0.9 in the second. Which expression gives the average multiplicative growth factor per term?",
   "options": [
-   "(1.2 + 0.9) / 2",
-   "1.2 × 0.9 × 2",
-   "The square root of (1.2 × 0.9)",
-   "1.2 / 0.9"
+   "Arithmetic mean of the two growth factors",
+   "Product of the two growth factors without a square root",
+   "Square root of the product of the two growth factors",
+   "Ratio of the first growth factor to the second"
   ],
   "answer": 2,
   "explanation": "The geometric mean is appropriate for successive multiplicative changes. The factor is √(1.08), approximately 1.039, representing about 3.9% average growth per term.",

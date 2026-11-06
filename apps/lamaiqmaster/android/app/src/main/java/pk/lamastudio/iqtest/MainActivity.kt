@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -62,15 +63,16 @@ class MainActivity : ComponentActivity() {
             }
             MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = bg, surface = card)) {
               ModalNavigationDrawer(drawerState = drawerState, drawerContent = {
-                ModalDrawerSheet(drawerContainerColor = card, modifier = Modifier.fillMaxWidth(0.88f)) {
-                    Row(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF30206C), Color(0xFF102C61)))).padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(60.dp))
-                        Column { Text("LAMA IQ TEST", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 19.sp)
+                ModalDrawerSheet(drawerContainerColor = Color(0xFF111B43), modifier = Modifier.fillMaxWidth(0.90f)) {
+                    Row(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF412181), Color(0xFF0D326F)))).padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(78.dp))
+                        Column { Text("LAMA IQ TEST", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                             Text("Brain Training Academy", color = accent, fontSize = 12.sp) }
                     }
                     HorizontalDivider(color = accent.copy(alpha = 0.35f))
-                    listOf(Triple("Number Logic", "🔢", "Numbers and sequences"), Triple("Visual Patterns", "🔷", "Shapes and figures"), Triple("Memory", "🧠", "Remember and recall"), Triple("Attention", "🎯", "Focus and accuracy"), Triple("Advanced Reasoning", "💡", "Logic and problem solving")).forEach { (module, symbol, detail) ->
-                        NavigationDrawerItem(icon = { Text(symbol, fontSize = 23.sp) }, label = { Column { Text(module, fontWeight = FontWeight.SemiBold); Text(detail, fontSize = 11.sp, color = Color.LightGray) } }, selected = selectedModule == module && infoPage.isEmpty(),
+                    listOf(Triple("Number Logic", "🧮", "Numbers • Series • Calculations"), Triple("Visual Patterns", "🧊", "Shapes • Sequences • Figures"), Triple("Memory", "🧠", "Recall • Compare • Remember"), Triple("Attention", "🎯", "Focus • Speed • Accuracy"), Triple("Advanced Reasoning", "💡", "Logic • Analysis • Problem Solving")).forEach { (module, symbol, detail) ->
+                        NavigationDrawerItem(icon = { Text(symbol, fontSize = 29.sp) }, label = { Column { Text(module, fontWeight = FontWeight.Bold, fontSize = 16.sp); Text(detail, fontSize = 12.sp, color = Color(0xFFCBD5F5)) } }, selected = selectedModule == module && infoPage.isEmpty(),
+                            colors = NavigationDrawerItemDefaults.colors(selectedContainerColor = Color(0xFF6032BD), unselectedContainerColor = Color.Transparent, selectedTextColor = Color.White, unselectedTextColor = Color.White),
                             onClick = {
                                 selectedModule = module; infoPage = ""; visualMode = module == "Visual Patterns";
                                 level = 0; question = 0; selected = -1; score = 0
@@ -78,8 +80,8 @@ class MainActivity : ComponentActivity() {
                             })
                     }
                     HorizontalDivider()
-                    listOf("Privacy" to "🛡️", "About" to "ℹ️", "Version" to "🔄", "Lama Studio Website" to "🌐").forEach { (item, symbol) ->
-                        NavigationDrawerItem(icon = { Text(symbol, fontSize = 20.sp) }, label = { Text(if (item == "Version") "Version & Updates" else item) }, selected = infoPage == item, onClick = {
+                    listOf("Privacy" to "🛡️", "About" to "ⓘ", "Version" to "🔄", "Lama Studio Website" to "🌐").forEach { (item, symbol) ->
+                        NavigationDrawerItem(icon = { Text(symbol, fontSize = 20.sp) }, label = { Text(when(item) { "Privacy" -> "Privacy Policy"; "About" -> "About Lama IQ Test"; "Version" -> "Check for Update"; else -> item }, fontWeight = FontWeight.Medium) }, selected = infoPage == item, onClick = {
                             if (item == "Lama Studio Website") uriHandler.openUri("https://www.lamastudio.pk/")
                             else { infoPage = item; visualMode = false; level = 0 }
                             scope.launch { drawerState.close() }
@@ -88,14 +90,19 @@ class MainActivity : ComponentActivity() {
                     HorizontalDivider(color = accent.copy(alpha = 0.3f))
                     Text("A project of LAMA STUDIO", color = accent, fontSize = 12.sp, modifier = Modifier.padding(start = 20.dp, top = 12.dp))
                     Text("Software • Education • Innovation", color = Color.LightGray, fontSize = 11.sp, modifier = Modifier.padding(start = 20.dp))
+                    Spacer(Modifier.height(20.dp))
+                    Text("🏔️   🦙   LAMA STUDIO", color = Color(0xFFDBB8FF), fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF241548), Color(0xFF3E227A), Color(0xFF111B43))), RoundedCornerShape(18.dp)).padding(20.dp))
                 }
               }) {
                 Column(
                     Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF111C48), bg, bg))).verticalScroll(rememberScrollState()).padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    FilledTonalButton(onClick = { scope.launch { drawerState.open() } }, colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF30245F))) { Text("☰  Modules & Settings", color = Color.White) }
-                    Column(modifier = Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF28316E), Color(0xFF17234E), Color(0xFF301A63))), RoundedCornerShape(24.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        FilledTonalButton(onClick = { scope.launch { drawerState.open() } }, colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF452282))) { Text("☰  Modules & Settings", color = Color.White) }
+                        Text("♧", color = Color(0xFFE9D5FF), fontSize = 25.sp)
+                    }
+                    Column(modifier = Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF183E89), Color(0xFF101C50), Color(0xFF4920A0))), RoundedCornerShape(24.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(72.dp))
                             Column {
@@ -105,6 +112,7 @@ class MainActivity : ComponentActivity() {
                         }
                         Text("Lama IQ Test", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
                         Text("Brain training • Logic • Patterns", color = Color(0xFFE3DAFF), fontSize = 14.sp)
+                        Text("🧠  Build your reasoning skills", color = Color(0xFF8BE9FF), fontSize = 13.sp)
                     }
                     when {
                         infoPage.isNotEmpty() -> {
@@ -124,7 +132,7 @@ class MainActivity : ComponentActivity() {
                                 Text("This module is being prepared with reviewed, non-repeating questions. It is not yet available in this testing build.", color = Color.LightGray)
                             } else {
                             Text("Choose a level", color = Color.White, fontSize = 22.sp)
-                            Button(onClick = { visualMode = true }, modifier = Modifier.fillMaxWidth()) { Text("Play visual pattern challenges • 5 languages") }
+                            Button(onClick = { selectedModule = "Visual Patterns"; visualMode = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED)), shape = RoundedCornerShape(24.dp)) { Text("🎮  Visual pattern challenges     ❯", color = Color.White, fontWeight = FontWeight.Bold) }
                             Text("Score at least 7 of 10 to unlock the next level. Your progress is saved offline.", color = Color.LightGray)
                             (1..5).forEach { i ->
                                 val best = prefs.getInt("best_$i", 0)
@@ -132,11 +140,17 @@ class MainActivity : ComponentActivity() {
                                     enabled = i <= unlocked,
                                     onClick = { level = i; question = 0; score = 0; selected = -1 },
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(16.dp)
+                                    shape = RoundedCornerShape(22.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = if (i <= unlocked) Color(0xFFB18AF5) else Color(0xFF252D50), disabledContainerColor = Color(0xFF252D50), contentColor = Color(0xFF10152E), disabledContentColor = Color(0xFFCED2E8))
                                 ) {
-                                    Column(Modifier.fillMaxWidth().padding(8.dp)) {
-                                        Text("Level $i  •  " + listOf("Starter","Explorer","Thinker","Expert","Master")[i-1], fontWeight = FontWeight.Bold)
-                                        Text(if (i <= unlocked) "Best: $best / 10" else "Locked — complete previous level")
+                                    Row(Modifier.fillMaxWidth().padding(vertical = 9.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        Text(if (i <= unlocked) "🏆" else "🔒", fontSize = 28.sp)
+                                        Column(Modifier.weight(1f)) {
+                                            Text("Level $i", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                            Text(listOf("Starter","Explorer","Thinker","Expert","Master")[i-1], fontSize = 14.sp)
+                                            Text(if (i <= unlocked) "Best: $best / 10" else "Locked", fontSize = 12.sp)
+                                        }
+                                        Text(if (i <= unlocked) "▶" else "›", fontSize = 23.sp)
                                     }
                                 }
                             }

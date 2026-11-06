@@ -250,3 +250,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Extended `data/class1-islamiat-batch1-source-verified-starter.json` from 24 to **44 unapproved draft questions/activities** (commit `ee9c8b4c97be5ce36adb90f3c4eab1c8bdb0e738`). 20 new tasks refer to PDF pages 6–8. This is 44/500 for batch 1 and 44/1500 overall, not 44 distinct concepts.
 - Teacher grading required for recitation, oral identification and colouring; exact Arabic and pedagogical correctness still require independent review. No live activation or deployment.
 - Next: inspect further pages; diversify meaningful lesson-based questions rather than inflate counts through paraphrases.
+
+
+## Class 1 Islamiat — 72 draft milestone (2026-11-06)
+- Visually inspected PDF pages 9–12 (printed pages 6–9) in `Islamiat 1 PCTB  Watermark_compressed.pdf` (Drive ID `1wcbkbayvUt5nv_GSvHBdVBMplTuGwLVR`). Topics: `ما شاء اللہ` / `ان شاء اللہ` selection practice, cleanliness hadith, prayer for increased knowledge, and `ایمانیات و عبادات` / `توحید کا تعارف`.
+- Added 28 new page-grounded draft questions and activities to `data/class1-islamiat-batch1-source-verified-starter.json`; now **72 total**, commit `f4ed26ca4ff232d533cd8ad03976b611f1b8457f`. Some are variations of the same core concept, not independent facts.
+- Questions are **not approved or online-ready**. Arabic transcription, teacher rubrics, age suitability, and correctness need editorial review. The first 4 records and later records have slightly different fields; normalize schema before importing.
+- Next: inspect further textbook pages and create meaningful, varied questions. 72/500 batch 1; 72/1500 target. No deployment.

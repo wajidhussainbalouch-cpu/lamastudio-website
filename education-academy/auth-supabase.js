@@ -101,7 +101,17 @@ window.LamaAcademyAuth=(()=>{
  async function adminRegistrations(){return dataRequest('ppsc_candidate_registrations?select=user_id,email,display_name,email_confirmed_at,last_sign_in_at,auth_created_at&order=auth_created_at.desc&limit=200','GET')}
  async function adminQuestions(jobId){
   const filter=jobId?'&job_id=eq.'+encodeURIComponent(jobId):'';
-  return dataRequest('ppsc_question_bank?select=id,job_id,subject,topic,question_text,options,answer_index,explanation,difficulty,review_status,source_notes,reviewed_by,reviewed_at,created_at&order=created_at.desc&limit=200'+filter,'GET');
+  const fields='id,job_id,subject,topic,question_text,options,answer_index,explanation,difficulty,review_status,source_notes,reviewed_by,reviewed_at,created_at';
+  const all=[];
+  // Fetch successive authenticated RLS-protected pages. Never silently lose old question drafts.
+  for(let offset=0;offset<=5000;offset+=250){
+   const result=await dataRequest('ppsc_question_bank?select='+fields+'&order=created_at.desc,id.asc&limit=250&offset='+offset+filter,'GET');
+   if(!Array.isArray(result))throw Error('Question-bank response was not a list.');
+   if(offset===5000&&result.length)throw Error('Question bank has more than 5,000 records. Apply the job-specific filter or upgrade Admin pagination.');
+   all.push(...result);
+   if(result.length<250)return all;
+  }
+  return all;
  }
  async function adminSaveQuestion(question,exists){
   if(exists){

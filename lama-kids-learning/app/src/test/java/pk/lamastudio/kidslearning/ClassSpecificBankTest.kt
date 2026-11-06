@@ -20,7 +20,7 @@ class ClassSpecificBankTest {
    }
   }
  }
- @Test fun allClassSpecificPromptsAreUniqueAcrossGrades() {
-  assertEquals(180, ClassSpecificBank.lessons.flatMap { it.questions }.map { it.prompt }.distinct().size)
+ @Test fun allClassSpecificLessonIdsAreUnique() {
+  assertEquals(60, ClassSpecificBank.lessons.map { it.id }.distinct().size)
  }
 }

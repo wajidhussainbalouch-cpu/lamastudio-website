@@ -3,31 +3,31 @@ window.LAMA_PPSC_HM08_4=[
  {
   "id": "HM08-076",
   "subject": "English Grammar",
-  "topic": "Parallel construction",
-  "q": "Which sentence uses parallel grammatical form in a school development plan?",
+  "topic": "Third conditional in formal reports",
+  "q": "A safety review discusses a past event that cannot now be changed. Which sentence correctly uses the third conditional to describe that missed opportunity?",
   "options": [
-   "The plan aims to improve reading, strengthening mathematics and better science.",
-   "The plan aims to improve reading, strengthen mathematics and expand science activities.",
-   "The plan aims at reading better, strengthen mathematics and science expands.",
-   "The plan aims improving reading, to strengthen mathematics and science activities."
+   "If the alarm had worked, the staff would have evacuated earlier.",
+   "If the alarm has worked, the staff would have evacuated earlier.",
+   "If the alarm worked yesterday, the staff will have evacuated earlier.",
+   "If the alarm had work, the staff would evacuate earlier."
   ],
-  "answer": 1,
-  "explanation": "Parallel verbs after 'aims to' make the coordinated objectives consistent: improve, strengthen and expand. Mixed grammatical forms obscure the structure.",
+  "answer": 0,
+  "explanation": "The third conditional describes an unreal past condition with 'if + past perfect' and a hypothetical past result with 'would have + past participle.'",
   "difficulty": "intermediate"
  },
  {
   "id": "HM08-077",
-  "subject": "English Writing",
-  "topic": "Semi-colon between clauses",
-  "q": "Which sentence correctly uses a semicolon to join two closely related independent clauses?",
+  "subject": "English Usage",
+  "topic": "Affect versus effect",
+  "q": "An evaluator wants to describe a possible influence on attendance and the result to be measured. Which sentence correctly uses 'affect' and 'effect'?",
   "options": [
-   "The committee reviewed; the school budget yesterday.",
-   "The committee; reviewed the school budget yesterday.",
-   "The committee reviewed the budget; the treasurer then circulated the approved totals.",
-   "The committee reviewed the budget; and with the treasurer."
+   "The policy may effect attendance, and its affect will be studied.",
+   "The policy may affect attendance, and its effect will be studied.",
+   "The policy may affect attendance, and its affect will be studied.",
+   "The policy may effect attendance, and its effect will be studied."
   ],
-  "answer": 2,
-  "explanation": "A semicolon can connect two complete related clauses without a coordinating conjunction. Both sides of the chosen sentence can stand independently.",
+  "answer": 1,
+  "explanation": "In this context 'affect' is the verb meaning influence, while 'effect' is the noun meaning a result. The distinction makes the evaluation statement grammatically precise.",
   "difficulty": "intermediate"
  },
  {

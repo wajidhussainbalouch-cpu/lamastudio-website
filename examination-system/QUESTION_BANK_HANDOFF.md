@@ -278,3 +278,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added `data/class2-urdu-supplemental-starter-30-draft.json` with 30 original literacy-practice drafts, commit `bec94fa73de84dbf519e9cec7c9c3adbdd5979d2`. Skills: noun/verb, singular/plural, masculine/feminine, antonyms, spelling, sentence writing, comprehension. **These are supplemental, not lesson/page-grounded questions.**
 - 30/500 initial batch; 30/1500 target. All `approved=false`, `onlineReady=false`; free-text responses require teacher review. Check editorial quality and ambiguous items before approval.
 - Next: inspect actual first lessons and construct chapter-grounded exercises; keep accurate source PDF page mapping. No deployment.
+
+
+## Class 2 Urdu batch 1 — 500 drafts committed in one attempt (2026-11-06)
+- File: `data/class2-urdu-batch1-500-draft.json`; commit `9bfdffde7ea349c6ab38688cafb0b79519f705e0`.
+- 500 records, 500 unique IDs, 125 core word/sentence concepts × four assessment formats. 14 exact repeated question prompts flagged for editorial review. No missing answers or invalid answer-option references in construction checks.
+- This is **supplemental Class 2 Urdu practice**, not verified against individual textbook lessons/pages; `chapterId`, `lessonId`, `sourcePdfPage` are null. All questions `approved=false`, `onlineReady=false`. Some word pairs, inflections and teacher-marked rubrics may require correction; do not use for live student exams.
+- Earlier 30-question starter file is separate and **excluded** from the 500-count, to avoid silently adding duplicates. Next: editorial deduplication, textbook mapping and then batch 2 (501–1000). No Vercel deployment.

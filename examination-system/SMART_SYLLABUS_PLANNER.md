@@ -200,3 +200,11 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Added `LamaAPI.getPublishedSyllabusPlan(planId)` in `lamastudio-school-suite/js/api-client.js`, using POST with the active teacher session.
 - Added a read-only published-syllabus panel to `lamastudio-school-suite/portals/teacher/teacher-diary.html`; teacher supplies a plan ID and date and sees the scheduled lessons. It never silently creates homework or marks progress.
 - **Admin integration remains pending:** create/approve/publish endpoints, server-side module grants, plan discovery and admin UI. Existing `syllabus-sheets-adapter.gs` must be installed alongside the live Apps Script and the live deployment must be backed up/verified first. No backend deployment, database writes, or live end-to-end verification occurred.
+
+
+## Administrator read-only integration — 2026-11-06
+- Confirmed existing `lamastudio-school-suite/backend-api/module-entitlements.gs` already implements `lamaSchoolHasModuleGrant_` and `lamaRequireModuleForVerifiedSchool_`; avoid duplicate entitlement implementations. This file must be included in the actual live Apps Script deployment before the route can work.
+- Added POST-only `syllabusAdminReadPlan` route in repository `backend-api/code.gs`, requiring school administrator token verification, an active Examination grant, tenant-scoped school spreadsheet resolution and plan ID. The response includes the stored plan and audit trail, not write capabilities.
+- Added `LamaAPI.getAdminSyllabusPlan(planId)` and a read-only administrator page at `lamastudio-school-suite/portals/school/syllabus-planner.html`. It renders scheduled lessons, plan status and approval audit using textContent (not untrusted HTML).
+- The existing teacher route uses the already-present `lamaSchoolHasModuleGrant_` helper. Both routes remain fail-closed if the backend files have not been installed.
+- **Important:** Administrator page is not yet linked from the verified active school dashboard; create/submit/approve/publish and plan discovery endpoints remain pending. No live Apps Script deployment, production deployment or database modification has occurred. Unit/integration tests have not been verified.

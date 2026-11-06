@@ -189,3 +189,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added FinalMilestoneBank.kt: 180 new question placements, three per subject in each of ten grades, across six subjects. Connected to LearningContent and added FinalMilestoneBankTest for counts, answer structure and coverage.
 - Expected aggregate allLessons question placements: 4,030 (previous 3,850 + 180). This count includes reuse between lesson banks and structured sets, so it is not 4,030 unique questions.
 - GitHub Actions Android CI builds and tests a debug APK on branch develop/lama-kids-learning. Final release readiness requires a successful CI run, device testing, editorial review of age suitability, duplicate prompts and distractors, and a signed release build. No Play Store publishing or production merge without approval.
+
+## 6 November 2026 — CI failure investigation
+- User provided Android CI screenshots: 38 unit tests ran, six failed, with ExceptionInInitializerError at TenQuestionSets.kt:101 cascading to TopicLibraryTest. SDK/Gradle setup succeeded; APK artifact upload skipped because test task failed.
+- Expanded TenQuestionSets.from to draw grade-specific mathematics questions from MathPracticeBank and WordProblemBank, science from ScienceDiscoveryBank, English from ReadingComprehensionBank, then de-duplicate prompts before selecting 20 per subject. This addresses likely insufficient unique question pool; root exception message is not visible in screenshot, so correction remains unverified until CI passes.
+- Do not label release ready until GitHub Actions tests and debug APK pass and device testing completes.

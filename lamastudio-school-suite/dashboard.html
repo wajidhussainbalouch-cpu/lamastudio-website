@@ -1236,6 +1236,9 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
   const attendanceTasks=new Set(['attendance','teachers']);
   const normDate=v=>typeof normalizeAttendanceDate==='function'?normalizeAttendanceDate(v):String(v||'').slice(0,10);
   const validStatus=r=>['present','absent','leave','p','a','l','on leave'].includes(String(r.status||'').trim().toLowerCase());
+  const keys=(r,fields)=>fields.map(k=>String(r?.[k]??'').trim()).filter(Boolean);
+  const rosterKeys={attendance:['id','_id','studentId','enrlNo','enrollmentNo','enrollment'],teachers:['id','_id','teacherId','teacherID','staffId','employeeId']};
+  const recordKeys={attendance:['studentId','student_id','studentID','enrlNo','enrollmentNo','enrollment'],teachers:['teacherId','teacherID','teacher_id','staffId','employeeId']};
   function persist(){try{localStorage.setItem(key,JSON.stringify(saved))}catch(e){}}
   function paint(){let done=0;boxes.forEach(box=>{if(box.checked)done++;box.closest('.daily-checklist-item').classList.toggle('is-complete',box.checked)});const progress=document.getElementById('dailyChecklistProgress');if(progress)progress.textContent=done+' of '+boxes.length+' completed · '+day}
   function updateFromSavedRecords(){
@@ -1252,12 +1255,12 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
      if(hint)hint.textContent=saved[task]?'✓ Manually completed · records not available':'Manual check available · records not available';
      continue;
     }
-    const roster=new Set(people.map(personId).filter(Boolean));
-    const marked=new Set(records.filter(r=>normDate(r.date)===day&&validStatus(r)).map(recordId).filter(Boolean));
-    const matched=[...roster].filter(id=>marked.has(id)).length;
-    const complete=roster.size>0&&matched===roster.size;
+    const roster=people.map(p=>keys(p,rosterKeys[task]));
+    const marked=new Set(records.filter(r=>normDate(r.date)===day&&validStatus(r)).flatMap(r=>keys(r,recordKeys[task])));
+    const matched=roster.filter(ids=>ids.some(id=>marked.has(id))).length;
+    const complete=roster.length>0&&matched===roster.length;
     box.checked=complete||saved[task]===true;
-    if(hint)hint.textContent=complete?'✓ Automatically completed · '+matched+' / '+roster.size+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.size+' saved':'Auto progress: '+matched+' / '+roster.size+' saved · or check manually';
+    if(hint)hint.textContent=complete?'✓ Automatically completed · '+matched+' / '+roster.length+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.length+' saved':'Auto progress: '+matched+' / '+roster.size+' saved · or check manually';
     box.closest('.daily-checklist-item').title=complete?'All roster attendance entries saved': 'You can complete manually or wait for saved records to auto-check';
    }
    paint();

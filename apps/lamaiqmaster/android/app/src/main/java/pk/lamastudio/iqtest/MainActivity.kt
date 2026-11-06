@@ -22,13 +22,14 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val bg = Color(0xFF0C1023)
+private val bg = Color(0xFF080F2B)
 private val accent = Color(0xFFAB8BFF)
-private val card = Color(0xFF1B2140)
+private val card = Color(0xFF1A2548)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,8 +62,8 @@ class MainActivity : ComponentActivity() {
             }
             MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = bg, surface = card)) {
               ModalNavigationDrawer(drawerState = drawerState, drawerContent = {
-                ModalDrawerSheet(drawerContainerColor = card) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ModalDrawerSheet(drawerContainerColor = card, modifier = Modifier.fillMaxWidth(0.88f)) {
+                    Row(modifier = Modifier.fillMaxWidth().background(Brush.horizontalGradient(listOf(Color(0xFF30206C), Color(0xFF102C61)))).padding(18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(60.dp))
                         Column { Text("LAMA IQ TEST", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 19.sp)
                             Text("Brain Training Academy", color = accent, fontSize = 12.sp) }
@@ -90,16 +91,21 @@ class MainActivity : ComponentActivity() {
                 }
               }) {
                 Column(
-                    Modifier.fillMaxSize().background(bg).verticalScroll(rememberScrollState()).padding(22.dp),
+                    Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF111C48), bg, bg))).verticalScroll(rememberScrollState()).padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    TextButton(onClick = { scope.launch { drawerState.open() } }) { Text("☰  Modules & Settings", color = accent) }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(54.dp))
-                        Text("LAMA STUDIO", color = accent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    FilledTonalButton(onClick = { scope.launch { drawerState.open() } }, colors = ButtonDefaults.filledTonalButtonColors(containerColor = Color(0xFF30245F))) { Text("☰  Modules & Settings", color = Color.White) }
+                    Column(modifier = Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF28316E), Color(0xFF17234E), Color(0xFF301A63))), RoundedCornerShape(24.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(72.dp))
+                            Column {
+                                Text("LAMA STUDIO", color = accent, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text("Brain Training Academy", color = Color.LightGray, fontSize = 12.sp)
+                            }
+                        }
+                        Text("Lama IQ Test", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Text("Brain training • Logic • Patterns", color = Color(0xFFE3DAFF), fontSize = 14.sp)
                     }
-                    Text("Lama IQ Test", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Bold)
-                    Text("Brain training • Logic • Patterns", color = Color(0xFFC7C9DD))
                     when {
                         infoPage.isNotEmpty() -> {
                             Text(infoPage, color = Color.White, fontSize = 25.sp)

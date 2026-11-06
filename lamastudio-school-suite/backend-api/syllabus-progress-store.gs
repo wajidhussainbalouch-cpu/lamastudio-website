@@ -81,11 +81,30 @@ var LamaSyllabusProgressStore=(function(){
    // Audit intent before updates; transfer is idempotently recoverable from per-row teacherId.
    audit.getRange(audit.getLastRow()+1,1,1,headers.length).setValues([[schoolId,planId,fromTeacherId,toTeacherId,actorId,reason.trim(),targets.length,now]]);
    SpreadsheetApp.flush();
-   targets.forEach(function(t){
-    var updated=t.data.slice();updated[5]=toTeacherId;updated[6]=now;
-    sh.getRange(t.row,1,1,7).setValues([updated]);
-   });
-   SpreadsheetApp.flush();
+   var applied=[];
+   try{
+    targets.forEach(function(t){
+     var updated=t.data.slice();updated[5]=toTeacherId;updated[6]=now;
+     sh.getRange(t.row,1,1,7).setValues([updated]);
+     applied.push(t);
+    });
+    SpreadsheetApp.flush();
+    // Verify every row before reporting success.
+    targets.forEach(function(t){
+     var stored=sh.getRange(t.row,1,1,7).getValues()[0];
+     if(String(stored[5])!==toTeacherId||stored[3]!==t.data[3]||
+        String(stored[4]||'')!==String(t.data[4]||''))throw Error('Transfer verification failed');
+    });
+   }catch(error){
+    var rollbackErrors=[];
+    applied.reverse().forEach(function(t){
+     try{sh.getRange(t.row,1,1,7).setValues([t.data])}
+     catch(e){rollbackErrors.push(String(e.message||e))}
+    });
+    try{SpreadsheetApp.flush()}catch(e){rollbackErrors.push(String(e.message||e))}
+    if(rollbackErrors.length)throw Error('Transfer incomplete; rollback failed. Administrator must reconcile audit and progress before retrying: '+rollbackErrors.join('; '));
+    throw Error('Transfer failed and rollback attempted: '+String(error.message||error));
+   }
    return {planId:planId,transferred:targets.length,fromTeacherId:fromTeacherId,toTeacherId:toTeacherId,transferredAt:now};
   }finally{lock.releaseLock()}
  }

@@ -7,9 +7,10 @@ var LamaSyllabusProgressStore=(function(){
  'use strict';
  var TAB='_LAMA_SYLLABUS_PROGRESS';
  var HEAD=['schoolId','planId','lessonKey','status','completedAt','teacherId','updatedAt'];
- function sheet(bookId){
+ function sheet(bookId,create){
   var ss=SpreadsheetApp.openById(bookId),sh=ss.getSheetByName(TAB);
-  if(!sh){sh=ss.insertSheet(TAB);sh.getRange(1,1,1,HEAD.length).setValues([HEAD]);sh.setFrozenRows(1)}
+  if(!sh&&create===true){sh=ss.insertSheet(TAB);sh.getRange(1,1,1,HEAD.length).setValues([HEAD]);sh.setFrozenRows(1)}
+  if(!sh)return null;
   var header=sh.getRange(1,1,1,HEAD.length).getValues()[0];
   if(HEAD.some(function(h,i){return header[i]!==h}))throw Error('Unexpected syllabus progress schema');
   return sh;
@@ -30,7 +31,7 @@ var LamaSyllabusProgressStore=(function(){
   var lock=LockService.getScriptLock();
   if(!lock.tryLock(30000))throw Error('Progress store busy');
   try{
-   var sh=sheet(bookId),last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,7).getValues():[],matches=[];
+   var sh=sheet(bookId,true),last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,7).getValues():[],matches=[];
    rows.forEach(function(r,i){if(r[0]===schoolId&&r[1]===plan.planId&&r[2]===lessonKey)matches.push(i+2)});
    if(matches.length>1)throw Error('Duplicate lesson progress rows');
    var now=new Date().toISOString(),row=[schoolId,plan.planId,lessonKey,status,completedAt,teacherId,now];
@@ -41,7 +42,9 @@ var LamaSyllabusProgressStore=(function(){
   }finally{lock.releaseLock()}
  }
  function list(bookId,schoolId,planId){
-  var sh=sheet(bookId),last=sh.getLastRow();
+  var sh=sheet(bookId,false);
+  if(!sh)return [];
+  var last=sh.getLastRow();
   if(last<2)return [];
   if(last>10002)throw Error('Progress index too large; pagination required');
   return sh.getRange(2,1,last-1,7).getValues().filter(function(r){return r[0]===schoolId&&r[1]===planId}).map(function(r){

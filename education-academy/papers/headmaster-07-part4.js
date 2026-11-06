@@ -107,17 +107,17 @@ window.LAMA_PPSC_HM07_4=[
   },
   {
     "id": "HM07-083",
-    "subject": "Data Literacy",
-    "topic": "Percentage points versus relative change",
-    "q": "A school's reading proficiency rate rises from 40% to 50%. By how many percentage points did the rate increase?",
+    "subject": "Set Reasoning",
+    "topic": "Overlapping study groups",
+    "q": "Among 60 candidates, 36 attend mathematics revision, 29 attend English revision, and 14 attend both. How many candidates attend neither revision group?",
     "options": [
-      "10 percentage points",
-      "20 percentage points",
-      "25 percentage points",
-      "50 percentage points"
+      "5 candidates",
+      "9 candidates",
+      "14 candidates",
+      "23 candidates"
     ],
-    "answer": 0,
-    "explanation": "Subtract the two percentages directly: 50% minus 40% equals 10 percentage points. The relative percentage increase would be a different calculation.",
+    "answer": 1,
+    "explanation": "The number attending at least one group is 36 + 29 − 14 = 51. Subtracting from all 60 candidates gives 9 attending neither; the overlap must be subtracted once.",
     "difficulty": "intermediate"
   },
   {

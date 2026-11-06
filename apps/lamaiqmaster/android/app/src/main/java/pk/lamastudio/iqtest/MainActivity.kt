@@ -126,6 +126,7 @@ class MainActivity : ComponentActivity() {
                         }
                         visualMode -> VisualChallengeScreen(level = if (level == 0) 1 else level, onExit = { visualMode = false; selectedModule = "Number Logic"; level = 0 })
                         selectedModule == "Memory" -> MemoryChallengeScreen(onExit = { selectedModule = "Number Logic"; level = 0 })
+                        selectedModule == "Attention" -> AttentionChallengeScreen(onExit = { selectedModule = "Number Logic"; level = 0 })
                         level == 0 -> {
                             Text(selectedModule, color = accent, fontSize = 20.sp)
                             if (selectedModule != "Number Logic") {

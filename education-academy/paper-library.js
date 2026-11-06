@@ -23,7 +23,9 @@
  }
  function selectedJob(){
   const params=new URLSearchParams(location.search);
-  return jobs()?.resolve(params.get('job'))||jobs()?.resolve('teaching:0')||variants()[0]||null;
+  const requested=params.get('job');
+  if(requested)return jobs()?.resolve(requested)||null;
+  return jobs()?.resolve('teaching:0')||variants()[0]||null;
  }
  function activePaper(){
   const selected=selectedJob();
@@ -131,7 +133,7 @@
  window.addEventListener('storage',render);
  window.addEventListener('focus',render);
  window.addEventListener('lama:paper-completed',render);
- window.addEventListener('lama:jobs-updated',()=>{populate();render()});
+ window.addEventListener('lama:jobs-updated',()=>{const fromUrl=jobs()?.fromUrl();if(fromUrl)selected=fromUrl.id;populate();render()});
  window.addEventListener('hashchange',()=>{if(location.hash==='#papers')render()});
  populate();render();
 })();

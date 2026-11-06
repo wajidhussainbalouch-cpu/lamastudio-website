@@ -137,3 +137,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added ConceptReviewBank: 30 new lessons and 150 additional class-level questions, five each for English, Urdu and Science at Nursery, KG and Classes 1–8. All questions include an explanation and rotated answer positions. The 150 concept prompts are class-specific within each subject and use curated definitions.
 - Wired to LearningContent.allLessons; new topics appear in each grade's subject menu. Added ConceptReviewBankTest for coverage, unique answers, valid indices and lesson IDs.
 - This is an additional question bank, NOT a claim of complete grade-level curriculum coverage. Content requires teacher review, particularly for young children's abstract vocabulary and Urdu definitions. CI/build and device validation for these changes are pending. No Vercel, production merge or publishing.
+
+## 6 November 2026 — Applied practice expansion
+- Added `AppliedPracticeBank.kt` with 30 class-specific offline lessons: one each for English, Urdu and Science in Nursery, KG and Classes 1–8, four questions per lesson (120 additional authored question entries).
+- Prompts now include short contextual grammar, comprehension, Urdu usage and science application, rather than only term-definition drills. Integrated into LearningContent.allLessons and topic selection.
+- Added `AppliedPracticeBankTest.kt` for 30-lesson/120-question coverage, answer-option uniqueness and explanations. Tests are committed but CI results have not yet been inspected; do not claim a successful build or APK.
+- Content still needs professional educational and Urdu proofreading, grade appropriateness review, accessibility checks and device QA. No Vercel deployment, production merge or publication.

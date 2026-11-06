@@ -241,3 +241,9 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Added POST-only syllabusTeacherProgress route in code.gs; authenticates teacher, checks Examination entitlement and matches class/subject against published plan. Supports list/save operations.
 - Added LamaAPI.listSyllabusProgress and LamaAPI.saveSyllabusProgress. Teacher diary now displays per-lesson progress controls and feedback when loading a published plan.
 - Caveats: teacher completion dates currently use the browser's UTC date; server-side trusted date policy and progress ownership/section policy need review. No live Apps Script deployment, runtime verification or test execution was performed. School admin progress reporting is not yet integrated.
+
+## Administrator reporting and progress-store safety (6 Nov 2026)
+- Added authenticated school administrator per-plan progress API and browser table for completed, pending and delayed lessons; chapter-level counts are displayed in the administrator page.
+- Changed progress-store reads so a missing progress worksheet returns an empty result without creating a new sheet. Writes still initialize the isolated progress worksheet under a script lock.
+- Added pure reporting helper syllabus-report.js and Node test-syllabus-report.js, configured in the syllabus CI workflow. CI execution has not been verified.
+- Remaining: consolidated school-wide reporting, section/teacher ownership policy, test runs, Apps Script deployment and live integration. No live records or deployments were changed.

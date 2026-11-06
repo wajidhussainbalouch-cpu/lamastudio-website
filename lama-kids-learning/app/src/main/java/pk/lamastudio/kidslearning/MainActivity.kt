@@ -208,7 +208,7 @@ class MainActivity : ComponentActivity() {
          }
         }, modifier = Modifier.fillMaxWidth(), enabled = !gameAnswered && gameInput.isNotBlank()) { Text("Check answer") } }
         if (gameFeedback.isNotBlank()) item { Text(gameFeedback) }
-        item { OutlinedButton(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }, modifier = Modifier.fillMaxWidth()) { Text("Next puzzle →") } }
+        item { OutlinedButton(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }, modifier = Modifier.fillMaxWidth(), enabled = gameAnswered) { Text("Next puzzle →") } }
        } else if (page == "rewards") {
         item { Hero("🏆 My rewards", "Every lesson is a new achievement!") }
         item { Section("⭐ " + stars + " stars collected") }

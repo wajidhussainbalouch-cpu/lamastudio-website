@@ -25,4 +25,28 @@
 <div class="job-buttons"><button id="saveJob" type="submit">Save Job</button> <button id="resetJob" type="button">New Job / Clear</button></div></form>
 <h3>Super Admin managed jobs</h3><p class="muted">Edit or unpublish jobs created here. Existing built-in jobs remain preserved as an offline fallback.</p>
 <div id="adminJobList" class="job-list" aria-live="polite">Loading jobs…</div>
-</section><section class="card"><h2>Candidates & subscription status</h2><label>Search candidate<input id="search" type="search" placeholder="Name or occupation"></label><div class="scroll"><table><thead><tr><th>Candidate</th><th>Occupation</th><th>Gender</th><th>Phone</th><th>Address</th><th>Subscription</th><th>Joined</th></tr></thead><tbody id="candidateRows"></tbody></table></div><small>Read-only initial release. Approval and payment changes require a separately secured server workflow. Candidate passwords are never accessible.</small></section><section class="card"><h2>Question bank</h2><p>Free teaching-administration practice paper: 100 questions / 90 minutes. Additional job-specific banks remain in preparation; no unpublished questions are represented as ready.</p><a href="./index.html#papers">Open academy papers</a></section></div></main><script src="./supabase-config.js"></script><script src="./auth-supabase.js"></script><script src="./admin.js"></script><script src="./admin-jobs.js"></script></body></html>
+</section><section class="card"><h2>Candidates & subscription status</h2><label>Search candidate<input id="search" type="search" placeholder="Name or occupation"></label><div class="scroll"><table><thead><tr><th>Candidate</th><th>Occupation</th><th>Gender</th><th>Phone</th><th>Address</th><th>Subscription</th><th>Joined</th></tr></thead><tbody id="candidateRows"></tbody></table></div><small>Read-only initial release. Approval and payment changes require a separately secured server workflow. Candidate passwords are never accessible.</small></section><section class="card" id="questionBankManager"><h2>Private Question Bank Editor</h2>
+<p>Author, edit and academically review job-specific MCQs. Answers and explanations remain visible only to authorized Super Admins. Saving or approving a question does <strong>not</strong> publish a premium examination.</p>
+<p id="qFeedback" role="status" aria-live="polite">Load questions after administrator sign-in.</p>
+<form id="questionForm"><div class="job-form-grid">
+<label>Target PPSC job *<select name="job_id" id="qJob" required><option value="">Loading managed jobs…</option></select></label>
+<label>Question ID *<input id="qId" name="id" required pattern="[A-Z0-9][A-Z0-9-]{4,79}" maxlength="80" placeholder="EDU-HM-131"></label>
+<label>Subject *<input name="subject" required maxlength="100" placeholder="School Leadership"></label>
+<label>Topic *<input name="topic" required maxlength="120" placeholder="Classroom supervision"></label>
+<label class="wide">Question (at least 30 characters) *<textarea name="question_text" rows="3" required minlength="30" maxlength="1500" placeholder="Write a clear, syllabus-relevant question with only one defensible answer."></textarea></label>
+<label>Option A *<textarea name="option_a" rows="2" required maxlength="400"></textarea></label>
+<label>Option B *<textarea name="option_b" rows="2" required maxlength="400"></textarea></label>
+<label>Option C *<textarea name="option_c" rows="2" required maxlength="400"></textarea></label>
+<label>Option D *<textarea name="option_d" rows="2" required maxlength="400"></textarea></label>
+<label>Correct answer *<select name="answer_index"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+<label>Difficulty *<select name="difficulty"><option value="foundation">Foundation</option><option value="intermediate" selected>Intermediate</option><option value="advanced">Advanced</option></select></label>
+<label class="wide">Evidence-based explanation (at least 40 characters) *<textarea name="explanation" rows="4" required minlength="40" maxlength="2500" placeholder="Why is the answer correct? Explain the principle clearly."></textarea></label>
+<label class="wide">Source / reviewer notes<input name="source_notes" maxlength="800" placeholder="Original scenario; academic review required"></label>
+<label>Editorial status<select name="review_status"><option value="draft">Draft — private</option><option value="in_review">In review — private</option><option value="approved">Academically reviewed — private</option></select></label>
+</div><div class="job-buttons"><button id="qSave" type="submit">Save Question</button><button type="button" id="qReset">New Question / Clear</button></div></form>
+<h3>Question library</h3><p class="muted">Showing the latest 200 private questions. Use the job selector above to narrow the list; no questions are exposed to candidates.</p>
+<label>Search questions<input id="qSearch" type="search" placeholder="Search by subject, question ID, topic or wording"></label>
+<div id="qStats" aria-live="polite"></div><div id="qList" class="job-list"></div>
+</section>
+<section class="card" id="registrationManager"><h2>Candidate Email Verification</h2><p>Read-only Supabase Auth status. Candidates must confirm their own email link; an administrator cannot safely confirm their address for them.</p><p id="registrationSummary" role="status">Loading registration status…</p>
+<div class="scroll"><table><thead><tr><th>Candidate</th><th>Email</th><th>Verification</th><th>Last sign-in</th></tr></thead><tbody id="registrationRows"></tbody></table></div></section></div></main><script src="./supabase-config.js"></script><script src="./auth-supabase.js"></script><script src="./admin.js"></script><script src="./admin-jobs.js"></script><script src="./admin-question-bank.js"></script><script src="./admin-registrations.js"></script></body></html>

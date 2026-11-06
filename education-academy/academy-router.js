@@ -4,7 +4,10 @@
  const views=new Set(['subscription','account','performance','studyPlanner','papers','resources','paper','jobDetail']);
  const toView=()=>{
   const hash=decodeURIComponent(location.hash.slice(1));
-  const view=views.has(hash)?hash:'jobs';
+  let view=views.has(hash)?hash:'jobs';
+  if(view==='paper'&&window.LamaPpscPaperLibrary&&!window.LamaPpscPaperLibrary.activePaper()){
+   view='papers';history.replaceState(null,'',location.pathname+location.search+'#papers');
+  }
   const detail=document.getElementById('jobDetail');
   if(view==='jobDetail'&&detail&&detail.hidden){document.body.dataset.view='jobs';return;}
   document.body.classList.add('academy-routed');

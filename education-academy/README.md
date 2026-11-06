@@ -55,3 +55,12 @@ for f in education-academy/*.js education-academy/*.cjs; do node --check "$f"; d
 ```
 
 These checks detect structural issues but **do not establish academic accuracy or production security**.
+
+## Job-wise paper library (6 November 2026)
+
+- `jobs.js` is the single public preparation-job catalog; the Papers & Examinations job dropdown is derived from it (including the two school-head post variants).
+- `paper-library.js` discovers only explicitly public, full-length free papers. The legacy `DEMO-01` educational foundation set remains available for teaching administration. To publish another free paper, add an academically reviewed 100-item object to `LAMA_PPSC_PAPERS` with `jobIds: ["job-id"]`, `access: "free"`, `publishStatus: "public"`, and `reviewStatus: "approved"`. Its questions require unique IDs, clear answers and substantive explanations. Run the paper validation and editorial review before publishing.
+- Other jobs display syllabus and planning links with an honest unpublished status; no teaching paper is mislabelled for another profession. Only public papers are shipped to visitors; do not put premium answer keys in public JS files.
+- Paper states come from existing local `lama_ppsc_attempt_<paperId>` and `lama_ppsc_history_v1` records. Saved scores, in-progress timers and previous answers are not overwritten by the new library. Backups remain available under My Scores.
+- Job track availability does **not** mean the PPSC vacancy is open or the case-specific syllabus is verified. User data is browser-local unless the configured and authenticated cloud attempt API separately reports a successful save.
+- The 500-paper figure is a roadmap, not a published paper count. Subscription activation and secure entitlement checks must be completed server-side before paid content is released.

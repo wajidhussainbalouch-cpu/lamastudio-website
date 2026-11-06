@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Latest Headmaster/Headmistress question-bank milestone — Paper 11 (6 November 2026)
+
+**Paper 11 completed:** `HM-2026-P11` contains 100 original Headmaster/Headmistress free practice MCQs (`HM11-001`–`HM11-100`), each with four choices and explanations, in four 25-question files. The Academy source registers **11 separate papers, 1,100 public practice questions**, 90-minute individual attempts, score/history tracking and post-submission answer explanations/printable answer key. Papers 1–10 and all existing candidate records are preserved. The exam, print, review and PWA source files are integrated; offline cache is `lama-ppsc-preview-v66`.
+
+**Supabase:** Inserted 100 Paper 11 private `draft` questions without replacing previous records; the protected teaching editor bank now has **1,030 unique private questions / 1,030 pending editorial drafts**, with no human-approved records. Automated checks screened the new items against 930 older private stems plus Paper 1, corrected five problematic items, and validated 100 IDs, stems, topics and four answer options. **GitHub Actions passed** including Paper 11, global registry/answer review and backward compatibility. Human academic review and official case-specific PPSC syllabus verification remain outstanding. Free client JavaScript contains answer keys, so local submission gating is a study-only feature, not secure paid examination delivery.
+
+**Read [PAPER_11_RELEASE.md](./PAPER_11_RELEASE.md)** for the full release details and the next **Paper 12** instructions (`HM12-001`–`HM12-100`, `HM-2026-P12`). Keep GitHub `main` authoritative, avoid destructive edits, and do **not** initiate a manual Vercel deployment under the existing quota restriction. Verify the actual production SHA and Android Chrome behavior separately.
+
+
 ## Most recent content — Headmaster/Headmistress Paper 10 (6 November 2026)
 
 **Paper 10** (`HM-2026-P10`) is completed in GitHub source with 100 original free-practice MCQs `HM10-001`–`HM10-100`, each with four answer choices, correct response and explanation. The teaching practice library now includes **10 separate 100-question papers / 1,000 total public MCQs** for Headmaster/Headmistress and Senior Headmaster/Headmistress study tracks. The new paper has a **90-minute** independent attempt, saved result, question-only print view and post-submission answer explanations plus printable answer key. Papers 1–9 and prior marks are preserved. Public PWA cache version: `lama-ppsc-preview-v65`.

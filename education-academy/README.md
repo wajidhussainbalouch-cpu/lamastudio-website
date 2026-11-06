@@ -1,5 +1,16 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Final integration checks — 6 November 2026
+
+- **Admin identity:** The previously designated academy owner email was matched to the connected Gmail account and to its existing Supabase Auth UID, then provisioned with `super_admin` in `ppsc_admin_members`. The Gmail confirmation message was confirmed delivered, but **the owner has not yet clicked the confirmation link** and the Auth account remains unconfirmed. Admin sign-in is blocked until the user completes that step.
+- **Public job test:** the actual Headmaster/Headmistress preparation track is published as a managed Supabase job, status **unverified** (not an open vacancy). Using database transactions that were rolled back, an authenticated Super Admin role successfully inserted a test draft job; an ordinary candidate role was rejected by RLS. No test job remains.
+- **Candidate verification:** private status mirror has two registrations, one confirmed and one pending; one candidate profile was created for the confirmed account. `admin-registrations.js` displays read-only status. Signup now requests an academy `confirm.html` redirect and includes a **Resend confirmation email** option. Configure the Supabase redirect allow-list and custom SMTP before unrestricted release. The observed email was sent by **Supabase Auth**, not an academy-branded sender.
+- **Private MCQs:** 30 new Headmaster/Headmistress drafts across 11 subjects. Correct options were distributed across A–D (7 / 8 / 9 / 6) with answer-text preservation checked. They are private and not a second published 100-MCQ exam. The private Super Admin editor supports draft/review, JSON batch imports of up to 100 and local export of the last loaded 200.
+- **PWA:** `admin.webmanifest`, `admin-install.js` and the secure login page provide a private admin installation path; the service worker caches only public academy shell assets, never private candidate or question bank API responses. **Android install and live mobile UX remain unverified.**
+- **Tests:** Supabase role simulations, public visibility checks, answer-key rotation QA and GitHub Actions regression tests passed. Actual candidate browser signup, email-confirmation click, Super Admin UI sign-in, SMTP branding and live website deploy still have user/external dependencies. Do not claim these gates completed.
+- **Deployment:** Vercel's latest inspected READY production deployment referenced an earlier GitHub commit, not all of the changes above. No manual deployment was triggered because of the earlier build-limit constraint. Update `main` and verify the live domain after deployment resumes.
+
+
 ## Verified implementation status — 6 November 2026 (latest)
 
 **Super Admin:** One academy Auth account associated with the designated owner mailbox was independently matched to the connected Gmail account and provisioned in the protected `ppsc_admin_members` registry. The account is **not yet email-confirmed** and cannot sign in until its 6 November Supabase confirmation email is opened and confirmed. No Auth confirmation was bypassed. Another existing candidate account is confirmed.

@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Paper 3 completed — 6 November 2026 (newest academy question-bank status)
+
+**Headmaster / Headmistress Paper 3** (`HM-2026-P03`) now contains **100 new original free-practice questions** (HM03-001–HM03-100), a separate 90-minute exam state, post-submission marks, per-question answer/explanation review and printable answer key. Papers 1 and 2 remain intact: **3 free school-head papers / 300 public practice questions** in the GitHub source.
+
+The 100 additional questions are also saved as private **Supabase editorial drafts** under the `teaching` job. The private bank contains **230 unique question stems**, with **0 independently human-approved** items. Do not represent automated QA as academic approval or the papers as an official PPSC syllabus. Public free JavaScript contains the keys, so post-submission hiding is a user-experience gate and is not a secure premium exam design.
+
+GitHub CI now tests Paper 3's item counts, answer positions, source originality, question-only printing, answer-key unlock, job links and PWA loading; all older exam records and school modules are preserved. Read [PAPER_03_RELEASE.md](./PAPER_03_RELEASE.md) first for the next `Continue` (Paper 4, IDs HM04-001–HM04-100). Latest source commits and automated testing do not, by themselves, establish whether the current live Vercel build or mobile Chrome has been updated.
+
+
 ## Latest verified Paper 2 development — 6 November 2026
 
 A **second original Headmaster / Headmistress free practice paper (HM-2026-P02)** has now been authored with **100 new MCQs** (HM02-001 to HM02-100), 90-minute timer, post-submission answer key, explanations, and print-to-PDF via the browser. Both school-head preparation options display Paper 1 and Paper 2. Existing Paper 1, local scores and other academy modules are retained.

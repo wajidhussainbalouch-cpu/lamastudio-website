@@ -6,7 +6,7 @@ import org.junit.Test
 class MathPracticeBankTest {
     @Test fun allQuestionsHaveCorrectAnswer() {
         assertEquals(40, MathPracticeBank.lessons.size)
-        assertEquals(400, MathPracticeBank.lessons.sumOf { it.questions.size })
+        assertEquals(800, MathPracticeBank.lessons.sumOf { it.questions.size })
         MathPracticeBank.lessons.forEach { lesson ->
             lesson.questions.forEach { question ->
                 assertEquals(3, question.answers.size)

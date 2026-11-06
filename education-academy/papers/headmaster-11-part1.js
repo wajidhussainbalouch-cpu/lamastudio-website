@@ -197,17 +197,17 @@ window.LAMA_PPSC_HM11_1=[
  },
  {
   "id": "HM11-014",
-  "subject": "Education Ethics",
-  "topic": "Vendor gifts during tender",
-  "q": "A technology vendor offers the procurement chair an expensive personal gift while bids are still under consideration. Which response is most appropriate?",
+  "subject": "Procurement",
+  "topic": "Verification of warranty obligations",
+  "q": "A company offers computer equipment with a five-year warranty but refuses to state what repairs or replacements are covered. What should the purchasing committee require?",
   "options": [
-   "Accept it because evaluation has not finished",
-   "Ask for a second gift for another committee member",
-   "Decline or disclose the offer and apply conflict-of-interest and procurement integrity rules",
-   "Record the gift as school revenue and keep it privately"
+   "Accept the verbal promise as a complete contract",
+   "Assume all physical damage will be covered forever",
+   "Obtain written warranty scope, exclusions, service response and remedy terms before award",
+   "Remove warranty considerations from technical evaluation"
   ],
   "answer": 2,
-  "explanation": "Personal benefits during an active tender can compromise impartiality or create perceived influence. Disclosure and impartial procedures protect the decision.",
+  "explanation": "A written warranty defines enforceable coverage, exclusions and service responsibilities. An undefined verbal promise cannot reliably support lifecycle purchasing decisions.",
   "difficulty": "advanced"
  },
  {

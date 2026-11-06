@@ -22,10 +22,7 @@
  const heading=document.getElementById('heading'),message=document.getElementById('message');
  if(!Object.prototype.hasOwnProperty.call(labels,view)){location.replace('./index.html');return}
  document.title='LAMA PPSC · '+labels[view];heading.textContent=labels[view];
- // Non-teaching job tracks must not silently display the Headmaster paper.
- if(view==='paper'&&job&&job!=='teaching'&&!job.startsWith('teaching:')){
-  const target=new URL('./index.html',location.href);target.searchParams.set('job',job);target.hash='papers';location.replace(target.href);return;
- }
+ // The main router verifies that the requested job has a published paper.
  // Navigate to the existing single-page academy router. No nested iframe or double padding.
  const target=new URL('./index.html',location.href);if(job)target.searchParams.set('job',job);target.hash=encodeURIComponent(view);location.replace(target.href);
 })();

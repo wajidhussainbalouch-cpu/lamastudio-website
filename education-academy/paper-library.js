@@ -116,7 +116,7 @@
  select.addEventListener('change',()=>{
   selected=select.value;
   const url=new URL(location.href);url.searchParams.set('job',selected);url.searchParams.delete('paper');
-  history.replaceState(null,'',url.href);
+  window.history.replaceState(null,'',url.href);
   render();
  });
  filter.addEventListener('change',render);

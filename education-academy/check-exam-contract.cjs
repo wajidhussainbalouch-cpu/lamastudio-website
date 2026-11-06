@@ -5,7 +5,7 @@
 const fs=require('node:fs'),path=require('node:path');
 const root=__dirname;
 const read=name=>fs.readFileSync(path.join(root,name),'utf8');
-const html=read('index.html'),engine=read('engine.js'),worker=read('sw.js');
+const html=read('index.html'),engine=read('engine.js'),worker=read('sw.js'),account=read('candidate-account-ui.js'),library=read('paper-library.js');
 const errors=[];
 function requireMatch(ok,message){if(!ok)errors.push(message)}
 for(const id of ['backupResults','restoreResults','startExam','submitExam','restartExam','examStatusBar','examProgress','nextUnanswered','nextFlagged','candidateHistory']){
@@ -19,7 +19,10 @@ requireMatch(engine.includes('attempt.flags[q.id]'),'Review flags must persist')
 requireMatch(engine.includes("Math.max(0,Math.ceil((paper.minutes*60000-(Date.now()-attempt.startedAt))/1000))"),'Exam timer remaining-time expression must be syntactically valid');
 requireMatch(engine.includes("format:'lama-ppsc-score-backup'"),'Local score backup format missing');
 requireMatch(engine.includes('recordAttempt()'),'Completed attempts must be recorded');
-requireMatch(html.includes('disabled>Create Account'),'Preview registration must remain disabled until backend exists');
+requireMatch(html.includes('id="candidateSignUp"')&&account.includes('const enabled=Boolean(state&&state.configured)'),'Candidate signup must be gated by provider configuration');
+requireMatch(html.includes('id="paperJob"')&&html.includes('id="paperStateFilter"'),'Paper library job and progress controls missing');
+requireMatch(library.includes("window.LamaPpscPaperLibrary=api"),'Published paper catalog is not registered');
+requireMatch(worker.includes("'./paper-library.js'"),'PWA must include job-wise paper catalog');
 requireMatch(worker.includes('const allowed=new Set('),'Service worker must use public asset allowlist');
 requireMatch(worker.includes("request.headers.has('authorization')"),'Service worker must reject authenticated requests');
 requireMatch(!/caches\.open\(CACHE\).*put\(request/i.test(worker.replace(/allowed\.has\(url\.pathname\)/g,''))||worker.includes('!allowed.has(url.pathname)'),'Cache write must be restricted to allowed paths');

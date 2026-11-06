@@ -1,5 +1,12 @@
 # Headmaster / Headmistress Paper 13 Release
 
+## Live website publication blocker — 6 November 2026
+
+A production deployment was explicitly attempted for the tested GitHub commit `33aef0c805a2b1d3058c1db69bbfd4142abe2112`, targeted to Vercel project `lamastudio-website` on the connected account. Vercel rejected it with **HTTP 402**, code **`api-deployments-free-per-day`**, stating the Hobby account exceeded 100 daily deployments and returning `retryAfter=86400` seconds. **No new production deployment resulted.** The latest READY production SHA seen prior to this attempt was `a4ea406bf940734da3be71e8c59691a61428b7c4`, earlier than Paper 13. Therefore Paper 13 is **not yet verified live on the custom domain**.
+
+When the Vercel limit resets or the user resolves the quota, deploy the latest reviewed GitHub `main` once (not every intermediary commit), confirm that the deployment reports `READY` and the exact main commit, and check the public `/education-academy/` paper selector and Paper 13 attempt/print/answer-key workflow on mobile. Do not repeat deployment attempts before the reset. Source, Supabase and academic-review statuses are unaffected.
+
+
 Completed 6 November 2026. Paper ID: `HM-2026-P13`; items: `HM13-001`–`HM13-100`.
 
 **Status:** Original LAMA educational practice, free. Automated structural and overlap checks passed; human academic review and official PPSC syllabus mapping remain pending.

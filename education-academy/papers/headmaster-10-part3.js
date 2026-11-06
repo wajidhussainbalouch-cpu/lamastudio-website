@@ -19,7 +19,7 @@ window.LAMA_PPSC_HM10_3=[
   "id": "HM10-052",
   "subject": "Educational Measurement",
   "topic": "Standard error from variance",
-  "q": "A sample of pupil scores has a sample standard deviation of 18 and contains 36 independent observations. What is the estimated standard error of its mean?",
+  "q": "In a random sample of 36 independent classroom observation durations, the measured standard deviation is 18 minutes. What is the estimated standard error of the mean duration?",
   "options": [
    "6",
    "3",
@@ -27,7 +27,7 @@ window.LAMA_PPSC_HM10_3=[
    "0.5"
   ],
   "answer": 1,
-  "explanation": "The standard error of the mean is s divided by the square root of n. With s=18 and n=36, the result is 18/6 = 3.",
+  "explanation": "For independent measurements, standard error equals the sample standard deviation divided by the square root of the sample size: 18/√36 = 18/6 = 3 minutes.",
   "difficulty": "intermediate"
  },
  {
@@ -184,7 +184,7 @@ window.LAMA_PPSC_HM10_3=[
   "id": "HM10-063",
   "subject": "Statistics",
   "topic": "Mean absolute deviation",
-  "q": "For scores 2, 4, 6, 8 and 10, what is the mean absolute deviation about their arithmetic mean?",
+  "q": "Five printing jobs take 2, 4, 6, 8 and 10 minutes. What is the mean of their absolute deviations from the average printing time?",
   "options": [
    "2.4",
    "2",
@@ -192,7 +192,7 @@ window.LAMA_PPSC_HM10_3=[
    "4"
   ],
   "answer": 0,
-  "explanation": "The mean is 6. Absolute deviations are 4, 2, 0, 2 and 4; their sum is 12. Dividing by five yields 2.4.",
+  "explanation": "Average printing time is 6 minutes. Absolute deviations are 4, 2, 0, 2 and 4 minutes, totaling 12; the mean absolute deviation is 12/5 = 2.4 minutes.",
   "difficulty": "intermediate"
  },
  {

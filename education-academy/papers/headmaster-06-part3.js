@@ -107,17 +107,17 @@ window.LAMA_PPSC_HM06_3=[
  },
  {
   "id": "HM06-058",
-  "subject": "Data Interpretation",
-  "topic": "Absolute percentage points",
-  "q": "A school's daily attendance rate rises from 76% to 82%. What is the increase measured in percentage points?",
+  "subject": "Mathematics",
+  "topic": "Triangle garden area",
+  "q": "A school plans a triangular flower bed with a base of 14 metres and a perpendicular height of 9 metres. What is the bed's area?",
   "options": [
-   "Approximately 7.9 points",
-   "6 percent of the original rate",
-   "82 percentage points",
-   "6 percentage points"
+   "23 square metres",
+   "126 square metres",
+   "45 square metres",
+   "63 square metres"
   ],
   "answer": 3,
-  "explanation": "Percentage-point change subtracts the reported percentages directly: 82 − 76 = 6 percentage points. Relative percentage growth is a different quantity.",
+  "explanation": "The area of a triangle is one-half of base multiplied by perpendicular height: (14 × 9)/2 = 63 square metres.",
   "difficulty": "foundation"
  },
  {

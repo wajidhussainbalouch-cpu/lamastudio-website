@@ -123,16 +123,16 @@ window.LAMA_PPSC_HM12_2=[
  {
   "id": "HM12-034",
   "subject": "Mathematics Pedagogy",
-  "topic": "Fraction equivalence reasoning",
-  "q": "A learner says 2/3 and 4/6 cannot be equal because their numerators differ. Which demonstration is most appropriate?",
+  "topic": "Rational numbers between fractions",
+  "q": "A learner believes there is no fraction strictly between one-third and one-half because the denominators are consecutive. Which example disproves the claim?",
   "options": [
-   "Compare only the printed size of the digits",
-   "Partition equal-sized rectangles into thirds and sixths and show both fractions shade the same area",
-   "Add the numerators and denominators",
-   "Replace the problem with decimals only"
+   "Five-twelfths, which lies strictly between one-third and one-half",
+   "Two-thirds, which is larger than one-half",
+   "One-sixth, which is smaller than one-third",
+   "Three-thirds, which equals one"
   ],
-  "answer": 1,
-  "explanation": "Equivalent fractions represent the same proportion of a common whole even with different numerator and denominator values. Area models make this visible.",
+  "answer": 0,
+  "explanation": "Using twelfths, one-third is 4/12 and one-half is 6/12. The fraction 5/12 lies between them, showing there are rational values between the two.",
   "difficulty": "foundation"
  },
  {

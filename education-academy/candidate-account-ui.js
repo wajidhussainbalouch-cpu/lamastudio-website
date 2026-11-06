@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(tabs){tabs.addEventListener('click',e=>{const b=e.target.closest('button[data-account-tab]');if(b)showTab(b.dataset.accountTab)});showTab('signup')}
 
  const formData=form=>Object.fromEntries(new FormData(form).entries());
+ document.querySelectorAll('[data-password-toggle]').forEach(button=>button.addEventListener('click',()=>{const input=button.parentElement.querySelector('input');const visible=input.type==='password';input.type=visible?'text':'password';button.textContent=visible?'Hide':'Show';button.setAttribute('aria-pressed',String(visible));button.setAttribute('aria-label',visible?'Hide password':'Show password')}));
  const refresh=()=>{
   const state=auth&&auth.state();
   const enabled=Boolean(state&&state.configured);
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const details=auth.state().user;
     const meta=details&&details.user_metadata||{};
     const fullName=String(meta.full_name||'').trim();
-    if(fullName.length>=2&&fullName.length<=120)await auth.createProfile({displayName:fullName,occupation:String(meta.occupation||'').slice(0,120)});
+    if(fullName.length>=2&&fullName.length<=120)await auth.createProfile({displayName:fullName,occupation:String(meta.occupation||'').slice(0,120),gender:meta.gender,phone:meta.phone,address:meta.address,photoUrl:meta.photo_url});
    }
   }catch(e){/* Sign-in remains valid if profile read is temporarily unavailable. */}
  },'Signed in successfully. Your cloud practice history is available below.');

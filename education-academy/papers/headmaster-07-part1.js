@@ -335,18 +335,18 @@ window.LAMA_PPSC_HM07_1=[
   },
   {
     "id": "HM07-023",
-    "subject": "English Grammar",
-    "topic": "Subject-verb agreement",
-    "q": "Choose the sentence with correct subject-verb agreement for a formal school notice.",
+    "subject": "English Syntax",
+    "topic": "Inversion after only after",
+    "q": "Which sentence correctly uses inversion after the introductory expression 'Only after the hall was checked'?",
     "options": [
-      "Each of the teachers have submitted their monthly report.",
-      "Each of the teachers are submitting their monthly report.",
-      "Each of the teachers were submitting their monthly report.",
-      "Each of the teachers has submitted their monthly report."
+      "Only after the hall was checked did the candidates enter.",
+      "Only after the hall was checked the candidates entered.",
+      "Only after the hall checked did the candidates entered.",
+      "Only after did the hall was checked candidates enter."
     ],
-    "answer": 3,
-    "explanation": "The grammatical subject is the singular indefinite pronoun 'Each', not the plural noun in the prepositional phrase. It therefore takes 'has' in the present perfect.",
-    "difficulty": "intermediate"
+    "answer": 0,
+    "explanation": "A fronted restrictive expression such as 'Only after' normally triggers subject–auxiliary inversion in the main clause: 'did the candidates enter,' with the base verb after did.",
+    "difficulty": "advanced"
   },
   {
     "id": "HM07-024",

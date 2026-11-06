@@ -171,7 +171,7 @@ class MainActivity : ComponentActivity() {
           OutlinedButton(
            onClick = { if (answer == -1) { answer = i; feedback(QuizEngine.isCorrect(question, i)) } },
            modifier = Modifier.fillMaxWidth(),
-           colors = ButtonDefaults.outlinedButtonColors(containerColor = if (chosen) Color(0xFFDCEEFF) else Color.White),
+           colors = ButtonDefaults.outlinedButtonColors(containerColor = if (answer >= 0 && i == question.correctIndex) Color(0xFFB7E9C6) else if (chosen) Color(0xFFFFC9C9) else Color.White),
            shape = RoundedCornerShape(16.dp)
           ) { Text(question.answers[i], Modifier.padding(6.dp)) }
          }

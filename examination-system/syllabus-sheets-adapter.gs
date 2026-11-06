@@ -110,5 +110,30 @@ var LamaSyllabusSheetStore = (function () {
       return {schoolId:schoolId, planId:planId, version:stored.plan.version, status:stored.plan.status};
     });
   }
-  return {initialize:initialize, read:read, create:create, transition:transition};
+  function list(spreadsheetId, schoolId, filter) {
+    requireId(schoolId, 'School ID');
+    var tab = tabFor(spreadsheetId, false);
+    var last = tab.getLastRow();
+    if (last < 2) return [];
+    if (last > 5002) throw Error('Syllabus index too large; pagination required');
+    var rows = tab.getRange(2, 1, last - 1, 3).getValues();
+    var found = {}, result = [];
+    rows.forEach(function(row) {
+      if (row[0] !== schoolId) return;
+      var planId = String(row[1]);
+      if (found[planId]) throw Error('Duplicate syllabus plan rows');
+      found[planId] = true;
+      var record = JSON.parse(row[2]), plan = record && record.plan;
+      if (!plan || plan.schoolId !== schoolId || plan.planId !== planId ||
+          !Array.isArray(record.audit)) throw Error('Corrupt syllabus plan record');
+      if (filter && filter.status && plan.status !== filter.status) return;
+      if (filter && filter.classId && String(plan.classId).trim().toLowerCase() !== String(filter.classId).trim().toLowerCase()) return;
+      if (filter && filter.subjectId && String(plan.subjectId).trim().toLowerCase() !== String(filter.subjectId).trim().toLowerCase()) return;
+      result.push({planId:plan.planId, schoolId:plan.schoolId, sessionId:plan.sessionId,
+        classId:plan.classId, subjectId:plan.subjectId, status:plan.status,
+        version:plan.version, lessonCount:plan.scheduled.length});
+    });
+    return result;
+  }
+  return {initialize:initialize, read:read, list:list, create:create, transition:transition};
 })();

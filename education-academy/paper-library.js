@@ -10,11 +10,24 @@
  const variants=()=>jobs()?.options()||[];
  const jobId=id=>String(id||'').split(':')[0];
  const isPublic=paper=>Boolean(paper&&typeof paper.id==='string'&&Array.isArray(paper.questions)&&paper.questions.length===100&&Number.isInteger(paper.minutes)&&paper.minutes>0&&(paper.id===LEGACY_PUBLIC_ID||(paper.access==='free'&&paper.publishStatus==='public'&&(paper.reviewStatus==='approved'||(paper.reviewStatus==='automated-checked'&&paper.qaStatus==='pass'&&paper.practiceOnly===true)))));
- const list=()=>Array.isArray(window.LAMA_PPSC_PAPERS)?window.LAMA_PPSC_PAPERS.filter(isPublic):[];
- const forJob=id=>list().filter(paper=>{
-  const assigned=Array.isArray(paper.jobIds)?paper.jobIds:(paper.id===LEGACY_PUBLIC_ID?['teaching']:[]);
-  return assigned.some(value=>jobId(value)===jobId(id));
- });
+ // The owner's fixed paper ceiling is enforced independently for each job family.
+ // Job variants (e.g. teaching:0 and teaching:1) share the same family and count.
+ const MAX_PAPERS_PER_JOB=20;
+ const candidates=()=>Array.isArray(window.LAMA_PPSC_PAPERS)?window.LAMA_PPSC_PAPERS.filter(isPublic):[];
+ const assignedJobs=paper=>[...new Set((Array.isArray(paper.jobIds)?paper.jobIds:(paper.id===LEGACY_PUBLIC_ID?['teaching']:[])).map(jobId).filter(Boolean))];
+ const forJob=id=>candidates().filter(paper=>assignedJobs(paper).includes(jobId(id))).slice(0,MAX_PAPERS_PER_JOB);
+ // Only expose papers occupying an allowed job slot. The source registry is never deleted.
+ const list=()=>{
+  const counts=new Map();
+  return candidates().filter(paper=>{
+   let allowed=false;
+   for(const id of assignedJobs(paper)){
+    const count=counts.get(id)||0;
+    if(count<MAX_PAPERS_PER_JOB){counts.set(id,count+1);allowed=true}
+   }
+   return allowed;
+  });
+ };
  const find=id=>list().find(paper=>paper.id===id)||null;
  function coverage(id){
   const counts=new Map();
@@ -47,7 +60,7 @@
   if(latest||attempt&&attempt.submitted)return {state:'completed',last:latest,attempts:rows.length};
   return {state:'not-started',last:null,attempts:0};
  }
- const api=Object.freeze({list,forJob,find,coverage,selectedJob,activePaper,history,progress});
+ const api=Object.freeze({list,forJob,find,coverage,selectedJob,activePaper,history,progress,maxPapersPerJob:MAX_PAPERS_PER_JOB});
  window.LamaPpscPaperLibrary=api;
  if(typeof document==='undefined')return;
  const select=document.getElementById('paperJob'),filter=document.getElementById('paperStateFilter');
@@ -68,7 +81,7 @@
   const options=variants();
   select.replaceChildren();
   for(const job of options){
-   const opt=element('option',job.label+(forJob(job.id).length?' · '+forJob(job.id).length+' available':' · awaiting paper'));
+   const opt=element('option',job.label+(forJob(job.id).length?' · '+forJob(job.id).length+' of '+MAX_PAPERS_PER_JOB+' available':' · awaiting paper'));
    opt.value=job.id;select.append(opt);
   }
   if(!options.length){select.append(element('option','No jobs found'));select.disabled=true;selected='';return}
@@ -88,10 +101,10 @@
   const subjects=job?coverage(job.id):[];
   if(subjects.length)for(const entry of subjects)coverageArea.append(element('span',entry.subject+' · '+entry.count+' MCQs','paper-topic-chip'));
   else coverageArea.append(element('p','No published questions for this job yet. Preparation topics are available below.','muted'));
-  for(const [value,label] of [[available.length,'Published papers'],[completed,'Completed'],[started,'In progress'],[available.length-completed-started,'Not started']]){
+  for(const [value,label] of [[available.length+'/'+MAX_PAPERS_PER_JOB,'Published papers'],[completed,'Completed'],[started,'In progress'],[available.length-completed-started,'Not started']]){
    const cell=element('div',undefined,'paper-stat');cell.append(element('strong',value),element('span',label));stats.append(cell);
   }
-  summary.textContent=job?job.label+' · '+(job.category||'PPSC')+' · '+available.length+' full-length public paper(s) currently available.':'Select a preparation job.';
+  summary.textContent=job?job.label+' · '+(job.category||'PPSC')+' · '+available.length+' of '+MAX_PAPERS_PER_JOB+' maximum full-length public papers available.':'Select a preparation job.';
   root.replaceChildren();
   const visible=details.filter(entry=>filter.value==='all'||filter.value===entry.state.state||(filter.value==='in-progress'&&entry.state.state==='expired'));
   visible.forEach(({paper,state},i)=>{
@@ -123,7 +136,7 @@
    empty.append(makeLink('Create study plan',urlFor('studyPlanner',job),true));
    root.append(empty);
   }else if(!visible.length){root.append(element('p','No papers match this status filter. Choose All papers to see available practice.','library-empty'))}
-  helper.textContent='Paper availability is separate from PPSC vacancy status. This is a preparation library, not an official PPSC examination or an active-recruitment announcement. Results and unfinished attempts are retained in this browser; back up scores before changing devices. Planned premium papers are not live.';
+  helper.textContent='Each preparation job is limited to '+MAX_PAPERS_PER_JOB+' published papers. Paper availability is separate from PPSC vacancy status. This is a preparation library, not an official PPSC examination or an active-recruitment announcement. Results and unfinished attempts are retained in this browser; back up scores before changing devices. Planned premium papers are not live.';
  }
  select.addEventListener('change',()=>{
   selected=select.value;

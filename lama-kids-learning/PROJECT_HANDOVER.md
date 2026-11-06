@@ -143,3 +143,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Prompts now include short contextual grammar, comprehension, Urdu usage and science application, rather than only term-definition drills. Integrated into LearningContent.allLessons and topic selection.
 - Added `AppliedPracticeBankTest.kt` for 30-lesson/120-question coverage, answer-option uniqueness and explanations. Tests are committed but CI results have not yet been inspected; do not claim a successful build or APK.
 - Content still needs professional educational and Urdu proofreading, grade appropriateness review, accessibility checks and device QA. No Vercel deployment, production merge or publication.
+
+## 6 November 2026 — Ten sets of ten per level
+- `TenQuestionSets.kt` adds 100 structured practice lessons across Nursery, KG, Classes 1–8: 10 sets per grade, exactly 10 questions each, for 1,000 question placements total. Subject allocation per grade: English 20, Urdu 20, Mathematics 20, Science 20, General Knowledge 10, Computer Basics 10.
+- The 80 English/Urdu/Math/Science questions per grade are selected from existing question banks and are not all newly authored; prompts are deduplicated within each subject's 20-question selection. General Knowledge and Computer Basics each have 30 authored questions divided into three age bands and reused across grades within each band. Therefore do not claim 1,000 wholly unique questions.
+- Both new subjects are exposed in MainActivity subject selection; lessons are available through LearningContent.allLessons. Added TenQuestionSetsTest to assert count, uniqueness within each set and answer structure.
+- Tests are written but GitHub Actions results and installation of this revision have not been checked. Educational accuracy, Urdu proofreading, accessibility and grade-by-grade curriculum alignment still require review. No deployment, merge or publication.

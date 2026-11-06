@@ -139,7 +139,7 @@ class MainActivity : ComponentActivity() {
           }
          }
         }
-        item { Button(onClick = { page = "game"; game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }, modifier = Modifier.fillMaxWidth()) { Text("🎮 Play Math Challenge") } }
+        item { Button(onClick = { page = "game"; game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }, modifier = Modifier.fillMaxWidth()) { Text("🎮 Play Math Challenge") } }
        } else if (page == "topics") {
         item { Hero("📚 " + subject + " topics", grade + " • Choose a topic to start a lesson") }
         val available = LearningContent.forGradeAndSubject(grade, subject)
@@ -208,7 +208,7 @@ class MainActivity : ComponentActivity() {
          }
         }, modifier = Modifier.fillMaxWidth(), enabled = !gameAnswered && gameInput.isNotBlank()) { Text("Check answer") } }
         if (gameFeedback.isNotBlank()) item { Text(gameFeedback) }
-        item { OutlinedButton(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = "" }, modifier = Modifier.fillMaxWidth()) { Text("Next puzzle →") } }
+        item { OutlinedButton(onClick = { game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }, modifier = Modifier.fillMaxWidth()) { Text("Next puzzle →") } }
        } else if (page == "rewards") {
         item { Hero("🏆 My rewards", "Every lesson is a new achievement!") }
         item { Section("⭐ " + stars + " stars collected") }

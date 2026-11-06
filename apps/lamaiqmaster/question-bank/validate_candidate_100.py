@@ -3,12 +3,15 @@
 import json
 from pathlib import Path
 
-paths = [Path(__file__).with_name(name) for name in ("number_logic_candidate_100.json", "advanced_candidate_100.json", "visual_patterns_candidate_100.json", "memory_candidate_100.json", "attention_candidate_100.json")]
+paths = [Path(__file__).with_name(name) for name in ("number_logic_candidate_100.json", "advanced_candidate_100.json", "visual_patterns_candidate_100.json", "memory_candidate_100.json", "attention_candidate_100.json", "number_logic_candidate_101_200.json")]
+all_ids = set()
 for path in paths:
     pack = json.loads(path.read_text(encoding="utf-8"))
     items = pack["questions"]
     assert len(items) == pack["count"] == 100
     assert len({q["id"] for q in items}) == 100
+    assert not (all_ids & {q["id"] for q in items}), f"Duplicate IDs across packs: {path}"
+    all_ids.update(q["id"] for q in items)
     assert len({(q["prompt"], q.get("stimulus", "")) for q in items}) == 100
     assert len({q["kind"] for q in items}) >= 10
     for q in items:
@@ -24,4 +27,5 @@ for path in paths:
         assert q["explanation"]
         assert q["reviewStatus"] == "automated-verified"
     print(f"PASS: {path.name}, {len(items)} candidates, {len({q['kind'] for q in items})} mechanisms")
+print(f"TOTAL: {len(all_ids)} candidate records across {len(paths)} packs")
 print("LIMIT: Structural checks are not independent answer verification or editorial approval.")

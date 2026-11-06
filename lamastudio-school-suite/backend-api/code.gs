@@ -1755,7 +1755,7 @@ function handleRequest(params) {
                 .filter(function(p){return p.status==='published' && p.sessionId===sessionId});
             const scopes={};
             plans.forEach(function(p){
-                const scope=[String(p.classId).trim().toLowerCase(),String(p.subjectId).trim().toLowerCase()].join('|');
+                const scope=[String(p.classId).trim().toLowerCase(),String(p.subjectId).trim().toLowerCase(),String(p.sectionId||'').trim().toLowerCase()].join('|');
                 if(Object.prototype.hasOwnProperty.call(scopes,scope))
                     throw new Error('Overlapping published plans for class and subject. Resolve duplicate plans before reporting.');
                 scopes[scope]=true;
@@ -1883,8 +1883,7 @@ function handleRequest(params) {
                 lamaRequireModuleForVerifiedSchool_(ctx.schoolMatch.obj.schoolId, 'examination');
                 const plans = LamaSyllabusSheetStore.list(ctx.ss.getId(), ctx.schoolMatch.obj.schoolId, {status:'published'});
                 return {status:'success', plans:plans.filter(function(plan) {
-                    return normalizeSchoolClass(plan.classId) === normalizeSchoolClass(ctx.teacher.assignedClass) &&
-                        String(plan.subjectId).trim().toLowerCase() === String(ctx.teacher.subject).trim().toLowerCase();
+                    return lamaSyllabusTeacherScope_(plan,ctx.teacher);
                 })};
             }
             if ((params.role || 'school') !== 'school') throw new Error('School administrator session required.');
@@ -1917,8 +1916,7 @@ function handleRequest(params) {
             if (!params.planId || typeof params.planId !== 'string') throw new Error('Plan ID required.');
             const record = LamaSyllabusSheetStore.read(ctx.ss.getId(), params.schoolId, params.planId);
             if (!record || record.plan.status !== 'published') throw new Error('Published syllabus plan not found.');
-            if (normalizeSchoolClass(record.plan.classId) !== normalizeSchoolClass(ctx.teacher.assignedClass)) throw new Error('Class scope denied.');
-            if (String(record.plan.subjectId).trim().toLowerCase() !== String(ctx.teacher.subject).trim().toLowerCase()) throw new Error('Subject scope denied.');
+            if (!lamaSyllabusTeacherScope_(record.plan,ctx.teacher)) throw new Error('Class, subject or section scope denied.');
             return {status:'success',plan:record.plan};
         }
         switch (action) {

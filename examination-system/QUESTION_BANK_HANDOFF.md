@@ -285,3 +285,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - 500 records, 500 unique IDs, 125 core word/sentence concepts × four assessment formats. 14 exact repeated question prompts flagged for editorial review. No missing answers or invalid answer-option references in construction checks.
 - This is **supplemental Class 2 Urdu practice**, not verified against individual textbook lessons/pages; `chapterId`, `lessonId`, `sourcePdfPage` are null. All questions `approved=false`, `onlineReady=false`. Some word pairs, inflections and teacher-marked rubrics may require correction; do not use for live student exams.
 - Earlier 30-question starter file is separate and **excluded** from the 500-count, to avoid silently adding duplicates. Next: editorial deduplication, textbook mapping and then batch 2 (501–1000). No Vercel deployment.
+
+
+## Class 2 Urdu first questions — 2026-11-06
+- Source `urdu 2.pdf`, Drive ID `1cWaeH4aUC0xJi2kbYkmrENXmU-NnBx6L`, 146 pages; PDF image-based, extracted text empty.
+- Visually inspected PDF pages 4–11 (contents/early lesson). PDF page 9 = printed page 1: lesson 1 `حمد` introduction; PDF page 10 = printed page 2: Hamd text, pronunciation, discussion and `ہم نے سیکھا` exercises.
+- Created `data/class2-urdu-batch1-source-verified-starter.json` with **20 unapproved drafts** (including oral activities), commit `ca4e0fdad7e23319f33bb79952e956b25fd72c2d`. These questions are page-referenced but not editorially approved; some are open-ended and require teacher grading.
+- Count 20/500 first batch; 20/1500 subject target. Do not claim 500 generated. Next: inspect additional actual lesson pages, validate answers and difficulty, expand varied content, and preserve no-deployment policy.

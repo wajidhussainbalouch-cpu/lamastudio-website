@@ -36,9 +36,9 @@ window.LAMA_PPSC_HM03_4=[
   "topic": "Restrictive relative clause",
   "q": "Which sentence clearly identifies the particular teachers required to attend a workshop, rather than implying that every teacher must attend?",
   "options": [
-   "All science teachers and all non-science teachers must attend the workshop.",
-   "The teachers; who teach science must attend the workshop.",
-   "The teachers whom science teach must attend the workshop.",
+   "All teachers, including those outside science, must attend the workshop.",
+   "Teachers who taught science last year must attend the workshop.",
+   "Teachers who intend to teach science next year must attend the workshop.",
    "The teachers who teach science must attend the workshop."
   ],
   "answer": 3,

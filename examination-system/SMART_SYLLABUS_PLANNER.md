@@ -253,3 +253,9 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Added LamaAPI.getSchoolSyllabusProgress and school admin dashboard table showing class, plan count, completed, pending, delayed and completion percentage.
 - Added pure syllabus-school-report.js aggregation helper and Node tests in test-syllabus-school-report.js; configured CI workflow. GitHub Actions execution has not been confirmed.
 - Reporting uses all published and archived plans, so overlapping plans may double-count lessons; reporting must add session and active-plan filters before production. Teacher-section ownership enforcement and live Apps Script verification are still pending. No deployment or live data change.
+
+## Academic-session reporting safeguards (6 Nov 2026)
+- School-wide progress now requires an academic session, passed through the school admin selector and API client. Only published plans in that session are included; archived plans are excluded.
+- Duplicate published plans for the same class and subject in the same session cause an explicit error rather than double-counting. This is intentionally conservative until multi-section planning is modeled.
+- Added syllabus-session-filter.js and test-syllabus-session-filter.js, and included tests in the CI workflow. Tests and deployment remain unverified.
+- Important remaining work: section-aware plan schema and teacher permissions, end-to-end verification, and a production Apps Script release after approval. No live school data was changed.

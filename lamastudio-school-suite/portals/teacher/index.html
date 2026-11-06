@@ -59,6 +59,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
             </div>
         </div>
         <div class="flex items-center justify-end gap-2 w-full">
+            <div class="mr-auto min-w-0 flex-1"><span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Assigned Class</span><div id="headerAssignedClass" class="text-lg sm:text-xl font-black text-white break-words">—</div></div>
             <span id="teacherNameLabel" class="text-xs font-bold text-slate-300 hidden sm:inline">Teacher</span>
             <a href="teacher-diary.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">📓 Diary</a>
             <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition">Logout</button>
@@ -274,7 +275,7 @@ function updateStats(){
  $('statGirls').textContent=girls;
  $('genderMissingNote').textContent=unknown?unknown+' without recorded gender':'Assigned class';
 }
-function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
+function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('headerAssignedClass').textContent=me.assignedClass||'Not assigned';$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 let refreshPromise=null;
 async function refresh(){

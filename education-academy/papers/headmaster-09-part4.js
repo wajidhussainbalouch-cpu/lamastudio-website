@@ -1,19 +1,19 @@
 /* Original Headmaster Paper 9, Section 4: English, ICT, science Q076-100. */
 window.LAMA_PPSC_HM09_4=[
  {
-  "id": "HM09-076",
   "subject": "English Grammar",
-  "topic": "Emphatic inversion",
-  "q": "Which sentence correctly uses inversion after 'Rarely' in an examination report?",
+  "topic": "Unreal present conditional",
+  "q": "Which sentence correctly expresses a hypothetical present situation rather than an actual school rule?",
   "options": [
-   "Rarely the candidates had seen such a lengthy paper.",
-   "Rarely had the candidates seen such a lengthy paper.",
-   "Rarely the candidates seen such a lengthy paper.",
-   "Rarely candidates had seen such a lengthy paper."
+   "If I am the headteacher yesterday, I change the timetable.",
+   "If I were the headteacher, I would review the timetable.",
+   "If I had been headteacher, I will review yesterday's timetable.",
+   "If I was being headteacher tomorrow, I review the timetable."
   ],
   "answer": 1,
-  "explanation": "A negative or restrictive adverb at the beginning of a clause commonly triggers auxiliary–subject inversion: 'Rarely had the candidates seen.'",
-  "difficulty": "advanced"
+  "explanation": "The second conditional uses a past-form hypothetical condition, often 'if I were,' followed by 'would' and the base verb for an unreal present situation.",
+  "difficulty": "advanced",
+  "id": "HM09-076"
  },
  {
   "id": "HM09-077",
@@ -76,19 +76,19 @@ window.LAMA_PPSC_HM09_4=[
   "difficulty": "intermediate"
  },
  {
-  "id": "HM09-081",
   "subject": "English Usage",
   "topic": "Defining versus nondefining relative clauses",
   "q": "Which sentence clearly identifies a subset of teachers who completed an optional cybersecurity workshop?",
   "options": [
-   "The teachers, who completed the workshop, received badges.",
-   "The teachers who completed, the workshop received badges.",
+   "All teachers received badges, whether or not they completed the optional workshop.",
+   "Teachers who only registered for the workshop received badges regardless of completion.",
    "The teachers who completed the workshop received badges.",
-   "The teachers whose completed workshop received badges."
+   "The teachers who missed the workshop received badges instead."
   ],
   "answer": 2,
-  "explanation": "A defining relative clause without surrounding commas restricts the statement to those teachers who actually completed the workshop.",
-  "difficulty": "intermediate"
+  "explanation": "A defining relative clause identifies the relevant subgroup: teachers who completed the workshop. The other options change the eligibility condition or include non-completers.",
+  "difficulty": "intermediate",
+  "id": "HM09-081"
  },
  {
   "id": "HM09-082",
@@ -106,19 +106,19 @@ window.LAMA_PPSC_HM09_4=[
   "difficulty": "advanced"
  },
  {
-  "id": "HM09-083",
   "subject": "English Grammar",
   "topic": "Conjunctive adverb punctuation",
   "q": "Which sentence correctly uses 'however' between two complete clauses in a formal notice?",
   "options": [
-   "The library is open however, the lab is closed.",
-   "The library is open however the lab, is closed.",
-   "The library is open, however the lab is closed.",
+   "The library is open because the lab is closed.",
+   "The library is open and lab closes.",
+   "The library is open; the lab however has closed tomorrow.",
    "The library is open; however, the lab is closed."
   ],
   "answer": 3,
-  "explanation": "Two independent clauses can be joined with a semicolon before the conjunctive adverb and a comma after it: '; however,'.",
-  "difficulty": "intermediate"
+  "explanation": "The correct sentence places a semicolon between independent clauses and a comma after the linking adverb 'however', clearly expressing contrast.",
+  "difficulty": "intermediate",
+  "id": "HM09-083"
  },
  {
   "id": "HM09-084",

@@ -219,3 +219,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Automated construction checks: no missing answers; 2 exact repeated prompt occurrences (due to overlapping action phrases). **These require correction**. Five formats for each fact also create intentional conceptual repetition; this is **not** 500 unique concepts.
 - All 500 are supplemental practice, not derived from verified textbook pages; chapter/lesson/page are null; `approved=false`, `onlineReady=false`. Do not expose to live exams. 40 separate earlier starter drafts exist and may overlap with batch 1; do not combine without deduplication.
 - Source `G.K 1 r.pdf` (54-page image-only PDF) accessible via Drive but contents not visually inspected. Next: visually verify chapter map, remove duplicates, review answers/distractors and class-level suitability, add genuinely different source-based questions, then batch 2.
+
+
+## Class 1 GK batch 2 — 500 additional drafts (2026-11-06)
+- `data/class1-general-knowledge-batch2-500-draft.json`, commit `0fd45a9a8d57ab1f9f9d041aa29411d808e05cbb`: 500 new records with IDs `C1-GK-B2-0501` through `C1-GK-B2-1000` (separate from batch 1).
+- Source PDF `G.K 1 r.pdf` (54 pages) retrieved from Drive and visually inspected PDF pages 3–5, including contents and first lesson `میرا تعارف`. These pages do **not** validate each drafted fact or page mapping.
+- 100 core fact prompts repeated in five assessment formats; 478 unique literal prompts (22 repeated occurrences). Some topic labels are paraphrased rather than exact textbook headings. Requires editorial correction and textbook lesson verification before release.
+- No verified chapter/lesson/page per question. All `approved=false`, `onlineReady=false`; supplemental practice only. 1,000 questions in two 500-record draft batches, not 1,000 textbook-approved questions. Earlier separate 40-question starter file may overlap and is excluded from the 1,000 total.
+- Next: correct repeated/ambiguous items, diversify concepts, inspect remaining textbook pages, verify answers and source links, then draft batch 3 without deploying.

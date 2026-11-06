@@ -82,7 +82,7 @@ window.LAMA_PPSC_HM13_4=[
   "q": "Which sentence uses a comma correctly between two equally ranked adjectives describing the school's inspection report?",
   "options": [
    "The school received a detailed and thorough report.",
-   "The school received a detailed; and thorough report.",
+   "The school received a detailed; very thorough report.",
    "The school received a detailed, thorough report.",
    "The school received a detailed: yet thorough report."
   ],

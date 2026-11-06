@@ -1,4 +1,4 @@
-/* Original LAMA PPSC Paper 6: English and ICT questions 076–087 */
+/* Original LAMA PPSC Paper 6: English, ICT and science questions 076–100 */
 window.LAMA_PPSC_HM06_4=[
  {
   "id": "HM06-076",
@@ -179,5 +179,200 @@ window.LAMA_PPSC_HM06_4=[
   "answer": 3,
   "explanation": "Optimistic concurrency checks compare the version read with the current record to detect intervening changes and prevent silent lost updates.",
   "difficulty": "advanced"
+ },
+ {
+  "id": "HM06-088",
+  "subject": "ICT",
+  "topic": "Data retention expiry",
+  "q": "A school records a deletion date for temporary admission enquiries that did not result in enrollment. Why is this useful?",
+  "options": [
+   "It guarantees inquiries were answered",
+   "It makes every enquiry a permanent student record",
+   "It supports a defined retention rule so unnecessary personal data do not remain indefinitely",
+   "It lets all teachers see private enquiry notes"
+  ],
+  "answer": 2,
+  "explanation": "A documented retention period helps the school remove data that no longer serve an authorized purpose while preserving records required by policy.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-089",
+  "subject": "ICT",
+  "topic": "Offline synchronization conflict",
+  "q": "A teacher updates attendance on an offline tablet while an administrator corrects the same entry online. On reconnect, what should the app do?",
+  "options": [
+   "Detect conflicting revisions and provide a controlled reconciliation rather than silently overwriting one",
+   "Always discard the administrator's verified correction",
+   "Save both entries as separate students",
+   "Mark both statuses as present without explanation"
+  ],
+  "answer": 0,
+  "explanation": "Offline changes can conflict with authoritative server records. Version-aware reconciliation is safer than an automatic last-write-wins overwrite for sensitive attendance.",
+  "difficulty": "advanced"
+ },
+ {
+  "id": "HM06-090",
+  "subject": "ICT",
+  "topic": "Secure password reset",
+  "q": "A candidate requests a password reset from a shared public computer. Which interface measure reduces the risk of disclosing whether that email has an account?",
+  "options": [
+   "Show the candidate's stored password",
+   "Display all matching account names",
+   "Publish a list of registered email addresses",
+   "Give a neutral response such as 'If an account exists, reset instructions will be sent'"
+  ],
+  "answer": 3,
+  "explanation": "Neutral messages reduce account enumeration. Reset tokens must still be secure, time-limited and delivered only through a verified account recovery process.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-091",
+  "subject": "ICT",
+  "topic": "Screen-reader table headings",
+  "q": "An online student-marks table has only bold text in its first row, so assistive technology does not recognize column headings. Which change best addresses the issue?",
+  "options": [
+   "Replace all column names with emojis",
+   "Use semantic table header cells and appropriate header associations",
+   "Increase only the table border width",
+   "Convert marks into a single unlabeled image"
+  ],
+  "answer": 1,
+  "explanation": "Semantic table markup lets assistive technologies associate values with the correct column or row headings, improving navigation and interpretation.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-092",
+  "subject": "ICT",
+  "topic": "Least-data export",
+  "q": "An external supplier needs aggregate textbook shortages by grade, but the school proposes sending a full student list with parent phone numbers. What is the better arrangement?",
+  "options": [
+   "Send the complete list in a public chat",
+   "Include identity numbers to improve totals",
+   "Export only grade-level shortages and other fields essential to the supplier's task",
+   "Give the supplier access to all school records"
+  ],
+  "answer": 2,
+  "explanation": "Data minimization limits disclosure to what the receiving party actually needs. Grade-level quantities can usually be shared without personal identifiers.",
+  "difficulty": "foundation"
+ },
+ {
+  "id": "HM06-093",
+  "subject": "ICT",
+  "topic": "Webhook retries",
+  "q": "A payment provider can resend the same successful-payment notification after a timeout. Which backend check helps avoid crediting a student's fee twice?",
+  "options": [
+   "Store the provider event ID and process each unique event only once",
+   "Add another random fee to every retry",
+   "Delete the prior ledger entry before recording a new one",
+   "Trust that notifications never repeat"
+  ],
+  "answer": 0,
+  "explanation": "Event-ID de-duplication makes repeated webhooks idempotent, helping the fee ledger reflect one genuine payment only once.",
+  "difficulty": "advanced"
+ },
+ {
+  "id": "HM06-094",
+  "subject": "Physics",
+  "topic": "Pressure from force",
+  "q": "A chair leg exerts a downward force of 120 newtons over a contact area of 0.02 square metres. What average pressure does it exert?",
+  "options": [
+   "60 pascals",
+   "240 pascals",
+   "2,400 pascals",
+   "6,000 pascals"
+  ],
+  "answer": 3,
+  "explanation": "Pressure is force divided by contact area: 120 / 0.02 = 6,000 newtons per square metre, or 6,000 pascals.",
+  "difficulty": "foundation"
+ },
+ {
+  "id": "HM06-095",
+  "subject": "Chemistry",
+  "topic": "Exothermic reaction",
+  "q": "A classroom chemical reaction raises the temperature of its surroundings without external heating. Which description is most appropriate?",
+  "options": [
+   "It must absorb net heat from the surroundings",
+   "It releases energy to the surroundings and is exothermic",
+   "It has no energy change",
+   "It proves the reactants have disappeared without products"
+  ],
+  "answer": 1,
+  "explanation": "An exothermic process releases energy to its surroundings. A temperature rise can indicate this transfer under suitable experimental conditions.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-096",
+  "subject": "Biology",
+  "topic": "Osmosis in plant cells",
+  "q": "A firm plant cell is placed in a highly concentrated salt solution, and its cell membrane pulls away from the wall. Which process best explains this?",
+  "options": [
+   "Photosynthesis increasing cell volume",
+   "Diffusion of cellulose out of the wall",
+   "Osmotic loss of water leading to plasmolysis",
+   "Active transport of sand into the cell"
+  ],
+  "answer": 2,
+  "explanation": "A hypertonic solution draws water out of the cell by osmosis. The protoplast may shrink away from the rigid cell wall.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-097",
+  "subject": "Earth Science",
+  "topic": "Permeability and infiltration",
+  "q": "After rain, water pools on a compacted clay surface more than on nearby loose sandy ground. Which property most directly helps explain the difference?",
+  "options": [
+   "Clay often has slower infiltration because its pore structure restricts water movement",
+   "Clay always absorbs all rainfall immediately",
+   "Sand is completely impermeable",
+   "Surface shape never affects ponding"
+  ],
+  "answer": 0,
+  "explanation": "Compaction and fine pore structure can reduce infiltration. Runoff and ponding also depend on slope, rainfall intensity and existing moisture.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-098",
+  "subject": "Physics",
+  "topic": "Latent heat",
+  "q": "Ice at its melting point receives heat but its temperature remains nearly constant while it melts. Where does most of that heat energy go?",
+  "options": [
+   "Directly into increasing the temperature of the melted portion by hundreds of degrees",
+   "Into creating additional mass",
+   "Into converting the ice into electrical energy",
+   "Into the phase change by altering intermolecular arrangements rather than raising temperature"
+  ],
+  "answer": 3,
+  "explanation": "During melting, latent heat changes the substance's phase while temperature stays approximately at the melting point until the transition is complete.",
+  "difficulty": "intermediate"
+ },
+ {
+  "id": "HM06-099",
+  "subject": "Ecology",
+  "topic": "Nutrient cycling",
+  "q": "In a forest soil system, fungi and bacteria break down dead leaves and release mineral nutrients. What ecological role are they performing?",
+  "options": [
+   "Primary consumers feeding on living plants exclusively",
+   "Decomposers returning nutrients to cycles accessible to other organisms",
+   "Producers fixing sunlight directly into minerals",
+   "Top predators controlling all food chains"
+  ],
+  "answer": 1,
+  "explanation": "Decomposers transform organic remains and release nutrients, contributing to nutrient cycling and supporting future plant growth.",
+  "difficulty": "foundation"
+ },
+ {
+  "id": "HM06-100",
+  "subject": "Environmental Science",
+  "topic": "Soil salinization",
+  "q": "A school agricultural plot is irrigated repeatedly in a dry area with poor drainage, and white crusts appear on the surface. What issue should be investigated?",
+  "options": [
+   "Seasonal changes in daylight hours",
+   "The age of the irrigation pump's paint",
+   "Accumulation of soluble salts as water evaporates and drainage remains inadequate",
+   "An automatic increase in soil organic matter"
+  ],
+  "answer": 2,
+  "explanation": "When irrigation water evaporates and drainage is insufficient, dissolved salts can accumulate in the root zone and at the surface, damaging plant growth.",
+  "difficulty": "intermediate"
  }
 ];

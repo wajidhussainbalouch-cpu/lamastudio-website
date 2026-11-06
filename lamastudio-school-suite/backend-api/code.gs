@@ -1734,6 +1734,19 @@ function handleRequest(params) {
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
+        if (action === 'syllabusAdminReadPlan') {
+            if (typeof LamaSyllabusSheetStore === 'undefined') throw new Error('Syllabus storage adapter not installed.');
+            if (typeof lamaRequireModuleForVerifiedSchool_ !== 'function') throw new Error('Server-side module authorization unavailable.');
+            if ((params.role || 'school') !== 'school') throw new Error('School administrator session required.');
+            const actor = requireSchoolAdminWrite(params);
+            if (!actor || !actor.id) throw new Error('Administrator identity unavailable.');
+            lamaRequireModuleForVerifiedSchool_(params.schoolId, 'examination');
+            const school = authorizeSchool(params.schoolId, params.apiKey);
+            if (typeof params.planId !== 'string' || !params.planId.trim()) throw new Error('Plan ID required.');
+            const stored = LamaSyllabusSheetStore.read(school.obj.sheetId, params.schoolId, params.planId);
+            if (!stored) throw new Error('Syllabus plan not found in this school.');
+            return {status:'success', plan:stored.plan, audit:stored.audit};
+        }
         if (action === 'syllabusPublishedPlans') {
             if (typeof LamaSyllabusSheetStore === 'undefined') throw new Error('Syllabus storage adapter not installed.');
             if (typeof lamaSchoolHasModuleGrant_ !== 'function') throw new Error('Server-side Examination grant verification unavailable.');
@@ -1886,7 +1899,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

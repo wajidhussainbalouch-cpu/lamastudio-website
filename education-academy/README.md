@@ -1,5 +1,16 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest Headmaster / Headmistress batch — Paper 13 (6 November 2026)
+
+**Paper 13 complete:** `HM-2026-P13` adds original LAMA free educational-practice questions `HM13-001`–`HM13-100`, with 90-minute individual exam, preserved attempt/score history, print-ready question-only paper and post-submission answer explanations. The GitHub source includes **13 papers / 1,300 practice MCQs**. Public PWA cache: `lama-ppsc-preview-v68`.
+
+**Private Supabase:** Inserted 100 new Paper 13 `draft` questions; the protected teaching bank totals **1,230 unique draft questions**, with no human-approved records. Automated originality and structural checks passed, and GitHub Actions validates the new paper and older papers. Independent academic review and official PPSC vacancy-specific syllabus alignment remain pending.
+
+**Maximum 20 papers per job:** `MAX_PAPERS_PER_JOB=20` enforced in the job-specific paper library and the Paper 13 registration guard. Teaching job variants share one twenty-paper cap; other job families have separate caps. Candidate records are preserved. Free client JavaScript contains answer keys; normal post-submission review is not secure premium-exam scoring.
+
+See **[PAPER_13_RELEASE.md](./PAPER_13_RELEASE.md)** for detailed verification and next **Paper 14** instructions. Publishing to GitHub does not alone confirm the same version is live at the custom domain; check Vercel deployment commit and actual browser behavior separately.
+
+
 ## Latest Headmaster / Headmistress paper and maximum-per-job policy — Paper 12 (6 November 2026)
 
 **Paper 12 completed in GitHub source:** `HM-2026-P12` contains 100 new original educational practice MCQs (`HM12-001`–`HM12-100`) with four options and explanation per question, a dedicated 90-minute exam, preserved candidate scores and attempts, printable question paper and post-submission printable answer review. This brings the school-head public practice collection to **12 distinct papers / 1,200 MCQs**, including its senior school-head variant. PWA cache is `lama-ppsc-preview-v67`.

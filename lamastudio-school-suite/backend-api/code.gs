@@ -1721,7 +1721,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
@@ -1733,6 +1733,41 @@ function handleRequest(params) {
         const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
+        }
+        if (action === 'syllabusSchoolProgress') {
+            if ((params.role || 'school') !== 'school') throw new Error('Administrator session required.');
+            if (typeof LamaSyllabusSheetStore === 'undefined' || typeof LamaSyllabusProgressStore === 'undefined' ||
+                typeof lamaRequireModuleForVerifiedSchool_ !== 'function') throw new Error('Syllabus components unavailable.');
+            const actor=requireSchoolAdminWrite(params);
+            if (!actor || !actor.id) throw new Error('Verified administrator required.');
+            lamaRequireModuleForVerifiedSchool_(params.schoolId,'examination');
+            const school=authorizeSchool(params.schoolId,params.apiKey);
+            const plans=LamaSyllabusSheetStore.list(school.obj.sheetId,params.schoolId,{})
+                .filter(function(p){return p.status==='published'||p.status==='archived'});
+            if(plans.length>100)throw new Error('Too many syllabus plans for single report; pagination required.');
+            const asOf=Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyyy-MM-dd');
+            const totals={completed:0,pending:0,delayed:0},groups={};
+            plans.forEach(function(meta){
+                const record=LamaSyllabusSheetStore.read(school.obj.sheetId,params.schoolId,meta.planId);
+                if(!record)throw new Error('Syllabus plan missing');
+                const updates=LamaSyllabusProgressStore.list(school.obj.sheetId,params.schoolId,meta.planId);
+                const index={};
+                updates.forEach(function(u){if(Object.prototype.hasOwnProperty.call(index,u.key))throw new Error('Duplicate progress rows');index[u.key]=u});
+                const groupKey=String(meta.classId);
+                if(!Object.prototype.hasOwnProperty.call(groups,groupKey))groups[groupKey]={classId:meta.classId,plans:0,completed:0,pending:0,delayed:0,totalLessons:0};
+                const group=groups[groupKey];group.plans++;
+                record.plan.scheduled.forEach(function(e){
+                    if(!e.lessonId)return;
+                    const u=index[LamaSyllabusProgressStore.key(e)];
+                    const state=u&&u.status==='completed'?'completed':(u&&u.status==='delayed'||e.date<asOf?'delayed':'pending');
+                    totals[state]++;group[state]++;group.totalLessons++;
+                });
+            });
+            const classes=Object.keys(groups).map(function(k){const g=groups[k];g.completionPercent=g.totalLessons?Math.round(g.completed*100/g.totalLessons):0;return g});
+            classes.sort(function(a,b){return String(a.classId).localeCompare(String(b.classId))});
+            const totalLessons=totals.completed+totals.pending+totals.delayed;
+            return {status:'success',report:{asOf:asOf,plans:plans.length,classes:classes,totals:totals,totalLessons:totalLessons,
+                completionPercent:totalLessons?Math.round(totals.completed*100/totalLessons):0}};
         }
         if (action === 'syllabusAdminProgress') {
             if ((params.role || 'school') !== 'school') throw new Error('School administrator session required.');
@@ -2008,7 +2043,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

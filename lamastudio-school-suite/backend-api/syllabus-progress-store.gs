@@ -26,6 +26,7 @@ var LamaSyllabusProgressStore=(function(){
   if(typeof teacherId!=='string'||!teacherId.trim())throw Error('Verified teacher required');
   if(status==='completed'){
    if(typeof completedAt!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(completedAt)||
+      !Number.isFinite(Date.parse(completedAt+'T00:00:00Z'))||
       new Date(completedAt+'T00:00:00Z').toISOString().slice(0,10)!==completedAt)throw Error('Invalid completion date');
   }else completedAt='';
   var lock=LockService.getScriptLock();

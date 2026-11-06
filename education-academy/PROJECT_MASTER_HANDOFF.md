@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Most recent Headmaster/Headmistress bank — Paper 5 (6 November 2026)
+
+**Paper 5** (`HM-2026-P05`) is now authored and committed as **100 more original free-practice MCQs** (`HM05-001` through `HM05-100`). The academy source now contains **five separate free school-head papers, 500 total practice questions**. The new paper retains its own 90-minute state, separate saved attempts and scores, and post-submission correct answers, explanations, and Print / Save PDF review. Papers 1–4 and all existing marks remain intact.
+
+The new 100-question batch was also inserted into the RLS-protected Supabase `ppsc_question_bank` as academic editorial drafts. The **private Headmaster/Headmistress bank now contains 430 unique question stems**, **430 still needing human approval**. Automated tests found no exact or strong word-overlap duplicates against earlier papers/drafts, and the question/answer structures passed. These are original LAMA educational practice questions, **not officially issued PPSC questions**, not independently verified syllabus coverage, and not secure premium material. Answer keys inside free client scripts remain inspectable.
+
+Read **[PAPER_05_RELEASE.md](./PAPER_05_RELEASE.md)** for the complete changes, quality checks and next `Continue` instructions. The next Paper 6 batch is reserved as `HM06-001`–`HM06-100`, with paper ID `HM-2026-P06`. Keep GitHub `main` authoritative, verify actual Supabase status before inserting, preserve past candidate data, and update the exam/print/review/PWA/test/documentation files. **GitHub commits and checks are not proof that Vercel has deployed the new code**; do not manually deploy under the existing quota restriction.
+
+
 ## Latest content release — Paper 4 (6 November 2026)
 
 **Headmaster / Headmistress Paper 4** (`HM-2026-P04`) adds **100 unique original free-practice MCQs** (`HM04-001` through `HM04-100`), complete with four choices, answer keys, explanations, difficulty and subject tags. Source registration, selected-job card, 90-minute attempt, independent saved score, question-only printing and post-submission answer-review/PDF printing are integrated. **Four school-head free practice papers / 400 public MCQ slots** now exist in GitHub source; previous papers and attempts are preserved.

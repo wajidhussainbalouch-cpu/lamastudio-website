@@ -179,3 +179,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - GK and Computer second sets draw from GeneralKnowledgeExpansion, computer second sets from DigitalSkillsBank; filter duplicate prompts against their first sets. All other practice sets retain existing selected questions. These are placements drawn partly from existing banks, not 1,200 new unique questions.
 - Updated TenQuestionSetsTest to assert six subjects each have two sets, 20 unique prompts within the subject per grade, and total 120 per grade.
 - Existing extra topic lessons remain. Unit tests and Android build have not yet been verified; grade-appropriate content, distractors and unique prompts across all banks need review. No deployment, production merge or publication.
+
+## 6 November 2026 — Science discovery expansion
+- Added ScienceDiscoveryBank.kt with 100 grade-specific science questions: ten per grade in two five-question lessons, Nursery through Class 8. Topics progress from body parts and weather to ecology, energy, chemistry, cells and genetics.
+- Connected to LearningContent.allLessons and added ScienceDiscoveryBankTest for counts, grade coverage, uniqueness within grade and answer structure. This is extra content outside the balanced 120-question program; that program remains 20 per subject per grade.
+- Tests and APK build not yet verified green; grade-level editorial review required. No Vercel deployment, production merge or Play Store publication.

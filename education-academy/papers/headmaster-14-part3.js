@@ -17,17 +17,17 @@ window.LAMA_PPSC_HM14_3=[
  },
  {
   "id": "HM14-052",
-  "subject": "Assessment Statistics",
-  "topic": "Coefficient of variation",
-  "q": "Two subjects have a mean score of 50 and standard deviation of 5, and mean 80 and standard deviation of 8, respectively. What are their coefficients of variation?",
+  "subject": "Educational Statistics",
+  "topic": "Weighted average of reliability estimates",
+  "q": "Two examination sections contain 20 and 30 questions with average item difficulties of 0.6 and 0.8, respectively. What is the question-count-weighted average difficulty?",
   "options": [
-   "5% and 8%",
-   "10% and 8%",
-   "Both 10%",
-   "Both 5%"
+   "0.68",
+   "0.72",
+   "0.75",
+   "0.70"
   ],
-  "answer": 2,
-  "explanation": "Coefficient of variation is standard deviation divided by mean. The ratios are 5/50=10% and 8/80=10%, providing equal relative dispersion.",
+  "answer": 1,
+  "explanation": "The weighted average is (20×0.6+30×0.8)/(20+30)=(12+24)/50=0.72, giving greater weight to the 30-item section.",
   "difficulty": "intermediate"
  },
  {
@@ -56,7 +56,7 @@ window.LAMA_PPSC_HM14_3=[
    "7 points",
    "9 points"
   ],
-  "answer": 3,
+  "answer": 1,
   "explanation": "The first class improves by 58−42=16 and the second by 56−45=11. The difference in improvements is 5, not nine.",
   "difficulty": "intermediate"
  },
@@ -257,17 +257,17 @@ window.LAMA_PPSC_HM14_3=[
  },
  {
   "id": "HM14-068",
-  "subject": "Quantitative Reasoning",
-  "topic": "Linear depreciation accounting",
-  "q": "An item costs Rs 50,000 with a projected residual value of Rs 5,000 after five years. Under straight-line depreciation, what is the annual expense?",
+  "subject": "Management Accounting",
+  "topic": "Unfavorable consumption variance",
+  "q": "A school expected to use 140 liters of paint at Rs 300 per liter, but actually used 155 liters at the same rate. What is the unfavorable quantity variance?",
   "options": [
-   "Rs 8,000",
-   "Rs 10,000",
-   "Rs 9,000",
-   "Rs 11,000"
+   "Rs 3,000",
+   "Rs 4,500",
+   "Rs 6,000",
+   "Rs 46,500"
   ],
-  "answer": 2,
-  "explanation": "Depreciable amount is 50,000−5,000=Rs 45,000. Dividing evenly over five years gives Rs 9,000 annually.",
+  "answer": 1,
+  "explanation": "The excess quantity is 155−140=15 liters. At the standard Rs 300 per liter, the unfavorable usage variance is 15×300=Rs 4,500.",
   "difficulty": "intermediate"
  },
  {
@@ -287,32 +287,32 @@ window.LAMA_PPSC_HM14_3=[
  },
  {
   "id": "HM14-070",
-  "subject": "Mathematics",
-  "topic": "Fractional work completion",
-  "q": "Three identical printers together finish a job in 4 hours. Assuming independent constant rates, how long would two of these printers take for the same job?",
+  "subject": "Operations Research",
+  "topic": "Serial task throughput with parallel workers",
+  "q": "A school registration process needs 4 minutes at verification with two clerks and 3 minutes at approval with one clerk. What is the maximum steady throughput per hour, ignoring variability?",
   "options": [
-   "4 hours",
-   "5 hours",
-   "8 hours",
-   "6 hours"
+   "15 completed forms",
+   "20 completed forms",
+   "30 completed forms",
+   "35 completed forms"
   ],
-  "answer": 3,
-  "explanation": "Three printers supply 3×4=12 printer-hours of work. Two printers need 12/2=6 hours at the same rate.",
+  "answer": 1,
+  "explanation": "Two verification clerks can handle 2×(60/4)=30 forms per hour, but one approval clerk handles 60/3=20. The bottleneck limits output to 20 per hour.",
   "difficulty": "intermediate"
  },
  {
   "id": "HM14-071",
-  "subject": "Educational Measurement",
-  "topic": "Standard scores",
-  "q": "A candidate earns 82 marks on a test whose mean is 70 and standard deviation is 8. What is the candidate's z-score?",
+  "subject": "Educational Statistics",
+  "topic": "Interpreting standardized percentile rank",
+  "q": "Two candidates receive scaled scores of 480 and 520 on a system whose reference mean is 500. Which additional information is essential before interpreting how unusual each score is?",
   "options": [
-   "1.0",
-   "1.5",
-   "2.0",
-   "0.5"
+   "The color of the answer sheets",
+   "The candidates' preferred subjects",
+   "The reference score distribution or its standard deviation",
+   "The number of pages in the examination booklet"
   ],
-  "answer": 1,
-  "explanation": "Standardization gives z=(82−70)/8=12/8=1.5, indicating a score one and a half standard deviations above the mean.",
+  "answer": 2,
+  "explanation": "A scaled-score distance from a mean cannot be interpreted as a percentile or standardized rarity without the reference distribution and its spread.",
   "difficulty": "intermediate"
  },
  {

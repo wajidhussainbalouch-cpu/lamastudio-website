@@ -212,3 +212,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added `data/class1-general-knowledge-supplemental-starter-draft.json`: **40 original supplemental MCQ drafts**. These are general age-appropriate practice prompts, **not textbook-derived or approved**; each has null chapter/lesson/page, `approved=false`, `onlineReady=false`.
 - Target remains three verified batches of 500 (1,500 total), not yet generated. Do not misreport these 40 as the first complete batch.
 - Next: visually inspect source table of contents and lesson pages; build grounded chapter map; author varied source-specific questions with manual answer review; no deployment.
+
+
+## Class 1 GK batch 1 — 500 drafts committed (2026-11-06)
+- `data/class1-general-knowledge-batch1-500-draft.json`, commit `59f2f48677e55d0dd43f204445a729da8d141cbb`: 500 draft records, 500 unique IDs, 100 core concepts in 10 themes, 5 assessment formats per concept (MCQ, fill-blank, matching, true/false, short answer).
+- Automated construction checks: no missing answers; 2 exact repeated prompt occurrences (due to overlapping action phrases). **These require correction**. Five formats for each fact also create intentional conceptual repetition; this is **not** 500 unique concepts.
+- All 500 are supplemental practice, not derived from verified textbook pages; chapter/lesson/page are null; `approved=false`, `onlineReady=false`. Do not expose to live exams. 40 separate earlier starter drafts exist and may overlap with batch 1; do not combine without deduplication.
+- Source `G.K 1 r.pdf` (54-page image-only PDF) accessible via Drive but contents not visually inspected. Next: visually verify chapter map, remove duplicates, review answers/distractors and class-level suitability, add genuinely different source-based questions, then batch 2.

@@ -257,17 +257,17 @@ window.LAMA_PPSC_HM07_2=[
   },
   {
     "id": "HM07-043",
-    "subject": "Probability Basics",
-    "topic": "Sampling without replacement",
-    "q": "A box contains three blue and two green counters. Two counters are drawn without replacement. What is the probability that both are blue?",
+    "subject": "Combinatorics",
+    "topic": "Unordered selections",
+    "q": "Nine teachers volunteer for a workshop, but exactly two can attend. If every pair is permitted and the order of names does not matter, how many different pairs can be chosen?",
     "options": [
-      "3/5",
-      "2/5",
-      "3/10",
-      "1/5"
+      "18 pairs",
+      "36 pairs",
+      "72 pairs",
+      "81 pairs"
     ],
-    "answer": 2,
-    "explanation": "The probability of blue first is 3/5. After drawing one blue counter, two blue remain among four; multiplying 3/5 by 2/4 gives 3/10.",
+    "answer": 1,
+    "explanation": "The number of unordered pairs from nine distinct people is the combination C(9,2) = 9 × 8 ÷ 2 = 36, since selecting A then B is the same pair as selecting B then A.",
     "difficulty": "intermediate"
   },
   {

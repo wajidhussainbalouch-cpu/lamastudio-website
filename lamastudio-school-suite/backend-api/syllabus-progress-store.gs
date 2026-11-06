@@ -34,6 +34,7 @@ var LamaSyllabusProgressStore=(function(){
    var sh=sheet(bookId,true),last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,7).getValues():[],matches=[];
    rows.forEach(function(r,i){if(r[0]===schoolId&&r[1]===plan.planId&&r[2]===lessonKey)matches.push(i+2)});
    if(matches.length>1)throw Error('Duplicate lesson progress rows');
+   if(matches.length && String(rows[matches[0]-2][5])!==teacherId)throw Error('Lesson progress belongs to another teacher; administrator reassignment required');
    var now=new Date().toISOString(),row=[schoolId,plan.planId,lessonKey,status,completedAt,teacherId,now];
    if(matches.length)sh.getRange(matches[0],1,1,7).setValues([row]);
    else sh.getRange(last+1,1,1,7).setValues([row]);

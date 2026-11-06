@@ -235,3 +235,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Book `G.K 1 r.pdf` Drive ID `1pyHTreo1lqtubCL0iGBZDNFwoRaebxAG` (54 pages) remains source reference; individual chapter/lesson/page mappings are null and all questions `approved=false`, `onlineReady=false`.
 - IMPORTANT QA: Across batches, multiple formats revisit the same fact and subjects overlap. Review cross-batch semantic duplicates, answer ambiguity, age appropriateness, distractor quality, exact Urdu textbook chapter names, and page grounding. Do not activate questions for students. No Vercel deployment.
 - Next subject after GK: Class 1 Islamiat (registered source) subject to source verification and content accuracy review; do not represent any batch as textbook-derived until pages inspected.
+
+
+## Class 1 Islamiat started — 2026-11-06
+- Source: `Islamiat 1 PCTB  Watermark_compressed.pdf` (44 pages), Drive ID `1wcbkbayvUt5nv_GSvHBdVBMplTuGwLVR`; fetched successfully.
+- Visually inspected PDF pages 4 and 5 (printed pages 1 and 2): first chapter `قرآن مجید و حدیث نبوی ﷺ`, lesson `حفظِ قرآن مجید`, featuring `سورۃ الکوثر` and `سورۃ الاخلاص`.
+- Created `data/class1-islamiat-batch1-source-verified-starter.json` with **24 draft questions/tasks**, commit `5b07bbeccda52120abeb25ed9ad6ac26e501c5f4`. Includes recitation tasks requiring teacher review. Some questions assess overlapping material; no claim of 24 independent concepts.
+- **24/500** of first batch, **24/1500** target. All unapproved; the initial 4 records have a simpler schema than the added 20 and require normalization before system integration. No live use, no deployment.
+- Next: inspect more actual PDF pages and build diverse lesson-grounded questions; independently review Arabic spellings, answer keys, age suitability and teacher marking.

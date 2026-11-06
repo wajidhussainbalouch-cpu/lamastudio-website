@@ -1,1 +1,35 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#103d34"><title>LAMA PPSC Academy · Section</title><style>body{font:16px system-ui,sans-serif;margin:0;background:#f1f6f3;color:#153e33}header{background:#103d34;color:#fff;padding:16px}header a{color:#d4f6e2}main{max-width:950px;margin:auto;padding:16px}.card{background:white;padding:18px;border-radius:15px;box-shadow:0 3px 12px #1232}iframe{width:100%;height:80vh;border:0;border-radius:10px;background:#fff}p{line-height:1.5}.notice{background:#fff5df;padding:12px;border-radius:9px}h1{font-size:1.3rem}</style></head><body><header><a href="./index.html">← Dashboard · Job Categories</a><h1 id="title">Academy Section</h1></header><main><div class="card"><p id="notice" class="notice"></p><iframe id="content" title="Academy section" loading="eager"></iframe></div></main><script>'use strict';(()=>{const params=new URLSearchParams(location.search),v=params.get('view')||'',job=params.get('job')||'';const labels={studyPlanner:'My Study Plan',papers:'Papers & Exams',resources:'Syllabus & Resources',performance:'My Scores',subscription:'Membership',account:'Registration & Login'};if(!Object.hasOwn(labels,v)){location.replace('./index.html');return}document.title='LAMA PPSC · '+labels[v];document.getElementById('title').textContent=labels[v];const notice=document.getElementById('notice');const isTeaching=!job||job==='teaching';notice.textContent=!isTeaching?'This job is a preparation roadmap only. Its dedicated syllabus, study plan and examination have not yet been verified or published. The Headmaster paper is not available for this post.':v==='papers'?'Only the Headmaster / Headmistress free paper is currently available. No official PPSC examination date is confirmed here.':v==='account'?'Candidate registration is not active until email verification and security tests are completed.':'This is a dedicated academy section. Only verified and available material is displayed.';notice.hidden=true;if(!isTeaching&&(v==='papers'||v==='resources'||v==='studyPlanner')){const p=document.createElement('p');p.textContent='Please check the official PPSC website for the latest advertisement, syllabus and examination date.';notice.after(p);return}document.getElementById('content').src='./index.html#'+encodeURIComponent(v)})();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#103d34">
+<title>LAMA PPSC Preparation Academy · Section</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font:16px system-ui,sans-serif;background:#f1f6f3;color:#153e33}header{background:#103d34;color:white;padding:22px 16px}header a{color:#d4f6e2}main{max-width:720px;margin:auto;padding:20px 16px}.notice{background:#fff;padding:20px;border-radius:14px;line-height:1.6;box-shadow:0 4px 18px #103d341a}h1{font-size:1.4rem}
+</style>
+</head>
+<body>
+<header><a href="./index.html">← Academy Dashboard</a><h1 id="heading">Academy Section</h1></header>
+<main><div class="notice" id="message" role="status">Opening your academy section…</div></main>
+<script>
+'use strict';
+(()=>{
+ const params=new URLSearchParams(location.search);
+ const view=params.get('view')||'';
+ const job=params.get('job')||'';
+ const labels={studyPlanner:'My Study Plan',papers:'Papers & Examinations',resources:'Syllabus & Resources',performance:'My Scores',subscription:'Membership',account:'Registration & Login',paper:'Free Practice Paper',jobDetail:'Job Details'};
+ const heading=document.getElementById('heading'),message=document.getElementById('message');
+ if(!Object.prototype.hasOwnProperty.call(labels,view)){location.replace('./index.html');return}
+ document.title='LAMA PPSC · '+labels[view];heading.textContent=labels[view];
+ // Non-teaching job tracks must not silently display the Headmaster syllabus or paper.
+ if(job&&job!=='teaching'&&['papers','resources','studyPlanner','paper'].includes(view)){
+  message.textContent='This post currently has a preparation roadmap only. Its dedicated syllabus and examination are not yet verified or published. Please check the official PPSC website for current requirements.';
+  return;
+ }
+ // Navigate to the existing single-page academy router. No nested iframe or double padding.
+ location.replace('./index.html#'+encodeURIComponent(view));
+})();
+</script>
+</body>
+</html>

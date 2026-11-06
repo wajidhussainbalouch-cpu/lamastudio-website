@@ -5,8 +5,12 @@
 const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const src=fs.readFileSync(path.join(__dirname,'papers.js'),'utf8');
 const sandbox={window:{}};vm.runInNewContext(src,sandbox,{timeout:2000});
+for(const name of ['headmaster-02-part1.js','headmaster-02-part2.js','headmaster-02-part3.js','headmaster-02-part4.js','headmaster-02-register.js']){
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'papers',name),'utf8'),sandbox,{timeout:2000,filename:name});
+}
 const papers=sandbox.window.LAMA_PPSC_PAPERS;
 const errors=[],warnings=[],normalize=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const globalIds=new Set(),globalStems=new Map();
 if(!Array.isArray(papers)||!papers.length)errors.push('No paper collection');
 for(const paper of papers||[]){
  const ids=new Set(),texts=new Map(),subjects=new Map();
@@ -15,11 +19,13 @@ for(const paper of papers||[]){
  for(const [i,q] of (paper.questions||[]).entries()){
   const tag=paper.id+' Q'+(i+1);
   if(!q.id||ids.has(q.id))errors.push(tag+': missing/duplicate question id');ids.add(q.id);
+  if(globalIds.has(q.id))errors.push(tag+': repeated ID in another paper');globalIds.add(q.id);
   if(!q.subject||!q.q||!q.explanation)errors.push(tag+': missing subject/question/explanation');
   if(!Array.isArray(q.options)||q.options.length!==4||q.options.some(x=>!String(x).trim()))errors.push(tag+': four non-empty options required');
   if(!Number.isInteger(q.answer)||q.answer<0||q.answer>3)errors.push(tag+': answer index must be 0-3');
   if(Array.isArray(q.options)&&new Set(q.options.map(normalize)).size!==q.options.length)errors.push(tag+': duplicate answer options');
   const n=normalize(q.q);if(texts.has(n))errors.push(tag+': duplicate question text with '+texts.get(n));texts.set(n,tag);
+  if(globalStems.has(n))errors.push(tag+': question text repeats across papers with '+globalStems.get(n));globalStems.set(n,tag);
   const stem=n.split(' ').slice(0,9).join(' ');if(stem.length>40){const count=subjects.get(stem)||0;subjects.set(stem,count+1)}
   if(/foundational concept in .*consult standard teacher education references/i.test(q.explanation))warnings.push(tag+': generic explanation; replace with subject-specific reasoning');
   if(String(q.q).length<22)warnings.push(tag+': short question; check difficulty and context');

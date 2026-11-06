@@ -98,7 +98,8 @@ class MainActivity : ComponentActivity() {
                             }, color = Color.LightGray)
                             Button(onClick = { infoPage = "" }) { Text("Back to modules") }
                         }
-                        visualMode -> VisualChallengeScreen(level = if (level == 0) 1 else level, onExit = { visualMode = false; level = 0 })
+                        visualMode -> VisualChallengeScreen(level = if (level == 0) 1 else level, onExit = { visualMode = false; selectedModule = "Number Logic"; level = 0 })
+                        selectedModule == "Memory" -> MemoryChallengeScreen(onExit = { selectedModule = "Number Logic"; level = 0 })
                         level == 0 -> {
                             Text(selectedModule, color = accent, fontSize = 20.sp)
                             if (selectedModule != "Number Logic") {

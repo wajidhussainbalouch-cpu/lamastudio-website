@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
      drawerContent = {
       ModalDrawerSheet {
        Text("🌈 Lama Kids", Modifier.padding(22.dp), style = MaterialTheme.typography.headlineSmall, color = ink)
-       listOf("🏠 Home" to "home", "📚 Topics" to "topics", "🎮 Math game" to "game", "🏆 My rewards" to "rewards", "⚙ Settings" to "settings", "👨‍👩‍👧 Parent area" to "parent").forEach { (label, destination) ->
+       listOf("🏠 Home" to "home", "📚 Topics" to "topics", "🎮 Math game" to "game", "🏆 My rewards" to "rewards", "⚙ Settings" to "settings", "🔒 Privacy policy" to "privacy", "ℹ About" to "about", "❓ Help" to "help", "👨‍👩‍👧 Parent area" to "parent").forEach { (label, destination) ->
         NavigationDrawerItem(label = { Text(label) }, selected = page == destination, onClick = {
          page = destination
          if (destination == "game") { game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }
@@ -229,6 +229,21 @@ class MainActivity : ComponentActivity() {
         }
         item { Text("Works offline. No child account or internet permission.", style = MaterialTheme.typography.bodyMedium) }
         item { OutlinedButton(onClick = { page = "parent"; parentUnlocked = false }) { Text("👨‍👩‍👧 Parent area") } }
+       } else if (page == "privacy") {
+        item { Hero("🔒 Privacy policy", "Lama Kids Learning • Offline test version") }
+        item { Text("This test version does not require an account or internet access. It stores lesson stars and sound preferences locally on this device.") }
+        item { Text("No names, email addresses, location data or contacts are requested by the app. No analytics, advertising or third-party tracking SDK is currently included.") }
+        item { Text("Deleting the app or clearing its storage can remove saved progress. We will update this notice before adding any online service, advertising or subscription features.") }
+        item { Text("Publisher: LAMA Studio. This in-app notice is not yet a publicly hosted Google Play privacy-policy URL.") }
+       } else if (page == "about") {
+        item { Hero("🌈 About Lama Kids Learning", "Learn • Play • Grow") }
+        item { Text("An offline educational app by LAMA Studio for Nursery, KG and Classes 1–8.") }
+        item { Text("Subjects: English, Urdu, Mathematics and Science. Practice lessons, quizzes, games and local rewards.") }
+        item { Text("Development version 0.2.0 • Not yet a production release.") }
+       } else if (page == "help") {
+        item { Hero("❓ Help", "Quick guide to using the app") }
+        item { Text("1. Choose your class on the home screen.\n2. Tap a subject and select a topic.\n3. Read the lesson and answer every question.\n4. Earn stars for correct answers.\n5. Use the side menu for games, rewards and settings.") }
+        item { Text("Your stars are stored on this device. Use the Parent area for an overview of learning progress.") }
        } else if (page == "parent") {
         item { Hero("👨‍👩‍👧 Parent area", "Adults only • local learning information") }
         if (!parentUnlocked) {

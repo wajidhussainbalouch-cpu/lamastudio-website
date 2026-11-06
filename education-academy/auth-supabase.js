@@ -28,14 +28,18 @@ window.LamaAcademyAuth=(()=>{
    return payload;
   }finally{clearTimeout(timeout)}
  }
- async function signUp({email,password,fullName,occupation}){
+ async function signUp({email,password,fullName,occupation,gender,phone,address,photoUrl}){
   if(!configured)throw Error('Registration is not enabled.');
   if(!/^\S+@\S+\.\S+$/.test(email)||email.length>254)throw Error('Enter a valid email address.');
   if(typeof password!=='string'||password.length<12||password.length>128)throw Error('Use a password between 12 and 128 characters.');
   if(typeof fullName!=='string'||fullName.trim().length<2||fullName.trim().length>120)throw Error('Enter your full name.');
   if(occupation&&occupation.length>120)throw Error('Occupation is too long.');
+  if(gender&&!['Male','Female','Other','Prefer not to say'].includes(gender))throw Error('Select a valid gender.');
+  if(phone&&phone.length>25)throw Error('Phone number is too long.');
+  if(address&&address.length>500)throw Error('Address is too long.');
+  if(photoUrl&&(!/^https:\/\//i.test(photoUrl)||photoUrl.length>1000))throw Error('Photo link must be an HTTPS URL.');
   // Supabase stores passwords securely; do not persist credentials in localStorage.
-  const result=await request('signup',{email:email.trim().toLowerCase(),password,data:{full_name:fullName.trim(),occupation:(occupation||'').trim()}});
+  const result=await request('signup',{email:email.trim().toLowerCase(),password,data:{full_name:fullName.trim(),occupation:(occupation||'').trim(),gender:gender||null,phone:phone?.trim()||null,address:address?.trim()||null,photo_url:photoUrl?.trim()||null}});
   return {emailVerificationRequired:!result.access_token,created:Boolean(result.user)};
  }
  async function restoreSession(){if(!configured||!refreshToken)return state();try{await token()}catch(e){/* Expired sessions remain signed out */}return state()}
@@ -64,18 +68,18 @@ window.LamaAcademyAuth=(()=>{
    return result;
   }finally{clearTimeout(timeout)}
  }
- async function profile(){return dataRequest('ppsc_candidates?select=id,display_name,occupation,created_at&limit=1','GET')}
+ async function profile(){return dataRequest('ppsc_candidates?select=id,display_name,occupation,gender,phone,address,photo_url,created_at&limit=1','GET')}
  async function ensureProfile(){
   const existing=await profile();if(existing.length)return existing[0];
   const name=String(currentUser?.user_metadata?.full_name||'').trim();
   if(name.length<2||name.length>120)throw Error('Your profile name is missing. Please contact support to complete your profile.');
-  try{const rows=await createProfile({displayName:name,occupation:String(currentUser?.user_metadata?.occupation||'').slice(0,120)});return rows[0]||null}
+  try{const rows=await createProfile({displayName:name,occupation:String(currentUser?.user_metadata?.occupation||'').slice(0,120),gender:currentUser?.user_metadata?.gender,phone:currentUser?.user_metadata?.phone,address:currentUser?.user_metadata?.address,photoUrl:currentUser?.user_metadata?.photo_url});return rows[0]||null}
   catch(error){const again=await profile();if(again.length)return again[0];throw error}
  }
- async function createProfile({displayName,occupation}){
+ async function createProfile({displayName,occupation,gender,phone,address,photoUrl}){
   if(typeof displayName!=='string'||displayName.trim().length<2||displayName.trim().length>120)throw Error('Enter a valid name.');
   const bearer=await token();if(!bearer||!currentUser)throw Error('Sign in first.');
-  return dataRequest('ppsc_candidates','POST',{id:currentUser.id,display_name:displayName.trim(),occupation:(occupation||'').trim()});
+  return dataRequest('ppsc_candidates','POST',{id:currentUser.id,display_name:displayName.trim(),occupation:(occupation||'').trim(),gender:gender||null,phone:phone?.trim()||null,address:address?.trim()||null,photo_url:photoUrl?.trim()||null});
  }
  async function practiceHistory(){return dataRequest('ppsc_practice_attempts?select=id,job_id,paper_id,total_questions,correct_answers,duration_seconds,completed_at&order=completed_at.desc&limit=100','GET')}
  async function savePracticeAttempt({jobId,paperId,totalQuestions,correctAnswers,durationSeconds}){

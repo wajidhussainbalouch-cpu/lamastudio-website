@@ -1,7 +1,7 @@
 package pk.lamastudio.kidslearning
 
 /**
- * Exactly ten selectable practice sets of ten questions per grade (100 per level).
+ * Exactly twelve selectable practice sets of ten questions per grade (120 per level).
  * Questions for the existing four subjects are selected from previously authored
  * content. General Knowledge and Computer Basics use reviewed starter prompts
  * shared within age bands. This is not a complete curriculum.
@@ -102,15 +102,19 @@ object TenQuestionSets {
   return pool.drop(offset).take(10)
  }
  private val subjects = listOf("English", "English", "Urdu", "Urdu",
-  "Mathematics", "Mathematics", "Science", "Science", "General Knowledge", "Computer Basics")
+  "Mathematics", "Mathematics", "Science", "Science",
+  "General Knowledge", "General Knowledge", "Computer Basics", "Computer Basics")
 
  val lessons: List<Lesson> = CurriculumCatalog.grades.flatMapIndexed { gradeIndex, grade ->
   subjects.mapIndexed { setIndex, subject ->
    val questions = when (subject) {
-    "General Knowledge" -> gk[tier(gradeIndex)]
-    "Computer Basics" -> computer[tier(gradeIndex)]
+    "General Knowledge" -> if (setIndex == 8) gk[tier(gradeIndex)] else
+     GeneralKnowledgeExpansion.lessons.filter { it.grade == grade }.flatMap { it.questions }
+    "Computer Basics" -> if (setIndex == 10) computer[tier(gradeIndex)] else
+     DigitalSkillsBank.lessons.filter { it.grade == grade }.flatMap { it.questions }
     else -> from(grade, subject, if (setIndex % 2 == 0) 0 else 10)
    }
+   require(questions.size == 10) { "Expected ten questions for $grade / $subject / $setIndex" }
    Lesson("ten-set-${grade.replace(" ", "-")}-${setIndex + 1}", grade, subject,
     "Practice set ${setIndex + 1} of 10",
     "Answer ten questions and review the explanation after each answer.",

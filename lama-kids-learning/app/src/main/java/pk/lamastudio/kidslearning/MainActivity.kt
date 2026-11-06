@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 private val grades = listOf("Nursery", "KG") + (1..8).map { "Class " + it }
-private val subjects = listOf("English", "Urdu", "Mathematics", "Science")
+private val subjects = listOf("English", "Urdu", "Mathematics", "Science", "General Knowledge", "Computer Basics")
 private val ink = Color(0xFF19335A)
 private val ocean = Color(0xFF2776D2)
 private val cream = Color(0xFFF6F9FF)
@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
           subjects.chunked(2).forEach { group ->
            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             group.forEach { choice ->
-             val symbol = when (choice) { "English" -> "🔤"; "Urdu" -> "✍️"; "Mathematics" -> "🔢"; else -> "🔬" }
+             val symbol = when (choice) { "English" -> "🔤"; "Urdu" -> "✍️"; "Mathematics" -> "🔢"; "Science" -> "🔬"; "General Knowledge" -> "🌍"; else -> "💻" }
              Card(onClick = { subject = choice; page = "topics" }, modifier = Modifier.weight(1f), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
               Column(Modifier.fillMaxWidth().padding(18.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                Text(symbol, style = MaterialTheme.typography.headlineMedium)

@@ -275,3 +275,8 @@ Validation and release gate:
 3. Test school admin draft -> submit -> approve -> publish -> teacher assigned section sees plan -> other section cannot see or save -> progress -> school admin report; test archived plans and legacy blank sections.
 4. Ensure all required `.gs` modules are deployed together in the existing Apps Script project without replacing production school records. Do not deploy or change Vercel before the release gate passes.
 5. Remaining: secure teacher reassignment, teacher section configuration audit, performance of multi-plan reporting, integration test coverage and confirmation of live authentication.
+
+## Progress-store validation and release gate — 6 Nov 2026
+- Added mocked Apps Script regression tests for tenant isolation, missing-sheet read behavior, malformed completion dates and cross-teacher overwrite rejection. Registered in syllabus CI.
+- Malformed completion dates now return a controlled validation error.
+- Section-aware reverse teacher reassignment with administrator audit remains NOT implemented. Full workflow tests, GitHub Actions success and production Apps Script deployment are NOT verified. No live release has been performed.

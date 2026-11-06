@@ -53,5 +53,41 @@ var LamaSyllabusProgressStore=(function(){
    return {key:r[2],status:r[3],completedAt:r[4]||null,teacherId:r[5],updatedAt:r[6]};
   });
  }
- return {save:save,list:list,key:key};
+ function reassign(bookId,schoolId,planId,fromTeacherId,toTeacherId,actorId,reason){
+  if(![schoolId,planId,fromTeacherId,toTeacherId,actorId,reason].every(function(x){return typeof x==='string'&&!!x.trim()}))
+   throw Error('Verified reassignment details and reason required');
+  if(fromTeacherId===toTeacherId)throw Error('Teachers must differ');
+  if(reason.trim().length<8||reason.length>500)throw Error('Reassignment reason must be 8–500 characters');
+  var lock=LockService.getScriptLock();
+  if(!lock.tryLock(30000))throw Error('Progress store busy');
+  try{
+   var sh=sheet(bookId,false);
+   if(!sh)return {transferred:0,planId:planId};
+   var last=sh.getLastRow(),rows=last>1?sh.getRange(2,1,last-1,7).getValues():[];
+   var targets=[],seen={};
+   rows.forEach(function(r,i){
+    if(r[0]!==schoolId||r[1]!==planId)return;
+    if(seen[r[2]])throw Error('Duplicate lesson progress rows');
+    seen[r[2]]=true;
+    if(String(r[5])===fromTeacherId)targets.push({row:i+2,data:r});
+   });
+   if(!targets.length)throw Error('No progress owned by source teacher');
+   var ss=SpreadsheetApp.openById(bookId),audit=ss.getSheetByName('_LAMA_SYLLABUS_TRANSFERS');
+   var headers=['schoolId','planId','fromTeacherId','toTeacherId','actorId','reason','lessonCount','transferredAt'];
+   if(!audit){audit=ss.insertSheet('_LAMA_SYLLABUS_TRANSFERS');audit.getRange(1,1,1,headers.length).setValues([headers]);audit.setFrozenRows(1)}
+   var actual=audit.getRange(1,1,1,headers.length).getValues()[0];
+   if(headers.some(function(h,i){return h!==actual[i]}))throw Error('Unexpected syllabus transfer audit schema');
+   var now=new Date().toISOString();
+   // Audit intent before updates; transfer is idempotently recoverable from per-row teacherId.
+   audit.getRange(audit.getLastRow()+1,1,1,headers.length).setValues([[schoolId,planId,fromTeacherId,toTeacherId,actorId,reason.trim(),targets.length,now]]);
+   SpreadsheetApp.flush();
+   targets.forEach(function(t){
+    var updated=t.data.slice();updated[5]=toTeacherId;updated[6]=now;
+    sh.getRange(t.row,1,1,7).setValues([updated]);
+   });
+   SpreadsheetApp.flush();
+   return {planId:planId,transferred:targets.length,fromTeacherId:fromTeacherId,toTeacherId:toTeacherId,transferredAt:now};
+  }finally{lock.releaseLock()}
+ }
+ return {save:save,list:list,key:key,reassign:reassign};
 })();

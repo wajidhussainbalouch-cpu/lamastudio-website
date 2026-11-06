@@ -299,3 +299,31 @@ Validation and release gate:
 - Verified in repository source that `doGet` blocks syllabus mutation and private syllabus read endpoints, including `syllabusReassignProgress`; teacher plan discovery uses the exact section-aware scope helper.
 - Added transfer rollback and failure-injection tests in previous changes. Test execution and a production Apps Script deployment have **not** been confirmed; commits alone do not establish correctness.
 - Outstanding before release: execute and fix CI failures; verify teacher registry schema/status fields and the actual configured-section representation; implement durable transfer recovery for interruptions; test school administrator and teacher journeys against a disposable test school; obtain verified production Apps Script deployment and smoke-test. Do not use production school data for unverified transfer tests.
+
+## Verified Class 5 English textbook source — 6 Nov 2026
+
+- User-supplied Google Drive PDF: https://drive.google.com/file/d/1jsODAQskQsmY_SUp_4xJS7_4VB2lEfat/view?usp=drivesdk
+- Filename: `english 5.pdf`; 154 PDF pages. PDF is scanned/image-based: text extraction yields no usable text. Contents table visually inspected on PDF pages 5–6; **book page numbers below are printed textbook pages, not PDF indices**.
+- Unit inventory, printed page starts:
+  1. Patience — 1
+  2. Be Grateful — 12
+  3. Women as Role Models — 25
+  Review 1 — 33
+  4. Unforgettable Moments of My Life — 35
+  5. Amazing Planet — 45
+  6. A Fit and Healthy Life — 54
+  Review 2 — 64
+  7. What Goes Around, Comes Around — 66
+  8. Do What's Right — 75
+  9. Patriotism — 83
+  10. Eid-ul-Azha — 94
+  Review 3 — 105
+  11. Let's Be Helpful — 107
+  12. Our National Animal — 116
+  13. When Something Went Wrong — 125
+  14. Together We Live — 135
+  Review 4 — 146
+- Contents table confirms strands for each unit: oral communication, reading/critical thinking, language focus, grammar and writing. Reviews occur after units 3, 6, 10 and 14.
+- **Planner implementation requirement:** treat the 14 units and 4 reviews as a *source catalog*; do not invent school teaching dates, periods or term boundaries from page numbers. Scheduling must use school-specific session, holidays, weekly teaching days, periods and exam calendar. Teacher should be able to assign and edit periods for reading, oral communication, grammar, writing and review/assessment.
+- Keep original Drive PDF as a reference URL; do not copy scanned copyrighted textbook pages into GitHub. Source catalog may include original unit headings and page references for navigation.
+- Next integration: create a read-only Class 5 English catalog JSON with these source-verified headings and reviews; offer opt-in import into a school's draft planner without automatically publishing or overwriting school plans.

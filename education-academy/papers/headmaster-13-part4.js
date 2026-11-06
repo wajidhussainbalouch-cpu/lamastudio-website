@@ -79,15 +79,15 @@ window.LAMA_PPSC_HM13_4=[
   "id": "HM13-081",
   "subject": "English Editing",
   "topic": "Coordinate adjective punctuation",
-  "q": "Which sentence correctly punctuates two equally ranked adjectives describing a school's inspection report?",
+  "q": "Which sentence uses a comma correctly between two equally ranked adjectives describing the school's inspection report?",
   "options": [
-   "The school received a detailed thorough report.",
-   "The school received a detailed; thorough report.",
+   "The school received a detailed and thorough report.",
+   "The school received a detailed; and thorough report.",
    "The school received a detailed, thorough report.",
-   "The school received a detailed: thorough report."
+   "The school received a detailed: yet thorough report."
   ],
   "answer": 2,
-  "explanation": "Coordinate adjectives that independently modify the same noun are commonly separated by a comma, as in 'a detailed, thorough report.'",
+  "explanation": "In the requested comma construction, the coordinate adjectives 'detailed' and 'thorough' are separated by a comma. The alternatives lack that comma structure or misuse other punctuation.",
   "difficulty": "intermediate"
  },
  {
@@ -272,17 +272,17 @@ window.LAMA_PPSC_HM13_4=[
  },
  {
   "id": "HM13-094",
-  "subject": "Biology",
-  "topic": "Osmosis in plant cells",
-  "q": "A living plant cell is placed in a sufficiently concentrated salt solution and its membrane pulls away from the cell wall. Which process explains this?",
+  "subject": "Plant Biology",
+  "topic": "Drought stomatal response",
+  "q": "During a dry afternoon, a plant closes many leaf stomata. What paired effect is most likely compared with keeping them open under otherwise similar conditions?",
   "options": [
-   "Water leaves the cell by osmosis, causing plasmolysis",
-   "Salt turns directly into oxygen inside the cell",
-   "Water enters until the cell explodes",
-   "The cell wall dissolves instantly"
+   "Both transpiration and carbon dioxide exchange necessarily rise",
+   "The leaf can no longer perform any cellular respiration",
+   "The plant immediately produces more flowers",
+   "Water loss tends to fall, while entry of carbon dioxide for photosynthesis may also decrease"
   ],
-  "answer": 0,
-  "explanation": "A hypertonic surrounding solution promotes net water loss across the membrane. Reduced cell volume can separate the protoplast from the rigid wall.",
+  "answer": 3,
+  "explanation": "Stomatal closure restricts exchange through leaf pores, often conserving water while reducing carbon dioxide supply for photosynthesis during drought.",
   "difficulty": "intermediate"
  },
  {

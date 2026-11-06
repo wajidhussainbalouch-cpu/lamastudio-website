@@ -247,3 +247,9 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Changed progress-store reads so a missing progress worksheet returns an empty result without creating a new sheet. Writes still initialize the isolated progress worksheet under a script lock.
 - Added pure reporting helper syllabus-report.js and Node test-syllabus-report.js, configured in the syllabus CI workflow. CI execution has not been verified.
 - Remaining: consolidated school-wide reporting, section/teacher ownership policy, test runs, Apps Script deployment and live integration. No live records or deployments were changed.
+
+## School-wide class progress dashboard (6 Nov 2026)
+- Added syllabusSchoolProgress POST-only backend action: verified school administrator, Examination entitlement, tenant-scoped plan and progress reads, published/archived plan filtering, and maximum 100 plans per report.
+- Added LamaAPI.getSchoolSyllabusProgress and school admin dashboard table showing class, plan count, completed, pending, delayed and completion percentage.
+- Added pure syllabus-school-report.js aggregation helper and Node tests in test-syllabus-school-report.js; configured CI workflow. GitHub Actions execution has not been confirmed.
+- Reporting uses all published and archived plans, so overlapping plans may double-count lessons; reporting must add session and active-plan filters before production. Teacher-section ownership enforcement and live Apps Script verification are still pending. No deployment or live data change.

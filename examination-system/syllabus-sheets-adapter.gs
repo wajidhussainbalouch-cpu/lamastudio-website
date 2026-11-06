@@ -130,7 +130,7 @@ var LamaSyllabusSheetStore = (function () {
       if (filter && filter.classId && String(plan.classId).trim().toLowerCase() !== String(filter.classId).trim().toLowerCase()) return;
       if (filter && filter.subjectId && String(plan.subjectId).trim().toLowerCase() !== String(filter.subjectId).trim().toLowerCase()) return;
       result.push({planId:plan.planId, schoolId:plan.schoolId, sessionId:plan.sessionId,
-        classId:plan.classId, subjectId:plan.subjectId, status:plan.status,
+        classId:plan.classId, sectionId:plan.sectionId||'', subjectId:plan.subjectId, status:plan.status,
         version:plan.version, lessonCount:plan.scheduled.length});
     });
     return result;

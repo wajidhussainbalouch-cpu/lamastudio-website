@@ -93,8 +93,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Entries posted</small></div>
  <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><small>Attendance alerts</small></div>
  <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small>Saved student attendance</small></div>
- <div class="overview-tile"><span class="tile-icon">👦</span><span class="tile-label">Boys</span><strong id="statBoys">—</strong><small>Assigned class</small></div>
- <div class="overview-tile"><span class="tile-icon">👧</span><span class="tile-label">Girls</span><strong id="statGirls">—</strong><small>Assigned class</small></div>
+ <div class="overview-tile"><span class="tile-icon">👦👧</span><span class="tile-label">Boys &amp; Girls</span><div class="flex items-center gap-5 mt-2"><div><small>Boys</small><strong id="statBoys" class="block">—</strong></div><div class="h-10 w-px bg-slate-600" aria-hidden="true"></div><div><small>Girls</small><strong id="statGirls" class="block">—</strong></div></div><small id="genderMissingNote">Assigned class</small></div>
 </section>
 <section class="employee-panel" aria-label="Employee identity card">
  <div class="employee-details">
@@ -273,7 +272,7 @@ function updateStats(){
  const unknown=myStudents.length-boys-girls;
  $('statBoys').textContent=boys;
  $('statGirls').textContent=girls;
- $('statGirls').nextElementSibling.textContent=unknown?unknown+' without recorded gender':'Assigned class';
+ $('genderMissingNote').textContent=unknown?unknown+' without recorded gender':'Assigned class';
 }
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}

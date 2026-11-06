@@ -62,7 +62,7 @@ async function discoverPlans(){
   const sessionPlaceholder=document.createElement('option');sessionPlaceholder.value='';sessionPlaceholder.textContent='Select session';sessionSelect.append(sessionPlaceholder);
   sessions.forEach(id=>{const opt=document.createElement('option');opt.value=id;opt.textContent=id;sessionSelect.append(opt)});
   if(sessions.includes(previous))sessionSelect.value=previous;
-  plans.forEach(p=>{const option=document.createElement('option');option.value=p.planId;option.textContent=[p.classId,p.subjectId,p.sessionId,p.status,'v'+p.version].join(' · ');select.append(option)});
+  plans.forEach(p=>{const option=document.createElement('option');option.value=p.planId;option.textContent=[p.classId,p.sectionId||'Unsectioned',p.subjectId,p.sessionId,p.status,'v'+p.version].join(' · ');select.append(option)});
   el('status').textContent=plans.length?plans.length+' plan(s) found. Select a plan to inspect.':'No syllabus plans yet. Creation and approval are not enabled in this page.';
  }catch(e){el('status').textContent='Plan discovery unavailable: '+e.message}
 }
@@ -74,7 +74,7 @@ el('load').onclick=async()=>{
   const result=await LamaAPI.getAdminSyllabusPlan(planId),plan=result.plan;
   currentPlan=plan;renderWorkflow();await showAdminProgress(plan);
   el('heading').textContent='Plan '+plan.planId;
-  el('meta').textContent='Class '+plan.classId+' · Subject '+plan.subjectId+' · Status '+plan.status+' · Version '+plan.version;
+  el('meta').textContent='Class '+plan.classId+(plan.sectionId?' · Section '+plan.sectionId:'')+' · Subject '+plan.subjectId+' · Status '+plan.status+' · Version '+plan.version;
   showRows('lessons',plan.scheduled||[],[x=>x.date,x=>x.slot,x=>x.chapterId,x=>x.lessonTitle||x.lessonId||x.kind]);
   showRows('audit',result.audit||[],[x=>x.serverTime,x=>x.from+' → '+x.to,x=>x.actorId,x=>x.reason]);
   el('details').hidden=false;el('status').textContent='Plan loaded successfully (read only).';
@@ -91,7 +91,7 @@ async function saveSyllabusDraft(event) {
    if(p.length<4||p.length>5)throw Error('Each lesson needs date, slot, ID, title, optional chapter');
    return {date:p[0],slot:Number(p[1]),lessonId:p[2],lessonTitle:p[3],chapterId:p[4]||''};
   });
-  const draft={planId:el('draftPlanId').value.trim(),sessionId:el('draftSession').value.trim(),classId:el('draftClass').value.trim(),subjectId:el('draftSubject').value.trim(),scheduled};
+  const draft={planId:el('draftPlanId').value.trim(),sessionId:el('draftSession').value.trim(),classId:el('draftClass').value.trim(),sectionId:el('draftSection').value.trim(),subjectId:el('draftSubject').value.trim(),scheduled};
   button.disabled=true;el('draftStatus').textContent='Saving draft...';
   const saved=await LamaAPI.createSyllabusDraft(draft);
   el('draftStatus').textContent='Draft saved: '+saved.planId;

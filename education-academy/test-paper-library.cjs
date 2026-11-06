@@ -12,15 +12,15 @@ const localStorage={
  removeItem:key=>store.delete(key)
 };
 const context={window:{},localStorage,URLSearchParams,location:{search:'?job=teaching:1'}};
-for(const name of ['jobs.js','job-catalog-ui.js','papers.js','papers/headmaster-02-part1.js','papers/headmaster-02-part2.js','papers/headmaster-02-part3.js','papers/headmaster-02-part4.js','papers/headmaster-02-register.js','papers/headmaster-03-part1.js','papers/headmaster-03-part2.js','papers/headmaster-03-part3.js','papers/headmaster-03-part4.js','papers/headmaster-03-register.js','papers/headmaster-04-part1.js','papers/headmaster-04-part2.js','papers/headmaster-04-part3.js','papers/headmaster-04-part4.js','papers/headmaster-04-register.js','papers/headmaster-05-part1.js','papers/headmaster-05-part2.js','papers/headmaster-05-part3.js','papers/headmaster-05-part4.js','papers/headmaster-05-register.js','papers/headmaster-06-part1.js','papers/headmaster-06-part2.js','papers/headmaster-06-part3.js','papers/headmaster-06-part4.js','papers/headmaster-06-register.js','papers/headmaster-07-part1.js','papers/headmaster-07-part2.js','papers/headmaster-07-part3.js','papers/headmaster-07-part4.js','papers/headmaster-07-register.js','papers/headmaster-08-part1.js','papers/headmaster-08-part2.js','papers/headmaster-08-part3.js','papers/headmaster-08-part4.js','papers/headmaster-08-register.js','papers/headmaster-09-part1.js','papers/headmaster-09-part2.js','papers/headmaster-09-part3.js','papers/headmaster-09-part4.js','papers/headmaster-09-register.js','paper-library.js']){
+for(const name of ['jobs.js','job-catalog-ui.js','papers.js','papers/headmaster-02-part1.js','papers/headmaster-02-part2.js','papers/headmaster-02-part3.js','papers/headmaster-02-part4.js','papers/headmaster-02-register.js','papers/headmaster-03-part1.js','papers/headmaster-03-part2.js','papers/headmaster-03-part3.js','papers/headmaster-03-part4.js','papers/headmaster-03-register.js','papers/headmaster-04-part1.js','papers/headmaster-04-part2.js','papers/headmaster-04-part3.js','papers/headmaster-04-part4.js','papers/headmaster-04-register.js','papers/headmaster-05-part1.js','papers/headmaster-05-part2.js','papers/headmaster-05-part3.js','papers/headmaster-05-part4.js','papers/headmaster-05-register.js','papers/headmaster-06-part1.js','papers/headmaster-06-part2.js','papers/headmaster-06-part3.js','papers/headmaster-06-part4.js','papers/headmaster-06-register.js','papers/headmaster-07-part1.js','papers/headmaster-07-part2.js','papers/headmaster-07-part3.js','papers/headmaster-07-part4.js','papers/headmaster-07-register.js','papers/headmaster-08-part1.js','papers/headmaster-08-part2.js','papers/headmaster-08-part3.js','papers/headmaster-08-part4.js','papers/headmaster-08-register.js','papers/headmaster-09-part1.js','papers/headmaster-09-part2.js','papers/headmaster-09-part3.js','papers/headmaster-09-part4.js','papers/headmaster-09-register.js','papers/headmaster-10-part1.js','papers/headmaster-10-part2.js','papers/headmaster-10-part3.js','papers/headmaster-10-part4.js','papers/headmaster-10-register.js','paper-library.js']){
  vm.runInNewContext(fs.readFileSync(path.join(root,name),'utf8'),context,{timeout:1500,filename:name});
 }
 const registry=context.window.LamaPpscPaperLibrary;
 assert.ok(registry,'paper registry exposed');
-assert.equal(registry.list().length,9,'nine original free practice papers are available');
-assert.equal(registry.forJob('teaching:0').length,9);
-assert.equal(registry.forJob('teaching:1').length,9,'school-head variants share the approved foundation set');
-assert.equal(registry.coverage('teaching:0').reduce((sum,item)=>sum+item.count,0),900,'published subject coverage matches bank');
+assert.equal(registry.list().length,10,'ten original free practice papers are available');
+assert.equal(registry.forJob('teaching:0').length,10);
+assert.equal(registry.forJob('teaching:1').length,10,'school-head variants share the approved foundation set');
+assert.equal(registry.coverage('teaching:0').reduce((sum,item)=>sum+item.count,0),1000,'published subject coverage matches bank');
 assert.equal(registry.coverage('information-officer').length,0,'unpublished track must not show MCQs');
 assert.equal(registry.forJob('information-officer').length,0,'do not substitute Headmaster exam for another job');
 assert.equal(registry.activePaper().id,'DEMO-01');
@@ -64,6 +64,11 @@ assert.equal(registry.activePaper().id,'HM-2026-P09','Paper 9 deep link must wor
 assert.equal(registry.activePaper().questions.length,100);
 context.location.search='?job=teaching:1&paper=HM-2026-P09';
 assert.equal(registry.activePaper().id,'HM-2026-P09','senior head school option must see Paper 9');
+context.location.search='?job=teaching:0&paper=HM-2026-P10';
+assert.equal(registry.activePaper().id,'HM-2026-P10','Paper 10 deep link must work');
+assert.equal(registry.activePaper().questions.length,100);
+context.location.search='?job=teaching:1&paper=HM-2026-P10';
+assert.equal(registry.activePaper().id,'HM-2026-P10','senior school head can open Paper 10');
 context.location.search='?job=information-officer&paper=DEMO-01';
 assert.equal(registry.activePaper(),null,'cross-job paper link must be rejected');
 const base=context.window.LAMA_PPSC_PAPERS[0];

@@ -334,3 +334,44 @@ Validation and release gate:
 - The textbook contents (scanned PDF pages 5–6) identify named oral communication, reading and critical thinking, language focus, grammar and writing topics for all 14 units. These headings have been assigned to proposed daily lesson slots; this is **not** a page-by-page verification of each exercise and is **not** a school-approved calendar.
 - A review CSV was generated in the conversation as `Class_5_English_Daily_Diary_2027_Topic_Wise_Review.csv`, with date, weekday, class, unit, source page, daily topic, source-confidence label, approval status and holiday-confirmation status. **The CSV is not yet imported into the application or GitHub.**
 - Implementation gate: provide administrator preview of daily lessons, explicit approval, calendar-aware rescheduling and teacher-diary read-only future suggestions. No automatic publishing or changing real school records before approval.
+
+
+## Approved planning architecture: immutable lesson division, flexible calendar — 6 November 2026
+
+**This section supersedes the earlier 2027–28 dates, September 2026 completion target and any equal-topics-per-day allocation in the draft examples above.** Those drafts are historical review artifacts, not the active school calendar.
+
+### School calendar and course milestones (2026–27)
+- Academic session: **1 April 2026 – 31 March 2027**.
+- Summer vacation: **22 May – 23 August 2026** (inclusive).
+- Winter vacation: **24 – 31 December 2026** (inclusive).
+- Saturday and Sunday: full closure. Friday: **half-day**, so do not assume a full weekday's teaching capacity.
+- Apply the user-supplied Government of Pakistan Cabinet Division **2026** public-holiday circular as the initial holiday source. Respect observed days, holiday applicability and subsequent school/provincial notices; religious holidays and local closures may require confirmation. Do not reuse the 2026 circular for 2027.
+- Target **complete the Class 5 English syllabus by 23 December 2026**. January–March 2027 is for revision, practice papers, assessments and examinations, subject to the school exam calendar.
+- A target is not permission to truncate difficult lessons or invent periods. Report a completion-capacity shortfall explicitly.
+
+### Source-backed, weight-aware division (before assigning dates)
+1. Load the Class 5 English source catalog from `examination-system/catalogs/english-class-5.json` (14 units, four reviews, original order). Verify detailed exercise-level content against the scanned textbook before claiming page-exact homework.
+2. Build a **canonical ordered lesson division** independently of dates. Assign stable `lessonId` values; include `unitId`, `topic`, `subtopics`, `sourcePageReference`, `learningObjectives`, `prerequisiteLessonIds`, `difficulty`, `weight`, `estimatedPeriods`, `assessment`, `teacherNotes` and `sourceConfidence`.
+3. Judge difficulty, conceptual load, reading length, writing workload, students' grade level and required practice. An easy introduction may need one period; reading comprehension, complex grammar and guided writing may need two or more. These are estimates for review, not an automatic guarantee of learning.
+4. Do not combine topics simply to fill a date or satisfy the December target. Split heavy topics into coherent sequential lessons where necessary; preserve prerequisite order and leave room for checks for understanding.
+5. Workflow: `draft -> submitted -> approved -> published`. Freeze an approved division as a **versioned immutable snapshot**. Changes to topic, order, weight, difficulty, objectives or period estimates require a new draft revision and approval. Preserve old versions and progress history.
+
+### Date-only rescheduling engine
+- Maintain **separate entities**: `lessonDivisionVersion` (approved immutable content), `schoolCalendarVersion` (session, weekly hours, vacations, holidays, exam blocks, Friday half-day, subject periods), and `scheduleVersion` (lessonId to proposed date/period slots).
+- Schedule ordered lessons by **available subject periods**, not raw weekdays. Obtain actual English periods for each weekday, including Friday, from the school timetable. Do not assume one English period every full day.
+- Calendar updates generate a new **schedule version** from the same approved division: only dates and assigned period slots may change. `lessonId`, topics, sequence, difficulty, weight, estimated periods and objectives must remain unchanged. Use a diff preview showing old/new dates and displaced lessons.
+- Preserve actual teaching dates and completion evidence for already-taught lessons. Reflow **unfinished** lessons only, respecting prerequisites, available periods, closures and fixed exams. Flag collisions, impossible deadlines and required extra periods; never silently skip, merge or shorten content.
+- Any manual lesson content edit is a **division revision**, not a calendar adjustment. Keep separate permissions and audit trails for both operations.
+- Teacher diary displays today's assigned lesson, next lesson, progress, delay reason and schedule-version provenance. School admin approves publication of schedule changes; teacher progress does not rewrite canonical lesson content.
+- Ensure school, campus, class, section, subject, academic session and teacher permissions are enforced for every read/write. Do not let a reschedule overwrite other schools' plans.
+
+### Required tests and rollout gate
+1. Same approved division + changed holiday -> **identical ordered lesson IDs/content/period requirements**, changed dates only.
+2. Added summer/winter closure or Friday half-day -> correct capacity and date reflow; no scheduling on closed days.
+3. Completed lessons remain anchored to actual dates; unfinished lessons shift, with no duplicate/missing IDs.
+4. Insufficient periods before 23 December -> explicit at-risk/infeasible status, never silent compression.
+5. Topic edit after approval rejected unless a new division revision is approved.
+6. Cross-tenant/section permissions, concurrent calendar edits, schedule version conflicts and audit logs tested.
+7. Verify unit and exercise details, school timetable, 2026 holiday applicability, and full school admin/teacher workflow against a disposable test school before any Apps Script or live website deployment.
+
+**Status on 6 Nov 2026:** Specification approved in conversation; code integration, period-level scheduling, calendar reflow, tests and production verification remain pending. No production data mutation or Vercel deployment is authorized by this documentation update alone.

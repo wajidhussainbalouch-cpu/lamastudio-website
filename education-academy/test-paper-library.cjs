@@ -20,6 +20,8 @@ assert.ok(registry,'paper registry exposed');
 assert.equal(registry.list().length,1,'only the reviewed free legacy paper is publicly available');
 assert.equal(registry.forJob('teaching:0').length,1);
 assert.equal(registry.forJob('teaching:1').length,1,'school-head variants share the approved foundation set');
+assert.equal(registry.coverage('teaching:0').reduce((sum,item)=>sum+item.count,0),100,'published subject coverage matches bank');
+assert.equal(registry.coverage('information-officer').length,0,'unpublished track must not show MCQs');
 assert.equal(registry.forJob('information-officer').length,0,'do not substitute Headmaster exam for another job');
 assert.equal(registry.activePaper().id,'DEMO-01');
 context.location.search='?job=information-officer&paper=DEMO-01';
@@ -32,6 +34,7 @@ candidate.publishStatus='public';candidate.reviewStatus='approved';candidate.acc
 assert.equal(registry.forJob('information-officer').length,0,'paid bank must never be exposed from public JS');
 candidate.access='free';
 assert.equal(registry.forJob('information-officer').length,1,'approved public paper auto-appears under the matching job');
+assert.equal(registry.coverage('information-officer').reduce((sum,item)=>sum+item.count,0),100,'new job coverage registered automatically');
 context.location.search='?job=information-officer&paper=INFO-01';
 assert.equal(registry.activePaper().id,'INFO-01','job-specific paper URL resolves');
 assert.equal(registry.progress(base).state,'not-started');

@@ -1742,8 +1742,18 @@ function handleRequest(params) {
             if (!actor || !actor.id) throw new Error('Verified administrator required.');
             lamaRequireModuleForVerifiedSchool_(params.schoolId,'examination');
             const school=authorizeSchool(params.schoolId,params.apiKey);
+            if (typeof params.sessionId !== 'string' || !/^[a-zA-Z0-9 _./-]{1,100}$/.test(params.sessionId.trim()))
+                throw new Error('Academic session is required.');
+            const sessionId=params.sessionId.trim();
             const plans=LamaSyllabusSheetStore.list(school.obj.sheetId,params.schoolId,{})
-                .filter(function(p){return p.status==='published'||p.status==='archived'});
+                .filter(function(p){return p.status==='published' && p.sessionId===sessionId});
+            const scopes={};
+            plans.forEach(function(p){
+                const scope=[String(p.classId).trim().toLowerCase(),String(p.subjectId).trim().toLowerCase()].join('|');
+                if(Object.prototype.hasOwnProperty.call(scopes,scope))
+                    throw new Error('Overlapping published plans for class and subject. Resolve duplicate plans before reporting.');
+                scopes[scope]=true;
+            });
             if(plans.length>100)throw new Error('Too many syllabus plans for single report; pagination required.');
             const asOf=Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyyy-MM-dd');
             const totals={completed:0,pending:0,delayed:0},groups={};
@@ -1766,7 +1776,7 @@ function handleRequest(params) {
             const classes=Object.keys(groups).map(function(k){const g=groups[k];g.completionPercent=g.totalLessons?Math.round(g.completed*100/g.totalLessons):0;return g});
             classes.sort(function(a,b){return String(a.classId).localeCompare(String(b.classId))});
             const totalLessons=totals.completed+totals.pending+totals.delayed;
-            return {status:'success',report:{asOf:asOf,plans:plans.length,classes:classes,totals:totals,totalLessons:totalLessons,
+            return {status:'success',report:{sessionId:sessionId,asOf:asOf,plans:plans.length,classes:classes,totals:totals,totalLessons:totalLessons,
                 completionPercent:totalLessons?Math.round(totals.completed*100/totalLessons):0}};
         }
         if (action === 'syllabusAdminProgress') {

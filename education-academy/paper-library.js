@@ -9,7 +9,7 @@
  const jobs=()=>window.LamaAcademyJobCatalog;
  const variants=()=>jobs()?.options()||[];
  const jobId=id=>String(id||'').split(':')[0];
- const isPublic=paper=>Boolean(paper&&typeof paper.id==='string'&&Array.isArray(paper.questions)&&paper.questions.length===100&&Number.isInteger(paper.minutes)&&paper.minutes>0&&(paper.id===LEGACY_PUBLIC_ID||(paper.access==='free'&&paper.publishStatus==='public'&&paper.reviewStatus==='approved')));
+ const isPublic=paper=>Boolean(paper&&typeof paper.id==='string'&&Array.isArray(paper.questions)&&paper.questions.length===100&&Number.isInteger(paper.minutes)&&paper.minutes>0&&(paper.id===LEGACY_PUBLIC_ID||(paper.access==='free'&&paper.publishStatus==='public'&&(paper.reviewStatus==='approved'||(paper.reviewStatus==='automated-checked'&&paper.qaStatus==='pass'&&paper.practiceOnly===true)))));
  const list=()=>Array.isArray(window.LAMA_PPSC_PAPERS)?window.LAMA_PPSC_PAPERS.filter(isPublic):[];
  const forJob=id=>list().filter(paper=>{
   const assigned=Array.isArray(paper.jobIds)?paper.jobIds:(paper.id===LEGACY_PUBLIC_ID?['teaching']:[]);
@@ -101,6 +101,8 @@
    const labels={'not-started':'Not started','in-progress':'In progress','expired':'Time elapsed','completed':'Completed'};
    head.append(element('span',labels[state.state],'library-status library-status-'+state.state));
    card.append(head,element('p',paper.title+' · '+paper.minutes+' minutes · Free educational practice','muted'));
+   if(paper.reviewStatus==='automated-checked')card.append(element('p','Original practice · Automated checks · Independent academic review pending','muted'));
+   card.append(element('p','Answer keys and explanations appear after submitting this paper.','muted'));
    const subjects=[...new Set(paper.questions.map(q=>q.subject).filter(Boolean))].slice(0,9);
    card.append(element('p','Subjects: '+subjects.join(' · '),'paper-subjects'));
    if(state.last&&Number(state.last.total)>0){

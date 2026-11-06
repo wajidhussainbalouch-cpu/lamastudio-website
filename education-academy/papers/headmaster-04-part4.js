@@ -111,7 +111,7 @@ window.LAMA_PPSC_HM04_4=[
   "topic": "Possessive meaning",
   "q": "Which sentence correctly refers to a resource room shared by several teachers?",
   "options": [
-   "The teachers resource room was renovated.",
+   "The resource room of one teacher was renovated.",
    "The teachers' resource room was renovated.",
    "The teacher's resource room were renovated by teachers.",
    "The teachers's resource room was renovated."

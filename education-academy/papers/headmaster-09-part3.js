@@ -1,19 +1,19 @@
 /* Original Headmaster Paper 9, Section 3: maths, statistics and research Q051-075. */
 window.LAMA_PPSC_HM09_3=[
  {
-  "id": "HM09-051",
-  "subject": "Educational Statistics",
-  "topic": "Weighted mean by enrollment",
-  "q": "Campus A has 40 pupils with a mean test score of 70, while Campus B has 60 pupils with a mean score of 80. What is the combined mean score?",
+  "subject": "Quantitative Reasoning",
+  "topic": "Cost per learner after fixed fee",
+  "q": "A school pays a fixed online examination-platform fee of Rs 2,400 plus Rs 30 for each of 80 candidates. What is the average total cost per candidate?",
   "options": [
-   "74",
-   "76",
-   "78",
-   "75"
+   "Rs 30",
+   "Rs 45",
+   "Rs 60",
+   "Rs 90"
   ],
-  "answer": 1,
-  "explanation": "The weighted sum is 40 × 70 + 60 × 80 = 7,600. Dividing by all 100 pupils gives a combined mean of 76.",
-  "difficulty": "foundation"
+  "answer": 2,
+  "explanation": "The fixed fee plus per-candidate charges cost 2,400 + 30 × 80 = Rs 4,800. Dividing by 80 candidates gives Rs 60 each.",
+  "difficulty": "foundation",
+  "id": "HM09-051"
  },
  {
   "id": "HM09-052",
@@ -31,19 +31,19 @@ window.LAMA_PPSC_HM09_3=[
   "difficulty": "foundation"
  },
  {
-  "id": "HM09-053",
-  "subject": "Assessment Statistics",
-  "topic": "Item discrimination",
-  "q": "On a practice MCQ, 18 of 20 high-scoring candidates answer correctly, but only 6 of 20 low-scoring candidates do. What is the upper-minus-lower discrimination index?",
+  "subject": "Educational Measurement",
+  "topic": "Standard score conversion",
+  "q": "An examination reports a standardized score using T = 50 + 10z. What T-score corresponds to a candidate whose z-score equals −1.5?",
   "options": [
-   "0.60",
-   "0.30",
-   "0.90",
-   "0.12"
+   "35",
+   "40",
+   "45",
+   "65"
   ],
   "answer": 0,
-  "explanation": "The upper group proportion is 18/20 = 0.90 and the lower group is 6/20 = 0.30. Their difference is 0.60.",
-  "difficulty": "advanced"
+  "explanation": "Substitute z = −1.5 into T = 50 + 10z. The calculation 50 − 15 gives a T-score of 35, representing a result below the reference mean.",
+  "difficulty": "advanced",
+  "id": "HM09-053"
  },
  {
   "id": "HM09-054",

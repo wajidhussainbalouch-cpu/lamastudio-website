@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Latest Academy question bank — Paper 6 (6 November 2026)
+
+**Paper 6 is complete in GitHub source:** `HM-2026-P06`, original MCQs `HM06-001`–`HM06-100`, across teaching, school leadership, educational research, English, ICT and science. It has a **separate 90-minute attempt**, marks, post-submission explanation/answer key and printable PDF review. The earlier five papers remain available with their original history: **6 free Headmaster/Headmistress practice papers / 600 questions**.
+
+**Supabase:** Added 100 private `draft` records; the separate school-head editorial question bank now contains **530 unique normalized stems** (all 530 pending human academic approval). Automated checks verified question uniqueness, options, rationales and paper-link/answer-review logic. The source also uses PWA cache `v61`; tests and GitHub CI passed. **Do not claim official PPSC syllabus endorsement or independently reviewed questions.** Free client JavaScript includes keys and cannot protect premium exams.
+
+The new handoff is **[PAPER_06_RELEASE.md](./PAPER_06_RELEASE.md)**. When the owner says **Continue**, next prepare Paper 7 with **100 additional non-repeating items `HM07-001`–`HM07-100`**, separate ID `HM-2026-P07`, keep old papers and candidate records, insert new private drafts, update CI/PWA/docs. Follow GitHub-only policy: **do not manually deploy to Vercel** under current project constraints. A CI pass is not proof that the latest commit is live or mobile-tested.
+
+
 ## Most recent Headmaster/Headmistress bank — Paper 5 (6 November 2026)
 
 **Paper 5** (`HM-2026-P05`) is now authored and committed as **100 more original free-practice MCQs** (`HM05-001` through `HM05-100`). The academy source now contains **five separate free school-head papers, 500 total practice questions**. The new paper retains its own 90-minute state, separate saved attempts and scores, and post-submission correct answers, explanations, and Print / Save PDF review. Papers 1–4 and all existing marks remain intact.

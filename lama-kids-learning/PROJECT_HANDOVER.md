@@ -132,3 +132,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added `ClassSpecificBankTest.kt` to verify class/subject coverage, prompt uniqueness within each class/subject, answer indices, explanations and unique lesson IDs. Tests are written but not confirmed executed.
 - All new lessons are connected to LearningContent.allLessons and therefore topic menus and saved star totals.
 - LIMITATIONS: These are short vocabulary/definition drills, not complete textbook chapters. More question formats, original age-appropriate lessons, teacher review, accessibility, CI and device QA are still required. No deployment, production merge or publication.
+
+## 6 November 2026 — Additional concept review questions
+- Added ConceptReviewBank: 30 new lessons and 150 additional class-level questions, five each for English, Urdu and Science at Nursery, KG and Classes 1–8. All questions include an explanation and rotated answer positions. The 150 concept prompts are class-specific within each subject and use curated definitions.
+- Wired to LearningContent.allLessons; new topics appear in each grade's subject menu. Added ConceptReviewBankTest for coverage, unique answers, valid indices and lesson IDs.
+- This is an additional question bank, NOT a claim of complete grade-level curriculum coverage. Content requires teacher review, particularly for young children's abstract vocabulary and Urdu definitions. CI/build and device validation for these changes are pending. No Vercel, production merge or publishing.

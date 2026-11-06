@@ -112,6 +112,10 @@ window.LamaAcademyAuth=(()=>{
   }
   return dataRequest('ppsc_question_bank','POST',{...question,review_status:'draft'});
  }
+ async function adminImportQuestions(questions){
+  if(!Array.isArray(questions)||!questions.length||questions.length>100)throw Error('Import between 1 and 100 questions per batch.');
+  return dataRequest('ppsc_question_bank','POST',questions.map(q=>({...q,review_status:'draft'})));
+ }
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob,adminRegistrations,adminQuestions,adminSaveQuestion});
+ return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob,adminRegistrations,adminQuestions,adminSaveQuestion,adminImportQuestions});
 })();

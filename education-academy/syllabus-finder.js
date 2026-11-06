@@ -16,20 +16,33 @@
   {match:/legal|law|prosecut|inspector/i,topics:['Constitutional and administrative law','Relevant substantive and procedural laws','Legal reasoning and statutory interpretation','Evidence, ethics and public administration','English comprehension and legal writing','General knowledge and current affairs']}
  ];
  const generic=['Job-specific professional knowledge and responsibilities','Relevant Punjab and federal laws, policies and regulations','English comprehension and communication','Quantitative and analytical reasoning','Pakistan affairs, current affairs and general knowledge','Applied problem-solving and professional ethics'];
- const roles=[...document.querySelectorAll('#jobCards .job-card h3')].map(x=>clean(x.textContent)).filter(Boolean);
- const unique=[...new Set(roles)];unique.forEach(role=>{const option=document.createElement('option');option.value=role;option.textContent=role;select.append(option)});
+ const catalog=window.LamaAcademyJobCatalog;
+ if(!catalog){out.textContent='Job catalog did not load. Please refresh.';return}
+ catalog.populate(select,{allowEmpty:true,emptyLabel:'Choose a preparation job',preferUrl:true});
  function render(){
-  const role=clean(query.value)||select.value;
+  const typed=clean(query.value);
+  const available=catalog.options();
+  const matched=typed?available.find(j=>(j.caseNo&&j.caseNo.toLowerCase()===typed.toLowerCase())||j.label.toLowerCase()===typed.toLowerCase()):null;
+  const chosen=matched||(!typed?catalog.resolve(select.value):null);
+  const role=chosen?chosen.label:typed;
   out.replaceChildren();
   if(!role){out.textContent='Select a job to see a suggested preparation outline.';return}
-  const source=templates.find(t=>t.match.test(role)),topics=source?source.topics:generic;
+  const source=templates.find(t=>t.match.test(role));
+  const fromCatalog=chosen&&chosen.subjects.length?chosen.subjects:null;
+  const topics=fromCatalog||source&&source.topics||generic;
   const h=document.createElement('h3');h.textContent=role;
-  const status=document.createElement('p');status.className='syllabus-status';status.textContent='Academy-suggested outline — not officially verified';
-  const info=document.createElement('p');info.textContent=source?'Suggested topics based on the job category. Confirm all topics and weightings against the exact PPSC case syllabus.':'No verified job-specific syllabus is stored for this post. Start with this general preparation checklist while checking the official case syllabus.';
-  const list=document.createElement('ul');topics.forEach(topic=>{const li=document.createElement('li');li.textContent=topic;list.append(li)});
-  const advice=document.createElement('p');advice.textContent='Suggested method: review the official advertisement, make subject notes, practise topic-wise MCQs, then attempt timed papers and revise mistakes. This is study guidance, not an exam pattern.';
+  const status=document.createElement('p');status.className='syllabus-status';
+  status.textContent='Academy-suggested topics — not an official PPSC syllabus';
+  const info=document.createElement('p');
+  info.textContent=fromCatalog?
+   'These preparation topics are linked to the academy job catalog. Verify every subject and weighting against the official syllabus for your case number.':
+   source?'Suggested topics for this kind of post. Verify the exact official PPSC syllabus before relying on this outline.':
+   'No verified syllabus is stored for this post. This is general preparation guidance until official case-specific details are reviewed.';
+  const list=document.createElement('ul');
+  topics.forEach(topic=>{const li=document.createElement('li');li.textContent=topic;list.append(li)});
+  const advice=document.createElement('p');advice.textContent='Suggested approach: check the official advertisement, create subject notes, practise topic-wise MCQs, and revise mistakes. No official paper pattern is implied.';
   out.append(h,status,info,list,advice);
-  const search='site:ppsc.gop.pk syllabus '+role;
+  const search='site:ppsc.gop.pk syllabus '+role+(chosen&&chosen.caseNo?' '+chosen.caseNo:'');
   official.href='https://www.google.com/search?q='+encodeURIComponent(search);
   official.textContent='Search official PPSC pages for '+role;
  }
@@ -37,4 +50,5 @@
  button.addEventListener('click',render);
  query.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();render()}});
  render();
+ window.addEventListener('lama:jobs-updated',()=>{const current=select.value;catalog.populate(select,{allowEmpty:true,emptyLabel:'Choose a preparation job',value:current});render()});
 })();

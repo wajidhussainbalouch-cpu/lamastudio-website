@@ -167,17 +167,17 @@ window.LAMA_PPSC_HM15_2=[
  },
  {
   "id": "HM15-037",
-  "subject": "Early Literacy",
-  "topic": "Syllable counting versus phoneme counting",
-  "q": "A child says the word 'elephant' has three syllables but cannot identify its individual speech sounds. Which conclusion is appropriate?",
+  "subject": "Literacy",
+  "topic": "Morpheme versus syllable awareness",
+  "q": "A pupil divides the spoken word 'unhappiness' into syllables but cannot explain how 'un-' changes the meaning of 'happy.' Which additional knowledge is needed?",
   "options": [
-   "Syllable awareness proves complete phonemic mastery",
-   "Speech sounds cannot be segmented",
-   "All syllables contain exactly two phonemes",
-   "Syllable segmentation and phoneme-level awareness are related but distinct skills"
+   "The ability to count full stops in a paragraph",
+   "Awareness of morphemes and how prefixes change word meaning",
+   "Only the ability to name alphabet letters",
+   "Knowledge of the word's page number"
   ],
-  "answer": 3,
-  "explanation": "Syllables are larger sound units than phonemes. Success with syllables does not necessarily imply mastery of individual phoneme analysis.",
+  "answer": 1,
+  "explanation": "Syllable awareness concerns spoken sound groupings, while morphological awareness concerns meaningful word parts such as the negative prefix 'un-'.",
   "difficulty": "intermediate"
  },
  {

@@ -89,6 +89,9 @@ window.LamaAcademyAuth=(()=>{
  }
  async function subscriptions(){return dataRequest('ppsc_subscriptions?select=status,starts_at,expires_at,approved_at&order=created_at.desc&limit=10','GET')}
 
+ async function adminRole(){return dataRequest('ppsc_admin_members?select=role&limit=1','GET')}
+ async function adminCandidates(){return dataRequest('ppsc_candidates?select=id,display_name,occupation,gender,phone,address,photo_url,created_at&order=created_at.desc&limit=200','GET')}
+ async function adminSubscriptions(){return dataRequest('ppsc_subscriptions?select=candidate_id,status,starts_at,expires_at,created_at&order=created_at.desc&limit=500','GET')}
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions});
+ return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions});
 })();

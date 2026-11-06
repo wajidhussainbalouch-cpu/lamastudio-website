@@ -13,3 +13,9 @@
 - Source PDF successfully retrieved from Google Drive.
 - **0 Class 2 English questions created yet.** Next action: visually review actual lesson pages and create 500 original draft questions with accurate source mapping. Do not invent textbook references.
 - No Vercel deployment, data deletion, or live activation.
+
+## English batch 1 created — 2026-11-06
+- `data/class2-english-batch1-500-draft.json`, commit `7f545aa456e43fed31056f86da53c4ccaab3998e`: 500 unique question IDs, 125 core words/pairs assessed in four formats, across nouns, adjectives, action words, opposites, and singular/plural.
+- Verified curricular skills table on PDF page 6 of the 126-page PCTB English 2 source. These questions are **supplemental**, not verified against individual lesson text/pages. No chapter/lesson/page references are assigned to questions.
+- All records `approved=false`, `onlineReady=false`. 0 repeated literal prompts in the batch, but significant intended conceptual repetition and possible ambiguous choices; editorial, pedagogical and answer-key review mandatory.
+- Progress 500/1500 draft target; next batch 501–1000. No live activation or Vercel deployment.

@@ -46,7 +46,7 @@ internal fun createReasoningRounds(seed: Int = 20261106): List<ReasoningRound> {
     val blocks = r.nextInt(3, 8)
     val start = r.nextInt(10, 30)
     val step = r.nextInt(2, 7)
-    val cycle = r.nextInt(2, 6)
+    val cycle = r.nextInt(4, 7)
     val price = r.nextInt(4, 11)
     val count = r.nextInt(2, 7)
     val ratio = r.nextInt(2, 6)
@@ -56,8 +56,8 @@ internal fun createReasoningRounds(seed: Int = 20261106): List<ReasoningRound> {
         makeRound("route-$distance", "Walk $distance blocks north, then $distance blocks east. Which direction is the starting point from your destination?", "Southwest", listOf("Northeast", "Southeast", "Northwest"), "Reverse both movements.", "The start is south and west of the destination.", r),
         makeRound("rank-$people", "$people students stand in a row. Ali is third from the front. What is Ali's position from the back?", "${people-2}", listOf("${people-1}", "${people-3}", "$people"), "Positions from both ends add up to the total plus one.", "$people − 3 + 1 = ${people-2}.", r),
         makeRound("sets-$left-$right-$both", "$left children like apples, $right like oranges, and $both like both. How many like at least one?", "${left+right-both}", listOf("${left+right}", "${left+right-2*both}", "${left+right-both+1}"), "Children who like both were counted twice.", "$left + $right − $both = ${left+right-both}.", r),
-        makeRound("polygon-$sides", "A polygon has $sides sides. How many diagonals does it have?", "${sides*(sides-3)/2}", listOf("${sides*(sides-1)/2}", "${sides*(sides-2)/2}", "${sides*(sides-3)/2+sides}"), "Each vertex connects to all except itself and its two neighbours; divide by two.", "$sides × ($sides − 3) ÷ 2 = ${sides*(sides-3)/2}.", r),
-        makeRound("handshakes-$blocks", "$blocks people each shake hands once with every other person. How many handshakes occur?", "${blocks*(blocks-1)/2}", listOf("${blocks*(blocks-1)}", "${blocks*blocks}", "${blocks*(blocks+1)/2}"), "Each handshake involves two people.", "$blocks × ${blocks-1} ÷ 2 = ${blocks*(blocks-1)/2}.", r),
+        makeRound("polygon-$sides", "A polygon has $sides sides. How many diagonals does it have?", "${sides*(sides-3)/2}", listOf("${sides*(sides-1)/2}", "${sides*(sides-2)/2}", "${sides*(sides-3)/2+1}"), "Each vertex connects to all except itself and its two neighbours; divide by two.", "$sides × ($sides − 3) ÷ 2 = ${sides*(sides-3)/2}.", r),
+        makeRound("handshakes-$blocks", "$blocks people each shake hands once with every other person. How many handshakes occur?", "${blocks*(blocks-1)/2}", listOf("${blocks*(blocks-1)}", "${blocks*blocks}", "${blocks*(blocks-1)/2+1}"), "Each handshake involves two people.", "$blocks × ${blocks-1} ÷ 2 = ${blocks*(blocks-1)/2}.", r),
         makeRound("series-$start-$step", "Find the next number: $start, ${start+step}, ${start+2*step}, ${start+3*step}, ?", "${start+4*step}", listOf("${start+3*step}", "${start+5*step}", "${start+4*step+1}"), "Compare the differences between adjacent numbers.", "The difference is always $step.", r),
         makeRound("modular-$cycle-$base", "A lamp repeats a cycle of $cycle colours. If it starts at colour 1, what colour number is shown at position ${cycle*base+2}?", "2", listOf("1", "3", "$cycle"), "A complete cycle returns to the first colour.", "${cycle*base} is divisible by $cycle, so the remainder is 2.", r),
         makeRound("unit-$price-$count", "$count notebooks cost ${count*price} coins. How many coins do ${count+2} notebooks cost at the same rate?", "${(count+2)*price}", listOf("${count*price}", "${(count+1)*price}", "${(count+3)*price}"), "Find the price of one notebook first.", "Each notebook costs $price coins; ${count+2} cost ${(count+2)*price}.", r),

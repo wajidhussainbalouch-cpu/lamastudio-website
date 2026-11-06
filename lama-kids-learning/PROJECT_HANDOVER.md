@@ -184,3 +184,8 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added ScienceDiscoveryBank.kt with 100 grade-specific science questions: ten per grade in two five-question lessons, Nursery through Class 8. Topics progress from body parts and weather to ecology, energy, chemistry, cells and genetics.
 - Connected to LearningContent.allLessons and added ScienceDiscoveryBankTest for counts, grade coverage, uniqueness within grade and answer structure. This is extra content outside the balanced 120-question program; that program remains 20 per subject per grade.
 - Tests and APK build not yet verified green; grade-level editorial review required. No Vercel deployment, production merge or Play Store publication.
+
+## 6 November 2026 — 4,000-entry milestone and APK build
+- Added FinalMilestoneBank.kt: 180 new question placements, three per subject in each of ten grades, across six subjects. Connected to LearningContent and added FinalMilestoneBankTest for counts, answer structure and coverage.
+- Expected aggregate allLessons question placements: 4,030 (previous 3,850 + 180). This count includes reuse between lesson banks and structured sets, so it is not 4,030 unique questions.
+- GitHub Actions Android CI builds and tests a debug APK on branch develop/lama-kids-learning. Final release readiness requires a successful CI run, device testing, editorial review of age suitability, duplicate prompts and distractors, and a signed release build. No Play Store publishing or production merge without approval.

@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-paths = [Path(__file__).with_name(name) for name in ("number_logic_candidate_100.json", "advanced_candidate_100.json")]
+paths = [Path(__file__).with_name(name) for name in ("number_logic_candidate_100.json", "advanced_candidate_100.json", "visual_patterns_candidate_100.json")]
 for path in paths:
     pack = json.loads(path.read_text(encoding="utf-8"))
     items = pack["questions"]

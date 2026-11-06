@@ -5,8 +5,8 @@ plugins {
 }
 android {
     namespace = "pk.lamastudio.kidslearning"
-    compileSdk = 35
-    defaultConfig { applicationId = "pk.lamastudio.kidslearning"; minSdk = 24; targetSdk = 35; versionCode = 1; versionName = "0.1.0" }
+    compileSdk = 36
+    defaultConfig { applicationId = "pk.lamastudio.kidslearning"; minSdk = 24; targetSdk = 36; versionCode = 2; versionName = "0.2.0" }
     buildFeatures { compose = true }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }

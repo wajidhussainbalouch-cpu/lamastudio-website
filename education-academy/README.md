@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Most recent content — Headmaster/Headmistress Paper 10 (6 November 2026)
+
+**Paper 10** (`HM-2026-P10`) is completed in GitHub source with 100 original free-practice MCQs `HM10-001`–`HM10-100`, each with four answer choices, correct response and explanation. The teaching practice library now includes **10 separate 100-question papers / 1,000 total public MCQs** for Headmaster/Headmistress and Senior Headmaster/Headmistress study tracks. The new paper has a **90-minute** independent attempt, saved result, question-only print view and post-submission answer explanations plus printable answer key. Papers 1–9 and prior marks are preserved. Public PWA cache version: `lama-ppsc-preview-v65`.
+
+**Supabase verified:** 100 new Paper 10 rows inserted privately into `ppsc_question_bank` with `review_status='draft'`, bringing the teaching editorial bank to **930 unique question stems / 930 drafts**, with zero independently human-approved items. Automated QA tested structure, answer rotation, originality against the prior 830 private stems plus public Paper 1, print/answer review, job-wise paper selection and old-paper compatibility. GitHub Actions passed. These questions are original LAMA practice, **not officially issued PPSC questions or independently academically approved**. Public free-paper JavaScript exposes the answer keys; the post-submission UI does not offer premium exam security.
+
+Read **[PAPER_10_RELEASE.md](./PAPER_10_RELEASE.md)** before the next `Continue`. The next phase is Paper 11 with **100 new questions `HM11-001`–`HM11-100`**, separate paper `HM-2026-P11`, preservation of old paper results, fresh private draft imports, QA, CI and MD updates. Maintain the **GitHub-only / no manual Vercel deployment** restriction and independently verify live production and Android browser behavior before describing any new paper as live.
+
+
 ## Latest school-head practice — Paper 9 (6 November 2026)
 
 **Paper 9** (`HM-2026-P09`) adds **100 original free-practice MCQs** (`HM09-001`–`HM09-100`) across governance, instructional practice, assessment, math/research, English, ICT and science. The Academy GitHub source now registers **nine separate 100-question Headmaster/Headmistress papers / 900 public MCQ positions**; Papers 1–8, attempts, candidate marks and separate job assignments are preserved. Paper 9 has a 90-minute timer, distinct saved attempt, post-submission explanations/printable answer key, and question-only printing. The public PWA cache is `lama-ppsc-preview-v64`.

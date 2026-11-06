@@ -92,6 +92,12 @@ window.LamaAcademyAuth=(()=>{
  async function adminRole(){return dataRequest('ppsc_admin_members?select=role&limit=1','GET')}
  async function adminCandidates(){return dataRequest('ppsc_candidates?select=id,display_name,occupation,gender,phone,address,photo_url,created_at&order=created_at.desc&limit=200','GET')}
  async function adminSubscriptions(){return dataRequest('ppsc_subscriptions?select=candidate_id,status,starts_at,expires_at,created_at&order=created_at.desc&limit=500','GET')}
+ async function adminJobs(){return dataRequest('ppsc_job_catalog?select=id,title,post,category,case_no,listing_date,subjects,priority,priority_order,vacancy_status,official_url,is_published,created_at,updated_at&order=created_at.desc&limit=500','GET')}
+ async function adminSaveJob(data,exists){
+  const payload={...data};
+  if(exists){delete payload.id;return dataRequest('ppsc_job_catalog?id=eq.'+encodeURIComponent(data.id),'PATCH',payload)}
+  return dataRequest('ppsc_job_catalog','POST',payload);
+ }
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions});
+ return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob});
 })();

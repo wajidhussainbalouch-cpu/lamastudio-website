@@ -131,6 +131,7 @@ const LamaAPI = (() => {
     previewStudentIds:async prefix=>(await callApi('previewStudentIds',{prefix})).result,
     applyStudentIds:async prefix=>(await callApi('applyStudentIds',{prefix})).result,
     importStudentsBatch:async records=>(await callApi('importStudentsBatch',{records})).result,
+    reassignSyllabusProgress:async(planId,fromTeacherId,toTeacherId,reason)=>(await callApi('syllabusReassignProgress',{planId,fromTeacherId,toTeacherId,reason},'POST')).result,
     getSchoolSyllabusProgress:async sessionId=>(await callApi('syllabusSchoolProgress',{sessionId},'POST')).report,
     getAdminSyllabusProgress:async planId=>(await callApi('syllabusAdminProgress',{planId},'POST')).progress,
     listSyllabusProgress:async planId=>(await callApi('syllabusTeacherProgress',{planId,operation:'list'},'POST')).updates,

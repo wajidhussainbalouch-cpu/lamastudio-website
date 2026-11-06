@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const setStatus=message=>{status.textContent=message;};
  const signup=byId('candidateSignUp'),signin=byId('candidateSignIn'),reset=byId('candidateReset');
  const tabs=byId('accountTabs');
- function showTab(which){if(!tabs)return;signup.hidden=which!=='signup';signin.hidden=which!=='signin';reset.hidden=which!=='reset';tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.accountTab===which)));}
+ function showTab(which){if(!tabs)return;signup.hidden=which!=='signup';const resend=byId('candidateResend');if(resend)resend.hidden=which!=='signup';signin.hidden=which!=='signin';reset.hidden=which!=='reset';tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.accountTab===which)));}
  if(tabs){tabs.addEventListener('click',e=>{const b=e.target.closest('button[data-account-tab]');if(b)showTab(b.dataset.accountTab)});showTab('signup')}
 
  const formData=form=>Object.fromEntries(new FormData(form).entries());
@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const result=await auth.signUp(data);
   if(!result.created)throw Error('Registration could not be confirmed.');
  },'Registration requested. Check your email for a verification link, then sign in.');
+ handle('candidateResend',data=>auth.resendSignupEmail(data.email),'If delivery is permitted, a confirmation email has been requested. Check your inbox and Spam.');
  handle('candidateSignIn',async data=>{
   await auth.signIn(data);
   try{

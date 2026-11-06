@@ -1,5 +1,18 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest verified Paper 2 development — 6 November 2026
+
+A **second original Headmaster / Headmistress free practice paper (HM-2026-P02)** has now been authored with **100 new MCQs** (HM02-001 to HM02-100), 90-minute timer, post-submission answer key, explanations, and print-to-PDF via the browser. Both school-head preparation options display Paper 1 and Paper 2. Existing Paper 1, local scores and other academy modules are retained.
+
+**Private Supabase bank:** the 100 additional questions were inserted as draft records in ppsc_question_bank, alongside the earlier 30 private drafts (**130 total, 130 unreviewed drafts, 0 human approved**). A free practice copy uses automated structural and duplicate checks and **must not be described as independently academically approved or official PPSC questions**.
+
+**Non-repetition:** 100 new unique stems and IDs. Checks compare against Paper 1's 100 stems, 30 pre-existing private-stem fingerprints, and the new 100 internal pairs. Automatic answer-position rotation preserves the correct response. The paper's source contains answer keys because it is free practice; candidate UI displays them only after submitting. **Premium/private exams still require server-side answer security.**
+
+**Files:** papers/headmaster-02-part1.js through part4.js, papers/headmaster-02-register.js, answer-key.html, index.html, print.html, paper-library.js, engine.js, sw.js, expanded validators and GitHub Actions. Read **PAPER_02_RELEASE.md** first before working on the next 100-question batch; next Paper 3 IDs are HM03-001 to HM03-100. Do not overwrite older papers or score records.
+
+**Release distinction:** GitHub commits and automated CI do not prove that a latest Vercel production build is live or mobile-tested. No manual Vercel deployment was requested in this batch. Confirm actual production commit before sending candidates to the new paper.
+
+
 ## Final integration checks — 6 November 2026
 
 - **Admin identity:** The previously designated academy owner email was matched to the connected Gmail account and to its existing Supabase Auth UID, then provisioned with `super_admin` in `ppsc_admin_members`. The Gmail confirmation message was confirmed delivered, but **the owner has not yet clicked the confirmation link** and the Auth account remains unconfirmed. Admin sign-in is blocked until the user completes that step.

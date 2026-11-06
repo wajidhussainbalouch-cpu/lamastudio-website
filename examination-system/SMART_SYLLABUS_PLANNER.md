@@ -224,3 +224,9 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Added `LamaAPI.changeSyllabusStatus` and status-action buttons to `portals/school/syllabus-planner.html`. Actions confirm before submission, require a reason when returning to draft, and reload plan/audit data after saving.
 - Added `test-syllabus-approval.js` and CI job for the Apps Script state machine. Test execution/CI status is not verified in this turn.
 - **Security and release caveats:** This is an administrator-only first phase, not teacher submission. Existing teacher routes remain read-only. The adapter still requires installation into the verified live Apps Script project, plus module-entitlements and approval helper files. There is no plan-creation endpoint, no validated schedule editor, no canonical class/section mapping, and no live integration testing yet. Do not deploy or declare production-ready without backup, testing and review.
+
+## Draft creation work — 2026-11-06
+- Added POST-only syllabusCreateDraft route in backend-api/code.gs with administrator session verification, Examination grant verification, configured-class check, strict LamaSyllabusDraft validation and locked syllabus storage initialization/create.
+- Added LamaAPI.createSyllabusDraft(draft) to api-client.js.
+- Added draft input fields to school administrator page, but the submit button is deliberately DISABLED because its client-side handler could not be committed successfully. Do not claim the form works.
+- Draft validation module exists in backend-api/syllabus-draft.gs. No verified automated tests or live deployment. Teacher progress remains pending.

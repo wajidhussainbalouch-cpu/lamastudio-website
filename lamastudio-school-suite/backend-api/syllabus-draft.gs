@@ -9,9 +9,9 @@ var LamaSyllabusDraft = (function(){
  function text(x,label){if(typeof x!=='string'||!x.trim()||x.length>180||/^[=+@\t\r]/.test(x.trim()))throw Error('Invalid '+label);return x.trim()}
  function create(schoolId,input){
   if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Draft input required');
-  var allowed=['planId','sessionId','classId','subjectId','scheduled'];
+  var allowed=['planId','sessionId','classId','sectionId','subjectId','scheduled'];
   if(Object.keys(input).some(function(k){return allowed.indexOf(k)<0}))throw Error('Unsupported draft field');
-  var planId=id(input.planId,'plan ID'),sessionId=id(input.sessionId,'session'),classId=id(input.classId,'class'),subjectId=id(input.subjectId,'subject');
+  var planId=id(input.planId,'plan ID'),sessionId=id(input.sessionId,'session'),classId=id(input.classId,'class'),subjectId=id(input.subjectId,'subject'),sectionId=input.sectionId==null||input.sectionId===''?'':id(input.sectionId,'section');
   if(!Array.isArray(input.scheduled)||!input.scheduled.length||input.scheduled.length>300)throw Error('1–300 lessons required');
   var seen={};
   var scheduled=input.scheduled.map(function(item){
@@ -24,7 +24,7 @@ var LamaSyllabusDraft = (function(){
    return {date:d,slot:slot,lessonId:lessonId,lessonTitle:title,chapterId:chapterId};
   });
   scheduled.sort(function(a,b){return a.date.localeCompare(b.date)||a.slot-b.slot});
-  return {schoolId:id(schoolId,'school ID'),planId:planId,sessionId:sessionId,classId:classId,subjectId:subjectId,
+  return {schoolId:id(schoolId,'school ID'),planId:planId,sessionId:sessionId,classId:classId,sectionId:sectionId,subjectId:subjectId,
    status:'draft',version:1,scheduled:scheduled,approvedBy:null,publishedBy:null};
  }
  return {create:create};

@@ -287,3 +287,9 @@ Validation and release gate:
 - Added admin transfer form and `LamaAPI.reassignSyllabusProgress`, with a confirmation prompt and mandatory reason. Added `test-syllabus-reassign.js` and CI step.
 - **Important limitation:** Google Sheets cannot atomically commit audit and multiple progress rows. The transfer logs intent before updates, so an interruption can leave a partially transferred set. A recovery/reconciliation workflow and failure-injection tests are mandatory before production release.
 - Live Apps Script deployment, GitHub Actions results, real teacher registry verification and complete end-to-end tests remain unverified. Do not release to live School Suite yet.
+
+## Teacher reassignment failure handling — 6 Nov 2026
+- Strengthened `LamaSyllabusProgressStore.reassign`: after recording transfer intent, updates rows under script lock, reads each changed row back, checks teacher ownership and preservation of status/completion date, and attempts to restore previously updated rows if an update or verification fails.
+- Added a failure-injection regression scenario to `test-syllabus-reassign.js` that forces a later row write to fail and checks earlier rows are restored.
+- **This is not an atomic transaction.** An Apps Script timeout, process termination or failed rollback may still leave an audit intent and partially reassigned rows. Such cases must be manually reconciled before another transfer; a durable resumable journal is still required for production readiness.
+- Current code is committed to GitHub; CI execution and live end-to-end verification are not confirmed. Do not deploy to live school records yet.

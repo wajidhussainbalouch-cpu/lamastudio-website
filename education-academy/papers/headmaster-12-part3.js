@@ -228,16 +228,16 @@ window.LAMA_PPSC_HM12_3=[
  {
   "id": "HM12-066",
   "subject": "Probability",
-  "topic": "Without-replacement sample",
-  "q": "A drawer contains 7 blue and 3 red markers. If two are selected without replacement, what is the probability both are red?",
+  "topic": "Ordered placement of distinct books",
+  "q": "Four different textbooks are arranged randomly on a shelf. What is the probability that the Science book is first and the Mathematics book is second?",
   "options": [
-   "1/15",
-   "1/10",
-   "1/5",
-   "3/10"
+   "1/4",
+   "1/6",
+   "1/8",
+   "1/12"
   ],
-  "answer": 0,
-  "explanation": "The probability is (3/10)×(2/9)=6/90=1/15. The second draw has only two red markers among nine remaining.",
+  "answer": 3,
+  "explanation": "The Science book has probability 1/4 of being first. Given that placement, Mathematics has probability 1/3 of being second; multiplying gives 1/12.",
   "difficulty": "intermediate"
  },
  {

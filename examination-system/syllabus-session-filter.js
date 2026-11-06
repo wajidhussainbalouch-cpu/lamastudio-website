@@ -7,7 +7,7 @@ function select(plans,sessionId){
  const selected=plans.filter(p=>p.status==='published'&&p.sessionId===sessionId.trim());
  const seen=new Set();
  for(const p of selected){
-  const key=[p.classId,p.subjectId].map(x=>String(x||'').trim().toLowerCase()).join('|');
+  const key=[p.classId,p.subjectId,p.sectionId||''].map(x=>String(x||'').trim().toLowerCase()).join('|');
   if(seen.has(key))throw Error('Overlapping published plans');
   seen.add(key);
  }

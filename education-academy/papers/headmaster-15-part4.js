@@ -33,16 +33,16 @@ window.LAMA_PPSC_HM15_4=[
  {
   "id": "HM15-078",
   "subject": "English Grammar",
-  "topic": "Subject agreement with one of",
-  "q": "Which sentence is grammatically correct in standard formal English?",
+  "topic": "Agreement with a collective number",
+  "q": "Which sentence correctly uses 'a number of' to mean several pupils who volunteered for an examination workshop?",
   "options": [
-   "One of the science teachers is responsible for the laboratory inventory.",
-   "One of the science teachers are responsible for the laboratory inventory.",
-   "One of the science teachers have responsible for the laboratory inventory.",
-   "One of the science teachers were responsible tomorrow."
+   "A number of pupils has volunteered for the workshop.",
+   "A number of pupils have volunteered for the workshop.",
+   "A number of pupils is volunteered for the workshop.",
+   "A number of pupils volunteering for the workshop."
   ],
-  "answer": 0,
-  "explanation": "The subject head 'one' is singular, even though 'teachers' appears in the modifying phrase, so the verb is 'is'.",
+  "answer": 1,
+  "explanation": "The phrase 'a number of' meaning several normally takes a plural verb, 'have volunteered,' unlike 'the number of,' which takes a singular verb.",
   "difficulty": "foundation"
  },
  {
@@ -77,17 +77,17 @@ window.LAMA_PPSC_HM15_4=[
  },
  {
   "id": "HM15-081",
-  "subject": "English Editing",
-  "topic": "Faulty comparison correction",
-  "q": "A school report reads, 'Attendance in Campus A is higher than Campus B.' Which revision makes the comparison explicit?",
+  "subject": "English Writing",
+  "topic": "Anaphoric reference in reports",
+  "q": "A meeting report states, 'The librarian spoke to the clerk after she finished the inventory.' Which rewrite clearly makes the clerk the person who finished?",
   "options": [
-   "Campus A attendance is higher than buildings",
-   "Campus A is attendance higher than Campus B",
-   "Campus A's attendance rate is higher than Campus B's attendance rate",
-   "Attendance is higher than the school's name"
+   "The librarian spoke to the clerk after the clerk finished the inventory.",
+   "She spoke to the clerk after she finished it.",
+   "The librarian spoke after the inventory and the clerk.",
+   "The clerk spoke to the librarian after she finished it."
   ],
-  "answer": 2,
-  "explanation": "A valid comparison names the same measure for both groups, preventing a rate from being compared ambiguously with an institution.",
+  "answer": 0,
+  "explanation": "Repeating 'the clerk' as the subject of 'finished' removes an ambiguous pronoun and identifies who completed the inventory.",
   "difficulty": "intermediate"
  },
  {

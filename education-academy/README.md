@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest school-head practice — Paper 9 (6 November 2026)
+
+**Paper 9** (`HM-2026-P09`) adds **100 original free-practice MCQs** (`HM09-001`–`HM09-100`) across governance, instructional practice, assessment, math/research, English, ICT and science. The Academy GitHub source now registers **nine separate 100-question Headmaster/Headmistress papers / 900 public MCQ positions**; Papers 1–8, attempts, candidate marks and separate job assignments are preserved. Paper 9 has a 90-minute timer, distinct saved attempt, post-submission explanations/printable answer key, and question-only printing. The public PWA cache is `lama-ppsc-preview-v64`.
+
+**Supabase verified:** 100 new Paper 9 `draft` records added without overwriting existing entries. The private editorial teaching bank now contains **830 records / 830 distinct normalized stems**, including 30 older unpublished editorial drafts. **All 830 remain pending human academic approval**; no official PPSC endorsement or case-specific syllabus validation is asserted. Automated checks compared all 100 new stems with the earlier 730 private items plus public Paper 1 and flagged no remaining strong token-overlap matches after corrections. Free public JS contains the answer keys; post-submission answer review is not secure premium/proctored access control.
+
+**Read [PAPER_09_RELEASE.md](./PAPER_09_RELEASE.md)** before the next `Continue`. Next: **Paper 10** `HM10-001`–`HM10-100` as a separate `HM-2026-P10`, with fresh questions, private drafts, tests and docs. Continue committing to GitHub `main` only; under the standing quota restriction do **not** initiate manual Vercel deployment. Independently inspect actual production commit and mobile browser behavior.
+
+
 ## Latest Headmaster/Headmistress practice batch — Paper 8 (6 November 2026)
 
 **Paper 8 completed in GitHub source:** `HM-2026-P08`, questions `HM08-001`–`HM08-100`, with a separate 90-minute exam, candidate answer/explanation review after submission, printable question-only paper and printable answer key. This raises the public school-head preparation library to **8 independent free practice papers / 800 MCQ positions** while preserving Papers 1–7 and their saved attempts.

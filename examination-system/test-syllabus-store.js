@@ -16,6 +16,6 @@ const deps={schoolId:'s1',planId:'p1',to:'approved',expectedVersion:2,session,
  await assert.rejects(store.changeStatus({...deps,schoolId:'s2'}),/Verified school session/);
  await assert.rejects(store.changeStatus({...deps,readPlan:async()=>({...plan,schoolId:'s2'})}),/Plan not found in school/);
  await assert.rejects(store.changeStatus({...deps,loadEntitlements:async()=>({schoolId:'s2',examination:true})}),/Trusted school entitlement/);
- await assert.rejects(store.changeStatus({...deps,commitPlanAndAudit:async()=>null}),/commit confirmation/);
+ await assert.rejects(store.changeStatus({...deps,readPlan:async()=>plan,commitPlanAndAudit:async()=>null}),/commit confirmation/);
  console.log('Syllabus storage orchestration tests passed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

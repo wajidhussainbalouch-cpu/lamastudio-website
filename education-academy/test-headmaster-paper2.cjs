@@ -67,5 +67,37 @@ assert.ok(index.includes('headmaster-02-register.js'));
 assert.ok(print.includes('headmaster-02-register.js'));
 assert.ok(worker.includes("'./answer-key.html'"));
 assert.ok(worker.includes("'./papers/headmaster-02-register.js'"));
+
+// Exercise the actual answer-key page logic with tiny DOM stubs. It must not
+// render answers before a completed local submission, and must render 100 after.
+const inline=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)?.[1];
+assert.ok(inline&&inline.includes('attempt.submitted'),'Answer-key page script missing');
+function runKeyPage(data){
+ const nodes=new Map();
+ function element(tag='div'){
+  return {tag,textContent:'',children:[],hidden:true,className:'',
+   append(...children){this.children.push(...children)},
+   addEventListener(event,fn){this[event]=fn}};
+ }
+ const dom={
+  getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id)},
+  createElement:tag=>element(tag)
+ };
+ const memory={getItem:k=>k==='lama_ppsc_attempt_HM-2026-P02'?(data?JSON.stringify(data):null):null};
+ vm.runInNewContext(inline,{window:{LAMA_PPSC_PAPERS:all,print(){}},document:dom,localStorage:memory,
+  location:{search:'?paper=HM-2026-P02'},URLSearchParams,Number,String,Math,JSON},{timeout:2500});
+ return dom;
+}
+const unopened=runKeyPage(null);
+assert.equal(unopened.getElementById('keyQuestions').children.length,0,'answer key leaked before starting');
+assert.ok(unopened.getElementById('keyStatus').textContent.includes('submit'));
+const inProgress=runKeyPage({startedAt:1,answers:{},submitted:false});
+assert.equal(inProgress.getElementById('keyQuestions').children.length,0,'answer key leaked while exam is active');
+const choices=Object.fromEntries(paper.questions.slice(0,7).map(q=>[q.id,q.answer]));
+const completed=runKeyPage({startedAt:1,submittedAt:2,submitted:true,answers:choices});
+assert.equal(completed.getElementById('keyQuestions').children.length,100,'completed paper must reveal exactly 100 explanations');
+assert.equal(completed.getElementById('printAnswerKey').hidden,false,'answer key print-to-PDF control not unlocked');
+assert.ok(completed.getElementById('keyStatus').textContent.includes('7 correct'));
+
 console.log('Paper 2 validated: 100 unique questions, 0 duplicate stems vs Paper 1 and 30 private draft fingerprints');
 console.log('Unique topics:',topics.size,'subjects:',subjects.size,'correct positions A-D:',positions.join('/'));

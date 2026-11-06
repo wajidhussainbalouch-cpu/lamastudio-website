@@ -227,3 +227,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - 100 core fact prompts repeated in five assessment formats; 478 unique literal prompts (22 repeated occurrences). Some topic labels are paraphrased rather than exact textbook headings. Requires editorial correction and textbook lesson verification before release.
 - No verified chapter/lesson/page per question. All `approved=false`, `onlineReady=false`; supplemental practice only. 1,000 questions in two 500-record draft batches, not 1,000 textbook-approved questions. Earlier separate 40-question starter file may overlap and is excluded from the 1,000 total.
 - Next: correct repeated/ambiguous items, diversify concepts, inspect remaining textbook pages, verify answers and source links, then draft batch 3 without deploying.
+
+
+## Class 1 GK batch 3 — 500 additional drafts (2026-11-06)
+- `data/class1-general-knowledge-batch3-500-draft.json`, commit `f0e73012b0543268a9a1c3bfb91d081b38175ea9`: IDs 1001–1500, 500 unique IDs, 125 core concepts, four formats per concept; 5 repeated literal prompt occurrences flagged. No missing answers in construction check.
+- GK total: three separate 500-record batches = **1,500 supplemental draft questions**, NOT 1,500 unique facts or textbook-approved questions. Earlier 40 starter questions are separate and excluded from count.
+- Book `G.K 1 r.pdf` Drive ID `1pyHTreo1lqtubCL0iGBZDNFwoRaebxAG` (54 pages) remains source reference; individual chapter/lesson/page mappings are null and all questions `approved=false`, `onlineReady=false`.
+- IMPORTANT QA: Across batches, multiple formats revisit the same fact and subjects overlap. Review cross-batch semantic duplicates, answer ambiguity, age appropriateness, distractor quality, exact Urdu textbook chapter names, and page grounding. Do not activate questions for students. No Vercel deployment.
+- Next subject after GK: Class 1 Islamiat (registered source) subject to source verification and content accuracy review; do not represent any batch as textbook-derived until pages inspected.

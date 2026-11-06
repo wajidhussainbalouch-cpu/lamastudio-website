@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Latest school-head practice — Paper 14 (6 November 2026)
+
+**Paper 14 is complete in GitHub:** `HM-2026-P14` contains 100 original free-practice MCQs (`HM14-001`–`HM14-100`) across four 25-question source files. Separate 90-minute timed exam, question-only printing, post-submission answer explanations and result history are integrated. The academy now registers **14 Headmaster/Headmistress papers / 1,400 public practice questions**, with earlier 13 papers and candidate data retained. The offline PWA version is `lama-ppsc-preview-v69`.
+
+**Protected Supabase:** 100 new Paper 14 rows saved as `draft` without overwriting older records; **1,330 unique private editorial questions**, all pending human review. Cross-paper duplicate screening against 1,230 previous private stems plus public Paper 1 is clear at the established threshold after corrections. GitHub Actions validates the paper and job-wise limits. **Maximum of 20 papers per job family** is enforced; Headmaster and Senior Headmaster variants share the teaching family limit. No official PPSC endorsement or current syllabus validation is claimed; public JS free-practice answers cannot secure paid exams.
+
+See **[PAPER_14_RELEASE.md](./PAPER_14_RELEASE.md)** for full status and next **Paper 15** instructions. The last explicit Vercel deployment for Paper 13 was blocked by the Hobby account's daily deployment quota. GitHub source status must not be confused with verified live custom-domain publication.
+
+
 ## Latest Headmaster / Headmistress batch — Paper 13 (6 November 2026)
 
 **Paper 13 complete:** `HM-2026-P13` adds original LAMA free educational-practice questions `HM13-001`–`HM13-100`, with 90-minute individual exam, preserved attempt/score history, print-ready question-only paper and post-submission answer explanations. The GitHub source includes **13 papers / 1,300 practice MCQs**. Public PWA cache: `lama-ppsc-preview-v68`.

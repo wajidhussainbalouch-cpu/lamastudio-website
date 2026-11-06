@@ -12,15 +12,15 @@ const localStorage={
  removeItem:key=>store.delete(key)
 };
 const context={window:{},localStorage,URLSearchParams,location:{search:'?job=teaching:1'}};
-for(const name of ['jobs.js','job-catalog-ui.js','papers.js','papers/headmaster-02-part1.js','papers/headmaster-02-part2.js','papers/headmaster-02-part3.js','papers/headmaster-02-part4.js','papers/headmaster-02-register.js','paper-library.js']){
+for(const name of ['jobs.js','job-catalog-ui.js','papers.js','papers/headmaster-02-part1.js','papers/headmaster-02-part2.js','papers/headmaster-02-part3.js','papers/headmaster-02-part4.js','papers/headmaster-02-register.js','papers/headmaster-03-part1.js','papers/headmaster-03-part2.js','papers/headmaster-03-part3.js','papers/headmaster-03-part4.js','papers/headmaster-03-register.js','paper-library.js']){
  vm.runInNewContext(fs.readFileSync(path.join(root,name),'utf8'),context,{timeout:1500,filename:name});
 }
 const registry=context.window.LamaPpscPaperLibrary;
 assert.ok(registry,'paper registry exposed');
-assert.equal(registry.list().length,2,'both original free practice papers are available');
-assert.equal(registry.forJob('teaching:0').length,2);
-assert.equal(registry.forJob('teaching:1').length,2,'school-head variants share the approved foundation set');
-assert.equal(registry.coverage('teaching:0').reduce((sum,item)=>sum+item.count,0),200,'published subject coverage matches bank');
+assert.equal(registry.list().length,3,'both original free practice papers are available');
+assert.equal(registry.forJob('teaching:0').length,3);
+assert.equal(registry.forJob('teaching:1').length,3,'school-head variants share the approved foundation set');
+assert.equal(registry.coverage('teaching:0').reduce((sum,item)=>sum+item.count,0),300,'published subject coverage matches bank');
 assert.equal(registry.coverage('information-officer').length,0,'unpublished track must not show MCQs');
 assert.equal(registry.forJob('information-officer').length,0,'do not substitute Headmaster exam for another job');
 assert.equal(registry.activePaper().id,'DEMO-01');
@@ -29,6 +29,11 @@ assert.equal(registry.activePaper().id,'HM-2026-P02','Paper 2 deep link selects 
 assert.equal(registry.activePaper().questions.length,100);
 context.location.search='?job=teaching:1&paper=HM-2026-P02';
 assert.equal(registry.activePaper().id,'HM-2026-P02','senior headteacher can choose Paper 2');
+context.location.search='?job=teaching:0&paper=HM-2026-P03';
+assert.equal(registry.activePaper().id,'HM-2026-P03','Paper 3 link resolves');
+assert.equal(registry.activePaper().questions.length,100);
+context.location.search='?job=teaching:1&paper=HM-2026-P03';
+assert.equal(registry.activePaper().id,'HM-2026-P03','Senior Headmaster/Headmistress shares Paper 3');
 context.location.search='?job=information-officer&paper=DEMO-01';
 assert.equal(registry.activePaper(),null,'cross-job paper link must be rejected');
 const base=context.window.LAMA_PPSC_PAPERS[0];

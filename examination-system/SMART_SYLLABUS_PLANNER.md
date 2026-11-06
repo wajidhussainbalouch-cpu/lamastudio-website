@@ -259,3 +259,19 @@ Status (2026-11-04): Scheduling, policy, workflow, diary suggestion and transact
 - Duplicate published plans for the same class and subject in the same session cause an explicit error rather than double-counting. This is intentionally conservative until multi-section planning is modeled.
 - Added syllabus-session-filter.js and test-syllabus-session-filter.js, and included tests in the CI workflow. Tests and deployment remain unverified.
 - Important remaining work: section-aware plan schema and teacher permissions, end-to-end verification, and a production Apps Script release after approval. No live school data was changed.
+
+## Section-aware assignments and teacher permissions — 6 Nov 2026
+
+Implementation committed on `main`:
+- Draft validation accepts an optional `sectionId` (blank for unsectioned classes). School-admin draft form sends it; backend verifies both class and section against configured school offerings.
+- Syllabus list metadata exposes sectionId, defaulting to blank for legacy plans. Teacher discovery, published-plan read and progress updates require exact school/class/subject/section match to the authenticated teacher assignment. Blank-section plans are accessible only to teachers with blank section assignment; there is no cross-section fallback.
+- School-wide report duplicate checks distinguish class + subject + section within the selected academic session. Pure session-filter tests include distinct sections.
+- Progress writes refuse to overwrite a lesson entry last recorded by a different teacher. Administrators need a controlled reassignment procedure before handovers.
+- Updated draft tests for section validation and legacy blank sections.
+
+Validation and release gate:
+1. GitHub file-content checks confirm all new section fields and permission hooks exist. This is not runtime verification.
+2. Node test execution, GitHub Actions success, Apps Script deployment dependencies and live end-to-end tests are NOT verified. Do not claim production readiness.
+3. Test school admin draft -> submit -> approve -> publish -> teacher assigned section sees plan -> other section cannot see or save -> progress -> school admin report; test archived plans and legacy blank sections.
+4. Ensure all required `.gs` modules are deployed together in the existing Apps Script project without replacing production school records. Do not deploy or change Vercel before the release gate passes.
+5. Remaining: secure teacher reassignment, teacher section configuration audit, performance of multi-plan reporting, integration test coverage and confirmation of live authentication.

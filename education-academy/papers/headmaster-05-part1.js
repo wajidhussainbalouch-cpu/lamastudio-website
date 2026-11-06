@@ -21,12 +21,12 @@ window.LAMA_PPSC_HM05_1=[
   "topic": "Escalation after failed intervention",
   "q": "A headteacher has provided two rounds of coaching to a teacher, documented observations, and found continuing serious gaps in classroom supervision. What is the next defensible step?",
   "options": [
-   "Publish the teacher's name on the public website",
    "Follow the documented performance and safeguarding escalation procedure with fair evidence and required support",
+   "Publish the teacher's name on the public website",
    "Ignore the issue because coaching was attempted",
    "Ask students to make disciplinary decisions by ballot"
   ],
-  "answer": 1,
+  "answer": 0,
   "explanation": "Persistent risks require action under employment and child-safety procedures. Fair evidence, appropriate support, due process, and timely escalation matter more than public blame.",
   "difficulty": "advanced"
  },
@@ -53,10 +53,10 @@ window.LAMA_PPSC_HM05_1=[
   "options": [
    "The timetable necessarily becomes more equitable",
    "All teachers will have identical workloads",
-   "There can be no need for catch-up instruction",
-   "Unexpected staff absences or learning needs may have no workable schedule space"
+   "Unexpected staff absences or learning needs may have no workable schedule space",
+   "There can be no need for catch-up instruction"
   ],
-  "answer": 3,
+  "answer": 2,
   "explanation": "Operating at maximum planned capacity leaves little flexibility for replacement lessons, targeted support, or short-term disruption. Resilience requires feasible reserves.",
   "difficulty": "intermediate"
  },
@@ -81,12 +81,12 @@ window.LAMA_PPSC_HM05_1=[
   "topic": "Chronological incident notes",
   "q": "A child describes a concerning incident to a teacher using their own words. Which recording practice best preserves the initial account?",
   "options": [
-   "Rewrite the child's statement into a preferred narrative",
    "Note the date, time, exact words where possible, observable facts and who received the report",
+   "Rewrite the child's statement into a preferred narrative",
    "Question the child repeatedly until every detail changes",
    "Post an audio recording in a staff-wide group"
   ],
-  "answer": 1,
+  "answer": 0,
   "explanation": "Contemporaneous factual notes protect the reliability of a disclosure and support appropriate referral. Leading questions and broad circulation can create harm and compromise evidence.",
   "difficulty": "advanced"
  },
@@ -113,10 +113,10 @@ window.LAMA_PPSC_HM05_1=[
   "options": [
    "An extra signature on the invoice from the same clerk",
    "A copy of the supplier's advertisement",
-   "A verbal promise that the furniture will arrive soon",
-   "A count and condition check by an authorized receiver matched to the order and invoice"
+   "A count and condition check by an authorized receiver matched to the order and invoice",
+   "A verbal promise that the furniture will arrive soon"
   ],
-  "answer": 3,
+  "answer": 2,
   "explanation": "Three-way matching of an approved order, delivery evidence, and invoice helps verify that payment relates to actual, acceptable goods.",
   "difficulty": "intermediate"
  },
@@ -306,12 +306,12 @@ window.LAMA_PPSC_HM05_1=[
   "topic": "Stock rotation",
   "q": "A school stores art materials that deteriorate over time. Which stock-management practice generally reduces avoidable expiry waste?",
   "options": [
-   "Use clearly dated first-expiring stock before later-expiring equivalent items",
+   "Order new stock whenever a cupboard looks empty",
    "Open new deliveries first and leave older stock untouched",
    "Keep all supplies without recorded dates",
-   "Order new stock whenever a cupboard looks empty"
+   "Use clearly dated first-expiring stock before later-expiring equivalent items"
   ],
-  "answer": 0,
+  "answer": 3,
   "explanation": "First-expire, first-out rotation aligns use with shelf life. Inventory labels and periodic condition checks help prevent unusable stock.",
   "difficulty": "foundation"
  },
@@ -336,12 +336,12 @@ window.LAMA_PPSC_HM05_1=[
   "topic": "Exception reporting",
   "q": "A monthly finance report lists only totals and hides transactions outside approved spending categories. What reporting improvement is most useful?",
   "options": [
-   "Replace totals with a narrative about future plans",
-   "Remove category labels to simplify the report",
    "Add a documented exception list for unusual or noncompliant entries, with resolution owners",
+   "Remove category labels to simplify the report",
+   "Replace totals with a narrative about future plans",
    "Post every staff member's personal account details publicly"
   ],
-  "answer": 2,
+  "answer": 0,
   "explanation": "Exception reporting highlights deviations that need attention and assigns accountability, complementing summary totals rather than concealing important anomalies.",
   "difficulty": "intermediate"
  },
@@ -366,12 +366,12 @@ window.LAMA_PPSC_HM05_1=[
   "topic": "Verification versus validation",
   "q": "A school app passes checks that its attendance calculations match the software specification, yet teachers say it cannot record authorized leave. Which statement best describes the difference?",
   "options": [
-   "The software may be built according to its specification but still fail to meet users' real attendance needs",
-   "Passing technical checks proves the app meets every school need",
    "Teachers should change the definition of authorized leave to suit the app",
+   "Passing technical checks proves the app meets every school need",
+   "The software may be built according to its specification but still fail to meet users' real attendance needs",
    "Validation consists only of checking whether the code compiles"
   ],
-  "answer": 0,
+  "answer": 2,
   "explanation": "Verification asks whether a system meets specifications; validation asks whether it meets its intended real-world purpose. Both are needed before relying on operational software.",
   "difficulty": "advanced"
  }

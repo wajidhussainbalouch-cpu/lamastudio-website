@@ -155,3 +155,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Each problem uses real-world objects, grade-scaled quantities and a worked explanation. The 100-question structured sets per level remain unchanged; these 20 are EXTRA topics outside those ten sets.
 - Added WordProblemBankTest for counts, unique prompts within grade and answer integrity. Tests have not been executed or verified via GitHub Actions yet. Early grade reading level and difficulty require educator review.
 - No Vercel deployment, production merge or publishing.
+
+## 6 November 2026 — Reading comprehension expansion
+- Added ReadingComprehensionBank.kt: 20 original offline English reading passages (two per grade, Nursery through Class 8), five questions per passage: 100 new question entries, 10 per grade.
+- Each passage is shown in the lesson explanation, with questions about explicit details and, in higher grades, interpretation and evidence. Added to LearningContent.allLessons.
+- Added ReadingComprehensionBankTest for grade coverage, question counts and answer structure. Latest Android build and unit tests remain unverified; editorial/reading-level review still required, especially Nursery/KG where adult reading support may be needed.
+- No Vercel deployment, production merge or Google Play publication.

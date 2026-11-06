@@ -98,6 +98,20 @@ window.LamaAcademyAuth=(()=>{
   if(exists){delete payload.id;return dataRequest('ppsc_job_catalog?id=eq.'+encodeURIComponent(data.id),'PATCH',payload)}
   return dataRequest('ppsc_job_catalog','POST',payload);
  }
+ async function adminRegistrations(){return dataRequest('ppsc_candidate_registrations?select=user_id,email,display_name,email_confirmed_at,last_sign_in_at,auth_created_at&order=auth_created_at.desc&limit=200','GET')}
+ async function adminQuestions(jobId){
+  const filter=jobId?'&job_id=eq.'+encodeURIComponent(jobId):'';
+  return dataRequest('ppsc_question_bank?select=id,job_id,subject,topic,question_text,options,answer_index,explanation,difficulty,review_status,source_notes,reviewed_by,reviewed_at,created_at&order=created_at.desc&limit=200'+filter,'GET');
+ }
+ async function adminSaveQuestion(question,exists){
+  if(exists){
+   const body={...question};delete body.id;delete body.job_id;
+   if(body.review_status==='approved'){body.reviewed_by=currentUser.id;body.reviewed_at=new Date().toISOString()}
+   else {body.reviewed_by=null;body.reviewed_at=null}
+   return dataRequest('ppsc_question_bank?id=eq.'+encodeURIComponent(question.id),'PATCH',body);
+  }
+  return dataRequest('ppsc_question_bank','POST',{...question,review_status:'draft'});
+ }
  async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
- return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob});
+ return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob,adminRegistrations,adminQuestions,adminSaveQuestion});
 })();

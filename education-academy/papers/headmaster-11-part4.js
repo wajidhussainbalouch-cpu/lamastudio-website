@@ -66,13 +66,13 @@ window.LAMA_PPSC_HM11_4=[
   "topic": "Which versus that in clause",
   "q": "Which sentence correctly uses a nonrestrictive relative clause to add information about the library?",
   "options": [
-   "The library which opened last year, has expanded.",
+   "The library, that opened last year, has expanded.",
    "The library, which opened last year, has expanded.",
-   "The library, that opened last year has expanded.",
-   "The library, which opened last year has expanded."
+   "The library, which opened last year have expanded.",
+   "The library which open last year, has expanded."
   ],
   "answer": 1,
-  "explanation": "A supplementary 'which' clause is set off by commas on both sides, providing extra information rather than identifying a subset.",
+  "explanation": "The supplementary relative clause 'which opened last year' is enclosed by commas, and the singular subject 'library' correctly takes 'has expanded'.",
   "difficulty": "intermediate"
  },
  {
@@ -108,16 +108,16 @@ window.LAMA_PPSC_HM11_4=[
  {
   "id": "HM11-083",
   "subject": "English Grammar",
-  "topic": "Neither of singular verb",
-  "q": "Which sentence correctly uses standard formal agreement with 'neither of'?",
+  "topic": "Agreement with number of",
+  "q": "Which sentence uses appropriate subject–verb agreement when reporting that the total count of applications has grown?",
   "options": [
-   "Neither of the two explanations are sufficient.",
-   "Neither of the two explanations have sufficient.",
-   "Neither of the two explanations were sufficient tomorrow.",
-   "Neither of the two explanations is sufficient."
+   "The number of applications have increased.",
+   "A number of applications has increased yesterday.",
+   "The number of applications is increase.",
+   "The number of applications has increased."
   ],
   "answer": 3,
-  "explanation": "In formal usage, 'neither' refers to not one of two and typically takes a singular verb: 'is sufficient.'",
+  "explanation": "The head of the subject 'the number' is singular, so it takes 'has increased.' 'A number of' can take a plural verb when referring to several items.",
   "difficulty": "foundation"
  },
  {
@@ -232,8 +232,8 @@ window.LAMA_PPSC_HM11_4=[
   "q": "An Excel worksheet calculates fees by multiplying each student's tuition in column B by a single tax rate stored in F1. Which formula in C2 keeps the tax-rate cell fixed when filled down?",
   "options": [
    "=B2*F2",
-   "=$B$2*F2",
-   "=B$2*$F2",
+   "=$B$2*F4",
+   "=B$2*$F3",
    "=B2*$F$1"
   ],
   "answer": 3,

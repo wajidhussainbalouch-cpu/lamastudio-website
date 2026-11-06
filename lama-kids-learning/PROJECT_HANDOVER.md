@@ -113,3 +113,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added a simplified native vector llama launcher icon in drawable and manifest. A separate illustrated logo concept was generated in chat; it is NOT the same asset as the vector icon committed to Android source.
 - Added MathPracticeBankTest. No Vercel deployment, production merge, or publishing.
 - Still pending: rich original graded content for other subjects, audio/music licensed for redistribution, accessibility, Families policy checks, final signing and new CI/device verification.
+
+## 6 November 2026 — Quiz feedback and question expansion
+- Following real-device user feedback, quiz answers now turn green for the correct option and red for an incorrect selected option after answering. Unselected wrong choices remain white. Original question explanations still appear.
+- Expanded MathPracticeBank from 10 to 20 questions per lesson: 40 math lessons now contain 800 deterministic questions. Updated MathPracticeBankTest expected count.
+- English, Urdu and Science still have limited grade-specific content and reuse some questions; DO NOT claim these are complete. New Android CI build and device testing for these commits remain pending.
+- No production merge, Vercel deployment or publishing.

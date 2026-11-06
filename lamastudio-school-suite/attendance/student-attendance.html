@@ -128,7 +128,7 @@ async function load(options={}){if(busy){alertText('Attendance is already loadin
  const started=performance.now();let studentsReady=false,attendanceReady=false;
  updateAttendanceLoad(0,'Connecting to school records…',started,null);
  clearInterval(attendanceLoadClock);
- attendanceLoadClock=setInterval(()=>{if(!busy)return;const pct=studentsReady&&attendanceReady?85:studentsReady||attendanceReady?45:10;const stage=studentsReady&&attendanceReady?'Preparing class attendance register…':studentsReady?'Students loaded; waiting for attendance records…':attendanceReady?'Attendance loaded; waiting for student records…':'Waiting for student and attendance records…';updateAttendanceLoad(pct,stage,started,null)},500);
+ attendanceLoadClock=setInterval(()=>{if(!busy)return;const pct=studentsReady&&attendanceReady?85:studentsReady||attendanceReady?45:10;const stage=studentsReady&&attendanceReady?'Preparing class attendance register…':studentsReady?'Student roster received; attendance history still pending…':attendanceReady?'Attendance history received; student roster still pending…':'Waiting for student roster and attendance history…';updateAttendanceLoad(pct,stage,started,null)},500);
  try{const studentRequest=cachedStudents?Promise.resolve(cachedStudents):LamaAPI.list('students');
  const attendanceRequest=LamaAPI.list('attendance');
  const timeout=(promise,label)=>new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error(label+' request timed out after 40 seconds. Check the deployed Apps Script response.')),40000);Promise.resolve(promise).then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)})});

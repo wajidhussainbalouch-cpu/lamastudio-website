@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -60,9 +62,14 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(colorScheme = darkColorScheme(primary = accent, background = bg, surface = card)) {
               ModalNavigationDrawer(drawerState = drawerState, drawerContent = {
                 ModalDrawerSheet(drawerContainerColor = card) {
-                    Text("LAMA IQ TEST", color = accent, modifier = Modifier.padding(20.dp), fontWeight = FontWeight.Bold)
-                    listOf("Number Logic", "Visual Patterns", "Memory", "Attention", "Advanced Reasoning").forEach { module ->
-                        NavigationDrawerItem(label = { Text(module) }, selected = selectedModule == module && infoPage.isEmpty(),
+                    Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(60.dp))
+                        Column { Text("LAMA IQ TEST", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 19.sp)
+                            Text("Brain Training Academy", color = accent, fontSize = 12.sp) }
+                    }
+                    HorizontalDivider(color = accent.copy(alpha = 0.35f))
+                    listOf(Triple("Number Logic", "🔢", "Numbers and sequences"), Triple("Visual Patterns", "🔷", "Shapes and figures"), Triple("Memory", "🧠", "Remember and recall"), Triple("Attention", "🎯", "Focus and accuracy"), Triple("Advanced Reasoning", "💡", "Logic and problem solving")).forEach { (module, symbol, detail) ->
+                        NavigationDrawerItem(icon = { Text(symbol, fontSize = 23.sp) }, label = { Column { Text(module, fontWeight = FontWeight.SemiBold); Text(detail, fontSize = 11.sp, color = Color.LightGray) } }, selected = selectedModule == module && infoPage.isEmpty(),
                             onClick = {
                                 selectedModule = module; infoPage = ""; visualMode = module == "Visual Patterns";
                                 level = 0; question = 0; selected = -1; score = 0
@@ -70,13 +77,16 @@ class MainActivity : ComponentActivity() {
                             })
                     }
                     HorizontalDivider()
-                    listOf("Privacy", "About", "Version", "Lama Studio Website").forEach { item ->
-                        NavigationDrawerItem(label = { Text(item) }, selected = infoPage == item, onClick = {
+                    listOf("Privacy" to "🛡️", "About" to "ℹ️", "Version" to "🔄", "Lama Studio Website" to "🌐").forEach { (item, symbol) ->
+                        NavigationDrawerItem(icon = { Text(symbol, fontSize = 20.sp) }, label = { Text(if (item == "Version") "Version & Updates" else item) }, selected = infoPage == item, onClick = {
                             if (item == "Lama Studio Website") uriHandler.openUri("https://www.lamastudio.pk/")
                             else { infoPage = item; visualMode = false; level = 0 }
                             scope.launch { drawerState.close() }
                         })
                     }
+                    HorizontalDivider(color = accent.copy(alpha = 0.3f))
+                    Text("A project of LAMA STUDIO", color = accent, fontSize = 12.sp, modifier = Modifier.padding(start = 20.dp, top = 12.dp))
+                    Text("Software • Education • Innovation", color = Color.LightGray, fontSize = 11.sp, modifier = Modifier.padding(start = 20.dp))
                 }
               }) {
                 Column(
@@ -84,8 +94,10 @@ class MainActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     TextButton(onClick = { scope.launch { drawerState.open() } }) { Text("☰  Modules & Settings", color = accent) }
-                    Spacer(Modifier.height(10.dp))
-                    Text("LAMA STUDIO", color = accent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Image(painterResource(R.drawable.ic_lama_iq), contentDescription = "Lama IQ Test logo", modifier = Modifier.size(54.dp))
+                        Text("LAMA STUDIO", color = accent, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
                     Text("Lama IQ Test", color = Color.White, fontSize = 31.sp, fontWeight = FontWeight.Bold)
                     Text("Brain training • Logic • Patterns", color = Color(0xFFC7C9DD))
                     when {

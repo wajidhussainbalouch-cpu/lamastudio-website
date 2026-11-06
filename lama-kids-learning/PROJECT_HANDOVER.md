@@ -173,3 +173,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Added to LearningContent.allLessons; added GeneralKnowledgeExpansionTest for count, per-grade prompt uniqueness and answer structure.
 - These are additional to the existing structured 100-question sets per grade. Distractors are currently generic placeholders; editorial review and more plausible grade-specific distractors are needed before release. Some facts may require periodic verification.
 - Unit tests and APK build have not yet been confirmed green. No Vercel deployment, production merge or Play Store publication.
+
+## 6 November 2026 — Equal subject practice sets
+- Updated TenQuestionSets to twelve sets of ten questions per grade, 120 placements per grade: English 20, Urdu 20, Mathematics 20, Science 20, General Knowledge 20 and Computer Basics 20. Across ten grades this yields 1,200 structured placements (previously 1,000).
+- GK and Computer second sets draw from GeneralKnowledgeExpansion, computer second sets from DigitalSkillsBank; filter duplicate prompts against their first sets. All other practice sets retain existing selected questions. These are placements drawn partly from existing banks, not 1,200 new unique questions.
+- Updated TenQuestionSetsTest to assert six subjects each have two sets, 20 unique prompts within the subject per grade, and total 120 per grade.
+- Existing extra topic lessons remain. Unit tests and Android build have not yet been verified; grade-appropriate content, distractors and unique prompts across all banks need review. No deployment, production merge or publication.

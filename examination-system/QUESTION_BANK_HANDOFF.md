@@ -204,3 +204,11 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Retrieved source text via Drive connector; Urdu text extraction is badly garbled and cannot ground chapter titles, quotations or exact page mappings. **Visual PDF review required before drafting textbook-grounded questions.**
 - Added `examination-system/CLASS1_URDU_QUESTION_PLAN.md` with source review workflow, question schema, Urdu-specific marking rules, duplicate checks and release criteria.
 - Current Urdu counts: 0 drafted, 0 approved, 0 online-ready. Do not imply 1,500 questions have been generated. No deployment or production database changes.
+
+
+## Class 1 General Knowledge — 2026-11-06 new subject started
+- Selected as next subject after Class 1 Urdu; source `G.K 1 r.pdf`, Drive ID `1pyHTreo1lqtubCL0iGBZDNFwoRaebxAG`, 54 pages, Urdu, image-only.
+- Confirmed source accessible through connected Drive; extracted text empty. **No textbook lesson/page mapping has been verified.**
+- Added `data/class1-general-knowledge-supplemental-starter-draft.json`: **40 original supplemental MCQ drafts**. These are general age-appropriate practice prompts, **not textbook-derived or approved**; each has null chapter/lesson/page, `approved=false`, `onlineReady=false`.
+- Target remains three verified batches of 500 (1,500 total), not yet generated. Do not misreport these 40 as the first complete batch.
+- Next: visually inspect source table of contents and lesson pages; build grounded chapter map; author varied source-specific questions with manual answer review; no deployment.

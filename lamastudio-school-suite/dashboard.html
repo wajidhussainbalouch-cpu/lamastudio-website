@@ -755,7 +755,7 @@ header#topOverview{background:var(--lama-header)!important}
       status('Verifying administrator access…');
       var result=await Promise.race([
         LamaAPI.schoolAdminVerify(school.schoolId,auth.token),
-        new Promise(function(_,reject){setTimeout(function(){reject(Error('Verification timed out'));},18000);})
+        new Promise(function(_,reject){setTimeout(function(){reject(Error('Administrator verification did not respond within 45 seconds. Check the active Apps Script deployment and execution log, then retry login'));},45000);})
       ]);
       if(result===false||result&&result.status==='error')throw Error(result&&result.message||'Administrator verification rejected');
       document.documentElement.classList.add('admin-verified');

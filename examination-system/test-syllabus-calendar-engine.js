@@ -16,4 +16,10 @@ const short=scheduleApprovedDivision({lessons,calendar:{...base,end:'2026-04-02'
 assert.equal(short.feasible,false);
 assert.equal(short.assignments[1].status,'insufficient-capacity');
 assert.throws(()=>scheduleApprovedDivision({lessons:[...lessons,lessons[0]],calendar:base}),/duplicate/);
+
+const occupiedCheck=scheduleApprovedDivision({lessons,calendar:base,completed:{L1:{actualDate:'2026-04-01'}},previousSchedule:{L1:first.assignments[0].slots}});
+assert.equal(occupiedCheck.assignments[1].slots[0].date,'2026-04-03');
+assert.equal(occupiedCheck.assignments[1].slots[0].period,1);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar:base,completed:{unknown:{actualDate:'2026-04-01'}}}),/Unknown completed/);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar:base,completed:{L1:{}}}),/requires actualDate/);
 console.log('syllabus calendar engine tests passed');

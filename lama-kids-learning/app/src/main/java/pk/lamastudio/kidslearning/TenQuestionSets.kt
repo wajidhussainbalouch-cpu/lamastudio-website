@@ -1,7 +1,7 @@
 package pk.lamastudio.kidslearning
 
 /**
- * Exactly twelve selectable practice sets of ten questions per grade (120 per level).
+ * Six selectable practice sets of ten questions per grade (60 per level).
  * Questions for the existing four subjects are selected from previously authored
  * content. General Knowledge and Computer Basics use reviewed starter prompts
  * shared within age bands. This is not a complete curriculum.
@@ -93,49 +93,28 @@ object TenQuestionSets {
    .asSequence().filter { it.grade == grade && it.subject == subject }
    .flatMap { it.questions.asSequence() }.distinctBy { it.prompt.trim() }.toList()
 
- private fun from(grade: String, subject: String, offset: Int): List<Question> {
-  val additional = when (subject) {
+ private fun from(grade: String, subject: String): List<Question> {
+  val supplemental = when (subject) {
    "Mathematics" -> MathPracticeBank.lessons + WordProblemBank.lessons
    "Science" -> ScienceDiscoveryBank.lessons
    "English" -> ReadingComprehensionBank.lessons
+   "Urdu" -> FinalMilestoneBank.lessons
    else -> emptyList()
   }
-  val local = (existing(grade, subject) +
-   additional.filter { it.grade == grade && it.subject == subject }.flatMap { it.questions })
+  val pool = (existing(grade, subject) +
+   supplemental.filter { it.grade == grade && it.subject == subject }.flatMap { it.questions })
    .distinctBy { it.prompt.trim() }
-  // Keep all available grade-specific material first. Supplement only if
-  // an earlier bank contains fewer than the required twenty distinct prompts.
-  val supplement = if (local.size >= 20) emptyList() else
-   (GradeQuestionBank.lessons + ClassSpecificBank.lessons + ConceptReviewBank.lessons +
-    AppliedPracticeBank.lessons + TopicLibrary.lessons + additional)
-    .asSequence().filter { it.subject == subject && it.grade != grade }
-    .flatMap { it.questions.asSequence() }.toList()
-  val pool = (local + supplement).distinctBy { it.prompt.trim() }
-  check(pool.size >= 20) {
-   "Insufficient distinct prompts for $grade / $subject: ${pool.size}"
-  }
-  return pool.drop(offset).take(10)
+  return pool.take(10)
  }
- private val subjects = listOf("English", "English", "Urdu", "Urdu",
-  "Mathematics", "Mathematics", "Science", "Science",
-  "General Knowledge", "General Knowledge", "Computer Basics", "Computer Basics")
-
+ private val subjects = listOf(
+  "English", "Urdu", "Mathematics", "Science", "General Knowledge", "Computer Basics"
+ )
  val lessons: List<Lesson> = CurriculumCatalog.grades.flatMapIndexed { gradeIndex, grade ->
   subjects.mapIndexed { setIndex, subject ->
    val questions = when (subject) {
-    "General Knowledge" -> if (setIndex == 8) gk[tier(gradeIndex)] else
-     (GeneralKnowledgeExpansion.lessons.filter { it.grade == grade }.flatMap { it.questions } +
-      GeneralKnowledgeExpansion.lessons.flatMap { it.questions })
-      .distinctBy { it.prompt.trim() }.filterNot { candidate ->
-       gk[tier(gradeIndex)].any { it.prompt.trim() == candidate.prompt.trim() }
-      }.take(10)
-    "Computer Basics" -> if (setIndex == 10) computer[tier(gradeIndex)] else
-     (DigitalSkillsBank.lessons.filter { it.grade == grade }.flatMap { it.questions } +
-      DigitalSkillsBank.lessons.flatMap { it.questions })
-      .distinctBy { it.prompt.trim() }.filterNot { candidate ->
-       computer[tier(gradeIndex)].any { it.prompt.trim() == candidate.prompt.trim() }
-      }.take(10)
-    else -> from(grade, subject, if (setIndex % 2 == 0) 0 else 10)
+    "General Knowledge" -> gk[tier(gradeIndex)]
+    "Computer Basics" -> computer[tier(gradeIndex)]
+    else -> from(grade, subject)
    }
    require(questions.size == 10) { "Expected ten questions for $grade / $subject / $setIndex" }
    Lesson("ten-set-${grade.replace(" ", "-")}-${setIndex + 1}", grade, subject,

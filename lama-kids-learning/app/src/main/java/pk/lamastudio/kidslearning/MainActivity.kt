@@ -41,6 +41,8 @@ class MainActivity : ComponentActivity() {
    var answer by remember { mutableIntStateOf(-1) }
    var questionIndex by remember { mutableIntStateOf(0) }
    var correctCount by remember { mutableIntStateOf(0) }
+   var completedScore by remember { mutableIntStateOf(0) }
+   var completedTotal by remember { mutableIntStateOf(0) }
    var stars by remember { mutableIntStateOf(store.totalStars()) }
    var sound by remember { mutableStateOf(store.soundEnabled()) }
    var parentUnlocked by remember { mutableStateOf(false) }
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
     if (sound) tone.startTone(if (correct) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_NACK, 130)
    }
    BackHandler(enabled = page != "home") {
-    if (page == "quiz") { page = "topics"; currentLesson = null }
+    if (page == "quiz" || page == "result") { page = "topics"; currentLesson = null }
     else goHome()
    }
    MaterialTheme(colorScheme = lightColorScheme(primary = ocean, background = cream, surface = Color.White)) {
@@ -142,7 +144,7 @@ class MainActivity : ComponentActivity() {
         item { Button(onClick = { page = "game"; game = MathGames.generate(grade); gameInput = ""; gameFeedback = ""; gameAnswered = false }, modifier = Modifier.fillMaxWidth()) { Text("🎮 Play Math Challenge") } }
        } else if (page == "topics") {
         item { Hero("📚 " + subject + " topics", grade + " • Choose a topic to start a lesson") }
-        val available = LearningContent.forGradeAndSubject(grade, subject)
+        val available = QuizJourney.tests(grade, subject)
         items(available) { lesson ->
          Card(onClick = { currentLesson = lesson; questionIndex = 0; correctCount = 0; answer = -1; page = "quiz" }, colors = CardDefaults.cardColors(containerColor = Color.White)) {
           Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -185,12 +187,32 @@ class MainActivity : ComponentActivity() {
             } else {
              store.completeWithScore(lesson.id, score, lesson.questions.size)
              stars = store.totalStars()
-             page = "topics"; currentLesson = null; questionIndex = 0; correctCount = 0; answer = -1
+             completedScore = score; completedTotal = lesson.questions.size
+             page = "result"; questionIndex = 0; correctCount = 0; answer = -1
             }
            }, modifier = Modifier.fillMaxWidth()) { Text(if (questionIndex + 1 == lesson.questions.size) "🏅 Finish lesson" else "Next question →") }
           }
          }
          item { OutlinedButton(onClick = { page = "topics"; currentLesson = null }) { Text("← Topics") } }
+        }
+       } else if (page == "result") {
+        val finished = currentLesson
+        if (finished != null) {
+         val next = QuizJourney.next(grade, subject, finished.id)
+         item { Hero("🏆 Test completed!", "You answered $completedScore of $completedTotal correctly. Great effort!") }
+         item { Text("⭐ Keep learning to earn more stars and discover new topics.", color = ink) }
+         if (next != null) {
+          item { Button(onClick = {
+           currentLesson = next; questionIndex = 0; correctCount = 0; answer = -1; page = "quiz"
+          }, modifier = Modifier.fillMaxWidth()) { Text("🚀 Start next test →") } }
+         } else {
+          item { Text("🎉 You have finished all available tests in this subject for $grade!") }
+         }
+         item { OutlinedButton(onClick = {
+          currentLesson = finished; questionIndex = 0; correctCount = 0; answer = -1; page = "quiz"
+         }, modifier = Modifier.fillMaxWidth()) { Text("🔄 Try this test again") } }
+         item { OutlinedButton(onClick = { currentLesson = null; page = "topics" },
+          modifier = Modifier.fillMaxWidth()) { Text("📚 Choose another test") } }
         }
        } else if (page == "game") {
         val current = game ?: MathGames.generate(grade).also { game = it }

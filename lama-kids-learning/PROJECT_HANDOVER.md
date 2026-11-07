@@ -199,3 +199,9 @@ Native Android: Kotlin, Jetpack Compose, Material 3, MVVM, Room for local progre
 - Per owner discretion, reduced structured practice from twelve to six sets per grade: one ten-question set for each of English, Urdu, Mathematics, Science, General Knowledge and Computer Basics. This avoids selecting a second set from insufficient grade-specific pools and removes the cross-grade fallback. Other topic and supplemental lessons are preserved.
 - Updated TenQuestionSetsTest to require 60 structured placements per grade, 600 across ten grades. Aggregate placements consequently decrease by 600 from the previous 4,030 estimate to approximately 3,430. **The 4,000 placement target is not currently met after this change**; additional original grade-specific questions are needed rather than artificially repeating questions.
 - CI build/test success not verified. If initialization still fails, inspect first exception in uploaded diagnostics rather than repeatedly weakening tests.
+
+## 7 November 2026 — Sequential quiz journey
+- Added QuizJourney.kt: six grade-specific structured ten-question tests followed by supplemental offline question-bank rounds, each capped at ten questions. Users can choose the next test after completion, retry, or return to topics. This uses existing questions and preserves grade/subject context.
+- MainActivity now shows a completion/results screen with score, Start next test, Retry, and Choose another test. Scores use the existing ProgressStore; round IDs are distinct for independent stars.
+- Added QuizJourneyTest across ten grades and six subjects to check round size, unique IDs and next-test navigation.
+- No new unique question count claimed. Build and device testing remain unverified; check GitHub Actions before providing APK.

@@ -19,3 +19,9 @@
 - Verified curricular skills table on PDF page 6 of the 126-page PCTB English 2 source. These questions are **supplemental**, not verified against individual lesson text/pages. No chapter/lesson/page references are assigned to questions.
 - All records `approved=false`, `onlineReady=false`. 0 repeated literal prompts in the batch, but significant intended conceptual repetition and possible ambiguous choices; editorial, pedagogical and answer-key review mandatory.
 - Progress 500/1500 draft target; next batch 501–1000. No live activation or Vercel deployment.
+
+## English batch 2 — 2026-11-07
+- `data/class2-english-batch2-500-draft.json` commit `1113fdf3c1bce256632085ae765aff96e29a1e96`: 500 draft questions, IDs 501–1000; 125 examples × four formats across pronouns, articles, prepositions, punctuation, and reading comprehension.
+- QA checks: 500 unique IDs, no empty answers, no literal prompt repeats within batch. **Important:** Article choices may be context-dependent (e.g., 'a' versus 'the'), and preposition questions may allow alternative answers. Pronoun transformations and oral/teacher responses require manual grading and correction. Do not assume pedagogical correctness from structural checks.
+- Progress: 1,000/1,500 Class 2 English drafts. **Not** 1,000 independent concepts. No verified lesson/page mapping; all unapproved and offline.
+- Next: batch 3, then cross-batch quality review, textbook alignment and teacher validation. No deployment.

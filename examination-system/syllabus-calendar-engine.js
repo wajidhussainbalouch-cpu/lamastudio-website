@@ -17,6 +17,19 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
   d.setUTCDate(d.getUTCDate()+1);
  }
  const assignments=[];let slotIndex=0;
+ // Historical completed slots remain reserved, even if the calendar changes.
+ const occupied=new Set();
+ for(const [lessonId,progress] of Object.entries(completed)){
+  if(!lessons.some(l=>l.lessonId===lessonId))throw Error('Unknown completed lessonId');
+  if(!progress||!progress.actualDate)throw Error('Completed lesson requires actualDate');
+  dateUTC(progress.actualDate);
+  for(const slot of previousSchedule[lessonId]||[]){
+   if(!slot||!slot.date||!Number.isSafeInteger(slot.period)||slot.period<1)throw Error('Invalid historical slot');
+   dateUTC(slot.date);
+   occupied.add(slot.date+'#'+slot.period);
+  }
+ }
+ const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period));
  for(const lesson of lessons){
   if(!lesson||typeof lesson.lessonId!=='string'||!lesson.lessonId||seen.has(lesson.lessonId))throw Error('Missing/duplicate lessonId');
   seen.add(lesson.lessonId);
@@ -26,10 +39,10 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
    assignments.push({lessonId:lesson.lessonId,status:'completed',actualDate:completed[lesson.lessonId].actualDate||null,slots:(previousSchedule[lesson.lessonId]||[])});
    continue;
   }
-  const allocated=slots.slice(slotIndex,slotIndex+required);
+  const allocated=availableSlots.slice(slotIndex,slotIndex+required);
   slotIndex+=allocated.length;
   assignments.push({lessonId:lesson.lessonId,status:allocated.length===required?'scheduled':'insufficient-capacity',slots:allocated,missingPeriods:required-allocated.length});
  }
- return {assignments,requiredUnfinishedPeriods:lessons.filter(l=>!completed[l.lessonId]).reduce((s,l)=>s+l.estimatedPeriods,0),availablePeriods:slots.length,remainingPeriods:Math.max(0,slots.length-slotIndex),feasible:assignments.every(a=>a.status!=='insufficient-capacity')};
+ return {assignments,requiredUnfinishedPeriods:lessons.filter(l=>!completed[l.lessonId]).reduce((s,l)=>s+l.estimatedPeriods,0),availablePeriods:availableSlots.length,remainingPeriods:Math.max(0,availableSlots.length-slotIndex),feasible:assignments.every(a=>a.status!=='insufficient-capacity')};
 }
 if(typeof module!=='undefined')module.exports={scheduleApprovedDivision};

@@ -50,6 +50,7 @@ $('clearDate').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('d
 $('csv').onclick=()=>{const rows=[['Date','Class','Enrollment','Name','Status'],...visible().map(s=>[$('date').value,cls(s),enr(s),s.name,state.chosen.get(id(s))?.status||'Unmarked'])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.href=url;a.download='attendance-'+$('date').value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 let qrSaving=false,portalPublishing=false;
 async function persistQrStudent(student){
+ if(!validAdminWriteSession()){$('scanStatus').textContent='School Admin login required to save QR attendance. No request was sent.';stop();return}
  if(qrSaving||state.saving||state.loading||!state.historyReady||state.loadedDate!==$('date').value||state.dirty.size){$('scanStatus').textContent='Pending manual changes or another save. Save or discard those changes before QR scanning.';return}
  const key=id(student),previous=state.chosen.get(key)?.status||'';
  if(previous==='Present'){$('scanStatus').textContent='✓ '+student.name+' already marked Present — no duplicate save';return}

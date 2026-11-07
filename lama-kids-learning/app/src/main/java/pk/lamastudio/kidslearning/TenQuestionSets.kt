@@ -100,10 +100,20 @@ object TenQuestionSets {
    "English" -> ReadingComprehensionBank.lessons
    else -> emptyList()
   }
-  val pool = (existing(grade, subject) +
+  val local = (existing(grade, subject) +
    additional.filter { it.grade == grade && it.subject == subject }.flatMap { it.questions })
    .distinctBy { it.prompt.trim() }
-  require(pool.size >= 20) { "Not enough unique $subject questions for $grade: ${pool.size}" }
+  // Keep all available grade-specific material first. Supplement only if
+  // an earlier bank contains fewer than the required twenty distinct prompts.
+  val supplement = if (local.size >= 20) emptyList() else
+   (GradeQuestionBank.lessons + ClassSpecificBank.lessons + ConceptReviewBank.lessons +
+    AppliedPracticeBank.lessons + TopicLibrary.lessons + additional)
+    .asSequence().filter { it.subject == subject && it.grade != grade }
+    .flatMap { it.questions.asSequence() }.toList()
+  val pool = (local + supplement).distinctBy { it.prompt.trim() }
+  check(pool.size >= 20) {
+   "Insufficient distinct prompts for $grade / $subject: ${pool.size}"
+  }
   return pool.drop(offset).take(10)
  }
  private val subjects = listOf("English", "English", "Urdu", "Urdu",

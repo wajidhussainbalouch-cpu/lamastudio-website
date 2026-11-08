@@ -7,7 +7,7 @@
 - The `Papers & Examinations` page now places the long subject list in a **collapsed** disclosure and links to the full library, reducing excessive scrolling on phones.
 - The side menu adds **Question Bank Library** and an expandable **Job-wise Paper List**. Selecting a post shows only its published, numbered papers and opens the correct exam. Unpublished jobs show a clear empty-state message, never an unrelated school-head exam.
 - Public paper order is derived from the stable paper sequence/ID in `paper-library.js`, rather than the insertion order in JavaScript. The same numbered ordering is used in the examination list, resource library and side menu. Existing paper IDs, saved scores and in-progress attempts are preserved.
-- `library-ui.js` handles searchable subject counts, CSV export, menu job selector and automatic refresh on catalog changes. The `test-jobwise-library.cjs` regression is added to CI; service-worker cache updated to **v71**.
+- `library-ui.js` handles searchable subject counts, CSV export, menu job selector and automatic refresh on catalog changes. The `test-jobwise-library.cjs` regression is added to CI; service-worker cache updated to **v72**, including offline fallback for public job, library, print and paper deep links.
 - The 20-public-papers-per-job cap remains enforced through `LamaPpscPaperLibrary.forJob`; new jobs and published papers will appear automatically **when registered through the existing catalog/public paper workflow**. This does not itself build new MCQs or grant subscription access.
 - Browser end-to-end testing and actual Vercel production deployment have **not been independently verified**. No Vercel deployment was initiated by this change.
 

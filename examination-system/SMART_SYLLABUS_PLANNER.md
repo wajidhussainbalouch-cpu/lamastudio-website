@@ -399,3 +399,12 @@ Validation and release gate:
 - Added `test-syllabus-school-calendar-2026.js` to syllabus CI. It verifies weekends, summer closure, date boundaries and that an illustrative one-English-period-per-weekday timetable cannot fit the provisional 176-period draft before the deadline. The illustrative timetable is **not** asserted as the school's actual timetable.
 - Capacity warning must be visible to the school administrator before approval. Never automatically compress or delete lessons to meet 23 December.
 - No actual textbook exercise-level difficulty assessment or production integration is claimed. CI execution is not yet confirmed; no live data or deployment was changed.
+
+
+## Read-only syllabus completion-risk preview — 8 Nov 2026
+- Added `examination-system/syllabus-capacity-preview.js` and `test-syllabus-capacity-preview.js`, and registered the test in syllabus CI.
+- Preview accepts a division, school calendar, completed lessons and historical schedule, then reports total lessons, completed/unfinished lessons, required unfinished subject periods, available subject periods, shortage, last assigned date and explicit feasibility warnings.
+- It is a **pure preview**, not a live admin panel, not a publication action, and not a change to teacher progress or the canonical division.
+- In the provisional Class 5 English division there are 74 blocks requiring an estimated 176 English periods. This estimate must be refined from textbook exercises. A sample one-period-per-weekday timetable is used only for test assertions; actual school periods and holiday applicability are still unknown.
+- Admin should review shortage before approving any date mapping; no silent compression of learning activities. Next: verify the actual timetable, review textbook-level topic difficulty, display the preview in the school admin UI, and test workflow end-to-end.
+- GitHub Actions success and live Apps Script integration remain unverified; no deployment or live data mutation.

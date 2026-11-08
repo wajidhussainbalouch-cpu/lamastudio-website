@@ -411,3 +411,12 @@ Enabled browser candidate auth using the existing isolated LAMA PPSC Academy Sup
 - Routing updated in `academy-router.js` and `section.html`. PWA `sw.js` cache v72 includes library UI and provides offline fallback for public routing query URLs without caching query-specific variants. Mobile layout uses responsive columns/rows.
 - `test-jobwise-library.cjs` added to `.github/workflows/ppsc-academy-checks.yml` to check routing, menu, subject counts, sorting, CSV availability, fallback, and catalog changes. Syntax/source checks passed in assistant simulation; confirm full Node CI execution and deployed Android Chrome layout separately.
 - No deployment authorized or initiated. Do not claim the live website has these changes until a successful deployment and cache refresh.
+
+
+## Launch readiness and mobile polish — 8 November 2026
+
+The candidate academy has been updated with the approved PPSC green/gold logo, `academy-polish.css` (responsive mobile touch targets, compact secondary headers, keyboard focus, reduced-motion), `help.html`, `privacy.html`, `terms.html`, a support/footer section, descriptive route titles and active-menu semantics. The public PWA cache now uses **v74** to include all new public pages and styles. The release-check `test-launch-polish.cjs` was added to `.github/workflows/ppsc-academy-checks.yml`.
+
+**Go/no-go decision: NO-GO for commercial paid launch.** Supabase project is active and 7/7 academy tables have RLS enabled, but there were no active subscription records and payment entitlements/approval remain unimplemented for public use. Security Advisor warned that leaked-password protection is disabled. Account confirmation, reset flows, Android Chrome layout, offline/PWA update, printed PDFs and a full end-to-end exam attempt are still not independently verified, nor has the educational bank completed independent academic review. Only the school-head job family has 15 dedicated published 100-question practice papers; other catalog jobs must not advertise exams until published. No direct Vercel deploy action was initiated, though `main` Git commits may trigger Git-integrated deployments.
+
+Full release checklist: [LAUNCH_READINESS_2026-11-08.md](./LAUNCH_READINESS_2026-11-08.md). Preserve previous questions, candidate attempts and backend data. Do not activate billing or premium examination access before owner approval, trusted server-side entitlement checks and reviewed business/legal policy.

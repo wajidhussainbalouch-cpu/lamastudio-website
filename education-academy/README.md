@@ -255,3 +255,12 @@ These checks detect structural issues but **do not establish academic accuracy o
 - Paper states come from existing local `lama_ppsc_attempt_<paperId>` and `lama_ppsc_history_v1` records. Saved scores, in-progress timers and previous answers are not overwritten by the new library. Backups remain available under My Scores.
 - Job track availability does **not** mean the PPSC vacancy is open or the case-specific syllabus is verified. User data is browser-local unless the configured and authenticated cloud attempt API separately reports a successful save.
 - The 500-paper figure is a roadmap, not a published paper count. Subscription activation and secure entitlement checks must be completed server-side before paid content is released.
+
+
+## Launch readiness and mobile polish — 8 November 2026
+
+The candidate academy has been updated with the approved PPSC green/gold logo, `academy-polish.css` (responsive mobile touch targets, compact secondary headers, keyboard focus, reduced-motion), `help.html`, `privacy.html`, `terms.html`, a support/footer section, descriptive route titles and active-menu semantics. The public PWA cache now uses **v74** to include all new public pages and styles. The release-check `test-launch-polish.cjs` was added to `.github/workflows/ppsc-academy-checks.yml`.
+
+**Go/no-go decision: NO-GO for commercial paid launch.** Supabase project is active and 7/7 academy tables have RLS enabled, but there were no active subscription records and payment entitlements/approval remain unimplemented for public use. Security Advisor warned that leaked-password protection is disabled. Account confirmation, reset flows, Android Chrome layout, offline/PWA update, printed PDFs and a full end-to-end exam attempt are still not independently verified, nor has the educational bank completed independent academic review. Only the school-head job family has 15 dedicated published 100-question practice papers; other catalog jobs must not advertise exams until published. No direct Vercel deploy action was initiated, though `main` Git commits may trigger Git-integrated deployments.
+
+Full release checklist: [LAUNCH_READINESS_2026-11-08.md](./LAUNCH_READINESS_2026-11-08.md). Preserve previous questions, candidate attempts and backend data. Do not activate billing or premium examination access before owner approval, trusted server-side entitlement checks and reviewed business/legal policy.

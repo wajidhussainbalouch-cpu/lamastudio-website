@@ -21,3 +21,9 @@ No production deployment or student-facing activation.
 - `data/class2-mathematics-batch1-500-draft.json` commit `c06d7ec47c77a4052f6c86f4f13899099a47317a`: 500 supplemental drafts, 50 each in ordinal numbers, number names, numerals, place value, comparison, ascending, descending, backward count, tens, hundreds.
 - Construction checks: 500 unique IDs, 500 unique literal prompts, all answers present, MCQ answers present in options. This is **not** an independent validation of each answer, classroom suitability or semantic uniqueness. The hundreds sequence has repeated numeric patterns with different labels. Some questions reference curriculum outcomes on PDF page 4, not an identical textbook exercise.
 - All `approved=false`, `onlineReady=false`; no live exams or Vercel deployment. Next: math QA and batch 2 from additional visually verified pages.
+
+## Mathematics batch 2 — 2026-11-08
+- `data/class2-mathematics-batch2-500-draft.json` committed at `ba203afd141cfafc4f20b74c64f1749e5d49a34d` (500 draft records, IDs 501–1000). Covers number sequences, number names, 3-digit numbers, hundreds/tens/ones, place value, expanded form, successor, comparison, and ascending order.
+- Visually inspected source PDF pages 7–18 and later pages 19–26. Pages 19–26 cover comparison, ascending/descending ordering, backward counting, counting in tens, and hundreds. Some repeated concepts are intentionally present across batches.
+- Structural checks: 500 unique IDs, 500 distinct literal prompts, no empty answers, no missing MCQ answers in options. **Independent arithmetic validation, semantic duplicate review and teacher grading still pending.** The `sourcePdfPage` is a lesson-topic reference, not an exact-question citation. All drafts unapproved and offline.
+- Mathematics progress: 1,000/1,500; next batch 3 (1001–1500). No Vercel deployment.

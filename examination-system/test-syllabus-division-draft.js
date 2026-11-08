@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {createDraftDivision}=require('./syllabus-division-draft');
+const catalog=require('./catalogs/english-class-5.json');
+const draft=createDraftDivision(catalog);
+assert.equal(draft.status,'draft');
+assert.equal(draft.lessons.length,74);
+assert.equal(new Set(draft.lessons.map(x=>x.lessonId)).size,74);
+assert.equal(draft.lessons.reduce((n,x)=>n+x.estimatedPeriods,0),14*12+4*2);
+assert.equal(draft.lessons.every(x=>!('date' in x)&&!('scheduledDate' in x)),true);
+assert.equal(draft.lessons.every(x=>x.sourceConfidence.includes('require')),true);
+assert.equal(draft.lessons[0].lessonId,'EN5-U01-READING');
+assert.equal(draft.lessons.at(-1).lessonId,'EN5-REVIEW-14');
+console.log('Class 5 English division draft tests passed');

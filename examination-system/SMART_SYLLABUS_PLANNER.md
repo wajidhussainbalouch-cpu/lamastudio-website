@@ -391,3 +391,11 @@ Validation and release gate:
 - Public holidays, school examination days, timetable period counts, Friday half-day subject allocation and detailed textbook topic-level verification remain to be confirmed. Capacity results are therefore **scenario estimates**, not a final approved teaching schedule.
 - The system must show insufficient capacity and offer admin-reviewed timetable/deadline changes, never silently compress, merge, reorder or drop the canonical lessons.
 - No live teacher-diary integration or production deployment. GitHub Actions results not yet verified.
+
+
+## Calendar fixture and capacity gate — 8 Nov 2026
+- Added `examination-system/syllabus-school-calendar-2026.js` with user-confirmed session (1 Apr 2026–31 Mar 2027), course deadline (23 Dec 2026), summer closure (22 May–23 Aug), winter closure (24–31 Dec), Saturday/Sunday closures, Friday half-day policy and January–March revision.
+- **English periods are not known**: the fixture requires a caller-supplied per-weekday English timetable. A half-day Friday does not establish whether the class has an English period that day. Public holidays remain pending school-specific confirmation.
+- Added `test-syllabus-school-calendar-2026.js` to syllabus CI. It verifies weekends, summer closure, date boundaries and that an illustrative one-English-period-per-weekday timetable cannot fit the provisional 176-period draft before the deadline. The illustrative timetable is **not** asserted as the school's actual timetable.
+- Capacity warning must be visible to the school administrator before approval. Never automatically compress or delete lessons to meet 23 December.
+- No actual textbook exercise-level difficulty assessment or production integration is claimed. CI execution is not yet confirmed; no live data or deployment was changed.

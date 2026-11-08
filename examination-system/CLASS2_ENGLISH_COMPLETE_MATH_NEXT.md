@@ -15,3 +15,9 @@
 - Next: retrieve the source, inspect pages and units, create mathematically verified 500-question drafts with source references and age-appropriate visuals.
 
 No production deployment or student-facing activation.
+
+## Mathematics batch 1 — 2026-11-08
+- Source `math 2.pdf` (154 pages), Drive ID `11SMlZk9Z3mdAG49ewxxK0ge1DnvyKViZ` retrieved. Visually inspected PDF pages 4–6: Unit 1 Whole Numbers learning outcomes, ordinal-number bees and ordinal exercise with alphabet cars.
+- `data/class2-mathematics-batch1-500-draft.json` commit `c06d7ec47c77a4052f6c86f4f13899099a47317a`: 500 supplemental drafts, 50 each in ordinal numbers, number names, numerals, place value, comparison, ascending, descending, backward count, tens, hundreds.
+- Construction checks: 500 unique IDs, 500 unique literal prompts, all answers present, MCQ answers present in options. This is **not** an independent validation of each answer, classroom suitability or semantic uniqueness. The hundreds sequence has repeated numeric patterns with different labels. Some questions reference curriculum outcomes on PDF page 4, not an identical textbook exercise.
+- All `approved=false`, `onlineReady=false`; no live exams or Vercel deployment. Next: math QA and batch 2 from additional visually verified pages.

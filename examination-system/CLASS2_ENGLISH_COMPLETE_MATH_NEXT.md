@@ -33,3 +33,9 @@ No production deployment or student-facing activation.
 - Topics: Counting to 100, Number words, Three-digit names, Numerals, Base-ten blocks, Place value, Expanded form, Next number, Compare numbers, Ascending order. Source references visually inspected PDF pages 7–18; independent verification of each source mapping remains pending.
 - Existing batch metadata reports 500 unique IDs, 500 unique literal prompts, and no missing answers. All records are unapproved. This is a structural check, not a complete arithmetic or pedagogical audit.
 - Class 2 Mathematics now has **1,000 saved draft questions** across batches 1 and 2. Next: batch 3 (1001–1500) after inspecting further textbook pages; do not deploy.
+
+## Class 2 Mathematics — third 500-draft batch (2026-11-08)
+- Committed `data/class2-mathematics-batch3-500-draft.json`, commit `ec56b6fac69607618b31dae604b8cdf70e88def5`, IDs `C2-MATH-B3-1001`–`C2-MATH-B3-1500`.
+- 500 supplemental questions, 50 each: addition, subtraction, number before/after, missing addend/subtrahend, ten more/less, hundred more/less. Arithmetic answers programmatically checked; 500 unique IDs and prompts.
+- Class 2 Mathematics has **1,500 draft records across three batches**. All remain `approved=false`, `onlineReady=false`. Batch 3 is **not individually textbook page-verified** and may need adjustments for teaching progression and regrouping. Editorial review, cross-batch deduplication and textbook mapping required before activation.
+- No live website deployment. Next subject to be selected from verified Class 2 intake.

@@ -1,7 +1,7 @@
 /* LAMA PPSC Academy: mobile-first section routing, no destructive state resets. */
 'use strict';
 (()=>{
- const views=new Set(['subscription','account','performance','studyPlanner','papers','resources','paper','jobDetail']);
+ const views=new Set(['subscription','account','performance','studyPlanner','papers','resources','library','paper','jobDetail']);
  const toView=()=>{
   const hash=decodeURIComponent(location.hash.slice(1));
   let view=views.has(hash)?hash:'jobs';

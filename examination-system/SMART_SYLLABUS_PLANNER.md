@@ -448,3 +448,11 @@ Validation and release gate:
 - It intentionally **rejects** the current Class 5 English provisional draft, which lacks verified exercise-level objectives and has not been submitted. This is the desired behavior; do not bypass it by changing flags.
 - This module is not server authorization. The eventual Apps Script/backend endpoint must derive actor and school identity from authenticated server context, not trust browser-supplied role/school IDs. Approval and publication must be separate audited transitions, with versioned immutable division snapshots.
 - Production admin UI and teacher diary integration remain pending; successful CI execution is not yet confirmed. No live deployment or school data changes.
+
+
+## Draft lesson editing with revision protection — 8 Nov 2026
+- Added `examination-system/syllabus-draft-editor.js` and its tests in CI. This pure helper allows edits only when the division is `draft`, and requires the caller's expected revision to match the current division revision.
+- Allowed draft fields: topic, subtopics, learning objectives, difficulty, weight, estimated periods, assessment and printed source-page reference. Lesson ID, unit identity, order, source metadata and approval state cannot be edited through this helper.
+- Editing returns a new division object and increments the revision without mutating the input. Approved, submitted and published divisions are rejected.
+- This is **not** an authenticated API or production editor. Before integrating, the backend must authorize school/class/section roles, store the revision atomically, record actor and audit history, and validate textbook source evidence. The school admin UI remains pending.
+- CI has been configured, but execution has not been confirmed. No live deployment or school data changes.

@@ -1,0 +1,21 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {assessApprovalReadiness}=require('./syllabus-approval-readiness');
+const {createDraftDivision}=require('./syllabus-division-draft');
+const catalog=require('./catalogs/english-class-5.json');
+const division=createDraftDivision(catalog),snapshot=JSON.stringify(division);
+const preview={feasible:true,shortfall:0,rows:division.lessons.map(l=>({lessonId:l.lessonId,status:'scheduled'}))};
+const review={schoolId:'school-a',classId:'5',subjectId:'English',sessionId:'2026-27',
+ textbookExercisesVerified:false,teacherReviewedDifficulty:false,timetableConfirmed:false,holidaysConfirmed:false};
+const actor={role:'school_admin',schoolId:'school-a'};
+let result=assessApprovalReadiness({division,preview,review,actor});
+assert.equal(result.ready,false);
+assert.ok(result.blockers.some(x=>x.includes('Textbook')));
+assert.ok(result.blockers.some(x=>x.includes('submitted')));
+assert.ok(result.blockers.some(x=>x.includes('objectives')));
+assert.equal(JSON.stringify(division),snapshot);
+result=assessApprovalReadiness({division,preview,review:{...review,textbookExercisesVerified:true,teacherReviewedDifficulty:true,timetableConfirmed:true,holidaysConfirmed:true},actor:{role:'teacher',schoolId:'school-a'}});
+assert.equal(result.ready,false);
+assert.ok(result.blockers.some(x=>x.includes('administrator')));
+assert.equal(result.requiresServerSideAuthorization,true);
+console.log('approval readiness gate tests passed');

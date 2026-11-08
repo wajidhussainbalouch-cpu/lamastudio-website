@@ -375,3 +375,11 @@ Validation and release gate:
 7. Verify unit and exercise details, school timetable, 2026 holiday applicability, and full school admin/teacher workflow against a disposable test school before any Apps Script or live website deployment.
 
 **Status on 6 Nov 2026:** Specification approved in conversation; code integration, period-level scheduling, calendar reflow, tests and production verification remain pending. No production data mutation or Vercel deployment is authorized by this documentation update alone.
+
+
+## Undated Class 5 English draft division — 8 Nov 2026
+- Added `examination-system/syllabus-division-draft.js` and `test-syllabus-division-draft.js`, registered in syllabus CI. The generator derives 70 strand-level blocks (five per each of 14 textbook units) plus four reviews, **74 draft blocks** in source order. These are **not** 74 verified exercise-level lessons.
+- Every block has a stable ID, textbook unit title, printed start-page reference, provisional difficulty, weight and estimated English periods. The current total is **176 provisional periods** (14 × 12 plus four reviews × 2); the school timetable must establish actual available English periods, including Friday half-days.
+- Dates are intentionally absent from division records. The calendar engine handles scheduling separately. Topic-level details, objectives, actual exercise references, difficulty, weights and periods still require textbook-page review and school administrator approval. No draft is auto-published.
+- Calendar engine now avoids placing unfinished lessons before the most recent completed lesson date, in addition to reserving historical completed slots. This is a safety improvement, not a complete production reflow solution; same-day period ordering and actual school timetable integration still need verification.
+- CI workflow has new tests but a successful GitHub Actions run has **not** been confirmed. No Apps Script deployment, school data changes or Vercel deployment were performed.

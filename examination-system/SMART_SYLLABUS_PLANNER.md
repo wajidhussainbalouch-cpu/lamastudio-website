@@ -424,3 +424,11 @@ Validation and release gate:
 - Holiday changes reduce available teaching periods when they affect a scheduled English day; overlapping summer closures are not double-counted in capacity.
 - The Class 5 English division remains a **provisional 176-period draft**, not an exercise-verified or administrator-approved division. The illustrative weekday timetable is not a school-confirmed timetable.
 - Next release gates: execute and verify CI, obtain the actual school English timetable and provincial/school holiday confirmations, review detailed textbook exercises and lesson weights, connect capacity preview to admin approval and integrate published schedule with teacher diary. No production deployment or data mutation in this update.
+
+
+## Read-only teaching-period capacity audit — 8 Nov 2026
+- Added `examination-system/syllabus-capacity-audit.js` and `test-syllabus-capacity-audit.js`; the latter is now registered in syllabus CI.
+- Audit accepts an **undated lesson division** and a **school-supplied subject timetable**. It calculates required English periods, available periods, shortfall, spare capacity, teaching days, Friday teaching days and month-by-month capacity after closures.
+- The report is informational and **never edits the canonical lesson topics, order, weights or periods**. A shortfall must trigger an administrator review rather than automatically compressing difficult topics.
+- A school timetable has **not** yet been supplied. The earlier one-period-per-weekday scenario is illustrative only; do not present its capacity as the real school's capacity.
+- School-specific 2026 public-holiday confirmation, exact exercise-level lesson objectives, progress-aware rescheduling, admin preview and teacher diary integration are pending. CI run outcome remains unverified; no production deployment or school data change.

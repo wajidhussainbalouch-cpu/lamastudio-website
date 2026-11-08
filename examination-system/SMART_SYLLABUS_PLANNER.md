@@ -408,3 +408,11 @@ Validation and release gate:
 - In the provisional Class 5 English division there are 74 blocks requiring an estimated 176 English periods. This estimate must be refined from textbook exercises. A sample one-period-per-weekday timetable is used only for test assertions; actual school periods and holiday applicability are still unknown.
 - Admin should review shortage before approving any date mapping; no silent compression of learning activities. Next: verify the actual timetable, review textbook-level topic difficulty, display the preview in the school admin UI, and test workflow end-to-end.
 - GitHub Actions success and live Apps Script integration remain unverified; no deployment or live data mutation.
+
+
+## Read-only teaching-capacity scenarios — 8 Nov 2026
+- Added `examination-system/syllabus-capacity-scenarios.js` with `test-syllabus-capacity-scenarios.js` and registered it in syllabus CI.
+- Compares three illustrative English timetables against the **same immutable 74-block/176-period draft**: (a) one period Mon–Thu and no Friday English, (b) one period Mon–Fri, (c) two periods Mon–Thu and one Friday.
+- Returns available periods, required unfinished periods, shortfall/spare periods, feasibility and last scheduled date. An added school holiday decreases capacity without altering lesson IDs or topics.
+- These are **scenarios, not the actual school's timetable**. Do not automatically assign two English periods per day; obtain verified timetable, holiday applicability and school approval before scheduling or publishing.
+- Current division is still provisional strand-level scaffolding, not verified topic-by-topic textbook exercises. No school data mutation or live deployment. CI success remains unconfirmed.

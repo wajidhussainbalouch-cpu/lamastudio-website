@@ -113,6 +113,7 @@
   address.searchParams.set('job',selected.id);address.searchParams.delete('paper');
   history.replaceState(null,'',address.href);
   menuJob.value=selected.id;
+  subjectSearch.value='';
   refreshMenu();refreshLibrary();
  }
  function downloadCoverage(){
@@ -130,7 +131,7 @@
   link.href=href;link.download='lama-ppsc-'+selected.id.replace(/[^a-z0-9-]/gi,'-')+'-coverage.csv';
   document.body.append(link);
   link.click();link.remove();
-  URL.revokeObjectURL(href);
+  setTimeout(()=>URL.revokeObjectURL(href),10000);
   if(exportMessage)exportMessage.textContent='Subject-count CSV prepared for download.';
  }
  const defaultJob=cat.fromUrl()||cat.resolve('teaching:0')||cat.options()[0]||null;

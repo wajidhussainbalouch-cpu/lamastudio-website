@@ -14,12 +14,28 @@
  // Job variants (e.g. teaching:0 and teaching:1) share the same family and count.
  const MAX_PAPERS_PER_JOB=20;
  const candidates=()=>Array.isArray(window.LAMA_PPSC_PAPERS)?window.LAMA_PPSC_PAPERS.filter(isPublic):[];
+ // Stable numerical order across public paper list, job-specific library and side menu.
+ // Demo Paper 1 keeps its historic ID and saved attempt key.
+ const paperNumber=paper=>{
+  if(paper.id===LEGACY_PUBLIC_ID)return 1;
+  if(Number.isInteger(paper.sequence)&&paper.sequence>0)return paper.sequence;
+  const m=String(paper.id||'').match(/(?:^|[-_])P(?:APER)?0*([0-9]+)$/i)||String(paper.title||'').match(/\bPaper\s+([0-9]+)\b/i);
+  return m?Number(m[1]):null;
+ };
+ const comparePapers=(a,b)=>{
+  const na=paperNumber(a),nb=paperNumber(b);
+  if(na!==null&&nb!==null&&na!==nb)return na-nb;
+  if(na!==null&&nb===null)return -1;
+  if(nb!==null&&na===null)return 1;
+  return String(a.id).localeCompare(String(b.id));
+ };
+
  const assignedJobs=paper=>[...new Set((Array.isArray(paper.jobIds)?paper.jobIds:(paper.id===LEGACY_PUBLIC_ID?['teaching']:[])).map(jobId).filter(Boolean))];
- const forJob=id=>candidates().filter(paper=>assignedJobs(paper).includes(jobId(id))).slice(0,MAX_PAPERS_PER_JOB);
+ const forJob=id=>candidates().filter(paper=>assignedJobs(paper).includes(jobId(id))).sort(comparePapers).slice(0,MAX_PAPERS_PER_JOB);
  // Only expose papers occupying an allowed job slot. The source registry is never deleted.
  const list=()=>{
   const counts=new Map();
-  return candidates().filter(paper=>{
+  return candidates().sort(comparePapers).filter(paper=>{
    let allowed=false;
    for(const id of assignedJobs(paper)){
     const count=counts.get(id)||0;
@@ -60,7 +76,7 @@
   if(latest||attempt&&attempt.submitted)return {state:'completed',last:latest,attempts:rows.length};
   return {state:'not-started',last:null,attempts:0};
  }
- const api=Object.freeze({list,forJob,find,coverage,selectedJob,activePaper,history,progress,maxPapersPerJob:MAX_PAPERS_PER_JOB});
+ const api=Object.freeze({list,forJob,find,coverage,paperNumber,selectedJob,activePaper,history,progress,maxPapersPerJob:MAX_PAPERS_PER_JOB});
  window.LamaPpscPaperLibrary=api;
  if(typeof document==='undefined')return;
  const select=document.getElementById('paperJob'),filter=document.getElementById('paperStateFilter');
@@ -94,6 +110,11 @@
  }
  function render(){
   const job=jobs()?.resolve(selected),available=job?forJob(job.id):[];
+  const jump=document.getElementById('paperLibraryOpen');
+  if(jump&&job)jump.href=urlFor('library',job);
+  const fold=document.getElementById('paperCoverageDisclosure');
+  if(fold)fold.querySelector('summary').textContent='Show published subject coverage for '+(job?job.label:'this job');
+
   const details=available.map(p=>({paper:p,state:progress(p)}));
   const completed=details.filter(p=>p.state.state==='completed'||p.state.last).length;
   const started=details.filter(p=>['in-progress','expired'].includes(p.state.state)).length;
@@ -110,7 +131,7 @@
   visible.forEach(({paper,state},i)=>{
    const card=element('article',undefined,'library-paper');
    const head=element('div',undefined,'library-paper-head');
-   head.append(element('h3',(paper.id===LEGACY_PUBLIC_ID?'Paper 1':paper.title)+' · '+paper.questions.length+' MCQs'));
+   head.append(element('h3',(paperNumber(paper)!==null?'Paper '+paperNumber(paper):paper.title)+' · '+paper.questions.length+' MCQs'));
    const labels={'not-started':'Not started','in-progress':'In progress','expired':'Time elapsed','completed':'Completed'};
    head.append(element('span',labels[state.state],'library-status library-status-'+state.state));
    card.append(head,element('p',paper.title+' · '+paper.minutes+' minutes · Free educational practice','muted'));

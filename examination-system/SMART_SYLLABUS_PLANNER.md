@@ -440,3 +440,11 @@ Validation and release gate:
 - **Not a production admin page:** this is a Node/CommonJS preview helper. The school admin UI, Apps Script integration, verified timetable and school-specific holiday confirmation remain pending. Preview always reports `approvalReady:false`; it does not publish, save or modify the division.
 - Test source includes a hypothetical timetable and three calendar holidays as a fixture; these are not proof of the school's actual subject periods or holiday applicability.
 - Remaining release gates: run CI, inspect real textbook exercise pages, confirm timetable, implement admin preview UI with server-side permissions and schedule versioning, then validate with a disposable school. No production data or deployment changed.
+
+
+## Approval-readiness safety gate — 8 Nov 2026
+- Added `examination-system/syllabus-approval-readiness.js` with tests in syllabus CI.
+- The read-only gate requires submitted status, school/class/subject/session scope, school-admin actor matching school, verified textbook exercises and objectives, teacher review of difficulty and periods, confirmed subject timetable and holidays, complete preview and no capacity shortfall.
+- It intentionally **rejects** the current Class 5 English provisional draft, which lacks verified exercise-level objectives and has not been submitted. This is the desired behavior; do not bypass it by changing flags.
+- This module is not server authorization. The eventual Apps Script/backend endpoint must derive actor and school identity from authenticated server context, not trust browser-supplied role/school IDs. Approval and publication must be separate audited transitions, with versioned immutable division snapshots.
+- Production admin UI and teacher diary integration remain pending; successful CI execution is not yet confirmed. No live deployment or school data changes.

@@ -432,3 +432,11 @@ Validation and release gate:
 - The report is informational and **never edits the canonical lesson topics, order, weights or periods**. A shortfall must trigger an administrator review rather than automatically compressing difficult topics.
 - A school timetable has **not** yet been supplied. The earlier one-period-per-weekday scenario is illustrative only; do not present its capacity as the real school's capacity.
 - School-specific 2026 public-holiday confirmation, exact exercise-level lesson objectives, progress-aware rescheduling, admin preview and teacher diary integration are pending. CI run outcome remains unverified; no production deployment or school data change.
+
+
+## Read-only administrator schedule preview — 8 Nov 2026
+- Added `examination-system/syllabus-admin-preview.js` and `test-syllabus-admin-preview.js` and registered the tests in the syllabus CI workflow.
+- Pure preview composes the undated division, capacity audit and scheduling engine; returns ordered lesson rows with stable ID, topic, difficulty, weight, estimated periods, proposed dates, status, actual completed date, and missing periods. It includes month-level available capacity, shortfall and verification warnings.
+- **Not a production admin page:** this is a Node/CommonJS preview helper. The school admin UI, Apps Script integration, verified timetable and school-specific holiday confirmation remain pending. Preview always reports `approvalReady:false`; it does not publish, save or modify the division.
+- Test source includes a hypothetical timetable and three calendar holidays as a fixture; these are not proof of the school's actual subject periods or holiday applicability.
+- Remaining release gates: run CI, inspect real textbook exercise pages, confirm timetable, implement admin preview UI with server-side permissions and schedule versioning, then validate with a disposable school. No production data or deployment changed.

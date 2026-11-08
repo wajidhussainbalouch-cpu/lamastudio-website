@@ -383,3 +383,11 @@ Validation and release gate:
 - Dates are intentionally absent from division records. The calendar engine handles scheduling separately. Topic-level details, objectives, actual exercise references, difficulty, weights and periods still require textbook-page review and school administrator approval. No draft is auto-published.
 - Calendar engine now avoids placing unfinished lessons before the most recent completed lesson date, in addition to reserving historical completed slots. This is a safety improvement, not a complete production reflow solution; same-day period ordering and actual school timetable integration still need verification.
 - CI workflow has new tests but a successful GitHub Actions run has **not** been confirmed. No Apps Script deployment, school data changes or Vercel deployment were performed.
+
+
+## English-period capacity reporting — 8 November 2026
+- Added `examination-system/syllabus-capacity-report.js` and its Node regression test, included in syllabus CI. The report uses the undated division's estimated periods and the separate calendar engine's actual available subject-period slots. It returns feasibility, total required unfinished periods, available periods, unallocated period shortfall, affected lesson IDs and monthly allocations.
+- Test scenario: Class 5 English provisional **176 periods**; school session 1 April–23 December 2026; summer vacation 22 May–23 August; Saturday/Sunday no periods; one English period Monday–Friday. Expected outcome: **not feasible** without more periods. A two-period Monday–Thursday and one-period Friday scenario is tested as a higher-capacity illustration, **not an assertion about the school's actual timetable**.
+- Public holidays, school examination days, timetable period counts, Friday half-day subject allocation and detailed textbook topic-level verification remain to be confirmed. Capacity results are therefore **scenario estimates**, not a final approved teaching schedule.
+- The system must show insufficient capacity and offer admin-reviewed timetable/deadline changes, never silently compress, merge, reorder or drop the canonical lessons.
+- No live teacher-diary integration or production deployment. GitHub Actions results not yet verified.

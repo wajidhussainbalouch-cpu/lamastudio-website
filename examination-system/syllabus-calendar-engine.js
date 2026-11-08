@@ -29,7 +29,10 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
    occupied.add(slot.date+'#'+slot.period);
   }
  }
- const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period));
+ // Never schedule unfinished work before the latest completed teaching date.
+ const actualDates=Object.values(completed).map(x=>x.actualDate);
+ const latestActualDate=actualDates.length?actualDates.sort().at(-1):null;
+ const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period)&&(!latestActualDate||s.date>=latestActualDate));
  for(const lesson of lessons){
   if(!lesson||typeof lesson.lessonId!=='string'||!lesson.lessonId||seen.has(lesson.lessonId))throw Error('Missing/duplicate lessonId');
   seen.add(lesson.lessonId);

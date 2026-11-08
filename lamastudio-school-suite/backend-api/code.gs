@@ -588,6 +588,47 @@ function adminSetStatus(adminApiKey, schoolId, status) {
 /** Generates a brand-new password for a school's login and emails it to their registered admin email. */
 
 // School-owner self-service recovery. No account enumeration or plaintext password email.
+
+function requestAdministratorRecovery_(p){
+  const email=String(p.email||'').trim().toLowerCase(),generic={message:'If the registered school email matches, recovery instructions will be sent.'};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return generic;
+  const match=findSchoolRow(getRegistrySheet(),r=>String(r.adminEmail||'').trim().toLowerCase()===email&&String(r.status)==='Active');
+  if(!match)return generic;
+  const cache=CacheService.getScriptCache(),rate='ADMIN_RECOVERY_RATE_'+match.obj.schoolId;
+  if(cache.get(rate))return generic;
+  cache.put(rate,'1',120);
+  const u=adminUsers(match.obj.schoolId),active=u.items.filter(x=>x.obj.status==='Active');
+  const props=PropertiesService.getScriptProperties(),links=[];
+  for(const entry of active){
+    const token=Utilities.getUuid()+Utilities.getUuid(),key='ADMIN_RECOVERY_'+match.obj.schoolId+'_'+entry.obj.id;
+    props.setProperty(key,JSON.stringify({digest:hashPassword(token,'administrator-recovery'),expires:Date.now()+15*60*1000}));
+    links.push(entry.obj.displayName+' ('+entry.obj.username+'):\nhttps://www.lamastudio.pk/lamastudio-school-suite/school-admin-login.html?adminRecovery='+encodeURIComponent(match.obj.schoolId)+'&account='+encodeURIComponent(entry.obj.id)+'&token='+encodeURIComponent(token));
+  }
+  try{
+    MailApp.sendEmail({to:email,subject:'LAMA School Suite - administrator account recovery',body:'An administrator recovery request was received for '+match.obj.name+'.\n\nActive administrator usernames and individual password-reset links (valid for 15 minutes):\n\n'+(links.join('\n\n')||'No active administrator accounts found.')+'\n\nIf you did not request this, ignore the email. Existing passwords remain unchanged.'});
+  }catch(err){for(const entry of active)props.deleteProperty('ADMIN_RECOVERY_'+match.obj.schoolId+'_'+entry.obj.id);throw new Error('Could not send recovery email. Try again later.');}
+  return generic;
+}
+function completeAdministratorRecovery_(p){
+  const schoolId=String(p.schoolId||''),accountId=String(p.accountId||''),token=String(p.token||''),password=String(p.newPassword||'');
+  if(!schoolId||!accountId||!token||password.length<12||password.length>128)throw new Error('A valid recovery link and a new password of 12–128 characters are required.');
+  const props=PropertiesService.getScriptProperties(),key='ADMIN_RECOVERY_'+schoolId+'_'+accountId,lock=LockService.getScriptLock();
+  lock.waitLock(20000);
+  try{
+    const record=JSON.parse(props.getProperty(key)||'null');
+    if(!record||Date.now()>record.expires||record.digest!==hashPassword(token,'administrator-recovery'))throw new Error('Recovery link is invalid or expired.');
+    const school=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===schoolId&&String(r.status)==='Active');
+    if(!school)throw new Error('School unavailable.');
+    const u=adminUsers(schoolId),entry=u.items.find(x=>String(x.obj.id)===accountId&&x.obj.status==='Active');
+    if(!entry)throw new Error('Administrator account unavailable.');
+    const salt=Utilities.getUuid(),next=Object.assign({},entry.obj,{salt,passwordHash:hashPassword(password,salt),version:(Number(entry.obj.version)||1)+1,updatedAt:new Date().toISOString()});
+    u.sh.getRange(entry.rowIndex,1,1,u.headers.length).setValues([recordToRow(u.headers,next)]);
+    props.deleteProperty(key);
+    writeAudit(u.ss,schoolId,{id:'email-recovery',name:'Verified school email',role:'schoolOwner'},'passwordReset','schoolAdmins',accountId,null,{username:entry.obj.username});
+    return {message:'Administrator password updated. Sign in with your administrator username and new password.'};
+  }finally{lock.releaseLock();}
+}
+
 function requestSchoolPasswordRecovery_(p) {
   const email=String(p.email||'').trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return {message:'If the email is registered, a recovery link will be sent.'};
@@ -2027,6 +2068,8 @@ function handleRequest(params) {
             case 'adminApplications': return {status:'success',requests:adminApplications_(params.adminApiKey)};
             case 'reviewSchoolApplication': return {status:'success',result:reviewApplication_(params.adminApiKey,params.requestId,params.decision)};
             case 'activateSchoolApplication': return {status:'success',result:activateSchoolApplication_(params)};
+            case 'requestAdministratorRecovery': return {status:'success',result:requestAdministratorRecovery_(params)};
+            case 'completeAdministratorRecovery': return {status:'success',result:completeAdministratorRecovery_(params)};
             case 'requestSchoolPasswordRecovery': return {status:'success',result:requestSchoolPasswordRecovery_(params)};
             case 'completeSchoolPasswordRecovery': return {status:'success',result:completeSchoolPasswordRecovery_(params)};
             case 'login':
@@ -2125,7 +2168,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

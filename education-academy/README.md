@@ -1,5 +1,17 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Job-wise subject and paper library (8 November 2026)
+
+- The Academy has a dedicated **Question Bank & Paper Library** page: `index.html#library` or `section.html?view=library&job=teaching`. The job dropdown is sourced from the same catalog as the dashboard, including later Super Admin-published jobs.
+- Each job's **published MCQ subject coverage** is counted directly from its registered public paper questions. The full list is searchable; candidates can download the currently selected job's subject counts as CSV. These are source-derived practice totals, **not syllabus weightages or private Supabase drafts**.
+- The `Papers & Examinations` page now places the long subject list in a **collapsed** disclosure and links to the full library, reducing excessive scrolling on phones.
+- The side menu adds **Question Bank Library** and an expandable **Job-wise Paper List**. Selecting a post shows only its published, numbered papers and opens the correct exam. Unpublished jobs show a clear empty-state message, never an unrelated school-head exam.
+- Public paper order is derived from the stable paper sequence/ID in `paper-library.js`, rather than the insertion order in JavaScript. The same numbered ordering is used in the examination list, resource library and side menu. Existing paper IDs, saved scores and in-progress attempts are preserved.
+- `library-ui.js` handles searchable subject counts, CSV export, menu job selector and automatic refresh on catalog changes. The `test-jobwise-library.cjs` regression is added to CI; service-worker cache updated to **v71**.
+- The 20-public-papers-per-job cap remains enforced through `LamaPpscPaperLibrary.forJob`; new jobs and published papers will appear automatically **when registered through the existing catalog/public paper workflow**. This does not itself build new MCQs or grant subscription access.
+- Browser end-to-end testing and actual Vercel production deployment have **not been independently verified**. No Vercel deployment was initiated by this change.
+
+
 ## Latest Headmaster / Headmistress milestone — Paper 15 (6 November 2026)
 
 **Paper 15 complete:** `HM-2026-P15` adds 100 original educational-practice MCQs (`HM15-001`–`HM15-100`), with a separate 90-minute exam, unique saved candidate attempt, question-only print page and post-submission printable explanations. The academy GitHub source now contains **15 papers / 1,500 public MCQ positions**, retaining all previous papers, candidate accounts, memberships and results. Offline cache `lama-ppsc-preview-v70`.

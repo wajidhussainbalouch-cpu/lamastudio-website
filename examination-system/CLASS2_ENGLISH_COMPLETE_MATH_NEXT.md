@@ -27,3 +27,9 @@ No production deployment or student-facing activation.
 - Visually inspected source PDF pages 7–18 and later pages 19–26. Pages 19–26 cover comparison, ascending/descending ordering, backward counting, counting in tens, and hundreds. Some repeated concepts are intentionally present across batches.
 - Structural checks: 500 unique IDs, 500 distinct literal prompts, no empty answers, no missing MCQ answers in options. **Independent arithmetic validation, semantic duplicate review and teacher grading still pending.** The `sourcePdfPage` is a lesson-topic reference, not an exact-question citation. All drafts unapproved and offline.
 - Mathematics progress: 1,000/1,500; next batch 3 (1001–1500). No Vercel deployment.
+
+## Mathematics batch 2 discovered and verified — 2026-11-08
+- Existing file `data/class2-mathematics-batch2-500-draft.json` was found on `main`, with 500 records and IDs `C2-MATH-B2-0501`–`C2-MATH-B2-1000`. Do **not** overwrite or double-count it.
+- Topics: Counting to 100, Number words, Three-digit names, Numerals, Base-ten blocks, Place value, Expanded form, Next number, Compare numbers, Ascending order. Source references visually inspected PDF pages 7–18; independent verification of each source mapping remains pending.
+- Existing batch metadata reports 500 unique IDs, 500 unique literal prompts, and no missing answers. All records are unapproved. This is a structural check, not a complete arithmetic or pedagogical audit.
+- Class 2 Mathematics now has **1,000 saved draft questions** across batches 1 and 2. Next: batch 3 (1001–1500) after inspecting further textbook pages; do not deploy.

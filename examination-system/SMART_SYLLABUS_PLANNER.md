@@ -456,3 +456,9 @@ Validation and release gate:
 - Editing returns a new division object and increments the revision without mutating the input. Approved, submitted and published divisions are rejected.
 - This is **not** an authenticated API or production editor. Before integrating, the backend must authorize school/class/section roles, store the revision atomically, record actor and audit history, and validate textbook source evidence. The school admin UI remains pending.
 - CI has been configured, but execution has not been confirmed. No live deployment or school data changes.
+
+## Content-addressed syllabus snapshot — 8 Nov 2026
+- Added `examination-system/syllabus-division-snapshot.js` and CI regression tests. Submitted divisions at a matching revision can be copied into school/class/subject/session-scoped snapshots with a SHA-256 integrity hash.
+- Snapshot preparation rejects embedded schedule/progress dates, invalid lesson IDs and scope mismatches. Calendar dates remain separate from immutable lesson content.
+- This is a pure helper, **not** server authorization, atomic persistence, a digital signature, approval or publication. Backend authenticated role checks, append-only audit history, version locking and teacher diary integration are still required.
+- Class 5 English remains an unapproved draft pending textbook exercise review and a real timetable. CI success and live integration are unverified. No production deployment or school data changed.

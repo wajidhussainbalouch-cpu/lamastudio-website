@@ -39,4 +39,13 @@ assert.ok(router.includes("'aria-current'"),'Current menu location should be acc
 assert.ok(router.includes('document.title='),'Routed pages should have meaningful titles');
 assert.ok(!/service_role|sb_secret_/i.test(file('supabase-config.js')),'Public config must not contain a service role or secret key');
 assert.ok(!worker.includes('admin.html'),'Private admin page must not be explicitly precached');
+const engine=file('engine.js'),account=file('auth-supabase.js');
+assert.ok(!engine.includes("||window.LAMA_PPSC_PAPERS?.[0]"),'Missing job paper must never fall back to Headmaster');
+assert.ok(engine.includes("location.hash!=='#paper'"),'Sticky exam timer must be hidden outside exam view');
+assert.ok(engine.includes("addEventListener('hashchange',tick)"),'Timer should react to route changes');
+assert.ok(html.includes('selectedPublicPaper'),'Missing paper should not trigger a generic page-load error');
+assert.ok(html.includes('id="benefitExamCount"'),'Public exam count should be dynamic');
+assert.ok(account.includes('reset-password.html'),'Candidate account recovery needs academy callback');
+assert.ok(exists('reset-password.html'),'Academy password recovery form missing');
+assert.ok(!worker.includes("'./reset-password.html'"),'Password recovery callback should not be precached offline');
 console.log('Academy launch presentation checks passed: mobile polish, keyboard access, policy pages, public PWA and payment warning.');

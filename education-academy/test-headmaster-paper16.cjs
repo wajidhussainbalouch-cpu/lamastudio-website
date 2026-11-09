@@ -84,5 +84,5 @@ const result=answerPage(submitted);
 assert.equal(result.get('keyQuestions').children.length,100,'100 reviewed answers after submission');
 assert.equal(result.get('printAnswerKey').hidden,false);
 assert.ok(result.get('keyStatus').textContent.includes('9 correct'));
-console.log('Paper 16 validated: 100 MCQs; fifteen distinct papers and 1600 public practice positions');
+console.log('Paper 16 validated: 100 MCQs; sixteen distinct papers and 1600 public practice positions');
 console.log('Subjects '+subjects.size+'; unique topics '+topics.size+'; answer distribution '+positions.join('/'));

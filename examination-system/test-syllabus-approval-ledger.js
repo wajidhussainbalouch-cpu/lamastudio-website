@@ -23,4 +23,7 @@ const fractional=appendApprovalEvent({events:[],event:{...base,action:'submitted
 assert.throws(()=>appendApprovalEvent({events:fractional,event:{...base,action:'approved',at:'2026-11-09T04:00:00Z'},expectedSequence:1}),/timestamp regression/);
 const sameSecond=appendApprovalEvent({events:fractional,event:{...base,action:'approved',at:'2026-11-09T04:00:00.750Z'},expectedSequence:1});
 assert.equal(verifyApprovalLedger(sameSecond),true);
+assert.equal(verifyApprovalLedger([{sequence:1,previousHash:null,hash:'bad'}]),false);
+assert.equal(verifyApprovalLedger([{sequence:1,previousHash:null,hash:'bad',payload:null}]),false);
+assert.equal(verifyApprovalLedger([{sequence:1,previousHash:null,hash:'bad',payload:[]}]),false);
 console.log('approval ledger chain tests passed');

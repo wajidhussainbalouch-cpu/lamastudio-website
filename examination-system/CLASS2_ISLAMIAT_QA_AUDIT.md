@@ -65,3 +65,10 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Added `.github/workflows/class2-islamiat-draft-qa.yml`, commit `237f92f3d471d97cc32ad0944875459bf09ea08a`.
 - On relevant pushes, pull requests, and manual dispatch, GitHub Actions is configured to run Node 22, the draft adapter unit tests, and the 1500-record structural audit. Permissions: read-only contents. No deploy steps.
 - **Workflow execution status has not been verified.** Do not claim CI passed until checking its actual run logs/status. This is structural QA, not textbook or theological review.
+
+## Concept-aware paper selection prototype — 2026-11-09
+- Added `tools/class2-islamiat-paper-selector.cjs` (commit `dfe51b6445697dc97ced219f7e0bd9912b0e001d`) and synthetic fixture tests (commit `b131feafbf1ee0722f21b2fa9ec2581b4c44446f`).
+- Selector accepts a **server-authorized** question pool and explicit concept-family index, chooses at most one variant per family, and excludes answer keys from the returned paper.
+- Requires approved status, online readiness, completed teacher review, and a positive textbook page integer. It does **not** independently verify that a page number matches the book, authenticate the caller, or enforce tenant separation; these must be provided by trusted server code.
+- The current 1500 draft questions remain ineligible for selection. Tests use synthetic approved fixtures only; they are not evidence of approved textbook content.
+- Added the selector test to `.github/workflows/class2-islamiat-draft-qa.yml` (commit `bc57af05e3cdc83545917374cb1e1613f69fba27`). CI status and runtime execution have not been verified, and no live integration or deployment occurred.

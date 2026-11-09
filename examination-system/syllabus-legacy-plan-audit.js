@@ -12,6 +12,8 @@ function auditLegacyDatedPlan(plan,expectedScope){
   if(expectedScope&&plan[k]!==expectedScope[k])issues.push('Scope mismatch: '+k);
  }
  if(!Array.isArray(plan.scheduled)||!plan.scheduled.length)issues.push('Missing dated schedule');
+ if(Array.isArray(plan.scheduled)&&plan.scheduled.length>300)issues.push('Legacy schedule exceeds supported 300 entries');
+ if(typeof plan.planId!=='string'||!plan.planId.trim())issues.push('Missing planId');
  const seenSlots=new Set(),seenLessons=new Set();
  for(const item of Array.isArray(plan.scheduled)?plan.scheduled:[]){
   if(!item||typeof item!=='object'||Array.isArray(item)){issues.push('Invalid scheduled entry');continue;}
@@ -23,6 +25,7 @@ function auditLegacyDatedPlan(plan,expectedScope){
   if(seenSlots.has(key))issues.push('Duplicate dated slot');
   seenSlots.add(key);
   if(typeof item.lessonId!=='string'||!item.lessonId.trim())issues.push('Invalid lesson ID');
+  if(typeof item.lessonTitle!=='string'||!item.lessonTitle.trim())issues.push('Missing lesson title');
   else if(seenLessons.has(item.lessonId))issues.push('Repeated lesson ID needs exercise-level review');
   seenLessons.add(item.lessonId);
  }

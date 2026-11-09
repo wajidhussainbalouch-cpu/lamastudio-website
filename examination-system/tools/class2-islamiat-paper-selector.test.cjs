@@ -19,4 +19,6 @@ assert.throws(()=>selectPaper({questions,familyIndex,count:4}),/Insufficient/);
 assert.throws(()=>selectPaper({questions,familyIndex,count:2,topicLimits:{A:0,B:0,C:0}}),/Insufficient/);
 assert.throws(()=>selectPaper({questions:[q("a"),q("a")],familyIndex,count:1}),/duplicate/);
 assert.throws(()=>selectPaper({questions,familyIndex:[...familyIndex,{familyId:"other",questionIds:["a"]}],count:1}),/multiple families/);
+assert.throws(()=>selectPaper({questions:questions.map(x=>({...x,requiresTeacherReview:undefined})),familyIndex,count:1}),/Insufficient/);
+assert.throws(()=>selectPaper({questions:questions.map(x=>({...x,requiresTeacherReview:null})),familyIndex,count:1}),/Insufficient/);
 console.log("Paper selector tests passed");

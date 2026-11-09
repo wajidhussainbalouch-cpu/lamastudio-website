@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LAMA School Suite | Islamiat Review Preview</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#172b43;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}
+header{background:#13355c;color:white;padding:22px max(16px,calc((100vw - 1050px)/2))}
+main{max-width:1050px;margin:22px auto;padding:0 16px}.panel{background:white;border:1px solid #dae3ee;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 15px #17365c0b}
+h1{margin:0;font-size:1.6rem}h2{margin-top:0}small,.muted{color:#64748b}header small{color:#d9e8f7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+label{display:block;font-weight:600;font-size:.92rem;margin-bottom:5px}input,textarea,select,button{font:inherit}input,textarea,select{width:100%;padding:10px;border:1px solid #b7c7da;border-radius:8px;background:white}textarea{min-height:92px}
+button{border:0;border-radius:8px;padding:10px 16px;background:#174e82;color:white;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+.notice{border-left:4px solid #b67816;background:#fff8e8;padding:12px}.questions{display:grid;gap:10px}.question{border:1px solid #d9e3ef;border-radius:10px;padding:14px}.question p{white-space:pre-wrap;overflow-wrap:anywhere}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.secondary{background:#e5edf5;color:#153e64}
+footer{padding:20px;text-align:center;color:#66778a}
+</style></head><body>
+<header><h1>LAMA School Suite</h1><small>Class 2 Islamiat · Teacher Review · Prototype</small></header>
+<main><div class="notice"><strong>Offline demonstration only.</strong> This page does not log in to a school, load private records, approve questions, or save review decisions. All imported questions remain drafts. Do not enter confidential student or staff information.</div>
+<section class="panel"><h2>Review queue preview</h2><p class="muted">Load a local JSON batch exported from the Class 2 Islamiat draft bank. Nothing is uploaded by this page.</p>
+<div class="grid"><div><label for="file">Draft JSON batch</label><input id="file" type="file" accept=".json,application/json"></div>
+<div><label for="topic">Topic</label><select id="topic"><option value="">All topics</option></select></div>
+<div><label for="size">Questions per page</label><select id="size"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></div></div>
+<p id="status" role="status">No draft file loaded.</p>
+<div class="actions"><button id="prev" class="secondary" disabled>Previous</button><span id="pagination">Page 0 of 0</span><button id="next" class="secondary" disabled>Next</button></div>
+<div id="questions" class="questions" aria-live="polite"></div></section>
+<section class="panel"><h2>Review checklist (not submitted)</h2>
+<div class="grid"><div><label for="questionId">Selected question ID</label><input id="questionId" readonly></div>
+<div><label for="page">Verified textbook page (1–48)</label><input id="page" type="number" min="1" max="48"></div></div>
+<p><label for="note">Textbook verification note</label><textarea id="note" placeholder="Explain the textbook reference and any corrections needed."></textarea></p>
+<p><label><input type="checkbox" id="answer" style="width:auto"> Answer checked</label></p>
+<p><label><input type="checkbox" id="age" style="width:auto"> Age suitability checked</label></p>
+<p><label><input type="checkbox" id="duplicate" style="width:auto"> Duplicate wording checked</label></p>
+<div class="actions"><button id="validate" type="button">Check completeness</button><span id="validation" role="status"></span></div>
+<p class="muted">A complete checklist is not proof of teacher authorization or textbook accuracy. Actual approval requires a secure school backend and a separate authorized decision.</p>
+</section></main><footer>A project of LamaStudio.pk · Software • Education • Innovation</footer>
+<script>
+"use strict";
+let records=[],page=1,selected=null;
+const el=id=>document.getElementById(id);
+function clearChecklist(){el("questionId").value=selected?.questionId||"";el("page").value="";el("note").value="";for(const id of ["answer","age","duplicate"])el(id).checked=false;el("validation").textContent="";}
+function render(){
+ const topic=el("topic").value,filtered=records.filter(q=>!topic||q.topic===topic);
+ const size=Number(el("size").value),pages=Math.ceil(filtered.length/size);
+ page=Math.max(1,Math.min(page,Math.max(pages,1)));
+ el("pagination").textContent="Page "+(pages?page:0)+" of "+pages;
+ el("status").textContent=filtered.length+" draft questions in this view. No approvals are possible.";
+ el("prev").disabled=page<=1;el("next").disabled=page>=pages;
+ const root=el("questions");root.replaceChildren();
+ for(const q of filtered.slice((page-1)*size,page*size)){
+  const card=document.createElement("article");card.className="question";
+  const title=document.createElement("strong");title.textContent=q.questionId+" · "+(q.topic||"Unmapped");
+  const prompt=document.createElement("p");prompt.lang="ur";prompt.dir="auto";prompt.textContent=q.questionText;
+  const button=document.createElement("button");button.className="secondary";button.textContent="Review checklist";
+  button.addEventListener("click",()=>{selected=q;clearChecklist();el("questionId").scrollIntoView({behavior:"smooth",block:"center"});});
+  card.append(title,prompt,button);root.append(card);
+ }
+}
+el("file").addEventListener("change",async e=>{
+ try{
+  const file=e.target.files?.[0];if(!file)return;
+  if(file.size>3_000_000)throw Error("File too large for this preview");
+  const data=JSON.parse(await file.text());
+  if(!Array.isArray(data.questions)||data.questions.length>1500)throw Error("Expected a draft questions array");
+  const seen=new Set();
+  const valid=data.questions.map(q=>{
+   if(!q||typeof q.questionId!=="string"||!q.questionId||seen.has(q.questionId)||typeof q.questionText!=="string"||q.reviewStatus!=="draft"||q.approved!==false||q.onlineReady!==false)throw Error("File contains invalid, duplicate, or non-draft questions");
+   seen.add(q.questionId);return q;
+  });
+  records=valid;selected=null;clearChecklist();page=1;
+  const topics=[...new Set(records.map(q=>q.topic).filter(Boolean))].sort();
+  el("topic").replaceChildren(new Option("All topics",""),...topics.map(t=>new Option(t,t)));
+  render();
+ }catch(err){records=[];selected=null;clearChecklist();el("topic").replaceChildren(new Option("All topics",""));render();el("status").textContent="Unable to load file: "+err.message;}
+});
+el("topic").addEventListener("change",()=>{page=1;render()});
+el("size").addEventListener("change",()=>{page=1;render()});
+el("prev").addEventListener("click",()=>{page--;render()});
+el("next").addEventListener("click",()=>{page++;render()});
+el("validate").addEventListener("click",()=>{
+ const pg=Number(el("page").value),note=el("note").value.trim();
+ const ok=!!selected&&Number.isInteger(pg)&&pg>=1&&pg<=48&&note.length>=15&&["answer","age","duplicate"].every(id=>el(id).checked);
+ el("validation").textContent=ok?"Checklist complete for local preview only; not approved or saved.":"Incomplete: select a question, enter page 1–48, write at least 15 characters, and check all three boxes.";
+});
+render();
+</script></body></html>

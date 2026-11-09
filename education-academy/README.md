@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## New job family — Information Officer (BS-17), Paper 01 (9 November 2026)
+
+**Next category developed:** After 20 Headmaster/Headmistress teaching-family papers, `information-officer` starts its own 20-paper sequence. New `INFO-2026-P01` contains 100 original AI-assisted educational-practice MCQs (`IO01-001`–`IO01-100`), mainly journalism, mass communication, government PR, media studies and research, with 20 related political-science/history/Urdu/English-literature questions. The **80 media / 20 related-subject** mix is a practice design, not an officially verified PPSC weighting. Its 90-minute exam, separate candidate attempts, question-only A4 printing, post-submission explanation and offline PWA cache `lama-ppsc-preview-v82` are integrated. Total public source registry: **21 papers = 20 teaching + 1 Information Officer, 2,100 MCQ positions**, while the 20-per-family cap remains.
+
+**Protected editorial database:** Created a new `information-officer` job catalog record (`vacancy_status='unverified'`, no confirmed case number), then inserted 100 original Paper 01 questions as private `draft`, non-destructively. Verified **100 Information Officer editorial rows, all draft and structurally valid, zero approved**, plus the previous 1,930 teaching rows. GitHub Actions academy validation and job-isolation tests passed; factual academic answer review, official case/syllabus verification, and authenticated Android live-site testing remain open. Public browser practice keys are not secure paid examination storage.
+
+**Next `Continue`:** Check source and Supabase for concurrent development, then build **Information Officer Paper 02** (`IO02-001`–`IO02-100`) without modifying the completed teaching quota. Check Vercel custom-domain READY SHA before reporting the new job paper as live. Reference: [INFORMATION_OFFICER_PAPER_01_RELEASE.md](./INFORMATION_OFFICER_PAPER_01_RELEASE.md).
+
+
 ## Final school-head milestone — Paper 20 (9 November 2026)
 
 **Paper 20 completed in source:** `HM-2026-P20` adds 100 original AI-assisted free-practice MCQs (`HM20-001`–`HM20-100`) in four batches, with 80 education-domain and 20 general-ability questions. **20 teaching-family practice papers / 2,000 MCQ positions** are integrated into the exam selector, 90-minute test, per-paper saved attempts, print and post-submission explanations. The owner-set **20-paper limit is now reached**; do not create a Paper 21 without explicit authorization to change this policy. Public PWA cache `lama-ppsc-preview-v81`.

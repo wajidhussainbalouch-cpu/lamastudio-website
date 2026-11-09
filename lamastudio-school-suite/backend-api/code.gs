@@ -2142,8 +2142,17 @@ function handleRequest(params) {
             case 'bulkDeleteStudents': return {status:'success',result:bulkDeleteStudents_(params)};
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
+                // Resolve the actor BEFORE writing: teacher sessions do not carry
+                // school-admin _auditActor. Missing audit identity must not turn
+                // an already-committed attendance batch into an apparent failure.
+                let attendanceActor=params._auditActor;
+                if ((params.role||'school')==='teacher') {
+                    const verifiedTeacher=authorizeTeacher(params.schoolId,params.teacherId,params.apiKey).teacher;
+                    attendanceActor={id:verifiedTeacher.id,name:verifiedTeacher.name,role:'teacher'};
+                }
+                if (!attendanceActor||!attendanceActor.id) throw new Error('Verified attendance writer required.');
                 const result=bulkAttendanceRecords(params);
-                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'bulkAttendance','attendance','',null,{count:Array.isArray(result)?result.length:undefined});
+                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,attendanceActor,'bulkAttendance','attendance','',null,{count:Number(result.saved)||0});
                 return {status:'success',result};
             case 'list':
                 return { status: 'success', records: listRecords(resolveContext(params), params.collection) };

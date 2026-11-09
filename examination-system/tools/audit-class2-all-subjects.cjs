@@ -15,7 +15,8 @@ function audit(root=path.join(__dirname,"../data")){
     ids.add(id);globalIds.add(id);
     if(q.approved!==false||q.onlineReady!==false||q.reviewStatus!=="draft")issues.push("Unsafe publication flags: "+id);
     if(typeof q.questionText!=="string"||!q.questionText.trim())issues.push("Missing prompt: "+id);
-    if(q.correctAnswer===undefined||q.correctAnswer===null||!String(q.correctAnswer).trim())issues.push("Missing answer: "+id);
+    const answer=q.correctAnswer??q.expectedAnswer;
+    if(answer===undefined||answer===null||!String(answer).trim())issues.push("Missing answer: "+id);
     if(!Number.isInteger(q.sourcePdfPage)||q.sourcePdfPage<1)unmapped++;
     const key=String(q.questionText||"").trim().toLocaleLowerCase().replace(/\s+/g," ");
     if(key)prompts.set(key,(prompts.get(key)||0)+1);

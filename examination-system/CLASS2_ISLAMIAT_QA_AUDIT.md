@@ -53,3 +53,10 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Added `tools/class2-islamiat-draft-adapter.test.cjs` (commit `631c060ca87a2b08e5c118c94fbdfdd0168f37c9`) with Node assertions covering answer-field fallback, rejection of approved/non-draft input, duplicate IDs, rejection of student delivery for drafts, and student answer-key omission.
 - This is **not wired into the Paper Generator or Online Testing**. Tests are committed but were **not executed in CI or a runtime during this increment**. Run `node examination-system/tools/class2-islamiat-draft-adapter.test.cjs` and integrate only after verifying test results.
 - The adapter is not a substitute for a secure server-side authorization check; approved content still requires a verified teacher-review and school-access workflow.
+
+## Reproducible audit tooling — 2026-11-09
+- Added `tools/audit-class2-islamiat.cjs` in commit `79c0ccefc760f736fb4832d3d386358db8bed254`.
+- Run from repository root: `node examination-system/tools/audit-class2-islamiat.cjs`.
+- Script checks all three batch files for total and per-batch counts, IDs, literal prompts, answers, textbook page mapping, approval and online-ready flags, and question-type distribution; exits nonzero on structural blockers.
+- In an independent in-session data inspection, all 1500 records were fetched. A simple normalization that removes some assessment-mode prefixes reduced 1500 prompts to 1000 normalized strings, with 200 repeated groups totaling 700 records. **This is only a partial lexical heuristic, not a reliable count of distinct concepts**: inconsistent prefix conventions cause under-detection, and the source metadata explicitly says each batch contains 100 concepts repeated five times. Teacher-led semantic deduplication is still required.
+- The committed CLI has not been run with Node in this session, and no production integration or deployment occurred.

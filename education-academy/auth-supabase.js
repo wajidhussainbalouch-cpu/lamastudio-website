@@ -132,6 +132,6 @@ window.LamaAcademyAuth=(()=>{
   await request('resend',{type:'signup',email:email.trim().toLowerCase()});
   return true;
  }
- async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover',{email});return true}
+ async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover?redirect_to='+encodeURIComponent('https://www.lamastudio.pk/education-academy/reset-password.html'),{email:email.trim().toLowerCase()});return true}
  return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob,adminRegistrations,adminQuestions,adminSaveQuestion,adminImportQuestions,resendSignupEmail});
 })();

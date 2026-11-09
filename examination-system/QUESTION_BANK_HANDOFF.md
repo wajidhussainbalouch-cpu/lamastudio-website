@@ -292,3 +292,9 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Visually inspected PDF pages 4–11 (contents/early lesson). PDF page 9 = printed page 1: lesson 1 `حمد` introduction; PDF page 10 = printed page 2: Hamd text, pronunciation, discussion and `ہم نے سیکھا` exercises.
 - Created `data/class2-urdu-batch1-source-verified-starter.json` with **20 unapproved drafts** (including oral activities), commit `ca4e0fdad7e23319f33bb79952e956b25fd72c2d`. These questions are page-referenced but not editorially approved; some are open-ended and require teacher grading.
 - Count 20/500 first batch; 20/1500 subject target. Do not claim 500 generated. Next: inspect additional actual lesson pages, validate answers and difficulty, expand varied content, and preserve no-deployment policy.
+
+## 2026-11-09 — Class 2 five-subject draft-count milestone
+- Verified the third 500-record batch exists on main for Urdu, English, Mathematics, General Knowledge and Islamiat. Existing handoffs report three batches per subject, yielding **7,500 draft records** (1,500 per subject). This is **draft-count completion only**, not 7,500 unique verified concepts or approved exam questions.
+- Added read-only inventory audit `tools/audit-class2-all-subjects.cjs` to check all 15 JSON batches, IDs, empty questions/answers, publication flags, unmapped source pages and exact prompt repetition groups. Run with `node examination-system/tools/audit-class2-all-subjects.cjs`; its execution has not yet been confirmed.
+- **Remaining before release:** run audit and resolve errors; review semantic duplicates, answers, distractors and difficulty; map to actual textbook pages; obtain school teacher sign-off; connect authenticated backend and protected question storage. Do not deploy or publish draft JSON as live student questions.
+- Other class/subject targets remain separate; do not infer completion from Class 2 counts.

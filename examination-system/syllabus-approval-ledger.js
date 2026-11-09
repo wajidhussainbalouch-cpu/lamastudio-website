@@ -3,6 +3,13 @@
 const crypto=require('node:crypto');
 const stable=x=>Array.isArray(x)?'['+x.map(stable).join(',')+']':x&&typeof x==='object'?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stable(x[k])).join(',')+'}':JSON.stringify(x);
 const hash=x=>crypto.createHash('sha256').update(stable(x)).digest('hex');
+function validAuditTime(at){
+ if(typeof at!=='string'||!/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$/.test(at))return false;
+ const ms=Date.parse(at);
+ if(!Number.isFinite(ms))return false;
+ const normalized=new Date(ms).toISOString();
+ return at.slice(0,19)===normalized.slice(0,19);
+}
 function appendApprovalEvent({events,event,expectedSequence}){
  if(!Array.isArray(events)||!event||!Number.isSafeInteger(expectedSequence)||expectedSequence<0)throw Error('Invalid audit inputs');
  if(events.length!==expectedSequence)throw Error('Audit sequence conflict');
@@ -20,7 +27,7 @@ function appendApprovalEvent({events,event,expectedSequence}){
  if(event.action==='published'&&priorAction!=='approved')throw Error('Publication requires approval');
  if(event.action==='rejected'&&priorAction!=='submitted')throw Error('Rejection requires submission');
  if(prior&&prior.payload.snapshotId!==event.snapshotId)throw Error('Snapshot changed within audit chain');
- if(prior&&event.at<prior.payload.at)throw Error('Audit timestamp regression');
+ if(prior&&Date.parse(event.at)<Date.parse(prior.payload.at))throw Error('Audit timestamp regression');
  if(priorAction==='published'||priorAction==='rejected')throw Error('Audit chain closed');
  if(prior&&event.action==='submitted')throw Error('Submission already recorded');
  if(!prior&&event.action!=='submitted')throw Error('First audit event must be submitted');
@@ -43,7 +50,7 @@ function verifyApprovalLedger(events){
   if(i===0&&p.action!=='submitted')return false;
   if(prior){
    if(['schoolId','classId','subjectId','sessionId','snapshotId'].some(k=>p[k]!==prior[k]))return false;
-   if(p.at<prior.at)return false;
+   if(Date.parse(p.at)<Date.parse(prior.at))return false;
    if(prior.action==='published'||prior.action==='rejected')return false;
    if(p.action==='approved'&&prior.action!=='submitted')return false;
    if(p.action==='published'&&prior.action!=='approved')return false;

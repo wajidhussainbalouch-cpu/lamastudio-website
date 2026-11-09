@@ -68,7 +68,7 @@ function snapshotTests(){
   {id:'s2',name:'Student B',class:'4',section:'B',enrlNo:'102',password:'DO NOT LEAK'}
  ];
  const attendance=[
-  {id:'a1',studentId:'s1',enrlNo:'101',date:'2026-11-08',status:'Present'},
+  {id:'a1',studentId:'s1',enrlNo:'101',date:new Date(Date.now()-86400000).toISOString().slice(0,10),status:'Present'},
   {id:'a2',studentId:'s2',enrlNo:'102',date:'2020-01-01',status:'Absent'}
  ];
  const mocks={
@@ -97,6 +97,7 @@ function snapshotTests(){
  const teacher=get({role:'teacher',apiKey:'valid-teacher'});
  assert.equal(teacher.students.length,1);
  assert.equal(teacher.attendance.every(r=>r.studentId==='s1'),true);
+ assert.equal(teacher.attendance.length,1,'recent teacher attendance should be included');
  assert.throws(()=>get({role:'school',token:'valid',dates:['2026-02-30']}),/Invalid/);
  assert.throws(()=>get({role:'school',token:'valid',dates:Array(91).fill('2020-01-01')}),/Invalid/);
 }

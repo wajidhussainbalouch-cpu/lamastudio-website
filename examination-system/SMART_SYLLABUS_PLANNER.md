@@ -618,3 +618,8 @@ Validation and release gate:
 - Added `syllabus-legacy-batch-report.js` to audit up to 1000 existing legacy plans in a read-only inventory, reporting compatible/repair/manual-review counts, invalid or cross-school records, and repeated plan IDs.
 - Added `test-syllabus-legacy-batch-report.js`, with checks for counts, multi-period review warnings, no mutation, duplicate IDs and cross-school record handling. Executed this test file in an isolated JavaScript harness: **passed**. Full Node.js/GitHub Actions suite not independently verified.
 - This module is a backend building block only, not a live endpoint. A trusted server must enforce authentication, entitlements and school-scoped loading before invoking it. No migration, live data changes or deployment.
+
+## Legacy inventory CI coverage — 9 Nov 2026
+- Added the previously missing `test-syllabus-legacy-batch-report.js` execution step to `.github/workflows/syllabus-planner-tests.yml`.
+- Expanded inventory regression coverage for missing plan IDs, invalid records and batches exceeding 1000 plans. Retrieved the current GitHub source and executed the updated test file in an isolated JavaScript harness: **passed**.
+- This does **not** confirm a full GitHub Actions or Node.js test pass. No production deployment or school-data changes.

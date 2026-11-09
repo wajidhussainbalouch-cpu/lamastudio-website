@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Information Officer Paper 03 — 9 November 2026
+
+**Completed in source:** `INFO-2026-P03` has 100 original AI-assisted practice MCQs (`IO03-001`–`IO03-100`), with 80 media/journalism/PR questions and 20 related political-science/history/Urdu/English-literature questions. This split is an **academy educational design**, not an official current PPSC pattern. The public paper list has **3/20 Information Officer papers (300 MCQs)** and **20/20 teaching-family papers (2,000 MCQs)**, totaling **23 public practice papers / 2,300 positions**. Each remains 100 MCQs and 90 minutes, separate attempts, printing, post-submission explanations and offline service-worker cache `lama-ppsc-preview-v84`.
+
+**Supabase editorial bank:** Added 100 Paper 03 rows as private `draft` under `information-officer`, with non-destructive inserts. Verified **300 Information Officer question rows / 300 distinct normalized stems**, including exactly 100 Paper 03 draft and structurally valid entries; **1,930** teaching editorial rows unchanged. None of these rows has independent academic approval. CI run `42609015071` passed all automated quality and historical regression checks. Public free-practice answer keys remain browser-readable and not suitable for secure premium tests.
+
+**Next `Continue`:** Begin **Information Officer Paper 04** (`IO04-001`–`IO04-100`) after checking GitHub and Supabase for concurrent updates. Independently verify factual keys and PPSC syllabus before declaring academic approval, and check Vercel custom-domain READY SHA before claiming new papers live. See [INFORMATION_OFFICER_PAPER_03_RELEASE.md](./INFORMATION_OFFICER_PAPER_03_RELEASE.md).
+
+
 ## Information Officer Paper 02 — Second Job-Family Paper (9 November 2026)
 
 **Paper 02 implemented:** `INFO-2026-P02` adds 100 original AI-assisted educational practice MCQs (`IO02-001`–`IO02-100`) across investigative journalism, communication theory, mass-media research, government PR, crisis communications, digital media, political science, Pakistan history and Urdu/English literature. **Two Information Officer papers / 200 public practice positions** now appear in the separate job-family library, alongside **20 Headmaster/Headmistress papers / 2,000 positions**. Every paper remains 100 questions and 90 minutes, with unique attempts, scores, A4 question-only print, post-submission explanations and PWA cache `lama-ppsc-preview-v83`. Per-job limit stays 20; no extra teaching paper was added.

@@ -129,6 +129,13 @@ function render(){
       button.dataset.selected=String(chosen(student,date)===choice);button.textContent=choice;button.disabled=!ready;
       button.onclick=()=>setChoice(student,date,choice);group.append(button);
     }
+    if(draft){
+      const discard=document.createElement('button');discard.type='button';
+      discard.textContent='Discard local draft';discard.disabled=!ready;
+      discard.style.background='#fff1f2';discard.style.color='#9d1f31';
+      discard.onclick=()=>discardLocal(student,date);
+      group.append(discard);
+    }
     row.append(info,group);root.append(row);
   }
 }
@@ -138,6 +145,17 @@ function renderClassList(){
   const classes=[...new Set(state.data.roster.map(s=>s.className))].sort();
   classes.forEach(name=>select.add(new Option(name,name)));
   select.value=classes.includes(before)?before:'';
+}
+async function discardLocal(student,date){
+  if(state.busy||!state.data||!draftFor(student,date))return;
+  if(!confirm('Discard this unsynchronized attendance change for '+student.name+' on '+date+'? This cannot be undone. The server record will not be changed.'))return;
+  state.busy=true;const old=state.data.drafts.slice();
+  try{
+    state.data.drafts=old.filter(d=>!(d.date===date&&d.studentId===student.id));
+    await writeVault();
+    text('actionStatus','Local draft discarded. Refresh server records when pending changes reach zero.');
+  }catch(error){state.data.drafts=old;text('actionStatus','Could not discard draft: '+error.message,true);}
+  finally{state.busy=false;render();}
 }
 async function setChoice(student,date,value){
   if(state.busy||!state.data)return;

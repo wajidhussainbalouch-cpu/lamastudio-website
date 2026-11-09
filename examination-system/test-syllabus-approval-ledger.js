@@ -13,4 +13,7 @@ assert.equal(verifyApprovalLedger(events),true);
 assert.equal(verifyApprovalLedger(events.map((x,i)=>i===1?{...x,payload:{...x.payload,action:'rejected'}}:x)),false);
 assert.throws(()=>appendApprovalEvent({events,event:{...base,action:'submitted',at:'2026-11-09T04:03:00Z'},expectedSequence:3}),/closed/);
 assert.throws(()=>appendApprovalEvent({events:[],event:{...base,action:'approved'},expectedSequence:0}),/requires submission/);
+assert.throws(()=>appendApprovalEvent({events:events.slice(0,2),event:{...base,action:'submitted',at:'2026-11-09T04:03:00Z'},expectedSequence:2}),/Submission already recorded/);
+const rejected=appendApprovalEvent({events:events.slice(0,1),event:{...base,action:'rejected',at:'2026-11-09T04:01:00Z'},expectedSequence:1});
+assert.throws(()=>appendApprovalEvent({events:rejected,event:{...base,action:'submitted',at:'2026-11-09T04:03:00Z'},expectedSequence:2}),/closed/);
 console.log('approval ledger chain tests passed');

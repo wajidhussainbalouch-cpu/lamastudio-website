@@ -517,3 +517,8 @@ Validation and release gate:
 - Corrected `periodSlotsByWeekday` semantics: when an explicit subject timetable is present, omitted weekdays have **zero subject periods**. The engine no longer silently falls back to `periodsByWeekday` for those omitted days. With no explicit timetable, the legacy count-based behavior remains unchanged.
 - Added a regression case verifying a Monday-only English timetable does not schedule English on Tuesday even if the general period-count map lists Tuesday capacity.
 - School English timetable and textbook exercise-level division remain unverified. CI run remains unconfirmed; no live deployment or school records changed.
+
+## Explicit timetable full-map validation — 9 Nov 2026
+- Validate all `periodSlotsByWeekday` keys (0–6 only) and all period lists before generating any dates, including weekday entries not encountered within the requested date range. This prevents invalid configurations from passing unnoticed on short calendar windows.
+- Added regression assertions for an invalid weekday 7 and duplicate periods on a weekday outside the requested date window.
+- GitHub Actions execution is not independently confirmed; this change is not a live deployment or school-data update.

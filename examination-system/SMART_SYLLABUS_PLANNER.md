@@ -527,3 +527,8 @@ Validation and release gate:
 - Added `makeEnglishCalendarFromTimetable(periodSlotsByWeekday, holidays)` to `syllabus-school-calendar-2026.js`. It preserves the 1 Apr–23 Dec 2026 teaching window, school closures, and explicit numbered English periods; missing weekdays have zero English lessons. Saturday and Sunday periods are disallowed for this specific school fixture, not for every school.
 - Extended `test-syllabus-school-calendar-2026.js` with a Monday period 2/5 scheduling scenario and invalid timetable checks. The original count-based builder remains unchanged for compatibility.
 - **Pending:** confirm actual school English period numbers, textbook exercise-level division and teacher review; execute full CI and integrate authenticated production backend. No live deploy or school-data mutation.
+
+## Teacher diary schedule completeness safeguards — 9 Nov 2026
+- `syllabus-teacher-diary-projection.js` now rejects duplicate/invalid lesson assignments and rejects schedules that omit approved snapshot lessons. This closes a read-only projection gap where an incomplete schedule could previously appear valid.
+- Updated diary regression assertions: duplicate lesson ID, missing lesson assignment, and a separate overlap between distinct lessons. The earlier overlap test reused an existing lesson ID and now correctly tests the duplicate guard.
+- Changes committed only to GitHub; complete CI run and authenticated production diary integration remain unverified. No Vercel deployment or school data mutation.

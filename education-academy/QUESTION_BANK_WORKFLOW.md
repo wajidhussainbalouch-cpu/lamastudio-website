@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Latest school-head practice — Paper 16 (9 November 2026)
+
+**Paper 16 integrated in GitHub source:** `HM-2026-P16` adds 100 original free practice MCQs (`HM16-001`–`HM16-100`) in four batches, with 80 education-domain and 20 general-ability items, 90-minute timed examination, distinct saved attempt, A4 paper printing, and post-submission answer explanations. **16 teaching-family papers / 1,600 public practice positions** now register, subject to the existing cap of 20 papers per job family. Public PWA cache: `lama-ppsc-preview-v77`.
+
+**Private editorial bank:** 100 Paper 16 records inserted as `draft` without overwriting earlier records; **1,530 teaching questions and 1,530 distinct normalized stems, zero human-approved**. Source structure and text-overlap screening completed, but independent factual accuracy review and official PPSC syllabus verification are pending. Client-side free practice keys are not secure premium examinations.
+
+**Next:** Paper 17 (`HM17-001`–`HM17-100`), unless another worker has already created it. Check source and Supabase first, and do not claim the academy's newest version is live without checking the READY production SHA and mobile browser. Do not trigger Vercel redeploys against the previously reached quota. Details: [PAPER_16_RELEASE.md](./PAPER_16_RELEASE.md).
+
+
 ## Latest Headmaster / Headmistress milestone — Paper 15 (6 November 2026)
 
 **Paper 15 complete:** `HM-2026-P15` adds 100 original educational-practice MCQs (`HM15-001`–`HM15-100`), with a separate 90-minute exam, unique saved candidate attempt, question-only print page and post-submission printable explanations. The academy GitHub source now contains **15 papers / 1,500 public MCQ positions**, retaining all previous papers, candidate accounts, memberships and results. Offline cache `lama-ppsc-preview-v70`.

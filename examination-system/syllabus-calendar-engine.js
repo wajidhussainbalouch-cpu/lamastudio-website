@@ -26,6 +26,7 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
   for(const slot of previousSchedule[lessonId]||[]){
    if(!slot||!slot.date||!Number.isSafeInteger(slot.period)||slot.period<1)throw Error('Invalid historical slot');
    dateUTC(slot.date);
+   if(slot.date>progress.actualDate)throw Error('Historical slot occurs after completion date');
    const key=slot.date+'#'+slot.period;
    if(occupied.has(key))throw Error('Overlapping completed historical slots');
    occupied.add(key);

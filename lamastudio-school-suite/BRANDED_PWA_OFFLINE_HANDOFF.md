@@ -16,7 +16,7 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 - `backend-api/school-pwa-approvals.gs`: extra Apps Script module, read-only/public school identity conditional on persisted Super Admin approval. Master Registry holds two new tabs: `SchoolPwaApprovals` and append-only `SchoolPwaApprovalAudit`. The default is disabled. No existing Schools rows are rewritten. Each approval write is lock-guarded.
 - `backend-api/code.gs`: new actions `adminGetSchoolPwaAccess` (POST), `adminSetSchoolPwaAccess` (POST), `getSchoolPwaStatus` (POST, authenticated school), and `getPublicSchoolPwa` (GET, approved active school only). Deny privileged GET mutations. All non-public actions verify server credentials.
 - `super-admin-app/app.js`: **Allow school icon / Revoke access** under an individual school's management screen. Server result must confirm approval; cannot toggle locally.
-- `js/api-client.js`: authenticated school-status method.
+- `js/api-client.js`: authenticated school-status method and explicit teacher-scoped read/bulk attendance methods that do not fall back to a school-admin session.
 
 **School installation**
 - `settings.html`: permission-aware guidance and link to `install-school.html?schoolId=...`, hidden when not approved.
@@ -25,11 +25,13 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 - Root `package.json` adds pinned `sharp`. Requires Node 20.9+ and a Vercel build check. This is not currently deployed.
 
 **Free offline attendance**
-- `attendance/offline-attendance.html`: administrator workspace for preparing, marking, reviewing and synchronizing.
-- `js/offline-attendance.js`: encrypted, per-school IndexedDB vault. PBKDF2-SHA256 key derivation (250k iterations), AES-GCM, offline password held only in memory. The service worker never caches private API responses or plaintext student records.
-- Initial online preparation downloads a minimal student roster and attendance statuses using an authenticated **verified school administrator** session.
+- `attendance/offline-attendance.html`: school-admin and assigned-class teacher workspace for preparing, marking, reviewing and synchronizing.
+- `js/offline-attendance.js`: encrypted, per-school/per-account IndexedDB vault. PBKDF2-SHA256 key derivation (250k iterations), AES-GCM, offline password held only in memory. The service worker never caches private API responses or plaintext student records.
+- Initial online preparation downloads a minimal student roster and attendance statuses using a verified **school administrator** or an authenticated **teacher session**. Teacher reads and bulk writes use explicit teacher credentials, with class/section scoping enforced by the existing backend.
 - When offline, mark Present, Absent or Leave for selected students/dates. Changes are encrypted locally before a saved confirmation is shown; no server success is falsely reported.
-- When online, synchronization rereads server students and attendance and compares each queued record's `baseStatus` with the current server status. Changed school records are treated as conflicts rather than overwritten. The existing `bulkAttendance` endpoint upserts and validates school/teacher scope; the offline client rereads attendance to confirm each write before removing it from its encrypted queue. Ambiguous server responses do not trigger blind retries.
+- Each school admin and teacher account has its own separate per-device encrypted vault. When online, synchronization rereads authorized server students and attendance and compares each queued record's `baseStatus` with the current server status. Changed school records are treated as conflicts rather than overwritten. The existing `bulkAttendance` endpoint upserts and validates school/teacher scope; the offline client rereads attendance to confirm each write before removing it from its encrypted queue. Ambiguous server responses do not trigger blind retries.
+- `backend-api/code.gs`: fixes the bulk-attendance audit actor for a verified teacher **before** the write, preventing a missing actor from falsely reporting an already-committed save as failed.
+- `portals/teacher/index.html` links to the free offline attendance workspace.
 - The service worker `sw.js` caches only the static offline page and scripts, version `lama-school-static-v4`; network requests and school data remain out of SW Cache Storage.
 - Both School Settings and administrator Dashboard include a link. Offline work is not premium.
 
@@ -37,7 +39,7 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 
 - This is **not** a fully audited secure offline system. The local encrypted vault protects cached records at rest against casual inspection but is not a substitute for device encryption and screen locks. Losing the offline password, clearing site data, browser eviction, uninstalling the PWA, or losing the device can destroy **unsynchronized** edits. Train schools to sync daily when possible.
 - The offline password is per browser/device. A school must prepare each phone separately online. Admin session is required again for synchronization; offline entries are not server-validated until synced.
-- Local sync currently covers **student attendance in the school-admin workflow only**. Teacher role offline marking, admissions, diary, finance, examinations and other record types require additional scoped queues, server idempotency/audit, conflict policies, and separate tests. Do NOT claim all modules are offline-ready.
+- Local sync currently covers **student attendance for school administrators and assigned-class teachers**. The teacher path and its audit-actor fix are only source-implemented: **not yet integration-tested**. Offline admissions, diary, finance, examinations and other record types require separate scoped queues, server idempotency/audit, conflict policies, and separate tests. Do NOT claim all modules are offline-ready.
 - Browser `navigator.onLine` is only an availability hint; backend fetch/verification decides success. Automatic sync occurs while the page is open, unlocked and has an admin session. The **Sync now** control remains required; no promise of reliable background sync after closing the app.
 - Offline queued records are not available in other portals until the backend verifies them.
 - The publicly accessible premium app icon/name is intentionally public after Super Admin approval. No school emails, student data, keys or private registry fields are exposed by `getPublicSchoolPwa`.

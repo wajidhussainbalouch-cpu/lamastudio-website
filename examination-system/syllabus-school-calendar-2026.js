@@ -25,4 +25,22 @@ function makeEnglishCalendar(periodsByWeekday,holidays=[]){
   closedRanges:[SCHOOL_CALENDAR_2026.summer,SCHOOL_CALENDAR_2026.winter],
   holidays};
 }
-if(typeof module!=='undefined')module.exports={SCHOOL_CALENDAR_2026,makeEnglishCalendar};
+/**
+ * Build a subject-specific school calendar using actual timetable period indices.
+ * Omitted weekdays mean no English lesson; never infer a timetable from capacity.
+ */
+function makeEnglishCalendarFromTimetable(periodSlotsByWeekday,holidays=[]){
+ if(!periodSlotsByWeekday||typeof periodSlotsByWeekday!=='object'||Array.isArray(periodSlotsByWeekday))throw Error('English timetable required');
+ const slots={};
+ for(const [weekday,periods] of Object.entries(periodSlotsByWeekday)){
+  if(!/^[0-6]$/.test(weekday))throw Error('Invalid English timetable weekday');
+  if(!Array.isArray(periods)||periods.some(p=>!Number.isSafeInteger(p)||p<1||p>12)||new Set(periods).size!==periods.length||periods.some((p,i)=>i>0&&p<=periods[i-1]))throw Error('Invalid English timetable periods');
+  if((weekday==='0'||weekday==='6')&&periods.length)throw Error('Weekend must have zero periods');
+  slots[weekday]=[...periods];
+ }
+ return {start:SCHOOL_CALENDAR_2026.academicSessionStart,end:SCHOOL_CALENDAR_2026.syllabusDeadline,
+  periodSlotsByWeekday:slots,
+  closedRanges:[{...SCHOOL_CALENDAR_2026.summer},{...SCHOOL_CALENDAR_2026.winter}],
+  holidays:[...holidays]};
+}
+if(typeof module!=='undefined')module.exports={SCHOOL_CALENDAR_2026,makeEnglishCalendar,makeEnglishCalendarFromTimetable};

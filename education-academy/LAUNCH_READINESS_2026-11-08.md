@@ -94,3 +94,9 @@ The Supabase project `cqoeokovxuimbltskuze` is `ACTIVE_HEALTHY`. All seven publi
 Free preview: publish transparently as a non-official educational service after manual device/print/email checks.  
 Paid launch: **STOP** until Auth, support/privacy approval, commercial payment/entitlement security and content quality requirements are independently completed.  
 No manual Vercel deployment or promotion was initiated during this continuation; GitHub main commits can trigger the repository's existing automatic deployment integration.
+
+### Deployment verification — 9 November 2026
+- Latest inspected commit after the repairs: `6a53d6b6154e79325d654a7268dc0ebb4d2363c7`.
+- Vercel connector reports Git-linked deployment `dpl_Af5S2S2AagR5QTYdekQWni14gH9Y`, target **production**, state **READY**, with aliases `www.lamastudio.pk` and `lamastudio.pk` assigned to that exact SHA.
+- Candidate PWA cache is **v76**. A production deployment being READY does not certify mobile layout, email confirmation, payment, subject accuracy or test coverage.
+- GitHub workflow-runs lookup returned no workflow runs for that commit, so the source regressions should not be described as having passed in GitHub Actions. Tool-level mock tests for recovery redirects, history cleanup and new-password update did succeed.

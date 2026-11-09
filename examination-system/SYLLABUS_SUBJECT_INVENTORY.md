@@ -33,7 +33,7 @@ Status "registered (handoff)" means the question-bank handoff reports a textbook
 | 4 | Islamiat | 88 | Pending |
 | 4 | Social Studies | 108 | Pending |
 | 5 | English | 154 | **74 provisional strand lessons / 176 periods**, NOT exercise-verified or approved |
-| 5 | General Science | 134 | Pending; scanned PDF needs visual review |
+| 5 | General Science | 134 | **10 chapter titles/start pages visually verified** from PDF contents; exercise mapping pending |
 | 5 | Islamiat | 96 | Pending |
 | 5 | Social Studies | 114 | Pending |
 | 5 | Urdu | unknown | No main-branch intake; source needed |
@@ -69,3 +69,8 @@ Missing **intake metadata on main** does not establish that the original PDF is 
 6. Connect published schedules to teacher diary and progress; completed teaching history stays immutable.
 
 **Not deployed:** no production Apps Script or Vercel changes, no school records migrated. The current planner's Class 5 English division is a draft, not an approved template.
+
+## Class 5 General Science verified source progress — 9 Nov 2026
+- Retrieved the original 134-page PDF from its registered Google Drive file and visually inspected PDF page 3 (contents). Verified ten chapter titles and printed start pages; glossary starts on printed page 129.
+- Added `catalogs/general-science-class-5-toc.json` with evidence and page references; each chapter's lessons array remains empty until actual exercise review. This is **not** an approved syllabus or automatically schedulable catalog.
+- PDF page 4 displays printed textbook page 1, so the chapter PDF start page is printed start + 3 for this edition.

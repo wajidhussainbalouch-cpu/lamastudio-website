@@ -532,3 +532,8 @@ Validation and release gate:
 - `syllabus-teacher-diary-projection.js` now rejects duplicate/invalid lesson assignments and rejects schedules that omit approved snapshot lessons. This closes a read-only projection gap where an incomplete schedule could previously appear valid.
 - Updated diary regression assertions: duplicate lesson ID, missing lesson assignment, and a separate overlap between distinct lessons. The earlier overlap test reused an existing lesson ID and now correctly tests the duplicate guard.
 - Changes committed only to GitHub; complete CI run and authenticated production diary integration remain unverified. No Vercel deployment or school data mutation.
+
+## Approved lesson order verification in teacher diary — 9 Nov 2026
+- Teacher diary projection now requires schedule assignment lesson IDs to match the approved snapshot lesson sequence exactly. Prior safeguards already rejected missing, duplicate, and unknown lesson IDs, but a reordered complete schedule was previously accepted.
+- Added regression test for a schedule with all valid lesson IDs in reversed order. Reflow may move dates and periods, but must not silently reorder the permanent division.
+- GitHub code only; complete CI execution and authenticated production integration remain unverified. No deployment or school data modification.

@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Latest school-head practice — Paper 18 (9 November 2026)
+
+**Paper 18 is implemented in the GitHub source:** `HM-2026-P18` adds 100 new original AI-assisted free-practice MCQs (`HM18-001`–`HM18-100`) in four 25-question batches, including 80 education-domain and 20 general-ability items, a separate 90-minute examination, attempt and score isolation, question-only A4 printing, and a post-submission answer key. This brings the **teaching family to 18 published source papers / 1,800 practice question positions**. Maximum remains 20 papers per job family; PWA cache is `lama-ppsc-preview-v79`.
+
+**Protected Supabase bank:** 100 new Paper 18 draft questions saved without overwriting earlier records; verified **1,730 private teaching items / 1,730 unique normalized stems**, 100 Paper 18 drafts and zero human-approved items. Automated stem screening against the previous 1,630 editorial questions found zero identical or above-threshold near-text matches. CI structural checks passed; human academic checking and vacancy-specific syllabus review are **still required**. Public-browser practice answer keys are not secure premium examination materials.
+
+**Next `Continue`:** Check for concurrent edits, then build **Paper 19** (`HM19-001`–`HM19-100`) if absent. Respect the 20-paper limit, private draft workflow and no unnecessary Vercel manual deployments. Live website publication must be checked separately from GitHub source. See [PAPER_18_RELEASE.md](./PAPER_18_RELEASE.md).
+
+
 ## Latest school-head practice — Paper 17 (9 November 2026)
 
 **Paper 17 implemented:** `HM-2026-P17` adds 100 original free educational-practice MCQs (`HM17-001`–`HM17-100`) as four 25-question source files, with 80 education-related and 20 general-ability questions. The academy now registers **17 teaching-family papers / 1,700 public practice question positions**, using the existing 90-minute exam workflow, candidate attempt and score isolation, question-only A4 print and post-submission answer explanations. The offline PWA cache is `lama-ppsc-preview-v78`, and the 20-paper ceiling per job family is preserved.

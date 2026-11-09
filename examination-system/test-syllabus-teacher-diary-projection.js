@@ -21,4 +21,6 @@ const missing={assignments:[schedule.assignments[0]]};
 assert.throws(()=>buildTeacherDiary({snapshot,schedule:missing,...scope}),/Incomplete schedule assignments/);
 const sameSlot={assignments:[schedule.assignments[0],{...schedule.assignments[1],slots:[{date:'2026-04-02',period:1}]}]};
 assert.throws(()=>buildTeacherDiary({snapshot,schedule:sameSlot,...scope}),/Overlapping subject diary slots/);
+const reordered={assignments:[schedule.assignments[1],schedule.assignments[0]]};
+assert.throws(()=>buildTeacherDiary({snapshot,schedule:reordered,...scope}),/Schedule lesson order differs/);
 console.log('teacher diary projection tests passed');

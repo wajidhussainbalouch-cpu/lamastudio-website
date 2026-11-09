@@ -18,4 +18,8 @@ assert.ok(auditLegacyDatedPlan({...base,scheduled:[base.scheduled[0],{...base.sc
 assert.ok(auditLegacyDatedPlan({...base,scheduled:[{...base.scheduled[0],date:'2026-02-30'}]}).issues.includes('Invalid scheduled date'));
 assert.ok(auditLegacyDatedPlan({...base,version:0}).issues.includes('Invalid plan version'));
 assert.equal(auditLegacyDatedPlan(null).compatible,false);
+assert.ok(auditLegacyDatedPlan({...base,planId:''}).issues.includes('Missing planId'));
+assert.ok(auditLegacyDatedPlan({...base,scheduled:[{...base.scheduled[0],lessonTitle:''}]}).issues.includes('Missing lesson title'));
+const oversized=Array.from({length:301},(_,i)=>({date:'2026-04-01',slot:1,lessonId:'L'+i,lessonTitle:'Lesson '+i}));
+assert.ok(auditLegacyDatedPlan({...base,scheduled:oversized}).issues.includes('Legacy schedule exceeds supported 300 entries'));
 console.log('legacy syllabus compatibility audit tests passed');

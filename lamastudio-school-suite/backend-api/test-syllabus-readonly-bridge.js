@@ -22,4 +22,7 @@ assert.throws(()=>prepare({...plan,scheduled:[{...plan.scheduled[0],slot:0}]},co
 assert.throws(()=>prepare({...plan,scheduled:[{...plan.scheduled[0],date:'2026-02-30'}]},context),/Invalid stored syllabus lesson/);
 assert.throws(()=>prepare({...plan,scheduled:[{...plan.scheduled[0],lessonTitle:'=SUM(A1:A2)'}]},context),/Invalid stored syllabus lesson/);
 assert.throws(()=>prepare({...plan,scheduled:[plan.scheduled[0],{...plan.scheduled[0],lessonId:'L2'}]},context),/Duplicate stored syllabus teaching slot/);
+assert.throws(()=>prepare({...plan,scheduled:[]},context),/1–300 lessons/);
+const multiPeriod=prepare({...plan,scheduled:[plan.scheduled[0],{...plan.scheduled[0],date:'2026-04-02',lessonId:'L1'}]},context);
+assert.equal(multiPeriod.scheduled.length,2,'a lesson may span multiple distinct periods');
 console.log('Apps Script read-only syllabus bridge tests passed');

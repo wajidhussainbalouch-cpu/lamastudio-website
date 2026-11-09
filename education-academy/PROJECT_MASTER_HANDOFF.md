@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — MASTER PROJECT HANDOFF
 
+## Final school-head milestone — Paper 20 (9 November 2026)
+
+**Paper 20 completed in source:** `HM-2026-P20` adds 100 original AI-assisted free-practice MCQs (`HM20-001`–`HM20-100`) in four batches, with 80 education-domain and 20 general-ability questions. **20 teaching-family practice papers / 2,000 MCQ positions** are integrated into the exam selector, 90-minute test, per-paper saved attempts, print and post-submission explanations. The owner-set **20-paper limit is now reached**; do not create a Paper 21 without explicit authorization to change this policy. Public PWA cache `lama-ppsc-preview-v81`.
+
+**Protected Supabase editorial bank:** Added 100 Paper 20 rows as `draft` without changing earlier records. Verified **1,930 private teaching editorial records / 1,930 distinct normalized stems**, exactly 100 Paper 20 drafts, all 100 structurally valid and **zero human-approved**. GitHub Actions Paper 20 checks passed, including 100 unique stems/topics and no above-threshold text repeats against the public Papers 2–19. Independent academic answer-key, explanation, and current PPSC syllabus review remain outstanding. Browser-readable public practice answer keys are not secure premium exams.
+
+**Next `Continue`:** Move to the **post-Paper-20 release audit**, including candidate paper selection, Start Examination, timer, answer persistence, score, printable question-only paper, post-submission key and PWA offline behavior. Check the READY production domain commit before calling the new paper live; avoid unnecessary manual Vercel deployments. See [PAPER_20_RELEASE.md](./PAPER_20_RELEASE.md).
+
+
 ## Latest school-head practice — Paper 19 (9 November 2026)
 
 **Paper 19 integrated:** `HM-2026-P19` adds 100 new original AI-assisted Headmaster/Headmistress practice MCQs, in four 25-question batches (`HM19-001`–`HM19-100`), with 80 education-related and 20 general-ability items, 90-minute test, separate saved attempt, two-column question-only A4 paper and post-submission explanation. **19 public teaching-family papers / 1,900 MCQ positions** now register with a strict 20-paper cap. PWA cache `lama-ppsc-preview-v80`.

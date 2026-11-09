@@ -473,3 +473,8 @@ Validation and release gate:
 - It validates school/class/subject/session scope and rejects overlapping periods or unknown lesson IDs. The source inputs are not modified.
 - This is **not live diary sync**. A production endpoint must verify the snapshot hash, approved/published ledger state, school and section permissions, teacher assignment, and schedule version before showing or writing diary entries. The helper currently does not enforce those backend requirements.
 - The Class 5 English division remains provisional pending textbook exercise verification and actual subject timetable. No deployment or school data changes; CI execution is unverified.
+
+## Published teacher diary access gate — 9 Nov 2026
+- Added `examination-system/syllabus-published-diary-gate.js` with regression tests in CI. The read-only gate verifies snapshot integrity and ID, approval ledger chain ending in publication, matching school/class/subject/session, a versioned schedule referencing the same snapshot, and a supplied teacher class assignment or school admin/owner role before calling the diary projection.
+- This helper is **not a production security boundary**: actor, roles and assigned classes must come from server-verified sessions and the current school registry, never browser input. The ledger head and approved snapshot must be fetched from trusted storage; the ledger chain alone cannot establish authenticity.
+- Pending: authenticated Apps Script/backend endpoint, school/section permissions, audit persistence, real teacher diary UI, verified Class 5 English exercises and subject timetable. CI execution is unverified; no deployment or school data change.

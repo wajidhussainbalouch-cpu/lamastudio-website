@@ -69,6 +69,16 @@
             </div>
         </div>
 
+        <!-- Per-school PWA identity is paid/premium and must be granted by Super Admin. -->
+        <section aria-labelledby="schoolPwaHeading" class="rounded-2xl border border-cyan-500/30 bg-cyan-950/20 p-4 space-y-2">
+          <h2 id="schoolPwaHeading" class="font-black text-base text-white">📱 Your School Mobile App</h2>
+          <p class="text-xs text-slate-300">1. Ask LAMA Super Admin to approve your custom app icon. 2. Upload your school logo and save School Settings. 3. Open the install link and share it with staff and parents. No coding required.</p>
+          <p id="schoolPwaStatus" role="status" class="text-sm text-amber-300">Checking Super Admin permission…</p>
+          <a id="schoolPwaInstall" hidden target="_blank" rel="noopener" class="inline-flex rounded-xl bg-emerald-600 px-4 py-3 text-white text-sm font-bold" href="#">Open &amp; share school app install link</a>
+          <p class="text-xs text-slate-400">Offline attendance is a separate facility available to all schools without premium approval.</p>
+          <a href="attendance/offline-attendance.html" class="inline-flex text-xs text-cyan-200 underline">Offline Attendance Center</a>
+        </section>
+
         <!-- Settings Form -->
         <form id="settingsForm" class="space-y-4 text-xs">
             <div>
@@ -295,6 +305,22 @@
             banner.classList.remove('hidden');
         }
 
+        async function loadSchoolPwaPermission(school) {
+          const status=document.getElementById('schoolPwaStatus'),link=document.getElementById('schoolPwaInstall');
+          link.hidden=true;
+          if(!school.schoolId){status.textContent='Log in to your school to check app access.';return;}
+          try {
+            const pwa=await LamaAPI.getSchoolPwaStatus();
+            if(!pwa?.enabled){status.textContent='Custom school app icon: awaiting Super Admin approval.';return;}
+            if(!pwa.hasLogo){status.textContent='Approved. Upload a school logo above and Save Settings to prepare the icon.';return;}
+            status.textContent='Approved — school app is ready to install. Save any name/logo updates before opening the link.';
+            link.href='install-school.html?schoolId='+encodeURIComponent(school.schoolId);
+            link.hidden=false;
+          } catch(e) {
+            status.textContent='Permission cannot be verified yet: '+(e.message||'Backend unavailable')+'. Custom installation remains locked.';
+          }
+        }
+
         async function loadSettings() {
             let school = {};
             try {
@@ -302,6 +328,7 @@
             } catch(e) {}
             
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
+            loadSchoolPwaPermission(school);
             document.getElementById('inName').value = school.name || '';
             document.getElementById('inType').value = school.type || 'Private';
             document.getElementById('inLevel').value = school.level || 'High';
@@ -354,6 +381,7 @@
 
             try {
                 await LamaAPI.updateSchoolConfig(patch);
+                await loadSchoolPwaPermission(await LamaAPI.getActiveSchool()||{});
                 showMessage('successBanner', '🚀 Settings successfully updated and broadcasted to Dashboard and Portal views!');
             } catch (err) {
                 showMessage('errorBanner', err.message || 'Failed to update settings.');

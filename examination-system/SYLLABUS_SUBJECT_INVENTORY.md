@@ -74,3 +74,7 @@ Missing **intake metadata on main** does not establish that the original PDF is 
 - Retrieved the original 134-page PDF from its registered Google Drive file and visually inspected PDF page 3 (contents). Verified ten chapter titles and printed start pages; glossary starts on printed page 129.
 - Added `catalogs/general-science-class-5-toc.json` with evidence and page references; each chapter's lessons array remains empty until actual exercise review. This is **not** an approved syllabus or automatically schedulable catalog.
 - PDF page 4 displays printed textbook page 1, so the chapter PDF start page is printed start + 3 for this edition.
+
+## Class 5 General Science Chapter 3 — 9 Nov 2026
+- Original textbook printed pages 38–40 (PDF 41–43) visually reviewed. Five exercise groups: 5 MCQ, 5 short-answer, 2 constructed-response, 1 investigation and 2 project tasks.
+- `catalogs/general-science-class-5-ch03-exercises.json` records the groups and source pages. In-chapter activity list and teaching-period estimates remain pending; this is not approved for scheduling.

@@ -75,10 +75,19 @@ const keyFor=(date,studentId)=>date+'|'+studentId;
 const currentDate=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const validDate=v=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const d=new Date(v+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v;};
 function authorizedWriter(){
-  if(teacherMode)return !!(schoolId&&accountId&&session?.apiKey);
-  try{const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
-    return !!(a&&a.token&&schoolId&&String(a.schoolId)===schoolId);}
-  catch(_){return false;}
+  // Never use the original page session after another tab switches school
+  // accounts. API methods resolve current credentials just before each POST.
+  const current=teacherMode?LamaAPI.getSession('teacher'):LamaAPI.getSession('school');
+  if(!current||String(current.schoolId||'')!==schoolId)return false;
+  if(teacherMode){
+    return !!(schoolId&&accountId&&session?.apiKey&&current.role==='teacher'&&
+      String(current.teacherId||current.id||'')===accountId&&
+      current.apiKey===session.apiKey);
+  }
+  try{
+    const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
+    return !!(a&&a.token&&schoolId&&String(a.schoolId)===schoolId);
+  }catch(_){return false;}
 }
 function online(){return navigator.onLine===true;}
 function b64(bytes){
@@ -419,6 +428,9 @@ async function sync(automatic=false){
             status:d.status,baseStatus:d.baseStatus};
         });
         let responseOk=false,unverifiedBatch=0;
+        // Preflight credentials can change while awaiting network requests.
+        // Stop before the next write if another tab has switched identities.
+        if(!authorizedWriter())throw Error('School or teacher login changed during sync. Drafts stay on this device. Sign in again using the original account.');
         try{
           const result=await sendBulk(date,records);
           responseOk=Number(result?.saved)===records.length&&

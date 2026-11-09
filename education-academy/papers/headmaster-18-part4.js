@@ -126,10 +126,10 @@ window.LAMA_PPSC_HM18_4=[
     "topic": "Punctuation of nonrestrictive clause",
     "q": "Which sentence correctly punctuates a nonrestrictive relative clause giving extra information about an already identified principal?",
     "options": [
-      "The principal who, joined in June addressed the assembly.",
-      "The principal, who joined in June addressed the assembly.",
+      "The principal who joined, in June addressed the parents.",
+      "The principal, who joined in June addressed the morning gathering.",
       "The principal, who joined in June, addressed the assembly.",
-      "The principal who joined in June addressed, the assembly."
+      "The principal who joined in June, addressed the assembly today."
     ],
     "answer": 2,
     "explanation": "A nonrestrictive clause is set off with commas because it supplies additional information rather than identifying which principal is meant.",

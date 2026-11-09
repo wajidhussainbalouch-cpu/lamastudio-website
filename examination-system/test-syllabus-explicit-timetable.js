@@ -21,4 +21,6 @@ const omitted=scheduleApprovedDivision({lessons:[{lessonId:'ONLY-MON',estimatedP
 assert.equal(omitted.feasible,false);
 assert.equal(omitted.availablePeriods,2);
 assert.deepEqual(omitted.assignments[0].slots,[{date:'2026-11-09',period:2},{date:'2026-11-09',period:5}]);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar:{...calendar,periodSlotsByWeekday:{1:[2,5],7:[1]}}}),/Invalid timetable weekday/);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar:{...calendar,periodSlotsByWeekday:{1:[2,5],0:[4,4]}}}),/Invalid explicit teaching periods/);
 console.log('explicit subject timetable tests passed');

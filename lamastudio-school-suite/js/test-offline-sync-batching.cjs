@@ -15,7 +15,8 @@ function extract(begin,end){
  return source.slice(a,b);
 }
 const batchSource=extract('async function readPendingSnapshots(dates){','const sendBulk=');
-const syncSource=extract('async function sync(automatic=false){','async function downloadEncryptedBackup(){');
+const syncSource=extract('async function sync(automatic=false){','function showNextReview(){');
+const reviewSource=extract('function showNextReview(){','async function downloadEncryptedBackup(){');
 const dateValue=x=>String(x||'').slice(0,10);
 const status=x=>['Present','Absent','Leave'].includes(x)?x:'';
 const normalizedStudents=rows=>rows.map(r=>({
@@ -107,6 +108,23 @@ function buildSyncScenario(mode){
  const run=new Function(...Object.keys(dependencies),syncSource+'return sync;')(...Object.values(dependencies));
  return {run,state,cloud,sent,messages,get writes(){return writes;}};
 }
+function reviewNavigationTests(){
+ const state={busy:false,staleVault:false,data:{
+   drafts:[{studentId:'id495',date:'2026-10-02',syncIssue:'conflict'}],
+   roster:[{id:'id495',name:'Student 495'}]
+ }};
+ const nodes=new Map();
+ const $=id=>{if(!nodes.has(id))nodes.set(id,{value:''});return nodes.get(id);};
+ let rendered=false,notice='';
+ const fn=new Function('state','$','text','render',reviewSource+'return showNextReview;')(
+   state,$,(_target,value)=>{notice=value;},()=>{rendered=true;});
+ fn();
+ assert.equal($('attDate').value,'2026-10-02');
+ assert.equal($('attSearch').value,'id495','Jump must target flagged student ID');
+ assert.equal($('attFilter').value,'review');
+ assert.equal($('attClass').value,'');
+ assert.ok(rendered&&notice.includes('cloud was NOT overwritten'));
+}
 async function syncTests(){
  const ok=buildSyncScenario('success');
  await ok.run(false);
@@ -139,5 +157,6 @@ async function syncTests(){
 (async()=>{
  await snapshotTests();
  await syncTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student conflict labels and ambiguous sync retention.');
+ reviewNavigationTests();
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student conflict labels, direct review navigation and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

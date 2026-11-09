@@ -16,7 +16,14 @@ const teacherMode=session?.role==='teacher';
 const schoolId=String(session?.schoolId||'');
 const accountId=teacherMode?String(session?.teacherId||session?.id||''):'admin';
 const vaultId=schoolId+'#'+(teacherMode?'teacher#'+accountId:'school-admin');
-const readList=collection=>teacherMode?LamaAPI.teacherOfflineList(collection):LamaAPI.list(collection);
+const readSnapshot=dates=>teacherMode?LamaAPI.teacherOfflineSnapshot(dates):LamaAPI.offlineAttendanceSnapshot(dates);
+function validatedSnapshot(snapshot){
+  if(!snapshot||snapshot.schoolId!==schoolId||
+    snapshot.role!==(teacherMode?'teacher':'school')||
+    !Array.isArray(snapshot.students)||!Array.isArray(snapshot.attendance))
+    throw Error('Invalid or cross-school attendance snapshot returned');
+  return snapshot;
+}
 const sendBulk=(date,records)=>teacherMode?LamaAPI.teacherOfflineBulkAttendance(date,records):LamaAPI.bulkAttendance(date,records);
 const state={data:null,key:null,salt:null,busy:false,autoPaused:false};
 const schoolAccount=LamaAPI.getSession('school'),teacherAccount=LamaAPI.getSession('teacher');
@@ -194,7 +201,8 @@ async function prepare(){
     if(existing&&!state.data)throw Error('This device already has protected school records. Unlock them first.');
     if(state.data?.drafts?.length)throw Error('Synchronize pending attendance before refreshing the offline roster.');
     text('actionStatus','Downloading school roster and attendance…');
-    const [students,attendance]=await Promise.all([readList('students'),readList('attendance')]);
+    const snapshot=validatedSnapshot(await readSnapshot([]));
+    const {students,attendance}=snapshot;
     const roster=normalizedStudents(students),history=historyIndex(attendance,roster);
     if(roster.length>5000)throw Error('Roster exceeds offline device safety limit (5,000).');
     if(!roster.length)throw Error('The server returned an empty student roster. Offline attendance was not prepared.');
@@ -239,7 +247,8 @@ async function sync(automatic=false){
   try{
     if(!authorizedWriter())throw Error('An active verified School Admin or Teacher login is required before synchronizing.');
     text('actionStatus','Checking cloud records for changes before uploading…');
-    const [students,attendance]=await Promise.all([readList('students'),readList('attendance')]);
+    const snapshot=validatedSnapshot(await readSnapshot([...new Set(state.data.drafts.map(d=>d.date))]));
+    const {students,attendance}=snapshot;
     const serverRoster=normalizedStudents(students),serverIds=new Map(serverRoster.map(s=>[s.id,s]));
     let cloud=historyIndex(attendance,serverRoster);
     let verified=0,conflicts=0,uncertain=0;
@@ -267,8 +276,8 @@ async function sync(automatic=false){
           Number(result?.inserted||0)+Number(result?.updated||0)===records.length;
       }catch(_){/* Response is ambiguous: reread; never automatically repeat the write. */}
       try{
-        const latest=await readList('attendance');
-        cloud=historyIndex(latest,serverRoster);
+        const latest=validatedSnapshot(await readSnapshot([date]));
+        cloud=historyIndex(latest.attendance,serverRoster);
         for(const draft of drafts){
           const k=keyFor(draft.date,draft.studentId);
           if(cloud[k]===draft.status){draft.verified=true;state.data.history[k]=draft.status;verified++;}

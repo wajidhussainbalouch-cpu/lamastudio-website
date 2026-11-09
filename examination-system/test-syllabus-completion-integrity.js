@@ -15,4 +15,7 @@ const valid=scheduleApprovedDivision({lessons,calendar,completed,previousSchedul
 }});
 assert.deepEqual(valid.assignments[2].slots,[{date:'2026-11-09',period:3}]);
 assert.throws(()=>scheduleApprovedDivision({lessons,calendar,completed:{A:{actualDate:'2026-11-09'}},previousSchedule:{A:[{date:'2026-11-10',period:1}]}}),/after completion date/);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar,previousSchedule:{ghost:[{date:'2026-11-09',period:1}]}}),/Unknown historical lessonId/);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar,previousSchedule:{A:[{date:'2026-11-09',period:1}]}}),/require completed progress/);
+assert.throws(()=>scheduleApprovedDivision({lessons,calendar,completed:{A:{actualDate:'2026-11-09'}},previousSchedule:{A:{date:'2026-11-09',period:1}}}),/Invalid historical slots/);
 console.log('completed history integrity tests passed');

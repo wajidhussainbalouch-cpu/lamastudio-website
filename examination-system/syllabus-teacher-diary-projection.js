@@ -23,6 +23,8 @@ function buildTeacherDiary({snapshot,schedule,schoolId,classId,subjectId,session
   }
  }
  if(assignedIds.size!==lessons.length)throw Error('Incomplete schedule assignments');
+ // A published schedule must retain the approved lesson sequence, not just its IDs.
+ for(let i=0;i<lessons.length;i++)if(schedule.assignments[i].lessonId!==lessons[i].lessonId)throw Error('Schedule lesson order differs from approved division');
  const seen=new Set();
  for(const r of rows){const key=r.date+'#'+r.period;if(seen.has(key))throw Error('Overlapping subject diary slots');seen.add(key);}
  rows.sort((a,b)=>a.date.localeCompare(b.date)||a.period-b.period);

@@ -18,10 +18,10 @@ window.LamaAcademyJobCatalog=(()=>{
    const variants=j.id==='teaching'?String(j.post||'').split(';').map(s=>s.trim()).filter(Boolean):[];
    if(variants.length>1){
     variants.forEach((label,i)=>result.push({
-     id:j.id+':'+i,jobId:j.id,label,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready
+     id:j.id+':'+i,jobId:j.id,label,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready,syllabusEvidence:j.syllabusEvidence||null,priorityOrder:Number(j.priorityOrder)||99
     }));
    }else{
-    result.push({id:j.id,jobId:j.id,label:j.title,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready});
+    result.push({id:j.id,jobId:j.id,label:j.title,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready,syllabusEvidence:j.syllabusEvidence||null,priorityOrder:Number(j.priorityOrder)||99});
    }
   }
   return result;

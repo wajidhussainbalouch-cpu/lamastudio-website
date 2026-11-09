@@ -17,6 +17,8 @@ assert.throws(()=>appendApprovalEvent({events:events.slice(0,2),event:{...base,a
 const rejected=appendApprovalEvent({events:events.slice(0,1),event:{...base,action:'rejected',at:'2026-11-09T04:01:00Z'},expectedSequence:1});
 assert.throws(()=>appendApprovalEvent({events:rejected,event:{...base,action:'submitted',at:'2026-11-09T04:03:00Z'},expectedSequence:2}),/closed/);
 assert.throws(()=>appendApprovalEvent({events:[],event:{...base,action:'submitted',at:'2026-02-30T04:00:00Z'},expectedSequence:0}),/Invalid timestamp/);
+const basicValid=appendApprovalEvent({events:[],event:{...base,action:'submitted'},expectedSequence:0});
+assert.equal(verifyApprovalLedger(basicValid),true);
 const fractional=appendApprovalEvent({events:[],event:{...base,action:'submitted',at:'2026-11-09T04:00:00.500Z'},expectedSequence:0});
 assert.throws(()=>appendApprovalEvent({events:fractional,event:{...base,action:'approved',at:'2026-11-09T04:00:00Z'},expectedSequence:1}),/timestamp regression/);
 const sameSecond=appendApprovalEvent({events:fractional,event:{...base,action:'approved',at:'2026-11-09T04:00:00.750Z'},expectedSequence:1});

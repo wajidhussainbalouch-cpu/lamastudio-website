@@ -597,3 +597,9 @@ Validation and release gate:
 - Executed focused JavaScript smoke checks against the current GitHub source for `syllabus-readonly-handler.gs` and `syllabus-readonly-bridge.gs`: **8/8 passed**, including authorized read, permission denials, client-supplied school rejection, cross-school stored plan, mismatched plan ID and invalid date.
 - Added a plan-ID match check between requested `planId` and the record returned by the scoped storage adapter, with a dedicated regression assertion.
 - These are focused source-level checks, **not** a complete GitHub Actions run or live Apps Script integration test. No HTTP route, deployed storage adapter, school record mutation or Vercel deployment.
+
+## Read-only syllabus bridge regression verification — 9 Nov 2026
+- Bridge now rejects empty stored schedules, while preserving repeated lesson IDs when a lesson legitimately spans multiple dates/periods. Duplicate date+slot remains prohibited.
+- Added assertions for empty schedules and valid multi-period lessons.
+- Retrieved current GitHub source and executed both committed read-only test files in an isolated JavaScript harness that supplies compatible `assert`, `fs` and `vm` shims: **both passed**. This is not equivalent to running the tests under Node.js or the complete GitHub Actions workflow; those remain unverified.
+- No live backend route, data mutation, Apps Script deployment or Vercel deployment.

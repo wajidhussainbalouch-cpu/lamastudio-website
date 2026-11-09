@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Screenshot-supplied PPSC jobs prioritized (9 November 2026)
+
+**10 distinct new job records** were added to `jobs.js` and the protected `public.ppsc_job_catalog` from ten user-provided PPSC-domain syllabus screenshots: Junior Clerk Bahawalpur (80% General Ability / 20% MS Office), Assistant Kot Addu (General Ability), Junior Clerk Faisalabad (80/20 + separate typing/proficiency selection), Assistant Faisalabad (General Ability), Secretary A and B Market Committee / PAMRA (60% qualification / 40% General Ability), Chief Officer / Municipal Officer Regulations (Punjab Local Government Act 2025 + General Ability, split **unspecified**), Assistant Microbiologist PFA (100% qualification), Municipal Infrastructure/Engineering roles (100% qualification), and Laboratory Technician Auqaf (qualification-related only; **marks/duration not stated**).
+
+These case-specific jobs are **priority paper-development tracks** ahead of jobs with only an unsourced suggested syllabus. Each displays its supplied distribution in Syllabus & Resources; **no exam question papers have yet been published for these ten new jobs**. Each listing has `ready:false`, `vacancy_status='unverified'`, and no invented official PDF URL. Existing Headmaster and Information Officer papers, saved candidate history and private questions were preserved. The website's historical generic Junior Clerk listing remains separate. Candidate PWA public shell cache was advanced to `lama-ppsc-preview-v85`.
+
+**Next `Continue`:** Start **Junior Clerk (Bahawalpur) Paper 01** using 80 General Ability + 20 MS Office / Computer MCQs; keep typing/proficiency as a separate stage and do not mark questions academically approved without independent review. Reference [PPSC_UPLOADED_JOB_SYLLABI_PRIORITY_2026.md](./PPSC_UPLOADED_JOB_SYLLABI_PRIORITY_2026.md) and [PPSC_SCREENSHOT_SYLLABI_2026.json](./PPSC_SCREENSHOT_SYLLABI_2026.json) for exact case-specific outlines and explicit unknowns. Confirm the original PDFs, legal amendments and remaining specialist qualification details before making high-stakes or current-vacancy claims.
+
+
 ## Information Officer Paper 03 — 9 November 2026
 
 **Completed in source:** `INFO-2026-P03` has 100 original AI-assisted practice MCQs (`IO03-001`–`IO03-100`), with 80 media/journalism/PR questions and 20 related political-science/history/Urdu/English-literature questions. This split is an **academy educational design**, not an official current PPSC pattern. The public paper list has **3/20 Information Officer papers (300 MCQs)** and **20/20 teaching-family papers (2,000 MCQs)**, totaling **23 public practice papers / 2,300 positions**. Each remains 100 MCQs and 90 minutes, separate attempts, printing, post-submission explanations and offline service-worker cache `lama-ppsc-preview-v84`.

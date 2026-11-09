@@ -19,6 +19,14 @@ const vaultId=schoolId+'#'+(teacherMode?'teacher#'+accountId:'school-admin');
 const readList=collection=>teacherMode?LamaAPI.teacherOfflineList(collection):LamaAPI.list(collection);
 const sendBulk=(date,records)=>teacherMode?LamaAPI.teacherOfflineBulkAttendance(date,records):LamaAPI.bulkAttendance(date,records);
 const state={data:null,key:null,salt:null,busy:false,autoPaused:false};
+const schoolAccount=LamaAPI.getSession('school'),teacherAccount=LamaAPI.getSession('teacher');
+if(schoolAccount&&teacherAccount){
+ const chooser=$('roleSwitch');chooser.hidden=false;
+ $('adminOfflineLink').textContent='School Admin: '+String(schoolAccount.name||'School');
+ $('teacherOfflineLink').textContent='Class Teacher: '+String(teacherAccount.schoolName||'School');
+ const current=teacherMode?$('teacherOfflineLink'):$('adminOfflineLink');
+ current.style.background='#0b626d';current.style.color='#fff';
+}
 const text=(id,message,error=false)=>{const node=$(id);node.textContent=message;node.classList.toggle('error',!!error);};
 const status=x=>{const v=String(x||'').toLowerCase();return v==='present'||v==='p'?'Present':v==='absent'||v==='a'?'Absent':v==='leave'||v==='l'?'Leave':'';};
 const dateValue=v=>{const m=String(v||'').match(/^(\d{4}-\d{2}-\d{2})/);return m?m[1]:'';};

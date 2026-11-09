@@ -26,14 +26,18 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
   for(const slot of previousSchedule[lessonId]||[]){
    if(!slot||!slot.date||!Number.isSafeInteger(slot.period)||slot.period<1)throw Error('Invalid historical slot');
    dateUTC(slot.date);
-   occupied.add(slot.date+'#'+slot.period);
+   const key=slot.date+'#'+slot.period;
+   if(occupied.has(key))throw Error('Overlapping completed historical slots');
+   occupied.add(key);
   }
  }
  // Never schedule unfinished work before the latest completed teaching date.
  const actualDates=Object.values(completed).map(x=>x.actualDate);
  const latestActualDate=actualDates.length?actualDates.sort().at(-1):null;
  const latestCompletedPeriod=latestActualDate?Math.max(0,...Object.entries(completed).flatMap(([id,p])=>(previousSchedule[id]||[]).filter(s=>s.date===latestActualDate).map(s=>s.period))):0;
- const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period)&&(!latestActualDate||s.date>latestActualDate||(s.date===latestActualDate&&s.period>latestCompletedPeriod)));
+ // Without period-level evidence for the latest completed date, do not guess same-day chronology.
+ const latestDateHasUnlocatedCompletion=latestActualDate&&Object.entries(completed).some(([id,p])=>p.actualDate===latestActualDate&&!(previousSchedule[id]||[]).some(s=>s.date===latestActualDate));
+ const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period)&&(!latestActualDate||s.date>latestActualDate||(!latestDateHasUnlocatedCompletion&&s.date===latestActualDate&&s.period>latestCompletedPeriod)));
  for(const lesson of lessons){
   if(!lesson||typeof lesson.lessonId!=='string'||!lesson.lessonId||seen.has(lesson.lessonId))throw Error('Missing/duplicate lessonId');
   seen.add(lesson.lessonId);

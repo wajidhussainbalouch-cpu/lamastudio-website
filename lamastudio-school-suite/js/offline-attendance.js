@@ -305,7 +305,7 @@ function lock(){
 $('attDate').value=currentDate();
 if(session?.name||session?.schoolName)$('schoolName').textContent=(session.schoolName||session.name)+' • '+(teacherMode?'Teacher offline register':'School Admin offline register');
 $('prepare').onclick=prepare;$('unlock').onclick=unlock;$('lock').onclick=lock;
-$('sync').onclick=()=>{state.autoPaused=false;sync(false);};
+$('sync').onclick=()=>{state.autoPaused=false;return sync(false);};
 $('refresh').onclick=prepare;
 $('attDate').onchange=render;$('attClass').onchange=render;$('attSearch').oninput=render;
 addEventListener('online',()=>{refreshConnectivity();if(state.data&&authorizedWriter())sync(true);render();});

@@ -22,7 +22,7 @@ function selectPaper({questions, familyIndex, count, seed=1, topicLimits={}}) {
     seenIds.add(q.id);
     // Fail closed: every question must be independently approved, source verified, and review complete.
     if(q.approved!==true||q.onlineReady!==true||q.reviewStatus!=="approved"||
-       q.requiresTeacherReview===true||!Number.isInteger(q.textbookPage)||q.textbookPage<1)continue;
+       q.requiresTeacherReview!==false||!Number.isInteger(q.textbookPage)||q.textbookPage<1)continue;
     const familyId=familyFor.get(q.id);
     if(!familyId)continue; // unknown family never enters a paper
     if(!byFamily.has(familyId))byFamily.set(familyId,[]);

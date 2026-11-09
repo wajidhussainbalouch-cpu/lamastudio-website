@@ -20,8 +20,9 @@ var LamaSyllabusReadonlyBridge=(function(){
     !validId(storedPlan.subjectId)||!Array.isArray(storedPlan.scheduled))throw Error('Invalid stored syllabus plan');
   if(!Number.isSafeInteger(storedPlan.version)||storedPlan.version<1)throw Error('Invalid stored syllabus version');
   if(['draft','submitted','approved','published','archived'].indexOf(storedPlan.status)<0)throw Error('Invalid stored syllabus status');
-  if(storedPlan.scheduled.length>300)throw Error('Stored syllabus exceeds legacy limit');
+  if(storedPlan.scheduled.length<1||storedPlan.scheduled.length>300)throw Error('Stored syllabus must contain 1–300 lessons');
   var seenSlots=Object.create(null);
+  var seenLessonIds=Object.create(null);
   var lessons=storedPlan.scheduled.map(function(item){
    if(!item||typeof item!=='object'||!validDate(item.date)||
      !Number.isSafeInteger(item.slot)||item.slot<1||item.slot>12||
@@ -30,6 +31,8 @@ var LamaSyllabusReadonlyBridge=(function(){
    var key=item.date+'|'+item.slot;
    if(seenSlots[key])throw Error('Duplicate stored syllabus teaching slot');
    seenSlots[key]=true;
+   if(seenLessonIds[item.lessonId])throw Error('Repeated lesson ID requires manual review');
+   seenLessonIds[item.lessonId]=true;
    return {date:item.date,slot:item.slot,lessonId:item.lessonId,lessonTitle:item.lessonTitle,
      chapterId:typeof item.chapterId==='string'?item.chapterId:''};
   });

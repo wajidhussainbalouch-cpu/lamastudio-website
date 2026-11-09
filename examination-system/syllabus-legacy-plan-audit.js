@@ -4,7 +4,7 @@
  * Does not approve, migrate, mutate or convert plans to permanent divisions.
  */
 function auditLegacyDatedPlan(plan,expectedScope){
- const issues=[];
+ const issues=[],warnings=[];
  if(!plan||typeof plan!=='object'||Array.isArray(plan))return {compatible:false,requiresMigration:true,issues:['Invalid legacy plan']};
  const scopeFields=['schoolId','classId','subjectId','sessionId'];
  for(const k of scopeFields){
@@ -26,12 +26,12 @@ function auditLegacyDatedPlan(plan,expectedScope){
   seenSlots.add(key);
   if(typeof item.lessonId!=='string'||!item.lessonId.trim())issues.push('Invalid lesson ID');
   if(typeof item.lessonTitle!=='string'||!item.lessonTitle.trim())issues.push('Missing lesson title');
-  else if(seenLessons.has(item.lessonId))issues.push('Repeated lesson ID needs exercise-level review');
+  else if(seenLessons.has(item.lessonId)&&!warnings.includes('Repeated lesson ID needs exercise-level review'))warnings.push('Repeated lesson ID needs exercise-level review');
   seenLessons.add(item.lessonId);
  }
  if(!Number.isSafeInteger(plan.version)||plan.version<1)issues.push('Invalid plan version');
  if(!['draft','submitted','approved','published','archived'].includes(plan.status))issues.push('Invalid plan status');
- return {compatible:issues.length===0,requiresMigration:true,issues,
+ return {compatible:issues.length===0,requiresMigration:true,issues,warnings,
   datedEntries:Array.isArray(plan.scheduled)?plan.scheduled.length:0,
   distinctLessonIds:seenLessons.size,
   warning:'Legacy dated plans are not approved immutable syllabus divisions. Manual review and authorized migration are required.'};

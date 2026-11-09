@@ -34,8 +34,12 @@ async function readPendingSnapshots(dates){
   if(!unique.length)return validatedSnapshot(await readSnapshot([]));
   let combined=null,rosterFingerprint=null;
   const records=new Map();
-  for(let index=0;index<unique.length;index+=90){
-    const snapshot=validatedSnapshot(await readSnapshot(unique.slice(index,index+90)));
+  // Match the backend's per-roster download budget (max 30,000 exact-date
+  // attendance statuses). Large schools use fewer dates per request.
+  const rosterSize=Math.max(1,state.data?.roster?.length||1);
+  const dateBatchSize=Math.max(1,Math.min(90,Math.floor(30000/rosterSize)));
+  for(let index=0;index<unique.length;index+=dateBatchSize){
+    const snapshot=validatedSnapshot(await readSnapshot(unique.slice(index,index+dateBatchSize)));
     const normalized=normalizedStudents(snapshot.students).sort((a,b)=>a.id.localeCompare(b.id));
     const fingerprint=JSON.stringify(normalized);
     if(rosterFingerprint!==null&&rosterFingerprint!==fingerprint)

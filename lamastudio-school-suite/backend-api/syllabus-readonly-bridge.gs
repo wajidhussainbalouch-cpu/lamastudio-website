@@ -8,6 +8,8 @@
 var LamaSyllabusReadonlyBridge=(function(){
  'use strict';
  function validId(v){return typeof v==='string'&&v.length>0&&v.length<=100&&!!v.trim()}
+ function validDate(d){return typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&!isNaN(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d}
+ function validTitle(t){return typeof t==='string'&&!!t.trim()&&t.length<=180&&!/^[=+@\t\r]/.test(t.trim())}
  function prepare(storedPlan,context){
   if(!context||typeof context!=='object'||!validId(context.schoolId)||!validId(context.actorId)||
     context.authenticated!==true||context.examinationGranted!==true||
@@ -19,11 +21,15 @@ var LamaSyllabusReadonlyBridge=(function(){
   if(!Number.isSafeInteger(storedPlan.version)||storedPlan.version<1)throw Error('Invalid stored syllabus version');
   if(['draft','submitted','approved','published','archived'].indexOf(storedPlan.status)<0)throw Error('Invalid stored syllabus status');
   if(storedPlan.scheduled.length>300)throw Error('Stored syllabus exceeds legacy limit');
+  var seenSlots=Object.create(null);
   var lessons=storedPlan.scheduled.map(function(item){
-   if(!item||typeof item!=='object'||!/^\d{4}-\d{2}-\d{2}$/.test(item.date)||
+   if(!item||typeof item!=='object'||!validDate(item.date)||
      !Number.isSafeInteger(item.slot)||item.slot<1||item.slot>12||
-     !validId(item.lessonId)||typeof item.lessonTitle!=='string'||!item.lessonTitle.trim())
+     !validId(item.lessonId)||!validTitle(item.lessonTitle))
      throw Error('Invalid stored syllabus lesson');
+   var key=item.date+'|'+item.slot;
+   if(seenSlots[key])throw Error('Duplicate stored syllabus teaching slot');
+   seenSlots[key]=true;
    return {date:item.date,slot:item.slot,lessonId:item.lessonId,lessonTitle:item.lessonTitle,
      chapterId:typeof item.chapterId==='string'?item.chapterId:''};
   });

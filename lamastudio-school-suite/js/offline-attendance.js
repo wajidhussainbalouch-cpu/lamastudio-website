@@ -128,6 +128,7 @@ function render(){
   $('prepare').disabled=state.busy||!online();
   $('unlock').disabled=state.busy;
   $('lock').disabled=!unlocked||state.busy;
+  $('bulkPresent').disabled=!ready||!validDate($('attDate').value);
   $('sync').disabled=!ready||!online()||!state.data.drafts.length;
   $('refresh').disabled=!ready||!online()||!!state.data.drafts.length;
   const root=$('students');root.replaceChildren();
@@ -167,6 +168,37 @@ function renderClassList(){
   const classes=[...new Set(state.data.roster.map(s=>s.className))].sort();
   classes.forEach(name=>select.add(new Option(name,name)));
   select.value=classes.includes(before)?before:'';
+}
+async function markVisiblePresent(){
+  if(state.busy||!state.data)return;
+  const date=$('attDate').value;
+  if(!validDate(date)){text('actionStatus','Choose a valid attendance date.',true);return;}
+  const klass=$('attClass').value,query=$('attSearch').value.trim().toLowerCase();
+  const visible=state.data.roster.filter(s=>(!klass||s.className===klass)&&
+    (!query||(s.name+' '+s.enrlNo).toLowerCase().includes(query)));
+  if(visible.length>200){
+    text('actionStatus','This view includes more than 200 students. Choose a single class or search before marking.',true);
+    return;
+  }
+  const unmarked=visible.filter(s=>!chosen(s,date));
+  if(!unmarked.length){text('actionStatus','All visible students already have an attendance status.');return;}
+  if(!confirm('Mark '+unmarked.length+' visible, unmarked students Present for '+date+
+    '? Existing Absent, Leave, Present and pending choices will not be changed.'))return;
+  state.busy=true;
+  const previous=state.data.drafts.slice();
+  try{
+    for(const student of unmarked){
+      const key=keyFor(date,student.id);
+      state.data.drafts=state.data.drafts.filter(d=>keyFor(d.date,d.studentId)!==key);
+      state.data.drafts.push({id:crypto.randomUUID(),studentId:student.id,date,status:'Present',
+        baseStatus:baseline(student,date),savedAt:new Date().toISOString()});
+    }
+    await writeVault();
+    text('actionStatus','✓ '+unmarked.length+' Present marks saved securely on this device. Synchronize when online.');
+  }catch(error){
+    state.data.drafts=previous;
+    text('actionStatus','Bulk local save failed: '+error.message,true);
+  }finally{state.busy=false;render();}
 }
 async function discardLocal(student,date){
   if(state.busy||!state.data||!draftFor(student,date))return;
@@ -306,6 +338,7 @@ $('attDate').value=currentDate();
 if(session?.name||session?.schoolName)$('schoolName').textContent=(session.schoolName||session.name)+' • '+(teacherMode?'Teacher offline register':'School Admin offline register');
 $('prepare').onclick=prepare;$('unlock').onclick=unlock;$('lock').onclick=lock;
 $('sync').onclick=()=>{state.autoPaused=false;return sync(false);};
+$('bulkPresent').onclick=markVisiblePresent;
 $('refresh').onclick=prepare;
 $('attDate').onchange=render;$('attClass').onchange=render;$('attSearch').oninput=render;
 addEventListener('online',()=>{refreshConnectivity();if(state.data&&authorizedWriter())sync(true);render();});

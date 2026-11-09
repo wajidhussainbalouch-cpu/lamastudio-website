@@ -220,3 +220,10 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Added per-student conflict/unverified flags to encrypted offline attendance drafts and mobile **Pending sync** / **Needs review** filters, with direct jump to flagged student ID/date. No automatic overwrite of divergent server attendance is allowed.
 - Source regression suites passed in isolated mocked JS execution: large 195-date snapshot batching; 502-record chunk sync; competing server attendance; ambiguous acknowledgments; 12 existing offline browser-flow scenarios. No production records or live deployment were touched.
 - Source-only draft PR #84 remains divergent from `main`. Before merge, reconcile concurrent main-branch updates, deploy matching Apps Script snapshot and bulk endpoints to a disposable test instance, then test on Android Chrome offline and while reconnecting.
+
+### 2026-11-09 — Offline sync account-switch guard and full review navigation
+
+- PR #84 (still **draft**) now cycles through all flagged attendance drafts rather than showing only the first; conflict cards show **offline status versus last observed cloud status**. This value can be stale and does not authorize overwriting the school register.
+- Hardened school/teacher offline sync against login changes in another tab. The page checks the original teacher identity/API key or original school administrator token, plus current school ID, before each 500-record upload. On any mismatch, stop and keep unsent drafts encrypted.
+- Added `lamastudio-school-suite/js/test-offline-writer-binding.cjs` (10 mocked identity checks) and mid-sync account-switch regression; repeated previous mocked offline browser scenarios (12 passes). `package.json` now runs six self-contained school suite test files.
+- No deployment, Apps Script update, production student data change or real mobile device testing occurred. Coordinate `main` divergence before merging; verify the actual web app, live Apps Script backup/version and school-scoped access on a disposable school first.

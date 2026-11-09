@@ -72,3 +72,9 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Requires approved status, online readiness, completed teacher review, and a positive textbook page integer. It does **not** independently verify that a page number matches the book, authenticate the caller, or enforce tenant separation; these must be provided by trusted server code.
 - The current 1500 draft questions remain ineligible for selection. Tests use synthetic approved fixtures only; they are not evidence of approved textbook content.
 - Added the selector test to `.github/workflows/class2-islamiat-draft-qa.yml` (commit `bc57af05e3cdc83545917374cb1e1613f69fba27`). CI status and runtime execution have not been verified, and no live integration or deployment occurred.
+
+## Review evidence gate — 2026-11-09
+- The review-only paper selector now also requires `sourceBasis === "pctb-page-verified"`, a nonblank `reviewedBy` identifier, and a parseable `reviewedAt` timestamp, in addition to existing approved/onlineReady/review-complete and positive textbook-page checks. Commit `5cd04de1cbdfb0516eb6beb8ce440703e3ac3478`.
+- Synthetic tests cover unverified source labels, blank reviewer IDs, and invalid timestamps. Commit `05eb347c835aa92eb794e8b0d50cd1fde5a809af`.
+- **Security caveat:** these are metadata gates, not proof of authentic teacher identity, textbook matching, or tamper resistance. A trusted server must validate roles, school tenancy, review audit trail and immutable source evidence; client-supplied flags must never authorize release.
+- All existing 1500 drafts lack textbook page mapping and remain excluded. CI/runtime results and live integration have not been verified; no deployment occurred.

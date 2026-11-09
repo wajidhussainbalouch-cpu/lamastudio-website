@@ -227,3 +227,11 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Hardened school/teacher offline sync against login changes in another tab. The page checks the original teacher identity/API key or original school administrator token, plus current school ID, before each 500-record upload. On any mismatch, stop and keep unsent drafts encrypted.
 - Added `lamastudio-school-suite/js/test-offline-writer-binding.cjs` (10 mocked identity checks) and mid-sync account-switch regression; repeated previous mocked offline browser scenarios (12 passes). `package.json` now runs six self-contained school suite test files.
 - No deployment, Apps Script update, production student data change or real mobile device testing occurred. Coordinate `main` divergence before merging; verify the actual web app, live Apps Script backup/version and school-scoped access on a disposable school first.
+
+### 2026-11-09 — Stop unsafe conflict taps and account-switched sync
+
+- Draft PR #84 offline client now prevents flagged students from being altered by pressing Present/Absent/Leave: an unresolved conflict or ambiguous server save must first be investigated. Already-selected non-conflicting statuses no longer produce redundant vault writes.
+- Review navigation cycles through all flagged dates/student IDs and displays the locally selected status versus the **last observed** server status; the latter may no longer be current.
+- The client checks the original logged-in school administrator token, or teacher ID and API key, before **every** attendance batch. A school or teacher account switch in another tab halts further uploads and retains drafts for recovery. These checks supplement (and cannot replace) Apps Script role and tenant authorization.
+- New identity-switch regression (10 mocked checks) and expanded batching/review tests passed, as did the 12-case offline browser-flow mock. Tests are integrated into `npm run test:school-suite`.
+- No live deployment, Apps Script update, mobile-device integration, or production database mutation. Reconcile independent `main` changes before any release, preserving all existing school modules.

@@ -8,13 +8,15 @@ const {createReviewService}=require("./class2-islamiat-review-service.cjs");
  let writes=0,identity=actor;
  const service=createReviewService({
   resolveActor:async()=>identity,
+  serverNow:()=>new Date("2026-11-09T08:00:00Z"),
   loadQuestion:async()=>question,
   loadHistory:async()=>({version:0,headHash:null}),
-  appendAtomically:async({event,expectedVersion,expectedHeadHash})=>{writes++;assert.equal(expectedVersion,0);assert.equal(expectedHeadHash,null);assert.equal(event.approved,false);return {stored:true};}
+  appendAtomically:async({event,expectedVersion,expectedHeadHash})=>{writes++;assert.equal(expectedVersion,0);assert.equal(expectedHeadHash,null);assert.equal(event.approved,false);assert.equal(event.reviewedAt,"2026-11-09T08:00:00.000Z");assert.equal(event.actorId,"teacher-1");return {stored:true};}
  });
  const args={session:"server-session",schoolId:"school-a",questionId:"Q1",review,decision:"recommend_approval",expectedVersion:0,expectedHeadHash:null,actor:{id:"attacker",role:"school_admin",authenticated:true}};
  assert.deepEqual(await service.submit(args),{stored:true});
  assert.equal(writes,1);
+ assert.equal(review.reviewedAt,"2026-11-09T07:00:00Z");
  identity={...actor,authenticated:false};
  await assert.rejects(()=>service.submit(args),/Not authorized/);
  identity=actor;

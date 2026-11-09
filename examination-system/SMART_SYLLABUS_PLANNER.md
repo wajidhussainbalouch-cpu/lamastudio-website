@@ -613,3 +613,8 @@ Validation and release gate:
 - Updated `syllabus-legacy-plan-audit.js` to classify repeated lesson IDs across distinct teaching slots as nonblocking **manual-review warnings**, not compatibility errors. Multi-period lessons are legitimate; duplicate date+slot remains an error.
 - Updated regression tests and executed the committed legacy audit test file in an isolated JavaScript harness: **passed**. This does not establish a successful full Node.js/Actions run.
 - All legacy dated plans still require exercise-level verification and authorized migration before an immutable syllabus division can be approved. No production deployment or record changes.
+
+## School-scoped legacy syllabus inventory — 9 Nov 2026
+- Added `syllabus-legacy-batch-report.js` to audit up to 1000 existing legacy plans in a read-only inventory, reporting compatible/repair/manual-review counts, invalid or cross-school records, and repeated plan IDs.
+- Added `test-syllabus-legacy-batch-report.js`, with checks for counts, multi-period review warnings, no mutation, duplicate IDs and cross-school record handling. Executed this test file in an isolated JavaScript harness: **passed**. Full Node.js/GitHub Actions suite not independently verified.
+- This module is a backend building block only, not a live endpoint. A trusted server must enforce authentication, entitlements and school-scoped loading before invoking it. No migration, live data changes or deployment.

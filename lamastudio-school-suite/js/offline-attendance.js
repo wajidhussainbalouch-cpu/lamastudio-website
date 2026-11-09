@@ -214,14 +214,20 @@ function render(){
   $('unlock').disabled=state.busy;
   $('lock').disabled=!unlocked||state.busy;
   $('backup').disabled=!ready;
-  $('bulkPresent').disabled=!ready||!validDate($('attDate').value);
+  $('bulkPresent').disabled=!ready||!validDate($('attDate').value)||($('attFilter').value&&$('attFilter').value!=='all');
   $('sync').disabled=!ready||!online()||!state.data.drafts.length;
+  $('reviewNext').disabled=!ready||!state.data.drafts.some(d=>d.syncIssue);
   $('refresh').disabled=!ready||!online()||!!state.data.drafts.length;
   const root=$('students');root.replaceChildren();
   if(!unlocked){$('rosterInfo').textContent='Unlock the school vault or prepare it while online.';$('queueInfo').textContent='Local records are locked.';return;}
   const date=$('attDate').value;
-  const klass=$('attClass').value,query=$('attSearch').value.trim().toLowerCase();
-  const shown=state.data.roster.filter(s=>(!klass||s.className===klass)&&(!query||(s.name+' '+s.enrlNo).toLowerCase().includes(query)));
+  const klass=$('attClass').value,query=$('attSearch').value.trim().toLowerCase(),
+    filter=$('attFilter').value||'all';
+  const draftMap=new Map(state.data.drafts.filter(d=>d.date===date).map(d=>[d.studentId,d]));
+  const shown=state.data.roster.filter(s=>(!klass||s.className===klass)&&
+    (!query||(s.name+' '+s.enrlNo).toLowerCase().includes(query))&&
+    (filter==='all'||(filter==='pending'&&draftMap.has(s.id))||
+     (filter==='review'&&!!draftMap.get(s.id)?.syncIssue)));
   const rows=shown.slice(0,200);
   $('rosterInfo').textContent=rows.length+' shown of '+shown.length+' matching students. Prepared: '+new Date(state.data.preparedAt).toLocaleString()+' (select a class for larger schools).';
   const flagged=state.data.drafts.filter(d=>d.syncIssue==='conflict'||d.syncIssue==='student-changed').length;
@@ -231,7 +237,7 @@ function render(){
     (uncertainCount?' '+uncertainCount+' had uncertain synchronization.':'');
   for(const student of rows){
     const row=document.createElement('div');row.className='student';
-    const draft=draftFor(student,date);row.dataset.pending=draft?'true':'false';
+    const draft=draftMap.get(student.id);row.dataset.pending=draft?'true':'false';
     row.dataset.syncIssue=draft?.syncIssue||'';
     const info=document.createElement('div'),name=document.createElement('div'),small=document.createElement('small');
     name.className='name';name.textContent=student.name;
@@ -243,7 +249,8 @@ function render(){
     const group=document.createElement('div');group.className='choices';
     for(const choice of ['Present','Absent','Leave']){
       const button=document.createElement('button');button.type='button';button.dataset.value=choice;
-      button.dataset.selected=String(chosen(student,date)===choice);button.textContent=choice;button.disabled=!ready;
+      button.dataset.selected=String((draft?.status||baseline(student,date))===choice);
+      button.textContent=choice;button.disabled=!ready;
       button.onclick=()=>setChoice(student,date,choice);group.append(button);
     }
     if(draft){
@@ -264,7 +271,7 @@ function renderClassList(){
   select.value=classes.includes(before)?before:'';
 }
 async function markVisiblePresent(){
-  if(state.busy||state.staleVault||!state.data)return;
+  if(state.busy||state.staleVault||!state.data||($('attFilter').value&&$('attFilter').value!=='all'))return;
   const date=$('attDate').value;
   if(!validDate(date)){text('actionStatus','Choose a valid attendance date.',true);return;}
   const klass=$('attClass').value,query=$('attSearch').value.trim().toLowerCase();
@@ -439,6 +446,19 @@ async function sync(automatic=false){
   }catch(error){state.autoPaused=true;text('actionStatus','Sync not confirmed: '+error.message+'. Drafts remain on this device. Do not delete app data.',true);}
   finally{state.busy=false;render();}
 }
+function showNextReview(){
+  if(state.busy||state.staleVault||!state.data)return;
+  const issue=state.data.drafts.find(d=>d.syncIssue);
+  if(!issue){text('actionStatus','No flagged records need review.');return;}
+  $('attDate').value=issue.date;
+  $('attClass').value='';
+  $('attSearch').value='';
+  $('attFilter').value='review';
+  render();
+  const student=state.data.roster.find(s=>s.id===issue.studentId);
+  text('actionStatus','Showing '+(student?.name||issue.studentId)+' on '+issue.date+
+    '. The cloud was NOT overwritten. Verify the latest attendance online before discarding or correcting the local draft.',true);
+}
 async function downloadEncryptedBackup(){
   if(state.busy||state.staleVault||!state.data)return;
   state.busy=true;render();
@@ -516,8 +536,10 @@ $('sync').onclick=()=>{state.autoPaused=false;return sync(false);};
 $('backup').onclick=downloadEncryptedBackup;
 $('restoreBackup').onclick=restoreEncryptedBackup;
 $('bulkPresent').onclick=markVisiblePresent;
+$('reviewNext').onclick=showNextReview;
 $('refresh').onclick=prepare;
-$('attDate').onchange=render;$('attClass').onchange=render;$('attSearch').oninput=render;
+$('attDate').onchange=render;$('attClass').onchange=render;
+$('attSearch').oninput=render;$('attFilter').onchange=render;
 addEventListener('online',()=>{refreshConnectivity();if(state.data&&authorizedWriter())sync(true);render();});
 addEventListener('offline',()=>{refreshConnectivity();render();});
 refreshConnectivity();

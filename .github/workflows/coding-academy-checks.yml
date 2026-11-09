@@ -1,0 +1,22 @@
+name: LAMA Coding Academy checks
+
+on:
+  pull_request:
+    paths:
+      - "coding-academy/**"
+      - ".github/workflows/coding-academy-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  practice-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Node.js runtime
+        run: node --version
+      - name: Validate 18 practice missions
+        run: node coding-academy/tests/practice.test.cjs

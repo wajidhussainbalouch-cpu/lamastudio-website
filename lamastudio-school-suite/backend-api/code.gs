@@ -1808,7 +1808,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolPwaStatus' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
@@ -2078,6 +2078,12 @@ function handleRequest(params) {
             case 'getTeacherManagementBootstrap': return getTeacherManagementBootstrap_(params);
             case 'getSchoolConfig':
                 return { status: 'success', school: getSchoolConfig(params.schoolId, params.apiKey) };
+            case 'getSchoolPwaStatus':
+                if (typeof lamaSchoolPwaStatus_ !== 'function') throw new Error('School PWA approval backend not installed.');
+                return {status:'success',pwa:lamaSchoolPwaStatus_(params.schoolId,params.apiKey)};
+            case 'getPublicSchoolPwa':
+                if (typeof lamaPublicSchoolPwa_ !== 'function') throw new Error('School PWA approval backend not installed.');
+                return {status:'success',pwa:lamaPublicSchoolPwa_(params.schoolId)};
             case 'updateSchoolConfig':
                 return { status: 'success', school: updateSchoolConfig(params.schoolId, params.apiKey, params.patch || {}) };
             case 'getDashboardStats':
@@ -2109,6 +2115,12 @@ function handleRequest(params) {
                 return { status: 'success', admin: adminLogin(params.password) };
             case 'adminSetSubscription':
                 return { status: 'success', result: adminSetSubscription(params.adminApiKey, params.schoolId, params.details || {}) };
+            case 'adminGetSchoolPwaAccess':
+                if (typeof lamaAdminGetSchoolPwaAccess_ !== 'function') throw new Error('School PWA approval backend not installed.');
+                return {status:'success',pwa:lamaAdminGetSchoolPwaAccess_(params.adminApiKey,params.schoolId)};
+            case 'adminSetSchoolPwaAccess':
+                if (typeof lamaAdminSetSchoolPwaAccess_ !== 'function') throw new Error('School PWA approval backend not installed.');
+                return {status:'success',pwa:lamaAdminSetSchoolPwaAccess_(params.adminApiKey,params.schoolId,params.enabled)};
             case 'adminGetModuleGrant':
                 authorizeAdmin(params.adminApiKey);
                 if (typeof lamaAdminGetModuleGrant_ !== 'function') throw new Error('Module grant adapter not installed in Apps Script deployment.');
@@ -2168,7 +2180,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['adminSetSchoolPwaAccess','adminGetSchoolPwaAccess','getSchoolPwaStatus','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

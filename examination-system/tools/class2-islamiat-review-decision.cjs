@@ -14,11 +14,12 @@ function prepareReviewDecision({question,review,actor,schoolId,decision}){
  if(question.schoolId!==schoolId)throw new Error("Question school mismatch");
  if(!["request_changes","recommend_approval"].includes(decision))throw new Error("Unsupported review decision");
  if(!review||review.reviewedBy!==actor.id)throw new Error("Review identity mismatch");
+ if(typeof review.reviewedAt!=="string"||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(review.reviewedAt)||!Number.isFinite(Date.parse(review.reviewedAt)))throw new Error("Valid UTC review timestamp required");
  const evidence=validateReviewEvidence(question,review);
  if(decision==="recommend_approval"&&!evidence.valid)throw new Error("Review evidence incomplete: "+evidence.errors.join("; "));
  if(decision==="request_changes"&&(!review||typeof review.verificationNote!=="string"||review.verificationNote.trim().length<15))throw new Error("Change request requires a meaningful note");
  return Object.freeze({
-  eventType:"islamiat_review_recommendation",
+  eventType:"islamiat_review_decision",
   questionId:question.id,
   schoolId,
   actorId:actor.id,

@@ -29,10 +29,26 @@ function appendApprovalEvent({events,event,expectedSequence}){
 }
 function verifyApprovalLedger(events){
  if(!Array.isArray(events))return false;
- let prev=null;
+ let prev=null,prior=null;
+ const required=['schoolId','classId','subjectId','sessionId','snapshotId','actorId','action','at'];
  for(let i=0;i<events.length;i++){
   const e=events[i];
   if(!e||e.sequence!==i+1||e.previousHash!==prev||e.hash!==hash({sequence:e.sequence,previousHash:e.previousHash,payload:e.payload}))return false;
+  const p=e.payload;
+  if(!p||required.some(k=>typeof p[k]!=='string'||!p[k].trim()))return false;
+  if(!['submitted','approved','rejected','published'].includes(p.action)||!/^sha256:[a-f0-9]{64}$/.test(p.snapshotId))return false;
+  if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(p.at)||!Number.isFinite(Date.parse(p.at)))return false;
+  if(i===0&&p.action!=='submitted')return false;
+  if(prior){
+   if(['schoolId','classId','subjectId','sessionId','snapshotId'].some(k=>p[k]!==prior[k]))return false;
+   if(p.at<prior.at)return false;
+   if(prior.action==='published'||prior.action==='rejected')return false;
+   if(p.action==='approved'&&prior.action!=='submitted')return false;
+   if(p.action==='published'&&prior.action!=='approved')return false;
+   if(p.action==='rejected'&&prior.action!=='submitted')return false;
+   if(p.action==='submitted')return false;
+  }
+  prior=p;
   prev=e.hash;
  }
  return true;

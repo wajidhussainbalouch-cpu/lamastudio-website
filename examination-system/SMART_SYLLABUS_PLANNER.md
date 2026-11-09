@@ -562,3 +562,8 @@ Validation and release gate:
 - Checked the existing `syllabus-draft.gs` validation contract against `syllabus-legacy-plan-audit.js`; the read-only audit now flags missing `planId`, missing lesson titles and schedules exceeding 300 entries. Added corresponding regression assertions.
 - Attempted a direct repository checkout for full CI verification, but the execution container could not resolve `github.com`; this is **not** a test failure or a CI pass. The GitHub connector was used for code commits only.
 - Full repository test execution, authenticated server adapter and legacy-data migration remain pending. No live Apps Script or Vercel deployment.
+
+## Audit timestamp integrity — 9 Nov 2026
+- Replaced lexicographic audit timestamp comparisons with parsed chronological comparisons, including fractional seconds. Added a calendar normalization check to reject impossible ISO dates before accepting ledger events.
+- Extended `test-syllabus-approval-ledger.js` with impossible February date, sub-second timestamp regression, and correctly ordered fractional timestamps.
+- Committed code and tests to GitHub; **the updated tests have not been executed or confirmed passing**, and complete CI status is unknown. No live Apps Script, data migration or Vercel deployment.

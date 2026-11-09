@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Information Officer Paper 02 — Second Job-Family Paper (9 November 2026)
+
+**Paper 02 implemented:** `INFO-2026-P02` adds 100 original AI-assisted educational practice MCQs (`IO02-001`–`IO02-100`) across investigative journalism, communication theory, mass-media research, government PR, crisis communications, digital media, political science, Pakistan history and Urdu/English literature. **Two Information Officer papers / 200 public practice positions** now appear in the separate job-family library, alongside **20 Headmaster/Headmistress papers / 2,000 positions**. Every paper remains 100 questions and 90 minutes, with unique attempts, scores, A4 question-only print, post-submission explanations and PWA cache `lama-ppsc-preview-v83`. Per-job limit stays 20; no extra teaching paper was added.
+
+**Protected bank:** Saved 100 Paper 02 questions as `draft` under `information-officer`; audit confirms **200 Information Officer draft rows / 200 distinct normalized stems**, alongside unchanged **1,930 teaching drafts**. No human academic approvals yet. GitHub Actions PPSC checks passed (run `42604313502`) after fixing an older test's brittle assumption about the service-worker version. The 80 media / 20 related humanities split is a practice design, **not an official confirmed PPSC weighting**. The site's historical case-number field remains subject to official verification.
+
+**Next `Continue`:** Verify no concurrent Paper 03 and build Information Officer **Paper 03** (`IO03-001`–`IO03-100`), while respecting independent 20-paper job-family quotas, protected draft review, live Vercel SHA and Android/PWA release verification. See [INFORMATION_OFFICER_PAPER_02_RELEASE.md](./INFORMATION_OFFICER_PAPER_02_RELEASE.md).
+
+
 ## New job family — Information Officer (BS-17), Paper 01 (9 November 2026)
 
 **Next category developed:** After 20 Headmaster/Headmistress teaching-family papers, `information-officer` starts its own 20-paper sequence. New `INFO-2026-P01` contains 100 original AI-assisted educational-practice MCQs (`IO01-001`–`IO01-100`), mainly journalism, mass communication, government PR, media studies and research, with 20 related political-science/history/Urdu/English-literature questions. The **80 media / 20 related-subject** mix is a practice design, not an officially verified PPSC weighting. Its 90-minute exam, separate candidate attempts, question-only A4 printing, post-submission explanation and offline PWA cache `lama-ppsc-preview-v82` are integrated. Total public source registry: **21 papers = 20 teaching + 1 Information Officer, 2,100 MCQ positions**, while the 20-per-family cap remains.

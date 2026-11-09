@@ -5,8 +5,14 @@
  */
 (()=>{
 const $=id=>document.getElementById(id);
-const session=LamaAPI.getSession('school');
+const active=LamaAPI.getSession();
+const session=active?.role==='teacher'?active:(LamaAPI.getSession('school')||LamaAPI.getSession('teacher'));
+const teacherMode=session?.role==='teacher';
 const schoolId=String(session?.schoolId||'');
+const accountId=teacherMode?String(session?.teacherId||session?.id||''):'admin';
+const vaultId=schoolId+'#'+(teacherMode?'teacher#'+accountId:'school-admin');
+const readList=collection=>teacherMode?LamaAPI.teacherOfflineList(collection):LamaAPI.list(collection);
+const sendBulk=(date,records)=>teacherMode?LamaAPI.teacherOfflineBulkAttendance(date,records):LamaAPI.bulkAttendance(date,records);
 const state={data:null,key:null,salt:null,busy:false,autoPaused:false};
 const text=(id,message,error=false)=>{const node=$(id);node.textContent=message;node.classList.toggle('error',!!error);};
 const status=x=>{const v=String(x||'').toLowerCase();return v==='present'||v==='p'?'Present':v==='absent'||v==='a'?'Absent':v==='leave'||v==='l'?'Leave':'';};
@@ -14,7 +20,8 @@ const dateValue=v=>{const m=String(v||'').match(/^(\d{4}-\d{2}-\d{2})/);return m
 const keyFor=(date,studentId)=>date+'|'+studentId;
 const currentDate=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const validDate=v=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const d=new Date(v+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v;};
-function verifiedAdmin(){
+function authorizedWriter(){
+  if(teacherMode)return !!(schoolId&&accountId&&session?.apiKey);
   try{const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
     return !!(a&&a.token&&schoolId&&String(a.schoolId)===schoolId);}
   catch(_){return false;}
@@ -45,7 +52,7 @@ async function dbRequest(mode,method,arg){
     tx.onabort=()=>{db.close();reject(tx.error||Error('Local storage cancelled'));};
   });
 }
-const readVault=()=>dbRequest('readonly','get',schoolId);
+const readVault=()=>dbRequest('readonly','get',vaultId);
 async function derive(password,salt){
   const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
@@ -55,7 +62,7 @@ async function writeVault(){
   const iv=crypto.getRandomValues(new Uint8Array(12));
   const bytes=new TextEncoder().encode(JSON.stringify(state.data));
   const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},state.key,bytes);
-  await dbRequest('readwrite','put',{schoolId,version:1,salt:b64(state.salt),iv:b64(iv),ciphertext:b64(ciphertext),savedAt:new Date().toISOString()});
+  await dbRequest('readwrite','put',{schoolId:vaultId,version:1,salt:b64(state.salt),iv:b64(iv),ciphertext:b64(ciphertext),savedAt:new Date().toISOString()});
 }
 function passphrase(){
   const value=$('offlinePass').value;
@@ -149,12 +156,12 @@ async function prepare(){
   if(state.busy)return;
   state.busy=true;render();
   try{
-    if(!online()||!verifiedAdmin())throw Error('Internet and an active verified School Admin session are required to prepare records.');
+    if(!online()||!authorizedWriter())throw Error('Internet and an active verified School Admin or Teacher session are required to prepare records.');
     const password=passphrase(),existing=await readVault();
     if(existing&&!state.data)throw Error('This device already has protected school records. Unlock them first.');
     if(state.data?.drafts?.length)throw Error('Synchronize pending attendance before refreshing the offline roster.');
     text('actionStatus','Downloading school roster and attendance…');
-    const [students,attendance]=await Promise.all([LamaAPI.list('students'),LamaAPI.list('attendance')]);
+    const [students,attendance]=await Promise.all([readList('students'),readList('attendance')]);
     const roster=normalizedStudents(students),history=historyIndex(attendance,roster);
     if(roster.length>5000)throw Error('Roster exceeds offline device safety limit (5,000).');
     const salt=existing?unb64(existing.salt):crypto.getRandomValues(new Uint8Array(16));
@@ -164,7 +171,7 @@ async function prepare(){
       await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(existing.iv)},key,unb64(existing.ciphertext));
     }
     const prior={...state};
-    state.data={schoolId,roster,history,drafts:[],preparedAt:new Date().toISOString()};
+    state.data={schoolId,accountScope:vaultId,roster,history,drafts:[],preparedAt:new Date().toISOString()};
     state.salt=salt;state.key=key;
     try{await writeVault();}catch(error){Object.assign(state,prior);throw error;}
     $('offlinePass').value='';
@@ -184,11 +191,11 @@ async function unlock(){
     try{const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(stored.iv)},key,unb64(stored.ciphertext));
       data=JSON.parse(new TextDecoder().decode(bytes));}
     catch(_){throw Error('Wrong offline password, or corrupted local records. No changes were made.');}
-    if(data.schoolId!==schoolId||!Array.isArray(data.roster)||!Array.isArray(data.drafts))throw Error('Offline vault does not belong to this school');
+    if(data.schoolId!==schoolId||data.accountScope!==vaultId||!Array.isArray(data.roster)||!Array.isArray(data.drafts))throw Error('Offline vault does not belong to this school');
     state.data=data;state.key=key;state.salt=unb64(stored.salt);
     $('offlinePass').value='';renderClassList();
     text('status','School records unlocked. '+data.drafts.length+' pending changes.');
-    text('actionStatus','Offline records are ready. Sync requires internet and an authorized School Admin session.');
+    text('actionStatus','Offline records are ready. Sync requires internet and an authorized School Admin or Teacher session.');
   }catch(error){text('actionStatus','Unlock failed: '+error.message,true);}
   finally{state.busy=false;render();}
 }
@@ -196,9 +203,9 @@ async function sync(automatic=false){
   if(state.busy||!state.data||!state.data.drafts.length||!online()||state.autoPaused&&automatic)return;
   state.busy=true;render();
   try{
-    if(!verifiedAdmin())throw Error('Sign in as the verified School Administrator before synchronizing.');
+    if(!authorizedWriter())throw Error('An active verified School Admin or Teacher login is required before synchronizing.');
     text('actionStatus','Checking cloud records for changes before uploading…');
-    const [students,attendance]=await Promise.all([LamaAPI.list('students'),LamaAPI.list('attendance')]);
+    const [students,attendance]=await Promise.all([readList('students'),readList('attendance')]);
     const serverRoster=normalizedStudents(students),serverIds=new Map(serverRoster.map(s=>[s.id,s]));
     let cloud=historyIndex(attendance,serverRoster);
     let verified=0,conflicts=0,uncertain=0;
@@ -221,12 +228,12 @@ async function sync(automatic=false){
       });
       let responseOk=false;
       try{
-        const result=await LamaAPI.bulkAttendance(date,records);
+        const result=await sendBulk(date,records);
         responseOk=Number(result?.saved)===records.length&&
           Number(result?.inserted||0)+Number(result?.updated||0)===records.length;
       }catch(_){/* Response is ambiguous: reread; never automatically repeat the write. */}
       try{
-        const latest=await LamaAPI.list('attendance');
+        const latest=await readList('attendance');
         cloud=historyIndex(latest,serverRoster);
         for(const draft of drafts){
           const k=keyFor(draft.date,draft.studentId);
@@ -253,18 +260,18 @@ function lock(){
   text('actionStatus','');render();
 }
 $('attDate').value=currentDate();
-if(session?.name||session?.schoolName)$('schoolName').textContent=session.name||session.schoolName;
+if(session?.name||session?.schoolName)$('schoolName').textContent=(session.schoolName||session.name)+' • '+(teacherMode?'Teacher offline register':'School Admin offline register');
 $('prepare').onclick=prepare;$('unlock').onclick=unlock;$('lock').onclick=lock;
 $('sync').onclick=()=>{state.autoPaused=false;sync(false);};
 $('refresh').onclick=prepare;
 $('attDate').onchange=render;$('attClass').onchange=render;$('attSearch').oninput=render;
-addEventListener('online',()=>{refreshConnectivity();if(state.data&&verifiedAdmin())sync(true);render();});
+addEventListener('online',()=>{refreshConnectivity();if(state.data&&authorizedWriter())sync(true);render();});
 addEventListener('offline',()=>{refreshConnectivity();render();});
 refreshConnectivity();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});
-if(!schoolId)text('status','Please sign in to your school on this device while online before preparing offline attendance.',true);
+if(!schoolId)text('status','Please sign in as your School Administrator or assigned Teacher on this device before preparing offline attendance.',true);
 else if(!isSecureContext||!crypto?.subtle||!('indexedDB'in window))
   text('status','This browser does not support secure offline storage. Use recent Chrome on HTTPS.',true);
-else readVault().then(v=>text('status',v?'Existing encrypted school records found. Enter your offline password and Unlock.':'No offline records saved. Sign in as School Admin and Prepare while connected.')).catch(e=>text('status',e.message,true));
+else readVault().then(v=>text('status',v?'Existing encrypted school records found. Enter your offline password and Unlock.':'No offline records saved. Sign in as School Admin or Teacher and Prepare while connected.')).catch(e=>text('status',e.message,true));
 render();
 })();

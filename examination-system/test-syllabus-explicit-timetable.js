@@ -17,4 +17,8 @@ for(const invalid of [[2,2],[5,2],[0,2],[1.5,2],[13]]) {
 }
 const legacy=scheduleApprovedDivision({lessons,calendar:{start:'2026-11-09',end:'2026-11-10',periodsByWeekday:{1:2,2:1}}});
 assert.deepEqual(legacy.assignments[0].slots,[{date:'2026-11-09',period:1}]);
+const omitted=scheduleApprovedDivision({lessons:[{lessonId:'ONLY-MON',estimatedPeriods:3}],calendar:{start:'2026-11-09',end:'2026-11-10',periodsByWeekday:{1:3,2:3},periodSlotsByWeekday:{1:[2,5]}}});
+assert.equal(omitted.feasible,false);
+assert.equal(omitted.availablePeriods,2);
+assert.deepEqual(omitted.assignments[0].slots,[{date:'2026-11-09',period:2},{date:'2026-11-09',period:5}]);
 console.log('explicit subject timetable tests passed');

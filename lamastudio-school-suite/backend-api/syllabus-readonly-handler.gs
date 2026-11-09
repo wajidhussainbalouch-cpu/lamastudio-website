@@ -18,6 +18,7 @@ var LamaSyllabusReadonlyHandler=(function(){
    throw Error('Only a valid planId may be requested');
   // The school ID comes exclusively from the authenticated server session.
   var stored=services.loadScopedPlan(context.schoolId,request.planId);
+  if(stored&&stored.planId!==request.planId)throw Error('Syllabus plan ID mismatch');
   if(!stored)throw Error('Syllabus plan not found');
   if(typeof LamaSyllabusReadonlyBridge==='undefined'||!LamaSyllabusReadonlyBridge.prepare)
    throw Error('Syllabus read-only bridge unavailable');

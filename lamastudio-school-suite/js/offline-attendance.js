@@ -118,6 +118,26 @@ function historyIndex(rows,roster){
   }
   return out;
 }
+function validateVaultData(data){
+  if(!data||data.schoolId!==schoolId||data.accountScope!==vaultId||
+    !Array.isArray(data.roster)||!Array.isArray(data.drafts)||
+    !data.history||typeof data.history!=='object'||Array.isArray(data.history)||
+    data.roster.length>5000||data.drafts.length>75000)
+    throw Error('Invalid or different-school offline vault');
+  const ids=new Set();
+  for(const student of data.roster){
+    const id=String(student?.id||'');
+    if(!id||ids.has(id))throw Error('Offline vault has missing or duplicate student IDs');
+    ids.add(id);
+  }
+  for(const draft of data.drafts){
+    if(!ids.has(String(draft?.studentId||''))||!validDate(draft.date)||
+      !['Present','Absent','Leave'].includes(draft.status)||
+      !['','Present','Absent','Leave'].includes(draft.baseStatus))
+      throw Error('Offline vault has invalid pending attendance');
+  }
+  return data;
+}
 function sameStudentId(a,b){return String(a.id)===String(b.id)&&String(a.enrlNo||'')===String(b.enrlNo||'');}
 function baseline(student,date){return state.data.history[keyFor(date,student.id)]||'';}
 function draftFor(student,date){return state.data.drafts.find(d=>d.date===date&&d.studentId===student.id);}
@@ -266,7 +286,7 @@ async function unlock(){
     try{const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(stored.iv)},key,unb64(stored.ciphertext));
       data=JSON.parse(new TextDecoder().decode(bytes));}
     catch(_){throw Error('Wrong offline password, or corrupted local records. No changes were made.');}
-    if(data.schoolId!==schoolId||data.accountScope!==vaultId||!Array.isArray(data.roster)||!Array.isArray(data.drafts))throw Error('Offline vault does not belong to this school');
+    validateVaultData(data);
     state.data=data;state.key=key;state.salt=unb64(stored.salt);
     $('offlinePass').value='';renderClassList();
     text('status','School records unlocked. '+data.drafts.length+' pending changes.');
@@ -375,22 +395,7 @@ async function restoreEncryptedBackup(){
       const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher);
       data=JSON.parse(new TextDecoder().decode(bytes));
     }catch(_){throw Error('Incorrect offline password or damaged encrypted backup');}
-    if(data?.schoolId!==schoolId||data?.accountScope!==vaultId||
-      !Array.isArray(data.roster)||!Array.isArray(data.drafts)||
-      data.roster.length>5000||data.drafts.length>75000)
-      throw Error('Backup has invalid or cross-school attendance data');
-    const ids=new Set();
-    for(const student of data.roster){
-      const sid=String(student?.id||'');
-      if(!sid||ids.has(sid))throw Error('Backup contains duplicate/invalid student IDs');
-      ids.add(sid);
-    }
-    for(const d of data.drafts){
-      if(!ids.has(String(d?.studentId||''))||!validDate(d.date)||
-         !['Present','Absent','Leave'].includes(d.status)||
-         !['','Present','Absent','Leave'].includes(d.baseStatus))
-        throw Error('Backup contains invalid pending attendance');
-    }
+    validateVaultData(data);
     const stored={schoolId:vaultId,version:1,salt:payload.salt,iv:payload.iv,
       ciphertext:payload.ciphertext,savedAt:new Date().toISOString()};
     await dbRequest('readwrite','put',stored);

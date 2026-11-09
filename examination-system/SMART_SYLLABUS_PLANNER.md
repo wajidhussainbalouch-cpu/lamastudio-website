@@ -629,3 +629,9 @@ Validation and release gate:
 - Verified missing `main`-branch intake files for Class 2 General Knowledge, Class 4 Urdu, Class 5 Urdu and Class 5 Mathematics (direct GitHub 404). Handoff contains Drive IDs for the first two; the latter two require source discovery.
 - Continue subject-by-subject textbook visual review and chapter/exercise mapping before creating immutable divisions. Do not infer lesson counts or period estimates from page counts. Class 5 English remains provisional, not approved.
 - No live backend connection, deployment or school-data mutation.
+
+## Multi-subject textbook intake readiness gate — 9 Nov 2026
+- Added `syllabus-intake-readiness.js` and `test-syllabus-intake-readiness.js`. Validates source identity, page count and class/subject matching for existing intake metadata formats, without treating registered PDF metadata as verified exercises or an approved division.
+- Explicitly returns `readyForScheduling:false` for intake-only records; textbook visual verification and school approval are still required.
+- Added regression test to `.github/workflows/syllabus-planner-tests.yml`; isolated JavaScript harness executed the committed test file successfully. Full GitHub Actions result remains unverified.
+- No deployment, live data access or mutation.

@@ -198,7 +198,8 @@ function validateVaultData(data){
   for(const draft of data.drafts){
     if(!ids.has(String(draft?.studentId||''))||!validDate(draft.date)||
       !['Present','Absent','Leave'].includes(draft.status)||
-      !['','Present','Absent','Leave'].includes(draft.baseStatus))
+      !['','Present','Absent','Leave'].includes(draft.baseStatus)||
+      (draft.syncIssue!==undefined&&!['conflict','student-changed','unverified'].includes(draft.syncIssue)))
       throw Error('Offline vault has invalid pending attendance');
   }
   return data;
@@ -225,7 +226,7 @@ function render(){
     filter=$('attFilter').value||'all';
   const draftMap=new Map(state.data.drafts.filter(d=>d.date===date).map(d=>[d.studentId,d]));
   const shown=state.data.roster.filter(s=>(!klass||s.className===klass)&&
-    (!query||(s.name+' '+s.enrlNo).toLowerCase().includes(query))&&
+    (!query||(s.name+' '+s.enrlNo+' '+s.id).toLowerCase().includes(query))&&
     (filter==='all'||(filter==='pending'&&draftMap.has(s.id))||
      (filter==='review'&&!!draftMap.get(s.id)?.syncIssue)));
   const rows=shown.slice(0,200);
@@ -452,7 +453,7 @@ function showNextReview(){
   if(!issue){text('actionStatus','No flagged records need review.');return;}
   $('attDate').value=issue.date;
   $('attClass').value='';
-  $('attSearch').value='';
+  $('attSearch').value=issue.studentId;
   $('attFilter').value='review';
   render();
   const student=state.data.roster.find(s=>s.id===issue.studentId);

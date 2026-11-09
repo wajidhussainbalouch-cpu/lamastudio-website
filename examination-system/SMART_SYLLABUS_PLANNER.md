@@ -512,3 +512,8 @@ Validation and release gate:
 - The calendar scheduler now accepts optional `periodSlotsByWeekday`, e.g. `{1:[2,5],2:[3]}`, to schedule a subject in its actual numbered school periods rather than assuming all subject periods start at period 1. Values must be ascending, distinct, integers 1–12. Days omitted from the explicit mapping retain the legacy `periodsByWeekday` capacity behavior. Holidays and closures still take precedence.
 - Added `test-syllabus-explicit-timetable.js` and CI step for nonconsecutive periods, holiday removal, invalid inputs and legacy compatibility.
 - The school's actual English period numbers are **not yet confirmed**. Do not approve the 176-period draft based on this new capability alone. This is not live teacher diary integration; CI results remain unverified and no production deployment or school data changes were made.
+
+## Explicit timetable omission policy — 9 Nov 2026
+- Corrected `periodSlotsByWeekday` semantics: when an explicit subject timetable is present, omitted weekdays have **zero subject periods**. The engine no longer silently falls back to `periodsByWeekday` for those omitted days. With no explicit timetable, the legacy count-based behavior remains unchanged.
+- Added a regression case verifying a Monday-only English timetable does not schedule English on Tuesday even if the general period-count map lists Tuesday capacity.
+- School English timetable and textbook exercise-level division remain unverified. CI run remains unconfirmed; no live deployment or school records changed.

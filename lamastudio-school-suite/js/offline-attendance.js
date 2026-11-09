@@ -224,13 +224,21 @@ function render(){
   const shown=state.data.roster.filter(s=>(!klass||s.className===klass)&&(!query||(s.name+' '+s.enrlNo).toLowerCase().includes(query)));
   const rows=shown.slice(0,200);
   $('rosterInfo').textContent=rows.length+' shown of '+shown.length+' matching students. Prepared: '+new Date(state.data.preparedAt).toLocaleString()+' (select a class for larger schools).';
-  $('queueInfo').textContent=state.data.drafts.length+' attendance changes stored on this device, awaiting server verification.';
+  const flagged=state.data.drafts.filter(d=>d.syncIssue==='conflict'||d.syncIssue==='student-changed').length;
+  const uncertainCount=state.data.drafts.filter(d=>d.syncIssue==='unverified').length;
+  $('queueInfo').textContent=state.data.drafts.length+' attendance changes stored on this device, awaiting server verification.'+
+    (flagged?' '+flagged+' need review because cloud records changed.':'')+
+    (uncertainCount?' '+uncertainCount+' had uncertain synchronization.':'');
   for(const student of rows){
     const row=document.createElement('div');row.className='student';
     const draft=draftFor(student,date);row.dataset.pending=draft?'true':'false';
+    row.dataset.syncIssue=draft?.syncIssue||'';
     const info=document.createElement('div'),name=document.createElement('div'),small=document.createElement('small');
     name.className='name';name.textContent=student.name;
-    small.textContent='Class '+student.className+(student.section?' / '+student.section:'')+' • '+(student.enrlNo||student.id)+(draft?' • PENDING SYNC':'');
+    const issue=draft?.syncIssue==='conflict'?' • NEEDS REVIEW: cloud attendance changed':
+      draft?.syncIssue==='student-changed'?' • NEEDS REVIEW: student record changed':
+      draft?.syncIssue==='unverified'?' • SYNC UNVERIFIED: keep this record':'';
+    small.textContent='Class '+student.className+(student.section?' / '+student.section:'')+' • '+(student.enrlNo||student.id)+(draft?' • PENDING SYNC':'')+issue;
     info.append(name,small);
     const group=document.createElement('div');group.className='choices';
     for(const choice of ['Present','Absent','Leave']){
@@ -376,10 +384,13 @@ async function sync(automatic=false){
     const byDate=new Map();
     for(const draft of state.data.drafts){
       const original=localIds.get(draft.studentId),current=serverIds.get(draft.studentId);
-      if(!original||!current||!sameStudentId(original,current)){conflicts++;continue;}
+      if(!original||!current||!sameStudentId(original,current)){
+        draft.syncIssue='student-changed';conflicts++;continue;
+      }
       const serverStatus=cloud[keyFor(draft.date,draft.studentId)]||'';
       if(serverStatus===draft.status){state.data.history[keyFor(draft.date,draft.studentId)]=draft.status;draft.verified=true;verified++;continue;}
-      if(serverStatus!==draft.baseStatus){conflicts++;continue;}
+      if(serverStatus!==draft.baseStatus){draft.syncIssue='conflict';conflicts++;continue;}
+      delete draft.syncIssue;
       if(!byDate.has(draft.date))byDate.set(draft.date,[]);
       byDate.get(draft.date).push(draft);
     }
@@ -408,9 +419,9 @@ async function sync(automatic=false){
           for(const draft of batch){
             const k=keyFor(draft.date,draft.studentId);
             if(cloud[k]===draft.status){draft.verified=true;state.data.history[k]=draft.status;verified++;}
-            else{unverifiedBatch++;}
+            else{draft.syncIssue='unverified';unverifiedBatch++;}
           }
-        }catch(_){unverifiedBatch=batch.length;}
+        }catch(_){batch.forEach(d=>{d.syncIssue='unverified';});unverifiedBatch=batch.length;}
         uncertain+=unverifiedBatch;
         state.data.drafts=state.data.drafts.filter(d=>!d.verified);
         await writeVault();

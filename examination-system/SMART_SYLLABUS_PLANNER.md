@@ -577,3 +577,8 @@ Validation and release gate:
 - `verifyApprovalLedger` now checks payload shape before computing a hash, returning `false` for missing, null or array payloads rather than throwing from the hashing implementation.
 - Added regression assertions for those malformed records in `test-syllabus-approval-ledger.js`.
 - Code and tests are committed, but no complete test-suite pass has been verified. Server authentication, persistence and production integration remain separate pending work; no school data changed.
+
+## Isolated Apps Script read-only bridge — 9 Nov 2026
+- Added `lamastudio-school-suite/backend-api/syllabus-readonly-bridge.gs`: a helper that prepares a sanitized legacy dated-plan view after a **server-authenticated** context supplies actor, school, active Examination grant and syllabus-view permission. It denies cross-school access and never labels legacy plans as immutable approved divisions.
+- Added `test-syllabus-readonly-bridge.js` covering permissions, school isolation, read-only behavior and malformed lesson slots. Wired it into syllabus CI and workflow path triggers.
+- **Integration boundary:** the bridge does not authenticate callers itself, load storage, register routes, write records or migrate plans. A future backend handler must derive context from a trusted session, authorize before loading scoped data, and apply version checks for any writes. Tests committed but no full CI pass verified; production untouched.

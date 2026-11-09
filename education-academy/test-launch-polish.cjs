@@ -47,5 +47,9 @@ assert.ok(html.includes('selectedPublicPaper'),'Missing paper should not trigger
 assert.ok(html.includes('id="benefitExamCount"'),'Public exam count should be dynamic');
 assert.ok(account.includes('reset-password.html'),'Candidate account recovery needs academy callback');
 assert.ok(exists('reset-password.html'),'Academy password recovery form missing');
+assert.ok(html.includes('name="confirmPassword"'),'Registration must ask users to confirm password');
+assert.ok(file('candidate-account-ui.js').includes('data.password!==data.confirmPassword'),'Registration must reject mismatched passwords');
+assert.ok(!html.includes('name="photo" type="file"'),'Inactive candidate photo upload must not pretend to save a file');
+
 assert.ok(!worker.includes("'./reset-password.html'"),'Password recovery callback should not be precached offline');
 console.log('Academy launch presentation checks passed: mobile polish, keyboard access, policy pages, public PWA and payment warning.');

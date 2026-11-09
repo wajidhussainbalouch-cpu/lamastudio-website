@@ -17,6 +17,7 @@ function extract(begin,end){
 const batchSource=extract('async function readPendingSnapshots(dates){','const sendBulk=');
 const syncSource=extract('async function sync(automatic=false){','function showNextReview(){');
 const reviewSource=extract('function showNextReview(){','async function downloadEncryptedBackup(){');
+const choiceSource=extract('async function setChoice(student,date,value){','async function prepare(){');
 const dateValue=x=>String(x||'').slice(0,10);
 const status=x=>['Present','Absent','Leave'].includes(x)?x:'';
 const normalizedStudents=rows=>rows.map(r=>({
@@ -109,6 +110,31 @@ function buildSyncScenario(mode){
  const run=new Function(...Object.keys(dependencies),syncSource+'return sync;')(...Object.values(dependencies));
  return {run,state,cloud,sent,messages,get writes(){return writes;}};
 }
+async function choiceSafetyTests(){
+ const student={id:'id42',name:'Student 42'};
+ const date='2026-11-09';
+ const draft={studentId:'id42',date,status:'Present',baseStatus:'',syncIssue:'conflict',serverStatus:'Absent'};
+ const state={busy:false,staleVault:false,data:{history:{},drafts:[draft]}};
+ let writes=0,notice='';
+ const ctx={
+  state,draftFor:(s,d)=>state.data.drafts.find(x=>x.studentId===s.id&&x.date===d),
+  validDate:()=>true,text:(_id,t)=>{notice=t;},keyFor:(d,id)=>d+'|'+id,
+  baseline:()=>'',writeVault:async()=>{writes++;},render:()=>{},
+  crypto:{randomUUID:()=>'new-draft-id'}
+ };
+ const setChoice=new Function(...Object.keys(ctx),choiceSource+'return setChoice;')(...Object.values(ctx));
+ await setChoice(student,date,'Absent');
+ assert.equal(writes,0,'Clicking a conflict cannot silently erase its review flag');
+ assert.equal(state.data.drafts[0].syncIssue,'conflict');
+ assert.ok(notice.includes('unresolved sync review'));
+ delete draft.syncIssue;delete draft.serverStatus;
+ await setChoice(student,date,'Present');
+ assert.equal(writes,0,'Same attendance choice should not rewrite a local draft');
+ await setChoice(student,date,'Absent');
+ assert.equal(writes,1,'Changing a clear draft should save encrypted local work');
+ assert.equal(state.data.drafts.length,1);
+ assert.equal(state.data.drafts[0].status,'Absent');
+}
 function reviewNavigationTests(){
  const state={busy:false,staleVault:false,reviewCursor:null,data:{
    drafts:[{studentId:'id495',date:'2026-10-02',syncIssue:'conflict'},
@@ -175,6 +201,7 @@ async function syncTests(){
 (async()=>{
  await snapshotTests();
  await syncTests();
+ await choiceSafetyTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation, account switching and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation, account switching, blocked unsafe draft edits and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

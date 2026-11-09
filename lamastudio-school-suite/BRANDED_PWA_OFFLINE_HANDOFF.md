@@ -30,8 +30,10 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 - Initial online preparation downloads a minimal student roster and attendance statuses using a verified **school administrator** or an authenticated **teacher session**. Teacher reads and bulk writes use explicit teacher credentials, with class/section scoping enforced by the existing backend.
 - When offline, mark Present, Absent or Leave for selected students/dates. Changes are encrypted locally before a saved confirmation is shown; no server success is falsely reported.
 - Each school admin and teacher account has its own separate per-device encrypted vault. When online, synchronization rereads authorized server students and attendance and compares each queued record's `baseStatus` with the current server status. Changed school records are treated as conflicts rather than overwritten. The existing `bulkAttendance` endpoint upserts and validates school/teacher scope; the offline client rereads attendance to confirm each write before removing it from its encrypted queue. Ambiguous server responses do not trigger blind retries.
+- `backend-api/bulk-attendance-backend.gs`: optional lock-held offline `baseStatus` check (legacy online callers unchanged).
 - `backend-api/code.gs`: fixes the bulk-attendance audit actor for a verified teacher **before** the write, preventing a missing actor from falsely reporting an already-committed save as failed.
 - `portals/teacher/index.html` links to the free offline attendance workspace.
+- A queued local draft can be explicitly discarded after a confirmation; otherwise conflicts remain encrypted and are not silently overwritten.
 - The service worker `sw.js` caches only the static offline page and scripts, version `lama-school-static-v4`; network requests and school data remain out of SW Cache Storage.
 - Both School Settings and administrator Dashboard include a link. Offline work is not premium.
 
@@ -62,7 +64,7 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 3. On a disposable test school, check Super Admin deny/allow/revoke and that a normal school cannot approve itself; verify that GET public branding returns 403-like application denial for an unapproved school and contains no secrets.
 4. Deploy frontend/serverless only with owner approval and Vercel quota available; confirm installation page and PNG icons via real HTTPS requests. Do not independently trigger production deployment when quota is blocked.
 5. On two Android phones and one iPhone, verify per-school app name/icon for two different schools, reinstallation behavior, scope/isolation, and role logins. Test missing/corrupt logos, revoked permission, and new vs existing installed apps.
-6. Prepare an isolated test roster, disable network, mark attendance over multiple days, force-close/reopen, unlock, reconnect, sync, reload, and compare each row in actual Sheets. Test two-device conflicts, timeouts, rejected sessions, duplicated enrollment, blocked schools, and phone storage clearing.
+6. Prepare an isolated test roster, disable network, mark attendance over multiple days, force-close/reopen, unlock, reconnect, sync, reload, and compare each row in actual Sheets. Include a deliberately racing second device and verify server-side baseline conflicts reject the whole stale batch. Test two-device conflicts, timeouts, rejected sessions, duplicated enrollment, blocked schools, and phone storage clearing.
 7. Check encrypted IndexedDB is the only storage of offline records, and Cache Storage contains only static assets. Have a recovery policy for pending offline changes before schools rely on this in production.
 8. Extend offline record types only after backend idempotency and role-scoped authorization are reviewed. Keep unsynced drafts visible until confirmed.
 

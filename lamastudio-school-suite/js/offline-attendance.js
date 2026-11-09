@@ -25,7 +25,7 @@ function validatedSnapshot(snapshot){
   return snapshot;
 }
 const sendBulk=(date,records)=>teacherMode?LamaAPI.teacherOfflineBulkAttendance(date,records):LamaAPI.bulkAttendance(date,records);
-const state={data:null,key:null,salt:null,busy:false,autoPaused:false};
+const state={data:null,key:null,salt:null,busy:false,autoPaused:false,storeVersion:null,staleVault:false};
 const schoolAccount=LamaAPI.getSession('school'),teacherAccount=LamaAPI.getSession('teacher');
 if(schoolAccount&&teacherAccount){
  const chooser=$('roleSwitch');chooser.hidden=false;
@@ -73,6 +73,31 @@ async function dbRequest(mode,method,arg){
   });
 }
 const readVault=()=>dbRequest('readonly','get',vaultId);
+/**
+ * IndexedDB compare-and-set in one readwrite transaction. If the same account
+ * is opened in two tabs, the second tab cannot overwrite changes saved first.
+ */
+async function saveVaultCas(record,expectedCiphertext){
+  const db=await database();
+  return new Promise((resolve,reject)=>{
+    let stale=false,finished=false;
+    const tx=db.transaction('vaults','readwrite'),store=tx.objectStore('vaults');
+    const current=store.get(vaultId);
+    current.onsuccess=()=>{
+      const actual=current.result?.ciphertext||null;
+      if(actual!==expectedCiphertext){stale=true;tx.abort();return;}
+      store.put(record);
+    };
+    tx.oncomplete=()=>{finished=true;db.close();resolve(record.ciphertext);};
+    tx.onabort=()=>{
+      if(finished)return;
+      finished=true;db.close();
+      reject(stale?Error('OFFLINE_VAULT_CHANGED: Another tab changed this school register. Lock and unlock to reload it; no newer records were overwritten.'):
+        (tx.error||Error('Could not save local school records')));
+    };
+    tx.onerror=()=>{};
+  });
+}
 async function derive(password,salt){
   const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
@@ -82,7 +107,13 @@ async function writeVault(){
   const iv=crypto.getRandomValues(new Uint8Array(12));
   const bytes=new TextEncoder().encode(JSON.stringify(state.data));
   const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},state.key,bytes);
-  await dbRequest('readwrite','put',{schoolId:vaultId,version:1,salt:b64(state.salt),iv:b64(iv),ciphertext:b64(ciphertext),savedAt:new Date().toISOString()});
+  const record={schoolId:vaultId,version:1,salt:b64(state.salt),iv:b64(iv),
+    ciphertext:b64(ciphertext),savedAt:new Date().toISOString()};
+  try{state.storeVersion=await saveVaultCas(record,state.storeVersion);}
+  catch(error){
+    if(String(error.message||'').startsWith('OFFLINE_VAULT_CHANGED:'))state.staleVault=true;
+    throw error;
+  }
 }
 function passphrase(){
   const value=$('offlinePass').value;
@@ -144,8 +175,8 @@ function draftFor(student,date){return state.data.drafts.find(d=>d.date===date&&
 function chosen(student,date){return draftFor(student,date)?.status||baseline(student,date);}
 function refreshConnectivity(){text('onlineFlag',online()?'● Internet appears available':'● Offline — data will stay on this phone');}
 function render(){
-  const unlocked=!!state.data,ready=unlocked&&!state.busy;
-  $('prepare').disabled=state.busy||!online();
+  const unlocked=!!state.data,ready=unlocked&&!state.busy&&!state.staleVault;
+  $('prepare').disabled=state.busy||state.staleVault||!online();
   $('unlock').disabled=state.busy;
   $('lock').disabled=!unlocked||state.busy;
   $('backup').disabled=!ready;
@@ -222,7 +253,7 @@ async function markVisiblePresent(){
   }finally{state.busy=false;render();}
 }
 async function discardLocal(student,date){
-  if(state.busy||!state.data||!draftFor(student,date))return;
+  if(state.busy||state.staleVault||!state.data||!draftFor(student,date))return;
   if(!confirm('Discard this unsynchronized attendance change for '+student.name+' on '+date+'? This cannot be undone. The server record will not be changed.'))return;
   state.busy=true;const old=state.data.drafts.slice();
   try{
@@ -233,7 +264,7 @@ async function discardLocal(student,date){
   finally{state.busy=false;render();}
 }
 async function setChoice(student,date,value){
-  if(state.busy||!state.data)return;
+  if(state.busy||state.staleVault||!state.data)return;
   if(!validDate(date)){text('actionStatus','Choose a valid attendance date.',true);return;}
   state.busy=true;
   const old=state.data.drafts.slice(),k=keyFor(date,student.id),base=baseline(student,date);
@@ -266,6 +297,7 @@ async function prepare(){
       await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(existing.iv)},key,unb64(existing.ciphertext));
     }
     const prior={...state};
+    state.storeVersion=existing?.ciphertext||null;
     state.data={schoolId,accountScope:vaultId,roster,history,drafts:[],preparedAt:new Date().toISOString()};
     state.salt=salt;state.key=key;
     try{await writeVault();}catch(error){Object.assign(state,prior);throw error;}
@@ -288,6 +320,7 @@ async function unlock(){
     catch(_){throw Error('Wrong offline password, or corrupted local records. No changes were made.');}
     validateVaultData(data);
     state.data=data;state.key=key;state.salt=unb64(stored.salt);
+    state.storeVersion=stored.ciphertext;state.staleVault=false;
     $('offlinePass').value='';renderClassList();
     text('status','School records unlocked. '+data.drafts.length+' pending changes.');
     text('actionStatus','Offline records are ready. Sync requires internet and an authorized School Admin or Teacher session.');
@@ -295,7 +328,7 @@ async function unlock(){
   finally{state.busy=false;render();}
 }
 async function sync(automatic=false){
-  if(state.busy||!state.data||!state.data.drafts.length||!online()||state.autoPaused&&automatic)return;
+  if(state.busy||state.staleVault||!state.data||!state.data.drafts.length||!online()||state.autoPaused&&automatic)return;
   state.busy=true;render();
   try{
     if(!authorizedWriter())throw Error('An active verified School Admin or Teacher login is required before synchronizing.');
@@ -409,7 +442,7 @@ async function restoreEncryptedBackup(){
 }
 function lock(){
   if(state.busy)return;
-  state.key=null;state.salt=null;state.data=null;
+  state.key=null;state.salt=null;state.data=null;state.storeVersion=null;state.staleVault=false;
   $('offlinePass').value='';$('students').replaceChildren();
   text('status','Locked. Offline attendance remains encrypted on this device.');
   text('actionStatus','');render();

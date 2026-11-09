@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 1
+# LAMA Coding Academy — MVP 2 (industry practice expansion)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -44,3 +44,39 @@ Take complete beginners from uncertainty to working, explainable code by repeati
 
 ## Deployment note
 Changes deliberately live in a feature branch so existing deployment quota and production app flows are not disturbed. Merge and deploy only after review. Recommended canonical route after deployment: https://www.lamastudio.pk/coding-academy/
+
+
+## Second learning stage — 18 practical challenges
+
+New route: [Industry Practice Labs](./practice.html), linked from the learner dashboard.
+
+Six hands-on **JavaScript** business cases are tested by code execution in a sandboxed iframe. Each includes three independent cases, including boundary and empty-value checks: billing totals, attendance rates, pass thresholds, inventory alerts, case-insensitive student search and readable record labels.
+
+Six **SQL** exercises query built-in example school/office datasets. A deterministic, read-only teaching simulator supports a **small SQL subset**: SELECT chosen columns, one WHERE comparison, ORDER BY, LIMIT, COUNT(*), SUM and AVG. Query output must match the mission's reference result. This is **not a complete SQL engine**; it does not support JOIN, GROUP BY, writes, multiple conditions, or production database operations.
+
+Six **Python** syntax drills guide learners through print, variables, functions, if statements, loops and dictionaries. These are intentionally marked **non-executable**; the app checks specific syntax patterns and shows a teaching output. Students must use a real Python interpreter to verify real behavior and edge cases.
+
+All 18 exercises save drafts and pass status in browser localStorage, provide hints and downloadable source code, and are cached for offline use after a successful online load where supported.
+
+Progress in the 18-lab track is separate from the 12-lesson foundation track. **Total authored introductory activities: 30.**
+
+### Run repeatable checks
+
+From the repository root:
+
+    node coding-academy/tests/practice.test.cjs
+
+GitHub Actions workflow: .github/workflows/coding-academy-checks.yml, scoped to changes under coding-academy/** and manual dispatch. No external packages, credentials, or deploy job are required.
+
+**Current limitations:** The JavaScript runner is intended for short, trusted learning exercises; a sandbox limits origin access, but malicious or infinite-loop code can still affect the device or spoof local results. No proctored exams, code certification, remote grading, teacher review, student accounts, Python runtime, real SQL database, or cross-device synchronization has been implemented. No paid or private course data is stored.
+
+### Manual release checks still needed
+
+1. Open /coding-academy/practice.html on desktop and Android browsers.
+2. Verify all 6 JavaScript examples fail before edits and pass using correct solutions; check invalid syntax, too-large source and timeout reporting.
+3. Verify the 6 SQL starters produce different results from the target, and correct queries pass; injection-like/multiple statements are rejected.
+4. Verify Python "syntax only" explanation is clear and no execution is claimed.
+5. Check next/back challenge navigation, track switching, draft saves after refresh, local pass counts, download extensions and keyboard controls.
+6. Test a low-memory Android phone and desktop browser for offline cache install/update behavior.
+7. Manually inspect accessibility (screen reader, contrast, mobile keyboard resizing) and runtime CSP behavior.
+8. Reconcile latest main-branch commits before merging; production remains unchanged until a reviewed merge/deploy.

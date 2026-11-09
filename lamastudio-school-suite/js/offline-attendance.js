@@ -24,6 +24,36 @@ function validatedSnapshot(snapshot){
     throw Error('Invalid or cross-school attendance snapshot returned');
   return snapshot;
 }
+/**
+ * The server permits up to 90 explicit dates per request. Batch a longer offline
+ * history without dropping drafts. Duplicate 31-day history is deduplicated, and
+ * any roster/status changes between batches stop the sync before upload.
+ */
+async function readPendingSnapshots(dates){
+  const unique=[...new Set(dates)].sort();
+  if(!unique.length)return validatedSnapshot(await readSnapshot([]));
+  let combined=null,rosterFingerprint=null;
+  const records=new Map();
+  for(let index=0;index<unique.length;index+=90){
+    const snapshot=validatedSnapshot(await readSnapshot(unique.slice(index,index+90)));
+    const normalized=normalizedStudents(snapshot.students).sort((a,b)=>a.id.localeCompare(b.id));
+    const fingerprint=JSON.stringify(normalized);
+    if(rosterFingerprint!==null&&rosterFingerprint!==fingerprint)
+      throw Error('Student roster changed during offline synchronization. Keep drafts; refresh and try again.');
+    if(rosterFingerprint===null){combined=snapshot;rosterFingerprint=fingerprint;}
+    for(const row of snapshot.attendance){
+      const date=dateValue(row?.date),studentId=String(row?.studentId||'').trim(),
+        enrl=String(row?.enrlNo||'').trim(),attendanceStatus=status(row?.status);
+      if(!date||!attendanceStatus)continue;
+      const key=date+'|'+(studentId?'id:'+studentId:'enrl:'+enrl);
+      const prior=records.get(key);
+      if(prior&&prior.status!==attendanceStatus)
+        throw Error('Attendance changed while loading offline sync history. Keep drafts and retry.');
+      records.set(key,{date,studentId,enrlNo:enrl,status:attendanceStatus});
+    }
+  }
+  return {...combined,attendance:[...records.values()]};
+}
 const sendBulk=(date,records)=>teacherMode?LamaAPI.teacherOfflineBulkAttendance(date,records):LamaAPI.bulkAttendance(date,records);
 const state={data:null,key:null,salt:null,busy:false,autoPaused:false,storeVersion:null,staleVault:false};
 const schoolAccount=LamaAPI.getSession('school'),teacherAccount=LamaAPI.getSession('teacher');
@@ -300,7 +330,7 @@ async function prepare(){
     state.storeVersion=existing?.ciphertext||null;
     state.data={schoolId,accountScope:vaultId,roster,history,drafts:[],preparedAt:new Date().toISOString()};
     state.salt=salt;state.key=key;
-    try{await writeVault();}catch(error){Object.assign(state,prior);throw error;}
+    try{await writeVault();}catch(error){const stale=state.staleVault;Object.assign(state,prior);if(stale)state.staleVault=true;throw error;}
     $('offlinePass').value='';
     renderClassList();
     if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
@@ -333,14 +363,15 @@ async function sync(automatic=false){
   try{
     if(!authorizedWriter())throw Error('An active verified School Admin or Teacher login is required before synchronizing.');
     text('actionStatus','Checking cloud records for changes before uploading…');
-    const snapshot=validatedSnapshot(await readSnapshot([...new Set(state.data.drafts.map(d=>d.date))]));
+    const snapshot=await readPendingSnapshots(state.data.drafts.map(d=>d.date));
     const {students,attendance}=snapshot;
     const serverRoster=normalizedStudents(students),serverIds=new Map(serverRoster.map(s=>[s.id,s]));
+    const localIds=new Map(state.data.roster.map(s=>[s.id,s]));
     let cloud=historyIndex(attendance,serverRoster);
     let verified=0,conflicts=0,uncertain=0;
     const byDate=new Map();
     for(const draft of state.data.drafts){
-      const original=state.data.roster.find(s=>s.id===draft.studentId),current=serverIds.get(draft.studentId);
+      const original=localIds.get(draft.studentId),current=serverIds.get(draft.studentId);
       if(!original||!current||!sameStudentId(original,current)){conflicts++;continue;}
       const serverStatus=cloud[keyFor(draft.date,draft.studentId)]||'';
       if(serverStatus===draft.status){state.data.history[keyFor(draft.date,draft.studentId)]=draft.status;draft.verified=true;verified++;continue;}

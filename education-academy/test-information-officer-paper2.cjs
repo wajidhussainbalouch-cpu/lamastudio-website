@@ -61,5 +61,5 @@ for(const file of ['index.html','print.html','answer-key.html','sw.js']){
  for(let i=1;i<=4;i++)assert.ok(data.includes('information-officer-02-part'+i+'.js'),'missing part '+i+' in '+file);
  assert.ok(data.includes('information-officer-02-register.js'),'missing register in '+file);
 }
-assert.ok(fs.readFileSync(path.join(root,'sw.js'),'utf8').includes('lama-ppsc-preview-v83'));
+assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/lama-ppsc-preview-v\d+/,'public PWA must retain versioned cache');
 console.log('Information Officer Paper 02: all 100 MCQs, rotated keys, distinct job, previous papers and offline assets passed');

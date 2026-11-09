@@ -478,3 +478,9 @@ Validation and release gate:
 - Added `examination-system/syllabus-published-diary-gate.js` with regression tests in CI. The read-only gate verifies snapshot integrity and ID, approval ledger chain ending in publication, matching school/class/subject/session, a versioned schedule referencing the same snapshot, and a supplied teacher class assignment or school admin/owner role before calling the diary projection.
 - This helper is **not a production security boundary**: actor, roles and assigned classes must come from server-verified sessions and the current school registry, never browser input. The ledger head and approved snapshot must be fetched from trusted storage; the ledger chain alone cannot establish authenticity.
 - Pending: authenticated Apps Script/backend endpoint, school/section permissions, audit persistence, real teacher diary UI, verified Class 5 English exercises and subject timetable. CI execution is unverified; no deployment or school data change.
+
+## Same-day completed lesson chronology fix — 9 Nov 2026
+- Calendar engine now excludes available slots at or before the latest recorded completed period on the latest completed teaching date, preventing unfinished lessons from being placed earlier on that same day. Historical completed slots remain unchanged.
+- Added `examination-system/test-syllabus-same-day-progress.js` to CI and removed a duplicate capacity audit workflow step.
+- This handles the common case of completed lessons with stored historical slots. For completed lessons without precise period records, same-day ordering cannot be established; backend should require verified period-level progress before automatic same-day reflow.
+- GitHub commits are complete, but CI results and production integration are not yet verified. No live deployment or school records changed.

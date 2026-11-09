@@ -19,20 +19,21 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 - `js/api-client.js`: authenticated school-status method and explicit teacher-scoped read/bulk attendance methods that do not fall back to a school-admin session.
 
 **School installation**
-- `settings.html`: permission-aware guidance and link to `install-school.html?schoolId=...`, hidden when not approved.
-- `install-school.html`: dedicated school installer/launcher; profile and link visible only if public approved endpoint succeeds.
+- `settings.html`: permission-aware three-step guidance, approved school installation link, and one-tap copy/share link (hidden unless Super Admin approval and school logo are verified).
+- `install-school.html`: dedicated school installer/launcher; manifest and icon link are placed in the document head for browser install discovery, but install CTA remains locked until approval response succeeds. Offline reopening displays previously verified public school name only, without promising reauthorization.
 - `api/school-pwa.js`: Vercel Node serverless endpoint at `/api/school-pwa`, with `kind=profile|manifest|icon`, reading only the approved **public** Apps Script identity. `manifest` uses a stable school-specific `id` and `start_url`, with 192/512 PNG icons from the school's uploaded logo, rendered by `sharp`.
 - Root `package.json` adds pinned `sharp`. Requires Node 20.9+ and a Vercel build check. This is not currently deployed.
 
 **Free offline attendance**
 - `attendance/offline-attendance.html`: school-admin and assigned-class teacher workspace for preparing, marking, reviewing and synchronizing.
 - `js/offline-attendance.js`: encrypted, per-school/per-account IndexedDB vault. PBKDF2-SHA256 key derivation (250k iterations), AES-GCM, offline password held only in memory. The service worker never caches private API responses or plaintext student records.
-- Initial online preparation downloads a minimal student roster and attendance statuses using a verified **school administrator** or an authenticated **teacher session**. Teacher reads and bulk writes use explicit teacher credentials, with class/section scoping enforced by the existing backend.
+- Initial online preparation downloads a **minimal role-scoped snapshot** with school/teacher authorization and no passwords, CNICs, profile photos or other unrelated fields. Teacher reads and bulk writes use explicit teacher credentials with class/section scoping enforced on the server. The snapshot returns recent attendance (about 31 days) plus up to 90 explicitly requested historical dates needed to verify pending drafts, instead of transferring all historical school records.
 - When offline, mark Present, Absent or Leave for selected students/dates. Changes are encrypted locally before a saved confirmation is shown; no server success is falsely reported.
 - Each school admin and teacher account has its own separate per-device encrypted vault. When online, synchronization rereads authorized server students and attendance and compares each queued record's `baseStatus` with the current server status. Changed school records are treated as conflicts rather than overwritten. Additionally, the bulk backend checks an optional `baseStatus` precondition **under the same lock as the write** so a second-device change between fetch and save rejects the whole stale batch. The existing `bulkAttendance` endpoint upserts and validates school/teacher scope; the offline client rereads attendance to confirm each write before removing it from its encrypted queue. Ambiguous server responses do not trigger blind retries.
+- `backend-api/offline-attendance-snapshot.gs`: new read-only `offlineAttendanceSnapshot` handler. POST only, requires a verified school administrator or authenticated assigned-class teacher; limits students and returned attendance; no school data writes.
 - `backend-api/bulk-attendance-backend.gs`: optional lock-held offline `baseStatus` check (legacy online callers unchanged).
 - `backend-api/code.gs`: fixes the bulk-attendance audit actor for a verified teacher **before** the write, preventing a missing actor from falsely reporting an already-committed save as failed.
-- `portals/teacher/index.html` links to the free offline attendance workspace.
+- `portals/teacher/index.html` links to the free offline attendance workspace using an explicit teacher role. The offline page offers a role switch when a shared device has both school-admin and teacher sessions.
 - A queued local draft can be explicitly discarded after a confirmation; otherwise conflicts remain encrypted and are not silently overwritten.
 - The service worker `sw.js` caches only the static offline page and scripts, version `lama-school-static-v4`; network requests and school data remain out of SW Cache Storage.
 - Both School Settings and administrator Dashboard include a link. Offline work is not premium.
@@ -40,9 +41,9 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 ## Security boundaries / limitations
 
 - This is **not** a fully audited secure offline system. The local encrypted vault protects cached records at rest against casual inspection but is not a substitute for device encryption and screen locks. Losing the offline password, clearing site data, browser eviction, uninstalling the PWA, or losing the device can destroy **unsynchronized** edits. Train schools to sync daily when possible.
-- The offline password is per browser/device. A school must prepare each phone separately online. Admin session is required again for synchronization; offline entries are not server-validated until synced.
+- The offline password is per browser/device. A school must prepare each phone separately online. An authenticated school-admin or teacher session is required again for synchronization; offline entries are not server-validated until synced.
 - Local sync currently covers **student attendance for school administrators and assigned-class teachers**. The teacher path and its audit-actor fix are only source-implemented: **not yet integration-tested**. Offline admissions, diary, finance, examinations and other record types require separate scoped queues, server idempotency/audit, conflict policies, and separate tests. Do NOT claim all modules are offline-ready.
-- Browser `navigator.onLine` is only an availability hint; backend fetch/verification decides success. Automatic sync occurs while the page is open, unlocked and has an admin session. The **Sync now** control remains required; no promise of reliable background sync after closing the app.
+- Browser `navigator.onLine` is only an availability hint; backend fetch/verification decides success. Automatic sync occurs while the page is open, unlocked and has an appropriate school-admin or teacher session. The **Sync now** control remains required; no promise of reliable background sync after closing the app.
 - Offline queued records are not available in other portals until the backend verifies them.
 - The publicly accessible premium app icon/name is intentionally public after Super Admin approval. No school emails, student data, keys or private registry fields are exposed by `getPublicSchoolPwa`.
 - A Super Admin revocation prevents new authorized manifest/icon fetches; it cannot remotely remove an app icon already installed on an individual's phone.
@@ -54,13 +55,13 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 
 - JavaScript syntax parsing passed for the changed `code.gs`, `super-admin-app/app.js`, `js/api-client.js`, new `api/school-pwa.js`, `js/offline-attendance.js`, `sw.js` and the inline `settings.html` scripts.
 - Nine **in-memory mock tests** passed for Super Admin-only approval, default deny, per-school isolation, public-field redaction, revoke, wrong credentials and blocked schools. Six mocked serverless handler checks passed (manifest/identity/icon requests and invalid argument denial). These mocks are **not** end-to-end or live browser tests.
-- Added a runnable Node mock test: `node lamastudio-school-suite/backend-api/test-school-pwa-approvals.cjs`. CI execution is not verified.
+- Runnable Node mock tests: `node lamastudio-school-suite/backend-api/test-school-pwa-approvals.cjs` and `node lamastudio-school-suite/backend-api/test-offline-attendance-backend.cjs`. The latter's exact file passed an isolated mocked execution (teacher scope, stale-write prevention, role authorization, privacy and history filtering). **No live Apps Script or browser/device test.**
 - **No Apps Script version deployment, production school record modification, Vercel build or real-device test occurred.**
 
 ## Release gates — all mandatory
 
 1. Review branch diff and root package impact (Vercel Node runtime + `sharp`). Run Node syntax and mock tests after checking out branch; verify serverless manifest/PNG outputs with a safe non-production Apps Script deployment.
-2. Back up the actual active Apps Script project, then **merge** the matching `code.gs` routes and the entire `school-pwa-approvals.gs` into that SAME project. Do not replace or reset other live modules. Publish a **new version of the existing web-app deployment**; never assume GitHub commits update Apps Script.
+2. Back up the actual active Apps Script project, then **merge** the matching `code.gs` routes, `school-pwa-approvals.gs`, `offline-attendance-snapshot.gs` and updated `bulk-attendance-backend.gs` into that SAME project. Do not replace or reset other live modules. Publish a **new version of the existing web-app deployment**; never assume GitHub commits update Apps Script.
 3. On a disposable test school, check Super Admin deny/allow/revoke and that a normal school cannot approve itself; verify that GET public branding returns 403-like application denial for an unapproved school and contains no secrets.
 4. Deploy frontend/serverless only with owner approval and Vercel quota available; confirm installation page and PNG icons via real HTTPS requests. Do not independently trigger production deployment when quota is blocked.
 5. On two Android phones and one iPhone, verify per-school app name/icon for two different schools, reinstallation behavior, scope/isolation, and role logins. Test missing/corrupt logos, revoked permission, and new vs existing installed apps.
@@ -71,3 +72,13 @@ Updated: 2026-11-09. **Status: development branch; NOT deployed, NOT production 
 ## Safe continuation
 
 Use the feature branch and **draft PR** for review. Do not merge into `main` or claim the feature is live until server/backend/client versions are coordinated. Current school attendance stability has priority. Production student databases must never be used for destructive testing.
+
+## 2026-11-09 continuation — optimized offline snapshot and installation safeguards
+
+- New backend module `backend-api/offline-attendance-snapshot.gs` and a POST-only protected handler in `code.gs` return a minimal 31-day school/teacher-scoped attendance snapshot and explicit pending-date lookups (max 90 requested dates, 75,000 attendance statuses). The server still reads the relevant Google Sheet tabs; reducing the mobile response does not prove total backend latency is fixed.
+- Offline client now uses this snapshot for initial preparation, conflict preflight and post-save verification, rather than downloading full attendance history into each rural phone.
+- Explicit role links, in-page selector on shared devices, validation that a returned snapshot matches the logged-in school and role, and refusal to cache empty or incomplete rosters.
+- PWA installer puts school-specific manifest and icons in the document head and shows the install CTA only on verified premium approval. Settings adds copy-link sharing.
+- Vercel `vercel.json` includes a 25-second function duration limit for school icon generation; `sharp@0.35.5` is published and requires Node.js 20.9+. Vercel build/settings still need real verification.
+- `test-offline-attendance-backend.cjs` passed in an isolated mocked runtime using the exact committed source, covering attendance write conditions and snapshot restrictions. A real device/browser + test-school end-to-end run is still outstanding.
+- **This change remains draft PR #84. No merge, Apps Script deployment, Vercel production deployment, school data migration, or billing mutation.**

@@ -30,18 +30,37 @@
   const source=templates.find(t=>t.match.test(role));
   const fromCatalog=chosen&&chosen.subjects.length?chosen.subjects:null;
   const topics=fromCatalog||source&&source.topics||generic;
+  const evidence=chosen&&chosen.syllabusEvidence&&chosen.syllabusEvidence.status==='screenshot-transcribed'?chosen.syllabusEvidence:null;
   const h=document.createElement('h3');h.textContent=role;
   const status=document.createElement('p');status.className='syllabus-status';
-  status.textContent='Academy-suggested topics — not an official PPSC syllabus';
+  status.textContent=evidence?'PPSC screenshot syllabus transcribed · original PDF verification pending':'Academy-suggested topics — not an official PPSC syllabus';
   const info=document.createElement('p');
-  info.textContent=fromCatalog?
+  info.textContent=evidence?
+   'This outline follows the PPSC written-test syllabus screenshot provided for this particular job. It does not confirm a current vacancy, official case-document download, or independently checked detailed subtopics.':fromCatalog?
    'These preparation topics are linked to the academy job catalog. Verify every subject and weighting against the official syllabus for your case number.':
    source?'Suggested topics for this kind of post. Verify the exact official PPSC syllabus before relying on this outline.':
    'No verified syllabus is stored for this post. This is general preparation guidance until official case-specific details are reviewed.';
   const list=document.createElement('ul');
   topics.forEach(topic=>{const li=document.createElement('li');li.textContent=topic;list.append(li)});
-  const advice=document.createElement('p');advice.textContent='Suggested approach: check the official advertisement, create subject notes, practise topic-wise MCQs, and revise mistakes. No official paper pattern is implied.';
-  out.append(h,status,info,list,advice);
+  let pattern=null;
+  if(evidence){
+   pattern=document.createElement('section');
+   pattern.className='uploaded-syllabus-details';
+   const summary=document.createElement('p');
+   summary.textContent='Written test: '+(evidence.marks==null?'marks not stated':evidence.marks+' marks')+' · '+(evidence.minutes==null?'duration not stated':evidence.minutes+' minutes')+'.';
+   const heading=document.createElement('strong');heading.textContent='Screenshot syllabus distribution';
+   const sections=document.createElement('ul');
+   for(const part of evidence.sections||[]){
+    const row=document.createElement('li');
+    const pct=part.percent==null?'percentage not specified':part.percent+'%';
+    row.textContent=part.title+' — '+pct+'. '+(part.topics||[]).join(', ');
+    sections.append(row);
+   }
+   pattern.append(summary,heading,sections);
+   if(evidence.note){const note=document.createElement('p');note.textContent=evidence.note;pattern.append(note)}
+  }
+  const advice=document.createElement('p');advice.textContent=evidence?'Next: review this screenshot-backed outline, study the exact listed areas, then take a job-specific paper once it is published. Verify the original PPSC case document before relying on exam weightings.':'Suggested approach: check the official advertisement, create subject notes, practise topic-wise MCQs, and revise mistakes. No official paper pattern is implied.';
+  out.append(h,status,info,...(pattern?[pattern]:[]),list,advice);
   const search='site:ppsc.gop.pk syllabus '+role+(chosen&&chosen.caseNo?' '+chosen.caseNo:'');
   official.href='https://www.google.com/search?q='+encodeURIComponent(search);
   official.textContent='Search official PPSC pages for '+role;

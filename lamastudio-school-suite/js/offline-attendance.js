@@ -222,7 +222,7 @@ function renderClassList(){
   select.value=classes.includes(before)?before:'';
 }
 async function markVisiblePresent(){
-  if(state.busy||!state.data)return;
+  if(state.busy||state.staleVault||!state.data)return;
   const date=$('attDate').value;
   if(!validDate(date)){text('actionStatus','Choose a valid attendance date.',true);return;}
   const klass=$('attClass').value,query=$('attSearch').value.trim().toLowerCase();
@@ -382,7 +382,7 @@ async function sync(automatic=false){
   finally{state.busy=false;render();}
 }
 async function downloadEncryptedBackup(){
-  if(state.busy||!state.data)return;
+  if(state.busy||state.staleVault||!state.data)return;
   state.busy=true;render();
   try{
     const vault=await readVault();
@@ -431,8 +431,12 @@ async function restoreEncryptedBackup(){
     validateVaultData(data);
     const stored={schoolId:vaultId,version:1,salt:payload.salt,iv:payload.iv,
       ciphertext:payload.ciphertext,savedAt:new Date().toISOString()};
-    await dbRequest('readwrite','put',stored);
+    // Restore must be compare-and-set too; otherwise a second tab could
+    // create a vault after the initial absence check and be overwritten.
+    // Remember restored ciphertext as the version for the next local edit.
+    const storedVersion=await saveVaultCas(stored,null);
     state.data=data;state.key=key;state.salt=salt;state.autoPaused=true;
+    state.storeVersion=storedVersion;state.staleVault=false;
     $('offlinePass').value='';$('backupFile').value='';
     renderClassList();
     text('status','Restored protected school records. '+data.drafts.length+' unsynchronized changes remain.');

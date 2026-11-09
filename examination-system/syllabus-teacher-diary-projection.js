@@ -6,8 +6,10 @@ function buildTeacherDiary({snapshot,schedule,schoolId,classId,subjectId,session
  for(const [k,v] of Object.entries({schoolId,classId,subjectId,sessionId}))if(!v||scope[k]!==v)throw Error('Diary scope mismatch: '+k);
  const lessons=snapshot.content.lessons,byId=new Map(lessons.map(l=>[l.lessonId,l]));
  if(byId.size!==lessons.length)throw Error('Duplicate snapshot lesson');
- const rows=[];
+ const rows=[],assignedIds=new Set();
  for(const a of schedule.assignments){
+  if(!a||typeof a.lessonId!=='string'||assignedIds.has(a.lessonId))throw Error('Duplicate or invalid schedule assignment');
+  assignedIds.add(a.lessonId);
   const l=byId.get(a.lessonId);
   if(!l)throw Error('Unknown schedule lesson');
   if(!['scheduled','completed','insufficient-capacity'].includes(a.status))throw Error('Invalid status');
@@ -20,6 +22,7 @@ function buildTeacherDiary({snapshot,schedule,schoolId,classId,subjectId,session
     status:a.status,actualDate:a.actualDate||null,sourcePageReference:l.sourcePageReference||null});
   }
  }
+ if(assignedIds.size!==lessons.length)throw Error('Incomplete schedule assignments');
  const seen=new Set();
  for(const r of rows){const key=r.date+'#'+r.period;if(seen.has(key))throw Error('Overlapping subject diary slots');seen.add(key);}
  rows.sort((a,b)=>a.date.localeCompare(b.date)||a.period-b.period);

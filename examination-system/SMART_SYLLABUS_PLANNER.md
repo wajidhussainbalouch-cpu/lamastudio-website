@@ -462,3 +462,8 @@ Validation and release gate:
 - Snapshot preparation rejects embedded schedule/progress dates, invalid lesson IDs and scope mismatches. Calendar dates remain separate from immutable lesson content.
 - This is a pure helper, **not** server authorization, atomic persistence, a digital signature, approval or publication. Backend authenticated role checks, append-only audit history, version locking and teacher diary integration are still required.
 - Class 5 English remains an unapproved draft pending textbook exercise review and a real timetable. CI success and live integration are unverified. No production deployment or school data changed.
+
+## Approval audit chain — 9 Nov 2026
+- Added `examination-system/syllabus-approval-ledger.js` and `test-syllabus-approval-ledger.js` in CI. Pure append-only event builder records submitted/approved/rejected/published transitions with scope, snapshot hash, actor ID, UTC time, sequence and previous-event hash. It rejects sequence conflicts, broken hash chains, scope/snapshot changes and invalid transitions.
+- Hash chains detect edits only if the chain's trusted head is independently anchored. They do not prevent deletion or wholesale replacement of the ledger. Production requires authenticated server-derived actor identity, atomic compare-and-swap writes, immutable/off-site audit anchors, role permissions and server-generated timestamps. Browser-provided identities and timestamps are not trustworthy.
+- No live storage, approval API, dashboard integration or teacher diary sync has been performed. CI outcome remains unverified.

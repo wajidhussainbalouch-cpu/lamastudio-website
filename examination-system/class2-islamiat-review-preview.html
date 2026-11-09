@@ -57,13 +57,13 @@ function render(){
 el("file").addEventListener("change",async e=>{
  try{
   const file=e.target.files?.[0];if(!file)return;
-  if(file.size>3_000_000)throw Error("File too large for this preview");
+  if(file.size>5_000_000)throw Error("File too large for this preview");
   const data=JSON.parse(await file.text());
   if(!Array.isArray(data.questions)||data.questions.length>1500)throw Error("Expected a draft questions array");
   const seen=new Set();
   const valid=data.questions.map(q=>{
    if(!q||typeof q.questionId!=="string"||!q.questionId||seen.has(q.questionId)||typeof q.questionText!=="string"||q.reviewStatus!=="draft"||q.approved!==false||q.onlineReady!==false)throw Error("File contains invalid, duplicate, or non-draft questions");
-   seen.add(q.questionId);return q;
+   seen.add(q.questionId);return {questionId:q.questionId,questionText:q.questionText,topic:q.topic||"Unmapped",reviewStatus:"draft",approved:false,onlineReady:false};
   });
   records=valid;selected=null;clearChecklist();page=1;
   const topics=[...new Set(records.map(q=>q.topic).filter(Boolean))].sort();

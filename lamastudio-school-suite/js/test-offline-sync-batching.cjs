@@ -76,6 +76,7 @@ function buildSyncScenario(mode){
  }))};
  const state={data,busy:false,staleVault:false,autoPaused:false};
  const cloud=[],sent=[],messages=[];
+ if(mode==='cloud-conflict')cloud.push({date,studentId:'id0',enrlNo:'100',status:'Absent'});
  let writes=0;
  const dependencies={
   state,online:()=>true,authorizedWriter:()=>true,
@@ -119,15 +120,24 @@ async function syncTests(){
  assert.equal(rejected.state.data.drafts.length,2,'Unverified second group must stay queued');
  assert.equal(rejected.cloud.length,500);
  assert.equal(rejected.state.autoPaused,true);
+ assert.ok(rejected.state.data.drafts.every(d=>d.syncIssue==='unverified'),
+  'Unverified records must be flagged for review after failed upload');
  const ambiguous=buildSyncScenario('first-ambiguous');
  await ambiguous.run(false);
  assert.deepEqual(ambiguous.sent,[500],'Never continue blindly after lost acknowledgment');
  assert.equal(ambiguous.state.data.drafts.length,2,'Remaining unsent drafts must stay queued');
  assert.equal(ambiguous.cloud.length,500);
  assert.equal(ambiguous.state.autoPaused,true);
+ const conflict=buildSyncScenario('cloud-conflict');
+ await conflict.run(false);
+ assert.deepEqual(conflict.sent,[500,1]);
+ assert.equal(conflict.state.data.drafts.length,1,'Conflicting draft must not be overwritten');
+ assert.equal(conflict.state.data.drafts[0].studentId,'id0');
+ assert.equal(conflict.state.data.drafts[0].syncIssue,'conflict','Conflict should be visible after sync');
+ assert.equal(conflict.cloud[0].status,'Absent','The cloud attendance must be preserved');
 }
 (async()=>{
  await snapshotTests();
  await syncTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student conflict labels and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

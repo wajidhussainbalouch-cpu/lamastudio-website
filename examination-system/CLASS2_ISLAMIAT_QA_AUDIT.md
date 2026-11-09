@@ -60,3 +60,8 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Script checks all three batch files for total and per-batch counts, IDs, literal prompts, answers, textbook page mapping, approval and online-ready flags, and question-type distribution; exits nonzero on structural blockers.
 - In an independent in-session data inspection, all 1500 records were fetched. A simple normalization that removes some assessment-mode prefixes reduced 1500 prompts to 1000 normalized strings, with 200 repeated groups totaling 700 records. **This is only a partial lexical heuristic, not a reliable count of distinct concepts**: inconsistent prefix conventions cause under-detection, and the source metadata explicitly says each batch contains 100 concepts repeated five times. Teacher-led semantic deduplication is still required.
 - The committed CLI has not been run with Node in this session, and no production integration or deployment occurred.
+
+## CI validation workflow — 2026-11-09
+- Added `.github/workflows/class2-islamiat-draft-qa.yml`, commit `237f92f3d471d97cc32ad0944875459bf09ea08a`.
+- On relevant pushes, pull requests, and manual dispatch, GitHub Actions is configured to run Node 22, the draft adapter unit tests, and the 1500-record structural audit. Permissions: read-only contents. No deploy steps.
+- **Workflow execution status has not been verified.** Do not claim CI passed until checking its actual run logs/status. This is structural QA, not textbook or theological review.

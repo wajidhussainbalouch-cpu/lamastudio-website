@@ -19,7 +19,7 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
   if(explicit&&Object.prototype.hasOwnProperty.call(explicit,dow)){
    periods=explicit[dow];
    if(!Array.isArray(periods)||periods.some(p=>!Number.isSafeInteger(p)||p<1||p>12)||new Set(periods).size!==periods.length||periods.some((p,i)=>i>0&&p<=periods[i-1]))throw Error('Invalid explicit teaching periods');
-  }else periods=Array.from({length:capacity},(_,i)=>i+1);
+  }else periods=explicit?[]:Array.from({length:capacity},(_,i)=>i+1);
   if(!holidays.has(day)&&!inRanges(day,closed))for(const p of periods)slots.push({date:day,period:p});
   d.setUTCDate(d.getUTCDate()+1);
  }

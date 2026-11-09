@@ -484,3 +484,8 @@ Validation and release gate:
 - Added `examination-system/test-syllabus-same-day-progress.js` to CI and removed a duplicate capacity audit workflow step.
 - This handles the common case of completed lessons with stored historical slots. For completed lessons without precise period records, same-day ordering cannot be established; backend should require verified period-level progress before automatic same-day reflow.
 - GitHub commits are complete, but CI results and production integration are not yet verified. No live deployment or school records changed.
+
+## Completed-period history integrity — 9 Nov 2026
+- Calendar reflow now rejects overlapping historical completed slots and avoids all same-day rescheduling on the latest completed date if any completion on that date lacks period-level evidence. Earlier completed dates and slots remain historical, not rewritten.
+- Added `examination-system/test-syllabus-completion-integrity.js` to CI, covering unknown same-day period, overlapping history and valid chronological placement.
+- This is a pure scheduler safeguard, not a deployed backend fix. Authenticated progress, schedule version locking, class-specific timetables and confirmed holidays remain necessary. CI execution is not yet independently verified; no production deployment or school records changed.

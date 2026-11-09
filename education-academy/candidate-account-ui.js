@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
  }
  handle('candidateSignUp',async data=>{
+  if(typeof data.password!=='string'||data.password.length<12)throw Error('Use a password of at least 12 characters.');
+  if(data.password!==data.confirmPassword)throw Error('The passwords do not match. Please try again.');
+  delete data.confirmPassword;
   const result=await auth.signUp(data);
   if(!result.created)throw Error('Registration could not be confirmed.');
  },'Registration requested. Check your email for a verification link, then sign in.');

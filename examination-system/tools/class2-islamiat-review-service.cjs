@@ -6,8 +6,8 @@
  * No publishing or approval is performed.
  */
 const {prepareReviewDecision}=require("./class2-islamiat-review-decision.cjs");
-function createReviewService({resolveActor,loadQuestion,loadHistory,appendAtomically}={}){
- for(const [name,fn] of Object.entries({resolveActor,loadQuestion,loadHistory,appendAtomically})){
+function createReviewService({resolveActor,loadQuestion,loadHistory,appendAtomically,serverNow}={}){
+ for(const [name,fn] of Object.entries({resolveActor,loadQuestion,loadHistory,appendAtomically,serverNow})){
   if(typeof fn!=="function")throw new TypeError(name+" must be a trusted backend function");
  }
  async function submit({session,schoolId,questionId,review,decision,expectedVersion,expectedHeadHash}={}){
@@ -18,7 +18,13 @@ function createReviewService({resolveActor,loadQuestion,loadHistory,appendAtomic
   if(!actor||actor.authenticated!==true||!["teacher","school_admin"].includes(actor.role)||actor.schoolId!==schoolId||!actor.id)throw new Error("Not authorized for this school");
   const question=await loadQuestion({schoolId,questionId});
   if(!question||question.id!==questionId||question.schoolId!==schoolId)throw new Error("Question not found in school");
-  const event=prepareReviewDecision({question,review,actor,schoolId,decision});
+  if(!review||typeof review!=="object"||Array.isArray(review))throw new Error("Review data required");
+  if(review.reviewedBy!==undefined&&review.reviewedBy!==actor.id)throw new Error("Review identity mismatch");
+  // The timestamp and reviewer are server-owned, never taken from client data.
+  const now=serverNow();
+  if(!(now instanceof Date)||!Number.isFinite(now.getTime()))throw new Error("Trusted server clock invalid");
+  const trustedReview={...review,reviewedBy:actor.id,reviewedAt:now.toISOString()};
+  const event=prepareReviewDecision({question,review:trustedReview,actor,schoolId,decision});
   // loadHistory is advisory; appendAtomically MUST check version and head in a transaction.
   const snapshot=await loadHistory({schoolId,questionId});
   if(!snapshot||snapshot.version!==expectedVersion||snapshot.headHash!==expectedHeadHash)throw new Error("Review history conflict");

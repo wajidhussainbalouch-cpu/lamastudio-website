@@ -20,7 +20,7 @@ function lamaOfflineAttendanceSnapshot_(params){
   if(requested.some(function(s){return !validDay(s);}))throw new Error('Invalid requested offline date');
   var extra=new Set(requested);
   var tz=Session.getScriptTimeZone()||'Asia/Karachi';
-  var since=Utilities.formatDate(new Date(Date.now()-31*86400000),tz,'yyyy-MM-dd');
+  var since=''; // chosen after role-scoped roster size is known
   function dayOf(value){
     if(value instanceof Date)return Utilities.formatDate(value,tz,'yyyy-MM-dd');
     var s=String(value==null?'':value);
@@ -31,6 +31,13 @@ function lamaOfflineAttendanceSnapshot_(params){
       enrlNo:String(r.enrlNo||'').trim(),class:String(r.class||'').trim(),section:String(r.section||'').trim()};
   });
   if(!students.length||students.length>5000)throw new Error('Offline roster must contain between 1 and 5000 students');
+  // Bound mobile download sizes even when a school has 5,000 students:
+  // ~30k historical statuses + ~30k requested statuses, below 75k safety cap.
+  var recentDays=Math.max(1,Math.min(31,Math.floor(30000/students.length)));
+  var maxRequestedDays=Math.max(1,Math.min(90,Math.floor(30000/students.length)));
+  if(requested.length>maxRequestedDays)
+    throw new Error('Too many offline dates in one request for this roster (maximum '+maxRequestedDays+').');
+  since=Utilities.formatDate(new Date(Date.now()-recentDays*86400000),tz,'yyyy-MM-dd');
   var ids=new Set();
   students.forEach(function(s){
     if(!s.id||ids.has(s.id))throw new Error('Student ID missing or duplicated; repair before offline preparation');

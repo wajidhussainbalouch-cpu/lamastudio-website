@@ -19,6 +19,12 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
  const assignments=[];let slotIndex=0;
  // Historical completed slots remain reserved, even if the calendar changes.
  const occupied=new Set();
+ // Reject orphan historical records instead of silently discarding them.
+ for(const id of Object.keys(previousSchedule)){
+  if(!lessons.some(l=>l.lessonId===id))throw Error('Unknown historical lessonId');
+  if(!Object.prototype.hasOwnProperty.call(completed,id))throw Error('Historical slots require completed progress');
+  if(!Array.isArray(previousSchedule[id]))throw Error('Invalid historical slots');
+ }
  for(const [lessonId,progress] of Object.entries(completed)){
   if(!lessons.some(l=>l.lessonId===lessonId))throw Error('Unknown completed lessonId');
   if(!progress||!progress.actualDate)throw Error('Completed lesson requires actualDate');

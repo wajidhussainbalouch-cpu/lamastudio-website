@@ -27,14 +27,41 @@ async function main(){
    }
   }
  };
+ // Model an atomic IndexedDB readwrite transaction. Nested put() inside
+ // get.onsuccess must commit before oncomplete, or abort without any write.
  const indexedDB={open(){
   const req={};
   Promise.resolve().then(()=>{
    req.result={createObjectStore(){},close(){},transaction(){
-    const tx={objectStore(){return{
-     get(k){const r={};Promise.resolve().then(()=>{r.result=db.get(k);r.onsuccess?.();tx.oncomplete?.()});return r;},
-     put(v){const r={};Promise.resolve().then(()=>{db.set(v.schoolId,v);r.onsuccess?.();tx.oncomplete?.()});return r;}
-    }}};
+    let aborted=false,committed=false,pending=null,insideGet=false;
+    const tx={error:null,oncomplete:null,onabort:null,onerror:null,
+      abort(){aborted=true;Promise.resolve().then(()=>tx.onabort?.());}};
+    function finish(){
+      if(aborted||committed)return;
+      committed=true;
+      if(pending)db.set(pending.schoolId,pending);
+      tx.oncomplete?.();
+    }
+    tx.objectStore=()=>({
+      get(k){
+       const r={};
+       Promise.resolve().then(()=>{
+        if(aborted)return;
+        r.result=db.get(k);
+        insideGet=true;
+        r.onsuccess?.();
+        insideGet=false;
+        finish();
+       });
+       return r;
+      },
+      put(v){
+       pending=v;
+       const r={};
+       if(!insideGet)Promise.resolve().then(()=>{if(!aborted){r.onsuccess?.();finish();}});
+       return r;
+      }
+    });
     return tx;
    }};
    req.onupgradeneeded?.();req.onsuccess?.();

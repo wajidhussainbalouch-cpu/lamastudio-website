@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {SCHOOL_CALENDAR_2026,makeEnglishCalendar}=require('./syllabus-school-calendar-2026');
+const {SCHOOL_CALENDAR_2026,makeEnglishCalendar,makeEnglishCalendarFromTimetable}=require('./syllabus-school-calendar-2026');
 const {scheduleApprovedDivision}=require('./syllabus-calendar-engine');
 const {createDraftDivision}=require('./syllabus-division-draft');
 const catalog=require('./catalogs/english-class-5.json');
@@ -17,4 +17,12 @@ assert.equal(result.assignments.flatMap(a=>a.slots).some(s=>new Date(s.date+'T00
 assert.equal(SCHOOL_CALENDAR_2026.revisionStart,'2027-01-01');
 assert.throws(()=>makeEnglishCalendar({0:1,1:1}),/Weekend/);
 assert.throws(()=>makeEnglishCalendar({1:1,2:1,3:1,4:1,5:2}),/Friday/);
+const actual=makeEnglishCalendarFromTimetable({1:[2,5],3:[3],5:[1]});
+assert.deepEqual(actual.periodSlotsByWeekday,{1:[2,5],3:[3],5:[1]});
+assert.equal(actual.end,'2026-12-23');
+const short=scheduleApprovedDivision({lessons:[{lessonId:'E1',estimatedPeriods:2}],calendar:{...actual,start:'2026-11-09',end:'2026-11-10'}});
+assert.deepEqual(short.assignments[0].slots,[{date:'2026-11-09',period:2},{date:'2026-11-09',period:5}]);
+assert.throws(()=>makeEnglishCalendarFromTimetable({6:[2]}),/Weekend/);
+assert.throws(()=>makeEnglishCalendarFromTimetable({7:[1]}),/weekday/);
+assert.throws(()=>makeEnglishCalendarFromTimetable({1:[5,2]}),/periods/);
 console.log('2026-27 school calendar capacity and closure tests passed',result.availablePeriods);

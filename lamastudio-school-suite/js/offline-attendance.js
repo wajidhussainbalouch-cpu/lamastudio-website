@@ -13,7 +13,7 @@ const status=x=>{const v=String(x||'').toLowerCase();return v==='present'||v==='
 const dateValue=v=>{const m=String(v||'').match(/^(\d{4}-\d{2}-\d{2})/);return m?m[1]:'';};
 const keyFor=(date,studentId)=>date+'|'+studentId;
 const currentDate=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
-const validDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v;
+const validDate=v=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const d=new Date(v+'T12:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v;};
 function verifiedAdmin(){
   try{const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
     return !!(a&&a.token&&schoolId&&String(a.schoolId)===schoolId);}
@@ -261,6 +261,7 @@ $('attDate').onchange=render;$('attClass').onchange=render;$('attSearch').oninpu
 addEventListener('online',()=>{refreshConnectivity();if(state.data&&verifiedAdmin())sync(true);render();});
 addEventListener('offline',()=>{refreshConnectivity();render();});
 refreshConnectivity();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});
 if(!schoolId)text('status','Please sign in to your school on this device while online before preparing offline attendance.',true);
 else if(!isSecureContext||!crypto?.subtle||!('indexedDB'in window))
   text('status','This browser does not support secure offline storage. Use recent Chrome on HTTPS.',true);

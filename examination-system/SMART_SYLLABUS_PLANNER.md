@@ -572,3 +572,8 @@ Validation and release gate:
 - Code review found double-escaped `\\d` / `\\.` regex tokens in `validAuditTime` introduced by the previous commit. Corrected them to regex digit and literal-dot tokens (`\d`, `\.`) in `syllabus-approval-ledger.js`.
 - Added an explicit valid ISO timestamp acceptance assertion in `test-syllabus-approval-ledger.js`. This prevents silently treating all ordinary timestamp strings as invalid.
 - GitHub commits completed; no full Node test execution or CI pass verified for these changes. Production untouched.
+
+## Malformed approval ledger payload handling — 9 Nov 2026
+- `verifyApprovalLedger` now checks payload shape before computing a hash, returning `false` for missing, null or array payloads rather than throwing from the hashing implementation.
+- Added regression assertions for those malformed records in `test-syllabus-approval-ledger.js`.
+- Code and tests are committed, but no complete test-suite pass has been verified. Server authentication, persistence and production integration remain separate pending work; no school data changed.

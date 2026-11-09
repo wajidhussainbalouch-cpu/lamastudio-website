@@ -1,5 +1,16 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Junior Clerk Faisalabad Paper 01 — Completed source milestone (9 November 2026)
+
+**Faisalabad Board of Revenue Junior Clerk (BS-11)** now has its **own** 100-MCQ, 90-minute practice Paper 01: `JCF-FAISALABAD-2026-P01`, questions `JCF01-001`–`JCF01-100`, implementing the supplied **80% General Ability / 20% MS Office and Computer Skills** pattern. Do not confuse with **Bahawalpur** `JCB-BAHAWALPUR-2026-P01`; these are two independent job families, paper URLs, scores and histories, each capped at 20. Total source registry: **25 papers / 2,500 practice MCQ positions** (20 teaching, 3 Information Officer, 1 Bahawalpur Junior Clerk, 1 Faisalabad Junior Clerk).
+
+GitHub candidate `index.html`, print and answer-review pages, `sw.js`, global validator and new `test-junior-clerk-faisalabad-paper1.cjs` now include the new paper. Academy quality checks passed at integration SHA `a9c50447dc1db1f865e19912a58dbbd45cb746ff`. `jobs.js` marks both Junior Clerk cases `ready:true`, while the other 8 new screenshot-syllabus tracks still lack published practice papers. Supabase: **100 new Faisalabad `draft` questions** inserted, preserving 2,330 earlier editorial entries; **2,430 private editorial records total**, with no expert-approved Faisalabad questions.
+
+**Release gaps:** Production Vercel SHA and real Android/A4 print-preview behavior require live verification; do not claim source = live. Current paper uses seven Islamic Studies MCQs; the screenshot specifies a **General Knowledge alternative for non-Muslim candidates** not yet implemented as an alternate form. Written-qualified Faisalabad applicants face a stated **1:20 English typing and subsequent English proficiency selection**, but separate typing/proficiency tests are not built. Original official PPSC case number is not legible in uploaded image. All facts and language require independent academic review.
+
+**Next `Continue`:** Start **Assistant (BS-16), Kot Addu** Paper 01 with 100 original General Ability MCQs and no invented subtopic weightages. Reference [JUNIOR_CLERK_FAISALABAD_PAPER_01_RELEASE.md](./JUNIOR_CLERK_FAISALABAD_PAPER_01_RELEASE.md) and screenshot syllabus priority roadmap.
+
+
 ## Junior Clerk Bahawalpur Paper 01 — 80/20 official-screenshot syllabus (9 November 2026)
 
 **Published source practice:** `JCB-BAHAWALPUR-2026-P01` contains 100 original AI-assisted MCQs (`JCB01-001`–`JCB01-100`), each with explanatory answer feedback and a 90-minute exam. **80 General Ability + 20 MS Office/Computer Skills** exactly match the user-supplied Bahawalpur Division Junior Clerk screenshot's specified distribution. The existing school-head (20) and Information Officer (3) paper sets remain untouched: **24 public practice papers / 2,400 MCQ positions** across three job families. Candidate exam, saved score, A4 print, post-submission answer key and PWA offline scripts (cache v86) are integrated; the dashboard now marks only this newly built screenshot job as `ready:true`.

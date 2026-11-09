@@ -24,4 +24,8 @@ assert.throws(()=>selectPaper({questions:questions.map(x=>({...x,requiresTeacher
 assert.throws(()=>selectPaper({questions:questions.map(x=>({...x,sourceBasis:"supplemental-not-textbook-verified"})),familyIndex,count:1}),/Insufficient/);
 assert.throws(()=>selectPaper({questions:questions.map(x=>({...x,reviewedBy:""})),familyIndex,count:1}),/Insufficient/);
 assert.throws(()=>selectPaper({questions:questions.map(x=>({...x,reviewedAt:"not-a-date"})),familyIndex,count:1}),/Insufficient/);
+assert.throws(()=>selectPaper({questions,familyIndex:[familyIndex[0],familyIndex[0]],count:1}),/duplicate family ID/);
+assert.throws(()=>selectPaper({questions,familyIndex,count:1,topicLimits:{Z:-1}}),/Invalid topic limit/);
+assert.throws(()=>selectPaper({questions,familyIndex,count:1,topicLimits:null}),/topicLimits/);
+assert.equal(selectPaper({questions,familyIndex,count:1,topicLimits:{toString:0},seed:1}).length,1);
 console.log("Paper selector tests passed");

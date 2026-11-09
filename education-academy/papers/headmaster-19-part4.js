@@ -198,16 +198,16 @@ window.LAMA_PPSC_HM19_4=[
   {
     "id": "HM19-089",
     "subject": "Quantitative Reasoning",
-    "topic": "Probability without replacement",
-    "q": "A bag contains 3 red and 2 blue counters. Two counters are drawn without replacement. What is the probability both are blue?",
+    "topic": "Independent spinner outcomes",
+    "q": "A fair spinner has four equal sectors labeled A, B, C and D. If it is spun independently twice, what is the probability that the two results are different?",
     "options": [
-      "1/5",
-      "1/20",
-      "1/10",
-      "2/5"
+      "1/4",
+      "1/2",
+      "3/4",
+      "1/8"
     ],
     "answer": 2,
-    "explanation": "The first blue probability is 2/5 and the second is 1/4 after one blue is removed; multiplying gives 2/20, or 1/10.",
+    "explanation": "There are sixteen equally likely ordered pairs from two spins, and four pairs repeat the same letter. The other twelve pairs differ, giving 12/16 or 3/4.",
     "difficulty": "intermediate"
   },
   {

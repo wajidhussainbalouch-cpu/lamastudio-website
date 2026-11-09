@@ -603,3 +603,8 @@ Validation and release gate:
 - Added assertions for empty schedules and valid multi-period lessons.
 - Retrieved current GitHub source and executed both committed read-only test files in an isolated JavaScript harness that supplies compatible `assert`, `fs` and `vm` shims: **both passed**. This is not equivalent to running the tests under Node.js or the complete GitHub Actions workflow; those remain unverified.
 - No live backend route, data mutation, Apps Script deployment or Vercel deployment.
+
+## CI pull-request coverage — 9 Nov 2026
+- Updated `.github/workflows/syllabus-planner-tests.yml` so pull requests changing `lamastudio-school-suite/backend-api/syllabus-*.gs` or `test-syllabus-*.js` trigger the syllabus test workflow, matching the existing push coverage intent.
+- This closes a CI trigger gap, but a successful GitHub Actions run has **not** been independently verified. Existing read-only bridge and handler source-level regression tests were previously checked in an isolated JavaScript harness; they do not establish full CI success.
+- No deployment or school-data change.

@@ -103,7 +103,7 @@ function snapshotTests(){
  // Simulate the 5,000-student limit: only 6 exact requested dates fit the
  // 30k historical + 30k requested attendance response budget.
  for(let i=2;i<5000;i++)students.push({
-  id:'s'+i,name:'Student '+i,class:'4',section:'B',enrlNo:String(100+i)
+  id:'extra-'+i,name:'Student '+i,class:'4',section:'B',enrlNo:String(100+i)
  });
  const large=get({role:'school',token:'valid',dates:Array(6).fill('2020-01-01')});
  assert.equal(large.students.length,5000);

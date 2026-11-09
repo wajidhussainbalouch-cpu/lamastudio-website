@@ -592,3 +592,8 @@ Validation and release gate:
 - Added `lamastudio-school-suite/backend-api/syllabus-readonly-handler.gs` as an inactive handler contract. Trusted server services must resolve an authenticated session and load the plan using the session-derived school ID. The request accepts `planId` only; it rejects caller-supplied school/actor fields.
 - Authorization runs before storage access. The existing read-only bridge rechecks the stored plan school and returns a legacy dated-plan view marked `immutableDivisionApproved:false`.
 - Added `test-syllabus-readonly-handler.js` for authorization-before-load, scoped lookup, request field rejection and cross-school results; added CI trigger and test step. **Tests committed, not confirmed passing.** No route, live storage adapter, deployment or data migration.
+
+## Read-only handler source smoke verification and plan identity — 9 Nov 2026
+- Executed focused JavaScript smoke checks against the current GitHub source for `syllabus-readonly-handler.gs` and `syllabus-readonly-bridge.gs`: **8/8 passed**, including authorized read, permission denials, client-supplied school rejection, cross-school stored plan, mismatched plan ID and invalid date.
+- Added a plan-ID match check between requested `planId` and the record returned by the scoped storage adapter, with a dedicated regression assertion.
+- These are focused source-level checks, **not** a complete GitHub Actions run or live Apps Script integration test. No HTTP route, deployed storage adapter, school record mutation or Vercel deployment.

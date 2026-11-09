@@ -623,3 +623,9 @@ Validation and release gate:
 - Added the previously missing `test-syllabus-legacy-batch-report.js` execution step to `.github/workflows/syllabus-planner-tests.yml`.
 - Expanded inventory regression coverage for missing plan IDs, invalid records and batches exceeding 1000 plans. Retrieved the current GitHub source and executed the updated test file in an isolated JavaScript harness: **passed**.
 - This does **not** confirm a full GitHub Actions or Node.js test pass. No production deployment or school-data changes.
+
+## All-subject syllabus expansion — 9 Nov 2026
+- Created `examination-system/SYLLABUS_SUBJECT_INVENTORY.md` using the Examination System question-bank handoff: 27 Class 1–5 class/subject entries and four unassigned primer sources. This is a **source/planning inventory**, not an exercise-verified lesson catalog.
+- Verified missing `main`-branch intake files for Class 2 General Knowledge, Class 4 Urdu, Class 5 Urdu and Class 5 Mathematics (direct GitHub 404). Handoff contains Drive IDs for the first two; the latter two require source discovery.
+- Continue subject-by-subject textbook visual review and chapter/exercise mapping before creating immutable divisions. Do not infer lesson counts or period estimates from page counts. Class 5 English remains provisional, not approved.
+- No live backend connection, deployment or school-data mutation.

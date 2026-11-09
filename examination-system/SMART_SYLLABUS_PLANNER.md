@@ -522,3 +522,8 @@ Validation and release gate:
 - Validate all `periodSlotsByWeekday` keys (0–6 only) and all period lists before generating any dates, including weekday entries not encountered within the requested date range. This prevents invalid configurations from passing unnoticed on short calendar windows.
 - Added regression assertions for an invalid weekday 7 and duplicate periods on a weekday outside the requested date window.
 - GitHub Actions execution is not independently confirmed; this change is not a live deployment or school-data update.
+
+## Class 5 English actual-timetable calendar builder — 9 Nov 2026
+- Added `makeEnglishCalendarFromTimetable(periodSlotsByWeekday, holidays)` to `syllabus-school-calendar-2026.js`. It preserves the 1 Apr–23 Dec 2026 teaching window, school closures, and explicit numbered English periods; missing weekdays have zero English lessons. Saturday and Sunday periods are disallowed for this specific school fixture, not for every school.
+- Extended `test-syllabus-school-calendar-2026.js` with a Monday period 2/5 scheduling scenario and invalid timetable checks. The original count-based builder remains unchanged for compatibility.
+- **Pending:** confirm actual school English period numbers, textbook exercise-level division and teacher review; execute full CI and integrate authenticated production backend. No live deploy or school-data mutation.

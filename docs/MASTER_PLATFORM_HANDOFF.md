@@ -171,3 +171,15 @@ Commit `9bef4e0f` adds guarded `Publish absent/leave portal notices` to V2. It r
 
 ### 2026-11-07 — Live V2 write failure: School Admin login required
 User verified V2 loaded the expected 3 students in 4–6 seconds on the official site. First test save displayed `Save not verified: School Admin login required`, with one Present count visible but no persisted write verified. Root-cause candidate identified in `js/api-client.js`: `callApi` schoolScoped routing included student/attendance list but omitted `bulkAttendance`, causing writes to use active role instead of school admin session token. Commit `6cfa3b5e` adds `bulkAttendance`, `clearStudentAttendanceDate`, and school-admin notification list/add to school-scoped authentication routing. This is a source-code fix only; requires deployment and live save/readback validation. Do not retry uncertain write until refresh and verification. Do not clear attendance or switch production route yet.
+
+## 2026-11-09 — Premium branded school PWA & free offline attendance (DRAFT, NOT LIVE)
+
+New user-approved product rule: **offline attendance is free for every registered school**; custom home-screen **school name/logo PWA** needs an explicit **Super Admin grant**. Schools configure it in Settings in three steps after approval; they cannot self-grant.
+
+Development is isolated in **draft PR #84**: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/pull/84 (branch `feature/school-branded-pwa-offline-20261109`).
+
+The implementation includes `backend-api/school-pwa-approvals.gs` (Super Admin-only grant and registry audit), new code.gs routes, `super-admin-app/app.js` management buttons, Settings/installation page, serverless `api/school-pwa.js` (school manifests and PNG logos via sharp), and a separate offline attendance workspace. Offline records are encrypted per school/account/device in IndexedDB; teachers use an explicit assigned-class scoped transport. The backend bulk attendance route has an optional lock-held baseline precondition to reject stale writes; ambiguous responses require reread and leave drafts pending until verified.
+
+**No live deployment, production data change, final payment integration, or device-level proof.** Existing Apps Script deployment must be backed up and then updated together with the new module, preserving all live scripts. Vercel build with Node/sharp and real Android/iOS installation plus offline school/teacher tests must pass before merging/releasing. Do not trigger Vercel while deployment quota is restricted.
+
+Full architecture, per-file notes, security caveats and acceptance checklist: `lamastudio-school-suite/BRANDED_PWA_OFFLINE_HANDOFF.md`. Other offline records (admissions, diary, finance, examinations) remain future work and are **not** implemented by this draft.

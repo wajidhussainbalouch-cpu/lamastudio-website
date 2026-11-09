@@ -78,3 +78,8 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Synthetic tests cover unverified source labels, blank reviewer IDs, and invalid timestamps. Commit `05eb347c835aa92eb794e8b0d50cd1fde5a809af`.
 - **Security caveat:** these are metadata gates, not proof of authentic teacher identity, textbook matching, or tamper resistance. A trusted server must validate roles, school tenancy, review audit trail and immutable source evidence; client-supplied flags must never authorize release.
 - All existing 1500 drafts lack textbook page mapping and remain excluded. CI/runtime results and live integration have not been verified; no deployment occurred.
+
+## Selector defensive validation — 2026-11-09
+- Added duplicate/blank concept-family ID rejection, up-front topic-limit validation, and own-property lookup for topic limits in `tools/class2-islamiat-paper-selector.cjs` (commit `1472a176bbf9b596dd0c921282bbe2326e7a5fcb`).
+- Added regression tests for repeated family IDs, invalid limits, null limits, and inherited-name topic keys (commit `f4a306d7c03b6bb6f64ccd25f4bf47b358d2a385`).
+- Runtime/CI execution has not been confirmed. No change to the draft approval status, no production connection and no deployment.

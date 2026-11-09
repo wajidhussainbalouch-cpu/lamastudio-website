@@ -19,3 +19,9 @@ Updated 2026-11-09
 4. Only after validation integrate reviewed questions with shared bank for paper printing and online testing; keep answer keys secure.
 
 No Vercel deployment or school data changes.
+
+## Batch 2 — 2026-11-09
+- `data/class2-general-knowledge-batch2-500-draft.json`, commit `9b317f1373408782e234565ae9df7d2603a9cb3f`.
+- 500 draft records, IDs `C2-GK-B2-0501`–`C2-GK-B2-1000`; 250 original question stems, each in short-answer and oral forms. Ten new topic groups, 50 records each.
+- Structural QA passed: 500 unique IDs and literal prompts. All are teacher-review-required, not auto-graded, not approved or online-ready. Source GK 2.pdf content has not been examined; alignment and factual checking remain pending.
+- Running GK total: 1,000/1,500 drafts. Next: batch 3, 500 drafts, avoiding semantic duplication; review source and batches before production.

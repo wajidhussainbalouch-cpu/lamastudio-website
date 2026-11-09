@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Latest school-head practice — Paper 17 (9 November 2026)
+
+**Paper 17 implemented:** `HM-2026-P17` adds 100 original free educational-practice MCQs (`HM17-001`–`HM17-100`) as four 25-question source files, with 80 education-related and 20 general-ability questions. The academy now registers **17 teaching-family papers / 1,700 public practice question positions**, using the existing 90-minute exam workflow, candidate attempt and score isolation, question-only A4 print and post-submission answer explanations. The offline PWA cache is `lama-ppsc-preview-v78`, and the 20-paper ceiling per job family is preserved.
+
+**Protected Supabase editorial bank:** 100 new Paper 17 draft rows inserted non-destructively; verified **1,630 teaching editorial questions / 1,630 unique normalized stems**, with **zero human-approved** questions. The GitHub Actions structural and text originality checks passed, but independent academic correctness and PPSC vacancy-specific syllabus review are still pending. Public practice JS contains visible keys and must not be treated as secure premium testing.
+
+**Next `Continue`:** Check repository and private bank for concurrent work, then build **Paper 18** (`HM18-001`–`HM18-100`) if absent. Do not claim live-site update until the production domain's READY SHA and mobile exam behavior are verified. Respect prior Vercel usage limits. See [PAPER_17_RELEASE.md](./PAPER_17_RELEASE.md).
+
+
 ## Latest school-head practice — Paper 16 (9 November 2026)
 
 **Paper 16 integrated in GitHub source:** `HM-2026-P16` adds 100 original free practice MCQs (`HM16-001`–`HM16-100`) in four batches, with 80 education-domain and 20 general-ability items, 90-minute timed examination, distinct saved attempt, A4 paper printing, and post-submission answer explanations. **16 teaching-family papers / 1,600 public practice positions** now register, subject to the existing cap of 20 papers per job family. Public PWA cache: `lama-ppsc-preview-v77`.

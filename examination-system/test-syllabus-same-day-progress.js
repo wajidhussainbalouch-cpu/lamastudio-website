@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {scheduleApprovedDivision}=require('./syllabus-calendar-engine');
+const lessons=[{lessonId:'L1',estimatedPeriods:1},{lessonId:'L2',estimatedPeriods:1},{lessonId:'L3',estimatedPeriods:1}];
+const calendar={start:'2026-11-09',end:'2026-11-10',periodsByWeekday:{1:3,2:3,3:3,4:3,5:3,6:3,0:3}};
+const completed={L1:{actualDate:'2026-11-09'}};
+const previousSchedule={L1:[{date:'2026-11-09',period:2}]};
+const result=scheduleApprovedDivision({lessons,calendar,completed,previousSchedule});
+assert.equal(result.assignments[0].status,'completed');
+assert.deepEqual(result.assignments[0].slots,previousSchedule.L1);
+assert.deepEqual(result.assignments[1].slots,[{date:'2026-11-09',period:3}]);
+assert.deepEqual(result.assignments[2].slots,[{date:'2026-11-10',period:1}]);
+assert.equal(result.feasible,true);
+console.log('same-day completion chronology test passed');

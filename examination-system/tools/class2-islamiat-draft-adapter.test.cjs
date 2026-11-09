@@ -1,0 +1,13 @@
+"use strict";
+const assert = require("node:assert/strict");
+const {normalizeDraftQuestion,normalizeDraftBatch,toStudentQuestion} = require("./class2-islamiat-draft-adapter.cjs");
+const base={questionId:"C2-ISL-B1-0001",class:"Class 2",subject:"Islamiat",questionText:"سوال؟",correctAnswer:"جواب",reviewStatus:"draft",approved:false,onlineReady:false};
+const n=normalizeDraftQuestion(base);
+assert.equal(n.expectedAnswer,"جواب");
+assert.equal(n.autoGradeEligible,false);
+assert.throws(()=>toStudentQuestion(n),/not approved/);
+assert.equal(normalizeDraftQuestion({...base,correctAnswer:undefined,expectedAnswer:"جواب ۲"}).expectedAnswer,"جواب ۲");
+assert.throws(()=>normalizeDraftQuestion({...base,approved:true}),/unapproved/);
+assert.throws(()=>normalizeDraftBatch({questions:[base,base]}),/Duplicate/);
+assert.deepEqual(toStudentQuestion({id:"A",class:"Class 2",subject:"Islamiat",topic:"Test",type:"short_answer",prompt:"Q",marks:1,expectedAnswer:"SECRET",approved:true,onlineReady:true,reviewStatus:"approved",requiresTeacherReview:false}),{id:"A",class:"Class 2",subject:"Islamiat",topic:"Test",type:"short_answer",prompt:"Q",marks:1});
+console.log("Draft adapter checks passed");

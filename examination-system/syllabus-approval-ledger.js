@@ -21,7 +21,7 @@ function appendApprovalEvent({events,event,expectedSequence}){
  if(event.action==='rejected'&&priorAction!=='submitted')throw Error('Rejection requires submission');
  if(prior&&prior.payload.snapshotId!==event.snapshotId)throw Error('Snapshot changed within audit chain');
  if(prior&&event.at<prior.payload.at)throw Error('Audit timestamp regression');
- if(priorAction==='published'||priorAction==='rejected')throw Error('Closed audit chain');
+ if(priorAction==='published'||priorAction==='rejected')throw Error('Audit chain closed');
  if(prior&&event.action==='submitted')throw Error('Submission already recorded');
  if(!prior&&event.action!=='submitted')throw Error('First audit event must be submitted');
  const payload=Object.fromEntries(required.map(k=>[k,event[k]]));

@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest school-head practice — Paper 18 (9 November 2026)
+
+**Paper 18 integrated:** `HM-2026-P18` has 100 new original AI-assisted free-practice questions (`HM18-001`–`HM18-100`), consisting of 80 education-domain and 20 general-ability MCQs, with a separate 90-minute examination, candidate attempt and score tracking, question-only A4 printing and post-submission answer explanations. **18 teaching-family papers / 1,800 public practice positions** are registered in GitHub. The existing maximum 20 papers per teaching job family stays in place; offline PWA cache is `lama-ppsc-preview-v79`.
+
+**Private editorial Supabase bank:** 100 Paper 18 `draft` items inserted non-destructively; **1,730 unique teaching editorial questions**, with zero human-approved. Source screening against the older 1,630 private questions found no identical or above-threshold near-text question stems. Automated tests passed, but independent educational accuracy and vacancy-specific syllabus checking are pending. Public free-practice JS contains answer keys and is not suitable for secure paid tests.
+
+**Next `Continue`:** Paper 19 (`HM19-001`–`HM19-100`), after confirming no concurrent work has already built it. Verify exact READY production SHA and mobile exam behavior independently of GitHub. Do not trigger unnecessary Vercel manual deployments. See [PAPER_18_RELEASE.md](./PAPER_18_RELEASE.md).
+
+
 ## Latest school-head practice — Paper 17 (9 November 2026)
 
 **Paper 17 implemented:** `HM-2026-P17` adds 100 original free educational-practice MCQs (`HM17-001`–`HM17-100`) as four 25-question source files, with 80 education-related and 20 general-ability questions. The academy now registers **17 teaching-family papers / 1,700 public practice question positions**, using the existing 90-minute exam workflow, candidate attempt and score isolation, question-only A4 print and post-submission answer explanations. The offline PWA cache is `lama-ppsc-preview-v78`, and the 20-paper ceiling per job family is preserved.

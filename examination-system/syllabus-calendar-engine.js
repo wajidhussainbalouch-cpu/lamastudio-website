@@ -13,6 +13,10 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
  for(const h of holidays)dateUTC(h);
  const explicit=calendar.periodSlotsByWeekday;
  if(explicit!=null&&(typeof explicit!=='object'||Array.isArray(explicit)))throw Error('Invalid explicit timetable');
+ if(explicit)for(const [weekday,periods] of Object.entries(explicit)){
+  if(!/^[0-6]$/.test(weekday))throw Error('Invalid timetable weekday');
+  if(!Array.isArray(periods)||periods.some(p=>!Number.isSafeInteger(p)||p<1||p>12)||new Set(periods).size!==periods.length||periods.some((p,i)=>i>0&&p<=periods[i-1]))throw Error('Invalid explicit teaching periods');
+ }
  while(d<=end){const day=iso(d),dow=d.getUTCDay(),capacity=Number((calendar.periodsByWeekday||{})[dow]||0);
   if(!Number.isSafeInteger(capacity)||capacity<0)throw Error('Invalid period capacity');
   let periods;

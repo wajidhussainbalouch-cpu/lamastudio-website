@@ -1,0 +1,15 @@
+"use strict";
+const assert=require("node:assert/strict");
+const {chooseDistinctFamilies}=require("./class2-islamiat-paper-selection.cjs");
+const approved=(id)=>({questionId:id,questionText:"Test "+id,questionType:"oral",topic:"Sample",marks:1,approved:true,onlineReady:true,reviewStatus:"approved",requiresTeacherReview:false,textbookVerified:true,correctAnswer:"PRIVATE"});
+const data=[approved("C2-ISL-B1-0001"),approved("C2-ISL-B1-0002"),approved("C2-ISL-B1-0006"),approved("C2-ISL-B2-0001")];
+const selected=chooseDistinctFamilies(data,3,()=>0.5);
+assert.equal(selected.length,3);
+assert.equal(new Set(selected.map(q=>q.familyKey)).size,3);
+assert.ok(selected.every(q=>!("correctAnswer" in q)));
+assert.deepEqual(chooseDistinctFamilies(data.map(q=>({...q,approved:false})),0),[]);
+assert.throws(()=>chooseDistinctFamilies(data.map(q=>({...q,textbookVerified:false})),1),/Not enough/);
+assert.throws(()=>chooseDistinctFamilies(data,4),/Not enough/);
+assert.throws(()=>chooseDistinctFamilies(data,1,()=>1),/Random source/);
+assert.throws(()=>chooseDistinctFamilies(data,-1),/Invalid count/);
+console.log("Paper selection safeguards passed");

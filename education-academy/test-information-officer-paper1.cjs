@@ -69,5 +69,5 @@ for(const file of ['index.html','print.html','answer-key.html','sw.js']){
 }
 const key=fs.readFileSync(path.join(root,'answer-key.html'),'utf8');
 assert.ok(key.includes('submitted')||key.includes('history'),'answer-key must check submitted attempt');
-assert.ok(fs.readFileSync(path.join(root,'sw.js'),'utf8').includes('lama-ppsc-preview-v82'));
+assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/lama-ppsc-preview-v\d+/,'public PWA must retain versioned cache');
 console.log('Information Officer Paper 01: 100 original structural questions; 80 journalism and 20 related subjects; job isolation and answer rotation passed');

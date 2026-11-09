@@ -59,7 +59,7 @@ async function readPendingSnapshots(dates){
   return {...combined,attendance:[...records.values()]};
 }
 const sendBulk=(date,records)=>teacherMode?LamaAPI.teacherOfflineBulkAttendance(date,records):LamaAPI.bulkAttendance(date,records);
-const state={data:null,key:null,salt:null,busy:false,autoPaused:false,storeVersion:null,staleVault:false};
+const state={data:null,key:null,salt:null,busy:false,autoPaused:false,storeVersion:null,staleVault:false,reviewCursor:null};
 const schoolAccount=LamaAPI.getSession('school'),teacherAccount=LamaAPI.getSession('teacher');
 if(schoolAccount&&teacherAccount){
  const chooser=$('roleSwitch');chooser.hidden=false;
@@ -199,7 +199,8 @@ function validateVaultData(data){
     if(!ids.has(String(draft?.studentId||''))||!validDate(draft.date)||
       !['Present','Absent','Leave'].includes(draft.status)||
       !['','Present','Absent','Leave'].includes(draft.baseStatus)||
-      (draft.syncIssue!==undefined&&!['conflict','student-changed','unverified'].includes(draft.syncIssue)))
+      (draft.syncIssue!==undefined&&!['conflict','student-changed','unverified'].includes(draft.syncIssue))||
+      (draft.serverStatus!==undefined&&!['','Present','Absent','Leave'].includes(draft.serverStatus)))
       throw Error('Offline vault has invalid pending attendance');
   }
   return data;
@@ -242,9 +243,11 @@ function render(){
     row.dataset.syncIssue=draft?.syncIssue||'';
     const info=document.createElement('div'),name=document.createElement('div'),small=document.createElement('small');
     name.className='name';name.textContent=student.name;
-    const issue=draft?.syncIssue==='conflict'?' • NEEDS REVIEW: cloud attendance changed':
+    const observed=draft?.serverStatus===undefined?'not confirmed':(draft.serverStatus||'Unmarked');
+    const issue=draft?.syncIssue==='conflict'?
+      ' • NEEDS REVIEW: on device '+draft.status+'; last seen on server '+observed:
       draft?.syncIssue==='student-changed'?' • NEEDS REVIEW: student record changed':
-      draft?.syncIssue==='unverified'?' • SYNC UNVERIFIED: keep this record':'';
+      draft?.syncIssue==='unverified'?' • SYNC UNVERIFIED: last seen on server '+observed:'';
     small.textContent='Class '+student.className+(student.section?' / '+student.section:'')+' • '+(student.enrlNo||student.id)+(draft?' • PENDING SYNC':'')+issue;
     info.append(name,small);
     const group=document.createElement('div');group.className='choices';
@@ -393,12 +396,12 @@ async function sync(automatic=false){
     for(const draft of state.data.drafts){
       const original=localIds.get(draft.studentId),current=serverIds.get(draft.studentId);
       if(!original||!current||!sameStudentId(original,current)){
-        draft.syncIssue='student-changed';conflicts++;continue;
+        draft.syncIssue='student-changed';delete draft.serverStatus;conflicts++;continue;
       }
       const serverStatus=cloud[keyFor(draft.date,draft.studentId)]||'';
       if(serverStatus===draft.status){state.data.history[keyFor(draft.date,draft.studentId)]=draft.status;draft.verified=true;verified++;continue;}
-      if(serverStatus!==draft.baseStatus){draft.syncIssue='conflict';conflicts++;continue;}
-      delete draft.syncIssue;
+      if(serverStatus!==draft.baseStatus){draft.syncIssue='conflict';draft.serverStatus=serverStatus;conflicts++;continue;}
+      delete draft.syncIssue;delete draft.serverStatus;
       if(!byDate.has(draft.date))byDate.set(draft.date,[]);
       byDate.get(draft.date).push(draft);
     }
@@ -427,9 +430,9 @@ async function sync(automatic=false){
           for(const draft of batch){
             const k=keyFor(draft.date,draft.studentId);
             if(cloud[k]===draft.status){draft.verified=true;state.data.history[k]=draft.status;verified++;}
-            else{draft.syncIssue='unverified';unverifiedBatch++;}
+            else{draft.syncIssue='unverified';draft.serverStatus=cloud[k]||'';unverifiedBatch++;}
           }
-        }catch(_){batch.forEach(d=>{d.syncIssue='unverified';});unverifiedBatch=batch.length;}
+        }catch(_){batch.forEach(d=>{d.syncIssue='unverified';delete d.serverStatus;});unverifiedBatch=batch.length;}
         uncertain+=unverifiedBatch;
         state.data.drafts=state.data.drafts.filter(d=>!d.verified);
         await writeVault();
@@ -449,8 +452,12 @@ async function sync(automatic=false){
 }
 function showNextReview(){
   if(state.busy||state.staleVault||!state.data)return;
-  const issue=state.data.drafts.find(d=>d.syncIssue);
-  if(!issue){text('actionStatus','No flagged records need review.');return;}
+  const flagged=state.data.drafts.filter(d=>d.syncIssue).sort((a,b)=>
+    a.date.localeCompare(b.date)||String(a.studentId).localeCompare(String(b.studentId)));
+  if(!flagged.length){state.reviewCursor=null;text('actionStatus','No flagged records need review.');return;}
+  const previous=flagged.findIndex(d=>keyFor(d.date,d.studentId)===state.reviewCursor);
+  const issue=flagged[(previous+1)%flagged.length];
+  state.reviewCursor=keyFor(issue.date,issue.studentId);
   $('attDate').value=issue.date;
   $('attClass').value='';
   $('attSearch').value=issue.studentId;
@@ -525,7 +532,7 @@ async function restoreEncryptedBackup(){
 }
 function lock(){
   if(state.busy)return;
-  state.key=null;state.salt=null;state.data=null;state.storeVersion=null;state.staleVault=false;
+  state.key=null;state.salt=null;state.data=null;state.storeVersion=null;state.staleVault=false;state.reviewCursor=null;
   $('offlinePass').value='';$('students').replaceChildren();
   text('status','Locked. Offline attendance remains encrypted on this device.');
   text('actionStatus','');render();

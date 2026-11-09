@@ -21,4 +21,5 @@ assert.throws(()=>read({planId:'p1',schoolId:'s2'},services),/Only a valid planI
 assert.throws(()=>read({planId:'p1',actorId:'fake'},services),/Only a valid planId/);
 assert.throws(()=>read({planId:'p1'},{...services,loadScopedPlan:()=>({...plan,schoolId:'s2'})}),/Cross-school/);
 assert.throws(()=>read({planId:'p1'},{...services,loadScopedPlan:()=>null}),/not found/);
+assert.throws(()=>read({planId:'p1'},{...services,loadScopedPlan:()=>({...plan,planId:'p2'})}),/plan ID mismatch/);
 console.log('Apps Script read-only syllabus handler tests passed');

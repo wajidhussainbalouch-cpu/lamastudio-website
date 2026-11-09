@@ -381,29 +381,41 @@ async function sync(automatic=false){
     }
     state.data.drafts=state.data.drafts.filter(d=>!d.verified);
     await writeVault(); // Preserves all unverified records before any network write.
+    // Backend rejects batches larger than 1,500. Keep each write small for
+    // rural/mobile connections. Stop the remaining batches if ANY write cannot
+    // be independently verified; never blindly replay a timed-out write.
     for(const [date,drafts] of byDate){
-      const records=drafts.map(d=>{
-        const s=serverIds.get(d.studentId);
-        return {date,studentId:s.id,enrlNo:s.enrlNo,class:s.className,status:d.status,baseStatus:d.baseStatus};
-      });
-      let responseOk=false;
-      try{
-        const result=await sendBulk(date,records);
-        responseOk=Number(result?.saved)===records.length&&
-          Number(result?.inserted||0)+Number(result?.updated||0)===records.length;
-      }catch(_){/* Response is ambiguous: reread; never automatically repeat the write. */}
-      try{
-        const latest=validatedSnapshot(await readSnapshot([date]));
-        cloud=historyIndex(latest.attendance,serverRoster);
-        for(const draft of drafts){
-          const k=keyFor(draft.date,draft.studentId);
-          if(cloud[k]===draft.status){draft.verified=true;state.data.history[k]=draft.status;verified++;}
-          else{uncertain++;}
+      for(let start=0;start<drafts.length;start+=500){
+        const batch=drafts.slice(start,start+500);
+        const records=batch.map(d=>{
+          const student=serverIds.get(d.studentId);
+          return {date,studentId:student.id,enrlNo:student.enrlNo,class:student.className,
+            status:d.status,baseStatus:d.baseStatus};
+        });
+        let responseOk=false,unverifiedBatch=0;
+        try{
+          const result=await sendBulk(date,records);
+          responseOk=Number(result?.saved)===records.length&&
+            Number(result?.inserted||0)+Number(result?.updated||0)===records.length;
+        }catch(_){/* Uncertain server state: read back, do not blindly retry. */}
+        try{
+          const latest=validatedSnapshot(await readSnapshot([date]));
+          cloud=historyIndex(latest.attendance,serverRoster);
+          for(const draft of batch){
+            const k=keyFor(draft.date,draft.studentId);
+            if(cloud[k]===draft.status){draft.verified=true;state.data.history[k]=draft.status;verified++;}
+            else{unverifiedBatch++;}
+          }
+        }catch(_){unverifiedBatch=batch.length;}
+        uncertain+=unverifiedBatch;
+        state.data.drafts=state.data.drafts.filter(d=>!d.verified);
+        await writeVault();
+        if(!responseOk||unverifiedBatch){
+          state.autoPaused=true;
+          break;
         }
-      }catch(_){uncertain+=drafts.length;}
-      state.data.drafts=state.data.drafts.filter(d=>!d.verified);
-      await writeVault();
-      if(!responseOk||uncertain)state.autoPaused=true;
+      }
+      if(state.autoPaused)break;
     }
     text('actionStatus',verified+' records verified in cloud. '+conflicts+' conflicts, '+uncertain+
       ' unverified. Pending records remain encrypted on this device.'+

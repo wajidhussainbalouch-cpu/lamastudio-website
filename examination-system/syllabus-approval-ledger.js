@@ -4,7 +4,7 @@ const crypto=require('node:crypto');
 const stable=x=>Array.isArray(x)?'['+x.map(stable).join(',')+']':x&&typeof x==='object'?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+stable(x[k])).join(',')+'}':JSON.stringify(x);
 const hash=x=>crypto.createHash('sha256').update(stable(x)).digest('hex');
 function validAuditTime(at){
- if(typeof at!=='string'||!/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$/.test(at))return false;
+ if(typeof at!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(at))return false;
  const ms=Date.parse(at);
  if(!Number.isFinite(ms))return false;
  const normalized=new Date(ms).toISOString();

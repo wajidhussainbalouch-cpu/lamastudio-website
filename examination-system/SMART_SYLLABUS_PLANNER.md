@@ -507,3 +507,8 @@ Validation and release gate:
 - Reproduced the current `syllabus-calendar-engine.js` in an isolated local Node.js 22.16.0 test environment and executed scheduler scenarios covering calendar holiday reflow, historical completion preservation, insufficient capacity, duplicate IDs, same-day period chronology, missing completion-period evidence, overlapping slots, completion dates, orphan historical entries and malformed historical slot collections. All reproduced scenarios passed locally.
 - **Verification scope:** this was a manual local reproduction of the GitHub engine and selected assertions, **not** a direct checkout of the GitHub repository or the full GitHub Actions suite. GitHub clone was blocked by DNS resolution. This result does not certify the repository CI or production backend.
 - No live deployment or school data change.
+
+## Actual subject period timetable — 9 Nov 2026
+- The calendar scheduler now accepts optional `periodSlotsByWeekday`, e.g. `{1:[2,5],2:[3]}`, to schedule a subject in its actual numbered school periods rather than assuming all subject periods start at period 1. Values must be ascending, distinct, integers 1–12. Days omitted from the explicit mapping retain the legacy `periodsByWeekday` capacity behavior. Holidays and closures still take precedence.
+- Added `test-syllabus-explicit-timetable.js` and CI step for nonconsecutive periods, holiday removal, invalid inputs and legacy compatibility.
+- The school's actual English period numbers are **not yet confirmed**. Do not approve the 176-period draft based on this new capability alone. This is not live teacher diary integration; CI results remain unverified and no production deployment or school data changes were made.

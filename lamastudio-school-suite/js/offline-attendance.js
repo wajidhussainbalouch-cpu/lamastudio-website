@@ -86,7 +86,7 @@ async function writeVault(){
 }
 function passphrase(){
   const value=$('offlinePass').value;
-  if(value.length<8)throw Error('Use an offline device password of at least 8 characters');
+  if(value.length<12)throw Error('Use an offline device password of at least 12 characters');
   return value;
 }
 function normalizedStudents(rows){
@@ -128,6 +128,7 @@ function render(){
   $('prepare').disabled=state.busy||!online();
   $('unlock').disabled=state.busy;
   $('lock').disabled=!unlocked||state.busy;
+  $('backup').disabled=!ready;
   $('bulkPresent').disabled=!ready||!validDate($('attDate').value);
   $('sync').disabled=!ready||!online()||!state.data.drafts.length;
   $('refresh').disabled=!ready||!online()||!!state.data.drafts.length;
@@ -327,6 +328,80 @@ async function sync(automatic=false){
   }catch(error){state.autoPaused=true;text('actionStatus','Sync not confirmed: '+error.message+'. Drafts remain on this device. Do not delete app data.',true);}
   finally{state.busy=false;render();}
 }
+async function downloadEncryptedBackup(){
+  if(state.busy||!state.data)return;
+  state.busy=true;render();
+  try{
+    const vault=await readVault();
+    if(!vault||vault.schoolId!==vaultId)throw Error('No saved encrypted vault found');
+    const backup={format:'lama-offline-attendance-backup',version:1,createdAt:new Date().toISOString(),
+      schoolId:vaultId,payload:vault};
+    const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),link=document.createElement('a');
+    link.href=url;link.download='lama-offline-'+schoolId+'-'+
+      (teacherMode?'teacher-'+accountId:'school-admin')+'-'+currentDate()+'.json';
+    link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    text('actionStatus','Encrypted backup created. Store the file safely with the separate offline password.');
+  }catch(e){text('actionStatus','Backup failed: '+e.message,true);}
+  finally{state.busy=false;render();}
+}
+async function restoreEncryptedBackup(){
+  if(state.busy)return;
+  const file=$('backupFile').files?.[0];
+  if(!file){text('actionStatus','Choose your earlier encrypted backup file.',true);return;}
+  if(file.size>5*1024*1024){text('actionStatus','Backup file is too large (maximum 5 MB).',true);return;}
+  state.busy=true;render();
+  try{
+    if(!schoolId||!vaultId.startsWith(schoolId+'#'))
+      throw Error('Sign in to the correct school account first');
+    if(await readVault())throw Error('This device already has a school vault. Restore is blocked to protect existing or unsynced records.');
+    const password=passphrase();
+    const fileText=await file.text();if(fileText.length>7*1024*1024)throw Error('Invalid backup size');
+    let backup;try{backup=JSON.parse(fileText);}catch(_){throw Error('Not a valid backup JSON file');}
+    const payload=backup?.payload;
+    if(backup?.format!=='lama-offline-attendance-backup'||backup?.version!==1||
+      backup?.schoolId!==vaultId||!payload||payload.version!==1||payload.schoolId!==vaultId)
+      throw Error('Backup belongs to a different school, user role or unsupported format');
+    if(!['salt','iv','ciphertext'].every(k=>typeof payload[k]==='string'&&
+      payload[k].length>0&&payload[k].length<7*1024*1024))
+      throw Error('Backup has invalid encryption fields');
+    const salt=unb64(payload.salt),iv=unb64(payload.iv),cipher=unb64(payload.ciphertext);
+    if(salt.byteLength!==16||iv.byteLength!==12||!cipher.byteLength)
+      throw Error('Invalid encrypted backup parameters');
+    const key=await derive(password,salt);
+    let data;
+    try{
+      const bytes=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,cipher);
+      data=JSON.parse(new TextDecoder().decode(bytes));
+    }catch(_){throw Error('Incorrect offline password or damaged encrypted backup');}
+    if(data?.schoolId!==schoolId||data?.accountScope!==vaultId||
+      !Array.isArray(data.roster)||!Array.isArray(data.drafts)||
+      data.roster.length>5000||data.drafts.length>75000)
+      throw Error('Backup has invalid or cross-school attendance data');
+    const ids=new Set();
+    for(const student of data.roster){
+      const sid=String(student?.id||'');
+      if(!sid||ids.has(sid))throw Error('Backup contains duplicate/invalid student IDs');
+      ids.add(sid);
+    }
+    for(const d of data.drafts){
+      if(!ids.has(String(d?.studentId||''))||!validDate(d.date)||
+         !['Present','Absent','Leave'].includes(d.status)||
+         !['','Present','Absent','Leave'].includes(d.baseStatus))
+        throw Error('Backup contains invalid pending attendance');
+    }
+    const stored={schoolId:vaultId,version:1,salt:payload.salt,iv:payload.iv,
+      ciphertext:payload.ciphertext,savedAt:new Date().toISOString()};
+    await dbRequest('readwrite','put',stored);
+    state.data=data;state.key=key;state.salt=salt;state.autoPaused=true;
+    $('offlinePass').value='';$('backupFile').value='';
+    renderClassList();
+    text('status','Restored protected school records. '+data.drafts.length+' unsynchronized changes remain.');
+    text('actionStatus','✓ Encrypted backup restored. Review drafts, then use Sync Now online to check server conflicts.');
+  }catch(e){text('actionStatus','Restore failed: '+e.message,true);}
+  finally{state.busy=false;render();}
+}
 function lock(){
   if(state.busy)return;
   state.key=null;state.salt=null;state.data=null;
@@ -338,6 +413,8 @@ $('attDate').value=currentDate();
 if(session?.name||session?.schoolName)$('schoolName').textContent=(session.schoolName||session.name)+' • '+(teacherMode?'Teacher offline register':'School Admin offline register');
 $('prepare').onclick=prepare;$('unlock').onclick=unlock;$('lock').onclick=lock;
 $('sync').onclick=()=>{state.autoPaused=false;return sync(false);};
+$('backup').onclick=downloadEncryptedBackup;
+$('restoreBackup').onclick=restoreEncryptedBackup;
 $('bulkPresent').onclick=markVisiblePresent;
 $('refresh').onclick=prepare;
 $('attDate').onchange=render;$('attClass').onchange=render;$('attSearch').oninput=render;

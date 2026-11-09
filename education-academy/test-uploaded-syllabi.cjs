@@ -17,7 +17,8 @@ const byId=new Map(jobs.map(x=>[x.id,x]));
 for(const [i,entry] of manifest.jobs.entries()){
  const job=byId.get(entry.id),selected=catalog.resolve(entry.id);
  assert.ok(job&&selected,'missing uploaded case '+entry.id);
- assert.ok(!job.ready,'new syllabus is not a published practice exam '+entry.id);
+ if(entry.id==='junior-clerk-bahawalpur-bor')assert.ok(job.ready,'Junior Clerk Bahawalpur first practice paper must be available');
+ else assert.ok(!job.ready,'other uploaded syllabus tracks cannot claim a paper before publication '+entry.id);
  assert.equal(job.priority,true,'uploaded syllabus must be prioritized '+entry.id);
  assert.equal(job.priorityOrder,i+2,'prioritized preparation queue must have stable order '+entry.id);
  assert.equal(job.title,entry.title);

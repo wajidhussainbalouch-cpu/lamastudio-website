@@ -641,3 +641,8 @@ Validation and release gate:
 - Added `catalogs/general-science-class-5-ch01-exercises.json`: five numbered end-of-chapter exercise groups (5 multiple-choice, 5 short-answer, 3 constructed responses, 2 investigations, one animal-album project) and seven in-chapter activity labels with page references.
 - Exercise group counts and activity locations are recorded for teacher review; no teaching periods, final lesson boundaries, or approval have been fabricated. `approvedForScheduling:false`.
 - No production deployment or school data changes.
+
+## Class 5 General Science Chapter 2 exercise inventory — 9 Nov 2026
+- Inspected original PDF pages 20–30 (printed pages 17–27) for Chapter 2, *Microorganisms*.
+- Added `catalogs/general-science-class-5-ch02-exercises.json` recording five end-of-chapter exercise groups (5 MCQ, 5 short answers, 1 constructed response, 2 investigation prompts and one yeast/carbon-dioxide project) and five in-chapter activities (2.1–2.5) with source page references.
+- Both Chapters 1 and 2 now have separate exercise/activity inventories. **Neither has approved lesson boundaries or teaching-period estimates**; scheduling remains blocked. No deployment or live school data changes.

@@ -227,7 +227,8 @@ document.addEventListener('DOMContentLoaded',function(){
  const el=document.getElementById('academyHealth');
  const readyJobs=Array.isArray(window.LAMA_PPSC_JOBS)&&window.LAMA_PPSC_JOBS.length>0;
  const readyPapers=Array.isArray(window.LAMA_PPSC_PAPERS)&&window.LAMA_PPSC_PAPERS[0]&&window.LAMA_PPSC_PAPERS[0].questions.length===100;
- const readyExam=Boolean(document.querySelector('#examQuestions .exam-question')&&document.getElementById('startExam'));
+ const selectedPublicPaper=window.LamaPpscPaperLibrary?.activePaper();
+ const readyExam=Boolean(window.LamaPpscPaperLibrary)&&(!selectedPublicPaper||Boolean(document.querySelector('#examQuestions .exam-question')&&document.getElementById('startExam')));
  const readyCards=Boolean(document.querySelector('#jobCards .job-card'));
  if(readyJobs&&readyPapers&&readyExam&&readyCards)return;
  el.hidden=false;el.classList.add('error');

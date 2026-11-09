@@ -557,3 +557,8 @@ Validation and release gate:
 - Reproduced `syllabus-legacy-plan-audit.js` and `test-syllabus-legacy-plan-audit.js` from the inspected repository content in an isolated Node.js workspace. Ran `node test-syllabus-legacy-plan-audit.js`: **passed**. This is a focused reproduction, not a checkout of the repository and not proof of full CI success.
 - GitHub combined commit status for `f88e0a501d28431b67a771365982122337b2b8de` reported a **Vercel build-rate-limit failure**, not a syllabus test outcome. The available workflow-run lookup does not establish push-triggered syllabus CI status.
 - Next release gate: execute all syllabus workflow commands in a real repository checkout, inspect failures, then validate server authentication and isolated Apps Script integration. No deployment or data migration.
+
+## Legacy plan audit alignment with Apps Script draft validator — 9 Nov 2026
+- Checked the existing `syllabus-draft.gs` validation contract against `syllabus-legacy-plan-audit.js`; the read-only audit now flags missing `planId`, missing lesson titles and schedules exceeding 300 entries. Added corresponding regression assertions.
+- Attempted a direct repository checkout for full CI verification, but the execution container could not resolve `github.com`; this is **not** a test failure or a CI pass. The GitHub connector was used for code commits only.
+- Full repository test execution, authenticated server adapter and legacy-data migration remain pending. No live Apps Script or Vercel deployment.

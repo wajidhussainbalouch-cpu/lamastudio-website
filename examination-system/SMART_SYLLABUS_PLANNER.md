@@ -537,3 +537,8 @@ Validation and release gate:
 - Teacher diary projection now requires schedule assignment lesson IDs to match the approved snapshot lesson sequence exactly. Prior safeguards already rejected missing, duplicate, and unknown lesson IDs, but a reordered complete schedule was previously accepted.
 - Added regression test for a schedule with all valid lesson IDs in reversed order. Reflow may move dates and periods, but must not silently reorder the permanent division.
 - GitHub code only; complete CI execution and authenticated production integration remain unverified. No deployment or school data modification.
+
+## Approval ledger semantic verification — 9 Nov 2026
+- `verifyApprovalLedger` now checks event payload requirements, scope/snapshot consistency, chronological timestamps, valid first submission, legal approval/rejection/publication transitions and closed terminal states in addition to SHA-256 chain links. Previously a rehashed invalid event sequence could pass structural verification.
+- `appendApprovalEvent` now rejects repeated submissions and appends after rejection, aligning creation with verification. Added regression assertions for both cases.
+- The audit chain remains a **pure in-memory utility**, not independently tamper-proof storage; a trusted authenticated server must enforce identity, authorization, append-only persistence and concurrency. No live deployment; full CI results not confirmed.

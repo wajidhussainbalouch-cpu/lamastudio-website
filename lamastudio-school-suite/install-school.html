@@ -35,7 +35,14 @@ button.onclick=async()=>{if(installEvent){installEvent.prompt();await installEve
   const manifest=document.createElement('link');manifest.rel='manifest';manifest.href='/api/school-pwa?kind=manifest&schoolId='+encodeURIComponent(schoolId);document.head.append(manifest);
   const apple=document.createElement('link');apple.rel='apple-touch-icon';apple.href=icon.src;document.head.append(apple);
   status.textContent='Approved school app. You can install the school name and logo on this device.';
+  localStorage.setItem('lama-public-school-pwa-'+schoolId,JSON.stringify({schoolId,name:school.name}));
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{});
   instructions.hidden=false;document.getElementById('links').hidden=false;
- }catch(error){nameNode.textContent='School app is unavailable';status.textContent=error.message;button.style.display='none';}
+ }catch(error){
+   let cached=null;try{cached=JSON.parse(localStorage.getItem('lama-public-school-pwa-'+schoolId)||'null');}catch(_){}
+   if(!navigator.onLine&&cached?.schoolId===schoolId){nameNode.textContent=cached.name;status.textContent='Offline. Your previously verified school app identity is shown, but approval cannot be checked until internet returns.';document.getElementById('links').hidden=false;}
+   else{nameNode.textContent='School app is unavailable';status.textContent=error.message;}
+   button.style.display='none';
+ }
 })();
 </script></body></html>

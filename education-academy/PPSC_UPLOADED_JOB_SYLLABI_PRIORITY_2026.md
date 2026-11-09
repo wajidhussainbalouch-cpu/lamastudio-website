@@ -1,5 +1,16 @@
 # Uploaded PPSC Job Syllabi — Priority Paper Development Queue
 
+## Junior Clerk Bahawalpur Paper 01 — 80/20 official-screenshot syllabus (9 November 2026)
+
+**Published source practice:** `JCB-BAHAWALPUR-2026-P01` contains 100 original AI-assisted MCQs (`JCB01-001`–`JCB01-100`), each with explanatory answer feedback and a 90-minute exam. **80 General Ability + 20 MS Office/Computer Skills** exactly match the user-supplied Bahawalpur Division Junior Clerk screenshot's specified distribution. The existing school-head (20) and Information Officer (3) paper sets remain untouched: **24 public practice papers / 2,400 MCQ positions** across three job families. Candidate exam, saved score, A4 print, post-submission answer key and PWA offline scripts (cache v86) are integrated; the dashboard now marks only this newly built screenshot job as `ready:true`.
+
+**Protected editorial questions:** 100 private `draft` records added under `junior-clerk-bahawalpur-bor`; database audit found 100 distinct stems, 100 structurally valid answers and zero human approvals. Existing 1,930 school-head and 300 Information Officer records preserved. Urdu Unicode support and symbol-sensitive Excel options were added to automated validation. This paper is **practice-only**, not authenticated PPSC material, and its browser answer keys cannot secure paid or proctored testing.
+
+**Outstanding**: PPSC's separately specified **General Knowledge alternative for non-Muslim candidates** is not yet implemented; the present practice paper includes eight Islamic Studies items. Add this variant without inferring or collecting the candidate's religion. Typed/proficiency assessment is also not yet built. Check authoritative original PPSC notice, independent subject review and production-domain deployment SHA before calling the paper academically approved or live.
+
+**Next `Continue`**: **Junior Clerk Faisalabad Paper 01** (`junior-clerk-faisalabad-bor`, 80 General Ability + 20 MS Office) following its separate supplied syllabus. Subsequently build Assistant Kot Addu and Assistant Faisalabad (100 General Ability) while honoring each independent 20-paper cap. See [JUNIOR_CLERK_BAHAWALPUR_PAPER_01_RELEASE.md](./JUNIOR_CLERK_BAHAWALPUR_PAPER_01_RELEASE.md).
+
+
 *Recorded 9 November 2026 from ten screenshots of PPSC-written-test syllabus notices supplied by the academy owner.*
 
 **Evidence class:** PPSC-domain screenshots supplied in conversation. The original downloadable PDFs, complete advertisements, applicant eligibility and present vacancy status have **not** been independently verified. Every job is marked `vacancy_status='unverified'`; published means **visible preparation category**, not an open PPSC application or a published exam paper.

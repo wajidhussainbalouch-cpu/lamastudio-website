@@ -298,3 +298,10 @@ User can say: **"Continue LAMA Examination System question bank. Read examinatio
 - Added read-only inventory audit `tools/audit-class2-all-subjects.cjs` to check all 15 JSON batches, IDs, empty questions/answers, publication flags, unmapped source pages and exact prompt repetition groups. Run with `node examination-system/tools/audit-class2-all-subjects.cjs`; its execution has not yet been confirmed.
 - **Remaining before release:** run audit and resolve errors; review semantic duplicates, answers, distractors and difficulty; map to actual textbook pages; obtain school teacher sign-off; connect authenticated backend and protected question storage. Do not deploy or publish draft JSON as live student questions.
 - Other class/subject targets remain separate; do not infer completion from Class 2 counts.
+
+## 2026-11-09 — Direct all-subject draft inventory check
+- Read all 15 Class 2 JSON batches directly from GitHub main (5 subjects × 3 batches). Verified 1,500 unique IDs per subject, 7,500 records overall, all records still `reviewStatus=draft`, `approved=false`, `onlineReady=false`.
+- Corrected the read-only audit tool to support both `correctAnswer` and `expectedAnswer` (Islamiat batches 2 and 3 use the latter). After accounting for both, **0 empty/missing answer fields** across 7,500 records; answer correctness has NOT been independently verified.
+- Unmapped `sourcePdfPage`: Urdu 1,500; English 1,500; Mathematics 500; General Knowledge 1,500; Islamiat 1,500 (6,500 total). These are missing page mappings, not proof of invalid questions.
+- Exact duplicate normalized question-text groups: Urdu 23; English 0; Mathematics 0; General Knowledge 0; Islamiat 0. Semantic duplication and concept variants remain unmeasured.
+- This was a direct source-data check, not execution of the Node CLI or GitHub Actions workflow. No publishing or deployment.

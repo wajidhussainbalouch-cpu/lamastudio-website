@@ -51,7 +51,8 @@ function lamaAdminGetSchoolPwaAccess_(adminApiKey,schoolId){
   authorizeAdmin(adminApiKey);
   var match=findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(schoolId);});
   if(!match)throw Error('School not found');
-  return {schoolId:String(schoolId),enabled:lamaPwaGrant_(schoolId).enabled,updatedAt:lamaPwaGrant_(schoolId).updatedAt};
+  var grant=lamaPwaGrant_(schoolId);
+  return {schoolId:String(schoolId),enabled:grant.enabled,updatedAt:grant.updatedAt};
 }
 function lamaSchoolPwaStatus_(schoolId,apiKey){
   var match=authorizeSchool(schoolId,apiKey);

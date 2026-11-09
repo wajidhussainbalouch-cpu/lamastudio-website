@@ -11,9 +11,16 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
  for(const r of closed){dateUTC(r.start);dateUTC(r.end);if(r.start>r.end)throw Error('Invalid closure range');}
  const holidays=new Set(calendar.holidays||[]);
  for(const h of holidays)dateUTC(h);
+ const explicit=calendar.periodSlotsByWeekday;
+ if(explicit!=null&&(typeof explicit!=='object'||Array.isArray(explicit)))throw Error('Invalid explicit timetable');
  while(d<=end){const day=iso(d),dow=d.getUTCDay(),capacity=Number((calendar.periodsByWeekday||{})[dow]||0);
   if(!Number.isSafeInteger(capacity)||capacity<0)throw Error('Invalid period capacity');
-  if(!holidays.has(day)&&!inRanges(day,closed))for(let p=1;p<=capacity;p++)slots.push({date:day,period:p});
+  let periods;
+  if(explicit&&Object.prototype.hasOwnProperty.call(explicit,dow)){
+   periods=explicit[dow];
+   if(!Array.isArray(periods)||periods.some(p=>!Number.isSafeInteger(p)||p<1||p>12)||new Set(periods).size!==periods.length||periods.some((p,i)=>i>0&&p<=periods[i-1]))throw Error('Invalid explicit teaching periods');
+  }else periods=Array.from({length:capacity},(_,i)=>i+1);
+  if(!holidays.has(day)&&!inRanges(day,closed))for(const p of periods)slots.push({date:day,period:p});
   d.setUTCDate(d.getUTCDate()+1);
  }
  const assignments=[];let slotIndex=0;

@@ -16,6 +16,13 @@ const teacherMode=session?.role==='teacher';
 const schoolId=String(session?.schoolId||'');
 const accountId=teacherMode?String(session?.teacherId||session?.id||''):'admin';
 const vaultId=schoolId+'#'+(teacherMode?'teacher#'+accountId:'school-admin');
+const initialSchoolAdminToken=(()=>{
+  if(teacherMode)return '';
+  try{
+    const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
+    return a&&String(a.schoolId)===schoolId?String(a.token||''):'';
+  }catch(_){return '';}
+})();
 const readSnapshot=dates=>teacherMode?LamaAPI.teacherOfflineSnapshot(dates):LamaAPI.offlineAttendanceSnapshot(dates);
 function validatedSnapshot(snapshot){
   if(!snapshot||snapshot.schoolId!==schoolId||
@@ -86,7 +93,8 @@ function authorizedWriter(){
   }
   try{
     const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
-    return !!(a&&a.token&&schoolId&&String(a.schoolId)===schoolId);
+    return !!(a&&a.token&&initialSchoolAdminToken&&String(a.token)===initialSchoolAdminToken&&
+      schoolId&&String(a.schoolId)===schoolId);
   }catch(_){return false;}
 }
 function online(){return navigator.onLine===true;}

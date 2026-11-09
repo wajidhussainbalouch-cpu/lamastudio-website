@@ -1,5 +1,14 @@
 # LAMA PPSC Preparation Academy — development handoff
 
+## Latest school-head practice — Paper 19 (9 November 2026)
+
+**Paper 19 integrated:** `HM-2026-P19` adds 100 new original AI-assisted Headmaster/Headmistress practice MCQs, in four 25-question batches (`HM19-001`–`HM19-100`), with 80 education-related and 20 general-ability items, 90-minute test, separate saved attempt, two-column question-only A4 paper and post-submission explanation. **19 public teaching-family papers / 1,900 MCQ positions** now register with a strict 20-paper cap. PWA cache `lama-ppsc-preview-v80`.
+
+**Editorial bank:** 100 Paper 19 entries added as private `draft` rows without overwriting old records. Supabase audit: **1,830 teaching questions / 1,830 distinct normalized stems**, 100 structurally valid Paper 19 questions and zero human-reviewed approvals. GitHub Actions academy quality checks passed, including original-text/answer-key compatibility, but source-based answer keys are not secure premium exams and independent expert/syllabus review is still required.
+
+**Next `Continue`:** First verify no concurrent Paper 20 source or protected records; then build **Paper 20** (`HM20-001`–`HM20-100`) to reach the 20-paper ceiling. Before claiming the latest update is live, confirm Vercel production alias READY at an appropriate GitHub commit and test on mobile; avoid extra manual Vercel builds. See [PAPER_19_RELEASE.md](./PAPER_19_RELEASE.md).
+
+
 ## Latest school-head practice — Paper 18 (9 November 2026)
 
 **Paper 18 integrated:** `HM-2026-P18` has 100 new original AI-assisted free-practice questions (`HM18-001`–`HM18-100`), consisting of 80 education-domain and 20 general-ability MCQs, with a separate 90-minute examination, candidate attempt and score tracking, question-only A4 printing and post-submission answer explanations. **18 teaching-family papers / 1,800 public practice positions** are registered in GitHub. The existing maximum 20 papers per teaching job family stays in place; offline PWA cache is `lama-ppsc-preview-v79`.

@@ -493,3 +493,7 @@ Validation and release gate:
 ## Completion-date consistency — 9 Nov 2026
 - Completed lesson historical slots dated later than the recorded actual completion date now cause a validation error; earlier multi-day lesson slots remain permitted. Regression coverage added to `test-syllabus-completion-integrity.js`.
 - GitHub commit combined status showed Vercel failure linked to build-rate limits, not a confirmed syllabus CI result. No deployment was requested. Scheduler remains a pure, unintegrated module; live teacher diary and server-side authenticated progress still require integration and verification.
+
+## Regression fixture correction — 9 Nov 2026
+- Reviewed `test-syllabus-calendar-engine.js` against the new rule rejecting historical slots after actual completion. Two fixtures incorrectly marked lesson L1 complete on 2026-04-01 despite its historical second teaching slot being on 2026-04-02. Updated both fixture completion dates to 2026-04-02 and aligned the expected actualDate assertion.
+- This changes test data only, not school progress or lesson schedule data. The tests still need an actual successful Node/GitHub Actions execution; no deployment attempted.

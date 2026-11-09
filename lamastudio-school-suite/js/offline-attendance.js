@@ -5,8 +5,13 @@
  */
 (()=>{
 const $=id=>document.getElementById(id);
+// The active role may be lost when the browser closes. Explicit links preserve
+// the intended role even if both school and teacher accounts have logged in.
+const requestedRole=new URLSearchParams(location.search).get('role');
 const active=LamaAPI.getSession();
-const session=active?.role==='teacher'?active:(LamaAPI.getSession('school')||LamaAPI.getSession('teacher'));
+const session=requestedRole==='teacher'?LamaAPI.getSession('teacher'):
+  requestedRole==='school'?LamaAPI.getSession('school'):
+  active?.role==='teacher'?active:(LamaAPI.getSession('school')||LamaAPI.getSession('teacher'));
 const teacherMode=session?.role==='teacher';
 const schoolId=String(session?.schoolId||'');
 const accountId=teacherMode?String(session?.teacherId||session?.id||''):'admin';
@@ -72,7 +77,9 @@ function passphrase(){
 function normalizedStudents(rows){
   if(!Array.isArray(rows))throw Error('Invalid student roster received');
   const ids=new Set();
-  return rows.filter(r=>r&&r.id).map(r=>{
+  if(rows.some(r=>!r||!String(r.id||'').trim()))
+    throw Error('Some student records have no unique ID. Repair these online before preparing offline attendance.');
+  return rows.map(r=>{
     const id=String(r.id).trim();
     if(!id||ids.has(id))throw Error('Duplicate or invalid student ID');
     ids.add(id);
@@ -182,6 +189,7 @@ async function prepare(){
     const [students,attendance]=await Promise.all([readList('students'),readList('attendance')]);
     const roster=normalizedStudents(students),history=historyIndex(attendance,roster);
     if(roster.length>5000)throw Error('Roster exceeds offline device safety limit (5,000).');
+    if(!roster.length)throw Error('The server returned an empty student roster. Offline attendance was not prepared.');
     const salt=existing?unb64(existing.salt):crypto.getRandomValues(new Uint8Array(16));
     const key=await derive(password,salt);
     if(existing){

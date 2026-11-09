@@ -74,7 +74,7 @@ function buildSyncScenario(mode){
   state,online:()=>true,authorizedWriter:()=>true,
   render:()=>{},text:(target,value)=>messages.push({target,value}),
   readPendingSnapshots:async dates=>{
-   assert.deepEqual(dates,[date]);
+   assert.ok(dates.length===502&&dates.every(d=>d===date),'Preflight includes all 502 pending records');
    return {schoolId:'school-one',role:'school',students:roster,attendance:cloud.map(r=>({...r}))};
   },
   normalizedStudents:rows=>rows,

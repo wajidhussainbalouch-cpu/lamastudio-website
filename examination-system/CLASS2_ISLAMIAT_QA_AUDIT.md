@@ -88,3 +88,8 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Added `tools/class2-islamiat-live-draft-guard.test.cjs` (commit `4465746428a0b7284a306cb44d19bf53c738ded3`), exercising all three actual 500-record files via the draft adapter and the concept-family index. It asserts all 1500 remain draft/unapproved and that selecting even one for student delivery throws.
 - Included the test in `.github/workflows/class2-islamiat-draft-qa.yml` (commit `233b8e376fd3c0fe77a08622b5d5db6eabb30cd7`).
 - This is a repository safety regression check, **not** a deployed integration test. Successful CI execution is not yet confirmed; all drafts remain blocked from publication.
+
+## Review audit history prototype — 2026-11-09
+- Added pure SHA-256 hash-chained review event helper `tools/class2-islamiat-review-audit.cjs` (commit `2c7dc37fe903f37d6b4bc22ec5db668e0cfd04d1`) and tampering/sequence/school-mismatch tests (commit `cf664e67216537641d6e9355c6ee0d62842f340c`). CI workflow includes the new test (commit `56a788affefac4c494be491868de87f285c433eb`).
+- **Important:** hash chaining is tamper-evident only against a separately trusted head or immutable record; an attacker able to rewrite the entire chain can recompute hashes. This module does not authenticate users, store events, provide concurrency safety, or publish questions. A trusted backend with atomic append, tenant authorization and independently protected audit anchors is required.
+- GitHub Actions success and live integration have not been verified. Existing questions remain draft-only.

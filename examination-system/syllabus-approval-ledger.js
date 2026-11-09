@@ -42,7 +42,8 @@ function verifyApprovalLedger(events){
  const required=['schoolId','classId','subjectId','sessionId','snapshotId','actorId','action','at'];
  for(let i=0;i<events.length;i++){
   const e=events[i];
-  if(!e||e.sequence!==i+1||e.previousHash!==prev||e.hash!==hash({sequence:e.sequence,previousHash:e.previousHash,payload:e.payload}))return false;
+  if(!e||typeof e!=='object'||Array.isArray(e)||e.sequence!==i+1||e.previousHash!==prev||typeof e.hash!=='string'||!e.payload||typeof e.payload!=='object'||Array.isArray(e.payload))return false;
+  if(e.hash!==hash({sequence:e.sequence,previousHash:e.previousHash,payload:e.payload}))return false;
   const p=e.payload;
   if(!p||required.some(k=>typeof p[k]!=='string'||!p[k].trim()))return false;
   if(!['submitted','approved','rejected','published'].includes(p.action)||!/^sha256:[a-f0-9]{64}$/.test(p.snapshotId))return false;

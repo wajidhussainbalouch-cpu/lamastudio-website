@@ -27,7 +27,7 @@
   if(na!==null&&nb!==null&&na!==nb)return na-nb;
   if(na!==null&&nb===null)return -1;
   if(nb!==null&&na===null)return 1;
-  return String(a.id).localeCompare(String(b.id));
+  return String(a.id).localeCompare(String(b.id),undefined,{numeric:true,sensitivity:'base'});
  };
 
  const assignedJobs=paper=>[...new Set((Array.isArray(paper.jobIds)?paper.jobIds:(paper.id===LEGACY_PUBLIC_ID?['teaching']:[])).map(jobId).filter(Boolean))];

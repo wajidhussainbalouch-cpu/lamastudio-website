@@ -502,3 +502,8 @@ Validation and release gate:
 - The pure calendar scheduler now rejects `previousSchedule` lesson IDs absent from the approved lesson list, historical entries without matching completed progress, and malformed non-array historical slot collections. Previously these could be ignored or interpreted incorrectly.
 - Added three regression assertions to `test-syllabus-completion-integrity.js`. No production deployment or school-data mutation.
 - Verification limitation: repository could not be cloned in the execution environment because GitHub DNS/network access is unavailable. GitHub Actions status for these commits has not been confirmed, so tests must not be described as passing.
+
+## Local scheduler regression execution — 9 Nov 2026
+- Reproduced the current `syllabus-calendar-engine.js` in an isolated local Node.js 22.16.0 test environment and executed scheduler scenarios covering calendar holiday reflow, historical completion preservation, insufficient capacity, duplicate IDs, same-day period chronology, missing completion-period evidence, overlapping slots, completion dates, orphan historical entries and malformed historical slot collections. All reproduced scenarios passed locally.
+- **Verification scope:** this was a manual local reproduction of the GitHub engine and selected assertions, **not** a direct checkout of the GitHub repository or the full GitHub Actions suite. GitHub clone was blocked by DNS resolution. This result does not certify the repository CI or production backend.
+- No live deployment or school data change.

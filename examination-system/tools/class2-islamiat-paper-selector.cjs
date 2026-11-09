@@ -8,9 +8,13 @@ function selectPaper({questions, familyIndex, count, seed=1, topicLimits={}}) {
   if(!Array.isArray(questions)||!Array.isArray(familyIndex))throw new TypeError("Questions and familyIndex must be arrays");
   if(!Number.isSafeInteger(count)||count<1||count>100)throw new RangeError("count must be 1..100");
   if(!Number.isSafeInteger(seed))throw new TypeError("seed must be a safe integer");
-  const familyFor=new Map();
+  if(!topicLimits||typeof topicLimits!=="object"||Array.isArray(topicLimits))throw new TypeError("topicLimits must be an object");
+  for(const max of Object.values(topicLimits))if(!Number.isSafeInteger(max)||max<0)throw new RangeError("Invalid topic limit");
+  const familyFor=new Map(),seenFamilies=new Set();
   for(const family of familyIndex){
     if(!family||typeof family.familyId!=="string"||!Array.isArray(family.questionIds)||!family.questionIds.length)throw new Error("Invalid family");
+    if(!family.familyId.trim()||seenFamilies.has(family.familyId))throw new Error("Missing/duplicate family ID");
+    seenFamilies.add(family.familyId);
     for(const id of family.questionIds){
       if(familyFor.has(id))throw new Error("Question belongs to multiple families: "+id);
       familyFor.set(id,family.familyId);
@@ -36,7 +40,7 @@ function selectPaper({questions, familyIndex, count, seed=1, topicLimits={}}) {
   const candidates=shuffle([...byFamily].map(([familyId,variants])=>({familyId,q:shuffle([...variants])[0]})));
   const selected=[],topics={};
   for(const {familyId,q} of candidates){
-    const max=topicLimits[q.topic];
+    const max=Object.hasOwn(topicLimits,q.topic)?topicLimits[q.topic]:undefined;
     if(max!==undefined&&(!Number.isSafeInteger(max)||max<0))throw new RangeError("Invalid topic limit");
     if(max!==undefined&&(topics[q.topic]||0)>=max)continue;
     selected.push({familyId,questionId:q.id,topic:q.topic,type:q.type,prompt:q.prompt,marks:q.marks});

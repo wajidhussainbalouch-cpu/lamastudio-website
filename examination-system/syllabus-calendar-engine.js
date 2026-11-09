@@ -32,7 +32,8 @@ function scheduleApprovedDivision({lessons,calendar,completed={},previousSchedul
  // Never schedule unfinished work before the latest completed teaching date.
  const actualDates=Object.values(completed).map(x=>x.actualDate);
  const latestActualDate=actualDates.length?actualDates.sort().at(-1):null;
- const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period)&&(!latestActualDate||s.date>=latestActualDate));
+ const latestCompletedPeriod=latestActualDate?Math.max(0,...Object.entries(completed).flatMap(([id,p])=>(previousSchedule[id]||[]).filter(s=>s.date===latestActualDate).map(s=>s.period))):0;
+ const availableSlots=slots.filter(s=>!occupied.has(s.date+'#'+s.period)&&(!latestActualDate||s.date>latestActualDate||(s.date===latestActualDate&&s.period>latestCompletedPeriod)));
  for(const lesson of lessons){
   if(!lesson||typeof lesson.lessonId!=='string'||!lesson.lessonId||seen.has(lesson.lessonId))throw Error('Missing/duplicate lessonId');
   seen.add(lesson.lessonId);

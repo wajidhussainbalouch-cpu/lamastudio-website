@@ -497,3 +497,8 @@ Validation and release gate:
 ## Regression fixture correction — 9 Nov 2026
 - Reviewed `test-syllabus-calendar-engine.js` against the new rule rejecting historical slots after actual completion. Two fixtures incorrectly marked lesson L1 complete on 2026-04-01 despite its historical second teaching slot being on 2026-04-02. Updated both fixture completion dates to 2026-04-02 and aligned the expected actualDate assertion.
 - This changes test data only, not school progress or lesson schedule data. The tests still need an actual successful Node/GitHub Actions execution; no deployment attempted.
+
+## Orphan historical schedule safeguards — 9 Nov 2026
+- The pure calendar scheduler now rejects `previousSchedule` lesson IDs absent from the approved lesson list, historical entries without matching completed progress, and malformed non-array historical slot collections. Previously these could be ignored or interpreted incorrectly.
+- Added three regression assertions to `test-syllabus-completion-integrity.js`. No production deployment or school-data mutation.
+- Verification limitation: repository could not be cloned in the execution environment because GitHub DNS/network access is unavailable. GitHub Actions status for these commits has not been confirmed, so tests must not be described as passing.

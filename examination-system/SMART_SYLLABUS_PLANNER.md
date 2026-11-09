@@ -582,3 +582,8 @@ Validation and release gate:
 - Added `lamastudio-school-suite/backend-api/syllabus-readonly-bridge.gs`: a helper that prepares a sanitized legacy dated-plan view after a **server-authenticated** context supplies actor, school, active Examination grant and syllabus-view permission. It denies cross-school access and never labels legacy plans as immutable approved divisions.
 - Added `test-syllabus-readonly-bridge.js` covering permissions, school isolation, read-only behavior and malformed lesson slots. Wired it into syllabus CI and workflow path triggers.
 - **Integration boundary:** the bridge does not authenticate callers itself, load storage, register routes, write records or migrate plans. A future backend handler must derive context from a trusted session, authorize before loading scoped data, and apply version checks for any writes. Tests committed but no full CI pass verified; production untouched.
+
+## Read-only Apps Script bridge integrity — 9 Nov 2026
+- Hardened `syllabus-readonly-bridge.gs` to reject impossible calendar dates, formula-like or oversized lesson titles, and duplicate date/period assignments in legacy plans.
+- Extended `test-syllabus-readonly-bridge.js` for these cases. The tests are committed but **not confirmed passing**; a complete CI run remains required before integration.
+- This is an isolated helper only. It does not create HTTP routes, authenticate callers, migrate legacy plans, write school records, or deploy Apps Script/Vercel.

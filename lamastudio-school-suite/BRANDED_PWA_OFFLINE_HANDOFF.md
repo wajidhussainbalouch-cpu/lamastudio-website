@@ -102,3 +102,11 @@ Use the feature branch and **draft PR** for review. Do not merge into `main` or 
 - `package.json` exposes `npm run test:school-suite`, running the three self-contained Node mock regression suites (PWA grants, backend attendance/snapshot, and browser-flow simulation).
 - The exact committed frontend workflow regression was rerun after this validation hardening and **all 12 mocked scenarios passed**. No device, WebCrypto implementation, real Apps Script deployment or live database was involved.
 - GitHub PR #84 remains **draft** and has substantial independent `main` branch divergence; do not use GitHub's merge button without reconciling the diff and running real integration tests.
+
+## 2026-11-09 — Multi-tab integrity hardening (still draft)
+
+- Offline IndexedDB writes now use **atomic compare-and-set** in a single `readwrite` transaction. The active tab retains the last encrypted vault ciphertext as its expected version; it refuses to overwrite a newer version saved by another open tab. On such a conflict, the current tab disables edits and requires **Lock** then **Unlock** to reload.
+- The same CAS check also guards first-time encrypted backup restoration, preventing a race where a second tab creates a vault during restore. Successfully restored data now initializes the correct write version, so later attendance marks are saved normally. Bulk Present and backup download are disabled for stale vault state.
+- Committed `lamastudio-school-suite/js/test-offline-vault-cas.cjs` with an isolated simulated IndexedDB transaction suite. It passed five mocked outcomes: first write, versioned write, stale write rejection, collision rejection, and a subsequent correct write. **This is not a real browser/IndexedDB integration result.**
+- Updated `backend-api/test-offline-attendance-client.cjs` to simulate atomic `get`/nested `put`/abort semantics and reran its exact current frontend source: **12/12 mocked workflow checks passed**, including encrypted download/restore, offline bulk Present, failed sync retention and successful verified synchronization.
+- The root `package.json` `npm run test:school-suite` now includes all four regression suites. Real Chrome device and school-record acceptance tests remain release blockers.

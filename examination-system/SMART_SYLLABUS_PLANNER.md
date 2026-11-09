@@ -635,3 +635,9 @@ Validation and release gate:
 - Explicitly returns `readyForScheduling:false` for intake-only records; textbook visual verification and school approval are still required.
 - Added regression test to `.github/workflows/syllabus-planner-tests.yml`; isolated JavaScript harness executed the committed test file successfully. Full GitHub Actions result remains unverified.
 - No deployment, live data access or mutation.
+
+## Class 5 General Science Chapter 1 exercise inventory — 9 Nov 2026
+- Visually reviewed the scanned textbook chapter 1, printed pages 1–16 (PDF pages 4–19).
+- Added `catalogs/general-science-class-5-ch01-exercises.json`: five numbered end-of-chapter exercise groups (5 multiple-choice, 5 short-answer, 3 constructed responses, 2 investigations, one animal-album project) and seven in-chapter activity labels with page references.
+- Exercise group counts and activity locations are recorded for teacher review; no teaching periods, final lesson boundaries, or approval have been fabricated. `approvedForScheduling:false`.
+- No production deployment or school data changes.

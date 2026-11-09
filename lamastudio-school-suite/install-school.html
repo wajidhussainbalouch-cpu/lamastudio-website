@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b626d"><title>School App Installation | LAMA School Suite</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#173b42;background:#eef6f4}*{box-sizing:border-box}
+main{max-width:660px;margin:30px auto;padding:25px}section{background:white;border:1px solid #d2e3df;border-radius:20px;padding:24px;box-shadow:0 8px 22px #184b3b10}
+#logo{height:104px;width:104px;object-fit:contain;border-radius:22px;background:white;border:1px solid #cadcda}
+h1{margin:12px 0;font-size:clamp(22px,5vw,32px)}a,button{display:inline-block;border-radius:11px;padding:12px 15px;background:#0b626d;color:white;text-decoration:none;border:0;font-weight:750;font:inherit;cursor:pointer;margin:5px}
+nav{display:flex;flex-wrap:wrap;margin:15px -5px}p{line-height:1.6}small{color:#58727b}#install{background:#086a41;display:none}
+</style></head><body><main><section><img id="logo" hidden alt="School logo"><h1 id="name">Verifying school app…</h1>
+<p id="status" role="status">Checking Super Admin authorization.</p><button id="install" type="button">Install school app</button>
+<p id="instructions" hidden>On Android Chrome: open the browser menu and select <strong>Install app</strong> or <strong>Add to Home screen</strong>. On iPhone Safari: tap Share, then <strong>Add to Home Screen</strong>. Install separately on each phone.</p>
+<nav id="links" hidden><a href="main-dashboard.html">School Board</a><a href="portal-login.html">Student / Parent / Teacher login</a><a href="school-admin-login.html">School Admin</a></nav>
+<small>School identity is provided by the school. LAMA School Suite operates the shared school management platform. Users still sign in to access their own records.</small></section></main>
+<script>
+'use strict';
+const params=new URLSearchParams(location.search),schoolId=params.get('schoolId')||'';
+const status=document.getElementById('status'),nameNode=document.getElementById('name');
+const icon=document.getElementById('logo'),button=document.getElementById('install'),instructions=document.getElementById('instructions');
+let installEvent=null;
+addEventListener('beforeinstallprompt',event=>{event.preventDefault();installEvent=event;button.style.display='inline-block';});
+button.onclick=async()=>{if(installEvent){installEvent.prompt();await installEvent.userChoice;installEvent=null;button.style.display='none';}else instructions.hidden=false;};
+(async()=>{
+ if(!/^[A-Za-z0-9_-]{4,100}$/.test(schoolId)){nameNode.textContent='Invalid school app link';status.textContent='Ask the school for its official installation link.';return;}
+ const url='/api/school-pwa?kind=profile&schoolId='+encodeURIComponent(schoolId);
+ try{
+  const response=await fetch(url,{cache:'no-store'});
+  if(!response.ok)throw Error('School-branded installation has not been approved or configured.');
+  const school=await response.json();
+  if(school.schoolId!==schoolId||!school.name)throw Error('School identity could not be verified.');
+  nameNode.textContent=school.name;
+  document.title=school.name+' | Install School App';
+  icon.src='/api/school-pwa?kind=icon&size=192&schoolId='+encodeURIComponent(schoolId);
+  icon.hidden=false;
+  const manifest=document.createElement('link');manifest.rel='manifest';manifest.href='/api/school-pwa?kind=manifest&schoolId='+encodeURIComponent(schoolId);document.head.append(manifest);
+  const apple=document.createElement('link');apple.rel='apple-touch-icon';apple.href=icon.src;document.head.append(apple);
+  status.textContent='Approved school app. You can install the school name and logo on this device.';
+  instructions.hidden=false;document.getElementById('links').hidden=false;
+ }catch(error){nameNode.textContent='School app is unavailable';status.textContent=error.message;button.style.display='none';}
+})();
+</script></body></html>

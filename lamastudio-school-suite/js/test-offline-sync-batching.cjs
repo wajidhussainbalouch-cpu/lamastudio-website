@@ -109,21 +109,30 @@ function buildSyncScenario(mode){
  return {run,state,cloud,sent,messages,get writes(){return writes;}};
 }
 function reviewNavigationTests(){
- const state={busy:false,staleVault:false,data:{
-   drafts:[{studentId:'id495',date:'2026-10-02',syncIssue:'conflict'}],
-   roster:[{id:'id495',name:'Student 495'}]
+ const state={busy:false,staleVault:false,reviewCursor:null,data:{
+   drafts:[{studentId:'id495',date:'2026-10-02',syncIssue:'conflict'},
+     {studentId:'id111',date:'2026-09-01',syncIssue:'unverified'}],
+   roster:[{id:'id495',name:'Student 495'},{id:'id111',name:'Student 111'}]
  }};
  const nodes=new Map();
  const $=id=>{if(!nodes.has(id))nodes.set(id,{value:''});return nodes.get(id);};
- let rendered=false,notice='';
- const fn=new Function('state','$','text','render',reviewSource+'return showNextReview;')(
-   state,$,(_target,value)=>{notice=value;},()=>{rendered=true;});
+ let renderCount=0,notice='';
+ const fn=new Function('state','$','text','render','keyFor',reviewSource+'return showNextReview;')(
+   state,$,(_target,value)=>{notice=value;},()=>{renderCount++;},
+   (date,id)=>date+'|'+id);
+ fn();
+ assert.equal($('attDate').value,'2026-09-01');
+ assert.equal($('attSearch').value,'id111');
+ assert.equal($('attFilter').value,'review');
  fn();
  assert.equal($('attDate').value,'2026-10-02');
- assert.equal($('attSearch').value,'id495','Jump must target flagged student ID');
- assert.equal($('attFilter').value,'review');
+ assert.equal($('attSearch').value,'id495','Find next must advance to second flag');
+ fn();
+ assert.equal($('attDate').value,'2026-09-01','Review navigation must wrap to first flag');
  assert.equal($('attClass').value,'');
- assert.ok(rendered&&notice.includes('cloud was NOT overwritten'));
+ assert.ok(renderCount===3&&notice.includes('cloud was NOT overwritten'));
+ state.data.drafts=[];fn();
+ assert.equal(state.reviewCursor,null,'Review cursor resets when all flags resolved');
 }
 async function syncTests(){
  const ok=buildSyncScenario('success');
@@ -152,11 +161,12 @@ async function syncTests(){
  assert.equal(conflict.state.data.drafts.length,1,'Conflicting draft must not be overwritten');
  assert.equal(conflict.state.data.drafts[0].studentId,'id0');
  assert.equal(conflict.state.data.drafts[0].syncIssue,'conflict','Conflict should be visible after sync');
+ assert.equal(conflict.state.data.drafts[0].serverStatus,'Absent','Last confirmed server status must be shown for review');
  assert.equal(conflict.cloud[0].status,'Absent','The cloud attendance must be preserved');
 }
 (async()=>{
  await snapshotTests();
  await syncTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student conflict labels, direct review navigation and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

@@ -141,10 +141,10 @@ window.LAMA_PPSC_HM19_4=[
     "topic": "Nonrestrictive clause punctuation",
     "q": "Which sentence correctly punctuates an additional, nonessential detail about a teacher?",
     "options": [
-      "Ms Khan, who teaches science will lead, the workshop.",
-      "Ms Khan who, teaches science, will lead the workshop.",
+      "Ms Khan, who teaches science will lead, the workshop on Tuesday.",
+      "Ms Khan who, teaches science, will lead a workshop.",
       "Ms Khan, who teaches science, will lead the workshop.",
-      "Ms Khan who teaches science will, lead the workshop."
+      "Ms Khan who teaches science will, lead the staff workshop."
     ],
     "answer": 2,
     "explanation": "A nonrestrictive relative clause adds supplementary information and is set off with a comma before and after the clause.",

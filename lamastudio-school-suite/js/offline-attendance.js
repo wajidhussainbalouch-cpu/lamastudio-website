@@ -224,7 +224,7 @@ async function sync(automatic=false){
     for(const [date,drafts] of byDate){
       const records=drafts.map(d=>{
         const s=serverIds.get(d.studentId);
-        return {date,studentId:s.id,enrlNo:s.enrlNo,class:s.className,status:d.status};
+        return {date,studentId:s.id,enrlNo:s.enrlNo,class:s.className,status:d.status,baseStatus:d.baseStatus};
       });
       let responseOk=false;
       try{

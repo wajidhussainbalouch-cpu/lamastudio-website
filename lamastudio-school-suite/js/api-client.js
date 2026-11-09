@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolPwaStatus' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolPwaStatus' || action === 'offlineAttendanceSnapshot' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -130,8 +130,10 @@ const LamaAPI = (() => {
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
     getActiveSchool,updateSchoolConfig,deriveShortCode,
     getSchoolPwaStatus:async()=>(await callApi('getSchoolPwaStatus',{},'POST')).pwa,
+    offlineAttendanceSnapshot:async(dates=[])=>(await callApi('offlineAttendanceSnapshot',{dates},'POST')).snapshot,
     teacherOfflineList:async collection=>{if(!['students','attendance'].includes(collection))throw Error('Offline teacher collection not allowed');return (await teacherOfflineCall('list',{collection})).records;},
     teacherOfflineBulkAttendance:async(date,records)=>(await teacherOfflineCall('bulkAttendance',{date,records})).result,
+    teacherOfflineSnapshot:async(dates=[])=>(await teacherOfflineCall('offlineAttendanceSnapshot',{dates})).snapshot,
     getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,

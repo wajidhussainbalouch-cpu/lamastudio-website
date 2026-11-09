@@ -542,3 +542,8 @@ Validation and release gate:
 - `verifyApprovalLedger` now checks event payload requirements, scope/snapshot consistency, chronological timestamps, valid first submission, legal approval/rejection/publication transitions and closed terminal states in addition to SHA-256 chain links. Previously a rehashed invalid event sequence could pass structural verification.
 - `appendApprovalEvent` now rejects repeated submissions and appends after rejection, aligning creation with verification. Added regression assertions for both cases.
 - The audit chain remains a **pure in-memory utility**, not independently tamper-proof storage; a trusted authenticated server must enforce identity, authorization, append-only persistence and concurrency. No live deployment; full CI results not confirmed.
+
+## Legacy Apps Script integration audit — 9 Nov 2026
+- Reviewed the actual `backend-api/syllabus-draft.gs` and `backend-api/syllabus-approval.gs` alongside the immutable division/scheduler/ledger/diary modules. Existing backend stores **dated** scheduled lessons and uses a different approval state machine; it is **not** connected to the new undated snapshot/approval model.
+- Added [`SYLLABUS_BACKEND_INTEGRATION_AUDIT.md`](SYLLABUS_BACKEND_INTEGRATION_AUDIT.md) documenting schema incompatibilities, publication/revision semantics, server authentication, atomic storage, Node-to-Apps-Script runtime differences, migration requirements and a safe staged rollout.
+- No live Apps Script or deployment modified. Full CI and production integration remain unverified.

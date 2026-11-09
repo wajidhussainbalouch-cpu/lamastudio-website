@@ -214,3 +214,9 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Offline attendance writes are grouped into **500 students per call** (below the 1,500-row backend maximum). Every group needs a confirmed server readback. Network uncertainty stops following groups and preserves all unsynchronized records.
 - A new repeatable mock test `lamastudio-school-suite/js/test-offline-sync-batching.cjs` was added to `npm run test:school-suite`. Its isolated source tests passed with 195 queued dates, a 5,000-student response budget, 502 same-day attendance entries, stale/mismatched roster snapshots and lost network acknowledgments. Updated backend and previous 12-case browser mocks also passed. **No production writes, deployments or physical-device tests.**
 - PR #84 is still draft and diverges from independently changing `main`. All backend/frontend versions must be reconciled and jointly tested on a disposable school before any live release.
+
+### 2026-11-09 — Offline sync conflict review UI (draft only)
+
+- Added per-student conflict/unverified flags to encrypted offline attendance drafts and mobile **Pending sync** / **Needs review** filters, with direct jump to flagged student ID/date. No automatic overwrite of divergent server attendance is allowed.
+- Source regression suites passed in isolated mocked JS execution: large 195-date snapshot batching; 502-record chunk sync; competing server attendance; ambiguous acknowledgments; 12 existing offline browser-flow scenarios. No production records or live deployment were touched.
+- Source-only draft PR #84 remains divergent from `main`. Before merge, reconcile concurrent main-branch updates, deploy matching Apps Script snapshot and bulk endpoints to a disposable test instance, then test on Android Chrome offline and while reconnecting.

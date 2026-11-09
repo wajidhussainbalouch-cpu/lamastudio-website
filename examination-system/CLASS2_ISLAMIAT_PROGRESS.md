@@ -19,3 +19,9 @@ Updated 2026-11-09
 4. Connect reviewed questions to shared Paper Generator and Online Testing question bank without leaking answer keys.
 
 No Vercel deployment or live activation.
+
+## Batch 2 — 2026-11-09
+- `data/class2-islamiat-batch2-500-draft.json` committed as `f2540a768e5d084cb21593f08cb451456a53d96b`.
+- IDs 0501–1000; 100 supplemental Urdu concept stems in five modes, 500 structurally unique prompts, not 500 independent facts. Topics: cleanliness, Quranic manners, daily phrases and supplications, service, social conduct.
+- Automated structural QA passed: count, IDs, literal prompts. **No visual verification of the 48-page PCTB textbook**; factual/theological/curriculum suitability review outstanding. All `approved=false`, `onlineReady=false`, `requiresTeacherReview=true`.
+- Running Class 2 Islamiat total: 1,000/1,500 draft records. Do not expose these as approved questions in paper generator or online exams.

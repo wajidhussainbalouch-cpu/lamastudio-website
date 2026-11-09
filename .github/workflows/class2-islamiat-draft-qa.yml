@@ -1,0 +1,33 @@
+name: Class 2 Islamiat Draft QA
+
+on:
+  push:
+    paths:
+      - 'examination-system/data/class2-islamiat-batch*-500-draft.json'
+      - 'examination-system/tools/class2-islamiat-*.cjs'
+      - 'examination-system/tools/audit-class2-islamiat.cjs'
+      - '.github/workflows/class2-islamiat-draft-qa.yml'
+  pull_request:
+    paths:
+      - 'examination-system/data/class2-islamiat-batch*-500-draft.json'
+      - 'examination-system/tools/class2-islamiat-*.cjs'
+      - 'examination-system/tools/audit-class2-islamiat.cjs'
+      - '.github/workflows/class2-islamiat-draft-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  draft-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify draft adapter
+        run: node examination-system/tools/class2-islamiat-draft-adapter.test.cjs
+      - name: Audit 1,500 draft records
+        run: node examination-system/tools/audit-class2-islamiat.cjs

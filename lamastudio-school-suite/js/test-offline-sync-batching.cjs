@@ -78,9 +78,9 @@ function buildSyncScenario(mode){
  const state={data,busy:false,staleVault:false,autoPaused:false};
  const cloud=[],sent=[],messages=[];
  if(mode==='cloud-conflict')cloud.push({date,studentId:'id0',enrlNo:'100',status:'Absent'});
- let writes=0;
+ let writes=0,identityValid=true;
  const dependencies={
-  state,online:()=>true,authorizedWriter:()=>true,
+  state,online:()=>true,authorizedWriter:()=>identityValid,
   render:()=>{},text:(target,value)=>messages.push({target,value}),
   readPendingSnapshots:async dates=>{
    assert.ok(dates.length===502&&dates.every(d=>d===date),'Preflight includes all 502 pending records');
@@ -95,6 +95,7 @@ function buildSyncScenario(mode){
    assert.ok(records.length<=500,'Oversized write submitted');
    if(mode==='second-rejected'&&sent.length===2)throw Error('Simulated failed save');
    for(const r of records)cloud.push({...r,date:d});
+   if(mode==='auth-switched'&&sent.length===1)identityValid=false;
    if(mode==='first-ambiguous'&&sent.length===1)throw Error('Acknowledgment lost after server saved');
    return {saved:records.length,inserted:records.length,updated:0};
   },
@@ -163,10 +164,17 @@ async function syncTests(){
  assert.equal(conflict.state.data.drafts[0].syncIssue,'conflict','Conflict should be visible after sync');
  assert.equal(conflict.state.data.drafts[0].serverStatus,'Absent','Last confirmed server status must be shown for review');
  assert.equal(conflict.cloud[0].status,'Absent','The cloud attendance must be preserved');
+ const switched=buildSyncScenario('auth-switched');
+ await switched.run(false);
+ assert.deepEqual(switched.sent,[500],'Account switch must stop before second upload');
+ assert.equal(switched.cloud.length,500);
+ assert.equal(switched.state.data.drafts.length,2,'Unsent local changes survive account switch');
+ assert.equal(switched.state.autoPaused,true);
+ assert.ok(switched.messages.some(m=>String(m.value).includes('login changed during sync')));
 }
 (async()=>{
  await snapshotTests();
  await syncTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation, account switching and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

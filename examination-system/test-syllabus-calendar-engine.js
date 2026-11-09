@@ -9,15 +9,15 @@ const second=scheduleApprovedDivision({lessons,calendar:{...base,holidays:['2026
 assert.deepEqual(second.assignments.map(a=>a.lessonId),first.assignments.map(a=>a.lessonId));
 assert.notDeepEqual(second.assignments.map(a=>a.slots),first.assignments.map(a=>a.slots));
 assert.deepEqual(lessons.map(l=>l.topic),['Reading','Grammar']);
-const done=scheduleApprovedDivision({lessons,calendar:{...base,holidays:['2026-04-02']},completed:{L1:{actualDate:'2026-04-01'}},previousSchedule:{L1:first.assignments[0].slots}});
-assert.equal(done.assignments[0].actualDate,'2026-04-01');
+const done=scheduleApprovedDivision({lessons,calendar:{...base,holidays:['2026-04-02']},completed:{L1:{actualDate:'2026-04-02'}},previousSchedule:{L1:first.assignments[0].slots}});
+assert.equal(done.assignments[0].actualDate,'2026-04-02');
 assert.deepEqual(done.assignments[0].slots,first.assignments[0].slots);
 const short=scheduleApprovedDivision({lessons,calendar:{...base,end:'2026-04-02'}});
 assert.equal(short.feasible,false);
 assert.equal(short.assignments[1].status,'insufficient-capacity');
 assert.throws(()=>scheduleApprovedDivision({lessons:[...lessons,lessons[0]],calendar:base}),/duplicate/);
 
-const occupiedCheck=scheduleApprovedDivision({lessons,calendar:base,completed:{L1:{actualDate:'2026-04-01'}},previousSchedule:{L1:first.assignments[0].slots}});
+const occupiedCheck=scheduleApprovedDivision({lessons,calendar:base,completed:{L1:{actualDate:'2026-04-02'}},previousSchedule:{L1:first.assignments[0].slots}});
 assert.equal(occupiedCheck.assignments[1].slots[0].date,'2026-04-03');
 assert.equal(occupiedCheck.assignments[1].slots[0].period,1);
 assert.throws(()=>scheduleApprovedDivision({lessons,calendar:base,completed:{unknown:{actualDate:'2026-04-01'}}}),/Unknown completed/);

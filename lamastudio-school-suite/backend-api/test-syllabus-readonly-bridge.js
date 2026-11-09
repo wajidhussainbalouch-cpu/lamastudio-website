@@ -19,4 +19,7 @@ assert.throws(()=>prepare(plan,{...context,authenticated:false}),/Authenticated/
 assert.throws(()=>prepare(plan,{...context,examinationGranted:false}),/Authenticated/);
 assert.throws(()=>prepare(plan,{...context,canViewSyllabus:false}),/Authenticated/);
 assert.throws(()=>prepare({...plan,scheduled:[{...plan.scheduled[0],slot:0}]},context),/Invalid stored syllabus lesson/);
+assert.throws(()=>prepare({...plan,scheduled:[{...plan.scheduled[0],date:'2026-02-30'}]},context),/Invalid stored syllabus lesson/);
+assert.throws(()=>prepare({...plan,scheduled:[{...plan.scheduled[0],lessonTitle:'=SUM(A1:A2)'}]},context),/Invalid stored syllabus lesson/);
+assert.throws(()=>prepare({...plan,scheduled:[plan.scheduled[0],{...plan.scheduled[0],lessonId:'L2'}]},context),/Duplicate stored syllabus teaching slot/);
 console.log('Apps Script read-only syllabus bridge tests passed');

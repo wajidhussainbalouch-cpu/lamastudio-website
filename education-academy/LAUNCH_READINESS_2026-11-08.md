@@ -62,3 +62,35 @@ The Supabase project `cqoeokovxuimbltskuze` is `ACTIVE_HEALTHY`. All seven publi
 - Owner approval is required before announcing a final **paid** launch, taking fees, or presenting an unverified syllabus as official.
 
 **Recommended launch sequence:** Free preview and feedback -> verified technical and academic acceptance -> secure membership/payment implementation -> owner approval -> separate paid launch.
+
+## 9 November 2026 continuation — launch-blocker repairs
+
+**Decision remains NO-GO for commercial membership activation.** The free practice site can be reviewed separately, subject to mobile and exam acceptance tests.
+
+### Fixes committed after the 8 November audit
+
+- `engine.js`: removed an unsafe fallback to the first Headmaster paper. A candidate visiting an unrelated or not-yet-published job no longer receives a school-head examination by default.
+- `engine.js`: the sticky examination countdown appears only on `#paper`, while an already-started attempt continues to count down if the candidate navigates elsewhere. The hash-change handler refreshes visibility immediately.
+- `index.html`: the page-load self-check now treats *no published paper for the selected job* as an expected state rather than showing a false "academy features failed" banner. The homepage shows dynamically calculated public school-head paper/MCQ totals instead of saying just one practice paper exists.
+- `auth-supabase.js`: requested account-password recovery emails now explicitly redirect to `https://www.lamastudio.pk/education-academy/reset-password.html`.
+- New `reset-password.html`: branded new-password / confirm-password form, accessible show/hide buttons, client-side matching validation, password update through authenticated Supabase Auth `PUT /auth/v1/user`, immediate cleanup of bearer tokens from navigation history, and a best-effort recovery-session signout after success.
+- Signup form now requires matching new/confirm passwords. An inactive photo input previously accepted files without uploading them; it has been replaced with a clear disclosure so users do not mistakenly believe their photos were stored.
+- New `test-account-recovery.cjs` validates the reset-email destination, token cleanup, matching passwords and authenticated update request using mocked data. Extended `test-launch-polish.cjs` verifies safe job-specific exams, timer routing, signup and recovery availability, and the absence of the misleading photo control. Both are registered within academy CI.
+- The PWA cache has been bumped since the earlier audit (v75 before the last account UI refinements). Recovery pages are intentionally **not offline-cached**, as password updates require a live authenticated connection.
+
+### Still unverified — must be checked before launch
+
+1. **Supabase authentication redirect allow-list**: Set Site URL to `https://www.lamastudio.pk/education-academy/` and explicitly allow `https://www.lamastudio.pk/education-academy/confirm.html` and `https://www.lamastudio.pk/education-academy/reset-password.html` in Authentication → URL Configuration. The connector does not expose these Auth settings.
+2. **Real email journey**: Fresh account signup, inbox delivery, email confirmation, login, incorrect password, password reset link, new password, sign-out and return login, including expired-link behavior. This requires an authorized test mailbox.
+3. **Email delivery**: Production SMTP/verified sender. Supabase's default hosted email service has low best-effort limits and is not suitable evidence of reliable public delivery (see Supabase official Auth passwords docs).
+4. **Auth security**: Supabase Security Advisor warned of disabled leaked-password protection. According to the current official documentation, this check is a paid-plan feature; evaluate the project plan and alternative password protection rather than assuming the Free plan can enable it.
+5. **Exam correctness**: Full per-paper timer/resume/submit/timeout/print/backups on Android, no fallback under unready jobs, academic answer-key and syllabus expert review.
+6. **Paid membership**: A trusted server-managed entitlement ledger, non-public paid questions, verified payment and refund policy, admin approvals, abuse/rate-limit controls and audit trails are not live. Do not collect fees until all are tested and separately authorized by the owner.
+7. **Live frontend acceptance**: The repository/production deployment status cannot substitute for screenshots and real browsing at common Android viewport widths; direct live website access was blocked in the available browser environment. Reconfirm exact production commit, manifest, offline cache and forms before making public launch claims.
+8. **CI**: Tool-side simulation of recovery request and DOM updates succeeded, but the GitHub Actions workflow run was not available/confirmed for the exact release commit. Do not label all automated checks passing without a real run.
+
+### Recommended release gate
+
+Free preview: publish transparently as a non-official educational service after manual device/print/email checks.  
+Paid launch: **STOP** until Auth, support/privacy approval, commercial payment/entitlement security and content quality requirements are independently completed.  
+No manual Vercel deployment or promotion was initiated during this continuation; GitHub main commits can trigger the repository's existing automatic deployment integration.

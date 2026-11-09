@@ -7,6 +7,7 @@ const review={textbookPage:2,sourceBasis:"pctb-page-verified",reviewedBy:"teache
 const args={question,actor,schoolId:"school-a",review,decision:"recommend_approval"};
 const result=prepareReviewDecision(args);
 assert.equal(result.decision,"recommend_approval");
+assert.equal(result.eventType,"islamiat_review_decision");
 assert.equal(result.approved,false);
 assert.equal(result.onlineReady,false);
 assert.equal(question.approved,false);
@@ -19,5 +20,8 @@ assert.throws(()=>prepareReviewDecision({...args,review:{...review,textbookPage:
 assert.throws(()=>prepareReviewDecision({...args,question:{...question,approved:true}}),/Only draft/);
 const change=prepareReviewDecision({...args,decision:"request_changes",review:{reviewedBy:"teacher-1",reviewedAt:"2026-11-09T07:00:00Z",verificationNote:"Please correct the answer and reference."}});
 assert.equal(change.evidenceValid,false);
+assert.equal(change.eventType,"islamiat_review_decision");
+assert.throws(()=>prepareReviewDecision({...args,decision:"request_changes",review:{reviewedBy:"teacher-1",reviewedAt:"invalid",verificationNote:"Please correct the answer and reference."}}),/timestamp/);
+assert.throws(()=>prepareReviewDecision({...args,decision:"request_changes",review:{reviewedBy:"teacher-1",verificationNote:"Please correct the answer and reference."}}),/timestamp/);
 assert.equal(change.approved,false);
 console.log("Offline review decision tests passed");

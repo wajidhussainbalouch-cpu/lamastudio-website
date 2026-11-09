@@ -608,3 +608,8 @@ Validation and release gate:
 - Updated `.github/workflows/syllabus-planner-tests.yml` so pull requests changing `lamastudio-school-suite/backend-api/syllabus-*.gs` or `test-syllabus-*.js` trigger the syllabus test workflow, matching the existing push coverage intent.
 - This closes a CI trigger gap, but a successful GitHub Actions run has **not** been independently verified. Existing read-only bridge and handler source-level regression tests were previously checked in an isolated JavaScript harness; they do not establish full CI success.
 - No deployment or school-data change.
+
+## Legacy dated-plan compatibility clarification — 9 Nov 2026
+- Updated `syllabus-legacy-plan-audit.js` to classify repeated lesson IDs across distinct teaching slots as nonblocking **manual-review warnings**, not compatibility errors. Multi-period lessons are legitimate; duplicate date+slot remains an error.
+- Updated regression tests and executed the committed legacy audit test file in an isolated JavaScript harness: **passed**. This does not establish a successful full Node.js/Actions run.
+- All legacy dated plans still require exercise-level verification and authorized migration before an immutable syllabus division can be approved. No production deployment or record changes.

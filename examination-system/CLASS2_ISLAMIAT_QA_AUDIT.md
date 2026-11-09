@@ -47,3 +47,9 @@ Status: **review-only / NOT production-ready**
 6. Run controlled school-level end-to-end tests before any production release.
 
 No Vercel deployment, question approval, or school-data changes were made by this audit.
+
+## Integration safeguard increment — 2026-11-09
+- Added `tools/class2-islamiat-draft-adapter.cjs` (commit `723f678e07af839ef18b112d3b0723a2679b0d7b`) to normalize either `correctAnswer` or `expectedAnswer` into a review-only representation.
+- Added `tools/class2-islamiat-draft-adapter.test.cjs` (commit `631c060ca87a2b08e5c118c94fbdfdd0168f37c9`) with Node assertions covering answer-field fallback, rejection of approved/non-draft input, duplicate IDs, rejection of student delivery for drafts, and student answer-key omission.
+- This is **not wired into the Paper Generator or Online Testing**. Tests are committed but were **not executed in CI or a runtime during this increment**. Run `node examination-system/tools/class2-islamiat-draft-adapter.test.cjs` and integrate only after verifying test results.
+- The adapter is not a substitute for a secure server-side authorization check; approved content still requires a verified teacher-review and school-access workflow.

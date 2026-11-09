@@ -25,3 +25,9 @@ No Vercel deployment or school data changes.
 - 500 draft records, IDs `C2-GK-B2-0501`–`C2-GK-B2-1000`; 250 original question stems, each in short-answer and oral forms. Ten new topic groups, 50 records each.
 - Structural QA passed: 500 unique IDs and literal prompts. All are teacher-review-required, not auto-graded, not approved or online-ready. Source GK 2.pdf content has not been examined; alignment and factual checking remain pending.
 - Running GK total: 1,000/1,500 drafts. Next: batch 3, 500 drafts, avoiding semantic duplication; review source and batches before production.
+
+## Batch 3 — 2026-11-09
+- `data/class2-general-knowledge-batch3-500-draft.json`, commit `dc81b547c4529d322de3c409319de5d63119652d`.
+- IDs `C2-GK-B3-1001`–`C2-GK-B3-1500`: 125 supplemental concepts × four formats = 500 question records, five topic groups. Structural checks: 500 unique IDs and prompts; no empty answers.
+- **GK total: 1,500 draft records** (batch 1 500, batch 2 500, batch 3 500). The records are not 1,500 independent facts; formats repeat concepts. All `approved=false`, `onlineReady=false`; not textbook-aligned or ready for official paper printing/online tests. Check semantic duplicates, age appropriateness, factual correctness, and curricular relevance before activation.
+- No deployment or school data changes. Next subject to work on: Class 2 Islamiat, subject to source verification and user's earlier instructions about prioritization.

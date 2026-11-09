@@ -547,3 +547,8 @@ Validation and release gate:
 - Reviewed the actual `backend-api/syllabus-draft.gs` and `backend-api/syllabus-approval.gs` alongside the immutable division/scheduler/ledger/diary modules. Existing backend stores **dated** scheduled lessons and uses a different approval state machine; it is **not** connected to the new undated snapshot/approval model.
 - Added [`SYLLABUS_BACKEND_INTEGRATION_AUDIT.md`](SYLLABUS_BACKEND_INTEGRATION_AUDIT.md) documenting schema incompatibilities, publication/revision semantics, server authentication, atomic storage, Node-to-Apps-Script runtime differences, migration requirements and a safe staged rollout.
 - No live Apps Script or deployment modified. Full CI and production integration remain unverified.
+
+## Legacy dated plan read-only audit — 9 Nov 2026
+- Added `syllabus-legacy-plan-audit.js` to inspect legacy Apps Script plan shape and scope, date/slot integrity, repeated lesson IDs and status/version. It does not write data, authorize migration or claim old plans are approved immutable divisions.
+- Added `test-syllabus-legacy-plan-audit.js` and wired it into `.github/workflows/syllabus-planner-tests.yml`. A structurally compatible plan still requires migration and exercise-level academic review.
+- Full GitHub CI outcome has not been confirmed. No live Apps Script, school data or Vercel deployment changed.

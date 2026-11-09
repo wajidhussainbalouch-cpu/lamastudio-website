@@ -83,3 +83,8 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Added duplicate/blank concept-family ID rejection, up-front topic-limit validation, and own-property lookup for topic limits in `tools/class2-islamiat-paper-selector.cjs` (commit `1472a176bbf9b596dd0c921282bbe2326e7a5fcb`).
 - Added regression tests for repeated family IDs, invalid limits, null limits, and inherited-name topic keys (commit `f4a306d7c03b6bb6f64ccd25f4bf47b358d2a385`).
 - Runtime/CI execution has not been confirmed. No change to the draft approval status, no production connection and no deployment.
+
+## Real-data student-publication guard — 2026-11-09
+- Added `tools/class2-islamiat-live-draft-guard.test.cjs` (commit `4465746428a0b7284a306cb44d19bf53c738ded3`), exercising all three actual 500-record files via the draft adapter and the concept-family index. It asserts all 1500 remain draft/unapproved and that selecting even one for student delivery throws.
+- Included the test in `.github/workflows/class2-islamiat-draft-qa.yml` (commit `233b8e376fd3c0fe77a08622b5d5db6eabb30cd7`).
+- This is a repository safety regression check, **not** a deployed integration test. Successful CI execution is not yet confirmed; all drafts remain blocked from publication.

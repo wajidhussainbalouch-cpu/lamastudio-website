@@ -93,3 +93,8 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Added pure SHA-256 hash-chained review event helper `tools/class2-islamiat-review-audit.cjs` (commit `2c7dc37fe903f37d6b4bc22ec5db668e0cfd04d1`) and tampering/sequence/school-mismatch tests (commit `cf664e67216537641d6e9355c6ee0d62842f340c`). CI workflow includes the new test (commit `56a788affefac4c494be491868de87f285c433eb`).
 - **Important:** hash chaining is tamper-evident only against a separately trusted head or immutable record; an attacker able to rewrite the entire chain can recompute hashes. This module does not authenticate users, store events, provide concurrency safety, or publish questions. A trusted backend with atomic append, tenant authorization and independently protected audit anchors is required.
 - GitHub Actions success and live integration have not been verified. Existing questions remain draft-only.
+
+## Mobile teacher review preview — 2026-11-09
+- Added `examination-system/class2-islamiat-review-preview.html` (commit `2ac801650cd2e6f2755a256598a3849ac214110a`). Local-file-only, mobile-responsive demonstration with draft JSON upload, Urdu prompt display, topic filtering, pagination, and an unsaved review checklist.
+- The page uses DOM `textContent` for question text and does not call network endpoints. It does not authenticate teachers, save review events, authorize approval, or change any question status. Its checklist is UI-only and cannot verify textbook truth.
+- This is **not** linked into the live teacher dashboard or deployed. Browser testing has not been confirmed. All 1500 records remain drafts.

@@ -567,3 +567,8 @@ Validation and release gate:
 - Replaced lexicographic audit timestamp comparisons with parsed chronological comparisons, including fractional seconds. Added a calendar normalization check to reject impossible ISO dates before accepting ledger events.
 - Extended `test-syllabus-approval-ledger.js` with impossible February date, sub-second timestamp regression, and correctly ordered fractional timestamps.
 - Committed code and tests to GitHub; **the updated tests have not been executed or confirmed passing**, and complete CI status is unknown. No live Apps Script, data migration or Vercel deployment.
+
+## Timestamp validator escape regression corrected — 9 Nov 2026
+- Code review found double-escaped `\\d` / `\\.` regex tokens in `validAuditTime` introduced by the previous commit. Corrected them to regex digit and literal-dot tokens (`\d`, `\.`) in `syllabus-approval-ledger.js`.
+- Added an explicit valid ISO timestamp acceptance assertion in `test-syllabus-approval-ledger.js`. This prevents silently treating all ordinary timestamp strings as invalid.
+- GitHub commits completed; no full Node test execution or CI pass verified for these changes. Production untouched.

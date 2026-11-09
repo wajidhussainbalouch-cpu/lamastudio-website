@@ -98,3 +98,7 @@ No Vercel deployment, question approval, or school-data changes were made by thi
 - Added `examination-system/class2-islamiat-review-preview.html` (commit `2ac801650cd2e6f2755a256598a3849ac214110a`). Local-file-only, mobile-responsive demonstration with draft JSON upload, Urdu prompt display, topic filtering, pagination, and an unsaved review checklist.
 - The page uses DOM `textContent` for question text and does not call network endpoints. It does not authenticate teachers, save review events, authorize approval, or change any question status. Its checklist is UI-only and cannot verify textbook truth.
 - This is **not** linked into the live teacher dashboard or deployed. Browser testing has not been confirmed. All 1500 records remain drafts.
+
+## Trusted review timestamp hardening — 2026-11-09
+- `tools/class2-islamiat-review-service.cjs` now requires an injected trusted `serverNow` adapter and replaces client-provided `reviewedAt` and `reviewedBy` with server-owned values before review validation. A mismatched client-provided reviewer is rejected. The mock service test asserts server timestamp precedence.
+- This is a backend integration contract only; no live identity provider, clock adapter, atomic persistence, or teacher UI connection is installed. Source verification remains a human task. No drafts are published.

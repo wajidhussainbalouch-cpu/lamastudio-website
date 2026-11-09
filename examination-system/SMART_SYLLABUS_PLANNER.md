@@ -467,3 +467,9 @@ Validation and release gate:
 - Added `examination-system/syllabus-approval-ledger.js` and `test-syllabus-approval-ledger.js` in CI. Pure append-only event builder records submitted/approved/rejected/published transitions with scope, snapshot hash, actor ID, UTC time, sequence and previous-event hash. It rejects sequence conflicts, broken hash chains, scope/snapshot changes and invalid transitions.
 - Hash chains detect edits only if the chain's trusted head is independently anchored. They do not prevent deletion or wholesale replacement of the ledger. Production requires authenticated server-derived actor identity, atomic compare-and-swap writes, immutable/off-site audit anchors, role permissions and server-generated timestamps. Browser-provided identities and timestamps are not trustworthy.
 - No live storage, approval API, dashboard integration or teacher diary sync has been performed. CI outcome remains unverified.
+
+## Teacher diary read-only projection — 9 Nov 2026
+- Added `examination-system/syllabus-teacher-diary-projection.js` and its tests to syllabus CI. Given a division snapshot and schedule, it produces ordered date/period diary rows with stable lesson IDs, topic, learning objectives, difficulty, source page and actual completion date.
+- It validates school/class/subject/session scope and rejects overlapping periods or unknown lesson IDs. The source inputs are not modified.
+- This is **not live diary sync**. A production endpoint must verify the snapshot hash, approved/published ledger state, school and section permissions, teacher assignment, and schedule version before showing or writing diary entries. The helper currently does not enforce those backend requirements.
+- The Class 5 English division remains provisional pending textbook exercise verification and actual subject timetable. No deployment or school data changes; CI execution is unverified.

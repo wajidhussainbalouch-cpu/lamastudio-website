@@ -13,7 +13,7 @@ function chooseDistinctFamilies(questions, count, random=Math.random) {
     if(!q||typeof q!=="object") throw new TypeError("Invalid question");
     // Fail closed: all records must have completed human approval.
     if(q.approved!==true||q.onlineReady!==true||q.reviewStatus!=="approved"||
-       q.requiresTeacherReview===true||q.textbookVerified!==true) continue;
+       q.requiresTeacherReview!==false||q.textbookVerified!==true) continue;
     if(typeof q.questionId!=="string"||!/^C2-ISL-B[123]-\d{4}$/.test(q.questionId))
       throw new Error("Unrecognized question ID");
     if(typeof q.questionText!=="string"||!q.questionText.trim()) throw new Error("Empty question");

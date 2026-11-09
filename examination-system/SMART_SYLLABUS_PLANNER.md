@@ -489,3 +489,7 @@ Validation and release gate:
 - Calendar reflow now rejects overlapping historical completed slots and avoids all same-day rescheduling on the latest completed date if any completion on that date lacks period-level evidence. Earlier completed dates and slots remain historical, not rewritten.
 - Added `examination-system/test-syllabus-completion-integrity.js` to CI, covering unknown same-day period, overlapping history and valid chronological placement.
 - This is a pure scheduler safeguard, not a deployed backend fix. Authenticated progress, schedule version locking, class-specific timetables and confirmed holidays remain necessary. CI execution is not yet independently verified; no production deployment or school records changed.
+
+## Completion-date consistency — 9 Nov 2026
+- Completed lesson historical slots dated later than the recorded actual completion date now cause a validation error; earlier multi-day lesson slots remain permitted. Regression coverage added to `test-syllabus-completion-integrity.js`.
+- GitHub commit combined status showed Vercel failure linked to build-rate limits, not a confirmed syllabus CI result. No deployment was requested. Scheduler remains a pure, unintegrated module; live teacher diary and server-side authenticated progress still require integration and verification.

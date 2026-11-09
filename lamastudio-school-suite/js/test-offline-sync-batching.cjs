@@ -41,11 +41,18 @@ async function snapshotTests(){
   if(s.schoolId!=='school-one'||s.role!=='school')throw Error('Cross-school snapshot');
   return s;
  };
- const run=new Function('readSnapshot','validatedSnapshot','normalizedStudents','dateValue','status',
-   batchSource+'return readPendingSnapshots;')(get,validated,normalizedStudents,dateValue,status);
+ const state={data:{roster:[students[0]]}};
+ const run=new Function('readSnapshot','validatedSnapshot','normalizedStudents','dateValue','status','state',
+   batchSource+'return readPendingSnapshots;')(get,validated,normalizedStudents,dateValue,status,state);
  let result=await run([...requestedDates,...requestedDates.slice(0,5)]);
  assert.deepEqual(calls.map(c=>c.length),[90,90,15],'Date windows should be batched');
  assert.equal(result.attendance.length,196,'Recent repeat must not duplicate history');
+ // A very large rural school's attendance responses must use fewer dates
+ // so a 5,000-student roster never exceeds the server's 75k row limit.
+ calls.length=0;state.data.roster=Array.from({length:5000},()=>students[0]);
+ await run(requestedDates.slice(0,13));
+ assert.deepEqual(calls.map(c=>c.length),[6,6,1]);
+ state.data.roster=[students[0]];
  calls.length=0;mutatedRoster=true;
  await assert.rejects(run(requestedDates),/roster changed/);
  calls.length=0;mutatedRoster=false;changedStatus=true;

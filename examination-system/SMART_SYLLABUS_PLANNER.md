@@ -587,3 +587,8 @@ Validation and release gate:
 - Hardened `syllabus-readonly-bridge.gs` to reject impossible calendar dates, formula-like or oversized lesson titles, and duplicate date/period assignments in legacy plans.
 - Extended `test-syllabus-readonly-bridge.js` for these cases. The tests are committed but **not confirmed passing**; a complete CI run remains required before integration.
 - This is an isolated helper only. It does not create HTTP routes, authenticate callers, migrate legacy plans, write school records, or deploy Apps Script/Vercel.
+
+## Opt-in authenticated syllabus read handler — 9 Nov 2026
+- Added `lamastudio-school-suite/backend-api/syllabus-readonly-handler.gs` as an inactive handler contract. Trusted server services must resolve an authenticated session and load the plan using the session-derived school ID. The request accepts `planId` only; it rejects caller-supplied school/actor fields.
+- Authorization runs before storage access. The existing read-only bridge rechecks the stored plan school and returns a legacy dated-plan view marked `immutableDivisionApproved:false`.
+- Added `test-syllabus-readonly-handler.js` for authorization-before-load, scoped lookup, request field rejection and cross-school results; added CI trigger and test step. **Tests committed, not confirmed passing.** No route, live storage adapter, deployment or data migration.

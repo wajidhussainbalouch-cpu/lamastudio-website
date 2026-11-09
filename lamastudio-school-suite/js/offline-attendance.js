@@ -271,7 +271,7 @@ function render(){
     for(const choice of ['Present','Absent','Leave']){
       const button=document.createElement('button');button.type='button';button.dataset.value=choice;
       button.dataset.selected=String((draft?.status||baseline(student,date))===choice);
-      button.textContent=choice;button.disabled=!ready;
+      button.textContent=choice;button.disabled=!ready||!!draft?.syncIssue;
       button.onclick=()=>setChoice(student,date,choice);group.append(button);
     }
     if(draft){
@@ -336,6 +336,16 @@ async function discardLocal(student,date){
 async function setChoice(student,date,value){
   if(state.busy||state.staleVault||!state.data)return;
   if(!validDate(date)){text('actionStatus','Choose a valid attendance date.',true);return;}
+  const existing=draftFor(student,date);
+  // Never erase a visible cloud conflict or uncertain save just by tapping
+  // an attendance choice. First recheck cloud records or explicitly discard.
+  if(existing?.syncIssue){
+    text('actionStatus','This student has an unresolved sync review. Recheck the school database online and decide whether to discard the local draft. No attendance was changed.',true);
+    return;
+  }
+  if(existing?.status===value){
+    text('actionStatus','This attendance choice is already securely saved on this device.');return;
+  }
   state.busy=true;
   const old=state.data.drafts.slice(),k=keyFor(date,student.id),base=baseline(student,date);
   try{

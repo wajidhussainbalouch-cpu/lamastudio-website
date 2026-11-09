@@ -95,3 +95,10 @@ Use the feature branch and **draft PR** for review. Do not merge into `main` or 
 - Added `backend-api/test-offline-attendance-client.cjs` and executed it against the exact current client source in an isolated JS test harness: 12 mocked cases passed. Mock encryption is used only for control-flow regression; real WebCrypto and IndexedDB/device tests remain mandatory.
 - Administrator vault is per-school-per-device, not per individual admin account; school admins sharing a device could unlock the same vault if they share the offline password. Restrict shared-device access and evaluate per-admin vault identities before production.
 - Existing draft PR #84 remains unmerged and undeployed. Main has advanced independently; reconcile conflicts before release.
+
+## 2026-11-09 final continuation checks
+
+- Centralized `validateVaultData` on both offline password unlock and encrypted backup restore. Requires matching school/role scope, an object attendance history, unique student IDs, valid pending dates/statuses, and bounded roster/queue sizes.
+- `package.json` exposes `npm run test:school-suite`, running the three self-contained Node mock regression suites (PWA grants, backend attendance/snapshot, and browser-flow simulation).
+- The exact committed frontend workflow regression was rerun after this validation hardening and **all 12 mocked scenarios passed**. No device, WebCrypto implementation, real Apps Script deployment or live database was involved.
+- GitHub PR #84 remains **draft** and has substantial independent `main` branch divergence; do not use GitHub's merge button without reconciling the diff and running real integration tests.

@@ -1026,9 +1026,67 @@ function getRecord(ctx, collection, id) {
     return null;
 }
 
+/**
+ * Admin-only staff attendance uses a single canonical row per teacher/day.
+ * In rural/mobile connections an acknowledgment can be lost after Sheets wrote
+ * a row. Retrying must not create another row with a different generated ID.
+ * The lock protects the existence check and write as one Apps Script operation.
+ */
+function upsertTeacherAttendance_(ctx, record) {
+    if (ctx.role !== 'school' || !ctx.auditActor) throw Error('Verified School Administrator required to save teacher attendance.');
+    const teacherId = String(record.teacherId || '').trim();
+    const date = String(record.date || '').trim();
+    const status = String(record.status || '').trim();
+    const remarks = status === 'Present' ? '' : String(record.remarks || '').trim().slice(0,500);
+    if (!teacherId || !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        !Number.isFinite(Date.parse(date+'T12:00:00Z')) ||
+        new Date(date+'T12:00:00Z').toISOString().slice(0,10) !== date ||
+        !['Present','Absent','Leave'].includes(status))
+        throw Error('Invalid teacher attendance record.');
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) throw Error('Teacher attendance register is busy. Refresh before retrying.');
+    try {
+        const teachers = getCollectionSheet(ctx,'teachers');
+        const schoolTeachers = teachers.sheet.getDataRange().getValues();
+        const teacher = schoolTeachers.slice(1)
+            .map(row=>rowToRecord(teachers.headers,row))
+            .find(t=>String(t.id || '').trim()===teacherId);
+        if (!teacher) throw Error('Teacher not found in this school. No attendance was saved.');
+        const data = getCollectionSheet(ctx,'teacherAttendance');
+        const headers=data.headers,sheet=data.sheet;
+        const rows=sheet.getDataRange().getValues();
+        const timezone=(ctx.ss && typeof ctx.ss.getSpreadsheetTimeZone==='function' &&
+            ctx.ss.getSpreadsheetTimeZone()) || Session.getScriptTimeZone() || 'Asia/Karachi';
+        const sheetDay=value=>value instanceof Date
+            ? Utilities.formatDate(value,timezone,'yyyy-MM-dd')
+            : String(value||'').slice(0,10);
+        const found=[];
+        for(let i=1;i<rows.length;i++){
+            const prev=rowToRecord(headers,rows[i]);
+            if(String(prev.teacherId || '').trim()===teacherId && sheetDay(prev.date)===date)
+                found.push({row:i+1,record:prev});
+        }
+        if(found.length>1)throw Error('Duplicate teacher attendance already exists for this date. Ask School Admin to reconcile before saving.');
+        const old=found.length?found[0].record:null;
+        if(old && String(old.status)===status && String(old.remarks||'')===remarks)
+            return {...old,date};
+        const full=Object.assign({},old||{},{
+            id:old?.id || genId('tat'),teacherId,
+            teacherName:String(teacher.name||teacher.teacherName||'').slice(0,120),
+            date,status,remarks,markedBy:ctx.auditActor.name || 'School Admin',
+            createdAt:old?.createdAt || new Date().toISOString()
+        });
+        if(found.length)sheet.getRange(found[0].row,1,1,headers.length).setValues([recordToRow(headers,full)]);
+        else sheet.appendRow(recordToRow(headers,full));
+        SpreadsheetApp.flush();
+        writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,old?'update':'add','teacherAttendance',full.id,old,full);
+        return full;
+    }finally{lock.releaseLock();}
+}
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
+    if (collection === 'teacherAttendance') return upsertTeacherAttendance_(ctx,record);
     if (collection === 'studentRequests' && ctx.role === 'student') {
         const type = String(record.requestType || 'help');
         if (['help','sick_leave'].indexOf(type) === -1) throw new Error('Invalid request type.');

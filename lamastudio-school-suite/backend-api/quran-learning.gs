@@ -508,6 +508,12 @@ function quranHandleRequest_(p){
     const all=quranRows_(ctx,'schedules');
     return {status:'success',result:ctx.role==='teacher'?all.filter(x=>x.teacherId===ctx.teacher.id):all};
   }
+  if(action==='quranGroups'){
+    if(ctx.role==='student')throw Error('Student access to teacher group assignments is denied.');
+    const rows=quranRows_(ctx,'groups');
+    return {status:'success',result:ctx.role==='teacher'?
+      rows.filter(g=>String(g.teacherId)===String(ctx.teacher.id)):rows};
+  }
   if(ctx.role==='student')throw Error('Student accounts have read-only Quran access.');
   if(action==='quranSaveLesson')return {status:'success',result:quranSaveLesson_(ctx,p,config)};
   if(action==='quranSaveAttendance')return {status:'success',result:quranSaveAttendance_(ctx,p)};

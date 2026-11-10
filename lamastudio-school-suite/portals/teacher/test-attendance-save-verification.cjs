@@ -12,6 +12,7 @@ function extract(first,last){
  return src.slice(a,b);
 }
 const matching=extract('function myStudent(id){','function mine(r){');
+const schoolScope=extract('function schoolMatch(r){','const normalizeClass=');
 const operations=extract('function loadAttendanceList(){','function loadAbsentees(){');
 const stats=extract('function updateStats(){','function header(){');
 const date='2026-11-10';
@@ -56,6 +57,7 @@ const factory=new Function('ctx',[
  'const {me,myStudents,$,document,esc,contact,norm,message,localDate,LamaAPI}=ctx;',
  'let attendance=[],attendanceReadReady=true,attendanceSavePending=null,attendanceVerifyBusy=false,attendanceSaveBusy=false;',
  'const attendanceDrafts=new Map();',
+ schoolScope,
  matching,
  'function renderAll(){loadAttendanceList();}',
  operations,
@@ -113,6 +115,7 @@ const page=factory(ctx);
   'const {me,myStudents,$,norm,localDate}=ctx;',
   'let attendance=[],attendanceReadReady=false,attendanceSavePending=null;',
   'const homework=[];',
+  schoolScope,
   matching,
   stats,
   'return (rows,ready,pending)=>{attendance=rows;attendanceReadReady=ready;',

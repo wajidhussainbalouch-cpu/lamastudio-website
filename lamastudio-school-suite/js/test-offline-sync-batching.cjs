@@ -19,6 +19,7 @@ const syncSource=extract('async function sync(automatic=false){','function showN
 const reviewSource=extract('function showNextReview(){','async function downloadEncryptedBackup(){');
 const cloudRecheckSource=extract('async function recheckCloud(student,date){','function showNextReview(){');
 const choiceSource=extract('async function setChoice(student,date,value){','async function prepare(){');
+const prepareSource=extract('async function prepare(){','async function unlock(){');
 const dateValue=x=>String(x||'').slice(0,10);
 const status=x=>['Present','Absent','Leave'].includes(x)?x:'';
 const normalizedStudents=rows=>rows.map(r=>({
@@ -96,6 +97,7 @@ function buildSyncScenario(mode){
   render:()=>{},text:(target,value)=>messages.push({target,value}),
   readPendingSnapshots:async dates=>{
    assert.ok(dates.length===502&&dates.every(d=>d===date),'Preflight includes all 502 pending records');
+   if(mode==='auth-switched-preflight')identityValid=false;
    return {schoolId:'school-one',role:'school',students:roster.map(r=>({...r})),attendance:cloud.map(r=>({...r}))};
   },
   normalizedStudents:rows=>rows,
@@ -227,6 +229,45 @@ async function cloudRecheckTests(){
  assert.equal(writes,saved);
  assert.ok(notices.some(s=>s.includes('Read-only cloud recheck:')));
 }
+async function prepareBindingTests(){
+ for(const switchWhen of ['snapshot','keyDerivation','never']){
+  const state={busy:false,data:null,key:null,salt:null,storeVersion:null,staleVault:false};
+  const notifications=[],nodes={offlinePass:{value:'a secure offline passphrase'}};
+  let identityValid=true,writes=0;
+  const student={id:'s1',name:'School Student',enrlNo:'21',class:'5',section:'A'};
+  const deps={
+   state,render:()=>{},online:()=>true,authorizedWriter:()=>identityValid,
+   passphrase:()=>nodes.offlinePass.value,readVault:async()=>null,
+   validatedSnapshot:x=>x,readSnapshot:async()=>{
+    if(switchWhen==='snapshot')identityValid=false;
+    return {schoolId:'school-one',role:'school',students:[student],attendance:[]};
+   },
+   normalizedStudents:rows=>rows,historyIndex:()=>({}),
+   crypto:{getRandomValues:bytes=>bytes.fill(7)},
+   derive:async()=>{
+    if(switchWhen==='keyDerivation')identityValid=false;
+    return 'mock-key';
+   },
+   schoolId:'school-one',vaultId:'school-one#school-admin',
+   writeVault:async()=>{writes++;},renderClassList:()=>{},
+   navigator:{storage:{}},
+   text:(id,message)=>notifications.push(String(message)),
+   $:id=>nodes[id]||(nodes[id]={value:''})
+  };
+  const prepare=new Function(...Object.keys(deps),prepareSource+'return prepare;')(...Object.values(deps));
+  await prepare();
+  if(switchWhen==='never'){
+   assert.equal(writes,1,'Original verified account can prepare device vault');
+   assert.equal(state.data.roster.length,1);
+  }else{
+   assert.equal(writes,0,'Switched account cannot persist original school/teacher roster');
+   assert.equal(state.data,null,'No local preparation after account switch');
+   assert.ok(notifications.some(m=>m.includes('Account changed during')||m.includes('Account changed while')));
+  }
+  assert.equal(state.busy,false);
+ }
+}
+
 function reviewNavigationTests(){
  const state={busy:false,staleVault:false,reviewCursor:null,data:{
    drafts:[{studentId:'id495',date:'2026-10-02',syncIssue:'conflict'},
@@ -282,6 +323,12 @@ async function syncTests(){
  assert.equal(conflict.state.data.drafts[0].syncIssue,'conflict','Conflict should be visible after sync');
  assert.equal(conflict.state.data.drafts[0].serverStatus,'Absent','Last confirmed server status must be shown for review');
  assert.equal(conflict.cloud[0].status,'Absent','The cloud attendance must be preserved');
+ const beforeUpload=buildSyncScenario('auth-switched-preflight');
+ await beforeUpload.run(false);
+ assert.deepEqual(beforeUpload.sent,[],'Changing login during snapshot must prevent any uploads');
+ assert.equal(beforeUpload.state.data.drafts.length,502);
+ assert.equal(beforeUpload.writes,0,'No offline vault should be rewritten using an untrusted snapshot');
+ assert.equal(beforeUpload.state.autoPaused,true);
  const switched=buildSyncScenario('auth-switched');
  await switched.run(false);
  assert.deepEqual(switched.sent,[500],'Account switch must stop before second upload');
@@ -306,6 +353,7 @@ async function syncTests(){
  await syncTests();
  await choiceSafetyTests();
  await cloudRecheckTests();
+ await prepareBindingTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, changed readback enrollment, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, changed readback enrollment, snapshot/preparation account switching, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

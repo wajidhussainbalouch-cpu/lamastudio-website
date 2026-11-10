@@ -1,5 +1,18 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Assistant Faisalabad (BS-16) Paper 01 — completed source milestone (10 November 2026)
+
+**Completed distinct practice paper:** \`AFSD-FAISALABAD-2026-P01\`, \`AFSD01-001\`–\`AFSD01-100\`, 100 General Ability MCQs and 90-minute exam. Ten syllabus categories each have ten questions as an editorial practice choice, **not** an official PPSC subtopic weighting. Verified case-reference reproductions identify PPSC Advertisement No. 08/2026, 36-RJ/2026; preserve earlier \`36J2026\` screenshot transcription in \`PPSC_SCREENSHOT_SYLLABI_2026.json\`. This is an independent Faisalabad Assistant job family, separate from Kot Addu and Faisalabad Junior Clerk.
+
+**Current GitHub source registry: 27 practice papers / 2,700 question positions** (20 teaching, 3 Information Officer, 1 Junior Clerk Bahawalpur, 1 Junior Clerk Faisalabad, 1 Assistant Kot Addu, 1 Assistant Faisalabad). The new paper is included in free practice, 2-column A4 print, submitted answer key and offline assets (PWA cache v90). Other job families and scores are preserved.
+
+**Supabase editorial bank:** 100 new Faisalabad Assistant \`draft\` records have been inserted into the protected RLS-enabled bank, leaving 2,530 private questions overall. Database verified 100 unique new IDs, 10 subjects, zero approved. Neither expert validation nor live production-domain verification is complete.
+
+**Academic and security gaps:** An alternative General Knowledge form for non-Muslim candidates is still needed, and all answers require independent expert review. Browser-side free practice remains unsuitable for secured premium question keys. Do not label the original government vacancy open, confirm deployment, or treat AI-assisted material as an official PPSC paper. See [ASSISTANT_FAISALABAD_PAPER_01_RELEASE.md](./ASSISTANT_FAISALABAD_PAPER_01_RELEASE.md).
+
+**Next \`Continue\`:** Secretary 'A' Class Market Committee Paper 01, observing the screenshot syllabus's 60% qualification-related and 40% General Ability division. Verify the exact professional topics before publication.
+
+
 ## Junior Clerk Faisalabad Paper 01 — Completed source milestone (9 November 2026)
 
 **Faisalabad Board of Revenue Junior Clerk (BS-11)** now has its **own** 100-MCQ, 90-minute practice Paper 01: `JCF-FAISALABAD-2026-P01`, questions `JCF01-001`–`JCF01-100`, implementing the supplied **80% General Ability / 20% MS Office and Computer Skills** pattern. Do not confuse with **Bahawalpur** `JCB-BAHAWALPUR-2026-P01`; these are two independent job families, paper URLs, scores and histories, each capped at 20. Total source registry: **25 papers / 2,500 practice MCQ positions** (20 teaching, 3 Information Officer, 1 Bahawalpur Junior Clerk, 1 Faisalabad Junior Clerk).

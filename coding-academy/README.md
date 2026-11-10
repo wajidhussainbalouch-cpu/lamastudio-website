@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 3 (portfolio project studio)
+# LAMA Coding Academy — MVP 4 (real Python execution)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -115,3 +115,34 @@ Data remains on-device in localStorage; back it up with HTML and report exports.
 - Complete manual Chrome Android/desktop tests of the project preview and milestone flow.
 - Verify the Urdu coaching, right-to-left layout legibility, browser storage reset behavior and keyboard/screen-reader access.
 - Confirm current main-branch changes are incorporated without overriding newer edits. This remains a draft PR and **does not initiate a Vercel deployment**.
+
+
+## Phase 4 — Real executable Python learning (10 Nov 2026)
+
+Route: [Real Python Lab](./python.html), linked from the main learner navigation and from the older Python syntax warm-up course.
+
+- **10 original executable Python missions** with **30 behavioral test cases** and a concept question for every mission.
+- Content: greeting functions, fee totals, pass/fail conditions, attendance rates, low-stock filtering, average marks, string normalization, absence counts, grade bands and a passing-students report.
+- This is a **genuine Python interpreter**, powered by [Pyodide](https://pyodide.org/) Python 3/WebAssembly in a **module-type Web Worker**, not a JavaScript syntax mock or regular-expression approximation. Pinned release: v314.0.7 (not a floating latest release).
+- Student code is executed by python-harness.py in a fresh Python globals dictionary per run. Standard output, errors and individual behavioral-test outcomes are reported to the page.
+- Separate python-runner.mjs fetches the local Python harness, loads Pyodide from a version-pinned CDN, runs code and returns results via structured worker messages.
+- Students edit local saved drafts, start the runtime on demand, cancel execution, see output and tracebacks, answer one concept question and download .py source code.
+- Completion is granted only after the **current code** passes all 3 authored tests and the correct concept answer is chosen; editing previously passed code clears its lesson completion.
+- A 120-second first initialization timeout and 8-second execution timeout terminate and recreate a stuck worker. A full browser reload may be needed on low-memory devices.
+- Third-party runtime/wasm assets are **not bundled or guaranteed offline**. Local lesson content and Python worker/harness files are cached, but the actual Python interpreter normally needs a network connection for first launch and potentially later if external cache has been cleared.
+
+### Python regression test
+
+From repo root:
+
+    node coding-academy/tests/python.test.cjs
+
+This Node test runs the same Python harness via system Python 3, checks all 10 reference solutions against 30 test cases, confirms all incomplete starter code fails, checks output/error capture and verifies worker version pinning, timeout controls and page wiring. GitHub Actions now runs foundation-practice, project-studio and executable-Python test files.
+
+### Security / release restrictions
+
+A Web Worker **prevents many blocking computations from freezing the page** and allows cancellation, but it is **not a hostile-code security sandbox**. Arbitrary Python can still use Pyodide browser bridges, consume memory or attempt network access within browser rules. Only learner-authored practice is intended. Never use an account password, API key, real student details, payment information or production credentials inside this lab. This local, non-proctored learning feature must not be exposed as a secure multi-tenant evaluation service.
+
+The pinned runtime is downloaded from a CDN. Its availability, offline behavior, loading performance, browser support, WebAssembly compatibility, and Android memory requirements still require hands-on verification. Browser-specific Pyodide behavior is **not proven** by Python CLI tests. No production merge or deployment has occurred.
+
+**Authored activity count: 52** = 12 foundational guided labs + 18 industry practice challenges (including 6 non-executable Python syntax warm-ups) + 12 project-studio milestones + 10 real Python missions. Six career roadmaps remain separate informational guides.

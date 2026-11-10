@@ -34,6 +34,7 @@ const code=html.slice(i,j);
   'const {$,teachers,selected,dirty,LamaAPI,arr,status,recDate,reason,id,name,',
   'verifiedStaffAttendanceAdmin,holidayReason,toast,render,renderHistory}=ctx;',
   'const setBusy=v=>{busy=v};',
+  'const teacherQrPending=new Set();',
   code,
   'return {save,verifyTeacherPending,get pending(){return teacherPendingVerification},',
   'get dirty(){return dirty},get records(){return records}};'

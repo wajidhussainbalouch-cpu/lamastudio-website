@@ -75,7 +75,7 @@ function validateModule(module,value){
  if(keys.length>Object.keys(schema).length+2)throw Error(module.key+" contains unexpected fields.");
  for(const [field,v] of Object.entries(value)){
    if(!Object.hasOwn(schema,field))throw Error(module.key+" has an unsupported field: "+field);
-   if(typeof v!==schema[field]||!validPlainValue(v,0))throw Error(module.key+" has invalid or oversized data in "+field+".");
+   if(typeof v!==schema[field]||(schema[field]==="object"&&!isRecord(v))||!validPlainValue(v,0))throw Error(module.key+" has invalid or oversized data in "+field+".");
  }
  return value;
 }

@@ -141,6 +141,25 @@ const LamaAPI = (() => {
     listSyllabusPlans:async()=>(await callApi('syllabusListPlans',{},'POST')).plans,
     getAdminSyllabusPlan:async planId=>{const data=await callApi('syllabusAdminReadPlan',{planId},'POST');return {plan:data.plan,audit:data.audit};},
     getPublishedSyllabusPlan:async planId=>(await callApi('syllabusPublishedPlans',{planId},'POST')).plan,
+    // Dedicated Quran Learning Centre endpoint. The login belongs to the
+    // existing school/teacher/student portal; no new credentials are stored.
+    quran:async(action,fields={},role)=>{
+      if(!/^quran[A-Z][A-Za-z]*$/.test(String(action||'')))throw Error('Invalid Quran operation');
+      const loginRole=role||activeRole();
+      if(!['school','teacher','student','admin'].includes(loginRole))throw Error('School Suite sign-in required');
+      const login=getSession(loginRole);
+      if(!login)throw Error('Please sign in using your existing School Suite account.');
+      const auth=authFieldsFor(login);
+      if(loginRole==='school'){
+        let schoolAdmin=null;
+        try{schoolAdmin=parse(sessionStorage.getItem('lama_school_admin_auth'));}catch(_){}
+        if(!schoolAdmin||!schoolAdmin.token||String(schoolAdmin.schoolId)!==String(login.schoolId))
+          throw Error('Verified School Administrator session required for Quran administration.');
+        auth.token=schoolAdmin.token;
+      }
+      const payload=Object.assign({},fields,auth);
+      return (await callApi(action,payload,'POST')).result;
+    },
     list:async collection=>(await callApi('list',{collection},['teachers','students','attendance'].includes(collection)?'POST':'GET')).records,
     get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,
     clearStudentAttendanceDate:async(date,className,previewOnly,confirmText)=>(await callApi('clearStudentAttendanceDate',{date,className,previewOnly,confirmText})).result,

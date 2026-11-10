@@ -104,6 +104,11 @@ for(const p of projects){
     assert.match(get('feedback').textContent,/Milestone checked!/,'Milestone '+p.id+' '+i+' must pass');
     if(i<p.steps.length-1)get('next').fire('click');
   }
+  // The final audit also requires a genuine project reflection, not only syntax patterns.
+  get('audit').fire('click');
+  assert.match(get('auditResult').textContent,/at least 80 characters/,'Missing reflection must block portfolio readiness');
+  get('reflection').value='I built this project to solve a practical office problem, wrote and tested the HTML and JavaScript, and checked the final output on different inputs.';
+  get('reflection').fire('input');
   get('audit').fire('click');
   assert.match(get('auditResult').textContent,/All milestone code patterns are present/,'All stages ready for '+p.id);
 }

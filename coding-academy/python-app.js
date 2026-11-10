@@ -198,7 +198,7 @@ function download(){
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(link),1200);
 }
-byId("language").addEventListener("click",()=>{state.lang=state.lang==="en"?"ur":"en";save();render();});
+byId("language").addEventListener("click",()=>{if(active)abortRun("");state.lang=state.lang==="en"?"ur":"en";save();render();});
 byId("missionMenu").addEventListener("click",event=>{
   const b=event.target.closest("[data-mission]");if(b)choose(b.dataset.mission);
 });

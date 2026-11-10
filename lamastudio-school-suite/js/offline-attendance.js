@@ -45,9 +45,30 @@ async function readPendingSnapshots(dates){
   // attendance statuses). Large schools use fewer dates per request.
   const rosterSize=Math.max(1,state.data?.roster?.length||1);
   const dateBatchSize=Math.max(1,Math.min(90,Math.floor(30000/rosterSize)));
-  for(let index=0;index<unique.length;index+=dateBatchSize){
-    const snapshot=validatedSnapshot(await readSnapshot(unique.slice(index,index+dateBatchSize)));
+  for(let index=0;index<unique.length;){
+    const slice=unique.slice(index,index+dateBatchSize);
+    let snapshot;
+    try{snapshot=validatedSnapshot(await readSnapshot(slice));}
+    catch(error){
+      // New admissions may have increased the cloud roster since this phone
+      // last prepared its vault. Adapt only to the backend's explicit
+      // roster/date-limit response, not to auth or generic network failures.
+      const message=String(error?.message||'');
+      if(dateBatchSize>1&&message.includes('Too many offline dates in one request for this roster')){
+        const match=message.match(/maximum (\d+)/);
+        const advertised=match?Number(match[1]):NaN;
+        const smaller=Number.isInteger(advertised)&&advertised>0?
+          Math.min(advertised,dateBatchSize-1):Math.floor(dateBatchSize/2);
+        dateBatchSize=Math.max(1,smaller);
+        continue;
+      }
+      throw error;
+    }
     const normalized=normalizedStudents(snapshot.students).sort((a,b)=>a.id.localeCompare(b.id));
+    // Use the newer server roster size for subsequent date requests.
+    dateBatchSize=Math.min(dateBatchSize,
+      Math.max(1,Math.min(90,Math.floor(30000/Math.max(1,normalized.length)))));
+    index+=slice.length;
     const fingerprint=JSON.stringify(normalized);
     if(rosterFingerprint!==null&&rosterFingerprint!==fingerprint)
       throw Error('Student roster changed during offline synchronization. Keep drafts; refresh and try again.');

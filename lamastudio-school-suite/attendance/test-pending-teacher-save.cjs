@@ -6,6 +6,10 @@ const i=html.indexOf('async function verifyTeacherPending(){');
 const j=html.indexOf('function setPeriod(){',i);
 assert.ok(i>=0&&j>i);
 const code=html.slice(i,j);
+const d=html.indexOf('function diagnoseTeacherReadback(rows,pending){');
+const e=html.indexOf('const reason=r=>',d);
+assert.ok(d>=0&&e>d,'Readback diagnostics must come from the production source');
+const diagnostics=html.slice(d,e);
 (async()=>{
  const date='2026-11-10',teacher={id:'t1',name:'Teacher One'};
  const teachers=[teacher],selected=new Map([['t1',{status:'Present',remarks:''}]]),
@@ -35,6 +39,7 @@ const code=html.slice(i,j);
   'verifiedStaffAttendanceAdmin,holidayReason,toast,render,renderHistory}=ctx;',
   'const setBusy=v=>{busy=v};',
   'const teacherQrPending=new Set();',
+  diagnostics,
   code,
   'return {save,verifyTeacherPending,get pending(){return teacherPendingVerification},',
   'get dirty(){return dirty},get records(){return records}};'
@@ -46,6 +51,16 @@ const code=html.slice(i,j);
  assert.ok(actions.pending);
  await actions.save();
  assert.equal(writes,1,'Unconfirmed staff mark may not be submitted twice');
+ cloud.push({teacherId:'t1',date:'2026-11-09',status:'Present',remarks:''});
+ await actions.verifyTeacherPending();
+ assert.equal(actions.pending.diagnostic.includes('previous-UTC-day'),true,
+   'One-day UTC shift must be diagnosed, never accepted as verification');
+ assert.equal(actions.dirty.size,1);
+ cloud.pop();
+ cloud.push({teacherId:'t1',date,status:'Absent',remarks:'Unexpected'});
+ await actions.verifyTeacherPending();
+ assert.equal(actions.pending.diagnostic.includes('status/remarks mismatch'),true);
+ cloud.pop();
  cloud.push({teacherId:'t1',date,status:'Present',remarks:''});
  cloud.push({teacherId:'t1',date,status:'Present',remarks:''});
  await actions.verifyTeacherPending();
@@ -55,5 +70,5 @@ const code=html.slice(i,j);
  assert.equal(actions.pending,null);
  assert.equal(actions.dirty.size,0);
  assert.equal(actions.records.length,1);
- console.log('PASS: staff save locks uncertain record, blocks repeat POST and verifies one matching cloud row.');
+ console.log('PASS: staff save blocks repeat POST, diagnoses timezone/status/duplicate mismatches and verifies only one matching row.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

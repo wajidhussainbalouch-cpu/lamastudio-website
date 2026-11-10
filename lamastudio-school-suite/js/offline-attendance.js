@@ -44,7 +44,7 @@ async function readPendingSnapshots(dates){
   // Match the backend's per-roster download budget (max 30,000 exact-date
   // attendance statuses). Large schools use fewer dates per request.
   const rosterSize=Math.max(1,state.data?.roster?.length||1);
-  const dateBatchSize=Math.max(1,Math.min(90,Math.floor(30000/rosterSize)));
+  let dateBatchSize=Math.max(1,Math.min(90,Math.floor(30000/rosterSize)));
   for(let index=0;index<unique.length;){
     const slice=unique.slice(index,index+dateBatchSize);
     let snapshot;

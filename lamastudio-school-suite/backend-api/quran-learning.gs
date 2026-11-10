@@ -486,21 +486,43 @@ function quranOverview_(ctx,config){
   const lessons=quranRows_(ctx,'lessons').filter(l=>ids.has(l.enrollmentId));
   const attendance=quranRows_(ctx,'attendance').filter(a=>ids.has(a.enrollmentId));
   const now=Utilities.formatDate(new Date(),ctx.ss.getSpreadsheetTimeZone()||'Asia/Karachi','yyyy-MM-dd');
-  const count=code=>enrollments.filter(e=>e.programCode===code).length;
+  const month=now.slice(0,7),count=code=>enrollments.filter(e=>e.programCode===code).length;
   const todayLessons=lessons.filter(l=>l.date===now);
+  const monthlyLessons=lessons.filter(l=>String(l.date||'').slice(0,7)===month);
+  const students=quranRowsFromCollection_(ctx,'students');
+  const learnerRows=enrollments.map(e=>{
+    const student=students.find(s=>String(s.id)===String(e.studentId));
+    return Object.assign({},e,{studentName:student?.name||'Student',
+      className:student?.class||'',section:student?.section||''});
+  });
+  const byClass=new Map(),byTeacher=new Map();
+  if(ctx.role!=='student'){
+    for(const e of learnerRows){
+      const classKey=[e.className,e.section].join(' · ');
+      const cls=byClass.get(classKey)||{className:e.className,section:e.section,learnerCount:0,lessonsThisMonth:0};
+      cls.learnerCount++;
+      cls.lessonsThisMonth+=monthlyLessons.filter(l=>l.enrollmentId===e.id).length;
+      byClass.set(classKey,cls);
+      const t=byTeacher.get(e.teacherId)||{teacherId:e.teacherId,assignedProgrammes:0,lessonsThisMonth:0,revisionFollowups:0};
+      t.assignedProgrammes++;
+      t.lessonsThisMonth+=monthlyLessons.filter(l=>l.enrollmentId===e.id).length;
+      t.revisionFollowups+=monthlyLessons.filter(l=>l.enrollmentId===e.id &&
+        (l.revisionRequired===true||String(l.revisionRequired)==='true')).length;
+      byTeacher.set(e.teacherId,t);
+    }
+  }
+  const teachers=ctx.role==='student'?[]:quranRowsFromCollection_(ctx,'teachers');
   return {
-    asOf:now,students:new Set(enrollments.map(e=>e.studentId)).size,
+    asOf:now,month,students:new Set(enrollments.map(e=>e.studentId)).size,
     programmes:{qaida:count('qaida'),nazra:count('nazra'),hifz:count('hifz'),islamicStudies:count('islamicStudies')},
-    lessonsToday:todayLessons.length,
+    lessonsToday:todayLessons.length,lessonsThisMonth:monthlyLessons.length,
     revisionRequired:todayLessons.filter(l=>l.revisionRequired===true||String(l.revisionRequired)==='true').length,
     attendanceToday:attendance.filter(a=>a.date===now&&a.status==='Present').length,
-    learners:enrollments.map(e=>{
-      const student=quranRowsFromCollection_(ctx,'students').find(s=>String(s.id)===String(e.studentId));
-      return Object.assign({},e,{
-        studentName:student?.name||'Student',
-        className:student?.class||'',section:student?.section||''
-      });
-    })
+    classProgress:[...byClass.values()],
+    teacherPerformance:[...byTeacher.values()].map(t=>Object.assign({},t,{
+      teacherName:teachers.find(x=>String(x.id)===String(t.teacherId))?.name||'Assigned Quran Teacher'
+    })),
+    learners:learnerRows
   };
 }
 /**

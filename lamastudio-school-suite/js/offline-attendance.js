@@ -174,7 +174,7 @@ async function derive(password,salt){
   const material=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
-async function writeVault(){
+async function writeVault(requireOnlineAuth=false){
   if(state.staleVault)throw Error('Local vault requires Lock and Unlock before new edits.');
   if(!state.data||!state.key||!state.salt)throw Error('Offline records are locked');
   try{
@@ -183,6 +183,12 @@ async function writeVault(){
     const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},state.key,bytes);
     const record={schoolId:vaultId,version:1,salt:b64(state.salt),iv:b64(iv),
       ciphertext:b64(ciphertext),savedAt:new Date().toISOString()};
+    // Device preparation downloads the roster using online credentials. A
+    // switched account during slow device encryption must not persist a
+    // freshly fetched teacher/school roster under the earlier identity.
+    // Offline attendance edits deliberately do not require internet login.
+    if(requireOnlineAuth&&!authorizedWriter())
+      throw Error('Account changed during secure offline preparation.');
     state.storeVersion=await saveVaultCas(record,state.storeVersion);
   }catch(error){
     // A failed encryption, quota error, or aborted IndexedDB transaction
@@ -416,7 +422,16 @@ async function prepare(){
     state.storeVersion=existing?.ciphertext||null;
     state.data={schoolId,accountScope:vaultId,roster,history,drafts:[],preparedAt:new Date().toISOString()};
     state.salt=salt;state.key=key;
-    try{await writeVault();}catch(error){const stale=state.staleVault;Object.assign(state,prior);if(stale)state.staleVault=true;throw error;}
+    try{await writeVault(true);}
+    catch(error){
+      const stale=state.staleVault;
+      Object.assign(state,prior);
+      // If this was the very first preparation there is no unlocked vault
+      // to Lock/Unlock. Let staff retry Prepare; it re-reads IndexedDB and
+      // refuses to overwrite any record another tab created meanwhile.
+      if(stale&&prior.data)state.staleVault=true;
+      throw error;
+    }
     $('offlinePass').value='';
     renderClassList();
     if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});

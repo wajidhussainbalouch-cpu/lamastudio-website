@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 4 (real Python execution)
+# LAMA Coding Academy — MVP 5 (bilingual Python and unified progress)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -146,3 +146,31 @@ A Web Worker **prevents many blocking computations from freezing the page** and 
 The pinned runtime is downloaded from a CDN. Its availability, offline behavior, loading performance, browser support, WebAssembly compatibility, and Android memory requirements still require hands-on verification. Browser-specific Pyodide behavior is **not proven** by Python CLI tests. No production merge or deployment has occurred.
 
 **Authored activity count: 52** = 12 foundational guided labs + 18 industry practice challenges (including 6 non-executable Python syntax warm-ups) + 12 project-studio milestones + 10 real Python missions. Six career roadmaps remain separate informational guides.
+
+
+## Phase 5 — Unified progress and English/Urdu Python guidance (10 November 2026)
+
+- Added [Learning Journey dashboard](./progress.html): one place to view completion from all four independent browser-local modules:
+  - 12 foundation lessons (original academy)
+  - 18 industry practice challenges (6 JavaScript, 6 SQL subset, 6 non-executable Python syntax)
+  - 10 real Python missions (Pyodide when supported)
+  - 12 coached milestones across 3 portfolio projects
+- Progress charts and next-step links are based on existing module data; no duplicate source of truth, migration, accounts, external storage or cloud sync.
+- Added device-only **JSON progress backup and restore**. Backup includes current code drafts, choices, completion metadata and optional portfolio reflections from all four modules.
+- Import requires an explicitly chosen local JSON file, correct backup format, a four-module schema, size limit, field/type validation, an on-screen review and user confirmation before replacing stored data. On storage write failure, the app attempts to roll back each previous entry. This is not a cloud backup service.
+- Importing code from an untrusted third party is unsafe because code can be executed later when a learner chooses Run; accept only your own trusted backups. The backup may contain personal notes; keep it private and never publish it in forums or repositories.
+- New python-i18n.js contains **Urdu lesson explanations and quiz options for all 10 executable Python missions**, plus an English/Urdu interface toggle. Technical code and Pyodide runtime behavior remain unchanged.
+- Python language preference is saved in the existing local Python data store and included in portable backups.
+- Added tests/progress.test.cjs and wired it to the scoped GitHub Actions checks. It validates all 52 activity counts, translation coverage, backup file format, explicit confirmation, cancel behavior and rejection of malformed restore data.
+- Expanded service worker cache v5 to include local progress pages and Urdu strings. External Pyodide WASM/CDN runtime is **not** available offline by promise; first use and some later use require network access.
+
+### Testing and release notes
+
+Run all regression tests:
+
+    node coding-academy/tests/practice.test.cjs
+    node coding-academy/tests/studio.test.cjs
+    node coding-academy/tests/python.test.cjs
+    node coding-academy/tests/progress.test.cjs
+
+Required hands-on checks still include Android WebAssembly compatibility and memory, Pyodide initialization time, Urdu layout on real devices, long code entry, local storage quotas, file picker/import/export round trips, keyboard/screen-reader use and browser update/offline behavior. Tests only cover modeled behavior, not complete security, educational effectiveness or production readiness. This is still a draft GitHub PR and has not been deployed to the live website.

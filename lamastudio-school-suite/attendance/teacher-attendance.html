@@ -80,35 +80,39 @@ function teacherQrStop(){document.getElementById('qrTeacherPanel')?.classList.re
 }
 let teacherQrSaving=false;
 async function teacherQrSaveVerified(teacher){
- if(teacherQrSaving)return;
- if(!verifiedStaffAttendanceAdmin()){teacherQrFeedback('error','School Administrator login required. QR attendance was not submitted.');return;}
+ if(teacherQrSaving||teacherPendingVerification)return;
+ if(!verifiedStaffAttendanceAdmin()){
+  teacherQrFeedback('error','School Administrator login required. QR attendance was not submitted.');return;
+ }
  const k=id(teacher),when=$('date').value;
- if(busy||!attendanceHistoryLoaded||when!==loadedDate||holidayReason(when)){teacherQrFeedback('error','Attendance register unavailable. Nothing saved.');return}
- if(dirty.size){teacherQrFeedback('error','Unsaved manual changes exist. Save or discard them before QR auto-attendance.');return}
+ if(busy||!attendanceHistoryLoaded||when!==loadedDate||holidayReason(when)){
+  teacherQrFeedback('error','Attendance register unavailable. Nothing saved.');return;
+ }
+ if(dirty.size){teacherQrFeedback('error','Unsaved manual changes exist. Save or discard them before QR attendance.');return;}
  const existing=records.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
- if(existing.length){teacherQrFeedback('error','Existing attendance found. QR will not overwrite it.');return}
+ if(existing.length){teacherQrFeedback('error','Existing attendance found. QR will not overwrite it.');return;}
+ const patch={teacherId:k,teacherName:name(teacher),date:when,status:'Present',remarks:''};
+ // Capture the intent before the network request. An exception can mean the
+ // sheet wrote the row but the server acknowledgment was lost.
+ teacherPendingVerification={date:when,records:[patch]};
+ teacherQrPending.add(k);
  teacherQrSaving=true;
- teacherQrFeedback('pending',name(teacher)+' scanned. Saving attendance and verifying…');
+ teacherQrFeedback('pending',name(teacher)+' scanned. Saving once and verifying attendance…');
+ render();
  try{
-  const patch={teacherId:k,teacherName:name(teacher),date:when,status:'Present',remarks:''};
   const result=await LamaAPI.add('teacherAttendance',patch);
-  if(result===false||result?.success===false||result?.error)throw Error(result?.message||result?.error||'Server rejected save');
-  const response=await LamaAPI.list('teacherAttendance');
-  if(!Array.isArray(response)&&!Array.isArray(response?.records)&&!Array.isArray(response?.data))throw Error('Verification response invalid');
-  const fresh=arr(response);
-  const matches=fresh.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
-  records=fresh;
-  if(matches.length===1&&status(matches[0])==='Present'){
-   selected.set(k,{status:'Present',remarks:'',recordId:String(matches[0].id??matches[0]._id??'')});
-   teacherQrPending.delete(k);
-   render();renderHistory();
-   teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified.');
+  if(result===false||result?.success===false||result?.error)
+   throw Error(result?.message||result?.error||'Save acknowledgment not verified');
+  await verifyTeacherPending();
+  if(teacherPendingVerification){
+   teacherQrFeedback('pending','Save was submitted but not independently verified. Do not rescan; Refresh is read-only.');
   }else{
-   teacherQrFeedback('pending','Save submitted but verification is incomplete. Do not rescan; refresh to check the register.');
+   teacherQrPending.delete(k);
+   teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified in the register.');
   }
  }catch(error){
-  teacherQrFeedback('pending','Could not confirm save: '+error.message+'. Check register before retrying to prevent duplicates.');
- }finally{teacherQrSaving=false}
+  teacherQrFeedback('pending','Save status uncertain: '+error.message+'. Do not rescan; Refresh will recheck without writing.');
+ }finally{teacherQrSaving=false;render();}
 }
 async function teacherQrStart(){
  if(teacherQrActive||busy||teacherPendingVerification)return;
@@ -257,7 +261,14 @@ async function verifyTeacherPending(){
    return;
   }
   records=rows;
-  pending.records.forEach(r=>dirty.delete(r.teacherId));
+  pending.records.forEach(r=>{
+   dirty.delete(r.teacherId);
+   const saved=rows.find(row=>recDate(row)===pending.date&&
+    String(row.teacherId??row.teacherID??'')===r.teacherId);
+   selected.set(r.teacherId,{status:r.status,remarks:r.remarks||'',
+    recordId:String(saved?.id??saved?._id??'')});
+   teacherQrPending.delete(r.teacherId);
+  });
   teacherPendingVerification=null;
   editing=!!dirty.size;
   toast('✓ '+pending.records.length+' staff mark(s) verified in the school database. No duplicate request.');

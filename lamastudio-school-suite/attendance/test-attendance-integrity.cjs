@@ -7,8 +7,8 @@ function extract(start,end){
  assert.ok(i>=0&&j>i,'Missing integrity source '+start);
  return html.slice(i,j);
 }
-const analyze=new Function(extract('function inspectAttendanceRecords(kind,records,date){','function administratorSession(){')+
- 'return inspectAttendanceRecords;')();
+const analyze=new Function('dateValue',extract('function inspectAttendanceRecords(kind,records,date){','function administratorSession(){')+
+ 'return inspectAttendanceRecords;')(value=>String(value??'').slice(0,10));
 const csv=new Function(extract('function csvCell(v){','function renderReport(report){')+
  'return reviewCsv;')();
 const day='2026-11-10';

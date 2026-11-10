@@ -1087,10 +1087,97 @@ function upsertTeacherAttendance_(ctx, record, expectedId) {
         return full;
     }finally{lock.releaseLock();}
 }
+/**
+ * Single-student attendance cannot use appendRow blindly: a successful
+ * Sheets write followed by a lost HTTP acknowledgment may be retried.
+ * Under the same script lock, reuse an exact existing mark or block a
+ * differing/duplicated record for administrator reconciliation.
+ */
+function addStudentAttendanceOnce_(ctx, submitted) {
+    submitted = submitted || {};
+    if (ctx.role !== 'school' && ctx.role !== 'teacher')
+        throw Error('Attendance write access denied');
+    const date = String(submitted.date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        !Number.isFinite(Date.parse(date + 'T12:00:00Z')) ||
+        new Date(date + 'T12:00:00Z').toISOString().slice(0, 10) !== date)
+        throw Error('Invalid attendance date');
+    const value = String(submitted.status || '').trim();
+    if (['Present','Absent','Leave'].indexOf(value) < 0)
+        throw Error('Invalid attendance status');
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) throw Error('Attendance busy; review the saved record before retrying');
+    try {
+        const students = getCollectionSheet(ctx, 'students');
+        const roster = students.sheet.getDataRange().getValues();
+        const requestedId = String(submitted.studentId || '').trim();
+        const requestedEnrl = String(submitted.enrlNo || '').trim();
+        if (!requestedId && !requestedEnrl) throw Error('Student ID or enrollment required');
+        let matches = [];
+        for (let i = 1; i < roster.length; i++) {
+            const candidate = rowToRecord(students.headers, roster[i]);
+            if (!candidate.id) continue;
+            if (requestedId && String(candidate.id).trim() === requestedId)
+                matches.push(candidate);
+            else if (!requestedId && requestedEnrl && String(candidate.enrlNo || '').trim() === requestedEnrl)
+                matches.push(candidate);
+        }
+        if (matches.length !== 1) throw Error(matches.length
+            ? 'Ambiguous student enrollment; use the unique student ID'
+            : 'Student record not found');
+        const student = matches[0];
+        if (requestedEnrl && String(student.enrlNo || '').trim() !== requestedEnrl)
+            throw Error('Student ID/enrollment mismatch');
+        if (ctx.role === 'teacher') teacherStudentAccess_(ctx, {studentId:student.id,enrlNo:student.enrlNo});
+        const sid = String(student.id).trim(), enrl = String(student.enrlNo || '').trim();
+        const attendance = getCollectionSheet(ctx, 'attendance');
+        const sheet = attendance.sheet, headers = attendance.headers;
+        const data = sheet.getDataRange().getValues();
+        const tz = (typeof ctx.ss.getSpreadsheetTimeZone === 'function' && ctx.ss.getSpreadsheetTimeZone())
+          || Session.getScriptTimeZone() || 'Asia/Karachi';
+        const matchesForDate = [];
+        for (let i = 1; i < data.length; i++) {
+            const raw = rowToRecord(headers, data[i]);
+            const day = raw.date instanceof Date ?
+                Utilities.formatDate(raw.date, tz, 'yyyy-MM-dd') :
+                String(raw.date || '').slice(0, 10);
+            if (day !== date) continue;
+            const rowId = String(raw.studentId || '').trim();
+            const rowEnrl = String(raw.enrlNo || '').trim();
+            if (rowId === sid || (enrl && rowEnrl === enrl))
+                matchesForDate.push(raw);
+        }
+        if (matchesForDate.length > 1)
+            throw Error('Existing duplicate attendance for student ID: ' + sid +
+              '. No additional row written; review duplicate records first.');
+        if (matchesForDate.length) {
+            const prior = matchesForDate[0];
+            if (String(prior.status || '').trim() !== value)
+                throw Error('Attendance already marked with a different status. Refresh and use the verified correction workflow.');
+            return Object.assign({}, prior, {date:date}); // idempotent exact repeat
+        }
+        const now = new Date().toISOString();
+        const full = {
+            id:genId('att'), studentId:sid,enrlNo:enrl,
+            studentName:student.name || '',class:student.class || '',
+            section:student.section || '',date:date,status:value,
+            markedBy:ctx.role === 'teacher' ? (ctx.teacher.name || '') : 'School Admin',
+            createdAt:now
+        };
+        sheet.appendRow(recordToRow(headers, full));
+        SpreadsheetApp.flush();
+        if (ctx.auditActor) writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','attendance',full.id,null,full);
+        return full;
+    } finally {
+        lock.releaseLock();
+    }
+}
+
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
     if (collection === 'teacherAttendance') return upsertTeacherAttendance_(ctx,record);
+    if (collection === 'attendance') return addStudentAttendanceOnce_(ctx,record);
     if (collection === 'studentRequests' && ctx.role === 'student') {
         const type = String(record.requestType || 'help');
         if (['help','sick_leave'].indexOf(type) === -1) throw new Error('Invalid request type.');

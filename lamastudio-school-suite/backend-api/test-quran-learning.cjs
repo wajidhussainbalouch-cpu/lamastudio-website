@@ -44,7 +44,7 @@ const staff=makeSheet(teacherHeaders,[
  ['teacher1','Ustad One','Playgroup','A','Active'],
  ['teacher2','Ustad Two','Class 5','','Active']
 ]);
-let schoolGrants={schoolA:true,schoolB:false},lockHeld=false,generated=0,flushed=0;
+let schoolGrants={schoolA:false,schoolB:false},lockHeld=false,generated=0,flushed=0;
 const record=(h,row)=>Object.fromEntries(h.map((k,i)=>[k,row[i]]));
 const toRow=(h,obj)=>h.map(k=>obj[k]??'');
 const mock={

@@ -156,8 +156,55 @@ function quranLockWrite_(ctx,kind,operation,payload,expectedVersion) {
     if(found.length>1)throw Error('Duplicate Quran record ID; no changes made');
     var old=found.length?found[0].item:null;
     if(operation.id&&!old)throw Error('Quran record changed or missing; refresh');
+    // This check MUST happen under the lock. Checking requestId before locking
+    // still allows two phones to append the same lesson simultaneously.
+    if(payload.requestId){
+      var matching=source.filter(function(x){return String(x.item.requestId)===String(payload.requestId)});
+      if(matching.length>1)throw Error('Duplicate Quran request ID; manual review required');
+      if(matching.length===1){
+        if(operation.id && matching[0].item.id!==operation.id)
+          throw Error('Request ID belongs to a different Quran record');
+        var same=Object.keys(payload).every(function(key){
+          return String(matching[0].item[key]??'')===String(payload[key]??'');
+        });
+        if(!same)throw Error('Request ID already used for different Quran data');
+        if(!operation.id)return matching[0].item; // exact replay, no write
+      }
+    }
     if(old&&Number(old.version)!==Number(expectedVersion))
       throw Error('Quran edit conflict: someone changed this record. Refresh before correcting.');
+    if(old&&['enrollments','lessons','assessments','revisions'].includes(kind) &&
+       (String(old.studentId)!==String(payload.studentId)||String(old.programme)!==String(payload.programme)))
+      throw Error('Quran student/programme cannot be reassigned; create a separate authorised record');
+    if(old&&['lessons','assessments','revisions'].includes(kind) &&
+       String(old.teacherId)!==String(payload.teacherId))
+      throw Error('Quran teacher identity cannot change during correction');
+    if(kind==='enrollments'&&payload.status==='Active'){
+      var active=source.filter(function(x){
+        return x.item.id!==String(operation.id||'') &&
+          x.item.studentId===payload.studentId && x.item.programme===payload.programme &&
+          x.item.status==='Active'
+      });
+      if(active.length)throw Error('Active Quran programme enrolment already exists');
+    }
+    if(kind==='assignments'&&payload.status==='Active'){
+      var overlaps=source.filter(function(x){
+        return x.item.id!==String(operation.id||'') && x.item.status==='Active' &&
+          x.item.teacherId===payload.teacherId && x.item.programme===payload.programme &&
+          sameClass(x.item.class,payload.class) && sameClass(x.item.section||'',payload.section||'')
+      });
+      if(overlaps.length)throw Error('Active Quran teacher assignment already exists');
+    }
+    if(kind==='timetable'){
+      var conflicts=source.filter(function(x){
+        var row=x.item;
+        return row.id!==String(operation.id||'') && row.day===payload.day &&
+          payload.start<row.end && payload.end>row.start &&
+          (row.teacherId===payload.teacherId||
+           (sameClass(row.class,payload.class)&&sameClass(row.section||'',payload.section||'')))
+      });
+      if(conflicts.length)throw Error('Quran timetable conflict; refresh before scheduling');
+    }
     var next=Object.assign({},old||{},payload,{
       id:old?old.id:genId('q'+kind.slice(0,2)),
       version:old?Number(old.version)+1:1,

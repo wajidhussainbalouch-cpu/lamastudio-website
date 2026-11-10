@@ -11,7 +11,7 @@ mainIntro:'Choose a practical project, edit starter code, run the preview, test 
 hint:'Show a hint',editor:'Your project code',preview:'Live preview',run:'▶ Run Preview',check:'✓ Check Milestone',download:'↓ Download HTML',restore:'Restore Starter',
 review:'I ran the project and checked this milestone myself. Automatic pattern checks cannot verify everything.',
 previous:'← Previous',next:'Next milestone →',portfolio:'Portfolio evidence',
-reflectionHelp:'Explain the problem this project solves and what you built. This note stays on this device until exported.',
+reflectionHelp:'Describe the problem, your approach, and how you tested the result (at least 80 characters). This note stays on this device until exported.',
 reflection:'My project reflection',audit:'Verify all milestones',export:'Export portfolio report',
 safety:'Your code runs inside an isolated browser frame, but unknown code may still slow your device. Never paste passwords or private student information. Export your work regularly.',
 choose:'Open project',milestones:'milestones previously checked',runFirst:'Run your current code after your latest edit, then check the milestone.',
@@ -30,7 +30,7 @@ draft:'Project draft. Continue completing the milestones.',
 step:'Milestone',criteria:'Automatic learning checks',
 noData:'The project content could not be loaded. Please reload this page.',
 storage:'Local browser storage is unavailable; your changes might be lost after refresh.',
-reflectionPlaceholder:'I used HTML, CSS and JavaScript to...',
+reflectionPlaceholder:'I used HTML, CSS and JavaScript to...',reflectionRequired:'Explain the problem, your solution, and one test result in at least 80 characters.',
 saved:'Draft saved on this device.'
 },
 ur:{
@@ -39,7 +39,7 @@ mainIntro:'پراجیکٹ منتخب کریں، کوڈ میں تبدیلی کر�
 hint:'اشارہ دیکھیں',editor:'آپ کا پراجیکٹ کوڈ',preview:'لائیو نتیجہ',run:'▶ کوڈ چلائیں',check:'✓ مرحلہ چیک کریں',download:'↓ HTML محفوظ کریں',restore:'ابتدائی کوڈ بحال کریں',
 review:'میں نے کوڈ کا نتیجہ دیکھا اور خود جانچ کی۔ خودکار جانچ تمام غلطیاں نہیں پکڑ سکتی۔',
 previous:'← پچھلا مرحلہ',next:'اگلا مرحلہ →',portfolio:'پورٹ فولیو کا ثبوت',
-reflectionHelp:'اس پراجیکٹ سے کون سا مسئلہ حل ہوتا ہے اور آپ نے کیا بنایا؟ یہ نوٹ فائل برآمد کرنے تک اسی ڈیوائس پر رہتا ہے۔',
+reflectionHelp:'کم از کم 80 حروف میں بتائیں کہ مسئلہ کیا تھا، آپ نے کیسے حل کیا، اور نتیجہ کیسے چیک کیا۔ یہ نوٹ اسی ڈیوائس پر رہتا ہے۔',
 reflection:'میرے پراجیکٹ کی وضاحت',audit:'تمام مراحل جانچیں',export:'پورٹ فولیو رپورٹ محفوظ کریں',
 safety:'کوڈ محدود براؤزر فریم میں چلتا ہے، لیکن غیر محفوظ یا بہت زیادہ کوڈ فون سست کر سکتا ہے۔ پاس ورڈ یا طلبہ کی ذاتی معلومات یہاں نہ ڈالیں۔',
 choose:'پراجیکٹ کھولیں',milestones:'مراحل پہلے چیک ہو چکے ہیں',runFirst:'آخری تبدیلی کے بعد کوڈ چلا کر نتیجہ دیکھیں، پھر مرحلہ چیک کریں۔',
@@ -58,7 +58,7 @@ draft:'پراجیکٹ زیر تکمیل ہے۔ اگلے مرحلے مکمل کر
 step:'مرحلہ',criteria:'خودکار تربیتی جانچ',
 noData:'پراجیکٹ کا مواد دستیاب نہیں۔ صفحہ دوبارہ کھولیں۔',
 storage:'براؤزر میں مقامی محفوظ کرنے کی سہولت دستیاب نہیں؛ دوبارہ کھولنے پر تبدیلیاں ختم ہو سکتی ہیں۔',
-reflectionPlaceholder:'میں نے HTML، CSS اور JavaScript استعمال کر کے...',
+reflectionPlaceholder:'میں نے HTML، CSS اور JavaScript استعمال کر کے...',reflectionRequired:'کم از کم 80 حروف میں مسئلہ، حل اور ایک آزمائشی نتیجہ لکھیں۔',
 saved:'کام اس ڈیوائس پر محفوظ ہو گیا۔'
 }
 };
@@ -172,6 +172,7 @@ function allAudit(){
     if(failed.length)missing.push(langValue(step,'title')+': '+failed.map(c=>c.label).join(', '));
     if(!completed[step.id]||!completed[step.id].reviewed)missing.push(langValue(step,'title')+': '+msg('reviewFirst'));
   }
+  if(String(state.reflection[p.id]||'').trim().length<80)missing.push(msg('reflectionRequired'));
   return {ready:missing.length===0,missing};
 }
 function verifyAll(){

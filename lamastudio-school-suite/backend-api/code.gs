@@ -1032,7 +1032,7 @@ function getRecord(ctx, collection, id) {
  * a row. Retrying must not create another row with a different generated ID.
  * The lock protects the existence check and write as one Apps Script operation.
  */
-function upsertTeacherAttendance_(ctx, record) {
+function upsertTeacherAttendance_(ctx, record, expectedId) {
     if (ctx.role !== 'school' || !ctx.auditActor) throw Error('Verified School Administrator required to save teacher attendance.');
     const teacherId = String(record.teacherId || '').trim();
     const date = String(record.date || '').trim();
@@ -1067,6 +1067,10 @@ function upsertTeacherAttendance_(ctx, record) {
                 found.push({row:i+1,record:prev});
         }
         if(found.length>1)throw Error('Duplicate teacher attendance already exists for this date. Ask School Admin to reconcile before saving.');
+        // An edit carries the original row ID. Never let an old device
+        // silently correct a newly replaced or deleted teacher/date record.
+        if(expectedId&&(!found.length||String(found[0].record.id)!==String(expectedId)))
+            throw Error('Teacher attendance row changed while editing. Refresh and review before saving again.');
         const old=found.length?found[0].record:null;
         if(old && String(old.status)===status && String(old.remarks||'')===remarks)
             return {...old,date};
@@ -1130,6 +1134,13 @@ function validateTeacherAssignment_(sheet,headers,teacherId,assignedClass,assign
 function updateRecord(ctx, collection, id, patch) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
+    if(collection==='teacherAttendance'){
+        // The teacher/date and row ID must be supplied together. Run the
+        // existence check and update under the SAME lock as a new mark.
+        if(!patch||!patch.teacherId||!patch.date)
+            throw Error('Teacher attendance correction requires teacher ID and date. Refresh first.');
+        return upsertTeacherAttendance_(ctx,patch,String(id));
+    }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     const idCol = headers.indexOf('id');

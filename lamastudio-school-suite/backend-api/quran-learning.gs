@@ -67,9 +67,17 @@ function quranTable_(ctx,key,create){
 function quranRows_(ctx,key){
   const data=quranTable_(ctx,key,false);
   if(!data)return [];
+  const dateCol=data.headers.indexOf('date');
+  const zone=typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+    ctx.ss.getSpreadsheetTimeZone()||'Asia/Karachi':'Asia/Karachi';
   return data.sheet.getDataRange().getValues().slice(1)
     .filter(row=>row[data.headers.indexOf('id')])
-    .map(row=>rowToRecord(data.headers,row));
+    .map(row=>{
+      const record=rowToRecord(data.headers,row);
+      if(dateCol>=0&&row[dateCol] instanceof Date)
+        record.date=Utilities.formatDate(row[dateCol],zone,'yyyy-MM-dd');
+      return record;
+    });
 }
 function quranRowIndex_(ctx,key,id){
   const data=quranTable_(ctx,key,true),values=data.sheet.getDataRange().getValues();
@@ -184,9 +192,19 @@ function quranContext_(p){
   throw Error('This login role cannot open the Quran module.');
 }
 function quranGetStudent_(ctx,studentId){
-  const rows=listRecords(ctx,'students'); // Teacher: existing class-scope applied.
-  const matching=rows.filter(s=>String(s.id)===String(studentId));
-  if(matching.length!==1)throw Error('Student unavailable for this school and role.');
+  // Read from the existing school roster, but never expose a record unless
+  // the authenticated student or assigned Quran teacher owns the scope.
+  const matching=quranRowsFromCollection_(ctx,'students')
+    .filter(s=>String(s.id)===String(studentId));
+  if(matching.length!==1)throw Error('Student unavailable in this school.');
+  if(ctx.role==='student'&&String(ctx.student.id)!==String(studentId))
+    throw Error('Another student’s record is private.');
+  if(ctx.role==='teacher'){
+    const authorized=quranRows_(ctx,'enrollments')
+      .filter(e=>String(e.studentId)===String(studentId)&&e.status==='Active')
+      .some(e=>{try{quranTeacherOwns_(ctx,e);return true}catch(_){return false}});
+    if(!authorized)throw Error('Student is not assigned to this Quran teacher.');
+  }
   return matching[0];
 }
 function quranGetTeacher_(ctx,teacherId){

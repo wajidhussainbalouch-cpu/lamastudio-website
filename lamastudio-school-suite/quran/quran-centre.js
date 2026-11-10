@@ -211,8 +211,9 @@ async function recheckPending(){
   if(match[0].studentId && isTeacher &&
     !(latest.records.enrollments||[]).some(e=>e.studentId===match[0].studentId&&e.programme===match[0].programme))
     throw Error('Student scope changed; verify with school administrator');
+  const confirmedKind=pending.kind;
   data=latest;storePending(null);renderData();
-  show('✓ Quran '+pending?.kind+' entry verified in the school database. No duplicate request was sent.','success');
+  show('✓ Quran '+confirmedKind+' entry verified in the school database. No duplicate request was sent.','success');
  }catch(error){show('Read-only verification failed: '+error.message+'. Do not submit again.','error')}
 }
 async function write(kind,record,form){
@@ -223,7 +224,8 @@ async function write(kind,record,form){
  if(requestId){record.requestId=requestId;storePending({kind,requestId,schoolId:role.schoolId})}
  else togglePending();
  try{
-  const saved=await LamaAPI.quranSave(kind,record);
+  const options=kind==='settings'?{expectedVersion:data.settings?.version||0}:{};
+  const saved=await LamaAPI.quranSave(kind,record,options);
   if(!saved?.id)throw Error('Missing verified Quran record ID');
   const latest=await LamaAPI.quranBootstrap(today());
   const matching=(latest.records?.[kind]||[]).filter(r=>r.id===saved.id&&Number(r.version)===Number(saved.version));
@@ -283,7 +285,8 @@ function renderReport(){
    l.parentNote||l.revision]);
  }
  if(!rows.length){const n=document.createElement('p');n.textContent='No verified records for this report selection.';preview.append(n);return}
- table(preview,headers,rows);
+ const reportTable=document.createElement('div');preview.append(reportTable);
+ table(reportTable,headers,rows);
  const foot=document.createElement('p');foot.className='report-sub';
  foot.textContent='Teacher signature: __________________  Parent acknowledgment: __________________';
  preview.append(foot);

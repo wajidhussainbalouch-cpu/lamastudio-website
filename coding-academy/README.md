@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 6 (optional cloud account foundation)
+# LAMA Coding Academy — MVP 7 (privacy and account-erasure readiness)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -209,3 +209,18 @@ A cloud snapshot can contain personal source code and reflections. Data is NOT e
 5. GitHub draft PR must be reviewed and merged through the existing deployment pipeline only after approval.
 
 Regression suite: node coding-academy/tests/cloud.test.cjs. GitHub Actions runs all five academy test files. Static and mocked checks do not prove production Supabase availability or real end-to-end security.
+
+
+## Phase 7 — Learner privacy and account erasure (10 November 2026)
+
+Added privacy.html with an English product-specific explanation and Urdu summary of where learner progress, code, optional Auth data and cloud snapshots reside; how opt-in works; the risks of sharing exported backups; and the distinction between deleting a browser record, a cloud backup, and the full Auth identity. This is a draft for owner/legal review, not a completed public privacy policy.
+
+Account & Data now includes an explicit **Delete learning data on this device** action. It erases only the four known local Coding Academy module keys after confirmation and attempts rollback if browser writes fail. It does not delete unrelated product data, the optional account, or cloud records.
+
+A separate, strongly confirmed **permanent account deletion** form is prepared for email/password accounts. It requires a current password and exact DELETE ACCOUNT phrase; users may choose whether to also erase local learning data. This is **disabled by default** with cloud-config.js accountDeletionEnabled false. The Edge Function staged under backend/supabase/functions/coding-account-delete/index.ts requires a valid signed-in JWT plus successful password reauthentication for the same Auth user before calling a server-only admin delete. The client cannot supply a different user's id.
+
+The staged backend function is NOT deployed; the dedicated Coding Academy database/Cloud Auth system is still not configured or active. The linked cloud progress row is designed to be deleted via the foreign-key cascade when the Auth identity is deleted. Tokens may remain valid until expiry, and retained provider backups may have different retention. These require real testing, provider review and careful disclosures.
+
+Added tests/privacy.test.cjs and a sixth academy regression step in GitHub Actions to check local guest erasure, other-storage preservation, privacy content and staged deletion guards. Cache v7 includes the privacy page. Earlier practice, Studio, Python, progress, and cloud tests remain in the same workflow.
+
+**Release blockers:** real Android/browser QA, dedicated backend approval, RLS checks with two users, live Edge Function deletion tests, branded confirmation email, published privacy/support/retention policy, minors/guardian consent rules and merge/deployment approval. No deployment or production database change was made.

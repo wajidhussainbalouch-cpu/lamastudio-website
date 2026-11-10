@@ -456,7 +456,8 @@ function quranProfile_(ctx,studentId){
         parentFeedback:x.parentFeedback,version:x.version,programCode:x.programCode}:x),
     assessments:assessments.filter(x=>!parent||x.published===true||String(x.published)==='true')
       .map(x=>parent?{enrollmentId:x.enrollmentId,date:x.date,criterion:x.criterion,level:x.level,parentFeedback:x.parentFeedback}:x),
-    attendance:attendance.map(x=>({enrollmentId:x.enrollmentId,date:x.date,status:x.status}))
+    attendance:attendance.map(x=>parent?
+      {enrollmentId:x.enrollmentId,date:x.date,status:x.status} : x)
   };
 }
 function quranOverview_(ctx,config){
@@ -475,7 +476,13 @@ function quranOverview_(ctx,config){
     lessonsToday:todayLessons.length,
     revisionRequired:todayLessons.filter(l=>l.revisionRequired===true||String(l.revisionRequired)==='true').length,
     attendanceToday:attendance.filter(a=>a.date===now&&a.status==='Present').length,
-    learners:enrollments
+    learners:enrollments.map(e=>{
+      const student=quranRowsFromCollection_(ctx,'students').find(s=>String(s.id)===String(e.studentId));
+      return Object.assign({},e,{
+        studentName:student?.name||'Student',
+        className:student?.class||'',section:student?.section||''
+      });
+    })
   };
 }
 /**

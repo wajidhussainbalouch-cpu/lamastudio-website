@@ -490,8 +490,19 @@ async function sync(automatic=false){
         }catch(_){/* Uncertain server state: read back, do not blindly retry. */}
         try{
           const latest=validatedSnapshot(await readSnapshot([date]));
-          cloud=historyIndex(latest.attendance,serverRoster);
+          // Readback can complete after another tab signs into a different
+          // school or teacher account. Never clear a draft based on that
+          // response; a fresh authorized sync can confirm it later.
+          if(!authorizedWriter())throw Error('Account changed during readback verification');
+          const checkedRoster=normalizedStudents(latest.students);
+          const checkedIds=new Map(checkedRoster.map(s=>[s.id,s]));
+          cloud=historyIndex(latest.attendance,checkedRoster);
           for(const draft of batch){
+            const original=serverIds.get(draft.studentId),current=checkedIds.get(draft.studentId);
+            if(!original||!current||!sameStudentId(original,current)){
+              draft.syncIssue='student-changed';delete draft.serverStatus;unverifiedBatch++;
+              continue;
+            }
             const k=keyFor(draft.date,draft.studentId);
             if(cloud[k]===draft.status){draft.verified=true;state.data.history[k]=draft.status;verified++;}
             else{draft.syncIssue='unverified';draft.serverStatus=cloud[k]||'';unverifiedBatch++;}

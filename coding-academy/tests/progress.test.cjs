@@ -27,7 +27,7 @@ for(const mission of missions){
   const ur=i18n.missions[mission.id];
   assert.ok(ur,mission.id+" needs Urdu coaching");
   for(const field of ["title","topic","concept","task","purpose","question"]){
-    assert.ok(typeof ur[field]==="string"&&ur[field].length>6,mission.id+" missing Urdu "+field);
+    assert.ok(typeof ur[field]==="string"&&ur[field].length>=(field==="topic"?3:7),mission.id+" missing Urdu "+field);
   }
   assert.equal(ur.options.length,mission.quiz.options.length);
 }

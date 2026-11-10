@@ -30,10 +30,10 @@ const day=n=>new Date(Date.UTC(2026,0,1+n)).toISOString().slice(0,10);
 const requestedDates=Array.from({length:195},(_,i)=>day(i));
 async function snapshotTests(){
  const calls=[];
- let mutatedRoster=false,changedStatus=false,wrongSchool=false,failCall=0;
+ let mutatedRoster=false,changedStatus=false,wrongSchool=false,failCall=0,allowedDates=90;
  const get=async dates=>{
   calls.push(dates);
-  if(dates.length>90)throw Error('Backend limits date list to 90');
+  if(dates.length>allowedDates)throw Error('Too many offline dates in one request for this roster (maximum '+allowedDates+').');
   if(failCall&&calls.length===failCall)throw Error('Temporary server failure');
   const recent={date:'2026-11-07',studentId:'s1',enrlNo:'101',status:changedStatus&&calls.length>1?'Absent':'Present'};
   return {role:'school',schoolId:wrongSchool?'different-school':'school-one',
@@ -56,6 +56,16 @@ async function snapshotTests(){
  await run(requestedDates.slice(0,13));
  assert.deepEqual(calls.map(c=>c.length),[6,6,1]);
  state.data.roster=[students[0]];
+ // The original phone has one pupil; after new admissions, the live school
+ // server may allow only six requested days. The client must shrink windows
+ // without dropping old drafts or retrying generic errors indefinitely.
+ calls.length=0;allowedDates=6;
+ const resized=await run(requestedDates);
+ assert.equal(calls[0].length,90,'Initial request uses local roster estimate');
+ assert.ok(calls.slice(1).every(d=>d.length<=6)&&calls.length>2,
+  'After server limit rejection, all subsequent windows must fit live roster');
+ assert.equal(resized.attendance.length,196);
+ allowedDates=90;
  calls.length=0;mutatedRoster=true;
  await assert.rejects(run(requestedDates),/roster changed/);
  calls.length=0;mutatedRoster=false;changedStatus=true;
@@ -280,5 +290,5 @@ async function syncTests(){
  await choiceSafetyTests();
  await cloudRecheckTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation, account switching, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

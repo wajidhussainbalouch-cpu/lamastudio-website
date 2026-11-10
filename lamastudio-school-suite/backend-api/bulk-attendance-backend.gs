@@ -55,7 +55,7 @@ function bulkAttendanceRecords(params) {
       throw new Error('Required attendance columns missing');
     }
     const existing = sheet.getDataRange().getValues();
-    const timezone = Session.getScriptTimeZone() || 'Asia/Karachi';
+    const timezone = (typeof ctx.ss.getSpreadsheetTimeZone === 'function' && ctx.ss.getSpreadsheetTimeZone()) || Session.getScriptTimeZone() || 'Asia/Karachi';
     function dayOf(value) {
       return value instanceof Date
         ? Utilities.formatDate(value, timezone, 'yyyy-MM-dd')

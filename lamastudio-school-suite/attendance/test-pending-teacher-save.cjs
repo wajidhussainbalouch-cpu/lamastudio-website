@@ -33,7 +33,7 @@ const diagnostics=html.slice(d,e);
   toast:s=>messages.push(String(s)),render:()=>{},renderHistory:()=>{}
  };
  const setup=[
-  'let busy=false,teacherPendingVerification=null,editing=true,attendanceHistoryLoaded=true;',
+  'let busy=false,teacherPendingVerification=null,staffIntegrityBlocked=0,editing=true,attendanceHistoryLoaded=true;',
   'let loadedDate=ctx.date,records=[];',
   'const {$,teachers,selected,dirty,LamaAPI,arr,status,recDate,reason,id,name,',
   'verifiedStaffAttendanceAdmin,holidayReason,toast,render,renderHistory}=ctx;',

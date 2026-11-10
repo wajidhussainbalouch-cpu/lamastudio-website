@@ -138,6 +138,24 @@ async function main(){
  get('offlinePass').value='wrong-passphrase';
  await click(get('restoreBackup'));
  check(db.size===0,'Wrong password cannot restore backup');
+ // Construct a validly encrypted but logically inconsistent test vault.
+ // This tests the entire Restore button path, not just validateVaultData().
+ const duplicated=JSON.parse(backup);
+ const rawCipher=enc(atob(duplicated.payload.ciphertext));
+ const decrypted=JSON.parse(dec(await crypto.subtle.decrypt({name:'AES-GCM'},
+   'strong-passphrase',rawCipher)));
+ decrypted.drafts.push({...decrypted.drafts[0],id:'another-id-same-student-day'});
+ const alteredCipher=await crypto.subtle.encrypt({name:'AES-GCM'},
+   'strong-passphrase',enc(JSON.stringify(decrypted)));
+ duplicated.payload.ciphertext=btoa(dec(alteredCipher));
+ const malformed=JSON.stringify(duplicated);
+ get('backupFile').files=[{size:malformed.length,text:async()=>malformed}];
+ get('offlinePass').value='strong-passphrase';
+ await click(get('restoreBackup'));
+ check(db.size===0,'Duplicate student/day backup must not create device records');
+ check(get('actionStatus').textContent.includes('duplicate pending attendance'),
+   'Duplicate backup gives explicit integrity warning');
+ get('backupFile').files=[{size:backup.length,text:async()=>backup}];
  get('offlinePass').value='strong-passphrase';
  await click(get('restoreBackup'));
  check(db.size===1,'Valid backup persists to empty device vault');

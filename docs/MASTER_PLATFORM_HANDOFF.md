@@ -264,3 +264,10 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Resolved a stuck-in-setup case: failure of the very first encrypted vault save no longer forces Lock/Unlock when no saved vault exists. Staff can retry preparation; local storage is rechecked on retry.
 - Updated the seven-file mock test suite to cover preflight account changes, post-upload enrollment changes, wrong-school results, first-save recovery, encrypted-write authorization, and the preexisting 12 offline client and 10 identity checks. Source-level simulated tests passed; real Android/Apps Script/Google Sheets acceptance remains a release gate.
 - Development branch only; no Vercel deployment, Apps Script update, production merge or student-data change.
+
+### 2026-11-10 — Guard offline attendance from student class and section transfers
+
+- The draft PR #84 client now compares saved student ID, enrollment **and class/section** to fresh role-scoped cloud roster before upload, after upload and during read-only conflict recheck. A pupil moved to another class or section cannot silently receive an old-class offline mark. The queued encrypted draft is preserved for school staff review.
+- Added `js/test-offline-student-assignment.cjs` to the root School Suite regression command (now eight mocked files). It uses actual production comparison/sync functions with fake student and cloud data to test preflight and readback class/section transfers and unchanged rosters. Tests passed, as did the existing 12 offline-client mocked workflows and 10 identity-switch tests.
+- Class/section move handling is deliberately conservative: transfers after the marked *historical date* may need manual reconciliation. The draft does not automatically override any cloud attendance.
+- **Not live:** no Apps Script project modification, real school database writes, branch merge or Vercel deploy. Still require disposable-school mobile and Google Sheets integration tests and careful reconciliation of independently advancing `main`.

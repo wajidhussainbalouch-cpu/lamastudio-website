@@ -235,3 +235,10 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - The client checks the original logged-in school administrator token, or teacher ID and API key, before **every** attendance batch. A school or teacher account switch in another tab halts further uploads and retains drafts for recovery. These checks supplement (and cannot replace) Apps Script role and tenant authorization.
 - New identity-switch regression (10 mocked checks) and expanded batching/review tests passed, as did the 12-case offline browser-flow mock. Tests are integrated into `npm run test:school-suite`.
 - No live deployment, Apps Script update, mobile-device integration, or production database mutation. Reconcile independent `main` changes before any release, preserving all existing school modules.
+
+### 2026-11-10 — Cloud recheck without attendance mutation
+
+- Draft PR #84 now shows a per-student **Recheck cloud** button for pending conflict/unverified records. It fetches a fresh, role-scoped snapshot for one date, checks school/role and unchanged account identity, and saves only the last observed status/review metadata in encrypted IndexedDB.
+- Rechecking **does not** issue a bulk attendance write or automatically delete a draft. Match with the pending choice remains `unverified` until ordinary Sync Now; restored baseline clears the conflict flag without discarding the draft; changed student identity remains blocked for manual school admin review.
+- Added regression coverage for matching, disagreeing and missing cloud rows; mismatched enrollment; failed network, mismatched school, login change, local CAS failure and no internet. Earlier 12-case offline recovery and 10-case identity binding simulations still passed.
+- Keep PR #84 draft; branch remains divergent from main. Deploy to a disposable Apps Script/test school and verify on actual phones before any production release.

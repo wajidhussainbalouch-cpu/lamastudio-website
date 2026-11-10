@@ -55,6 +55,7 @@ class Element{
   addEventListener(type,fn){this.handlers[type]=fn;}
   setAttribute(k,v){this.attributes[k]=v;}
   click(){this.clicked=true;}
+  remove(){this.removed=true;}
   fire(name){assert.ok(this.handlers[name]);return this.handlers[name]();}
 }
 const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new Element());return elements.get(id);};

@@ -388,9 +388,38 @@ function quranView_(ctx,params) {
   var counts={Qaida:0,Nazra:0,Hifz:0,IslamicStudies:0,Akhlaq:0};
   all.enrollments.forEach(function(e){if(e.status==='Active'&&counts[e.programme]!==undefined)counts[e.programme]++});
   var daily=recentDay?all.lessons.filter(function(l){return l.date===recentDay}):[];
+  var month=recentDay?recentDay.slice(0,7):'';
+  var monthly=all.lessons.filter(function(l){return month&&String(l.date||'').slice(0,7)===month});
+  // Counts describe learning activity, not spiritual merit or recitation quality.
+  var classes={},teachers={};
+  all.enrollments.filter(function(e){return e.status==='Active'}).forEach(function(e){
+    var st=studentRows[e.studentId];
+    if(!st)return;
+    var cl=st.class+(st.section?' / '+st.section:'');
+    if(!classes[cl])classes[cl]={name:cl,learners:[],programmes:[]};
+    if(classes[cl].learners.indexOf(st.id)<0)classes[cl].learners.push(st.id);
+    if(classes[cl].programmes.indexOf(e.programme)<0)classes[cl].programmes.push(e.programme);
+  });
+  monthly.forEach(function(l){
+    var k=String(l.teacherId||'');
+    if(!k)return;
+    if(!teachers[k])teachers[k]={teacherId:k,lessons:0,students:[],revisionAssigned:0};
+    teachers[k].lessons++;
+    if(teachers[k].students.indexOf(l.studentId)<0)teachers[k].students.push(l.studentId);
+  });
+  all.revisions.filter(function(r){return month&&String(r.date||'').slice(0,7)===month})
+    .forEach(function(r){if(teachers[r.teacherId])teachers[r.teacherId].revisionAssigned++});
   return {settings:cfg,school:{id:ctx.schoolId,role:ctx.role},
     learners:Object.keys(studentRows).length,students:Object.values(studentRows),
-    programmes:counts,lessonsToday:daily.length,
+    programmes:counts,monthlyProgress:{month,recordedLessons:monthly.length,
+      learnersWithLessons:[...new Set(monthly.map(function(l){return l.studentId}))].length,
+      classProgress:Object.values(classes).map(function(c){return {className:c.name,
+        learners:c.learners.length,programmes:c.programmes,
+        recordedLessons:monthly.filter(function(l){return c.learners.indexOf(l.studentId)>=0}).length}})},
+    teacherActivity:ctx.role==='student'?[]:Object.values(teachers).map(function(t){
+      return {teacherId:t.teacherId,recordedLessons:t.lessons,
+        learnersWithLessons:t.students.length,revisionAssigned:t.revisionAssigned}}),
+    lessonsToday:daily.length,
     attendanceToday:{present:daily.filter(function(l){return l.attendance==='Present'}).length,
       absent:daily.filter(function(l){return l.attendance==='Absent'}).length,
       leave:daily.filter(function(l){return l.attendance==='Leave'}).length},

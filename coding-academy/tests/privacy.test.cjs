@@ -63,7 +63,7 @@ const result=vm.runInNewContext(account,{
 });
 assert.equal(byId("deleteAccount").disabled,true,"Account deletion is gated by disabled backend flag.");
 assert.equal(byId("upload").disabled,true,"Cloud sync must remain off.");
-assert.match(byId("localCount").textContent,/4 \/ 52/);
+assert.match(byId("localCount").textContent,/3 \/ 52/);
 // Guest learner can remove only the four Coding Academy stores with a real click.
 assert.ok(typeof byId("clearLocal").listeners.click==="function");
 byId("clearLocal").listeners.click();

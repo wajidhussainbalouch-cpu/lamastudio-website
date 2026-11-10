@@ -1,4 +1,4 @@
-/* Local-first project studio content. Step checks are formative patterns, not professional certification. */
+/* Local-first guided project data: English with Urdu coaching. Pattern checks are formative, not professional certification. */
 window.LAMA_STUDIO_PROJECTS = [
   {
     "id": "school",
@@ -30,7 +30,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "<a\\b[^>]*href\\s*=\\s*[\"']#contact[\"']"
           ]
         ],
-        "review": "Click both navigation links. Confirm they scroll to their intended sections."
+        "review": "Click both navigation links. Confirm they scroll to their intended sections.",
+        "ur": {
+          "title": "درست نیویگیشن بنائیں",
+          "why": "حقیقی ویب سائٹ پر ہر صارف آسانی سے مطلوبہ حصے تک پہنچ سکے۔",
+          "task": "aria-label=\"Main navigation\" والا nav بنائیں اور #programs اور #contact کے لنکس شامل کریں۔",
+          "review": "دونوں لنک کلک کر کے دیکھیں کہ متعلقہ حصے کھلتے ہیں۔"
+        }
       },
       {
         "id": "programs",
@@ -52,7 +58,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "<p\\b[^>]*>[^<]{15,}<\\/p>"
           ]
         ],
-        "review": "Ask a reader whether they understand what the school offers."
+        "review": "Ask a reader whether they understand what the school offers.",
+        "ur": {
+          "title": "اسکول کے پروگرام بتائیں",
+          "why": "صارف کو واضح طور پر معلوم ہونا چاہیے کہ ادارہ کیا سہولت فراہم کرتا ہے۔",
+          "task": "id=\"programs\" والا section، Programs کے عنوان کا h2، اور کم از کم ایک پیراگراف لکھیں۔",
+          "review": "کسی دوسرے شخص سے پوچھیں کہ ویب سائٹ پڑھ کر اسکول کے پروگرام سمجھ آتے ہیں یا نہیں۔"
+        }
       },
       {
         "id": "responsive",
@@ -70,7 +82,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "@media\\s*\\([^)]*max-width[^)]*\\)\\s*\\{[\\s\\S]*?header\\s*\\{[^}]*padding\\s*:\\s*14px"
           ]
         ],
-        "review": "Test portrait mobile width: no horizontal scrolling and buttons remain easy to tap."
+        "review": "Test portrait mobile width: no horizontal scrolling and buttons remain easy to tap.",
+        "ur": {
+          "title": "موبائل اسکرین کے لیے ترتیب",
+          "why": "بہت سے والدین موبائل فون سے ویب سائٹ کھولتے ہیں۔",
+          "task": "CSS میں @media(max-width:600px) شامل کریں اور چھوٹی اسکرین پر header کی padding کو 14px کریں۔",
+          "review": "موبائل کی عمودی اسکرین میں دیکھیں کہ کوئی حصہ باہر تو نہیں نکلتا۔"
+        }
       },
       {
         "id": "contact",
@@ -92,9 +110,20 @@ window.LAMA_STUDIO_PROJECTS = [
             "<a\\b[^>]*href\\s*=\\s*[\"']mailto:[^\"']+[\"']"
           ]
         ],
-        "review": "Open the mailto link and confirm its destination is a safe test address."
+        "review": "Open the mailto link and confirm its destination is a safe test address.",
+        "ur": {
+          "title": "رابطے کی سہولت دیں",
+          "why": "صارفین کو ادارے سے رابطہ کرنے کا واضح طریقہ چاہیے۔",
+          "task": "id=\"contact\" والا section، Contact کا h2 اور mailto ای میل لنک شامل کریں۔ حقیقی طالب علم کا ذاتی ڈیٹا نہ ڈالیں۔",
+          "review": "صرف تجربے کے لیے فرضی ای میل استعمال کر کے رابطہ لنک چیک کریں۔"
+        }
       }
-    ]
+    ],
+    "ur": {
+      "name": "اسکول کی معلومات کی ویب سائٹ",
+      "description": "والدین اور طلبہ کے لیے واضح اور آسان ویب سائٹ بنانے کی مشق۔",
+      "outcome": "ایسی ویب سائٹ جس میں پروگرام، رابطہ اور موبائل کے مطابق ترتیب ہو۔"
+    }
   },
   {
     "id": "fees",
@@ -118,7 +147,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "return\\s+monthly\\s*\\*\\s*months\\s*;?"
           ]
         ],
-        "review": "Test the function for a regular amount, zero months, and a different price."
+        "review": "Test the function for a regular amount, zero months, and a different price.",
+        "ur": {
+          "title": "دوبارہ استعمال ہونے والا حساب",
+          "why": "فیس کے حساب کا ایک درست فنکشن مختلف مقامات پر کام آتا ہے۔",
+          "task": "totalFee فنکشن کو مکمل کریں تاکہ monthly * months واپس کرے۔",
+          "review": "عام رقم، صفر مہینے اور مختلف اعداد پر نتیجہ خود چیک کریں۔"
+        }
       },
       {
         "id": "inputs",
@@ -140,7 +175,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "\\b(?:Number\\s*\\(|valueAsNumber\\b)"
           ]
         ],
-        "review": "Change the monthly price and duration before clicking Calculate."
+        "review": "Change the monthly price and duration before clicking Calculate.",
+        "ur": {
+          "title": "فارم سے اعداد پڑھیں",
+          "why": "فارم سے ملنے والی قدریں اکثر متن ہوتی ہیں، حساب کے لیے عدد میں بدلنا پڑتا ہے۔",
+          "task": "بٹن کے click ہینڈلر میں document.getElementById کے ذریعے monthly اور months پڑھیں، پھر Number یا valueAsNumber استعمال کریں۔",
+          "review": "رقم اور مہینے بدل کر Calculate دبائیں۔"
+        }
       },
       {
         "id": "output",
@@ -158,7 +199,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "totalFee\\s*\\(\\s*monthly\\s*,\\s*months\\s*\\)"
           ]
         ],
-        "review": "Confirm a monthly fee of 500 for three months produces 1500."
+        "review": "Confirm a monthly fee of 500 for three months produces 1500.",
+        "ur": {
+          "title": "صارف کو کل رقم دکھائیں",
+          "why": "حساب مکمل ہونے پر واضح نتیجہ نظر آنا چاہیے۔",
+          "task": "result کے textContent میں totalFee(monthly, months) کا جواب دکھائیں۔",
+          "review": "ماہانہ 500 اور تین مہینوں کا جواب 1500 ہونا چاہیے۔"
+        }
       },
       {
         "id": "validate",
@@ -180,9 +227,20 @@ window.LAMA_STUDIO_PROJECTS = [
             "\\bif\\s*\\("
           ]
         ],
-        "review": "Try -5, 0, a blank input, and 3 months; verify a clear response."
+        "review": "Try -5, 0, a blank input, and 3 months; verify a clear response.",
+        "ur": {
+          "title": "غلط اعداد کو روکیں",
+          "why": "مالی سافٹ ویئر میں منفی یا نامکمل رقم قبول کرنا مسئلہ پیدا کر سکتا ہے۔",
+          "task": "Number.isFinite سے اعداد چیک کریں اور if لگا کر منفی فیس یا منفی مہینے مسترد کریں۔",
+          "review": "-5، صفر، خالی خانہ اور تین مہینوں پر نتیجہ چیک کریں۔"
+        }
       }
-    ]
+    ],
+    "ur": {
+      "name": "فیس کیلکولیٹر",
+      "description": "فارم، جاوا اسکرپٹ فنکشن اور غلط اندراج سے نمٹنے کی عملی مشق۔",
+      "outcome": "ایسا فارم جو فیس کا مجموعہ نکالے اور غلط اعداد پر مناسب پیغام دکھائے۔"
+    }
   },
   {
     "id": "attendance",
@@ -214,7 +272,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "\\b(?:student|s)\\.present\\b"
           ]
         ],
-        "review": "With the sample data, exactly two students should be marked present."
+        "review": "With the sample data, exactly two students should be marked present.",
+        "ur": {
+          "title": "حاضر طلبہ کی گنتی",
+          "why": "حاضری رجسٹر میں درست اعداد بنیادی ضرورت ہیں۔",
+          "task": "attendance.filter اور student.present استعمال کر کے presentCount نام کا متغیر بنائیں۔",
+          "review": "نمونے کے چار ریکارڈ میں دو طلبہ حاضر ہونے چاہییں۔"
+        }
       },
       {
         "id": "absent",
@@ -228,7 +292,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "(?:const|let)\\s+absentCount\\s*=\\s*attendance\\.length\\s*-\\s*presentCount"
           ]
         ],
-        "review": "With four students total, present plus absent must equal four."
+        "review": "With four students total, present plus absent must equal four.",
+        "ur": {
+          "title": "غیر حاضر طلبہ کی گنتی",
+          "why": "اسکول کو غیر حاضر طلبہ کا بروقت پتا ہونا چاہیے۔",
+          "task": "attendance.length سے presentCount منفی کر کے absentCount بنائیں۔",
+          "review": "حاضر اور غیر حاضر کی کل تعداد چار ہونی چاہیے۔"
+        }
       },
       {
         "id": "summary",
@@ -250,7 +320,13 @@ window.LAMA_STUDIO_PROJECTS = [
             "presentCount[\\s\\S]*absentCount|absentCount[\\s\\S]*presentCount"
           ]
         ],
-        "review": "Verify the displayed totals match the four example records."
+        "review": "Verify the displayed totals match the four example records.",
+        "ur": {
+          "title": "خلاصہ اسکرین پر دکھائیں",
+          "why": "ڈیش بورڈ پر اہم اعداد واضح نظر آنے چاہییں۔",
+          "task": "#summary عنصر کو getElementById سے حاصل کریں اور textContent کے ذریعے presentCount اور absentCount دکھائیں۔",
+          "review": "نظر آنے والے اعداد نمونے کے ریکارڈ سے ملائیں۔"
+        }
       },
       {
         "id": "records",
@@ -276,8 +352,19 @@ window.LAMA_STUDIO_PROJECTS = [
             "\\.appendChild\\s*\\("
           ]
         ],
-        "review": "Confirm the list contains all four names, with no HTML injection."
+        "review": "Confirm the list contains all four names, with no HTML injection.",
+        "ur": {
+          "title": "ہر طالب علم کا نام دکھائیں",
+          "why": "اسکول ریکارڈ دکھاتے وقت غیر ضروری HTML شامل کرنا خطرناک ہو سکتا ہے۔",
+          "task": "attendance.forEach، document.createElement('li')، textContent اور appendChild استعمال کر کے طلبہ کی فہرست دکھائیں۔",
+          "review": "چاروں نام نظر آئیں اور کوئی غیر محفوظ HTML شامل نہ ہو۔"
+        }
       }
-    ]
+    ],
+    "ur": {
+      "name": "طلبہ کی حاضری کا خلاصہ",
+      "description": "فہرست، فلٹر، گنتی اور محفوظ متن دکھانے کی عملی مشق۔",
+      "outcome": "حاضر اور غیر حاضر طلبہ کی گنتی اور نام دکھانے والا ڈیش بورڈ۔"
+    }
   }
 ];

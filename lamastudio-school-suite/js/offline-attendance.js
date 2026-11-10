@@ -244,13 +244,31 @@ function validateVaultData(data){
     if(!id||ids.has(id))throw Error('Offline vault has missing or duplicate student IDs');
     ids.add(id);
   }
+  const draftIds=new Set(),draftKeys=new Set();
   for(const draft of data.drafts){
-    if(!ids.has(String(draft?.studentId||''))||!validDate(draft.date)||
+    if(!draft||typeof draft!=='object'||Array.isArray(draft)||
+      typeof draft.id!=='string'||!draft.id.trim()||
+      typeof draft.studentId!=='string'||!ids.has(draft.studentId)||
+      !validDate(draft.date)||
       !['Present','Absent','Leave'].includes(draft.status)||
       !['','Present','Absent','Leave'].includes(draft.baseStatus)||
       (draft.syncIssue!==undefined&&!['conflict','student-changed','unverified'].includes(draft.syncIssue))||
-      (draft.serverStatus!==undefined&&!['','Present','Absent','Leave'].includes(draft.serverStatus)))
+      (draft.serverStatus!==undefined&&!['','Present','Absent','Leave'].includes(draft.serverStatus))||
+      draft.verified===true)
       throw Error('Offline vault has invalid pending attendance');
+    const key=keyFor(draft.date,draft.studentId);
+    // The register displays one mark per student/day, and the backend
+    // rejects duplicate student writes. Do not unlock or import a queue
+    // whose second mark would be hidden behind the first.
+    if(draftIds.has(draft.id)||draftKeys.has(key))
+      throw Error('Offline vault contains duplicate pending attendance. Keep the encrypted backup and seek school administrator help.');
+    draftIds.add(draft.id);draftKeys.add(key);
+  }
+  for(const [key,value] of Object.entries(data.history)){
+    const date=key.slice(0,10),studentId=key.slice(11);
+    if(key.charAt(10)!=='|'||!validDate(date)||!ids.has(studentId)||
+      !['Present','Absent','Leave'].includes(value))
+      throw Error('Offline vault contains invalid saved attendance history');
   }
   return data;
 }

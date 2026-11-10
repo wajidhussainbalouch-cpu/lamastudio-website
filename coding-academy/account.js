@@ -22,6 +22,10 @@ function buttonState(){
  byId("deleteCloud").disabled=!online||!remote;
  byId("authSubmit").disabled=!client||busy;
  byId("signOut").disabled=!client||busy;
+ byId("clearLocal").disabled=busy;
+ byId("deleteAccount").disabled=!online||config.accountDeletionEnabled!==true||
+   byId("deletePhrase").value.trim()!=="DELETE ACCOUNT"||
+   byId("deletePassword").value.length<8;
 }
 function setBusy(value){
  busy=value;buttonState();
@@ -52,6 +56,7 @@ function renderSession(){
  byId("signedOut").hidden=Boolean(user)||recovery;
  byId("signedIn").hidden=!user||recovery;
  byId("recovery").hidden=!recovery;
+ byId("accountDeleteArea").hidden=!(client&&user&&!recovery&&config.accountDeletionEnabled===true);
  text("accountEmail",user?.email||"Signed-in learner");
  if(!user){remote=null;byId("syncConsent").checked=false;}
  describeRemote();describeLocal();buttonState();
@@ -232,6 +237,71 @@ async function deleteCopy(){
  }catch(e){report("syncStatus","Cloud deletion failed: "+String(e.message||e),"error");}
  finally{setBusy(false);}
 }
+// Device-local deletion is independent of cloud progress and Auth.
+function eraseLocalLearning(){
+ const parts=core?.parts||[];
+ const previous=parts.map(part=>({key:part.key,value:localStorage.getItem(part.key)}));
+ try{
+  for(const item of previous)localStorage.removeItem(item.key);
+ }catch(error){
+  let reverted=true;
+  for(const item of previous){
+   try{
+    if(item.value===null)localStorage.removeItem(item.key);
+    else localStorage.setItem(item.key,item.value);
+   }catch(e){reverted=false;}
+  }
+  throw Error(reverted?"Unable to erase data. No change was kept.":"Some local data could not be restored. Please use your downloaded backup.");
+ }
+ describeLocal();
+}
+async function deleteAccount(event){
+ event.preventDefault();
+ if(!client||!user||busy||config.accountDeletionEnabled!==true)return;
+ if(byId("deletePhrase").value.trim()!=="DELETE ACCOUNT"||
+    byId("deletePassword").value.length<8){
+  report("eraseStatus","Type DELETE ACCOUNT and enter your current password.","error");
+  return;
+ }
+ const localErase=byId("clearAfterDelete").checked;
+ if(!confirm("Permanently delete your learner account and its cloud progress? This cannot be undone. Your device learning data will "+(localErase?"also be erased.":"remain on this device.")))return;
+ setBusy(true);
+ const password=byId("deletePassword").value;
+ byId("deletePassword").value="";
+ try{
+  // This function is deployed separately with its own protected server-side
+  // secret and user/password verification. No administrative key is in the app.
+  const {data,error}=await client.functions.invoke("coding-account-delete",{
+   method:"DELETE",
+   body:{confirmation:"DELETE ACCOUNT",password}
+  });
+  if(error)throw error;
+  if(!data||data.deleted!==true)throw Error("Deletion was not confirmed by the server.");
+  try{await client.auth.signOut({scope:"local"});}catch(e){}
+  user=null;remote=null;recovery=false;
+  if(localErase){
+   try{eraseLocalLearning();}
+   catch(e){report("eraseStatus","Your account was deleted, but local learning data could not be fully erased: "+String(e.message||e),"error");renderSession();return;}
+  }
+  byId("deletePhrase").value="";
+  byId("clearAfterDelete").checked=false;
+  renderSession();
+  report("eraseStatus","Your account and linked cloud progress have been deleted. "+(localErase?"This browser's academy progress was also erased.":"Progress on this device was kept."),"good");
+  report("accountStatus","The account was deleted. You may continue using the academy without signing in.","good");
+ }catch(e){
+  report("eraseStatus","Account deletion was NOT confirmed. Your account may still exist. "+String(e.message||e),"error");
+ }finally{setBusy(false);}
+}
+function clearLocal(){
+ if(busy)return;
+ if(!confirm("Delete all four academy modules' saved progress, code drafts and reflections from THIS browser? This does not remove your cloud progress or account. Download a backup first."))return;
+ try{
+  eraseLocalLearning();
+  report("eraseStatus","Device learning data erased. This action does not delete your cloud copy or authentication account.","good");
+ }catch(e){
+  report("eraseStatus","Local deletion failed: "+String(e.message||e),"error");
+ }
+}
 async function logout(){
  if(!client||busy)return;
  setBusy(true);
@@ -296,6 +366,10 @@ byId("upload").addEventListener("click",upload);
 byId("refresh").addEventListener("click",refreshRemote);
 byId("downloadCloud").addEventListener("click",restore);
 byId("deleteCloud").addEventListener("click",deleteCopy);
+byId("clearLocal").addEventListener("click",clearLocal);
+byId("deletePhrase").addEventListener("input",buttonState);
+byId("deletePassword").addEventListener("input",buttonState);
+byId("accountDeleteForm").addEventListener("submit",deleteAccount);
 changeMode("login");
 buttonState();
 initialize().catch(e=>report("accountStatus",String(e.message||e),"error"));

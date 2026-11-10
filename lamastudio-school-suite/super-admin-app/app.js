@@ -18,6 +18,25 @@ async function manageSchool(school){
  }catch(err){status.textContent='Backend module controls not available';enable.title='Requires deployed server-side module grant API';disable.title=enable.title;}
  }
  area.append(modules);
+
+ const branded=document.createElement('section');branded.className='card';
+ const pwaHeading=document.createElement('h3');pwaHeading.textContent='Premium: School-Branded Mobile App';
+ const pwaInfo=document.createElement('p');pwaInfo.className='muted';pwaInfo.textContent='Only Super Admin can authorize the school\'s own installed PWA icon. Offline attendance is free for every school.';
+ const pwaState=document.createElement('p');pwaState.textContent='Checking school app access…';
+ const allowPwa=document.createElement('button');allowPwa.textContent='Allow school icon';allowPwa.disabled=true;
+ const revokePwa=document.createElement('button');revokePwa.textContent='Revoke access';revokePwa.className='school-block-btn';revokePwa.disabled=true;
+ branded.append(pwaHeading,pwaInfo,pwaState,allowPwa,revokePwa);area.append(branded);
+ const readPwa=async()=>{const result=await call('adminGetSchoolPwaAccess',{adminApiKey:key,schoolId:school.schoolId});
+   const enabled=result.pwa?.enabled===true;pwaState.textContent=enabled?'Approved — school can install its branded app':'Not approved — generic LAMA School Suite only';
+   allowPwa.disabled=enabled;revokePwa.disabled=!enabled;};
+ try{await readPwa();}catch(err){pwaState.textContent='Permission service unavailable: '+err.message;}
+ const setPwa=async(enabled)=>{if(!confirm((enabled?'Allow':'Revoke')+' premium PWA branding for '+school.name+'?'))return;
+   allowPwa.disabled=true;revokePwa.disabled=true;
+   try{await call('adminSetSchoolPwaAccess',{adminApiKey:key,schoolId:school.schoolId,enabled});
+     await readPwa();message('School app permission verified by server.');}
+   catch(err){pwaState.textContent='Change unverified: '+err.message;message('PWA approval failed. Check deployed Apps Script.');}
+ };
+ allowPwa.onclick=()=>setPwa(true);revokePwa.onclick=()=>setPwa(false);
  const reset=document.createElement('button');reset.textContent='Reset school login password';reset.onclick=async()=>{if(!confirm('Reset the school login password for '+school.name+'? Existing login credentials will stop working.'))return;try{const result=await call('adminResetPassword',{adminApiKey:key,schoolId:school.schoolId});const password=result.result?.newPassword;if(password){const output=document.createElement('p');output.textContent='New password: '+password;area.prepend(output);message('Password reset. Copy the new password now; it will not be stored in the app.')}else message('Password reset requested.')}catch(e){message(e.message)}};area.append(reset);
  const audit=document.createElement('div');audit.className='card';area.append(audit);const auditButton=document.createElement('button');auditButton.textContent='Load recent audit events';audit.append(auditButton);auditButton.onclick=async()=>{try{const data=await call('adminGetAudit',{adminApiKey:key,schoolId:school.schoolId,limit:30});const pre=document.createElement('pre');pre.style.whiteSpace='pre-wrap';pre.textContent=JSON.stringify(data.records||[],null,2);audit.append(pre)}catch(e){message(e.message)}};
  // Administrator accounts belong to the school owner; no unsupported action is called here.

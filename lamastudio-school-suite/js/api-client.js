@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolPwaStatus' || action === 'offlineAttendanceSnapshot' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -98,6 +98,21 @@ const LamaAPI = (() => {
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
+
+  // Explicit teacher-only transport: never select a school-admin session even
+  // when a shared browser also contains one. Server validates class scope.
+  async function teacherOfflineCall(action,payload={}) {
+    const teacher=getSession('teacher');
+    if(!teacher||!teacher.schoolId||!(teacher.teacherId||teacher.id)||!teacher.apiKey)
+      throw Error('Teacher login required. Sign in before preparing or syncing offline work.');
+    const request={action,...authFieldsFor(teacher),...payload};
+    const response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(request),redirect:'follow'});
+    const raw=await response.text();let data;
+    try{data=JSON.parse(raw);}catch(_){throw Error('Teacher attendance service returned an invalid response.');}
+    if(!response.ok||data.status!=='success')throw Error(data.message||'Teacher request rejected');
+    return data;
+  }
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
     getSession,setSession,clearSession,logout:clearSession,isLoggedIn,requireLogin,requireAnyLogin,
@@ -114,6 +129,11 @@ const LamaAPI = (() => {
     schoolAdminVerify: (schoolId, token) => callApi('schoolAdminVerify',{schoolId,token}),
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
     getActiveSchool,updateSchoolConfig,deriveShortCode,
+    getSchoolPwaStatus:async()=>(await callApi('getSchoolPwaStatus',{},'POST')).pwa,
+    offlineAttendanceSnapshot:async(dates=[])=>(await callApi('offlineAttendanceSnapshot',{dates},'POST')).snapshot,
+    teacherOfflineList:async collection=>{if(!['students','attendance'].includes(collection))throw Error('Offline teacher collection not allowed');return (await teacherOfflineCall('list',{collection})).records;},
+    teacherOfflineBulkAttendance:async(date,records)=>(await teacherOfflineCall('bulkAttendance',{date,records})).result,
+    teacherOfflineSnapshot:async(dates=[])=>(await teacherOfflineCall('offlineAttendanceSnapshot',{dates})).snapshot,
     getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,

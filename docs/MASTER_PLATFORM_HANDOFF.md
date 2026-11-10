@@ -171,3 +171,110 @@ Commit `9bef4e0f` adds guarded `Publish absent/leave portal notices` to V2. It r
 
 ### 2026-11-07 — Live V2 write failure: School Admin login required
 User verified V2 loaded the expected 3 students in 4–6 seconds on the official site. First test save displayed `Save not verified: School Admin login required`, with one Present count visible but no persisted write verified. Root-cause candidate identified in `js/api-client.js`: `callApi` schoolScoped routing included student/attendance list but omitted `bulkAttendance`, causing writes to use active role instead of school admin session token. Commit `6cfa3b5e` adds `bulkAttendance`, `clearStudentAttendanceDate`, and school-admin notification list/add to school-scoped authentication routing. This is a source-code fix only; requires deployment and live save/readback validation. Do not retry uncertain write until refresh and verification. Do not clear attendance or switch production route yet.
+
+## 2026-11-09 — Premium branded school PWA & free offline attendance (DRAFT, NOT LIVE)
+
+New user-approved product rule: **offline attendance is free for every registered school**; custom home-screen **school name/logo PWA** needs an explicit **Super Admin grant**. Schools configure it in Settings in three steps after approval; they cannot self-grant.
+
+Development is isolated in **draft PR #84**: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/pull/84 (branch `feature/school-branded-pwa-offline-20261109`).
+
+The implementation includes `backend-api/school-pwa-approvals.gs` (Super Admin-only grant and registry audit), new code.gs routes, `super-admin-app/app.js` management buttons, Settings/installation page, serverless `api/school-pwa.js` (school manifests and PNG logos via sharp), and a separate offline attendance workspace. Offline records are encrypted per school/account/device in IndexedDB; teachers use an explicit assigned-class scoped transport. The backend bulk attendance route has an optional lock-held baseline precondition to reject stale writes; ambiguous responses require reread and leave drafts pending until verified.
+
+**No live deployment, production data change, final payment integration, or device-level proof.** Existing Apps Script deployment must be backed up and then updated together with the new module, preserving all live scripts. Vercel build with Node/sharp and real Android/iOS installation plus offline school/teacher tests must pass before merging/releasing. Do not trigger Vercel while deployment quota is restricted.
+
+Full architecture, per-file notes, security caveats and acceptance checklist: `lamastudio-school-suite/BRANDED_PWA_OFFLINE_HANDOFF.md`. Other offline records (admissions, diary, finance, examinations) remain future work and are **not** implemented by this draft.
+
+### 2026-11-09 continuation — compact offline snapshot and premium installer (PR #84 remains DRAFT)
+
+- Added a **POST-only**, authenticated `offlineAttendanceSnapshot` route and separate `lamastudio-school-suite/backend-api/offline-attendance-snapshot.gs` module. It returns a minimal school/assigned-class teacher roster and up to 31 days of attendance, scaled to roster size plus explicitly requested pending dates. Offline clients no longer download the full historical attendance sheet as mobile JSON. This optimizes transfer size, not necessarily the underlying Google Sheets read time.
+- Offline UI supports explicit teacher/school-admin account choice on shared devices, fails closed on wrong-scope snapshots and incomplete rosters, and still uses encrypted IndexedDB plus conflict-safe server baseline checks.
+- Installer manifest/icons are identified per school; install prompt is approval-gated and a copyable link appears in settings only after a verified Super Admin permission. `sharp@0.35.5` is pinned, but Vercel Node version/build and actual mobile PWA behavior are unverified.
+- New repeatable backend mock regression file: `lamastudio-school-suite/backend-api/test-offline-attendance-backend.cjs`. Exact committed source passed isolated mocked execution for role scoping, conflicts and privacy. Real Apps Script version and Android offline sync require validation against a disposable test school.
+- All changes remain on draft branch `feature/school-branded-pwa-offline-20261109`; no production deployment or live database changes. Deploy the new Apps Script snapshot module **together** with the PWA approvals and bulk attendance baseline guard, after backing up all installed scripts. Never replace the live master with a partial repository file.
+
+### 2026-11-09 — Offline attendance recovery and batch usability, PR #84 (DRAFT)
+
+- Added **Mark visible unmarked Present** to the offline school/teacher attendance workspace. It updates up to 200 filtered students in a single encrypted IndexedDB write. Existing attendance choices and pending edits are not overwritten.
+- Added **encrypted recovery backup download/restore** using the existing offline passphrase, now minimum 12 characters. The backup includes ciphertext, salt and IV but no plaintext roster; restore checks school, role and saved student IDs, and rejects any device with an existing local vault. Export/download must be manually completed by each school and stored safely; it is NOT an automatic cloud backup.
+- Exact new client mock test `lamastudio-school-suite/backend-api/test-offline-attendance-client.cjs` passed **12** simulated scenarios, including restoring pending attendance after local IndexedDB clearing, wrong password rejection, refusing to overwrite an existing vault, server timeout preservation and confirmed sync. Mock cryptography is NOT an AES-GCM security test; real Chrome/Android offline storage and Google Sheets sync validation remain release blockers.
+- School-admin local vault currently belongs to the **school/device** (shared between school administrator accounts that know the offline passphrase). Teacher vault is individually scoped by teacher ID. Evaluate per-admin device isolation before making the feature production standard.
+- Do not merge PR #84 while `main` has independent changes to reconcile; no source additions in this branch have been deployed to production.
+
+### 2026-11-09 — Browser-tab conflict protection (draft PR #84)
+
+- Added an atomic IndexedDB compare-and-set for encrypted school/teacher attendance vaults. A tab holding an obsolete encrypted version cannot overwrite newer attendance drafts saved in another tab, including from a recently restored encrypted backup.
+- Restoring an encrypted backup initializes the vault version and only writes when the account-scoped vault is absent. Bulk Present and encrypted backup operations refuse stale local state. A blocked tab must Lock and Unlock to reload the latest offline records.
+- New repeatable Node mock `lamastudio-school-suite/js/test-offline-vault-cas.cjs` (simulated IndexedDB transactions). Updated `backend-api/test-offline-attendance-client.cjs` to model atomic transactions; **12/12 mocked browser-flow cases passed** with the current frontend. Root `npm run test:school-suite` now invokes all four mock suites.
+- **Still not production-ready:** real browser WebCrypto + IndexedDB transaction lifecycle tests, two-tab races on mobile, teacher role isolation, actual Google Apps Script sync/readback and multi-device school tests remain outstanding. This is code/test work only, not a live deployment or school data modification.
+
+### 2026-11-09 — Long-offline and large-roster attendance limits (DRAFT PR #84)
+
+- Student/teacher offline sync now handles queues spanning more than 90 separate dates by requesting **multiple authenticated snapshot pages**, validating roster stability and duplicate status consistency before any write. Each request remains below the server's dated-history limit.
+- Google Apps Script's offline snapshot window now adapts to student count (up to 31 recent days; about 6 recent days at 5,000 students). Explicit requested date batches scale to approximately 30,000 potential statuses per request. This bounds network responses but **does not eliminate the underlying Spreadsheet read cost**.
+- Offline attendance writes are grouped into **500 students per call** (below the 1,500-row backend maximum). Every group needs a confirmed server readback. Network uncertainty stops following groups and preserves all unsynchronized records.
+- A new repeatable mock test `lamastudio-school-suite/js/test-offline-sync-batching.cjs` was added to `npm run test:school-suite`. Its isolated source tests passed with 195 queued dates, a 5,000-student response budget, 502 same-day attendance entries, stale/mismatched roster snapshots and lost network acknowledgments. Updated backend and previous 12-case browser mocks also passed. **No production writes, deployments or physical-device tests.**
+- PR #84 is still draft and diverges from independently changing `main`. All backend/frontend versions must be reconciled and jointly tested on a disposable school before any live release.
+
+### 2026-11-09 — Offline sync conflict review UI (draft only)
+
+- Added per-student conflict/unverified flags to encrypted offline attendance drafts and mobile **Pending sync** / **Needs review** filters, with direct jump to flagged student ID/date. No automatic overwrite of divergent server attendance is allowed.
+- Source regression suites passed in isolated mocked JS execution: large 195-date snapshot batching; 502-record chunk sync; competing server attendance; ambiguous acknowledgments; 12 existing offline browser-flow scenarios. No production records or live deployment were touched.
+- Source-only draft PR #84 remains divergent from `main`. Before merge, reconcile concurrent main-branch updates, deploy matching Apps Script snapshot and bulk endpoints to a disposable test instance, then test on Android Chrome offline and while reconnecting.
+
+### 2026-11-09 — Offline sync account-switch guard and full review navigation
+
+- PR #84 (still **draft**) now cycles through all flagged attendance drafts rather than showing only the first; conflict cards show **offline status versus last observed cloud status**. This value can be stale and does not authorize overwriting the school register.
+- Hardened school/teacher offline sync against login changes in another tab. The page checks the original teacher identity/API key or original school administrator token, plus current school ID, before each 500-record upload. On any mismatch, stop and keep unsent drafts encrypted.
+- Added `lamastudio-school-suite/js/test-offline-writer-binding.cjs` (10 mocked identity checks) and mid-sync account-switch regression; repeated previous mocked offline browser scenarios (12 passes). `package.json` now runs six self-contained school suite test files.
+- No deployment, Apps Script update, production student data change or real mobile device testing occurred. Coordinate `main` divergence before merging; verify the actual web app, live Apps Script backup/version and school-scoped access on a disposable school first.
+
+### 2026-11-09 — Stop unsafe conflict taps and account-switched sync
+
+- Draft PR #84 offline client now prevents flagged students from being altered by pressing Present/Absent/Leave: an unresolved conflict or ambiguous server save must first be investigated. Already-selected non-conflicting statuses no longer produce redundant vault writes.
+- Review navigation cycles through all flagged dates/student IDs and displays the locally selected status versus the **last observed** server status; the latter may no longer be current.
+- The client checks the original logged-in school administrator token, or teacher ID and API key, before **every** attendance batch. A school or teacher account switch in another tab halts further uploads and retains drafts for recovery. These checks supplement (and cannot replace) Apps Script role and tenant authorization.
+- New identity-switch regression (10 mocked checks) and expanded batching/review tests passed, as did the 12-case offline browser-flow mock. Tests are integrated into `npm run test:school-suite`.
+- No live deployment, Apps Script update, mobile-device integration, or production database mutation. Reconcile independent `main` changes before any release, preserving all existing school modules.
+
+### 2026-11-10 — Cloud recheck without attendance mutation
+
+- Draft PR #84 now shows a per-student **Recheck cloud** button for pending conflict/unverified records. It fetches a fresh, role-scoped snapshot for one date, checks school/role and unchanged account identity, and saves only the last observed status/review metadata in encrypted IndexedDB.
+- Rechecking **does not** issue a bulk attendance write or automatically delete a draft. Match with the pending choice remains `unverified` until ordinary Sync Now; restored baseline clears the conflict flag without discarding the draft; changed student identity remains blocked for manual school admin review.
+- Added regression coverage for matching, disagreeing and missing cloud rows; mismatched enrollment; failed network, mismatched school, login change, local CAS failure and no internet. Earlier 12-case offline recovery and 10-case identity binding simulations still passed.
+- Keep PR #84 draft; branch remains divergent from main. Deploy to a disposable Apps Script/test school and verify on actual phones before any production release.
+
+### 2026-11-10 — Offline write-failure lockout and adaptive snapshot limits
+
+- Draft PR #84: any failed encryption or IndexedDB write now locks out further offline attendance operations; staff must Lock/Unlock to restore last successfully persisted encrypted records before trying again. This prevents the user interface from treating unsaved in-memory edits as durable attendance. Tests verified quota, crypto, CAS errors and the recovery path.
+- The client now safely shrinks multi-day snapshot requests in response to the backend's specific date-limit error when student enrollment has grown since offline preparation, without discarding drafts or auto-retrying unrelated API failures. The 195-day mocked test passed.
+- Added `js/test-offline-write-failures.cjs` and included it in root `npm run test:school-suite` (seven standalone mock test files). These tests remain *simulations*, not Android/iOS WebCrypto or Google Apps Script/Sheets integration.
+- No changes were deployed to production. Current `main` is advancing independently: resolve divergence and validate against a disposable school before any merge, web-app deployment or real-school use.
+
+### 2026-11-10 — Post-upload readback checks for changing student or account
+
+- Strengthened draft PR #84 offline attendance synchronization to verify **the original logged-in account and the freshly returned student roster** after every upload readback. A correct status alone no longer clears the encrypted draft if the student's ID/enrollment changed during the upload or the login changed in another tab.
+- Failed/cross-school readback retains all affected encrypted drafts as `unverified`; enrollment changes retain those students with `student-changed`. The client pauses further write batches until staff reauthenticate/review.
+- Expanded 502-record mock regression for mid-readback account switch, changed enrollment and wrong-school responses; tests passed. Existing 10 writer-binding, 12 mock browser recovery and fail-closed storage checks were rerun and passed.
+- No production deploy/merge, student-record mutation, or real Android/Google Sheets integration. The branch remains divergent from `main`. Real-device and disposable-school tests remain the required release gate.
+
+### 2026-11-10 — Final identity verification and first offline preparation retry
+
+- Draft School Suite PR #84 now checks current account and student enrollment **after every cloud upload readback** before deleting encrypted pending attendance. A changed school/teacher login, wrong-school readback or changed enrollment cannot silently clear local drafts.
+- Also checks the original school/teacher account after lengthy preflight snapshot requests and throughout first offline roster preparation. `writeVault(true)` enforces the original identity immediately before persisting the prepared roster; routine offline attendance remains independent of internet login.
+- Resolved a stuck-in-setup case: failure of the very first encrypted vault save no longer forces Lock/Unlock when no saved vault exists. Staff can retry preparation; local storage is rechecked on retry.
+- Updated the seven-file mock test suite to cover preflight account changes, post-upload enrollment changes, wrong-school results, first-save recovery, encrypted-write authorization, and the preexisting 12 offline client and 10 identity checks. Source-level simulated tests passed; real Android/Apps Script/Google Sheets acceptance remains a release gate.
+- Development branch only; no Vercel deployment, Apps Script update, production merge or student-data change.
+
+### 2026-11-10 — Guard offline attendance from student class and section transfers
+
+- The draft PR #84 client now compares saved student ID, enrollment **and class/section** to fresh role-scoped cloud roster before upload, after upload and during read-only conflict recheck. A pupil moved to another class or section cannot silently receive an old-class offline mark. The queued encrypted draft is preserved for school staff review.
+- Added `js/test-offline-student-assignment.cjs` to the root School Suite regression command (now eight mocked files). It uses actual production comparison/sync functions with fake student and cloud data to test preflight and readback class/section transfers and unchanged rosters. Tests passed, as did the existing 12 offline-client mocked workflows and 10 identity-switch tests.
+- Class/section move handling is deliberately conservative: transfers after the marked *historical date* may need manual reconciliation. The draft does not automatically override any cloud attendance.
+- **Not live:** no Apps Script project modification, real school database writes, branch merge or Vercel deploy. Still require disposable-school mobile and Google Sheets integration tests and careful reconciliation of independently advancing `main`.
+
+### 2026-11-10 — Reject duplicated encrypted attendance before restore
+
+- PR #84 offline client now validates unique draft IDs **and** unique student/date pairs on Unlock and Restore, plus pending statuses, student existence, history keys and saved attendance values. This prevents a malformed or corrupted encrypted vault from displaying one attendance mark while queuing another hidden duplicate.
+- New `js/test-offline-vault-validation.cjs` passes 17 invalid-vault cases and successful valid/uncertain restoration scenarios. The root test command now covers **nine** scripts. Extended existing end-to-end mocked Restore button test to 14 cases: a fabricated encrypted backup containing a duplicated student/day is blocked without creating device data; the original valid backup still restores correctly.
+- Keep corrupted backup bytes for support/recovery rather than auto-fixing or deleting attendance; none of these tests run on real Android Chrome or live Google Apps Script/Sheets.
+- No merge, deployment, backend changes or real school/student data updates were made. Resolve large `main` divergence and test with a disposable school before release.

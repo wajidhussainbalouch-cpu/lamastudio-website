@@ -128,6 +128,20 @@ function bulkAttendanceRecords(params) {
       if (index !== undefined && touchedRows.has(index)) throw new Error('Two records target the same attendance row');
       if (index !== undefined) touchedRows.add(index);
       const old = index === undefined ? {} : rowToRecord(headers, existing[index]);
+      // Offline synchronization uses optimistic concurrency, checked INSIDE
+      // the same script lock as the actual write. Legacy online callers omit
+      // baseStatus and keep their existing behavior. Any conflict rejects the
+      // WHOLE incoming batch before a single sheet row is modified.
+      if (Object.prototype.hasOwnProperty.call(rec,'baseStatus')) {
+        if (['','Present','Absent','Leave'].indexOf(rec.baseStatus) === -1)
+          throw new Error('Invalid offline baseline status for student: '+sid);
+        const raw=String(old.status||'').trim().toLowerCase();
+        const current=raw==='present'||raw==='p'?'Present':
+          raw==='absent'||raw==='a'?'Absent':
+          raw==='leave'||raw==='l'?'Leave':raw===''?'':'UNKNOWN';
+        if (current!==rec.baseStatus)
+          throw new Error('Offline attendance conflict for student '+sid+' on '+date+'. Refresh and review; no batch rows changed.');
+      }
       // Do not allow client-supplied metadata, names, classes, or identifiers to override register values.
       const full = Object.assign({}, old, {
         id: old.id || genId('att'), studentId: sid, enrlNo: enrl,

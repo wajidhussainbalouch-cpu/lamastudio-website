@@ -249,3 +249,10 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - The client now safely shrinks multi-day snapshot requests in response to the backend's specific date-limit error when student enrollment has grown since offline preparation, without discarding drafts or auto-retrying unrelated API failures. The 195-day mocked test passed.
 - Added `js/test-offline-write-failures.cjs` and included it in root `npm run test:school-suite` (seven standalone mock test files). These tests remain *simulations*, not Android/iOS WebCrypto or Google Apps Script/Sheets integration.
 - No changes were deployed to production. Current `main` is advancing independently: resolve divergence and validate against a disposable school before any merge, web-app deployment or real-school use.
+
+### 2026-11-10 — Post-upload readback checks for changing student or account
+
+- Strengthened draft PR #84 offline attendance synchronization to verify **the original logged-in account and the freshly returned student roster** after every upload readback. A correct status alone no longer clears the encrypted draft if the student's ID/enrollment changed during the upload or the login changed in another tab.
+- Failed/cross-school readback retains all affected encrypted drafts as `unverified`; enrollment changes retain those students with `student-changed`. The client pauses further write batches until staff reauthenticate/review.
+- Expanded 502-record mock regression for mid-readback account switch, changed enrollment and wrong-school responses; tests passed. Existing 10 writer-binding, 12 mock browser recovery and fail-closed storage checks were rerun and passed.
+- No production deploy/merge, student-record mutation, or real Android/Google Sheets integration. The branch remains divergent from `main`. Real-device and disposable-school tests remain the required release gate.

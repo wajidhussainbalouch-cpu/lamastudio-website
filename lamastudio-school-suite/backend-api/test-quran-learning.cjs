@@ -142,7 +142,7 @@ assert.throws(()=>call('quranSaveLesson',parent({...lesson,clientRequestId:'requ
 assert.throws(()=>call('quranSaveLesson',{
  role:'teacher',schoolId:'A',teacherId:'tA2',apiKey:'teach-tA2',
  ...lesson,clientRequestId:'request00006'}),/assignment required/);
-assert.throws(()=>call('quranStatus',{role:'teacher',schoolId:'B',teacherId:'tB1',apiKey:'teach-tB1'}),/not activated|cannot/i);
+assert.equal(call('quranStatus',{role:'teacher',schoolId:'B',teacherId:'tB1',apiKey:'teach-tB1'}).enabled,false,'Disabled school can see only its disabled status');
 const attended=call('quranSaveAttendance',teacher({
  enrollmentId:enrolled.id,date:'2026-11-10',status:'Present',clientRequestId:'requestatt01',expectedVersion:0}));
 assert.equal(attended.version,1);

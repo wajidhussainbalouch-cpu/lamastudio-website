@@ -86,7 +86,7 @@ class E{
  setAttribute(k,v){this.attributes[k]=v;}
 }
 const els=new Map(),get=id=>{if(!els.has(id))els.set(id,new E());return els.get(id);};
-const page={getElementById:get,querySelectorAll:()=>[{dataset:{mode:"login"},setAttribute(){}},{dataset:{mode:"signup"},setAttribute(){}},{dataset:{mode:"reset"},setAttribute(){}}]};
+const page={getElementById:get,querySelectorAll:()=>["login","signup","reset"].map(mode=>({dataset:{mode},setAttribute(){},addEventListener(){}}))};
 const browser={...win,addEventListener(){}};
 vm.runInNewContext(account,{window:browser,document:page,localStorage:storage,navigator:{},location:{href:"https://example.org/account.html"},console,setTimeout,confirm:()=>true});
 assert.match(get("configStatus").textContent,/not activated/i);

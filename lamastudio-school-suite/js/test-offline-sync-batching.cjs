@@ -230,7 +230,7 @@ async function cloudRecheckTests(){
  assert.ok(notices.some(s=>s.includes('Read-only cloud recheck:')));
 }
 async function prepareBindingTests(){
- for(const switchWhen of ['snapshot','keyDerivation','never']){
+ for(const switchWhen of ['snapshot','keyDerivation','first-save-failure','never']){
   const state={busy:false,data:null,key:null,salt:null,storeVersion:null,staleVault:false};
   const notifications=[],nodes={offlinePass:{value:'a secure offline passphrase'}};
   let identityValid=true,writes=0;
@@ -249,7 +249,14 @@ async function prepareBindingTests(){
     return 'mock-key';
    },
    schoolId:'school-one',vaultId:'school-one#school-admin',
-   writeVault:async()=>{writes++;},renderClassList:()=>{},
+   writeVault:async requireOnlineAuth=>{
+    assert.equal(requireOnlineAuth,true,'Preparing a fresh vault requires original online login');
+    writes++;
+    if(switchWhen==='first-save-failure'){
+     state.staleVault=true;
+     throw Error('QuotaExceededError: simulated first-time device storage limit');
+    }
+   },renderClassList:()=>{},
    navigator:{storage:{}},
    text:(id,message)=>notifications.push(String(message)),
    $:id=>nodes[id]||(nodes[id]={value:''})
@@ -259,6 +266,11 @@ async function prepareBindingTests(){
   if(switchWhen==='never'){
    assert.equal(writes,1,'Original verified account can prepare device vault');
    assert.equal(state.data.roster.length,1);
+  }else if(switchWhen==='first-save-failure'){
+   assert.equal(writes,1);
+   assert.equal(state.data,null,'Failed first save does not pretend the roster is prepared');
+   assert.equal(state.staleVault,false,'No existing vault should be left permanently locked out');
+   assert.ok(notifications.some(m=>m.includes('QuotaExceededError')));
   }else{
    assert.equal(writes,0,'Switched account cannot persist original school/teacher roster');
    assert.equal(state.data,null,'No local preparation after account switch');
@@ -355,5 +367,5 @@ async function syncTests(){
  await cloudRecheckTests();
  await prepareBindingTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, changed readback enrollment, snapshot/preparation account switching, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, changed readback enrollment, snapshot/preparation account switching, initial save recovery, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

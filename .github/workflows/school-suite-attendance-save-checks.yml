@@ -1,0 +1,40 @@
+name: School Suite Attendance Save Checks
+
+on:
+  pull_request:
+    paths:
+      - "lamastudio-school-suite/attendance/**"
+      - "lamastudio-school-suite/backend-api/**"
+      - "lamastudio-school-suite/js/api-client.js"
+      - ".github/workflows/school-suite-attendance-save-checks.yml"
+  push:
+    branches:
+      - "fix/attendance-verification-teacher-auth-20261110"
+    paths:
+      - "lamastudio-school-suite/attendance/**"
+      - "lamastudio-school-suite/backend-api/**"
+      - "lamastudio-school-suite/js/api-client.js"
+      - ".github/workflows/school-suite-attendance-save-checks.yml"
+
+jobs:
+  attendance-save-regressions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: School-local Sheets dates
+        run: node lamastudio-school-suite/backend-api/test-attendance-date-verification.cjs
+      - name: Admin-authenticated teacher attendance browser calls
+        run: node lamastudio-school-suite/js/test-teacher-attendance-auth.cjs
+      - name: Admin-authenticated teacher attendance backend routes
+        run: node lamastudio-school-suite/backend-api/test-teacher-attendance-backend-auth.cjs
+      - name: Idempotent teacher attendance database upsert
+        run: node lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs
+      - name: Student pending-write duplicate prevention
+        run: node lamastudio-school-suite/attendance/test-pending-student-save.cjs
+      - name: Teacher pending-write duplicate prevention
+        run: node lamastudio-school-suite/attendance/test-pending-teacher-save.cjs

@@ -149,6 +149,11 @@ function quranSetGrant_(p){
     for(let i=1;i<rows.length;i++)if(String(rows[i][headers.indexOf('schoolId')])===schoolId)index=i+1;
     if(index)sheet.getRange(index,1,1,headers.length).setValues([recordToRow(headers,value)]);
     else sheet.appendRow(recordToRow(headers,value));
+    // Append immutable permission history; never store passwords or API keys.
+    const auditHeaders=['schoolId','timestamp','enabled','hifzEnabled','approvedBy','reason'];
+    let audit=master.getSheetByName('QuranModuleGrantAudit');
+    if(!audit){audit=master.insertSheet('QuranModuleGrantAudit');audit.appendRow(auditHeaders);audit.setFrozenRows(1);}
+    audit.appendRow([schoolId,value.updatedAt,p.enabled,p.hifzEnabled,'Super Admin',value.reason]);
     SpreadsheetApp.flush();
     return {schoolId,enabled:p.enabled,hifzEnabled:p.hifzEnabled};
   }finally{lock.releaseLock()}
@@ -532,6 +537,13 @@ function quranOverview_(ctx,config){
 function quranHandleRequest_(p){
   const action=String(p.action||'');
   if(action==='quranAdminSetSchool')return {status:'success',result:quranSetGrant_(p)};
+  if(action==='quranAdminGetSchool'){
+    authorizeAdmin(p.adminApiKey);
+    const target=String(p.targetSchoolId||'').trim();
+    const record=findSchoolRow(getRegistrySheet(),r=>String(r.schoolId)===target);
+    if(!record)throw Error('Registered school not found.');
+    return {status:'success',result:Object.assign({schoolId:target},quranGrant_(target))};
+  }
   const ctx=quranContext_(p);
   if(action==='quranStatus'){
     const grant=quranGrant_(ctx.schoolId);

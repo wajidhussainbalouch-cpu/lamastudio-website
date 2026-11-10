@@ -25,7 +25,9 @@ function visible(){return state.students.filter(s=>(!$('class').value||cls(s)===
 function enable(){const ready=state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!state.pendingVerification;$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
 function render(){enable();const all=state.students,rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
  $('summary').innerHTML=[['Students',all.length],['Present',count('Present')],['Absent',count('Absent')],['Leave',count('Leave')],['Unmarked',all.length-count('Present')-count('Absent')-count('Leave')]].map(([k,v])=>'<div class="panel"><div class="muted">'+k+'</div><h2>'+v+'</h2></div>').join('');
- $('count').textContent=rows.length+' visible of '+all.length+' students'+(state.historyReady?' · saved attendance verified':' · roster preview only');
+ $('count').textContent=rows.length+' visible of '+all.length+' students'+(state.pendingVerification?
+ ' · '+state.pendingVerification.records.length+' submitted mark(s) awaiting cloud verification (not confirmed)':
+ state.historyReady?' · saved attendance verified':' · roster preview only');
  $('list').innerHTML=rows.map(s=>{const k=id(s),v=state.chosen.get(k)?.status||'';return '<div class="student"><div><strong>'+escapeHtml(s.name||'Unnamed')+'</strong> <span class="muted">('+escapeHtml(enr(s))+')</span><div class="muted">'+escapeHtml(cls(s))+' · '+escapeHtml(s.fatherName||s.fatherGuardian||'')+'</div></div><div class="controls">'+['Present','Absent','Leave'].map(x=>'<button data-id="'+escapeHtml(k)+'" data-status="'+x+'" class="'+(v===x?'selected '+x.toLowerCase():'')+'" '+(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||state.pendingVerification?'disabled':'')+'>'+x+'</button>').join('')+'</div></div>'}).join('');
  const classes=[...new Set(all.map(cls))];$('coverage').innerHTML=classes.map(c=>{const ss=all.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length;return '<p><strong>'+escapeHtml(c)+'</strong>: '+marked+' / '+ss.length+' marked ('+(ss.length?Math.round(marked/ss.length*100):0)+'%)</p>'}).join('');
  $('followup').innerHTML=all.filter(s=>['Absent','Leave'].includes(state.chosen.get(id(s))?.status)).map(s=>{const raw=String(s.whatsapp||s.contact||s.guardianCell||'').replace(/\D/g,'');const n=raw.startsWith('0')&&raw.length===11?'92'+raw.slice(1):raw;const valid=/^\d{10,15}$/.test(n);const body='Dear Parent/Guardian, '+(s.name||'your child')+' is recorded '+state.chosen.get(id(s)).status+' on '+$('date').value+'. Please contact the school if assistance is needed. Thank you.';return '<div class="student"><div><strong>'+escapeHtml(s.name)+' · '+escapeHtml(cls(s))+'</strong><div class="muted">Previous 7 weekdays (saved records): '+escapeHtml(recentAttendance(s))+'</div></div><div class="controls">'+(valid?'<a target="_blank" rel="noopener" href="https://wa.me/'+n+'?text='+encodeURIComponent(body)+'">Prepare WhatsApp</a><a href="tel:+'+n+'">Call parent</a>':'<span class="muted">No valid parent number</span>')+'<button type="button" data-confirm-contact="'+escapeHtml(id(s))+'">Record confirmed parent contact</button></div></div>'}).join('')||'<p class="muted">No absent or on-leave students in the current register.</p>';
@@ -73,6 +75,7 @@ async function verifyPendingAttendance(){
    return matching.length!==1||status(matching[0].status)!==rec.status;
   });
   if(unresolved.length){
+   $('stage').textContent='Attendance save NOT verified — do not submit again';
    message('Read-only verification: '+unresolved.length+' of '+pending.records.length+
     ' submitted records are still unconfirmed or duplicated. The selected marks are preserved on this page. Do not submit again. Export CSV for reference and check the official attendance sheet.',true);
    return;
@@ -80,8 +83,10 @@ async function verifyPendingAttendance(){
   state.history=rows;
   state.dirty.clear();
   state.pendingVerification=null;
+  $('stage').textContent='Attendance saved and independently verified';
   message('✓ '+pending.records.length+' attendance records confirmed in the school database. No duplicate submission was made.');
  }catch(e){
+  $('stage').textContent='Attendance verification pending';
   message('Attendance verification is still pending: '+e.message+
    '. Your selected marks remain visible but locked. Do not Save again. Export CSV and verify the school sheet.',true);
  }finally{state.saving=false;render();}
@@ -98,6 +103,7 @@ $('save').onclick=async()=>{
  }
  if(!confirm('Save '+records.length+' selected attendance changes?'))return;
  state.pendingVerification={date:$('date').value,records};
+ $('stage').textContent='Saving attendance; verification required';
  state.saving=true;render();message('Submitting once and checking cloud records…');
  try{
   const response=await LamaAPI.bulkAttendance($('date').value,records);

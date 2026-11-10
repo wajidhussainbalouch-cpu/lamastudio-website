@@ -284,6 +284,9 @@ function quranValidateLesson_(raw,program){
 }
 function quranSaveVersioned_(ctx,key,identity,requestId,expectedVersion,record){
   const rows=quranRows_(ctx,key);
+  const sameRequest=rows.filter(row=>String(row.clientRequestId||'')===requestId);
+  if(sameRequest.length&&sameRequest.some(row=>!identity(row)))
+    throw Error('Quran client request ID is already used for a different record.');
   const matches=rows.filter(identity);
   if(matches.length>1)throw Error('Duplicate Quran records detected; do not submit again. Ask School Admin to reconcile.');
   const prior=matches[0]||null;
@@ -320,10 +323,22 @@ function quranAdminConfigure_(ctx,p,grant){
     return {programmes:enabled.filter(x=>x!=='hifz'||grant.hifzEnabled)};
   });
 }
+function quranValidTeacherAssignment_(ctx,student,teacher,programCode){
+  const standard=sameClass(student.class,teacher.assignedClass)&&
+    (!String(teacher.assignedSection||'').trim()||
+      String(teacher.assignedSection).trim().toLowerCase()===String(student.section||'').trim().toLowerCase());
+  if(standard)return true;
+  return quranRows_(ctx,'groups').some(g=>
+    String(g.teacherId)===String(teacher.id)&&g.programCode===programCode&&
+    sameClass(g.className,student.class)&&
+    (!g.section||String(g.section).toLowerCase()===String(student.section||'').toLowerCase()));
+}
 function quranEnroll_(ctx,p,config){
   quranAllowedProgram_(config,p.programCode);
   const student=quranGetStudent_(ctx,p.studentId);
   const teacher=quranGetTeacher_(ctx,p.teacherId);
+  if(!quranValidTeacherAssignment_(ctx,student,teacher,p.programCode))
+    throw Error('Teacher is not assigned to this class, section or approved Quran learning group.');
   if(!student.class)throw Error('Student must have a registered class.');
   const program=p.programCode,level=quranText_(p.level,110,'Quran level');
   const groupName=quranText_(p.groupName,90,'Quran group');
@@ -379,8 +394,9 @@ function quranSaveLesson_(ctx,p,config){
       teacherId:ctx.role==='teacher'?ctx.teacher.id:enrollment.teacherId,
       programCode:enrollment.programCode,date})));
 }
-function quranSaveAttendance_(ctx,p){
+function quranSaveAttendance_(ctx,p,config){
   const enrollment=quranEnrollment_(ctx,p.enrollmentId);
+  quranAllowedProgram_(config,enrollment.programCode);
   quranTeacherOwns_(ctx,enrollment);
   const date=quranDate_(p.date),status=quranEnum_(p.status,QURAN_ATTENDANCE_,'lesson attendance');
   const requestId=quranText_(p.clientRequestId,110,'request ID');
@@ -391,8 +407,9 @@ function quranSaveAttendance_(ctx,p){
     {enrollmentId:enrollment.id,studentId:enrollment.studentId,
      teacherId:enrollment.teacherId,date,status}));
 }
-function quranSaveAssessment_(ctx,p){
+function quranSaveAssessment_(ctx,p,config){
   const enrollment=quranEnrollment_(ctx,p.enrollmentId);
+  quranAllowedProgram_(config,enrollment.programCode);
   quranTeacherOwns_(ctx,enrollment);
   const date=quranDate_(p.date);
   const criterion=quranEnum_(p.criterion,QURAN_CRITERIA_,'assessment criterion');
@@ -453,7 +470,8 @@ function quranProfile_(ctx,studentId){
       .map(x=>parent?{id:x.id,enrollmentId:x.enrollmentId,date:x.date,sessionType:x.sessionType,
         lessonTitle:x.lessonTitle,surahNumber:x.surahNumber,ayahFrom:x.ayahFrom,ayahTo:x.ayahTo,
         juzNumber:x.juzNumber,revisionRequired:x.revisionRequired,revisionWork:x.revisionWork,
-        parentFeedback:x.parentFeedback,version:x.version,programCode:x.programCode}:x),
+        parentFeedback:x.parentFeedback,quality:x.quality,
+        version:x.version,programCode:x.programCode}:x),
     assessments:assessments.filter(x=>!parent||x.published===true||String(x.published)==='true')
       .map(x=>parent?{enrollmentId:x.enrollmentId,date:x.date,criterion:x.criterion,level:x.level,parentFeedback:x.parentFeedback}:x),
     attendance:attendance.map(x=>parent?
@@ -516,8 +534,8 @@ function quranHandleRequest_(p){
   }
   if(ctx.role==='student')throw Error('Student accounts have read-only Quran access.');
   if(action==='quranSaveLesson')return {status:'success',result:quranSaveLesson_(ctx,p,config)};
-  if(action==='quranSaveAttendance')return {status:'success',result:quranSaveAttendance_(ctx,p)};
-  if(action==='quranSaveAssessment')return {status:'success',result:quranSaveAssessment_(ctx,p)};
+  if(action==='quranSaveAttendance')return {status:'success',result:quranSaveAttendance_(ctx,p,config)};
+  if(action==='quranSaveAssessment')return {status:'success',result:quranSaveAssessment_(ctx,p,config)};
   if(ctx.role!=='school')throw Error('School Administrator approval required.');
   if(action==='quranConfigure')return {status:'success',result:quranAdminConfigure_(ctx,p,quranGrant_(ctx.schoolId))};
   if(action==='quranEnroll')return {status:'success',result:quranEnroll_(ctx,p,config)};

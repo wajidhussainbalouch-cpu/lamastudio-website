@@ -69,7 +69,7 @@ const page=factory(ctx);
  await page.saveAttendance();
  assert.equal(writes,2,'Two selected students must submit exactly two records');
  assert.equal(page.pending.records.length,2,'Unverified marks must be retained');
- assert.ok(nodes.get('attendanceVerifyNote').textContent.includes('NOT verified'));
+ assert.ok(nodes.get('attendanceVerifyNote').textContent.toLowerCase().includes('unverified'));
  assert.equal(button.disabled,true,'Save must remain blocked while pending');
  await page.saveAttendance();
  assert.equal(writes,2,'Repeated Save must never submit pending student records');

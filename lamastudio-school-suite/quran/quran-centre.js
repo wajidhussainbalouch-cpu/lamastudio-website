@@ -145,6 +145,15 @@ function renderData(){
   '<div class="stat"><small>'+escapeText(label)+'</small><strong>'+escapeText(v)+'</strong></div>').join('');
  $('statNote').textContent='Verified school-scoped Quran records · '+today()+
   ' · Assessments are qualitative, not automatic recitation judgments.';
+ const monthly=data.monthlyProgress||{};
+ table($('monthlyProgress'),['Class / section','Learners','Monthly lessons recorded','Programmes'],
+  (monthly.classProgress||[]).map(c=>[
+   c.className,c.learners,c.recordedLessons,(c.programmes||[]).map(p=>subjectName[p]||p).join(', ')]));
+ const activity=data.teacherActivity||[];
+ if(isStudent){$('teacherActivity').textContent='Teacher activity is available to authorised school staff.'}
+ else table($('teacherActivity'),['Quran teacher','Monthly recorded lessons','Learners with lessons','Revision assignments'],
+   activity.map(x=>[teacherRoster.find(t=>t.id===x.teacherId)?.name||x.teacherId,
+    x.recordedLessons,x.learnersWithLessons,x.revisionAssigned]));
  const lookup=Object.fromEntries((data.students||[]).map(s=>[s.id,s]));
  const enrolled=data.records.enrollments||[];
  table($('learnerList'),['Student','Class','Programme','Current level','Quran teacher'],

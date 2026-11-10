@@ -154,15 +154,20 @@ async function derive(password,salt){
   return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
 }
 async function writeVault(){
+  if(state.staleVault)throw Error('Local vault requires Lock and Unlock before new edits.');
   if(!state.data||!state.key||!state.salt)throw Error('Offline records are locked');
-  const iv=crypto.getRandomValues(new Uint8Array(12));
-  const bytes=new TextEncoder().encode(JSON.stringify(state.data));
-  const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},state.key,bytes);
-  const record={schoolId:vaultId,version:1,salt:b64(state.salt),iv:b64(iv),
-    ciphertext:b64(ciphertext),savedAt:new Date().toISOString()};
-  try{state.storeVersion=await saveVaultCas(record,state.storeVersion);}
-  catch(error){
-    if(String(error.message||'').startsWith('OFFLINE_VAULT_CHANGED:'))state.staleVault=true;
+  try{
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const bytes=new TextEncoder().encode(JSON.stringify(state.data));
+    const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM',iv},state.key,bytes);
+    const record={schoolId:vaultId,version:1,salt:b64(state.salt),iv:b64(iv),
+      ciphertext:b64(ciphertext),savedAt:new Date().toISOString()};
+    state.storeVersion=await saveVaultCas(record,state.storeVersion);
+  }catch(error){
+    // A failed encryption, quota error, or aborted IndexedDB transaction
+    // leaves the in-memory copy untrusted. Block ALL further writes until
+    // the last committed encrypted version is reloaded from storage.
+    state.staleVault=true;
     throw error;
   }
 }
@@ -237,6 +242,7 @@ function render(){
   $('sync').disabled=!ready||!online()||!state.data.drafts.length;
   $('reviewNext').disabled=!ready||!state.data.drafts.some(d=>d.syncIssue);
   $('refresh').disabled=!ready||!online()||!!state.data.drafts.length;
+  if(state.staleVault)text('status','LOCAL SAVE NOT CONFIRMED. Further edits are blocked. Lock the register, then Unlock with your offline password to reload the last encrypted copy. Do not clear browser data.',true);
   const root=$('students');root.replaceChildren();
   if(!unlocked){$('rosterInfo').textContent='Unlock the school vault or prepare it while online.';$('queueInfo').textContent='Local records are locked.';return;}
   const date=$('attDate').value;

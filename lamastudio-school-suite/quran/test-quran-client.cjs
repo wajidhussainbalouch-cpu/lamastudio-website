@@ -58,6 +58,6 @@ const API=new Function('localStorage','sessionStorage','fetch','URLSearchParams'
  body=JSON.parse(requests.at(-1).opts.body);
  assert.equal(body.role,'admin');assert.equal(body.adminApiKey,'super-key');
  assert.equal(requests.length,4);
- assert.throws(()=>API.quran('list',{},'teacher'),/Invalid Quran operation/);
+ await assert.rejects(API.quran('list',{},'teacher'),/Invalid Quran operation/);
  console.log('PASS: role-separated POST auth, school admin token, parent isolation by credential, pending verification and duplicate readback checks.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

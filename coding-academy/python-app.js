@@ -6,9 +6,13 @@
 'use strict';
 const lessons=Array.isArray(window.LAMA_PYTHON_MISSIONS)?window.LAMA_PYTHON_MISSIONS:[];
 const storageKey="lama-python-executable-v1";
+const translations=window.LAMA_PYTHON_I18N||{missions:{},ui:{}};
+const ui=()=>translations.ui?.[state.lang]||translations.ui?.en||{};
+const t=key=>ui()[key]||key;
+const localized=(lesson,field)=>state.lang==="ur"&&translations.missions?.[lesson.id]?.[field]||lesson[field];
 const byId=id=>document.getElementById(id);
 const safe=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const defaultState=()=>({selected:lessons[0]?.id||"",drafts:{},answers:{},passed:{}});
+const defaultState=()=>({selected:lessons[0]?.id||"",drafts:{},answers:{},passed:{},lang:"en"});
 function readState(){
   try{
     const r=JSON.parse(localStorage.getItem(storageKey)||"null");
@@ -17,7 +21,8 @@ function readState(){
       selected:lessons.some(l=>l.id===r.selected)?r.selected:defaultState().selected,
       drafts:r.drafts&&typeof r.drafts==="object"?r.drafts:{},
       answers:r.answers&&typeof r.answers==="object"?r.answers:{},
-      passed:r.passed&&typeof r.passed==="object"?r.passed:{}
+      passed:r.passed&&typeof r.passed==="object"?r.passed:{},
+      lang:r.lang==="ur"?"ur":"en"
     };
   }catch(e){return defaultState();}
 }
@@ -54,27 +59,36 @@ function testList(items){
   }
   root.appendChild(list);
 }
+function applyLanguage(){
+  document.documentElement.lang=state.lang;
+  const ids={brandSmall:"smallLabel",heroTitle:"title",heroIntro:"intro",statsLabel:"stat",onlineNote:"online",safetyNote:"notSafe",
+    industryLabel:"industry",hintLabel:"hint",codeLabel:"codeTitle",outputLabel:"programOutput",testsLabel:"testFeedback",quizLabel:"conceptTitle",
+    run:"run",stop:"stop",complete:"complete",download:"download",restore:"restore",previous:"prev",next:"next"};
+  Object.entries(ids).forEach(([id,key])=>{const el=byId(id);if(el)el.textContent=t(key);});
+  byId("language").textContent=t("language");
+}
 function render(){
+  applyLanguage();
   if(!lessons.length){document.querySelector("main").textContent="Python lessons are not available.";return;}
   const l=current(),pos=index();
-  byId("missionMenu").innerHTML=lessons.map((m,i)=>'<button type="button" class="'+(m.id===l.id?"active ":"")+(state.passed[m.id]?"pass":"")+'" data-mission="'+safe(m.id)+'"><small>'+(i+1)+'. '+safe(m.topic)+' · '+safe(m.minutes)+' min</small><b>'+safe(m.title)+(state.passed[m.id]?" ✓":"")+'</b></button>').join("");
-  byId("missionTopic").textContent=l.topic+" · "+l.difficulty;
-  byId("missionTitle").textContent=l.title;
-  byId("concept").textContent=l.concept;
-  byId("missionTask").textContent=l.task;
-  byId("purpose").textContent=l.purpose;
+  byId("missionMenu").innerHTML=lessons.map((m,i)=>'<button type="button" class="'+(m.id===l.id?"active ":"")+(state.passed[m.id]?"pass":"")+'" data-mission="'+safe(m.id)+'"><small>'+(i+1)+'. '+safe(localized(m,"topic"))+' · '+safe(m.minutes)+' min</small><b>'+safe(localized(m,"title"))+(state.passed[m.id]?" ✓":"")+'</b></button>').join("");
+  byId("missionTopic").textContent=localized(l,"topic")+" · "+l.difficulty;
+  byId("missionTitle").textContent=localized(l,"title");
+  byId("concept").textContent=localized(l,"concept");
+  byId("missionTask").textContent=localized(l,"task");
+  byId("purpose").textContent=localized(l,"purpose");
   byId("hint").textContent=l.hint;
   byId("editor").value=typeof state.drafts[l.id]==="string"?state.drafts[l.id]:l.starter;
-  byId("question").textContent=l.quiz.question;
-  byId("options").innerHTML=l.quiz.options.map((o,i)=>'<label class="choice"><input type="radio" name="answer" value="'+i+'" '+(state.answers[l.id]===i?'checked':'')+'> <span>'+safe(o)+'</span></label>').join("");
+  byId("question").textContent=localized(l,"question");
+  byId("options").innerHTML=(state.lang==="ur"&&translations.missions?.[l.id]?.options||l.quiz.options).map((o,i)=>'<label class="choice"><input type="radio" name="answer" value="'+i+'" '+(state.answers[l.id]===i?'checked':'')+'> <span>'+safe(o)+'</span></label>').join("");
   byId("previous").disabled=pos===0;
   byId("next").disabled=pos===lessons.length-1;
-  byId("stdout").textContent="Click Run Python to start.";
-  byId("testResults").textContent="No tests run yet.";
-  setStatus("Not started");
+  byId("stdout").textContent=t("initOut");
+  byId("testResults").textContent=t("initTests");
+  setStatus(t("statusIdle"));
   testApprovedCode=null;
   setBusy(false);
-  feedback(state.passed[l.id]?"Mission previously completed. Re-run if you change the code.":"Change the starter code, run it, and answer the concept question.",undefined);
+  feedback(state.passed[l.id]?t("previousDone"):t("startHint"),undefined);
   updateProgress();
 }
 function cleanupWorker(){
@@ -83,7 +97,7 @@ function cleanupWorker(){
 function clearTimer(){if(deadline!==null){clearTimeout(deadline);deadline=null;}}
 function abortRun(message){
   clearTimer();cleanupWorker();active=null;testApprovedCode=null;setBusy(false);
-  setStatus("Stopped");
+  setStatus(t("statusStop"));
   if(message)feedback(message,false);
 }
 function startTimer(ms,message){
@@ -93,10 +107,10 @@ function startTimer(ms,message){
 function receive(w,payload){
   if(worker!==w||!active||!payload||payload.id!==active.id)return;
   if(payload.type==="loading"){
-    setStatus("Loading Python runtime…");return;
+    setStatus(t("statusLoad"));return;
   }
   if(payload.type==="ready"){
-    setStatus("Running Python tests…");
+    setStatus(t("statusRun"));
     startTimer(8000,"Python took too long to finish. The worker was stopped. Check for loops that never end.");
     return;
   }
@@ -106,22 +120,22 @@ function receive(w,payload){
   }
   if(payload.type!=="result")return;
   const original=active;
-  clearTimer();active=null;setBusy(false);setStatus("Finished");
+  clearTimer();active=null;setBusy(false);setStatus(t("statusFinished"));
   const result=payload.result||{};
   byId("stdout").textContent=String(result.stdout||"").slice(0,4000)+(result.stderr?"\nStderr:\n"+String(result.stderr).slice(0,1000):"")||(result.error?"No program output.":"(No printed output; function return values are tested.)");
   if(result.error){
     byId("testResults").textContent=String(result.error).slice(0,2000);
-    feedback("Python reported an error. Read the traceback, fix your code and run it again.",false);
+    feedback(t("errored"),false);
     testApprovedCode=null;return;
   }
   testList(result.results);
   const valid=Array.isArray(result.results)&&result.results.length===original.tests.length&&result.results.every((t,i)=>t&&t.pass===true&&t.label===original.tests[i].label);
   if(valid&&result.passed===true){
     testApprovedCode=original.code;
-    feedback("All three Python behavior tests passed! Answer the concept question and press Check & Complete Mission.",true);
+    feedback(t("success"),true);
   }else{
     testApprovedCode=null;
-    feedback("One or more Python behavior tests failed. Use the feedback and hint, then try again.",false);
+    feedback(t("failed"),false);
   }
 }
 function makeWorker(){
@@ -149,8 +163,8 @@ function run(){
   catch(e){feedback("This browser cannot start a module worker: "+String(e.message||e),false);return;}
   const id=++requestId;
   active={id,missionId:l.id,code,tests:l.tests};
-  setBusy(true);setStatus("Starting…");
-  feedback("First use may download a large Python runtime. A network connection is required.",undefined);
+  setBusy(true);setStatus(t("statusStart"));
+  feedback(t("busy"),undefined);
   startTimer(120000,"Python did not initialize in time. Check internet access and browser memory, then try again.");
   try{w.postMessage({id,action:"run",code,tests:l.tests});}
   catch(e){abortRun("Could not send code to the Python runtime: "+String(e.message||e));}
@@ -159,15 +173,15 @@ function complete(){
   if(active){feedback("Finish or stop the current Python run first.",false);return;}
   const l=current(),code=byId("editor").value;
   if(testApprovedCode===null||testApprovedCode!==code){
-    feedback("Run your latest code and pass all behavior tests before completing the mission.",false);
+    feedback(t("needRun"),false);
     return;
   }
   if(state.answers[l.id]!==l.quiz.answer){
-    feedback("The concept answer is not correct yet. Review the explanation and choose again.",false);
+    feedback(t("wrongAnswer"),false);
     return;
   }
   state.passed[l.id]={at:new Date().toISOString()};save();
-  feedback("Mission passed! Your code passed all three behavior tests and you answered the concept question correctly. Continue to the next problem.",true);
+  feedback(t("finished"),true);
   updateProgress();
   const btn=byId("missionMenu").querySelector('[data-mission="'+l.id+'"]');
   if(btn){btn.classList.add("pass");const name=btn.querySelector("b");if(name&&!name.textContent.endsWith(" ✓"))name.textContent+=" ✓";}
@@ -184,6 +198,7 @@ function download(){
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(link),1200);
 }
+byId("language").addEventListener("click",()=>{state.lang=state.lang==="en"?"ur":"en";save();render();});
 byId("missionMenu").addEventListener("click",event=>{
   const b=event.target.closest("[data-mission]");if(b)choose(b.dataset.mission);
 });

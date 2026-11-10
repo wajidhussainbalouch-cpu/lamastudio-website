@@ -1806,6 +1806,13 @@ function handleRequest(params) {
         if (params.campusId && String(params.campusId) !== 'main' && ['ownerListCampuses','ownerSaveCampus','ownerListCampusRecords','ownerSaveCampusRecord'].indexOf(action) === -1) {
             throw new Error('Campus-specific operations are not enabled yet. Existing main-campus records were not accessed.');
         }
+        // Quran Learning Centre uses existing accounts and its own strict,
+        // school-scoped permissions. Never expose private Quran tables via
+        // generic list/get/add/update/remove or a separate login system.
+        if(/^quran[A-Z]/.test(String(action||''))) {
+            if(typeof quranHandleRequest_!=='function')throw Error('Quran backend not installed in this Apps Script deployment.');
+            return quranHandleRequest_(params);
+        }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
         const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
@@ -2169,7 +2176,7 @@ function doGet(e) {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
     const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
-    if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
+    if(/^quran[A-Z]/.test(String(params.action||''))||blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
 

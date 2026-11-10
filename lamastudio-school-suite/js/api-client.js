@@ -55,6 +55,18 @@ const LamaAPI = (() => {
       }
     }
     try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
+    // Staff attendance is school-admin-only. A teacher session may be the
+    // browser's active role while the administrator has signed in separately.
+    // Prefer the verified administrator token over an unrelated active role;
+    // the backend resolves the school's private API key from that token.
+    if (['list','add','update'].includes(action) && payload.collection === 'teacherAttendance') {
+      let adminAuth=null;
+      try { adminAuth=parse(sessionStorage.getItem('lama_school_admin_auth')); } catch (_) {}
+      if (adminAuth?.schoolId && adminAuth?.token) {
+        body.role='school';body.schoolId=adminAuth.schoolId;body.token=adminAuth.token;
+        delete body.apiKey;delete body.teacherId;delete body.studentId;delete body.adminApiKey;
+      }
+    }
     let response;
     try {
       if (method === 'GET') {

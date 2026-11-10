@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 5 (bilingual Python and unified progress)
+# LAMA Coding Academy — MVP 6 (optional cloud account foundation)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -174,3 +174,38 @@ Run all regression tests:
     node coding-academy/tests/progress.test.cjs
 
 Required hands-on checks still include Android WebAssembly compatibility and memory, Pyodide initialization time, Urdu layout on real devices, long code entry, local storage quotas, file picker/import/export round trips, keyboard/screen-reader use and browser update/offline behavior. Tests only cover modeled behavior, not complete security, educational effectiveness or production readiness. This is still a draft GitHub PR and has not been deployed to the live website.
+
+
+## Phase 6 — Optional Learner Accounts and Manual Cloud Sync
+
+Status: development branch only. The account service is DISABLED BY DEFAULT and no cloud project, user account or database table was changed as part of this implementation.
+
+New route: [Optional learner account](./account.html). Other academy pages link to this option, but remain open to guest learners.
+
+### Built components
+
+- account.html + account.js: email sign-up and login, email confirmation handling, forgot-password links, reset password, session status, sign-out, visibility toggles and offline-friendly setup messages.
+- cloud-config.js: disabled-by-default browser configuration. Cloud can be activated only after a dedicated project is approved and supplied with a valid Supabase URL and public publishable key. Never place service-role keys or private credentials in browser source.
+- cloud-core.js: validated snapshot format for the 52 existing learning activities across four independent stores; size/shape checks, safe local copy application with rollback attempt, and local counts.
+- backend/cloud-progress-setup.sql: OWNER-REVIEWED, NOT APPLIED SQL for a distinct Supabase project. One row per authenticated user, strict SELECT/INSERT/UPDATE/DELETE row-level policies, timestamp handling and a 256-KiB database size limit.
+- backend/README.md: dedicated project activation checklist, Auth/email/redirect setup, data API grants, RLS tests across accounts and privacy requirements.
+- tests/cloud.test.cjs: local simulation, validation rejection, rollback, RLS policy inspection and assurance that the account UI loads with the cloud disabled.
+- Service-worker cache v6 includes local account UI and config, but remote Auth and cloud sync need an internet connection.
+
+### How learners control their data
+
+Creating an account does not automatically upload anything. The learner explicitly opts in for each upload, confirms before changing their private cloud copy, and chooses whether to restore a cloud copy to the current device. Cloud deletion removes only the remote progress row, not local data or the Auth account. Sign-out preserves local lesson progress.
+
+Uploads use a server timestamp to check for another device's more recent changes, and conditional update/insert protects against silent overwrites. No automatic cross-device merging or realtime sync is implemented. If the cloud changed elsewhere, the learner must refresh and review before uploading.
+
+A cloud snapshot can contain personal source code and reflections. Data is NOT end-to-end encrypted by this application, and authorized backend administrators may be able to access it. Do not place real student data, passwords or secret keys in lessons.
+
+### Production blockers
+
+1. A dedicated Coding Academy Supabase project, not the existing PPSC academy backend, must be approved.
+2. Its SQL setup must be manually reviewed and applied; RLS isolation must be tested using two different users.
+3. Email confirmation, password-recovery templates, account deletion support and privacy policy/guardian protections must be configured.
+4. Browser and Android QA must verify authentication, manual upload/restore, concurrent devices, local backup/export and offline learning.
+5. GitHub draft PR must be reviewed and merged through the existing deployment pipeline only after approval.
+
+Regression suite: node coding-academy/tests/cloud.test.cjs. GitHub Actions runs all five academy test files. Static and mocked checks do not prove production Supabase availability or real end-to-end security.

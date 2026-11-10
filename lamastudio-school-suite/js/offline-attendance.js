@@ -254,7 +254,19 @@ function validateVaultData(data){
   }
   return data;
 }
-function sameStudentId(a,b){return String(a.id)===String(b.id)&&String(a.enrlNo||'')===String(b.enrlNo||'');}
+/**
+ * A student's class/section may change during days without connectivity.
+ * Enrollment ID alone is not enough: a mark from an old class register
+ * must not be synchronized automatically under a different assignment.
+ * Ignore cosmetic capitalization/spacing, not an actual class transfer.
+ */
+function sameStudentId(a,b){
+  const value=x=>String(x||'').trim().toLowerCase();
+  return String(a.id)===String(b.id)&&
+    String(a.enrlNo||'').trim()===String(b.enrlNo||'').trim()&&
+    value(a.className)===value(b.className)&&
+    value(a.section)===value(b.section);
+}
 function baseline(student,date){return state.data.history[keyFor(date,student.id)]||'';}
 function draftFor(student,date){return state.data.drafts.find(d=>d.date===date&&d.studentId===student.id);}
 function chosen(student,date){return draftFor(student,date)?.status||baseline(student,date);}
@@ -296,7 +308,7 @@ function render(){
     const observed=draft?.serverStatus===undefined?'not confirmed':(draft.serverStatus||'Unmarked');
     const issue=draft?.syncIssue==='conflict'?
       ' • NEEDS REVIEW: on device '+draft.status+'; last seen on server '+observed:
-      draft?.syncIssue==='student-changed'?' • NEEDS REVIEW: student record changed':
+      draft?.syncIssue==='student-changed'?' • NEEDS REVIEW: ID, enrollment, class or section changed':
       draft?.syncIssue==='unverified'?' • SYNC UNVERIFIED: last seen on server '+observed:'';
     small.textContent='Class '+student.className+(student.section?' / '+student.section:'')+' • '+(student.enrlNo||student.id)+(draft?' • PENDING SYNC':'')+issue;
     info.append(name,small);
@@ -564,7 +576,7 @@ async function recheckCloud(student,date){
       draft.syncIssue='student-changed';
       delete draft.serverStatus;
       await writeVault();
-      text('actionStatus','Student ID or enrollment changed on the server. Keep the local mark and ask the School Administrator to review the student record.',true);
+      text('actionStatus','Student ID, enrollment, class or section changed on the server. Keep the local mark and ask the School Administrator to review the student record.',true);
       return;
     }
     const cloud=historyIndex(snapshot.attendance,roster);

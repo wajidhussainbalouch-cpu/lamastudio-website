@@ -56,7 +56,7 @@ function message(s,kind){
 const allowed={
  foundation:{goal:"string",name:"string",progress:"object",drafts:"object",quiz:"object",lastLesson:"string"},
  practice:{track:"string",selected:"object",passed:"object",drafts:"object"},
- python:{selected:"string",drafts:"object",answers:"object",passed:"object"},
+ python:{selected:"string",drafts:"object",answers:"object",passed:"object",lang:"string"},
  studio:{project:"string",lang:"string",steps:"object",code:"object",checks:"object",reflection:"object"}
 };
 function validPlainValue(v,depth){

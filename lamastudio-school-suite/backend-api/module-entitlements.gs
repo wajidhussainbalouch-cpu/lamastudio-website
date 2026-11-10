@@ -10,7 +10,7 @@ function lamaGrantSheet_(create){
  return s;
 }
 function lamaModuleAccess_(schoolId,module){
- if(['schoolManagement','examination','smartMarker'].indexOf(module)<0)throw Error('Unknown module');
+ if(['schoolManagement','examination','smartMarker','quranLearning'].indexOf(module)<0)throw Error('Unknown module');
  var s=lamaGrantSheet_(false);if(!s)return {allowed:false,reason:'ENTITLEMENT_REQUIRED'};
  var rows=s.getDataRange().getValues().slice(1).filter(function(r){return String(r[0])===String(schoolId)&&r[1]===module});
  if(!rows.length)return {allowed:false,reason:'ENTITLEMENT_REQUIRED'};
@@ -27,7 +27,7 @@ function lamaModuleAccess_(schoolId,module){
 function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){
  authorizeAdmin(adminApiKey);
  if(!findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(schoolId)}))throw Error('School not found');
- if(['schoolManagement','examination','smartMarker'].indexOf(module)<0||['active','suspended','revoked'].indexOf(status)<0)throw Error('Invalid grant');
+ if(['schoolManagement','examination','smartMarker','quranLearning'].indexOf(module)<0||['active','suspended','revoked'].indexOf(status)<0)throw Error('Invalid grant');
  function iso(s){if(!s)return '';if(typeof s!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/.test(s)||!Number.isFinite(Date.parse(s))||new Date(Date.parse(s)).toISOString()!==s.replace('Z','.000Z'))throw Error('Invalid UTC timestamp');return s}
  start=iso(start);end=iso(end);
  if(status==='active'&&(!start||!end))throw Error('Active module grants require start and expiry dates');
@@ -44,7 +44,7 @@ function lamaAdminSetModuleGrant_(adminApiKey,schoolId,module,status,start,end){
 
 function lamaAdminGetModuleGrant_(adminApiKey,schoolId,module){
  authorizeAdmin(adminApiKey);
- if(['schoolManagement','examination','smartMarker'].indexOf(module)<0)throw Error('Unknown module');
+ if(['schoolManagement','examination','smartMarker','quranLearning'].indexOf(module)<0)throw Error('Unknown module');
  if(!findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(schoolId)}))throw Error('School not found');
  var sheet=lamaGrantSheet_(false);
  if(!sheet)return null;
@@ -63,7 +63,7 @@ function lamaAdminGetModuleGrant_(adminApiKey,schoolId,module){
  */
 function lamaRequireModuleForVerifiedSchool_(verifiedSchoolId,module){
  if(typeof verifiedSchoolId!=='string'||!verifiedSchoolId.trim())throw Error('UNAUTHORIZED: Verified school context required');
- if(['examination','smartMarker','schoolManagement'].indexOf(module)<0)throw Error('INVALID_MODULE');
+ if(['examination','smartMarker','schoolManagement','quranLearning'].indexOf(module)<0)throw Error('INVALID_MODULE');
  var access=lamaModuleAccess_(verifiedSchoolId,module);
  if(!access.allowed)throw Error('ENTITLEMENT_REQUIRED: '+access.reason);
  return access;

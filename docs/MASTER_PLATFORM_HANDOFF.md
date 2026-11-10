@@ -242,3 +242,10 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Rechecking **does not** issue a bulk attendance write or automatically delete a draft. Match with the pending choice remains `unverified` until ordinary Sync Now; restored baseline clears the conflict flag without discarding the draft; changed student identity remains blocked for manual school admin review.
 - Added regression coverage for matching, disagreeing and missing cloud rows; mismatched enrollment; failed network, mismatched school, login change, local CAS failure and no internet. Earlier 12-case offline recovery and 10-case identity binding simulations still passed.
 - Keep PR #84 draft; branch remains divergent from main. Deploy to a disposable Apps Script/test school and verify on actual phones before any production release.
+
+### 2026-11-10 — Offline write-failure lockout and adaptive snapshot limits
+
+- Draft PR #84: any failed encryption or IndexedDB write now locks out further offline attendance operations; staff must Lock/Unlock to restore last successfully persisted encrypted records before trying again. This prevents the user interface from treating unsaved in-memory edits as durable attendance. Tests verified quota, crypto, CAS errors and the recovery path.
+- The client now safely shrinks multi-day snapshot requests in response to the backend's specific date-limit error when student enrollment has grown since offline preparation, without discarding drafts or auto-retrying unrelated API failures. The 195-day mocked test passed.
+- Added `js/test-offline-write-failures.cjs` and included it in root `npm run test:school-suite` (seven standalone mock test files). These tests remain *simulations*, not Android/iOS WebCrypto or Google Apps Script/Sheets integration.
+- No changes were deployed to production. Current `main` is advancing independently: resolve divergence and validate against a disposable school before any merge, web-app deployment or real-school use.

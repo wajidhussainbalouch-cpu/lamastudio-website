@@ -96,7 +96,7 @@ function buildSyncScenario(mode){
   render:()=>{},text:(target,value)=>messages.push({target,value}),
   readPendingSnapshots:async dates=>{
    assert.ok(dates.length===502&&dates.every(d=>d===date),'Preflight includes all 502 pending records');
-   return {schoolId:'school-one',role:'school',students:roster,attendance:cloud.map(r=>({...r}))};
+   return {schoolId:'school-one',role:'school',students:roster.map(r=>({...r})),attendance:cloud.map(r=>({...r}))};
   },
   normalizedStudents:rows=>rows,
   historyIndex:rows=>Object.fromEntries(rows.map(r=>[r.date+'|'+r.studentId,r.status])),
@@ -113,9 +113,15 @@ function buildSyncScenario(mode){
   },
   readSnapshot:async dates=>{
    assert.deepEqual(dates,[date]);
-   return {schoolId:'school-one',role:'school',students:roster,attendance:cloud.map(r=>({...r}))};
+   const latestRoster=roster.map((r,i)=>
+     mode==='enrollment-changed-readback'&&i===0?{...r,enrlNo:'changed-enrollment'}:{...r});
+   return {schoolId:mode==='wrong-school-readback'?'other-school':'school-one',
+     role:'school',students:latestRoster,attendance:cloud.map(r=>({...r}))};
   },
-  validatedSnapshot:s=>s,
+  validatedSnapshot:s=>{
+   if(s.schoolId!=='school-one'||s.role!=='school')throw Error('Cross-school readback');
+   return s;
+  },
   writeVault:async()=>{writes++;}
  };
  const run=new Function(...Object.keys(dependencies),syncSource+'return sync;')(...Object.values(dependencies));
@@ -280,9 +286,20 @@ async function syncTests(){
  await switched.run(false);
  assert.deepEqual(switched.sent,[500],'Account switch must stop before second upload');
  assert.equal(switched.cloud.length,500);
- assert.equal(switched.state.data.drafts.length,2,'Unsent local changes survive account switch');
+ assert.equal(switched.state.data.drafts.length,502,'Account switch during readback keeps entire uncertain batch pending');
+ assert.ok(switched.state.data.drafts.slice(0,500).every(d=>d.syncIssue==='unverified'));
  assert.equal(switched.state.autoPaused,true);
- assert.ok(switched.messages.some(m=>String(m.value).includes('login changed during sync')));
+ const enrollment=buildSyncScenario('enrollment-changed-readback');
+ await enrollment.run(false);
+ assert.deepEqual(enrollment.sent,[500],'Stop after unexpected enrollment change in server readback');
+ assert.equal(enrollment.state.data.drafts.length,3,'One changed student and two unsent drafts are retained');
+ assert.equal(enrollment.state.data.drafts.find(d=>d.studentId==='id0')?.syncIssue,'student-changed');
+ assert.equal(enrollment.state.autoPaused,true);
+ const wrongSchool=buildSyncScenario('wrong-school-readback');
+ await wrongSchool.run(false);
+ assert.deepEqual(wrongSchool.sent,[500],'No further writes after cross-school readback');
+ assert.equal(wrongSchool.state.data.drafts.length,502,'Untrusted readback must clear no drafts');
+ assert.equal(wrongSchool.state.autoPaused,true);
 }
 (async()=>{
  await snapshotTests();
@@ -290,5 +307,5 @@ async function syncTests(){
  await choiceSafetyTests();
  await cloudRecheckTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, adaptive new-admissions snapshot limits, per-student cloud status, cycling review navigation, account switching, changed readback enrollment, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

@@ -165,23 +165,42 @@ async function upload(){
  let snapshot;
  try{snapshot=core.read(localStorage);}
  catch(e){report("syncStatus","Upload cancelled: "+String(e.message||e),"error");return;}
- const counts=core.counts(snapshot);
- const intent=remote
-  ? "Replace the existing cloud backup with this device's "+counts.done+"/"+counts.total+" completed activities? Older cloud-only work may be lost."
-  : "Upload this device's learning progress, code drafts and reflections to your private cloud account?";
- if(!confirm(intent))return;
  setBusy(true);
  try{
   const verified=await requireUser();
-  const {data,error}=await client.from(config.table)
-   .upsert({user_id:verified.id,snapshot},{onConflict:"user_id"})
-   .select("updated_at").single();
-  if(error)throw error;
-  remote={snapshot,updated_at:data.updated_at};
-  byId("syncConsent").checked=false;
-  describeRemote();
-  report("syncStatus","Upload completed. The cloud record was saved for your signed-in account. Future changes on this device are NOT uploaded automatically.","good");
- }catch(e){report("syncStatus","Cloud upload failed: "+String(e.message||e),"error");}
+  // Check cloud state before asking to overwrite. Do not silently replace
+  // changes uploaded from another device since this page last refreshed.
+  const latest=await getRemote();
+  if((remote?.updated_at||null)!==(latest?.updated_at||null)){
+   remote=latest;describeRemote();
+   throw Error("The cloud backup changed on another device. Refresh and review it before uploading.");
+  }
+  const counts=core.counts(snapshot);
+  const intent=latest
+   ? "Replace the cloud copy with this device's "+counts.done+"/"+counts.total+" completed activities? Cloud-only work will be lost. Consider restoring/download backup first."
+   : "Upload this device's learning progress, code drafts and reflections to your private cloud account?";
+  if(!confirm(intent)){report("syncStatus","Upload cancelled; neither device's progress was changed.");return;}
+  let result;
+  if(latest){
+   // Optimistic concurrency: the server changes updated_at on every update.
+   // If a concurrent upload landed after our check, zero rows will be updated.
+   result=await client.from(config.table)
+    .update({snapshot})
+    .eq("user_id",verified.id)
+    .eq("updated_at",latest.updated_at)
+    .select("updated_at").maybeSingle();
+   if(!result.error&&!result.data)throw Error("Cloud backup changed during this upload. Refresh before retrying.");
+  }else{
+   // Insert-only first upload: a competing insert fails on primary-key conflict.
+   result=await client.from(config.table)
+    .insert({user_id:verified.id,snapshot})
+    .select("updated_at").single();
+  }
+  if(result.error)throw result.error;
+  remote={snapshot,updated_at:result.data.updated_at};
+  byId("syncConsent").checked=false;describeRemote();
+  report("syncStatus","Upload completed. Your private cloud copy is saved; future changes are NOT uploaded automatically.","good");
+ }catch(e){report("syncStatus","Cloud upload was not completed: "+String(e.message||e),"error");}
  finally{setBusy(false);}
 }
 async function restore(){

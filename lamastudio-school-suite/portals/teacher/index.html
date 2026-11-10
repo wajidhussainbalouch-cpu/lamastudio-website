@@ -93,7 +93,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small></div>
  <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Entries posted</small></div>
  <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><small>Attendance alerts</small></div>
- <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small>Saved student attendance</small></div>
+ <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small id="statAttendanceHint">Saved student attendance</small></div>
  <div class="overview-tile"><span class="tile-icon">👦👧</span><span class="tile-label">Boys &amp; Girls</span><div class="flex items-center gap-5 mt-2"><div><small>Boys</small><strong id="statBoys" class="block">—</strong></div><div class="h-10 w-px bg-slate-600" aria-hidden="true"></div><div><small>Girls</small><strong id="statGirls" class="block">—</strong></div></div><small id="genderMissingNote">Assigned class</small></div>
 </section>
 <section class="employee-panel" aria-label="Employee identity card">
@@ -230,11 +230,22 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
+let attendanceReadReady=false,attendanceSavePending=null,attendanceVerifyBusy=false;
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
 function scope(r){return schoolMatch(r)&&classMatch(r)}
-function myStudent(id){return myStudents.find(s=>String(s.id)===String(id))}
+function myStudent(id){return myStudents.find(s=>String(s.id??s._id??s.studentId??'')===String(id))}
+function attendanceStudent(r){
+ const studentId=String(r.studentId??r.studentID??r.student_id??'').trim();
+ if(studentId)return myStudent(studentId);
+ const enrollment=String(r.enrlNo??r.enrollmentNo??r.enrollment??'').trim();
+ return enrollment?myStudents.find(s=>String(s.enrlNo??s.enrollmentNo??'').trim()===enrollment):null;
+}
+function attendanceDay(r){return String(r?.date||'').slice(0,10)}
+function attendanceRecordsFor(rows,student,day){
+ return rows.filter(r=>attendanceDay(r)===day&&attendanceStudent(r)?.id===student.id);
+}
 function mine(r){return norm(r.teacherId)===norm(me.teacherId||me.id)}
 function published(r){return r.isPublished===true||r.published===true||norm(r.status)==='published'||norm(r.status)==='sent'}
 function message(t){alert(t)}
@@ -253,20 +264,24 @@ function updateTeacherOverview(){
  $('miniDesignation').textContent=me.designation||'Teacher';
  $('miniEmployeeId').textContent='ID · '+(me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—');
 }
-function todayAbsentees(){return attendance.filter(a=>String(a.date||'').slice(0,10)===localDate()&&norm(a.status)==='absent')}
+function todayAbsentees(){return attendanceReadReady&&!attendanceSavePending?attendance.filter(a=>attendanceDay(a)===localDate()&&norm(a.status)==='absent'&&!!attendanceStudent(a)):[]}
 function updateStats(){
  $('statStudents').textContent=myStudents.length;
  $('statHomework').textContent=homework.filter(h=>mine(h)).length;
  const today=localDate();
  const latest=new Map();
  for(const a of attendance){
-  if(String(a.date||'').slice(0,10)!==today)continue;
-  const student=myStudents.find(s=>String(s.id??s._id??s.studentId??'')===String(a.studentId??a.studentID??a.enrlNo??'')||String(s.enrlNo??s.enrollmentNo??'')===String(a.enrlNo??a.studentId??''));
+  if(attendanceDay(a)!==today)continue;
+  const student=attendanceStudent(a);
   if(student)latest.set(String(student.id??student._id??student.studentId),String(a.status||'').trim().toLowerCase());
  }
  const statuses=[...latest.values()];
- $('statPresent').textContent=statuses.filter(x=>x==='present'||x==='p').length;
- $('statAbsent').textContent=statuses.filter(x=>x==='absent'||x==='a').length;
+ const verified=attendanceReadReady&&!attendanceSavePending;
+ $('statPresent').textContent=verified?statuses.filter(x=>x==='present'||x==='p').length:'—';
+ $('statAbsent').textContent=verified?statuses.filter(x=>x==='absent'||x==='a').length:'—';
+ const hint=$('statAttendanceHint');
+ if(hint)hint.textContent=attendanceSavePending?'Submitted attendance awaiting cloud verification':
+   attendanceReadReady?'Saved student attendance':'Could not verify saved attendance';
  const gender=s=>String(s.gender??s.sex??'').trim().toLowerCase();
  const boys=myStudents.filter(s=>['male','boy','m'].includes(gender(s))).length;
  const girls=myStudents.filter(s=>['female','girl','f'].includes(gender(s))).length;
@@ -279,16 +294,17 @@ function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teac
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 let refreshPromise=null;
 async function refresh(){
+ if(attendanceSavePending)return verifyTeacherStudentPending();
  if(refreshPromise)return refreshPromise;
  refreshPromise=(async()=>{
   const timeout=(promise,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out after 20 seconds')),20000))]);
   const students=await timeout(LamaAPI.list('students'),'Student register');
   if(!Array.isArray(students))throw Error('Student register response is invalid');
   myStudents=students.filter(scope);
-  attendance=[];homework=[];notices=[];results=[];
+  attendance=[];attendanceReadReady=false;homework=[];notices=[];results=[];
   renderAll();
-  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId))}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
-  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else console.warn(name+' response invalid')}catch(e){console.warn(name+' failed',e)}finally{renderAll()}}));
+  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!attendanceStudent(a));attendanceReadReady=true;}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
+  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else throw Error(name+' response invalid')}catch(e){console.warn(name+' failed',e);if(name==='attendance'){attendanceReadReady=false;message('Student attendance could not be verified: '+e.message+'. Please refresh before marking.')}}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
 }

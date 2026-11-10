@@ -37,3 +37,23 @@ The snapshot size is capped at 200 KB in the client and 256 KiB in PostgreSQL. B
     node coding-academy/tests/progress.test.cjs
 
 Automated tests validate local snapshot handling and the SQL RLS rules structurally. They **do not** demonstrate real email delivery or cross-account isolation in a live database. That verification remains mandatory before enabling cloud accounts.
+
+
+## Phase 7 — Data erasure and staged account deletion
+
+New privacy page: coding-academy/privacy.html. It distinguishes device-only progress, signed-in cloud progress, and the separate Supabase Auth identity; an Urdu summary is provided. This is a DRAFT product notice, not a final lawyer-reviewed privacy policy.
+
+The learner account page now offers device-only deletion (explicit confirmation, four named Coding Academy storage keys only) and a separate permanent Auth-account deletion form. Device deletion does not delete Auth sessions or cloud progress. Auth-account deletion is gated by a second feature flag in cloud-config.js: accountDeletionEnabled remains false until the protected Edge Function is deployed and tested.
+
+The server function source is staged at backend/supabase/functions/coding-account-delete/index.ts. It has NOT been deployed. Before enabling:
+
+1. Use a SEPARATE Coding Academy Supabase project. Do NOT deploy to the existing LAMA PPSC Academy backend.
+2. Review the Edge Function source and platform documentation. Use secure server-only SUPABASE_SECRET_KEYS (and corresponding publishable key). Never put these in browser config.
+3. Deploy only after review using your dedicated project's normal Supabase function workflow. Keep verify_jwt enabled: this function is called using a real signed-in user's access JWT. The handler calls Auth getUser(token) to verify identity and also rechecks that same user's current password. It never accepts a client-supplied target user id.
+4. Verify allowed browser Origins, CORS, password handling, invalid sessions, wrong passwords, cross-account requests, successful deletion, database FK cascade, subsequent sign-in failure and expected data retention in provider backups.
+5. The account deletion route is designed for EMAIL/PASSWORD identities. It is not a full solution for OAuth/passwordless accounts or parental-consent flows. Provide a supported manual account deletion path before launch if those sign-in methods are allowed.
+6. Set accountDeletionEnabled to true only after successful multi-account security testing, published product-specific privacy notice and owner approval.
+7. Deleting an Auth user may not immediately invalidate every already-issued JWT. Verify session behavior and configure a short appropriate token lifetime/other revocation controls before launch. Supabase backup-retention and legal preservation can also limit immediate erasure of historical copies.
+8. Finalize legal owner/contact, support route, retention periods, minimum registration age, parental permission and service data-sharing details. Do not invite learners until these are reviewed.
+
+Test account deletion guards locally using node coding-academy/tests/privacy.test.cjs. This is a mocked/structural test; the server function must separately be tested using a staging Supabase project and test identities.

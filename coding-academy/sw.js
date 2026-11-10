@@ -1,6 +1,6 @@
 /* Offline assets are intentionally scoped only to coding-academy/. */
-const CACHE = 'lama-coding-academy-v3';
-const ASSETS = ['./', './index.html', './icon.svg', './manifest.webmanifest', './practice.html', './practice.js', './studio.html', './studio.js', './projects-data.js'];
+const CACHE = 'lama-coding-academy-v4';
+const ASSETS = ['./', './index.html', './icon.svg', './manifest.webmanifest', './practice.html', './practice.js', './studio.html', './studio.js', './projects-data.js', './python.html', './python-app.js', './python-lessons.js', './python-runner.mjs', './python-harness.py'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

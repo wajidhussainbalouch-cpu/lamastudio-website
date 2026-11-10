@@ -41,7 +41,10 @@ const solutions={
 };
 function executePython(code,tests){
   const payload=JSON.stringify({code,tests});
-  const script="_lama_payload = "+JSON.stringify(payload)+"\n"+harness;
+  // Python -c discards the final expression, while Pyodide.runPython returns it. Print it for CLI tests.
+  const cliHarness=harness.replace(/json\.dumps\(_lama_run\(json\.loads\(_lama_payload\)\), ensure_ascii=False\)\s*$/, "print(json.dumps(_lama_run(json.loads(_lama_payload)), ensure_ascii=False))");
+  assert.notEqual(cliHarness,harness,"CLI harness must print the Pyodide return value");
+  const script="_lama_payload = "+JSON.stringify(payload)+"\n"+cliHarness;
   const result=cp.spawnSync("python3",["-c",script],{encoding:"utf8",timeout:15000,maxBuffer:1024*1024});
   if(result.error)throw result.error;
   if(result.status!==0)throw new Error("Harness could not run: "+result.stderr);

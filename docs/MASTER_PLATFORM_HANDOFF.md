@@ -256,3 +256,11 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Failed/cross-school readback retains all affected encrypted drafts as `unverified`; enrollment changes retain those students with `student-changed`. The client pauses further write batches until staff reauthenticate/review.
 - Expanded 502-record mock regression for mid-readback account switch, changed enrollment and wrong-school responses; tests passed. Existing 10 writer-binding, 12 mock browser recovery and fail-closed storage checks were rerun and passed.
 - No production deploy/merge, student-record mutation, or real Android/Google Sheets integration. The branch remains divergent from `main`. Real-device and disposable-school tests remain the required release gate.
+
+### 2026-11-10 — Final identity verification and first offline preparation retry
+
+- Draft School Suite PR #84 now checks current account and student enrollment **after every cloud upload readback** before deleting encrypted pending attendance. A changed school/teacher login, wrong-school readback or changed enrollment cannot silently clear local drafts.
+- Also checks the original school/teacher account after lengthy preflight snapshot requests and throughout first offline roster preparation. `writeVault(true)` enforces the original identity immediately before persisting the prepared roster; routine offline attendance remains independent of internet login.
+- Resolved a stuck-in-setup case: failure of the very first encrypted vault save no longer forces Lock/Unlock when no saved vault exists. Staff can retry preparation; local storage is rechecked on retry.
+- Updated the seven-file mock test suite to cover preflight account changes, post-upload enrollment changes, wrong-school results, first-save recovery, encrypted-write authorization, and the preexisting 12 offline client and 10 identity checks. Source-level simulated tests passed; real Android/Apps Script/Google Sheets acceptance remains a release gate.
+- Development branch only; no Vercel deployment, Apps Script update, production merge or student-data change.

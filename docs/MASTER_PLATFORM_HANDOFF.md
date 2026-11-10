@@ -271,3 +271,10 @@ Full architecture, per-file notes, security caveats and acceptance checklist: `l
 - Added `js/test-offline-student-assignment.cjs` to the root School Suite regression command (now eight mocked files). It uses actual production comparison/sync functions with fake student and cloud data to test preflight and readback class/section transfers and unchanged rosters. Tests passed, as did the existing 12 offline-client mocked workflows and 10 identity-switch tests.
 - Class/section move handling is deliberately conservative: transfers after the marked *historical date* may need manual reconciliation. The draft does not automatically override any cloud attendance.
 - **Not live:** no Apps Script project modification, real school database writes, branch merge or Vercel deploy. Still require disposable-school mobile and Google Sheets integration tests and careful reconciliation of independently advancing `main`.
+
+### 2026-11-10 — Reject duplicated encrypted attendance before restore
+
+- PR #84 offline client now validates unique draft IDs **and** unique student/date pairs on Unlock and Restore, plus pending statuses, student existence, history keys and saved attendance values. This prevents a malformed or corrupted encrypted vault from displaying one attendance mark while queuing another hidden duplicate.
+- New `js/test-offline-vault-validation.cjs` passes 17 invalid-vault cases and successful valid/uncertain restoration scenarios. The root test command now covers **nine** scripts. Extended existing end-to-end mocked Restore button test to 14 cases: a fabricated encrypted backup containing a duplicated student/day is blocked without creating device data; the original valid backup still restores correctly.
+- Keep corrupted backup bytes for support/recovery rather than auto-fixing or deleting attendance; none of these tests run on real Android Chrome or live Google Apps Script/Sheets.
+- No merge, deployment, backend changes or real school/student data updates were made. Resolve large `main` divergence and test with a disposable school before release.

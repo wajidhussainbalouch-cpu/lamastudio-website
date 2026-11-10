@@ -54,7 +54,9 @@ const LamaAPI = (() => {
         body.token = adminAuth.token;
       }
     }
-    try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
+    if (!action.startsWith('quran') || body.role === 'school') {
+      try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
+    }
     let response;
     try {
       if (method === 'GET') {

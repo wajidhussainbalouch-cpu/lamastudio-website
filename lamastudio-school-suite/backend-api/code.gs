@@ -964,9 +964,23 @@ function listRecords(ctx, collection) {
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     let records = [];
+    // Google Sheets may turn a YYYY-MM-DD attendance cell into a Date at
+    // local midnight. JSON.stringify(Date) converts it to UTC, potentially
+    // moving 2026-11-10 to 2026-11-09 for a Pakistan-timezone school.
+    // Return the actual date as seen in the school's sheet instead.
+    const attendanceDates = collection === 'attendance' || collection === 'teacherAttendance';
+    const dateColumn = attendanceDates ? headers.indexOf('date') : -1;
+    const sheetTimezone = attendanceDates && ctx.ss && typeof ctx.ss.getSpreadsheetTimeZone === 'function'
+        ? ctx.ss.getSpreadsheetTimeZone() : '';
+    const attendanceTimezone = sheetTimezone || Session.getScriptTimeZone() || 'Asia/Karachi';
     for (let i = 1; i < data.length; i++) {
         if (!data[i][headers.indexOf('id')]) continue;
-        records.push(rowToRecord(headers, data[i]));
+        const record = rowToRecord(headers, data[i]);
+        if (dateColumn !== -1 && data[i][dateColumn] instanceof Date &&
+            Number.isFinite(data[i][dateColumn].getTime())) {
+            record.date = Utilities.formatDate(data[i][dateColumn], attendanceTimezone, 'yyyy-MM-dd');
+        }
+        records.push(record);
     }
     if (collection === 'notifications' && ctx.role === 'student') {
         records = records.filter(r => {
@@ -1808,7 +1822,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add','update'].indexOf(action)!==-1 && params.collection === 'teacherAttendance') || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {

@@ -123,10 +123,21 @@ function renderStats(){
   ['Quran learners',o.students],['Qaida',o.programmes?.qaida||0],
   ['Nazra',o.programmes?.nazra||0],['Hifz',o.programmes?.hifz||0],
   ['Islamic Studies',o.programmes?.islamicStudies||0],
-  ['Lessons today',o.lessonsToday],['Quran present today',o.attendanceToday],
+  ['Lessons today',o.lessonsToday],['Lessons this month',o.lessonsThisMonth],
+  ['Quran present today',o.attendanceToday],
   ['Need revision',o.revisionRequired]
  ];
  $('stats').innerHTML=metrics.map(([label,value])=>'<div class="stat"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join('');
+ const classes=o.classProgress||[],teachers=o.teacherPerformance||[];
+ $('classReports').innerHTML=classes.length?'<ul class="profile-list">'+classes.map(r=>'<li><b>'+
+  esc(r.className||'Class')+'</b> '+esc(r.section||'')+' · '+esc(r.learnerCount)+
+  ' enrolment(s) · '+esc(r.lessonsThisMonth)+' lesson(s) recorded this month</li>').join('')+'</ul>':
+  '<p class="muted">No class progress available for your access scope.</p>';
+ $('teacherReports').innerHTML=teachers.length?'<ul class="profile-list">'+teachers.map(r=>'<li><b>'+
+  esc(r.teacherName||'Quran Teacher')+'</b> · '+esc(r.assignedProgrammes)+
+  ' assigned programme(s) · '+esc(r.lessonsThisMonth)+' lesson(s) recorded · '+
+  esc(r.revisionFollowups)+' revision follow-up(s) this month</li>').join('')+'</ul>':
+  '<p class="muted">No assigned Quran teacher activity available.</p>';
 }
 function renderLearners(){
  const ls=state.overview?.learners||[];
@@ -260,9 +271,14 @@ function reportPaper(){
  const assessmentsHtml=kind==='monthly'||kind==='progress'?
    '<h3>Teacher assessment</h3><table><tr><th>Date</th><th>Criterion</th><th>Level</th></tr>'+
    assessments.slice(0,12).map(a=>'<tr><td>'+esc(a.date)+'</td><td>'+esc(a.criterion)+'</td><td>'+esc(a.level)+'</td></tr>').join('')+'</table>':'';
- paper.innerHTML='<h1>'+esc(school)+'</h1><p class="paper-subtitle">'+
-  esc(state.session?.schoolAddress||'Shah Sadar Din, Dera Ghazi Khan')+
-  ' · Modern Education with Islamic Values</p><h2>'+esc(titles[kind])+'</h2>'+
+ const schoolLocation=state.session?.address||state.session?.schoolAddress||
+   (/^LAMA Islamic School$/i.test(school)?'Shah Sadar Din, Dera Ghazi Khan':'');
+ const logo=String(state.session?.schoolLogo||state.session?.logo||'');
+ const safeLogo=/^(https?:\/\/|data:image\/(png|jpeg|webp);base64,)/i.test(logo)?
+  '<p style="text-align:center"><img src="'+esc(logo)+'" alt="School logo" style="width:65px;height:65px;object-fit:contain"></p>':'';
+ paper.innerHTML=safeLogo+'<h1>'+esc(school)+'</h1><p class="paper-subtitle">'+
+  esc(schoolLocation)+(schoolLocation?' · ':'')+
+  'Modern Education with Islamic Values</p><h2>'+esc(titles[kind])+'</h2>'+
   '<p><strong>Student:</strong> '+esc(student.name||'')+' · <strong>Class:</strong> '+
   esc(student.class||'')+' · <strong>Section:</strong> '+esc(student.section||'')+'</p>'+
   '<p><strong>Enrolments:</strong> '+(p.enrollments||[]).map(e=>esc(PROGRAMS[e.programCode]||e.programCode)).join(', ')+'</p>'+
@@ -318,7 +334,7 @@ function attachActions(){
   const programmes=[...document.querySelectorAll('input[name=quranProgramme]:checked')].map(x=>x.value);
   await schoolWrite('quranConfigure',{programmes},async()=>{const c=await api('quranStatus');
    const a=JSON.stringify([...c.programmes].sort())===JSON.stringify([...programmes].sort());
-   if(a){state.config=c;await refresh()}return a});
+   if(a){state.config=c;}return a});
  });
  submit('enrollForm',async()=>{
   const studentId=bodyValue('enrollStudent'),programCode=bodyValue('enrollProgram'),teacherId=bodyValue('enrollTeacher');
@@ -365,6 +381,7 @@ async function init(){
    show('dashboard',true);
    say('A previous Quran save is awaiting verification after refresh. Recheck is read-only; do not submit again.','warn');
    await verifyPending();
+   if(!state.pending)await refresh();
   }else await refresh();
  }catch(error){say('Quran Centre cannot open: '+(error.message||String(error)),'error')}
 }

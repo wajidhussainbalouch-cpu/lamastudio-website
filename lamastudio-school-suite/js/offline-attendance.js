@@ -275,6 +275,13 @@ function render(){
       button.onclick=()=>setChoice(student,date,choice);group.append(button);
     }
     if(draft){
+      if(draft.syncIssue){
+        const recheck=document.createElement('button');recheck.type='button';
+        recheck.textContent='Recheck cloud';recheck.disabled=!ready||!online();
+        recheck.title='Read current server attendance; do not upload or discard this local mark';
+        recheck.onclick=()=>recheckCloud(student,date);
+        group.append(recheck);
+      }
       const discard=document.createElement('button');discard.type='button';
       discard.textContent='Discard local draft';discard.disabled=!ready;
       discard.style.background='#fff1f2';discard.style.color='#9d1f31';
@@ -479,6 +486,59 @@ async function sync(automatic=false){
     if(!state.data.drafts.length)text('status','All offline attendance changes synchronized and verified.');
   }catch(error){state.autoPaused=true;text('actionStatus','Sync not confirmed: '+error.message+'. Drafts remain on this device. Do not delete app data.',true);}
   finally{state.busy=false;render();}
+}
+/**
+ * Read-only cloud recheck for one disputed student/day. NEVER submits an
+ * attendance write or automatically deletes the encrypted local draft.
+ * Any metadata refresh must itself be saved atomically to the local vault.
+ */
+async function recheckCloud(student,date){
+  if(state.busy||state.staleVault||!state.data||!online())return;
+  const draft=draftFor(student,date);
+  if(!draft?.syncIssue||!validDate(date))return;
+  state.busy=true;render();
+  const previous={...draft};
+  try{
+    if(!authorizedWriter())throw Error('Sign in using the original school or teacher account before rechecking.');
+    const snapshot=validatedSnapshot(await readSnapshot([date]));
+    if(!authorizedWriter())throw Error('Login changed during the cloud recheck. No local change was saved.');
+    const roster=normalizedStudents(snapshot.students);
+    const current=roster.find(s=>s.id===student.id);
+    if(!current||!sameStudentId(student,current)){
+      draft.syncIssue='student-changed';
+      delete draft.serverStatus;
+      await writeVault();
+      text('actionStatus','Student ID or enrollment changed on the server. Keep the local mark and ask the School Administrator to review the student record.',true);
+      return;
+    }
+    const cloud=historyIndex(snapshot.attendance,roster);
+    const latest=cloud[keyFor(date,student.id)]||'';
+    draft.serverStatus=latest;
+    if(latest===draft.status){
+      // Stay pending until Sync Now confirms the match and clears the draft.
+      draft.syncIssue='unverified';
+    }else if(latest===draft.baseStatus){
+      // The cloud returned to the original baseline. Manual Sync Now can
+      // re-apply the mark with the backend's optimistic-lock protection.
+      delete draft.syncIssue;
+    }else{
+      draft.syncIssue='conflict';
+    }
+    await writeVault();
+    const value=latest||'Unmarked';
+    const detail=latest===draft.status?
+      'Server currently matches this offline mark. Use Sync Now to confirm and clear the pending draft.':
+      latest===draft.baseStatus?
+      'Server currently matches the original baseline. The draft is ready for a normal, conflict-checked Sync Now.':
+      'Server differs from the offline mark. Do not overwrite; review online or discard the local draft after checking.';
+    text('actionStatus','Read-only cloud recheck: '+student.name+' on '+date+
+      ' — offline '+draft.status+', server '+value+'. '+detail,latest!==draft.status);
+  }catch(error){
+    // Failed network/validation/CAS must not replace the original review data.
+    Object.keys(draft).forEach(k=>delete draft[k]);
+    Object.assign(draft,previous);
+    text('actionStatus','Recheck failed: '+error.message+'. Encrypted local attendance was retained.',true);
+  }finally{state.busy=false;render();}
 }
 function showNextReview(){
   if(state.busy||state.staleVault||!state.data)return;

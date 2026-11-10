@@ -1,0 +1,44 @@
+name: LAMA Quran Learning Centre
+
+on:
+  pull_request:
+    paths:
+      - "lamastudio-school-suite/quran/**"
+      - "lamastudio-school-suite/backend-api/quran-learning.gs"
+      - "lamastudio-school-suite/backend-api/test-quran-learning.cjs"
+      - "lamastudio-school-suite/backend-api/code.gs"
+      - "lamastudio-school-suite/js/api-client.js"
+      - "lamastudio-school-suite/super-admin-app/**"
+      - ".github/workflows/school-suite-quran-learning.yml"
+  push:
+    branches:
+      - "feature/school-suite-quran-learning-20261110"
+    paths:
+      - "lamastudio-school-suite/quran/**"
+      - "lamastudio-school-suite/backend-api/quran-learning.gs"
+      - "lamastudio-school-suite/backend-api/test-quran-learning.cjs"
+      - "lamastudio-school-suite/js/api-client.js"
+      - ".github/workflows/school-suite-quran-learning.yml"
+
+jobs:
+  quran-integration-regressions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Compile existing Apps Script and Quran module without executing them
+        run: |
+          node -e "const fs=require('fs'),vm=require('vm'); for(const p of ['lamastudio-school-suite/backend-api/code.gs','lamastudio-school-suite/backend-api/quran-learning.gs']) new vm.Script(fs.readFileSync(p,'utf8'),{filename:p});"
+      - name: Quran permissions, school isolation, teacher/parent scoping and idempotent persistence
+        run: node lamastudio-school-suite/backend-api/test-quran-learning.cjs
+      - name: Existing-login API and independent readback
+        run: node lamastudio-school-suite/quran/test-quran-client.cjs
+      - name: Quran frontend and Super Admin syntax
+        run: |
+          node --check lamastudio-school-suite/quran/quran-app.js
+          node --check lamastudio-school-suite/super-admin-app/app.js
+          node --check lamastudio-school-suite/js/api-client.js

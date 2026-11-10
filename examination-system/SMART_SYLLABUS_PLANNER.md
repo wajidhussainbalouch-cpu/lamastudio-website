@@ -656,3 +656,8 @@ Validation and release gate:
 - Reviewed original scanned textbook Chapter 4, *Environmental Pollution*, printed pages 41–50 (PDF pages 44–53).
 - Added `catalogs/general-science-class-5-ch04-exercises.json` with five exercise groups: 5 multiple-choice, 5 short-answer, 3 constructed-response, 2 investigation and one organic-fertilizer project; and five numbered activities (4.1–4.5), each with printed/PDF page references.
 - Chapters 1–4 now have end-of-chapter exercise inventories. No estimated periods or school approval; no production deployment or school-data changes.
+
+## Class 5 General Science Chapters 5–6 — 10 Nov 2026
+- Chapter 5 `catalogs/general-science-class-5-ch05-exercises.json`: visually reviewed printed pages 51–61, eight numbered classroom activities and five exercise groups (5 MCQ, 5 short-answer, 3 constructed responses, 1 investigation, 1 eggshell-removal project).
+- Chapter 6 `catalogs/general-science-class-5-ch06-exercises.json`: visually reviewed end-of-chapter printed pages 75–77; five groups (5 MCQ, 5 short-answer, 4 constructed responses, 2 investigation prompts, 2 projects). Full chapter activity inventory remains pending.
+- **6/10 chapters have exercise inventories**, but no final teaching-period estimates or approved schedule. No deployment or school data changes.

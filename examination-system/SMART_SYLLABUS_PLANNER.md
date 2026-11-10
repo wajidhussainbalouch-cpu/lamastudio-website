@@ -661,3 +661,8 @@ Validation and release gate:
 - Chapter 5 `catalogs/general-science-class-5-ch05-exercises.json`: visually reviewed printed pages 51–61, eight numbered classroom activities and five exercise groups (5 MCQ, 5 short-answer, 3 constructed responses, 1 investigation, 1 eggshell-removal project).
 - Chapter 6 `catalogs/general-science-class-5-ch06-exercises.json`: visually reviewed end-of-chapter printed pages 75–77; five groups (5 MCQ, 5 short-answer, 4 constructed responses, 2 investigation prompts, 2 projects). Full chapter activity inventory remains pending.
 - **6/10 chapters have exercise inventories**, but no final teaching-period estimates or approved schedule. No deployment or school data changes.
+
+## Class 5 General Science Chapter 7 — 10 Nov 2026
+- Visually inspected *Electricity and Magnetism* end-of-chapter exercises on original textbook printed pages 93–94 (PDF pages 96–97).
+- Added `catalogs/general-science-class-5-ch07-exercises.json` recording five groups: 5 multiple-choice, 5 short-answer, 4 constructed-response, 1 investigation and 2 project tasks. Source page references included.
+- Seven of ten chapters now have end-of-chapter exercise inventories. Chapter 7 in-chapter activity review, teaching periods and school approval remain pending. No production deployment or school-data changes.

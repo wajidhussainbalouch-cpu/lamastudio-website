@@ -65,7 +65,8 @@ const localStorage={
  setItem:(k,v)=>memory.set(k,String(v)),
  removeItem:k=>memory.delete(k)
 };
-const context={document,window:{addEventListener(){}},navigator:{},localStorage,
+windowData.addEventListener=()=>{};
+const context={document,window:windowData,navigator:{},localStorage,
   Blob,URL:{createObjectURL(blob){lastBlob=blob;return "blob:testing";},revokeObjectURL(){}},
   setTimeout(){},Date,confirm:()=>true,console};
 vm.runInNewContext(progress,context);

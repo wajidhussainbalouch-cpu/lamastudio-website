@@ -400,6 +400,7 @@ async function prepare(){
     if(state.data?.drafts?.length)throw Error('Synchronize pending attendance before refreshing the offline roster.');
     text('actionStatus','Downloading school roster and attendance…');
     const snapshot=validatedSnapshot(await readSnapshot([]));
+    if(!authorizedWriter())throw Error('Account changed during offline preparation. No new local records were saved.');
     const {students,attendance}=snapshot;
     const roster=normalizedStudents(students),history=historyIndex(attendance,roster);
     if(roster.length>5000)throw Error('Roster exceeds offline device safety limit (5,000).');
@@ -410,6 +411,7 @@ async function prepare(){
       // Reject accidental overwrite using the wrong passphrase.
       await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(existing.iv)},key,unb64(existing.ciphertext));
     }
+    if(!authorizedWriter())throw Error('Account changed while securing the offline roster. No new local records were saved.');
     const prior={...state};
     state.storeVersion=existing?.ciphertext||null;
     state.data={schoolId,accountScope:vaultId,roster,history,drafts:[],preparedAt:new Date().toISOString()};
@@ -448,6 +450,7 @@ async function sync(automatic=false){
     if(!authorizedWriter())throw Error('An active verified School Admin or Teacher login is required before synchronizing.');
     text('actionStatus','Checking cloud records for changes before uploading…');
     const snapshot=await readPendingSnapshots(state.data.drafts.map(d=>d.date));
+    if(!authorizedWriter())throw Error('Account changed during cloud preflight. Drafts remain encrypted; reauthenticate before syncing.');
     const {students,attendance}=snapshot;
     const serverRoster=normalizedStudents(students),serverIds=new Map(serverRoster.map(s=>[s.id,s]));
     const localIds=new Map(state.data.roster.map(s=>[s.id,s]));

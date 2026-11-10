@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 2 (industry practice expansion)
+# LAMA Coding Academy — MVP 3 (portfolio project studio)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -80,3 +80,38 @@ GitHub Actions workflow: .github/workflows/coding-academy-checks.yml, scoped to 
 6. Test a low-memory Android phone and desktop browser for offline cache install/update behavior.
 7. Manually inspect accessibility (screen reader, contrast, mobile keyboard resizing) and runtime CSP behavior.
 8. Reconcile latest main-branch commits before merging; production remains unchanged until a reviewed merge/deploy.
+
+
+## Phase 3 — Portfolio Project Studio
+
+Open [Project Studio](./studio.html) from the academy dashboard.
+
+Three carefully scoped, editable portfolio starters, each with four guided milestones (**12 portfolio milestones**):
+- **School Information Website** — semantic navigation, a programs section, mobile CSS and contact linking.
+- **Tuition Fee Calculator** — reusable multiplication, numeric inputs, live result updates and invalid-value handling.
+- **Attendance Summary** — data filtering, derived absent counts, an accessible summary and safe student-list rendering.
+
+Each milestone includes the reason the skill matters, a concrete editing task, a hint, formative code-pattern checks, and a **learner-run preview + learner-confirmed review** gate. Learners can switch between all three projects, save local drafts/reflections, download a standalone HTML project, restore a starter, audit all criteria on the current code and export a transparent self-reported JSON portfolio record.
+
+Core coaching copy and all 12 milestone explanations are available in **English or Urdu** via the language control. Technical tokens/code remain in English.
+
+**Phase totals:** 12 foundation labs + 18 subject practice challenges + 12 coached project milestones = **42 instructional activities**, grouped into 3 portfolio projects, six career roadmaps and the original four simpler project ideas. The 12 project milestones are not standalone lessons.
+
+Run project regression tests:
+
+    node coding-academy/tests/studio.test.cjs
+
+Both practice and project-studio tests are included in the coding-academy GitHub Actions workflow.
+
+### What the checks do *not* prove
+
+Milestone checks look for teaching patterns, not complete program correctness or accessibility. Learners can still write broken code that satisfies a pattern. The final audit confirms that the current source contains required patterns, plus records the learner's earlier self-review confirmations; it is **not an instructor assessment, security review, certificate, or guarantee of employment**. Real device testing and human review remain necessary. Project code executes in a browser sandbox with a restrictive CSP, but unknown code could still slow or disrupt a device. Do not enter private student records, financial accounts, passwords, or production keys.
+
+Data remains on-device in localStorage; back it up with HTML and report exports. No back-end account, automatic remote progress sync, real Python interpreter, real SQL server, or public-facing publication is implemented. Installability/offline operation must still be checked on physical Android devices before release.
+
+### Before merge/deployment
+
+- Confirm that GitHub Actions passed both regression test files.
+- Complete manual Chrome Android/desktop tests of the project preview and milestone flow.
+- Verify the Urdu coaching, right-to-left layout legibility, browser storage reset behavior and keyboard/screen-reader access.
+- Confirm current main-branch changes are incorporated without overriding newer edits. This remains a draft PR and **does not initiate a Vercel deployment**.

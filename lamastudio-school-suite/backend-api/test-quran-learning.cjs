@@ -6,8 +6,8 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const source=fs.readFileSync(path.join(__dirname,'quran-learning.gs'),'utf8');
 class Sheet {
- constructor(headers){this.rows=[headers.slice()];this.getParent=()=>this.owner;}
- getLastColumn(){return this.rows[0].length;}
+ constructor(headers){this.rows=headers.length?[headers.slice()]:[];this.getParent=()=>this.owner;}
+ getLastColumn(){return this.rows[0]?.length||0;}
  getDataRange(){return {getValues:()=>this.rows.map(r=>r.slice())};}
  getRange(row,col,count=1,width=this.getLastColumn()){
   return {getValues:()=>Array.from({length:count},(_,i)=>

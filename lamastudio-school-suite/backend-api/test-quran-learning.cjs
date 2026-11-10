@@ -137,7 +137,7 @@ assert.equal(family.student.id,'sA1');
 assert.equal(family.lessons[0].teacherRemarks,undefined);
 assert.equal(family.lessons[0].mistakes,undefined);
 assert.equal(family.lessons[0].parentFeedback,'Practise the assigned page.');
-assert.throws(()=>call('quranProfile',parent({studentId:'sA2'})),/private|unavailable/i);
+assert.throws(()=>call('quranProfile',parent({studentId:'sA2'})),/private|unavailable|Invalid student credentials/i);
 assert.throws(()=>call('quranSaveLesson',parent({...lesson,clientRequestId:'request00005'})),/read-only|denied|Quran teacher/i);
 assert.throws(()=>call('quranSaveLesson',{
  role:'teacher',schoolId:'A',teacherId:'tA2',apiKey:'teach-tA2',

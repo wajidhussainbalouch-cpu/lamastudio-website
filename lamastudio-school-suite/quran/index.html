@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quran & Islamic Learning Centre — LAMA School Suite</title>
+<script src="../js/api-client.js"></script>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;color:#17323b;background:#ecf5f4;line-height:1.5}
+*{box-sizing:border-box}body{margin:0}a{color:inherit}header{background:linear-gradient(115deg,#0a5c66,#0d404e);color:white;padding:22px 16px}
+.wrap{max-width:1170px;margin:auto}.brand{display:flex;gap:15px;align-items:center;flex-wrap:wrap}.logo{width:58px;height:58px;object-fit:contain;border-radius:14px;background:#fff;padding:5px}.mark{width:55px;height:55px;display:grid;place-items:center;border-radius:15px;background:#ffffff25;font-weight:900;font-size:23px}
+h1{font-size:clamp(1.4rem,3vw,2.1rem);margin:0}h2{margin:0 0 12px;font-size:1.2rem}h3{margin:8px 0}
+small,.muted{color:#54747a}header .muted{color:#c5e4e1}p{margin:6px 0 12px}
+header nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+header nav a{color:#f6ffff;text-decoration:none;border:1px solid #ffffff66;padding:8px 13px;border-radius:12px;font-weight:700;font-size:.87rem}
+main{padding:14px 16px 40px}.card{border:1px solid #d4e5e4;border-radius:17px;background:white;padding:18px;margin:14px 0;box-shadow:0 5px 20px #123b4710}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.stat{background:#f1f8f7;border:1px solid #dbebe9;border-radius:13px;padding:15px}.stat strong{font-size:1.8rem;display:block}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{background:#e1efed;color:#173a42;border:1px solid #b9d4d2;padding:9px 15px;border-radius:11px;cursor:pointer;font-weight:700}
+.tab[aria-selected="true"]{background:#0a6265;color:#fff}.panel[hidden],[hidden]{display:none!important}
+.row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.field{flex:1;min-width:170px}.field label{font-weight:700;font-size:.85rem;display:block;margin-bottom:6px}
+select,input,textarea{font:inherit;width:100%;border:1px solid #bad0cf;border-radius:10px;padding:11px;background:#fff;color:#14333b}
+input[type=checkbox]{width:auto;accent-color:#096c67}.choice{display:inline-flex;align-items:center;gap:7px;margin:4px 12px 6px 0}
+button{font:inherit;border:1px solid #0a646a;background:#0a646a;color:white;border-radius:11px;padding:11px 15px;font-weight:750;cursor:pointer;min-height:44px}
+button.secondary{background:white;color:#095c61}button:disabled{opacity:.45;cursor:not-allowed}
+#status{white-space:pre-wrap;border-radius:12px;padding:13px;background:#f0f7f6;border:1px solid #cde5e2}
+#status.error{background:#fff1f2;color:#962437;border-color:#f5b5c3}#status.success{background:#ecfdf4;color:#116445;border-color:#91d7a9}
+.programme{background:#f9fdfc;border:1px solid #d5e6e3;border-radius:14px;padding:14px}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{padding:10px;border-bottom:1px solid #e4eeec;text-align:left;white-space:normal}th{background:#f0f7f5}
+.note{background:#fff7e8;border:1px solid #eed8aa;border-radius:10px;padding:12px;color:#775115}
+.report{background:#fff;border:1px solid #dbe5e3;padding:18px}.report h2{color:#0b6367}.report-header{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.report-header img{max-width:67px;max-height:67px;object-fit:contain}.report-sub{font-size:.8rem;color:#53707a}
+@media(min-width:840px){.columns{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}}
+@media print{
+ body{background:white;color:#111}header,.no-print,.tabs,#status,form,.card:not(.print-area){display:none!important}
+ .print-area{border:none;box-shadow:none;margin:0;padding:0}.report{border:none;padding:0}
+ @page{size:A4;margin:12mm}body.print-a5{@page{size:A5;margin:9mm}}
+ table{font-size:10pt}th,td{padding:6px}.report h2{font-size:16pt}
+}
+</style></head>
+<body>
+<header><div class="wrap">
+  <div class="brand"><img id="schoolLogo" class="logo" alt="School logo" hidden><div id="masterMark" class="mark" aria-hidden="true">L</div>
+   <div><h1 id="schoolName">Quran & Islamic Learning Centre</h1>
+    <p class="muted" id="schoolTagline">Modern Education with Islamic Values</p>
+    <small id="schoolLocation">LAMA School Suite · School-scoped student learning</small></div></div>
+  <nav class="no-print"><a href="../main-dashboard.html">← School Suite</a>
+    <a id="teacherBack" href="../portals/teacher/index.html" hidden>Teacher Portal</a>
+    <a id="studentBack" href="../portals/student/index.html" hidden>Student Portal</a></nav>
+</div></header>
+<main class="wrap">
+<div id="status" role="status" aria-live="polite">Checking your existing School Suite session and Quran module permission…</div>
+<div class="no-print row" style="margin:16px 0">
+ <button id="reload" type="button" class="secondary">↻ Refresh verified records</button>
+ <span id="offlineStatus" class="muted">Online verification required for writing</span>
+ <button id="recheck" class="secondary" type="button" hidden>Recheck pending save (read-only)</button>
+</div>
+<section class="card">
+ <h2>Quran learning overview</h2>
+ <div class="grid" id="stats"></div>
+ <p class="muted" id="statNote">Counts appear only after authenticated backend data is loaded.</p>
+</section>
+<div class="tabs no-print" role="tablist" aria-label="Quran learning sections">
+ <button class="tab" data-panel="learners" type="button" aria-selected="true">Learners & progress</button>
+ <button class="tab" data-panel="lessons" type="button" aria-selected="false">Daily lessons</button>
+ <button class="tab" data-panel="assessments" type="button" aria-selected="false">Assessments & revision</button>
+ <button class="tab" data-panel="admin" type="button" aria-selected="false">School settings</button>
+ <button class="tab" data-panel="reports" type="button" aria-selected="false">Print reports</button>
+</div>
+<section class="panel" id="panel-learners">
+ <div class="card"><h2>Enrolled Quran learners</h2><p class="muted">One school student ID can join more than one programme. A Quran enrolment is not a second student registration.</p>
+ <div id="learnerList">Loading authorised learners…</div></div>
+</section>
+<section class="panel" id="panel-lessons" hidden>
+ <div class="columns">
+ <div class="card no-print" id="lessonEditor"><h2>Record today's Quran lesson</h2>
+  <p class="note">No automatic recitation score. Only a qualified Quran teacher should confirm Tajweed and memorization performance.</p>
+  <form id="lessonForm">
+   <div class="row"><div class="field"><label for="lessonStudent">Existing student</label><select id="lessonStudent" required></select></div>
+    <div class="field"><label for="lessonProgramme">Programme</label><select id="lessonProgramme" required></select></div></div>
+   <div class="row"><div class="field"><label for="lessonDate">Lesson date</label><input id="lessonDate" type="date" required></div>
+    <div class="field"><label for="lessonAttendance">Quran lesson attendance</label><select id="lessonAttendance"><option>Present</option><option>Absent</option><option>Leave</option></select></div></div>
+   <div class="field"><label for="lessonTitle">Lesson / Qaida page / learning target</label><input id="lessonTitle" maxlength="200" required placeholder="Teacher-approved lesson title or page"></div>
+   <div class="row"><div class="field"><label for="lessonSurah">Surah reference (teacher-verified)</label><input id="lessonSurah" maxlength="100" placeholder="Name or number; no generated verse text"></div>
+    <div class="field"><label for="lessonJuz">Juz / Para reference</label><input id="lessonJuz" maxlength="30" placeholder="Teacher-verified reference"></div>
+    <div class="field"><label for="lessonAyahFrom">Ayah from</label><input id="lessonAyahFrom" maxlength="30"></div>
+    <div class="field"><label for="lessonAyahTo">Ayah to</label><input id="lessonAyahTo" maxlength="30"></div></div>
+   <div class="row"><div class="field"><label for="lessonSabaq">Hifz Sabaq</label><input id="lessonSabaq" maxlength="200"></div>
+    <div class="field"><label for="lessonSabqi">Sabqi revision</label><input id="lessonSabqi" maxlength="200"></div>
+    <div class="field"><label for="lessonManzil">Manzil revision</label><input id="lessonManzil" maxlength="200"></div></div>
+   <div class="field"><label for="lessonMistakes">Teacher-only correction notes</label><textarea id="lessonMistakes" maxlength="750" rows="2"></textarea></div>
+   <div class="field"><label for="lessonRevision">Revision homework</label><textarea id="lessonRevision" maxlength="500" rows="2"></textarea></div>
+   <div class="field"><label for="lessonParent">Parent-visible feedback</label><textarea id="lessonParent" maxlength="500" rows="2" placeholder="Encouraging, actionable feedback"></textarea></div>
+   <button id="saveLesson" type="submit">Save & verify lesson</button>
+  </form>
+ </div>
+ <div class="card"><h2>Recent lessons</h2><div id="lessonHistory"></div></div>
+ </div>
+</section>
+<section class="panel" id="panel-assessments" hidden>
+ <div class="columns">
+ <div class="card no-print" id="assessmentEditor"><h2>Qualitative teacher assessment</h2>
+ <form id="assessmentForm">
+ <div class="row"><div class="field"><label for="assessmentStudent">Student</label><select id="assessmentStudent"></select></div>
+ <div class="field"><label for="assessmentProgramme">Programme</label><select id="assessmentProgramme"></select></div></div>
+ <div class="row"><div class="field"><label for="assessmentDate">Date</label><input id="assessmentDate" type="date"></div>
+ <div class="field"><label for="assessmentSkill">Skill</label><select id="assessmentSkill"><option>Pronunciation</option><option>Makharij</option><option>Tajweed</option><option>Reading fluency</option><option>Memorization</option><option>Revision</option><option>Islamic understanding</option></select></div></div>
+ <div class="field"><label for="assessmentLevel">Teacher assessment</label><select id="assessmentLevel"><option>Excellent</option><option>Good</option><option>Developing</option><option>Needs Support</option></select></div>
+ <div class="field"><label for="assessmentNotes">Teacher-only remarks</label><textarea id="assessmentNotes" maxlength="700" rows="2"></textarea></div>
+ <div class="field"><label for="assessmentParent">Parent-visible encouragement</label><textarea id="assessmentParent" maxlength="500" rows="2"></textarea></div>
+ <button type="submit">Save & verify assessment</button></form></div>
+ <div class="card no-print" id="revisionEditor"><h2>Assign revision</h2>
+ <form id="revisionForm"><div class="row"><div class="field"><label for="revisionStudent">Student</label><select id="revisionStudent"></select></div>
+ <div class="field"><label for="revisionProgramme">Programme</label><select id="revisionProgramme"></select></div></div>
+ <div class="row"><div class="field"><label for="revisionDate">Assigned</label><input type="date" id="revisionDate"></div>
+ <div class="field"><label for="revisionDue">Due</label><input type="date" id="revisionDue"></div></div>
+ <div class="field"><label for="revisionTarget">Revision work</label><textarea id="revisionTarget" maxlength="400" rows="3" required></textarea></div>
+ <div class="field"><label for="revisionParent">Parent-visible guidance</label><textarea id="revisionParent" maxlength="500" rows="2"></textarea></div>
+ <button type="submit">Save & verify revision</button></form></div>
+ </div>
+ <div class="card"><h2>Assessments & revision history</h2><div id="assessmentHistory"></div></div>
+</section>
+<section class="panel" id="panel-admin" hidden>
+ <div id="adminOnly">
+ <div class="card"><h2>School Quran programme settings</h2>
+ <p class="muted">School settings are allowed only after Super Admin activates Quran Learning for this registered school.</p>
+ <form id="settingsForm">
+  <label class="choice"><input type="checkbox" checked disabled> Noorani / Tajweedi Qaida</label>
+  <label class="choice"><input type="checkbox" checked disabled> Nazra Quran</label>
+  <label class="choice"><input type="checkbox" checked disabled> Islamic Studies</label>
+  <label class="choice"><input id="enableHifz" type="checkbox"> Enable Hifz</label>
+  <label class="choice"><input id="enableAkhlaq" type="checkbox"> Enable Akhlaq & Asool</label>
+  <p><button type="submit">Save school settings</button></p>
+ </form></div>
+ <div class="columns">
+  <div class="card"><h2>Assign existing Quran teacher</h2><form id="assignmentForm">
+   <div class="field"><label for="assignTeacher">School teacher</label><select id="assignTeacher" required></select></div>
+   <div class="field"><label for="assignProgramme">Programme</label><select id="assignProgramme" required></select></div>
+   <div class="row"><div class="field"><label for="assignClass">Existing assigned class</label><input id="assignClass" readonly required></div>
+   <div class="field"><label for="assignSection">Section</label><input id="assignSection" readonly></div></div>
+   <div class="field"><label for="assignGroup">Optional group name</label><input id="assignGroup" maxlength="100"></div>
+   <button type="submit">Save teacher assignment</button></form></div>
+  <div class="card"><h2>Enrol an existing student</h2><form id="enrollmentForm">
+   <div class="field"><label for="enrollStudent">Student record</label><select id="enrollStudent" required></select></div>
+   <div class="field"><label for="enrollProgramme">Quran programme</label><select id="enrollProgramme" required></select></div>
+   <div class="field"><label for="enrollTeacher">Assigned Quran teacher</label><select id="enrollTeacher" required></select></div>
+   <div class="field"><label for="enrollLevel">Starting level / Qaida page</label><input id="enrollLevel" maxlength="100"></div>
+   <button type="submit">Save enrolment</button></form></div>
+ </div>
+ <div class="card"><h2>Saved Quran teacher assignments</h2><div id="assignmentList"></div></div>
+ </div>
+</section>
+<section class="panel" id="panel-reports" hidden>
+ <div class="card no-print"><h2>Print Quran progress and diary</h2>
+ <div class="row"><div class="field"><label for="reportKind">Report</label><select id="reportKind">
+ <option value="daily">Daily Quran lesson register</option><option value="student">Individual student progress</option><option value="monthly">Monthly Quran assessment</option><option value="hifz">Hifz Sabaq / Sabqi / Manzil</option><option value="revision">Revision assignments</option><option value="parent">Parent progress report</option></select></div>
+ <div class="field"><label for="reportStudent">Student (optional)</label><select id="reportStudent"></select></div>
+ <div class="field"><label for="reportPaper">Paper size</label><select id="reportPaper"><option value="a4">A4</option><option value="a5">A5</option></select></div>
+ <button id="printReport" type="button">Print / Save PDF</button></div>
+ <p class="muted">Reports contain existing teacher-reviewed records only, no generated Quran verses or automated recitation grades.</p></div>
+ <div class="card print-area"><div id="reportPreview" class="report">Load school records to preview a printable report.</div></div>
+</section>
+<section class="card"><h2>Learning approach</h2><div class="grid">
+ <div class="programme"><strong>Qaida</strong><p>Arabic letters, joining, Harakat, Makharij and introductory Tajweed.</p></div>
+ <div class="programme"><strong>Nazra</strong><p>Teacher-verified Surah, Ayah and Juz references; fluency and revision.</p></div>
+ <div class="programme"><strong>Hifz (optional)</strong><p>Sabaq, Sabqi, Manzil and thoughtful memorization review.</p></div>
+ <div class="programme"><strong>Islamic Studies & Akhlaq</strong><p>Age-appropriate Salah, duas, Seerah and observable good habits; no ranking by religiosity.</p></div>
+ </div></section>
+</main>
+<script src="quran-centre.js"></script>
+</body></html>

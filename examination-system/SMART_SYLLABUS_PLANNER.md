@@ -651,3 +651,8 @@ Validation and release gate:
 - Added `catalogs/general-science-class-5-ch03-exercises.json` from visual review of original scanned textbook printed pages 38–40 (PDF 41–43).
 - Five exercise groups with 15 total numbered tasks: 5 MCQ, 5 short answers, 2 constructed responses, 1 investigation and 2 project tasks. In-chapter activities not yet fully inventoried; periods and approval remain pending.
 - Chapters 1–3 now have end-of-chapter exercise inventories. No deployment or school data changes.
+
+## Class 5 General Science Chapter 4 exercise inventory — 10 Nov 2026
+- Reviewed original scanned textbook Chapter 4, *Environmental Pollution*, printed pages 41–50 (PDF pages 44–53).
+- Added `catalogs/general-science-class-5-ch04-exercises.json` with five exercise groups: 5 multiple-choice, 5 short-answer, 3 constructed-response, 2 investigation and one organic-fertilizer project; and five numbered activities (4.1–4.5), each with printed/PDF page references.
+- Chapters 1–4 now have end-of-chapter exercise inventories. No estimated periods or school approval; no production deployment or school-data changes.

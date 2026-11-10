@@ -15,6 +15,7 @@ const role=LamaAPI.getSession?.()||null;
 const isAdmin=role?.role==='school',isTeacher=role?.role==='teacher',isStudent=role?.role==='student';
 const subjectName={Qaida:'Noorani / Tajweedi Qaida',Nazra:'Nazra Quran',Hifz:'Hifz Quran',IslamicStudies:'Islamic Studies',Akhlaq:'Akhlaq & Asool'};
 let data=null,teacherRoster=[],studentRoster=[],currentPanel='learners',pending=null,loading=false,saveBusy=false;
+let offlineQueue=null,offlineSnapshot=false;
 const pendingKey=()=>role?'lama_quran_pending_v1_'+String(role.schoolId||'')+'_'+
  String(role.role||'')+'_'+String(role.teacherId||role.studentId||'admin'):'';
 function show(text,kind=''){
@@ -47,10 +48,17 @@ function storePending(next){
 }
 function togglePending(){
  $('recheck').hidden=!pending;
- $('offlineStatus').textContent=(!navigator.onLine?'Offline — writes locked; encrypted queue is not available yet':
-   pending?'Unverified write pending — do not resubmit':'Online verification required for each write');
+ $('offlineStatus').textContent=!navigator.onLine?
+  (offlineQueue?.isUnlocked()?'Offline: lessons can be encrypted and queued (NOT saved)':'Offline: unlock your encrypted vault before staging lessons'):
+  pending?'Unverified write pending — do not resubmit':'Online: verified save/readback required';
  document.querySelectorAll('form button[type=submit]').forEach(button=>button.disabled=!!pending||saveBusy||!data);
  $('recheck').disabled=loading;
+ if($('stageLesson')){
+  $('stageLesson').disabled=!isTeacher||!offlineQueue?.isUnlocked()||!data||!!pending||saveBusy;
+  $('syncQueue').disabled=!offlineQueue?.isUnlocked()||!navigator.onLine||saveBusy||!!pending;
+  $('unlockVault').disabled=!!offlineQueue?.isUnlocked();
+  $('lockVault').disabled=!offlineQueue?.isUnlocked();
+ }
 }
 function validLogo(v){
  const s=String(v||'');
@@ -183,10 +191,24 @@ async function reload(){
  try{
   if(!role?.schoolId||!['school','teacher','student'].includes(role.role))
    throw Error('Please sign in using your existing School Suite account.');
-  if(!navigator.onLine)throw Error('No internet connection. Existing saved data was not fetched.');
+  if(!navigator.onLine){
+   if(!offlineQueue?.isUnlocked())throw Error('Offline. Unlock the encrypted vault to view a previously cached learner roster.');
+   const snapshot=await offlineQueue.readSnapshot();
+   if(!snapshot)throw Error('No encrypted learner snapshot exists on this device. Prepare it while online.');
+   offlineSnapshot=true;
+   data={settings:snapshot.settings,students:snapshot.students,
+    learners:snapshot.students.length,programmes:{},monthlyProgress:{},
+    records:{enrollments:snapshot.records.enrollments,lessons:[],assessments:[],
+     revisions:[],assignments:[],timetable:[]}};
+   renderData();
+   show('OFFLINE CACHED ROSTER ONLY. Lesson entries can be encrypted locally but are NOT saved or verified on the server.','error');
+   return;
+  }
+  offlineSnapshot=false;
   const result=await LamaAPI.quranBootstrap(today());
   if(!result?.records||!result.settings)throw Error('Quran backend returned an invalid response');
   data=result;
+  if(offlineQueue?.isUnlocked())await offlineQueue.cacheSnapshot(result);
   if(isAdmin){
    const others=await Promise.all([LamaAPI.list('teachers'),LamaAPI.list('students')]);
    if(!Array.isArray(others[0])||!Array.isArray(others[1]))throw Error('Existing school staff/student roster unavailable');
@@ -225,9 +247,74 @@ async function recheckPending(){
   show('✓ Quran '+confirmedKind+' entry verified in the school database. No duplicate request was sent.','success');
  }catch(error){show('Read-only verification failed: '+error.message+'. Do not submit again.','error')}
 }
+function lessonPayload(){
+ return {
+  studentId:$('lessonStudent').value,programme:$('lessonProgramme').value,
+  date:$('lessonDate').value,attendance:$('lessonAttendance').value,
+  lesson:$('lessonTitle').value,surah:$('lessonSurah').value,
+  juz:$('lessonJuz').value,ayahFrom:$('lessonAyahFrom').value,
+  ayahTo:$('lessonAyahTo').value,sabaq:$('lessonSabaq').value,
+  sabqi:$('lessonSabqi').value,manzil:$('lessonManzil').value,
+  mistakes:$('lessonMistakes').value,revision:$('lessonRevision').value,
+  parentNote:$('lessonParent').value
+ };
+}
+async function showQueueCount(){
+ if(!offlineQueue?.isUnlocked())return;
+ try{
+  const entries=await offlineQueue.entries();
+  $('queueCount').textContent=entries.length+' local Quran lesson(s) pending verification · '+
+   entries.filter(e=>e.state==='attempted').length+' attempted/uncertain';
+ }catch(e){$('queueCount').textContent='Encrypted queue cannot be read: '+e.message}
+}
+async function stageOffline(input){
+ if(!isTeacher||!offlineQueue?.isUnlocked())
+  return show('Offline Quran lesson staging requires your existing teacher login and unlocked vault.','error');
+ if(!data)return show('Load a verified online enrolment or unlock a cached teacher roster first.','error');
+ const enrolled=(data.records.enrollments||[]).some(e=>e.studentId===input.studentId&&
+  e.programme===input.programme&&e.status==='Active');
+ if(!enrolled)return show('Student is not on your previously authorised Quran enrolment list.','error');
+ try{
+  const record={...input,requestId:newRequestId()};
+  await offlineQueue.stage(record);
+  await showQueueCount();
+  show('Lesson encrypted and queued locally (NOT SAVED). Use Sync queued lessons when connected. Your passphrase is not stored or sent.','error');
+ }catch(error){show('Offline lesson was not queued: '+error.message,'error')}
+}
+async function unlockOfflineVault(){
+ if(!offlineQueue)return;
+ try{
+  await offlineQueue.unlock($('vaultPassphrase').value);
+  $('vaultPassphrase').value='';
+  if(data&&!offlineSnapshot)await offlineQueue.cacheSnapshot(data);
+  await showQueueCount();togglePending();
+  if(!navigator.onLine&&!data)await reload();
+  show('Encrypted Quran vault unlocked for this existing teacher account. Offline items are not server-saved.','success');
+ }catch(error){$('vaultPassphrase').value='';show('Vault unlock failed: '+error.message,'error')}
+}
+async function syncOfflineQueue(){
+ if(!offlineQueue?.isUnlocked()||!navigator.onLine||pending||saveBusy)
+  return show('Unlock your vault, connect to the internet, and resolve any other pending save first.','error');
+ saveBusy=true;togglePending();
+ try{
+  const outcome=await offlineQueue.sync(
+   ()=>LamaAPI.quranBootstrap(today()),
+   record=>LamaAPI.quranSave('lessons',record)
+  );
+  await showQueueCount();
+  saveBusy=false;togglePending();
+  await reload();
+  show('✓ '+outcome.verified+' encrypted lesson(s) independently verified on the school database.','success');
+ }catch(error){
+  show('Offline sync STOPPED: '+error.message+' No repeated submission was attempted. Read-only verification is required.','error');
+ }finally{saveBusy=false;togglePending();await showQueueCount()}
+}
 async function write(kind,record,form){
  if(saveBusy||pending)return show('A previous save is not yet verified. Recheck before another write.','error');
- if(!navigator.onLine)return show('Offline entries are not enabled without secure encryption and conflict-safe sync. No data were sent.','error');
+ if(!navigator.onLine){
+  if(kind==='lessons')return stageOffline(record);
+  return show('Only Quran lessons support encrypted offline staging. Other records were NOT sent.','error');
+ }
  if(!data)return show('Load verified Quran records first.','error');
  saveBusy=true;const requestId=['lessons','assessments','revisions'].includes(kind)?newRequestId():'';
  if(requestId){record.requestId=requestId;storePending({kind,requestId,schoolId:role.schoolId})}
@@ -313,6 +400,20 @@ function bind(){
  }
  $('reload').onclick=reload;
  $('recheck').onclick=recheckPending;
+ if(isTeacher&&role?.schoolId&&(role.teacherId||role.id)&&
+   typeof LamaQuranOffline!=='undefined'){
+  $('offlineVaultPanel').hidden=false;
+  offlineQueue=new LamaQuranOffline.QuranQueue({
+   schoolId:role.schoolId,role:'teacher',accountId:role.teacherId||role.id
+  });
+  $('unlockVault').onclick=unlockOfflineVault;
+  $('lockVault').onclick=()=>{
+   offlineQueue.lock();$('queueCount').textContent='Vault locked — no records exposed';
+   togglePending();show('Encrypted offline Quran vault locked.','success')
+  };
+  $('stageLesson').onclick=()=>stageOffline(lessonPayload());
+  $('syncQueue').onclick=syncOfflineQueue;
+ }
  for(const [student,programme] of [['lessonStudent','lessonProgramme'],
   ['assessmentStudent','assessmentProgramme'],['revisionStudent','revisionProgramme']])
   $(student).addEventListener('change',()=>{
@@ -335,14 +436,9 @@ function bind(){
  $('enrollmentForm').onsubmit=async e=>{e.preventDefault();await write('enrollments',{
   studentId:$('enrollStudent').value,programme:$('enrollProgramme').value,
   teacherId:$('enrollTeacher').value,level:$('enrollLevel').value,status:'Active'},$('enrollmentForm'))};
- $('lessonForm').onsubmit=async e=>{e.preventDefault();await write('lessons',{
-  studentId:$('lessonStudent').value,programme:$('lessonProgramme').value,date:$('lessonDate').value,
-  attendance:$('lessonAttendance').value,lesson:$('lessonTitle').value,
-  surah:$('lessonSurah').value,juz:$('lessonJuz').value,
-  ayahFrom:$('lessonAyahFrom').value,ayahTo:$('lessonAyahTo').value,
-  sabaq:$('lessonSabaq').value,sabqi:$('lessonSabqi').value,manzil:$('lessonManzil').value,
-  mistakes:$('lessonMistakes').value,revision:$('lessonRevision').value,
-  parentNote:$('lessonParent').value},$('lessonForm'))};
+ $('lessonForm').onsubmit=async e=>{
+  e.preventDefault();await write('lessons',lessonPayload(),$('lessonForm'));
+ };
  $('assessmentForm').onsubmit=async e=>{e.preventDefault();await write('assessments',{
   studentId:$('assessmentStudent').value,programme:$('assessmentProgramme').value,date:$('assessmentDate').value,
   skill:$('assessmentSkill').value,level:$('assessmentLevel').value,

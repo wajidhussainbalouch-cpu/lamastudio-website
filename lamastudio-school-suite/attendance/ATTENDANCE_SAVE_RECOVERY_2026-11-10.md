@@ -28,3 +28,12 @@
 7. If records truly do not exist in Sheets, investigate the exact deployed Apps Script version, sheet tab, authorization error and write response **before** attempting another submission. Do not paste admin tokens, school API keys or private student details into issue comments.
 
 **Status:** Code-only GitHub draft; no production Apps Script, Google Sheet, or Vercel change has been made. The report cannot guarantee repair of existing rows without inspecting the real school database.
+
+## Additional safeguards: pending writes remain visible until independently verified
+
+- Student Attendance V2 no longer clears selected marks immediately after an accepted bulk-save response. If independent readback lacks an exact unique student ID/date/status match, **the submitted marks remain visible but locked** on that browser page. The Save/QR/bulk and date-clear controls cannot submit a second write. **Refresh only checks the cloud** until all attempted rows are verified; CSV export remains available.
+- Teacher Attendance now preserves each attempted teacher mark until independent readback confirms exactly one row with the same teacher ID, local date, status and applicable remarks. The manual Save button is blocked while a request is unverified. Teacher QR also uses this pending verification lock so repeated scans cannot create new unverified writes.
+- The register status explicitly distinguishes **selected / pending** marks from **confirmed cloud records**. An uncertain server result is not called success.
+- The existing `attendance-save-regressions.yml` workflow now runs **six** source-level/mock checks, including `attendance/test-pending-student-save.cjs` and `attendance/test-pending-teacher-save.cjs`. All six passed in isolated tests. Real Android/Google Sheets acceptance remains unverified.
+- These pending selections live only in the open browser page; they are **not durable encrypted backups**. When verification is pending, export CSV as a local reference before closing the page.
+- The user's 38 previously unverified November 10 marks predate this fix. **Do not re-submit those 38 marks**. First inspect the real `Attendance` sheet, then the `TeacherAttendance` sheet, and confirm raw date values, ID counts and duplicate rows.

@@ -1,0 +1,35 @@
+name: School Suite attendance save regressions
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/attendance/**'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/js/test-teacher-attendance-auth.cjs'
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/backend-api/bulk-attendance-backend.gs'
+      - 'lamastudio-school-suite/backend-api/test-*attendance*.cjs'
+      - '.github/workflows/attendance-save-regressions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  attendance-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check date mapping against spreadsheet timezone
+        run: node lamastudio-school-suite/backend-api/test-attendance-date-verification.cjs
+      - name: Check teacher administrator browser requests
+        run: node lamastudio-school-suite/js/test-teacher-attendance-auth.cjs
+      - name: Check teacher backend administrator authorization
+        run: node lamastudio-school-suite/backend-api/test-teacher-attendance-backend-auth.cjs
+      - name: Check locked and idempotent teacher attendance saves
+        run: node lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs

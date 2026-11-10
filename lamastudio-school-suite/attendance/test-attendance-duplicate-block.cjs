@@ -32,7 +32,7 @@ assert.equal(teachers([{teacherId:'t1',date,status:'Leave'}],date),0);
 assert.equal(students(stRows,'2026-11-09'),0,'Historical dates must be independent');
 assert.equal(teachers(tRows,'2026-11-09'),0);
 assert.ok(st.includes('state.integrityBlocked=duplicateAttendanceGroups(state.history'));
-assert.ok(st.includes('&&state.integrityBlocked||!state.dirty.size'));
+assert.ok(st.includes('state.pendingVerification||state.integrityBlocked||!state.dirty.size'));
 assert.ok(st.includes('Review duplicate records (read-only)'));
 assert.ok(teacher.includes('staffIntegrityBlocked=historyAvailable?duplicateTeacherGroups'));
 assert.ok(teacher.includes('||staffIntegrityBlocked'));

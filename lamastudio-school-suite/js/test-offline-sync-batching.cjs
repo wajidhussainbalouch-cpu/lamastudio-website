@@ -17,6 +17,7 @@ function extract(begin,end){
 const batchSource=extract('async function readPendingSnapshots(dates){','const sendBulk=');
 const syncSource=extract('async function sync(automatic=false){','function showNextReview(){');
 const reviewSource=extract('function showNextReview(){','async function downloadEncryptedBackup(){');
+const cloudRecheckSource=extract('async function recheckCloud(student,date){','function showNextReview(){');
 const choiceSource=extract('async function setChoice(student,date,value){','async function prepare(){');
 const dateValue=x=>String(x||'').slice(0,10);
 const status=x=>['Present','Absent','Leave'].includes(x)?x:'';
@@ -135,6 +136,81 @@ async function choiceSafetyTests(){
  assert.equal(state.data.drafts.length,1);
  assert.equal(state.data.drafts[0].status,'Absent');
 }
+async function cloudRecheckTests(){
+ const date='2026-10-16',student={id:'s1',name:'Student A',enrlNo:'101',className:'5'};
+ let serverStatus='Absent',currentStudent={...student},badSchool=false,
+   failNetwork=false,failSave=false,changeLogin=false,connected=true,
+   writes=0,reads=0,notices=[];
+ const draft={date,studentId:'s1',status:'Present',baseStatus:'',syncIssue:'conflict',serverStatus:'Absent'};
+ const state={busy:false,staleVault:false,data:{drafts:[draft]}};
+ const dependencies={
+  state,online:()=>connected,draftFor:(s,d)=>state.data.drafts.find(x=>x.studentId===s.id&&x.date===d),
+  validDate:()=>true,render:()=>{},text:(target,msg)=>{notices.push(String(msg));},
+  authorizedWriter:()=>!changeLogin,
+  readSnapshot:async dates=>{
+   reads++;assert.deepEqual(dates,[date]);
+   if(failNetwork)throw Error('Connection lost');
+   return {schoolId:badSchool?'wrong-school':'school-test',role:'school',
+     students:[currentStudent],attendance:serverStatus?[{date,studentId:'s1',status:serverStatus}]:[]};
+  },
+  validatedSnapshot:result=>{
+   if(result.schoolId!=='school-test'||result.role!=='school')throw Error('Cross-school cloud snapshot');
+   return result;
+  },
+  normalizedStudents:rows=>rows,
+  sameStudentId:(a,b)=>a.id===b.id&&a.enrlNo===b.enrlNo,
+  historyIndex:rows=>Object.fromEntries(rows.map(x=>[x.date+'|'+x.studentId,x.status])),
+  keyFor:(d,id)=>d+'|'+id,
+  writeVault:async()=>{if(failSave)throw Error('Mock IndexedDB CAS conflict');writes++;}
+ };
+ const recheck=new Function(...Object.keys(dependencies),
+   cloudRecheckSource+'return recheckCloud;')(...Object.values(dependencies));
+ await recheck(student,date);
+ assert.equal(draft.syncIssue,'conflict','Disagreeing cloud status remains a conflict');
+ assert.equal(draft.serverStatus,'Absent');
+ assert.equal(writes,1);
+ assert.equal(state.data.drafts.length,1,'Read-only recheck never deletes a local draft');
+ serverStatus='Present';
+ await recheck(student,date);
+ assert.equal(draft.syncIssue,'unverified','Matching cloud mark remains queued until Sync Now');
+ assert.equal(draft.serverStatus,'Present');
+ assert.equal(state.data.drafts.length,1);
+ serverStatus='';
+ await recheck(student,date);
+ assert.equal(draft.syncIssue,undefined,'Original baseline restores normal conflict-checked sync');
+ assert.equal(draft.serverStatus,'');
+ assert.equal(state.data.drafts.length,1);
+ draft.syncIssue='conflict';
+ currentStudent={...student,enrlNo:'different'};
+ await recheck(student,date);
+ assert.equal(draft.syncIssue,'student-changed','Changed enrollment requires staff review');
+ assert.equal(draft.serverStatus,undefined);
+ currentStudent={...student};
+ draft.syncIssue='conflict';draft.serverStatus='Absent';
+ const checkpoint={...draft},saved=writes;
+ failNetwork=true;
+ await recheck(student,date);
+ assert.deepEqual(draft,checkpoint,'Network error must leave local draft intact');
+ assert.equal(writes,saved);
+ failNetwork=false;badSchool=true;
+ await recheck(student,date);
+ assert.deepEqual(draft,checkpoint,'Cross-school result must leave local draft intact');
+ assert.equal(writes,saved);
+ badSchool=false;changeLogin=true;
+ await recheck(student,date);
+ assert.deepEqual(draft,checkpoint,'Changed login must block recheck');
+ assert.equal(writes,saved);
+ changeLogin=false;failSave=true;
+ await recheck(student,date);
+ assert.deepEqual(draft,checkpoint,'Failed local CAS must restore review state');
+ assert.equal(writes,saved);
+ failSave=false;connected=false;
+ const beforeReads=reads;
+ await recheck(student,date);
+ assert.equal(reads,beforeReads,'Offline action never reaches cloud API');
+ assert.equal(writes,saved);
+ assert.ok(notices.some(s=>s.includes('Read-only cloud recheck:')));
+}
 function reviewNavigationTests(){
  const state={busy:false,staleVault:false,reviewCursor:null,data:{
    drafts:[{studentId:'id495',date:'2026-10-02',syncIssue:'conflict'},
@@ -202,6 +278,7 @@ async function syncTests(){
  await snapshotTests();
  await syncTests();
  await choiceSafetyTests();
+ await cloudRecheckTests();
  reviewNavigationTests();
- console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation, account switching, blocked unsafe draft edits and ambiguous sync retention.');
+ console.log('PASS: >90-date snapshot windows, duplicate history, changing-roster safety, privacy/transport failures, 500-record chunk writes, per-student cloud status, cycling review navigation, account switching, blocked unsafe draft edits, read-only cloud rechecks and ambiguous sync retention.');
 })().catch(err=>{console.error(err);process.exitCode=1;});

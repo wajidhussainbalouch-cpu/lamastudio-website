@@ -71,7 +71,8 @@
   if(!selected){summary.textContent='The job catalog is unavailable.';return}
   const papers=api.forJob(selected.id),coverage=api.coverage(selected.id);
   const count=papers.reduce((n,p)=>n+p.questions.length,0);
-  summary.textContent=selected.label+' · '+papers.length+' numbered public practice papers · '+count+' published MCQs.';
+  const hasShared=papers.some(p=>p.sharedFromExistingQuestions);
+  summary.textContent=selected.label+' · '+papers.length+' numbered public practice papers · '+count+' question positions.'+(hasShared?' Shared-bank papers reuse existing questions; these positions are not newly authored items.':'');
   const stats=[['Papers',papers.length+' / '+api.maxPapersPerJob],['MCQs',count],['Subjects',coverage.length]];
   for(const [label,value] of stats){
    const tile=make('div');tile.append(make('strong',value),make('span',label));summaryCards.append(tile);

@@ -18,6 +18,12 @@ const asDate=new Function('LamaAPI',asDateSource+'return asDate;')({
 assert.equal(asDate('2026-11-10T19:00:00.000Z'),'2026-11-11','Sheets UTC midnight must resolve to school local day');
 assert.equal(asDate('2026-11-11'),'2026-11-11');
 assert.equal(asDate('11/11/2026'),'2026-11-11');
+const sessionCheck=section('function validAdminWriteSession(){','function recentAttendance(');
+const makeAdminCheck=(stored,school)=>new Function('sessionStorage','LamaAPI',sessionCheck+'return validAdminWriteSession;')(
+ {getItem:()=>JSON.stringify(stored)},{getSession:()=>school});
+assert.equal(makeAdminCheck({schoolId:'test-school',token:'admin-token'},null)(),true,'Verified token-only school admin must not be blocked by absent legacy session');
+assert.equal(makeAdminCheck({schoolId:'test-school',token:'admin-token'},{schoolId:'other-school'})(),false,'An unrelated legacy school session must never authorize cross-school writes');
+
 
 const roster=Array.from({length:349},(_,i)=>({
  id:'student-'+(i+1),name:'Pupil '+(i+1),

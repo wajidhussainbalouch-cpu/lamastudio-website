@@ -59,7 +59,7 @@ function attendanceCompletion(){
 }
 function render(){enable();const all=state.students,rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
  attendanceCompletion();
- const confirmed=x=>all.filter(s=>state.chosen.get(id(s))?.status===x&&!state.dirty.has(id(s))&&
+ const confirmed=x=>state.integrityBlocked?0:all.filter(s=>state.chosen.get(id(s))?.status===x&&!state.dirty.has(id(s))&&
    !state.pendingVerification?.records.some(r=>r.studentId===id(s))).length;
  $('summary').innerHTML=[['Students',all.length,'Registered students'],
   ['Present',count('Present'),confirmed('Present')+' verified'+(count('Present')-confirmed('Present')?' · '+(count('Present')-confirmed('Present'))+' pending':'')],
@@ -73,9 +73,10 @@ function render(){enable();const all=state.students,rows=visible(),count=x=>all.
  $('list').innerHTML=rows.map(s=>{const k=id(s),v=state.chosen.get(k)?.status||'';return '<div class="student"><div><strong>'+escapeHtml(s.name||'Unnamed')+'</strong> <span class="muted">('+escapeHtml(enr(s))+')</span><div class="muted">'+escapeHtml(cls(s))+' · '+escapeHtml(s.fatherName||s.fatherGuardian||'')+'</div></div><div class="controls">'+['Present','Absent','Leave'].map(x=>'<button data-id="'+escapeHtml(k)+'" data-status="'+x+'" class="'+(v===x?'selected '+x.toLowerCase():'')+'" '+(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||state.pendingVerification||state.integrityBlocked?'disabled':'')+'>'+x+'</button>').join('')+'</div></div>'}).join('');
  const classes=[...new Set(all.map(cls))];$('coverage').innerHTML=classes.map(c=>{
  const ss=all.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length,
- verified=ss.filter(s=>state.chosen.get(id(s))?.status&&!state.dirty.has(id(s))&&
+ verified=state.integrityBlocked?0:ss.filter(s=>state.chosen.get(id(s))?.status&&!state.dirty.has(id(s))&&
    !state.pendingVerification?.records.some(r=>r.studentId===id(s))).length;
- const label=verified===ss.length&&ss.length&&!state.integrityBlocked?'✓ Class complete':
+ const label=state.integrityBlocked?'Duplicate date rows — administrator review needed':
+   verified===ss.length&&ss.length?'✓ Class complete':
    marked===ss.length?'All marked; awaiting Save/verification':(ss.length-marked)+' unmarked';
  return '<p><strong>'+escapeHtml(c)+'</strong>: '+verified+'/'+ss.length+
   ' verified ('+(ss.length?Math.round(verified/ss.length*100):0)+'%) · '+label+'</p>';

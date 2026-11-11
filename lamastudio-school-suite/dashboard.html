@@ -547,7 +547,7 @@ header#topOverview{background:var(--lama-header)!important}
         <!-- KPI matrix -->
         <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(139,92,246,.18)"><p class="section-kicker">Students</p><p id="totalStudentsCount" class="text-2xl font-black text-purple-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">active database records</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Attendance</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Register coverage</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(52,211,153,.18)"><p class="section-kicker">Teachers</p><p id="teacherAttDisplay" class="text-2xl font-black text-emerald-300 mt-2">—</p><p id="notMarkedDisplay" class="text-[10px] text-slate-500 mt-1">— not marked</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(251,191,36,.18)"><p class="section-kicker">Today Collection</p><p id="todayCollectionDisplay" class="text-xl font-black text-amber-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">paid records today</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(236,72,153,.18)"><p class="section-kicker">This Month</p><p id="monthCollectionDisplay" class="text-xl font-black text-pink-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
@@ -593,7 +593,7 @@ header#topOverview{background:var(--lama-header)!important}
             <div class="attendance-kpi col-span-2 lg:col-span-1"><p class="section-kicker">Not marked</p><strong id="studentAttUnmarked" class="text-cyan-300">—</strong></div>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily attendance rate</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
+            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily register coverage</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
             <div><div class="flex justify-between gap-2 items-center mb-1"><p class="text-xs font-black">Class-wise register</p><span id="studentAttClassCount" class="text-[10px] text-slate-400">—</span></div><div id="studentAttClasses" class="max-h-44 overflow-y-auto pr-1"><p class="text-xs text-slate-400">Loading…</p></div></div>
           </div>
           <div class="mt-4 border-t border-slate-700/40 pt-4"><div class="flex flex-wrap justify-between items-center gap-2"><div><p class="text-xs font-black">Absent / Leave — Parent follow-up</p><p class="text-[11px] text-slate-400">Recognize students and contact parents from the attendance register.</p></div><div class="flex gap-2 flex-wrap"><a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Open follow-up →</a><a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">One bulk portal notification →</a></div></div><div id="dashboardAbsentFollowup" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"><p class="text-xs text-slate-400">Loading attendance follow-up…</p></div></div>
@@ -876,15 +876,15 @@ header#topOverview{background:var(--lama-header)!important}
               return `<div class="rounded-xl border border-slate-700/60 p-3 flex gap-3"><div class="shrink-0">${photo?`<img src="${safe(photo)}" alt="Student" class="w-12 h-12 object-cover rounded-lg" loading="lazy">`:'<div class="w-12 h-12 rounded-lg bg-slate-800 text-[9px] flex items-center justify-center">No photo</div>'}</div><div class="min-w-0 flex-1"><p class="text-xs font-black">${safe(name)} · <span class="text-rose-300">${safe(status)}</span></p><p class="text-[11px] text-slate-400">Class ${safe(className)} · Enrl ${safe(enrl)}</p><p class="text-[11px] text-slate-400">${safe(parent)} · ${safe(raw||'No contact')}</p><div class="flex gap-2 flex-wrap mt-2">${wa.length>=10&&wa.length<=15?`<a class="hub-mini-link" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:''}${digits.length>=10?`<a class="hub-mini-link" href="tel:${safe(raw.replace(/[^+\d]/g,''))}">Call</a>`:''}<a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Follow up →</a></div></div></div>`;
             }).join(''):'<p class="text-xs text-slate-400">No absent or leave students recorded today.</p>';
           }
-          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),rate=marked?Math.round(100*counts.present/marked):null;
+          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),coverage=total?Math.round(100*marked/total):null,presentAmongMarked=marked?Math.round(100*counts.present/marked):null;
           const set=(key,value)=>document.getElementById(key).textContent=value;
           set('studentAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
           set('studentAttEnrolled',total.toLocaleString());set('studentAttPresent',counts.present);set('studentAttAbsent',counts.absent);set('studentAttLeave',counts.leave);set('studentAttUnmarked',unmarked);
-          set('studentAttRate',rate===null?'—':rate+'%');
+          set('studentAttRate',coverage===null?'—':coverage+'%');
           document.getElementById('attendanceRatioDisplay').textContent =
-            rate===null?'—':rate+'%';
+            coverage===null?'—':coverage+'%';
           document.getElementById('absentTodayCount').textContent =
-            counts.absent+' absent today';set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
+            counts.absent+' absent · '+unmarked+' unmarked';set('studentAttHint',total?marked?`${marked} of ${total} saved (${coverage}% register coverage). ${unmarked} unmarked. Present among marked: ${presentAmongMarked}%.`:`0 of ${total} students marked. No attendance rate can be confirmed yet.`:'No students in the register.');
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>{
@@ -1057,7 +1057,7 @@ function renderAssessmentAnalytics(tests){
           const totals={total:0,present:0,absent:0,leave:0,unmarked:0};
           const rows=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
           const holder=document.getElementById('attendanceClassBars');
-          holder.innerHTML=rows.map(([name,r])=>{const missing=Math.max(0,r.total-r.present-r.absent-r.leave);totals.total+=r.total;totals.present+=r.present;totals.absent+=r.absent;totals.leave+=r.leave;totals.unmarked+=missing;const width=n=>r.total?100*n/r.total:0;return `<div class="attendance-kpi"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(name==='Unassigned'?name:'Class '+name)}</span><span>${r.present} present / ${r.total}</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked</p></div>`}).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
+          holder.innerHTML=rows.map(([name,r])=>{const missing=Math.max(0,r.total-r.present-r.absent-r.leave);totals.total+=r.total;totals.present+=r.present;totals.absent+=r.absent;totals.leave+=r.leave;totals.unmarked+=missing;const width=n=>r.total?100*n/r.total:0;return `<div class="attendance-kpi"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(name==='Unassigned'?name:'Class '+name)}</span><span>${r.present+r.absent+r.leave} / ${r.total} marked</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked</p></div>`}).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
           document.getElementById('classBarsDate').textContent=new Date(today+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+(weekend?' · Weekend holiday (saved records shown for review)':' · Saved attendance');
           document.getElementById('attendanceSummary').innerHTML=[['Present',totals.present],['Absent',totals.absent],['Leave',totals.leave],['Unmarked',totals.unmarked]].map(([label,n])=>`<div class="hub-stat"><small>${label}</small><b>${n}</b></div>`).join('');
         }
@@ -1228,7 +1228,9 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
  function init(){
   const root=document.getElementById('dailyChecklist');if(!root)return;
   const session=window.LamaAPI&&typeof LamaAPI.getSession==='function'?LamaAPI.getSession('school'):null;
-  const schoolId=session&&session.schoolId;if(!schoolId)return;
+  let admin=null;try{admin=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(e){}
+  // The school administrator may use a token-only login without a legacy school session.
+  const schoolId=session?.schoolId||(admin?.token&&admin?.schoolId?admin.schoolId:'');if(!schoolId)return;
   const day=typeof localISODate==='function'?localISODate():new Date().toLocaleDateString('en-CA');
   const key='lama-admin-daily-checklist:'+schoolId+':'+day;
   let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(e){}
@@ -1260,7 +1262,7 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
     const matched=roster.filter(ids=>ids.some(id=>marked.has(id))).length;
     const complete=roster.length>0&&matched===roster.length;
     box.checked=complete||saved[task]===true;
-    if(hint)hint.textContent=complete?'✓ Automatically completed · '+matched+' / '+roster.length+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.length+' saved':'Auto progress: '+matched+' / '+roster.size+' saved · or check manually';
+    if(hint)hint.textContent=complete?'✓ Automatically completed · '+matched+' / '+roster.length+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.length+' saved':'Auto progress: '+matched+' / '+roster.length+' saved · or check manually';
     box.closest('.daily-checklist-item').title=complete?'All roster attendance entries saved': 'You can complete manually or wait for saved records to auto-check';
    }
    paint();

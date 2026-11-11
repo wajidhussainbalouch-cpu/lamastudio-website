@@ -13,8 +13,8 @@ const scripts=[...html.matchAll(/<script src="\.\/(papers\/[^"]+\.js)" defer><\/
 assert.ok(scripts.includes('papers/assistant-kot-addu-01-register.js'));
 for(const script of scripts)load(script);
 const all=context.window.LAMA_PPSC_PAPERS;
-assert.equal(all.length,27,'Expected 20 Headmaster, 3 Information Officer, 2 Junior Clerk and 2 independent Assistant papers');
-assert.equal(all.reduce((sum,p)=>sum+p.questions.length,0),2700);
+assert.equal(all.length,28,'Expected 20 Headmaster, 3 Information Officer, 2 Junior Clerk, 2 Assistant and 1 Secretary A papers');
+assert.equal(all.reduce((sum,p)=>sum+p.questions.length,0),2800);
 const p=all.find(p=>p.id==='AKD-KOT-ADDU-2026-P01');
 assert.ok(p,'Kot Addu Assistant paper missing from candidate list');
 assert.equal(p.minutes,90);assert.equal(p.sequence,1);assert.equal(p.questions.length,100);
@@ -50,4 +50,4 @@ for(const name of ['index.html','print.html','answer-key.html','sw.js']){
 }
 assert.match(fs.readFileSync(path.join(root,'jobs.js'),'utf8'),/id:"assistant-kot-addu-bor"[^\n]*ready:true/);
 assert.ok(fs.readFileSync(path.join(root,'print.html'),'utf8').includes('column-count:2!important'),'A4 two-column print must remain');
-console.log('Kot Addu Assistant Paper 01 PASS: 100 questions; 10x10 syllabus; 27 paper registry; 2,700 items; unique IDs/stems; exam, print, answer key and offline asset wiring');
+console.log('Kot Addu Assistant Paper 01 PASS: 100 questions; 10x10 syllabus; 28 paper registry; 2,800 items; unique IDs/stems; exam, print, answer key and offline asset wiring');

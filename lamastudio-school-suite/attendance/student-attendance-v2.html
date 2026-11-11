@@ -79,20 +79,30 @@ function attendanceCompletion(){
 }
 function render(){enable();const selectedClass=$('class').value,all=selectedClass?state.students.filter(s=>cls(s)===selectedClass):state.students,rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
  attendanceCompletion();
- const confirmed=x=>state.integrityBlocked?0:all.filter(s=>state.chosen.get(id(s))?.status===x&&!state.dirty.has(id(s))&&
+ const cardsFor=(members)=>{
+ const c=x=>members.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
+ const verified=x=>state.integrityBlocked?0:members.filter(s=>state.chosen.get(id(s))?.status===x&&!state.dirty.has(id(s))&&
    !state.pendingVerification?.records.some(r=>r.studentId===id(s))).length;
- $('summary').innerHTML=[['Students',all.length,'Registered students'],
-  ['Present',count('Present'),confirmed('Present')+' verified'+(count('Present')-confirmed('Present')?' · '+(count('Present')-confirmed('Present'))+' pending':'')],
-  ['Absent',count('Absent'),confirmed('Absent')+' verified'+(count('Absent')-confirmed('Absent')?' · '+(count('Absent')-confirmed('Absent'))+' pending':'')],
-  ['Leave',count('Leave'),confirmed('Leave')+' verified'+(count('Leave')-confirmed('Leave')?' · '+(count('Leave')-confirmed('Leave'))+' pending':'')],
-  ['Unmarked',all.length-count('Present')-count('Absent')-count('Leave'),'No status selected']]
+ return [['Students',members.length,'Registered students'],
+  ['Present',c('Present'),verified('Present')+' saved and verified'+(c('Present')-verified('Present')?' · '+(c('Present')-verified('Present'))+' not verified':'')],
+  ['Absent',c('Absent'),verified('Absent')+' saved and verified'+(c('Absent')-verified('Absent')?' · '+(c('Absent')-verified('Absent'))+' not verified':'')],
+  ['Leave',c('Leave'),verified('Leave')+' saved and verified'+(c('Leave')-verified('Leave')?' · '+(c('Leave')-verified('Leave'))+' not verified':'')],
+  ['Unmarked',members.length-c('Present')-c('Absent')-c('Leave'),'No status selected']]
  .map(([k,v,detail])=>'<div class="panel"><div class="muted">'+k+'</div><h2>'+v+'</h2><div class="muted">'+detail+'</div></div>').join('');
+};
+$('selectedSummaryHeading').textContent=selectedClass?'Class '+selectedClass+' — Attendance':'Selected Classes — Attendance';
+$('selectedSummaryNote').textContent=selectedClass?'Only students assigned to Class '+selectedClass+' are included below.':'All classes selected. Choose a class to see its own totals.';
+$('summary').innerHTML=cardsFor(all);
+$('schoolSummary').innerHTML=cardsFor(state.students);
+const allVerified=state.students.filter(s=>state.chosen.get(id(s))?.status&&!state.dirty.has(id(s))&&
+ !state.pendingVerification?.records.some(r=>r.studentId===id(s))).length;
+$('schoolSummaryNote').textContent='Whole school: '+allVerified+'/'+state.students.length+' confirmed for '+$('date').value+(state.integrityBlocked?' · duplicates require review':state.pendingVerification?' · one or more saves remain unverified':'');
  $('count').textContent=rows.length+' visible of '+all.length+(selectedClass?' students in Class '+selectedClass:' students across all classes')+(state.pendingVerification?
  ' · '+state.pendingVerification.records.length+' submitted mark(s) awaiting cloud verification (not confirmed)':
  state.integrityBlocked?' · DUPLICATE ROWS — saving locked until school administrator reconciliation':state.historyReady?' · saved attendance verified':' · roster preview only');
  $('list').innerHTML=rows.map(s=>{const k=id(s),v=state.chosen.get(k)?.status||'';return '<div class="student"><div><strong>'+escapeHtml(s.name||'Unnamed')+'</strong> <span class="muted">('+escapeHtml(enr(s))+')</span><div class="muted">'+escapeHtml(cls(s))+' · '+escapeHtml(s.fatherName||s.fatherGuardian||'')+'</div></div><div class="controls">'+['Present','Absent','Leave'].map(x=>'<button data-id="'+escapeHtml(k)+'" data-status="'+x+'" class="'+(v===x?'selected '+x.toLowerCase():'')+'" '+(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||state.pendingVerification||state.integrityBlocked?'disabled':'')+'>'+x+'</button>').join('')+'</div></div>'}).join('');
- const classes=[...new Set(all.map(cls))];$('coverage').innerHTML=classes.map(c=>{
- const ss=all.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length,
+ const classes=[...new Set(state.students.map(cls))];$('coverage').innerHTML=classes.map(c=>{
+ const ss=state.students.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length,
  verified=state.integrityBlocked?0:ss.filter(s=>state.chosen.get(id(s))?.status&&!state.dirty.has(id(s))&&
    !state.pendingVerification?.records.some(r=>r.studentId===id(s))).length;
  const label=state.integrityBlocked?'Duplicate date rows — administrator review needed':

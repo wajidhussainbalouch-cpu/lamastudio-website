@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#103d34"><title>Stenographer Skills Practice | LAMA PPSC Academy</title>
+<style>
+:root{font-family:system-ui,"Noto Naskh Arabic",sans-serif;color:#183b30;background:#f1f6f3}
+*{box-sizing:border-box}body{margin:0}header{background:#103d34;color:white;padding:18px max(16px,calc((100vw - 850px)/2))}
+header a{color:#d6ffeb;text-decoration:none}main{max-width:850px;margin:auto;padding:18px}
+.card{background:white;border:1px solid #d7e5dd;padding:19px;border-radius:14px;margin:14px 0;box-shadow:0 4px 16px #153e330e}
+h1{font-size:1.5rem}h2{font-size:1.13rem}p,li{line-height:1.6}
+.muted,small{color:#577068}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+label{display:block;font-weight:700;margin-bottom:8px}select,textarea{font:inherit;border:1px solid #a1bbae;border-radius:8px;background:white;width:100%;padding:12px}
+textarea{min-height:145px;resize:vertical}.passage{white-space:pre-wrap;line-height:1.8;background:#eef8f2;padding:15px;border-radius:10px;max-height:240px;overflow:auto}
+button{font:inherit;padding:12px 18px;background:#126c54;color:white;border:0;border-radius:9px;font-weight:700;cursor:pointer;margin:6px 8px 6px 0}
+button:disabled{opacity:.5;cursor:not-allowed}button.secondary{background:#516c61}
+.stat{background:#eef8f2;border-radius:10px;padding:12px}.stat strong{display:block;font-size:1.3rem}
+#feedback{font-weight:700}#timer{font-variant-numeric:tabular-nums}footer{text-align:center;padding:18px;font-size:.9rem;color:#557267}
+[hidden]{display:none!important}
+@media(max-width:500px){main{padding:10px}header{padding:15px}.card{padding:15px}}
+</style></head>
+<body>
+<header><a href="./index.html#jobCategories">← LAMA PPSC Preparation Academy</a><h1>Stenographer · Shorthand & Typing Practice</h1></header>
+<main>
+<section class="card"><h2 id="jobTitle">Stenographer preparation</h2><p id="jobNote"></p>
+<p class="muted">Practice only. The PPSC screenshots specify practical speed tests, not a 100-MCQ examination. This tool cannot recognize handwritten shorthand strokes, verify official eligibility or provide certified test results.</p>
+<div class="grid">
+<div class="stat"><strong>70 WPM</strong>English shorthand target</div>
+<div class="stat"><strong>35 WPM</strong>English typing target</div>
+<div class="stat"><strong>60 WPM</strong>Urdu shorthand target</div>
+<div class="stat"><strong>25 WPM</strong>Urdu typing target</div>
+</div></section>
+<section class="card"><h2>Choose a skill</h2>
+<label for="mode">Practice mode</label>
+<select id="mode"><option value="en-type">English typing — 35 WPM</option><option value="ur-type">Urdu typing — 25 WPM</option><option value="en-short">English shorthand — 70 WPM</option><option value="ur-short">Urdu shorthand — 60 WPM</option></select>
+<p class="muted" id="instructions"></p><h3>Practice passage</h3>
+<div class="passage" id="passage" tabindex="0"></div><div class="grid">
+<div><strong id="timer">Time: 00:00</strong></div><div><strong id="wordTarget">Target</strong></div>
+</div>
+<div id="typingArea"><label for="typed">Type the passage exactly as shown</label><textarea id="typed" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" disabled aria-describedby="instructions"></textarea></div>
+<div id="shorthandArea" hidden><p><strong>Timed shorthand practice:</strong> A partner can dictate the displayed passage at the required target pace. Use your shorthand notes on paper. This timer cannot read or grade shorthand writing; compare the transcription with the source afterward.</p></div>
+<button id="start">Start practice</button><button id="finish" disabled>Finish and review</button><button id="reset" class="secondary">Reset</button>
+<p id="feedback" aria-live="polite"></p></section>
+<section class="card"><h2>Local practice history</h2><p class="muted">Typing estimates are saved only in this browser. Shorthand stopwatch sessions are not scored. No candidate account or official PPSC records are changed.</p><div id="history">No practice attempts saved yet.</div></section>
+</main><footer>A project of LamaStudio.pk · LAMA PPSC Preparation Academy</footer>
+<script>
+'use strict';
+(()=>{
+ const id=new URLSearchParams(location.search).get('job');
+ const dc='stenographer-kot-addu-dc-bor',adc='stenographer-kot-addu-adc-bor';
+ const job=id===adc?adc:dc;
+ const $=name=>document.getElementById(name);
+ $('jobTitle').textContent=job===adc?'Stenographer (BS-15) — Additional Deputy Commissioner, Kot Addu':'Stenographer (BS-15) — Deputy Commissioner, Kot Addu';
+ $('jobNote').textContent=job===adc?'ADC Office: English shorthand qualifiers proceed to typing/computer proficiency at a stated 1:20 ratio. Urdu shorthand and typing are marked for preference in the supplied syllabus.':'DC Office: English shorthand qualifiers proceed to typing/computer proficiency at a stated 1:20 ratio, followed by the stated Urdu shorthand and typing stages.';
+ const en='Official correspondence requires accuracy, clear language and timely delivery of information. The office receives public applications, records supporting documents and sends replies through approved channels. Candidates should check spellings, names, dates and numerical figures before submitting any document. Careful practice improves typing fluency while maintaining attention to detail.';
+ const ur='دفتر میں موصول ہونے والی درخواستوں کا مکمل ریکارڈ رکھنا ضروری ہے۔ ہر خط پر تاریخ، موضوع اور متعلقہ افسر کا نام درست درج ہونا چاہیے۔ سرکاری دستاویزات کی تیاری میں زبان کی درستگی، وقت کی پابندی اور معلومات کی حفاظت کو خاص اہمیت دی جاتی ہے۔ مسلسل مشق سے لکھنے کی رفتار اور معیار بہتر ہو سکتا ہے۔';
+ const modes={
+  'en-type':{text:en,rate:35,lang:'en',short:false,label:'English typing'},
+  'ur-type':{text:ur,rate:25,lang:'ur',short:false,label:'Urdu typing'},
+  'en-short':{text:en,rate:70,lang:'en',short:true,label:'English shorthand'},
+  'ur-short':{text:ur,rate:60,lang:'ur',short:true,label:'Urdu shorthand'}
+ };
+ const historyKey='lama_ppsc_steno_practice_v1_'+job;
+ let startTime=0,ticker=null,active=false,done=false;
+ const words=s=>s.trim().split(/\s+/u).filter(Boolean);
+ const mode=()=>modes[$('mode').value];
+ const timeFormat=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+ const passed=()=>startTime?Math.max(1,Math.floor((Date.now()-startTime)/1000)):0;
+ function showHistory(){
+  let rows=[];try{rows=JSON.parse(localStorage.getItem(historyKey)||'[]')}catch{}
+  const root=$('history');root.replaceChildren();
+  if(!Array.isArray(rows)||!rows.length){root.textContent='No practice attempts saved yet.';return}
+  for(const row of rows.slice(0,10)){
+   const line=document.createElement('p');
+   line.textContent=row.mode+' · '+row.date+' · '+row.wpm+' estimated net WPM · '+row.accuracy+'% positional accuracy'+(row.thresholdMet?' · target reached':' · below target');
+   root.append(line);
+  }
+ }
+ function update(){
+  const m=mode(),length=words(m.text).length;
+  $('passage').textContent=m.text;$('passage').dir=m.lang==='ur'?'rtl':'ltr';
+  $('wordTarget').textContent=length+' words · target '+m.rate+' WPM';
+  $('typingArea').hidden=m.short;$('shorthandArea').hidden=!m.short;
+  $('typed').dir=m.lang==='ur'?'rtl':'ltr';
+  $('instructions').textContent=m.short?'Shorthand timing only; professional dictation and checking must be done by a qualified examiner.':'Copy the complete displayed passage. An estimated speed and simple position-based accuracy appear after finishing; neither is an official proficiency score.';
+ }
+ function stop(){
+  if(ticker){clearInterval(ticker);ticker=null}
+  active=false;done=true;$('start').disabled=false;$('finish').disabled=true;$('typed').disabled=true;$('mode').disabled=false;
+ }
+ function finish(){
+  if(!active)return;
+  const seconds=passed(),m=mode(),actual=$('typed').value,expected=m.text;
+  stop();$('timer').textContent='Elapsed: '+timeFormat(seconds);
+  if(m.short){$('feedback').textContent='Shorthand timing recorded: '+timeFormat(seconds)+'. Ask a qualified checker to review handwritten shorthand notes. No automatic WPM pass or fail is claimed.';return}
+  const compared=Math.max(actual.length,expected.length)||1;
+  let matching=0;for(let i=0;i<Math.min(actual.length,expected.length);i++)if(actual[i]===expected[i])matching++;
+  const accuracy=Math.round(100*matching/compared);
+  // English conventional 5-characters-per-word estimate; Urdu uses whitespace-separated typed words.
+  const gross=m.lang==='en'?actual.length/5:words(actual).length;
+  const wpm=Math.round(gross*60/seconds*10)/10;
+  const net=Math.round(wpm*accuracy/100*10)/10;
+  const ok=net>=m.rate&&accuracy>=90;
+  $('feedback').textContent=m.label+': '+net+' estimated net WPM · '+accuracy+'% positional accuracy · '+(ok?'practice target reached':'practice target not reached')+'. This is only a simplified training estimate.';
+  let rows=[];try{rows=JSON.parse(localStorage.getItem(historyKey)||'[]')}catch{}
+  if(!Array.isArray(rows))rows=[];
+  rows.unshift({mode:m.label,date:new Date().toLocaleDateString(),wpm:net,accuracy,thresholdMet:ok});
+  try{localStorage.setItem(historyKey,JSON.stringify(rows.slice(0,10)))}catch{}
+  showHistory();
+ }
+ $('start').addEventListener('click',()=>{
+  if(active)return;startTime=Date.now();active=true;done=false;
+  $('mode').disabled=true;$('start').disabled=true;$('finish').disabled=false;
+  $('typed').value='';$('typed').disabled=mode().short;
+  $('feedback').textContent='';$('timer').textContent='Elapsed: 00:00';
+  if(!mode().short)$('typed').focus();
+  ticker=setInterval(()=>{$('timer').textContent='Elapsed: '+timeFormat(passed());if(passed()>=60&&!mode().short)finish()},250);
+ });
+ $('finish').addEventListener('click',finish);
+ $('reset').addEventListener('click',()=>{if(ticker)clearInterval(ticker);ticker=null;active=false;done=false;startTime=0;$('start').disabled=false;$('finish').disabled=true;$('mode').disabled=false;$('typed').disabled=true;$('typed').value='';$('timer').textContent='Elapsed: 00:00';$('feedback').textContent='';update()});
+ $('mode').addEventListener('change',update);
+ update();showHistory();
+})();
+</script></body></html>

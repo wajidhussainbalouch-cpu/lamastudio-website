@@ -11,6 +11,20 @@ const home = fs.readFileSync(path.join(root,'index.html'),'utf8');
 const faqs = fs.readFileSync(path.join(root,'faqs.html'),'utf8');
 const signin = fs.readFileSync(path.join(root,'signin.html'),'utf8');
 
+const buildScript = require('./scripts/inject-asklama.cjs');
+for(const p of ['index.html','about.html','services.html','faqs.html','blogs/education.html','categories/tech/index.html','apps/lamasky/index.html','lamastudio-school-suite/index.html','education-academy/help.html']){
+  assert.equal(buildScript.isPublic(p),true,'Public AskLama page: '+p);
+}
+for(const p of ['lamastudio-school-suite/dashboard.html','lamastudio-school-suite/portals/teacher/index.html','education-academy/admin.html','education-academy/exam.html','examination-system/print-preview.html']){
+  assert.equal(buildScript.isPublic(p),false,'Protected workflow must stay untouched: '+p);
+}
+const startHTML='<html><body><h1>Page</h1></body></html>';
+const once=buildScript.inject(startHTML).content;
+const twice=buildScript.inject(once).content;
+assert.equal((twice.match(/ask-lama\.js/g)||[]).length,1,'No duplicate AskLama widget scripts');
+assert.match(once,/src="\/ask-lama\.js\?v=3"/);
+
+
 assert.match(css,/\.asklama-chat-box\s*\{[^}]*background:#f7faff;color:#102338/s);
 assert.match(css,/\.asklama-messages\s*\{[^}]*min-height:0/s);
 assert.match(css,/\.asklama-compose input\s*\{[^}]*min-width:0/s);
@@ -147,7 +161,7 @@ async function backendChecks(){
   await ctx.handler({method:'POST',body:{prompt:' '.repeat(3)}},invalid);
   assert.equal(invalid.code,400);
   const valid=makeResponse();
-  await ctx.handler({method:'POST',body:{prompt:'What is LAMA Studio?',history:[{role:'user',text:'Hello'},{role:'model',text:'Hi'}]}},valid);
+  await ctx.handler({method:'POST',body:{prompt:'How does an HTTP request work?',pagePath:'/categories/developer-tools/',history:[{role:'user',text:'Hello'},{role:'model',text:'Hi'}]}},valid);
   assert.equal(valid.code,200);
   assert.equal(valid.data.text,'First part \nSecond part');
   assert.equal(requests.length,1);
@@ -155,7 +169,8 @@ async function backendChecks(){
   assert.equal(requests[0].opts.headers['x-goog-api-key'],'test-only-key');
   const payload=JSON.parse(requests[0].opts.body);
   assert.equal(payload.contents.length,3);
-  assert.equal(payload.contents.at(-1).parts[0].text,'What is LAMA Studio?');
+  assert.match(payload.contents.at(-1).parts[0].text,/Visitor question: How does an HTTP request work/);
+  assert.match(payload.contents.at(-1).parts[0].text,/LAMA Studio tools/);
 
   requests=[];
   let first=true;
@@ -168,7 +183,21 @@ async function backendChecks(){
   assert.equal(fallback.code,200);
   assert.equal(fallback.data.text,'Fallback success');
   assert.equal(requests.length,2);
-  assert.match(requests[1].url,/gemini-3\.5-flash-lite/);
+  assert.match(requests[1].url,/gemini-3\.1-flash-lite/);
+
+  requests=[];
+  const schoolPrice=makeResponse();
+  await ctx.handler({method:'POST',body:{prompt:'What is price of school management software?'}},schoolPrice);
+  assert.equal(schoolPrice.code,200);
+  assert.equal(schoolPrice.data.source,'site-guide');
+  assert.match(schoolPrice.data.text,/Rs\. 1,500/);
+  assert.match(schoolPrice.data.text,/03437064536/);
+  assert.equal(requests.length,0,'Verified product answers must not wait for Gemini');
+  const schoolLogin=makeResponse();
+  await ctx.handler({method:'POST',body:{prompt:'How do teachers log in to LAMA School Suite?'}},schoolLogin);
+  assert.equal(schoolLogin.data.source,'site-guide');
+  assert.match(schoolLogin.data.text,/School ID/);
+  assert.equal(requests.length,0);
 
   ctx.process.env.GEMINI_API_KEY='';
   const noKey=makeResponse();

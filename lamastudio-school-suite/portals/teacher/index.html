@@ -394,6 +394,7 @@ async function saveAttendance(){
     const matches=attendance.filter(a=>String(a.studentId||'')===String(item.student.id)&&String(a.date||'').slice(0,10)===day);
     if(matches.length===1&&matches[0].status===item.status){attendanceDraft.delete(day+'|'+String(item.student.id));verified++;}
    }
+   if(verified!==items.length||errors.length)attendanceVerified=false;
    feedback.textContent=(verified===items.length&&errors.length===0?'✓ ':'⚠ ')+'Attendance verified: '+verified+'/'+items.length+' changes. Class: '+me.assignedClass+'.'+(errors.length?' Errors: '+errors.slice(0,2).join('; '):verified<items.length?' Some statuses were not confirmed. Refresh and check before retrying.':' Saved successfully.');
    updateStats();loadAbsentees();
   }catch(e){

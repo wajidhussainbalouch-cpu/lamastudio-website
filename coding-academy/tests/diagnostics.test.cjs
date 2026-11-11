@@ -18,7 +18,9 @@ assert.doesNotMatch(js,/fetch\(/,"Normal capability checks must never fetch clou
 const cloud={};
 vm.runInNewContext(coreJs,{window:cloud,TextEncoder});
 class E{
- constructor(){this.textContent="";this.className="";this.dataset={};this.children=[];this.disabled=false;this.listeners={};}
+ constructor(){this._textContent="";this.className="";this.dataset={};this.children=[];this.disabled=false;this.listeners={};}
+ set textContent(value){this._textContent=String(value);this.children=[];}
+ get textContent(){return this._textContent;}
  addEventListener(name,callback){this.listeners[name]=callback;}
  appendChild(child){this.children.push(child);return child;}
  click(){this.clicked=true;}
@@ -48,7 +50,7 @@ class FakeWorker{
 const urlApi={createObjectURL(b){lastBlob=b;return "blob:test";},revokeObjectURL(){}};
 const navigator={onLine:true,serviceWorker:{async getRegistration(){return {active:true};}}};
 const caches={async match(){return {ok:true};}};
-const windowMock={...cloud,isSecureContext:true,addEventListener(){}};
+const windowMock={...cloud,isSecureContext:true,caches,addEventListener(){}};
 vm.runInNewContext(js,{
  window:windowMock,document,navigator,localStorage,WebAssembly,Worker:FakeWorker,
  Blob,URL:Object.assign(function URLMock(url,base){return new URL(url,base);},{createObjectURL:urlApi.createObjectURL,revokeObjectURL:urlApi.revokeObjectURL}),

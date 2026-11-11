@@ -96,7 +96,7 @@ async function clientChecks() {
   input.value='Try again';
   await ui.handleUserMessage({preventDefault(){}});
   assert.match($('askLamaMessages').children.at(-1).textContent,/busy/);
-  assert.match($('askLamaMessages').children.at(-1).className,/error/);
+  assert.equal($('askLamaMessages').children.at(-1).classList.contains('error'),true);
   assert.equal($('askLamaSendBtn').disabled,false);
 
   let release;

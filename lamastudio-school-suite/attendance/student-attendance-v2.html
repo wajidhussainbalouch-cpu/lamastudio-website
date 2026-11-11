@@ -205,6 +205,10 @@ $('save').onclick=async()=>{
  }
  if(!confirm('Save '+records.length+' selected attendance changes?'))return;
  state.pendingVerification={date:$('date').value,records};
+ const savingStarted=Date.now();
+ $('progress').value=35;
+ $('elapsed').textContent='Saving: 0s';
+ const saveClock=setInterval(()=>{$('elapsed').textContent='Saving / verifying: '+Math.ceil((Date.now()-savingStarted)/1000)+'s';},1000);
  $('stage').textContent='Saving attendance; verification required';
  state.saving=true;render();message('Saving '+records.length+' marks once; awaiting Google Sheets confirmation…');
  let verifiedDateRows=null;
@@ -220,8 +224,15 @@ $('save').onclick=async()=>{
  }catch(e){
   message('Save acknowledgment uncertain: '+e.message+
    '. Do not submit again. Refresh checks the server without another write.',true);
- }finally{state.saving=false;render();}
- await verifyPendingAttendance(verifiedDateRows);
+ }finally{state.saving=false;$('progress').value=75;render();}
+ try{await verifyPendingAttendance(verifiedDateRows);}
+ finally{
+  clearInterval(saveClock);
+  const verified=!state.pendingVerification;
+  $('progress').value=verified?100:75;
+  $('elapsed').textContent=(verified?'Save verified in ':'Verification pending after ')+
+    Math.ceil((Date.now()-savingStarted)/1000)+'s';
+ }
 };
 $('clearDate').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||state.pendingVerification||state.integrityBlocked)return;if(state.dirty.size){message('Save or discard unsaved changes before clearing attendance.',true);return}if(typeof LamaAPI.clearStudentAttendanceDate!=='function'){message('Attendance date-clear API unavailable; no records changed.',true);return}const date=state.loadedDate,klass=$('class').value;try{const preview=await LamaAPI.clearStudentAttendanceDate(date,klass,true,'');const count=Number(preview?.count||0);if(!Number.isInteger(count)||count<0)throw Error('Invalid preview count');if(!count){message('No attendance records to clear for '+date);return}if(!confirm('ADMIN ONLY: remove '+count+' attendance records for '+date+(klass?' / '+klass:' / all classes')+'? The backend must create a backup and audit entry. Student records will not be deleted.'))return;const phrase=prompt('Type exactly: REMOVE '+date);if(phrase!=='REMOVE '+date){message('Clear cancelled. No records changed.');return}const result=await LamaAPI.clearStudentAttendanceDate(date,klass,false,phrase);if(!result||Number(result.count)!==count||!result.backupSheet)throw Error('Removal response not verified. Check the register and backup before trying again.');message('Removed '+count+' attendance records. Backup sheet: '+result.backupSheet);await load();}catch(error){message('Clear-date result uncertain: '+error.message+'. Do not retry until verified.',true);state.historyReady=false;state.loadedDate='';render()}};
 $('csv').onclick=()=>{const rows=[['Date','Class','Enrollment','Name','Status'],...visible().map(s=>[$('date').value,cls(s),enr(s),s.name,state.chosen.get(id(s))?.status||'Unmarked'])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.href=url;a.download='attendance-'+$('date').value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};

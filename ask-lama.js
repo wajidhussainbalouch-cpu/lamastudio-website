@@ -132,7 +132,7 @@
         headers: {'Content-Type': 'application/json'},
         credentials: 'same-origin',
         signal: controller.signal,
-        body: JSON.stringify({prompt: question, history: history.slice(-6)})
+        body: JSON.stringify({prompt: question, history: history.slice(-6), pagePath: window.location?.pathname || '/'})
       });
       let data = {};
       try { data = await response.json(); }
@@ -146,7 +146,7 @@
       reply.classList.remove('loading');
       history.push({role:'user',text:question}, {role:'model',text:answer});
       history = history.slice(-8);
-      status.textContent = 'Reply received. Ask a follow-up question.';
+      status.textContent = data.source === 'site-guide' ? 'From verified LAMA Studio product information. Ask a follow-up.' : 'AI reply received. Ask a follow-up question.';
     } catch (error) {
       reply.classList.remove('loading');
       reply.classList.add('error');

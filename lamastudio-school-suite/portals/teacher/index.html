@@ -134,6 +134,8 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
                     <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
                 </div>
             </div>
+            <p id="attendanceDailySummary" role="status" class="text-xs text-cyan-100 bg-slate-900 rounded-lg p-3">Loading class attendance…</p>
+            <p id="attendanceSaveStatus" role="status" aria-live="polite" class="text-xs text-amber-200"></p>
             <div id="attendanceList" class="space-y-2"></div>
             <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
         </section>
@@ -230,6 +232,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
+let attendanceVerified=false,attendanceSaving=false;const attendanceDraft=new Map();
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
@@ -279,15 +282,16 @@ function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teac
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 let refreshPromise=null;
 async function refresh(){
+ if(attendanceSaving)return;
  if(refreshPromise)return refreshPromise;
  refreshPromise=(async()=>{
   const timeout=(promise,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out after 20 seconds')),20000))]);
   const students=await timeout(LamaAPI.list('students'),'Student register');
   if(!Array.isArray(students))throw Error('Student register response is invalid');
   myStudents=students.filter(scope);
-  attendance=[];homework=[];notices=[];results=[];
+  attendanceVerified=false;attendance=[];homework=[];notices=[];results=[];
   renderAll();
-  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId))}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
+  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId));attendanceVerified=true;}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
   await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else console.warn(name+' response invalid')}catch(e){console.warn(name+' failed',e)}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
@@ -318,35 +322,89 @@ function showStudentRecord(id){
  for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const a=attendance.find(x=>String(x.studentId)===String(st.id)&&String(x.date).slice(0,10)===date);const item=document.createElement('div');item.className='week-day';const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=a?.status||'Not marked';status.dataset.status=a?.status||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
  const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows saved records only. To mark or change attendance, open the Attendance tab.';el.append(note);el.scrollIntoView({behavior:'smooth',block:'nearest'})
 }
-function loadAttendanceList(){const day=$('attDate').value;const el=$('attendanceList');$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);el.innerHTML=myStudents.map(s=>{const a=attendance.find(x=>String(x.studentId)===String(s.id)&&x.date===day);const status=a?.status||'';return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span></span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`}).join('')}
-function setAttStatus(btn,status){const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
+
+function recordedAttendance(s,day){
+ return attendance.find(a=>String(a.studentId??'')===String(s.id)&&String(a.date||'').slice(0,10)===day);
+}
+function renderAttendanceDailySummary(){
+ const el=$('attendanceDailySummary');if(!el)return;
+ const day=$('attDate').value,totals={Present:0,Absent:0,Leave:0},total=myStudents.length;
+ for(const s of myStudents){const st=attendanceDraft.get(day+'|'+String(s.id))||recordedAttendance(s,day)?.status||'';if(Object.prototype.hasOwnProperty.call(totals,st))totals[st]++;}
+ const marked=totals.Present+totals.Absent+totals.Leave;
+ const changed=[...attendanceDraft.keys()].filter(k=>k.startsWith(day+'|')).length;
+ el.textContent='Class '+(me.assignedClass||'')+' · Total: '+total+' · Present: '+totals.Present+' · Absent: '+totals.Absent+' · Leave: '+totals.Leave+' · Unmarked: '+(total-marked)+' · '+(changed?changed+' UNSAVED change(s)':attendanceVerified?(marked===total&&total?'Attendance complete (saved)':'Saved register loaded'):'Saved register NOT verified');
+}
+function loadAttendanceList(){
+ const day=$('attDate').value,el=$('attendanceList');
+ $('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);
+ el.innerHTML=myStudents.map(s=>{
+  const status=attendanceDraft.get(day+'|'+String(s.id))||recordedAttendance(s,day)?.status||'';
+  return '<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(s.id)+'"><span class="text-xs font-bold">'+esc(s.name)+' <span class="text-slate-400">('+esc(s.enrlNo||s.enrollmentNo||'—')+')</span></span><div class="flex gap-2 items-center">'+contact(s)+['Present','Absent','Leave'].map(x=>'<button class="att-btn '+(status===x?'att-active-'+x.toLowerCase():'')+'" data-status="'+x+'" onclick="setAttStatus(this,\''+x+'\')">'+x+'</button>').join('')+'</div></div>';
+ }).join('');
+ renderAttendanceDailySummary();
+}
+function setAttStatus(btn,status){
+ if(attendanceSaving)return;
+ const row=btn.closest('[data-student-id]');if(!row)return;
+ const student=myStudent(row.dataset.studentId);if(!student)return;
+ const day=$('attDate').value,key=day+'|'+String(student.id);
+ if(status===recordedAttendance(student,day)?.status)attendanceDraft.delete(key);
+ else attendanceDraft.set(key,status);
+ row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');
+ btn.className='att-btn att-active-'+status.toLowerCase();
+ $('attendanceSaveStatus').textContent='Changes are not saved yet. Press Save while online.';
+ renderAttendanceDailySummary();
+}
 async function saveAttendance(){
- if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');
- const day=$('attDate').value;if(!day)return message('Choose date');
- const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
- if(saveButton?.disabled)return;
- if(saveButton){saveButton.disabled=true;saveButton.dataset.previousText=saveButton.textContent;saveButton.textContent='Saving attendance…'}
- let ok=0,fail=0;const errors=[];
+ const feedback=$('attendanceSaveStatus');
+ if(attendanceSaving)return;
+ if(!me.schoolId||!me.assignedClass){feedback.textContent='Missing school/class assignment. Nothing saved.';return;}
+ const day=$('attDate').value;if(!day){feedback.textContent='Choose an attendance date.';return;}
+ if(!attendanceVerified){feedback.textContent='Saved attendance could not be loaded. Refresh before saving to prevent duplicates.';return;}
+ if(navigator.onLine===false){feedback.textContent='Offline: nothing was queued or saved. Reconnect and refresh first.';return;}
+ const items=[...attendanceDraft.entries()].filter(([k])=>k.startsWith(day+'|')).map(([k,status])=>({student:myStudent(k.slice(day.length+1)),status})).filter(x=>x.student);
+ if(!items.length){feedback.textContent='No changes to save. All displayed statuses are already in the saved register.';return;}
+ const button=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
+ attendanceSaving=true;
+ if(button){button.disabled=true;button.textContent='Saving 0/'+items.length+'…';}
+ feedback.textContent='Saving '+items.length+' changes to the online school register…';
+ const errors=[];let accepted=0;
  try{
-  for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){
-   const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');
-   if(!student||!btn)continue;
-   const old=attendance.find(x=>String(x.studentId)===String(student.id)&&String(x.date).slice(0,10)===day);
-   const status=btn.dataset.status;
+  for(const item of items){
+   const student=item.student,oldRows=attendance.filter(a=>String(a.studentId||'')===String(student.id)&&String(a.date||'').slice(0,10)===day);
+   if(oldRows.length>1){errors.push(student.name+': duplicate saved rows require administrator review');continue;}
    try{
-    if(old){
-     // Existing records must only receive editable fields; the server rejects reassignment keys.
-     await LamaAPI.update('attendance',old.id,{status,date:day,teacherId:me.teacherId||me.id});
+    if(oldRows.length){
+     if(!oldRows[0].id)throw Error('Existing attendance ID missing; cannot safely update');
+     await LamaAPI.update('attendance',oldRows[0].id,{status:item.status,date:day,teacherId:me.teacherId||me.id});
     }else{
-     await LamaAPI.add('attendance',{schoolId:me.schoolId,class:me.assignedClass,section:me.assignedSection||me.section||'',studentId:student.id,enrlNo:student.enrlNo||student.enrollmentNo||'',studentName:student.name,date:day,status,teacherId:me.teacherId||me.id});
+     await LamaAPI.add('attendance',{schoolId:me.schoolId,class:me.assignedClass,section:me.assignedSection||me.section||'',studentId:student.id,enrlNo:student.enrlNo||student.enrollmentNo||'',studentName:student.name,date:day,status:item.status,teacherId:me.teacherId||me.id});
     }
-    ok++;
-   }catch(e){fail++;errors.push(student.name+': '+(e.message||'Unknown error'));console.error('Attendance save failed',e)}
+    accepted++;
+   }catch(e){errors.push(student.name+': '+(e.message||'save rejected'));}
+   if(button)button.textContent='Saving '+(accepted+errors.length)+'/'+items.length+'…';
   }
-  try{await refresh()}catch(e){errors.push('Reload failed: '+e.message)}
-  const detail=errors.length?'\n'+errors.slice(0,3).join('\n')+(errors.length>3?'\nAnd '+(errors.length-3)+' more errors.':''):'';
-  message('Attendance saved: '+ok+'. Failed: '+fail+'.'+(fail?' Review errors below.':'')+detail);
- }finally{if(saveButton){saveButton.disabled=false;saveButton.textContent=saveButton.dataset.previousText||'Save'}}
+  feedback.textContent='Save requests finished. Checking the online attendance register…';
+  try{
+   const rows=await LamaAPI.list('attendance');
+   if(!Array.isArray(rows))throw Error('Invalid verification response');
+   attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId));attendanceVerified=true;
+   let verified=0;
+   for(const item of items){
+    const matches=attendance.filter(a=>String(a.studentId||'')===String(item.student.id)&&String(a.date||'').slice(0,10)===day);
+    if(matches.length===1&&matches[0].status===item.status){attendanceDraft.delete(day+'|'+String(item.student.id));verified++;}
+   }
+   feedback.textContent=(verified===items.length&&errors.length===0?'✓ ':'⚠ ')+'Attendance verified: '+verified+'/'+items.length+' changes. Class: '+me.assignedClass+'.'+(errors.length?' Errors: '+errors.slice(0,2).join('; '):verified<items.length?' Some statuses were not confirmed. Refresh and check before retrying.':' Saved successfully.');
+   updateStats();loadAbsentees();
+  }catch(e){
+   attendanceVerified=false;
+   feedback.textContent='⚠ '+accepted+' save request(s) accepted, but server readback failed: '+e.message+'. Do not repeat Save until the register is refreshed.';
+  }
+  loadAttendanceList();
+ }finally{
+  attendanceSaving=false;
+  if(button){button.disabled=false;button.textContent='💾 Save';}
+ }
 }
 function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
 function loadHomework(){let items=homework.filter(h=>mine(h));const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':'Draft'}</p></div><button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button></div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}

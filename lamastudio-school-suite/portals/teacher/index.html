@@ -146,9 +146,9 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
             <div class="flex flex-wrap justify-between items-center gap-3">
                 <div>
                     <h2 class="text-xs font-black uppercase text-red-400">Today's Absentees</h2>
-                    <p class="text-[10px] text-slate-400">Tap WhatsApp or SMS to open a pre-filled message to that parent.</p>
+                    <p class="text-[10px] text-slate-400">Open a WhatsApp draft or call the guardian. Messages are not sent automatically.</p>
                 </div>
-                <button onclick="loadAbsentees()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition">↻ Refresh</button>
+                <button onclick="refresh().catch(e=>message('Could not reload attendance: '+e.message))" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition">↻ Refresh</button>
             </div>
             <div id="absenteesList" class="space-y-2"></div>
             <p id="absenteesEmpty" class="text-center text-sm text-slate-400 py-6 hidden">Checking saved absentees…</p>
@@ -509,7 +509,27 @@ async function saveAttendance(){
  }
  await verifyTeacherStudentPending();
 }
-function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
+function loadAbsentees(){
+ const el=$('absenteesList'),empty=$('absenteesEmpty'),s=verifiedClassAttendance();
+ if(!s.ready||attendanceSavePending||s.duplicates.length){
+  el.innerHTML='';empty.classList.remove('hidden');
+  empty.textContent=attendanceSavePending?'Attendance save is awaiting verification; recheck before contacting parents.':
+   s.duplicates.length?'Duplicate attendance rows require school administrator review.':
+   'Saved attendance has not been verified. Refresh before parent follow-up.';
+  return;
+ }
+ const list=s.absentees;empty.classList.toggle('hidden',list.length>0);
+ empty.textContent=s.unmarked?'No saved absentees today; '+s.unmarked+' student(s) not yet marked.':
+  'No absent students today. '+(s.present+s.absent+s.leave)+' of '+s.total+' records saved.';
+ el.innerHTML=list.map(student=>{
+  const number=String(student.whatsapp||student.contact||student.guardianCell||'').replace(/\D/g,'');
+  const phone=number.startsWith('0')&&number.length===11?'92'+number.slice(1):number.length===10&&number.startsWith('3')?'92'+number:number;
+  const valid=/^\d{10,15}$/.test(phone);
+  const note=encodeURIComponent('Dear Parent/Guardian, '+(student.name||'your child')+' is marked absent on '+localDate()+'. Please contact the school if assistance is needed. Thank you. — '+(me.schoolName||'School'));
+  const links=valid?'<a class="text-xs text-emerald-300 underline" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+phone+'?text='+note+'">WhatsApp draft</a><a class="text-xs text-cyan-300 underline" href="tel:+'+phone+'">Call parent</a>':'<span class="text-xs text-slate-500">No valid parent phone</span>';
+  return '<div class="bg-slate-950 rounded-xl p-3 flex items-center justify-between gap-3"><div><b class="text-sm">'+esc(student.name)+'</b><p class="text-xs text-red-300">Absent · '+esc(localDate())+' · Saved and verified</p></div><div class="flex flex-wrap gap-3">'+links+'</div></div>';
+ }).join('');
+}
 function loadHomework(){let items=homework.filter(h=>mine(h));const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':'Draft'}</p></div><button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button></div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
 async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');if(me.subject&&norm(subject)!==norm(me.subject))return message('Use your assigned subject');try{await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();message('Published for your class')}catch(e){message('Save failed: '+e.message)}}
 async function deleteHomework(id){const x=homework.find(h=>String(h.id)===String(id));if(!x||!mine(x))return message('Only your entries can be removed');if(!confirm('Delete homework?'))return;try{await LamaAPI.remove('homework',id);await refresh()}catch(e){message(e.message)}}

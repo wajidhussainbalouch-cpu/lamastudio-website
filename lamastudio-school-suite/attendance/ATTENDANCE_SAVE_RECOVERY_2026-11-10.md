@@ -79,3 +79,23 @@
 - The master backend now routes single-student `add attendance` through `addStudentAttendanceOnce_`, a **script-locked idempotent write**. It resolves the canonical student and authorized class, checks the selected date in the school's own timezone, and returns an existing matching row without appending. A differing status, duplicate existing student/day record, invalid student/date or unauthorized class is rejected without a write.
 - New `backend-api/test-student-attendance-single-idempotence.cjs` checks duplicate HTTP retries, correct student ID, conflicting marks, teacher class permissions, invalid dates, preexisting duplicates and lock release. Passed in isolated mock execution. Total attendance-focused mock checks in CI: **10**.
 - Existing repeated rows must still be reconciled carefully from a verified backup under explicit owner approval. This new code **does not silently delete or collapse** old entries. Frontend + matching Apps Script backend must be validated against a disposable test school and deployed together before claiming a live fix.
+
+## 11 November 2026 — Faster verified bulk attendance and class-completion display
+
+A new screenshot showed a **12-second "Saving" state** while the register displayed **349 students: 20 Present, 18 Absent, 0 Leave and 311 Unmarked**. This is **38 selected marks, not 349 completed school-wide**. The previous UI counted local selections during saving, making submitted vs officially saved attendance unclear. The 12-second observation is not an independently measured server benchmark.
+
+### Changes in draft PR #86 only
+- `backend-api/bulk-attendance-backend.gs`: after batched Google Sheets writes and `SpreadsheetApp.flush()`, re-read the **selected school date** inside the same request and check each submitted student/date/status has exactly one matching persisted record. Return `verification:'confirmed'` and `verifiedDateRecords` only when the readback matches. If it fails, refuse to claim success and preserve the client's pending state; **never resend automatically**. Existing idempotent/deduplication safeguards remain.
+- `backend-api/code.gs`: new **POST-only**, verified-school-admin `attendanceDateSnapshot` action, returning only rows from one school-local date. No student data or login system is created. `js/api-client.js` provides `LamaAPI.attendanceDateSnapshot(date)` with the existing school-admin token.
+- `attendance/student-attendance-v2.html`: consume the server-verified date records immediately when provided, avoiding a **second full-history HTTP request after Save**. A read-only date-specific request is used when verification is needed; only an older backend's unknown-action response triggers the existing full-history fallback.
+- Present/Absent/Leave cards show **selected totals** and separate **verified/pending** counts. A distinct completion banner displays **selected-class verified totals** and **whole-school verified totals**. No "Day complete" statement appears until all registered students are independently verified; a class may be complete while other classes are still pending.
+- For the screenshot's modeled 38-student Class 5, after verified save, the UI says **Class 5 38/38 saved and verified (20 Present, 18 Absent, 0 Leave)** and **Whole school 38/349 confirmed, 311 remaining**.
+- The Save progress/elapsed indicator now measures **the Save and verification operation**, not an earlier roster load. Mark-visible-present applies all marks in one page render instead of rerendering the entire roster once per student.
+- Student, staff, and teacher-portal duplicate and uncertain-save protections remain. `attendance-integrity.html` is the read-only reconciliation screen; this change does not remove historical duplicate records.
+
+### Verification and release
+- New `attendance/test-attendance-save-completion.cjs` checks the 20/18/311 scenario, exact class-vs-school completion, batched render, and zero extra read HTTP calls after an already verified save.
+- New `backend-api/test-attendance-bulk-confirmation.cjs` simulates 38 school records, an actual Sheets date conversion, repeat writes, existing duplicates and stale readback refusal.
+- The attendance workflow now runs **12** regression scripts; all **12 passed in isolated source-level mocks**. Real Apps Script/Google Sheets/network latency, Android Chrome and parent notifications have not been performance-tested.
+- No automatic school Sheets cleanup, production merge, Apps Script update or Vercel deployment. Actual speed improvements require a disposable-school integration test and explicit release approval. Save latency may still include the existing synchronous parent-portal notification update, which was not removed.
+

@@ -211,7 +211,11 @@ body:before{
                         </div>
                         <h1 id="headerSchoolName" class="school-title text-3xl sm:text-5xl font-black tracking-tight gradient-text">School Name</h1>
                         <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-200/85 mt-2">School information</p>
-                        <p class="text-xs text-cyan-200 mt-2 font-bold">School ID: <span id="schoolIdDisplay">Loading…</span> <button type="button" onclick="copySchoolId()" class="ml-2 underline">Copy</button></p>
+                        <div class="mt-2 text-xs text-cyan-200 font-bold">
+    <span>School ID: </span><span id="schoolIdDisplay" class="select-text break-all">Loading…</span>
+    <button id="copySchoolIdButton" type="button" onclick="copySchoolId()" class="ml-2 underline rounded-lg px-2 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" aria-label="Copy School ID to clipboard">Copy</button>
+    <span id="copySchoolIdFeedback" role="status" aria-live="polite" class="ml-2 text-emerald-200"></span>
+</div>
                     </div>
                 </div>
             </div>
@@ -602,8 +606,51 @@ function normalizeExamRows(records) {
     const sortKey = d => { const x=String(d||''); const m=x.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : x; };
     return rows.sort((a,b)=>sortKey(a.date).localeCompare(sortKey(b.date)));
 }
-function copySchoolId() {
-    if (window.currentSchoolId && navigator.clipboard) navigator.clipboard.writeText(window.currentSchoolId);
+async function copySchoolId() {
+    const display = document.getElementById('schoolIdDisplay');
+    const button = document.getElementById('copySchoolIdButton');
+    const feedback = document.getElementById('copySchoolIdFeedback');
+    const id = String(window.currentSchoolId || display?.textContent || '').trim();
+    const show = (text, copied = false) => {
+        if (feedback) feedback.textContent = text;
+        if (button) {
+            button.textContent = copied ? '✓ Copied' : 'Copy';
+            button.setAttribute('aria-label', copied ? 'School ID copied to clipboard' : 'Copy School ID to clipboard');
+        }
+    };
+    if (!id || id === 'Loading…' || id === 'Not configured') {
+        show('School ID is not available yet.');
+        return false;
+    }
+
+    // Highlight the precise ID for easy manual copying on older Android phones.
+    try {
+        const selection = window.getSelection?.();
+        if (display && selection && document.createRange) {
+            const range = document.createRange();
+            range.selectNodeContents(display);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    } catch (error) { console.warn('School ID selection unavailable', error); }
+
+    // Copy synchronously while the user gesture is active, then try modern API.
+    let copied = false;
+    try {
+        if (typeof document.execCommand === 'function') copied = document.execCommand('copy') === true;
+    } catch (error) { console.warn('Legacy clipboard copy failed', error); }
+    if (!copied && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        try {
+            await navigator.clipboard.writeText(id);
+            copied = true;
+        } catch (error) { console.warn('Clipboard permission denied', error); }
+    }
+    if (copied) {
+        show('School ID copied successfully.', true);
+        return true;
+    }
+    show('School ID selected. Long-press it and choose Copy.');
+    return false;
 }
 
 async function render(){

@@ -125,7 +125,7 @@
     status.textContent = 'Generating a reply…';
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
+    const timeout = setTimeout(() => controller.abort(), 34000);
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',

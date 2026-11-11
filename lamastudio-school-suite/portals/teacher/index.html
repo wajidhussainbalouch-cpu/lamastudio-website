@@ -364,7 +364,9 @@ function showStudentRecord(id){
 
 function loadAttendanceList(){
  const day=$('attDate').value,root=$('attendanceList'),pending=attendanceSavePending;
- const locked=!!pending||!attendanceReadReady||attendanceVerifyBusy||attendanceSaveBusy;
+ const snapshot=verifiedClassAttendance(day);
+ const locked=!!pending||!attendanceReadReady||attendanceVerifyBusy||attendanceSaveBusy||!!snapshot.duplicates.length;
+ displayClassAttendanceSummary();
  const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
  if(saveButton)saveButton.disabled=locked;
  $('attDate').disabled=!!pending;
@@ -372,7 +374,7 @@ function loadAttendanceList(){
  note.classList.toggle('hidden',attendanceReadReady&&!pending);
  note.textContent=pending?
    (pending.problem||pending.records.length+' submitted mark(s) are NOT verified. Do not Save again. Use read-only Recheck and inspect the school sheet.'):
-   (!attendanceReadReady?'Saved attendance unavailable. Wait for a successful refresh before marking.':'');
+   (!attendanceReadReady?'Saved attendance unavailable. Wait for a successful refresh before marking.':snapshot.duplicates.length?'Duplicate student/date records found. Saving locked: request School Admin review.':'');
  recheck.classList.toggle('hidden',!pending);
  recheck.disabled=attendanceVerifyBusy||attendanceSaveBusy;
  $('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);
@@ -384,8 +386,7 @@ function loadAttendanceList(){
   const saved=attendanceRecordsFor(attendance,student,day);
   const current=saved.length===1?saved[0]:null;
   const selected=attempted?.status||draft||current?.status||'';
-  const label=attempted?' · Submitted, NOT verified':draft&&!pending?' · Unsaved choice':
-   saved.length>1?' · Duplicate cloud records — contact School Admin':'';
+  const label=saved.length>1?' · Duplicate cloud records — contact School Admin':attempted?' · Submitted, NOT verified':draft&&!pending?' · Unsaved choice':current?.status?' · ✓ Saved: '+current.status:' · Not yet saved';
   const buttons=['Present','Absent','Leave'].map(status=>
    '<button type="button" class="att-btn '+(selected===status?'att-active-'+status.toLowerCase():'')+
    '" data-status="'+status+'" onclick="setAttStatus(this,\''+status+'\')" '+
@@ -397,13 +398,14 @@ function loadAttendanceList(){
  }).join('');
 }
 function setAttStatus(button,status){
- if(attendanceSavePending||!attendanceReadReady||attendanceVerifyBusy||attendanceSaveBusy)
-  return message('Attendance cannot be edited until the cloud register is verified.');
+ if(attendanceSavePending||!attendanceReadReady||attendanceVerifyBusy||attendanceSaveBusy||verifiedClassAttendance($('attDate').value).duplicates.length)
+  return message('Attendance cannot be edited until cloud records are verified and duplicates resolved.');
  const row=button.closest('[data-student-id]');
  if(!row)return;
  attendanceDrafts.set($('attDate').value+'|'+String(row.dataset.studentId),status);
  row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');
  button.className='att-btn att-active-'+status.toLowerCase();
+ displayClassAttendanceSummary();
 }
 /** Read-only server check after ambiguous saves. Never resend any record here. */
 async function verifyTeacherStudentPending(){
@@ -457,6 +459,7 @@ async function verifyTeacherStudentPending(){
 async function saveAttendance(){
  if(attendanceSavePending)return message('Previous attendance save is unverified. Recheck the server, not Save again.');
  if(!attendanceReadReady)return message('Saved attendance is unavailable. Refresh before submitting.');
+ if(verifiedClassAttendance($('attDate').value).duplicates.length)return message('Duplicate saved attendance found. Administrator must review records before new writes.');
  if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');
  const day=$('attDate').value;
  if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return message('Choose a valid date');

@@ -27,7 +27,8 @@ const helpers=html.slice(helpersStart,helpersEnd);
   },
   timeout:async p=>p,array:x=>Array.isArray(x)?x:null,
   asDate:x=>String(x||'').slice(0,10),status:x=>x,
-  id:x=>x.id,enr:x=>x.enrlNo,cls:x=>x.class,qrSaving:false,confirm:()=>true
+  id:x=>x.id,enr:x=>x.enrlNo,cls:x=>x.class,duplicateAttendanceGroups:()=>0,
+  qrSaving:false,confirm:()=>true
  };
  const actions=new Function(...Object.keys(deps),
   helpers+source+"return {save:$('save').onclick,verifyPendingAttendance};"

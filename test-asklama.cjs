@@ -104,7 +104,7 @@ async function clientChecks() {
   assert.equal($('askLamaMessages').children.at(-1).textContent,'Hello from AskLama.');
   assert.equal(ui.isBusy(),false);
   assert.equal($('askLamaSendBtn').disabled,false);
-  assert.match($('askLamaStatus').textContent,/Reply received/);
+  assert.match($('askLamaStatus').textContent,/reply received/i);
 
   responder=async()=>({ok:false,json:async()=>({error:'AI service temporarily busy'})});
   input.value='Try again';

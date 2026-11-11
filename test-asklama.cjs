@@ -199,6 +199,39 @@ async function backendChecks(){
   assert.match(schoolLogin.data.text,/School ID/);
   assert.equal(requests.length,0);
 
+  const academyQuestions=[
+    'Today tell me about ppsc preparation',
+    'Does LAMA Studio have PPSC preparation?',
+    'Tell me about the Headmaster test academy',
+    'What is LAMA PPSC Preparation Academy?',
+    'Can I prepare for Senior Headmistress BS-18?',
+    'Tell me about this page'
+  ];
+  for (const question of academyQuestions) {
+    const reply=makeResponse();
+    await ctx.handler({method:'POST',body:{prompt:question,pagePath:'/education-academy/'}},reply);
+    assert.equal(reply.code,200,'PPSC should reply immediately: '+question);
+    assert.equal(reply.data.source,'site-guide','PPSC questions must bypass flaky Gemini: '+question);
+    assert.match(reply.data.text,/LAMA PPSC Preparation Academy/i);
+    assert.match(reply.data.text,/Headmaster\/Headmistress/);
+    assert.match(reply.data.text,/education-academy/);
+    assert.doesNotMatch(reply.data.text,/rather than exam preparation|does not offer preparation|no PPSC/i);
+  }
+  assert.equal(requests.length,0,'Verified PPSC answers cannot call Gemini');
+  const greeting=makeResponse();
+  await ctx.handler({method:'POST',body:{prompt:'Hello'}},greeting);
+  assert.equal(greeting.data.source,'site-guide');
+  assert.match(greeting.data.text,/PPSC Preparation Academy/);
+  assert.equal(requests.length,0);
+  const academyFees=makeResponse();
+  await ctx.handler({method:'POST',body:{prompt:'What is PPSC academy subscription price?'}},academyFees);
+  assert.equal(academyFees.data.source,'site-guide');
+  assert.doesNotMatch(academyFees.data.text,/Rs\. 1,500/,'School Suite price must not be substituted for Academy fees');
+  const studioCatalog=makeResponse();
+  await ctx.handler({method:'POST',body:{prompt:'What are your projects?'}},studioCatalog);
+  assert.match(studioCatalog.data.text,/LAMA PPSC Preparation Academy/);
+  assert.equal(requests.length,0);
+
   ctx.process.env.GEMINI_API_KEY='';
   const noKey=makeResponse();
   await ctx.handler({method:'POST',body:{prompt:'Another question'}},noKey);

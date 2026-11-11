@@ -86,7 +86,8 @@ const deps={
  message:x=>messages.push(String(x)),render:()=>{},
  timeout:async p=>p,array:v=>Array.isArray(v)?v:null,
  asDate:x=>String(x||'').slice(0,10),status,id,cls,enr,
- duplicateAttendanceGroups:()=>0,qrSaving:false,confirm:()=>true
+ duplicateAttendanceGroups:()=>0,qrSaving:false,confirm:()=>true,
+ setInterval:()=>1,clearInterval:()=>{}
 };
 const actions=new Function(...Object.keys(deps),
  helpers+save+"return {save:$('save').onclick,verifyPendingAttendance};"

@@ -187,7 +187,8 @@ function bulkAttendanceRecords(params) {
  */
 function readAttendanceDateRecords_(ctx,date,sheet,headers){
   const day=String(date||'').trim();
-  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day)||
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||
+      !Number.isFinite(Date.parse(day+'T12:00:00Z'))||
       new Date(day+'T12:00:00Z').toISOString().slice(0,10)!==day)
     throw Error('Invalid attendance date for verification');
   if(!sheet){

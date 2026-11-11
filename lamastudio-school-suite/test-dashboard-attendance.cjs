@@ -5,7 +5,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'dashboard.html'),'utf8');
-const start=html.indexOf('function renderStudentAttendanceCard(attendance,students){');
+const start=html.indexOf('function renderStudentAttendanceCard(attendance,students,attendanceLoaded=true){');
 const end=html.indexOf('function normalizeAttendanceDate(value){',start);
 assert.ok(start>=0&&end>start,'Admin attendance renderer not found');
 const elements=new Map();
@@ -42,6 +42,13 @@ assert.match(getElementById('studentAttHint').textContent,/Present among marked:
 render([],students);
 assert.equal(getElementById('studentAttRate').textContent,'0%');
 assert.match(getElementById('studentAttHint').textContent,/0 of 3 students marked/);
+render(records,students,false);
+assert.equal(getElementById('studentAttRate').textContent,'—','Failed attendance read must not look like 0%');
+assert.equal(getElementById('studentAttPresent').textContent,'—');
+assert.match(getElementById('studentAttHint').textContent,/could not be loaded/);
+assert.match(getElementById('dashboardAbsentFollowup').textContent,/Follow-up paused/);
+render(records,students,true);
+assert.equal(getElementById('studentAttRate').textContent,'67%');
 
 const scriptMatch=html.match(/<script id="lama-daily-checklist-script">([\s\S]*?)<\/script>/);
 assert.ok(scriptMatch,'Daily checklist source script missing');
@@ -78,4 +85,14 @@ new Function('window','document','sessionStorage','localStorage','localISODate',
 assert.equal(boxes.find(b=>b.dataset.taskCheck==='teachers').checked,true);
 assert.equal(boxes.find(b=>b.dataset.taskCheck==='attendance').checked,false);
 assert.match(getElementById('dailyChecklistProgress').textContent,/1 of 5 completed/);
-console.log('PASS: 2/3 coverage 67%, 2/2 present among marked 100%; class 4 incomplete; token-only admin checklist auto-confirms 2/2 teachers.');
+window.__dashboardData.attendance=[...records,{studentId:'s3',date:today,status:'Present'}];
+window.__dashboardData.studentAttendanceLoaded=false;
+window.lamaRefreshDailyChecklist();
+assert.equal(boxes.find(b=>b.dataset.taskCheck==='attendance').checked,false,
+ 'A failed student-attendance read cannot auto-complete the checklist even with stale saved data.');
+window.__dashboardData.studentAttendanceLoaded=true;
+window.lamaRefreshDailyChecklist();
+assert.equal(boxes.find(b=>b.dataset.taskCheck==='attendance').checked,true,
+ 'Three unique saved students must auto-complete student checklist.');
+assert.match(getElementById('dailyChecklistProgress').textContent,/2 of 5 completed/);
+console.log('PASS: 67% coverage vs 100% marked presence; failed reads show unknown not zero; token-only checklist respects verified 3/3 students and 2/2 teachers.');

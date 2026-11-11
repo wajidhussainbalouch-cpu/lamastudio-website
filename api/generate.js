@@ -8,39 +8,57 @@ const LAMA_SITE_FACTS = [
   'LAMA School Suite starting price: Rs. 1,500. This is a starting price only; billing period and school-specific plan terms must be confirmed with LAMA Studio.',
   'LAMA Studio WhatsApp contact for product information: 03437064536.',
   'LAMA School Suite site and registration: https://www.lamastudio.pk/lamastudio-school-suite/',
-  'LAMA PPSC Preparation Academy: competitive examination preparation, job-specific syllabi and practice papers; https://www.lamastudio.pk/education-academy/',
+  'LAMA PPSC Preparation Academy: LAMA Studio competitive-examination preparation platform, with job-wise syllabus resources, MCQ practice papers, mock tests and score/weak-area review. Priority tracks include Headmaster/Headmistress BS-17 and Senior Headmaster/Headmistress BS-18. Its availability and current content vary by job category; https://www.lamastudio.pk/education-academy/',
   'LAMA Kids Learning: child-focused learning activities. LAMA IQ Test: separate IQ and practice-question app.',
   'LamaSky: weather application. LAMA VPN Pro: separate VPN app. Do not confuse these products.',
   'The School Suite has school, teacher, and student/parent logins. A School ID identifies the school; users must still sign in with their authorized credentials.',
   'Do not request or display private school records, passwords, student details or billing history.'
 ].join('\n');
 
-function getSiteAnswer(prompt) {
-  const q = String(prompt || '').toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+function getSiteAnswer(prompt, pagePath = '/') {
+  const q = String(prompt || '').toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   if (!q) return null;
-  const has = expression => expression.test(q);
-  const school = has(/\b(school|schools|erp|management software|school suite|school suit|اسکول|سکول|مدرسہ)\b/u);
-  const price = has(/\b(price|cost|fees?|charges?|rates?|subscription|pricing|buy|purchase|قیمت|فیس|ریٹ|کتنے|پیسا|روپے|روپیہ)\b/u);
+  const has = re => re.test(q);
+  const ppsc = has(/\b(ppsc|pps c|headmaster|headmistress|competitive (?:exam|test)|preparation academy|public service commission|hm bs 17|shm bs 18)\b/u)
+    || /پنجاب پبلک سروس|پی پی ایس سی|ہیڈ ماسٹر|ہیڈ مسٹریس/u.test(q);
+  const school = has(/\b(school|schools|erp|management software|school suite|school suit)\b/u)
+    || /اسکول|سکول|مدرسہ/u.test(q);
+  const price = has(/\b(price|cost|fees?|charges?|rates?|subscription|pricing|buy|purchase)\b/u)
+    || /قیمت|فیس|ریٹ|کتنے|پیسا|روپے|روپیہ/u.test(q);
+  const vague = has(/\b(what is this|what does this (?:page|website) offer|tell me about (?:this|the) (?:page|website)|what can i do here|about this page)\b/u)
+    || /اس صفحے|اس پیج|یہ کیا ہے/u.test(q);
+
+  // Always identify an explicitly named LAMA product *before* sending the
+  // question to a general language model. This prevents false denials of a
+  // real product such as the LAMA PPSC Preparation Academy.
+  if (ppsc || (vague && String(pagePath).startsWith('/education-academy/'))) {
+    if (price && !school) {
+      return 'LAMA PPSC Preparation Academy is a LAMA Studio project. Current subscription prices and access terms should be checked directly on https://www.lamastudio.pk/education-academy/ or with LAMA Studio on WhatsApp 03437064536. Do not confuse its fees with the School Suite starting price.';
+    }
+    return 'Yes—LAMA Studio has a LAMA PPSC Preparation Academy for competitive-examination preparation. It focuses on job-wise syllabi, MCQ practice papers, timed mock exams and progress or weak-area analysis. Priority tracks include Headmaster/Headmistress (BS-17) and Senior Headmaster/Headmistress (BS-18); check the academy for the latest available job categories and study materials. Visit https://www.lamastudio.pk/education-academy/. This is a separate project from LAMA School Suite.';
+  }
   if (school && price) return 'LAMA School Suite starts from Rs. 1,500. This is a starting price, not a confirmed monthly fee. For current plans, a demo, and school-specific pricing, WhatsApp 03437064536 or visit https://www.lamastudio.pk/lamastudio-school-suite/';
-  if (school && has(/\b(what is|about|features?|modules?|benefits?|manage|attendance|results?|exams?|how does|سہولیات|خصوصیات|کیا ہے|کیا کرتا)\b/u))
+  if (school && (has(/\b(what is|about|features?|modules?|benefits?|manage|attendance|results?|exams?|how does)\b/u)
+       || /سہولیات|خصوصیات|کیا ہے|کیا کرتا/u.test(q) || vague))
     return 'LAMA School Suite is LAMA Studio’s school management platform, designed for student and teacher records, attendance, examinations and results, syllabus planning, fees and school communications. Some functions may be in testing. Explore the platform or request a demonstration at https://www.lamastudio.pk/lamastudio-school-suite/; WhatsApp 03437064536.';
-  if (school && has(/\b(login|log in|sign in|access|school id|teacher|student|parent|لاگ ان|آئی ڈی)\b/u))
+  if (school && (has(/\b(login|log in|sign in|access|school id|teacher|student|parent)\b/u) || /لاگ ان|آئی ڈی/u.test(q)))
     return 'Open the LAMA School Suite page at https://www.lamastudio.pk/lamastudio-school-suite/ and choose your school, teacher or student/parent portal. Use your own School ID and authorized account credentials. School IDs can be copied from the school board. Ask your school administrator for account access—never share your password in chat.';
-  if (has(/\b(whatsapp|contact|support|phone|telephone|helpline|number|رابطہ|واٹس ایپ|فون نمبر)\b/u))
+  if (vague && String(pagePath).startsWith('/lamastudio-school-suite/'))
+    return 'You are viewing LAMA School Suite, LAMA Studio’s school management software. It covers school records, student and staff attendance, exams and results, and other school operations. Explore https://www.lamastudio.pk/lamastudio-school-suite/ or WhatsApp 03437064536 for plans.';
+  if (has(/\b(whatsapp|contact|support|phone|telephone|helpline|number)\b/u) || /رابطہ|واٹس ایپ|فون نمبر/u.test(q))
     return 'You can contact LAMA Studio about software, registration or demonstrations on WhatsApp: 03437064536. Official website: https://www.lamastudio.pk/';
-  if (has(/\b(ppsc|headmaster|headmistress|competitive exam|preparation academy|پنجاب پبلک سروس)\b/u))
-    return 'LAMA PPSC Preparation Academy provides job-specific competitive-test preparation, syllabi and practice questions. Visit https://www.lamastudio.pk/education-academy/ for the available categories and sample materials.';
-  if (has(/\b(lamasky|lama sky|weather app|موسم)\b/u))
+  if (has(/\b(lamasky|lama sky|weather app)\b/u) || /موسم/u.test(q))
     return 'LamaSky is the LAMA Studio weather app. It is separate from LAMA VPN Pro. Explore LAMA Studio’s apps at https://www.lamastudio.pk/#apps.';
   if (has(/\b(vpn|lama vpn)\b/u))
     return 'LAMA VPN Pro is a separate VPN-related application, not the weather app LamaSky. Visit https://www.lamastudio.pk/#apps for the LAMA Studio app catalog.';
-  if (has(/\b(iq test|lama iq|kids learning|children learning|بچوں کی تعلیم)\b/u))
+  if (has(/\b(iq test|lama iq|kids learning|children learning)\b/u) || /بچوں کی تعلیم/u.test(q))
     return 'LAMA IQ Test focuses on IQ/practice questions, while LAMA Kids Learning focuses on children’s learning activities. These are separate projects. Browse them at https://www.lamastudio.pk/#apps.';
-  if (has(/\b(what is lama studio|about lama studio|who are you|what is this website|what can this site do|لاما اسٹوڈیو)\b/u))
-    return 'LAMA Studio is an independent software and education studio developing tools for schools, learners and everyday digital tasks. The website is https://www.lamastudio.pk/. You can browse projects, developer tools, school software and the education academy.';
+  if (has(/\b(what is lama studio|about lama studio|who are you|what is this website|what can this site do|your (?:products|projects|apps)|products of lama|lama projects|studio projects)\b/u) || /لاما اسٹوڈیو/u.test(q))
+    return 'LAMA Studio develops software and education projects, including LAMA School Suite, LAMA PPSC Preparation Academy, LAMA Kids Learning, LAMA IQ Test, LamaSky weather and LAMA VPN Pro. Browse https://www.lamastudio.pk/ for project information or WhatsApp 03437064536 for product questions.';
+  if (has(/^(hello|helo|hi|hey|salam|assalam o alaikum|السلام علیکم|ہیلو)(\s+(asklama|lama|there))?$/u))
+    return 'Hello! 👋 Welcome to LAMA Studio. I can help you with LAMA School Suite, our PPSC Preparation Academy, learning apps and software tools. What would you like to know?';
   return null;
 }
-
 function getPageContext(raw) {
   const path = typeof raw === 'string' && raw.startsWith('/') ? raw.slice(0,100) : '/';
   if (path.startsWith('/lamastudio-school-suite/')) return 'Visitor is viewing a LAMA School Suite page.';
@@ -57,6 +75,8 @@ const SYSTEM_GUIDE = [
   'LAMA Studio develops education and software projects, including LAMA School Suite.',
   'Do not claim you accessed private school data, payment records, accounts or live app status.',
   'When information about a LAMA product is unavailable, explain the uncertainty.',
+  'NEVER claim LAMA Studio does not provide PPSC or competitive-examination preparation: the LAMA PPSC Preparation Academy is an explicit verified product.',
+  'Do not confuse LAMA School Suite (school management) with LAMA PPSC Preparation Academy (exam preparation).',
   'Do not request passwords, student records, financial information or secret API keys.',
   'Use these verified public facts as grounding. Never make up prices, billing periods or release promises:',
   LAMA_SITE_FACTS
@@ -100,7 +120,7 @@ export default async function handler(req, res) {
     return res.status(400).json({error:'Please enter a question of up to 1,200 characters.'});
   }
 
-  const directAnswer = getSiteAnswer(prompt);
+  const directAnswer = getSiteAnswer(prompt, body.pagePath);
   if (directAnswer) return res.status(200).json({text:directAnswer,source:'site-guide'});
 
   const apiKey = process.env.GEMINI_API_KEY;

@@ -1230,7 +1230,7 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
   const session=window.LamaAPI&&typeof LamaAPI.getSession==='function'?LamaAPI.getSession('school'):null;
   let admin=null;try{admin=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(e){}
   // The school administrator may use a token-only login without a legacy school session.
-  const schoolId=session?.schoolId||(admin?.token&&admin?.schoolId?admin.schoolId:'');if(!schoolId)return;
+  const schoolId=admin?.token&&admin?.schoolId?admin.schoolId:(session?.schoolId||'');if(!schoolId)return;
   const day=typeof localISODate==='function'?localISODate():new Date().toLocaleDateString('en-CA');
   const key='lama-admin-daily-checklist:'+schoolId+':'+day;
   let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(e){}

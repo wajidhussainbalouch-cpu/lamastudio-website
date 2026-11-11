@@ -1,5 +1,20 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Kot Addu additional posts & reusable question-bank model — 11 November 2026
+
+Six new screenshots included one previously registered Bahawalpur Junior Clerk and five new Kot Addu tracks: Junior Clerk DC, Stenographer DC, Junior Clerk ADC Revenue (32J2026), Stenographer ADC and Junior Computer Operator ADC (34J2026). The new screenshot transcription and case-specific skill rules are stored in PPSC_KOT_ADDU_ADDITIONAL_SYLLABI_2026.json. Jobs are published in the preparation catalog with vacancy_status='unverified'; blank case numbers are deliberately left blank when illegible.
+
+**Shared-bank reuse:** shared-paper-bank.js derives two 100-MCQ, 80% General Ability / 20% MS Office papers **per** newly added Junior Clerk job from the existing 200-question Junior Clerk bank. A further 100-MCQ Junior Computer Operator practice paper is composed solely from eligible existing Office/IT questions. Questions and answer options are deterministically shuffled, with sourceQuestionId retained and distinct paper/attempt histories. No original source item is repeated between a single Junior Clerk job's Paper 1 and Paper 2. Cross-job sharing is intentional, not duplication of new content.
+
+**Inventory:** 28 original source papers (2,800 original paper positions) + **5 derived shared-bank paper variants** (500 reused positions) = 33 selectable papers / 3,300 positions. There were **no newly authored MCQs** in this update. Private Supabase editorial question-bank row count remains 2,630, while public job catalog includes 17 tracks.
+
+**Practical tracks:** Both Stenographer (BS-15) jobs use stenography.html, an English/Urdu typing WPM estimation and manual shorthand timing page. Neither has a fabricated 100-MCQ exam. DC Urdu stages and ADC Urdu preference wording follow the supplied PPSC screenshots. The academy and PWA are linked to this new skills page.
+
+**Checks:** GitHub Actions PPSC Academy Quality Checks run 43061087101 succeeded, including shared-bank provenance, IT-only/80-20 composition, older paper regressions and offline references. Live deployment, device testing and human subject-matter approval remain outstanding. See KOT_ADDU_SHARED_QUESTION_BANK_RELEASE_2026-11-11.md.
+
+**Next Continue:** Expand the reusable topic pool and add typing/proficiency training for Junior Clerk and Junior Computer Operator based on authentic typing standards, rather than copying the same 100 questions into each job's private question records.
+
+
 ## Secretary 'A' Class Market Committee (BS-17) — Paper 01 completed (11 November 2026)
 
 **Now in the source academy:** PPSC Advt. 08/2026, Secretary 'A' Class Market Committee (**BS-17**, corrected from prior BS-16 transcription), job \`secretary-a-market-pamra\`, paper \`SAC-PAMRA-2026-P01\`, 100 newly authored questions \`SAC01-001\`–\`SAC01-100\`, 90-minute practice test. The source follows **60 qualification-related / 40 General Ability**, with editorial specialist choices in Agricultural Economics, Marketing, Agribusiness Finance, Supply Chain and applied research. Specific practice subtopic percentages are **not official PPSC weightages**.

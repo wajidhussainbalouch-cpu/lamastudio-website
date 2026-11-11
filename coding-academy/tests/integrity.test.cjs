@@ -47,7 +47,7 @@ for(const p of projects){
 }
 const full=count();
 assert.equal(full.done,52,"All real lessons must reach 52/52");
-assert.deepEqual(full.items.map(x=>x.done),[12,18,10,12]);
+assert.deepEqual(Array.from(full.items,x=>x.done),[12,18,10,12]);
 modules.studio.checks[projects[0].id][projects[0].steps[0].id].reviewed=false;
 assert.equal(count().done,51,"An unreviewed portfolio milestone cannot be counted");
 modules.studio.checks[projects[0].id][projects[0].steps[0].id].reviewed=true;

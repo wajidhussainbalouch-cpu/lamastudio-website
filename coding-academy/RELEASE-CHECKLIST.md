@@ -58,3 +58,14 @@ Status: engineering checklist; manual verification required. Do not enable cloud
 - [ ] Merge the draft PR only after independent review and explicit launch authorization.
 
 Automated test suite: practice.test.cjs, studio.test.cjs, python.test.cjs, progress.test.cjs, cloud.test.cjs and privacy.test.cjs. Passing this list's automated tests does NOT imply the blocked live account/backend tests have been carried out.
+
+## F. Phase 8 device diagnosis (do on real Android and desktop)
+
+- [ ] Open coding-academy/diagnostics.html from the feature preview or an approved test deployment, not the still-unmodified live production site.
+- [ ] Run eight local capability checks on Android Chrome and desktop Chrome/Firefox. Record any warning and whether cached pages work in airplane mode.
+- [ ] Verify the page does not prompt for email, read private lesson content for the report, or start a Python download automatically.
+- [ ] After explaining mobile-data use, explicitly press Test Python now; verify the real runtime loads, prints 5, and passes its test. Repeat on a lower-memory Android device.
+- [ ] Test Stop during a long initial download or slow program. Verify the worker is terminated without freezing the app.
+- [ ] Download an anonymous JSON diagnostic and confirm it has only check identifiers, statuses, and Python pass/fail status—no saved student code or identifiers.
+- [ ] Verify every renamed or new lesson is reflected in tests/integrity.test.cjs and the 52-activity aggregation.
+- [ ] Review the results alongside real lesson/backup flows. The page is a readiness aid, not security certification.

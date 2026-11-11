@@ -12,12 +12,14 @@ function extract(first,last){
  return src.slice(a,b);
 }
 const matching=extract('function myStudent(id){','function mine(r){');
+const verifiedHelpers=extract('function verifiedClassAttendance(', 'function updateStats(){');
+const followup=extract('function loadAbsentees(){','function loadHomework(){');
 const schoolScope=extract('function schoolMatch(r){','const normalizeClass=');
 const operations=extract('function loadAttendanceList(){','function loadAbsentees(){');
 const stats=extract('function updateStats(){','function header(){');
 const date='2026-11-10';
 const people=[
- {id:'s1',enrlNo:'2',name:'Pupil One',gender:'Male'},
+ {id:'s1',enrlNo:'2',name:'Pupil One',gender:'Male',contact:'03001234567'},
  {id:'s2',enrlNo:'3',name:'Pupil Two',gender:'Female'}
 ];
 const nodes=new Map([
@@ -25,7 +27,10 @@ const nodes=new Map([
  ['attendanceList',{innerHTML:''}],
  ['attendanceEmpty',{classList:{toggle:()=>{}}}],
  ['attendanceVerifyNote',{textContent:'',classList:{toggle:()=>{}}}],
- ['attendanceRecheck',{disabled:false,classList:{toggle:()=>{}}}]
+ ['attendanceRecheck',{disabled:false,classList:{toggle:()=>{}}}],
+ ['attendanceClassSummary',{textContent:''}],
+ ['absenteesList',{innerHTML:''}],
+ ['absenteesEmpty',{textContent:'',classList:{toggle:()=>{},remove:()=>{}}}]
 ]);
 const $=id=>nodes.get(id)||nodes.set(id,{textContent:'',classList:{toggle:()=>{}}}).get(id);
 const button={disabled:false,textContent:'Save',dataset:{}};
@@ -45,7 +50,7 @@ const ctx={
  message:text=>notices.push(text),localDate:()=>date,
  LamaAPI:{
   add:async(_collection,record)=>{writes++;return{id:'a'+writes,...record}},
-  update:async()=>{changes++;return{id:'existing'}},
+  update:async(_collection,id,patch)=>{changes++;cloud=cloud.map(r=>r.id===id?{...r,...patch}:r);return{id}},
   list:async collection=>{
    assert.equal(collection,'attendance');
    if(failRead)throw Error('Readback connection lost');
@@ -59,9 +64,11 @@ const factory=new Function('ctx',[
  'const attendanceDrafts=new Map();',
  schoolScope,
  matching,
+ verifiedHelpers,
+ followup,
  'function renderAll(){loadAttendanceList();}',
  operations,
- 'return {saveAttendance,verifyTeacherStudentPending,loadAttendanceList,',
+ 'return {saveAttendance,verifyTeacherStudentPending,loadAttendanceList,loadAbsentees,' ,
  '  get pending(){return attendanceSavePending;},get records(){return attendance;},',
  '  get readReady(){return attendanceReadReady;}};'
 ].join('\n'));
@@ -100,8 +107,8 @@ const page=factory(ctx);
  assert.ok(page.pending,'Network readback error must not clear local pending queue');
  failRead=false;
  cloud=[
-  {studentId:'s1',date,status:'Present'},
-  {studentId:'s2',date,status:'Present'}
+  {id:'r1',studentId:'s1',date,status:'Present'},
+  {id:'r2',studentId:'s2',date,status:'Present'}
  ];
  await page.verifyTeacherStudentPending();
  assert.equal(page.pending,null,'Two unique matching rows complete verification');
@@ -117,6 +124,7 @@ const page=factory(ctx);
   'const homework=[];',
   schoolScope,
   matching,
+  verifiedHelpers,
   stats,
   'return (rows,ready,pending)=>{attendance=rows;attendanceReadReady=ready;',
   'attendanceSavePending=pending;updateStats();return {',

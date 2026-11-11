@@ -211,10 +211,26 @@ body:before{
                         </div>
                         <h1 id="headerSchoolName" class="school-title text-3xl sm:text-5xl font-black tracking-tight gradient-text">School Name</h1>
                         <p id="headerSchoolMeta" class="text-xs sm:text-sm text-slate-200/85 mt-2">School information</p>
-                        <div class="mt-2 text-xs text-cyan-200 font-bold">
-    <span>School ID: </span><span id="schoolIdDisplay" class="select-text break-all">Loading…</span>
-    <button id="copySchoolIdButton" type="button" onclick="copySchoolId()" class="ml-2 underline rounded-lg px-2 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" aria-label="Copy School ID to clipboard">Copy</button>
-    <span id="copySchoolIdFeedback" role="status" aria-live="polite" class="ml-2 text-emerald-200"></span>
+                        <div class="mt-3 text-cyan-100" id="schoolIdTools">
+    <label for="schoolIdDisplay" class="block text-sm font-bold mb-2">School ID — tap to select</label>
+    <div class="flex flex-wrap items-center gap-2">
+        <input type="text" id="schoolIdDisplay" readonly value="" onfocus="this.select()" onclick="this.select()"
+            aria-label="School ID, tap to select and copy" aria-describedby="copySchoolIdFeedback"
+            autocomplete="off" autocapitalize="off" spellcheck="false"
+            class="min-w-0 flex-1 max-w-sm rounded-xl border border-white/40 bg-slate-950/80 px-3 py-3 text-white font-bold tracking-normal"
+            style="min-width:180px;max-width:100%;font-size:16px;-webkit-user-select:text;user-select:text;min-height:48px"
+            placeholder="School ID loading…">
+        <button id="copySchoolIdButton" type="button" onclick="copySchoolId()"
+            class="rounded-xl border border-cyan-200/60 bg-teal-700 px-5 py-3 text-sm font-extrabold text-white min-h-[48px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+            aria-label="Copy School ID">📋 Copy ID</button>
+    </div>
+    <p id="copySchoolIdFeedback" role="status" aria-live="polite" class="text-xs text-cyan-100 mt-2">
+        Copy this School ID for teacher, student or parent login.
+    </p>
+    <div id="schoolIdPortalLinks" class="flex flex-wrap gap-3 mt-3 text-xs font-bold" hidden>
+        <a id="schoolTeacherLoginLink" href="teacher-login.html" class="underline text-white">Teacher login with this ID</a>
+        <a id="schoolStudentLoginLink" href="students/student-login.html" class="underline text-white">Student / Parent login with this ID</a>
+    </div>
 </div>
                     </div>
                 </div>
@@ -607,49 +623,53 @@ function normalizeExamRows(records) {
     return rows.sort((a,b)=>sortKey(a.date).localeCompare(sortKey(b.date)));
 }
 async function copySchoolId() {
-    const display = document.getElementById('schoolIdDisplay');
+    // Uses the currently displayed school's ID for every registered campus.
+    // Read-only input selection works in Android WebViews where selecting a span does not.
+    const field = document.getElementById('schoolIdDisplay');
     const button = document.getElementById('copySchoolIdButton');
     const feedback = document.getElementById('copySchoolIdFeedback');
-    const id = String(window.currentSchoolId || display?.textContent || '').trim();
-    const show = (text, copied = false) => {
+    const id = String(field?.value || window.currentSchoolId || '').trim();
+
+    const report = (text, success) => {
         if (feedback) feedback.textContent = text;
         if (button) {
-            button.textContent = copied ? '✓ Copied' : 'Copy';
-            button.setAttribute('aria-label', copied ? 'School ID copied to clipboard' : 'Copy School ID to clipboard');
+            button.textContent = success ? '✓ Copied' : '📋 Copy ID';
+            button.setAttribute('aria-label', success ? 'School ID copied' : 'Copy School ID');
         }
     };
-    if (!id || id === 'Loading…' || id === 'Not configured') {
-        show('School ID is not available yet.');
+    if (!id) {
+        report('School ID is still loading. Refresh this page and try again.', false);
         return false;
     }
 
-    // Highlight the precise ID for easy manual copying on older Android phones.
     try {
-        const selection = window.getSelection?.();
-        if (display && selection && document.createRange) {
-            const range = document.createRange();
-            range.selectNodeContents(display);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    } catch (error) { console.warn('School ID selection unavailable', error); }
+        // Execute synchronously from the real tap before losing user activation.
+        field.value = id;
+        field.focus({preventScroll:true});
+        field.select();
+        field.setSelectionRange(0, field.value.length);
+    } catch (error) {
+        console.warn('School ID input selection unavailable', error);
+    }
 
-    // Copy synchronously while the user gesture is active, then try modern API.
     let copied = false;
-    try {
-        if (typeof document.execCommand === 'function') copied = document.execCommand('copy') === true;
-    } catch (error) { console.warn('Legacy clipboard copy failed', error); }
-    if (!copied && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        try {
-            await navigator.clipboard.writeText(id);
-            copied = true;
-        } catch (error) { console.warn('Clipboard permission denied', error); }
+    // Legacy command is reliable in many Android embedded browsers when a
+    // real input element is focused and selected (unlike selecting a span).
+    try { copied = document.execCommand?.('copy') === true; }
+    catch (error) { console.warn('Android legacy copy failed', error); }
+
+    // Modern Clipboard API is available in HTTPS browsers with permission.
+    if (!copied && navigator.clipboard?.writeText) {
+        try { await navigator.clipboard.writeText(id); copied = true; }
+        catch (error) { console.warn('Modern Clipboard API denied', error); }
     }
     if (copied) {
-        show('School ID copied successfully.', true);
+        report('✓ School ID copied. Paste it into the school, teacher or student login.', true);
         return true;
     }
-    show('School ID selected. Long-press it and choose Copy.');
+    // Do not falsely claim success. The actual input stays selectable for
+    // press-and-hold Copy, even when clipboard permissions are restricted.
+    report('Automatic copy is blocked on this browser. Long-press the selected ID above and choose Copy, or use the login links below.', false);
     return false;
 }
 
@@ -669,7 +689,19 @@ async function render(){
     // browser-local data belonging to a different school or unpublished drafts.
     const school = await resolveSchool(data);
     const schoolId = school.id;
-    document.getElementById('schoolIdDisplay').textContent = schoolId || 'Not configured';
+    document.getElementById('schoolIdDisplay').value = schoolId || '';
+    const schoolLoginLinks = document.getElementById('schoolIdPortalLinks');
+    if (schoolLoginLinks) schoolLoginLinks.hidden = !schoolId;
+    if (schoolId) {
+        document.getElementById('schoolTeacherLoginLink').href = 'teacher-login.html?schoolId=' + encodeURIComponent(schoolId);
+        document.getElementById('schoolStudentLoginLink').href = 'students/student-login.html?schoolId=' + encodeURIComponent(schoolId);
+    }
+    const copyFeedback = document.getElementById('copySchoolIdFeedback');
+    if (copyFeedback) copyFeedback.textContent = schoolId
+        ? 'Copy this ID or open your school-specific teacher/student login below.'
+        : 'School ID not available. Please sign in to your school first.';
+    const copyButton = document.getElementById('copySchoolIdButton');
+    if (copyButton) copyButton.disabled = !schoolId;
     document.getElementById('navSchoolId').textContent = schoolId ? `ID: ${schoolId}` : '';
     window.currentSchoolId = schoolId;
     const rawTests = await loadPublishedCollection(['tests'], data.upcomingTests, schoolId);

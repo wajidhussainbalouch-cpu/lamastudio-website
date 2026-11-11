@@ -1,226 +1,192 @@
-// ask-lama.js — Connected to Google Apps Script & Gemini Backend
-(function() {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .asklama-widget-container {
-      position: fixed;
-      bottom: 25px;
-      right: 25px;
-      z-index: 2147483647;
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-    .asklama-mascot-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      width: 75px;
-      height: 75px;
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      position: relative;
-    }
-    .asklama-mascot-btn:hover {
-      transform: scale(1.1);
-    }
-    .asklama-mascot-btn img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
-    }
-    .asklama-chat-box {
-      position: absolute;
-      bottom: 90px;
-      right: 0;
-      width: 340px;
-      max-height: 480px;
-      background: var(--surface, #1e1e1e);
-      border: 1px solid var(--border, #333);
-      border-radius: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transform: scale(0.9);
-      opacity: 0;
-      pointer-events: none;
-      transform-origin: bottom right;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .asklama-chat-box.active {
-      transform: scale(1);
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .asklama-header {
-      background: linear-gradient(135deg, #2563eb, #174ea6);
-      color: #fff;
-      padding: 14px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-    .asklama-close {
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-    .asklama-messages {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      max-height: 320px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      font-size: 0.85rem;
-      background: var(--surface, #1e1e1e);
-      scroll-behavior: smooth;
-    }
-    .asklama-msg {
-      padding: 10px 14px;
-      border-radius: 12px;
-      max-width: 85%;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-    .asklama-msg.bot {
-      background: rgba(255,255,255,0.08);
-      color: var(--text, #fff);
-      align-self: flex-start;
-      border-bottom-left-radius: 2px;
-    }
-    .asklama-msg.user {
-      background: #2563eb;
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 2px;
-    }
-    .asklama-input-area {
-      padding: 12px;
-      border-top: 1px solid var(--border, #333);
-      display: flex;
-      gap: 8px;
-      background: var(--surface, #1e1e1e);
-    }
-    .asklama-input-area input {
-      flex: 1;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border, #333);
-      border-radius: 8px;
-      padding: 8px 12px;
-      color: var(--text, #fff);
-      font-size: 0.85rem;
-      outline: none;
-    }
-    .asklama-input-area input:focus {
-      border-color: #2563eb;
-    }
-    .asklama-input-area button {
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 0 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-  `;
-  document.head.appendChild(style);
+/* AskLama v2 — accessible, opaque chat powered by the same-origin AI endpoint. */
+(() => {
+  'use strict';
+  if (document.getElementById('askLamaChatBox')) return;
 
-  const widgetContainer = document.createElement('div');
-  widgetContainer.className = 'asklama-widget-container';
-  widgetContainer.innerHTML = `
-    <div class="asklama-chat-box" id="askLamaChatBox">
-      <div class="asklama-header">
-        <span>AskLama AI Guide</span>
-        <button class="asklama-close" id="askLamaCloseBtn">&times;</button>
-      </div>
-      <div class="asklama-messages" id="askLamaMessages">
-        <div class="asklama-msg bot">Hi there! 👋 I'm AskLama, powered by Gemini. Ask me anything in any language!</div>
-      </div>
-      <div class="asklama-input-area">
-        <input type="text" id="askLamaInput" placeholder="Ask anything...">
-        <button id="askLamaSendBtn">Send</button>
-      </div>
-    </div>
-    <button class="asklama-mascot-btn" id="askLamaMascotBtn" title="Chat with AskLama">
-      <img src="ask-lama-3d.png" alt="AskLama Mascot" id="askLamaImage" onerror="this.src='https://via.placeholder.com/75?text=Lama';">
-    </button>
-  `;
-  document.body.appendChild(widgetContainer);
+  const stylesheet = document.createElement('link');
+  stylesheet.rel = 'stylesheet';
+  stylesheet.href = '/ask-lama.css?v=2';
+  document.head.appendChild(stylesheet);
 
-  const mascotBtn = document.getElementById('askLamaMascotBtn');
-  const chatBox = document.getElementById('askLamaChatBox');
-  const closeBtn = document.getElementById('askLamaCloseBtn');
-  const sendBtn = document.getElementById('askLamaSendBtn');
-  const inputField = document.getElementById('askLamaInput');
-  const messagesContainer = document.getElementById('askLamaMessages');
+  const root = document.createElement('div');
+  root.className = 'asklama-widget-container';
+  root.innerHTML = [
+    "<div class='asklama-scrim' id='askLamaScrim' aria-hidden='true'></div>",
+    "<section class='asklama-chat-box' id='askLamaChatBox' role='dialog' aria-modal='true' aria-label='AskLama chat' aria-hidden='true'>",
+      "<div class='asklama-header'>",
+        "<div class='asklama-heading'><strong>AskLama AI Guide</strong><small>LAMA Studio · Your digital assistant</small></div>",
+        "<div class='asklama-header-actions'>",
+          "<button type='button' id='askLamaClearBtn' title='Clear chat' aria-label='Clear conversation'>Clear</button>",
+          "<button type='button' class='asklama-close' id='askLamaCloseBtn' aria-label='Close AskLama chat'>×</button>",
+        "</div>",
+      "</div>",
+      "<div class='asklama-messages' id='askLamaMessages' role='log' aria-live='polite' aria-relevant='additions text'>",
+        "<div class='asklama-msg bot'>Hello! 👋 I’m AskLama, your LAMA Studio guide. How can I help you today?</div>",
+      "</div>",
+      "<form class='asklama-compose' id='askLamaForm'>",
+        "<input type='text' id='askLamaInput' name='question' placeholder='Type your question…' aria-label='Message to AskLama' autocomplete='off' maxlength='1200' required>",
+        "<button type='submit' id='askLamaSendBtn'>Send</button>",
+      "</form>",
+      "<div class='asklama-status' id='askLamaStatus' role='status' aria-live='polite'>Do not share passwords or personal school records.</div>",
+    "</section>",
+    "<button type='button' class='asklama-mascot-btn' id='askLamaMascotBtn' aria-label='Open AskLama chat' title='Chat with AskLama'>",
+      "<img src='/ask-lama-3d.png' alt='' loading='lazy'>",
+    "</button>"
+  ].join('');
+  document.body.appendChild(root);
 
-  let isOpen = false;
+  const get = id => document.getElementById(id);
+  const chatBox = get('askLamaChatBox');
+  const scrim = get('askLamaScrim');
+  const messages = get('askLamaMessages');
+  const form = get('askLamaForm');
+  const input = get('askLamaInput');
+  const send = get('askLamaSendBtn');
+  const clear = get('askLamaClearBtn');
+  const close = get('askLamaCloseBtn');
+  const mascot = get('askLamaMascotBtn');
+  const status = get('askLamaStatus');
+  const welcome = messages.firstElementChild.textContent;
+  let open = false;
+  let busy = false;
+  let returnFocus = null;
+  let history = [];
 
-  window.toggleLamaChat = function() {
-    isOpen = !isOpen;
-    if (isOpen) {
-      chatBox.classList.add('active');
-      inputField.focus();
-    } else {
-      chatBox.classList.remove('active');
-    }
-  };
-
-  mascotBtn.addEventListener('click', window.toggleLamaChat);
-  closeBtn.addEventListener('click', window.toggleLamaChat);
-
-  async function handleUserMessage() {
-    const text = inputField.value.trim();
-    if (!text) return;
-
-    const userMsg = document.createElement('div');
-    userMsg.className = 'asklama-msg user';
-    userMsg.innerText = text;
-    messagesContainer.appendChild(userMsg);
-    inputField.value = '';
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-    const botMsg = document.createElement('div');
-    botMsg.className = 'asklama-msg bot';
-    botMsg.innerText = 'Thinking...';
-    messagesContainer.appendChild(botMsg);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-    try {
-      // Direct call to your active Google Apps Script Web App URL
-      const scriptUrl = 'https://script.google.com/macros/s/AKfycbzKX6oxKJH98jfdMOJt9597AKG4T6yBNttfTuO3eUtgLizdVmHKGZL6fEXyn3xYJ_ydBQ/exec';
-      
-      const response = await fetch(scriptUrl, {
-        method: 'POST',
-        body: JSON.stringify({ prompt: text })
-      });
-
-      const data = await response.json();
-
-      if (data && data.text) {
-        botMsg.innerText = data.text;
-      } else {
-        botMsg.innerText = data.error || 'Sorry, I encountered an issue generating a response.';
-      }
-    } catch (err) {
-      botMsg.innerText = 'Network connection error. Please try again.';
-    }
-
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  function mobile() {
+    return window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   }
 
-  sendBtn.addEventListener('click', handleUserMessage);
-  inputField.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleUserMessage();
+  function fitMobileKeyboard() {
+    if (!open || !mobile() || !window.visualViewport) {
+      chatBox.style.height = '';
+      chatBox.style.top = '';
+      chatBox.style.bottom = '';
+      return;
+    }
+    const viewport = window.visualViewport;
+    const top = Math.max(8, Math.round(viewport.offsetTop + 8));
+    const height = Math.max(180, Math.round(viewport.height - 16));
+    chatBox.style.top = top + 'px';
+    chatBox.style.height = height + 'px';
+    chatBox.style.bottom = 'auto';
+  }
+
+  function setOpen(next) {
+    if (open === next) return;
+    open = next;
+    if (next) returnFocus = document.activeElement;
+    root.classList.toggle('is-open', next);
+    chatBox.classList.toggle('active', next);
+    scrim.classList.toggle('active', next);
+    chatBox.setAttribute('aria-hidden', String(!next));
+    mascot.setAttribute('aria-expanded', String(next));
+    document.body.classList.toggle('asklama-open', next);
+    fitMobileKeyboard();
+    if (next) {
+      // Don't open the on-screen keyboard over chat when opening on Android.
+      if (!mobile()) input.focus();
+      messages.scrollTop = messages.scrollHeight;
+    } else {
+      if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
+      returnFocus = null;
+    }
+  }
+
+  window.toggleLamaChat = function(force) {
+    setOpen(typeof force === 'boolean' ? force : !open);
+  };
+
+  function bubble(text, kind) {
+    const node = document.createElement('div');
+    node.className = 'asklama-msg ' + (kind || 'bot');
+    node.textContent = text;
+    messages.appendChild(node);
+    messages.scrollTop = messages.scrollHeight;
+    return node;
+  }
+
+  async function handleUserMessage(event) {
+    if (event) event.preventDefault();
+    if (busy) return;
+    const question = input.value.trim();
+    if (!question) return;
+    if (question.length > 1200) {
+      status.textContent = 'Please shorten your question to 1,200 characters.';
+      return;
+    }
+
+    busy = true;
+    send.disabled = true;
+    clear.disabled = true;
+    send.textContent = 'Sending…';
+    bubble(question, 'user');
+    input.value = '';
+    const reply = bubble('Thinking…', 'bot loading');
+    status.textContent = 'Generating a reply…';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 34000);
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'same-origin',
+        signal: controller.signal,
+        body: JSON.stringify({prompt: question, history: history.slice(-6)})
+      });
+      let data = {};
+      try { data = await response.json(); }
+      catch (error) { throw new Error('The AI service returned an invalid response.'); }
+      if (!response.ok) {
+        throw new Error(typeof data.error === 'string' ? data.error : 'AI service unavailable.');
+      }
+      const answer = typeof data.text === 'string' ? data.text.trim() : '';
+      if (!answer) throw new Error('No reply was returned. Please try again.');
+      reply.textContent = answer;
+      reply.classList.remove('loading');
+      history.push({role:'user',text:question}, {role:'model',text:answer});
+      history = history.slice(-8);
+      status.textContent = 'Reply received. Ask a follow-up question.';
+    } catch (error) {
+      reply.classList.remove('loading');
+      reply.classList.add('error');
+      reply.textContent = error.name === 'AbortError'
+        ? 'This request took too long. Please check your connection and try again.'
+        : error instanceof TypeError
+          ? 'Could not connect to AskLama. Check your connection and try again.'
+          : String(error.message || 'Unable to get a reply. Please try again.');
+      status.textContent = 'Reply not received. You can try again.';
+    } finally {
+      clearTimeout(timeout);
+      busy = false;
+      send.disabled = false;
+      clear.disabled = false;
+      send.textContent = 'Send';
+      messages.scrollTop = messages.scrollHeight;
+    }
+  }
+
+  mascot.addEventListener('click', () => setOpen(!open));
+  close.addEventListener('click', () => setOpen(false));
+  scrim.addEventListener('click', () => setOpen(false));
+  form.addEventListener('submit', handleUserMessage);
+  clear.addEventListener('click', () => {
+    if (busy) return;
+    messages.replaceChildren();
+    bubble(welcome, 'bot');
+    history = [];
+    status.textContent = 'Conversation cleared. Ask a new question.';
+    input.value = '';
   });
+  document.addEventListener('keydown', event => {
+    if (open && event.key === 'Escape') setOpen(false);
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', fitMobileKeyboard);
+    window.visualViewport.addEventListener('scroll', fitMobileKeyboard);
+  }
+  window.addEventListener('resize', fitMobileKeyboard);
+
+  // Expose a minimal test interface; this contains no credentials or secrets.
+  window.__askLamaUI = {setOpen, handleUserMessage, isOpen:()=>open, isBusy:()=>busy};
 })();

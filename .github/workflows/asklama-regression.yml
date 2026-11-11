@@ -1,0 +1,30 @@
+name: AskLama Chat Regression
+on:
+  pull_request:
+    paths:
+      - 'ask-lama.js'
+      - 'ask-lama.css'
+      - 'api/generate.js'
+      - 'test-asklama.cjs'
+      - 'index.html'
+      - 'faqs.html'
+      - 'signin.html'
+      - '.github/workflows/asklama-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  asklama:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate AskLama mobile UI, API and error handling
+        run: node test-asklama.cjs

@@ -32,7 +32,7 @@ function validAdminWriteSession(){try{const a=JSON.parse(sessionStorage.getItem(
 function recentAttendance(student){const today=state.loadedDate||$('date').value;const days=[];let cursor=new Date(today+'T12:00:00Z');for(let n=0;n<14&&days.length<7;n++){cursor.setUTCDate(cursor.getUTCDate()-1);const weekday=cursor.getUTCDay();if(weekday!==0&&weekday!==6)days.push(cursor.toISOString().slice(0,10))}const rows=state.history.filter(r=>days.includes(asDate(r.date))&&matchRecord(r,student));const byDay=new Map(rows.map(r=>[asDate(r.date),status(r.status)]));return days.map(d=>d.slice(5)+': '+(byDay.get(d)||'Not marked')).join(' · ')}
 function message(s,error=false){$('notice').textContent=s;$('notice').className=error?'error':''}
 function visible(){return state.students.filter(s=>(!$('class').value||cls(s)===$('class').value)&&(!$('search').value||[s.name,enr(s),s.fatherName].join(' ').toLowerCase().includes($('search').value.toLowerCase()))&&(!$('filter').value||(state.chosen.get(id(s))?.status||'Unmarked')===$('filter').value))}
-function enable(){const ready=state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!state.pendingVerification&&!state.integrityBlocked;$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
+function enable(){const ready=state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!state.pendingVerification&&!state.integrityBlocked;$('save').disabled=!ready||!state.dirty.size;$('save').textContent=state.saving?'Saving / verifying…':state.pendingVerification?'Verification pending':'Save changes';$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
 function attendanceCompletion(){
  const all=state.students,date=$('date').value,selectedClass=$('class').value;
  const relevant=selectedClass?all.filter(s=>cls(s)===selectedClass):all;
@@ -88,12 +88,54 @@ function choose(k,v){if(!state.historyReady||state.loadedDate!==$('date').value|
 $('list').onclick=e=>{const b=e.target.closest('button[data-id]');if(b)choose(b.dataset.id,b.dataset.status)};
 ['class','filter','search'].forEach(x=>$(x).addEventListener(x==='search'?'input':'change',render));
 function timeout(p,label){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error(label+' timed out after 40 seconds')),40000);Promise.resolve(p).then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)})})}
+/**
+ * Hydrate only the selected school day, preserving the original student IDs.
+ * Called after a successful read; never overwrites pending local edits.
+ */
+function hydrateSavedDate(rows,date){
+ const byId=new Map(),byEnrollment=new Map();
+ for(const r of rows){
+  if(asDate(r.date)!==date)continue;
+  const sid=String(r.studentId??r.student_id??'').trim(),
+   enrollment=String(r.enrlNo??r.enrollmentNo??r.enrollment??'').trim();
+  if(sid)byId.set(sid,r);
+  else if(enrollment)byEnrollment.set(enrollment,r);
+ }
+ state.chosen.clear();
+ for(const student of state.students){
+  const record=byId.get(id(student))||
+    (!byId.has(id(student))&&enr(student)?byEnrollment.get(enr(student)):null);
+  if(record){
+   const value=status(record.status);
+   if(value)state.chosen.set(id(student),{status:value,recordId:String(record.id??record._id??'')});
+  }
+ }
+}
+/**
+ * Prefer a small admin-only day snapshot. Older Apps Script versions may not
+ * recognize that endpoint; only then fall back to the existing read-only full
+ * history. Never retry a write during confirmation.
+ */
+async function readAttendanceDateOnly(date){
+ if(typeof LamaAPI.attendanceDateSnapshot==='function'){
+  try{
+   const result=await timeout(LamaAPI.attendanceDateSnapshot(date),'Attendance date verification');
+   if(!Array.isArray(result))throw Error('Invalid day snapshot; no write will be retried.');
+   return result;
+  }catch(e){
+   if(!/Unknown action:\s*attendanceDateSnapshot/i.test(String(e.message||'')))throw e;
+  }
+ }
+ const result=array(await timeout(LamaAPI.list('attendance'),'Legacy attendance readback'));
+ if(!result)throw Error('Server returned an invalid attendance history.');
+ return result;
+}
 async function load(){if(state.loading||state.saving)return;state.loading=true;state.loadedDate='';state.historyReady=false;state.rosterReady=false;state.integrityBlocked=0;state.dirty.clear();stop();message('');const begin=Date.now();$('progress').value=0;$('stage').textContent='Connecting to school records…';render();const tick=setInterval(()=>{$('elapsed').textContent='Elapsed: '+Math.floor((Date.now()-begin)/1000)+'s';if(!$('progress').value)$('progress').value=10},500);
  try{
   const requests=await Promise.allSettled([timeout(LamaAPI.list('students'),'Student roster').then(v=>{const a=array(v);if(!a)throw Error('Invalid roster response');state.students=a.filter(s=>id(s));state.rosterReady=true;const previous=$('class').value;$('class').innerHTML='<option value="">All classes</option>'+[...new Set(state.students.map(cls))].sort().map(c=>'<option value="'+escapeHtml(c)+'">'+escapeHtml(c)+'</option>').join('');$('class').value=[...$('class').options].some(o=>o.value===previous)?previous:'';$('progress').value=45;$('stage').textContent='Student roster received';render();return a}),timeout(LamaAPI.list('attendance'),'Attendance history').then(v=>{const a=array(v);if(!a)throw Error('Invalid attendance response');state.history=a;$('progress').value=45;$('stage').textContent='Attendance history received';return a})]);
   const failures=requests.map((r,i)=>r.status==='rejected'?(i?'Attendance history: ':'Student roster: ')+r.reason.message:null).filter(Boolean);if(failures.length)throw Error(failures.join(' | '));
   state.integrityBlocked=duplicateAttendanceGroups(state.history,$('date').value);
-  state.chosen.clear();const byId=new Map(),byEnrollment=new Map();for(const r of state.history){if(asDate(r.date)!==$('date').value)continue;const sid=String(r.studentId??r.student_id??'').trim(),enrollment=String(r.enrlNo??r.enrollmentNo??r.enrollment??'').trim();if(sid)byId.set(sid,r);else if(enrollment)byEnrollment.set(enrollment,r)}for(const student of state.students){const r=byId.get(id(student))||(!byId.has(id(student))&&enr(student)?byEnrollment.get(enr(student)):null);if(r){const v=status(r.status);if(v)state.chosen.set(id(student),{status:v,recordId:String(r.id??r._id??'')})}}
+  hydrateSavedDate(state.history,$('date').value);
   state.historyReady=true;state.loadedDate=$('date').value;$('progress').value=100;$('stage').textContent=state.integrityBlocked?'Duplicate attendance records — review required':'Register loaded and verified';message(state.integrityBlocked?'Found '+state.integrityBlocked+' duplicate student/date groups. Save, QR, bulk marking and clearing are locked. Open Review duplicate records (read-only), back up your original Google Sheet and reconcile before Refresh.':'Ready. '+state.students.length+' student records loaded.',!!state.integrityBlocked);
  }catch(e){$('stage').textContent='Register could not be verified';message('Loading failed: '+e.message+'. Editing and scanning remain disabled. The original register is unchanged.',true)}
  finally{clearInterval(tick);state.loading=false;render()}
@@ -106,40 +148,49 @@ $('bulk').onclick=()=>{if(!state.historyReady||state.pendingVerification||state.
  * readback. Never throw away the teacher's 38 selected marks or allow another
  * POST while the first write is uncertain. Refresh is read-only during review.
  */
-async function verifyPendingAttendance(){
+async function verifyPendingAttendance(fastDateRows=null){
  const pending=state.pendingVerification;
  if(!pending||state.loading||state.saving)return;
  state.saving=true;render();
  try{
   if(!validAdminWriteSession())throw Error('The original School Administrator session is needed to verify attendance.');
-  const rows=array(await timeout(LamaAPI.list('attendance'),'Saved attendance verification'));
-  if(!rows)throw Error('Server returned an invalid attendance history.');
+  const rows=Array.isArray(fastDateRows)?fastDateRows:await readAttendanceDateOnly(pending.date);
+  if(!Array.isArray(rows))throw Error('Server returned an invalid attendance snapshot.');
+  const dayRows=rows.filter(row=>asDate(row.date)===pending.date);
+  const byStudent=new Map(),byEnrollment=new Map();
+  for(const row of dayRows){
+   const studentId=String(row.studentId??row.student_id??'').trim();
+   const enrollment=String(row.enrlNo??row.enrollmentNo??row.enrollment??'').trim();
+   if(studentId){const a=byStudent.get(studentId)||[];a.push(row);byStudent.set(studentId,a)}
+   else if(enrollment){const a=byEnrollment.get(enrollment)||[];a.push(row);byEnrollment.set(enrollment,a)}
+  }
   const unresolved=pending.records.filter(rec=>{
-   const matching=rows.filter(row=>{
-    if(asDate(row.date)!==pending.date)return false;
-    const studentId=String(row.studentId??row.student_id??'').trim();
-    return studentId?studentId===rec.studentId:
-      !!rec.enrlNo&&String(row.enrlNo??row.enrollmentNo??row.enrollment??'').trim()===rec.enrlNo;
-   });
-   // More than one match is not a verified write: require staff to inspect
-   // duplicate cloud records instead of silently choosing the last one.
-   return matching.length!==1||status(matching[0].status)!==rec.status;
+   const matches=byStudent.get(rec.studentId)||(rec.enrlNo?byEnrollment.get(rec.enrlNo):null)||[];
+   return matches.length!==1||status(matches[0].status)!==rec.status;
   });
   if(unresolved.length){
    $('stage').textContent='Attendance save NOT verified — do not submit again';
    message('Read-only verification: '+unresolved.length+' of '+pending.records.length+
-    ' submitted records are still unconfirmed or duplicated. The selected marks are preserved on this page. Do not submit again. Export CSV for reference and check the official attendance sheet.',true);
+    ' submitted records are not confirmed or have duplicate rows. The marked choices are retained. Do not Save again. Export CSV and inspect the official sheet.',true);
    return;
   }
-  state.history=rows;
+  // The date snapshot includes all official rows for that day. Merge with
+  // historical rows previously loaded, without an additional network call.
+  state.history=state.history.filter(r=>asDate(r.date)!==pending.date).concat(dayRows);
+  hydrateSavedDate(state.history,pending.date);
+  state.integrityBlocked=duplicateAttendanceGroups(state.history,pending.date);
   state.dirty.clear();
   state.pendingVerification=null;
-  $('stage').textContent='Attendance saved and independently verified';
-  message('✓ '+pending.records.length+' attendance records confirmed in the school database. No duplicate submission was made.');
- }catch(e){
+  const present=state.students.filter(x=>state.chosen.get(id(x))?.status==='Present').length;
+  const absent=state.students.filter(x=>state.chosen.get(id(x))?.status==='Absent').length;
+  const leave=state.students.filter(x=>state.chosen.get(id(x))?.status==='Leave').length;
+  $('stage').textContent='✓ Attendance saved and verified';
+  message('✓ '+pending.records.length+' marks confirmed in Google Sheets. Present: '+present+
+   ' · Absent: '+absent+' · Leave: '+leave+'. Class/day completion is shown above.');
+ }catch(error){
   $('stage').textContent='Attendance verification pending';
-  message('Attendance verification is still pending: '+e.message+
-   '. Your selected marks remain visible but locked. Do not Save again. Export CSV and verify the school sheet.',true);
+  message('Attendance remains unverified: '+error.message+
+   '. The selected marks are retained and locked. Do not Save again; use Refresh for read-only verification.',true);
  }finally{state.saving=false;render();}
 }
 $('save').onclick=async()=>{
@@ -155,7 +206,8 @@ $('save').onclick=async()=>{
  if(!confirm('Save '+records.length+' selected attendance changes?'))return;
  state.pendingVerification={date:$('date').value,records};
  $('stage').textContent='Saving attendance; verification required';
- state.saving=true;render();message('Submitting once and checking cloud records…');
+ state.saving=true;render();message('Saving '+records.length+' marks once; awaiting Google Sheets confirmation…');
+ let verifiedDateRows=null;
  try{
   const response=await LamaAPI.bulkAttendance($('date').value,records);
   if(!response||response.success===false||!Number.isInteger(Number(response.saved))||
@@ -163,11 +215,13 @@ $('save').onclick=async()=>{
      Number(response.inserted??0)+Number(response.updated??0)!==records.length){
    throw Error('Server save count could not be confirmed');
   }
+  if(response.verification==='confirmed'&&Array.isArray(response.verifiedDateRecords))
+   verifiedDateRows=response.verifiedDateRecords;
  }catch(e){
   message('Save acknowledgment uncertain: '+e.message+
    '. Do not submit again. Refresh checks the server without another write.',true);
  }finally{state.saving=false;render();}
- await verifyPendingAttendance();
+ await verifyPendingAttendance(verifiedDateRows);
 };
 $('clearDate').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||state.pendingVerification||state.integrityBlocked)return;if(state.dirty.size){message('Save or discard unsaved changes before clearing attendance.',true);return}if(typeof LamaAPI.clearStudentAttendanceDate!=='function'){message('Attendance date-clear API unavailable; no records changed.',true);return}const date=state.loadedDate,klass=$('class').value;try{const preview=await LamaAPI.clearStudentAttendanceDate(date,klass,true,'');const count=Number(preview?.count||0);if(!Number.isInteger(count)||count<0)throw Error('Invalid preview count');if(!count){message('No attendance records to clear for '+date);return}if(!confirm('ADMIN ONLY: remove '+count+' attendance records for '+date+(klass?' / '+klass:' / all classes')+'? The backend must create a backup and audit entry. Student records will not be deleted.'))return;const phrase=prompt('Type exactly: REMOVE '+date);if(phrase!=='REMOVE '+date){message('Clear cancelled. No records changed.');return}const result=await LamaAPI.clearStudentAttendanceDate(date,klass,false,phrase);if(!result||Number(result.count)!==count||!result.backupSheet)throw Error('Removal response not verified. Check the register and backup before trying again.');message('Removed '+count+' attendance records. Backup sheet: '+result.backupSheet);await load();}catch(error){message('Clear-date result uncertain: '+error.message+'. Do not retry until verified.',true);state.historyReady=false;state.loadedDate='';render()}};
 $('csv').onclick=()=>{const rows=[['Date','Class','Enrollment','Name','Status'],...visible().map(s=>[$('date').value,cls(s),enr(s),s.name,state.chosen.get(id(s))?.status||'Unmarked'])];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.href=url;a.download='attendance-'+$('date').value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};

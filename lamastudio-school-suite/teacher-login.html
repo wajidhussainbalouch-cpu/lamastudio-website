@@ -15,6 +15,10 @@ const $ = id => document.getElementById(id);
 const schoolKey = 'lama_teacher_remembered_school_id';
 const schoolInput = $('schoolId');
 try { schoolInput.value = localStorage.getItem(schoolKey) || ''; } catch (_e) {}
+const requestedSchoolId = new URLSearchParams(location.search).get('schoolId');
+if (requestedSchoolId && /^[A-Za-z0-9_-]{3,100}$/.test(requestedSchoolId)) {
+ schoolInput.value = requestedSchoolId; // Prefill only the public School ID, never credentials.
+}
 function rememberSchool() { try { localStorage.setItem(schoolKey, schoolInput.value.trim()); } catch (_e) {} }
 schoolInput.addEventListener('input', rememberSchool);
 schoolInput.addEventListener('change', rememberSchool);

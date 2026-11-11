@@ -8,7 +8,7 @@ const html=fs.readFileSync(path.join(__dirname,'main-dashboard.html'),'utf8');
 const teacher=fs.readFileSync(path.join(__dirname,'teacher-login.html'),'utf8');
 const sw=fs.readFileSync(path.join(__dirname,'sw.js'),'utf8');
 assert.match(html,/\.banner:after\s*\{[^}]*pointer-events:none/s,'Decorative overlay may not block taps');
-assert.match(html,/\.banner-content\{position:relative;z-index:1\}/);
+assert.match(html,/\.banner-content\{position:relative;z-index:1;?\}/);
 assert.match(html,/\.banner\{height:auto;min-height:315px;background-position:58% center\}/);
 assert.match(html,/<input[^>]*id="schoolIdDisplay"[^>]*readonly/);
 assert.match(html,/<button id="copySchoolIdButton" type="button"/);

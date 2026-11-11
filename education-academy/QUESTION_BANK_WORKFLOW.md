@@ -1,5 +1,20 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Secretary 'A' Class Market Committee (BS-17) — Paper 01 completed (11 November 2026)
+
+**Now in the source academy:** PPSC Advt. 08/2026, Secretary 'A' Class Market Committee (**BS-17**, corrected from prior BS-16 transcription), job \`secretary-a-market-pamra\`, paper \`SAC-PAMRA-2026-P01\`, 100 newly authored questions \`SAC01-001\`–\`SAC01-100\`, 90-minute practice test. The source follows **60 qualification-related / 40 General Ability**, with editorial specialist choices in Agricultural Economics, Marketing, Agribusiness Finance, Supply Chain and applied research. Specific practice subtopic percentages are **not official PPSC weightages**.
+
+**Full source paper library:** 28 papers / 2,800 MCQ positions (20 teaching, 3 Information Officer, 2 Junior Clerk, 2 Assistant, 1 Secretary A). Candidate exam, two-column A4 print, answer review and PWA cache are wired; existing score/attempt separation and per-job 20-paper cap are retained. The Secretary **'B'** entry is a distinct **BS-16** job, case **46-RJ/2026**, with **no paper published yet**.
+
+**Database:** 100 new \`draft\` private \`SAC01\` questions inserted into RLS-protected \`public.ppsc_question_bank\`, now 2,630 questions; 100 Secretary A drafts, 0 approved. Source-level practice is not equivalent to premium secured exam delivery.
+
+**Automation:** GitHub PPSC Academy Quality Checks run **43056136345** passed for the fully integrated 28-paper source revision, including the Secretary A paper 60/40 regression, previous Assistant tests and global question-bank validator. Later documentation-only commit does not change these test results. Production deployment, original PPSC PDF verification and human academic review remain **pending**.
+
+See [SECRETARY_A_MARKET_COMMITTEE_PAPER_01_RELEASE.md](./SECRETARY_A_MARKET_COMMITTEE_PAPER_01_RELEASE.md).
+
+**Next \`Continue\`:** Draft the independent **Secretary 'B' Class Market Committee (BS-16)** Paper 01, 60% qualification-related and 40% General Ability with original nonrepeated questions. Retain independent job IDs, exam histories and draft bank entries.
+
+
 ## Assistant Faisalabad (BS-16) Paper 01 — completed source milestone (10 November 2026)
 
 **Completed distinct practice paper:** \`AFSD-FAISALABAD-2026-P01\`, \`AFSD01-001\`–\`AFSD01-100\`, 100 General Ability MCQs and 90-minute exam. Ten syllabus categories each have ten questions as an editorial practice choice, **not** an official PPSC subtopic weighting. Verified case-reference reproductions identify PPSC Advertisement No. 08/2026, 36-RJ/2026; preserve earlier \`36J2026\` screenshot transcription in \`PPSC_SCREENSHOT_SYLLABI_2026.json\`. This is an independent Faisalabad Assistant job family, separate from Kot Addu and Faisalabad Junior Clerk.

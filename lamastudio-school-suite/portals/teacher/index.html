@@ -301,20 +301,14 @@ function displayClassAttendanceSummary(){
 function updateStats(){
  $('statStudents').textContent=myStudents.length;
  $('statHomework').textContent=homework.filter(h=>mine(h)).length;
- const today=localDate();
- const latest=new Map();
- for(const a of attendance){
-  if(attendanceDay(a)!==today)continue;
-  const student=attendanceStudent(a);
-  if(student)latest.set(String(student.id??student._id??student.studentId),String(a.status||'').trim().toLowerCase());
- }
- const statuses=[...latest.values()];
- const verified=attendanceReadReady&&!attendanceSavePending;
- $('statPresent').textContent=verified?statuses.filter(x=>x==='present'||x==='p').length:'—';
- $('statAbsent').textContent=verified?statuses.filter(x=>x==='absent'||x==='a').length:'—';
+ const s=verifiedClassAttendance();
+ const verified=s.ready&&!attendanceSavePending&&!s.duplicates.length;
+ $('statPresent').textContent=verified?s.present:'—';
+ $('statAbsent').textContent=verified?s.absent:'—';
  const hint=$('statAttendanceHint');
  if(hint)hint.textContent=attendanceSavePending?'Submitted attendance awaiting cloud verification':
-   attendanceReadReady?'Saved student attendance':'Could not verify saved attendance';
+  !s.ready?'Saved attendance unavailable':s.duplicates.length?'Duplicate rows: administrator review required':
+  'Saved student attendance · '+(s.present+s.absent+s.leave)+'/'+s.total+' marked';
  const gender=s=>String(s.gender??s.sex??'').trim().toLowerCase();
  const boys=myStudents.filter(s=>['male','boy','m'].includes(gender(s))).length;
  const girls=myStudents.filter(s=>['female','girl','f'].includes(gender(s))).length;

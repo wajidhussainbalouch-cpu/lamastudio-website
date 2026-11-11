@@ -547,7 +547,7 @@ header#topOverview{background:var(--lama-header)!important}
         <!-- KPI matrix -->
         <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(139,92,246,.18)"><p class="section-kicker">Students</p><p id="totalStudentsCount" class="text-2xl font-black text-purple-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">active database records</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Attendance</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Register coverage</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(52,211,153,.18)"><p class="section-kicker">Teachers</p><p id="teacherAttDisplay" class="text-2xl font-black text-emerald-300 mt-2">—</p><p id="notMarkedDisplay" class="text-[10px] text-slate-500 mt-1">— not marked</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(251,191,36,.18)"><p class="section-kicker">Today Collection</p><p id="todayCollectionDisplay" class="text-xl font-black text-amber-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">paid records today</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(236,72,153,.18)"><p class="section-kicker">This Month</p><p id="monthCollectionDisplay" class="text-xl font-black text-pink-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
@@ -593,7 +593,7 @@ header#topOverview{background:var(--lama-header)!important}
             <div class="attendance-kpi col-span-2 lg:col-span-1"><p class="section-kicker">Not marked</p><strong id="studentAttUnmarked" class="text-cyan-300">—</strong></div>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily attendance rate</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
+            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily register coverage</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
             <div><div class="flex justify-between gap-2 items-center mb-1"><p class="text-xs font-black">Class-wise register</p><span id="studentAttClassCount" class="text-[10px] text-slate-400">—</span></div><div id="studentAttClasses" class="max-h-44 overflow-y-auto pr-1"><p class="text-xs text-slate-400">Loading…</p></div></div>
           </div>
           <div class="mt-4 border-t border-slate-700/40 pt-4"><div class="flex flex-wrap justify-between items-center gap-2"><div><p class="text-xs font-black">Absent / Leave — Parent follow-up</p><p class="text-[11px] text-slate-400">Recognize students and contact parents from the attendance register.</p></div><div class="flex gap-2 flex-wrap"><a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Open follow-up →</a><a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">One bulk portal notification →</a></div></div><div id="dashboardAbsentFollowup" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"><p class="text-xs text-slate-400">Loading attendance follow-up…</p></div></div>
@@ -776,6 +776,7 @@ header#topOverview{background:var(--lama-header)!important}
         const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
         const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
         async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:Array.isArray(r?.records)?r.records:Array.isArray(r?.data)?r.data:Array.isArray(r?.items)?r.items:[]; } catch(e){ console.warn('Unable to load '+key,e); return []; } }
+        async function safeAttendanceList(collection){try{const rows=await LamaAPI.list(collection);if(!Array.isArray(rows))throw Error('Invalid '+collection+' response');return rows}catch(error){console.error('Verified attendance unavailable: '+collection,error);return null}}
         function handleLogout(){ LamaAPI.logout('school'); sessionStorage.removeItem('lama_school_admin_auth'); window.location.replace('main-dashboard.html'); }
         function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
         function chartDefaults(){const cs=getComputedStyle(document.documentElement);const text=cs.getPropertyValue('--chartText').trim()||'#cbd5e1',muted=cs.getPropertyValue('--muted').trim()||'#94a3b8',grid=cs.getPropertyValue('--grid').trim()||'rgba(148,163,184,.06)';return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:muted,font:{size:9}},grid:{color:grid}},y:{ticks:{color:muted,font:{size:9}},grid:{color:grid}}}};}
@@ -814,9 +815,17 @@ header#topOverview{background:var(--lama-header)!important}
             /* Collection headlines are populated from the saved fee records in renderFinanceR4(). */
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
-            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})]); window.__schoolClassOptions=schoolClassOptions; window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
-            document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
-            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
+            const [students,teachers,studentAttendanceRows,fees,notifications,tests,staffAttendanceRows,expenses,income,schoolClassOptions]=await Promise.all([
+ safeList('students'),safeList('teachers'),safeAttendanceList('attendance'),safeList('fees'),
+ safeList('notifications'),safeList('tests'),safeAttendanceList('teacherAttendance'),
+ safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})
+]);
+const studentAttendanceLoaded=Array.isArray(studentAttendanceRows),staffAttendanceLoaded=Array.isArray(staffAttendanceRows);
+const attendance=studentAttendanceRows||[],teacherAttendance=staffAttendanceRows||[];
+window.__schoolClassOptions=schoolClassOptions;
+window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance,studentAttendanceLoaded,staffAttendanceLoaded};
+            document.getElementById('engineState').innerText=studentAttendanceLoaded&&staffAttendanceLoaded?'synced':'attendance read incomplete';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students,studentAttendanceLoaded); renderTeacherAttendanceAnalytics(teachers,teacherAttendance,staffAttendanceLoaded); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
+            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students,studentAttendanceLoaded); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); if(!studentAttendanceLoaded){document.getElementById('dashboardAbsentFollowup').textContent='Attendance history unavailable; parent follow-up is paused until the saved register loads.';} renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -844,17 +853,18 @@ header#topOverview{background:var(--lama-header)!important}
             const notice=document.createElement('span');notice.className='text-xs text-red-600';notice.textContent='Could not notify teacher: '+(error.message||error);button.after(notice);
           }
         });
-                function renderStudentAttendanceCard(attendance,students){
+                function renderStudentAttendanceCard(attendance,students,attendanceLoaded=true){
+          if(!attendanceLoaded){const put=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};put('studentAttEnrolled',students.length);for(const key of ['studentAttPresent','studentAttAbsent','studentAttLeave','studentAttUnmarked','studentAttRate','attendanceRatioDisplay'])put(key,'—');put('studentAttHint','Attendance history could not be loaded. No completion or absence is verified. Refresh when the connection is restored.');put('studentAttClassCount','Not verified');document.getElementById('studentAttClasses').innerHTML='<p class="text-xs text-amber-500">Saved attendance unavailable — no class is marked complete.</p>';document.getElementById('dashboardAbsentFollowup').textContent='Follow-up paused: attendance could not be verified.';put('absentTodayCount','Attendance unavailable');return;}
           const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
-          const current=new Map();
+          const current=new Map(),duplicateIds=new Set();
           attendance.forEach(a=>{
             if(normalizeAttendanceDate(a.date)!==today)return;
             const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
             const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
             if(!student)return; // exclude staff and unrelated records
             const key=String(student.id??student._id??student.enrlNo??student.enrollmentNo??'');
-            if(key)current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});
+            if(key){if(duplicateIds.has(key))return;if(current.has(key)){current.delete(key);duplicateIds.add(key);return;}current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});}
           });
           const counts={present:0,absent:0,leave:0};const classMap=new Map();
           students.forEach(s=>{const c=String(s.class??s.grade??'Unassigned').trim()||'Unassigned';if(!classMap.has(c))classMap.set(c,{total:0,marked:0,present:0});classMap.get(c).total++});
@@ -876,15 +886,15 @@ header#topOverview{background:var(--lama-header)!important}
               return `<div class="rounded-xl border border-slate-700/60 p-3 flex gap-3"><div class="shrink-0">${photo?`<img src="${safe(photo)}" alt="Student" class="w-12 h-12 object-cover rounded-lg" loading="lazy">`:'<div class="w-12 h-12 rounded-lg bg-slate-800 text-[9px] flex items-center justify-center">No photo</div>'}</div><div class="min-w-0 flex-1"><p class="text-xs font-black">${safe(name)} · <span class="text-rose-300">${safe(status)}</span></p><p class="text-[11px] text-slate-400">Class ${safe(className)} · Enrl ${safe(enrl)}</p><p class="text-[11px] text-slate-400">${safe(parent)} · ${safe(raw||'No contact')}</p><div class="flex gap-2 flex-wrap mt-2">${wa.length>=10&&wa.length<=15?`<a class="hub-mini-link" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:''}${digits.length>=10?`<a class="hub-mini-link" href="tel:${safe(raw.replace(/[^+\d]/g,''))}">Call</a>`:''}<a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Follow up →</a></div></div></div>`;
             }).join(''):'<p class="text-xs text-slate-400">No absent or leave students recorded today.</p>';
           }
-          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),rate=marked?Math.round(100*counts.present/marked):null;
+          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),coverage=total?Math.round(100*marked/total):null,presentAmongMarked=marked?Math.round(100*counts.present/marked):null;
           const set=(key,value)=>document.getElementById(key).textContent=value;
           set('studentAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
           set('studentAttEnrolled',total.toLocaleString());set('studentAttPresent',counts.present);set('studentAttAbsent',counts.absent);set('studentAttLeave',counts.leave);set('studentAttUnmarked',unmarked);
-          set('studentAttRate',rate===null?'—':rate+'%');
+          set('studentAttRate',coverage===null?'—':coverage+'%');
           document.getElementById('attendanceRatioDisplay').textContent =
-            rate===null?'—':rate+'%';
+            coverage===null?'—':coverage+'%';
           document.getElementById('absentTodayCount').textContent =
-            counts.absent+' absent today';set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
+            counts.absent+' absent · '+unmarked+' unmarked';set('studentAttHint',duplicateIds.size?`Warning: ${duplicateIds.size} student(s) have duplicate saved records. Their status is not verified; ask the school administrator to review the original register.`:total?marked?`${marked} of ${total} saved (${coverage}% register coverage). ${unmarked} unmarked. Present among marked: ${presentAmongMarked}%.`:`0 of ${total} students marked. No attendance rate can be confirmed yet.`:'No students in the register.');
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>{
@@ -928,7 +938,8 @@ function normalizeAttendanceDate(value){
 
   return '';
 }
-function renderTeacherAttendanceAnalytics(teachers,records){
+function renderTeacherAttendanceAnalytics(teachers,records,attendanceLoaded=true){
+ if(!attendanceLoaded){for(const key of ['taTotal','taPresent','taAbsent','taLeave','teacherAttDisplay']){const el=document.getElementById(key);if(el)el.textContent='—'}for(const key of ['notMarkedDisplay','taPending','taCoverage','teacherTrendNote']){const el=document.getElementById(key);if(el)el.textContent='Staff attendance history unavailable — refresh to verify'}const el=document.getElementById('dashboardStaffFollowup');if(el)el.textContent='Follow-up paused until staff attendance is verified.';const bar=document.getElementById('taProgress');if(bar)bar.style.width='0%';return;}
  const today=localISODate(), byDate=new Map();
  const idOf=t=>String(t.id??t._id??t.teacherId??t.teacherID??t.staffId??'').trim();
  const recordId=r=>String(r.teacherId??r.teacherID??r.teacher_id??r.staffId??'').trim();
@@ -1047,18 +1058,19 @@ function renderAssessmentAnalytics(tests){
         }
         function renderClassChart(students){ if(typeof Chart==='undefined')return; const counts={}; students.filter(s=>s.active!==false&&!['passed','left','historical','withdrawn','inactive'].some(x=>String(s.studentStatus||s.status||'Current').toLowerCase().includes(x))).forEach(s=>{const c=String(s.class??s.grade??'Unknown').trim()||'Unknown';counts[c]=(counts[c]||0)+1}); const labels=Object.keys(counts).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})); destroyChart('class'); charts.class=new Chart(document.getElementById('classChart'),{type:'bar',data:{labels,datasets:[{label:'Students',data:labels.map(x=>counts[x]),borderRadius:7,backgroundColor:'rgba(139,92,246,.72)',borderColor:'#a78bfa',borderWidth:1}]},options:{...chartDefaults(),indexAxis:'y',plugins:{legend:{display:false}}}}); }
         function renderGenderChart(students){ if(typeof Chart==='undefined')return; const m=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('m')).length; const f=students.filter(s=>String(s.gender||s.sex).toLowerCase().startsWith('f')).length; const o=Math.max(0,students.length-m-f); destroyChart('gender'); charts.gender=new Chart(document.getElementById('genderChart'),{type:'doughnut',data:{labels:['Male','Female','Other / Unknown'],datasets:[{data:[m,f,o],backgroundColor:['rgba(34,211,238,.75)','rgba(236,72,153,.72)','rgba(148,163,184,.5)'],borderColor:getComputedStyle(document.documentElement).getPropertyValue('--surface').trim()||'#0f172a',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom'}}}}); }
-        function renderAttendanceChart(attendance,students){
-          const today=localISODate(),byId=new Map(),byEnrollment=new Map(),unique=new Map(),classes=new Map();
+        function renderAttendanceChart(attendance,students,attendanceLoaded=true){
+          if(!attendanceLoaded){document.getElementById('attendanceClassBars').innerHTML='<p class="text-xs text-amber-500">Attendance unavailable. Refresh the saved register before relying on class coverage.</p>';document.getElementById('attendanceSummary').innerHTML='';document.getElementById('classBarsDate').textContent='Attendance read failed — no saved status confirmed';return;}
+          const today=localISODate(),byId=new Map(),byEnrollment=new Map(),unique=new Map(),duplicateKeys=new Set(),classes=new Map();
           const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
           for(const st of students){const key=String(st.id??st._id??st.enrlNo??st.enrollmentNo??'').trim();if(!key)continue;const name=String(st.class??st.grade??st.className??'Unassigned').trim()||'Unassigned';if(!classes.has(name))classes.set(name,{total:0,present:0,absent:0,leave:0});classes.get(name).total++;if(st.id!=null||st._id!=null)byId.set(String(st.id??st._id),{key,name});if(st.enrlNo!=null||st.enrollmentNo!=null)byEnrollment.set(String(st.enrlNo??st.enrollmentNo),{key,name});}
-          for(const a of attendance){if(normalizeAttendanceDate(a.date)!==today)continue;const student=byId.get(String(a.studentId??a.student_id??''))||byEnrollment.get(String(a.enrlNo??a.enrollmentNo??''));if(student)unique.set(student.key,{name:student.name,status:String(a.status||'').trim().toLowerCase()})}
+          for(const a of attendance){if(normalizeAttendanceDate(a.date)!==today)continue;const student=byId.get(String(a.studentId??a.student_id??''))||byEnrollment.get(String(a.enrlNo??a.enrollmentNo??''));if(student){if(duplicateKeys.has(student.key))continue;if(unique.has(student.key)){unique.delete(student.key);duplicateKeys.add(student.key);continue;}unique.set(student.key,{name:student.name,status:String(a.status||'').trim().toLowerCase()})}}
           for(const {name,status} of unique.values()){const r=classes.get(name);if(!r)continue;if(['present','p'].includes(status))r.present++;else if(['absent','a'].includes(status))r.absent++;else if(['leave','l','on leave'].includes(status))r.leave++}
           const weekend=[0,6].includes(new Date(today+'T12:00:00').getDay());
           const totals={total:0,present:0,absent:0,leave:0,unmarked:0};
           const rows=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
           const holder=document.getElementById('attendanceClassBars');
-          holder.innerHTML=rows.map(([name,r])=>{const missing=Math.max(0,r.total-r.present-r.absent-r.leave);totals.total+=r.total;totals.present+=r.present;totals.absent+=r.absent;totals.leave+=r.leave;totals.unmarked+=missing;const width=n=>r.total?100*n/r.total:0;return `<div class="attendance-kpi"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(name==='Unassigned'?name:'Class '+name)}</span><span>${r.present} present / ${r.total}</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked</p></div>`}).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
-          document.getElementById('classBarsDate').textContent=new Date(today+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+(weekend?' · Weekend holiday (saved records shown for review)':' · Saved attendance');
+          holder.innerHTML=rows.map(([name,r])=>{const missing=Math.max(0,r.total-r.present-r.absent-r.leave);totals.total+=r.total;totals.present+=r.present;totals.absent+=r.absent;totals.leave+=r.leave;totals.unmarked+=missing;const width=n=>r.total?100*n/r.total:0;return `<div class="attendance-kpi"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(name==='Unassigned'?name:'Class '+name)}</span><span>${r.present+r.absent+r.leave} / ${r.total} marked</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked</p></div>`}).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
+          document.getElementById('classBarsDate').textContent=new Date(today+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+(duplicateKeys.size?' · ⚠ '+duplicateKeys.size+' duplicate pupil/date record(s) need review':weekend?' · Weekend holiday (saved records shown for review)':' · Saved attendance');
           document.getElementById('attendanceSummary').innerHTML=[['Present',totals.present],['Absent',totals.absent],['Leave',totals.leave],['Unmarked',totals.unmarked]].map(([label,n])=>`<div class="hub-stat"><small>${label}</small><b>${n}</b></div>`).join('');
         }
                  function renderFeeChart(series,fees){
@@ -1228,7 +1240,9 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
  function init(){
   const root=document.getElementById('dailyChecklist');if(!root)return;
   const session=window.LamaAPI&&typeof LamaAPI.getSession==='function'?LamaAPI.getSession('school'):null;
-  const schoolId=session&&session.schoolId;if(!schoolId)return;
+  let admin=null;try{admin=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(e){}
+  // The school administrator may use a token-only login without a legacy school session.
+  const schoolId=admin?.token&&admin?.schoolId?admin.schoolId:(session?.schoolId||'');if(!schoolId)return;
   const day=typeof localISODate==='function'?localISODate():new Date().toLocaleDateString('en-CA');
   const key='lama-admin-daily-checklist:'+schoolId+':'+day;
   let saved={};try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(e){}
@@ -1250,17 +1264,18 @@ document.querySelectorAll('.hub-section-heading[id]').forEach(el=>sectionObserve
     const box=root.querySelector('input[data-task-check="'+task+'"]');
     if(!box)continue;
     const hint=box.closest('.daily-checklist-item').querySelector('small');
-    if(!Array.isArray(people)||!Array.isArray(records)){
+    if(!Array.isArray(people)||!Array.isArray(records)||data[task==='attendance'?'studentAttendanceLoaded':'staffAttendanceLoaded']===false){
      box.checked=saved[task]===true;
      if(hint)hint.textContent=saved[task]?'✓ Manually completed · records not available':'Manual check available · records not available';
      continue;
     }
     const roster=people.map(p=>keys(p,rosterKeys[task]));
-    const marked=new Set(records.filter(r=>normDate(r.date)===day&&validStatus(r)).flatMap(r=>keys(r,recordKeys[task])));
-    const matched=roster.filter(ids=>ids.some(id=>marked.has(id))).length;
-    const complete=roster.length>0&&matched===roster.length;
+    const dayRows=records.filter(r=>normDate(r.date)===day&&validStatus(r));
+    const matchCount=roster.map(ids=>dayRows.filter(record=>keys(record,recordKeys[task]).some(k=>ids.includes(k))).length);
+    const matched=matchCount.filter(n=>n===1).length,duplicates=matchCount.filter(n=>n>1).length;
+    const complete=roster.length>0&&matched===roster.length&&duplicates===0;
     box.checked=complete||saved[task]===true;
-    if(hint)hint.textContent=complete?'✓ Automatically completed · '+matched+' / '+roster.length+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.length+' saved':'Auto progress: '+matched+' / '+roster.size+' saved · or check manually';
+    if(hint)hint.textContent=duplicates?'⚠ '+duplicates+' duplicate person/date record(s) require administrator review · '+matched+'/'+roster.length+' verified':complete?'✓ Automatically completed · '+matched+' / '+roster.length+' saved':saved[task]?'✓ Manually completed · '+matched+' / '+roster.length+' saved':'Auto progress: '+matched+' / '+roster.length+' saved · or check manually';
     box.closest('.daily-checklist-item').title=complete?'All roster attendance entries saved': 'You can complete manually or wait for saved records to auto-check';
    }
    paint();

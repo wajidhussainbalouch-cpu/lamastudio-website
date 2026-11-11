@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance Integrity Review — LAMA School Suite</title>
+<script src="../js/api-client.js"></script>
+<style>
+:root{font-family:system-ui,sans-serif;color:#193943;background:#edf5f4}*{box-sizing:border-box}
+body{margin:0}header{background:#0a606a;color:white;padding:20px}main{max-width:1050px;margin:auto;padding:16px}
+.panel{background:white;border:1px solid #cfdfe0;border-radius:16px;padding:20px;margin:16px 0}
+h1{margin:0;font-size:1.5rem}h2{margin:0 0 10px}p{line-height:1.5}
+button,input{font:inherit;border:1px solid #b2c7c8;border-radius:9px;padding:10px}
+button{background:#0a606a;color:white;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}a{color:inherit}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{border:1px solid #dce6e6;border-radius:12px;padding:14px;background:#fbfefd}
+.card strong{display:block;font-size:1.5rem}.muted{color:#556d76}
+.warning{padding:12px;border:1px solid #f0c3ca;border-radius:10px;background:#fff1f2;color:#8d1730}
+.safe{padding:12px;border:1px solid #bad9c4;border-radius:10px;background:#f2fff5}
+.group{border-top:1px solid #d9e4e6;padding:14px 0;overflow-wrap:anywhere}
+.group h3{margin:0 0 7px;font-size:1rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{text-align:left;padding:8px;border-bottom:1px solid #e3eeee;overflow-wrap:anywhere}
+small{color:#54707b}#message{white-space:pre-wrap}
+@media print{header,button,.no-print{display:none!important}.panel{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><a href="../dashboard.html">← School Dashboard</a><h1>Attendance Integrity Review</h1><p>School-admin-only, read-only inspection of existing Google Sheets attendance records.</p></header>
+<main>
+<section class="panel">
+<p class="warning"><strong>No records are changed here.</strong> If you see duplicates, do not press Save or Clear in the attendance register. Back up your school Google Spreadsheet before any manual reconciliation. Different statuses on the same date require human investigation.</p>
+<div class="row">
+<label for="reviewDate"><strong>School date</strong></label>
+<input id="reviewDate" type="date">
+<button id="inspect" type="button">Analyze existing records</button>
+<button id="export" type="button" disabled>Export duplicate review CSV</button>
+</div>
+<p id="message" role="status" class="muted">Choose a date and analyze existing records. This page performs read requests only.</p>
+</section>
+<section id="results" class="cards" aria-live="polite"></section>
+<section class="panel"><h2>Review requirements</h2><p>Compare the reported record IDs in the original <strong>Attendance</strong> and <strong>TeacherAttendance</strong> sheets. The report does not infer physical Google Sheet row numbers. Never assume identical-looking rows are safe to delete without a backup and checking creation times, edits and intended statuses.</p></section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const dateValue=value=>String(value??'').slice(0,10);
+const text=(el,tag,value)=>{const n=document.createElement(tag);n.textContent=value;el.append(n);return n};
+function inspectAttendanceRecords(kind,records,date){
+ if(!['attendance','teacherAttendance'].includes(kind)||!Array.isArray(records)||!/^\d{4}-\d{2}-\d{2}$/.test(date))
+  throw Error('Invalid attendance integrity input.');
+ const idField=kind==='attendance'?'studentId':'teacherId';
+ const byPerson=new Map();
+ let total=0,missingIds=0;
+ for(const record of records){
+  if(!record||dateValue(record.date)!==date)continue;
+  total++;
+  const personId=String(record[idField]??'').trim();
+  if(!personId){missingIds++;continue;}
+  const rows=byPerson.get(personId)||[];
+  rows.push({
+   id:String(record.id??record._id??''),
+   personId,
+   name:String(record.studentName??record.teacherName??''),
+   date,
+   status:String(record.status??'').trim(),
+   remarks:String(record.remarks??record.reason??'').trim(),
+   createdAt:String(record.createdAt??'')
+  });
+  byPerson.set(personId,rows);
+ }
+ const duplicates=[];
+ for(const [personId,rows] of byPerson){
+  if(rows.length<2)continue;
+  const normalizedStatuses=[...new Set(rows.map(r=>r.status.trim().toLowerCase()))];
+  const normalizedRemarks=[...new Set(rows.map(r=>r.remarks.trim().toLowerCase()))];
+  duplicates.push({
+   personId,rows,
+   differentStatus:normalizedStatuses.length>1,
+   differentRemarks:kind==='teacherAttendance'&&normalizedRemarks.length>1
+  });
+ }
+ duplicates.sort((a,b)=>b.rows.length-a.rows.length||a.personId.localeCompare(b.personId));
+ return {kind,date,total,uniquePeople:byPerson.size,missingIds,
+  duplicateGroups:duplicates.length,extraRows:duplicates.reduce((n,g)=>n+g.rows.length-1,0),
+  conflictingGroups:duplicates.filter(g=>g.differentStatus||g.differentRemarks).length,duplicates};
+}
+function administratorSession(){
+ let auth=null;
+ try{auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){}
+ const school=LamaAPI.getSession?.('school');
+ if(!auth?.schoolId||!auth?.token||!school?.schoolId||String(auth.schoolId)!==String(school.schoolId))
+  throw Error('Sign in as School Administrator to inspect attendance integrity.');
+ return {schoolId:String(auth.schoolId)};
+}
+let last=[];
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function reviewCsv(reports,schoolId){
+ const rows=[['schoolId','date','register','personId','name','recordId','status','remarks','createdAt','duplicateCount','conflict']];
+ for(const report of reports)for(const group of report.duplicates){
+  for(const record of group.rows)rows.push([schoolId,report.date,report.kind,
+   group.personId,record.name,record.id,record.status,record.remarks,
+   record.createdAt,group.rows.length,group.differentStatus||group.differentRemarks?'Yes':'No']);
+ }
+ return rows.map(row=>row.map(csvCell).join(',')).join('\r\n');
+}
+function renderReport(report){
+ const panel=document.createElement('section');panel.className='panel';
+ text(panel,'h2',report.kind==='attendance'?'Student Attendance':'Teacher Attendance');
+ const cards=document.createElement('div');cards.className='cards';panel.append(cards);
+ for(const [label,value] of [
+  ['Attendance rows for date',report.total],
+  ['Unique people with IDs',report.uniquePeople],
+  ['Duplicate groups',report.duplicateGroups],
+  ['Extra duplicate rows',report.extraRows],
+  ['Groups with conflicting status/remarks',report.conflictingGroups],
+  ['Records missing person ID',report.missingIds]
+ ]){
+  const box=document.createElement('div');box.className='card';text(box,'small',label);text(box,'strong',String(value));cards.append(box);
+ }
+ if(!report.duplicates.length){text(panel,'p','No repeated person/date keys were found in the loaded school records.');return panel}
+ const note=document.createElement('p');note.className='warning';note.textContent='Repeated person/day records found. This is a review report, NOT a proposed deletion list.';panel.append(note);
+ for(const group of report.duplicates){
+  const box=document.createElement('div');box.className='group';
+  text(box,'h3',(group.rows[0].name||'Person')+' — '+group.personId+' ('+group.rows.length+' entries)');
+  if(group.differentStatus||group.differentRemarks)
+   text(box,'p','CONFLICTING DATA: individual statuses or remarks differ. Escalate for manual review.');
+  const table=document.createElement('table');
+  const head=document.createElement('tr');
+  for(const h of ['Record ID','Status','Remarks','Created at'])text(head,'th',h);
+  const thead=document.createElement('thead');thead.append(head);table.append(thead);
+  const tbody=document.createElement('tbody');
+  for(const r of group.rows){
+   const tr=document.createElement('tr');
+   for(const v of [r.id,r.status,r.remarks,r.createdAt])text(tr,'td',v||'—');
+   tbody.append(tr);
+  }
+  table.append(tbody);box.append(table);panel.append(box);
+ }
+ return panel;
+}
+async function inspect(){
+ const root=$('results');root.replaceChildren();
+ $('export').disabled=true;last=[];
+ const date=$('reviewDate').value;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){$('message').textContent='Choose a valid calendar date.';return}
+ $('inspect').disabled=true;
+ try{
+  const {schoolId}=administratorSession();
+  $('message').textContent='Reading school records. No attendance writes will be sent…';
+  const [students,teachers]=await Promise.all([
+   LamaAPI.list('attendance'),LamaAPI.list('teacherAttendance')
+  ]);
+  if(!Array.isArray(students)||!Array.isArray(teachers))
+   throw Error('Attendance read response invalid. Do not infer that missing records were deleted.');
+  administratorSession();
+  last=[inspectAttendanceRecords('attendance',students,date),
+   inspectAttendanceRecords('teacherAttendance',teachers,date)];
+  last.forEach(report=>root.append(renderReport(report)));
+  $('export').disabled=last.every(report=>!report.duplicates.length);
+  $('message').textContent='Read-only analysis completed for '+date+
+   '. Student and teacher attendance were loaded independently. No data were changed.';
+ }catch(error){last=[];root.replaceChildren();
+  $('message').textContent='Unable to verify attendance: '+(error.message||String(error))+
+   '. No changes were made.';}finally{$('inspect').disabled=false}
+}
+$('inspect').onclick=inspect;
+$('export').onclick=()=>{
+ if(!last.length)return;
+ let auth;try{auth=administratorSession()}catch(error){$('message').textContent=error.message;return}
+ const blob=new Blob(['\ufeff',reviewCsv(last,auth.schoolId)],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='attendance-integrity-'+last[0].date+'.csv';
+ document.body.append(link);link.click();link.remove();
+ URL.revokeObjectURL(url);
+};
+const local=new Date();$('reviewDate').value=[
+ local.getFullYear(),String(local.getMonth()+1).padStart(2,'0'),
+ String(local.getDate()).padStart(2,'0')
+].join('-');
+</script>
+</body></html>

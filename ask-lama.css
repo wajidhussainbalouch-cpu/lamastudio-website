@@ -1,0 +1,110 @@
+/* AskLama v2 — opaque, accessible, keyboard-safe mobile chat.
+ * Never inherit the homepage's translucent --surface cards. */
+.asklama-widget-container,
+.asklama-widget-container *{box-sizing:border-box}
+.asklama-widget-container{
+  position:fixed;right:16px;bottom:max(12px,env(safe-area-inset-bottom));
+  z-index:100000;display:flex;align-items:flex-end;flex-direction:column;
+  font-family:Inter,system-ui,-apple-system,sans-serif;
+  pointer-events:none
+}
+.asklama-mascot-btn{
+  pointer-events:auto;display:grid;place-items:center;
+  width:66px;height:66px;border:0;background:transparent;
+  cursor:pointer;padding:0;filter:drop-shadow(0 6px 12px #0005)
+}
+.asklama-mascot-btn img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.asklama-scrim{position:fixed;inset:0;background:rgba(3,11,25,.64);opacity:0;pointer-events:none;transition:opacity .15s ease}
+.asklama-chat-box{
+  position:absolute;right:0;bottom:80px;
+  width:min(398px,calc(100vw - 24px));
+  height:min(570px,calc(100dvh - 110px));
+  max-height:calc(100dvh - 110px);min-height:260px;
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid #c6d6eb;border-radius:19px;
+  background:#f7faff;color:#102338;
+  box-shadow:0 20px 65px #0007;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transform:translateY(10px);transition:opacity .14s ease,transform .14s ease,visibility .14s
+}
+.asklama-chat-box.active{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0)}
+.asklama-header{
+  flex:0 0 auto;min-height:60px;padding:12px 14px 12px 18px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:linear-gradient(120deg,#155dd4,#1647a5);color:#fff
+}
+.asklama-heading{display:flex;flex-direction:column;gap:2px;min-width:0}
+.asklama-heading strong{font-size:16px;font-weight:800;line-height:1.25}
+.asklama-heading small{font-size:11px;color:#e2edff;font-weight:500}
+.asklama-header-actions{display:flex;align-items:center;gap:4px;flex:none}
+.asklama-header button{
+  color:#fff;background:transparent;border:1px solid #ffffff50;
+  min-width:40px;min-height:40px;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer
+}
+.asklama-header button:hover,.asklama-header button:focus-visible{background:#ffffff25}
+.asklama-close{font-size:24px!important;line-height:1}
+.asklama-messages{
+  display:flex;flex:1 1 auto;flex-direction:column;
+  gap:11px;overflow-y:auto;overscroll-behavior:contain;
+  min-height:0;padding:17px 14px;
+  background:#f7faff;color:#102338;scroll-behavior:smooth
+}
+.asklama-msg{
+  display:block;flex:0 0 auto;max-width:90%;min-width:0;
+  padding:12px 14px;border-radius:14px;
+  font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;
+  box-shadow:0 1px 3px #16385d0f
+}
+.asklama-msg.bot{
+  align-self:flex-start;color:#102338;background:#e4edf9;
+  border-bottom-left-radius:3px
+}
+.asklama-msg.user{
+  align-self:flex-end;color:#fff;background:#205bd0;
+  border-bottom-right-radius:3px
+}
+.asklama-msg.error{color:#83212d;background:#fff1f0;border:1px solid #fac8c6}
+.asklama-msg.loading{color:#40566c;background:#edf2f8}
+.asklama-compose{
+  display:flex;align-items:stretch;flex:0 0 auto;gap:8px;
+  padding:11px 12px max(11px,env(safe-area-inset-bottom));
+  border-top:1px solid #ccdbeb;background:#fff
+}
+.asklama-compose input{
+  width:100%;min-width:0;flex:1 1 auto;height:48px;
+  border:1px solid #b6cbe5;border-radius:12px;background:#fff;color:#102338;
+  padding:10px 12px;font:400 16px/1.3 Inter,system-ui,sans-serif;
+  box-shadow:none;outline:none
+}
+.asklama-compose input:focus-visible{border:2px solid #2563eb;outline:2px solid #bfdbfe}
+.asklama-compose input::placeholder{color:#677b90;opacity:1}
+.asklama-compose button{
+  flex:0 0 76px;min-width:76px;border:0;border-radius:12px;background:#205bd0;
+  color:#fff;font:700 14px Inter,system-ui,sans-serif;cursor:pointer
+}
+.asklama-compose button:disabled{cursor:wait;opacity:.6}
+.asklama-status{
+  min-height:20px;flex:0 0 auto;padding:2px 14px 7px;
+  font-size:12px;line-height:1.25;color:#52657c;background:#fff
+}
+.asklama-widget-container button:focus-visible{outline:3px solid #39c8ef;outline-offset:2px}
+@media(max-width:640px){
+  .asklama-widget-container{right:0;bottom:0}
+  .asklama-scrim.active{opacity:1;pointer-events:auto}
+  .asklama-chat-box{
+    position:fixed;inset:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom)) 8px;
+    width:auto;height:auto;max-height:none;min-height:0;
+    border-radius:16px;transform:translateY(14px)
+  }
+  .asklama-chat-box.active{transform:translateY(0)}
+  .asklama-mascot-btn{position:fixed;right:10px;bottom:max(10px,env(safe-area-inset-bottom));width:63px;height:63px}
+  .asklama-widget-container.is-open .asklama-mascot-btn{display:none}
+  .asklama-header{min-height:62px;padding:12px 12px 12px 16px}
+  .asklama-messages{padding:16px 12px;gap:10px}
+  .asklama-msg{max-width:94%;font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  .asklama-chat-box,.asklama-scrim{transition:none}
+  .asklama-messages{scroll-behavior:auto}
+}

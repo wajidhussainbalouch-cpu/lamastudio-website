@@ -57,7 +57,7 @@ function attendanceCompletion(){
      left+' student(s) not yet verified.')+
    (selectedClass?' Whole school: '+schoolSaved.length+'/'+all.length+' confirmed, '+schoolLeft+' remaining.':'');
 }
-function render(){enable();const all=state.students,rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
+function render(){enable();const selectedClass=$('class').value,all=selectedClass?state.students.filter(s=>cls(s)===selectedClass):state.students,rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
  attendanceCompletion();
  const confirmed=x=>state.integrityBlocked?0:all.filter(s=>state.chosen.get(id(s))?.status===x&&!state.dirty.has(id(s))&&
    !state.pendingVerification?.records.some(r=>r.studentId===id(s))).length;
@@ -67,7 +67,7 @@ function render(){enable();const all=state.students,rows=visible(),count=x=>all.
   ['Leave',count('Leave'),confirmed('Leave')+' verified'+(count('Leave')-confirmed('Leave')?' · '+(count('Leave')-confirmed('Leave'))+' pending':'')],
   ['Unmarked',all.length-count('Present')-count('Absent')-count('Leave'),'No status selected']]
  .map(([k,v,detail])=>'<div class="panel"><div class="muted">'+k+'</div><h2>'+v+'</h2><div class="muted">'+detail+'</div></div>').join('');
- $('count').textContent=rows.length+' visible of '+all.length+' students'+(state.pendingVerification?
+ $('count').textContent=rows.length+' visible of '+all.length+(selectedClass?' students in Class '+selectedClass:' students across all classes')+(state.pendingVerification?
  ' · '+state.pendingVerification.records.length+' submitted mark(s) awaiting cloud verification (not confirmed)':
  state.integrityBlocked?' · DUPLICATE ROWS — saving locked until school administrator reconciliation':state.historyReady?' · saved attendance verified':' · roster preview only');
  $('list').innerHTML=rows.map(s=>{const k=id(s),v=state.chosen.get(k)?.status||'';return '<div class="student"><div><strong>'+escapeHtml(s.name||'Unnamed')+'</strong> <span class="muted">('+escapeHtml(enr(s))+')</span><div class="muted">'+escapeHtml(cls(s))+' · '+escapeHtml(s.fatherName||s.fatherGuardian||'')+'</div></div><div class="controls">'+['Present','Absent','Leave'].map(x=>'<button data-id="'+escapeHtml(k)+'" data-status="'+x+'" class="'+(v===x?'selected '+x.toLowerCase():'')+'" '+(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||state.pendingVerification||state.integrityBlocked?'disabled':'')+'>'+x+'</button>').join('')+'</div></div>'}).join('');

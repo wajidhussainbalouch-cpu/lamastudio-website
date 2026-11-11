@@ -23,11 +23,12 @@ function isPublic(relative){
  return true;
 }
 function inject(html){
- const re=/<script\b[^>]*\bsrc\s*=\s*["'][^"']*ask-lama\.js(?:\?[^"']*)?["'][^>]*>\s*<\/script>/gi;
+ const re=/<script\b[^>]*\bsrc\s*=\s*["'][^"']*ask-lama\.js(?:\?[^"']*)?["'][^>]*>\s*<\/script>\s*/gi;
  const existing=re.test(html);re.lastIndex=0;
  let updatedHtml=html.replace(re,'');
- if(!/<\/body\s*>/i.test(updatedHtml))return {content:html,changed:false,error:'no body end'};
- updatedHtml=updatedHtml.replace(/<\/body\s*>/i,tag+'\n</body>');
+ if(/<\/body\s*>/i.test(updatedHtml))updatedHtml=updatedHtml.replace(/<\/body\s*>/i,tag+'\n</body>');
+ else if(/<\/html\s*>/i.test(updatedHtml))updatedHtml=updatedHtml.replace(/<\/html\s*>/i,tag+'\n</html>');
+ else updatedHtml += '\n'+tag+'\n';
  return {content:updatedHtml,changed:updatedHtml!==html,existing};
 }
 function walk(dir){

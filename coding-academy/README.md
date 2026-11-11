@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 7 (privacy and account-erasure readiness)
+# LAMA Coding Academy — MVP 8 (device self-check and progress integrity)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -224,3 +224,30 @@ The staged backend function is NOT deployed; the dedicated Coding Academy databa
 Added tests/privacy.test.cjs and a sixth academy regression step in GitHub Actions to check local guest erasure, other-storage preservation, privacy content and staged deletion guards. Cache v7 includes the privacy page. Earlier practice, Studio, Python, progress, and cloud tests remain in the same workflow.
 
 **Release blockers:** real Android/browser QA, dedicated backend approval, RLS checks with two users, live Edge Function deletion tests, branded confirmation email, published privacy/support/retention policy, minors/guardian consent rules and merge/deployment approval. No deployment or production database change was made.
+
+
+## Phase 8 — Actual catalog integrity and device self-test (11 November 2026)
+
+New learner-facing page: [System Check](./diagnostics.html), linked from the main academy, progress, Python Lab and optional-account pages.
+
+### Real lesson catalog contract
+
+Added tests/integrity.test.cjs: unlike manually populated activity-count fixtures, it evaluates the **actual** authored catalog sources: 12 foundation lessons from index.html, 18 practice tasks from practice.js, 10 real Python missions from python-lessons.js and 12 project milestones from projects-data.js. It confirms the cloud progress identifiers and reviewed-milestone rules match those source catalogs, checks partial completion behavior, verifies a full 52/52 JSON save and restore, and rejects unexpected or malicious fields. This guards against future lesson IDs being changed without updating the cloud progress tracker.
+
+### On-device System Check
+
+Added diagnostics.js + diagnostics.html with eight on-device capability checks: secure browser context, writable localStorage, compatibility of the four stored learner modules, Worker+WebAssembly presence, local file/download support, academy service-worker activation, cache presence for seven important academy pages, and basic browser connectivity indication.
+
+A **separate, optional Test Python now** button starts the same Python worker used in the 10 missions and runs a real simple function/behavior test. The test can trigger a substantial network download, is never started automatically, and includes cancellation and initialization/execution timeouts. The page does not read or upload the learner's saved code for the Python diagnostic.
+
+The downloadable anonymous diagnostic report includes only test identifiers and statuses; it does not include browser storage contents, saved code, learner name, email, IP address or browser user-agent string. This is a convenience for manual testing, not a complete privacy or security guarantee.
+
+Added tests/diagnostics.test.cjs: mocked browser features verify local tests, consent-based worker startup, correct worker protocol, cleanup, download format, and the absence of private storage contents in reports.
+
+Service-worker cache v8 includes diagnostics.html and diagnostics.js. The external Pyodide WebAssembly runtime is **not bundled offline** and is tested only after explicit user action.
+
+### Limits
+
+These tests are automated static/mocked checks, not proof that the runtime works on actual Android phones. Manual on-device testing remains mandatory for mobile data use, CDN access, WebAssembly performance, storage quota, installation, offline reload, Urdu layout and real learner pathways. Optional accounts and self-service Auth deletion remain disabled pending an approved dedicated Coding Academy Supabase backend, live multi-account RLS checks and privacy review. Nothing was deployed or merged to production.
+
+All eight Coding Academy test files run through the dedicated GitHub Actions workflow. At code commit f43034cb07f3da97c12d7eb95d40b8e356733b24, both the Coding Academy checks and AskLama regression workflows completed successfully.

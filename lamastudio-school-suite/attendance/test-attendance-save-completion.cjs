@@ -11,6 +11,14 @@ function section(a,b){
  return html.slice(start,end);
 }
 const date='2026-11-10';
+const asDateSource=section('const asDate=v=>{','const array=v=>');
+const asDate=new Function('LamaAPI',asDateSource+'return asDate;')({
+ getSession:()=>({timeZone:'Asia/Karachi'})
+});
+assert.equal(asDate('2026-11-10T19:00:00.000Z'),'2026-11-11','Sheets UTC midnight must resolve to school local day');
+assert.equal(asDate('2026-11-11'),'2026-11-11');
+assert.equal(asDate('11/11/2026'),'2026-11-11');
+
 const roster=Array.from({length:349},(_,i)=>({
  id:'student-'+(i+1),name:'Pupil '+(i+1),
  enrlNo:String(i+100),class:i<38?'5':'6'
@@ -37,6 +45,10 @@ renderCards();
 assert.ok(nodes.get('summary').innerHTML.includes('Students</div><h2>38</h2>'));
 assert.ok(nodes.get('summary').innerHTML.includes('Present</div><h2>20</h2>'));
 assert.ok(nodes.get('summary').innerHTML.includes('Absent</div><h2>18</h2>'));
+assert.ok(nodes.get('schoolSummary').innerHTML.includes('Students</div><h2>349</h2>'));
+assert.ok(nodes.get('schoolSummary').innerHTML.includes('Unmarked</div><h2>311</h2>'));
+assert.ok(nodes.get('selectedSummaryHeading').textContent.includes('Class 5'));
+assert.ok(nodes.get('coverage').innerHTML.includes('<strong>6</strong>'),'School coverage must include classes beyond the selected filter');
 assert.ok(nodes.get('count').textContent.includes('38 visible of 38 students in Class 5'));
 nodes.get('class').value='';
 renderCards();

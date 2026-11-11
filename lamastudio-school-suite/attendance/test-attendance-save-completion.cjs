@@ -29,6 +29,20 @@ const id=s=>s.id,cls=s=>s.class,enr=s=>s.enrlNo,status=x=>x;
 const banner=new Function('state','$','id','cls',
  section('function attendanceCompletion(){','function render(){')+
  'return attendanceCompletion;')(state,$,id,cls);
+// Class selection scopes summary cards as well as the completion banner.
+const renderCards=new Function('state','$','visible','id','cls','enr','escapeHtml','recentAttendance','qrSaving','portalPublishing','enable','attendanceCompletion',
+ section('function render(){',"$('followup').addEventListener")+'return render;'
+)(state,$,()=>roster.slice(0,38),id,cls,enr,x=>String(x??''),()=>'',false,false,()=>{},banner);
+renderCards();
+assert.ok(nodes.get('summary').innerHTML.includes('Students</div><h2>38</h2>'));
+assert.ok(nodes.get('summary').innerHTML.includes('Present</div><h2>20</h2>'));
+assert.ok(nodes.get('summary').innerHTML.includes('Absent</div><h2>18</h2>'));
+assert.ok(nodes.get('count').textContent.includes('38 visible of 38 students in Class 5'));
+nodes.get('class').value='';
+renderCards();
+assert.ok(nodes.get('summary').innerHTML.includes('Students</div><h2>349</h2>'));
+assert.ok(nodes.get('summary').innerHTML.includes('Unmarked</div><h2>311</h2>'));
+nodes.get('class').value='5';
 let message=banner(),label=nodes.get('completion').textContent;
 assert.ok(label.includes('Class 5 — 0/38 saved and verified'));
 assert.ok(!label.includes('Class attendance completed'));

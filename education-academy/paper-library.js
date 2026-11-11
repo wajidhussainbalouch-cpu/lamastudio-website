@@ -14,7 +14,7 @@
  // Job variants (e.g. teaching:0 and teaching:1) share the same family and count.
  const MAX_PAPERS_PER_JOB=20;
  // Derived papers are source-credited views, not new unique question records.
- const candidates=()=>[...(Array.isArray(window.LAMA_PPSC_PAPERS)?window.LAMA_PPSC_PAPERS:[]),...(Array.isArray(window.LAMA_PPSC_SHARED_PAPERS)?window.LAMA_PPSC_SHARED_PAPERS:[])].filter(isPublic);
+ const candidates=()=>Array.isArray(window.LAMA_PPSC_PAPERS)?window.LAMA_PPSC_PAPERS.filter(isPublic).concat(Array.isArray(window.LAMA_PPSC_SHARED_PAPERS)?window.LAMA_PPSC_SHARED_PAPERS.filter(isPublic):[]):[];
  // Stable numerical order across public paper list, job-specific library and side menu.
  // Demo Paper 1 keeps its historic ID and saved attempt key.
  const paperNumber=paper=>{

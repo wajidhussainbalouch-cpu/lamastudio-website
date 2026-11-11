@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = (action.startsWith('quranV8') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -100,6 +100,12 @@ const LamaAPI = (() => {
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
+    // Quran v8: existing School Suite identity only. Backend verifies all scopes; POST only.
+    quranV8ListLearners:async className=>(await callApi('quranV8ListLearners',{className},'POST')).result,
+    quranV8GetProgress:async targetStudentId=>(await callApi('quranV8GetProgress',{targetStudentId},'POST')).result,
+    quranV8LogPractice:async (targetStudentId,lessonId,kind,requestId)=>(await callApi('quranV8LogPractice',{targetStudentId,lessonId,kind,requestId},'POST')).result,
+    quranV8TeacherReview:async (targetStudentId,lessonId,status,note,requestId)=>(await callApi('quranV8TeacherReview',{targetStudentId,lessonId,status,note,requestId},'POST')).result,
+    quranV8ParentChildren:async()=>{throw Error('Guardian accounts are not verified in this School Suite version.');},
     getSession,setSession,clearSession,logout:clearSession,isLoggedIn,requireLogin,requireAnyLogin,
     register:()=>Promise.reject(Error('Use the school application and activation process.')),
     requestSchoolRegistration:async data=>(await callApi('requestSchoolRegistration',data)).result,

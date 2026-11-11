@@ -1,5 +1,5 @@
 /* Lama School Suite: cache only static shell assets; never cache API responses or personal school data. */
-const CACHE='lama-school-static-v3';
+const CACHE='lama-school-static-v4';
 const STATIC=['./main-dashboard.html','./portal-login.html','./manifest.webmanifest','./assets/icons/lama-school-192.png','./assets/icons/lama-school-512.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('lama-school-static-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

@@ -1,0 +1,27 @@
+name: School board School ID copy regression
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/main-dashboard.html'
+      - 'lamastudio-school-suite/teacher-login.html'
+      - 'lamastudio-school-suite/sw.js'
+      - 'lamastudio-school-suite/test-school-id-copy.cjs'
+      - '.github/workflows/school-board-copy-id.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  school-id-copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate School ID copy, mobile tap and teacher/student links
+        run: node lamastudio-school-suite/test-school-id-copy.cjs

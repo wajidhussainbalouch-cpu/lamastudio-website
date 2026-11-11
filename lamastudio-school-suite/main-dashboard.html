@@ -13,7 +13,8 @@
 <script src="js/api-client.js" onerror="console.warn('api-client.js missing');"></script>
 
 <style>
-#dashboardSubscriptionDialog[hidden]{display:none!important}
+#dashboardSubscriptionDialog[hidden],#schoolIdPortalLinks[hidden]{display:none!important}
+#schoolIdDisplay::selection{background:#67e8f9;color:#082f49}
 :root{
     --bg:#050812;--bg2:#091120;--card:rgba(12,20,35,.72);--card2:rgba(16,27,46,.62);
     --text:#f8fafc;--muted:#94a3b8;--line:rgba(148,163,184,.15);
@@ -220,7 +221,7 @@ body:before{
             class="min-w-0 flex-1 max-w-sm rounded-xl border border-white/40 bg-slate-950/80 px-3 py-3 text-white font-bold tracking-normal"
             style="min-width:180px;max-width:100%;font-size:16px;-webkit-user-select:text;user-select:text;min-height:48px"
             placeholder="School ID loading…">
-        <button id="copySchoolIdButton" type="button" onclick="copySchoolId()"
+        <button id="copySchoolIdButton" type="button"
             class="rounded-xl border border-cyan-200/60 bg-teal-700 px-5 py-3 text-sm font-extrabold text-white min-h-[48px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
             aria-label="Copy School ID">📋 Copy ID</button>
     </div>
@@ -672,6 +673,8 @@ async function copySchoolId() {
     report('Automatic copy is blocked on this browser. Long-press the selected ID above and choose Copy, or use the login links below.', false);
     return false;
 }
+
+document.getElementById('copySchoolIdButton')?.addEventListener('click', copySchoolId);
 
 async function render(){
     let data = {};

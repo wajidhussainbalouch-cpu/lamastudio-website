@@ -13,8 +13,8 @@ const scripts=[...html.matchAll(/<script src="\.\/(papers\/[^"]+\.js)" defer><\/
 assert.equal(scripts.filter(s=>s.includes('assistant-faisalabad-01-')).length,5,'Faisalabad assistant needs four batches and registrar');
 for(const script of scripts)load(script);
 const all=context.window.LAMA_PPSC_PAPERS;
-assert.equal(all.length,27,'Expect 20 teaching, 3 Information Officer, 2 Junior Clerk, Kot Addu Assistant and Faisalabad Assistant papers');
-assert.equal(all.reduce((sum,p)=>sum+p.questions.length,0),2700,'Total verified practice question positions');
+assert.equal(all.length,28,'Expect 20 teaching, 3 Information Officer, 2 Junior Clerk, two Assistant and one Secretary A paper');
+assert.equal(all.reduce((sum,p)=>sum+p.questions.length,0),2800,'Total verified practice question positions');
 const target=all.find(p=>p.id==='AFSD-FAISALABAD-2026-P01');
 assert.ok(target,'Faisalabad Assistant paper missing');
 assert.deepEqual(Array.from(target.jobIds),['assistant-faisalabad-bor']);
@@ -62,4 +62,4 @@ const job=fs.readFileSync(path.join(root,'jobs.js'),'utf8');
 assert.match(job,/id:"assistant-faisalabad-bor"[^\n]*caseNo:"36-RJ\/2026"[^\n]*ready:true/);
 assert.ok(fs.readFileSync(path.join(root,'print.html'),'utf8').includes('column-count:2!important'),'Question paper must print in two A4 columns');
 assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/lama-ppsc-preview-v90/);
-console.log('Assistant Faisalabad Paper 01 PASS: 100 MCQs, 10 subject areas, unique stems and options, full library 27 papers/2700 positions, exam/print/review/PWA wiring');
+console.log('Assistant Faisalabad Paper 01 PASS: 100 MCQs, 10 subject areas, unique stems and options, full library 28 papers/2800 positions, exam/print/review/PWA wiring');

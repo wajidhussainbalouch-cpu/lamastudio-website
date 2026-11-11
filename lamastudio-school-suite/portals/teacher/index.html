@@ -268,7 +268,36 @@ function updateTeacherOverview(){
  $('miniDesignation').textContent=me.designation||'Teacher';
  $('miniEmployeeId').textContent='ID · '+(me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—');
 }
-function todayAbsentees(){return attendanceReadReady&&!attendanceSavePending?attendance.filter(a=>attendanceDay(a)===localDate()&&norm(a.status)==='absent'&&!!attendanceStudent(a)):[]}
+function verifiedClassAttendance(day=localDate()){
+ const saved=new Map(),duplicates=[];
+ if(attendanceReadReady)for(const student of myStudents){
+  const rows=attendanceRecordsFor(attendance,student,day);
+  if(rows.length>1){duplicates.push(student);continue}
+  if(rows.length!==1)continue;
+  const raw=norm(rows[0].status);
+  const status=raw==='p'||raw==='present'?'Present':raw==='a'||raw==='absent'?'Absent':raw==='l'||raw==='leave'?'Leave':'';
+  if(status)saved.set(String(student.id),{status,record:rows[0]});
+ }
+ const values=[...saved.values()];
+ const present=values.filter(v=>v.status==='Present').length;
+ const absent=values.filter(v=>v.status==='Absent').length;
+ const leave=values.filter(v=>v.status==='Leave').length;
+ return {ready:attendanceReadReady,total:myStudents.length,present,absent,leave,
+  unmarked:myStudents.length-values.length-duplicates.length,duplicates,
+  absentees:myStudents.filter(s=>saved.get(String(s.id))?.status==='Absent'),saved};
+}
+function todayAbsentees(){const s=verifiedClassAttendance();return s.ready&&!attendanceSavePending&&!s.duplicates.length?s.absentees:[]}
+function displayClassAttendanceSummary(){
+ const node=$('attendanceClassSummary');if(!node)return;
+ const day=$('attDate').value,s=verifiedClassAttendance(day);
+ const drafts=[...attendanceDrafts.keys()].filter(k=>k.startsWith(day+'|')).length;
+ if(!s.ready){node.textContent='Saved attendance unavailable; refresh before saving.';return}
+ if(s.duplicates.length){node.textContent='Duplicate student/date records found. Saving locked; administrator review required.';return}
+ if(attendanceSavePending){node.textContent='Submitted attendance NOT yet verified. Recheck; do not Save again.';return}
+ const marked=s.present+s.absent+s.leave;
+ node.textContent=(marked===s.total&&s.total&&!drafts?'✓ Attendance saved and verified':'Class register')+
+  ' · '+marked+'/'+s.total+' saved · '+s.present+' Present · '+s.absent+' Absent · '+s.leave+' Leave · '+s.unmarked+' Unmarked'+(drafts?' · '+drafts+' UNSAVED choices':'');
+}
 function updateStats(){
  $('statStudents').textContent=myStudents.length;
  $('statHomework').textContent=homework.filter(h=>mine(h)).length;

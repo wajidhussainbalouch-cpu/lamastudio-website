@@ -61,5 +61,5 @@ for(const name of ['index.html','print.html','answer-key.html','sw.js']){
 const job=fs.readFileSync(path.join(root,'jobs.js'),'utf8');
 assert.match(job,/id:"assistant-faisalabad-bor"[^\n]*caseNo:"36-RJ\/2026"[^\n]*ready:true/);
 assert.ok(fs.readFileSync(path.join(root,'print.html'),'utf8').includes('column-count:2!important'),'Question paper must print in two A4 columns');
-assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/lama-ppsc-preview-v\\d+/);
+assert.match(fs.readFileSync(path.join(root,'sw.js'),'utf8'),/lama-ppsc-preview-v\d+/);
 console.log('Assistant Faisalabad Paper 01 PASS: 100 MCQs, 10 subject areas, unique stems and options, full library 28 papers/2800 positions, exam/print/review/PWA wiring');

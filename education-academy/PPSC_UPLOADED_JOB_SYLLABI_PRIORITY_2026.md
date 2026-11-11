@@ -1,5 +1,10 @@
 # Uploaded PPSC Job Syllabi — Priority Paper Development Queue
 
+## Secretary A/B correction and paper progress — 11 November 2026
+
+Independent advertisement reproductions correct **Secretary 'A' Class Market Committee to BS-17 (47-RJ/2026)** and identify **Secretary 'B' as BS-16 (46-RJ/2026)**. The uploaded screenshot did not make the case numbers legible; these are subsequent referenced transcriptions, **not an original PPSC PDF audit**. Secretary A has its own completed source practice Paper 01, 100 original MCQs with the specified approximate 60/40 split; **28 source papers / 2,800 items** now exist. Supabase has 100 new unapproved Secretary A drafts, protected alongside prior editorial bank entries. Secretary B remains pending. Read `SECRETARY_A_MARKET_COMMITTEE_PAPER_01_RELEASE.md` for details and review/deployment limitations.
+
+
 ## Junior Clerk Bahawalpur Paper 01 — 80/20 official-screenshot syllabus (9 November 2026)
 
 **Published source practice:** `JCB-BAHAWALPUR-2026-P01` contains 100 original AI-assisted MCQs (`JCB01-001`–`JCB01-100`), each with explanatory answer feedback and a 90-minute exam. **80 General Ability + 20 MS Office/Computer Skills** exactly match the user-supplied Bahawalpur Division Junior Clerk screenshot's specified distribution. The existing school-head (20) and Information Officer (3) paper sets remain untouched: **24 public practice papers / 2,400 MCQ positions** across three job families. Candidate exam, saved score, A4 print, post-submission answer key and PWA offline scripts (cache v86) are integrated; the dashboard now marks only this newly built screenshot job as `ready:true`.
@@ -23,8 +28,8 @@
 | 2 | Assistant (BS-16) — Kot Addu | Not readable / absent | 100% General Ability | 100 / 90 |
 | 3 | Junior Clerk (BS-11) — Faisalabad | Not readable / absent | 80% General Ability; 20% MS Office and Computer Skills | 100 / 90 |
 | 4 | Assistant (BS-16) — Faisalabad | 36J2026 | 100% General Ability | 100 / 90 |
-| 5 | Secretary 'A' Class Market Committee (BS-16) | Not readable / absent | 60% Qualification-related knowledge; 40% General Ability | 100 / 90 |
-| 6 | Secretary 'B' Class Market Committee (BS-16) | Not readable / absent | 60% Qualification-related knowledge; 40% General Ability | 100 / 90 |
+| 5 | Secretary 'A' Class Market Committee (BS-17) | 47-RJ/2026 (later advertisement reproduction) | 60% Qualification-related knowledge; 40% General Ability | 100 / 90 |
+| 6 | Secretary 'B' Class Market Committee (BS-16) | 46-RJ/2026 (later advertisement reproduction) | 60% Qualification-related knowledge; 40% General Ability | 100 / 90 |
 | 7 | Chief Officer / Municipal Officer (Regulations) (BS-16) | 39-J2026 | Punjab Local Government Act, 2025 (weight not stated); General Ability (weight not stated) | 100 / 90 |
 | 8 | Assistant Microbiologist (BS-15) | 23RJ2023 | 100% Qualification-related questions | 100 / 90 |
 | 9 | Municipal Officer / Assistant Engineer — Infrastructure (BS-17) | 27J2026 | 100% Qualification-related questions | 100 / 90 |
@@ -39,7 +44,7 @@
 - **Junior Clerk, Faisalabad — screenshot 3:** 19 BS-11 posts with reserved quotas at DC/District Collector Office. Same **80% General Ability / 20% MS Office and Computer Skills** pattern. Written-qualified applicants called for English typing and proficiency in **1:20 ratio**, and only typing-pass candidates proceed to the English proficiency test.
 - **Assistant, Faisalabad — screenshot 4:** Five BS-16 DC Office posts, **100-mark, 90-minute General Ability** including Basic Computer Studies; no detailed percentage split stated.
 - **Assistant Microbiologist, Punjab Food Authority — screenshot 5:** Five BS-15 contract posts, **100 marks / 90 minutes / 100% qualification-related questions**. The screenshot supplies no detailed microbiology subtopic weights. Historical 2023 case identifier requires special caution before claiming current openings.
-- **Secretary A, Market Committee / PAMRA — screenshot 6:** Nine BS-16 posts, **100 marks / 90 minutes, 60% qualification-related, 40% General Ability**. General Ability topics include GK, Pakistan Studies, Current Affairs, English, Urdu, Everyday Science, Geography, Basic Math, Basic Computer Studies.
+- **Secretary A, Market Committee / PAMRA — screenshot 6:** Nine BS-17 posts, **100 marks / 90 minutes, 60% qualification-related, 40% General Ability**. General Ability topics include GK, Pakistan Studies, Current Affairs, English, Urdu, Everyday Science, Geography, Basic Math, Basic Computer Studies.
 - **Secretary B, Market Committee / PAMRA — screenshot 7:** Fifteen BS-16 posts, same **60% qualification-related / 40% General Ability**. A and B class remain distinct job entries even if later paper content can share well-verified foundational skills.
 - **Chief Officer / Municipal Officer (Regulations), LG&CD — screenshot 8:** 30 posts for a stated **service quota**, including related local-council/secretary-union-council positions. **100 MCQs / 90 minutes**. Subjects: **Punjab Local Government Act, 2025 and General Ability** (GK, Pakistan Studies, English, Urdu, Basic Math, Basic Computer). **No percentage split stated**; verify the operative statute before authoring law questions.
 - **Municipal Officer / Engineering and Infrastructure titles, LG&CD — screenshot 9:** Five BS-17 service-quota posts covering municipal/infrastructure and assistant engineering titles. **100 MCQs / 90 minutes / 100% qualification-related**; exact discipline and detailed topics must be checked against eligibility and the approved official syllabus.

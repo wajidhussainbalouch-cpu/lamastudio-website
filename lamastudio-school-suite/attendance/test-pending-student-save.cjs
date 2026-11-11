@@ -28,7 +28,7 @@ const helpers=html.slice(helpersStart,helpersEnd);
   timeout:async p=>p,array:x=>Array.isArray(x)?x:null,
   asDate:x=>String(x||'').slice(0,10),status:x=>x,
   id:x=>x.id,enr:x=>x.enrlNo,cls:x=>x.class,duplicateAttendanceGroups:()=>0,
-  qrSaving:false,confirm:()=>true
+  qrSaving:false,confirm:()=>true,setInterval:()=>1,clearInterval:()=>{}
  };
  const actions=new Function(...Object.keys(deps),
   helpers+source+"return {save:$('save').onclick,verifyPendingAttendance};"

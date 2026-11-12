@@ -1,0 +1,27 @@
+name: Class Attendance Navigation
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/attendance/student-attendance-v2.html'
+      - 'lamastudio-school-suite/attendance/student-attendance.html'
+      - 'lamastudio-school-suite/test-class-attendance-navigation.cjs'
+      - '.github/workflows/class-attendance-navigation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  class-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify class/date register links and preselection
+        run: node lamastudio-school-suite/test-class-attendance-navigation.cjs

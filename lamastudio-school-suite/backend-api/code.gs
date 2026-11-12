@@ -1190,7 +1190,7 @@ function upsertTeacherAttendance_(ctx, record, expectedId) {
         const full=Object.assign({},old||{},{
             id:old?.id || genId('tat'),teacherId,
             teacherName:String(teacher.name||teacher.teacherName||'').slice(0,120),
-            date,status,remarks,markedBy:ctx.auditActor.name || 'School Admin',
+            date,status,remarks,markedBy:(ctx.auditActor&&ctx.auditActor.name) || 'School Admin',
             createdAt:old?.createdAt || new Date().toISOString()
         });
         if(found.length)sheet.getRange(found[0].row,1,1,headers.length).setValues([recordToRow(headers,full)]);

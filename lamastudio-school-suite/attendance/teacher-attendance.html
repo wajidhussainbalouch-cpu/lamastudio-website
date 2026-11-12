@@ -191,33 +191,51 @@ function teacherQrStop(){document.getElementById('qrTeacherPanel')?.classList.re
 let teacherQrSaving=false;
 async function teacherQrSaveVerified(teacher){
  if(teacherQrSaving)return;
- const k=id(teacher),when=$('date').value;
- if(pendingVerification||duplicateTeacherIds.length){teacherQrFeedback('pending','Verify pending/duplicate attendance before scanning. No new write was sent.');return}
- if(busy||!attendanceHistoryLoaded||when!==loadedDate||holidayReason(when)){teacherQrFeedback('error','Attendance register unavailable. Nothing saved.');return}
- if(dirty.size){teacherQrFeedback('error','Unsaved manual changes exist. Save or discard them before QR auto-attendance.');return}
- const existing=records.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
- if(existing.length){teacherQrFeedback('error','Existing attendance found. QR will not overwrite it.');return}
+ const key=id(teacher),day=$('date').value;
+ if(busy||pendingVerification||duplicateTeacherIds.length||!attendanceHistoryLoaded||day!==loadedDate||holidayReason(day)){
+  teacherQrFeedback('error','Attendance is not verified or cannot be edited. No QR write sent.');return;
+ }
+ if(dirty.size){teacherQrFeedback('error','Save or discard manual changes before using QR attendance.');return}
+ const existing=records.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'')===key&&status(r));
+ if(existing.length){teacherQrFeedback('error','A saved teacher/date record already exists; QR never overwrites it.');return}
  teacherQrSaving=true;
- teacherQrFeedback('pending',name(teacher)+' scanned. Saving attendance and verifying…');
+ const item={teacherId:key,status:'Present',remarks:''};
+ pendingVerification={date:day,records:[item]};
+ teacherQrFeedback('pending',name(teacher)+' scanned. Saving and checking server confirmation…');
  try{
-  const patch={teacherId:k,teacherName:name(teacher),date:when,status:'Present',remarks:''};
-  const result=await LamaAPI.add('teacherAttendance',patch);
-  if(result===false||result?.success===false||result?.error)throw Error(result?.message||result?.error||'Server rejected save');
-  const response=await LamaAPI.list('teacherAttendance');
-  if(!Array.isArray(response)&&!Array.isArray(response?.records)&&!Array.isArray(response?.data))throw Error('Verification response invalid');
-  const fresh=arr(response);
-  const matches=fresh.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
-  records=fresh;
-  if(matches.length===1&&status(matches[0])==='Present'){
-   selected.set(k,{status:'Present',remarks:'',recordId:String(matches[0].id??matches[0]._id??'')});
-   teacherQrPending.delete(k);
-   render();renderHistory();
-   teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified.');
-  }else{
-   teacherQrFeedback('pending','Save submitted but verification is incomplete. Do not rescan; refresh to check the register.');
+  let confirmed=null;
+  if(fastDailyAvailable===true){
+   try{
+    const result=await LamaAPI.bulkTeacherAttendanceVerified(day,[item]);
+    if(!result?.verified||result.date!==day||!verifySubmittedRecords([item],result.records,day))
+     throw Error('QR save not independently verified by server.');
+    confirmed=result.records;
+   }catch(error){
+    if(!unsupportedTeacherAction(error))throw error;
+    fastDailyAvailable=false;
+   }
   }
+  if(!confirmed){
+   const response=await LamaAPI.add('teacherAttendance',{teacherId:key,teacherName:name(teacher),date:day,status:'Present',remarks:''});
+   if(!response||response.success===false||response.error)throw Error('QR save status unknown; refresh to verify.');
+   const snapshot=await readTeacherDay(day);
+   if(snapshot.duplicates.length||!verifySubmittedRecords([item],snapshot.records,day))
+    throw Error('QR save accepted but server readback did not confirm a unique record.');
+   applyTeacherDay(day,snapshot);
+   confirmed=snapshot.records.filter(r=>String(r.teacherId??r.teacherID??'')===key);
+  }else{
+   records=records.filter(r=>recDate(r)!==day||String(r.teacherId??r.teacherID??'')!==key).concat(confirmed);
+   selected.set(key,{status:'Present',remarks:'',recordId:String(confirmed[0].id??'')});
+   verifiedAt=Date.now();
+  }
+  pendingVerification=null;lastSaveVerified=Date.now();teacherQrPending.delete(key);
+  historyLoaded=false;historyRecords=[];
+  render();renderHistory();
+  teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified.');
+  toast('✓ QR teacher attendance saved and verified.');
  }catch(error){
-  teacherQrFeedback('pending','Could not confirm save: '+error.message+'. Check register before retrying to prevent duplicates.');
+  teacherQrStop();render();
+  teacherQrFeedback('pending','QR write not verified: '+error.message+'. Press Refresh to check; do not rescan.');
  }finally{teacherQrSaving=false}
 }
 async function teacherQrStart(){

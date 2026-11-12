@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 8 (device self-check and progress integrity)
+# LAMA Coding Academy — MVP 9 (offline privacy and low-data Python readiness)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -251,3 +251,37 @@ Service-worker cache v8 includes diagnostics.html and diagnostics.js. The extern
 These tests are automated static/mocked checks, not proof that the runtime works on actual Android phones. Manual on-device testing remains mandatory for mobile data use, CDN access, WebAssembly performance, storage quota, installation, offline reload, Urdu layout and real learner pathways. Optional accounts and self-service Auth deletion remain disabled pending an approved dedicated Coding Academy Supabase backend, live multi-account RLS checks and privacy review. Nothing was deployed or merged to production.
 
 All eight Coding Academy test files run through the dedicated GitHub Actions workflow. At code commit f43034cb07f3da97c12d7eb95d40b8e356733b24, both the Coding Academy checks and AskLama regression workflows completed successfully.
+
+
+## Phase 9 — PWA cache security, low-data Python execution and bounded output (12 November 2026)
+
+### Offline service worker hardened
+
+- Updated coding-academy/sw.js scoped cache to v9 and restricted caching to the exact, explicitly listed public static academy assets.
+- One-time authentication/recovery links with URL query parameters are **never intercepted or stored** by the service worker. Requests with no-store cache policy or response headers, dynamic paths, unknown files, POST requests and external Pyodide CDN resources are not cached.
+- Offline navigation to unknown paths may still fall back to the already cached academy homepage. Cached static pages retain first-visit offline behavior.
+- Tests/offline.test.cjs validates cache privacy and offline fallback in a mocked service worker, and checks that every required static asset actually exists in the repository. No student identity or sensitive query tokens are copied to CacheStorage intentionally.
+- Real PWA installation, offline recovery and browser cache timing on Android remain manual QA requirements; browser HTTP caching is separate from this service-worker policy.
+
+### Large Python runtime requires explicit approval
+
+- Python Lab now asks permission before starting the first Pyodide WebAssembly download on each page visit. It warns when the browser reports slow or data-saving connectivity.
+- Learners can cancel the download and keep editing. Their current Python draft is saved locally even if they decline the download.
+- The Python Lab now links to the existing non-executable Python syntax practice challenges as a low-data alternative. Both the link and consent message have English/Urdu presentation.
+- Subsequent runs in the same page session reuse the worker and do not repeat the download dialog; no permanent consent record is written.
+- Runtime initialization and execution limits and a Stop button remain in effect. A real phone/network test must verify the CDN can be reached.
+
+### Bounded stdout/stderr memory usage
+
+- The Python harness replaces unbounded StringIO output capture with a limited streaming text sink: first 4,000 stdout and 1,000 stderr characters only.
+- Learners receive a clear truncation message when printing excessive text, rather than storing the whole output in the worker.
+- This reduces memory pressure but **does not sandbox arbitrary Python or prevent a malicious program from allocating huge data in other ways**; execution still requires trusted learner code and manual QA.
+
+### Expanded regression tests
+
+- tests/python.test.cjs runs real system Python for all 10 mission reference solutions, 30 behavior checks, and large-output memory-bound assertions.
+- tests/offline.test.cjs covers static cache allowlist, query-token bypass, external/dynamic requests and offline fallback.
+- tests/python-ui.test.cjs covers cancel/approve runtime, preserving local drafts, bilingual switch, quiz completion and invalidation after edits.
+- All ten Coding Academy Node-based regression files run in GitHub Actions, alongside the pre-existing AskLama checks. This is **mocked/browser-API and Python CLI validation**, not a complete live Android/browser acceptance test.
+
+No production deployment, branch merge, new Supabase project, account activation or cloud database modification was carried out in Phase 9.

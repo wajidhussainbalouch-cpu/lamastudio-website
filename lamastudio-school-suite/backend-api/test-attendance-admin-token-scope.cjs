@@ -11,12 +11,14 @@ const end=source.indexOf("        if (action === 'syllabusSchoolProgress')",star
 assert.ok(start>0&&end>start,'School scoped authorization preamble unavailable');
 const preamble=source.slice(start,end);
 const actions=['teacherAttendanceDailySnapshot','bulkTeacherAttendanceVerified','attendanceDateSnapshot'];
+const legacyActions=['list','get','add','update','remove','delete'];
 for(const action of actions){
   assert.match(preamble,new RegExp("action === '"+action+"'"),
     'Admin token resolution missing for '+action);
 }
 assert.match(preamble,/'bulkTeacherAttendanceVerified'/,
   'New verified batch must be a protected write');
+assert.match(preamble,/\['teachers','teacherAttendance'\]\.indexOf\(params\.collection\)/,'Legacy teacherAttendance actions must resolve admin tokens');
 function authorizeAction(action,params={}){
  let resolved=0,validated=0;
  const verifySchoolAdminToken=(req)=>{
@@ -53,6 +55,15 @@ for(const action of actions){
    assert.equal(result.actor.id,'admin-1','Write must be audited as School Admin');
  else
    assert.equal(result.actor,undefined,'Read must not be marked as a write');
+}
+
+for(const action of legacyActions){
+ const {result,validated}=authorizeAction(action,{collection:'teacherAttendance'});
+ assert.equal(result.scoped,true,'Legacy teacherAttendance '+action+' is not school scoped');
+ assert.equal(result.apiKey,'school-key','Legacy action '+action+' failed admin key resolution');
+ assert.equal(validated,1,'Legacy '+action+' did not verify admin token');
+ if(['add','update','remove','delete'].includes(action))
+  assert.equal(result.actor?.id,'admin-1','Legacy teacherAttendance '+action+' must audit admin write');
 }
 assert.throws(()=>authorizeAction('bulkTeacherAttendanceVerified',
   {token:'invalid-token'}),/invalid/,'Invalid admin token must fail');

@@ -71,9 +71,10 @@
   if(!selected){summary.textContent='The job catalog is unavailable.';return}
   const papers=api.forJob(selected.id),coverage=api.coverage(selected.id);
   const count=papers.reduce((n,p)=>n+p.questions.length,0);
+  const uniqueCount=new Set(papers.flatMap(p=>p.questions.map(q=>String(q.sourceQuestionId||q.id)))).size;
   const hasShared=papers.some(p=>p.sharedFromExistingQuestions);
-  summary.textContent=selected.label+' · '+papers.length+' numbered public practice papers · '+count+' question positions.'+(hasShared?' Shared-bank papers reuse existing questions; these positions are not newly authored items.':'');
-  const stats=[['Papers',papers.length+' / '+api.maxPapersPerJob],['MCQs',count],['Subjects',coverage.length]];
+  summary.textContent=selected.label+' · '+papers.length+' numbered public practice papers · '+count+' question positions from '+uniqueCount+' unique source questions.'+(hasShared?' Shared-bank papers reuse existing questions; these positions are not newly authored items.':'');
+  const stats=[['Papers',papers.length+' / '+api.maxPapersPerJob],['Question slots',count],['Unique questions',uniqueCount],['Subjects',coverage.length]];
   for(const [label,value] of stats){
    const tile=make('div');tile.append(make('strong',value),make('span',label));summaryCards.append(tile);
   }
@@ -125,7 +126,7 @@
    const cell=/^[=+\-@\t\r]/.test(value)?"'"+value:value;
    return '"'+cell.replace(/"/g,'""')+'"';
   };
-  const lines=['"Job","Subject","Published MCQs"',...coverage.map(x=>[selected.label,x.subject,x.count].map(safe).join(','))];
+  const lines=['"Job","Subject","Question Positions (may share source content with other jobs)"',...coverage.map(x=>[selected.label,x.subject,x.count].map(safe).join(','))];
   const content='\ufeff'+lines.join('\r\n');
   const blob=new Blob([content],{type:'text/csv;charset=utf-8'});
   const href=URL.createObjectURL(blob),link=make('a');

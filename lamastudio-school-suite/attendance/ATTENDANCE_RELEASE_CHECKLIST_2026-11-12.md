@@ -25,6 +25,14 @@
 
 GitHub Actions **Attendance Recovery Regression** run **43173955305** passed all 12 commands at commit `86f79e122918c27ff36584034d931742c29c60a4`. Vercel preview **dpl_E2E3EjxpiVWR7FPueyfF6M1UH6T9** is READY. These are synthetic and preview tests—not a live Apps Script or Android-device end-to-end acceptance.
 
+## Verified school-specific data — read-only inspection (12 November)
+
+On **12 November 2026**, the connected Allama Iqbal Model School spreadsheet (timezone **Asia/Karachi**) was inspected without modifying a cell. Official `Attendance` has exactly **one Absent** row for the date (three enrolled, two unmarked); `TeacherAttendance` has exactly **one Present and one Leave** row (two teachers). All student and teacher IDs match their current rosters. All three saved rows use **native Sheets date serial 46338** (not plain date strings), which Apps Script can serialize as `2026-11-11T19:00:00Z`. The old live student/teacher registers compared the first 10 UTC characters and incorrectly grouped them under November 11; the admin dashboard converted local dates correctly.
+
+The narrow **frontend-only PR #98** fixes school-local timestamp parsing and was merged into `main` at `fe9177ac56069f3fdfc530f60cf23f82dec11beb` after the dedicated date regression passed. **Production release is blocked by the Vercel daily deployment limit (HTTP 402)**; do not say it is live until the new production SHA and domain alias are verified. The broader staff-save backend work in this draft PR still requires paired Apps Script rollout and test-school backup. Do not re-enter already saved marks.
+
+A separate mismatch-guard test was added for hypothetical stale roster IDs; **this real school's saved IDs are not mismatched**. Do not apply automatic ID migrations here.
+
 ## Additional root cause fixed in this branch
 
 The previous generic `teacherAttendance` read/write actions were not consistently recognized as *school admin token-scoped* operations, despite the new snapshot actions being configured in the browser. Token-only school administrators could fail to load history or save records even when the teacher roster loaded. This branch now scopes `list/get/add/update/remove` of `teacherAttendance` and both new fast endpoints in **both** the web API client and Apps Script dispatcher. New regression: `test-attendance-admin-token-scope.cjs` proves token-only access, write audit attribution, and invalid/cross-school token rejection.

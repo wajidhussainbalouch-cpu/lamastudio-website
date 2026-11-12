@@ -274,72 +274,119 @@ function teacherLoadUpdate(percent,stage,started){
  $('teacherLoadBox').style.display='block';$('teacherLoadPercent').textContent=percent+'%';$('teacherLoadBar').style.width=percent+'%';$('teacherLoadStage').textContent=stage;
  $('teacherLoadElapsed').textContent='Elapsed: '+Math.floor((performance.now()-started)/1000)+'s · Remaining time unknown';
 }
-async function load(){
- if(busy||!discard()){$('date').value=loadedDate;return}
- teacherQrStop();
- setBusy(true);
- attendanceHistoryLoaded=false;
- const started=performance.now();let rosterReady=false,historyReady=false;
- teacherLoadUpdate(0,'Connecting to teacher records…',started);
- clearInterval(teacherLoadTimer);teacherLoadTimer=setInterval(()=>teacherLoadUpdate(rosterReady&&historyReady?85:rosterReady||historyReady?45:10,rosterReady&&historyReady?'Preparing teacher register…':rosterReady?'Waiting for saved attendance…':historyReady?'Waiting for teacher list…':'Waiting for teacher and attendance records…',started),500);
- let historyAvailable=false;
- const deadline=(promise,label)=>new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>reject(new Error(label+' did not respond within 40 seconds. Check Apps Script connection and retry.')),40000);
-  Promise.resolve(promise).then(value=>{clearTimeout(timer);resolve(value)},error=>{clearTimeout(timer);reject(error)});
- });
- try{
-  // Fetch independent datasets concurrently; both still have separate timeout diagnostics.
-  // Never permit editing when either request fails.
-  const timedList=async(collection,label)=>{
-   const started=performance.now();
-   try{
-    const result=await deadline(LamaAPI.list(collection),label);
-    if(!Array.isArray(result)&&!Array.isArray(result?.records)&&!Array.isArray(result?.data))throw Error(label+' returned an invalid response');
-    console.info('[LAMA attendance] '+label+' loaded in '+Math.round(performance.now()-started)+' ms');
-    return arr(result);
-   }catch(error){
-    console.warn('[LAMA attendance] '+label+' failed after '+Math.round(performance.now()-started)+' ms:',error.message);
-    throw error;
-   }
-  };
-  const [rosterResult,historyResult]=await Promise.allSettled([
-   timedList('teachers','Teacher list').then(v=>{rosterReady=true;return v}),
-   timedList('teacherAttendance','Teacher attendance').then(v=>{historyReady=true;return v})
-  ]);
-  if(rosterResult.status==='rejected')throw rosterResult.reason;
-  teachers=rosterResult.value.filter(t=>id(t));
-  historyAvailable=historyResult.status==='fulfilled';
-  records=historyAvailable?historyResult.value:[];
-  if(!historyAvailable)console.warn('Teacher attendance history unavailable',historyResult.reason);
-  selected.clear();dirty.clear();
-  attendanceHistoryLoaded=historyAvailable;
-  if(!historyAvailable)teacherQrStop();
-  if(historyAvailable){
-   for(const r of records){
-    if(recDate(r)!==$('date').value)continue;
-    const k=String(r.teacherId??r.teacherID??'');
-    if(k&&status(r))selected.set(k,{status:status(r),remarks:reason(r),recordId:String(r.id??r._id??'')});
-   }
+
+const withLoadDeadline=(promise,label,limit=25000)=>new Promise((resolve,reject)=>{
+ const timer=setTimeout(()=>reject(new Error(label+' timed out after '+(limit/1000)+' seconds. No save was attempted.')),limit);
+ Promise.resolve(promise).then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)});
+});
+function unsupportedTeacherAction(error){
+ return /Unknown action:\s*(?:teacherAttendanceDailySnapshot|bulkTeacherAttendanceVerified)/i.test(String(error?.message||error));
+}
+async function readTeacherDay(day){
+ if(fastDailyAvailable!==false){
+  try{
+   const result=await withLoadDeadline(LamaAPI.teacherAttendanceDailySnapshot(day),'Teacher daily register',27000);
+   if(!result||result.date!==day||!Array.isArray(result.teachers)||!Array.isArray(result.records)||!Array.isArray(result.duplicates))
+    throw Error('Daily attendance returned invalid data. No status was confirmed.');
+   fastDailyAvailable=true;
+   return {teachers:result.teachers,records:result.records,duplicates:result.duplicates,fast:true};
+  }catch(error){
+   if(!unsupportedTeacherAction(error))throw error;
+   fastDailyAvailable=false;console.info('Using legacy verified attendance readback until Apps Script is updated.');
   }
-  const classes=[...new Set(teachers.map(t=>fld(t,'assignedClass','class','grade')).filter(Boolean))].sort();
-  const old=$('classFilter').value;
-  $('classFilter').innerHTML='<option value="">All classes</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  if(classes.includes(old))$('classFilter').value=old;
-  $('historyTeacher').innerHTML='<option value="">All teachers</option>'+teachers.map(t=>`<option value="${esc(id(t))}">${esc(name(t))}</option>`).join('');
-  loadedDate=$('date').value;editing=false;render();renderHistory();
-  if(!historyAvailable){
-   // Never let a failed history request be mistaken for an empty attendance register.
-   $('edit').disabled=true;$('markAll').disabled=true;$('save').disabled=true;
-   $('completion').textContent='Attendance records unavailable. Editing disabled until refresh succeeds.';
-   toast('Teacher list loaded, but attendance history is unavailable. Retry Refresh before marking or saving.',true);
-  }else toast('Teacher attendance loaded');
- }catch(e){
-  attendanceHistoryLoaded=false;
-  teacherQrStop();
-  $('date').value=loadedDate;
-  toast('Loading failed: '+e.message,true);
- }finally{clearInterval(teacherLoadTimer);teacherLoadTimer=null;teacherLoadUpdate(attendanceHistoryLoaded?100:85,attendanceHistoryLoaded?'Teacher register ready':'Attendance history unavailable — refresh to retry',started);if(attendanceHistoryLoaded)$('teacherLoadElapsed').textContent='Loaded in '+((performance.now()-started)/1000).toFixed(1)+'s';setBusy(false);render();
-  if(!attendanceHistoryLoaded){$('edit').disabled=true;$('markAll').disabled=true;$('save').disabled=true;$('completion').textContent='Attendance history unavailable. Refresh to retry.';}
+ }
+ // Backward compatible, read-only path. Never retry a failed write.
+ const responses=await Promise.allSettled([
+  withLoadDeadline(LamaAPI.list('teachers'),'Teacher roster',40000),
+  withLoadDeadline(LamaAPI.list('teacherAttendance'),'Saved teacher history',40000)
+ ]);
+ if(responses[0].status!=='fulfilled')throw responses[0].reason;
+ const roster=responses[0].value;
+ if(!Array.isArray(roster)&&!Array.isArray(roster?.records)&&!Array.isArray(roster?.data))throw Error('Teacher roster response was invalid.');
+ teachers=arr(roster).filter(t=>id(t));
+ if(responses[1].status!=='fulfilled')throw responses[1].reason;
+ const rows=responses[1].value;
+ if(!Array.isArray(rows)&&!Array.isArray(rows?.records)&&!Array.isArray(rows?.data))throw Error('Teacher attendance history response was invalid.');
+ historyRecords=arr(rows);historyLoaded=true;
+ const attendance=historyRecords.filter(r=>recDate(r)===day&&status(r));
+ const counts={},duplicates=[];
+ for(const row of attendance){
+  const key=String(row.teacherId??row.teacherID??'').trim();
+  if(!key)continue;counts[key]=(counts[key]||0)+1;
+ }
+ for(const key of Object.keys(counts))if(counts[key]>1)duplicates.push(key);
+ return {teachers,records:attendance,duplicates,fast:false};
+}
+function applyTeacherDay(day,snapshot){
+ teachers=snapshot.teachers.filter(t=>id(t));
+ records=snapshot.records.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'').trim());
+ duplicateTeacherIds=snapshot.duplicates||[];
+ selected.clear();
+ const unique=new Map();
+ for(const row of records){
+  const key=String(row.teacherId??row.teacherID??'').trim();
+  if(!key||!status(row)||duplicateTeacherIds.includes(key))continue;
+  if(unique.has(key)){duplicateTeacherIds.push(key);unique.delete(key);continue}
+  unique.set(key,row);
+ }
+ for(const [key,row] of unique)selected.set(key,{status:status(row),remarks:reason(row),recordId:String(row.id??row._id??'')});
+ attendanceHistoryLoaded=true;loadedDate=day;verifiedAt=Date.now();
+ const classes=[...new Set(teachers.map(teacherClass).filter(Boolean))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
+ const previousClass=$('classFilter').value;
+ $('classFilter').innerHTML='<option value="">All classes</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+ if(classes.includes(previousClass))$('classFilter').value=previousClass;
+ $('historyTeacher').innerHTML='<option value="">All teachers</option>'+teachers.map(t=>'<option value="'+esc(id(t))+'">'+esc(name(t))+'</option>').join('');
+}
+function pendingSaveMatches(){
+ if(!pendingVerification||!attendanceHistoryLoaded)return false;
+ if(pendingVerification.date!==loadedDate)return false;
+ return pendingVerification.records.every(x=>{
+  const matches=records.filter(r=>recDate(r)===loadedDate&&String(r.teacherId??r.teacherID??'')===x.teacherId&&status(r));
+  return matches.length===1&&status(matches[0])===x.status&&
+   (x.status==='Present'||reason(matches[0])===x.remarks);
+ });
+}
+async function load(){
+ if(busy||(!pendingVerification&&!discard())){$('date').value=loadedDate;return}
+ teacherQrStop();setBusy(true);
+ const requested=$('date').value;
+ attendanceHistoryLoaded=false;duplicateTeacherIds=[];
+ const started=performance.now();
+ teacherLoadUpdate(0,'Checking saved teacher attendance…',started);
+ clearInterval(teacherLoadTimer);
+ teacherLoadTimer=setInterval(()=>{
+  const seconds=Math.floor((performance.now()-started)/1000);
+  teacherLoadUpdate(0,'Waiting for server verification ('+seconds+'s)…',started);
+ },1000);
+ try{
+  const snapshot=await readTeacherDay(requested);
+  applyTeacherDay(requested,snapshot);
+  if(pendingVerification){
+   if(pendingSaveMatches()){
+    const savedCount=pendingVerification.records.length;
+    pendingVerification=null;dirty.clear();editing=false;lastSaveVerified=Date.now();
+    toast('✓ Save successful: '+savedCount+' teacher attendance record(s) verified.');
+   }else{
+    // A server accepted a write but the returned record is not confirmed:
+    // never re-submit or clear the pending state automatically.
+    toast('Attendance was not fully verified. Do not Save again; review the original register.',true);
+   }
+  }else{dirty.clear();editing=false;}
+  teacherLoadUpdate(100,duplicateTeacherIds.length?'Duplicate staff records require review':'Daily teacher register verified',started);
+  $('teacherLoadElapsed').textContent='Verified in '+((performance.now()-started)/1000).toFixed(1)+'s'+(snapshot.fast?' · fast daily snapshot':' · legacy history read');
+  if(duplicateTeacherIds.length)toast('Duplicate teacher/date records detected. Editing is locked for review.',true);
+ }catch(error){
+  attendanceHistoryLoaded=false;teacherQrStop();
+  if(requested!==loadedDate&&loadedDate)$('date').value=loadedDate;
+  console.warn('[LAMA teacher attendance] verification read failed:',error);
+  $('teacherLoadPercent').textContent='Not verified';
+  $('teacherLoadBar').style.width='0%';
+  $('teacherLoadStage').textContent='Attendance unavailable — refresh to retry';
+  $('teacherLoadElapsed').textContent='Read failed after '+((performance.now()-started)/1000).toFixed(1)+'s · '+String(error.message||error);
+  toast('Teacher attendance could not be verified. No status was changed: '+error.message,true);
+ }finally{
+  clearInterval(teacherLoadTimer);teacherLoadTimer=null;
+  setBusy(false);render();renderHistory();
  }
 }
 async function save(){if(busy)return;if($('date').value!==loadedDate){toast('Selected date does not match the loaded attendance register. Refresh before saving.',true);return;}if(!attendanceHistoryLoaded){toast('Cannot save: saved attendance history has not loaded. Refresh and retry.',true);return;}if(!dirty.size){toast('No changes to save');return}const when=$('date').value;if(!when){toast('Select a date',true);return}if(holidayReason(when)){toast('This date is a holiday. Attendance editing is disabled.',true);return}setBusy(true);const failed=[];let count=0;try{for(const k of [...dirty]){const t=teachers.find(x=>id(x)===k),v=selected.get(k);if(!t||!['Present','Absent','Leave'].includes(v?.status)){failed.push('Teacher record missing or invalid attendance status for '+k);continue;}const old=records.find(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k);const patch={teacherId:k,teacherName:name(t),date:when,status:v.status,remarks:v.status==='Present'?'':v.remarks||''};try{let result;if(old?.id||old?._id){result=await LamaAPI.update('teacherAttendance',String(old.id??old._id),patch)}else{result=await LamaAPI.add('teacherAttendance',patch)}if(result===false||result?.success===false||result?.error)throw Error(result?.message||result?.error||'Server rejected save');dirty.delete(k);count++;if(old)Object.assign(old,patch);else records.push({...patch,id:String(result?.id??result?._id??'')})}catch(e){failed.push(`${name(t)}: ${e.message}`)}}}finally{setBusy(false);render();renderHistory()}if(!failed.length){editing=false;const expected=new Map([...selected].filter(([k])=>!dirty.has(k)).map(([k,v])=>[k,{status:v.status,remarks:v.remarks||''}]));const qrSaved=[...teacherQrPending];await load();if(!attendanceHistoryLoaded){if(qrSaved.length)teacherQrFeedback('pending','Save submitted, but server verification failed. Refresh before scanning again.');toast('Save submitted, but attendance could not be reloaded for verification. Check the register before retrying.',true);return;}const mismatches=[...expected].filter(([k,v])=>{const actual=selected.get(k);return actual?.status!==v.status||(v.status!=='Present'&&String(actual?.remarks||'')!==String(v.remarks||''));});const duplicates=[...expected.keys()].filter(k=>records.filter(r=>recDate(r)===loadedDate&&String(r.teacherId??r.teacherID??'')===k&&status(r)).length>1);if(mismatches.length||duplicates.length){if(qrSaved.length)teacherQrFeedback('pending','Some saved statuses were not verified. Check register before scanning again.');toast('Verification warning: '+mismatches.length+' status/remark mismatch(es), '+duplicates.length+' duplicate attendance record(s). Review the register before further changes.',true);return;}if(qrSaved.length){const confirmed=qrSaved.every(k=>selected.get(k)?.status==='Present'&&!dirty.has(k));teacherQrFeedback(confirmed?'success':'pending',confirmed?'Teacher QR attendance saved and verified in register.':'Save accepted; register verification pending. Refresh before retrying.');if(confirmed)teacherQrPending.clear()}toast(`${count} teacher attendance record(s) saved and register reloaded.`)}else{if(teacherQrPending.size)teacherQrFeedback('error','Some attendance records failed to save. Check and retry.');toast(`${count} saved; ${failed.length} failed: ${failed.slice(0,2).join('; ')}`,true)}}

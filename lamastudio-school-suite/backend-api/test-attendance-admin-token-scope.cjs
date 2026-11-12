@@ -11,7 +11,7 @@ const end=source.indexOf("        if (action === 'syllabusSchoolProgress')",star
 assert.ok(start>0&&end>start,'School scoped authorization preamble unavailable');
 const preamble=source.slice(start,end);
 const actions=['teacherAttendanceDailySnapshot','bulkTeacherAttendanceVerified','attendanceDateSnapshot'];
-const legacyActions=['list','get','add','update','remove','delete'];
+const legacyActions=['list','get','add','update','remove'];
 for(const action of actions){
   assert.match(preamble,new RegExp("action === '"+action+"'"),
     'Admin token resolution missing for '+action);

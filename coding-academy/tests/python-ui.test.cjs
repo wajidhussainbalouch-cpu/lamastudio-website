@@ -77,6 +77,7 @@ state=JSON.parse(storage.get("lama-python-executable-v1"));
 assert.equal(state.lang,"ur");
 assert.equal(document.documentElement.lang,"ur");
 assert.equal(byId("missionTitle").textContent,windowContext.LAMA_PYTHON_I18N.missions[first.id].title);
+assert.equal(byId("offlineAlternative").textContent,windowContext.LAMA_PYTHON_I18N.ui.ur.offlineAlternative);
 assert.equal(byId("editor").value,first.starter,"Urdu switch must preserve Python code.");
 byId("editor").value=first.starter+"\n# new edit";
 byId("editor").listeners.input();

@@ -55,7 +55,7 @@ function bulkAttendanceRecords(params) {
       throw new Error('Required attendance columns missing');
     }
     const existing = sheet.getDataRange().getValues();
-    const timezone = Session.getScriptTimeZone() || 'Asia/Karachi';
+    const timezone = (typeof ctx.ss.getSpreadsheetTimeZone === 'function' && ctx.ss.getSpreadsheetTimeZone()) || Session.getScriptTimeZone() || 'Asia/Karachi';
     function dayOf(value) {
       return value instanceof Date
         ? Utilities.formatDate(value, timezone, 'yyyy-MM-dd')
@@ -150,6 +150,19 @@ function bulkAttendanceRecords(params) {
         .setValues(additions);
     }
     SpreadsheetApp.flush();
+    // Verify actual persisted rows BEFORE declaring the batch saved. Returning
+    // this date-only snapshot avoids an extra full-history HTTP roundtrip.
+    const verifiedDateRecords=readAttendanceDateRecords_(ctx,date,sheet,headers);
+    for(const requested of incoming){
+      const requestedId=String(requested.studentId||'').trim();
+      const requestedEnrl=String(requested.enrlNo||'').trim();
+      const student=requestedId?byStudentId.get(requestedId):byEnrollment.get(requestedEnrl);
+      const sid=String(student.id).trim();
+      const matched=verifiedDateRecords.filter(row=>String(row.studentId||'').trim()===sid ||
+        (!String(row.studentId||'').trim()&&String(row.enrlNo||'').trim()===String(student.enrlNo||'').trim()));
+      if(matched.length!==1||String(matched[0].status)!==String(requested.status))
+        throw Error('Attendance write response could not be independently verified in Google Sheets. Do not resubmit; use read-only Refresh.');
+    }
     // Notification delivery is separate from attendance persistence. A failure
     // here must not make the client retry an already-saved attendance batch.
     let notificationResult = {created:0,updated:0,error:''};
@@ -159,10 +172,43 @@ function bulkAttendanceRecords(params) {
       notificationResult.error = String(notificationError.message || notificationError);
       console.error('Attendance saved, notification sync failed: '+notificationResult.error);
     }
-    return { saved: incoming.length, inserted: additions.length, updated: updates.length, notifications: notificationResult };
+    return { saved: incoming.length, inserted: additions.length, updated: updates.length,
+      verification:'confirmed', verifiedDateRecords:verifiedDateRecords,
+      notifications: notificationResult };
   } finally {
     lock.releaseLock();
   }
+}
+
+/**
+ * Read-only, school-local day rows. Never serialize a Sheet Date through UTC,
+ * which may shift the date back a day for Pakistan-timezone schools.
+ * Optional sheet/headers reuse an existing batch's sheet metadata.
+ */
+function readAttendanceDateRecords_(ctx,date,sheet,headers){
+  const day=String(date||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(day)||
+      !Number.isFinite(Date.parse(day+'T12:00:00Z'))||
+      new Date(day+'T12:00:00Z').toISOString().slice(0,10)!==day)
+    throw Error('Invalid attendance date for verification');
+  if(!sheet){
+    const current=getCollectionSheet(ctx,'attendance');
+    sheet=current.sheet;headers=current.headers;
+  }
+  const tz=(typeof ctx.ss.getSpreadsheetTimeZone==='function' && ctx.ss.getSpreadsheetTimeZone())
+    ||Session.getScriptTimeZone()||'Asia/Karachi';
+  const rows=sheet.getDataRange().getValues();
+  const list=[];
+  for(let i=1;i<rows.length;i++){
+    const rec=rowToRecord(headers,rows[i]);
+    if(!rec.id)continue;
+    const local=rec.date instanceof Date?Utilities.formatDate(rec.date,tz,'yyyy-MM-dd'):
+      String(rec.date||'').slice(0,10);
+    if(local!==day)continue;
+    rec.date=day;
+    list.push(rec);
+  }
+  return list;
 }
 
 /**

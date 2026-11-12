@@ -1,0 +1,57 @@
+name: Attendance Recovery Regression
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/attendance/**'
+      - 'lamastudio-school-suite/backend-api/**'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/portals/teacher/**'
+      - 'lamastudio-school-suite/test-dashboard-attendance.cjs'
+      - '.github/workflows/fast-teacher-attendance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run all attendance regression suites; fail if any fails
+        shell: bash
+        run: |
+          set +e
+          failed=0
+          echo "▶ lamastudio-school-suite/attendance/test-register-linkage-consistency.cjs"
+          node lamastudio-school-suite/attendance/test-register-linkage-consistency.cjs || failed=1
+          echo "▶ lamastudio-school-suite/attendance/test-fast-teacher-attendance.cjs"
+          node lamastudio-school-suite/attendance/test-fast-teacher-attendance.cjs || failed=1
+          echo "▶ lamastudio-school-suite/attendance/test-pending-teacher-save.cjs"
+          node lamastudio-school-suite/attendance/test-pending-teacher-save.cjs || failed=1
+          echo "▶ lamastudio-school-suite/attendance/test-attendance-save-completion.cjs"
+          node lamastudio-school-suite/attendance/test-attendance-save-completion.cjs || failed=1
+          echo "▶ lamastudio-school-suite/attendance/test-pending-student-save.cjs"
+          node lamastudio-school-suite/attendance/test-pending-student-save.cjs || failed=1
+          echo "▶ lamastudio-school-suite/attendance/test-attendance-duplicate-block.cjs"
+          node lamastudio-school-suite/attendance/test-attendance-duplicate-block.cjs || failed=1
+          echo "▶ lamastudio-school-suite/backend-api/test-attendance-bulk-confirmation.cjs"
+          node lamastudio-school-suite/backend-api/test-attendance-bulk-confirmation.cjs || failed=1
+          echo "▶ lamastudio-school-suite/backend-api/test-attendance-date-verification.cjs"
+          node lamastudio-school-suite/backend-api/test-attendance-date-verification.cjs || failed=1
+          echo "▶ lamastudio-school-suite/backend-api/test-student-attendance-single-idempotence.cjs"
+          node lamastudio-school-suite/backend-api/test-student-attendance-single-idempotence.cjs || failed=1
+          echo "▶ lamastudio-school-suite/backend-api/test-attendance-admin-token-scope.cjs"
+          node lamastudio-school-suite/backend-api/test-attendance-admin-token-scope.cjs || failed=1
+          echo "▶ lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs"
+          node lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs || failed=1
+          echo "▶ lamastudio-school-suite/portals/teacher/test-attendance-save-verification.cjs"
+          node lamastudio-school-suite/portals/teacher/test-attendance-save-verification.cjs || failed=1
+          echo "▶ lamastudio-school-suite/test-dashboard-attendance.cjs"
+          node lamastudio-school-suite/test-dashboard-attendance.cjs || failed=1
+          exit "$failed"

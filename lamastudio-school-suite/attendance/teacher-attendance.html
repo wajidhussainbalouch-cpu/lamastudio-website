@@ -36,15 +36,43 @@ body.qr-scanning{overflow:hidden!important}
 </style></head><body class="min-h-screen"><header class="no-print border-b" style="border-color:var(--line)"><div class="max-w-7xl mx-auto px-4 py-4 flex justify-between gap-3 flex-wrap items-center"><div class="flex items-center gap-3"><div id="logo" class="w-12 h-12 rounded-xl bg-teal-700 text-white font-black grid place-items-center overflow-hidden">LS</div><div><h1 id="school" class="font-black text-lg">School</h1><p class="muted text-xs">Teacher Attendance & Payroll History</p></div></div><div class="flex flex-wrap gap-2"><a href="../dashboard.html" class="btn">← Dashboard</a><button id="theme" class="btn">Theme</button><button id="logout" class="btn">Logout</button></div></div></header>
 <main class="max-w-7xl mx-auto px-4 py-6 space-y-5"><div class="no-print"><h2 class="text-2xl font-black">Teacher Attendance Register</h2><p class="muted text-sm">Daily marking, absence/leave reasons, weekly and monthly history, and salary attendance totals.</p></div>
 <section class="panel no-print"><div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><label class="text-xs font-bold">Attendance date <span class="muted">(DD/MM/YYYY)</span><input id="date" type="date" class="field mt-1"><span id="dateText" class="mini muted"></span></label><label class="text-xs font-bold">Search teacher<input id="search" class="field mt-1" placeholder="Name / subject / class"></label><label class="text-xs font-bold">Status<select id="filter" class="field mt-1"><option value="">All</option><option>Present</option><option>Absent</option><option>Leave</option><option value="Unmarked">Unmarked</option></select></label><label class="text-xs font-bold">Class<select id="classFilter" class="field mt-1"><option value="">All classes</option></select></label></div><div class="flex flex-wrap gap-2 mt-4"><button id="refresh" class="btn">↻ Refresh</button><button id="markAll" class="btn">✓ Mark visible present</button><button id="edit" class="btn" type="button">✎ Enable editing</button><button id="save" class="btn primary">💾 Save changes</button></div></section>
-<section class="panel no-print"><p id="completion" class="font-bold" role="status">Loading attendance register…</p><div id="teacherLoadBox" class="mt-3" role="status" aria-live="polite"><div class="flex justify-between text-xs font-bold"><span id="teacherLoadStage">Connecting…</span><span id="teacherLoadPercent">0%</span></div><div style="height:9px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px"><div id="teacherLoadBar" style="height:100%;width:0%;background:var(--brand);transition:width .2s"></div></div><p id="teacherLoadElapsed" class="muted mini mt-2">Elapsed: 0s · Remaining time unknown</p></div></section><section class="grid grid-cols-2 md:grid-cols-5 gap-3"><div class="panel stat"><span class="muted mini">Teachers</span><strong id="total">0</strong></div><div class="panel stat"><span class="muted mini">Present</span><strong id="present" class="statusP">0</strong></div><div class="panel stat"><span class="muted mini">Absent</span><strong id="absent" class="statusA">0</strong></div><div class="panel stat"><span class="muted mini">Leave</span><strong id="leave" class="statusL">0</strong></div><div class="panel stat"><span class="muted mini">Unmarked</span><strong id="unmarked">0</strong></div></section>
+<section class="panel no-print"><p id="completion" class="font-bold" role="status" aria-live="polite">Loading attendance register…</p><p id="saveVerificationNote" class="mini muted mt-2" role="status" aria-live="polite">Save confirmation appears only after the server verifies the saved records.</p><div id="teacherLoadBox" class="mt-3" role="status" aria-live="polite"><div class="flex justify-between text-xs font-bold"><span id="teacherLoadStage">Connecting…</span><span id="teacherLoadPercent">0%</span></div><div style="height:9px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px"><div id="teacherLoadBar" style="height:100%;width:0%;background:var(--brand);transition:width .2s"></div></div><p id="teacherLoadElapsed" class="muted mini mt-2">Elapsed: 0s · Remaining time unknown</p></div></section>
+<section class="panel" id="selectedClassSummary" role="region" aria-labelledby="classTotalsTitle">
+<div class="flex justify-between flex-wrap items-center gap-2"><h3 id="classTotalsTitle" class="font-black text-lg">Selected class attendance</h3><span id="classAttendanceCoverage" class="mini muted">Not verified</span></div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3"><div class="panel stat"><span class="muted mini">Teachers in selection</span><strong id="total">—</strong></div><div class="panel stat"><span class="muted mini">Present</span><strong id="present" class="statusP">—</strong></div><div class="panel stat"><span class="muted mini">Absent</span><strong id="absent" class="statusA">—</strong></div><div class="panel stat"><span class="muted mini">Leave</span><strong id="leave" class="statusL">—</strong></div><div class="panel stat"><span class="muted mini">Unmarked</span><strong id="unmarked">—</strong></div></div>
+</section>
+<section class="panel" id="schoolTeacherSummary" role="region" aria-labelledby="schoolTeacherTotalsTitle">
+<div class="flex justify-between flex-wrap items-center gap-2"><h3 id="schoolTeacherTotalsTitle" class="font-black text-lg">Whole school — teacher attendance</h3><span id="schoolAttendanceCoverage" class="mini muted">Not verified</span></div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3"><div class="panel stat"><span class="muted mini">Total teachers</span><strong id="schoolTotal">—</strong></div><div class="panel stat"><span class="muted mini">Present</span><strong id="schoolPresent" class="statusP">—</strong></div><div class="panel stat"><span class="muted mini">Absent</span><strong id="schoolAbsent" class="statusA">—</strong></div><div class="panel stat"><span class="muted mini">Leave</span><strong id="schoolLeave" class="statusL">—</strong></div><div class="panel stat"><span class="muted mini">Unmarked</span><strong id="schoolUnmarked">—</strong></div></div>
+</section>
+<section class="panel no-print" id="teacherClassCoveragePanel"><h3 class="font-black text-lg">Class-wise teacher coverage</h3><p class="muted mini mt-1">Confirmed teacher records, grouped by their assigned classes. All classes remain visible when one class is selected.</p><div id="teacherClassCoverageRows" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3" role="status" aria-live="polite">Loading…</div></section>
 <section class="panel" id="dailySection"><div class="flex justify-between items-center flex-wrap gap-3"><div><h3 class="font-black text-lg">Daily Attendance</h3><p id="summary" class="muted text-xs">Loading...</p></div></div><div id="holidayNotice" class="holiday-banner mt-3 hidden"></div><div class="print-only" id="dailyPrintHeader"></div><div id="list" class="screen-daily grid lg:grid-cols-2 gap-3 mt-4"></div><table class="print-only daily-print-table mt-3"><thead><tr><th>#</th><th>Photo</th><th>Teacher / Details</th><th>Status</th><th>Leave / absence details</th></tr></thead><tbody id="dailyPrintRows"></tbody></table></section>
 <section class="panel no-print" id="qrTeacherPanel" data-qr-scanner="true"><h3 class="font-black text-lg">▣ Teacher QR Attendance <span class="mini muted">Optional</span></h3><p class="muted text-sm mt-2">Scan school-issued teacher ID cards. Scans select Present; use Save changes to submit. A green tick is displayed only after saved attendance is reloaded and verified.</p><div class="flex flex-wrap gap-2 mt-4"><button class="btn primary" id="teacherQrStart" type="button">📷 Start QR scanner</button><button class="btn" id="teacherQrStop" type="button" disabled>Stop camera</button></div><video id="teacherQrVideo" playsinline muted style="display:none;width:100%;max-width:440px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;margin-top:12px;background:#081b23"></video><div id="teacherQrFeedback" role="status" aria-live="polite" style="border:2px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;font-weight:800">○ Ready to scan</div><p class="mini muted mt-2">Requires HTTPS, camera permission and a browser supporting BarcodeDetector. Manual attendance remains available.</p><button class="qr-close" id="qrTeacherPanelClose" type="button">✕ Close scanner · Save attendance</button></section>
 <section class="panel no-print"><h3 class="font-black text-base mb-3">Daily register tools</h3><div class="flex flex-wrap gap-3"><button id="printDaily" class="btn">🖨 Print daily register</button><button id="csvDaily" class="btn">↓ Daily CSV</button></div></section>
 <section class="panel print-section" id="historySection"><div class="no-print"><h3 class="font-black text-lg">Attendance History & Salary Support</h3><p class="muted text-xs mt-1">Choose last week, this month, last month or a custom date range. Counts include saved records only.</p><div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4"><label class="text-xs font-bold">Period<select id="period" class="field mt-1"><option value="week">Last 7 days</option><option value="thisMonth">This month</option><option value="lastMonth">Last month</option><option value="custom">Custom range</option></select></label><label class="text-xs font-bold">From<input id="from" type="date" class="field mt-1"></label><label class="text-xs font-bold">To<input id="to" type="date" class="field mt-1"></label><label class="text-xs font-bold">Teacher<select id="historyTeacher" class="field mt-1"><option value="">All teachers</option></select></label></div><div class="flex flex-wrap gap-2 mt-3"><button id="historyRefresh" class="btn">↻ Load history</button><button id="printHistory" class="btn">🖨 Print salary summary</button><button id="csvHistory" class="btn">↓ History CSV</button></div></div><div class="print-only" id="historyPrintHeader"></div><p id="historyInfo" class="muted text-xs my-3">Choose a period to view history.</p><div class="scroll"><table><thead><tr><th>Photo</th><th>Teacher / Details</th><th>Present</th><th>Absent</th><th>Leave</th><th>Marked days</th><th>Working days unmarked*</th></tr></thead><tbody id="historySummary"></tbody></table></div><p class="muted text-xs mt-2">*Unmarked working days exclude this school’s selected weekly off-days and configured holidays. They are not automatically counted as absences. Salary deductions and paid leave depend on your school's payroll policy.</p><h4 class="font-bold mt-5 mb-2">Saved attendance entries</h4><div class="scroll"><table><thead><tr><th>Date</th><th>Photo</th><th>Teacher</th><th>Status</th><th>Reason / note</th></tr></thead><tbody id="historyRows"></tbody></table></div></section>
 <section class="panel no-print"><div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-black">School holidays & weekly off-days</h3><p class="muted mini">Choose the weekly off-days for this school. Saturday can be a working day. Add school-specific or public holidays below. Holidays are excluded from working-day salary counts.</p></div></div><div class="flex flex-wrap gap-4 mt-3"><label class="mini font-bold flex items-center gap-2"><input type="checkbox" id="saturdayOff"> Saturday closed</label><label class="mini font-bold flex items-center gap-2"><input type="checkbox" id="sundayOff" checked> Sunday closed</label></div><div class="grid sm:grid-cols-4 gap-3 mt-3"><label class="mini font-bold">Holiday date<input id="holidayDate" type="date" class="field mt-1"></label><label class="mini font-bold sm:col-span-2">Holiday name<input id="holidayName" class="field mt-1" placeholder="e.g. School closure / public holiday" maxlength="100"></label><div class="flex items-end"><button id="addHoliday" class="btn primary w-full">+ Add holiday</button></div></div><div id="holidaysList" class="flex flex-wrap gap-2 mt-3"></div><p class="muted mini mt-2">Weekly off-days and custom holidays are saved in this browser for this school only. Export or re-enter them on other devices. Weekend and holiday dates are not automatically marked Present.</p></section>
 <section class="panel no-print" id="staffOutreach"><h3 class="font-black">Absent / Leave — Staff follow-up</h3><p class="muted mini">WhatsApp opens a draft for you to send; it is not sent automatically.</p><div id="staffOutreachRows" class="mt-3 space-y-2"></div></section></main><div id="toast" class="toast hidden" role="status"></div><script>
-'use strict';const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let teachers=[],records=[],selected=new Map(),dirty=new Set(),busy=false,school={},loadedDate='',historyCache=[],customHolidays={},weeklyOff=[0],editing=false,attendanceHistoryLoaded=false;
-const arr=v=>Array.isArray(v)?v:Array.isArray(v?.records)?v.records:Array.isArray(v?.data)?v.data:[];const id=t=>String(t?.id??t?._id??t?.teacherId??'').trim();const name=t=>String(t?.name??t?.teacherName??'Unnamed teacher');const fld=(t,...keys)=>{for(const k of keys)if(t?.[k])return String(t[k]);return ''};const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');const today=()=>iso(new Date());const fmt=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s))?`${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(0,4)}`:String(s||'');const recDate=r=>String(r?.date||'').slice(0,10);const status=r=>['Present','Absent','Leave'].includes(r?.status)?r.status:'';const reason=r=>String(r?.remarks??r?.reason??r?.note??'');const pic=t=>fld(t,'photo','profilePhoto','teacherPhoto','photoUrl','image','avatar');
+'use strict';const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));let teachers=[],records=[],selected=new Map(),dirty=new Set(),busy=false,school={},loadedDate='',historyCache=[],customHolidays={},weeklyOff=[0],editing=false,attendanceHistoryLoaded=false,historyLoaded=false,historyRecords=[],fastDailyAvailable=null,pendingVerification=null,verifiedAt=0,lastSaveVerified=0,duplicateTeacherIds=[];
+const arr=v=>Array.isArray(v)?v:Array.isArray(v?.records)?v.records:Array.isArray(v?.data)?v.data:[];const id=t=>String(t?.id??t?._id??t?.teacherId??'').trim();const name=t=>String(t?.name??t?.teacherName??'Unnamed teacher');const fld=(t,...keys)=>{for(const k of keys)if(t?.[k])return String(t[k]);return ''};const iso=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');const today=()=>iso(new Date());const fmt=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s))?`${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(0,4)}`:String(s||'');const recDate=r=>{
+ const raw=r?.date;
+ if(raw instanceof Date&&!isNaN(raw.getTime()))return iso(raw);
+ const value=String(raw||'').trim();
+ if(/^\d{4}-\d{2}-\d{2}$/.test(value))return value;
+ if(/^\d{4}-\d{2}-\d{2}T/.test(value)){
+  const time=new Date(value);
+  if(!isNaN(time.getTime())){
+   const zone=school.timezone||school.timeZone||'Asia/Karachi';
+   try{
+    const parts=new Intl.DateTimeFormat('en-GB',{timeZone:zone,day:'2-digit',month:'2-digit',year:'numeric'}).formatToParts(time);
+    const part=t=>parts.find(x=>x.type===t)?.value||'';
+    if(part('year')&&part('month')&&part('day'))return part('year')+'-'+part('month')+'-'+part('day');
+   }catch(error){console.warn('Attendance timezone unavailable:',error)}
+  }
+  return '';
+ }
+ const m=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+ return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):'';
+};const status=r=>{const s=String(r?.status??'').trim().toLowerCase();return ['present','p'].includes(s)?'Present':['absent','a'].includes(s)?'Absent':['leave','l','on leave'].includes(s)?'Leave':'';};const reason=r=>String(r?.remarks??r?.reason??r?.note??'');const pic=t=>fld(t,'photo','profilePhoto','teacherPhoto','photoUrl','image','avatar');
 function holidayStorageKey(){const sess=LamaAPI.getSession?.('school')||{};return 'lama_teacher_holidays_'+String(sess.schoolId||school.schoolId||'default')}
 function loadHolidays(){try{const obj=JSON.parse(localStorage.getItem(holidayStorageKey())||'{}');customHolidays=obj&&typeof obj==='object'&&!Array.isArray(obj)?obj:{}}catch(_){customHolidays={}}try{const saved=JSON.parse(localStorage.getItem(holidayStorageKey()+'_weekly')||'null');weeklyOff=Array.isArray(saved)?saved.filter(n=>n===0||n===6):[0]}catch(_){weeklyOff=[0]}$('saturdayOff').checked=weeklyOff.includes(6);$('sundayOff').checked=weeklyOff.includes(0);renderHolidays()}
 function saveHolidays(){localStorage.setItem(holidayStorageKey(),JSON.stringify(customHolidays));renderHolidays();render();renderHistory()}
@@ -52,9 +80,104 @@ function holidayReason(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return '';const 
 function workingDays(a,b){if(!a||!b||a>b)return 0;let n=0;const d=new Date(a+'T12:00:00'),end=new Date(b+'T12:00:00');for(let i=0;d<=end&&i<3700;i++,d.setDate(d.getDate()+1)){if(!holidayReason(iso(d)))n++}return n}
 function renderHolidays(){const list=Object.entries(customHolidays).sort((a,b)=>a[0].localeCompare(b[0]));$('holidaysList').innerHTML=list.map(([date,label])=>`<button type="button" class="btn" data-remove-holiday="${esc(date)}" title="Remove holiday">${esc(fmt(date))} · ${esc(label)} ×</button>`).join('')||'<span class="muted mini">No additional holidays configured.</span>'}
 function toast(message,error=false){const el=$('toast');el.textContent=message;el.classList.toggle('error',error);el.classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.add('hidden'),6000)}function setBusy(v){busy=v;$('date').disabled=v;for(const x of ['save','refresh','markAll','historyRefresh','edit'])$(x).disabled=v;$('save').textContent=v?'Saving...':'💾 Save changes'}function photoHtml(t){const p=pic(t);return p&&/^(https?:|data:image\/)/i.test(p)?`<img class="photo" src="${esc(p)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'<span class="photo inline-grid place-items-center font-bold">👤</span>'}function filtered(){const q=$('search').value.toLowerCase(),f=$('filter').value,c=$('classFilter').value;return teachers.filter(t=>(!q||[name(t),fld(t,'subject'),fld(t,'assignedClass','class','grade'),id(t)].some(x=>x.toLowerCase().includes(q)))&&(!c||fld(t,'assignedClass','class','grade')===c)&&(!f||(selected.get(id(t))?.status||'Unmarked')===f))}
-function render(){renderStaffOutreach();const count={Present:0,Absent:0,Leave:0};for(const t of teachers){const s=selected.get(id(t))?.status;if(s in count)count[s]++}for(const [k,v] of Object.entries({total:teachers.length,present:count.Present,absent:count.Absent,leave:count.Leave,unmarked:teachers.length-count.Present-count.Absent-count.Leave}))$(k).textContent=v;$('dateText').textContent=fmt($('date').value);const hol=holidayReason($('date').value);$('holidayNotice').classList.toggle('hidden',!hol);$('holidayNotice').textContent=hol?'Holiday: '+hol+'. Attendance is view-only on this date; no automatic Present marks.':''; $('markAll').disabled=busy||!attendanceHistoryLoaded||!!hol; $('save').disabled=busy||!attendanceHistoryLoaded||!!hol||!editing||!dirty.size;$('edit').disabled=busy||!attendanceHistoryLoaded||!!hol;$('edit').textContent=editing?'Cancel editing':'✎ Enable editing';const savedCount=teachers.filter(t=>selected.get(id(t))?.status).length;$('completion').textContent=hol?'Holiday — '+hol:dirty.size?`${dirty.size} unsaved change(s). Save to confirm.`:savedCount===teachers.length&&teachers.length?`✓ Attendance completed — ${savedCount} teachers saved. Use Enable editing to correct.`:savedCount?`${savedCount} of ${teachers.length} teachers saved. Enable editing to complete.`:'Attendance not yet marked. Tap Present, Absent or Leave, then Save changes.';$('summary').textContent=`${filtered().length} displayed · ${dirty.size} unsaved change(s) · ${fmt($('date').value)}`;$('list').innerHTML=filtered().map(t=>{const k=id(t),s=selected.get(k)||{},showReason=['Absent','Leave'].includes(s.status);return `<article class="person" data-teacher="${esc(k)}"><div class="flex items-center gap-3">${photoHtml(t)}<div class="min-w-0 flex-1"><div class="font-black">${esc(name(t))}</div><div class="muted mini">${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'subject')||'—')} · Class ${esc(fld(t,'assignedClass','class','grade')||'—')}</div><div class="mini ${dirty.has(k)?'text-amber-500':'muted'}">${dirty.has(k)?'● Unsaved change':s.status?'Saved: '+esc(s.status):'Unmarked'}</div></div></div><div class="flex gap-2 flex-wrap mt-3 no-print">${['Present','Absent','Leave'].map(v=>`<button class="pill ${s.status===v?'selected':''}" data-status="${v}" data-id="${esc(k)}" type="button" aria-pressed="${s.status===v}" ${busy||!editing?'disabled':''}>${v}</button>`).join('')}</div><div class="mt-2 ${showReason?'':'hidden'}"><label class="mini font-bold">${s.status==='Leave'?'Leave reason':'Absence reason'} <span class="muted">(short note)</span><input class="field mt-1 reason" data-id="${esc(k)}" value="${esc(s.remarks||'')}" placeholder="e.g. Medical leave, family emergency" ${busy||!editing?'disabled':''}></label></div><div class="print-only mini mt-2">Status: <b>${esc(s.status||'Unmarked')}</b>${showReason&&s.remarks?' · '+esc(s.remarks):''}</div></article>`}).join('')||'<p class="muted">No matching teachers.</p>';printHeaders();renderDailyPrint()}
+
+function teacherClass(t){return fld(t,'assignedClass','class','grade')||'Not assigned'}
+function displayTeacherClass(value){const label=String(value||'Not assigned').trim();return /^(class|grade)\b/i.test(label)||label==='Not assigned'?label:'Class '+label}
+function verifiedFor(k){
+ if(!attendanceHistoryLoaded||pendingVerification||dirty.has(k)||duplicateTeacherIds.includes(k))return null;
+ const found=records.filter(r=>recDate(r)===$('date').value&&String(r.teacherId??r.teacherID??'')===k&&status(r));
+ return found.length===1?{status:status(found[0]),remarks:reason(found[0]),recordId:String(found[0].id??found[0]._id??'')}:null;
+}
+function teacherMetrics(list){
+ const total=list.length,out={total,Present:0,Absent:0,Leave:0,unmarked:0};
+ if(!attendanceHistoryLoaded)return {...out,ready:false,percent:null};
+ for(const t of list){
+  const value=verifiedFor(id(t));
+  if(value)out[value.status]++;
+  else out.unmarked++;
+ }
+ const marked=out.Present+out.Absent+out.Leave;
+ return {...out,ready:true,marked,percent:total?Math.round(100*marked/total):0};
+}
+function updateTeacherCoverage(){
+ const cls=$('classFilter').value;
+ const scope=cls?teachers.filter(t=>teacherClass(t)===cls):teachers;
+ const selectedStats=teacherMetrics(scope),schoolStats=teacherMetrics(teachers);
+ $('classTotalsTitle').textContent=cls?displayTeacherClass(cls)+' — Teacher Attendance':'All classes — Teacher Attendance';
+ const cards=(stats,prefix)=>{
+  const values={Total:stats.total,Present:stats.Present,Absent:stats.Absent,Leave:stats.Leave,Unmarked:stats.unmarked};
+  for(const [key,value] of Object.entries(values)){
+   const n=prefix?prefix+key:key==='Total'?'total':key.toLowerCase();
+   const node=$(n);if(node)node.textContent=stats.ready?value:(key==='Total'?stats.total:'—');
+  }
+ };
+ cards(selectedStats,'');cards(schoolStats,'school');
+ const label=s=>s.ready?(s.marked+'/'+s.total+' saved · '+s.percent+'% verified'+(dirty.size?' · unsaved changes are excluded':'')):'Attendance unavailable — no saved status confirmed';
+ $('classAttendanceCoverage').textContent=label(selectedStats);
+ $('schoolAttendanceCoverage').textContent=label(schoolStats);
+ const classes=[...new Set(teachers.map(teacherClass))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+ $('teacherClassCoverageRows').innerHTML=classes.map(cls=>{
+  const s=teacherMetrics(teachers.filter(t=>teacherClass(t)===cls)),ratio=s.ready?s.percent:0;
+  return '<div class="panel" style="margin:0"><strong>'+esc(cls)+'</strong><div class="mini muted mt-2">'+
+   (s.ready?s.marked+'/'+s.total+' marked · '+ratio+'% · '+s.Present+' present · '+s.Absent+' absent · '+s.Leave+' leave':s.total+' teachers · attendance unverified')+
+   '</div><div style="height:9px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:9px"><div style="height:100%;width:'+ratio+'%;background:'+(ratio===100?'#10b981':'#e0a325')+'"></div></div></div>';
+ }).join('')||'<p class="muted mini">No assigned classes available.</p>';
+ return schoolStats;
+}
+function render(){
+ updateTeacherCoverage();
+ renderStaffOutreach();
+ $('dateText').textContent=fmt($('date').value);
+ const hol=holidayReason($('date').value);
+ $('holidayNotice').classList.toggle('hidden',!hol);
+ $('holidayNotice').textContent=hol?'Holiday: '+hol+'. Attendance is view-only on this date; no automatic Present marks.':'';
+ const locked=busy||!attendanceHistoryLoaded||!!pendingVerification||duplicateTeacherIds.length>0||!!hol;
+ $('markAll').disabled=locked;
+ $('save').disabled=locked||!editing||!dirty.size;
+ $('edit').disabled=locked;
+ $('edit').textContent=editing?'Cancel editing':'✎ Enable editing';
+ const totals=teacherMetrics(teachers);
+ const full=totals.ready&&totals.total>0&&totals.marked===totals.total&&!dirty.size;
+ const date=fmt($('date').value);
+ let headline;
+ if(pendingVerification)headline='◷ Save submitted but NOT yet verified. Refresh to check Google Sheets. Do not submit again.';
+ else if(duplicateTeacherIds.length)headline='⚠ '+duplicateTeacherIds.length+' teacher/date duplicate record(s) found. Saving disabled for administrator review.';
+ else if(!attendanceHistoryLoaded)headline='⚠ Attendance history unavailable. Saved statuses are NOT verified. Refresh to retry.';
+ else if(hol)headline='Holiday — '+hol;
+ else if(dirty.size)headline=dirty.size+' unsaved change(s). Tap Save changes to verify.';
+ else if(full)headline='✓ Attendance completed: '+totals.total+'/'+totals.total+' teachers saved and verified — 100%';
+ else if(totals.marked)headline=totals.marked+' of '+totals.total+' teacher(s) saved and verified ('+totals.percent+'%). '+totals.unmarked+' unmarked.';
+ else headline='Attendance not yet marked. Select Present, Absent or Leave and save.';
+ $('completion').textContent=headline;
+ const note=$('saveVerificationNote');
+ if(note)note.textContent=pendingVerification?'Saving may have reached the server. Refresh to verify the existing records; automatic resubmission is blocked.':
+   lastSaveVerified&&attendanceHistoryLoaded&&!dirty.size?'✓ Saved successfully and verified against Google Sheets · '+new Date(lastSaveVerified).toLocaleTimeString():
+   attendanceHistoryLoaded?'Only server-confirmed records count toward 100% completion. Unsaved selections are excluded.':
+   'A failed read is never counted as zero attendance or a successful save.';
+ $('summary').textContent=filtered().length+' displayed · '+dirty.size+' unsaved changes · '+date;
+ $('list').innerHTML=filtered().map(t=>{
+  const k=id(t),draft=selected.get(k)||{},verified=verifiedFor(k);
+  const s=dirty.has(k)?draft:verified||{};
+  const showing=dirty.has(k)||!!verified;
+  const reasonVisible=showing&&['Absent','Leave'].includes(s.status);
+  const state=dirty.has(k)?'● Unsaved selection':
+    pendingVerification?'◷ Awaiting server verification':
+    !attendanceHistoryLoaded?'⚠ Not verified (refresh required)':
+    duplicateTeacherIds.includes(k)?'⚠ Duplicate records — administrator review':
+    verified?'✓ Saved and verified: '+verified.status:'Unmarked';
+  const buttons=['Present','Absent','Leave'].map(v=>'<button class="pill '+(s.status===v?'selected':'')+'" data-status="'+v+'" data-id="'+esc(k)+'" type="button" aria-pressed="'+(s.status===v)+'" '+(locked||!editing?'disabled':'')+'>'+v+'</button>').join('');
+  return '<article class="person" data-teacher="'+esc(k)+'"><div class="flex items-center gap-3">'+photoHtml(t)+
+  '<div class="min-w-0 flex-1"><div class="font-black">'+esc(name(t))+'</div><div class="muted mini">'+
+  esc(fld(t,'designation')||'Teacher')+' · '+esc(fld(t,'subject')||'—')+' · '+esc(displayTeacherClass(teacherClass(t)))+
+  '</div><div class="mini '+(dirty.has(k)?'text-amber-500':'muted')+'">'+esc(state)+'</div></div></div>'+
+  '<div class="flex gap-2 flex-wrap mt-3 no-print">'+buttons+'</div><div class="mt-2 '+(reasonVisible?'':'hidden')+'"><label class="mini font-bold">'+
+  (s.status==='Leave'?'Leave reason':'Absence reason')+' <span class="muted">(short note)</span><input class="field mt-1 reason" data-id="'+esc(k)+'" value="'+esc(s.remarks||'')+'" placeholder="e.g. Medical leave, family emergency" '+(locked||!editing?'disabled':'')+'></label></div>'+
+  '<div class="print-only mini mt-2">Status: '+esc(s.status||'Unmarked')+'</div></article>';
+ }).join('')||'<p class="muted">No matching teachers.</p>';
+ printHeaders();renderDailyPrint();
+}
 function renderDailyPrint(){const day=$('date').value,hol=holidayReason(day);$('dailyPrintRows').innerHTML=filtered().map((t,i)=>{const v=selected.get(id(t))||{};return `<tr><td>${i+1}</td><td>${photoHtml(t)}</td><td><b>${esc(name(t))}</b><div>${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'subject')||'—')} · Class ${esc(fld(t,'assignedClass','class','grade')||'—')}</div></td><td><b>${esc(v.status|| (hol?'Holiday':'Unmarked'))}</b></td><td>${esc(v.status==='Absent'||v.status==='Leave'?v.remarks||'—':hol||'—')}</td></tr>`}).join('');}
-function choose(k,v){if($('date').value!==loadedDate){toast('Selected date has not been loaded. Refresh before editing.',true);return;}if(busy||!attendanceHistoryLoaded){if(!attendanceHistoryLoaded)toast('Attendance history not verified. Refresh before editing.',true);return;}const hol=holidayReason($('date').value);if(hol){toast('Holiday: '+hol,true);return}if(!editing)editing=true;const old=selected.get(k)||{};if(old.status===v)return;selected.set(k,{...old,status:v,remarks:v==='Present'?'':old.remarks||''});dirty.add(k);render()}
+function choose(k,v){if($('date').value!==loadedDate){toast('Selected date has not been loaded. Refresh before editing.',true);return;}if(busy||pendingVerification||duplicateTeacherIds.length||!attendanceHistoryLoaded){toast('Attendance not yet verified or has duplicates. Refresh before editing.',true);return;}const hol=holidayReason($('date').value);if(hol){toast('Holiday: '+hol,true);return}if(!editing)editing=true;const old=selected.get(k)||{};if(old.status===v)return;selected.set(k,{...old,status:v,remarks:v==='Present'?'':old.remarks||''});dirty.add(k);render()}
 let teacherQrStream=null,teacherQrActive=false,teacherQrLast='',teacherQrLastAt=0,teacherQrPending=new Set(),teacherQrIndex=new Map();
 function teacherQrFeedback(kind,message){
  const colors={success:['#dcfce7','#166534','✓'],error:['#fee2e2','#991b1b','✕'],pending:['#fef3c7','#92400e','◷'],ready:['#e8f4f6','#155e75','○']};
@@ -69,36 +192,55 @@ function teacherQrStop(){document.getElementById('qrTeacherPanel')?.classList.re
 let teacherQrSaving=false;
 async function teacherQrSaveVerified(teacher){
  if(teacherQrSaving)return;
- const k=id(teacher),when=$('date').value;
- if(busy||!attendanceHistoryLoaded||when!==loadedDate||holidayReason(when)){teacherQrFeedback('error','Attendance register unavailable. Nothing saved.');return}
- if(dirty.size){teacherQrFeedback('error','Unsaved manual changes exist. Save or discard them before QR auto-attendance.');return}
- const existing=records.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
- if(existing.length){teacherQrFeedback('error','Existing attendance found. QR will not overwrite it.');return}
+ const key=id(teacher),day=$('date').value;
+ if(busy||pendingVerification||duplicateTeacherIds.length||!attendanceHistoryLoaded||day!==loadedDate||holidayReason(day)){
+  teacherQrFeedback('error','Attendance is not verified or cannot be edited. No QR write sent.');return;
+ }
+ if(dirty.size){teacherQrFeedback('error','Save or discard manual changes before using QR attendance.');return}
+ const existing=records.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'')===key&&status(r));
+ if(existing.length){teacherQrFeedback('error','A saved teacher/date record already exists; QR never overwrites it.');return}
  teacherQrSaving=true;
- teacherQrFeedback('pending',name(teacher)+' scanned. Saving attendance and verifying…');
+ const item={teacherId:key,status:'Present',remarks:''};
+ pendingVerification={date:day,records:[item]};
+ teacherQrFeedback('pending',name(teacher)+' scanned. Saving and checking server confirmation…');
  try{
-  const patch={teacherId:k,teacherName:name(teacher),date:when,status:'Present',remarks:''};
-  const result=await LamaAPI.add('teacherAttendance',patch);
-  if(result===false||result?.success===false||result?.error)throw Error(result?.message||result?.error||'Server rejected save');
-  const response=await LamaAPI.list('teacherAttendance');
-  if(!Array.isArray(response)&&!Array.isArray(response?.records)&&!Array.isArray(response?.data))throw Error('Verification response invalid');
-  const fresh=arr(response);
-  const matches=fresh.filter(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k&&status(r));
-  records=fresh;
-  if(matches.length===1&&status(matches[0])==='Present'){
-   selected.set(k,{status:'Present',remarks:'',recordId:String(matches[0].id??matches[0]._id??'')});
-   teacherQrPending.delete(k);
-   render();renderHistory();
-   teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified.');
-  }else{
-   teacherQrFeedback('pending','Save submitted but verification is incomplete. Do not rescan; refresh to check the register.');
+  let confirmed=null;
+  if(fastDailyAvailable===true){
+   try{
+    const result=await LamaAPI.bulkTeacherAttendanceVerified(day,[item]);
+    if(!result?.verified||result.date!==day||!verifySubmittedRecords([item],result.records,day))
+     throw Error('QR save not independently verified by server.');
+    confirmed=result.records;
+   }catch(error){
+    if(!unsupportedTeacherAction(error))throw error;
+    fastDailyAvailable=false;
+   }
   }
+  if(!confirmed){
+   const response=await LamaAPI.add('teacherAttendance',{teacherId:key,teacherName:name(teacher),date:day,status:'Present',remarks:''});
+   if(!response||response.success===false||response.error)throw Error('QR save status unknown; refresh to verify.');
+   const snapshot=await readTeacherDay(day);
+   if(snapshot.duplicates.length||!verifySubmittedRecords([item],snapshot.records,day))
+    throw Error('QR save accepted but server readback did not confirm a unique record.');
+   applyTeacherDay(day,snapshot);
+   confirmed=snapshot.records.filter(r=>String(r.teacherId??r.teacherID??'')===key);
+  }else{
+   records=records.filter(r=>recDate(r)!==day||String(r.teacherId??r.teacherID??'')!==key).concat(confirmed);
+   selected.set(key,{status:'Present',remarks:'',recordId:String(confirmed[0].id??'')});
+   verifiedAt=Date.now();
+  }
+  pendingVerification=null;lastSaveVerified=Date.now();teacherQrPending.delete(key);
+  historyLoaded=false;historyRecords=[];
+  render();renderHistory();
+  teacherQrFeedback('success','✓ '+name(teacher)+' — Present saved and verified.');
+  toast('✓ QR teacher attendance saved and verified.');
  }catch(error){
-  teacherQrFeedback('pending','Could not confirm save: '+error.message+'. Check register before retrying to prevent duplicates.');
+  teacherQrStop();render();
+  teacherQrFeedback('pending','QR write not verified: '+error.message+'. Press Refresh to check; do not rescan.');
  }finally{teacherQrSaving=false}
 }
 async function teacherQrStart(){
- if(teacherQrActive||busy)return;
+ if(teacherQrActive||busy||pendingVerification||duplicateTeacherIds.length)return;
  if(!attendanceHistoryLoaded||$('date').value!==loadedDate){teacherQrFeedback('error','Saved teacher attendance for this date has not loaded. Refresh before scanning.');return;}
  if(holidayReason($('date').value)){teacherQrFeedback('error','Attendance is locked on a holiday.');return}
  if(!navigator.mediaDevices?.getUserMedia||!('BarcodeDetector' in window)){teacherQrFeedback('error','Camera QR scanning unavailable. Use manual attendance or a compatible browser.');return}
@@ -152,89 +294,238 @@ function teacherLoadUpdate(percent,stage,started){
  $('teacherLoadBox').style.display='block';$('teacherLoadPercent').textContent=percent+'%';$('teacherLoadBar').style.width=percent+'%';$('teacherLoadStage').textContent=stage;
  $('teacherLoadElapsed').textContent='Elapsed: '+Math.floor((performance.now()-started)/1000)+'s · Remaining time unknown';
 }
-async function load(){
- if(busy||!discard()){$('date').value=loadedDate;return}
- teacherQrStop();
- setBusy(true);
- attendanceHistoryLoaded=false;
- const started=performance.now();let rosterReady=false,historyReady=false;
- teacherLoadUpdate(0,'Connecting to teacher records…',started);
- clearInterval(teacherLoadTimer);teacherLoadTimer=setInterval(()=>teacherLoadUpdate(rosterReady&&historyReady?85:rosterReady||historyReady?45:10,rosterReady&&historyReady?'Preparing teacher register…':rosterReady?'Waiting for saved attendance…':historyReady?'Waiting for teacher list…':'Waiting for teacher and attendance records…',started),500);
- let historyAvailable=false;
- const deadline=(promise,label)=>new Promise((resolve,reject)=>{
-  const timer=setTimeout(()=>reject(new Error(label+' did not respond within 40 seconds. Check Apps Script connection and retry.')),40000);
-  Promise.resolve(promise).then(value=>{clearTimeout(timer);resolve(value)},error=>{clearTimeout(timer);reject(error)});
- });
- try{
-  // Fetch independent datasets concurrently; both still have separate timeout diagnostics.
-  // Never permit editing when either request fails.
-  const timedList=async(collection,label)=>{
-   const started=performance.now();
-   try{
-    const result=await deadline(LamaAPI.list(collection),label);
-    if(!Array.isArray(result)&&!Array.isArray(result?.records)&&!Array.isArray(result?.data))throw Error(label+' returned an invalid response');
-    console.info('[LAMA attendance] '+label+' loaded in '+Math.round(performance.now()-started)+' ms');
-    return arr(result);
-   }catch(error){
-    console.warn('[LAMA attendance] '+label+' failed after '+Math.round(performance.now()-started)+' ms:',error.message);
-    throw error;
-   }
-  };
-  const [rosterResult,historyResult]=await Promise.allSettled([
-   timedList('teachers','Teacher list').then(v=>{rosterReady=true;return v}),
-   timedList('teacherAttendance','Teacher attendance').then(v=>{historyReady=true;return v})
-  ]);
-  if(rosterResult.status==='rejected')throw rosterResult.reason;
-  teachers=rosterResult.value.filter(t=>id(t));
-  historyAvailable=historyResult.status==='fulfilled';
-  records=historyAvailable?historyResult.value:[];
-  if(!historyAvailable)console.warn('Teacher attendance history unavailable',historyResult.reason);
-  selected.clear();dirty.clear();
-  attendanceHistoryLoaded=historyAvailable;
-  if(!historyAvailable)teacherQrStop();
-  if(historyAvailable){
-   for(const r of records){
-    if(recDate(r)!==$('date').value)continue;
-    const k=String(r.teacherId??r.teacherID??'');
-    if(k&&status(r))selected.set(k,{status:status(r),remarks:reason(r),recordId:String(r.id??r._id??'')});
-   }
+
+const withLoadDeadline=(promise,label,limit=25000)=>new Promise((resolve,reject)=>{
+ const timer=setTimeout(()=>reject(new Error(label+' timed out after '+(limit/1000)+' seconds. No save was attempted.')),limit);
+ Promise.resolve(promise).then(v=>{clearTimeout(timer);resolve(v)},e=>{clearTimeout(timer);reject(e)});
+});
+function unsupportedTeacherAction(error){
+ return /Unknown action:\s*(?:teacherAttendanceDailySnapshot|bulkTeacherAttendanceVerified)/i.test(String(error?.message||error));
+}
+async function readTeacherDay(day){
+ if(fastDailyAvailable!==false){
+  try{
+   const result=await withLoadDeadline(LamaAPI.teacherAttendanceDailySnapshot(day),'Teacher daily register',27000);
+   if(!result||result.date!==day||!Array.isArray(result.teachers)||!Array.isArray(result.records)||!Array.isArray(result.duplicates))
+    throw Error('Daily attendance returned invalid data. No status was confirmed.');
+   fastDailyAvailable=true;
+   return {teachers:result.teachers,records:result.records,duplicates:result.duplicates,fast:true};
+  }catch(error){
+   if(!unsupportedTeacherAction(error))throw error;
+   fastDailyAvailable=false;console.info('Using legacy verified attendance readback until Apps Script is updated.');
   }
-  const classes=[...new Set(teachers.map(t=>fld(t,'assignedClass','class','grade')).filter(Boolean))].sort();
-  const old=$('classFilter').value;
-  $('classFilter').innerHTML='<option value="">All classes</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  if(classes.includes(old))$('classFilter').value=old;
-  $('historyTeacher').innerHTML='<option value="">All teachers</option>'+teachers.map(t=>`<option value="${esc(id(t))}">${esc(name(t))}</option>`).join('');
-  loadedDate=$('date').value;editing=false;render();renderHistory();
-  if(!historyAvailable){
-   // Never let a failed history request be mistaken for an empty attendance register.
-   $('edit').disabled=true;$('markAll').disabled=true;$('save').disabled=true;
-   $('completion').textContent='Attendance records unavailable. Editing disabled until refresh succeeds.';
-   toast('Teacher list loaded, but attendance history is unavailable. Retry Refresh before marking or saving.',true);
-  }else toast('Teacher attendance loaded');
- }catch(e){
-  attendanceHistoryLoaded=false;
-  teacherQrStop();
-  $('date').value=loadedDate;
-  toast('Loading failed: '+e.message,true);
- }finally{clearInterval(teacherLoadTimer);teacherLoadTimer=null;teacherLoadUpdate(attendanceHistoryLoaded?100:85,attendanceHistoryLoaded?'Teacher register ready':'Attendance history unavailable — refresh to retry',started);if(attendanceHistoryLoaded)$('teacherLoadElapsed').textContent='Loaded in '+((performance.now()-started)/1000).toFixed(1)+'s';setBusy(false);render();
-  if(!attendanceHistoryLoaded){$('edit').disabled=true;$('markAll').disabled=true;$('save').disabled=true;$('completion').textContent='Attendance history unavailable. Refresh to retry.';}
+ }
+ // Backward compatible, read-only path. Never retry a failed write.
+ const responses=await Promise.allSettled([
+  withLoadDeadline(LamaAPI.list('teachers'),'Teacher roster',40000),
+  withLoadDeadline(LamaAPI.list('teacherAttendance'),'Saved teacher history',40000)
+ ]);
+ if(responses[0].status!=='fulfilled')throw responses[0].reason;
+ const roster=responses[0].value;
+ if(!Array.isArray(roster)&&!Array.isArray(roster?.records)&&!Array.isArray(roster?.data))throw Error('Teacher roster response was invalid.');
+ teachers=arr(roster).filter(t=>id(t));
+ if(responses[1].status!=='fulfilled')throw responses[1].reason;
+ const rows=responses[1].value;
+ if(!Array.isArray(rows)&&!Array.isArray(rows?.records)&&!Array.isArray(rows?.data))throw Error('Teacher attendance history response was invalid.');
+ historyRecords=arr(rows);historyLoaded=true;
+ const attendance=historyRecords.filter(r=>recDate(r)===day&&status(r));
+ const counts={},duplicates=[];
+ for(const row of attendance){
+  const key=String(row.teacherId??row.teacherID??'').trim();
+  if(!key)continue;counts[key]=(counts[key]||0)+1;
+ }
+ for(const key of Object.keys(counts))if(counts[key]>1)duplicates.push(key);
+ return {teachers,records:attendance,duplicates,fast:false};
+}
+function applyTeacherDay(day,snapshot){
+ teachers=snapshot.teachers.filter(t=>id(t));
+ records=snapshot.records.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'').trim());
+ duplicateTeacherIds=snapshot.duplicates||[];
+ selected.clear();
+ const unique=new Map();
+ for(const row of records){
+  const key=String(row.teacherId??row.teacherID??'').trim();
+  if(!key||!status(row)||duplicateTeacherIds.includes(key))continue;
+  if(unique.has(key)){duplicateTeacherIds.push(key);unique.delete(key);continue}
+  unique.set(key,row);
+ }
+ for(const [key,row] of unique)selected.set(key,{status:status(row),remarks:reason(row),recordId:String(row.id??row._id??'')});
+ attendanceHistoryLoaded=true;loadedDate=day;verifiedAt=Date.now();
+ const classes=[...new Set(teachers.map(teacherClass).filter(Boolean))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
+ const previousClass=$('classFilter').value;
+ $('classFilter').innerHTML='<option value="">All classes</option>'+classes.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+ if(classes.includes(previousClass))$('classFilter').value=previousClass;
+ $('historyTeacher').innerHTML='<option value="">All teachers</option>'+teachers.map(t=>'<option value="'+esc(id(t))+'">'+esc(name(t))+'</option>').join('');
+}
+function pendingSaveMatches(){
+ if(!pendingVerification||!attendanceHistoryLoaded)return false;
+ if(pendingVerification.date!==loadedDate)return false;
+ return pendingVerification.records.every(x=>{
+  const matches=records.filter(r=>recDate(r)===loadedDate&&String(r.teacherId??r.teacherID??'')===x.teacherId&&status(r));
+  return matches.length===1&&status(matches[0])===x.status&&
+   (x.status==='Present'||reason(matches[0])===x.remarks);
+ });
+}
+async function load(){
+ if(busy||(!pendingVerification&&!discard())){$('date').value=loadedDate;return}
+ teacherQrStop();setBusy(true);
+ const requested=$('date').value;
+ attendanceHistoryLoaded=false;duplicateTeacherIds=[];
+ const started=performance.now();
+ teacherLoadUpdate(0,'Checking saved teacher attendance…',started);
+ clearInterval(teacherLoadTimer);
+ teacherLoadTimer=setInterval(()=>{
+  const seconds=Math.floor((performance.now()-started)/1000);
+  teacherLoadUpdate(0,'Waiting for server verification ('+seconds+'s)…',started);
+ },1000);
+ try{
+  const snapshot=await readTeacherDay(requested);
+  applyTeacherDay(requested,snapshot);
+  if(pendingVerification){
+   if(pendingSaveMatches()){
+    const savedCount=pendingVerification.records.length;
+    pendingVerification=null;dirty.clear();editing=false;lastSaveVerified=Date.now();
+    toast('✓ Save successful: '+savedCount+' teacher attendance record(s) verified.');
+   }else{
+    // A server accepted a write but the returned record is not confirmed:
+    // never re-submit or clear the pending state automatically.
+    toast('Attendance was not fully verified. Do not Save again; review the original register.',true);
+   }
+  }else{dirty.clear();editing=false;}
+  teacherLoadUpdate(100,duplicateTeacherIds.length?'Duplicate staff records require review':'Daily teacher register verified',started);
+  $('teacherLoadElapsed').textContent='Verified in '+((performance.now()-started)/1000).toFixed(1)+'s'+(snapshot.fast?' · fast daily snapshot':' · legacy history read');
+  if(duplicateTeacherIds.length)toast('Duplicate teacher/date records detected. Editing is locked for review.',true);
+ }catch(error){
+  attendanceHistoryLoaded=false;teacherQrStop();
+  if(requested!==loadedDate&&loadedDate)$('date').value=loadedDate;
+  console.warn('[LAMA teacher attendance] verification read failed:',error);
+  $('teacherLoadPercent').textContent='Not verified';
+  $('teacherLoadBar').style.width='0%';
+  $('teacherLoadStage').textContent='Attendance unavailable — refresh to retry';
+  $('teacherLoadElapsed').textContent='Read failed after '+((performance.now()-started)/1000).toFixed(1)+'s · '+String(error.message||error);
+  toast('Teacher attendance could not be verified. No status was changed: '+error.message,true);
+ }finally{
+  clearInterval(teacherLoadTimer);teacherLoadTimer=null;
+  setBusy(false);render();renderHistory();
  }
 }
-async function save(){if(busy)return;if($('date').value!==loadedDate){toast('Selected date does not match the loaded attendance register. Refresh before saving.',true);return;}if(!attendanceHistoryLoaded){toast('Cannot save: saved attendance history has not loaded. Refresh and retry.',true);return;}if(!dirty.size){toast('No changes to save');return}const when=$('date').value;if(!when){toast('Select a date',true);return}if(holidayReason(when)){toast('This date is a holiday. Attendance editing is disabled.',true);return}setBusy(true);const failed=[];let count=0;try{for(const k of [...dirty]){const t=teachers.find(x=>id(x)===k),v=selected.get(k);if(!t||!['Present','Absent','Leave'].includes(v?.status)){failed.push('Teacher record missing or invalid attendance status for '+k);continue;}const old=records.find(r=>recDate(r)===when&&String(r.teacherId??r.teacherID??'')===k);const patch={teacherId:k,teacherName:name(t),date:when,status:v.status,remarks:v.status==='Present'?'':v.remarks||''};try{let result;if(old?.id||old?._id){result=await LamaAPI.update('teacherAttendance',String(old.id??old._id),patch)}else{result=await LamaAPI.add('teacherAttendance',patch)}if(result===false||result?.success===false||result?.error)throw Error(result?.message||result?.error||'Server rejected save');dirty.delete(k);count++;if(old)Object.assign(old,patch);else records.push({...patch,id:String(result?.id??result?._id??'')})}catch(e){failed.push(`${name(t)}: ${e.message}`)}}}finally{setBusy(false);render();renderHistory()}if(!failed.length){editing=false;const expected=new Map([...selected].filter(([k])=>!dirty.has(k)).map(([k,v])=>[k,{status:v.status,remarks:v.remarks||''}]));const qrSaved=[...teacherQrPending];await load();if(!attendanceHistoryLoaded){if(qrSaved.length)teacherQrFeedback('pending','Save submitted, but server verification failed. Refresh before scanning again.');toast('Save submitted, but attendance could not be reloaded for verification. Check the register before retrying.',true);return;}const mismatches=[...expected].filter(([k,v])=>{const actual=selected.get(k);return actual?.status!==v.status||(v.status!=='Present'&&String(actual?.remarks||'')!==String(v.remarks||''));});const duplicates=[...expected.keys()].filter(k=>records.filter(r=>recDate(r)===loadedDate&&String(r.teacherId??r.teacherID??'')===k&&status(r)).length>1);if(mismatches.length||duplicates.length){if(qrSaved.length)teacherQrFeedback('pending','Some saved statuses were not verified. Check register before scanning again.');toast('Verification warning: '+mismatches.length+' status/remark mismatch(es), '+duplicates.length+' duplicate attendance record(s). Review the register before further changes.',true);return;}if(qrSaved.length){const confirmed=qrSaved.every(k=>selected.get(k)?.status==='Present'&&!dirty.has(k));teacherQrFeedback(confirmed?'success':'pending',confirmed?'Teacher QR attendance saved and verified in register.':'Save accepted; register verification pending. Refresh before retrying.');if(confirmed)teacherQrPending.clear()}toast(`${count} teacher attendance record(s) saved and register reloaded.`)}else{if(teacherQrPending.size)teacherQrFeedback('error','Some attendance records failed to save. Check and retry.');toast(`${count} saved; ${failed.length} failed: ${failed.slice(0,2).join('; ')}`,true)}}
+
+function verifySubmittedRecords(items,returned,day){
+ const all=Array.isArray(returned)?returned:[];
+ return items.every(item=>{
+  const matching=all.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'')===item.teacherId&&status(r));
+  return matching.length===1&&status(matching[0])===item.status&&
+   (item.status==='Present'||reason(matching[0])===item.remarks);
+ });
+}
+async function save(){
+ if(busy)return;
+ if($('date').value!==loadedDate)return toast('Selected date does not match the verified register. Refresh before saving.',true);
+ if(pendingVerification)return toast('Previous Save is unverified. Refresh to check Google Sheets; do NOT save twice.',true);
+ if(!attendanceHistoryLoaded||duplicateTeacherIds.length)return toast('Saved attendance history must be verified without duplicates before submitting.',true);
+ if(!dirty.size)return toast('No new changes to save.');
+ const day=$('date').value;
+ if(!day||holidayReason(day))return toast('Select a valid working date before saving.',true);
+ const items=[];
+ for(const key of dirty){
+  const teacher=teachers.find(t=>id(t)===key),draft=selected.get(key);
+  if(!teacher||!['Present','Absent','Leave'].includes(draft?.status))
+   return toast('Teacher selection is missing or invalid. No attendance sent.',true);
+  items.push({teacherId:key,status:draft.status,remarks:draft.status==='Present'?'':String(draft.remarks||'').trim().slice(0,300)});
+ }
+ if(items.some(item=>records.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'')===item.teacherId).length>1))
+  return toast('Duplicate teacher records detected. Administrator review required; no Save sent.',true);
+ pendingVerification={date:day,records:items};
+ setBusy(true);render();
+ try{
+  let confirmed;
+  if(fastDailyAvailable===true&&typeof LamaAPI.bulkTeacherAttendanceVerified==='function'){
+   try{
+    const result=await LamaAPI.bulkTeacherAttendanceVerified(day,items);
+    if(!result?.verified||result.date!==day||!Array.isArray(result.records))
+      throw Error('Server did not confirm attendance. Refresh to verify.');
+    if(!verifySubmittedRecords(items,result.records,day))
+      throw Error('Server returned mismatching statuses. Refresh to verify without resaving.');
+    confirmed=result.records;
+   }catch(error){
+    if(!unsupportedTeacherAction(error))throw error;
+    fastDailyAvailable=false;console.info('Verified batch not available; using legacy writes without automatic retry.');
+   }
+  }
+  if(!confirmed){
+   // Legacy Apps Script fallback: no concurrent writes to the same spreadsheet,
+   // and any unknown or partial result keeps the register locked until readback.
+   for(const item of items){
+    const teacher=teachers.find(t=>id(t)===item.teacherId);
+    const matches=records.filter(r=>recDate(r)===day&&String(r.teacherId??r.teacherID??'')===item.teacherId);
+    if(matches.length>1)throw Error('Duplicate teacher/date rows. No further writes permitted.');
+    const previous=matches[0];
+    const patch={teacherId:item.teacherId,teacherName:name(teacher),date:day,status:item.status,remarks:item.remarks};
+    const result=previous?.id||previous?._id
+      ? await LamaAPI.update('teacherAttendance',String(previous.id??previous._id),patch)
+      : matches.length===0?await LamaAPI.add('teacherAttendance',patch):null;
+    if(!result||result.success===false||result.error)
+      throw Error('Teacher attendance save response uncertain. Refresh before another Save.');
+  }
+   const snapshot=await readTeacherDay(day);
+   if(snapshot.duplicates.length||!verifySubmittedRecords(items,snapshot.records,day))
+    throw Error('Server accepted attendance but readback did not verify all records. Refresh and review.');
+   confirmed=items.map(item=>snapshot.records.find(r=>String(r.teacherId??r.teacherID??'')===item.teacherId));
+   applyTeacherDay(day,snapshot);
+  }else{
+   // The backend already re-read these exact saved rows after SpreadsheetApp.flush().
+   // Merge confirmed rows without another slow network round trip.
+   const replaced=new Set(items.map(x=>x.teacherId));
+   records=records.filter(r=>recDate(r)!==day||!replaced.has(String(r.teacherId??r.teacherID??''))).concat(confirmed);
+   for(const row of confirmed)selected.set(String(row.teacherId),{status:status(row),remarks:reason(row),recordId:String(row.id??'')});
+   attendanceHistoryLoaded=true;verifiedAt=Date.now();
+  }
+  dirty.clear();pendingVerification=null;lastSaveVerified=Date.now();editing=false;
+  historyLoaded=false;historyRecords=[];
+  teacherLoadUpdate(100,'Save verified by server',performance.now());
+  $('teacherLoadElapsed').textContent='✓ '+items.length+' teacher record(s) saved and independently verified for '+fmt(day)+'.';
+  toast('✓ Save successful! '+items.length+' teacher attendance record(s) verified.');
+ }catch(error){
+  // Never delete the pending state or resend automatically. Re-read before
+  // deciding whether the previous operation reached the sheet.
+  console.error('[LAMA teacher attendance] save verification pending:',error);
+  $('teacherLoadStage').textContent='Save confirmation pending — refresh to verify';
+  $('teacherLoadPercent').textContent='Not verified';
+  $('teacherLoadBar').style.width='0%';
+  toast('Save NOT verified: '+error.message+'. Press Refresh to check, do not Save again.',true);
+ }finally{
+  setBusy(false);render();renderHistory();
+ }
+}
 function setPeriod(){const p=$('period').value,d=new Date(),end=new Date(d.getFullYear(),d.getMonth(),d.getDate()),start=new Date(end);if(p==='week')start.setDate(start.getDate()-6);else if(p==='thisMonth')start.setDate(1);else if(p==='lastMonth'){start.setMonth(start.getMonth()-1,1);end.setDate(0)}else return;$('from').value=iso(start);$('to').value=iso(end);renderHistory()}
-function historyRows(){const a=$('from').value,b=$('to').value,k=$('historyTeacher').value;if(!a||!b||a>b)return [];const seen=new Map();for(const r of records){const d=recDate(r),t=String(r.teacherId??r.teacherID??'');if(d<a||d>b||!status(r)||!t||(k&&t!==k)||holidayReason(d))continue;seen.set(t+'|'+d,r)}return [...seen.values()].sort((x,y)=>recDate(y).localeCompare(recDate(x))||String(x.teacherId).localeCompare(String(y.teacherId)))}
-function renderHistory(){const a=$('from').value,b=$('to').value;const rows=historyRows(),byId=new Map(teachers.map(t=>[id(t),t]));historyCache=rows;const selectedTeachers=teachers.filter(t=>!$('historyTeacher').value||id(t)===$('historyTeacher').value);$('historyInfo').textContent=`${fmt(a)} – ${fmt(b)} · ${workingDays(a,b)} working days (holidays excluded) · ${rows.length} saved entries · ${selectedTeachers.length} teacher(s)`;const counts=new Map();for(const r of rows){const k=String(r.teacherId??r.teacherID??''),c=counts.get(k)||{Present:0,Absent:0,Leave:0};c[r.status]++;counts.set(k,c)}$('historySummary').innerHTML=selectedTeachers.map(t=>{const c=counts.get(id(t))||{Present:0,Absent:0,Leave:0},n=c.Present+c.Absent+c.Leave,work=workingDays(a,b),missing=Math.max(0,work-n);return `<tr><td>${photoHtml(t)}</td><td><b>${esc(name(t))}</b><div class="muted mini">${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'assignedClass','class','grade')||'—')} · ${esc(fld(t,'subject')||'—')}</div></td><td>${c.Present}</td><td>${c.Absent}</td><td>${c.Leave}</td><td>${n}</td><td>${missing} / ${work}</td></tr>`}).join('')||'<tr><td colspan="7">No teachers found.</td></tr>';$('historyRows').innerHTML=rows.map(r=>{const t=byId.get(String(r.teacherId??r.teacherID??''))||{};return `<tr><td>${fmt(recDate(r))}</td><td>${photoHtml(t)}</td><td>${esc(name(t)||r.teacherName)}</td><td class="${r.status==='Present'?'statusP':r.status==='Absent'?'statusA':'statusL'}">${esc(r.status)}</td><td>${esc(reason(r)||'—')}</td></tr>`}).join('')||'<tr><td colspan="5">No saved attendance in this period.</td></tr>';printHeaders()}
+function historyRows(){const a=$('from').value,b=$('to').value,k=$('historyTeacher').value;if(!a||!b||a>b)return [];const seen=new Map();for(const r of historyRecords){const d=recDate(r),t=String(r.teacherId??r.teacherID??'');if(d<a||d>b||!status(r)||!t||(k&&t!==k)||holidayReason(d))continue;seen.set(t+'|'+d,r)}return [...seen.values()].sort((x,y)=>recDate(y).localeCompare(recDate(x))||String(x.teacherId).localeCompare(String(y.teacherId)))}
+function renderHistory(){if(!historyLoaded){$('historyInfo').textContent='Historical attendance is not loaded. Tap Load history for saved dates and salary totals.';$('historySummary').innerHTML='<tr><td colspan="7">History not loaded yet — tap Load history above.</td></tr>';$('historyRows').innerHTML='<tr><td colspan="5">Historical records are not verified yet.</td></tr>';historyCache=[];return;}const a=$('from').value,b=$('to').value;const rows=historyRows(),byId=new Map(teachers.map(t=>[id(t),t]));historyCache=rows;const selectedTeachers=teachers.filter(t=>!$('historyTeacher').value||id(t)===$('historyTeacher').value);$('historyInfo').textContent=`${fmt(a)} – ${fmt(b)} · ${workingDays(a,b)} working days (holidays excluded) · ${rows.length} saved entries · ${selectedTeachers.length} teacher(s)`;const counts=new Map();for(const r of rows){const k=String(r.teacherId??r.teacherID??''),c=counts.get(k)||{Present:0,Absent:0,Leave:0};c[r.status]++;counts.set(k,c)}$('historySummary').innerHTML=selectedTeachers.map(t=>{const c=counts.get(id(t))||{Present:0,Absent:0,Leave:0},n=c.Present+c.Absent+c.Leave,work=workingDays(a,b),missing=Math.max(0,work-n);return `<tr><td>${photoHtml(t)}</td><td><b>${esc(name(t))}</b><div class="muted mini">${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'assignedClass','class','grade')||'—')} · ${esc(fld(t,'subject')||'—')}</div></td><td>${c.Present}</td><td>${c.Absent}</td><td>${c.Leave}</td><td>${n}</td><td>${missing} / ${work}</td></tr>`}).join('')||'<tr><td colspan="7">No teachers found.</td></tr>';$('historyRows').innerHTML=rows.map(r=>{const t=byId.get(String(r.teacherId??r.teacherID??''))||{};return `<tr><td>${fmt(recDate(r))}</td><td>${photoHtml(t)}</td><td>${esc(name(t)||r.teacherName)}</td><td class="${r.status==='Present'?'statusP':r.status==='Absent'?'statusA':'statusL'}">${esc(r.status)}</td><td>${esc(reason(r)||'—')}</td></tr>`}).join('')||'<tr><td colspan="5">No saved attendance in this period.</td></tr>';printHeaders()}
+
+async function loadTeacherHistory(){
+ if(busy||pendingVerification)return toast('Finish verifying the current attendance save before loading historical records.',true);
+ $('historyInfo').textContent='Loading saved teacher history…';
+ try{
+  const response=await withLoadDeadline(LamaAPI.list('teacherAttendance'),'Teacher salary/attendance history',45000);
+  if(!Array.isArray(response)&&!Array.isArray(response?.records)&&!Array.isArray(response?.data))throw Error('Invalid teacher history response');
+  historyRecords=arr(response);historyLoaded=true;
+  renderHistory();
+  toast('✓ Historical teacher attendance loaded.');
+ }catch(error){
+  historyLoaded=false;historyRecords=[];renderHistory();
+  toast('History unavailable: '+error.message,true);
+ }
+}
 function printHeaders(){const logo=school.logo&&/^(https?:|data:image\/)/i.test(school.logo)?`<img src="${esc(school.logo)}" style="width:65px;height:65px;object-fit:contain" alt="">`:'';const heading=title=>`<div style="display:flex;align-items:center;gap:15px;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:15px">${logo}<div><h1 style="font-size:21px;font-weight:900;margin:0">${esc(school.name||school.schoolName||'School')}</h1><p style="margin:3px 0">${esc(title)}</p><p style="font-size:11px">${esc(school.address||'')}</p></div></div>`;$('dailyPrintHeader').innerHTML=heading('Daily Teacher Attendance — '+fmt($('date').value)+(holidayReason($('date').value)?' — '+holidayReason($('date').value):''));$('historyPrintHeader').innerHTML=heading('Teacher Attendance & Salary Support — '+fmt($('from').value)+' to '+fmt($('to').value))}
 function csv(rows,filename){const data='\ufeff'+rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function printPart(part){renderDailyPrint();$('dailySection').classList.toggle('no-print',part==='history');$('historySection').classList.toggle('no-print',part==='daily');window.print();setTimeout(()=>{$('dailySection').classList.remove('no-print');$('historySection').classList.remove('no-print')},500)}
-function init(){if(typeof LamaAPI==='undefined'){toast('API client missing',true);return}if(!LamaAPI.requireLogin('school','../login.html'))return;const dark=localStorage.getItem('lama_theme')==='dark';document.documentElement.classList.toggle('dark',dark);$('theme').onclick=()=>{const d=document.documentElement.classList.toggle('dark');localStorage.setItem('lama_theme',d?'dark':'light')};$('date').value=today();loadedDate=today();loadHolidays();['saturdayOff','sundayOff'].forEach(k=>{$(k).onchange=()=>{weeklyOff=[$('sundayOff').checked?0:null,$('saturdayOff').checked?6:null].filter(n=>n!==null);localStorage.setItem(holidayStorageKey()+'_weekly',JSON.stringify(weeklyOff));render();renderHistory();toast('Weekly off-days saved for this school in this browser')}});$('holidayDate').value=today();$('addHoliday').onclick=()=>{const d=$('holidayDate').value,n=$('holidayName').value.trim();if(!d||!n){toast('Enter a holiday date and name',true);return}customHolidays[d]=n;saveHolidays();$('holidayName').value='';toast('Holiday saved in this browser')};$('holidaysList').onclick=e=>{const b=e.target.closest('[data-remove-holiday]');if(b&&confirm('Remove this holiday?')){delete customHolidays[b.dataset.removeHoliday];saveHolidays()}};$('period').onchange=setPeriod;for(const k of ['from','to','historyTeacher'])$(k).onchange=renderHistory;setPeriod();$('date').onchange=()=>{load()};$('refresh').onclick=load;$('save').onclick=save;$('edit').onclick=()=>{if(busy)return;if(editing&&dirty.size&&!discard())return;if(editing){dirty.clear();load()}else{editing=true;render()}};$('historyRefresh').onclick=async()=>{if(busy)return;await load()};$('search').oninput=render;$('filter').onchange=render;$('classFilter').onchange=render;$('markAll').onclick=()=>{if(busy||holidayReason($('date').value))return;editing=true;for(const t of filtered()){const k=id(t),v=selected.get(k)||{};if(v.status!=='Present'){selected.set(k,{...v,status:'Present',remarks:''});dirty.add(k)}}render()};$('list').addEventListener('click',e=>{const b=e.target.closest('button[data-status]');if(b)choose(b.dataset.id,b.dataset.status)});$('list').addEventListener('input',e=>{const b=e.target.closest('input.reason');if(!b||busy||!editing)return;const k=b.dataset.id,v=selected.get(k)||{};selected.set(k,{...v,remarks:b.value});dirty.add(k);$('summary').textContent=`${filtered().length} displayed · ${dirty.size} unsaved change(s) · ${fmt($('date').value)}`;$('save').disabled=false;$('completion').textContent=`${dirty.size} unsaved change(s). Save to confirm.`});$('printDaily').onclick=()=>printPart('daily');$('printHistory').onclick=()=>printPart('history');$('csvDaily').onclick=()=>csv([['Date','Teacher ID','Name','Designation','Subject','Class','Status','Reason'],...teachers.map(t=>{const v=selected.get(id(t))||{};return [fmt($('date').value),id(t),name(t),fld(t,'designation'),fld(t,'subject'),fld(t,'assignedClass','class','grade'),v.status||'Unmarked',v.remarks||'']})],'teacher-attendance-'+$('date').value+'.csv');$('csvHistory').onclick=()=>csv([['Date','Teacher ID','Name','Status','Reason'],...historyCache.map(r=>[fmt(recDate(r)),r.teacherId,r.teacherName,r.status,reason(r)])],'teacher-attendance-history-'+$('from').value+'-'+$('to').value+'.csv');$('logout').onclick=()=>{if(!discard())return;LamaAPI.logout();location.href='../login.html'};window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.returnValue=''}});LamaAPI.getActiveSchool().then(s=>{school=s||{};$('school').textContent=school.name||'School';if(school.logo){const img=document.createElement('img');img.src=school.logo;img.alt='School logo';img.className='w-full h-full object-contain';$('logo').replaceChildren(img)}printHeaders()}).catch(()=>{});load()};init();
+function init(){if(typeof LamaAPI==='undefined'){toast('API client missing',true);return}if(!LamaAPI.requireLogin('school','../login.html'))return;const dark=localStorage.getItem('lama_theme')==='dark';document.documentElement.classList.toggle('dark',dark);$('theme').onclick=()=>{const d=document.documentElement.classList.toggle('dark');localStorage.setItem('lama_theme',d?'dark':'light')};$('date').value=today();loadedDate=today();loadHolidays();['saturdayOff','sundayOff'].forEach(k=>{$(k).onchange=()=>{weeklyOff=[$('sundayOff').checked?0:null,$('saturdayOff').checked?6:null].filter(n=>n!==null);localStorage.setItem(holidayStorageKey()+'_weekly',JSON.stringify(weeklyOff));render();renderHistory();toast('Weekly off-days saved for this school in this browser')}});$('holidayDate').value=today();$('addHoliday').onclick=()=>{const d=$('holidayDate').value,n=$('holidayName').value.trim();if(!d||!n){toast('Enter a holiday date and name',true);return}customHolidays[d]=n;saveHolidays();$('holidayName').value='';toast('Holiday saved in this browser')};$('holidaysList').onclick=e=>{const b=e.target.closest('[data-remove-holiday]');if(b&&confirm('Remove this holiday?')){delete customHolidays[b.dataset.removeHoliday];saveHolidays()}};$('period').onchange=setPeriod;for(const k of ['from','to','historyTeacher'])$(k).onchange=renderHistory;setPeriod();$('date').onchange=()=>{load()};$('refresh').onclick=load;$('save').onclick=save;$('edit').onclick=()=>{if(busy)return;if(editing&&dirty.size&&!discard())return;if(editing){dirty.clear();load()}else{editing=true;render()}};$('historyRefresh').onclick=loadTeacherHistory;$('search').oninput=render;$('filter').onchange=render;$('classFilter').onchange=render;$('markAll').onclick=()=>{if(busy||pendingVerification||duplicateTeacherIds.length||!attendanceHistoryLoaded||holidayReason($('date').value))return;editing=true;for(const t of filtered()){const k=id(t),v=selected.get(k)||{};if(v.status!=='Present'){selected.set(k,{...v,status:'Present',remarks:''});dirty.add(k)}}render()};$('list').addEventListener('click',e=>{const b=e.target.closest('button[data-status]');if(b)choose(b.dataset.id,b.dataset.status)});$('list').addEventListener('input',e=>{const b=e.target.closest('input.reason');if(!b||busy||!editing)return;const k=b.dataset.id,v=selected.get(k)||{};selected.set(k,{...v,remarks:b.value});dirty.add(k);$('summary').textContent=`${filtered().length} displayed · ${dirty.size} unsaved change(s) · ${fmt($('date').value)}`;$('save').disabled=false;$('completion').textContent=`${dirty.size} unsaved change(s). Save to confirm.`});$('printDaily').onclick=()=>printPart('daily');$('printHistory').onclick=()=>printPart('history');$('csvDaily').onclick=()=>csv([['Date','Teacher ID','Name','Designation','Subject','Class','Status','Reason'],...teachers.map(t=>{const v=selected.get(id(t))||{};return [fmt($('date').value),id(t),name(t),fld(t,'designation'),fld(t,'subject'),fld(t,'assignedClass','class','grade'),v.status||'Unmarked',v.remarks||'']})],'teacher-attendance-'+$('date').value+'.csv');$('csvHistory').onclick=()=>csv([['Date','Teacher ID','Name','Status','Reason'],...historyCache.map(r=>[fmt(recDate(r)),r.teacherId,r.teacherName,r.status,reason(r)])],'teacher-attendance-history-'+$('from').value+'-'+$('to').value+'.csv');$('logout').onclick=()=>{if(!discard())return;LamaAPI.logout();location.href='../login.html'};window.addEventListener('beforeunload',e=>{if(dirty.size){e.preventDefault();e.returnValue=''}});LamaAPI.getActiveSchool().then(s=>{school=s||{};$('school').textContent=school.name||'School';if(school.logo){const img=document.createElement('img');img.src=school.logo;img.alt='School logo';img.className='w-full h-full object-contain';$('logo').replaceChildren(img)}printHeaders()}).catch(()=>{});load()};init();
 
 function staffWa(raw){let n=String(raw||'').replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);if(n.startsWith('0')&&n.length===11)n='92'+n.slice(1);if(n.length===10&&n.startsWith('3'))n='92'+n;return /^\d{10,15}$/.test(n)?n:''}
 function renderStaffOutreach(){
  const el=$('staffOutreachRows');if(!el)return;
- const list=teachers.filter(t=>['Absent','Leave'].includes(selected.get(id(t))?.status));
+ const list=attendanceHistoryLoaded&&!pendingVerification?teachers.filter(t=>['Absent','Leave'].includes(verifiedFor(id(t))?.status)):[];
  el.innerHTML=list.map(t=>{
-  const v=selected.get(id(t)),raw=fld(t,'whatsapp','contact','phone','mobile'),n=staffWa(raw);
+  const v=verifiedFor(id(t)),raw=fld(t,'whatsapp','contact','phone','mobile'),n=staffWa(raw);
   const dial=raw.replace(/[^+\d]/g,''),picture=pic(t);
   const message=[
    'Dear '+name(t)+',',
@@ -247,7 +538,7 @@ function renderStaffOutreach(){
    <div class="min-w-0"><div class="font-black">${esc(name(t))} <span class="muted mini">· ${esc(v.status)}</span></div><div class="muted mini">${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'subject')||'Subject not recorded')} · Class ${esc(fld(t,'assignedClass','class','grade')||'Not assigned')}</div><div class="muted mini">Date: ${esc(fmt($('date').value))} · Contact: ${esc(raw||'Not recorded')}</div>${v.remarks?`<div class="muted mini">Reason: ${esc(v.remarks)}</div>`:''}</div></div>
    <div class="flex flex-wrap gap-2">${n?`<a class="btn" href="https://wa.me/${n}?text=${encodeURIComponent(message)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:'<span class="muted mini">No valid WhatsApp number</span>'}${dial.replace(/\D/g,'').length>=10?`<a class="btn" href="tel:${esc(dial)}">Call</a>`:'<span class="muted mini">No phone number</span>'}</div>
   </div></article>`;
- }).join('')||'<p class="muted mini">No absent or leave teachers on the selected date.</p>';
+ }).join('')||'<p class="muted mini">'+(attendanceHistoryLoaded&&!pendingVerification?'No saved absent or leave teachers on the selected date.':'Saved attendance is unavailable or pending verification. Do not contact teachers using unverified statuses.')+'</p>';
 }
 document.getElementById('qrTeacherPanelClose').addEventListener('click',()=>{teacherQrStop();if(location.hash==='#qrTeacherPanel')history.replaceState(null,'',location.pathname+location.search);});
 window.addEventListener('hashchange',()=>{if(location.hash==='#qrTeacherPanel')teacherQrStart();});

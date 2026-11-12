@@ -964,9 +964,23 @@ function listRecords(ctx, collection) {
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     let records = [];
+    // Google Sheets may turn a YYYY-MM-DD attendance cell into a Date at
+    // local midnight. JSON.stringify(Date) converts it to UTC, potentially
+    // moving 2026-11-10 to 2026-11-09 for a Pakistan-timezone school.
+    // Return the actual date as seen in the school's sheet instead.
+    const attendanceDates = collection === 'attendance' || collection === 'teacherAttendance';
+    const dateColumn = attendanceDates ? headers.indexOf('date') : -1;
+    const sheetTimezone = attendanceDates && ctx.ss && typeof ctx.ss.getSpreadsheetTimeZone === 'function'
+        ? ctx.ss.getSpreadsheetTimeZone() : '';
+    const attendanceTimezone = sheetTimezone || Session.getScriptTimeZone() || 'Asia/Karachi';
     for (let i = 1; i < data.length; i++) {
         if (!data[i][headers.indexOf('id')]) continue;
-        records.push(rowToRecord(headers, data[i]));
+        const record = rowToRecord(headers, data[i]);
+        if (dateColumn !== -1 && data[i][dateColumn] instanceof Date &&
+            Number.isFinite(data[i][dateColumn].getTime())) {
+            record.date = Utilities.formatDate(data[i][dateColumn], attendanceTimezone, 'yyyy-MM-dd');
+        }
+        records.push(record);
     }
     if (collection === 'notifications' && ctx.role === 'student') {
         records = records.filter(r => {
@@ -991,6 +1005,125 @@ function listRecords(ctx, collection) {
     return records;
 }
 
+/**
+ * Fast and date-scoped staff attendance. Always authorize against the requested
+ * school and format native Sheets Dates in that school's own time zone.
+ * School-owned records are never included in the response for another school.
+ */
+function teacherAttendanceDate_(value, tz) {
+  if (value instanceof Date) return Utilities.formatDate(value,tz,'yyyy-MM-dd');
+  const text=String(value||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text))return text;
+  if(/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+    const parsed=new Date(text);
+    return !isNaN(parsed.getTime())?Utilities.formatDate(parsed,tz,'yyyy-MM-dd'):'';
+  }
+  const m=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  return m?m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2):'';
+}
+function teacherAttendanceDailySnapshot_(p) {
+  const date=String(p.date||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid attendance date YYYY-MM-DD required.');
+  const ctx=resolveContext(p);
+  if(ctx.role!=='school')throw Error('School administrator session required.');
+  checkPermission(ctx,'list','teachers');checkPermission(ctx,'list','teacherAttendance');
+  const roster=getCollectionSheet(ctx,'teachers'),attendance=getCollectionSheet(ctx,'teacherAttendance');
+  const tz=ctx.ss.getSpreadsheetTimeZone()||Session.getScriptTimeZone();
+  const teacherRows=roster.sheet.getDataRange().getValues();
+  const teachers=teacherRows.slice(1).map(row=>rowToRecord(roster.headers,row)).filter(t=>t.id)
+    .map(t=>({id:String(t.id),name:String(t.name||''),subject:String(t.subject||''),assignedClass:String(t.assignedClass||''),designation:String(t.designation||''),status:String(t.status||''),contact:String(t.contact||''),photo:String(t.photo||'')}));
+  const rows=attendance.sheet.getDataRange().getValues(),records=[],duplicates=[],seen={};
+  for(let i=1;i<rows.length;i++){
+    const rec=rowToRecord(attendance.headers,rows[i]);
+    if(!rec.id||teacherAttendanceDate_(rec.date,tz)!==date)continue;
+    rec.date=date;
+    const key=String(rec.teacherId||'').trim();
+    if(!key)continue;
+    records.push({id:String(rec.id),teacherId:key,teacherName:String(rec.teacherName||''),date,
+      status:String(rec.status||''),remarks:String(rec.remarks||''),markedBy:String(rec.markedBy||'')});
+    seen[key]=(seen[key]||0)+1;
+  }
+  Object.keys(seen).forEach(k=>{if(seen[k]>1)duplicates.push(k)});
+  return {date,teachers,records,duplicates,timezone:tz,verified:!duplicates.length};
+}
+/**
+ * One-HTTP-request staff batch upsert. Uses a server lock to avoid duplicate
+ * pupil/day writes and verifies the resulting rows before returning success.
+ * An uncertain response must be followed by a read-only snapshot; never retry
+ * the write automatically.
+ */
+function bulkTeacherAttendanceVerified_(p) {
+  const ctx=resolveContext(p);
+  if(ctx.role!=='school')throw Error('School administrator session required.');
+  assertSchoolWritable(ctx.schoolId);
+  const date=String(p.date||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid YYYY-MM-DD date required.');
+  const requested=p.records;
+  if(!Array.isArray(requested)||!requested.length||requested.length>80)throw Error('Select 1 to 80 teacher attendance records.');
+  const normalized=[],unique={};
+  requested.forEach(item=>{
+    const teacherId=String(item&&item.teacherId||'').trim();
+    const value=String(item&&item.status||'').trim();
+    const remarks=value==='Present'?'':String(item&&item.remarks||'').trim().slice(0,300);
+    if(!teacherId||!['Present','Absent','Leave'].includes(value))throw Error('Invalid teacher attendance selection.');
+    if(unique[teacherId])throw Error('Duplicate teacher ID within submitted attendance.');
+    if(/^[=+@]/.test(remarks))throw Error('Remarks cannot contain spreadsheet formulas.');
+    unique[teacherId]=true;normalized.push({teacherId,status:value,remarks});
+  });
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance is busy. Refresh to verify before retrying.');
+  try{
+    // Read under the same lock used for writes so two requests cannot both append.
+    const rosterInfo=getCollectionSheet(ctx,'teachers');
+    const rosterRows=rosterInfo.sheet.getDataRange().getValues();
+    const byTeacher={};
+    rosterRows.slice(1).forEach(row=>{const t=rowToRecord(rosterInfo.headers,row);if(t.id)byTeacher[String(t.id)]=t;});
+    normalized.forEach(item=>{if(!byTeacher[item.teacherId])throw Error('Teacher is not registered at this school. No attendance was written.');});
+    const info=getCollectionSheet(ctx,'teacherAttendance'),sheet=info.sheet,headers=info.headers;
+    const tz=ctx.ss.getSpreadsheetTimeZone()||Session.getScriptTimeZone();
+    const values=sheet.getDataRange().getValues(),dateIndex=headers.indexOf('date'),
+      teacherIndex=headers.indexOf('teacherId');
+    if(dateIndex<0||teacherIndex<0)throw Error('Teacher attendance sheet headers are incomplete.');
+    const existing={};
+    for(let i=1;i<values.length;i++){
+      if(teacherAttendanceDate_(values[i][dateIndex],tz)!==date)continue;
+      const key=String(values[i][teacherIndex]||'').trim();
+      if(!key)continue;
+      (existing[key]||(existing[key]=[])).push({row:i+1,record:rowToRecord(headers,values[i])});
+    }
+    // Stop before any mutation if even one submitted person has duplicated rows.
+    normalized.forEach(item=>{if((existing[item.teacherId]||[]).length>1)throw Error('Duplicate teacher/date records found. Administrator must review attendance before saving.');});
+    const updates=[],inserts=[],now=new Date().toISOString();
+    normalized.forEach(item=>{
+      const matches=existing[item.teacherId]||[],teacher=byTeacher[item.teacherId],old=matches[0]&&matches[0].record;
+      const rec={id:old?String(old.id):genId('tea'),teacherId:item.teacherId,
+        teacherName:String(teacher.name||''),date,status:item.status,
+        markedBy:old?String(old.markedBy||'School Admin'):'School Admin',
+        createdAt:old?old.createdAt:now,remarks:item.remarks};
+      if(matches.length)updates.push({row:matches[0].row,record:rec});
+      else inserts.push(rec);
+    });
+    updates.forEach(item=>sheet.getRange(item.row,1,1,headers.length).setValues([recordToRow(headers,item.record)]));
+    if(inserts.length){
+      const first=sheet.getLastRow()+1;
+      sheet.getRange(first,1,inserts.length,headers.length).setValues(inserts.map(rec=>recordToRow(headers,rec)));
+    }
+    SpreadsheetApp.flush();
+    const snapshot=teacherAttendanceDailySnapshot_(p);
+    const confirmed=[];
+    normalized.forEach(item=>{
+      const matches=snapshot.records.filter(r=>r.teacherId===item.teacherId);
+      if(matches.length!==1||matches[0].status!==item.status||
+        String(matches[0].remarks||'')!==item.remarks)throw Error('Server accepted attendance but readback is not verified. Refresh before another Save.');
+      confirmed.push(matches[0]);
+    });
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'bulkTeacherAttendance','teacherAttendance','',null,
+      {date,count:confirmed.length,teacherIds:confirmed.map(r=>r.teacherId)});
+    return {date,saved:confirmed.length,verified:true,records:confirmed,teachers:snapshot.teachers,
+      duplicates:snapshot.duplicates,timezone:tz};
+  }finally{lock.releaseLock();}
+}
+
 function getRecord(ctx, collection, id) {
     checkPermission(ctx, 'get', collection);
     if (ctx.role === 'student' && collection === 'students' && id !== ctx.student.id) {
@@ -1012,9 +1145,152 @@ function getRecord(ctx, collection, id) {
     return null;
 }
 
+function upsertTeacherAttendance_(ctx, record, expectedId) {
+    if (ctx.role !== 'school') throw Error('School authorization required to save teacher attendance.');
+    const teacherId = String(record.teacherId || '').trim();
+    const date = String(record.date || '').trim();
+    const status = String(record.status || '').trim();
+    const remarks = status === 'Present' ? '' : String(record.remarks || '').trim().slice(0,500);
+    if (!teacherId || !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        !Number.isFinite(Date.parse(date+'T12:00:00Z')) ||
+        new Date(date+'T12:00:00Z').toISOString().slice(0,10) !== date ||
+        !['Present','Absent','Leave'].includes(status))
+        throw Error('Invalid teacher attendance record.');
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) throw Error('Teacher attendance register is busy. Refresh before retrying.');
+    try {
+        const teachers = getCollectionSheet(ctx,'teachers');
+        const schoolTeachers = teachers.sheet.getDataRange().getValues();
+        const teacher = schoolTeachers.slice(1)
+            .map(row=>rowToRecord(teachers.headers,row))
+            .find(t=>String(t.id || '').trim()===teacherId);
+        if (!teacher) throw Error('Teacher not found in this school. No attendance was saved.');
+        const data = getCollectionSheet(ctx,'teacherAttendance');
+        const headers=data.headers,sheet=data.sheet;
+        const rows=sheet.getDataRange().getValues();
+        const timezone=(ctx.ss && typeof ctx.ss.getSpreadsheetTimeZone==='function' &&
+            ctx.ss.getSpreadsheetTimeZone()) || Session.getScriptTimeZone() || 'Asia/Karachi';
+        const sheetDay=value=>value instanceof Date
+            ? Utilities.formatDate(value,timezone,'yyyy-MM-dd')
+            : String(value||'').slice(0,10);
+        const found=[];
+        for(let i=1;i<rows.length;i++){
+            const prev=rowToRecord(headers,rows[i]);
+            if(String(prev.teacherId || '').trim()===teacherId && sheetDay(prev.date)===date)
+                found.push({row:i+1,record:prev});
+        }
+        if(found.length>1)throw Error('Duplicate teacher attendance already exists for this date. Ask School Admin to reconcile before saving.');
+        // An edit carries the original row ID. Never let an old device
+        // silently correct a newly replaced or deleted teacher/date record.
+        if(expectedId&&(!found.length||String(found[0].record.id)!==String(expectedId)))
+            throw Error('Teacher attendance row changed while editing. Refresh and review before saving again.');
+        const old=found.length?found[0].record:null;
+        if(old && String(old.status)===status && String(old.remarks||'')===remarks)
+            return {...old,date};
+        const full=Object.assign({},old||{},{
+            id:old?.id || genId('tat'),teacherId,
+            teacherName:String(teacher.name||teacher.teacherName||'').slice(0,120),
+            date,status,remarks,markedBy:(ctx.auditActor&&ctx.auditActor.name) || 'School Admin',
+            createdAt:old?.createdAt || new Date().toISOString()
+        });
+        if(found.length)sheet.getRange(found[0].row,1,1,headers.length).setValues([recordToRow(headers,full)]);
+        else sheet.appendRow(recordToRow(headers,full));
+        SpreadsheetApp.flush();
+        if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,old?'update':'add','teacherAttendance',full.id,old,full);
+        return full;
+    }finally{lock.releaseLock();}
+}
+/**
+ * Single-student attendance cannot use appendRow blindly: a successful
+ * Sheets write followed by a lost HTTP acknowledgment may be retried.
+ * Under the same script lock, reuse an exact existing mark or block a
+ * differing/duplicated record for administrator reconciliation.
+ */
+function addStudentAttendanceOnce_(ctx, submitted) {
+    submitted = submitted || {};
+    if (ctx.role !== 'school' && ctx.role !== 'teacher')
+        throw Error('Attendance write access denied');
+    const date = String(submitted.date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+        !Number.isFinite(Date.parse(date + 'T12:00:00Z')) ||
+        new Date(date + 'T12:00:00Z').toISOString().slice(0, 10) !== date)
+        throw Error('Invalid attendance date');
+    const value = String(submitted.status || '').trim();
+    if (['Present','Absent','Leave'].indexOf(value) < 0)
+        throw Error('Invalid attendance status');
+    const lock = LockService.getScriptLock();
+    if (!lock.tryLock(20000)) throw Error('Attendance busy; review the saved record before retrying');
+    try {
+        const students = getCollectionSheet(ctx, 'students');
+        const roster = students.sheet.getDataRange().getValues();
+        const requestedId = String(submitted.studentId || '').trim();
+        const requestedEnrl = String(submitted.enrlNo || '').trim();
+        if (!requestedId && !requestedEnrl) throw Error('Student ID or enrollment required');
+        let matches = [];
+        for (let i = 1; i < roster.length; i++) {
+            const candidate = rowToRecord(students.headers, roster[i]);
+            if (!candidate.id) continue;
+            if (requestedId && String(candidate.id).trim() === requestedId)
+                matches.push(candidate);
+            else if (!requestedId && requestedEnrl && String(candidate.enrlNo || '').trim() === requestedEnrl)
+                matches.push(candidate);
+        }
+        if (matches.length !== 1) throw Error(matches.length
+            ? 'Ambiguous student enrollment; use the unique student ID'
+            : 'Student record not found');
+        const student = matches[0];
+        if (requestedEnrl && String(student.enrlNo || '').trim() !== requestedEnrl)
+            throw Error('Student ID/enrollment mismatch');
+        if (ctx.role === 'teacher') teacherStudentAccess_(ctx, {studentId:student.id,enrlNo:student.enrlNo});
+        const sid = String(student.id).trim(), enrl = String(student.enrlNo || '').trim();
+        const attendance = getCollectionSheet(ctx, 'attendance');
+        const sheet = attendance.sheet, headers = attendance.headers;
+        const data = sheet.getDataRange().getValues();
+        const tz = (typeof ctx.ss.getSpreadsheetTimeZone === 'function' && ctx.ss.getSpreadsheetTimeZone())
+          || Session.getScriptTimeZone() || 'Asia/Karachi';
+        const matchesForDate = [];
+        for (let i = 1; i < data.length; i++) {
+            const raw = rowToRecord(headers, data[i]);
+            const day = raw.date instanceof Date ?
+                Utilities.formatDate(raw.date, tz, 'yyyy-MM-dd') :
+                String(raw.date || '').slice(0, 10);
+            if (day !== date) continue;
+            const rowId = String(raw.studentId || '').trim();
+            const rowEnrl = String(raw.enrlNo || '').trim();
+            if (rowId === sid || (enrl && rowEnrl === enrl))
+                matchesForDate.push(raw);
+        }
+        if (matchesForDate.length > 1)
+            throw Error('Existing duplicate attendance for student ID: ' + sid +
+              '. No additional row written; review duplicate records first.');
+        if (matchesForDate.length) {
+            const prior = matchesForDate[0];
+            if (String(prior.status || '').trim() !== value)
+                throw Error('Attendance already marked with a different status. Refresh and use the verified correction workflow.');
+            return Object.assign({}, prior, {date:date}); // idempotent exact repeat
+        }
+        const now = new Date().toISOString();
+        const full = {
+            id:genId('att'), studentId:sid,enrlNo:enrl,
+            studentName:student.name || '',class:student.class || '',
+            section:student.section || '',date:date,status:value,
+            markedBy:ctx.role === 'teacher' ? (ctx.teacher.name || '') : 'School Admin',
+            createdAt:now
+        };
+        sheet.appendRow(recordToRow(headers, full));
+        SpreadsheetApp.flush();
+        if (ctx.auditActor) writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','attendance',full.id,null,full);
+        return full;
+    } finally {
+        lock.releaseLock();
+    }
+}
+
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
+    if (collection === 'teacherAttendance') return upsertTeacherAttendance_(ctx,record);
+    if (collection === 'attendance') return addStudentAttendanceOnce_(ctx,record);
     if (collection === 'studentRequests' && ctx.role === 'student') {
         const type = String(record.requestType || 'help');
         if (['help','sick_leave'].indexOf(type) === -1) throw new Error('Invalid request type.');
@@ -1058,6 +1334,10 @@ function validateTeacherAssignment_(sheet,headers,teacherId,assignedClass,assign
 function updateRecord(ctx, collection, id, patch) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
+    if(collection==='teacherAttendance'){
+        if(!patch||!patch.teacherId||!patch.date)throw Error('Attendance correction requires teacher ID and date. Refresh first.');
+        return upsertTeacherAttendance_(ctx,patch,String(id));
+    }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     const idCol = headers.indexOf('id');
@@ -1808,8 +2088,8 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
-            (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
+        const teacherScoped = action === 'teacherAttendanceDailySnapshot' || action === 'bulkTeacherAttendanceVerified' || action === 'attendanceDateSnapshot' || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+            (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && ['teachers','teacherAttendance'].indexOf(params.collection) !== -1) ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
             verifySchoolAdminToken(params);
@@ -1817,7 +2097,7 @@ function handleRequest(params) {
             if (!schoolRecord || schoolRecord.obj.status !== 'Active') throw new Error('School is not active.');
             params.apiKey = schoolRecord.obj.apiKey;
         }
-        const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+        const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkTeacherAttendanceVerified','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
@@ -2128,6 +2408,12 @@ function handleRequest(params) {
 
             case 'clearStudentAttendanceDate': return {status:'success',result:clearStudentAttendanceDate_(params)};
             case 'bulkDeleteStudents': return {status:'success',result:bulkDeleteStudents_(params)};
+            case 'attendanceDateSnapshot':
+                if((params.role||'school')!=='school')throw Error('School administrator role required.');
+                requireSchoolAdminWrite(params);
+                return {status:'success',records:readAttendanceDateRecords_(resolveContext(params),params.date)};
+            case 'teacherAttendanceDailySnapshot': return {status:'success',result:teacherAttendanceDailySnapshot_(params)};
+            case 'bulkTeacherAttendanceVerified': return {status:'success',result:bulkTeacherAttendanceVerified_(params)};
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
                 const result=bulkAttendanceRecords(params);
@@ -2168,7 +2454,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','attendanceDateSnapshot','teacherAttendanceDailySnapshot','bulkTeacherAttendanceVerified','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

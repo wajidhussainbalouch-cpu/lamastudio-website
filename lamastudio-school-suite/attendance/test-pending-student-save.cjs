@@ -16,7 +16,7 @@ const helpers=html.slice(helpersStart,helpersEnd);
  const date='2026-11-11',student={id:'s1',name:'Student 1',enrlNo:'001',class:'5'};
  const state={students:[student],history:[],chosen:new Map([['s1',{status:'Present'}]]),
   dirty:new Set(['s1']),pendingVerification:null,historyReady:true,loadedDate:date,
-  loading:false,saving:false};
+  loading:false,saving:false,linkageWarnings:new Map()};
  const nodes=new Map([['date',{value:date}],['save',{onclick:null}]]);
  const $=id=>nodes.get(id)||nodes.set(id,{value:''}).get(id);
  let writes=0;

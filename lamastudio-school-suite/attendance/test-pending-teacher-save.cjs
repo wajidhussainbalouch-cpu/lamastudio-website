@@ -1,74 +1,68 @@
-/* Simulate uncertain staff attendance using the actual save/verify functions. */
+/* Simulate successful and uncertain staff attendance using the current Save function. */
 'use strict';
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const html=fs.readFileSync(path.join(__dirname,'teacher-attendance.html'),'utf8');
-const i=html.indexOf('async function verifyTeacherPending(){');
-const j=html.indexOf('function setPeriod(){',i);
-assert.ok(i>=0&&j>i);
-const code=html.slice(i,j);
-const d=html.indexOf('function diagnoseTeacherReadback(rows,pending){');
-const e=html.indexOf('const reason=r=>',d);
-assert.ok(d>=0&&e>d,'Readback diagnostics must come from the production source');
-const diagnostics=html.slice(d,e);
-(async()=>{
- const date='2026-11-10',teacher={id:'t1',name:'Teacher One'};
- const teachers=[teacher],selected=new Map([['t1',{status:'Present',remarks:''}]]),
-  dirty=new Set(['t1']),cloud=[],messages=[];
- const nodes=new Map([['date',{value:date}]]);
- const $=id=>nodes.get(id)||nodes.set(id,{value:''}).get(id);
- let writes=0;
+const a=html.indexOf('function verifySubmittedRecords(items,returned,day){');
+const b=html.indexOf('function setPeriod(){',a);
+assert.ok(a>=0&&b>a,'Current Save and readback verification functions are required');
+assert.match(html,/if\(pendingVerification\)return toast\('Previous Save is unverified/);
+assert.match(html,/if\(pendingSaveMatches\(\)\)/);
+assert.match(html,/teacherLoadPercent'\)\.textContent='Not verified'/);
+assert.match(html,/duplicateTeacherIds\.length/);
+const code=html.slice(a,b);
+function createPage(submit){
+ const date='2026-11-12',teacher={id:'t1',name:'Teacher One'},teachers=[teacher],
+   selected=new Map([['t1',{status:'Present',remarks:''}]]),dirty=new Set(['t1']);
+ const nodes=new Map([['date',{value:date}],['teacherLoadElapsed',{textContent:''}],
+   ['teacherLoadStage',{textContent:''}],['teacherLoadPercent',{textContent:''}],
+   ['teacherLoadBar',{style:{}}]]);
+ const $=id=>nodes.get(id)||nodes.set(id,{textContent:'',value:'',style:{}}).get(id);
+ const notices=[];
  const ctx={
-  date,teachers,selected,dirty,$,
-  LamaAPI:{
-   add:async(_collection,p)=>{writes++;return {id:'rec1',...p};},
-   update:async()=>{throw Error('Unexpected update');},
-   list:async()=>cloud
-  },
-  arr:v=>Array.isArray(v)?v:v?.records||[],
+  teachers,selected,dirty,$,date,
+  LamaAPI:{bulkTeacherAttendanceVerified:submit},
   status:r=>['Present','Absent','Leave'].includes(r?.status)?r.status:'',
   recDate:r=>String(r?.date||'').slice(0,10),
   reason:r=>String(r?.remarks||''),
   id:t=>t.id,name:t=>t.name,
-  verifiedStaffAttendanceAdmin:()=>true,holidayReason:()=>false,
-  toast:s=>messages.push(String(s)),render:()=>{},renderHistory:()=>{}
+  holidayReason:()=>false,toast:s=>notices.push(String(s)),
+  render(){},renderHistory(){},teacherLoadUpdate(){},setBusy(){}
  };
  const setup=[
-  'let busy=false,teacherPendingVerification=null,staffIntegrityBlocked=0,editing=true,attendanceHistoryLoaded=true;',
-  'let loadedDate=ctx.date,records=[];',
-  'const {$,teachers,selected,dirty,LamaAPI,arr,status,recDate,reason,id,name,',
-  'verifiedStaffAttendanceAdmin,holidayReason,toast,render,renderHistory}=ctx;',
-  'const setBusy=v=>{busy=v};',
-  'const teacherQrPending=new Set();',
-  diagnostics,
-  code,
-  'return {save,verifyTeacherPending,get pending(){return teacherPendingVerification},',
-  'get dirty(){return dirty},get records(){return records}};'
+  "let busy=false,editing=true,attendanceHistoryLoaded=true,fastDailyAvailable=true,",
+  "pendingVerification=null,loadedDate=ctx.date,records=[],historyLoaded=true,",
+  "historyRecords=[],verifiedAt=0,lastSaveVerified=0,duplicateTeacherIds=[];",
+  "const {teachers,selected,dirty,$,LamaAPI,status,recDate,reason,id,name,holidayReason,",
+  "toast,render,renderHistory,teacherLoadUpdate,setBusy}=ctx;",
+  "const unsupportedTeacherAction=()=>false;",
+  "const performance={now:()=>100};"
  ].join('\n');
- const actions=new Function('ctx',setup)(ctx);
- await actions.save();
+ const actions=new Function('ctx',setup+code+
+  'return {save,get pending(){return pendingVerification},get historyLoaded(){return historyLoaded},get lastSaveVerified(){return lastSaveVerified}};')(ctx);
+ return {actions,ctx,notices};
+}
+(async()=>{
+ let writes=0;
+ const success=createPage(async(day,items)=>{
+  writes++;assert.equal(day,'2026-11-12');assert.equal(items.length,1);
+  return {verified:true,date:day,records:[{id:'rec1',teacherId:'t1',date:day,status:'Present',remarks:''}]};
+ });
+ await success.actions.save();
  assert.equal(writes,1);
- assert.equal(actions.dirty.size,1,'Teacher mark must stay pending until server verification');
- assert.ok(actions.pending);
- await actions.save();
- assert.equal(writes,1,'Unconfirmed staff mark may not be submitted twice');
- cloud.push({teacherId:'t1',date:'2026-11-09',status:'Present',remarks:''});
- await actions.verifyTeacherPending();
- assert.equal(actions.pending.diagnostic.includes('previous-UTC-day'),true,
-   'One-day UTC shift must be diagnosed, never accepted as verification');
- assert.equal(actions.dirty.size,1);
- cloud.pop();
- cloud.push({teacherId:'t1',date,status:'Absent',remarks:'Unexpected'});
- await actions.verifyTeacherPending();
- assert.equal(actions.pending.diagnostic.includes('status/remarks mismatch'),true);
- cloud.pop();
- cloud.push({teacherId:'t1',date,status:'Present',remarks:''});
- cloud.push({teacherId:'t1',date,status:'Present',remarks:''});
- await actions.verifyTeacherPending();
- assert.ok(actions.pending,'Duplicate cloud records cannot confirm a staff save');
- cloud.pop();
- await actions.verifyTeacherPending();
- assert.equal(actions.pending,null);
- assert.equal(actions.dirty.size,0);
- assert.equal(actions.records.length,1);
- console.log('PASS: staff save blocks repeat POST, diagnoses timezone/status/duplicate mismatches and verifies only one matching row.');
-})().catch(error=>{console.error(error);process.exitCode=1;});
+ assert.equal(success.actions.pending,null,'Success must clear pending state after server readback');
+ assert.equal(success.ctx.dirty.size,0,'Confirmed mark must clear unsaved selection');
+ assert.ok(success.actions.lastSaveVerified,'Successful server verification must be remembered');
+ assert.ok(success.notices.some(x=>x.includes('Save successful')));
+ assert.equal(success.actions.historyLoaded,false,'Stale salary history must be invalidated');
+
+ let uncertainWrites=0;
+ const uncertain=createPage(async()=>{uncertainWrites++;throw Error('Connection lost after server accepted write')});
+ await uncertain.actions.save();
+ assert.equal(uncertainWrites,1);
+ assert.ok(uncertain.actions.pending,'Unknown write result must remain pending');
+ assert.equal(uncertain.ctx.dirty.size,1);
+ await uncertain.actions.save();
+ assert.equal(uncertainWrites,1,'An unknown write must never be re-submitted');
+ assert.ok(uncertain.notices.some(x=>x.includes('do NOT save twice')||x.includes('do not Save again')));
+ console.log('PASS: confirmed staff batch shows Save successful; connection failure remains pending and blocks repeat submissions.');
+})().catch(e=>{console.error(e);process.exitCode=1});

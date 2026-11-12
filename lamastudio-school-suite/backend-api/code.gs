@@ -2408,6 +2408,10 @@ function handleRequest(params) {
 
             case 'clearStudentAttendanceDate': return {status:'success',result:clearStudentAttendanceDate_(params)};
             case 'bulkDeleteStudents': return {status:'success',result:bulkDeleteStudents_(params)};
+            case 'attendanceDateSnapshot':
+                if((params.role||'school')!=='school')throw Error('School administrator role required.');
+                requireSchoolAdminWrite(params);
+                return {status:'success',records:readAttendanceDateRecords_(resolveContext(params),params.date)};
             case 'teacherAttendanceDailySnapshot': return {status:'success',result:teacherAttendanceDailySnapshot_(params)};
             case 'bulkTeacherAttendanceVerified': return {status:'success',result:bulkTeacherAttendanceVerified_(params)};
             case 'bulkAttendance':
@@ -2450,7 +2454,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','attendanceDateSnapshot','teacherAttendanceDailySnapshot','bulkTeacherAttendanceVerified','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

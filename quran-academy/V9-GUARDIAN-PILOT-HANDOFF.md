@@ -33,3 +33,10 @@ No Vercel deployment, production Apps Script deployment, or real school data mig
 - Committed `quran-academy/backend/quran-academy-v9.gs` on the v9 development branch (commit `78c5c99b121d0c4625a60cebfd0195a698dc2ef2`).
 - Local packaged v8/v9 mock suites passed 15 + 26 checks. **Live Apps Script has not been exercised**; re-run test suites and conduct independent pilot security review before deployment.
 - No production website or spreadsheet changes were made in this change.
+
+## 2026-11-12 — Follow-up release packaging and validation
+- Strengthened guardian email validation in the branch's canonical `quran-academy/backend/quran-academy-v9.gs` to reject spreadsheet formula-like/invalid email values (commit `893772524e8ed27cb4150b6550ee621783702c2e`).
+- Prepared a Version 9 learning-app ZIP and standalone demonstration retaining earlier modules; added a fictional School Link verification/revocation walkthrough and separate restricted `guardian-pilot.html` and `guardian-admin-pilot.html` frontend pages. These frontend files are supplied as a downloadable chat artifact, **not committed on this branch**.
+- The new ZIP points to this GitHub branch's canonical backend source via `integration/GUARDIAN-BACKEND-SOURCE-v9.md`; it deliberately does **not** embed a competing v9 server add-on. The prior note above about the add-on being contained in the ZIP referred to an earlier local package.
+- Browser-simulated frontend tests passed using fictional API responses. Local exploratory guardian logic (separate from the canonical server add-on) passed 26 mocks, but canonical backend must still be independently exercised on a test Apps Script deployment.
+- No live deployment, no main-branch modification, and no real student data accessed.

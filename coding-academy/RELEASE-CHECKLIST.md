@@ -96,3 +96,14 @@ Automated test suite: practice.test.cjs, studio.test.cjs, python.test.cjs, progr
 - [ ] Do not merge/deploy to www.lamastudio.pk without final approval and existing production pipeline review.
 
 The browser test instructions are in coding-academy/browser-tests/README.md; its Playwright dependency is test-only and not included on published academy pages.
+
+
+## I. Phase 11 — Backup round-trip and keyboard accessibility
+
+- [ ] Confirm the browser smoke suite passes the full four-module **backup → local deletion → preview/cancel → re-import → restore** test; validate real draft text and reflection preservation.
+- [ ] Try exporting from a browser with intentionally malformed test-only learning JSON. The export must refuse to create a misleading empty backup, display an explanation, and leave the original data untouched. Do not corrupt actual learner data.
+- [ ] Verify a valid exported file remains below the 800 KB import limit; malformed and oversized backups must be blocked.
+- [ ] Review the WCAG 2.0/2.1 A/AA Chromium audit results for eight core pages. Serious/critical findings must be resolved, and other findings reviewed. Automated passing does NOT prove accessibility compliance.
+- [ ] Navigate the horizontally scrolling privacy table using only a keyboard and verify a visible focus indicator at phone width.
+- [ ] Repeat with real Android screen-reader support, a physical keyboard where available, landscape orientation and zoomed text; document any accessibility blockers.
+- [ ] Confirm all GitHub Actions workflows pass on the final reviewed commit before approving any merge.

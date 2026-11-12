@@ -1,0 +1,21 @@
+name: School Board Product Header
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/main-dashboard.html'
+      - 'lamastudio-school-suite/test-school-board-product-brand.cjs'
+      - '.github/workflows/school-board-product-header.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  brand-and-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check branded header and school identity preservation
+        run: node lamastudio-school-suite/test-school-board-product-brand.cjs

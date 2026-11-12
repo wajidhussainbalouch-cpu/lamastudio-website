@@ -52,6 +52,13 @@ body:before{
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
     border-bottom:1px solid var(--line);
 }
+.school-suite-brand{flex:0 1 auto}
+.school-suite-brand-icon{width:42px;height:42px;min-width:42px;object-fit:contain;border-radius:11px}
+.school-suite-brand-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+.school-suite-brand-name{font-size:clamp(15px,1.65vw,19px);line-height:1.15;font-weight:900;letter-spacing:-.02em;color:var(--text);white-space:nowrap}
+.school-suite-brand-byline{font-size:clamp(10px,1vw,12px);line-height:1.25;font-weight:650;color:var(--muted);white-space:nowrap}
+.school-suite-actions{flex:0 1 auto;min-width:0}
+@media(max-width:639px){.school-suite-brand-name{font-size:17px}.school-suite-brand-byline{font-size:11px}}
 .banner-wrap{
     position:relative;overflow:hidden;border-radius:0 0 36px 36px;
     border-bottom:1px solid var(--line);box-shadow:0 22px 80px rgba(0,0,0,.28);
@@ -151,7 +158,10 @@ body:before{
 @media(max-width:639px){
     .banner-wrap{border-radius:0 0 25px 25px}
     .banner{height:auto;min-height:315px;background-position:58% center}
-    .topbar-inner{padding-left:12px!important;padding-right:12px!important}
+    .topbar-inner{padding:10px 12px!important;height:auto!important;min-height:68px;flex-wrap:wrap!important;align-items:center!important;gap:8px!important}
+    .topbar-inner>.school-suite-brand{width:100%;flex:1 1 100%;min-width:0}
+    .topbar-inner>.school-suite-actions{width:100%;justify-content:flex-end;flex-wrap:wrap;gap:8px;min-width:0}
+    .school-suite-actions .nav-btn{min-height:40px;padding:0 12px}
     .main-wrap{padding-left:12px!important;padding-right:12px!important}
     .school-logo{width:70px;height:70px;border-radius:20px}
     .school-title{font-size:1.85rem;line-height:1.05}
@@ -175,15 +185,14 @@ body:before{
 
 <header class="topbar">
     <div class="topbar-inner max-w-7xl mx-auto px-4 sm:px-6 h-[62px] flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2 min-w-0">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 grid place-items-center text-white font-black shadow-lg">L</div>
-            <div class="min-w-0">
-                <p class="text-[9px] uppercase tracking-[.2em] font-black text-cyan-400">Lama School</p>
-                <p id="navSchoolName" class="font-black text-sm truncate max-w-[190px]">School Board</p>
-                <p id="navSchoolId" class="text-[10px] text-cyan-400 font-bold"></p>
+        <div class="school-suite-brand flex items-center gap-2 min-w-0" aria-label="LAMA School Suite, a product of LamaStudio.pk">
+            <img src="assets/icons/lama-school-192.png" width="42" height="42" alt="LAMA School Suite" class="school-suite-brand-icon">
+            <div class="school-suite-brand-copy min-w-0">
+                <p class="school-suite-brand-name">LAMA School Suite</p>
+                <p class="school-suite-brand-byline">A product of LamaStudio.pk</p>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="school-suite-actions flex items-center gap-2">
             <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme">☀️</button>
             <button id="dashboardSubscriptionLink" type="button" class="nav-btn" title="View subscription">Subscription</button>
             <a id="dashboardAuthLink" href="login.html" class="nav-btn">School Login</a>
@@ -707,7 +716,7 @@ async function render(){
         : 'School ID not available. Please sign in to your school first.';
     const copyButton = document.getElementById('copySchoolIdButton');
     if (copyButton) copyButton.disabled = !schoolId;
-    document.getElementById('navSchoolId').textContent = schoolId ? `ID: ${schoolId}` : '';
+    // School ID belongs to the school-specific board, not the global product-brand header.
     window.currentSchoolId = schoolId;
     const rawTests = await loadPublishedCollection(['tests'], data.upcomingTests, schoolId);
     const rawExams = await loadPublishedCollection(['datesheet'], data.upcomingExams, schoolId);
@@ -719,8 +728,8 @@ async function render(){
     const schoolName = school.name || data.schoolName || 'Lama School';
 
     document.getElementById('pageTitle').innerText = `${schoolName} | School Board`;
-    const navNameEl = document.getElementById('navSchoolName');
-    if(navNameEl) navNameEl.innerText = schoolName;
+    // Keep the top header branded LAMA School Suite across all schools.
+    // The school-specific identity still appears in the hero and copyable School ID.
     const headerNameEl = document.getElementById('headerSchoolName');
     if(headerNameEl) headerNameEl.innerText = schoolName;
     const metaEl = document.getElementById('headerSchoolMeta');

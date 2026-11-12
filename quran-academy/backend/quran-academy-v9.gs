@@ -41,7 +41,7 @@ function quranV9Same_(a,b){
 }
 function quranV9Email_(raw){
   var s=String(raw||'').trim().toLowerCase();
-  if(s.length>254||!/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(s))throw Error('Enter a valid guardian email.');
+  if(s.length>160||!/^[a-z0-9][a-z0-9.!#$%&'*+/=?^_`{|}~-]*@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/.test(s))throw Error('Enter a valid guardian email.');
   return s;
 }
 function quranV9EmailHash_(gate,email){return quranV9Hmac_(gate.secret,'email|'+gate.schoolId+'|'+email);}

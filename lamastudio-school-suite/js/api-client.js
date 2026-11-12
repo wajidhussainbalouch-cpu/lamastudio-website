@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = (['quranV9ApproveGuardian','quranV9RevokeGuardian','quranV9ListGuardianLinks'].includes(action) && !!sessionStorage.getItem('lama_school_admin_auth')) || (action.startsWith('quranV8') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = (action === 'quranV10PilotReadiness' && !!sessionStorage.getItem('lama_school_admin_auth')) || (['quranV9ApproveGuardian','quranV9RevokeGuardian','quranV9ListGuardianLinks'].includes(action) && !!sessionStorage.getItem('lama_school_admin_auth')) || (action.startsWith('quranV8') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -110,6 +110,8 @@ const LamaAPI = (() => {
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
     // Quran v8: existing School Suite identity only. Backend verifies all scopes; POST only.
+    quranV10PilotReadiness:async()=>(await callApi('quranV10PilotReadiness',{},'POST')).result,
+    quranV10TeacherSummary:async()=>(await callApi('quranV10TeacherSummary',{},'POST')).result,
     quranV8ListLearners:async className=>(await callApi('quranV8ListLearners',{className},'POST')).result,
     quranV8GetProgress:async targetStudentId=>(await callApi('quranV8GetProgress',{targetStudentId},'POST')).result,
     quranV8LogPractice:async (targetStudentId,lessonId,kind,requestId)=>(await callApi('quranV8LogPractice',{targetStudentId,lessonId,kind,requestId},'POST')).result,

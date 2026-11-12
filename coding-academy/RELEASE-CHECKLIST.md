@@ -83,3 +83,16 @@ Automated test suite: practice.test.cjs, studio.test.cjs, python.test.cjs, progr
 - [ ] Verify no-store responses and dynamic private URLs are not cached by the academy service worker; external Pyodide resources remain outside its scope.
 - [ ] Confirm all ten academy Node regression files and AskLama tests pass on the final review commit.
 - [ ] Repeat actual lesson, project milestone, backup/export, restore, privacy and account-deletion readiness tests. No cloud service should be enabled before the dedicated database/RLS/Auth QA described earlier.
+
+## H. Phase 10 — Real Chromium CI smoke tests
+
+- [ ] Confirm the LAMA Coding Academy Chromium smoke GitHub Actions workflow completes successfully on the FINAL feature branch commit. This is separate from the Node.js regression and AskLama workflows.
+- [ ] Review real-browser results for the first lesson's complete edit → save → preview → quiz → pass → progress sequence.
+- [ ] Review guest account, privacy, low-data Python cancellation, diagnostic export, service-worker installation, offline pages and fake Auth token non-caching.
+- [ ] Check mobile-emulated desktop Chromium at both 390px and 360px. Repeat on physical Android phones; emulator viewport success is not a hardware compatibility guarantee.
+- [ ] Perform explicit first Pyodide WebAssembly download/mission completion on a real supported phone using an appropriate connection, respecting learner data bundles.
+- [ ] Verify real storage/backup roundtrips, screen-reader labels, keyboard navigation, color contrast and PWA install/uninstall on physical devices.
+- [ ] Keep dedicated cloud backend, Supabase security checks, password email delivery and Auth account deletion disabled until their separate project and privacy review are complete.
+- [ ] Do not merge/deploy to www.lamastudio.pk without final approval and existing production pipeline review.
+
+The browser test instructions are in coding-academy/browser-tests/README.md; its Playwright dependency is test-only and not included on published academy pages.

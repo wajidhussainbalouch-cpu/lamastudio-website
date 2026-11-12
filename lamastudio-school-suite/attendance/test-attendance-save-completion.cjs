@@ -33,7 +33,7 @@ const chosen=new Map();
 for(let i=0;i<38;i++)chosen.set(roster[i].id,{status:i<20?'Present':'Absent'});
 const dirty=new Set(roster.slice(0,38).map(s=>s.id));
 const state={students:roster,chosen,dirty,history:[],rosterReady:true,historyReady:true,
- loadedDate:date,loading:false,saving:false,pendingVerification:null,integrityBlocked:0};
+ loadedDate:date,loading:false,saving:false,pendingVerification:null,integrityBlocked:0,linkageWarnings:new Map()};
 const nodes=new Map([
  ['date',{value:date}],['class',{value:'5'}],['completion',{textContent:''}],
  ['save',{disabled:false,onclick:null}],['stage',{textContent:''}]

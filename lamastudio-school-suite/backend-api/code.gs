@@ -1808,7 +1808,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = action === 'quranV10PilotReadiness' || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
@@ -2145,6 +2145,10 @@ function handleRequest(params) {
             case 'quranV9GuardianLogout':
                 if (typeof quranV9Run_ !== 'function') throw new Error('Guardian pilot addon is not installed.');
                 return { status:'success', result:quranV9Run_(params) };
+            case 'quranV10PilotReadiness':
+            case 'quranV10TeacherSummary':
+                if (typeof quranV10Run_ !== 'function') throw new Error('Quran v10 pilot addon is not installed.');
+                return { status: 'success', result: quranV10Run_(params) };
             case 'quranV8ListLearners':
             case 'quranV8GetProgress':
             case 'quranV8LogPractice':
@@ -2187,7 +2191,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['quranV8ListLearners','quranV8GetProgress','quranV8LogPractice','quranV8TeacherReview','quranV8ParentChildren','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove','quranV9ApproveGuardian','quranV9ListGuardianLinks','quranV9RevokeGuardian','quranV9RequestGuardianCode','quranV9VerifyGuardianCode','quranV9GuardianChildren','quranV9GuardianProgress','quranV9GuardianLogout'];
+    const blocked=['quranV10PilotReadiness','quranV10TeacherSummary','quranV8ListLearners','quranV8GetProgress','quranV8LogPractice','quranV8TeacherReview','quranV8ParentChildren','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove','quranV9ApproveGuardian','quranV9ListGuardianLinks','quranV9RevokeGuardian','quranV9RequestGuardianCode','quranV9VerifyGuardianCode','quranV9GuardianChildren','quranV9GuardianProgress','quranV9GuardianLogout'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

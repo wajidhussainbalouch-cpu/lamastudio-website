@@ -857,12 +857,18 @@ window.__dashboardData={students,teachers,attendance,fees,notifications,tests,ex
           if(!attendanceLoaded){const put=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};put('studentAttEnrolled',students.length);for(const key of ['studentAttPresent','studentAttAbsent','studentAttLeave','studentAttUnmarked','studentAttRate','attendanceRatioDisplay'])put(key,'—');put('studentAttHint','Attendance history could not be loaded. No completion or absence is verified. Refresh when the connection is restored.');put('studentAttClassCount','Not verified');document.getElementById('studentAttClasses').innerHTML='<p class="text-xs text-amber-500">Saved attendance unavailable — no class is marked complete.</p>';document.getElementById('dashboardAbsentFollowup').textContent='Follow-up paused: attendance could not be verified.';put('absentTodayCount','Attendance unavailable');return;}
           const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
-          const current=new Map(),duplicateIds=new Set();
+          const current=new Map(),duplicateIds=new Set(),linkageIds=new Set();
           attendance.forEach(a=>{
             if(normalizeAttendanceDate(a.date)!==today)return;
             const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
-            const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
-            if(!student)return; // exclude staff and unrelated records
+            const direct=sid?byId.get(sid):null,byEnroll=en?byEnrollment.get(en):null;
+            // Never count a saved row under the wrong student simply because
+            // its enrollment matched after the roster ID changed. Reconcile IDs
+            // in a backed-up school sheet; this screen must remain read-only.
+            if(sid&&!direct&&byEnroll){linkageIds.add(en);return}
+            if(direct&&byEnroll&&direct!==byEnroll){linkageIds.add(en);return}
+            const student=direct||(!sid?byEnroll:null);
+            if(!student)return; // unmatched rows cannot be counted as verified
             const key=String(student.id??student._id??student.enrlNo??student.enrollmentNo??'');
             if(key){if(duplicateIds.has(key))return;if(current.has(key)){current.delete(key);duplicateIds.add(key);return;}current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});}
           });
@@ -894,7 +900,7 @@ window.__dashboardData={students,teachers,attendance,fees,notifications,tests,ex
           document.getElementById('attendanceRatioDisplay').textContent =
             coverage===null?'—':coverage+'%';
           document.getElementById('absentTodayCount').textContent =
-            counts.absent+' absent · '+unmarked+' unmarked';set('studentAttHint',duplicateIds.size?`Warning: ${duplicateIds.size} student(s) have duplicate saved records. Their status is not verified; ask the school administrator to review the original register.`:total?marked?`${marked} of ${total} saved (${coverage}% register coverage). ${unmarked} unmarked. Present among marked: ${presentAmongMarked}%.`:`0 of ${total} students marked. No attendance rate can be confirmed yet.`:'No students in the register.');
+            counts.absent+' absent · '+unmarked+' unmarked';set('studentAttHint',linkageIds.size?`Verification warning: ${linkageIds.size} student attendance row(s) have a saved Student ID that does not match the current roster, although an enrollment number matches. No automatic correction or parent follow-up was made; reconcile these rows in the backed-up school sheet.`:duplicateIds.size?`Warning: ${duplicateIds.size} student(s) have duplicate saved records. Their status is not verified; ask the school administrator to review the original register.`:total?marked?`${marked} of ${total} saved (${coverage}% register coverage). ${unmarked} unmarked. Present among marked: ${presentAmongMarked}%.`:`0 of ${total} students marked. No attendance rate can be confirmed yet.`:'No students in the register.');
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>{
@@ -950,16 +956,18 @@ function renderTeacherAttendanceAnalytics(teachers,records,attendanceLoaded=true
  const savedIds=new Set(todayRecords.map(recordId).filter(Boolean));
  const rosterMissing=rosterIds.size===0;
  const mismatch=rosterIds.size>0&&savedIds.size>0&&![...savedIds].some(id=>rosterIds.has(id));
- const allowed=rosterMissing||mismatch?null:rosterIds;
+ // Never count teacher IDs outside the current roster as verified just because
+ // their saved rows exist. If roster is unavailable, report unverified status.
+ const allowed=rosterIds;
  for(const r of records){const date=normalizeAttendanceDate(r.date),key=recordId(r),status=normStatus(r);if(!date||!key||!status||(allowed&&!allowed.has(key)))continue;if(!byDate.has(date))byDate.set(date,new Map());byDate.get(date).set(key,status)}
  const todayRows=byDate.get(today)||new Map(), vals=[...todayRows.values()];
  const present=vals.filter(x=>x==='present').length,absent=vals.filter(x=>x==='absent').length,leave=vals.filter(x=>x==='leave').length;
- const marked=present+absent+leave,total=Math.max(rosterIds.size,todayRows.size),pending=Math.max(0,total-marked);
+ const marked=present+absent+leave,total=rosterIds.size,pending=Math.max(0,total-marked);
  const put=(k,v)=>{const el=document.getElementById(k);if(el)el.textContent=v};
  put('taTotal',total);put('taPresent',present);put('taAbsent',absent);put('taLeave',leave);
  put('teacherAttDisplay',present+' / '+total);put('notMarkedDisplay',pending+' not marked today');
  put('taPending',([0,6].includes(new Date(today+'T12:00:00').getDay())?'Weekend holiday · ':'')+pending+' teachers not marked today');
- put('taCoverage',marked+' / '+total+' marked · '+(total?Math.round(marked/total*100):0)+'% coverage');
+ put('taCoverage',(rosterMissing&&savedIds.size?'Verification unavailable — teacher roster missing':marked+' / '+total+' verified · '+(total?Math.round(marked/total*100):0)+'% coverage')+(mismatch?' · Saved teacher IDs do not match roster; review required':''));
  put('teacherAttDate',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}));
  const staffFollowup=document.getElementById('dashboardStaffFollowup');
  if(staffFollowup){
@@ -980,7 +988,7 @@ function renderTeacherAttendanceAnalytics(teachers,records,attendanceLoaded=true
  const isWeekend=key=>{const day=new Date(key+'T12:00:00').getDay();return day===0||day===6};
  const series=days.map(d=>{const v=isWeekend(d.key)?[]:[...(byDate.get(d.key)||new Map()).values()];return {present:v.filter(x=>x==='present').length,absent:v.filter(x=>x==='absent').length,leave:v.filter(x=>x==='leave').length}});
  const weekendSaved=days.filter(d=>isWeekend(d.key)&&(byDate.get(d.key)?.size||0)>0).length;
- put('teacherTrendNote',weekendSaved?`${weekendSaved} weekend date(s) contain saved attendance; excluded from working-day chart (records preserved).`:rosterMissing&&todayRows.size?'Using saved teacher attendance records; teacher directory did not load.':mismatch?'Saved attendance teacher IDs differ from teacher directory IDs; check teacher data linkage.':records.length?'Seven-day trend from saved records; missing days are not absences.':'No saved teacher attendance records for this school.');
+ put('teacherTrendNote',weekendSaved?`${weekendSaved} weekend date(s) contain saved attendance; excluded from working-day chart (records preserved).`:rosterMissing&&savedIds.size?'Teacher directory missing. Saved staff rows are not counted as verified.':mismatch?'Saved attendance teacher IDs differ from the roster. Attendance and follow-up remain unverified until linkage is reconciled.':records.length?'Seven-day trend from saved records; missing days are not absences.':'No saved teacher attendance records for this school.');
  destroyChart('teacherAttendance');if(typeof Chart==='undefined')return;
  charts.teacherAttendance=new Chart(document.getElementById('teacherAttendanceChart'),{type:'bar',data:{labels:days.map(d=>isWeekend(d.key)?d.label+' · Holiday':d.label),datasets:[{label:'Present',data:series.map(x=>x.present),backgroundColor:'rgba(52,211,153,.8)',borderRadius:5},{label:'Absent',data:series.map(x=>x.absent),backgroundColor:'rgba(251,113,133,.8)',borderRadius:5},{label:'Leave',data:series.map(x=>x.leave),backgroundColor:'rgba(251,191,36,.8)',borderRadius:5}]},options:{...chartDefaults(),scales:{x:{stacked:true,ticks:{color:'#94a3b8'},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
 }

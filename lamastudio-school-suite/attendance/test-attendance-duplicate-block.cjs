@@ -33,7 +33,7 @@ const status=r=>['Present','Absent','Leave'].includes(r.status)?r.status:'';
 const reason=r=>String(r.remarks||'');
 const ctx={
  $,
- id:t=>t.id,
+ id:t=>t.id,name:t=>t.name,
  status,reason,
  recDate:r=>String(r.date||'').slice(0,10),
  teacherClass:t=>t.assignedClass||'Not assigned',
@@ -43,7 +43,7 @@ const boot=[
  "let teachers=[],records=[],duplicateTeacherIds=[],attendanceHistoryLoaded=false,",
  "loadedDate='',verifiedAt=0;",
  "const selected=new Map();",
- "const {$,id,status,reason,recDate,teacherClass,esc}=ctx;"
+ "const {$,id,name,status,reason,recDate,teacherClass,esc}=ctx;"
 ].join('\n');
 const app=new Function('ctx',boot+fn+
  'return {applyTeacherDay,get duplicates(){return duplicateTeacherIds},get selected(){return selected},get loaded(){return attendanceHistoryLoaded}};')(ctx);

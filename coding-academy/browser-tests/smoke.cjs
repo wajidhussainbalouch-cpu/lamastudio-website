@@ -105,6 +105,15 @@ test("desktop lessons and local draft persistence",async(browser,origin)=>{
   const src=await page.locator("#preview").getAttribute("srcdoc");
   assert.match(src,/Saved draft/);
   assert.match(src,/Content-Security-Policy/);
+  // Complete a real authored foundation lesson using actual browser controls.
+  await page.locator("#editor").fill("<!doctype html><html><body><h1>Hello, Developer!</h1></body></html>");
+  await page.locator('input[name="quiz"][value="0"]').check();
+  await page.locator('button[data-action="check"]').click();
+  assert.match(await page.locator("#result").textContent(),/Lesson passed!/);
+  const passed=await page.evaluate(()=>JSON.parse(localStorage.getItem("lama-coding-academy-v1")));
+  assert.equal(typeof passed.progress.h1,"string","Passing a lesson should save a completion timestamp.");
+  await page.goto(insideApp(origin,"progress.html"));
+  assert.equal((await page.locator("#total").textContent()).trim(),"1 / 52");
   assert.equal(pageErrors.length,0,"Unexpected JavaScript errors: "+pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
@@ -183,6 +192,12 @@ test("phone-sized pages have navigable controls without horizontal overflow",asy
    await page.goto(insideApp(origin,target));
    await page.locator("body").waitFor();
    await assertNoOverflow(page,target);
+  }
+  // Repeat at a narrower Android viewport to catch clipped menu/action rows.
+  await page.setViewportSize({width:360,height:780});
+  for(const target of ["index.html","python.html","practice.html","studio.html","account.html","progress.html"]){
+   await page.goto(insideApp(origin,target));
+   await assertNoOverflow(page,target+" at 360px");
   }
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}

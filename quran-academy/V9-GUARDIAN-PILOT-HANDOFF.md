@@ -2,10 +2,10 @@
 Date: 2026-11-12. **NOT DEPLOYED. DO NOT MERGE TO MAIN YET.**
 
 ## Development status
-The existing School Suite backend router and API client on this branch now reference the v9 action names:
+The existing School Suite backend router and API client on this branch reference the implemented v9 add-on action names:
 quranV9ApproveGuardian, quranV9RevokeGuardian, quranV9ListGuardianLinks, quranV9RequestGuardianCode, quranV9VerifyGuardianCode, quranV9GuardianChildren, quranV9GuardianProgress, quranV9GuardianLogout.
 
-**Important:** The full v9 Apps Script add-on is in the downloadable LAMA Quran Academy v9 ZIP from the project conversation, at `lama-quran-academy/integration/quran-academy-v9.gs`. It has NOT been committed to this branch yet. Therefore, the router fails closed with "Guardian pilot addon is not installed." Deploying just this branch does not enable guardian access.
+**Implementation now committed on this branch:** `quran-academy/backend/quran-academy-v9.gs` contains the guardian verification add-on. The same v9 integration is included in the downloadable app package at `lama-quran-academy/integration/quran-academy-v9.gs`. It is **not installed in any Apps Script deployment**. Merely merging this branch will not activate the add-on: it must be copied into the existing Apps Script project, separately tested, and explicitly enabled by Script Properties.
 
 ## Implemented in the packaged source
 - Existing School Suite student IDs only; school-admin-attested guardian approval; email/relationship stored in a private per-school sheet
@@ -28,3 +28,8 @@ quranV9ApproveGuardian, quranV9RevokeGuardian, quranV9ListGuardianLinks, quranV9
 6. Follow a child-data privacy plan, student credential upgrade, and qualified Quran content review.
 
 No Vercel deployment, production Apps Script deployment, or real school data migration has been performed by this v9 work.
+
+## 2026-11-12 update
+- Committed `quran-academy/backend/quran-academy-v9.gs` on the v9 development branch (commit `78c5c99b121d0c4625a60cebfd0195a698dc2ef2`).
+- Local packaged v8/v9 mock suites passed 15 + 26 checks. **Live Apps Script has not been exercised**; re-run test suites and conduct independent pilot security review before deployment.
+- No production website or spreadsheet changes were made in this change.

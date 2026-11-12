@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = ((action === 'quranV9GuardianGrant' || action === 'quranV9GuardianRevoke') && !!sessionStorage.getItem('lama_school_admin_auth')) || (action.startsWith('quranV8') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = (['quranV9ApproveGuardian','quranV9RevokeGuardian','quranV9ListGuardianLinks'].includes(action) && !!sessionStorage.getItem('lama_school_admin_auth')) || (action.startsWith('quranV8') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -74,7 +74,7 @@ const LamaAPI = (() => {
   // Guardian code and read-only access are separate from School Suite legacy role/session keys.
   // Never put a guardian bearer token in a URL or persistent localStorage.
   async function guardianPublicCall(action,payload) {
-    const response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action},payload)),redirect:'follow'});
+    const response=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,role:'guardian'},payload)),redirect:'follow'});
     const raw=await response.text();
     let data;try{data=JSON.parse(raw);}catch(_){throw Error('Guardian service returned an invalid response.');}
     if(!response.ok||data.status!=='success')throw Error(data.message||'Guardian request was rejected.');
@@ -116,10 +116,12 @@ const LamaAPI = (() => {
     quranV8TeacherReview:async (targetStudentId,lessonId,status,note,requestId)=>(await callApi('quranV8TeacherReview',{targetStudentId,lessonId,status,note,requestId},'POST')).result,
     quranV8ParentChildren:async()=>{throw Error('Guardian accounts are not verified in this School Suite version.');},
     getSession,setSession,clearSession,logout:clearSession,isLoggedIn,requireLogin,requireAnyLogin,
-    quranV9GuardianGrant:async(targetStudentId,email)=>(await callApi('quranV9GuardianGrant',{targetStudentId,email},'POST')).result,
-    quranV9GuardianRevoke:async linkId=>(await callApi('quranV9GuardianRevoke',{linkId},'POST')).result,
-    quranV9GuardianRequestCode:(schoolId,email)=>guardianPublicCall('quranV9GuardianRequestCode',{schoolId,email}),
-    quranV9GuardianVerifyCode:(schoolId,email,code)=>guardianPublicCall('quranV9GuardianVerifyCode',{schoolId,email,code}),
+    // Quran v9: school-admin approved guardian links; POST only, no new student accounts.
+    quranV9ApproveGuardian:async details=>(await callApi('quranV9ApproveGuardian',details,'POST')).result,
+    quranV9RevokeGuardian:async linkId=>(await callApi('quranV9RevokeGuardian',{linkId},'POST')).result,
+    quranV9ListGuardianLinks:async ()=>(await callApi('quranV9ListGuardianLinks',{},'POST')).result,
+    quranV9RequestGuardianCode:(schoolId,email)=>guardianPublicCall('quranV9RequestGuardianCode',{schoolId,email}),
+    quranV9VerifyGuardianCode:(schoolId,email,code)=>guardianPublicCall('quranV9VerifyGuardianCode',{schoolId,email,code}),
     quranV9GuardianChildren:(schoolId,guardianToken)=>guardianPublicCall('quranV9GuardianChildren',{schoolId,guardianToken}),
     quranV9GuardianProgress:(schoolId,guardianToken,targetStudentId)=>guardianPublicCall('quranV9GuardianProgress',{schoolId,guardianToken,targetStudentId}),
     quranV9GuardianLogout:(schoolId,guardianToken)=>guardianPublicCall('quranV9GuardianLogout',{schoolId,guardianToken}),

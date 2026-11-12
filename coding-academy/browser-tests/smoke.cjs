@@ -258,15 +258,18 @@ test("installed PWA serves offline pages without caching auth recovery queries",
   browser=await chromium.launch({headless:true});
   for(const t of tests){
     const started=Date.now();
+    let deadline=null;
     try{
       await Promise.race([
        t.run(browser,running.origin),
-       new Promise((_,reject)=>setTimeout(()=>reject(Error("Browser test exceeded 35 seconds")),35000))
+       new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error("Browser test exceeded 35 seconds")),35000);})
       ]);
       console.log("PASS "+t.name+" ("+(Date.now()-started)+"ms)");
     }catch(error){
       failures++;
       console.error("FAIL "+t.name+": "+String(error&&error.stack||error).slice(0,2000));
+    }finally{
+      if(deadline!==null)clearTimeout(deadline);
     }
   }
   if(failures)throw Error(failures+" of "+tests.length+" Chromium smoke tests failed.");

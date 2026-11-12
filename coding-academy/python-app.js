@@ -26,7 +26,7 @@ function readState(){
     };
   }catch(e){return defaultState();}
 }
-let state=readState(),worker=null,active=null,deadline=null,requestId=0,testApprovedCode=null;
+let state=readState(),worker=null,active=null,deadline=null,requestId=0,testApprovedCode=null,runtimeApproved=false;
 function save(){
   try{localStorage.setItem(storageKey,JSON.stringify(state));}
   catch(error){feedback("Browser storage is not available. Export code regularly.",false);}
@@ -122,7 +122,13 @@ function receive(w,payload){
   const original=active;
   clearTimer();active=null;setBusy(false);setStatus(t("statusFinished"));
   const result=payload.result||{};
-  byId("stdout").textContent=String(result.stdout||"").slice(0,4000)+(result.stderr?"\nStderr:\n"+String(result.stderr).slice(0,1000):"")||(result.error?"No program output.":"(No printed output; function return values are tested.)");
+  const printed=String(result.stdout||"").slice(0,4000);
+  const errors=String(result.stderr||"").slice(0,1000);
+  const notes=[];
+  if(result.stdout_truncated)notes.push(state.lang==="ur"?"بہت زیادہ متن؛ صرف پہلے ۴۰۰۰ حروف دکھائے گئے ہیں۔":"Long output: first 4,000 characters shown.");
+  if(result.stderr_truncated)notes.push(state.lang==="ur"?"غلطیوں کا متن مختصر کیا گیا ہے۔":"Error output was truncated.");
+  const visible=[printed,errors?"Stderr:\n"+errors:"",...notes].filter(Boolean).join("\n");
+  byId("stdout").textContent=visible||(result.error?"No program output.":"(No printed output; function return values are tested.)");
   if(result.error){
     byId("testResults").textContent=String(result.error).slice(0,2000);
     feedback(t("errored"),false);
@@ -154,6 +160,22 @@ function run(){
   if(active||!lessons.length)return;
   const l=current(),code=byId("editor").value;
   if(code.length>8000){feedback("Keep this beginner code under 8,000 characters.",false);return;}
+  // Pyodide can download many megabytes, especially on first use. Learners
+  // explicitly approve its first load on each page visit; no persistent
+  // consent is inferred from previous sessions or background preloading.
+  if(!runtimeApproved){
+    const connection=navigator.connection||{};
+    const metered=connection.saveData||/^(?:slow-2g|2g|3g)$/.test(connection.effectiveType||"");
+    const notice=state.lang==="ur"
+      ?"اصل Python چلانے کے لیے بڑا انٹرنیٹ ڈاؤن لوڈ ہو سکتا ہے۔ "+(metered?"آپ کا کنکشن سست یا ڈیٹا سیونگ پر ہے۔ ":"")+"کیا آپ ابھی ڈاؤن لوڈ شروع کرنا چاہتے ہیں؟"
+      :"Real Python can download a large WebAssembly runtime. "+(metered?"Your connection appears slow or data-saving is enabled. ":"")+"Continue with Python download now?";
+    if(!confirm(notice)){
+      feedback(state.lang==="ur"?"ڈاؤن لوڈ منسوخ ہوا۔ کوڈ اس ڈیوائس پر محفوظ رہ سکتا ہے۔":"Python download cancelled. You can keep editing or download your code.",undefined);
+      state.drafts[l.id]=code;save();
+      return;
+    }
+    runtimeApproved=true;
+  }
   state.drafts[l.id]=code;save();
   testApprovedCode=null;
   byId("stdout").textContent="Preparing Python…";

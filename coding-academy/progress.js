@@ -144,7 +144,7 @@ function restore(){
  resetPending();update();message("Academy progress restored successfully. Reopen any learning module to load the saved work.","ok");
 }
 byId("export").addEventListener("click",()=>{
- try{backup();}catch(error){message("Backup failed. Browser file downloads may be restricted: "+String(error.message||error),"error");}
+ try{backup();}catch(error){message("Backup could not be created. Existing learning data was not changed: "+String(error.message||error),"error");}
 });
 byId("import").addEventListener("click",()=>byId("file").click());
 byId("file").addEventListener("change",async()=>{

@@ -136,6 +136,87 @@ test("browser progress totals and module navigation",async(browser,origin)=>{
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
+test("full backup, local erasure, review and verified restore",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:390,height:844});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"progress.html"));
+  const snapshot={
+   "lama-coding-academy-v1":{
+    goal:"web",name:"Browser test learner",progress:{h1:true},
+    drafts:{h1:"<h1>Private demonstration draft</h1>"},quiz:{h1:0},lastLesson:"h1"
+   },
+   "lama-coding-practice-v2":{
+    track:"js",selected:{js:"js-fee"},passed:{"js-fee":true},
+    drafts:{"js-fee":"const invoice = 42;"}
+   },
+   "lama-python-executable-v1":{
+    selected:"pyx-greetings",drafts:{"pyx-greetings":"def greet(name):\n    return 'Hello ' + name"},
+    answers:{},passed:{},lang:"ur"
+   },
+   "lama-coding-project-studio-v1":{
+    project:"school",lang:"en",steps:{school:1},code:{school:"<h1>Demo school</h1>"},
+    checks:{school:{navigation:{reviewed:true,checkedAt:"2026-11-12T00:00:00Z"}}},
+    reflection:{school:"An invented test project, not actual school data"}
+   }
+  };
+  await page.evaluate(stores=>{
+    for(const [key,value] of Object.entries(stores))localStorage.setItem(key,JSON.stringify(value));
+    localStorage.setItem("separate-lama-product","KEEP_OTHER_PROJECT_UNCHANGED");
+  },snapshot);
+  await page.reload();
+  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
+  const [download]=await Promise.all([
+   page.waitForEvent("download"),
+   page.locator("#export").click()
+  ]);
+  assert.match(download.suggestedFilename(),/^lama-coding-academy-progress-[0-9-]+\.json$/);
+  const content=fs.readFileSync(await download.path());
+  const backup=JSON.parse(content.toString("utf8"));
+  assert.equal(backup.format,"lama-coding-academy-backup-v1");
+  for(const [key,value] of Object.entries(snapshot)){
+    const moduleId={
+     "lama-coding-academy-v1":"foundation","lama-coding-practice-v2":"practice",
+     "lama-python-executable-v1":"python","lama-coding-project-studio-v1":"studio"
+    }[key];
+    assert.deepEqual(backup.modules[moduleId],value,"Download must contain the real "+moduleId+" saved state.");
+  }
+  assert.equal((await page.locator("#status").textContent()).includes("downloaded"),true);
+  await page.goto(insideApp(origin,"account.html"));
+  page.on("dialog",dialog=>dialog.accept());
+  await page.locator("#clearLocal").click();
+  assert.match(await page.locator("#eraseStatus").textContent(),/Device learning data erased/);
+  const erased=await page.evaluate(keys=>keys.map(key=>localStorage.getItem(key)),Object.keys(snapshot));
+  assert.deepEqual(erased,[null,null,null,null],"Local erasure must remove all four academy records.");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("separate-lama-product")),"KEEP_OTHER_PROJECT_UNCHANGED");
+  await page.goto(insideApp(origin,"progress.html"));
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52");
+  const file={name:"lama-test-progress.json",mimeType:"application/json",buffer:content};
+  await page.locator("#file").setInputFiles(file);
+  assert.equal(await page.locator("#confirm").isEnabled(),true);
+  assert.match(await page.locator("#restoreReview").textContent(),/Backup file: 3 \/ 52/);
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52","Preview must not write data.");
+  await page.locator("#cancel").click();
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52");
+  await page.locator("#file").setInputFiles(file);
+  assert.equal(await page.locator("#confirm").isEnabled(),true);
+  await page.locator("#confirm").click();
+  assert.match(await page.locator("#status").textContent(),/restored successfully/);
+  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
+  const restored=await page.evaluate(keys=>Object.fromEntries(
+   keys.map(key=>[key,JSON.parse(localStorage.getItem(key))])
+  ),Object.keys(snapshot));
+  assert.deepEqual(restored,snapshot,"All four modules must match the downloaded backup.");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("separate-lama-product")),"KEEP_OTHER_PROJECT_UNCHANGED");
+  await page.locator("#file").setInputFiles({
+   name:"bad.json",mimeType:"application/json",buffer:Buffer.from("{not-json")
+  });
+  assert.equal(await page.locator("#confirm").isDisabled(),true);
+  assert.match(await page.locator("#status").textContent(),/Backup rejected/);
+  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
+  assert.equal(pageErrors.length,0,"Unexpected JavaScript errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("guest account remains disabled and privacy visible",async(browser,origin)=>{
  const view=await browserPage(browser,{width:1280,height:800});
  try{

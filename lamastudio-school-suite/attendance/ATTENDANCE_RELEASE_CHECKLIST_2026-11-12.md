@@ -19,11 +19,17 @@
 7. Simulate an HTTP timeout or a lost acknowledgment after Sheets committed. Confirm the UI reports **Not verified**, stops duplicate saving, and uses a **read-only Refresh** to confirm the existing row. It must **not** display a green success or an artificial 85% or 100% during failure.
 8. Simulate duplicate teacher/day rows, missing teacher, mismatched school account and wrong date. Verify saves are rejected before writing; preserve the original records for explicit administrator review.
 9. Test QR attendance once with an already-marked teacher, once with a new teacher. Verify green success only after server verification and no repeated row.
-10. Run all 11 CI regression suites. Release the frontend and matching Apps Script together only after the isolated test passes. Check the production site and school sheet immediately after the coordinated release, and retain rollback/backups.
+10. Run all 12 CI regression suites (including token-only school admin authentication for both fast and legacy teacher attendance). Release the frontend and matching Apps Script together only after the isolated test passes. Check the production site and school sheet immediately after the coordinated release, and retain rollback/backups.
 
 ## Confirmed automated tests
 
-GitHub Actions **Attendance Recovery Regression** run **43158254935** passed all 11 commands at commit `203ee0a7399c2463fb9978e1499b6ecbff9cb7a4`. Vercel preview **dpl_4m2jm5fCCscTSRrtMnnxf2rvCpeA** is READY. These are synthetic and preview tests—not a live Apps Script or Android-device end-to-end acceptance.
+GitHub Actions **Attendance Recovery Regression** run **43173955305** passed all 12 commands at commit `86f79e122918c27ff36584034d931742c29c60a4`. Vercel preview **dpl_E2E3EjxpiVWR7FPueyfF6M1UH6T9** is READY. These are synthetic and preview tests—not a live Apps Script or Android-device end-to-end acceptance.
+
+## Additional root cause fixed in this branch
+
+The previous generic `teacherAttendance` read/write actions were not consistently recognized as *school admin token-scoped* operations, despite the new snapshot actions being configured in the browser. Token-only school administrators could fail to load history or save records even when the teacher roster loaded. This branch now scopes `list/get/add/update/remove` of `teacherAttendance` and both new fast endpoints in **both** the web API client and Apps Script dispatcher. New regression: `test-attendance-admin-token-scope.cjs` proves token-only access, write audit attribution, and invalid/cross-school token rejection.
+
+Live backend code must be updated together with the frontend: changing GitHub alone does not update Google Apps Script.
 
 ## User guidance for the photographed school
 

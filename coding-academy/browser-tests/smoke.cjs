@@ -324,6 +324,14 @@ async function auditAccessibility(browser,origin,pages){
       .map(v=>({id:v.id,impact:v.impact,targets:v.nodes.slice(0,4).map(n=>n.target.join(" "))}));
    });
    for(const item of issues)problems.push({page:target,...item});
+   if(target==="privacy.html"){
+    const scrollRegion=page.locator(".table-wrap");
+    await scrollRegion.focus();
+    assert.equal(await scrollRegion.evaluate(node=>document.activeElement===node),true,
+      "A learner using only a keyboard must be able to focus the wide privacy table.");
+    assert.ok(await scrollRegion.evaluate(node=>getComputedStyle(node).outlineStyle!=="none"),
+      "Keyboard focus on the privacy table must be visible.");
+   }
   }
   assert.deepEqual(problems,[],"Fix serious/critical WCAG audit findings:\n"+JSON.stringify(problems,null,2));
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));

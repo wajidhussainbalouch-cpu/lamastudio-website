@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 9 (offline privacy and low-data Python readiness)
+# LAMA Coding Academy — MVP 10 (real Chromium browser smoke coverage)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -285,3 +285,15 @@ All eight Coding Academy test files run through the dedicated GitHub Actions wor
 - All ten Coding Academy Node-based regression files run in GitHub Actions, alongside the pre-existing AskLama checks. This is **mocked/browser-API and Python CLI validation**, not a complete live Android/browser acceptance test.
 
 No production deployment, branch merge, new Supabase project, account activation or cloud database modification was carried out in Phase 9.
+
+## Phase 10 — Chromium browser test suite (12 November 2026)
+
+Added a dedicated GitHub Actions workflow `.github/workflows/coding-academy-browser.yml`, with isolated test files under `coding-academy/browser-tests/`. It installs a pinned Playwright 1.65.0 dependency and the matching Chromium browser **only inside GitHub Actions**. There is no added production browser dependency, Vercel deployment or cloud account.
+
+The `browser-tests/smoke.cjs` script starts a short-lived local HTTP server over the checked-out repository and runs real headless Chromium interactions, rather than only Node mocks. Tests include lesson navigation, editing and persistence of local code, passing the actual first foundation lesson, updating the 52-activity progress dashboard, opening Practice and Studio pages, guest-mode account protections, privacy navigation, cancelling the first Pyodide download, draft restoration, viewport overflow at 390px/360px, anonymous System Check export, and real service-worker offline navigation without caching fake Auth recovery query values.
+
+The test workflow runs separately from the existing ten Node-based Coding Academy test files and the AskLama regression suite. Both browser suites use disposable local demo data, not actual student records.
+
+**This is real desktop Chromium with emulated mobile viewport dimensions, not physical Android testing.** Python CDN download and execution, memory behavior on budget Android phones, installation mode, screen-reader checks, Supabase Auth, two-account RLS, confirmation emails and account deletion remain manual or separate staging-backend acceptance requirements. No live production deployment or merge was made during Phase 10.
+
+Instructions for local execution: see `coding-academy/browser-tests/README.md`.

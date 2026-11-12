@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 10 (real Chromium browser smoke coverage)
+# LAMA Coding Academy — MVP 11 (data restore and accessibility audit)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -297,3 +297,13 @@ The test workflow runs separately from the existing ten Node-based Coding Academ
 **This is real desktop Chromium with emulated mobile viewport dimensions, not physical Android testing.** Python CDN download and execution, memory behavior on budget Android phones, installation mode, screen-reader checks, Supabase Auth, two-account RLS, confirmation emails and account deletion remain manual or separate staging-backend acceptance requirements. No live production deployment or merge was made during Phase 10.
 
 Instructions for local execution: see `coding-academy/browser-tests/README.md`.
+
+
+## Phase 11 — Verified portable backup and browser accessibility (12 November 2026)
+
+- Export now validates each of the four real local progress records **before** generating a backup. Previously malformed browser JSON could be read as a missing module, and a later restore might accidentally erase work. Export now refuses damaged, unsupported or oversized data rather than producing a misleading file. It also enforces the 800 KB import limit on the produced backup so exported files are restorable under the app's documented constraints.
+- Expanded tests/progress.test.cjs to prove corrupted and oversized local records do not create a new downloadable backup, and corrected data can be exported safely.
+- Added a full real-Chromium test of **download → delete four academy module keys → preserve unrelated product storage → preview → cancel → re-import → confirm → verify all saved drafts/reflections and the 3/52 dashboard count**. The same test rejects malformed JSON without altering the restored progress.
+- Added pinned axe-core test dependency (test-only), and two browser audits covering eight key Academy pages, checking serious/critical WCAG 2.0/2.1 A and AA findings. The first audit found a wide privacy table inaccessible to keyboard users. The table has a named focusable region and a clear keyboard focus outline.
+- The browser accessibility checks are automatic indicators, not a certification of WCAG compliance: manual keyboard-only navigation, screen readers, reduced motion, low-memory Android, contrast in different displays, and real-user feedback are still required.
+- No production site deployment, draft PR merge, cloud database change or real-account activation was made in Phase 11.

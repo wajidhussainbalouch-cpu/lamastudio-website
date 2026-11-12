@@ -1,0 +1,27 @@
+name: LAMA Coding Academy Chromium smoke
+
+on:
+  pull_request:
+    paths:
+      - "coding-academy/**"
+      - ".github/workflows/coding-academy-browser.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install pinned browser test dependency (testing only)
+        run: npm install --no-audit --no-fund --no-save --no-package-lock --ignore-scripts --prefix coding-academy/browser-tests
+      - name: Install isolated Chromium test browser
+        run: ./coding-academy/browser-tests/node_modules/.bin/playwright install --with-deps chromium
+      - name: Test academy in real headless Chromium
+        run: node coding-academy/browser-tests/smoke.cjs

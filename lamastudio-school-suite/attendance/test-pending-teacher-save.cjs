@@ -25,7 +25,7 @@ function createPage(submit){
   recDate:r=>String(r?.date||'').slice(0,10),
   reason:r=>String(r?.remarks||''),
   id:t=>t.id,name:t=>t.name,
-  holidayReason:()=>false,toast:s=>notices.push(String(s)),
+  holidayReason:()=>false,fmt:day=>day,toast:s=>notices.push(String(s)),
   render(){},renderHistory(){},teacherLoadUpdate(){},setBusy(){}
  };
  const setup=[
@@ -33,7 +33,7 @@ function createPage(submit){
   "pendingVerification=null,loadedDate=ctx.date,records=[],historyLoaded=true,",
   "historyRecords=[],verifiedAt=0,lastSaveVerified=0,duplicateTeacherIds=[];",
   "const {teachers,selected,dirty,$,LamaAPI,status,recDate,reason,id,name,holidayReason,",
-  "toast,render,renderHistory,teacherLoadUpdate,setBusy}=ctx;",
+  "toast,render,renderHistory,teacherLoadUpdate,setBusy,fmt}=ctx;",
   "const unsupportedTeacherAction=()=>false;",
   "const performance={now:()=>100};"
  ].join('\n');

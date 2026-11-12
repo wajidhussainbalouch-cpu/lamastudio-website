@@ -8,6 +8,12 @@ new Function(source);
 assert.match(source,/lama-coding-academy-v9/);
 assert.match(source,/if \(url\.search \|\| url\.hash/);
 assert.match(source,/STATIC_ASSETS\.has\(url\.href\)/);
+const assetMatch=source.match(/const ASSETS = (\[[^\n]+\]);/);
+assert.ok(assetMatch,"The offline cache must list its static assets explicitly.");
+const realAssets=vm.runInNewContext(assetMatch[1]);
+for(const relative of realAssets){
+ assert.equal(fs.existsSync(path.join(__dirname,"..",relative)),true,"Missing precache file: "+relative);
+}
 const scope="https://www.lamastudio.pk/coding-academy/";
 const handlers={};
 let networkCalls=[],cachePuts=[],cacheDeletes=[];

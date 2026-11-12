@@ -214,6 +214,7 @@ test("full backup, local erasure, review and verified restore",async(browser,ori
    name:"bad.json",mimeType:"application/json",buffer:Buffer.from("{not-json")
   });
   assert.equal(await page.locator("#confirm").isDisabled(),true);
+  await page.waitForFunction(()=>document.getElementById("status").textContent.includes("Backup rejected"));
   assert.match(await page.locator("#status").textContent(),/Backup rejected/);
   assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
   assert.equal(pageErrors.length,0,"Unexpected JavaScript errors: "+pageErrors.join(" | "));

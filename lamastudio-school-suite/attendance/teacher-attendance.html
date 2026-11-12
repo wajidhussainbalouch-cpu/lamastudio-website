@@ -123,7 +123,58 @@ function updateTeacherCoverage(){
  }).join('')||'<p class="muted mini">No assigned classes available.</p>';
  return schoolStats;
 }
-function render(){renderStaffOutreach();const count={Present:0,Absent:0,Leave:0};for(const t of teachers){const s=selected.get(id(t))?.status;if(s in count)count[s]++}for(const [k,v] of Object.entries({total:teachers.length,present:count.Present,absent:count.Absent,leave:count.Leave,unmarked:teachers.length-count.Present-count.Absent-count.Leave}))$(k).textContent=v;$('dateText').textContent=fmt($('date').value);const hol=holidayReason($('date').value);$('holidayNotice').classList.toggle('hidden',!hol);$('holidayNotice').textContent=hol?'Holiday: '+hol+'. Attendance is view-only on this date; no automatic Present marks.':''; $('markAll').disabled=busy||!attendanceHistoryLoaded||!!hol; $('save').disabled=busy||!attendanceHistoryLoaded||!!hol||!editing||!dirty.size;$('edit').disabled=busy||!attendanceHistoryLoaded||!!hol;$('edit').textContent=editing?'Cancel editing':'✎ Enable editing';const savedCount=teachers.filter(t=>selected.get(id(t))?.status).length;$('completion').textContent=hol?'Holiday — '+hol:dirty.size?`${dirty.size} unsaved change(s). Save to confirm.`:savedCount===teachers.length&&teachers.length?`✓ Attendance completed — ${savedCount} teachers saved. Use Enable editing to correct.`:savedCount?`${savedCount} of ${teachers.length} teachers saved. Enable editing to complete.`:'Attendance not yet marked. Tap Present, Absent or Leave, then Save changes.';$('summary').textContent=`${filtered().length} displayed · ${dirty.size} unsaved change(s) · ${fmt($('date').value)}`;$('list').innerHTML=filtered().map(t=>{const k=id(t),s=selected.get(k)||{},showReason=['Absent','Leave'].includes(s.status);return `<article class="person" data-teacher="${esc(k)}"><div class="flex items-center gap-3">${photoHtml(t)}<div class="min-w-0 flex-1"><div class="font-black">${esc(name(t))}</div><div class="muted mini">${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'subject')||'—')} · Class ${esc(fld(t,'assignedClass','class','grade')||'—')}</div><div class="mini ${dirty.has(k)?'text-amber-500':'muted'}">${dirty.has(k)?'● Unsaved change':s.status?'Saved: '+esc(s.status):'Unmarked'}</div></div></div><div class="flex gap-2 flex-wrap mt-3 no-print">${['Present','Absent','Leave'].map(v=>`<button class="pill ${s.status===v?'selected':''}" data-status="${v}" data-id="${esc(k)}" type="button" aria-pressed="${s.status===v}" ${busy||!editing?'disabled':''}>${v}</button>`).join('')}</div><div class="mt-2 ${showReason?'':'hidden'}"><label class="mini font-bold">${s.status==='Leave'?'Leave reason':'Absence reason'} <span class="muted">(short note)</span><input class="field mt-1 reason" data-id="${esc(k)}" value="${esc(s.remarks||'')}" placeholder="e.g. Medical leave, family emergency" ${busy||!editing?'disabled':''}></label></div><div class="print-only mini mt-2">Status: <b>${esc(s.status||'Unmarked')}</b>${showReason&&s.remarks?' · '+esc(s.remarks):''}</div></article>`}).join('')||'<p class="muted">No matching teachers.</p>';printHeaders();renderDailyPrint()}
+function render(){
+ updateTeacherCoverage();
+ renderStaffOutreach();
+ $('dateText').textContent=fmt($('date').value);
+ const hol=holidayReason($('date').value);
+ $('holidayNotice').classList.toggle('hidden',!hol);
+ $('holidayNotice').textContent=hol?'Holiday: '+hol+'. Attendance is view-only on this date; no automatic Present marks.':'';
+ const locked=busy||!attendanceHistoryLoaded||!!pendingVerification||duplicateTeacherIds.length>0||!!hol;
+ $('markAll').disabled=locked;
+ $('save').disabled=locked||!editing||!dirty.size;
+ $('edit').disabled=locked;
+ $('edit').textContent=editing?'Cancel editing':'✎ Enable editing';
+ const totals=teacherMetrics(teachers);
+ const full=totals.ready&&totals.total>0&&totals.marked===totals.total&&!dirty.size;
+ const date=fmt($('date').value);
+ let headline;
+ if(pendingVerification)headline='◷ Save submitted but NOT yet verified. Refresh to check Google Sheets. Do not submit again.';
+ else if(duplicateTeacherIds.length)headline='⚠ '+duplicateTeacherIds.length+' teacher/date duplicate record(s) found. Saving disabled for administrator review.';
+ else if(!attendanceHistoryLoaded)headline='⚠ Attendance history unavailable. Saved statuses are NOT verified. Refresh to retry.';
+ else if(hol)headline='Holiday — '+hol;
+ else if(dirty.size)headline=dirty.size+' unsaved change(s). Tap Save changes to verify.';
+ else if(full)headline='✓ Attendance completed: '+totals.total+'/'+totals.total+' teachers saved and verified — 100%';
+ else if(totals.marked)headline=totals.marked+' of '+totals.total+' teacher(s) saved and verified ('+totals.percent+'%). '+totals.unmarked+' unmarked.';
+ else headline='Attendance not yet marked. Select Present, Absent or Leave and save.';
+ $('completion').textContent=headline;
+ const note=$('saveVerificationNote');
+ if(note)note.textContent=pendingVerification?'Saving may have reached the server. Refresh to verify the existing records; automatic resubmission is blocked.':
+   lastSaveVerified&&attendanceHistoryLoaded&&!dirty.size?'✓ Saved successfully and verified against Google Sheets · '+new Date(lastSaveVerified).toLocaleTimeString():
+   attendanceHistoryLoaded?'Only server-confirmed records count toward 100% completion. Unsaved selections are excluded.':
+   'A failed read is never counted as zero attendance or a successful save.';
+ $('summary').textContent=filtered().length+' displayed · '+dirty.size+' unsaved changes · '+date;
+ $('list').innerHTML=filtered().map(t=>{
+  const k=id(t),draft=selected.get(k)||{},verified=verifiedFor(k);
+  const s=dirty.has(k)?draft:verified||{};
+  const showing=dirty.has(k)||!!verified;
+  const reasonVisible=showing&&['Absent','Leave'].includes(s.status);
+  const state=dirty.has(k)?'● Unsaved selection':
+    pendingVerification?'◷ Awaiting server verification':
+    !attendanceHistoryLoaded?'⚠ Not verified (refresh required)':
+    duplicateTeacherIds.includes(k)?'⚠ Duplicate records — administrator review':
+    verified?'✓ Saved and verified: '+verified.status:'Unmarked';
+  const buttons=['Present','Absent','Leave'].map(v=>'<button class="pill '+(s.status===v?'selected':'')+'" data-status="'+v+'" data-id="'+esc(k)+'" type="button" aria-pressed="'+(s.status===v)+'" '+(locked||!editing?'disabled':'')+'>'+v+'</button>').join('');
+  return '<article class="person" data-teacher="'+esc(k)+'"><div class="flex items-center gap-3">'+photoHtml(t)+
+  '<div class="min-w-0 flex-1"><div class="font-black">'+esc(name(t))+'</div><div class="muted mini">'+
+  esc(fld(t,'designation')||'Teacher')+' · '+esc(fld(t,'subject')||'—')+' · Class '+esc(teacherClass(t))+
+  '</div><div class="mini '+(dirty.has(k)?'text-amber-500':'muted')+'">'+esc(state)+'</div></div></div>'+
+  '<div class="flex gap-2 flex-wrap mt-3 no-print">'+buttons+'</div><div class="mt-2 '+(reasonVisible?'':'hidden')+'"><label class="mini font-bold">'+
+  (s.status==='Leave'?'Leave reason':'Absence reason')+' <span class="muted">(short note)</span><input class="field mt-1 reason" data-id="'+esc(k)+'" value="'+esc(s.remarks||'')+'" placeholder="e.g. Medical leave, family emergency" '+(locked||!editing?'disabled':'')+'></label></div>'+
+  '<div class="print-only mini mt-2">Status: '+esc(s.status||'Unmarked')+'</div></article>';
+ }).join('')||'<p class="muted">No matching teachers.</p>';
+ printHeaders();renderDailyPrint();
+}
 function renderDailyPrint(){const day=$('date').value,hol=holidayReason(day);$('dailyPrintRows').innerHTML=filtered().map((t,i)=>{const v=selected.get(id(t))||{};return `<tr><td>${i+1}</td><td>${photoHtml(t)}</td><td><b>${esc(name(t))}</b><div>${esc(fld(t,'designation')||'Teacher')} · ${esc(fld(t,'subject')||'—')} · Class ${esc(fld(t,'assignedClass','class','grade')||'—')}</div></td><td><b>${esc(v.status|| (hol?'Holiday':'Unmarked'))}</b></td><td>${esc(v.status==='Absent'||v.status==='Leave'?v.remarks||'—':hol||'—')}</td></tr>`}).join('');}
 function choose(k,v){if($('date').value!==loadedDate){toast('Selected date has not been loaded. Refresh before editing.',true);return;}if(busy||!attendanceHistoryLoaded){if(!attendanceHistoryLoaded)toast('Attendance history not verified. Refresh before editing.',true);return;}const hol=holidayReason($('date').value);if(hol){toast('Holiday: '+hol,true);return}if(!editing)editing=true;const old=selected.get(k)||{};if(old.status===v)return;selected.set(k,{...old,status:v,remarks:v==='Present'?'':old.remarks||''});dirty.add(k);render()}
 let teacherQrStream=null,teacherQrActive=false,teacherQrLast='',teacherQrLastAt=0,teacherQrPending=new Set(),teacherQrIndex=new Map();

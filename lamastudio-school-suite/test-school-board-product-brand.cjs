@@ -13,18 +13,20 @@ assert.match(page,/\.topbar-inner>\.school-suite-brand\{[\s\S]*?flex:1 1 auto!im
   'Brand takes remaining space on the left');
 assert.match(page,/\.topbar-inner>\.school-suite-actions\{[\s\S]*?display:flex!important;flex:0 0 auto!important;align-items:center!important/,
   'The action group stays aligned right on the same row');
-assert.match(page,/\.school-action-full\{display:none!important\}/,
-  'Long labels should be hidden on phones');
-assert.match(page,/\.school-action-small\{display:inline!important/,
-  'Compact labels must appear on phones');
+assert.match(page,/\.school-action-full\{display:inline!important\}/,
+ 'Full Subscription / Log out labels must always be shown on mobile');
+assert.match(page,/\.school-action-small\{display:none!important\}/,
+ 'Plan / Exit shortened labels must be hidden on mobile');
 assert.match(page,/@media\(max-width:350px\)/,
-  'Small phones must have tighter button width rules');
-for(const [id,compact] of [['dashboardSubscriptionLink','Plan'],['dashboardAuthLink','Login'],['dashboardLogoutButton','Exit']]){
- const tag=page.match(new RegExp('<(?:button|a) id="'+id+'"[^>]*>[\\s\\S]*?<\\/(?:button|a)>'))?.[0];
+ 'Small phones must have reduced spacing instead of shortened labels');
+for(const [id,visible] of [['dashboardSubscriptionLink','Subscription'],['dashboardAuthLink','School Login'],['dashboardLogoutButton','Log out']]){
+ const tag=page.match(new RegExp('<(?:button|a) id="'+id+'"[^>]*>[\\\\s\\\\S]*?<\\\\/(?:button|a)>'))?.[0];
  assert.ok(tag,'Missing account control '+id);
- assert.match(tag,new RegExp('class="school-action-small"[^>]*>'+compact+'<'),'Missing compact mobile label '+compact);
- assert.match(tag,/aria-label=/,'Compact control must keep an accessible full label');
+ assert.match(tag,new RegExp('class="school-action-full">'+visible+'<'),'Missing full visible label '+visible);
+ assert.match(tag,/aria-label=/,'Control must keep accessible full label');
 }
+assert.doesNotMatch(page,/class="school-action-small" aria-hidden="true">(Plan|Exit)</,
+ 'Shortened labels must not remain in page markup');
 assert.doesNotMatch(page,/id="navSchoolName"|id="navSchoolId"|getElementById\('navSchoolName'\)|getElementById\('navSchoolId'\)/,
   'School-specific identity must not override global product header');
 for(const id of ['headerSchoolName','headerSchoolMeta','schoolLogoBox','schoolIdDisplay','copySchoolIdButton','schoolTeacherLoginLink','schoolStudentLoginLink']){
@@ -35,4 +37,4 @@ assert.match(page,/if\(headerNameEl\) headerNameEl\.innerText = schoolName/);
 assert.match(page,/window\.currentSchoolId = schoolId/);
 const code=[...page.matchAll(/<script(?:\s+[^>]*)?>([\s\S]*?)<\/script>/gi)].map(x=>x[1]).filter(Boolean);
 for(const s of code)new Function(s);
-console.log('PASS: LAMA School Suite product header, mobile full-width actions, genuine school identity, copy-ID and portal links retained.');
+console.log('PASS: LAMA School Suite product header, compact single-row mobile header with full labels, genuine school identity, copy-ID and portal links retained.');

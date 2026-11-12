@@ -64,7 +64,7 @@ assert.throws(()=>save(ctx,{...item,date:'2026-11-11'},first.id),
 assert.throws(()=>save(ctx,{...item,teacherId:'unknown'}),/Teacher not found/);
 assert.throws(()=>save(ctx,{...item,date:'2026-02-30'}),/Invalid teacher attendance/);
 assert.throws(()=>save(ctx,{...item,status:'Maybe'}),/Invalid teacher attendance/);
-assert.throws(()=>save({...ctx,role:'teacher'},item),/Verified School Administrator/);
+assert.throws(()=>save({...ctx,role:'teacher'},item),/School authorization required/);
 assert.equal(locks,0,'All script locks must be released');
 // The public updateRecord route must go through this same locked upsert.
 const u0=source.indexOf('function updateRecord(ctx, collection, id, patch) {');

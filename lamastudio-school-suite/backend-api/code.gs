@@ -991,6 +991,126 @@ function listRecords(ctx, collection) {
     return records;
 }
 
+
+/**
+ * Fast and date-scoped staff attendance. Always authorize against the requested
+ * school and format native Sheets Dates in that school's own time zone.
+ * School-owned records are never included in the response for another school.
+ */
+function teacherAttendanceDate_(value, tz) {
+  if (value instanceof Date) return Utilities.formatDate(value,tz,'yyyy-MM-dd');
+  const text=String(value||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text))return text;
+  if(/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+    const parsed=new Date(text);
+    return !isNaN(parsed.getTime())?Utilities.formatDate(parsed,tz,'yyyy-MM-dd'):'';
+  }
+  const m=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  return m?m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2):'';
+}
+function teacherAttendanceDailySnapshot_(p) {
+  const date=String(p.date||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid attendance date YYYY-MM-DD required.');
+  const ctx=resolveContext(p);
+  if(ctx.role!=='school')throw Error('School administrator session required.');
+  checkPermission(ctx,'list','teachers');checkPermission(ctx,'list','teacherAttendance');
+  const roster=getCollectionSheet(ctx,'teachers'),attendance=getCollectionSheet(ctx,'teacherAttendance');
+  const tz=ctx.ss.getSpreadsheetTimeZone()||Session.getScriptTimeZone();
+  const teacherRows=roster.sheet.getDataRange().getValues();
+  const teachers=teacherRows.slice(1).map(row=>rowToRecord(roster.headers,row)).filter(t=>t.id)
+    .map(t=>({id:String(t.id),name:String(t.name||''),subject:String(t.subject||''),assignedClass:String(t.assignedClass||''),designation:String(t.designation||''),status:String(t.status||''),contact:String(t.contact||''),photo:String(t.photo||'')}));
+  const rows=attendance.sheet.getDataRange().getValues(),records=[],duplicates=[],seen={};
+  for(let i=1;i<rows.length;i++){
+    const rec=rowToRecord(attendance.headers,rows[i]);
+    if(!rec.id||teacherAttendanceDate_(rec.date,tz)!==date)continue;
+    rec.date=date;
+    const key=String(rec.teacherId||'').trim();
+    if(!key)continue;
+    records.push({id:String(rec.id),teacherId:key,teacherName:String(rec.teacherName||''),date,
+      status:String(rec.status||''),remarks:String(rec.remarks||''),markedBy:String(rec.markedBy||'')});
+    seen[key]=(seen[key]||0)+1;
+  }
+  Object.keys(seen).forEach(k=>{if(seen[k]>1)duplicates.push(k)});
+  return {date,teachers,records,duplicates,timezone:tz,verified:!duplicates.length};
+}
+/**
+ * One-HTTP-request staff batch upsert. Uses a server lock to avoid duplicate
+ * pupil/day writes and verifies the resulting rows before returning success.
+ * An uncertain response must be followed by a read-only snapshot; never retry
+ * the write automatically.
+ */
+function bulkTeacherAttendanceVerified_(p) {
+  const ctx=resolveContext(p);
+  if(ctx.role!=='school')throw Error('School administrator session required.');
+  assertSchoolWritable(ctx.schoolId);
+  const date=String(p.date||'').trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid YYYY-MM-DD date required.');
+  const requested=p.records;
+  if(!Array.isArray(requested)||!requested.length||requested.length>80)throw Error('Select 1 to 80 teacher attendance records.');
+  const normalized=[],unique={};
+  requested.forEach(item=>{
+    const teacherId=String(item&&item.teacherId||'').trim();
+    const value=String(item&&item.status||'').trim();
+    const remarks=value==='Present'?'':String(item&&item.remarks||'').trim().slice(0,300);
+    if(!teacherId||!['Present','Absent','Leave'].includes(value))throw Error('Invalid teacher attendance selection.');
+    if(unique[teacherId])throw Error('Duplicate teacher ID within submitted attendance.');
+    if(/^[=+@]/.test(remarks))throw Error('Remarks cannot contain spreadsheet formulas.');
+    unique[teacherId]=true;normalized.push({teacherId,status:value,remarks});
+  });
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance is busy. Refresh to verify before retrying.');
+  try{
+    // Read under the same lock used for writes so two requests cannot both append.
+    const rosterInfo=getCollectionSheet(ctx,'teachers');
+    const rosterRows=rosterInfo.sheet.getDataRange().getValues();
+    const byTeacher={};
+    rosterRows.slice(1).forEach(row=>{const t=rowToRecord(rosterInfo.headers,row);if(t.id)byTeacher[String(t.id)]=t;});
+    normalized.forEach(item=>{if(!byTeacher[item.teacherId])throw Error('Teacher is not registered at this school. No attendance was written.');});
+    const info=getCollectionSheet(ctx,'teacherAttendance'),sheet=info.sheet,headers=info.headers;
+    const tz=ctx.ss.getSpreadsheetTimeZone()||Session.getScriptTimeZone();
+    const values=sheet.getDataRange().getValues(),dateIndex=headers.indexOf('date'),
+      teacherIndex=headers.indexOf('teacherId');
+    if(dateIndex<0||teacherIndex<0)throw Error('Teacher attendance sheet headers are incomplete.');
+    const existing={};
+    for(let i=1;i<values.length;i++){
+      if(teacherAttendanceDate_(values[i][dateIndex],tz)!==date)continue;
+      const key=String(values[i][teacherIndex]||'').trim();
+      if(!key)continue;
+      (existing[key]||(existing[key]=[])).push({row:i+1,record:rowToRecord(headers,values[i])});
+    }
+    // Stop before any mutation if even one submitted person has duplicated rows.
+    normalized.forEach(item=>{if((existing[item.teacherId]||[]).length>1)throw Error('Duplicate teacher/date records found. Administrator must review attendance before saving.');});
+    const updates=[],inserts=[],now=new Date().toISOString();
+    normalized.forEach(item=>{
+      const matches=existing[item.teacherId]||[],teacher=byTeacher[item.teacherId],old=matches[0]&&matches[0].record;
+      const rec={id:old?String(old.id):genId('tea'),teacherId:item.teacherId,
+        teacherName:String(teacher.name||''),date,status:item.status,
+        markedBy:old?String(old.markedBy||'School Admin'):'School Admin',
+        createdAt:old?old.createdAt:now,remarks:item.remarks};
+      if(matches.length)updates.push({row:matches[0].row,record:rec});
+      else inserts.push(rec);
+    });
+    updates.forEach(item=>sheet.getRange(item.row,1,1,headers.length).setValues([recordToRow(headers,item.record)]));
+    if(inserts.length){
+      const first=sheet.getLastRow()+1;
+      sheet.getRange(first,1,inserts.length,headers.length).setValues(inserts.map(rec=>recordToRow(headers,rec)));
+    }
+    SpreadsheetApp.flush();
+    const snapshot=teacherAttendanceDailySnapshot_(p);
+    const confirmed=[];
+    normalized.forEach(item=>{
+      const matches=snapshot.records.filter(r=>r.teacherId===item.teacherId);
+      if(matches.length!==1||matches[0].status!==item.status||
+        String(matches[0].remarks||'')!==item.remarks)throw Error('Server accepted attendance but readback is not verified. Refresh before another Save.');
+      confirmed.push(matches[0]);
+    });
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'bulkTeacherAttendance','teacherAttendance','',null,
+      {date,count:confirmed.length,teacherIds:confirmed.map(r=>r.teacherId)});
+    return {date,saved:confirmed.length,verified:true,records:confirmed,teachers:snapshot.teachers,
+      duplicates:snapshot.duplicates,timezone:tz};
+  }finally{lock.releaseLock();}
+}
+
 function getRecord(ctx, collection, id) {
     checkPermission(ctx, 'get', collection);
     if (ctx.role === 'student' && collection === 'students' && id !== ctx.student.id) {
@@ -2128,6 +2248,8 @@ function handleRequest(params) {
 
             case 'clearStudentAttendanceDate': return {status:'success',result:clearStudentAttendanceDate_(params)};
             case 'bulkDeleteStudents': return {status:'success',result:bulkDeleteStudents_(params)};
+            case 'teacherAttendanceDailySnapshot': return {status:'success',result:teacherAttendanceDailySnapshot_(params)};
+            case 'bulkTeacherAttendanceVerified': return {status:'success',result:bulkTeacherAttendanceVerified_(params)};
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
                 const result=bulkAttendanceRecords(params);

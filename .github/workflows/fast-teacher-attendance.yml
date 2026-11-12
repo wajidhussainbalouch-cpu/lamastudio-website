@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run every attendance regression; fail if any fails
+      - name: Run all attendance regression suites; fail if any fails
         shell: bash
         run: |
           set +e
@@ -44,6 +44,8 @@ jobs:
           node lamastudio-school-suite/backend-api/test-attendance-date-verification.cjs || failed=1
           echo "▶ lamastudio-school-suite/backend-api/test-student-attendance-single-idempotence.cjs"
           node lamastudio-school-suite/backend-api/test-student-attendance-single-idempotence.cjs || failed=1
+          echo "▶ lamastudio-school-suite/backend-api/test-attendance-admin-token-scope.cjs"
+          node lamastudio-school-suite/backend-api/test-attendance-admin-token-scope.cjs || failed=1
           echo "▶ lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs"
           node lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs || failed=1
           echo "▶ lamastudio-school-suite/portals/teacher/test-attendance-save-verification.cjs"

@@ -56,3 +56,10 @@ test infrastructure, separate from the academy's production runtime.
 
 A successful workflow verifies specified browser flows **on the GitHub runner**;
 it does not mean the academy is production-ready or deployed.
+
+
+## Phase 11 additional regression coverage
+
+- The full backup lifecycle is exercised in actual Chromium with representative private dummy drafts for all four modules. The test downloads a JSON file, clears Coding Academy local data through its own UI, checks that other product data remains, previews/cancels a restore, confirms another restore and verifies exact round-trip values. Corrupted files are rejected.
+- axe-core (pinned in the isolated test-only package) runs WCAG 2.0/2.1 A/AA checks in real mobile-viewport Chromium on all eight core Academy pages. Serious/critical findings fail CI; other findings still require review. This does not replace physical Android or real assistive-technology QA.
+- The privacy table's horizontally scrollable region must be reachable by keyboard and visibly focused when active.

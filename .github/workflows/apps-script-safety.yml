@@ -1,0 +1,29 @@
+name: Apps Script deployment safety checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/backend-api/**'
+      - '.github/workflows/apps-script-safety.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check backend source exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s lamastudio-school-suite/backend-api/code.gs
+          grep -q 'function registerSchool' lamastudio-school-suite/backend-api/code.gs
+          grep -q 'function createSchoolSheet' lamastudio-school-suite/backend-api/code.gs
+      - name: Guard against accidental deployment
+        run: |
+          echo "Validation only. No clasp push, version creation, deployment or script property mutation."
+          echo "Production script has additional modules (bulk-attendance and trial-monitor) that must be preserved."

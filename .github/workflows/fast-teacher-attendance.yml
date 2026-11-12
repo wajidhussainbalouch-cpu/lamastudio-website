@@ -1,0 +1,25 @@
+name: Fast Teacher Attendance Regression
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/attendance/teacher-attendance.html'
+      - 'lamastudio-school-suite/attendance/test-fast-teacher-attendance.cjs'
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - '.github/workflows/fast-teacher-attendance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify fast teacher attendance and duplicate-safe writes
+        run: node lamastudio-school-suite/attendance/test-fast-teacher-attendance.cjs

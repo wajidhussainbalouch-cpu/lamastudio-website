@@ -68,7 +68,7 @@ function quranV9ApprovedAction_(p,gate){
   if(!getRecord(ctx,'students',studentId))throw Error('Student is not part of this school.');
   var lock=LockService.getScriptLock();lock.waitLock(20000);
   try{
-    var sh=quranV8Table_(gate.ss,QURAN_V9_GUARDIAN_TAB,QURAN_V9_GUARDIAN_HEADERS,true);
+    var sh=quranV8Sheet_(gate.ss,QURAN_V9_GUARDIAN_TAB,QURAN_V9_GUARDIAN_HEADERS,true);
     var rows=quranV9Links_(gate);
     var old=rows.find(function(r){return String(r.studentId)===studentId&&String(r.emailHash)===hash;});
     var now=new Date().toISOString(),id=old?String(old.id):genId('qguardian'),version=old?Number(old.version||0)+1:1;
@@ -83,7 +83,7 @@ function quranV9Revoke_(p,gate){
   var actor=quranV9SchoolAdmin_(p,gate),linkId=quranV8Id_(p.linkId,'link ID');
   var lock=LockService.getScriptLock();lock.waitLock(20000);
   try{
-    var sh=quranV8Table_(gate.ss,QURAN_V9_GUARDIAN_TAB,QURAN_V9_GUARDIAN_HEADERS,false);
+    var sh=quranV8Sheet_(gate.ss,QURAN_V9_GUARDIAN_TAB,QURAN_V9_GUARDIAN_HEADERS,false);
     if(!sh)throw Error('Guardian link not found.');
     var rows=quranV9Links_(gate),i=rows.findIndex(function(r){return String(r.id)===linkId;});
     if(i<0)throw Error('Guardian link not found.');

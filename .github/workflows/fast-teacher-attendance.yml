@@ -1,11 +1,13 @@
-name: Fast Teacher Attendance Regression
+name: Attendance Recovery Regression
 on:
   pull_request:
     paths:
-      - 'lamastudio-school-suite/attendance/teacher-attendance.html'
-      - 'lamastudio-school-suite/attendance/test-fast-teacher-attendance.cjs'
-      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/attendance/**'
+      - 'lamastudio-school-suite/backend-api/**'
       - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/portals/teacher/**'
+      - 'lamastudio-school-suite/test-dashboard-attendance.cjs'
       - '.github/workflows/fast-teacher-attendance.yml'
   workflow_dispatch:
 
@@ -15,11 +17,31 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 9
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify fast teacher attendance and duplicate-safe writes
+      - name: Fast teacher staff save, date, unique records and class totals
         run: node lamastudio-school-suite/attendance/test-fast-teacher-attendance.cjs
+      - name: Existing teacher save remains blocked during uncertain readback
+        run: node lamastudio-school-suite/attendance/test-pending-teacher-save.cjs
+      - name: Student attendance class and school completion
+        run: node lamastudio-school-suite/attendance/test-attendance-save-completion.cjs
+      - name: Student uncertain save and date conversion
+        run: node lamastudio-school-suite/attendance/test-pending-student-save.cjs
+      - name: Detect duplicate student attendance rows
+        run: node lamastudio-school-suite/attendance/test-attendance-duplicate-block.cjs
+      - name: Backend confirms student bulk writes
+        run: node lamastudio-school-suite/backend-api/test-attendance-bulk-confirmation.cjs
+      - name: Backend timezone date serialization
+        run: node lamastudio-school-suite/backend-api/test-attendance-date-verification.cjs
+      - name: Backend idempotent student marks
+        run: node lamastudio-school-suite/backend-api/test-student-attendance-single-idempotence.cjs
+      - name: Backend idempotent staff marks
+        run: node lamastudio-school-suite/backend-api/test-teacher-attendance-upsert.cjs
+      - name: Teacher portal saved attendance and parent follow-up
+        run: node lamastudio-school-suite/portals/teacher/test-attendance-save-verification.cjs
+      - name: Admin dashboard verified coverage and token checklist
+        run: node lamastudio-school-suite/test-dashboard-attendance.cjs

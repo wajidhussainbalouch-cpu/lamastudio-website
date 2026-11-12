@@ -69,3 +69,17 @@ Automated test suite: practice.test.cjs, studio.test.cjs, python.test.cjs, progr
 - [ ] Download an anonymous JSON diagnostic and confirm it has only check identifiers, statuses, and Python pass/fail status—no saved student code or identifiers.
 - [ ] Verify every renamed or new lesson is reflected in tests/integrity.test.cjs and the 52-activity aggregation.
 - [ ] Review the results alongside real lesson/backup flows. The page is a readiness aid, not security certification.
+
+
+## G. Phase 9 — Low-data Python and secure offline cache
+
+- [ ] On a real Android phone, turn on Data Saver or use slow cellular data; open Python Lab. Confirm Run Python asks before starting the large Pyodide download.
+- [ ] Cancel first-use permission. Verify no Python worker/runtime download begins and the learner's edited draft remains saved after refresh.
+- [ ] Approve first-use permission, verify real Python loads, then run a second mission without another permission dialog during the same page session.
+- [ ] Open the Urdu version: verify first-download consent warning and the no-interpreter low-data practice link are understandable and all code stays left-to-right.
+- [ ] After obtaining approval and network, test large Python print statements (e.g. >200 KB output) and verify the output is truncated without exhausting all available browser memory. Do not run deliberately dangerous, secret-reading or untrusted code.
+- [ ] Install/refresh the PWA and check static pages work offline after an initial online load. Verify the service worker is v9 and not interfering with other LAMA Studio PWAs.
+- [ ] With **fake non-sensitive** query values only, inspect CacheStorage after navigating to account.html?code=TEST-NOT-REAL. Confirm this query URL is not cached. Never put real recovery tokens in public bug reports.
+- [ ] Verify no-store responses and dynamic private URLs are not cached by the academy service worker; external Pyodide resources remain outside its scope.
+- [ ] Confirm all ten academy Node regression files and AskLama tests pass on the final review commit.
+- [ ] Repeat actual lesson, project milestone, backup/export, restore, privacy and account-deletion readiness tests. No cloud service should be enabled before the dedicated database/RLS/Auth QA described earlier.

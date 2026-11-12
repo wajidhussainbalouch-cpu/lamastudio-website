@@ -1,4 +1,4 @@
-/* English/Urdu learner coaching for executable Python. Keep code, keys and tests language-neutral. */
+/* English/Urdu learner coaching for executable Python. Keep code and tests language-neutral. */
 window.LAMA_PYTHON_I18N = {
   "missions": {
     "pyx-greetings": {
@@ -171,7 +171,8 @@ window.LAMA_PYTHON_I18N = {
       "stat": "Python missions completed",
       "online": "Online runtime required: Python downloads a large WebAssembly runtime on first use. Your lessons and code drafts are saved locally; execution may require internet access.",
       "notSafe": "For learner-written practice only. Do not paste passwords, API keys or private student data.",
-      "greeting": "Welcome to Python Lab."
+      "greeting": "Welcome to Python Lab.",
+      "offlineAlternative": "Low-data alternative: practice Python syntax without downloading the real interpreter."
     },
     "ur": {
       "language": "English",
@@ -211,7 +212,8 @@ window.LAMA_PYTHON_I18N = {
       "stat": "پائتھن کی مکمل مشقیں",
       "online": "پائتھن کا رن ٹائم پہلی بار ڈاؤن لوڈ ہوگا۔ مشقیں اور آپ کا کوڈ اس ڈیوائس پر محفوظ ہوتے ہیں، مگر پائتھن چلانے کے لیے انٹرنیٹ ضروری ہو سکتا ہے۔",
       "notSafe": "یہ سیکھنے کی مشق ہے۔ پاس ورڈ، ذاتی طلبہ کا ریکارڈ یا خفیہ چابیاں یہاں استعمال نہ کریں۔",
-      "greeting": "پائتھن لیب میں خوش آمدید۔"
+      "greeting": "پائتھن لیب میں خوش آمدید۔",
+      "offlineAlternative": "کم انٹرنیٹ استعمال کریں: اصل Python ڈاؤن لوڈ کیے بغیر Python کے بنیادی قواعد کی مشق کریں۔"
     }
   }
 };

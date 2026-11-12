@@ -72,7 +72,7 @@ const arr=v=>Array.isArray(v)?v:Array.isArray(v?.records)?v.records:Array.isArra
  }
  const m=value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
  return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):'';
-};const status=r=>['Present','Absent','Leave'].includes(r?.status)?r.status:'';const reason=r=>String(r?.remarks??r?.reason??r?.note??'');const pic=t=>fld(t,'photo','profilePhoto','teacherPhoto','photoUrl','image','avatar');
+};const status=r=>{const s=String(r?.status??'').trim().toLowerCase();return ['present','p'].includes(s)?'Present':['absent','a'].includes(s)?'Absent':['leave','l','on leave'].includes(s)?'Leave':'';};const reason=r=>String(r?.remarks??r?.reason??r?.note??'');const pic=t=>fld(t,'photo','profilePhoto','teacherPhoto','photoUrl','image','avatar');
 function holidayStorageKey(){const sess=LamaAPI.getSession?.('school')||{};return 'lama_teacher_holidays_'+String(sess.schoolId||school.schoolId||'default')}
 function loadHolidays(){try{const obj=JSON.parse(localStorage.getItem(holidayStorageKey())||'{}');customHolidays=obj&&typeof obj==='object'&&!Array.isArray(obj)?obj:{}}catch(_){customHolidays={}}try{const saved=JSON.parse(localStorage.getItem(holidayStorageKey()+'_weekly')||'null');weeklyOff=Array.isArray(saved)?saved.filter(n=>n===0||n===6):[0]}catch(_){weeklyOff=[0]}$('saturdayOff').checked=weeklyOff.includes(6);$('sundayOff').checked=weeklyOff.includes(0);renderHolidays()}
 function saveHolidays(){localStorage.setItem(holidayStorageKey(),JSON.stringify(customHolidays));renderHolidays();render();renderHistory()}

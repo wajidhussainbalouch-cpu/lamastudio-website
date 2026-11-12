@@ -82,6 +82,7 @@ function renderHolidays(){const list=Object.entries(customHolidays).sort((a,b)=>
 function toast(message,error=false){const el=$('toast');el.textContent=message;el.classList.toggle('error',error);el.classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.add('hidden'),6000)}function setBusy(v){busy=v;$('date').disabled=v;for(const x of ['save','refresh','markAll','historyRefresh','edit'])$(x).disabled=v;$('save').textContent=v?'Saving...':'💾 Save changes'}function photoHtml(t){const p=pic(t);return p&&/^(https?:|data:image\/)/i.test(p)?`<img class="photo" src="${esc(p)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'<span class="photo inline-grid place-items-center font-bold">👤</span>'}function filtered(){const q=$('search').value.toLowerCase(),f=$('filter').value,c=$('classFilter').value;return teachers.filter(t=>(!q||[name(t),fld(t,'subject'),fld(t,'assignedClass','class','grade'),id(t)].some(x=>x.toLowerCase().includes(q)))&&(!c||fld(t,'assignedClass','class','grade')===c)&&(!f||(selected.get(id(t))?.status||'Unmarked')===f))}
 
 function teacherClass(t){return fld(t,'assignedClass','class','grade')||'Not assigned'}
+function displayTeacherClass(value){const label=String(value||'Not assigned').trim();return /^(class|grade)\b/i.test(label)||label==='Not assigned'?label:'Class '+label}
 function verifiedFor(k){
  if(!attendanceHistoryLoaded||pendingVerification||dirty.has(k)||duplicateTeacherIds.includes(k))return null;
  const found=records.filter(r=>recDate(r)===$('date').value&&String(r.teacherId??r.teacherID??'')===k&&status(r));
@@ -102,7 +103,7 @@ function updateTeacherCoverage(){
  const cls=$('classFilter').value;
  const scope=cls?teachers.filter(t=>teacherClass(t)===cls):teachers;
  const selectedStats=teacherMetrics(scope),schoolStats=teacherMetrics(teachers);
- $('classTotalsTitle').textContent=cls?'Class '+cls+' — Teacher Attendance':'All classes — Teacher Attendance';
+ $('classTotalsTitle').textContent=cls?displayTeacherClass(cls)+' — Teacher Attendance':'All classes — Teacher Attendance';
  const cards=(stats,prefix)=>{
   const values={Total:stats.total,Present:stats.Present,Absent:stats.Absent,Leave:stats.Leave,Unmarked:stats.unmarked};
   for(const [key,value] of Object.entries(values)){
@@ -167,7 +168,7 @@ function render(){
   const buttons=['Present','Absent','Leave'].map(v=>'<button class="pill '+(s.status===v?'selected':'')+'" data-status="'+v+'" data-id="'+esc(k)+'" type="button" aria-pressed="'+(s.status===v)+'" '+(locked||!editing?'disabled':'')+'>'+v+'</button>').join('');
   return '<article class="person" data-teacher="'+esc(k)+'"><div class="flex items-center gap-3">'+photoHtml(t)+
   '<div class="min-w-0 flex-1"><div class="font-black">'+esc(name(t))+'</div><div class="muted mini">'+
-  esc(fld(t,'designation')||'Teacher')+' · '+esc(fld(t,'subject')||'—')+' · Class '+esc(teacherClass(t))+
+  esc(fld(t,'designation')||'Teacher')+' · '+esc(fld(t,'subject')||'—')+' · '+esc(displayTeacherClass(teacherClass(t)))+
   '</div><div class="mini '+(dirty.has(k)?'text-amber-500':'muted')+'">'+esc(state)+'</div></div></div>'+
   '<div class="flex gap-2 flex-wrap mt-3 no-print">'+buttons+'</div><div class="mt-2 '+(reasonVisible?'':'hidden')+'"><label class="mini font-bold">'+
   (s.status==='Leave'?'Leave reason':'Absence reason')+' <span class="muted">(short note)</span><input class="field mt-1 reason" data-id="'+esc(k)+'" value="'+esc(s.remarks||'')+'" placeholder="e.g. Medical leave, family emergency" '+(locked||!editing?'disabled':'')+'></label></div>'+

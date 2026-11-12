@@ -306,6 +306,35 @@ test("diagnostics exports no learner data",async(browser,origin)=>{
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
+// Semantic and contrast checks use axe-core on a real rendered Chromium DOM.
+// These do not substitute for manual screen-reader and physical phone audits.
+async function auditAccessibility(browser,origin,pages){
+ const view=await browserPage(browser,{width:390,height:844});
+ try{
+  const {page,pageErrors}=view;
+  const problems=[];
+  for(const target of pages){
+   await page.goto(insideApp(origin,target));
+   await page.addScriptTag({path:require.resolve("axe-core/axe.min.js")});
+   const issues=await page.evaluate(async()=>{
+    const output=await window.axe.run(document,{
+      runOnly:{type:"tag",values:["wcag2a","wcag2aa","wcag21a","wcag21aa"]}
+    });
+    return output.violations.filter(v=>v.impact==="critical"||v.impact==="serious")
+      .map(v=>({id:v.id,impact:v.impact,targets:v.nodes.slice(0,4).map(n=>n.target.join(" "))}));
+   });
+   for(const item of issues)problems.push({page:target,...item});
+  }
+  assert.deepEqual(problems,[],"Fix serious/critical WCAG audit findings:\n"+JSON.stringify(problems,null,2));
+  assert.equal(pageErrors.length,0,pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+}
+test("WCAG browser audit: learning activities",async(browser,origin)=>{
+ await auditAccessibility(browser,origin,["index.html","practice.html","python.html","studio.html"]);
+});
+test("WCAG browser audit: progress, privacy and account",async(browser,origin)=>{
+ await auditAccessibility(browser,origin,["progress.html","account.html","privacy.html","diagnostics.html"]);
+});
 test("installed PWA serves offline pages without caching auth recovery queries",async(browser,origin)=>{
  const view=await browserPage(browser,{width:1280,height:800},true);
  try{

@@ -85,10 +85,27 @@ function validateBackup(raw){
  if(keys.length!==MODULES.length||MODULES.some(m=>!Object.hasOwn(raw.modules,m.key)))throw Error("The backup must contain all four learning modules.");
  return Object.fromEntries(MODULES.map(m=>[m.key,validateModule(m,raw.modules[m.key])]));
 }
+// Do not silently export a missing module when its local JSON is corrupt.
+// A genuine first-time learner has no record (null); a damaged one must not be
+// mistaken for a blank record that would erase work when restored elsewhere.
+function validatedLocalBackupModules(){
+ const result={};
+ for(const module of MODULES){
+   const raw=localStorage.getItem(module.storage);
+   if(raw===null){result[module.key]=null;continue;}
+   let parsed;
+   try{parsed=JSON.parse(raw);}
+   catch(error){throw Error(module.title+" has unreadable saved progress. Do not delete this browser's data; recover a trusted earlier backup.");}
+   result[module.key]=validateModule(module,parsed);
+ }
+ return result;
+}
 function backup(){
- const modules=collect();
+ const modules=validatedLocalBackupModules();
  const object={format:FORMAT,version:1,createdAt:new Date().toISOString(),modules};
- const contents=JSON.stringify(object,null,2),blob=new Blob([contents],{type:"application/json;charset=utf-8"}),url=URL.createObjectURL(blob);
+ const contents=JSON.stringify(object,null,2),blob=new Blob([contents],{type:"application/json;charset=utf-8"});
+ if(blob.size>800000)throw Error("This backup exceeds the 800 KB restore limit. Please save smaller code drafts before exporting.");
+ const url=URL.createObjectURL(blob);
  const a=document.createElement("a");a.href=url;a.download="lama-coding-academy-progress-"+new Date().toISOString().slice(0,10)+".json";
  document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);

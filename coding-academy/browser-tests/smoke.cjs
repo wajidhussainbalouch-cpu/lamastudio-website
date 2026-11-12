@@ -193,12 +193,14 @@ test("full backup, local erasure, review and verified restore",async(browser,ori
   assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52");
   const file={name:"lama-test-progress.json",mimeType:"application/json",buffer:content};
   await page.locator("#file").setInputFiles(file);
+  await page.waitForFunction(()=>!document.getElementById("confirm").disabled);
   assert.equal(await page.locator("#confirm").isEnabled(),true);
   assert.match(await page.locator("#restoreReview").textContent(),/Backup file: 3 \/ 52/);
   assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52","Preview must not write data.");
   await page.locator("#cancel").click();
   assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52");
   await page.locator("#file").setInputFiles(file);
+  await page.waitForFunction(()=>!document.getElementById("confirm").disabled);
   assert.equal(await page.locator("#confirm").isEnabled(),true);
   await page.locator("#confirm").click();
   assert.match(await page.locator("#status").textContent(),/restored successfully/);

@@ -62,7 +62,7 @@ function testList(items){
 function applyLanguage(){
   document.documentElement.lang=state.lang;
   const ids={brandSmall:"smallLabel",heroTitle:"title",heroIntro:"intro",statsLabel:"stat",onlineNote:"online",safetyNote:"notSafe",
-    industryLabel:"industry",hintLabel:"hint",codeLabel:"codeTitle",outputLabel:"programOutput",testsLabel:"testFeedback",quizLabel:"conceptTitle",
+    industryLabel:"industry",hintLabel:"hint",codeLabel:"codeTitle",outputLabel:"programOutput",testsLabel:"testFeedback",quizLabel:"conceptTitle",offlineAlternative:"offlineAlternative",
     run:"run",stop:"stop",complete:"complete",download:"download",restore:"restore",previous:"prev",next:"next"};
   Object.entries(ids).forEach(([id,key])=>{const el=byId(id);if(el)el.textContent=t(key);});
   byId("language").textContent=t("language");

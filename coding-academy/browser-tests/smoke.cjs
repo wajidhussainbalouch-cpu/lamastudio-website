@@ -113,7 +113,7 @@ test("desktop lessons and local draft persistence",async(browser,origin)=>{
   const passed=await page.evaluate(()=>JSON.parse(localStorage.getItem("lama-coding-academy-v1")));
   assert.equal(typeof passed.progress.h1,"string","Passing a lesson should save a completion timestamp.");
   await page.goto(insideApp(origin,"progress.html"));
-  assert.equal((await page.locator("#total").textContent()).trim(),"1 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"1 / 62");
   assert.equal(pageErrors.length,0,"Unexpected JavaScript errors: "+pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
@@ -127,7 +127,7 @@ test("browser progress totals and module navigation",async(browser,origin)=>{
   })));
   await page.goto(insideApp(origin,"progress.html"));
   await page.locator("#total").waitFor();
-  assert.equal((await page.locator("#total").textContent()).trim(),"1 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"1 / 62");
   assert.equal(await page.locator("#modules article").count(),4);
   await page.goto(insideApp(origin,"practice.html"));
   assert.ok(await page.locator("#challengeMenu button").count()>=6);
@@ -165,7 +165,7 @@ test("full backup, local erasure, review and verified restore",async(browser,ori
     localStorage.setItem("separate-lama-product","KEEP_OTHER_PROJECT_UNCHANGED");
   },snapshot);
   await page.reload();
-  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 62");
   const [download]=await Promise.all([
    page.waitForEvent("download"),
    page.locator("#export").click()
@@ -190,21 +190,21 @@ test("full backup, local erasure, review and verified restore",async(browser,ori
   assert.deepEqual(erased,[null,null,null,null],"Local erasure must remove all four academy records.");
   assert.equal(await page.evaluate(()=>localStorage.getItem("separate-lama-product")),"KEEP_OTHER_PROJECT_UNCHANGED");
   await page.goto(insideApp(origin,"progress.html"));
-  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 62");
   const file={name:"lama-test-progress.json",mimeType:"application/json",buffer:content};
   await page.locator("#file").setInputFiles(file);
   await page.waitForFunction(()=>!document.getElementById("confirm").disabled);
   assert.equal(await page.locator("#confirm").isEnabled(),true);
-  assert.match(await page.locator("#restoreReview").textContent(),/Backup file: 3 \/ 52/);
-  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52","Preview must not write data.");
+  assert.match(await page.locator("#restoreReview").textContent(),/Backup file: 3 \/ 62/);
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 62","Preview must not write data.");
   await page.locator("#cancel").click();
-  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 62");
   await page.locator("#file").setInputFiles(file);
   await page.waitForFunction(()=>!document.getElementById("confirm").disabled);
   assert.equal(await page.locator("#confirm").isEnabled(),true);
   await page.locator("#confirm").click();
   assert.match(await page.locator("#status").textContent(),/restored successfully/);
-  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 62");
   const restored=await page.evaluate(keys=>Object.fromEntries(
    keys.map(key=>[key,JSON.parse(localStorage.getItem(key))])
   ),Object.keys(snapshot));
@@ -216,7 +216,7 @@ test("full backup, local erasure, review and verified restore",async(browser,ori
   assert.equal(await page.locator("#confirm").isDisabled(),true);
   await page.waitForFunction(()=>document.getElementById("status").textContent.includes("Backup rejected"));
   assert.match(await page.locator("#status").textContent(),/Backup rejected/);
-  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 52");
+  assert.equal((await page.locator("#total").textContent()).trim(),"3 / 62");
   assert.equal(pageErrors.length,0,"Unexpected JavaScript errors: "+pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
@@ -365,7 +365,7 @@ test("installed PWA serves offline pages without caching auth recovery queries",
   await context.setOffline(true);
   await page.goto(insideApp(origin,"progress.html"));
   await page.locator("#total").waitFor();
-  assert.match((await page.locator("#total").textContent()).trim(),/\/ 52/);
+  assert.match((await page.locator("#total").textContent()).trim(),/\/ 62/);
   await page.goto(insideApp(origin,"diagnostics.html"));
   await page.getByRole("heading",{name:"Can this device learn to code?"}).waitFor();
   await context.setOffline(false);

@@ -6,7 +6,7 @@
 const FORMAT="lama-coding-academy-cloud-v1";
 const LIMIT=200000;
 const PARTS=[
- {id:"foundation",key:"lama-coding-academy-v1",label:"Foundations",total:12},
+ {id:"foundation",key:"lama-coding-academy-v1",label:"Foundations",total:22},
  {id:"practice",key:"lama-coding-practice-v2",label:"Industry practice",total:18},
  {id:"python",key:"lama-python-executable-v1",label:"Real Python",total:10},
  {id:"studio",key:"lama-coding-project-studio-v1",label:"Project Studio",total:12}
@@ -17,7 +17,7 @@ const SCHEMA={
  python:{selected:"string",drafts:"object",answers:"object",passed:"object",lang:"string"},
  studio:{project:"string",lang:"string",steps:"object",code:"object",checks:"object",reflection:"object"}
 };
-const FOUNDATION=["h1","p","link","semantic","css","layout","variable","click","functions","array","access","portfolio"];
+const FOUNDATION=["intro-browser","intro-html","intro-tags","intro-css","intro-js","intro-debug","h1","p","link","semantic","css","layout","variable","click","functions","array","form-fields","condition","objects","capstone","access","portfolio"];
 const PRACTICE=["js-fee","js-attendance","js-passing","js-stock","js-search","js-label","sql-select","sql-filter","sql-order","sql-stock","sql-count","sql-sum","py-print","py-variable","py-function","py-condition","py-loop","py-dictionary"];
 const PYTHON=["pyx-greetings","pyx-fees","pyx-grades","pyx-attendance","pyx-stock","pyx-average","pyx-clean","pyx-absent","pyx-grade-label","pyx-report"];
 const PROJECT_STEPS={
@@ -100,7 +100,7 @@ function counts(snapshot){
   PYTHON.filter(id=>plain(m.python?.passed?.[id])).length,
   Object.entries(PROJECT_STEPS).reduce((n,[p,steps])=>n+steps.filter(st=>m.studio?.checks?.[p]?.[st]?.reviewed===true).length,0)
  ];
- return {items:PARTS.map((p,i)=>({id:p.id,label:p.label,done:done[i],total:p.total})),done:done.reduce((a,b)=>a+b,0),total:52};
+ return {items:PARTS.map((p,i)=>({id:p.id,label:p.label,done:done[i],total:p.total})),done:done.reduce((a,b)=>a+b,0),total:62};
 }
 root.LAMA_CODING_CLOUD_CORE=Object.freeze({format:FORMAT,maxBytes:LIMIT,parts:PARTS,read,validate,apply,counts,sizeOf});
 })(typeof window!=="undefined"?window:globalThis);

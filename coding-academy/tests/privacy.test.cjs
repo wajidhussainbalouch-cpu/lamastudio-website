@@ -63,13 +63,13 @@ const result=vm.runInNewContext(account,{
 });
 assert.equal(byId("deleteAccount").disabled,true,"Account deletion is gated by disabled backend flag.");
 assert.equal(byId("upload").disabled,true,"Cloud sync must remain off.");
-assert.match(byId("localCount").textContent,/3 \/ 52/);
+assert.match(byId("localCount").textContent,/3 \/ 62/);
 // Guest learner can remove only the four Coding Academy stores with a real click.
 assert.ok(typeof byId("clearLocal").listeners.click==="function");
 byId("clearLocal").listeners.click();
 for(const part of win.LAMA_CODING_CLOUD_CORE.parts)
  assert.equal(storage.getItem(part.key),null,"Must erase local module "+part.id);
 assert.equal(storage.getItem("unrelated-auth-storage-key"),"keep this unrelated data","Do not clear unrelated app/session data.");
-assert.equal(byId("localCount").textContent,"0 / 52");
+assert.equal(byId("localCount").textContent,"0 / 62");
 assert.match(byId("eraseStatus").textContent,/Device learning data erased/);
 console.log("PASS: staged account deletion, password verification guards, learner privacy copy, guest-only local erasure, unrelated storage preservation.");

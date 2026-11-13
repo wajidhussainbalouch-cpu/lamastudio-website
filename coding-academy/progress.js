@@ -5,12 +5,12 @@
 "use strict";
 const FORMAT="lama-coding-academy-backup-v1";
 const MODULES=[
-  {key:"foundation",storage:"lama-coding-academy-v1",title:"Beginner Foundations",icon:"🌱",url:"./index.html",copy:"Start with HTML, CSS, JavaScript and beginner debugging.",total:12},
+  {key:"foundation",storage:"lama-coding-academy-v1",title:"Beginner Foundations",icon:"🌱",url:"./index.html",copy:"Start from zero: browser basics, HTML, CSS, JavaScript, debugging and mini apps.",total:22},
   {key:"practice",storage:"lama-coding-practice-v2",title:"Industry Practice",icon:"⚡",url:"./practice.html",copy:"JavaScript, SQL and Python syntax practice in small scenarios.",total:18},
   {key:"python",storage:"lama-python-executable-v1",title:"Executable Python",icon:"🐍",url:"./python.html",copy:"Run real Python functions and pass behavioral checks.",total:10},
   {key:"studio",storage:"lama-coding-project-studio-v1",title:"Project Studio",icon:"🏗️",url:"./studio.html",copy:"Create three practical projects through coached milestones.",total:12}
 ];
-const FOUNDATION=["h1","p","link","semantic","css","layout","variable","click","functions","array","access","portfolio"];
+const FOUNDATION=["intro-browser","intro-html","intro-tags","intro-css","intro-js","intro-debug","h1","p","link","semantic","css","layout","variable","click","functions","array","form-fields","condition","objects","capstone","access","portfolio"];
 const PRACTICE=["js-fee","js-attendance","js-passing","js-stock","js-search","js-label","sql-select","sql-filter","sql-order","sql-stock","sql-count","sql-sum","py-print","py-variable","py-function","py-condition","py-loop","py-dictionary"];
 const PYTHON=Array.isArray(window.LAMA_PYTHON_MISSIONS)?window.LAMA_PYTHON_MISSIONS.map(x=>x.id):[];
 const PROJECTS=Array.isArray(window.LAMA_STUDIO_PROJECTS)?window.LAMA_STUDIO_PROJECTS:[];

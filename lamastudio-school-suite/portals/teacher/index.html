@@ -134,6 +134,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
                     <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
                 </div>
             </div>
+            <p id="attendanceSyncStatus" class="text-xs text-amber-200 bg-amber-950/30 border border-amber-500/30 rounded-xl px-3 py-2" role="status" aria-live="polite">Loading saved attendance…</p>
             <div id="attendanceList" class="space-y-2"></div>
             <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
         </section>
@@ -230,6 +231,41 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
+let attendanceLoaded=false,attendanceLoadError='Saved attendance has not been verified.',attendanceSaving=false;
+function attendanceDay(raw){
+ const text=String(raw??'').trim();
+ if(/^\d{4}-\d{2}-\d{2}$/.test(text))return text;
+ if(/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)){
+  const d=new Date(text);if(Number.isNaN(d.getTime()))return '';
+  const zone=me.timezone||me.timeZone||me.schoolTimezone||'Asia/Karachi';
+  try{
+   const parts=new Intl.DateTimeFormat('en-GB',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+   const part=k=>parts.find(p=>p.type===k)?.value||'';
+   if(part('year')&&part('month')&&part('day'))return [part('year'),part('month'),part('day')].join('-');
+  }catch(e){console.warn('Invalid school attendance timezone',e)}
+  return '';
+ }
+ const legacy=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+ if(legacy)return [legacy[3],legacy[2].padStart(2,'0'),legacy[1].padStart(2,'0')].join('-');
+ return '';
+}
+const attendanceStatus=value=>{
+ const s=norm(value);
+ return ['present','p'].includes(s)?'Present':['absent','a'].includes(s)?'Absent':['leave','l','on leave'].includes(s)?'Leave':'';
+};
+function savedRowsFor(student,date,rows=attendance){
+ const sid=String(student?.id??student?._id??student?.studentId??'').trim();
+ if(!sid)return [];
+ return rows.filter(row=>String(row.studentId??row.studentID??'').trim()===sid&&attendanceDay(row.date)===date);
+}
+function currentDayDuplicates(date){
+ return myStudents.filter(student=>savedRowsFor(student,date).length>1);
+}
+function setAttendanceSyncStatus(text,bad=false){
+ const el=$('attendanceSyncStatus');if(!el)return;
+ el.textContent=text;
+ el.className='text-xs rounded-xl px-3 py-2 border '+(bad?'text-rose-200 bg-rose-950/30 border-rose-500/40':'text-emerald-100 bg-emerald-950/20 border-emerald-500/30');
+}
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}

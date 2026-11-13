@@ -330,6 +330,36 @@ async function refresh(){
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
 }
+/**
+ * After an attendance save, refresh ONLY the saved attendance list.
+ * A full dashboard refresh may still be in flight loading homework/notices:
+ * await it first, then read attendance again so we never verify stale rows.
+ */
+async function reloadSavedAttendance(){
+ if(refreshPromise){
+  try{await refreshPromise}catch(error){console.warn('Previous full refresh failed',error)}
+ }
+ attendanceLoaded=false;
+ attendanceLoadError='Reloading saved attendance for verification…';
+ loadAttendanceList();
+ try{
+  const rows=await Promise.race([
+   LamaAPI.list('attendance'),
+   new Promise((_,reject)=>setTimeout(()=>reject(Error('Saved attendance verification timed out after 20 seconds')),20000))
+  ]);
+  if(!Array.isArray(rows))throw Error('Attendance API returned an invalid register.');
+  attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId));
+  attendanceLoaded=true;
+  attendanceLoadError='';
+  renderAll();
+  return attendance;
+ }catch(error){
+  attendanceLoaded=false;
+  attendanceLoadError='Attendance reload could not be verified: '+error.message;
+  renderAll();
+  throw error;
+ }
+}
 function renderAll(){updateStats();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
 function renderStudentDirectory(){
  const el=$('studentDirectory');if(!el)return;
@@ -426,7 +456,7 @@ async function saveAttendance(){
   }
   // Re-read the server regardless of partial success or uncertainty. A
   // successful POST response is not by itself proof of saved attendance.
-  try{await refresh()}catch(error){
+  try{await reloadSavedAttendance()}catch(error){
    errors.push('Attendance reload failed: '+error.message);
   }
   if(!attendanceLoaded){

@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 11 (data restore and accessibility audit)
+# LAMA Coding Academy — MVP 12 (beginner-first lessons and line-by-line hints)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -7,7 +7,7 @@
 Take complete beginners from uncertainty to working, explainable code by repeating the **Dream → Understand → Edit → Run → Debug → Prove → Build** loop. Learners choose a long-term industry direction; they start with transferable web fundamentals and create portfolio evidence instead of only reading material.
 
 ## Present functionality
-- 12 original beginner labs from HTML through CSS, JavaScript, accessibility and portfolios.
+- 22 foundation lessons, including the 12 original HTML/CSS/JavaScript/portfolio labs plus 10 new beginner and advanced activities.
 - One-file HTML/CSS/JS editor and sandboxed iframe preview; no external execution service.
 - Small exercise pattern checks **plus** a correct concept question required before lesson completion. These are heuristics, not a full parser, code security scan or proctored assessment.
 - 6 career roadmaps (web, mobile, data/AI, automation, cybersecurity, games), honestly labeled as guides beyond the interactive web track.
@@ -307,3 +307,15 @@ Instructions for local execution: see `coding-academy/browser-tests/README.md`.
 - Added pinned axe-core test dependency (test-only), and two browser audits covering eight key Academy pages, checking serious/critical WCAG 2.0/2.1 A and AA findings. The first audit found a wide privacy table inaccessible to keyboard users. The table has a named focusable region and a clear keyboard focus outline.
 - The browser accessibility checks are automatic indicators, not a certification of WCAG compliance: manual keyboard-only navigation, screen readers, reduced motion, low-memory Android, contrast in different displays, and real-user feedback are still required.
 - No production site deployment, draft PR merge, cloud database change or real-account activation was made in Phase 11.
+
+## Phase 12 — Beginner-first Android update (13 November 2026)
+
+Based on the learner's Android screenshots, the academy now teaches web coding from zero. The current author-written course contains **22 ordered foundation lessons**, arranged as ten Beginner activities, six Intermediate activities, and six Advanced activities. Six lessons introduce browsers, HTML, opening/closing tags, CSS, JavaScript and debugging; four additional hands-on lessons teach labelled forms, if/else conditions, objects and a clickable counter. The original 12 foundation lessons remain available, and saved progress is preserved.
+
+The dashboard and every lesson now include a glossary: computer code, HTML, CSS, JavaScript, Python, SQL, Kotlin/Dart and debugging, with simple English and Urdu explanations. A new mobile-friendly editor gutter numbers every code line and marks suspected mistakes. Tapping the explanation for a line selects that line in the editor. For example, a learner typing the mistaken tag <My name is Wajid> sees why it is a tag attempt rather than paragraph text; the checker suggests <p>My name is Wajid</p>. It also catches some missing tag closures and CSS/JavaScript bracket mistakes. This is a teaching heuristic, not a full compiler, browser validator or security check.
+
+All **62 learning activities** are accounted for: 22 foundation + 18 industry practice + 10 real Python + 12 project milestones. The local backup format and previous localStorage keys remain supported. Cloud accounts are still disabled.
+
+The v0.12 owner-testing Android APK has a new package ID so it can be installed **alongside** the previous v0.11 test APK without erasing the older app's on-device data. These two builds do not automatically share progress; voluntary JSON backup/restore may be used if supported on the device. All new glossary and checker files are packaged offline. The real Python interpreter remains an optional large CDN download.
+
+The GitHub Actions checks include a new beginner content/diagnostics suite, Chromium UI regression for locked levels and line-specific hint correction, and the Android debug APK build. Physical Android usability remains to be tested and verified before any production approval. No live website merge/deployment or new cloud data service was performed.

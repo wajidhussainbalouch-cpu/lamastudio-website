@@ -34,7 +34,7 @@ for(const mission of missions){
 const foundationMatch=foundationHtml.match(/var lessons=\[([\s\S]*?)\];\s*var defaults/);
 assert.ok(foundationMatch,"Foundation lesson catalog available");
 const foundations=[...foundationMatch[1].matchAll(/\bid:'([^']+)'/g)].map(x=>x[1]);
-assert.equal(foundations.length,12);
+assert.equal(foundations.length,22);
 const practiceMatch=practice.match(/const tracks=\{([\s\S]*?)\};\s*const safe=/);
 assert.ok(practiceMatch,"Practice lesson catalog available");
 const exercises=[...practiceMatch[1].matchAll(/\bid:'([^']+)'/g)].map(x=>x[1]);
@@ -71,7 +71,7 @@ const context={document,window:windowData,navigator:{},localStorage,
   Blob,URL:{createObjectURL(blob){lastBlob=blob;return "blob:testing";},revokeObjectURL(){}},
   setTimeout(){},Date,confirm:()=>true,console};
 vm.runInNewContext(progress,context);
-assert.equal(get("total").textContent,"52 / 52");
+assert.equal(get("total").textContent,"62 / 62");
 assert.equal(get("overall").attributes["aria-valuenow"],"100");
 (async()=>{
   get("export").fire("click");
@@ -89,13 +89,13 @@ assert.equal(get("overall").attributes["aria-valuenow"],"100");
   await get("file").fire("change");
   assert.equal(get("confirm").disabled,false);
   assert.equal(get("previewSection").hidden,false);
-  assert.equal(get("total").textContent,"52 / 52","No changes before explicit confirmation");
+  assert.equal(get("total").textContent,"62 / 62","No changes before explicit confirmation");
   get("cancel").fire("click");
-  assert.equal(get("total").textContent,"52 / 52","Cancel preserves progress");
+  assert.equal(get("total").textContent,"62 / 62","Cancel preserves progress");
   get("file").files=[{size:5000,text:async()=>JSON.stringify(replacement)}];
   await get("file").fire("change");
   get("confirm").fire("click");
-  assert.equal(get("total").textContent,"1 / 52","Confirmed restore updates counts");
+  assert.equal(get("total").textContent,"1 / 62","Confirmed restore updates counts");
   assert.equal(localStorage.getItem("lama-python-executable-v1"),null);
   assert.equal(JSON.parse(localStorage.getItem("lama-coding-academy-v1")).progress.h1,true);
   // Malformed and suspicious backups must not change storage.
@@ -103,12 +103,12 @@ assert.equal(get("overall").attributes["aria-valuenow"],"100");
   get("file").files=[{size:2000,text:async()=>JSON.stringify(bad)}];
   await get("file").fire("change");
   assert.equal(get("confirm").disabled,true);
-  assert.equal(get("total").textContent,"1 / 52");
+  assert.equal(get("total").textContent,"1 / 62");
   const huge={...backup,modules:{...backup.modules,python:{drafts:{x:"A".repeat(90001)}}}};
   get("file").files=[{size:2500,text:async()=>JSON.stringify(huge)}];
   await get("file").fire("change");
   assert.equal(get("confirm").disabled,true);
-  assert.equal(get("total").textContent,"1 / 52");
+  assert.equal(get("total").textContent,"1 / 62");
   // Corrupted local data must NOT be silently exported as a blank module.
   const intactFoundation=localStorage.getItem("lama-coding-academy-v1");
   const safeBlob=lastBlob;
@@ -128,5 +128,5 @@ assert.equal(get("overall").attributes["aria-valuenow"],"100");
   get("export").fire("click");
   assert.notEqual(lastBlob,safeBlob,"A corrected record should export normally again.");
   assert.equal(JSON.parse(await lastBlob.text()).modules.foundation.progress.h1,true);
-  console.log("PASS: 52 counts, Urdu Python, export, safe backup preview/cancel/restore, and corrupt-local export refusal.");
+  console.log("PASS: 62 counts, Urdu Python, export, safe backup preview/cancel/restore, and corrupt-local export refusal.");
 })().catch(error=>{console.error(error);process.exitCode=1;});

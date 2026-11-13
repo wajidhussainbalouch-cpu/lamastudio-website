@@ -79,6 +79,11 @@ function q11School_(schoolId){
   if(!match||match.obj.status!=='Active')throw Error('School is unavailable.');
   return match;
 }
+function q11StudentId_(value){
+  var id=String(value||'').trim();
+  if(!/^[a-zA-Z0-9_-]{1,90}$/.test(id))throw Error('Invalid student ID.');
+  return id;
+}
 function q11StrongPassword_(password,student){
   if(typeof password!=='string'||password.length<12||password.length>128)throw Error('Password must be 12–128 characters.');
   if(String(password)===String(student.enrlNo)||String(password).toLowerCase()===String(student.name||'').toLowerCase())throw Error('Choose a stronger password.');
@@ -92,7 +97,7 @@ function q11Provision_(p){
   if(p.studentIdentityVerified!==true||['in-person','verified-school-record'].indexOf(String(p.verificationMethod))===-1)
     throw Error('Administrator must verify learner identity before credential change.');
   assertSchoolWritable(p.schoolId);
-  var id=quranV8Id_(p.targetStudentId,'student ID'),lock=LockService.getScriptLock();
+  var id=q11StudentId_(p.targetStudentId),lock=LockService.getScriptLock();
   lock.waitLock(20000);
   try{
     var info=q11Sheet_(match,true),found=q11Find_(info,'id',id);

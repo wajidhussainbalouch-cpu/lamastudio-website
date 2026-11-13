@@ -234,6 +234,73 @@ test("original question bank: ten-question coding round, explanations, missed re
   assert.equal(pageErrors.length,0,"Unexpected quiz JavaScript errors: "+pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
+test("question-score backup, erase, preview/cancel, restore and corrupt import",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:390,height:844});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"quiz.html"));
+  await page.evaluate(()=>{
+   const core=window.LAMA_QUESTION_CORE,bank=window.LAMA_CODING_QUESTIONS;
+   const state=core.createState();
+   core.record(state,bank.items[0],true);
+   core.record(state,bank.items[1],false);
+   core.record(state,bank.items[2],true);
+   state.selection={track:"html",level:1};
+   state.rounds["html-1"]=1;
+   state.history.push({track:"html",level:1,score:2});
+   core.save(localStorage,state);
+   localStorage.setItem("lama-coding-academy-v1",'{"sentinel":"KEEP_LESSON_PROGRESS"}');
+   localStorage.setItem("some-other-lama-product","KEEP_OTHER_PRODUCT");
+  });
+  await page.reload();
+  assert.equal(await page.locator("#answered").textContent(),"3");
+  assert.equal(await page.locator("#missed").textContent(),"1");
+  const [download]=await Promise.all([
+   page.waitForEvent("download"),
+   page.locator("#quizExport").click()
+  ]);
+  assert.match(download.suggestedFilename(),/^lama-coding-question-scores-\d{4}-\d{2}-\d{2}\.json$/);
+  const bytes=fs.readFileSync(await download.path());
+  const exported=JSON.parse(bytes.toString("utf8"));
+  assert.equal(exported.format,"lama-coding-questions-backup-v1");
+  assert.equal(exported.version,1);
+  assert.equal(Object.keys(exported.state.stats).length,3);
+  assert.equal(exported.state.history.length,1);
+  assert.equal(await page.locator("#quizBackupReview").textContent(),"","Backup is not pending before import.");
+  page.on("dialog",dialog=>dialog.accept());
+  await page.locator("#quizBackupSection details summary").click();
+  await page.locator("#quizClear").click();
+  assert.equal(await page.locator("#answered").textContent(),"0");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("lama-coding-academy-v1")),
+   '{"sentinel":"KEEP_LESSON_PROGRESS"}');
+  assert.equal(await page.evaluate(()=>localStorage.getItem("some-other-lama-product")),"KEEP_OTHER_PRODUCT");
+  const file={name:"lama-coding-question-scores-demo.json",mimeType:"application/json",buffer:bytes};
+  await page.locator("#quizBackupFile").setInputFiles(file);
+  await page.waitForFunction(()=>!document.getElementById("quizConfirm").disabled);
+  assert.match(await page.locator("#quizBackupReview").textContent(),/Selected backup: 3 checked answers/);
+  assert.match(await page.locator("#quizBackupReview").textContent(),/Current on this phone: 0 checked answers/);
+  assert.equal(await page.locator("#answered").textContent(),"0","Preview must not write local scores.");
+  await page.locator("#quizCancel").click();
+  assert.equal(await page.locator("#answered").textContent(),"0");
+  assert.equal(await page.locator("#quizConfirm").isDisabled(),true);
+  await page.locator("#quizBackupFile").setInputFiles(file);
+  await page.waitForFunction(()=>!document.getElementById("quizConfirm").disabled);
+  await page.locator("#quizConfirm").click();
+  assert.equal(await page.locator("#answered").textContent(),"3");
+  assert.equal(await page.locator("#missed").textContent(),"1");
+  await page.reload();
+  assert.equal(await page.locator("#answered").textContent(),"3","Restored scores must survive refresh.");
+  assert.equal(await page.locator("#track").inputValue(),"html");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("some-other-lama-product")),"KEEP_OTHER_PRODUCT");
+  await page.locator("#quizBackupFile").setInputFiles({
+   name:"not-an-academy-backup.json",mimeType:"application/json",buffer:Buffer.from('{"format":"other-app"}')
+  });
+  await page.waitForFunction(()=>document.getElementById("quizBackupStatus").textContent.includes("Backup rejected"));
+  assert.equal(await page.locator("#quizConfirm").isDisabled(),true);
+  assert.equal(await page.locator("#answered").textContent(),"3");
+  assert.equal(pageErrors.length,0,"Unexpected quiz backup browser error: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("browser progress totals and module navigation",async(browser,origin)=>{
  const view=await browserPage(browser,{width:1280,height:800});
  try{

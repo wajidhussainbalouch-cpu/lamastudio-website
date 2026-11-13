@@ -78,4 +78,27 @@ const before=store.getItem(core.KEY);
 const brokenStorage={setItem(){throw Error("Browser quota exceeded");}};
 assert.throws(()=>b.restore(brokenStorage,imported.state),/quota/i);
 assert.equal(store.getItem(core.KEY),before,"Failed storage write must not remove or alter actual record.");
-console.log("PASS: portable 150-question backups, strict schema/size guards, non-mutating preview, exact restore and unrelated-LAMA data isolation.");
+// Boot the actual learner-facing quiz.js in a minimal synthetic DOM. This
+// catches accidental top-level JavaScript expressions that syntax-only checks
+// and individual pure-function tests would otherwise miss.
+const nodes=new Map();
+function node(id){
+ if(!nodes.has(id))nodes.set(id,{
+  id,textContent:"",value:"",hidden:false,disabled:false,dataset:{},
+  addEventListener(){},querySelectorAll(){return [];},
+  replaceChildren(){},setAttribute(){},scrollIntoView(){},append(){},
+  style:{}
+ });
+ return nodes.get(id);
+}
+const quizContext={window:env.window,
+ document:{getElementById:node},localStorage:store,
+ console,setTimeout,clearTimeout,URL,Blob,confirm:()=>false};
+assert.doesNotThrow(()=>vm.runInNewContext(
+ fs.readFileSync(path.join(root,"quiz.js"),"utf8"),quizContext
+),"Actual quiz page must initialize successfully with restored scores.");
+assert.equal(node("answered").textContent,"2");
+assert.equal(node("missed").textContent,"1");
+assert.equal(node("track").value,"html");
+console.log("PASS: portable quiz backups, strict import safety, independent data protection and full quiz.js startup.");
+

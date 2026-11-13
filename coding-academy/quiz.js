@@ -203,7 +203,7 @@ el("next").addEventListener("click",()=>{
 for(const sel of [track,level]){
  sel.addEventListener("change",()=>{state.selection={track:track.value,level:Number(level.value)};persist();el("storageWarning").textContent="";});
 }
-s// Separate, explicit question-score backup flow. Never reads/writes code drafts,
+// Separate, explicit question-score backup flow. Never reads/writes code drafts,
 // auth state, school data, or other modules. Do not accept invalid/oversized JSON.
 const backup=window.LAMA_QUIZ_BACKUP;
 let pendingRestore=null,uploadTicket=0;

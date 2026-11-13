@@ -51,7 +51,7 @@ const el=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const loginPage='../../students/student-login.html';
 function validImage(v){try{const u=new URL(String(v),location.href);return ['https:','http:'].includes(u.protocol)||/^data:image\/(png|jpeg|webp);base64,/i.test(String(v));}catch{return /^data:image\/(png|jpeg|webp);base64,/i.test(String(v));}}
-el('logout').addEventListener('click',()=>{LamaAPI.logout('student');location.replace('../../main-dashboard.html')});
+el('logout').addEventListener('click',async()=>{try{await LamaAPI.studentLogoutV11();location.replace('../../main-dashboard.html')}catch(e){alert('Could not verify server sign-out: '+e.message+' Please try again.')}});
 function closePreview(){el('previewOverlay').classList.add('hidden');el('previewOverlay').classList.remove('flex');el('print').focus();}
 el('print').addEventListener('click',()=>{location.href='../../identity-cards.html?role=student';});
 el('closePreview').addEventListener('click',closePreview);

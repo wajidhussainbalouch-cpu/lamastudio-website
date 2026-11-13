@@ -42,7 +42,7 @@ const store=new Map();
 const storage={getItem:key=>store.has(key)?store.get(key):null,setItem:(key,v)=>store.set(key,String(v)),removeItem:key=>store.delete(key)};
 const starter=core.read(storage);
 assert.equal(core.counts(starter).done,0);
-assert.equal(core.counts(starter).total,52);
+assert.equal(core.counts(starter).total,62);
 assert.equal(Object.keys(starter.modules).length,4);
 const completed={
  foundation:{goal:"web",progress:{h1:true,p:true},drafts:{h1:"<h1>Hello</h1>"},name:"Test Learner"},
@@ -54,7 +54,7 @@ for(const part of core.parts)storage.setItem(part.key,JSON.stringify(completed[p
 const snap=core.read(storage);
 const counts=core.counts(snap);
 assert.equal(counts.done,6);
-assert.equal(counts.total,52);
+assert.equal(counts.total,62);
 assert.equal(snap.modules.python.lang,"ur");
 assert.ok(core.sizeOf(snap)<core.maxBytes);
 const remote=JSON.parse(JSON.stringify(snap));
@@ -96,5 +96,5 @@ assert.match(get("configStatus").textContent,/not activated/i);
 assert.equal(get("authSubmit").disabled,true);
 assert.equal(get("upload").disabled,true);
 assert.equal(get("refresh").disabled,true);
-assert.match(get("localCount").textContent,/8 \/ 52/);
-console.log("PASS: per-module validation, 52 scoring, safe local restore/rollback, RLS SQL, optional account disabled by default.");
+assert.match(get("localCount").textContent,/8 \/ 62/);
+console.log("PASS: per-module validation, 62 scoring, safe local restore/rollback, RLS SQL, optional account disabled by default.");

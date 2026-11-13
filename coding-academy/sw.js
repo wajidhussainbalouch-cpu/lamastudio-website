@@ -3,8 +3,8 @@
  * or any dynamic request in the service-worker cache.
  * External Pyodide CDN resources are intentionally outside this scope.
  */
-const CACHE = 'lama-coding-academy-v9';
-const ASSETS = ['./', './index.html', './icon.svg', './manifest.webmanifest', './practice.html', './practice.js', './studio.html', './studio.js', './projects-data.js', './python.html', './python-app.js', './python-lessons.js', './python-runner.mjs', './python-harness.py', './python-i18n.js', './progress.html', './progress.js', './account.html', './account.js', './cloud-config.js', './cloud-core.js', './privacy.html', './diagnostics.html', './diagnostics.js'];
+const CACHE = 'lama-coding-academy-v10';
+const ASSETS = ['./', './index.html', './icon.svg', './manifest.webmanifest', './beginner-coach.js', './beginner-ui.js', './beginner-ui.css', './practice.html', './practice.js', './studio.html', './studio.js', './projects-data.js', './python.html', './python-app.js', './python-lessons.js', './python-runner.mjs', './python-harness.py', './python-i18n.js', './progress.html', './progress.js', './account.html', './account.js', './cloud-config.js', './cloud-core.js', './privacy.html', './diagnostics.html', './diagnostics.js'];
 const SCOPE = new URL('./', self.location.href);
 const STATIC_ASSETS = new Set(ASSETS.map(asset => new URL(asset, SCOPE).href));
 

@@ -16,6 +16,9 @@ function quranV8Guard_(p){
  if(list.indexOf(schoolId)<0)throw Error('Quran integration not enabled for this school.');
  var role=String(p.role||'');
  if(role==='parent'||role==='guardian')throw Error('Guardian verification unavailable. Access denied.');
+ // Version 11: legacy student passwords and static student API keys require migration.
+ // No student API access in the supervised pilot until a new authenticated flow is reviewed.
+ if(role==='student')throw Error('Student Quran pilot access is paused pending secure student authentication.');
  if(role==='school'){
   var actor=verifySchoolAdminToken(p);
   var match=findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===schoolId;});

@@ -179,6 +179,13 @@ test("original question bank: ten-question coding round, explanations, missed re
    });
    if(item.mode==="build"){
     build++;
+    const offered=await page.locator("#options button[data-token]").evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.token)));
+    assert.equal(offered.length,item.parts.length);
+    assert.equal(new Set(offered).size,item.parts.length);
+    assert.equal(item.answer.every((token,n)=>offered[n]===token),false,
+      "Tap-to-build puzzle pieces must arrive shuffled, not pre-solved.");
+    if(item.example)assert.equal(await page.locator("#example").isHidden(),true,
+      "The full example must not reveal a code-building answer before submission.");
     const answerIndices=i===0?[...item.answer].reverse():item.answer;
     for(const pos of answerIndices)await page.locator('#options button[data-token="'+pos+'"]').click();
    }else{
@@ -208,9 +215,21 @@ test("original question bank: ten-question coding round, explanations, missed re
   assert.equal(await page.locator("#prompt").textContent(),
    await page.evaluate(id=>window.LAMA_CODING_QUESTIONS.items.find(x=>x.id===id).prompt,firstMissedId),
    "The next review round should start with the missed question.");
+  // A correct retry removes the question from the live mistake list.
+  const retry=await page.evaluate(id=>window.LAMA_CODING_QUESTIONS.items.find(x=>x.id===id),firstMissedId);
+  if(retry.mode==="build"){
+   for(const position of retry.answer)
+    await page.locator('#options button[data-token="'+position+'"]').click();
+  }else{
+   await page.locator('#options button[data-choice="'+retry.answer+'"]').click();
+  }
+  await page.locator("#check").click();
+  assert.match(await page.locator("#feedback").textContent(),/Correct!/);
+  assert.equal(await page.locator("#missed").textContent(),"0",
+    "A correctly answered mistake must leave the review queue.");
   await page.reload();
-  assert.equal(await page.locator("#answered").textContent(),"10","Scores should persist after refresh.");
-  assert.equal(await page.locator("#missed").textContent(),"1");
+  assert.equal(await page.locator("#answered").textContent(),"11","Scores should persist after refresh.");
+  assert.equal(await page.locator("#missed").textContent(),"0");
   await assertNoOverflow(page,"quiz bank after reload");
   assert.equal(pageErrors.length,0,"Unexpected quiz JavaScript errors: "+pageErrors.join(" | "));
  }finally{await cleanup(view);}

@@ -22,7 +22,7 @@ const idsPractice=[...practiceMatch[1].matchAll(/\bid:'([^']+)'/g)].map(x=>x[1])
 const idsPython=py.map(x=>x.id);
 const idsProjects=projects.flatMap(p=>p.steps.map(s=>p.id+"/"+s.id));
 const lengths=[idsFoundation,idsPractice,idsPython,idsProjects].map(arr=>arr.length);
-assert.deepEqual(lengths,[12,18,10,12],"Actual catalog activity totals must remain 52");
+assert.deepEqual(lengths,[22,18,10,12],"Actual catalog activity totals must remain 62");
 for(const ids of [idsFoundation,idsPractice,idsPython,idsProjects]){
  assert.equal(new Set(ids).size,ids.length,"No duplicated module/step IDs");
 }
@@ -36,7 +36,7 @@ function snapshot(){return {format:core.format,version:1,modules:JSON.parse(JSON
 function count(){return core.counts(snapshot());}
 assert.equal(count().done,0,"Zero completions initially");
 for(const id of idsFoundation)modules.foundation.progress[id]=true;
-assert.equal(count().items[0].done,12,"Foundation IDs must match");
+assert.equal(count().items[0].done,22,"Foundation IDs must match");
 for(const id of idsPractice)modules.practice.passed[id]=true;
 assert.equal(count().items[1].done,18,"Practice IDs must match");
 for(const id of idsPython)modules.python.passed[id]={at:"2026-11-10"};
@@ -46,8 +46,8 @@ for(const p of projects){
  for(const step of p.steps)modules.studio.checks[p.id][step.id]={reviewed:true,checkedAt:"2026-11-10"};
 }
 const full=count();
-assert.equal(full.done,52,"All real lessons must reach 52/52");
-assert.deepEqual(Array.from(full.items,x=>x.done),[12,18,10,12]);
+assert.equal(full.done,62,"All real lessons must reach 62/62");
+assert.deepEqual(Array.from(full.items,x=>x.done),[22,18,10,12]);
 modules.studio.checks[projects[0].id][projects[0].steps[0].id].reviewed=false;
 assert.equal(count().done,51,"An unreviewed portfolio milestone cannot be counted");
 modules.studio.checks[projects[0].id][projects[0].steps[0].id].reviewed=true;
@@ -68,7 +68,7 @@ const browser={
  removeItem:key=>stored.delete(key)
 };
 core.apply(browser,snapshot());
-assert.equal(core.counts(core.read(browser)).done,52);
+assert.equal(core.counts(core.read(browser)).done,62);
 assert.equal(JSON.stringify(core.read(browser).modules.studio.checks),JSON.stringify(modules.studio.checks));
 assert.equal(core.read(browser).modules.python.lang,"ur");
 assert.equal(core.read(browser).modules.foundation.name,"Test Learner");
@@ -79,4 +79,4 @@ const nested=snapshot();nested.modules.practice.drafts={safe:{"__proto__":"not a
 // A JSON parsed own __proto__ property is explicitly dangerous, and must be rejected.
 nested.modules.practice.drafts={safe:JSON.parse('{"__proto__":{"isAdmin":true}}')};
 assert.throws(()=>core.validate(nested),/invalid field/i);
-console.log("PASS: Real 12+18+10+12 catalogs match cloud scoring, reviewed milestones, local backup roundtrip and malicious input rejection.");
+console.log("PASS: Real 22+18+10+12 catalogs match cloud scoring, reviewed milestones, local backup roundtrip and malicious input rejection.");

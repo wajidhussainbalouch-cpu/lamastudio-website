@@ -959,13 +959,15 @@ function getCollectionSheet(ctx, collection) {
     return { sheet, headers: actualHeaders };
 }
 
-/** v11 pilot: never include student login secrets in generic API responses.
- * Login endpoints are unchanged pending replacement of legacy student auth.
- * This is defense-in-depth, NOT a password-storage migration. */
+/** v11 pilot: generic student/teacher collection responses must not expose
+ * authentication secrets. Does not change stored rows or login endpoints.
+ * This is defense-in-depth, NOT a student password-storage migration. */
 function quranV11PublicRecord_(collection,record) {
-    if (!record || collection !== 'students') return record;
+    if (!record || (collection !== 'students' && collection !== 'teachers')) return record;
     const safe=Object.assign({},record);
-    ['password','apiKey','passwordHash','passwordSalt','salt','resetToken','recoveryToken','sessionToken'].forEach(function(field){delete safe[field];});
+    ['password','apiKey','passwordHash','passwordSalt','salt','resetToken',
+     'recoveryToken','sessionToken','accessToken','refreshToken','authToken','secret']
+      .forEach(function(field){delete safe[field];});
     return safe;
 }
 

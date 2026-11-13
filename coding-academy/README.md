@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 12 (beginner-first lessons and line-by-line hints)
+# LAMA Coding Academy — MVP 13 (150 original practice questions and code puzzles)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -319,3 +319,27 @@ All **62 learning activities** are accounted for: 22 foundation + 18 industry pr
 The v0.12 owner-testing Android APK has a new package ID so it can be installed **alongside** the previous v0.11 test APK without erasing the older app's on-device data. These two builds do not automatically share progress; voluntary JSON backup/restore may be used if supported on the device. All new glossary and checker files are packaged offline. The real Python interpreter remains an optional large CDN download.
 
 The GitHub Actions checks include a new beginner content/diagnostics suite, Chromium UI regression for locked levels and line-specific hint correction, and the Android debug APK build. Physical Android usability remains to be tested and verified before any production approval. No live website merge/deployment or new cloud data service was performed.
+
+
+## Phase 13 — Original coding question bank and mobile practice (13 November 2026)
+
+**Research-informed, independent implementation.** See [LEARNING-APP-RESEARCH.md](./LEARNING-APP-RESEARCH.md) for a sourced comparison of the discontinued Google Grasshopper app, Mimo, Sololearn, Khan Academy and freeCodeCamp. The academy uses the broadly useful interaction patterns (short concept, immediate question, code-piece puzzle, clear explanation, repeat missed knowledge) without copying competitor questions or assets.
+
+### New practice content
+
+- New **150-question original question bank**: 5 subjects (HTML, CSS, JavaScript, Python, SQL) × 3 levels (Beginner, Intermediate, Advanced) × 10 questions each.
+- 85 choose-one concept questions, **35 predict-the-output/behavior exercises** and **30 tappable code-building puzzles**. Every authored item includes why the correct answer works; many include a short original code example.
+- Learners select a subject or Mixed subjects and complete **10-question micro-rounds** without a timer, paywall, limited lives or mandatory login. A round checks each answer and displays the correct explanation immediately.
+- Mixed rounds prioritize unseen questions. A Review missed action reintroduces questions the learner struggled with, followed by other practice as needed. Sessions and per-question attempts are saved **only on the device** under the new `lama-coding-questions-v1` key.
+- The question bank is separate from the existing **62 completed hands-on activities** and does not silently change the academy's four-module progress format or claim to be a certification.
+- Navigation links from the academy dashboard, within every foundation lesson and from My Journey open the practice. New files are allowlisted in the PWA v11 offline cache and bundled in the test-only Android app.
+- The quiz does not execute learner input, issue real SQL queries or run arbitrary Python. Original syntax puzzles are plain text.
+- Added `tests/quiz.test.cjs` to validate all 150 authored items, distributions, solution indices, unique IDs, local counters and missed review. Real Chromium tests exercise ten actual questions end-to-end, including the code-piece interface and round results, mobile widths, accessibility and offline availability.
+
+### Android test build
+
+**LAMA Code TEST v13** is a separate APK with package identifier `pk.lamastudio.codingacademy.testing.v13`. It can be installed beside the previous v11/v12 test packages so none of their existing local progress is overwritten or automatically migrated. It contains the original HTML/CSS/JS/Python/SQL question practice and has a permanent TEST BUILD banner. All APK and browser testing is performed from the GitHub feature branch; production remains unmerged.
+
+### Future content work
+
+This release adds real curated questions, not an infinite AI-generated catalog. Expand further only after reviewing learner difficulty and answer ambiguity, ideally with Urdu versions of each question and more authentic sandboxed code-tracing challenges. No claim of equivalent learning outcomes to Grasshopper or another education provider is made.

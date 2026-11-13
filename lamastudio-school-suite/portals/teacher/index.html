@@ -231,7 +231,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
-let attendanceLoaded=false,attendanceLoadError='Saved attendance has not been verified.',attendanceSaving=false;
+let attendanceLoaded=false,attendanceLoadError='Saved attendance has not been verified.',attendanceSaving=false,attendanceWriteHold=false;
 function attendanceDay(raw){
  const text=String(raw??'').trim();
  if(/^\d{4}-\d{2}-\d{2}$/.test(text))return text;
@@ -358,11 +358,12 @@ function showStudentRecord(id){
 }
 function loadAttendanceList(){
  const day=$('attDate').value,el=$('attendanceList'),duplicates=attendanceLoaded?currentDayDuplicates(day):[];
- const locked=!attendanceLoaded||attendanceSaving||!!duplicates.length;
+ const locked=!attendanceLoaded||attendanceSaving||attendanceWriteHold||!!duplicates.length;
  const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
  if(saveButton)saveButton.disabled=locked;
  $('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);
- if(!attendanceLoaded)setAttendanceSyncStatus(attendanceLoadError||'Saved attendance not verified. Saving is disabled.',true);
+ if(attendanceWriteHold)setAttendanceSyncStatus('⚠ Previous attendance save could not be fully verified. Editing is locked for this session; ask your school administrator to check Google Sheets before submitting another save.',true);
+ else if(!attendanceLoaded)setAttendanceSyncStatus(attendanceLoadError||'Saved attendance not verified. Saving is disabled.',true);
  else if(duplicates.length)setAttendanceSyncStatus('⚠ '+duplicates.length+' student(s) have multiple saved attendance rows for '+day+'. Saving is locked. Ask the school administrator to back up and reconcile the records.',true);
  else setAttendanceSyncStatus('Saved register verified for '+day+'. '+myStudents.length+' students in your assigned class.',false);
  el.innerHTML=myStudents.map(s=>{
@@ -371,11 +372,11 @@ function loadAttendanceList(){
   return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span>${note}</span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" ${locked?'disabled aria-disabled="true"':''} onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`;
  }).join('');
 }
-function setAttStatus(btn,status){if(!attendanceLoaded||attendanceSaving||currentDayDuplicates($('attDate').value).length){message('Saved register must be verified and free of duplicates before editing.');return}const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
+function setAttStatus(btn,status){if(!attendanceLoaded||attendanceSaving||attendanceWriteHold||currentDayDuplicates($('attDate').value).length){message('Saved register must be verified and free of duplicates before editing.');return}const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
 async function saveAttendance(){
  if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment.');
  const day=$('attDate').value;
- if(!day||!attendanceLoaded||attendanceSaving){
+ if(!day||!attendanceLoaded||attendanceSaving||attendanceWriteHold){
   message('Saved attendance has not been verified. Refresh the register before saving; no changes were sent.');
   return;
  }
@@ -429,6 +430,7 @@ async function saveAttendance(){
    errors.push('Attendance reload failed: '+error.message);
   }
   if(!attendanceLoaded){
+   attendanceWriteHold=true;
    message('Save result uncertain: the attendance register could not be reloaded and verified. Do not submit again. '+(attendanceLoadError||errors.join(' | ')));
    return;
   }
@@ -438,6 +440,7 @@ async function saveAttendance(){
   });
   const duplicatesAfter=currentDayDuplicates(day);
   if(errors.length||mismatch.length||duplicatesAfter.length||accepted.length!==changes.length){
+   attendanceWriteHold=true;
    const problems=[
     errors.length?errors.slice(0,2).join(' | '):'',
     mismatch.length?mismatch.length+' record(s) not confirmed after reload':'',
@@ -446,6 +449,7 @@ async function saveAttendance(){
    message('Attendance save NOT fully verified. '+accepted.length+'/'+changes.length+' responses received. '+(problems||'Some records remain uncertain')+'. Do not resubmit; ask the administrator to compare Google Sheets.');
    return;
   }
+  attendanceWriteHold=false;
   message('✓ Attendance saved successfully and verified in Google Sheets for '+day+': '+accepted.length+' changed student record(s).');
  }finally{
   attendanceSaving=false;
@@ -471,8 +475,8 @@ function selectAllPassing(){document.querySelectorAll('.promote-check-teacher').
 function selectNonePromote(){document.querySelectorAll('.promote-check-teacher').forEach(x=>x.checked=false);updatePromoteCount()}
 async function promoteMyClass(){message('Promotion is restricted to school administrators to protect enrollment history and prevent accidental record changes. Please use the admin promotion workflow.')}
 async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',loadAttendanceList);try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
-window.addEventListener('focus',()=>{if(me.schoolId)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId&&!attendanceSaving)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
+window.addEventListener('focus',()=>{if(me.schoolId&&!attendanceSaving)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 init();
     </script>
     <style>

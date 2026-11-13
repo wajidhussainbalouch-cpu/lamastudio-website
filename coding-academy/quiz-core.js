@@ -61,13 +61,36 @@ function pick(catalog,state,track,level,review=false){
   const aSeen=attempts(a),bSeen=attempts(b);
   return aSeen-bSeen || failures(b)-failures(a) || cyclicIndex(a)-cyclicIndex(b) || a.id.localeCompare(b.id);
  };
- const first=missed.sort((a,b)=>failures(b)-failures(a)||order(a,b));
- const chosen=[...first.slice(0,SET_SIZE)];
- const taken=new Set(chosen.map(x=>x.id));
- for(const q of pool.filter(x=>!taken.has(x.id)).sort(order)){
-  if(chosen.length>=SET_SIZE)break;
-  chosen.push(q);
+ const priority=missed.sort((a,b)=>failures(b)-failures(a)||order(a,b));
+ if(track!=="mixed"){
+  const chosen=priority.slice(0,SET_SIZE),taken=new Set(chosen.map(x=>x.id));
+  for(const q of pool.filter(x=>!taken.has(x.id)).sort(order)){
+   if(chosen.length>=SET_SIZE)break;
+   chosen.push(q);
+  }
+  return chosen;
  }
+ // A mixed ten-question round should teach *all five* subjects, not
+ // accidentally group ten HTML or SQL questions because of ID sort order.
+ const languages=catalog.tracks.map(t=>t.id);
+ const chosen=[],taken=new Set();
+ function fillRoundRobin(remaining){
+  const buckets=new Map(languages.map(id=>[id,remaining.filter(q=>q.track===id).sort(order)]));
+  while(chosen.length<SET_SIZE){
+   let added=0;
+   for(const id of languages){
+    const bucket=buckets.get(id);
+    while(bucket.length&&taken.has(bucket[0].id))bucket.shift();
+    if(!bucket.length)continue;
+    const q=bucket.shift();
+    chosen.push(q);taken.add(q.id);added++;
+    if(chosen.length===SET_SIZE)break;
+   }
+   if(!added)break;
+  }
+ }
+ if(review)fillRoundRobin(priority);
+ if(chosen.length<SET_SIZE)fillRoundRobin(pool);
  return chosen;
 }
 function check(question,choice){

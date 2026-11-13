@@ -1012,6 +1012,82 @@ function getRecord(ctx, collection, id) {
     return null;
 }
 
+
+/**
+ * Atomic legacy attendance insert for school administrators and class teachers.
+ * Uses the same ScriptLock as bulkAttendanceRecords; no duplicate student/day
+ * rows can be appended by concurrent generic add operations.
+ * Existing historical duplicates are never deleted or silently chosen.
+ */
+function attendanceSchoolDayKey_(raw, zone){
+  const timezone=zone||'Asia/Karachi';
+  if(raw instanceof Date){
+    if(isNaN(raw.getTime()))return '';
+    return Utilities.formatDate(raw,timezone,'yyyy-MM-dd');
+  }
+  const text=String(raw==null?'':raw).trim();
+  let date='';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text))date=text;
+  else if(/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)){
+    const parsed=new Date(text);
+    if(isNaN(parsed.getTime()))return '';
+    date=Utilities.formatDate(parsed,timezone,'yyyy-MM-dd');
+  }else{
+    const local=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(local)date=local[3]+'-'+('0'+local[2]).slice(-2)+'-'+('0'+local[1]).slice(-2);
+  }
+  if(!date)return '';
+  const sample=new Date(date+'T12:00:00Z');
+  return !isNaN(sample.getTime())&&sample.toISOString().slice(0,10)===date?date:'';
+}
+function attendanceStatusKey_(raw){
+  const status=String(raw==null?'':raw).trim().toLowerCase();
+  return status==='present'||status==='p'?'Present':
+         status==='absent'||status==='a'?'Absent':
+         status==='leave'||status==='l'||status==='on leave'?'Leave':'';
+}
+function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
+  const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+    ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+  const date=attendanceSchoolDayKey_(record.date,zone);
+  const studentId=String(record.studentId||'').trim();
+  const enrl=String(record.enrlNo||'').trim();
+  const cls=String(record.class||'').trim().toLowerCase();
+  const status=attendanceStatusKey_(record.status);
+  if(!date||!studentId||!status)throw Error('Attendance requires a valid student ID, date and Present/Absent/Leave status.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance register is busy. Refresh before retrying.');
+  try{
+    const data=sheet.getDataRange().getValues(),matches=[];
+    for(let i=1;i<data.length;i++){
+      const old=rowToRecord(headers,data[i]);
+      if(attendanceSchoolDayKey_(old.date,zone)!==date)continue;
+      const oldId=String(old.studentId||'').trim();
+      const oldEnrollment=String(old.enrlNo||'').trim();
+      const oldClass=String(old.class||'').trim().toLowerCase();
+      // The canonical ID wins. An older row with missing ID is matched
+      // only when enrollment AND class both identify the same student.
+      const sameStudent=oldId?oldId===studentId:
+        !!(enrl&&oldEnrollment===enrl&&cls&&oldClass===cls);
+      if(sameStudent)matches.push(old);
+    }
+    if(matches.length>1)
+      throw Error('Duplicate saved attendance records for this student and date. Ask the administrator to review the backed-up sheet; no new row was added.');
+    if(matches.length===1){
+      if(attendanceStatusKey_(matches[0].status)===status){
+        // Idempotent response: a timed-out previous request may have saved.
+        // Never insert the same attendance twice.
+        return matches[0];
+      }
+      throw Error('Attendance already exists for this student/date with a different status. Refresh and use Update, not Add.');
+    }
+    const full=Object.assign({},record,{id:genId('att'),date,status,createdAt:new Date().toISOString()});
+    sheet.appendRow(recordToRow(headers,full));
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','attendance',full.id,null,full);
+    return full;
+  }finally{lock.releaseLock();}
+}
+
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
@@ -1029,6 +1105,7 @@ function addRecord(ctx, collection, record) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || record.section || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
+    if(collection==='attendance')return addAttendanceRecordWithLock_(ctx,record,sheet,headers);
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
     if (collection === 'fees' && ctx.role === 'school' && ctx.auditActor) {

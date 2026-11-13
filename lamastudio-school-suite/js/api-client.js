@@ -58,7 +58,9 @@ const LamaAPI = (() => {
     try { const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'); if(auth && auth.schoolId===body.schoolId && auth.token)body.token=auth.token; } catch(_) {}
     let response;
     try {
-      if (method === 'GET') {
+      // Never put a short-lived student session token in a GET URL.
+      if (method === 'GET' && !(session && session.role === 'student' &&
+          /^q11_[a-f0-9]{64}$/.test(String(session.apiKey||'')))) {
         const params = new URLSearchParams();
         Object.entries(body).forEach(([k,v]) => { if (v !== undefined && v !== null) params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v)); });
         response = await fetch(API_URL + '?' + params.toString(), {method:'GET',redirect:'follow'});

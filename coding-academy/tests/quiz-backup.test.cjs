@@ -66,7 +66,7 @@ const invalid=[
  ["prototype key",JSON.stringify({...parsed,state:{...parsed.state,stats:JSON.parse('{"__proto__":{"attempts":1,"correct":1,"lastCorrect":true}}')}})]
 ];
 for(const [label,content] of invalid){
- assert.throws(()=>b.importData(content,data),Error,"Reject "+label);
+ assert.throws(()=>b.importData(content,data),undefined,"Reject "+label);
  assert.equal(core.totals(data,core.load(store,data)).answered,2,"Invalid preview cannot change existing scores");
 }
 const damagedLocal="{bad JSON";

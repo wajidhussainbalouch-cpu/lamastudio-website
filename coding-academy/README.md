@@ -343,3 +343,12 @@ The GitHub Actions checks include a new beginner content/diagnostics suite, Chro
 ### Future content work
 
 This release adds real curated questions, not an infinite AI-generated catalog. Expand further only after reviewing learner difficulty and answer ambiguity, ideally with Urdu versions of each question and more authentic sandboxed code-tracing challenges. No claim of equivalent learning outcomes to Grasshopper or another education provider is made.
+
+### Phase 13 practice quality refinement — 13 November 2026
+
+- Original competitor-learning review and differentiation decisions are documented in [LEARNING-APPS-REVIEW.md](./LEARNING-APPS-REVIEW.md), with public-source links for Grasshopper's historical approach, Mimo, Sololearn, Khan Academy and freeCodeCamp.
+- **Mixed-subject rounds are balanced**: at each level, two questions each from HTML, CSS, JavaScript, Python and SQL; previously the ID-based ordering could over-represent a single language.
+- Tap-to-build puzzle pieces are now shuffled independently from the correct answer indices. Learners do not see a completed code example until they submit their answer.
+- Mistake review is **mastery-aware**: the latest answer is tracked as correct/incorrect and a correct retry clears the outstanding mistake flag, preserving total attempt history. Old saved question-stat records are still readable.
+- Extended the pure question-bank tests for original puzzle distribution, token permutations, mixed-subject balance and a recovered mistake; extended real Chromium practice testing to verify shuffling and review recovery on a mobile-sized viewport.
+- Question practice is an independent offline learning module, not part of the established four-module 62-activity local backup. Future explicit export/restore is a documented planned improvement, not a claimed feature.

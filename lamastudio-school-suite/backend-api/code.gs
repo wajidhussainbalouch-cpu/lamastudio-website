@@ -1088,6 +1088,43 @@ function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
   }finally{lock.releaseLock();}
 }
 
+
+/** Idempotent, locked staff attendance insert; does not alter history. */
+function addTeacherAttendanceWithLock_(ctx,record,sheet,headers){
+  const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+    ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+  const date=attendanceSchoolDayKey_(record.date,zone);
+  const teacherId=String(record.teacherId||'').trim();
+  const status=attendanceStatusKey_(record.status);
+  const remarks=String(record.remarks||'').trim();
+  if(!date||!teacherId||!status)throw Error('Teacher attendance requires teacher ID, valid date and Present/Absent/Leave status.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Staff attendance register is busy. Refresh before retrying.');
+  try{
+    const teacherInfo=getCollectionSheet(ctx,'teachers');
+    const teachers=teacherInfo.sheet.getDataRange().getValues();
+    const isKnownTeacher=teachers.slice(1).some(row=>
+      String(rowToRecord(teacherInfo.headers,row).id||'').trim()===teacherId);
+    if(!isKnownTeacher)throw Error('Teacher ID not found in this school. No attendance was saved.');
+    const saved=sheet.getDataRange().getValues(),matches=[];
+    for(let i=1;i<saved.length;i++){
+      const old=rowToRecord(headers,saved[i]);
+      if(String(old.teacherId||'').trim()===teacherId &&
+         attendanceSchoolDayKey_(old.date,zone)===date)matches.push(old);
+    }
+    if(matches.length>1)throw Error('Duplicate staff attendance records for teacher/date. Administrator must reconcile the backed-up sheet.');
+    if(matches.length===1){
+      if(attendanceStatusKey_(matches[0].status)===status &&
+         String(matches[0].remarks||'').trim()===remarks)return matches[0];
+      throw Error('Staff attendance already exists with a different status or remark. Refresh and use Update.');
+    }
+    const full=Object.assign({},record,{id:genId('tatt'),date,status,remarks,createdAt:new Date().toISOString()});
+    sheet.appendRow(recordToRow(headers,full));
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','teacherAttendance',full.id,null,full);
+    return full;
+  }finally{lock.releaseLock();}
+}
+
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
@@ -1106,6 +1143,7 @@ function addRecord(ctx, collection, record) {
     }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     if(collection==='attendance')return addAttendanceRecordWithLock_(ctx,record,sheet,headers);
+    if(collection==='teacherAttendance')return addTeacherAttendanceWithLock_(ctx,record,sheet,headers);
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
     if (collection === 'fees' && ctx.role === 'school' && ctx.auditActor) {
@@ -1141,6 +1179,17 @@ function updateRecord(ctx, collection, id, patch) {
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
             const existing = rowToRecord(headers, data[i]);
+            if(collection==='attendance'||collection==='teacherAttendance'){
+                const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+                    ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+                const oldDay=attendanceSchoolDayKey_(existing.date,zone);
+                if(patch.date!==undefined && attendanceSchoolDayKey_(patch.date,zone)!==oldDay)
+                    throw Error('Cannot move saved attendance to another date via Update. Ask the administrator to correct the backed-up register.');
+                const identity=collection==='attendance'?'studentId':'teacherId';
+                if(patch[identity]!==undefined&&String(patch[identity])!==String(existing[identity]))
+                    throw Error('Cannot reassign an existing attendance record to another person.');
+            }
+
             if (ctx.role === 'teacher' && collection === 'students' && !sameClass(existing.class, ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }

@@ -1066,6 +1066,9 @@ function addRecord(ctx, collection, record) {
     }
     if (collection === 'students' && !full.apiKey) full.apiKey = Utilities.getUuid();
     if (collection === 'students' && quranV11StudentAuthSchool_(ctx.schoolId)) {
+        // Never accept login material through generic creation in pilot schools.
+        ['q11Salt','q11Hash','q11Rounds','q11Version','passwordHash','passwordSalt']
+          .forEach(k=>{delete full[k];});
         full.password='';full.apiKey='';
     } else if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
     sheet.appendRow(recordToRow(headers, full));

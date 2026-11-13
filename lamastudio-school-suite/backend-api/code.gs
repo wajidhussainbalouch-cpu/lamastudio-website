@@ -786,6 +786,14 @@ function authorizeTeacher(schoolId, teacherId, apiKey) {
 // STUDENTS  (role: 'student') — logs in with enrollment number + password
 // ============================================================================
 
+/** Shared School Suite v11 pilot gate. Empty/unset means legacy for all schools. */
+function quranV11StudentAuthSchool_(schoolId) {
+    const props=PropertiesService.getScriptProperties();
+    return props.getProperty('QURAN_V11_STUDENT_AUTH_ENABLED')==='true' &&
+      String(props.getProperty('QURAN_V11_STUDENT_AUTH_SCHOOLS')||'')
+        .split(',').map(s=>s.trim()).includes(String(schoolId));
+}
+
 function studentLogin(schoolId, enrlNo, password) {
     if (!schoolId || !enrlNo || !password) throw new Error('School ID, enrollment number, and password are required.');
     const registry = getRegistrySheet();
@@ -793,6 +801,10 @@ function studentLogin(schoolId, enrlNo, password) {
     if (!schoolMatch) throw new Error('School not found. Check your School ID.');
     if (schoolMatch.obj.status !== 'Active') throw new Error('This school\'s account is currently blocked.');
 
+    if(quranV11StudentAuthSchool_(schoolId)) {
+        if(typeof q11Login_!=='function')throw Error('Student auth pilot addon is missing; login denied.');
+        return q11Login_(schoolMatch,schoolId,enrlNo,password);
+    }
     const ss = SpreadsheetApp.openById(schoolMatch.obj.sheetId);
     const sheet = ss.getSheetByName(COLLECTIONS.students.tab);
     const data = sheet.getDataRange().getValues();
@@ -816,6 +828,10 @@ function authorizeStudent(schoolId, studentId, apiKey) {
     const registry = getRegistrySheet();
     const schoolMatch = findSchoolRow(registry, r => r.schoolId === schoolId);
     if (!schoolMatch || schoolMatch.obj.status !== 'Active') throw new Error('Invalid session or blocked account.');
+    if(quranV11StudentAuthSchool_(schoolId)) {
+        if(typeof q11Authorize_!=='function')throw Error('Student auth pilot addon missing; access denied.');
+        return q11Authorize_(schoolMatch,schoolId,studentId,apiKey);
+    }
     const ss = SpreadsheetApp.openById(schoolMatch.obj.sheetId);
     const sheet = ss.getSheetByName(COLLECTIONS.students.tab);
     const data = sheet.getDataRange().getValues();
@@ -966,7 +982,8 @@ function quranV11PublicRecord_(collection,record) {
     if (!record || (collection !== 'students' && collection !== 'teachers')) return record;
     const safe=Object.assign({},record);
     ['password','apiKey','passwordHash','passwordSalt','salt','resetToken',
-     'recoveryToken','sessionToken','accessToken','refreshToken','authToken','secret']
+     'recoveryToken','sessionToken','accessToken','refreshToken','authToken','secret',
+     'q11Salt','q11Hash','q11Rounds','q11Version']
       .forEach(function(field){delete safe[field];});
     return safe;
 }
@@ -1048,7 +1065,9 @@ function addRecord(ctx, collection, record) {
         full.receivedByAdminName = ctx.auditActor.name;
     }
     if (collection === 'students' && !full.apiKey) full.apiKey = Utilities.getUuid();
-    if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
+    if (collection === 'students' && quranV11StudentAuthSchool_(ctx.schoolId)) {
+        full.password='';full.apiKey='';
+    } else if (collection === 'students' && !full.password) full.password = full.enrlNo || id;
     sheet.appendRow(recordToRow(headers, full));
     if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add',collection,id,null,full);
     return full;
@@ -1070,6 +1089,9 @@ function validateTeacherAssignment_(sheet,headers,teacherId,assignedClass,assign
 function updateRecord(ctx, collection, id, patch) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
+    if(collection==='students' && quranV11StudentAuthSchool_(ctx.schoolId) &&
+       Object.keys(patch||{}).some(k=>['password','apiKey','q11Salt','q11Hash','q11Rounds','q11Version'].includes(k)))
+       throw new Error('Student credentials must be changed through verified provisioning.');
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     const idCol = headers.indexOf('id');
@@ -2157,6 +2179,12 @@ function handleRequest(params) {
             case 'quranV9GuardianLogout':
                 if (typeof quranV9Run_ !== 'function') throw new Error('Guardian pilot addon is not installed.');
                 return { status:'success', result:quranV9Run_(params) };
+            case 'quranV11ProvisionStudentAuth':
+                if(typeof q11Provision_!=='function')throw Error('Student auth pilot addon unavailable.');
+                return {status:'success',result:q11Provision_(params)};
+            case 'quranV11StudentLogout':
+                if(typeof q11Logout_!=='function')throw Error('Student auth pilot addon unavailable.');
+                return {status:'success',result:q11Logout_(params)};
             case 'quranV8ListLearners':
             case 'quranV8GetProgress':
             case 'quranV8LogPractice':
@@ -2199,7 +2227,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['quranV8ListLearners','quranV8GetProgress','quranV8LogPractice','quranV8TeacherReview','quranV8ParentChildren','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove','quranV9ApproveGuardian','quranV9ListGuardianLinks','quranV9RevokeGuardian','quranV9RequestGuardianCode','quranV9VerifyGuardianCode','quranV9GuardianChildren','quranV9GuardianProgress','quranV9GuardianLogout'];
+    const blocked=['quranV11ProvisionStudentAuth','quranV11StudentLogout','quranV8ListLearners','quranV8GetProgress','quranV8LogPractice','quranV8TeacherReview','quranV8ParentChildren','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove','quranV9ApproveGuardian','quranV9ListGuardianLinks','quranV9RevokeGuardian','quranV9RequestGuardianCode','quranV9VerifyGuardianCode','quranV9GuardianChildren','quranV9GuardianProgress','quranV9GuardianLogout'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

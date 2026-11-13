@@ -14,7 +14,7 @@ function validateState(value,catalog){
   for(const [id,item] of Object.entries(value.stats).slice(0,200)){
    if(!idSet.has(id)||!item||typeof item!=="object")continue;
    const attempts=safeNumber(item.attempts),correct=Math.min(attempts,safeNumber(item.correct));
-   fresh.stats[id]={attempts,correct};
+   fresh.stats[id]={attempts,correct,lastCorrect:typeof item.lastCorrect==="boolean"?item.lastCorrect:(attempts>0&&attempts===correct)};
   }
  }
  if(value.rounds&&typeof value.rounds==="object"&&!Array.isArray(value.rounds)){
@@ -51,7 +51,7 @@ function available(catalog,track,level){
 function pick(catalog,state,track,level,review=false){
  let pool=available(catalog,track,level);
  const k=track+"-"+level,round=safeNumber(state.rounds[k]||0);
- const failures=q=>{const s=state.stats[q.id];return s?Math.max(0,s.attempts-s.correct):0;};
+ const failures=q=>{const s=state.stats[q.id];return s&&s.attempts>0&&s.lastCorrect!==true?1:0;};
  const attempts=q=>state.stats[q.id]?.attempts||0;
  // Real review: missed items first. When there are fewer than ten,
  // fill from the normal pool to keep each mini-session a useful ten.
@@ -77,6 +77,22 @@ function check(question,choice){
  }
  return Number.isInteger(choice)&&choice===question.answer;
 }
+function tokenOrder(question,session=0){
+ // Deterministic, session-varied Fisher-Yates shuffle. Each tile keeps its
+ // original data-token index so answer checking is unchanged.
+ if(question.mode!=="build")return [];
+ let seed=2166136261;
+ for(const ch of question.id+":"+String(session))seed=Math.imul(seed^ch.charCodeAt(0),16777619)>>>0;
+ const order=Array.from({length:question.parts.length},(_,i)=>i);
+ for(let i=order.length-1;i>0;i--){
+   seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;seed>>>=0;
+   const j=seed%(i+1),tmp=order[i];order[i]=order[j];order[j]=tmp;
+ }
+ if(question.answer.length>1&&question.answer.every((index,i)=>order[i]===index)){
+   const tmp=order[0];order[0]=order[1];order[1]=tmp;
+ }
+ return order;
+}
 function solution(question){
  if(question.mode==="build")return question.answer.map(i=>question.parts[i]).join(" ");
  return question.options[question.answer];
@@ -84,6 +100,7 @@ function solution(question){
 function record(state,question,isCorrect){
  const old=state.stats[question.id]||{attempts:0,correct:0};
  old.attempts=Math.min(10000,old.attempts+1);
+ old.lastCorrect=Boolean(isCorrect);
  if(isCorrect)old.correct=Math.min(old.attempts,old.correct+1);
  state.stats[question.id]=old;
 }
@@ -94,10 +111,10 @@ function totals(catalog,state){
   if(item){
    answered+=item.attempts;
    correct+=item.correct;
-   if(item.attempts>item.correct)missed++;
+   if(item.attempts>0&&item.lastCorrect!==true)missed++;
   }
  }
  return {answered,correct,missed,learned:Object.keys(state.stats).filter(x=>state.stats[x]?.correct>0).length};
 }
-root.LAMA_QUESTION_CORE=Object.freeze({KEY,createState,validateState,load,save,available,pick,check,solution,record,totals,SET_SIZE});
+root.LAMA_QUESTION_CORE=Object.freeze({KEY,createState,validateState,load,save,available,pick,check,tokenOrder,solution,record,totals,SET_SIZE});
 })(typeof window!=="undefined"?window:globalThis);

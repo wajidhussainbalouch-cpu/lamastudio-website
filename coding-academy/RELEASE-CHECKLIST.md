@@ -148,3 +148,14 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Test a ten-question round in Airplane mode on physical Android without any external service.
 - [ ] Review LEARNING-APPS-REVIEW.md and confirm original content, no copied competitors' lesson text and no punitive lives/hearts design.
 - [ ] Treat new question scores as device-only; the existing 62-activity backup does **not** include this independent quiz store.
+
+## M. Phase 14 — Question score backup on Android
+
+- [ ] In v0.14, answer at least one question correctly and one incorrectly, then click **Download Question Scores**. Verify the Android document picker actually saves a JSON file; confirm it appears in Files before depending on it.
+- [ ] Clear **only** question scores with the separate confirmation dialog. The score count should return to zero; the 62-activity learning journey and other LAMA project local storage must remain untouched.
+- [ ] Import the previously saved quiz JSON, check its preview totals, select **Cancel**, and verify existing scores do not change.
+- [ ] Import again and **Confirm Restore**. Check exact per-question attempts, latest correct/incorrect flags, history and missed counts after app restart.
+- [ ] Try a file in the wrong format, a deliberately malformed test file and an oversized test file. All must be rejected without writing scores.
+- [ ] Verify the question backup works offline and contains no student details, code drafts, account information or school ID.
+- [ ] Remember that older v0.13 test builds cannot automatically export or transfer their old quiz progress. Do not uninstall old builds before testing any required learning-data exports.
+- [ ] Confirm v0.14 is independent of existing v0.11–v0.13 Android test packages, and verify all GitHub CI workflows and APK signing checks pass.

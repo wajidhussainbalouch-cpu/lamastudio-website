@@ -21,10 +21,10 @@ const sandbox={};vm.runInNewContext("var LAMA_LESSONS=["+match[1]+"]; ",sandbox)
 const missions=sandbox.LAMA_LESSONS;
 assert.equal(missions.length,22,"There should be 22 real interactive foundation lessons.");
 assert.equal(new Set(missions.map(m=>m.id)).size,22,"Lesson IDs must be distinct.");
-assert.deepEqual(missions.slice(0,6).map(m=>m.id),[
+assert.deepEqual(Array.from(missions.slice(0,6),m=>m.id),[
  "intro-browser","intro-html","intro-tags","intro-css","intro-js","intro-debug"
 ]);
-assert.deepEqual(missions.slice(16,20).map(m=>m.id),["form-fields","condition","objects","capstone"]);
+assert.deepEqual(Array.from(missions.slice(16,20),m=>m.id),["form-fields","condition","objects","capstone"]);
 for(const mission of missions){
  assert.ok(mission.concept&&mission.why&&mission.task&&mission.hint,mission.id+" missing clear instructions");
  assert.ok(mission.starter.length>25,mission.id+" starter is too short");

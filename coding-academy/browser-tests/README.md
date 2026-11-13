@@ -9,7 +9,7 @@ device tests**.
 
 - Main page and real first foundation lesson: edit a draft, refresh, run sandboxed
   preview, answer the concept question, verify completion is persisted and shown
-  in the unified 52-activity dashboard.
+  in the unified 62-activity dashboard.
 - Practice and Project Studio pages load the authored activity menus.
 - Guest-account configuration disables sign-up, upload and permanent deletion
   until an approved dedicated backend is configured.
@@ -63,3 +63,8 @@ it does not mean the academy is production-ready or deployed.
 - The full backup lifecycle is exercised in actual Chromium with representative private dummy drafts for all four modules. The test downloads a JSON file, clears Coding Academy local data through its own UI, checks that other product data remains, previews/cancels a restore, confirms another restore and verifies exact round-trip values. Corrupted files are rejected.
 - axe-core (pinned in the isolated test-only package) runs WCAG 2.0/2.1 A/AA checks in real mobile-viewport Chromium on all eight core Academy pages. Serious/critical findings fail CI; other findings still require review. This does not replace physical Android or real assistive-technology QA.
 - The privacy table's horizontally scrollable region must be reachable by keyboard and visibly focused when active.
+
+
+## Phase 12 learner-facing browser acceptance
+
+The browser suite now includes 22 progressive foundation lessons, a novice HTML/CSS/JavaScript/Python/SQL glossary, and a direct regression of the learner's mistaken <My name is a coder> HTML line. The real browser displays a line-number warning, focuses the clicked line, clears the warning when changed to a paragraph, and unlocks the next activity only after the lesson and quiz pass.

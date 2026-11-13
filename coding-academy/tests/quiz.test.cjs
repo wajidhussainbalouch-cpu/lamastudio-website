@@ -25,6 +25,14 @@ for(const q of questions){
   assert.equal(core.check(q,Array.from(q.answer)),true);
   assert.equal(core.check(q,Array.from(q.answer).reverse()),false,q.id+" order matters");
   assert.ok(core.solution(q).length>=8);
+  for(let session=0;session<6;session++){
+   const shuffled=Array.from(core.tokenOrder(q,session));
+   assert.equal(shuffled.length,q.parts.length,"Every code-piece tile must remain available.");
+   assert.equal(new Set(shuffled).size,q.parts.length,"No code piece is duplicated after shuffling.");
+   assert.ok(shuffled.every((index)=>index>=0&&index<q.parts.length));
+   assert.equal(q.answer.every((index,i)=>shuffled[i]===index),false,
+     "Code pieces must not appear already solved: "+q.id);
+  }
  }else{
   assert.ok(q.options.length>=3&&q.options.length<=4);
   assert.equal(new Set(q.options).size,q.options.length,q.id+" answer options must differ");
@@ -55,6 +63,13 @@ assert.equal(core.totals(data,state).answered,10);
 assert.equal(core.totals(data,state).correct,1);
 assert.equal(core.totals(data,state).learned,1);
 assert.equal(core.totals(data,state).missed,9);
+assert.equal(state.stats[first[1].id].lastCorrect,false);
+core.record(state,first[1],true);
+assert.equal(core.totals(data,state).missed,8,"A corrected question must leave the mistake list.");
+assert.equal(state.stats[first[1].id].lastCorrect,true);
+core.record(state,first[1],false);
+assert.equal(core.totals(data,state).missed,9,"A later wrong answer should return to review.");
+
 const mixedAgain=Array.from(core.pick(data,state,"mixed",1));
 assert.ok(mixedAgain.some(q=>!first.some(x=>x.id===q.id)),"Mixed rounds must rotate into unseen items.");
 const review=Array.from(core.pick(data,state,"mixed",1,true));
@@ -64,7 +79,8 @@ const storage=new Map();
 const store={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,String(v))};
 assert.equal(core.save(store,state),true);
 const restored=core.load(store,data);
-assert.equal(core.totals(data,restored).answered,10);
+assert.equal(core.totals(data,restored).answered,12);
+assert.equal(core.totals(data,restored).missed,9);
 storage.set(core.KEY,"{not valid JSON");
 assert.equal(core.totals(data,core.load(store,data)).answered,0,"Bad saved JSON must not crash practice.");
 storage.set(core.KEY,JSON.stringify({stats:{"__proto__":{attempts:5,correct:5},"sql-1-01":{attempts:999999,correct:5},"unknown":{attempts:3,correct:3}}}));

@@ -26,7 +26,7 @@ const checks=[
     if(!core||typeof core.read!=="function")return fail("Academy progress validator was not loaded.");
     try{
       const snapshot=core.read(localStorage),summary=core.counts(snapshot);
-      return summary.total===52?good("All four saved learning modules can be read in the current format."):fail("Progress catalog is not the expected 52 activities.");
+      return summary.total===62?good("All four saved learning modules can be read in the current format."):fail("Progress catalog is not the expected 62 activities.");
     }catch(e){return fail("One or more local learning stores could not be validated. Export a backup before editing them.");}
   }},
   {id:"workers",name:"Web Workers and WebAssembly",run:async()=>{

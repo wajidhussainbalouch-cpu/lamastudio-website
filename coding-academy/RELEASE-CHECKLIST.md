@@ -121,3 +121,18 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Test readable Urdu, line numbers and error hints at a narrow Android phone width, and ensure the line gutter scrolls with the editor.
 - [ ] In airplane mode, verify offline lessons, definitions and line hints still work. Real Python execution may require a first-use internet download.
 - [ ] Do not enter sensitive learner/student details in trial code or enable optional cloud accounts without a separate security review.
+
+
+## K. Phase 13 — New original question bank and Android round QA
+
+- [ ] Install **LAMA Code TEST v13** alongside v11/v12; verify older app data is not automatically overwritten. This is a distinct test app, not a production update.
+- [ ] Open **Practice Questions (150)** from the academy dashboard or any foundation lesson, then choose HTML → Beginner.
+- [ ] Answer 10 questions in sequence. Verify different modes include multiple choice, output/behavior prediction and tap-to-build code pieces; code pieces should be removable and their order should matter.
+- [ ] Check that a wrong answer shows both the correct answer and a helpful explanation. A correct answer should receive positive feedback; both should let learners continue with no life limits or punishment.
+- [ ] Finish a full round, verify final score, close/reopen the app and confirm all attempts and missed counts persist.
+- [ ] Tap **Review my mistakes**. Previously missed questions should be prioritized; switching to Mixed subjects should rotate through unseen questions across all five languages.
+- [ ] Verify 150 original question IDs, exactly 10 per language/level, and 30 code-building plus 35 output-prediction tasks in the Node catalog regression.
+- [ ] Turn on Airplane mode after initial installation, open Question Practice and complete a full round without an internet connection. Neither a real SQL server nor Python interpreter should start.
+- [ ] Check phone widths 360px and 390px, text wrapping, touch target sizes, screen-reader labels, keyboard navigation and contrast in both light/bright environments and dark surroundings.
+- [ ] Confirm question practice does **not** alter existing 62-activity foundation/practice/Python/studio progress, and no cloud account becomes enabled.
+- [ ] Review competitor-analysis document and confirm every item is independent original educational content, not copies of third-party exercises.

@@ -58,6 +58,10 @@ for(const track of data.tracks){
 let state=core.createState();
 const first=Array.from(core.pick(data,state,"mixed",1));
 assert.equal(first.length,10);
+const distribution=Object.fromEntries(data.tracks.map(t=>[t.id,first.filter(q=>q.track===t.id).length]));
+assert.deepEqual(distribution,{html:2,css:2,javascript:2,python:2,sql:2},
+  "Mixed rounds must contain two questions from each of five languages.");
+
 for(const q of first)core.record(state,q,q===first[0]);
 assert.equal(core.totals(data,state).answered,10);
 assert.equal(core.totals(data,state).correct,1);
@@ -72,6 +76,9 @@ assert.equal(core.totals(data,state).missed,9,"A later wrong answer should retur
 
 const mixedAgain=Array.from(core.pick(data,state,"mixed",1));
 assert.ok(mixedAgain.some(q=>!first.some(x=>x.id===q.id)),"Mixed rounds must rotate into unseen items.");
+assert.deepEqual(Object.fromEntries(data.tracks.map(t=>[t.id,mixedAgain.filter(q=>q.track===t.id).length])),
+ {html:2,css:2,javascript:2,python:2,sql:2},
+ "Repeated mixed rounds must remain balanced after some questions were answered.");
 const review=Array.from(core.pick(data,state,"mixed",1,true));
 assert.equal(review.length,10);
 assert.ok(review.some(q=>q.id===first[1].id),"Missed questions must appear in review.");

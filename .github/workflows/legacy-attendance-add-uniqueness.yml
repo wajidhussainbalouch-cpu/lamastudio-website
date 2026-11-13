@@ -1,0 +1,21 @@
+name: Legacy Attendance Add Uniqueness
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/backend-api/test-attendance-legacy-add-uniqueness.cjs'
+      - '.github/workflows/legacy-attendance-add-uniqueness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-attendance-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test legacy school/teacher add attendance uniqueness
+        run: node lamastudio-school-suite/backend-api/test-attendance-legacy-add-uniqueness.cjs

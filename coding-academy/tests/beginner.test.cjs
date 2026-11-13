@@ -13,7 +13,7 @@ const coach=env.window.LAMA_CODE_COACH,beginner=env.window.LAMA_BEGINNER_UI;
 assert.ok(coach&&beginner);
 assert.ok(coach.glossary.length>=8);
 for(const name of ["HTML","CSS","JavaScript","Python","SQL","Kotlin / Dart","Bug / debugging"]){
- assert.ok(coach.glossary.some(item=>item.word===name&&item.simple.length>20),name+" needs a clear definition");
+ assert.ok(coach.glossary.some(item=>item.word===name&&item.simple.length>20&&item.urdu.length>12),name+" needs clear English/Urdu definitions");
 }
 const match=html.match(/var lessons=\[([\s\S]*?)\];\s*var defaults/);
 assert.ok(match,"The academy's foundation curriculum must be discoverable.");
@@ -41,6 +41,7 @@ assert.equal(beginner.level(21),"Level 3 · Advanced");
 assert.match(beginner.levels(missions,{}),/0 \/ 10 completed/);
 assert.match(beginner.levels(missions,{}),/0 \/ 6 completed/);
 assert.match(beginner.glossary(),/JavaScript/);
+assert.match(beginner.glossary(),/lang="ur" dir="rtl"/);
 assert.match(html,/beginner-coach\.js/);
 assert.match(html,/beginner-ui\.js/);
 assert.match(html,/beginner-ui\.css/);

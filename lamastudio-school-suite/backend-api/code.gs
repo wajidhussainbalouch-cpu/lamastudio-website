@@ -959,6 +959,16 @@ function getCollectionSheet(ctx, collection) {
     return { sheet, headers: actualHeaders };
 }
 
+/** v11 pilot: never include student login secrets in generic API responses.
+ * Login endpoints are unchanged pending replacement of legacy student auth.
+ * This is defense-in-depth, NOT a password-storage migration. */
+function quranV11PublicRecord_(collection,record) {
+    if (!record || collection !== 'students') return record;
+    const safe=Object.assign({},record);
+    ['password','apiKey','passwordHash','passwordSalt','salt','resetToken','recoveryToken','sessionToken'].forEach(function(field){delete safe[field];});
+    return safe;
+}
+
 function listRecords(ctx, collection) {
     checkPermission(ctx, 'list', collection);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
@@ -2153,13 +2163,13 @@ function handleRequest(params) {
                 if (typeof quranV8Run_ !== 'function') throw new Error('Quran pilot addon is not installed.');
                 return { status: 'success', result: quranV8Run_(params) };
             case 'list':
-                return { status: 'success', records: listRecords(resolveContext(params), params.collection) };
+                return { status: 'success', records: listRecords(resolveContext(params), params.collection).map(function(r){return quranV11PublicRecord_(params.collection,r);}) };
             case 'get':
-                return { status: 'success', record: getRecord(resolveContext(params), params.collection, params.id) };
+                return { status: 'success', record: quranV11PublicRecord_(params.collection,getRecord(resolveContext(params), params.collection, params.id)) };
             case 'add':
-                return { status: 'success', record: addRecord(resolveContext(params), params.collection, params.record || {}) };
+                return { status: 'success', record: quranV11PublicRecord_(params.collection,addRecord(resolveContext(params), params.collection, params.record || {})) };
             case 'update':
-                return { status: 'success', record: updateRecord(resolveContext(params), params.collection, params.id, params.patch || {}) };
+                return { status: 'success', record: quranV11PublicRecord_(params.collection,updateRecord(resolveContext(params), params.collection, params.id, params.patch || {})) };
             case 'remove':
                 removeRecord(resolveContext(params), params.collection, params.id);
                 return { status: 'success' };

@@ -14,14 +14,14 @@ const htmlTags=new Set(("a abbr address area article aside audio b base bdi bdo 
 const voidTags=new Set("area base br col embed hr img input link meta param source track wbr".split(" "));
 const optionalClose=new Set("li p dt dd option tr td th".split(" "));
 const glossary=[
- {word:"Computer code",simple:"Instructions written so a computer can perform an action.",example:"You write a small instruction; the browser shows its result."},
- {word:"HTML",simple:"The structure of a web page: headings, paragraphs, images and buttons. HTML is markup, not a programming language.",example:"<h1>Welcome</h1> creates a big heading."},
- {word:"CSS",simple:"The styling language: colors, sizes, spacing and layouts.",example:"h1 { color: blue; } makes a heading blue."},
- {word:"JavaScript",simple:"A programming language that makes pages respond when someone clicks, types or changes something.",example:"A button can change a message."},
- {word:"Python",simple:"A beginner-friendly programming language for calculations, data, automation and many other tasks.",example:"print('Hello') displays text."},
- {word:"SQL",simple:"A language for asking a database questions and retrieving or changing its stored rows.",example:"SELECT name FROM students; asks for names."},
- {word:"Kotlin / Dart",simple:"Languages used to develop Android and cross-platform mobile apps; learn coding foundations first.",example:"They help build apps with screens and interactions."},
- {word:"Bug / debugging",simple:"A bug is a mistake that makes code behave incorrectly. Debugging means locating it, understanding it and fixing it.",example:"A missing </p> can make page structure confusing."}
+ {word:"Computer code",urdu:"کمپیوٹر کو دی جانے والی ہدایات، جن پر عمل کر کے وہ کوئی کام کرتا ہے۔",simple:"Instructions written so a computer can perform an action.",example:"You write a small instruction; the browser shows its result."},
+ {word:"HTML",urdu:"ویب صفحے کی ساخت، جیسے سرخی، عبارت، تصویر اور بٹن بنانے کی مارک اپ زبان۔",simple:"The structure of a web page: headings, paragraphs, images and buttons. HTML is markup, not a programming language.",example:"<h1>Welcome</h1> creates a big heading."},
+ {word:"CSS",urdu:"ویب صفحے کے رنگ، سائز، فاصلے اور ترتیب کو خوبصورت بناتی ہے۔",simple:"The styling language: colors, sizes, spacing and layouts.",example:"h1 { color: blue; } makes a heading blue."},
+ {word:"JavaScript",urdu:"ایسی پروگرامنگ زبان جو بٹن دبانے یا لکھنے پر صفحے کو ردعمل دینا سکھاتی ہے۔",simple:"A programming language that makes pages respond when someone clicks, types or changes something.",example:"A button can change a message."},
+ {word:"Python",urdu:"حساب، ڈیٹا اور خودکار کاموں کے لیے نسبتاً آسان پروگرامنگ زبان۔",simple:"A beginner-friendly programming language for calculations, data, automation and many other tasks.",example:"print('Hello') displays text."},
+ {word:"SQL",urdu:"ڈیٹابیس سے معلومات پوچھنے، تلاش کرنے اور تبدیل کرنے کی زبان۔",simple:"A language for asking a database questions and retrieving or changing its stored rows.",example:"SELECT name FROM students; asks for names."},
+ {word:"Kotlin / Dart",urdu:"اینڈرائیڈ اور دوسری موبائل ایپس بنانے میں استعمال ہونے والی زبانیں۔",simple:"Languages used to develop Android and cross-platform mobile apps; learn coding foundations first.",example:"They help build apps with screens and interactions."},
+ {word:"Bug / debugging",urdu:"کوڈ کی غلطی کو بگ کہتے ہیں، اور اسے تلاش کر کے درست کرنا ڈی بگنگ کہلاتا ہے۔",simple:"A bug is a mistake that makes code behave incorrectly. Debugging means locating it, understanding it and fixing it.",example:"A missing </p> can make page structure confusing."}
 ];
 function lineOf(code,offset){return code.slice(0,offset).split("\n").length;}
 function issue(code,offset,message,kind){return {line:lineOf(code,offset),offset,message,kind:kind||"warning"};}

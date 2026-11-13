@@ -136,3 +136,15 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Check phone widths 360px and 390px, text wrapping, touch target sizes, screen-reader labels, keyboard navigation and contrast in both light/bright environments and dark surroundings.
 - [ ] Confirm question practice does **not** alter existing 62-activity foundation/practice/Python/studio progress, and no cloud account becomes enabled.
 - [ ] Review competitor-analysis document and confirm every item is independent original educational content, not copies of third-party exercises.
+
+## L. Phase 13 refinement — Learner practice quality
+
+- [ ] In Mixed → Beginner, confirm ten questions comprise **two HTML, two CSS, two JavaScript, two Python and two SQL** questions.
+- [ ] Repeat Mixed rounds; previously unseen questions should be preferred.
+- [ ] For tap-to-build exercises, confirm the code pieces **are shuffled**; no answer should be available simply by tapping the choices from left to right.
+- [ ] Confirm a full worked example for build puzzles does not appear before submitting.
+- [ ] Intentionally answer one item incorrectly, finish the round and tap Review mistakes. After answering that same item correctly, the outstanding-mistake counter must decrease; a later wrong answer should add it again.
+- [ ] Confirm existing question score records remain readable after app updates.
+- [ ] Test a ten-question round in Airplane mode on physical Android without any external service.
+- [ ] Review LEARNING-APPS-REVIEW.md and confirm original content, no copied competitors' lesson text and no punitive lives/hearts design.
+- [ ] Treat new question scores as device-only; the existing 62-activity backup does **not** include this independent quiz store.

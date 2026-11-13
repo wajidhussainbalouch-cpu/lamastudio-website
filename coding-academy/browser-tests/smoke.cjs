@@ -154,6 +154,67 @@ test("new learner glossary, ordered levels and line-specific mistake recovery",a
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
+test("original question bank: ten-question coding round, explanations, missed review, offline retention",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:390,height:844});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"quiz.html"));
+  await page.getByRole("heading",{name:/Learn coding, one small question/}).waitFor();
+  assert.equal(await page.locator("#answered").textContent(),"0");
+  assert.equal(await page.locator('#track option').count(),6);
+  assert.equal(await page.locator('#level option').count(),3);
+  const count=await page.evaluate(()=>window.LAMA_CODING_QUESTIONS.items.length);
+  assert.equal(count,150);
+  await assertNoOverflow(page,"150 question bank mobile");
+  await page.locator("#track").selectOption("html");
+  await page.locator("#start").click();
+  await page.locator("#play").waitFor();
+  let firstMissedId=null,build=0,predict=0;
+  for(let i=0;i<10;i++){
+   const item=await page.evaluate(()=>{
+    const text=document.getElementById("prompt").textContent;
+    const q=window.LAMA_CODING_QUESTIONS.items.find(x=>x.prompt===text);
+    if(!q)throw Error("Question not found in real authored catalog: "+text);
+    return q;
+   });
+   if(item.mode==="build"){
+    build++;
+    const answerIndices=i===0?[...item.answer].reverse():item.answer;
+    for(const pos of answerIndices)await page.locator('#options button[data-token="'+pos+'"]').click();
+   }else{
+    if(item.mode==="predict")predict++;
+    await page.locator('#options button[data-choice="'+(i===0?(item.answer+1)%item.options.length:item.answer)+'"]').click();
+   }
+   if(i===0)firstMissedId=item.id;
+   await page.locator("#check").click();
+   await page.locator("#feedback").waitFor();
+   assert.match(await page.locator("#feedback").textContent(),/Correct answer:/);
+   if(i===0)assert.match(await page.locator("#feedback").textContent(),/Not quite/);
+   else assert.match(await page.locator("#feedback").textContent(),/Correct!/);
+   await page.locator("#next").click();
+  }
+  assert.ok(build>=1,"A beginner round must contain at least one code-building puzzle.");
+  assert.ok(predict>=1,"A beginner round must include at least one output/behavior prediction.");
+  assert.equal(await page.locator("#score").textContent(),"9 / 10");
+  assert.equal(await page.locator("#answered").textContent(),"10");
+  assert.equal(await page.locator("#missed").textContent(),"1");
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem("lama-coding-questions-v1")));
+  assert.equal(stored.stats[firstMissedId].attempts,1);
+  assert.equal(stored.stats[firstMissedId].correct,0);
+  assert.equal(stored.history.at(-1).score,9);
+  assert.equal(await page.evaluate(()=>localStorage.getItem("lama-coding-academy-v1")),null,
+    "Question practice must not touch the core 62-activity learner store.");
+  await page.locator("#reviewAfter").click();
+  assert.equal(await page.locator("#prompt").textContent(),
+   await page.evaluate(id=>window.LAMA_CODING_QUESTIONS.items.find(x=>x.id===id).prompt,firstMissedId),
+   "The next review round should start with the missed question.");
+  await page.reload();
+  assert.equal(await page.locator("#answered").textContent(),"10","Scores should persist after refresh.");
+  assert.equal(await page.locator("#missed").textContent(),"1");
+  await assertNoOverflow(page,"quiz bank after reload");
+  assert.equal(pageErrors.length,0,"Unexpected quiz JavaScript errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("browser progress totals and module navigation",async(browser,origin)=>{
  const view=await browserPage(browser,{width:1280,height:800});
  try{
@@ -309,14 +370,14 @@ test("phone-sized pages have navigable controls without horizontal overflow",asy
  const view=await browserPage(browser,{width:390,height:844});
  try{
   const {page,pageErrors}=view;
-  for(const target of ["index.html","practice.html","python.html","studio.html","progress.html","account.html","privacy.html","diagnostics.html"]){
+  for(const target of ["index.html","quiz.html","practice.html","python.html","studio.html","progress.html","account.html","privacy.html","diagnostics.html"]){
    await page.goto(insideApp(origin,target));
    await page.locator("body").waitFor();
    await assertNoOverflow(page,target);
   }
   // Repeat at a narrower Android viewport to catch clipped menu/action rows.
   await page.setViewportSize({width:360,height:780});
-  for(const target of ["index.html","python.html","practice.html","studio.html","account.html","progress.html"]){
+  for(const target of ["index.html","quiz.html","python.html","practice.html","studio.html","account.html","progress.html"]){
    await page.goto(insideApp(origin,target));
    await assertNoOverflow(page,target+" at 360px");
   }
@@ -376,7 +437,7 @@ async function auditAccessibility(browser,origin,pages){
  }finally{await cleanup(view);}
 }
 test("WCAG browser audit: learning activities",async(browser,origin)=>{
- await auditAccessibility(browser,origin,["index.html","practice.html","python.html","studio.html"]);
+ await auditAccessibility(browser,origin,["index.html","quiz.html","practice.html","python.html","studio.html"]);
 });
 test("WCAG browser audit: progress, privacy and account",async(browser,origin)=>{
  await auditAccessibility(browser,origin,["progress.html","account.html","privacy.html","diagnostics.html"]);
@@ -403,6 +464,9 @@ test("installed PWA serves offline pages without caching auth recovery queries",
   await page.goto(insideApp(origin,"progress.html"));
   await page.locator("#total").waitFor();
   assert.match((await page.locator("#total").textContent()).trim(),/\/ 62/);
+  await page.goto(insideApp(origin,"quiz.html"));
+  await page.getByRole("heading",{name:/Learn coding, one small question/}).waitFor();
+  assert.equal(await page.evaluate(()=>window.LAMA_CODING_QUESTIONS.items.length),150);
   await page.goto(insideApp(origin,"diagnostics.html"));
   await page.getByRole("heading",{name:"Can this device learn to code?"}).waitFor();
   await context.setOffline(false);

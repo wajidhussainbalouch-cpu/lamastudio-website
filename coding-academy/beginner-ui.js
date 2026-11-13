@@ -23,7 +23,7 @@ function glossary(){
  return '<section class="language-101" id="languageGuide"><h2>Before you code: what do these words mean?</h2>'+
  '<p>HTML makes the structure, CSS controls the appearance, and JavaScript adds actions. Python and SQL do other jobs. Tap a word for an example.</p>'+
  '<div class="language-grid">'+items.map((item,i)=>
- '<details'+(i<3?' open':'')+'><summary>'+safe(item.word)+'</summary><p>'+safe(item.simple)+'</p><p class="sample">'+safe(item.example)+'</p></details>'
+ '<details'+(i<3?' open':'')+'><summary>'+safe(item.word)+'</summary><p>'+safe(item.simple)+'</p>'+(item.urdu?'<p class="urdu" lang="ur" dir="rtl">'+safe(item.urdu)+'</p>':'')+'<p class="sample">'+safe(item.example)+'</p></details>'
  ).join('')+'</div></section>';
 }
 function updateHints(){

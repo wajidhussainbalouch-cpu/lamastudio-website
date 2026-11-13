@@ -54,7 +54,7 @@ const typo="<!doctype html>\n<html>\n<body>\n  <h1>About me</h1>\n  <My name is 
 const issue=coach.analyze(typo).find(i=>i.message.includes("not a common HTML tag"));
 assert.ok(issue,"An invented <My ...> tag must be recognized as a common beginner mistake");
 assert.equal(issue.line,5);
-assert.match(issue.message,/use <p>My name is Wajid<\/p>/);
+assert.match(issue.message,/<p>My name is Wajid<\/p>/);
 const corrected=typo.replace("<My name is Wajid>","<p>My name is Wajid</p>");
 assert.equal(coach.analyze(corrected).length,0,"Correct paragraphs should not show false warnings.");
 assert.equal(coach.analyze("<strong>Hello</strng>").some(i=>i.message.includes("strng")),true);

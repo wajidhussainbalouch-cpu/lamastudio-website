@@ -96,7 +96,7 @@ test("desktop lessons and local draft persistence",async(browser,origin)=>{
   const code="<!doctype html><html><head><title>Demo</title></head><body><h1>Saved draft</h1></body></html>";
   await page.locator("#editor").fill(code);
   const first=await page.evaluate(()=>JSON.parse(localStorage.getItem("lama-coding-academy-v1")));
-  assert.equal(first.drafts.h1,code);
+  assert.equal(first.drafts["intro-browser"],code);
   await page.reload();
   await page.locator('#nav button[data-screen="learn"]').click();
   await page.locator("#editor").waitFor();
@@ -106,15 +106,52 @@ test("desktop lessons and local draft persistence",async(browser,origin)=>{
   assert.match(src,/Saved draft/);
   assert.match(src,/Content-Security-Policy/);
   // Complete a real authored foundation lesson using actual browser controls.
-  await page.locator("#editor").fill("<!doctype html><html><body><h1>Hello, Developer!</h1></body></html>");
+  await page.locator("#editor").fill("<!doctype html><html><body><h1>Hello, Browser!</h1></body></html>");
   await page.locator('input[name="quiz"][value="0"]').check();
   await page.locator('button[data-action="check"]').click();
   assert.match(await page.locator("#result").textContent(),/Lesson passed!/);
   const passed=await page.evaluate(()=>JSON.parse(localStorage.getItem("lama-coding-academy-v1")));
-  assert.equal(typeof passed.progress.h1,"string","Passing a lesson should save a completion timestamp.");
+  assert.equal(typeof passed.progress["intro-browser"],"string","Passing a lesson should save a completion timestamp.");
   await page.goto(insideApp(origin,"progress.html"));
   assert.equal((await page.locator("#total").textContent()).trim(),"1 / 62");
   assert.equal(pageErrors.length,0,"Unexpected JavaScript errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
+test("new learner glossary, ordered levels and line-specific mistake recovery",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:390,height:844});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"index.html"));
+  await page.getByRole("heading",{name:/Before you code: what do these words mean/}).waitFor();
+  assert.match(await page.locator("#languageGuide").textContent(),/HTML/);
+  assert.match(await page.locator("#languageGuide").textContent(),/SQL/);
+  await page.getByRole("button",{name:/Start my first lesson/}).click();
+  await page.locator("#editor").waitFor();
+  const menu=page.locator(".lesson-list button[data-action=lesson]");
+  assert.equal(await menu.count(),22);
+  assert.equal(await page.locator(".side-level").count(),3);
+  assert.equal(await page.locator('button[data-action="lesson"][data-id="intro-browser"]').first().isEnabled(),true);
+  assert.equal(await page.locator(".lesson-list button[data-id=intro-html]").isDisabled(),true);
+  assert.equal(await page.locator(".lesson-list button[data-id=condition]").isDisabled(),true);
+  // Reproduce the exact kind of error seen on the learner's Android screenshot.
+  const broken='<!doctype html>\n<html>\n<body>\n<My name is a coder>\n<h1>Hello, Browser!</h1>\n</body>\n</html>';
+  await page.locator("#editor").fill(broken);
+  await page.waitForFunction(()=>document.querySelector("#codeHintSummary")?.textContent.includes("Line 4:"));
+  assert.match(await page.locator("#codeHintSummary").textContent(),/not a common HTML tag/);
+  assert.ok((await page.locator("#lineGutter .problem").count())>=1);
+  await page.locator('#codeHintSummary button[data-line="4"]').click();
+  assert.equal(await page.locator("#editor").evaluate(el=>el===document.activeElement),true);
+  assert.match(await page.locator("#editor").evaluate(el=>el.value.slice(el.selectionStart,el.selectionEnd)),/<My name is a coder>/);
+  await page.locator("#editor").fill(broken.replace("<My name is a coder>","<p>My name is a coder</p>"));
+  await page.waitForFunction(()=>document.querySelector("#codeHintSummary")?.textContent.includes("No common typing mistakes"));
+  assert.equal(await page.locator("#lineGutter .problem").count(),0);
+  await page.locator('input[name="quiz"][value="0"]').check();
+  await page.locator('button[data-action="check"]').click();
+  assert.match(await page.locator("#result").textContent(),/Lesson passed!/);
+  assert.equal(await page.locator(".lesson-list button[data-id=intro-html]").isEnabled(),true);
+  await page.locator(".lesson-list button[data-id=intro-html]").click();
+  await page.getByRole("heading",{name:/HTML: the skeleton of a page/}).waitFor();
+  assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
 test("browser progress totals and module navigation",async(browser,origin)=>{

@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 13 (150 original practice questions and code puzzles)
+# LAMA Coding Academy — MVP 14 (portable local question scores)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -352,3 +352,21 @@ This release adds real curated questions, not an infinite AI-generated catalog. 
 - Mistake review is **mastery-aware**: the latest answer is tracked as correct/incorrect and a correct retry clears the outstanding mistake flag, preserving total attempt history. Old saved question-stat records are still readable.
 - Extended the pure question-bank tests for original puzzle distribution, token permutations, mixed-subject balance and a recovered mistake; extended real Chromium practice testing to verify shuffling and review recovery on a mobile-sized viewport.
 - Question practice is an independent offline learning module, not part of the established four-module 62-activity local backup. Future explicit export/restore is a documented planned improvement, not a claimed feature.
+
+## Phase 14 — Safe offline question-score portability (14 November 2026)
+
+**Problem uncovered during Android trials:** Separate test APKs use distinct package IDs and therefore separate WebView local-storage spaces. The 150-question module introduced in v0.13 could not export its own score history, so it was possible to lose that progress when trying a future build.
+
+**Implemented in v0.14:**
+
+- Added **Download Question Scores**, **Import Saved Scores**, **Review Backup**, **Confirm Restore**, **Cancel**, and a separately confirmed **Clear Question Scores** control directly on the Practice Questions page.
+- Export format: `lama-coding-questions-backup-v1` (JSON) with metadata, question bank version, per-question attempts and last-correct status, completed round history, language/level selection and study-round counters. The file contains **no lesson code, account password, student record, cloud token or other LAMA project data**.
+- Strict 200 KB size limit and schema validation block malformed or oversized imports, invalid score counts, unknown question IDs, mismatched question-bank versions and suspicious fields. Export refuses corrupt local JSON instead of producing a misleading empty backup.
+- Import previews **current scores vs backup scores** before writing. Confirmation is required and replaces **only** the `lama-coding-questions-v1` local-storage key. Cancel makes no changes; a failed storage write leaves the previous record intact.
+- Updated offline service-worker cache to `lama-coding-academy-v12` so the question backup logic is available without an internet connection. Android v0.14 uses its own package ID `pk.lamastudio.codingacademy.testing.v14`, installable beside v0.11–v0.13.
+- Added dedicated Node regression `tests/quiz-backup.test.cjs` for portable round-trip, corrupted files, format/version mismatches, storage failures and non-interference with other modules; extended the real Chromium mobile test to download actual JSON, clear quiz scores, preview/cancel, confirm restore and reject the wrong file.
+- Test APK download/restore uses Android's document picker and WebView blob save bridge. **Actual file-save behavior on the owner's physical Android phone still requires hands-on confirmation.**
+
+**Important compatibility limitation:** Old v0.13 test builds did not have question-score export. Therefore v0.14 cannot automatically migrate their question results. Starting with v0.14, the user can export a portable question-score file to import into later builds. Existing core 62-activity progress has its own independent export/restore and is not included in this quiz file.
+
+No production deployment, draft PR merge, Play Store release, Supabase activation or database changes were made.

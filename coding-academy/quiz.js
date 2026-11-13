@@ -59,7 +59,9 @@ function renderQuestion(){
  el("type").textContent=q.mode==="build"?"Tap to build code":q.mode==="predict"?"Predict what happens":"Choose the correct answer";
  el("bar").style.width=String((number/round.length)*100)+"%";
  el("prompt").textContent=q.prompt;
- el("example").hidden=!q.example;
+ // A complete code example gives away the solution to a build puzzle.
+ // Reveal it only after the learner submits, while keeping prediction examples visible.
+ el("example").hidden=!q.example||q.mode==="build";
  el("example").textContent=q.example||"";
  el("feedback").hidden=true;
  el("feedback").replaceChildren();
@@ -69,7 +71,8 @@ function renderQuestion(){
  const building=q.mode==="build";
  el("build").hidden=!building;
  if(building){
-  for(let i=0;i<q.parts.length;i++){
+  const session=state.rounds[state.selection.track+"-"+state.selection.level]||0;
+  for(const i of core.tokenOrder(q,session)){
    const b=button(q.parts[i],"token","token",i);
    b.setAttribute("aria-label","Add code piece "+q.parts[i]);
    el("options").append(b);
@@ -87,7 +90,7 @@ function renderQuestion(){
 function startRound(review){
  const t=track.value,l=Number(level.value),pool=core.available(data,t,l);
  if(!pool.length){el("storageWarning").textContent="No questions are available for this selection.";return;}
- const failed=pool.filter(q=>(state.stats[q.id]?.attempts||0)>(state.stats[q.id]?.correct||0));
+ const failed=pool.filter(q=>state.stats[q.id]?.attempts>0&&state.stats[q.id]?.lastCorrect!==true);
  if(review&&!failed.length){
   el("storageWarning").textContent="No mistakes to review for this language and level. Start a new round or choose Mixed subjects.";
   return;
@@ -146,6 +149,10 @@ function checkAnswer(){
   else if(i===selected&&!correct)b.classList.add("incorrect");
  }
  showAnswer(correct);
+ if(q.mode==="build"&&q.example){
+   el("example").hidden=false;
+   el("example").textContent=q.example;
+ }
 }
 function finish(){
  el("play").hidden=true;el("finish").hidden=false;

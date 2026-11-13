@@ -107,3 +107,17 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Navigate the horizontally scrolling privacy table using only a keyboard and verify a visible focus indicator at phone width.
 - [ ] Repeat with real Android screen-reader support, a physical keyboard where available, landscape orientation and zoomed text; document any accessibility blockers.
 - [ ] Confirm all GitHub Actions workflows pass on the final reviewed commit before approving any merge.
+
+
+## J. Phase 12 Android beginner acceptance
+
+- [ ] Install LAMA Code TEST v12 alongside the earlier v0.11 test app. The older app and its saved progress must remain unchanged.
+- [ ] On the first screen, read the English/Urdu glossary for HTML, CSS, JavaScript, Python and SQL.
+- [ ] Open Level 1. Verify that Level 2 and Level 3 lessons are locked until the earlier activities are completed.
+- [ ] Type <My name is Wajid> on a line. The line number should be highlighted and its warning should explain that it is an invalid tag for displaying ordinary text.
+- [ ] Tap the warning to select that line, fix it using <p>My name is Wajid</p>, and verify the hint disappears and the Live Preview displays the words.
+- [ ] Complete the first concept quiz and confirm the next lesson unlocks. Test the other 21 lessons in order, including the advanced mini counter.
+- [ ] Check the three level groupings: 10 Beginner, 6 Intermediate, 6 Advanced; confirm the complete progress dashboard contains 62 activities.
+- [ ] Test readable Urdu, line numbers and error hints at a narrow Android phone width, and ensure the line gutter scrolls with the editor.
+- [ ] In airplane mode, verify offline lessons, definitions and line hints still work. Real Python execution may require a first-use internet download.
+- [ ] Do not enter sensitive learner/student details in trial code or enable optional cloud accounts without a separate security review.

@@ -37,7 +37,7 @@ const fixtureFactory=new Function('config',[
  " add:async (collection,record)=>{requests.push({action:'add',collection,record});if(config.failWrite)throw Error('Simulated backend timeout');const saved={...record,id:'record-'+(server.length+1)};if(!config.ignoreWrite)server.push(saved);return saved;},",
  " update:async (collection,id,patch)=>{requests.push({action:'update',collection,id,patch});if(config.failWrite)throw Error('Simulated backend timeout');const target=server.find(r=>r.id===id);if(!target)throw Error('Unknown saved record');if(!config.ignoreWrite)Object.assign(target,patch);return {...target,...patch};}",
  "};",
- "async function refresh(){if(config.failReload){attendanceLoaded=false;attendanceLoadError='Backend attendance list unavailable';return;}attendance=server.map(x=>({...x}));attendanceLoaded=true;attendanceLoadError='';}",
+ "async function reloadSavedAttendance(){if(config.failReload){attendanceLoaded=false;attendanceLoadError='Backend attendance list unavailable';return;}attendance=server.map(x=>({...x}));attendanceLoaded=true;attendanceLoadError='';}",
  helpers,
  save,
  "return {saveAttendance,messages,requests,statusNode,saveButton,server,attendanceDay,savedRowsFor,currentDayDuplicates,getFlags:()=>({attendanceLoaded,attendanceWriteHold,attendanceSaving}),setLoaded:value=>{attendanceLoaded=value}};"
@@ -102,5 +102,12 @@ const fixtureFactory=new Function('config',[
  assert.match(source,/const locked=!attendanceLoaded\|\|attendanceSaving\|\|attendanceWriteHold\|\|!!duplicates.length/);
  assert.match(source,/if\(!document.hidden&&me.schoolId&&!attendanceSaving\)/);
  assert.match(source,/if\(me.schoolId&&!attendanceSaving\)/);
+ assert.match(source,/async function reloadSavedAttendance\(\)/,
+  'Post-save verification must use a targeted attendance read-back');
+ assert.match(source,/if\(refreshPromise\)\{[\s\S]*?await refreshPromise/,
+  'Targeted reload must wait for earlier in-flight dashboard refresh');
+ assert.match(save,/await reloadSavedAttendance\(\)/);
+ assert.doesNotMatch(save,/await refresh\(\)/,
+  'Do not refetch students, homework and notifications merely to verify attendance');
  console.log('PASS: school-local dates, duplicates, no-history, unchanged marks, verified add/update, read-back uncertainty and write locks.');
 })().catch(error=>{console.error(error);process.exitCode=1});

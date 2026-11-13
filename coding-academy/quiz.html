@@ -70,6 +70,11 @@ select{width:100%;background:#0c1e32;color:var(--ink);border:1px solid #54708d;b
 [hidden]{display:none!important}
 @media(max-width:490px){main{padding:16px 12px 75px}header{padding:12px}nav{margin-left:0;width:100%}.panel{padding:14px}.controls{grid-template-columns:1fr}.controlrow .btn{flex:1 1 42%}.stat strong{font-size:22px}.question-meta{gap:5px}}
 @media(prefers-reduced-motion:reduce){.progressbar div{transition:none}}
+.backup-preview{background:#0b2334;border:1px solid #5c9e90;border-radius:12px;padding:14px;margin-top:13px}
+.backup-preview pre{font:13px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#e2fbe9}
+.backup-info{font-size:13px;color:#e4f6ee}
+.backup-warn{border-left:3px solid #e2c284;padding:10px;background:#342d27;color:#fff0d8}
+#quizBackupFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 </style>
 </head>
 <body>
@@ -144,10 +149,35 @@ select{width:100%;background:#0c1e32;color:var(--ink);border:1px solid #54708d;b
    <button class="btn" id="reviewAfter">Review mistakes</button>
   </div>
  </section>
+ <section id="quizBackupSection" class="panel" aria-labelledby="backupHeading">
+  <h2 id="backupHeading">Keep your question progress safe</h2>
+  <p>Save your scores as a private JSON file before changing phones or test apps. Import them into a newer LAMA Coding Academy test version. <strong>This backup contains only the 150-question practice history</strong>, not your lesson code or other apps' data.</p>
+  <div class="controlrow">
+   <button type="button" class="btn primary" id="quizExport">↓ Download question scores</button>
+   <button type="button" class="btn" id="quizImport">↑ Import saved scores</button>
+  </div>
+  <input type="file" id="quizBackupFile" accept=".json,application/json" aria-label="Choose a question practice JSON backup">
+  <p id="quizBackupStatus" class="backup-info" role="status" aria-live="polite">Question scores are stored locally; no cloud account is required.</p>
+  <div id="quizPreviewSection" class="backup-preview" hidden>
+   <h3>Review the backup before restoring</h3>
+   <pre id="quizBackupReview"></pre>
+   <p class="backup-warn">Restoring replaces this app's <strong>question-practice scores only</strong>. It does not change the 62-activity learning journey, your code, or other LAMA projects. Save a copy of your current question scores first.</p>
+   <div class="controlrow">
+    <button type="button" id="quizConfirm" class="btn primary" disabled>Confirm question-score restore</button>
+    <button type="button" id="quizCancel" class="btn">Cancel</button>
+   </div>
+  </div>
+  <details>
+   <summary class="tiny" style="cursor:pointer;color:var(--mint)">Reset only my question-practice scores</summary>
+   <p class="tiny">This clears the 150-question scores only after confirmation. It does not erase your coding lessons or other apps. Download a backup first if you want to keep them.</p>
+   <button type="button" id="quizClear" class="btn secondary">Clear question scores on this device</button>
+  </details>
+ </section>
  <footer><p class="tiny">LAMA Coding Academy · A project of LamaStudio.pk · Original educational questions. These syntax questions are local simulations, not access to a real SQL database or a secure Python sandbox.</p></footer>
 </main>
 <script src="./quiz-data.js" defer></script>
 <script src="./quiz-core.js" defer></script>
+<script src="./quiz-backup.js" defer></script>
 <script src="./quiz.js" defer></script>
 </body>
 </html>

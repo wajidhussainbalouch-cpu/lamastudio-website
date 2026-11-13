@@ -5,7 +5,7 @@
 const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const source=fs.readFileSync(path.join(__dirname,"..","sw.js"),"utf8");
 new Function(source);
-assert.match(source,/lama-coding-academy-v11/);
+assert.match(source,/lama-coding-academy-v12/);
 assert.match(source,/if \(url\.search \|\| url\.hash/);
 assert.match(source,/STATIC_ASSETS\.has\(url\.href\)/);
 const assetMatch=source.match(/const ASSETS = (\[[^\n]+\]);/);
@@ -29,9 +29,9 @@ const existingCache={
  async match(req){return cacheContents.get(typeof req==="string"?req:req.url)||undefined;}
 };
 const caches={
- async open(name){assert.match(name,/lama-coding-academy-v11/);return existingCache;},
+ async open(name){assert.match(name,/lama-coding-academy-v12/);return existingCache;},
  async match(req){return existingCache.match(req);},
- async keys(){return ["lama-coding-academy-v8","lama-school-suite-v1","lama-coding-academy-v11"];},
+ async keys(){return ["lama-coding-academy-v8","lama-school-suite-v1","lama-coding-academy-v12"];},
  async delete(name){cacheDeletes.push(name);return true;}
 };
 const self={

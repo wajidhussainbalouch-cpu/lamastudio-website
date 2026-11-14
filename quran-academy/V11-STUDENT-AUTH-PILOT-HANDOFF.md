@@ -45,3 +45,13 @@ The add-on uses peppered PBKDF2-HMAC-SHA256, random per-student salt and server-
 8. Obtain explicit approval before any real-school pilot or production deployment.
 
 **Production main, Vercel, live Apps Script and school data remained unchanged by this branch.**
+
+## Follow-up integration checks — 2026-11-14
+- Pilot password attempt reservations now use a script lock before CPU-intensive password validation (commit `5a07877892334f61ddc5e76ead8ee0ebdb9f5faa`). CacheService remains a **best-effort** counter, not a distributed production limiter.
+- The backend `doGet` now denies **all** pilot student-role GET calls before generic routing, to avoid placing short-session tokens in URL queries (commit `a36a04b5406f036186545f1b90f6154959dc599a`).
+- Additional **13/13** post-change login/provisioning/session mock checks passed using the actual addon source (mocked HMAC, fake School Suite Sheets and CacheService). **7/7** source-level GET/POST separation checks passed.
+- Independently recomputed the committed public PBKDF2 test-vector expected value with Python's `hashlib.pbkdf2_hmac`. The canonical Node test itself is still not recorded as executed on the repository source in an actual clone.
+- Updated standalone academy **v11** ZIP/demo retain previous learning modules and add an **8-gate local Student Account Protection** checklist under Pilot QA, CSV export, and Urdu/English labels. Browser tests at **390px and 1280px** passed without page JS errors or horizontal overflow.
+- Official Google Apps Script docs confirm `Utilities.computeHmacSha256Signature` supports Byte[] and String overloads, and list a six-minute execution limit. Real Apps Script hashing execution time and quotas remain UNTESTED.
+
+No production data, main branch or deployment changed. A local checklist marked green by a user does not constitute actual independent pilot approval.

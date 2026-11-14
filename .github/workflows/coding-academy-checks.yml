@@ -1,0 +1,50 @@
+name: LAMA Coding Academy checks
+
+on:
+  pull_request:
+    paths:
+      - "coding-academy/**"
+      - ".github/workflows/coding-academy-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  practice-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Node.js runtime
+        run: node --version
+      - name: Validate 18 practice missions
+        run: node coding-academy/tests/practice.test.cjs
+      - name: Validate the portfolio project studio
+        run: node coding-academy/tests/studio.test.cjs
+      - name: Validate executable Python missions
+        run: node coding-academy/tests/python.test.cjs
+      - name: Validate unified progress and Urdu Python guidance
+        run: node coding-academy/tests/progress.test.cjs
+      - name: Validate optional accounts and cloud sync safeguards
+        run: node coding-academy/tests/cloud.test.cjs
+      - name: Validate privacy and account deletion flow
+        run: node coding-academy/tests/privacy.test.cjs
+      - name: Validate actual learning catalog progress integrity
+        run: node coding-academy/tests/integrity.test.cjs
+      - name: Validate browser diagnostics and opt-in Python smoke test
+        run: node coding-academy/tests/diagnostics.test.cjs
+      - name: Validate 150 original bite-sized coding questions and local review
+        run: node coding-academy/tests/quiz.test.cjs
+      - name: Validate offline weak-area lesson guidance for 150-question practice
+        run: node coding-academy/tests/quiz-guidance.test.cjs
+      - name: Validate question score backup and independent restore safety
+        run: node coding-academy/tests/quiz-backup.test.cjs
+      - name: Validate unified five-record academy backup and data loss prevention
+        run: node coding-academy/tests/complete-backup.test.cjs
+      - name: Validate progressive first-time coding lessons and real-line hints
+        run: node coding-academy/tests/beginner.test.cjs
+      - name: Validate static-only offline cache security
+        run: node coding-academy/tests/offline.test.cjs
+      - name: Validate Python lab consent and mobile UI state
+        run: node coding-academy/tests/python-ui.test.cjs

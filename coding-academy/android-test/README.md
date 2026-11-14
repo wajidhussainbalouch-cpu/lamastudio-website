@@ -49,3 +49,8 @@ The Android v0.15 test APK adds a local, single-file **Complete Academy Backup**
 This file includes all four course modules plus 150-question scores. Prior four-course backups and question-only backups remain supported through their respective original restore controls.
 
 **Do not uninstall the older test app until you have verified the backup can be saved and restored.** A successful GitHub APK build does not prove Android's blob download/file picker works on every handset. The app remains debug-signed and separate from the live website.
+
+
+## v0.16: actionable help after a wrong answer
+
+The independent v0.16 Android TEST build introduces offline, English/Urdu lesson recommendations. Start Practice Questions, answer one question incorrectly, and tap the Practise this idea link to open a relevant lesson. The home screen lists outstanding mistakes by topic. A lesson still locked in the foundation course redirects to the next unlocked lesson, so recommendations never bypass course progression. After a correct retry, the weak-area entry disappears. No login or remote analysis is involved. Test links on a real phone before any production release.

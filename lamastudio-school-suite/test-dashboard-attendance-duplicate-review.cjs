@@ -72,3 +72,30 @@ assert.match(outreach,/Rukhsana/,'verified absent pupil should appear in parent 
 assert.doesNotMatch(outreach,/Ali/,'duplicate pupil should not appear in absence follow-up');
 assert.match(outreach,/Contact parents only for confirmed absences/);
 console.log('PASS: duplicate student/date rows are not reported as verified or sent to parent follow-up.');
+const chartConfigs=[];
+context.charts={};
+context.destroyChart=()=>{};
+context.chartDefaults=()=>({});
+context.Chart=class{constructor(canvas,config){chartConfigs.push(config)}};
+vm.runInContext(section('function renderTeacherAttendanceAnalytics(teachers,records){','async function renderAssessmentExtraOverview()'),context);
+context.renderTeacherAttendanceAnalytics(
+ [{id:'T1',name:'Staff One'},{id:'T2',name:'Staff Two'}],
+ [
+  {id:'r1',teacherId:'T1',date:day,status:'Present'},
+  {id:'r2',teacherId:'T1',date:day,status:'Absent'}, // ambiguous staff mark
+  {id:'r3',teacherId:'T2',date:day,status:'Leave'}
+ ]
+);
+assert.equal(get('taTotal').textContent,2);
+assert.equal(get('taPresent').textContent,0,'staff duplicate must not count as confirmed Present');
+assert.equal(get('taAbsent').textContent,0,'staff duplicate must not count as confirmed Absent');
+assert.equal(get('taLeave').textContent,1,'unique saved Leave is retained');
+assert.match(get('taPending').textContent,/1 staff record\(s\) need duplicate review/);
+assert.match(get('teacherTrendNote').textContent,/excluded from verified totals/);
+assert.ok(chartConfigs.length);
+const sat=chartConfigs[0].data.labels.findIndex(v=>v.startsWith('Sat'));
+assert.equal(chartConfigs[0].data.datasets[0].data[sat],0,'Saturday duplicate must not inflate seven-day chart');
+assert.equal(chartConfigs[0].data.datasets[2].data[sat],1,'Saturday confirmed Leave remains counted');
+assert.doesNotMatch(get('dashboardStaffFollowup').innerHTML,/Staff One/,'duplicate staff mark cannot trigger an absence notification');
+console.log('PASS: duplicate staff/day rows are excluded from verified staff totals, trends and follow-up.');
+

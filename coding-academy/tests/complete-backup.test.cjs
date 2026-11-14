@@ -85,4 +85,8 @@ assert.match(read("progress.html"),/id="completeExport"/);
 assert.match(read("progress.html"),/id="completeConfirm"/);
 assert.match(read("progress.html"),/complete-backup\.js/);
 assert.match(read("progress.js"),/completeCore\.restore\(localStorage,MODULES,pendingComplete\)/);
+const androidSource=read("android-test/app/src/main/java/pk/lamastudio/codingacademy/testing/MainActivity.java");
+assert.match(androidSource,/MAX_DOWNLOAD_BYTES\s*=\s*1200\s*\*\s*1024/);
+assert.ok(1200*1024>complete.MAX_BYTES,"Android bridge must accept a complete 1.1MB backup.");
+assert.match(androidSource,/base64\.length\(\)\s*>\s*1700000/);
 console.log("PASS: portable 5-area academy backup, strict file checks, question records, transactional rollback and unrelated data isolation.");

@@ -22,9 +22,19 @@ const LockService={getScriptLock:()=>({
  tryLock:()=>{if(deny||held)return false;held=true;lockedCount++;return true},
  releaseLock:()=>{assert.equal(held,true);held=false;releasedCount++}
 })};
-const api=new Function('LockService','Utilities','Session','rowToRecord','recordToRow','genId','writeAudit',
+const studentHeaders=['id','enrlNo','class','section','name'];
+const studentRecords=Array.from({length:8},(_,i)=>({
+ id:'s'+(i+1),enrlNo:String(i===5?5:i+1),class:i===5?'5':'4',section:'A',name:'Student '+(i+1)
+}));
+const studentRows=[studentHeaders,...studentRecords.map(student=>toRow(studentHeaders,student))];
+const getCollectionSheet=(_ctx,collection)=>{
+ assert.equal(collection,'students','Only the school-specific roster may be read');
+ return {headers:studentHeaders,sheet:{getDataRange:()=>({getValues:()=>studentRows.map(row=>row.slice())})}};
+};
+const sameClass=(a,b)=>String(a||'').trim().toLowerCase().replace(/^class\s*/,'')===String(b||'').trim().toLowerCase().replace(/^class\s*/,'');
+const api=new Function('LockService','Utilities','Session','rowToRecord','recordToRow','genId','writeAudit','getCollectionSheet','sameClass','teacherOwns',
  code.slice(start,end)+'return {attendanceSchoolDayKey_,attendanceStatusKey_,addAttendanceRecordWithLock_};'
-)(LockService,Utilities,Session,toRecord,toRow,()=> 'att_'+(++seq),()=>{addAudits++});
+)(LockService,Utilities,Session,toRecord,toRow,()=> 'att_'+(++seq),()=>{addAudits++},getCollectionSheet,sameClass,()=>true);
 const rows=[headers],sheet={getDataRange:()=>({getValues:()=>rows.map(x=>x.slice())}),appendRow:x=>rows.push(x.slice())};
 const ctx={ss:{getSpreadsheetTimeZone:()=> 'Asia/Karachi'},schoolId:'school-test',auditActor:{id:'admin-test'}};
 const record=(values={})=>({studentId:'s1',enrlNo:'1',class:'4',date:'2026-11-12',status:'Present',...values});
@@ -57,6 +67,10 @@ assert.equal(rows.length,before);
 assert.throws(()=>add(record({date:'2026-02-31'})),/valid student ID, date/);
 assert.throws(()=>add(record({studentId:''})),/valid student ID/);
 assert.throws(()=>add(record({status:'Invalid'})),/Present\/Absent\/Leave/);
+assert.throws(()=>add(record({studentId:'unknown',enrlNo:'999'})),/school roster/);
+assert.throws(()=>add(record({studentId:'s2',enrlNo:'1'})),/enrollment does not match/);
+assert.throws(()=>add(record({studentId:'s2',enrlNo:'2',class:'5'})),/class does not match/);
+assert.throws(()=>add(record({studentId:'s2',enrlNo:'2',section:'B'})),/section does not match/);
 deny=true;
 assert.throws(()=>add(record({studentId:'s8',enrlNo:'8'})),/busy/);
 deny=false;

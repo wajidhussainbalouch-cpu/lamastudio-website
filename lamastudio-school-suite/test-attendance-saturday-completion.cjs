@@ -68,6 +68,8 @@ for (const date of ['2026-11-14', '2026-11-15']) {
 console.log('PASS: Saturday saved teacher records appear in seven-day chart; no weekend holiday assumption');
 
 const e = environment('2026-11-14');
+const verifiedHelper=take('function verifiedStudentDayRows(attendance,students,day){', "\n        document.getElementById('studentAttClasses')");
+vm.runInContext(verifiedHelper,e.context);
 const studentFunction = take('function renderStudentAttendanceCard(attendance,students){', '\nfunction normalizeAttendanceDate(value)');
 vm.runInContext(studentFunction, e.context);
 const students = Array.from({ length: 4 }, (_, i) => ({ id: 'S' + i, name: 'Student ' + i, class: '1' }));

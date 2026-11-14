@@ -240,7 +240,11 @@ async function deleteCopy(){
 // Device-local deletion is independent of cloud progress and Auth.
 function eraseLocalLearning(){
  const parts=core?.parts||[];
- const previous=parts.map(part=>({key:part.key,value:localStorage.getItem(part.key)}));
+ // The 150-question practice bank is a fifth device-local learner store.
+ // It is intentionally excluded from the still-disabled cloud snapshot,
+ // but MUST be included when someone explicitly erases local learning data.
+ const keys=[...parts.map(part=>part.key),"lama-coding-questions-v1"];
+ const previous=keys.map(key=>({key,value:localStorage.getItem(key)}));
  try{
   for(const item of previous)localStorage.removeItem(item.key);
  }catch(error){
@@ -294,7 +298,7 @@ async function deleteAccount(event){
 }
 function clearLocal(){
  if(busy)return;
- if(!confirm("Delete all four academy modules' saved progress, code drafts and reflections from THIS browser? This does not remove your cloud progress or account. Download a backup first."))return;
+ if(!confirm("Delete all five learning records (four course modules and 150-question scores) from THIS browser? This does not remove your cloud progress or account. Download a backup first."))return;
  try{
   eraseLocalLearning();
   report("eraseStatus","Device learning data erased. This action does not delete your cloud copy or authentication account.","good");

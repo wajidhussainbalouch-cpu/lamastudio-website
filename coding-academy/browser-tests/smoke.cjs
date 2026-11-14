@@ -107,6 +107,7 @@ test("mobile onboarding, prominent academy brand, sidebar and direct bottom tabs
   const opener=page.getByRole("button",{name:"Open navigation menu"});
   await opener.click();
   assert.equal(await opener.getAttribute("aria-expanded"),"true");
+  await page.locator(".lama-shell-sidebar").waitFor({state:"visible"});
   assert.equal(await page.locator(".lama-shell-sidebar").isVisible(),true);
   assert.equal(await page.locator(".lama-shell-sidebar nav a").count(),12);
   await page.keyboard.press("Escape");

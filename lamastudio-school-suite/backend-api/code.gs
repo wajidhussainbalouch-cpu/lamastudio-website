@@ -1098,7 +1098,7 @@ function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
       // The canonical ID wins. An older row with missing ID is matched
       // only when enrollment AND class both identify the same student.
       const sameStudent=oldId?oldId===studentId:
-        !!(enrl&&oldEnrollment===enrl&&cls&&oldClass===cls);
+        !!(canonicalEnrollment&&oldEnrollment===canonicalEnrollment&&canonicalClass&&sameClass(oldClass,canonicalClass));
       if(sameStudent)matches.push(old);
     }
     if(matches.length>1)

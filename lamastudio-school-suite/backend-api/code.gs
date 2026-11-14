@@ -1046,6 +1046,31 @@ function attendanceStatusKey_(raw){
          status==='absent'||status==='a'?'Absent':
          status==='leave'||status==='l'||status==='on leave'?'Leave':'';
 }
+/**
+ * Resolve the canonical student from this school's own roster before adding
+ * attendance. A client-submitted ID, enrollment or class is not authority.
+ */
+function attendanceRosterStudent_(ctx,record){
+  const id=String(record.studentId||'').trim();
+  if(!id)throw Error('Attendance requires a student ID from the school roster.');
+  const source=getCollectionSheet(ctx,'students');
+  const matches=source.sheet.getDataRange().getValues().slice(1)
+    .map(row=>rowToRecord(source.headers,row))
+    .filter(student=>String(student.id||'').trim()===id);
+  if(matches.length!==1)
+    throw Error('Student ID is missing or ambiguous in this school roster. No attendance was saved.');
+  const student=matches[0];
+  const savedEnrollment=String(student.enrlNo||student.enrollmentNo||'').trim();
+  if(record.enrlNo && String(record.enrlNo).trim()!==savedEnrollment)
+    throw Error('Attendance enrollment does not match the student roster.');
+  if(record.class && !sameClass(record.class,student.class))
+    throw Error('Attendance class does not match the student roster.');
+  if(record.section && String(record.section).trim().toLowerCase()!==String(student.section||'').trim().toLowerCase())
+    throw Error('Attendance section does not match the student roster.');
+  if(ctx.role==='teacher'&&!teacherOwns(ctx,student))
+    throw Error('Student is outside this teacher\'s assigned class/section.');
+  return student;
+}
 function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
   const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
     ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
@@ -1058,6 +1083,11 @@ function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(20000))throw Error('Attendance register is busy. Refresh before retrying.');
   try{
+    const student=attendanceRosterStudent_(ctx,record);
+    const canonicalEnrollment=String(student.enrlNo||student.enrollmentNo||'').trim();
+    const canonicalClass=String(student.class||'').trim();
+    const canonicalSection=String(student.section||'').trim();
+    const canonicalName=String(student.name||'').trim();
     const data=sheet.getDataRange().getValues(),matches=[];
     for(let i=1;i<data.length;i++){
       const old=rowToRecord(headers,data[i]);
@@ -1081,7 +1111,7 @@ function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
       }
       throw Error('Attendance already exists for this student/date with a different status. Refresh and use Update, not Add.');
     }
-    const full=Object.assign({},record,{id:genId('att'),date,status,createdAt:new Date().toISOString()});
+    const full=Object.assign({},record,{id:genId('att'),studentId:String(student.id),enrlNo:canonicalEnrollment,class:canonicalClass,section:canonicalSection,studentName:canonicalName,date,status,createdAt:new Date().toISOString()});
     sheet.appendRow(recordToRow(headers,full));
     if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','attendance',full.id,null,full);
     return full;

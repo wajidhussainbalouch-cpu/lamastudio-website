@@ -18,10 +18,10 @@ window.LamaAcademyJobCatalog=(()=>{
    const variants=j.id==='teaching'?String(j.post||'').split(';').map(s=>s.trim()).filter(Boolean):[];
    if(variants.length>1){
     variants.forEach((label,i)=>result.push({
-     id:j.id+':'+i,jobId:j.id,label,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready,syllabusEvidence:j.syllabusEvidence||null,priorityOrder:Number(j.priorityOrder)||99
+     id:j.id+':'+i,jobId:j.id,label,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready,assessmentType:j.assessmentType||'mcq',skillsPracticeUrl:typeof j.skillsPracticeUrl==='string'&&/^\.\/stenography\.html\?job=[a-z0-9-]+$/.test(j.skillsPracticeUrl)?j.skillsPracticeUrl:'',sharedBankGroup:j.sharedBankGroup||'',syllabusEvidence:j.syllabusEvidence||null,priorityOrder:Number(j.priorityOrder)||99
     }));
    }else{
-    result.push({id:j.id,jobId:j.id,label:j.title,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready,syllabusEvidence:j.syllabusEvidence||null,priorityOrder:Number(j.priorityOrder)||99});
+    result.push({id:j.id,jobId:j.id,label:j.title,subjects,category:j.category||'',caseNo:j.caseNo||'',ready:!!j.ready,assessmentType:j.assessmentType||'mcq',skillsPracticeUrl:typeof j.skillsPracticeUrl==='string'&&/^\.\/stenography\.html\?job=[a-z0-9-]+$/.test(j.skillsPracticeUrl)?j.skillsPracticeUrl:'',sharedBankGroup:j.sharedBankGroup||'',syllabusEvidence:j.syllabusEvidence||null,priorityOrder:Number(j.priorityOrder)||99});
    }
   }
   return result;

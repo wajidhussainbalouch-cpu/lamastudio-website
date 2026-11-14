@@ -55,3 +55,15 @@ The add-on uses peppered PBKDF2-HMAC-SHA256, random per-student salt and server-
 - Official Google Apps Script docs confirm `Utilities.computeHmacSha256Signature` supports Byte[] and String overloads, and list a six-minute execution limit. Real Apps Script hashing execution time and quotas remain UNTESTED.
 
 No production data, main branch or deployment changed. A local checklist marked green by a user does not constitute actual independent pilot approval.
+
+
+## Additional code inspection and preflight — 2026-11-14
+
+- Fixed ambiguous identity handling in the canonical `school-suite-student-auth-v11.gs`: `q11Find_` now denies duplicate student IDs and duplicate enrollment numbers instead of returning the first matching row. Added conservative denials for trivial predictable test passwords while allowing longer passphrases (commit `2c3c9ec191c2d6cde46d134377ff886dc37498c5`).
+- **11/11** focused checks passed against the exact patched GitHub `q11Find_` and `q11StrongPassword_` functions with mock sheet records.
+- Local Node.js test of an accurately transcribed `q11Derive_` implementation passed **8 independent assertions** against standard Node `crypto.pbkdf2Sync` and the expected public test vector. This is not an Apps Script runtime/latency test, nor a run of the repository's canonical test file.
+- Local ZIP `lama-quran-academy-v11.zip` packages all earlier PWA learning resources, a Version 11 local-only readiness checklist, and the Node derivation test. Archive-integrity check passed.
+- The self-contained Version 11 demo was exercised at 390px and 1280px in headless Chromium: 11 navigation tabs, eight V11 readiness controls, local status update, no JavaScript errors, no horizontal overflow. This does not authenticate real users.
+- **Critical deployment blocker:** actual Google Apps Script PBKDF2 performance, student login session storage protections, rollback from destructive legacy credential clearing, independent real two-school tenancy/guardian tests, and qualified Islamic content review remain unfinished.
+
+**No deployment, live credential changes, or real child data processing occurred.**

@@ -185,3 +185,17 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Correct retries must clear outstanding weak-area entries while retaining attempt counts.
 - [ ] Check all 15 language/level destinations, 360–390px layout, keyboard focus and offline lesson navigation.
 - [ ] v0.16 is separate from earlier test APKs; restore a Complete Academy Backup deliberately to move saved work.
+
+
+## Phase 17 — Beginner-friendly Android UI and isolated learner accounts
+
+- [ ] On Android at 360–390px, the LAMA Coding Academy name and app logo appear in one compact header row. Branding should no longer consume two to three screenfuls.
+- [ ] From a fresh install, show Learn coding from zero, the clearly labelled Start my first lesson button above the fold, and a simple How learning works explanation.
+- [ ] Tap the hamburger menu; the sidebar should list Home, Guided Lessons, Practice Questions, Coding Challenges, Python Lab, Project Studio, My Journey, Career Paths, Account & Cloud Backup, Privacy, System Check and LAMA Studio. Esc and outside tap must close it.
+- [ ] Fixed bottom Home, Lessons, Practice and Journey shortcuts should be readable, tappable and not obscure content.
+- [ ] Open Lesson 1. The actual mission must appear near the top; course map and previous/next levels remain available but do not dominate the screen.
+- [ ] On desktop, the permanent sidebar must not overlap main content. Check keyboard focus and screen-reader ordering of the drawer.
+- [ ] With airplane mode enabled, navigate all bundled local pages; Python WASM download remains a separate opt-in limitation.
+- [ ] Supabase account configuration must remain disabled until the dedicated Coding Academy project is set up and verified. Do NOT use the PPSC candidate database or keys.
+- [ ] When cloud backend is eventually enabled, check two different authenticated test users cannot read or write each other's rows. Validate 62 lessons + 150 question scores, email confirmation, forgot password, and explicit consent before any upload.
+- [ ] Install v0.17 alongside v0.16, and verify old local work remains safe. Import a trusted Complete Academy Backup only after choosing to transfer it.

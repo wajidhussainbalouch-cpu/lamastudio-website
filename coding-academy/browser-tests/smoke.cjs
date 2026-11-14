@@ -154,6 +154,61 @@ test("new learner glossary, ordered levels and line-specific mistake recovery",a
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
+test("mistake-based lesson guidance opens real unlocked lessons without bypassing stages",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:360,height:780});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"quiz.html"));
+  await page.evaluate(()=>{
+   const state=window.LAMA_QUESTION_CORE.createState(),bank=window.LAMA_CODING_QUESTIONS;
+   window.LAMA_QUESTION_CORE.record(state,bank.items.find(q=>q.track==="html"&&q.level===1),false);
+   window.LAMA_QUESTION_CORE.record(state,bank.items.find(q=>q.track==="sql"&&q.level===1),false);
+   window.LAMA_QUESTION_CORE.save(localStorage,state);
+  });
+  await page.reload();
+  await assertNoOverflow(page,"weak-area cards at 360px");
+  assert.equal(await page.locator("#coachList .coach-card").count(),2);
+  assert.match(await page.locator("#coachList").textContent(),/HTML/);
+  assert.match(await page.locator("#coachList").textContent(),/SQL/);
+  assert.equal(await page.locator("#missed").textContent(),"2");
+  const htmlLink=page.locator('#coachList a[href="./index.html#lesson=intro-html"]');
+  assert.equal(await htmlLink.count(),1);
+  await htmlLink.click();
+  await page.locator("#editor").waitFor();
+  assert.match(await page.locator(".course-notice").textContent(),/still locked/i);
+  assert.match(await page.getByRole("heading",{level:1}).last().textContent(),/What is a website/);
+  await page.evaluate(()=>{
+   const key="lama-coding-academy-v1",x=JSON.parse(localStorage.getItem(key)||"{}");
+   x.progress={...(x.progress||{}),"intro-browser":true};
+   localStorage.setItem(key,JSON.stringify(x));
+  });
+  await page.goto(insideApp(origin,"quiz.html"));
+  await page.locator('#coachList a[href="./index.html#lesson=intro-html"]').click();
+  await page.locator("#editor").waitFor();
+  assert.match(await page.getByRole("heading",{level:1}).last().textContent(),/HTML: the skeleton of a page/);
+  await page.goto(insideApp(origin,"quiz.html"));
+  await page.locator("#track").selectOption("html");
+  await page.locator("#start").click();
+  const item=await page.evaluate(()=>{
+   const prompt=document.getElementById("prompt").textContent;
+   return window.LAMA_CODING_QUESTIONS.items.find(x=>x.prompt===prompt);
+  });
+  if(item.mode==="build"){
+   for(const index of [...item.answer].reverse())
+    await page.locator('#options button[data-token="'+index+'"]').click();
+  }else{
+   const wrong=(item.answer+1)%item.options.length;
+   await page.locator('#options button[data-choice="'+wrong+'"]').click();
+  }
+  await page.locator("#check").click();
+  const help=page.locator("#feedback a.learn-link");
+  assert.equal(await help.count(),1);
+  assert.ok((await help.getAttribute("href")).startsWith("./index.html#lesson="));
+  assert.match(await page.locator("#feedback").textContent(),/Useful next step/);
+  await assertNoOverflow(page,"question feedback learning link");
+  assert.equal(pageErrors.length,0,"JavaScript errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("original question bank: ten-question coding round, explanations, missed review, offline retention",async(browser,origin)=>{
  const view=await browserPage(browser,{width:390,height:844});
  try{

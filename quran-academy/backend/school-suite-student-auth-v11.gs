@@ -67,12 +67,15 @@ function q11Find_(sheetInfo,field,value){
   var data=sheetInfo.sheet.getDataRange().getValues();
   var pos=sheetInfo.headers.indexOf(field);
   if(pos<0)throw Error('Student sheet missing '+field+'.');
+  var found=null;
   for(var i=1;i<data.length;i++){
     if(String(data[i][pos])===String(value)){
-      return {row:i+1,record:rowToRecord(sheetInfo.headers,data[i])};
+      // Ambiguous enrollment or IDs must never select an arbitrary learner.
+      if(found)throw Error('Student record conflict. Contact school administrator.');
+      found={row:i+1,record:rowToRecord(sheetInfo.headers,data[i])};
     }
   }
-  return null;
+  return found;
 }
 function q11School_(schoolId){
   var match=findSchoolRow(getRegistrySheet(),function(s){return String(s.schoolId)===String(schoolId);});
@@ -86,7 +89,14 @@ function q11StudentId_(value){
 }
 function q11StrongPassword_(password,student){
   if(typeof password!=='string'||password.length<12||password.length>128)throw Error('Password must be 12–128 characters.');
-  if(String(password)===String(student.enrlNo)||String(password).toLowerCase()===String(student.name||'').toLowerCase())throw Error('Choose a stronger password.');
+  var norm=password.toLowerCase().replace(/\s+/g,'');
+  if(String(password)===String(student.enrlNo)||norm===String(student.name||'').toLowerCase().replace(/\s+/g,''))
+    throw Error('Choose a stronger password.');
+  // Block obviously guessable examples while allowing memorable long passphrases.
+  if(/^(.)\1{11,}$/.test(password) ||
+     /^(?:1234567890|0987654321|0123456789)+$/.test(password) ||
+     ['password123456','password12345678','admin12345678','qwerty123456','welcome123456'].indexOf(norm)!==-1)
+    throw Error('That password is too predictable. Use a longer, unique passphrase.');
 }
 /** School admin provisions an EXISTING fictional student; no account creation. */
 function q11Provision_(p){

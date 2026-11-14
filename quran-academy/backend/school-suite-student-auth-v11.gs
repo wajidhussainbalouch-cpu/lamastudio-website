@@ -117,8 +117,16 @@ function q11Login_(schoolMatch,schoolId,enrlNo,password){
   if(!enrlNo||!password||typeof password!=='string'||password.length>128)throw Error('Invalid school or student credentials.');
   var info=q11Sheet_(schoolMatch,false),found=q11Find_(info,'enrlNo',enrlNo);
   var cache=CacheService.getScriptCache(),rate=q11CacheKey_(settings,'fail',schoolId+'|'+String(enrlNo).trim());
-  var failures=Number(cache.get(rate)||0);
-  if(failures>=Q11_LOGIN_MAX_FAILURES_)throw Error('Too many attempts. Try again later.');
+  // Reserve an attempt under a script lock BEFORE doing expensive password work.
+  // CacheService is best-effort: an independent rate limiter is still needed
+  // for public production use (including distributed abusive traffic).
+  var lock=LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var failures=Number(cache.get(rate)||0);
+    if(failures>=Q11_LOGIN_MAX_FAILURES_)throw Error('Too many attempts. Try again later.');
+    cache.put(rate,String(failures+1),Q11_LOGIN_WINDOW_SECONDS_);
+  } finally { lock.releaseLock(); }
   var candidate=found&&found.record;
   var good=false;
   if(candidate&&candidate.q11Hash&&candidate.q11Salt&&Number(candidate.q11Rounds)>=20000){
@@ -126,7 +134,6 @@ function q11Login_(schoolMatch,schoolId,enrlNo,password){
     good=q11ConstantEqual_(attempted,candidate.q11Hash);
   }
   if(!good){
-    cache.put(rate,String(failures+1),Q11_LOGIN_WINDOW_SECONDS_);
     throw Error('Invalid school or student credentials.');
   }
   cache.remove(rate);

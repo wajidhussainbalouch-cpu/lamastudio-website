@@ -85,6 +85,47 @@ async function assertNoOverflow(page,label){
 async function cleanup(view){
  if(view)await view.context.close();
 }
+test("mobile onboarding, prominent academy brand, sidebar and direct bottom tabs",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:360,height:780});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"index.html"));
+  await page.locator(".lama-shell-header").waitFor();
+  const brand=page.locator(".lama-shell-logo");
+  assert.match(await brand.textContent(),/LAMA Coding Academy/);
+  assert.equal(await page.locator(".lama-shell-logo img").count(),1);
+  const top=await page.locator(".lama-shell-header").boundingBox();
+  assert.ok(top&&top.height<=72,"Header should use one compact row on phones.");
+  await page.getByRole("heading",{name:"Learn coding from zero"}).waitFor();
+  assert.equal(await page.locator(".home-tool-grid a").count(),4);
+  const start=page.getByRole("button",{name:/Start my first lesson/});
+  const startBox=await start.boundingBox();
+  assert.ok(startBox&&startBox.y+startBox.height<520,
+   "Main start button should appear before the learner has to scroll.");
+  assert.equal(await page.locator(".lama-bottom-nav a").count(),4);
+  await assertNoOverflow(page,"new 360px first-time learner home");
+  const opener=page.getByRole("button",{name:"Open navigation menu"});
+  await opener.click();
+  assert.equal(await opener.getAttribute("aria-expanded"),"true");
+  assert.equal(await page.locator(".lama-shell-sidebar").isVisible(),true);
+  assert.equal(await page.locator(".lama-shell-sidebar nav a").count(),12);
+  await page.keyboard.press("Escape");
+  assert.equal(await opener.getAttribute("aria-expanded"),"false");
+  await page.locator('.lama-bottom-nav a[href="./index.html#learn"]').click();
+  await page.locator("#editor").waitFor();
+  const head=await page.locator(".lesson-head").boundingBox();
+  assert.ok(head&&head.y<520,"The actual lesson mission should start near the top of a phone.");
+  assert.equal(await page.locator(".lesson-list button[data-action=lesson]").count(),22);
+  await assertNoOverflow(page,"new mobile lesson-first view");
+  await page.locator('.lama-bottom-nav a[href="./quiz.html"]').click();
+  await page.getByRole("heading",{name:/Learn coding, one small question/}).waitFor();
+  await page.locator(".lama-shell-menu").click();
+  await page.locator('.lama-shell-sidebar a[href="./account.html"]').click();
+  assert.match(await page.locator("#configStatus").textContent(),/not activated/i);
+  await assertNoOverflow(page,"shared mobile account navigation");
+  assert.equal(pageErrors.length,0,"Unexpected errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("desktop lessons and local draft persistence",async(browser,origin)=>{
  const view=await browserPage(browser,{width:1280,height:800});
  try{
@@ -98,7 +139,7 @@ test("desktop lessons and local draft persistence",async(browser,origin)=>{
   const first=await page.evaluate(()=>JSON.parse(localStorage.getItem("lama-coding-academy-v1")));
   assert.equal(first.drafts["intro-browser"],code);
   await page.reload();
-  await page.locator('#nav button[data-screen="learn"]').click();
+  await page.locator('.lama-shell-sidebar a[href="./index.html#learn"]').click();
   await page.locator("#editor").waitFor();
   assert.equal(await page.locator("#editor").inputValue(),code);
   await page.locator('button[data-action="run"]').click();

@@ -43,6 +43,8 @@ const storage={getItem:key=>store.has(key)?store.get(key):null,setItem:(key,v)=>
 const starter=core.read(storage);
 assert.equal(core.counts(starter).done,0);
 assert.equal(core.counts(starter).total,62);
+assert.equal(starter.questions,null);
+assert.equal(core.format,"lama-coding-academy-cloud-v2");
 assert.equal(Object.keys(starter.modules).length,4);
 const completed={
  foundation:{goal:"web",progress:{h1:true,p:true},drafts:{h1:"<h1>Hello</h1>"},name:"Test Learner"},
@@ -51,7 +53,10 @@ const completed={
  studio:{project:"school",steps:{school:1},checks:{school:{navigation:{reviewed:true}}},code:{school:"<html></html>"},reflection:{school:"I practiced navigation."},lang:"en"}
 };
 for(const part of core.parts)storage.setItem(part.key,JSON.stringify(completed[part.id]));
+const questionState={stats:{"html-1-01":{attempts:2,correct:1,lastCorrect:false}},rounds:{"html-1":1},history:[{track:"html",level:1,score:7}],selection:{track:"html",level:1}};
+storage.setItem(core.quizKey,JSON.stringify(questionState));
 const snap=core.read(storage);
+assert.equal(snap.questions.stats["html-1-01"].lastCorrect,false);
 const counts=core.counts(snap);
 assert.equal(counts.done,6);
 assert.equal(counts.total,62);
@@ -60,11 +65,15 @@ assert.ok(core.sizeOf(snap)<core.maxBytes);
 const remote=JSON.parse(JSON.stringify(snap));
 remote.modules.python.passed["pyx-fees"]={at:"2026-11-10T01:00:00Z"};
 remote.modules.foundation.progress.css=true;
+remote.questions.stats["html-1-01"].lastCorrect=true;
 core.apply(storage,remote);
 assert.equal(core.counts(core.read(storage)).done,8);
 assert.equal(core.read(storage).modules.python.passed["pyx-fees"].at,"2026-11-10T01:00:00Z");
-assert.throws(()=>core.validate({format:core.format,version:1,modules:{foundation:null}}),/all four/i);
-assert.throws(()=>core.validate({format:core.format,version:2,modules:remote.modules}),/Unsupported/i);
+assert.equal(core.read(storage).questions.stats["html-1-01"].lastCorrect,true);
+assert.throws(()=>core.validate({format:core.format,version:2,modules:{foundation:null},questions:null}),/all four/i);
+assert.throws(()=>core.validate({format:core.format,version:1,modules:remote.modules,questions:null}),/Unsupported/i);
+assert.throws(()=>core.validate({...remote,questions:{...remote.questions,stats:{"bad-id":{attempts:1,correct:1}}}}),/Invalid question score/i);
+assert.throws(()=>core.validate({...remote,questions:{...remote.questions,selection:{track:"ppsc",level:1}}}),/Invalid question selection/i);
 assert.throws(()=>core.validate({...remote,modules:{...remote.modules,python:{passed:[]}}}),/invalid field/i);
 assert.throws(()=>core.validate({...remote,modules:{...remote.modules,python:{drafts:{"x":"A".repeat(90001)}}}}),/invalid field/i);
 assert.throws(()=>core.validate({...remote,modules:{...remote.modules,python:{passed:{constructor:"oops"}}}}),/invalid field/i);

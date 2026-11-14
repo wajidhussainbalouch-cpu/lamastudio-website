@@ -391,3 +391,10 @@ The Account & Data page's **Delete learning data on this device** now erases all
 A new real-Chromium test verifies the whole five-record download → local erase → preview/cancel → restore flow, exact recovery of drafts/quiz results and rejection of malformed files. A pure regression test exercises version/size guards and rollback. The Android PWA offline cache is updated to v13 and packages the complete-backup script.
 
 Android build **LAMA Code TEST v0.15** uses a new package identifier `pk.lamastudio.codingacademy.testing.v15` and is debug-signed for owner acceptance testing, independently installable alongside v0.14. Nothing is merged or deployed to the live website.
+
+
+## Phase 16 — Learn from missed questions (14 November 2026)
+
+The new quiz-guidance.js module recommends authored lessons after missed questions across HTML, CSS, JavaScript, Python and SQL. Each language maps to Beginner, Intermediate and Advanced guidance (15 destinations total). Mistake summaries on Practice Questions rank active wrong answers; a correct retry clears the active review flag but preserves answer history. Feedback after an incorrect answer links to a relevant lesson. The lesson page uses safe #lesson= fragments and does not bypass stage locks. All suggestions run offline without changing stored lesson completion, and the guidance includes simple Urdu explanations. This is rules-based coaching, not an AI tutor or a measure of employment readiness.
+
+The v0.16 Android TEST APK has a distinct package ID to avoid overwriting v0.15 data. Users must export and explicitly restore a Complete Academy Backup to transfer local learning progress. New pure tests verify 15 mappings and recovery after correct retries; Chromium tests verify genuine navigation and lock behavior. Physical Android validation remains outstanding; no production merge or backend activation was made.

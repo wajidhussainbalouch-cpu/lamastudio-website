@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Student Account Recovery — LAMA Quran Pilot</title>
+<style>
+:root{color-scheme:light;--forest:#155043;--gold:#b48b48;--border:#dfe9e2}
+*{box-sizing:border-box}body{font:15px/1.6 system-ui,sans-serif;background:#f7faf7;color:#17352e;margin:0}
+main{max-width:750px;margin:32px auto;padding:0 16px 55px}
+h1{font-size:clamp(22px,4vw,31px);line-height:1.25;margin:0 0 12px}
+h2{font-size:18px;margin:0 0 12px}
+.card{border:1px solid var(--border);background:white;border-radius:17px;padding:21px;margin:14px 0}
+.warning{background:#fff3d9;border-color:#eacb89}.good{background:#e8f5eb;border-color:#b2d7b9}
+.field{display:block;font-size:13px;font-weight:700;margin:14px 0 4px}
+input,select{width:100%;border:1px solid #a9c8b8;border-radius:10px;padding:12px;background:white;color:#12291f;font:inherit}
+button{border:0;border-radius:10px;background:var(--forest);color:#fff;font:700 14px system-ui;padding:12px 18px;cursor:pointer}
+button:disabled{background:#a9b8ae;cursor:not-allowed}
+small,p{color:#56695f}small{display:block}label.check{display:flex;gap:10px;align-items:flex-start;margin:16px 0;font-size:13px}
+label.check input{width:18px;height:18px;flex:none;margin:2px}
+#error{color:#a72626}#status{font-weight:700}a{color:#155043}
+.footer{font-size:12px;text-align:center;margin-top:30px}
+</style>
+</head>
+<body>
+<main>
+<p><strong>LAMA Quran &amp; Islamic Learning Academy</strong> · Student security pilot</p>
+<h1>Administrator-assisted student account recovery</h1>
+<div class="card warning" role="note">
+  <strong>DISABLED BY DEFAULT — NOT FOR REAL STUDENT ACCOUNTS</strong>
+  <p>This is a non-production integration page. A developer must first clone the School Suite API onto a completely isolated Apps Script deployment and disposable test sheet, change the API URL in the copied client, then explicitly enable this page.</p>
+</div>
+<div class="card">
+  <h2>Identity and authorization</h2>
+  <p>Only a verified School Suite administrator can reset an existing learner's password. This form does not create accounts, allow public password recovery, or send student details to guardians.</p>
+  <p id="gateText" role="status"><strong>Recovery operations are disabled.</strong></p>
+  <form id="recover" autocomplete="off">
+    <label class="field" for="studentId">Existing fictional student ID</label>
+    <input id="studentId" maxlength="90" required autocomplete="off" placeholder="Example: test_student_01">
+    <label class="field" for="method">How was the student/guardian identity verified?</label>
+    <select id="method" required>
+      <option value="">Select verification method</option>
+      <option value="in-person">In person, checked by school administrator</option>
+      <option value="verified-school-record">Verified against existing school records</option>
+    </select>
+    <label class="field" for="newPassword">New private passphrase</label>
+    <input id="newPassword" type="password" minlength="12" maxlength="128" required autocomplete="new-password">
+    <label class="field" for="confirmPassword">Confirm passphrase</label>
+    <input id="confirmPassword" type="password" minlength="12" maxlength="128" required autocomplete="new-password">
+    <label class="field" for="confirmation">Type <code>RECOVER student_ID</code> to confirm this exact fictional learner</label>
+    <input id="confirmation" autocomplete="off" placeholder="RECOVER test_student_01">
+    <label class="check"><input type="checkbox" id="verified"><span>I personally verified the learner identity and understand this will invalidate existing sessions and clear legacy credentials in the test database.</span></label>
+    <button id="submit" type="submit" disabled>Reset fictional student's password</button>
+  </form>
+  <p id="status" role="status" aria-live="polite"></p>
+</div>
+<div class="card">
+ <h2>Non-destructive rollout checklist</h2>
+ <p>Use disposable fictional records. Confirm two isolated school IDs, rejected cross-school access, password hashing performance, session expiration, browser logout, recovery audit entry, rollback and guardian consent before real deployment.</p>
+ <p><a href="https://github.com/wajidhussainbalouch-cpu/lamastudio-website/tree/quran-academy-v12-recovery-pilot" target="_blank" rel="noopener noreferrer">Development branch and handoff</a></p>
+</div>
+<p class="footer">No production deployment or independent identity database is provided here.</p>
+</main>
+<script src="../../js/api-client.js"></script>
+<script>
+'use strict';
+// Developer must edit BOTH settings below only on a cloned, isolated TEST deployment.
+// Do not enable while ../../js/api-client.js still targets the production API URL.
+const Q12_ISOLATED_TEST_BUILD = false;
+const Q12_EXPECTED_TEST_SCHOOL_ID = ''; // exact fictional test school ID
+const $=id=>document.getElementById(id);
+const ready=Q12_ISOLATED_TEST_BUILD && /^[A-Za-z0-9_-]{1,90}$/.test(Q12_EXPECTED_TEST_SCHOOL_ID);
+$('gateText').textContent=ready
+  ? 'Pilot configured: verify this page is connected to the separate TEST backend.'
+  : 'Recovery disabled. A separate test API and explicit test-school configuration are required.';
+$('submit').disabled=!ready;
+$('recover').addEventListener('submit',async e=>{
+  e.preventDefault();$('status').textContent='';
+  if(!ready){$('status').textContent='Blocked: no isolated pilot configured.';return}
+  const admin=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
+  if(!admin || admin.schoolId!==Q12_EXPECTED_TEST_SCHOOL_ID || !admin.token){
+    $('status').textContent='Verified administrator sign-in to the exact pilot school required.';return;
+  }
+  const id=$('studentId').value.trim();
+  if(!/^[A-Za-z0-9_-]{1,90}$/.test(id)){ $('status').textContent='Invalid fictional student ID.';return; }
+  if($('newPassword').value!==$('confirmPassword').value){
+    $('status').textContent='Passphrases do not match.';return;
+  }
+  if($('confirmation').value.trim()!==('RECOVER '+id)||!$('verified').checked||!$('method').value){
+    $('status').textContent='Complete the offline verification and exact confirmation first.';return;
+  }
+  $('submit').disabled=true;
+  try {
+    if(typeof LamaAPI?.quranV12RecoverStudent!=='function')throw Error('Test client is missing student recovery method.');
+    await LamaAPI.quranV12RecoverStudent(id,$('newPassword').value,$('method').value,true);
+    $('status').textContent='Test learner password changed; existing sessions invalidated. Audit the server-side event before proceeding.';
+    $('recover').reset();
+  } catch(err) {
+    $('status').textContent='Recovery not completed: '+String(err?.message||'Request failed');
+  } finally {
+    $('newPassword').value='';$('confirmPassword').value='';
+    $('submit').disabled=!ready;
+  }
+});
+</script>
+</body></html>

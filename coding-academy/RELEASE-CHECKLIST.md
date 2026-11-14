@@ -159,3 +159,18 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Verify the question backup works offline and contains no student details, code drafts, account information or school ID.
 - [ ] Remember that older v0.13 test builds cannot automatically export or transfer their old quiz progress. Do not uninstall old builds before testing any required learning-data exports.
 - [ ] Confirm v0.14 is independent of existing v0.11–v0.13 Android test packages, and verify all GitHub CI workflows and APK signing checks pass.
+
+
+## M. Phase 15 — One complete five-area transfer and safe deletion
+
+- [ ] On the original test app, first download the **Complete Academy Backup** from Learning Journey; confirm Android Files saved the JSON.
+- [ ] The file must include the four learning modules and question scores. Do not assume that the previous four-course backup includes questions.
+- [ ] On a newer test build, import the complete file, review current vs backup counts, then cancel. Confirm nothing changes.
+- [ ] Reopen the same file and confirm restoration: Foundation, Industry Practice, Python, Studio and Question Practice all return, including code drafts and past mistakes.
+- [ ] Verify an invalid file, incorrect bank version or file larger than 1.1 MB is rejected before restore.
+- [ ] Verify importing an older four-course-only backup never removes independent question scores.
+- [ ] On Account & Data, explicitly deleting local learning data removes all five academy learning stores but does not touch any other LAMA app records.
+- [ ] Confirm the complete-backup screen, preview/confirm/cancel, and question score export work in offline mode on a physical Android phone.
+- [ ] Test Android v0.15 side by side with v0.14. They have separate app storage; transfer requires a user-controlled backup/import.
+- [ ] Confirm all coding Node, Chromium, AskLama and Android-build GitHub Actions checks pass for the latest commit.
+- [ ] Do not enable cloud sync, merge PR #85 or deploy any other LAMA product without approval.

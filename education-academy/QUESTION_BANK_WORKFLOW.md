@@ -1,5 +1,20 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Shared question-bank and stenographer routing — verified 14 November 2026
+
+**Supabase catalog:** Direct database check found 17 preparation tracks, including all five additional Kot Addu tracks from the owner's PPSC-domain screenshots. All five are published as *preparation tracks* with \`vacancy_status='unverified'\`; being in the practice catalog does **not** establish an open job application window. Bahawalpur Junior Clerk is preserved as the single existing job, not added twice.
+
+**Reuse model:** Public source registry remains **28 originally authored papers (2,800 source question positions)**. \`shared-paper-bank.js\` adds **five source-credited, deterministic, shuffled derived variants (500 reuse positions)**: two 80/20 papers for each Kot Addu Junior Clerk job, and one 100% MS Office/IT practice paper for Kot Addu Junior Computer Operator. This makes **33 selectable exam papers / 3,300 question positions**. Reused positions are not newly written or expert-approved MCQs. Each derived question keeps \`sourceQuestionId\`; answer rotation and source provenance are regression tested. Within each Junior Clerk job, Papers 1 and 2 use disjoint sets of the 160 General Ability + 40 Office source items; across jobs the same source items can intentionally reappear. Keep each job's attempt IDs, paper history, and 20-paper-per-family limit separate.
+
+**Candidate navigation corrected:** \`job-catalog-ui.js\` now carries \`assessmentType\`, validated \`skillsPracticeUrl\`, and \`sharedBankGroup\` to all selectors. For the two Stenographer BS-15 jobs, the exam/library view now links to the existing \`stenography.html\` timed practice instead of implying an unpublished 100-MCQ exam. The trainer displays the screenshot's English shorthand 70 WPM / typing 35 WPM and Urdu shorthand 60 WPM / typing 25 WPM targets; shorthand notes require manual checking. It is not a PPSC-certified assessment.
+
+**Accounting and transparency:** Paper and subject libraries label shared-bank variants as *reused practice* and distinguish question slots from unique source questions. No 500 phantom editorial question rows are created. Print and answer-review pages already consume the shared registry. Service-worker cache advanced to **v93** to refresh public JavaScript and navigation.
+
+**Validation:** PPSC Academy Quality Checks successful at GitHub Actions run **43592205788**, commit \`13cbfc8a83937f1924ecf5d88ab5214f34be447d\`. Shared-bank regression confirms 28 original papers preserved, five derived variants, 100 valid options per paper, 80/20 or 100% IT distribution, source provenance, deterministic shuffles, distinct paper/attempt IDs and practical navigation. Verified Supabase bank contains **2,630 private editorial entries, none expert-approved**. Table has RLS enabled, \`anon\` lacks SELECT privileges, and authenticated SELECT policy restricts viewing to registered super administrators.
+
+**Remaining:** Academic/explanation review, official PPSC source-PDF audit, and real device/PWA deployment smoke tests are outstanding. No Vercel deployment was initiated by this milestone. Do not present shuffled practice content as unique newly authored questions or secure premium question inventory.
+
+
 ## Kot Addu additional posts & reusable question-bank model — 11 November 2026
 
 Six new screenshots included one previously registered Bahawalpur Junior Clerk and five new Kot Addu tracks: Junior Clerk DC, Stenographer DC, Junior Clerk ADC Revenue (32J2026), Stenographer ADC and Junior Computer Operator ADC (34J2026). The new screenshot transcription and case-specific skill rules are stored in PPSC_KOT_ADDU_ADDITIONAL_SYLLABI_2026.json. Jobs are published in the preparation catalog with vacancy_status='unverified'; blank case numbers are deliberately left blank when illegible.

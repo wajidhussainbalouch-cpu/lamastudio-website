@@ -174,3 +174,14 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Test Android v0.15 side by side with v0.14. They have separate app storage; transfer requires a user-controlled backup/import.
 - [ ] Confirm all coding Node, Chromium, AskLama and Android-build GitHub Actions checks pass for the latest commit.
 - [ ] Do not enable cloud sync, merge PR #85 or deploy any other LAMA product without approval.
+
+
+## Phase 16 — Beginner coaching acceptance
+
+- [ ] On Android v0.16, intentionally answer an HTML practice question incorrectly and check that a relevant Practise this idea link appears after the explanation.
+- [ ] The Practice Questions home screen must show subjects with current outstanding mistakes, using readable English and Urdu text, not guess at unattempted subjects.
+- [ ] A recommendation for a locked lesson must take the learner to their next unlocked activity instead of bypassing the learning sequence.
+- [ ] After completing a prerequisite lesson, the same recommendation should open its authored lesson directly.
+- [ ] Correct retries must clear outstanding weak-area entries while retaining attempt counts.
+- [ ] Check all 15 language/level destinations, 360–390px layout, keyboard focus and offline lesson navigation.
+- [ ] v0.16 is separate from earlier test APKs; restore a Complete Academy Backup deliberately to move saved work.

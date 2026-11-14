@@ -50,7 +50,8 @@ public final class MainActivity extends Activity {
     private static final String START = "https://" + HOST + PREFIX + "index.html";
     private static final int OPEN_FILE = 1201;
     private static final int SAVE_FILE = 1202;
-    private static final int MAX_DOWNLOAD_BYTES = 1024 * 1024;
+    // Must exceed the complete Academy backup's 1.1 MB JSON cap.
+    private static final int MAX_DOWNLOAD_BYTES = 1200 * 1024;
     private WebView browser;
     private ProgressBar progress;
     private ValueCallback<Uri[]> chooseFile;
@@ -257,7 +258,7 @@ public final class MainActivity extends Activity {
             runOnUiThread(() -> {
                 if (!nonce.equals(pendingNonce)) return;
                 pendingNonce = null;
-                if (base64 == null || base64.length() > 1400000) {
+                if (base64 == null || base64.length() > 1700000) {
                     message("This file is too large to export from the test app.");
                     return;
                 }

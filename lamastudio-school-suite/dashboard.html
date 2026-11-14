@@ -824,6 +824,41 @@ header#topOverview{background:var(--lama-header)!important}
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+        /**
+         * One verified attendance status per roster student and school-local day.
+         * Duplicate saved rows remain unresolved (even if both say Present);
+         * their names must not contribute to verified totals or parent outreach.
+         */
+        function verifiedStudentDayRows(attendance,students,day){
+          const byId=new Map(),byEnrollment=new Map(),grouped=new Map();
+          const idOf=s=>String(s.id??s._id??s.studentId??'').trim();
+          const enrollmentOf=s=>String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();
+          for(const student of students){
+            const id=idOf(student),en=enrollmentOf(student);
+            if(id)byId.set(id,byId.has(id)?null:student);
+            if(en)byEnrollment.set(en,byEnrollment.has(en)?null:student);
+          }
+          for(const record of attendance){
+            if(normalizeAttendanceDate(record.date)!==day)continue;
+            const sid=String(record.studentId??record.student_id??record.studentID??'').trim();
+            const en=String(record.enrlNo??record.enrollmentNo??record.enrollment??'').trim();
+            // Never remap an unknown student ID by an incidental enrollment match.
+            const student=sid?byId.get(sid):en?byEnrollment.get(en):null;
+            if(!student)continue;
+            const key=idOf(student)||enrollmentOf(student);
+            if(!key)continue;
+            if(!grouped.has(key))grouped.set(key,{student,rows:[]});
+            grouped.get(key).rows.push(record);
+          }
+          const unique=new Map(),duplicates=new Map();
+          for(const [key,{student,rows}] of grouped){
+            if(rows.length!==1){duplicates.set(key,student);continue;}
+            const status=String(rows[0].status||'').trim().toLowerCase();
+            const value=['present','p'].includes(status)?'present':['absent','a'].includes(status)?'absent':['leave','l','on leave'].includes(status)?'leave':'';
+            if(value)unique.set(key,{student,status:value,record:rows[0]});
+          }
+          return {unique,duplicates};
+        }
         document.getElementById('studentAttClasses')?.addEventListener('click',async event=>{
           const button=event.target.closest('[data-ping-class]');if(!button||button.disabled)return;
           const className=button.getAttribute('data-ping-class');
@@ -849,20 +884,12 @@ header#topOverview{background:var(--lama-header)!important}
           }
         });
                 function renderStudentAttendanceCard(attendance,students){
-          const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
-          students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
-          const current=new Map();
-          attendance.forEach(a=>{
-            if(normalizeAttendanceDate(a.date)!==today)return;
-            const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
-            const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
-            if(!student)return; // exclude staff and unrelated records
-            const key=String(student.id??student._id??student.enrlNo??student.enrollmentNo??'');
-            if(key)current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});
-          });
+          const today=localISODate(),verified=verifiedStudentDayRows(attendance,students,today);
+          const current=verified.unique;
           const counts={present:0,absent:0,leave:0};const classMap=new Map();
-          students.forEach(s=>{const c=String(s.class??s.grade??'Unassigned').trim()||'Unassigned';if(!classMap.has(c))classMap.set(c,{total:0,marked:0,present:0});classMap.get(c).total++});
-          current.forEach(({student,status})=>{const c=String(student.class??student.grade??'Unassigned').trim()||'Unassigned';const r=classMap.get(c);if(['present','p'].includes(status)){counts.present++;if(r)r.present++}else if(['absent','a'].includes(status))counts.absent++;else if(['leave','l','on leave'].includes(status))counts.leave++;else return;if(r)r.marked++});
+          students.forEach(s=>{const c=String(s.class??s.grade??'Unassigned').trim()||'Unassigned';if(!classMap.has(c))classMap.set(c,{total:0,marked:0,present:0,review:0});classMap.get(c).total++});
+          current.forEach(({student,status})=>{const c=String(student.class??student.grade??'Unassigned').trim()||'Unassigned';const r=classMap.get(c);if(status==='present'){counts.present++;if(r)r.present++}else if(status==='absent')counts.absent++;else if(status==='leave')counts.leave++;if(r)r.marked++});
+          verified.duplicates.forEach(student=>{const c=String(student.class??student.grade??'Unassigned').trim()||'Unassigned';const r=classMap.get(c);if(r)r.review++});
           const followup=document.getElementById('dashboardAbsentFollowup');
           if(followup){
             const list=[...current.values()].filter(x=>['absent','a','leave','l','on leave'].includes(x.status));
@@ -880,7 +907,7 @@ header#topOverview{background:var(--lama-header)!important}
               return `<div class="rounded-xl border border-slate-700/60 p-3 flex gap-3"><div class="shrink-0">${photo?`<img src="${safe(photo)}" alt="Student" class="w-12 h-12 object-cover rounded-lg" loading="lazy">`:'<div class="w-12 h-12 rounded-lg bg-slate-800 text-[9px] flex items-center justify-center">No photo</div>'}</div><div class="min-w-0 flex-1"><p class="text-xs font-black">${safe(name)} · <span class="text-rose-300">${safe(status)}</span></p><p class="text-[11px] text-slate-400">Class ${safe(className)} · Enrl ${safe(enrl)}</p><p class="text-[11px] text-slate-400">${safe(parent)} · ${safe(raw||'No contact')}</p><div class="flex gap-2 flex-wrap mt-2">${wa.length>=10&&wa.length<=15?`<a class="hub-mini-link" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:''}${digits.length>=10?`<a class="hub-mini-link" href="tel:${safe(raw.replace(/[^+\d]/g,''))}">Call</a>`:''}<a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Follow up →</a></div></div></div>`;
             }).join(''):'<p class="text-xs text-slate-400">No absent or leave students recorded today.</p>';
           }
-          const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),rate=marked?Math.round(100*counts.present/marked):null;
+          const total=students.length,marked=counts.present+counts.absent+counts.leave,needsReview=verified.duplicates.size,unmarked=Math.max(0,total-marked-needsReview),rate=marked?Math.round(100*counts.present/marked):null;
           const set=(key,value)=>document.getElementById(key).textContent=value;
           set('studentAttDate',new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
           set('studentAttEnrolled',total.toLocaleString());set('studentAttPresent',counts.present);set('studentAttAbsent',counts.absent);set('studentAttLeave',counts.leave);set('studentAttUnmarked',unmarked);
@@ -888,15 +915,15 @@ header#topOverview{background:var(--lama-header)!important}
           document.getElementById('attendanceRatioDisplay').textContent =
             rate===null?'—':rate+'%';
           document.getElementById('absentTodayCount').textContent =
-            counts.absent+' absent today';set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
+            counts.absent+' absent today';set('studentAttHint',(needsReview?`⚠ ${needsReview} student(s) need attendance review; duplicate rows excluded from verified totals. `:'')+(marked?`${marked} of ${total} students marked and verified. Rate is based on verified records only.`:'No verified student attendance records found for today.'));
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
           const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>{
- const complete=r.total>0&&r.marked===r.total,partial=r.marked>0&&!complete;
- const color=complete?'bg-emerald-500':partial?'bg-amber-500':'bg-red-500';
- const label=complete?'✓ Completed':partial?'◐ Incomplete':'● Not marked';
+ const complete=r.total>0&&r.marked===r.total&&r.review===0,partial=r.marked>0&&!complete;
+ const color=r.review?'bg-amber-500':complete?'bg-emerald-500':partial?'bg-amber-500':'bg-red-500';
+ const label=r.review?'⚠ Needs review ('+r.review+')':complete?'✓ Completed':partial?'◐ Incomplete':'● Not marked';
  const width=r.total?Math.round(r.marked/r.total*100):0;
- return `<div class="py-2 border-b border-slate-700/30"><div class="flex items-center justify-between gap-2"><a href="${esc(classAttendanceUrl(name,today))}" class="text-xs font-bold underline underline-offset-4" aria-label="Open ${esc(name)} student attendance">${esc(name)} →</a><span class="text-[11px] ${complete?'text-emerald-500':partial?'text-amber-500':'text-red-500'}">${label}</span></div><div class="flex items-center justify-between gap-2 mt-1"><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} marked</span>${!complete?`<button type="button" class="hub-mini-link" data-ping-class="${esc(name)}">Ping teacher →</button>`:''}</div><div class="h-1.5 rounded-full bg-slate-700/40 overflow-hidden mt-2"><div class="h-full ${color}" style="width:${complete?100:Math.max(5,width)}%"></div></div></div>`;
+ return `<div class="py-2 border-b border-slate-700/30"><div class="flex items-center justify-between gap-2"><a href="${esc(classAttendanceUrl(name,today))}" class="text-xs font-bold underline underline-offset-4" aria-label="Open ${esc(name)} student attendance">${esc(name)} →</a><span class="text-[11px] ${complete?'text-emerald-500':partial?'text-amber-500':'text-red-500'}">${label}</span></div><div class="flex items-center justify-between gap-2 mt-1"><span class="text-[11px] text-slate-400">${r.present} present · ${r.marked}/${r.total} verified${r.review?' · '+r.review+' need review':''}</span>${!complete?`<button type="button" class="hub-mini-link" data-ping-class="${esc(name)}">Ping teacher →</button>`:''}</div><div class="h-1.5 rounded-full bg-slate-700/40 overflow-hidden mt-2"><div class="h-full ${color}" style="width:${complete?100:Math.max(5,width)}%"></div></div></div>`;
  }).join(''):'<p class="text-xs text-slate-400 py-3">No enrolled students found.</p>';
         }
 

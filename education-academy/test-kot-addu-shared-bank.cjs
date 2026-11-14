@@ -90,4 +90,23 @@ assert.ok(read('stenography.html').includes('60 WPM')&&read('stenography.html').
 assert.ok(read('shell.js').includes('skillsPracticeUrl'),'Steno job card must link to the practical trainer');
 assert.ok(read('sw.js').includes("'./stenography.html'"),'Steno page must be cached in PWA public shell');
 assert.equal(errs.length,0,'Source paper registration errors: '+errs.join('; '));
+// Every dropdown exposes the same practical/shared metadata as its source job.
+load('job-catalog-ui.js');
+const options=win.LamaAcademyJobCatalog;
+for(const id of ['stenographer-kot-addu-dc-bor','stenographer-kot-addu-adc-bor']){
+ const j=options.resolve(id);
+ assert.ok(j&&j.assessmentType==='practical','Practical route missing from dropdown: '+id);
+ assert.equal(j.ready,false,'Practical job cannot advertise an MCQ paper');
+ assert.equal(j.skillsPracticeUrl,'./stenography.html?job='+id);
+}
+for(const id of jobs){
+ const j=options.resolve(id);
+ assert.ok(j&&j.sharedBankGroup,'Shared-bank group missing in job selector: '+id);
+}
+const paperUi=read('paper-library.js');
+const subjectUi=read('library-ui.js');
+assert.ok(paperUi.includes('Shuffled shared-bank practice'),'Exam list must explicitly identify reused questions');
+assert.ok(paperUi.includes('Practical shorthand and typing preparation'),'Steno exam empty-state must be practical, not a fake MCQ');
+assert.ok(subjectUi.includes('Open shorthand & typing trainer'),'Job library must link to skills trainer');
+assert.ok(subjectUi.includes('0 newly authored items'),'Job library must not describe reuse as 500 original questions');
 console.log('PPSC Kot Addu shared bank PASS: 5 new jobs, 5 source-credited paper variants (2+2 Clerk, 1 IT), no new repeated stems per paper, 2 shorthand practice tracks, 28 original papers preserved.');

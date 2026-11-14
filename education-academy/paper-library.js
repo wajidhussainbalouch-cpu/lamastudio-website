@@ -136,7 +136,10 @@
    const labels={'not-started':'Not started','in-progress':'In progress','expired':'Time elapsed','completed':'Completed'};
    head.append(element('span',labels[state.state],'library-status library-status-'+state.state));
    card.append(head,element('p',paper.title+' · '+paper.minutes+' minutes · Free educational practice','muted'));
-   if(paper.reviewStatus==='automated-checked')card.append(element('p','Original practice · Automated checks · Independent academic review pending','muted'));
+   if(paper.sharedFromExistingQuestions){
+    card.append(element('p','Shuffled shared-bank practice · '+paper.questions.length+' reused question positions · 0 newly authored questions · Original question IDs preserved','muted'));
+    card.append(element('p','Independent academic review pending. Questions may also appear in other jobs.','muted'));
+   }else if(paper.reviewStatus==='automated-checked')card.append(element('p','Original practice · Automated checks · Independent academic review pending','muted'));
    card.append(element('p','Answer keys and explanations appear after submitting this paper.','muted'));
    const subjects=[...new Set(paper.questions.map(q=>q.subject).filter(Boolean))].slice(0,9);
    card.append(element('p','Subjects: '+subjects.join(' · '),'paper-subjects'));
@@ -149,7 +152,13 @@
    actions.append(makeLink('My scores',urlFor('performance',job),true));
    card.append(actions);root.append(card);
   });
-  if(!available.length&&job){
+  if(!available.length&&job&&job.assessmentType==='practical'){
+   const empty=element('div',undefined,'library-empty');
+   empty.append(element('h3','Practical shorthand and typing preparation'));
+   empty.append(element('p','This stenographer syllabus specifies shorthand and typing speed tests, not a 100-MCQ written paper. Shorthand notes require human checking.'));
+   if(job.skillsPracticeUrl)empty.append(makeLink('Open shorthand & typing practice',job.skillsPracticeUrl,true));
+   root.append(empty);
+  }else if(!available.length&&job){
    const empty=element('div',undefined,'library-empty');
    empty.append(element('h3','Job-specific papers not published yet'));
    empty.append(element('p','This '+job.category+' track is in preparation. We will show a paper here only after its questions, answer keys and academic coverage have been reviewed. No unrelated Headmaster paper will be substituted.'));
@@ -158,7 +167,7 @@
    empty.append(makeLink('Create study plan',urlFor('studyPlanner',job),true));
    root.append(empty);
   }else if(!visible.length){root.append(element('p','No papers match this status filter. Choose All papers to see available practice.','library-empty'))}
-  helper.textContent='Each preparation job is limited to '+MAX_PAPERS_PER_JOB+' published papers. Paper availability is separate from PPSC vacancy status. This is a preparation library, not an official PPSC examination or an active-recruitment announcement. Results and unfinished attempts are retained in this browser; back up scores before changing devices. Planned premium papers are not live.';
+  helper.textContent='Each preparation job is limited to '+MAX_PAPERS_PER_JOB+' published papers. Shared-bank papers reuse existing questions; question positions are not new unique MCQs. Paper availability is separate from PPSC vacancy status. This is a preparation library, not an official PPSC examination or an active-recruitment announcement. Results and unfinished attempts are retained in this browser; back up scores before changing devices. Planned premium papers are not live.';
  }
  select.addEventListener('change',()=>{
   selected=select.value;

@@ -320,6 +320,92 @@ test("browser progress totals and module navigation",async(browser,origin)=>{
   assert.equal(pageErrors.length,0,pageErrors.join(" | "));
  }finally{await cleanup(view);}
 });
+test("complete academy backup of five stores and independent restoration",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:390,height:844});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"progress.html"));
+  await assertNoOverflow(page,"complete backup interface at phone width");
+  const snapshot={
+   "lama-coding-academy-v1":{goal:"web",name:"Test learner",progress:{"intro-browser":true},
+    drafts:{"intro-browser":"<h1>Offline demo</h1>"},quiz:{"intro-browser":0},lastLesson:"intro-browser"},
+   "lama-coding-practice-v2":{track:"js",selected:{js:"js-fee"},passed:{"js-fee":true},drafts:{"js-fee":"let total = 42;"}},
+   "lama-python-executable-v1":{selected:"pyx-greetings",drafts:{"pyx-greetings":"print('Hi')"},answers:{},passed:{},lang:"ur"},
+   "lama-coding-project-studio-v1":{project:"school",lang:"en",steps:{school:1},
+    code:{school:"<h1>Demo</h1>"},checks:{},reflection:{school:"Only fake test notes"}}
+  };
+  const quizData=await page.evaluate(records=>{
+   for(const [key,value] of Object.entries(records))localStorage.setItem(key,JSON.stringify(value));
+   const core=window.LAMA_QUESTION_CORE,data=window.LAMA_CODING_QUESTIONS;
+   const q=core.createState();
+   core.record(q,data.items[0],true);core.record(q,data.items[1],false);
+   q.rounds["html-1"]=1;
+   q.history.push({track:"html",level:1,score:1});
+   q.selection={track:"html",level:1};
+   core.save(localStorage,q);
+   localStorage.setItem("separate-lama-product","DO_NOT_DELETE_OTHER_PROJECT");
+   return q;
+  },snapshot);
+  await page.reload();
+  assert.equal((await page.locator("#total").textContent()).trim(),"2 / 62");
+  const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#completeExport").click()]);
+  assert.match(download.suggestedFilename(),/^lama-coding-academy-COMPLETE-[0-9-]+\.json$/);
+  const fileBytes=fs.readFileSync(await download.path());
+  const file=JSON.parse(fileBytes.toString("utf8"));
+  assert.equal(file.format,"lama-coding-academy-complete-v1");
+  assert.equal(file.version,1);
+  assert.equal(file.questionBackup.format,"lama-coding-questions-backup-v1");
+  for(const [key,value] of Object.entries(snapshot)){
+   const moduleId={"lama-coding-academy-v1":"foundation","lama-coding-practice-v2":"practice",
+    "lama-python-executable-v1":"python","lama-coding-project-studio-v1":"studio"}[key];
+   assert.deepEqual(file.modules[moduleId],value,"Course data must survive complete export.");
+  }
+  assert.equal(file.questionBackup.state.stats["html-1-01"].correct,1);
+  assert.equal(file.questionBackup.state.stats["html-1-02"].lastCorrect,false);
+  // Confirm an explicit erase deletes exactly the five learner stores.
+  page.on("dialog",dialog=>dialog.accept());
+  await page.goto(insideApp(origin,"account.html"));
+  await page.locator("#clearLocal").click();
+  assert.match(await page.locator("#eraseStatus").textContent(),/Device learning data erased/);
+  const keys=[...Object.keys(snapshot),"lama-coding-questions-v1"];
+  const cleared=await page.evaluate(all=>all.map(k=>localStorage.getItem(k)),keys);
+  assert.deepEqual(cleared,[null,null,null,null,null]);
+  assert.equal(await page.evaluate(()=>localStorage.getItem("separate-lama-product")),
+   "DO_NOT_DELETE_OTHER_PROJECT");
+  await page.goto(insideApp(origin,"progress.html"));
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 62");
+  const uploaded={name:"lama-academy-COMPLETE-test.json",mimeType:"application/json",buffer:fileBytes};
+  await page.locator("#completeFile").setInputFiles(uploaded);
+  await page.waitForFunction(()=>!document.getElementById("completeConfirm").disabled);
+  assert.match(await page.locator("#completeReview").textContent(),/Selected backup: 2 \/ 62/);
+  assert.match(await page.locator("#completeReview").textContent(),/Selected question practice: 2 answers checked/);
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 62","Preview must not write any progress.");
+  await page.locator("#completeCancel").click();
+  assert.equal((await page.locator("#total").textContent()).trim(),"0 / 62");
+  await page.locator("#completeFile").setInputFiles(uploaded);
+  await page.waitForFunction(()=>!document.getElementById("completeConfirm").disabled);
+  await page.locator("#completeConfirm").click();
+  assert.match(await page.locator("#completeStatus").textContent(),/all four courses and question scores/i);
+  assert.equal((await page.locator("#total").textContent()).trim(),"2 / 62");
+  const restored=await page.evaluate(all=>{
+   const out={};for(const key of all)out[key]=JSON.parse(localStorage.getItem(key));return out;
+  },keys);
+  for(const [key,value] of Object.entries(snapshot))
+   assert.deepEqual(restored[key],value,"All saved course records must be exact on restore.");
+  assert.deepEqual(restored["lama-coding-questions-v1"],quizData,
+   "Answered questions, mistake flags and completed quiz rounds must restore.");
+  assert.equal(await page.evaluate(()=>localStorage.getItem("separate-lama-product")),
+   "DO_NOT_DELETE_OTHER_PROJECT");
+  // A malformed complete file must be rejected before writing anything.
+  await page.locator("#completeFile").setInputFiles({
+   name:"untrusted.json",mimeType:"application/json",buffer:Buffer.from("{bad json")
+  });
+  await page.waitForFunction(()=>document.getElementById("completeStatus").textContent.includes("rejected"));
+  assert.equal(await page.locator("#completeConfirm").isDisabled(),true);
+  assert.equal((await page.locator("#total").textContent()).trim(),"2 / 62");
+  assert.equal(pageErrors.length,0,"Browser errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("full backup, local erasure, review and verified restore",async(browser,origin)=>{
  const view=await browserPage(browser,{width:390,height:844});
  try{

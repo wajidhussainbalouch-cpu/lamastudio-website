@@ -1,0 +1,62 @@
+/* Run: node coding-academy/tests/quiz-guidance.test.cjs */
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
+const base=path.join(__dirname,".."),read=file=>fs.readFileSync(path.join(base,file),"utf8");
+const context={window:{}};
+for(const file of ["quiz-data.js","quiz-core.js","quiz-guidance.js"]){
+ const source=read(file);
+ new Function(source);
+ vm.runInNewContext(source,context);
+}
+const db=context.window.LAMA_CODING_QUESTIONS;
+const core=context.window.LAMA_QUESTION_CORE;
+const coach=context.window.LAMA_QUIZ_GUIDANCE;
+const stage1=core.createState();
+assert.equal(coach.suggestions(db,stage1).length,0,"Do not invent weaknesses with no answers.");
+const tracks=["html","css","javascript","python","sql"];
+const lessons=read("index.html");
+const urls=[];
+for(const track of tracks)for(let level=1;level<=3;level++){
+ const suggestion=coach.related({track,level});
+ assert.ok(suggestion&&suggestion.title&&suggestion.detail&&suggestion.urdu);
+ assert.ok(suggestion.href.startsWith("./"),"Recommendation must stay within bundled academy.");
+ assert.doesNotMatch(suggestion.href,/\.\.\/|^https?:|javascript:/i);
+ urls.push(suggestion.href);
+ const fragment=suggestion.href.match(/^\.\/index\.html#lesson=([a-z0-9-]+)$/);
+ if(fragment)assert.match(lessons,new RegExp("id:'"+fragment[1]+"'"),"Destination must have a real authored lesson.");
+ else assert.ok(["./python.html","./practice.html"].includes(suggestion.href));
+}
+assert.equal(coach.related({track:"unknown",level:1}),null);
+assert.equal(coach.related({track:"html",level:4}),null);
+const h1=db.items.find(q=>q.track==="html"&&q.level===1);
+const h2=db.items.find(q=>q.track==="html"&&q.level===2);
+const s3=db.items.find(q=>q.track==="sql"&&q.level===3);
+const p3=db.items.find(q=>q.track==="python"&&q.level===3);
+core.record(stage1,h1,false);
+core.record(stage1,h2,false);
+core.record(stage1,s3,false);
+core.record(stage1,p3,false);
+let top=Array.from(coach.suggestions(db,stage1));
+assert.deepEqual(top.map(x=>[x.track,x.missed]),[["html",2],["python",1],["sql",1]]);
+assert.equal(top[0].level,1,"Equal level counts should point beginners to the easier relevant lesson.");
+assert.equal(top[0].href,"./index.html#lesson=intro-html");
+assert.equal(top[1].href,"./python.html");
+assert.equal(top[2].href,"./practice.html");
+core.record(stage1,h1,true);
+top=Array.from(coach.suggestions(db,stage1));
+assert.equal(top.find(x=>x.track==="html").missed,1);
+assert.equal(top.find(x=>x.track==="html").level,2);
+assert.equal(top.find(x=>x.track==="html").href,"./index.html#lesson=link");
+core.record(stage1,h2,true);
+top=Array.from(coach.suggestions(db,stage1));
+assert.equal(top.some(x=>x.track==="html"),false,"Mastered topics must disappear without deleting history.");
+core.record(stage1,p3,true);
+core.record(stage1,s3,true);
+assert.equal(coach.suggestions(db,stage1).length,0);
+assert.equal(core.totals(db,stage1).answered,8,"Suggestions must not mutate answer counts.");
+assert.ok(read("quiz.html").includes('id="coachList"'));
+assert.ok(read("quiz.html").includes('quiz-guidance.js'));
+assert.match(read("quiz.js"),/renderCoach\(\)/);
+assert.match(read("quiz.js"),/guidance\.related\(q\)/);
+assert.match(read("index.html"),/#lesson=\(\[a-z0-9-\]\+\)/);
+console.log("PASS: real mapped lesson links, all 15 level/topic pathways, missed-topic ranking and correct-retry recovery.");

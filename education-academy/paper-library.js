@@ -98,7 +98,7 @@
   const options=variants();
   select.replaceChildren();
   for(const job of options){
-   const opt=element('option',job.label+(forJob(job.id).length?' · '+forJob(job.id).length+' of '+MAX_PAPERS_PER_JOB+' available':' · awaiting paper'));
+   const opt=element('option',job.label+(job.assessmentType==='practical'?' · shorthand & typing practice':forJob(job.id).length?' · '+forJob(job.id).length+' of '+MAX_PAPERS_PER_JOB+' available':' · awaiting paper'));
    opt.value=job.id;select.append(opt);
   }
   if(!options.length){select.append(element('option','No jobs found'));select.disabled=true;selected='';return}

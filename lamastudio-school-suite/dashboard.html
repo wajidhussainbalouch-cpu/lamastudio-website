@@ -1080,17 +1080,34 @@ function renderAssessmentAnalytics(tests){
           return 'attendance/student-attendance.html?class='+encodeURIComponent(String(className))+'&date='+encodeURIComponent(String(date));
         }
         function renderAttendanceChart(attendance,students){
-          const today=localISODate(),byId=new Map(),byEnrollment=new Map(),unique=new Map(),classes=new Map();
+          const today=localISODate(),classes=new Map();
           const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-          for(const st of students){const key=String(st.id??st._id??st.enrlNo??st.enrollmentNo??'').trim();if(!key)continue;const name=String(st.class??st.grade??st.className??'Unassigned').trim()||'Unassigned';if(!classes.has(name))classes.set(name,{total:0,present:0,absent:0,leave:0});classes.get(name).total++;if(st.id!=null||st._id!=null)byId.set(String(st.id??st._id),{key,name});if(st.enrlNo!=null||st.enrollmentNo!=null)byEnrollment.set(String(st.enrlNo??st.enrollmentNo),{key,name});}
-          for(const a of attendance){if(normalizeAttendanceDate(a.date)!==today)continue;const student=byId.get(String(a.studentId??a.student_id??''))||byEnrollment.get(String(a.enrlNo??a.enrollmentNo??''));if(student)unique.set(student.key,{name:student.name,status:String(a.status||'').trim().toLowerCase()})}
-          for(const {name,status} of unique.values()){const r=classes.get(name);if(!r)continue;if(['present','p'].includes(status))r.present++;else if(['absent','a'].includes(status))r.absent++;else if(['leave','l','on leave'].includes(status))r.leave++}
-          const totals={total:0,present:0,absent:0,leave:0,unmarked:0};
+          for(const student of students){
+            const name=String(student.class??student.grade??student.className??'Unassigned').trim()||'Unassigned';
+            if(!classes.has(name))classes.set(name,{total:0,present:0,absent:0,leave:0,review:0});
+            classes.get(name).total++;
+          }
+          const verified=verifiedStudentDayRows(attendance,students,today);
+          for(const {student,status} of verified.unique.values()){
+            const name=String(student.class??student.grade??student.className??'Unassigned').trim()||'Unassigned';
+            const tally=classes.get(name);if(tally)tally[status]++;
+          }
+          for(const student of verified.duplicates.values()){
+            const name=String(student.class??student.grade??student.className??'Unassigned').trim()||'Unassigned';
+            const tally=classes.get(name);if(tally)tally.review++;
+          }
+          const totals={total:0,present:0,absent:0,leave:0,unmarked:0,review:0};
           const rows=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
           const holder=document.getElementById('attendanceClassBars');
-          holder.innerHTML=rows.map(([name,r])=>{const missing=Math.max(0,r.total-r.present-r.absent-r.leave);totals.total+=r.total;totals.present+=r.present;totals.absent+=r.absent;totals.leave+=r.leave;totals.unmarked+=missing;const width=n=>r.total?100*n/r.total:0;const label=name==='Unassigned'?name:'Class '+name,href=classAttendanceUrl(name,today);return `<a class="attendance-kpi attendance-kpi-link" href="${escapeHTML(href)}" aria-label="Open ${escapeHTML(label)} attendance register for ${escapeHTML(today)}" title="Open ${escapeHTML(label)} attendance"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(label)}</span><span>${r.present} present / ${r.total}</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked</p><span class="inline-block mt-2 text-[11px] font-black text-teal-600">Open this class attendance →</span></a>`}).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
-          document.getElementById('classBarsDate').textContent=new Date(today+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+' · Saved attendance';
-          document.getElementById('attendanceSummary').innerHTML=[['Present',totals.present],['Absent',totals.absent],['Leave',totals.leave],['Unmarked',totals.unmarked]].map(([label,n])=>`<div class="hub-stat"><small>${label}</small><b>${n}</b></div>`).join('');
+          holder.innerHTML=rows.map(([name,r])=>{
+            const missing=Math.max(0,r.total-r.present-r.absent-r.leave-r.review);
+            for(const key of ['total','present','absent','leave','review'])totals[key]+=r[key];
+            totals.unmarked+=missing;
+            const width=n=>r.total?100*n/r.total:0,label=name==='Unassigned'?name:'Class '+name,href=classAttendanceUrl(name,today);
+            return `<a class="attendance-kpi attendance-kpi-link" href="${escapeHTML(href)}" aria-label="Open ${escapeHTML(label)} attendance register for ${escapeHTML(today)}" title="Open ${escapeHTML(label)} attendance"><div class="flex justify-between gap-2 text-xs font-black"><span>${escapeHTML(label)}</span><span>${r.present} present / ${r.total}</span></div><div class="attendance-track mt-2" style="height:12px"><span style="width:${width(r.present)}%;background:#16a085"></span><span style="width:${width(r.absent)}%;background:#fb7185"></span><span style="width:${width(r.leave)}%;background:#fbbf24"></span><span style="width:${width(r.review)}%;background:#f59e0b"></span><span style="width:${width(missing)}%;background:#cbd5e1"></span></div><p class="text-[10px] text-slate-400 mt-2">${r.present} present · ${r.absent} absent · ${r.leave} leave · ${missing} unmarked${r.review?' · '+r.review+' need review':''}</p><span class="inline-block mt-2 text-[11px] font-black text-teal-600">Open this class attendance →</span></a>`;
+          }).join('')||'<p class="text-xs text-slate-400">No classes found.</p>';
+          document.getElementById('classBarsDate').textContent=new Date(today+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'})+' · Verified attendance'+(totals.review?' · '+totals.review+' need review':'');
+          document.getElementById('attendanceSummary').innerHTML=[['Present',totals.present],['Absent',totals.absent],['Leave',totals.leave],['Unmarked',totals.unmarked],['Needs review',totals.review]].map(([label,n])=>`<div class="hub-stat"><small>${label}</small><b>${n}</b></div>`).join('');
         }
                  function renderFeeChart(series,fees){
              // Prefer server-calculated collection series; otherwise aggregate dated payments.
@@ -1179,31 +1196,11 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
         function renderAbsentees(attendance,students){
  const today=localISODate(),list=document.getElementById('absenteesList'),empty=document.getElementById('absenteesEmpty');
  if(!list||!empty)return;
- const normalize=v=>String(v??'').trim();
- const byId=new Map(),byEnrollment=new Map();
- (Array.isArray(students)?students:[]).forEach(student=>{
-  const sid=normalize(student.id??student._id??student.studentId);
-  const en=normalize(student.enrlNo??student.enrollmentNo??student.enrollment);
-  if(sid)byId.set(sid,student);
-  if(en)byEnrollment.set(en,student);
- });
- const latest=new Map();
- (Array.isArray(attendance)?attendance:[]).forEach((record,index)=>{
-  if(normalizeAttendanceDate(record.date)!==today)return;
-  const sid=normalize(record.studentId??record.student_id??record.studentID);
-  const en=normalize(record.enrlNo??record.enrollmentNo??record.enrollment);
-  const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
-  if(!student)return;
-  const key=normalize(student.id??student._id??student.studentId??student.enrlNo??student.enrollmentNo);
-  if(!key)return;
-  const stamp=Date.parse(record.updatedAt??record.markedAt??record.createdAt??'')||0;
-  const previous=latest.get(key);
-  if(!previous||stamp>previous.stamp||(stamp===previous.stamp&&index>previous.index))latest.set(key,{record,student,stamp,index});
- });
- const rows=[...latest.values()].filter(({record})=>normalize(record.status).toLowerCase()==='absent');
+ const verified=verifiedStudentDayRows(attendance,students,today);
+ const rows=[...verified.unique.values()].filter(item=>item.status==='absent').map(({record,student})=>({record,student}));
  empty.classList.toggle('hidden',rows.length>0);
- empty.textContent=latest.size===0?'No saved student attendance found for today. Refresh the dashboard after saving.':'No students marked absent today.';
- list.innerHTML=rows.map(({record:a,student:student})=>{
+ empty.textContent=verified.duplicates.size?'⚠ '+verified.duplicates.size+' student(s) have duplicate attendance needing review. Parent follow-up for them is withheld.':verified.unique.size===0?'No verified student attendance found for today. Refresh the dashboard after saving.':'No students marked absent today.';
+ list.innerHTML=(verified.duplicates.size?'<p class="text-xs text-amber-300">⚠ '+verified.duplicates.size+' student(s) need duplicate-record review. Contact parents only for confirmed absences.</p>':'')+rows.map(({record:a,student:student})=>{
   const name=student.name||student.studentName||a.studentName||'Student';
   const className=student.class||student.grade||a.class||'-';
   const number=student.whatsapp||student.parentWhatsApp||student.contact||student.phone||'';

@@ -32,7 +32,7 @@ const modules={
  python:{selected:idsPython[0],drafts:{},answers:{},passed:{},lang:"ur"},
  studio:{project:projects[0].id,lang:"ur",steps:{},code:{},checks:{},reflection:{}}
 };
-function snapshot(){return {format:core.format,version:1,modules:JSON.parse(JSON.stringify(modules))};}
+function snapshot(){return {format:core.format,version:2,modules:JSON.parse(JSON.stringify(modules)),questions:null};}
 function count(){return core.counts(snapshot());}
 assert.equal(count().done,0,"Zero completions initially");
 for(const id of idsFoundation)modules.foundation.progress[id]=true;

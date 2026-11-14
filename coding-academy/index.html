@@ -187,7 +187,22 @@ function download(name,content,type){var a=document.createElement('a'),u=URL.cre
 document.addEventListener('click',function(e){var b=e.target.closest('button[data-screen],button[data-action]');if(!b||b.disabled)return;if(b.dataset.screen){go(b.dataset.screen);return;}var id=b.dataset.id,action=b.dataset.action;if(action==='lesson'){go('learn',id);return;}if(action==='jump'){window.LAMA_BEGINNER_UI.jumpToLine(b.dataset.line);return;}if(action==='choose'){state.goal=id;save();go('paths');return;}if(action==='run'){run();return;}if(action==='check'){check();return;}if(action==='download'){download('lama-'+current+'.html',document.getElementById('editor').value,'text/html');return;}if(action==='starter'){if(confirm('Replace your current code with the starting example?')){var l=lessons.find(function(x){return x.id===current;});state.drafts[l.id]=l.starter;save();document.getElementById('editor').value=l.starter;run();}return;}if(action==='export'){download('lama-coding-progress.json',JSON.stringify({name:state.name,goal:state.goal,progress:state.progress,exportedAt:new Date().toISOString()},null,2),'application/json');return;}if(action==='reset'){if(confirm('Delete saved lesson progress and draft code from this browser? This cannot be undone.')){state=JSON.parse(JSON.stringify(defaults));save();go('home');}return;}});
 document.addEventListener('change',function(e){if(e.target.id==='goal'){state.goal=e.target.value;save();render();}if(e.target.id==='learnerName'){state.name=e.target.value.slice(0,70);save();}});
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});}
-render();
+// Authored in-app links can take a learner directly to a related exercise.
+ // Never bypass level locks: if a lesson is unavailable, open the next one.
+ var linkToLesson=null,requestedLesson=null;
+ try{
+  var match=/^#lesson=([a-z0-9-]+)$/.exec(window.location&&window.location.hash||"");
+  if(match&&lessons.some(function(l){return l.id===match[1];})){
+   requestedLesson=match[1];
+   linkToLesson=canOpen(requestedLesson)?requestedLesson:next().id;
+   screen="learn";current=linkToLesson;
+  }
+ }catch(e){}
+ render();
+ if(requestedLesson&&requestedLesson!==linkToLesson){
+  var notice=document.querySelector(".course-notice");
+  if(notice)notice.textContent="The suggested lesson is still locked. Complete the current lesson first to unlock the next one.";
+ }
 })();
 </script>
 </body>

@@ -779,7 +779,18 @@ header#topOverview{background:var(--lama-header)!important}
         let charts = {};
         const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
         const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
-        async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:Array.isArray(r?.records)?r.records:Array.isArray(r?.data)?r.data:Array.isArray(r?.items)?r.items:[]; } catch(e){ console.warn('Unable to load '+key,e); return []; } }
+        async function safeList(key,failures){
+          try{
+            const r=await LamaAPI.list(key);
+            const values=Array.isArray(r)?r:Array.isArray(r?.records)?r.records:Array.isArray(r?.data)?r.data:Array.isArray(r?.items)?r.items:null;
+            if(!values)throw Error('Invalid collection response');
+            return values;
+          }catch(error){
+            console.warn('Unable to load '+key,error);
+            if(failures)failures.add(key);
+            return [];
+          }
+        }
         function handleLogout(){ LamaAPI.logout('school'); sessionStorage.removeItem('lama_school_admin_auth'); window.location.replace('main-dashboard.html'); }
         function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
         function chartDefaults(){const cs=getComputedStyle(document.documentElement);const text=cs.getPropertyValue('--chartText').trim()||'#cbd5e1',muted=cs.getPropertyValue('--muted').trim()||'#94a3b8',grid=cs.getPropertyValue('--grid').trim()||'rgba(148,163,184,.06)';return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:muted,font:{size:9}},grid:{color:grid}},y:{ticks:{color:muted,font:{size:9}},grid:{color:grid}}}};}
@@ -795,7 +806,7 @@ header#topOverview{background:var(--lama-header)!important}
                 Object.keys(charts).forEach(k=>{try{charts[k].destroy()}catch(e){} charts[k]=null;});
                 if(window.__dashboardData){
                     const d=window.__dashboardData;
-                    renderClassChart(d.students);renderAcademicClasses(d.students);renderGenderChart(d.students);renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderFinanceR4(d);renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
+                    if(d.studentsReady){renderClassChart(d.students);renderAcademicClasses(d.students);renderGenderChart(d.students);}if(d.studentAttendanceReady)renderAttendanceChart(d.attendance,d.students);renderFeeChart(d.incomeSeries||[],d.fees);renderFinanceR4(d);if(d.teacherAttendanceReady)renderTeacherAttendanceAnalytics(d.teachers,d.teacherAttendance||[]);renderAssessmentAnalytics(d.tests);
                 }
             }
         }
@@ -818,12 +829,63 @@ header#topOverview{background:var(--lama-header)!important}
             /* Collection headlines are populated from the saved fee records in renderFinanceR4(). */
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
-            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})]); window.__schoolClassOptions=schoolClassOptions; window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
-            document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
-            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
+            const readFailures=new Set();
+            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions]=await Promise.all([
+              safeList('students',readFailures),safeList('teachers',readFailures),safeList('attendance',readFailures),
+              safeList('fees',readFailures),safeList('notifications',readFailures),safeList('tests',readFailures),
+              safeList('teacherAttendance',readFailures),safeList('expenses',readFailures),safeList('income',readFailures),
+              LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})
+            ]);
+            const studentsReady=!readFailures.has('students');
+            const studentAttendanceReady=studentsReady&&!readFailures.has('attendance');
+            const teacherAttendanceReady=!readFailures.has('teachers')&&!readFailures.has('teacherAttendance');
+            window.__schoolClassOptions=schoolClassOptions;
+            window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,
+              incomeSeries:stats.incomeSeries||[],teacherAttendance,studentsReady,studentAttendanceReady,teacherAttendanceReady};
+            document.getElementById('engineState').innerText=readFailures.size?'partial sync':'synced';
+            document.getElementById('totalStudentsCount').textContent=studentsReady?students.length.toLocaleString():'—';
+            renderEngineRows({students,teachers,attendance,fees,notifications,tests},readFailures);
+            if(studentAttendanceReady)renderStudentAttendanceCard(attendance,students);
+            else renderStudentAttendanceUnavailable();
+            if(teacherAttendanceReady)renderTeacherAttendanceAnalytics(teachers,teacherAttendance);
+            else renderTeacherAttendanceUnavailable();
+            renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();
+            if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
+            if(studentsReady){renderClassChart(students);renderAcademicClasses(students);renderGenderChart(students);}
+            if(studentAttendanceReady){renderAttendanceChart(attendance,students);renderAbsentees(attendance,students);}
+            renderFeeChart(stats.incomeSeries||[],fees);renderFinanceR4(window.__dashboardData);
+            renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+        function renderStudentAttendanceUnavailable(){
+          for(const id of ['studentAttEnrolled','studentAttPresent','studentAttAbsent','studentAttLeave',
+            'studentAttUnmarked','studentAttRate','studentAttCompletion','attendanceRatioDisplay'])
+            document.getElementById(id).textContent='—';
+          document.getElementById('absentTodayCount').textContent='Attendance unavailable';
+          document.getElementById('studentAttDate').textContent='Attendance not verified';
+          document.getElementById('studentAttHint').textContent='⚠ Saved student attendance or roster could not be loaded. Refresh before relying on counts or contacting parents.';
+          document.getElementById('studentAttClassCount').textContent='—';
+          document.getElementById('studentAttClasses').textContent='Class attendance unavailable — refresh.';
+          document.getElementById('dashboardAbsentFollowup').textContent='Parent follow-up unavailable while attendance is unverified.';
+          document.getElementById('attendanceClassBars').textContent='Class-wise attendance unavailable — refresh.';
+          document.getElementById('attendanceSummary').textContent='Daily totals not verified.';
+          document.getElementById('classBarsDate').textContent='Saved attendance unavailable';
+          document.getElementById('absenteesList').textContent='Absent student list unavailable while attendance is unverified.';
+          document.getElementById('absenteesEmpty').textContent='';
+          for(const id of ['studentAttPresentBar','studentAttAbsentBar','studentAttLeaveBar'])
+            document.getElementById(id).style.width='0%';
+        }
+        function renderTeacherAttendanceUnavailable(){
+          for(const id of ['taTotal','taPresent','taAbsent','taLeave','teacherAttDisplay','notMarkedDisplay'])
+            document.getElementById(id).textContent='—';
+          document.getElementById('taCoverage').textContent='Staff attendance not verified';
+          document.getElementById('taPending').textContent='⚠ Saved teacher attendance or roster could not be loaded. Refresh before relying on totals.';
+          document.getElementById('teacherTrendNote').textContent='Staff trend unavailable — refresh.';
+          document.getElementById('dashboardStaffFollowup').textContent='Staff follow-up unavailable while saved attendance is unverified.';
+          document.getElementById('taProgress').style.width='0%';
+          destroyChart('teacherAttendance');
+        }
         /**
          * One verified attendance status per roster student and school-local day.
          * Duplicate saved rows remain unresolved (even if both say Present);
@@ -1049,7 +1111,7 @@ function renderAssessmentAnalytics(tests){
  charts.assessment=new Chart(document.getElementById('assessmentChart'),{type:'bar',data:{labels:entries.map(x=>x[0]),datasets:[{label:'Tests',data:entries.map(x=>x[1]),backgroundColor:'rgba(236,72,153,.72)',borderColor:'#f9a8d4',borderWidth:1,borderRadius:6}]},options:{...chartDefaults(),plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
 }
 
-        function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance today',new Set(d.attendance.filter(r=>normalizeAttendanceDate(r.date)===localISODate()).map(r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??r.id??'')).filter(Boolean)).size,'students with saved attendance today'],['Attendance this month',new Set(d.attendance.map(r=>normalizeAttendanceDate(r.date)).filter(day=>day&&day.startsWith(localISODate().slice(0,7)))).size,'days with saved student attendance'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
+        function renderEngineRows(d,failures=new Set()){ const studentReady=!failures.has('students'),attendanceReady=studentReady&&!failures.has('attendance'); const rows=[['Students',studentReady?d.students.length:'—','student records'],['Teachers',failures.has('teachers')?'—':d.teachers.length,'staff records'],['Attendance today',attendanceReady?verifiedStudentDayRows(d.attendance,d.students,localISODate()).unique.size:'—','students with verified attendance today'],['Attendance this month',attendanceReady?new Set(d.attendance.map(r=>normalizeAttendanceDate(r.date)).filter(day=>day&&day.startsWith(localISODate().slice(0,7)))).size:'—','days with saved student attendance'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
         function normalizeDashboardClass(value){
           const raw=String(value??'').trim().replace(/\s+/g,' ').toLowerCase();
           const withoutPrefix=raw.replace(/^(?:class|grade|standard|std)\s*[-:.#]?\s*/i,'').trim();
@@ -1222,7 +1284,7 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
  }).join('');
 }
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
-        async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
+        async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';try{await renderDashboard();}catch(error){b.innerText='sync error';console.error('Dashboard refresh failed',error);}}
 ;
     </script>
 <script>

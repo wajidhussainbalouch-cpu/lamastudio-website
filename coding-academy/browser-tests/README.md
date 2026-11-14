@@ -68,3 +68,8 @@ it does not mean the academy is production-ready or deployed.
 ## Phase 12 learner-facing browser acceptance
 
 The browser suite now includes 22 progressive foundation lessons, a novice HTML/CSS/JavaScript/Python/SQL glossary, and a direct regression of the learner's mistaken <My name is a coder> HTML line. The real browser displays a line-number warning, focuses the clicked line, clears the warning when changed to a paragraph, and unlocks the next activity only after the lesson and quiz pass.
+
+
+## Phase 15 complete-backup acceptance
+
+Real headless Chromium now tests the full five-record lifecycle: download one complete JSON, explicitly erase local learner data, verify unrelated LAMA storage survives, preview/cancel, restore all five categories and reject corrupted JSON. The older four-module backup test remains in CI to preserve backward compatibility. The test also checks the 390-pixel mobile viewport. This is not a substitute for physical Android file-picker and low-memory testing.

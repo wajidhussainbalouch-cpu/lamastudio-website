@@ -34,6 +34,13 @@ function start(){
  header.innerHTML='<a class="lama-shell-logo" href="./index.html"><img src="./icon.svg" width="43" height="43" alt="LAMA Coding Academy logo">'+
   '<span><strong>LAMA Coding Academy</strong><small>Learn · Practice · Build</small></span></a>'+
   '<button class="lama-shell-menu" type="button" aria-label="Open navigation menu" aria-controls="lamaShellSidebar" aria-expanded="false">☰</button>';
+ // Preserve page-specific learning controls from the old header.
+ // Moving the button retains event listeners registered by Python/Studio.
+ const language=document.querySelector('body > header #language');
+ if(language){
+  language.classList.add("lama-shell-language");
+  header.insertBefore(language,header.querySelector(".lama-shell-menu"));
+ }
  const sidebar=document.createElement("aside");
  sidebar.className="lama-shell-sidebar";sidebar.id="lamaShellSidebar";
  sidebar.setAttribute("aria-label","Academy side navigation");

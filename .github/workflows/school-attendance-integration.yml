@@ -1,0 +1,41 @@
+name: School Suite Attendance Integrated Regression
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/portals/teacher/index.html'
+      - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/**/test-*attendance*.cjs'
+      - '.github/workflows/school-attendance-integration.yml'
+  push:
+    branches:
+      - 'integration/school-attendance-safe-save-20261114'
+jobs:
+  attendance-end-to-end-contract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Back-end student attendance duplicate/locking policy
+        run: node lamastudio-school-suite/backend-api/test-attendance-legacy-add-uniqueness.cjs
+      - name: Back-end teacher attendance duplicate/locking policy
+        run: node lamastudio-school-suite/backend-api/test-attendance-legacy-staff-add-uniqueness.cjs
+      - name: Locked student and teacher attendance update integrity
+        run: node lamastudio-school-suite/backend-api/test-attendance-legacy-update-uniqueness.cjs
+      - name: Teacher portal readback, duplicates and uncertain saves
+        run: node lamastudio-school-suite/test-teacher-portal-attendance-verification.cjs
+      - name: Saturday visibility and register completion
+        run: node lamastudio-school-suite/test-attendance-saturday-completion.cjs
+      - name: Reject duplicate student attendance in dashboard counts and parent follow-up
+        run: node lamastudio-school-suite/test-dashboard-attendance-duplicate-review.cjs
+      - name: Reject false zero attendance after failed or malformed data reads
+        run: node lamastudio-school-suite/test-dashboard-attendance-read-failure.cjs
+      - name: Selected student class attendance scope
+        run: node lamastudio-school-suite/test-selected-class-attendance-scope.cjs
+      - name: Dashboard class navigation
+        run: node lamastudio-school-suite/test-class-attendance-navigation.cjs
+      - name: Native Google Sheets date conversion
+        run: node lamastudio-school-suite/test-native-attendance-date-hotfix.cjs
+      - name: Mobile header branding regression
+        run: node lamastudio-school-suite/test-school-board-product-brand.cjs

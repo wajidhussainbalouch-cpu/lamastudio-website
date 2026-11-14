@@ -155,6 +155,98 @@ byId("file").addEventListener("change",async()=>{
  try{previewRestore(JSON.parse(await file.text()));}
  catch(error){resetPending();message("Backup rejected: "+String(error.message||error),"error");}
 });
+// Complete backup is additive; the original four-module backup still works.
+const completeCore=window.LAMA_COMPLETE_BACKUP;
+const quizCore=window.LAMA_QUIZ_BACKUP;
+const questionBank=window.LAMA_CODING_QUESTIONS;
+let pendingComplete=null,completeTicket=0;
+function completeStatus(text,kind){
+ const el=byId("completeStatus");
+ el.textContent=text;
+ el.className="message"+(kind?" "+kind:"");
+}
+function clearCompletePreview(){
+ pendingComplete=null;
+ byId("completePreview").hidden=true;
+ byId("completeReview").textContent="";
+ byId("completeConfirm").disabled=true;
+ byId("completeFile").value="";
+}
+function requireComplete(){
+ if(!completeCore||!quizCore||!questionBank)
+  throw Error("The complete-backup components are not available. Reload the academy while online or reinstall the updated test app.");
+}
+function completeExport(){
+ requireComplete();
+ const modules=validatedLocalBackupModules();
+ // Reject corrupt question scores; never silently replace them with blank data.
+ const questionJson=quizCore.exportData(localStorage,questionBank);
+ const json=completeCore.create(modules,questionJson);
+ const blob=new Blob([json],{type:"application/json;charset=utf-8"});
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="lama-coding-academy-COMPLETE-"+new Date().toISOString().slice(0,10)+".json";
+ document.body.appendChild(link);link.click();link.remove();
+ // Android's file-save picker reads the blob asynchronously.
+ setTimeout(()=>URL.revokeObjectURL(url),6000);
+ completeStatus("Complete backup download prepared. Confirm the file was saved in Android Files before replacing or uninstalling this app.","ok");
+}
+function renderCompletePreview(backup){
+ const existing=summary(collect()),incoming=summary(backup.modules);
+ const currentQuiz=window.LAMA_QUESTION_CORE.totals(questionBank,
+   window.LAMA_QUESTION_CORE.load(localStorage,questionBank));
+ const restoreQuiz=window.LAMA_QUESTION_CORE.totals(questionBank,backup.questions);
+ byId("completeReview").textContent=
+  "Current device: "+existing.done+" / "+existing.total+" course activities\n"+
+  "Selected backup: "+incoming.done+" / "+incoming.total+" course activities\n"+
+  "Current question practice: "+currentQuiz.answered+" answers checked; "+currentQuiz.missed+" mistakes\n"+
+  "Selected question practice: "+restoreQuiz.answered+" answers checked; "+restoreQuiz.missed+" mistakes\n\n"+
+  incoming.rows.map(r=>r.title+": "+r.done+" / "+r.total).join("\n")+
+  "\n\nBackup date: "+backup.createdAt+
+  "\nOnly these five learning records will change after you confirm.";
+ byId("completePreview").hidden=false;
+ byId("completeConfirm").disabled=false;
+ completeStatus("Complete backup verified. Review the preview. Your saved work is unchanged until you confirm.");
+}
+byId("completeExport").addEventListener("click",()=>{
+ try{completeExport();}
+ catch(e){completeStatus("Download stopped safely: "+String(e.message||e)+". Your saved data was not changed.","error");}
+});
+byId("completeImport").addEventListener("click",()=>{
+ completeTicket++;clearCompletePreview();byId("completeFile").click();
+});
+byId("completeFile").addEventListener("change",async()=>{
+ const file=byId("completeFile").files?.[0];if(!file)return;
+ const ticket=++completeTicket;
+ clearCompletePreview();
+ try{
+  requireComplete();
+  if(file.size>completeCore.MAX_BYTES)throw Error("File exceeds the 1.1 MB complete-backup size limit.");
+  const text=await file.text();
+  if(ticket!==completeTicket)return;
+  pendingComplete=completeCore.parseText(text,validateBackup,quizCore,questionBank);
+  renderCompletePreview(pendingComplete);
+ }catch(e){
+  if(ticket!==completeTicket)return;
+  clearCompletePreview();
+  completeStatus("Complete backup rejected: "+String(e.message||e)+". Nothing was changed.","error");
+ }
+});
+byId("completeCancel").addEventListener("click",()=>{
+ completeTicket++;clearCompletePreview();
+ completeStatus("Complete restore cancelled. Nothing was changed.");
+});
+byId("completeConfirm").addEventListener("click",()=>{
+ if(!pendingComplete||!completeCore)return;
+ if(!confirm("Replace all FOUR course records AND the 150-question practice record on this device? Download your current complete backup first; this cannot be undone."))return;
+ try{
+  completeCore.restore(localStorage,MODULES,pendingComplete);
+  completeTicket++;clearCompletePreview();update();
+  completeStatus("Complete academy progress restored: all four courses and question scores. Reopen Practice Questions to see restored results.","ok");
+ }catch(e){
+  completeStatus("Complete restore failed: "+String(e.message||e),"error");
+ }
+});
+
 byId("confirm").addEventListener("click",restore);
 byId("cancel").addEventListener("click",()=>{resetPending();message("Restore cancelled. No data was changed.");});
 update();

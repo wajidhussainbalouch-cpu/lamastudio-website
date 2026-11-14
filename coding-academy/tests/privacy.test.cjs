@@ -42,7 +42,7 @@ const store=new Map([
  ["lama-coding-practice-v2",'{"passed":{"js-fee":true}}'],
  ["lama-python-executable-v1",'{"passed":{"pyx-greetings":{"at":"2026-11-10"}}}'],
  ["lama-coding-project-studio-v1",'{"checks":{}}'],
- ["lama-coding-questions-v1",'{"stats":{"html-1-01":{"attempts":1,"correct":1,"lastCorrect":true}}}'],
+ ["lama-coding-questions-v1",'{"stats":{"html-1-01":{"attempts":1,"correct":1,"lastCorrect":true}},"rounds":{"html-1":1},"history":[{"track":"html","level":1,"score":1}],"selection":{"track":"html","level":1}}'],
  ["unrelated-auth-storage-key","keep this unrelated data"]
 ]);
 const storage={

@@ -4,6 +4,8 @@
 (function(){
 "use strict";
 const data=window.LAMA_CODING_QUESTIONS,core=window.LAMA_QUESTION_CORE;
+const guidance=window.LAMA_QUIZ_GUIDANCE;
+const safe=x=>String(x).replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const el=id=>document.getElementById(id);
 if(!data||!core){el("storageWarning").textContent="The practice question bank did not load. Reopen this page after the app has finished installing.";return;}
 let state=core.load(localStorage,data),round=[],number=0,selected=null,pieces=[],submitted=false,score=0,mode="regular";
@@ -11,11 +13,30 @@ const track=el("track"),level=el("level");
 track.value=state.selection.track;
 level.value=String(state.selection.level);
 function persist(){if(!core.save(localStorage,state))el("storageWarning").textContent="Your browser could not save question scores. You can still practice, but results may be lost after closing this app.";}
+function renderCoach(){
+ const holder=el("coachList"),intro=el("coachIntro");
+ if(!holder||!intro||!guidance)return;
+ const suggestions=guidance.suggestions(data,state);
+ if(!suggestions.length){
+  holder.innerHTML="";
+  intro.textContent=core.totals(data,state).answered===0
+   ?"Start a short question round; after a mistake, we'll show the right lesson to practise."
+   :"No outstanding incorrect answers right now. Try another round or select a different language.";
+  return;
+ }
+ intro.textContent="Try these lessons to work on "+suggestions.length+" topic"+(suggestions.length===1?"":"s")+" you last found difficult:";
+ holder.innerHTML=suggestions.slice(0,3).map(item=>
+  '<article class="coach-card" role="listitem"><strong>'+safe(item.label)+': '+item.missed+
+  ' question'+(item.missed===1?"":"s")+' to revisit</strong><span>'+
+  safe(item.detail)+'</span><span class="urdu" lang="ur" dir="rtl">'+safe(item.urdu)+
+  '</span><a href="'+safe(item.href)+'">Open related lesson →</a></article>').join("");
+}
 function stats(){
  const t=core.totals(data,state);
  el("answered").textContent=String(t.answered);
  el("learned").textContent=String(t.learned);
  el("missed").textContent=String(t.missed);
+ renderCoach();
 }
 function current(){return round[number];}
 function button(text,cls,action,index){
@@ -126,6 +147,17 @@ function showAnswer(correct){
  answer.textContent=core.solution(q);
  solution.append(prefix,answer);
  panel.append(heading,explain,solution);
+ if(!correct&&guidance){
+  const related=guidance.related(q);
+  if(related){
+   const note=document.createElement("p");
+   note.textContent="Useful next step: "+related.detail+" (If a lesson is still locked, the next available lesson opens.)";
+   const a=document.createElement("a");
+   a.href=related.href;a.className="learn-link";
+   a.textContent="Practise this idea in "+related.label+" →";
+   panel.append(note,a);
+  }
+ }
 }
 function checkAnswer(){
  if(submitted)return;

@@ -3,8 +3,9 @@
  */
 (function(root){
 "use strict";
-const FORMAT="lama-coding-academy-cloud-v1";
-const LIMIT=200000;
+const FORMAT="lama-coding-academy-cloud-v2";
+const LIMIT=240000;
+const QUIZ_KEY="lama-coding-questions-v1";
 const PARTS=[
  {id:"foundation",key:"lama-coding-academy-v1",label:"Foundations",total:22},
  {id:"practice",key:"lama-coding-practice-v2",label:"Industry practice",total:18},
@@ -26,6 +27,38 @@ const PROJECT_STEPS={
  attendance:["count","absent","summary","records"]
 };
 const plain=x=>x!==null&&typeof x==="object"&&!Array.isArray(x);
+function questionState(value){
+ if(value===null)return null;
+ if(!plain(value))throw Error("Question scores must be an object.");
+ const keys=["stats","rounds","history","selection"];
+ if(Object.keys(value).length!==4||Object.keys(value).some(k=>!keys.includes(k))||
+  !plain(value.stats)||!plain(value.rounds)||!Array.isArray(value.history)||!plain(value.selection))
+  throw Error("Invalid question-score fields.");
+ if(Object.keys(value.stats).length>150)throw Error("Too many question scores.");
+ const validNumber=(n,max=10000)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
+ for(const [id,row] of Object.entries(value.stats)){
+  if(!/^(?:html|css|javascript|python|sql)-[123]-(?:0[1-9]|10)$/.test(id)||!plain(row)||
+   !validNumber(row.attempts)||!validNumber(row.correct,row.attempts)||
+   (row.lastCorrect!==undefined&&typeof row.lastCorrect!=="boolean")||
+   Object.keys(row).some(k=>!["attempts","correct","lastCorrect"].includes(k)))
+   throw Error("Invalid question score entry.");
+ }
+ if(Object.keys(value.rounds).length>18)throw Error("Too many round counters.");
+ for(const [key,n] of Object.entries(value.rounds)){
+  if(!/^(?:mixed|html|css|javascript|python|sql)-[123]$/.test(key)||!validNumber(n))
+   throw Error("Invalid question round count.");
+ }
+ if(value.history.length>20||value.history.some(row=>!plain(row)||
+   !["mixed","html","css","javascript","python","sql"].includes(row.track)||
+   !validNumber(row.level,3)||row.level===0||!validNumber(row.score,10)||
+   Object.keys(row).some(k=>!["track","level","score"].includes(k))))
+   throw Error("Invalid question round history.");
+ if(!["mixed","html","css","javascript","python","sql"].includes(value.selection.track)||
+   !validNumber(value.selection.level,3)||value.selection.level===0||
+   Object.keys(value.selection).some(k=>!["track","level"].includes(k)))
+   throw Error("Invalid question selection.");
+ return value;
+}
 function validValue(x,depth){
  if(depth>6)return false;
  if(x===null||typeof x==="boolean")return true;
@@ -52,12 +85,13 @@ function validateModule(id,value){
 }
 function sizeOf(value){return new TextEncoder().encode(JSON.stringify(value)).length;}
 function validate(snapshot){
- if(!plain(snapshot)||snapshot.format!==FORMAT||snapshot.version!==1||!plain(snapshot.modules)){
+ if(!plain(snapshot)||snapshot.format!==FORMAT||snapshot.version!==2||!plain(snapshot.modules)||!Object.hasOwn(snapshot,"questions")||Object.keys(snapshot).some(k=>!["format","version","modules","questions"].includes(k))){
   throw Error("Unsupported Coding Academy cloud backup.");
  }
  const keys=Object.keys(snapshot.modules);
  if(keys.length!==PARTS.length||PARTS.some(p=>!Object.hasOwn(snapshot.modules,p.id)))throw Error("A backup must include all four academy modules.");
  for(const part of PARTS)validateModule(part.id,snapshot.modules[part.id]);
+ questionState(snapshot.questions);
  if(sizeOf(snapshot)>LIMIT)throw Error("This backup exceeds the 200 KB cloud limit; download it locally instead.");
  return snapshot;
 }
@@ -70,17 +104,22 @@ function read(storage){
   try{parsed=JSON.parse(raw);}catch(e){throw Error("Cannot sync invalid local "+part.label+" data.");}
   modules[part.id]=validateModule(part.id,parsed);
  }
- return validate({format:FORMAT,version:1,modules});
+ let questions=null;
+ const raw=storage.getItem(QUIZ_KEY);
+ if(raw!==null){try{questions=JSON.parse(raw);}catch(e){throw Error("Cannot sync unreadable local question scores.");}}
+ return validate({format:FORMAT,version:2,modules,questions});
 }
 function apply(storage,snapshot){
  const s=validate(snapshot);
- const before=PARTS.map(p=>({key:p.key,value:storage.getItem(p.key)}));
+ const before=[...PARTS.map(p=>({key:p.key,value:storage.getItem(p.key)})),{key:QUIZ_KEY,value:storage.getItem(QUIZ_KEY)}];
  try{
   for(const part of PARTS){
    const data=s.modules[part.id];
    if(data===null)storage.removeItem(part.key);
    else storage.setItem(part.key,JSON.stringify(data));
   }
+  if(s.questions===null)storage.removeItem(QUIZ_KEY);
+  else storage.setItem(QUIZ_KEY,JSON.stringify(s.questions));
  }catch(error){
   let rollbackOk=true;
   for(const entry of before){
@@ -102,5 +141,5 @@ function counts(snapshot){
  ];
  return {items:PARTS.map((p,i)=>({id:p.id,label:p.label,done:done[i],total:p.total})),done:done.reduce((a,b)=>a+b,0),total:62};
 }
-root.LAMA_CODING_CLOUD_CORE=Object.freeze({format:FORMAT,maxBytes:LIMIT,parts:PARTS,read,validate,apply,counts,sizeOf});
+root.LAMA_CODING_CLOUD_CORE=Object.freeze({format:FORMAT,maxBytes:LIMIT,parts:PARTS,quizKey:QUIZ_KEY,read,validate,apply,counts,sizeOf});
 })(typeof window!=="undefined"?window:globalThis);

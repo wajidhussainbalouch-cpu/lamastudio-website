@@ -40,3 +40,12 @@ The v0.14 APK bundles `quiz.html`, `quiz-data.js`, `quiz-core.js`, and `quiz.js`
 This test build adds explicit **Export Question Scores** and **Import Saved Scores** on the Practice Questions page. A download is a JSON file with only the 150-question scores and round history (limit: 200 KB). An imported file is validated and PREVIEWED without changing anything; restoring requires confirmation and replaces only the question-score data. A separate, confirmed clear option also affects only quiz results. Other learning module drafts, projects and cloud records are untouched.
 
 Android's file-save bridge uses the system document picker when the WebView's blob download callback fires. Test actual save/import on your phone before relying on the only copy of any data. This build has a separate application ID to avoid overwriting prior v0.13 data, and its local storage does not automatically transfer from older test packages. Existing v0.13 apps have no built-in question-score export, so previously accumulated question scores cannot be promised to migrate automatically. Your v0.13 lessons remain in that older app unless you voluntarily export those lesson records through their separate backup feature.
+
+
+## v0.15 acceptance: moving all academy learning data in one file
+
+The Android v0.15 test APK adds a local, single-file **Complete Academy Backup**. Open **My Journey → Download complete backup**, save the JSON using Android's system file picker, and confirm it exists. In another test app install, open **My Journey → Restore complete backup**, select that file, review the preview and explicitly confirm.
+
+This file includes all four course modules plus 150-question scores. Prior four-course backups and question-only backups remain supported through their respective original restore controls.
+
+**Do not uninstall the older test app until you have verified the backup can be saved and restored.** A successful GitHub APK build does not prove Android's blob download/file picker works on every handset. The app remains debug-signed and separate from the live website.

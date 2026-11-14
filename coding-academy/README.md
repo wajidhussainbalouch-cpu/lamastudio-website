@@ -1,4 +1,4 @@
-# LAMA Coding Academy — MVP 14 (portable local question scores)
+# LAMA Coding Academy — MVP 15 (complete progress transfer)
 
 **Status:** GitHub feature-branch implementation, not deployed or quality-assured for release.
 
@@ -370,3 +370,24 @@ This release adds real curated questions, not an infinite AI-generated catalog. 
 **Important compatibility limitation:** Old v0.13 test builds did not have question-score export. Therefore v0.14 cannot automatically migrate their question results. Starting with v0.14, the user can export a portable question-score file to import into later builds. Existing core 62-activity progress has its own independent export/restore and is not included in this quiz file.
 
 No production deployment, draft PR merge, Play Store release, Supabase activation or database changes were made.
+
+
+## Phase 15 — One complete five-area backup and Android v0.15 (14 November 2026)
+
+Question scores were formerly exported separately from the four-course learning backup. The updated Learning Journey page now offers a **Complete Academy Backup** that saves and restores five device-local records in one JSON file:
+
+1. 22 Foundation lessons, including code drafts and quiz choices
+2. 18 industry-practice drills
+3. 10 executable Python lesson drafts and checked results
+4. 12 portfolio project milestones and reflections
+5. The separate 150-question practice history, review state and checked attempts
+
+The complete backup has format `lama-coding-academy-complete-v1` and a **1.1 MB file cap**. It validates the same four course schemas used by earlier exports, then uses the separate strict question-bank schema and version validation. Restore requires a visible preview and explicit confirmation. Invalid files, mismatched question-bank versions and oversized files are rejected *before* writing. The restore engine writes only the five known localStorage keys and attempts to roll back all five if any write fails. This does not claim crash-proof storage transactions: export a backup before any restore.
+
+The previous **four-course-only JSON backup** and **question-only JSON backup** remain available and importable through their original screens. An older four-course backup does not modify question scores. Optional Supabase cloud snapshots remain four course modules and remain **disabled**; the complete five-area backup is local and voluntary, not a new cloud-sync feature.
+
+The Account & Data page's **Delete learning data on this device** now erases all five academy learning records (including question scores), with explicit confirmation and rollback on storage errors. It deliberately leaves unrelated LAMA project storage and account/session keys untouched. The privacy explanation and tests were updated to match.
+
+A new real-Chromium test verifies the whole five-record download → local erase → preview/cancel → restore flow, exact recovery of drafts/quiz results and rejection of malformed files. A pure regression test exercises version/size guards and rollback. The Android PWA offline cache is updated to v13 and packages the complete-backup script.
+
+Android build **LAMA Code TEST v0.15** uses a new package identifier `pk.lamastudio.codingacademy.testing.v15` and is debug-signed for owner acceptance testing, independently installable alongside v0.14. Nothing is merged or deployed to the live website.

@@ -6,9 +6,9 @@ This project packages only the public Coding Academy browser lessons into a smal
 
 1. Open the successful **LAMA Coding Academy Android Test APK** GitHub Actions run on the feature PR.
 2. Under **Artifacts**, download `LAMA-Coding-Academy-Android-Test`. GitHub may require you to sign into your account.
-3. Extract the downloaded ZIP. It contains `LAMA-Coding-Academy-TEST-v0.16.apk` and `SHA256SUMS.txt`.
+3. Extract the downloaded ZIP. It contains `LAMA-Coding-Academy-TEST-v0.17.apk` and `SHA256SUMS.txt`.
 4. On a personal Android phone running Android 7 or later, open the APK in Files. Android may request permission for the Files app to install this one test APK. Enable that specific permission only if you trust the source and understand the risk.
-5. Open **LAMA Code TEST v16** and try Foundation lessons, Industry Labs, Project Studio, My Progress, the backup/export + restore flow, Urdu switching, device System Check, and optional online real Python.
+5. Open **LAMA Code TEST v17** and try Foundation lessons, Industry Labs, Project Studio, My Progress, the backup/export + restore flow, Urdu switching, device System Check, and optional online real Python.
 6. After testing, report the exact screen, action, and any error. No private school/student records or real passwords should be entered.
 
 This is a **debug-signed, sideloaded test build**, not a verified Play Store release. It may produce an Android security warning. Never turn off Play Protect to install it, and do not distribute it as a finished academy app. Every GitHub runner may create a different debug signing certificate: later test APKs may require uninstalling the previous app before installation, which can delete local progress. Export a private backup before uninstalling.

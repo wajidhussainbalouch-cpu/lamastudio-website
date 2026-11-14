@@ -42,6 +42,7 @@ const store=new Map([
  ["lama-coding-practice-v2",'{"passed":{"js-fee":true}}'],
  ["lama-python-executable-v1",'{"passed":{"pyx-greetings":{"at":"2026-11-10"}}}'],
  ["lama-coding-project-studio-v1",'{"checks":{}}'],
+ ["lama-coding-questions-v1",'{"stats":{"html-1-01":{"attempts":1,"correct":1,"lastCorrect":true}}}'],
  ["unrelated-auth-storage-key","keep this unrelated data"]
 ]);
 const storage={
@@ -64,11 +65,12 @@ const result=vm.runInNewContext(account,{
 assert.equal(byId("deleteAccount").disabled,true,"Account deletion is gated by disabled backend flag.");
 assert.equal(byId("upload").disabled,true,"Cloud sync must remain off.");
 assert.match(byId("localCount").textContent,/3 \/ 62/);
-// Guest learner can remove only the four Coding Academy stores with a real click.
+// Guest learner can remove all five local Coding Academy learning records.
 assert.ok(typeof byId("clearLocal").listeners.click==="function");
 byId("clearLocal").listeners.click();
 for(const part of win.LAMA_CODING_CLOUD_CORE.parts)
  assert.equal(storage.getItem(part.key),null,"Must erase local module "+part.id);
+assert.equal(storage.getItem("lama-coding-questions-v1"),null,"Delete question progress with the four course records.");
 assert.equal(storage.getItem("unrelated-auth-storage-key"),"keep this unrelated data","Do not clear unrelated app/session data.");
 assert.equal(byId("localCount").textContent,"0 / 62");
 assert.match(byId("eraseStatus").textContent,/Device learning data erased/);

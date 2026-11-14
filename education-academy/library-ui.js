@@ -58,7 +58,11 @@
   const top=make('a','Open '+selected.label+' library');
   top.href=url(selected,'library');
   menuItems.append(top);
-  if(!all.length){menuItems.append(make('p','No published papers yet for this job. See its suggested syllabus and study plan.'));return}
+  if(!all.length){
+   if(selected.assessmentType==='practical'&&selected.skillsPracticeUrl){const practice=make('a','Open shorthand & typing practice');practice.href=selected.skillsPracticeUrl;menuItems.append(practice)}
+   else menuItems.append(make('p','No published papers yet for this job. See its suggested syllabus and study plan.'));
+   return;
+  }
   for(const [index,paper] of all.entries()){
    const link=make('a','Paper '+ordinal(paper,index)+' · '+paper.questions.length+' MCQs · '+status(paper));
    link.href=url(selected,'paper',paper);
@@ -98,13 +102,19 @@
    heading.append(make('span',status(paper),'library-status'));
    li.append(heading);
    li.append(make('p',paper.questions.length+' MCQs · '+paper.minutes+' minutes · '+paper.title));
+   if(paper.sharedFromExistingQuestions)li.append(make('p','Shuffled shared-bank paper · '+paper.questions.length+' reused question positions · 0 newly authored items.'));
    if(paper.reviewStatus==='automated-checked')li.append(make('p','Automated structural checks completed; independent academic review pending.'));
    const a=make('a','Open Paper '+ordinal(paper,index));
    a.href=url(selected,'paper',paper);
    li.append(a);paperList.append(li);
   }
   if(!papers.length){
-   paperList.append(make('li','No job-specific examinations have been published yet. Papers appear here automatically after their complete question banks have been registered.','library-empty-note'));
+   if(selected.assessmentType==='practical'){
+    const li=make('li',undefined,'library-entry');
+    li.append(make('p','This track has shorthand and typing tests, not a 100-question MCQ paper.'));
+    if(selected.skillsPracticeUrl){const practice=make('a','Open shorthand & typing trainer');practice.href=selected.skillsPracticeUrl;li.append(practice)}
+    paperList.append(li);
+   }else paperList.append(make('li','No job-specific examinations have been published yet. Papers appear here automatically after their complete question banks have been registered.','library-empty-note'));
   }
   exportButton.disabled=!coverage.length;
   if(exportMessage)exportMessage.textContent='';

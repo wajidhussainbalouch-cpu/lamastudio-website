@@ -58,6 +58,7 @@ rows.push(toRow(headers,record({id:'native',studentId:'s3',enrlNo:'3',date:new D
 assert.equal(add(record({studentId:'s3',enrlNo:'3',status:'A'})).id,'native');
 rows.push(toRow(headers,record({id:'old',studentId:'',enrlNo:'5',class:'4'})));
 assert.equal(add(record({studentId:'s5',enrlNo:'5',class:'4'})).id,'old');
+assert.equal(add(record({studentId:'s5',enrlNo:'',class:''})).id,'old','ID-only retry must detect the older enrollment/class row through the verified roster');
 assert.ok(add(record({studentId:'s6',enrlNo:'5',class:'5'})).id);
 rows.push(toRow(headers,record({id:'dup1',studentId:'s7',enrlNo:'7'})));
 rows.push(toRow(headers,record({id:'dup2',studentId:'s7',enrlNo:'7'})));

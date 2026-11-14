@@ -1,0 +1,32 @@
+name: LAMA Quran Learning Safety Checks
+
+on:
+  pull_request:
+    paths:
+      - "lamastudio-school-suite/backend-api/quran-learning.gs"
+      - "lamastudio-school-suite/backend-api/code.gs"
+      - "lamastudio-school-suite/backend-api/module-entitlements.gs"
+      - "lamastudio-school-suite/backend-api/test-quran-learning.cjs"
+      - "lamastudio-school-suite/js/api-client.js"
+      - "lamastudio-school-suite/quran/**"
+      - ".github/workflows/quran-learning-checks.yml"
+  push:
+    branches:
+      - "feature/quran-islamic-learning-centre-20261110"
+
+jobs:
+  quran-learning:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Role and school-scoped Quran backend workflow
+        run: node lamastudio-school-suite/backend-api/test-quran-learning.cjs
+      - name: Encrypted offline Quran queue
+        run: node lamastudio-school-suite/quran/test-offline-queue.cjs
+      - name: Existing school module grants regression
+        run: node lamastudio-school-suite/backend-api/test-module-entitlements.js

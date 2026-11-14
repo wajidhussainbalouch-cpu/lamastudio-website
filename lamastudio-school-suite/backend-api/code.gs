@@ -2227,6 +2227,11 @@ function doPost(e) {
 
 function doGet(e) {
     const params = e && e.parameter ? e.parameter : {};
+    // Never permit short-lived pilot student session tokens in URL query strings.
+    // Client forces POST; fail closed even if an older client or user tries GET.
+    if (params.role === 'student' && quranV11StudentAuthSchool_(params.schoolId)) {
+        return jsonOut({ status:'error', message:'POST required for pilot student sessions.' });
+    }
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }

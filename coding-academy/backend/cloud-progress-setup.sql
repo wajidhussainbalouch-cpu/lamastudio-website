@@ -1,6 +1,8 @@
 -- LAMA Coding Academy: optional learner cloud progress (review before applying).
 -- Apply ONLY to a dedicated Coding Academy Supabase project. Not applied by ChatGPT.
 -- Browser clients use a publishable key, a real Supabase Auth session and strict RLS.
+-- Snapshot v2 contains four academy learning modules and a separate question-practice state.
+-- The database is NOT active; verify cross-account RLS and a complete account-deletion flow before activation.
 -- Do not mix this table into an unrelated academy/school system without explicit review.
 begin;
 

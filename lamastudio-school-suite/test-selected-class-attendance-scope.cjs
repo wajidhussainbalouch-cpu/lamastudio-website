@@ -28,7 +28,7 @@ const id=s=>String(s.id);
 const enr=s=>String(s.enrlNo);
 const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const f=new Function('$','state','cls','id','enr','escapeHtml','recentAttendance','qrSaving','portalPublishing',
- src.slice(start,end)+'return {classStudents,visible,render};'
+ 'const registerNeedsReview=()=>false;'+src.slice(start,end)+'return {classStudents,visible,render};'
 )($,state,cls,id,enr,escapeHtml,()=>'No previous records',false,false);
 function checks(c,expected){
  $('class').value=c;$('search').value='';$('filter').value='';

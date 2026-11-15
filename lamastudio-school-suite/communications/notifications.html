@@ -12,23 +12,42 @@
   body { font-family: 'Plus Jakarta Sans', sans-serif; }
   .cyber-glow { box-shadow: 0 0 35px rgba(168, 85, 247, 0.15); }
   .card-gradient { background: linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.9) 100%); }
+  /* The school header and action toolbar must fit the phone viewport. */
+  html, body { max-width: 100%; overflow-x: clip; }
+  .circular-page-header { min-width: 0; }
+  .circular-school-identity { display: flex; align-items: center; gap: 12px; min-width: 0; width: 100%; }
+  .circular-school-copy { min-width: 0; flex: 1; }
+  #headerSchoolName { overflow-wrap: anywhere; word-break: normal; line-height: 1.35; }
+  .circular-header-actions { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .circular-header-actions > * { min-width: 0; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+  #feedContainer, #feedContainer > *, #circularModal > * { min-width: 0; max-width: 100%; }
+  .circular-feed-card, .circular-feed-card * { min-width: 0; }
+  .circular-feed-card h4, .circular-feed-card .circular-message { overflow-wrap: anywhere; word-break: normal; }
+  .circular-message { white-space: pre-wrap; }
+  @media (min-width: 640px) {
+    .circular-header-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
 </style>
 </head>
 <body class="bg-[#07090e] text-slate-100 min-h-screen flex flex-col items-center py-10 px-4">
 
-    <!-- Header -->
-    <header class="max-w-3xl w-full mb-6 bg-slate-900/90 backdrop-blur-xl border border-purple-500/20 rounded-3xl shadow-2xl px-6 py-4 flex items-center gap-4 cyber-glow">
-        <div id="schoolLogoBox" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-sm font-black text-white flex-shrink-0 shadow-lg shadow-purple-500/30">SCH</div>
-        <div class="flex-grow">
-            <h1 id="headerSchoolName" class="text-base font-extrabold tracking-wide text-white">School Name</h1>
-            <p class="text-[10px] uppercase tracking-widest text-purple-400 font-bold">Parent Circulars & Broadcast Log</p>
+    <!-- Mobile-first: full-width identity above a 2x2 navigation grid. -->
+    <header class="circular-page-header max-w-3xl w-full mb-6 bg-slate-900/90 backdrop-blur-xl border border-purple-500/20 rounded-3xl shadow-2xl p-4 sm:p-6 cyber-glow">
+        <div class="circular-school-identity">
+            <div id="schoolLogoBox" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 flex items-center justify-center text-sm font-black text-white flex-shrink-0 shadow-lg shadow-purple-500/30">SCH</div>
+            <div class="circular-school-copy">
+                <h1 id="headerSchoolName" class="text-base sm:text-lg font-extrabold tracking-wide text-white">School Name</h1>
+                <p class="text-[10px] uppercase tracking-wider text-purple-400 font-bold mt-1">Parent Circulars &amp; Broadcast Log</p>
+            </div>
         </div>
-        <button onclick="openCircularModal()" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-95 text-white font-black text-xs px-5 py-2.5 rounded-2xl transition shadow-lg shadow-purple-600/30 flex-shrink-0 flex items-center gap-2">
-            <span class="text-sm">+</span> New Circular
-        </button>
-        <a href="../main-dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs px-4 py-2.5 rounded-2xl transition flex-shrink-0 border border-slate-700">Main Dashboard</a>
-        <a href="../dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs px-4 py-2.5 rounded-2xl transition flex-shrink-0 border border-slate-700">Hub</a>
-        <button onclick="handleLogout()" class="bg-slate-800/80 hover:bg-red-500/20 hover:text-red-400 text-slate-300 font-bold text-xs px-4 py-2.5 rounded-2xl transition flex-shrink-0 border border-slate-700">Logout</button>
+        <nav class="circular-header-actions mt-4" aria-label="Circulars navigation">
+            <button type="button" onclick="openCircularModal()" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:opacity-95 text-white font-black text-xs px-3 py-2.5 rounded-2xl transition shadow-lg shadow-purple-600/30">
+                <span aria-hidden="true">+</span> New Circular
+            </button>
+            <a href="../main-dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs px-3 py-2.5 rounded-2xl transition border border-slate-700">Main Dashboard</a>
+            <a href="../dashboard.html" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs px-3 py-2.5 rounded-2xl transition border border-slate-700">Hub</a>
+            <button type="button" onclick="handleLogout()" class="bg-slate-800/80 hover:bg-red-500/20 hover:text-red-400 text-slate-300 font-bold text-xs px-3 py-2.5 rounded-2xl transition border border-slate-700">Logout</button>
+        </nav>
     </header>
 
     <!-- Filter Bar -->
@@ -167,11 +186,11 @@
             document.getElementById('emptyState').classList.toggle('hidden', items.length > 0);
 
             container.innerHTML = items.map(item => `
-                <div class="card-gradient rounded-3xl p-5 flex flex-col gap-3 border border-slate-800/80 shadow-xl transition hover:border-purple-500/30">
-                    <div class="flex justify-between items-start gap-3">
+                <div class="circular-feed-card card-gradient rounded-3xl p-4 sm:p-5 flex flex-col gap-3 border border-slate-800/80 shadow-xl transition hover:border-purple-500/30">
+                    <div class="flex flex-wrap justify-between items-start gap-3">
                         <div>
-                            <h4 class="text-sm font-extrabold text-white tracking-wide">${item.title}</h4>
-                            <p class="text-[10px] text-slate-400 mt-1 font-medium flex items-center gap-2">
+                            <h4 class="text-sm font-extrabold text-white tracking-wide break-words">${item.title}</h4>
+                            <p class="text-[10px] text-slate-400 mt-1 font-medium flex flex-wrap items-center gap-2">
                                 <span class="text-purple-400">${formatDate(item.createdAt)}</span> •
                                 <span class="bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300">${item.audience}</span> •
                                 <span class="text-indigo-300 font-semibold">${item.channel}</span>
@@ -179,7 +198,7 @@
                         </div>
                         <span class="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border ${STATUS_STYLES[item.status] || STATUS_STYLES['Draft']}">${item.status}</span>
                     </div>
-                    <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/50">${item.message}</p>
+                    <p class="circular-message text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/50">${item.message}</p>
                     
                     ${item.fileData ? `
                         <div class="mt-2">
@@ -193,7 +212,7 @@
                         </div>
                     ` : ''}
 
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 mt-1">
+                    <div class="flex flex-wrap justify-between items-center gap-3 pt-2 border-t border-slate-800/80 mt-1">
                         <span class="text-[10px] text-emerald-400 font-medium">⚡ Synced to Main Dashboard</span>
                         <button onclick="deleteCircular('${item.id}')" class="text-[11px] font-bold text-red-400 hover:text-red-300 transition flex items-center gap-1 bg-red-500/10 px-3 py-1.5 rounded-xl border border-red-500/20">🗑️ Delete</button>
                     </div>

@@ -53,7 +53,8 @@ for(const action of ["$('save').onclick","$('clearDate').onclick","$('bulk').onc
  assert.ok(src.slice(pos,pos+500).includes('registerNeedsReview()'),'Unsafe action not guarded: '+action);
 }
 assert.match(src,/attendance-raw-review-/);
-assert.match(src,/state\.writeHold=true;message\('Clear-date result uncertain/);
+assert.match(src,/holdUnverified\(\);message\('Clear-date result uncertain/);
+assert.match(src,/sessionStorage\.setItem\(attendanceHoldKey\(\),'review required'\)/,'An uncertain save/clear must survive a page refresh');
 const scripts=[...src.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(x=>x[1]).filter(Boolean);
 assert.ok(scripts.length>0);
 for(const script of scripts)new vm.Script(script,{filename:'student-attendance-v2 inline'});

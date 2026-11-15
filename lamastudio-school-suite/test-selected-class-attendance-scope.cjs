@@ -57,6 +57,12 @@ checks('Playgroup',{total:2,present:1,absent:0,leave:1,unmarked:0,classes:1,
  names:['Rukhsana','Jabir'],excluded:['Ali'],followup:['Jabir'],noFollowup:['Ali']});
 checks('',{total:3,present:1,absent:1,leave:1,unmarked:0,classes:2,
  names:['Ali','Rukhsana','Jabir'],excluded:[],followup:['Ali','Jabir'],noFollowup:[]});
+state.historyReady=false;
+f.render();
+assert.match($('summary').innerHTML,/Present<\\/div><h2>—<\\/h2>/,'Failed history load must not show old Present totals');
+assert.match($('summary').innerHTML,/Unmarked<\\/div><h2>—<\\/h2>/,'Failed history load must not label everyone unmarked');
+assert.match($('followup').innerHTML,/unavailable until attendance is verified/,'Do not prompt parents from stale saved history');
+state.historyReady=true;
 assert.match(src,/const recipients=classStudents\(\)\.filter\(student=>\[/,
  'Bulk parent notices must not include other classes');
 assert.match(src,/if\(\$\('class'\)\.value&&cls\(student\)!==\$\('class'\)\.value\)/,

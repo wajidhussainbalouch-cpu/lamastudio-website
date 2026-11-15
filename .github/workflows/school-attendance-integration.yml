@@ -4,6 +4,8 @@ on:
     paths:
       - 'lamastudio-school-suite/portals/teacher/index.html'
       - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/attendance/student-attendance-v2.html'
+      - 'lamastudio-school-suite/attendance/test-register-duplicate-review.cjs'
       - 'lamastudio-school-suite/backend-api/code.gs'
       - 'lamastudio-school-suite/**/test-*attendance*.cjs'
       - '.github/workflows/school-attendance-integration.yml'
@@ -31,6 +33,8 @@ jobs:
         run: node lamastudio-school-suite/test-dashboard-attendance-duplicate-review.cjs
       - name: Reject false zero attendance after failed or malformed data reads
         run: node lamastudio-school-suite/test-dashboard-attendance-read-failure.cjs
+      - name: Quarantine duplicate saved attendance and block uncertain retries
+        run: node lamastudio-school-suite/attendance/test-register-duplicate-review.cjs
       - name: Selected student class attendance scope
         run: node lamastudio-school-suite/test-selected-class-attendance-scope.cjs
       - name: Dashboard class navigation

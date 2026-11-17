@@ -85,6 +85,43 @@ async function assertNoOverflow(page,label){
 async function cleanup(view){
  if(view)await view.context.close();
 }
+test("optional bilingual onboarding tour works on Android-sized screens without cloud connection",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:360,height:780});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"index.html"));
+  const tour=page.locator("#takeTour");
+  await tour.waitFor();
+  await tour.click();
+  assert.equal(await page.getByRole("dialog").count(),1);
+  assert.match(await page.locator("#lamaTourTitle").textContent(),/Start with a tiny lesson/);
+  assert.ok((await page.locator("#lamaTourUrdu").textContent()).length>20);
+  assert.equal(await page.locator("#lamaTourStart").isHidden(),true);
+  await assertNoOverflow(page,"bilingual onboarding modal at 360px");
+  await page.locator("#lamaTourNext").click();
+  assert.match(await page.locator("#lamaTourTitle").textContent(),/Try code/);
+  await page.locator("#lamaTourNext").click();
+  assert.match(await page.locator("#lamaTourTitle").textContent(),/Practice, then keep/);
+  assert.equal(await page.locator("#lamaTourStart").isVisible(),true);
+  await page.locator("#lamaTourBack").click();
+  assert.match(await page.locator("#lamaTourTitle").textContent(),/Try code/);
+  await page.locator("#lamaTourNext").click();
+  await page.locator("#lamaTourStart").click();
+  assert.equal(await page.getByRole("dialog").count(),0);
+  await page.locator("#editor").waitFor();
+  assert.match(await page.locator(".lesson-head").textContent(),/What is a website and a browser/);
+  await page.goto(insideApp(origin,"index.html"));
+  await page.locator("#takeTour").click();
+  await page.keyboard.press("Escape");
+  assert.equal(await page.getByRole("dialog").count(),0);
+  await page.goto(insideApp(origin,"account.html"));
+  await page.waitForFunction(()=>document.querySelector("#configStatus")?.textContent.includes("not activated"));
+  assert.equal(await page.locator("#profileCard").isHidden(),true);
+  assert.equal(await page.locator("#profileSave").isDisabled(),true);
+  await assertNoOverflow(page,"inactive profile controls at 360px");
+  assert.equal(pageErrors.length,0,"Browser errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("mobile onboarding, prominent academy brand, sidebar and direct bottom tabs",async(browser,origin)=>{
  const view=await browserPage(browser,{width:360,height:780});
  try{

@@ -8,5 +8,6 @@ window.LAMA_CODING_CLOUD_CONFIG = Object.freeze({
   accountDeletionEnabled: false, // Enable ONLY after the protected Edge Function passes end-to-end QA.
   url: "",
   publishableKey: "",
-  table: "lama_coding_progress"
+  table: "lama_coding_progress",
+  profileTable: "lama_coding_learners"
 });

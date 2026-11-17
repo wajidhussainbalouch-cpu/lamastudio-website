@@ -141,7 +141,45 @@ $('reload').onclick=()=>{if(state.dirty.size&&!confirm('Discard unsaved attendan
 $('date').onchange=()=>{if(state.dirty.size&&!confirm('Discard unsaved changes and change date?')){$('date').value=state.loadedDate;return}load()};
 $('bulk').onclick=()=>{if(!state.historyReady||registerNeedsReview())return;for(const s of visible())if(!state.chosen.get(id(s))?.status)choose(id(s),'Present');render()};
 $('save').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('date').value||state.saving||qrSaving||registerNeedsReview()||!state.dirty.size)return;const records=state.students.filter(s=>state.dirty.has(id(s))).map(s=>({date:$('date').value,studentId:String(s.id??s._id??id(s)),enrlNo:enr(s),class:cls(s),status:state.chosen.get(id(s)).status}));if(!validAdminWriteSession()){message('School Admin sign-in is required to save attendance. Open the School Suite admin login, sign in, then return here. No save request was sent.',true);return}if(!confirm('Save '+records.length+' selected attendance changes?'))return;state.saving=true;render();message('Saving…');try{const r=await LamaAPI.bulkAttendance($('date').value,records);if(!r||r.success===false||!Number.isInteger(Number(r.saved))||Number(r.saved)!==records.length||Number(r.inserted??0)+Number(r.updated??0)!==records.length)throw Error('Backend bulk-save count not verified. No automatic retry. Check the original register before submitting again.');message('Server accepted '+records.length+' records. Reloading to verify…');state.saving=false;state.dirty.clear();await load();if(state.historyReady){const mismatch=records.filter(x=>{const student=state.students.find(s=>String(s.id??s._id??id(s))===x.studentId);return !student||state.chosen.get(id(student))?.status!==x.status});if(mismatch.length||registerNeedsReview()){holdUnverified();message('Server accepted save, but '+mismatch.length+' requested record(s) are not confirmed or saved attendance needs review. Do not submit again.',true);}else message('✓ '+records.length+' attendance records saved and verified.')}else{holdUnverified();message('Save response received but attendance reload failed. Do not retry until verified.',true)}}catch(e){state.saving=false;holdUnverified();message('Save not verified: '+e.message+'. No automatic retry: administrator must inspect saved records and audit.',true)}finally{render()}};
-$('clearDate').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;if(state.dirty.size){message('Save or discard unsaved changes before clearing attendance.',true);return}if(typeof LamaAPI.clearStudentAttendanceDate!=='function'){message('Attendance date-clear API unavailable; no records changed.',true);return}const date=state.loadedDate,klass=$('class').value;try{const preview=await LamaAPI.clearStudentAttendanceDate(date,klass,true,'');const count=Number(preview?.count||0);if(!Number.isInteger(count)||count<0)throw Error('Invalid preview count');if(!count){message('No attendance records to clear for '+date);return}if(!confirm('ADMIN ONLY: remove '+count+' attendance records for '+date+(klass?' / '+klass:' / all classes')+'? The backend must create a backup and audit entry. Student records will not be deleted.'))return;const phrase=prompt('Type exactly: REMOVE '+date);if(phrase!=='REMOVE '+date){message('Clear cancelled. No records changed.');return}const result=await LamaAPI.clearStudentAttendanceDate(date,klass,false,phrase);if(!result||Number(result.count)!==count||!result.backupSheet)throw Error('Removal response not verified. Check the register and backup before trying again.');message('Removed '+count+' attendance records. Backup sheet: '+result.backupSheet);await load();}catch(error){holdUnverified();message('Clear-date result uncertain: '+error.message+'. Export the saved register and check the sheet backup/audit. Do not retry.',true);state.historyReady=false;state.loadedDate='';render()}};
+$('clearDate').onclick=async()=>{
+ if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;
+ if(state.dirty.size){message('Save or discard unsaved changes before clearing attendance.',true);return;}
+ if(typeof LamaAPI.clearStudentAttendanceDate!=='function'){message('Attendance date-clear API unavailable; no records changed.',true);return;}
+ const date=state.loadedDate,klass=$('class').value;
+ let removalStarted=false;
+ try{
+   const preview=await LamaAPI.clearStudentAttendanceDate(date,klass,true,'');
+   const count=Number(preview?.count),token=String(preview?.previewToken||'').trim();
+   if(!Number.isInteger(count)||count<0)throw Error('Invalid preview count; nothing removed.');
+   if(!token)throw Error('This Apps Script backend does not support verified, lock-safe date clearing. No removal requested.');
+   if(!count){message('No attendance records to clear for '+date);return;}
+   if(count>75)throw Error('Over 75 saved rows. Clearing is blocked; export and review an administrator-approved backup first.');
+   if(!confirm('ADMIN ONLY: remove '+count+' attendance records for '+date+(klass?' / '+klass:' / all classes')+'? The backend will verify the live rows and backup before deletion. Student records will remain.'))return;
+   const phrase=prompt('Type exactly: REMOVE '+date);
+   if(phrase!=='REMOVE '+date){message('Clear cancelled. No records changed.');return;}
+   removalStarted=true;
+   const result=await LamaAPI.clearStudentAttendanceDate(date,klass,false,phrase,token,count);
+   if(!result||Number(result.count)!==count||!result.backupSheet||result.previewToken!==token)
+     throw Error('Removal response not verified. Check the saved backup and audit.');
+   message('Server reported removal of '+count+' records, backed up to '+result.backupSheet+'. Checking current register…');
+   await load();
+   const remaining=state.history.filter(r=>asDate(r.date)===date&&(!klass||cls({class:r.class})===klass));
+   if(!state.historyReady||state.writeHold||remaining.length){
+     holdUnverified();
+     message('Attendance removal could not be fully verified after reload. Check the backup and audit before retrying.',true);
+     render();
+     return;
+   }
+   message('✓ '+count+' attendance rows cleared and verified after reload. Backup: '+result.backupSheet);
+ }catch(error){
+   if(removalStarted){
+     holdUnverified();
+     message('Clear-date result uncertain: '+error.message+'. Review the sheet and backup/audit. Do not retry.',true);
+     state.historyReady=false;state.loadedDate='';state.chosen.clear();
+     render();
+   }else message('Clear not started: '+error.message,true);
+ }
+};
 $('csv').onclick=()=>{
  const date=$('date').value,review=registerNeedsReview();
  const rows=review

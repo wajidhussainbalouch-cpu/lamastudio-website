@@ -1897,47 +1897,80 @@ function adminGetAudit(p){
 
 
 /** Admin-only, school-scoped attendance cleanup with an independent recoverable snapshot. */
+/**
+ * Admin-only attendance date clearing.
+ * Preview records a digest; destructive execution re-reads rows INSIDE the
+ * same Apps Script lock as Add/Update/Bulk, and refuses a changed snapshot.
+ * Deletion is intentionally not auto-retried.
+ */
 function clearStudentAttendanceDate_(p) {
   const actor=requireSchoolAdminWrite(p);
   assertSchoolWritable(p.schoolId);
-  const date=String(p.date||'');
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid YYYY-MM-DD date required.');
-  const classFilter=String(p.className||'').trim().toLowerCase();
   const ctx=resolveContext(p);
-  const info=getCollectionSheet(ctx,'attendance'),sheet=info.sheet,headers=info.headers;
-  const data=sheet.getDataRange().getValues();
-  const dateCol=headers.indexOf('date'),classCol=headers.indexOf('class');
-  if(dateCol<0)throw Error('Attendance date column is missing.');
-  const toDate=v=>{
-    if(v instanceof Date)return Utilities.formatDate(v,Session.getScriptTimeZone(),'yyyy-MM-dd');
-    const t=String(v||'').trim();
-    if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);
-    const m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    return m?m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2):'';
-  };
-  const matches=[];
-  for(let i=1;i<data.length;i++){
-    if(toDate(data[i][dateCol])!==date)continue;
-    if(classFilter&&(classCol<0||String(data[i][classCol]||'').trim().toLowerCase()!==classFilter))continue;
-    matches.push(i);
-  }
-  if(p.previewOnly)return {count:matches.length,date:date,className:p.className||'',previewOnly:true};
-  if(String(p.confirmText||'')!=='REMOVE '+date)throw Error('Confirmation phrase is required.');
-  if(!matches.length)return {count:0,date:date};
-  const lock=LockService.getScriptLock();lock.waitLock(30000);
+  const date=String(p.date||'').trim();
+  const zone=(ctx.ss.getSpreadsheetTimeZone&&ctx.ss.getSpreadsheetTimeZone())||
+    Session.getScriptTimeZone()||'Asia/Karachi';
+  if(attendanceSchoolDayKey_(date,zone)!==date)
+    throw Error('Valid YYYY-MM-DD attendance date required.');
+  const classFilter=String(p.className||'').trim();
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance register busy. Refresh before retrying.');
   try{
-    // The archive is created before any deletion. Rows are retained with original column order.
-    const backupName='Attendance_Backup_'+Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyMMdd_HHmmss');
+    // An independently saved roster snapshot is required before any removal.
+    const info=getCollectionSheet(ctx,'attendance'),sheet=info.sheet,headers=info.headers;
+    const dateCol=headers.indexOf('date'),classCol=headers.indexOf('class');
+    if(dateCol<0||headers.indexOf('id')<0)throw Error('Required attendance columns missing.');
+    const values=sheet.getDataRange().getValues();
+    const matches=[];
+    for(let i=1;i<values.length;i++){
+      if(attendanceSchoolDayKey_(values[i][dateCol],zone)!==date)continue;
+      if(classFilter&&(classCol<0||!sameClass(values[i][classCol],classFilter)))continue;
+      matches.push({row:i+1,values:values[i]});
+    }
+    const canonical=matches.map(item=>item.values.map(value=>
+      value instanceof Date?value.toISOString():String(value==null?'':value)));
+    const digest=Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,JSON.stringify({date,classFilter,headers,canonical}),
+      Utilities.Charset.UTF_8);
+    const previewToken=Utilities.base64EncodeWebSafe(digest).replace(/=+$/,'');
+    if(p.previewOnly)return {count:matches.length,date,className:classFilter,previewOnly:true,previewToken};
+
+    if(String(p.confirmText||'')!=='REMOVE '+date)
+      throw Error('Confirmation phrase is required.');
+    const expected=String(p.previewToken||'').trim();
+    if(!expected||expected!==previewToken)
+      throw Error('Attendance changed since preview. Nothing removed. Refresh, back up and review before trying again.');
+    if(p.expectedCount!==undefined&&Number(p.expectedCount)!==matches.length)
+      throw Error('Attendance count changed since preview. Nothing removed.');
+    if(!matches.length)return {count:0,date,previewToken};
+    if(matches.length>75)
+      throw Error('This operation exceeds the 75-row safety limit. Export and reconcile the register in smaller supervised batches.');
+    // Do not use a stale pre-lock row index, and never delete until a
+    // complete independent sheet snapshot is read back and verified.
+    const backupName='Attendance_Backup_'+Utilities.formatDate(new Date(),zone,'yyMMdd_HHmmss')+
+      '_'+Utilities.getUuid().replace(/-/g,'').slice(0,8);
     const backup=ctx.ss.insertSheet(backupName);
     backup.getRange(1,1,1,headers.length).setValues([headers]);
-    backup.getRange(2,1,matches.length,headers.length).setValues(matches.map(i=>data[i]));
+    backup.getRange(2,1,matches.length,headers.length).setValues(matches.map(m=>m.values));
     backup.setFrozenRows(1);
-    for(let j=matches.length-1;j>=0;j--)sheet.deleteRow(matches[j]+1);
-    writeAudit(ctx.ss,p.schoolId,actor,'clearAttendanceDate','attendance',date,{count:matches.length,className:p.className||'',backupSheet:backupName},null);
-    return {count:matches.length,date:date,backupSheet:backupName};
-  }finally{lock.releaseLock()}
+    const archived=backup.getDataRange().getValues();
+    const same=(left,right)=>JSON.stringify(left.map(row=>row.map(value=>
+      value instanceof Date?value.toISOString():String(value==null?'':value))))===
+      JSON.stringify(right.map(row=>row.map(value=>
+      value instanceof Date?value.toISOString():String(value==null?'':value))));
+    if(archived.length!==matches.length+1||
+      !same(archived.slice(0,1),[headers])||
+      !same(archived.slice(1),matches.map(m=>m.values)))
+      throw Error('Backup verification failed. No attendance was deleted. Inspect the backup.');
+    writeAudit(ctx.ss,p.schoolId,actor,'attendanceClearBackupPrepared','attendance',date,
+      {count:matches.length,className:classFilter,backupSheet:backupName},null);
+    // Always delete descending so earlier row numbers remain stable.
+    for(let i=matches.length-1;i>=0;i--)sheet.deleteRow(matches[i].row);
+    writeAudit(ctx.ss,p.schoolId,actor,'clearAttendanceDate','attendance',date,
+      {count:matches.length,className:classFilter,backupSheet:backupName},null);
+    return {count:matches.length,date,backupSheet:backupName,previewToken};
+  }finally{lock.releaseLock();}
 }
-
 
 const SUPPORT_HEADERS_=['ticketId','schoolId','schoolName','category','subject','description','status','reply','createdAt','updatedAt','submittedBy'];
 function supportDirectory_(){

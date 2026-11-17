@@ -12,7 +12,7 @@ function harness(readbackOk){
   "const day='2026-11-17';",
   "const me={schoolId:'school-1',assignedClass:'1'};",
   "const myStudents=roster;",
-  "let attendanceSaving=false,attendanceReady=true,attendanceUncertain=false,attendanceIssue='';",
+  "let attendanceSaving=false,attendanceReady=true,attendanceUncertain=false,attendanceIssue='',attendanceSaveNote='';",
   "let draftAttendance=new Map(roster.map(s=>[s.id,'Present']));",
   "let editingAttendance=new Set(),selectedAttendanceDay=day;",
   "const status={textContent:''};",

@@ -1,0 +1,25 @@
+name: Branded Timetable Print A4
+on:
+  push:
+    branches:
+      - 'feat/planning-branded-class-timetable-print-20261117'
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/planning/index.html'
+      - 'lamastudio-school-suite/js/lama-school-planning.js'
+      - 'lamastudio-school-suite/js/lama-timetable-print.js'
+      - 'lamastudio-school-suite/planning/test-school-timetable-print.cjs'
+      - '.github/workflows/planning-timetable-print-a4.yml'
+permissions:
+  contents: read
+jobs:
+  print-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate school-branded class-wise and all-class printing
+        run: node lamastudio-school-suite/planning/test-school-timetable-print.cjs
+      - name: Verify existing academic-session delete protection remains intact
+        run: node lamastudio-school-suite/planning/test-academic-session-safe-delete.cjs
+      - name: Verify academic-session duplicate creation remains blocked
+        run: node lamastudio-school-suite/planning/test-academic-session-duplicate-save.cjs

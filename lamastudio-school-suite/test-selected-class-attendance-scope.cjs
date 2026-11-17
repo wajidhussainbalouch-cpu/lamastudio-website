@@ -21,7 +21,7 @@ const students=[
 ];
 const state={students,chosen:new Map([
  ['s1',{status:'Absent'}],['s2',{status:'Present'}],['s3',{status:'Leave'}]
-]),dirty:new Set(),conflicts:new Map(),unmatched:0,writeHold:false,rosterReady:true,historyReady:true,
+ ]),dirty:new Set(),conflicts:new Map(),unmatched:0,reviewUnknown:[],writeHold:false,rosterReady:true,historyReady:true,
  loadedDate:'2026-11-12',loading:false,saving:false};
 const cls=s=>String(s.class);
 const id=s=>String(s.id);
@@ -63,6 +63,17 @@ assert.ok($('summary').innerHTML.includes('Present</div><h2>—</h2>'),'Failed h
 assert.ok($('summary').innerHTML.includes('Unmarked</div><h2>—</h2>'),'Failed history load must not label everyone unmarked');
 assert.match($('followup').innerHTML,/unavailable until attendance is verified/,'Do not prompt parents from stale saved history');
 state.historyReady=true;
+$('class').value='4';
+state.conflicts.set('s1',[{id:'row-x',status:'Present'},{id:'row-y',status:'Absent'}]);
+state.chosen.delete('s1');state.reviewUnknown=[];
+f.render();
+assert.match($('summary').innerHTML,/Needs review<\\/div><h2>1<\\/h2>/,'Duplicate student must be counted for review');
+assert.match($('reviewDetails').innerHTML,/Ali/);
+assert.match($('reviewDetails').innerHTML,/row-x/);
+assert.match($('reviewDetails').innerHTML,/row-y/);
+assert.match($('reviewDetails').innerHTML,/not a duplicate-repair tool/);
+assert.equal($('save').disabled,true,'Save disabled until duplicate review');
+state.conflicts.clear();
 assert.match(src,/const recipients=classStudents\(\)\.filter\(student=>\[/,
  'Bulk parent notices must not include other classes');
 assert.match(src,/if\(\$\('class'\)\.value&&cls\(student\)!==\$\('class'\)\.value\)/,

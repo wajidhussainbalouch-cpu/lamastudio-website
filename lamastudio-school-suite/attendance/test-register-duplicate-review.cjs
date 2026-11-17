@@ -58,4 +58,20 @@ assert.match(src,/sessionStorage\.setItem\(attendanceHoldKey\(\),'review require
 const scripts=[...src.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(x=>x[1]).filter(Boolean);
 assert.ok(scripts.length>0);
 for(const script of scripts)new vm.Script(script,{filename:'student-attendance-v2 inline'});
+const recentStart=src.indexOf('function recentAttendance(student){');
+const recentEnd=src.indexOf('\nfunction message(',recentStart);
+assert.ok(recentStart>=0&&recentEnd>recentStart);
+const recentFn=new Function('state','asDate','matchRecord','status','
+,
+ src.slice(recentStart,recentEnd)+'return recentAttendance;'
+)(
+ {loadedDate:'2026-11-15',history:[
+  {studentId:'s1',date:'2026-11-14',status:'Present'},
+  {studentId:'s1',date:'2026-11-13',status:'Absent'},
+  {studentId:'s1',date:'2026-11-13',status:'Present'}]},
+ asDate,(record,student)=>record.studentId===student.id,status,()=>({value:'2026-11-15'})
+);
+assert.match(recentFn({id:'s1'}),/11-14: Present/,'Saturday saved attendance must appear in prior days');
+assert.match(recentFn({id:'s1'}),/11-13: Needs review/,'Historical duplicates must not be silently overwritten');
+assert.doesNotMatch(src,/Previous 7 weekdays \(saved records\)/,'No blanket Saturday exclusion');
 console.log('PASS: duplicate/unknown daily marks are quarantined, unsafe controls locked, raw CSV available, and inline JavaScript parses.');

@@ -199,3 +199,17 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] Supabase account configuration must remain disabled until the dedicated Coding Academy project is set up and verified. Do NOT use the PPSC candidate database or keys.
 - [ ] When cloud backend is eventually enabled, check two different authenticated test users cannot read or write each other's rows. Validate 62 lessons + 150 question scores, email confirmation, forgot password, and explicit consent before any upload.
 - [ ] Install v0.17 alongside v0.16, and verify old local work remains safe. Import a trusted Complete Academy Backup only after choosing to transfer it.
+
+
+## Phase 18 — New learner walkthrough and private account acceptance
+
+- [ ] On a new Android v0.18 install, the Academy header and **Start my first lesson** remain prominently displayed without requiring a login.
+- [ ] Tap **New here? See the 1-minute app guide**. Three small English/Urdu instructions should show in order. Test Back/Next and the close button; Escape should close on keyboard devices.
+- [ ] On the last guide page, tap **Start my first lesson** and verify the actual Lesson 1 coding editor opens. Closing the tour should never alter lesson or quiz progress.
+- [ ] On a 360px screen, check that all tour words, buttons and Urdu text are readable without horizontal overflow. Check focus trap and screen-reader labels.
+- [ ] Visit Account & Cloud Backup while the stage config is disabled. The account registration buttons must not connect or upload, and the learner profile form must remain hidden/inactive.
+- [ ] Before activating accounts, provision a **dedicated Coding Academy Supabase project**; apply both cloud-progress-setup.sql and learner-profile-setup.sql to it only, not PPSC.
+- [ ] Authenticate with two different test users. Verify User A cannot SELECT, INSERT, UPDATE or DELETE User B's profile or progress, and vice versa.
+- [ ] When enabled after approval, test explicit profile save/refresh, 60-character display name, Urdu/English preference, sign-out, email verification, password reset and account deletion cascades.
+- [ ] Verify **Save private profile** does not upload code or question answers; learning progress upload remains separate and explicit with consent.
+- [ ] Confirm the new v0.18 QA package installs beside v0.17 without erasing the older app. Use a Complete Academy Backup for voluntary transfer.

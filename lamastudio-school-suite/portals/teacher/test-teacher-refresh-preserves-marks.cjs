@@ -35,7 +35,7 @@ const $=id=>id==='attDate'?{value:'2026-11-17'}:id==='verifyTeacherAttendance'?{
 stub.$=$;
 const declarations=[
  "let myStudents=[student],attendance=[old],homework=[],notices=[],results=[];",
- "let rosterReady=true,attendanceReady=true,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceUncertain=false,attendanceWriteUncertain=true;",
+ "let rosterReady=true,attendanceReady=true,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceVerifying=false,attendanceUncertain=false,attendanceWriteUncertain=true;",
  "let draftAttendance=new Map([['s1','Present']]),editingAttendance=new Set(),selectedAttendanceDay='2026-11-17';",
  source.slice(i,j),
  "globalThis.api={refresh,loadSavedAttendance,verifyTeacherAttendance,state:()=>({attendance,attendanceReady,attendanceUncertain,attendanceIssue,drafts:[...draftAttendance],studentCount:myStudents.length})};"

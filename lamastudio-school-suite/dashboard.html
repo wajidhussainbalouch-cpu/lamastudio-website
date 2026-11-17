@@ -866,17 +866,32 @@ async function verifiedRegisterList(key){
             const notice=document.createElement('span');notice.className='text-xs text-red-600';notice.textContent='Could not notify teacher: '+(error.message||error);button.after(notice);
           }
         });
-                function renderStudentAttendanceCard(attendance,students){
+                function renderStudentAttendanceCard(attendance,students,meta=null){
+          const valid=meta||{verified:window.__dashboardVerified?.students!==false&&window.__dashboardVerified?.attendance!==false};
+          if(!valid.verified){
+            const put=(k,v)=>{const el=document.getElementById(k);if(el)el.textContent=v};
+            for(const k of ['studentAttPresent','studentAttAbsent','studentAttLeave','studentAttUnmarked','studentAttRate','attendanceRatioDisplay'])put(k,'—');
+            put('studentAttEnrolled',window.__dashboardVerified?.students===false?'—':students.length.toLocaleString());
+            put('absentTodayCount','Student attendance not verified');
+            put('attendanceCompletionNote','Class completion unavailable until the saved register loads');
+            put('studentAttDate','Saved student attendance unavailable · Refresh to verify');
+            put('studentAttClassCount','Unavailable');
+            put('studentAttHint','Could not read saved student attendance. No records have been changed or marked absent.');
+            const listing=document.getElementById('studentAttClasses');if(listing)listing.textContent='Attendance is unavailable; please refresh the saved register.';
+            const followup=document.getElementById('dashboardAbsentFollowup');if(followup)followup.textContent='Parent follow-up requires verified saved attendance.';
+            for(const id of ['studentAttPresentBar','studentAttAbsentBar','studentAttLeaveBar']){const el=document.getElementById(id);if(el)el.style.width='0%'}
+            return;
+          }
           const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
-          const current=new Map();
+          const current=new Map(),conflicts=new Set();
           attendance.forEach(a=>{
             if(normalizeAttendanceDate(a.date)!==today)return;
             const sid=String(a.studentId??a.student_id??'').trim(),en=String(a.enrlNo??a.enrollmentNo??'').trim();
             const student=(sid&&byId.get(sid))||(en&&byEnrollment.get(en));
             if(!student)return; // exclude staff and unrelated records
             const key=String(student.id??student._id??student.enrlNo??student.enrollmentNo??'');
-            if(key)current.set(key,{student,status:String(a.status||'').toLowerCase().trim()});
+            if(key){if(current.has(key)||conflicts.has(key)){current.delete(key);conflicts.add(key)}else current.set(key,{student,status:String(a.status||'').toLowerCase().trim()})}
           });
           const counts={present:0,absent:0,leave:0};const classMap=new Map();
           students.forEach(s=>{const c=String(s.class??s.grade??'Unassigned').trim()||'Unassigned';if(!classMap.has(c))classMap.set(c,{total:0,marked:0,present:0});classMap.get(c).total++});
@@ -906,9 +921,13 @@ async function verifiedRegisterList(key){
           document.getElementById('attendanceRatioDisplay').textContent =
             rate===null?'—':rate+'%';
           document.getElementById('absentTodayCount').textContent =
-            counts.absent+' absent today';set('studentAttHint',marked?`${marked} of ${total} students marked. Rate is based on marked records only.`:'No student attendance records found for today.');
+            counts.absent+' absent among marked';
+          const allClasses=[...classMap.values()],covered=allClasses.filter(r=>r.marked>0).length,complete=allClasses.filter(r=>r.total>0&&r.marked===r.total).length;
+          set('attendanceCompletionNote',marked+' / '+total+' students marked · '+complete+' / '+allClasses.length+' classes complete');
+          set('studentAttHint',(marked?marked+' of '+total+' students marked. Present percentage covers marked students only.':'No saved student marks found for today.')+(conflicts.size?' · '+conflicts.size+' duplicate student attendance record(s) require administrator review.':''));
+
           const percent=n=>total?`${100*n/total}%`:'0%';document.getElementById('studentAttPresentBar').style.width=percent(counts.present);document.getElementById('studentAttAbsentBar').style.width=percent(counts.absent);document.getElementById('studentAttLeaveBar').style.width=percent(counts.leave);
-          const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',classes.length+' classes');
+          const classes=[...classMap.entries()].sort(([a],[b])=>a.localeCompare(b,undefined,{numeric:true}));set('studentAttClassCount',complete+' / '+classes.length+' classes complete');
           document.getElementById('studentAttClasses').innerHTML=classes.length?classes.map(([name,r])=>{
  const complete=r.total>0&&r.marked===r.total,partial=r.marked>0&&!complete;
  const color=complete?'bg-emerald-500':partial?'bg-amber-500':'bg-red-500';

@@ -61,8 +61,7 @@ for(const script of scripts)new vm.Script(script,{filename:'student-attendance-v
 const recentStart=src.indexOf('function recentAttendance(student){');
 const recentEnd=src.indexOf('\nfunction message(',recentStart);
 assert.ok(recentStart>=0&&recentEnd>recentStart);
-const recentFn=new Function('state','asDate','matchRecord','status','
-,
+const recentFn=new Function('state','asDate','matchRecord','status',String.fromCharCode(36),
  src.slice(recentStart,recentEnd)+'return recentAttendance;'
 )(
  {loadedDate:'2026-11-15',history:[

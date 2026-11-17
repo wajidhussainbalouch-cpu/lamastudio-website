@@ -54,6 +54,10 @@ const mismatched=teachers.map((t,i)=>({teacherId:'other'+i,date:'2026-11-17',sta
 reportStaff(teachers,mismatched,{verified:true,rosterVerified:true});
 assert.equal($('teacherAttDisplay').textContent,'— / 7','Unmatched teacher IDs must never be called 0/7 or 7/7');
 assert.match($('taPending').textContent,/do not match/i);
+const partlyMismatched=[...staff.slice(0,6),{teacherId:'unknown-staff',date:'2026-11-17',status:'Present'}];
+reportStaff(teachers,partlyMismatched,{verified:true,rosterVerified:true});
+assert.equal($('teacherAttDisplay').textContent,'— / 7','Even one unmatched saved teacher ID requires review, not a misleading partial total');
+assert.match($('taPending').textContent,/do not match/i);
 const norm=new Function(section('function normalizeAttendanceDate(value){','function schoolTeacherAttendanceDay(value){')+
  'return normalizeAttendanceDate;')();
 const studentReport=new Function('document','window','localISODate','normalizeAttendanceDate','classAttendanceUrl','esc',

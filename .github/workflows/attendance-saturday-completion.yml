@@ -1,0 +1,19 @@
+name: Attendance Saturday & Register Completion Regression
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/test-attendance-saturday-completion.cjs'
+      - '.github/workflows/attendance-saturday-completion.yml'
+  push:
+    branches:
+      - 'fix/saturday-attendance-coverage-20261114'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert Saturday is counted and completion is separate from attendance rate
+        run: node lamastudio-school-suite/test-attendance-saturday-completion.cjs

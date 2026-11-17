@@ -1,0 +1,25 @@
+name: Teacher Portal Saved Attendance and Class Overview
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/portals/teacher/index.html'
+      - 'lamastudio-school-suite/js/teacher-register-helpers.js'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-verified-dashboard.cjs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-bulk-save-readback.cjs'
+      - '.github/workflows/teacher-portal-attendance-overview.yml'
+  push:
+    branches:
+      - 'fix/teacher-verified-attendance-homework-20261117'
+permissions:
+  contents: read
+jobs:
+  teacher-portal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify teacher dashboard, roster and subject diary
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-verified-dashboard.cjs
+      - name: Verify 51-student batch submission and timeout-safe readback
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-bulk-save-readback.cjs

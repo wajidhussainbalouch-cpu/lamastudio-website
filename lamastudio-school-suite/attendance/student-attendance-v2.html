@@ -10,6 +10,7 @@
 .attendance-edit-btn:hover:not(:disabled){background:#fbe6b0}
 .student .controls small{flex-basis:100%}
 @media(max-width:560px){.attendance-summary-card{padding:12px}.student .controls{width:100%;justify-content:flex-start}.attendance-edit-btn{width:100%;margin-bottom:2px}}
+button[data-status]{touch-action:manipulation;min-height:44px}
 </style></head><body><header><div class="brandbar"><div id="schoolLogo" class="school-logo school-fallback" aria-label="School logo">LS</div><div class="brand-copy"><h1 id="schoolName">LAMA School Suite</h1><p id="schoolSubtitle">Student Attendance · Daily Register</p></div></div><nav class="controls topnav no-print"><a href="../dashboard.html">← School Dashboard</a></nav></header><main>
 <section class="panel"><h2>Daily Attendance Register</h2><p id="classContext" class="muted" role="status" aria-live="polite">Showing all classes</p><div class="grid"><label>Date<input id="date" type="date"></label><label>Class<select id="class"><option value="">All classes</option></select></label><label>Search<input id="search" placeholder="Name or enrollment"></label><label>Status<select id="filter"><option value="">All statuses</option><option>Present</option><option>Absent</option><option>Leave</option><option value="Unmarked">Unmarked</option></select></label></div><p id="stage" role="status">Not loaded</p><progress id="progress" max="100" value="0"></progress><p id="elapsed" class="muted">Elapsed: 0s</p><p id="notice" role="alert"></p><div id="reviewDetails" class="muted" role="status" aria-live="polite"></div><div class="actions no-print"><button id="reload" class="primary">Refresh</button><button id="bulk" disabled>Mark visible present</button><button id="save" class="primary" disabled>Save changes</button><button id="csv">Export CSV</button><button id="clearDate" class="danger" disabled>Admin: clear selected date</button><button onclick="print()">Print</button></div></section>
 <section class="grid" id="summary"></section><section class="panel"><h2>Students</h2><p id="count" class="muted">Waiting for student roster…</p><div id="list"></div></section>
@@ -155,7 +156,7 @@ function renderTotals(all){
  }).join('');
 }
 function renderCoverage(all){
- const classes=[...new Set(all.map(cls))];$('coverage').innerHTML=classes.map(c=>{const ss=all.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length;return state.historyReady?'<p><strong>'+escapeHtml(c)+'</strong>: '+marked+' / '+ss.length+' verified ('+(ss.length?Math.round(marked/ss.length*100):0)+'%)</p>':'<p><strong>'+escapeHtml(c)+'</strong>: Attendance unverified</p>'}).join('');
+ const classes=[...new Set(all.map(cls))];$('coverage').innerHTML=classes.map(c=>{const ss=all.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length;return state.historyReady?'<p><strong>'+escapeHtml(c)+'</strong>: '+marked+' / '+ss.length+(state.dirty.size?' marked, unsaved preview (':' verified (')+(ss.length?Math.round(marked/ss.length*100):0)+'%)</p>':'<p><strong>'+escapeHtml(c)+'</strong>: Attendance unverified</p>'}).join('');
 }
 function render(){enable();const all=classStudents(),rows=visible();
  const review=$('reviewDetails');

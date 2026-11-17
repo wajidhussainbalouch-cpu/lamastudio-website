@@ -7,6 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../../assets/css/config.css">
 <script src="../../js/api-client.js"></script>
+<script src="../../js/teacher-register-helpers.js"></script>
 <style id="teacher-modern-ui">
 :root{--ink:#f5f9ff;--muted:#a6b6cd;--line:rgba(156,188,230,.17)}
 body{background:radial-gradient(circle at 10% 0%,#17314f 0,transparent 36%),radial-gradient(circle at 92% 14%,#173c49 0,transparent 34%),#081425!important}
@@ -43,9 +44,9 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 @media(max-width:390px){.overview-grid{gap:9px}.overview-tile{padding:13px;min-height:133px}.tile-icon{right:11px;top:12px;font-size:19px}.overview-tile strong{font-size:23px}.overview-tile:has(#statClass) strong{font-size:18px}.hero-actions>*{width:100%}}
 
 /* Student records, weekly history and non-obstructive mobile controls. */
-.student-directory{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px}.student-directory-item{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;background:#142c35;border:1px solid #537c7b66;border-radius:16px;color:#f6ffff;min-width:0}.student-directory-item:hover,.student-directory-item:focus-visible{border-color:#69d4ba;background:#1a3b40}.student-directory-item span:nth-child(2){min-width:0;flex:1}.student-directory-item strong,.student-directory-item small{display:block;overflow-wrap:anywhere}.student-directory-item small{color:#b7cbcd;margin-top:4px;font-size:12px}.student-avatar{width:52px;height:52px;border-radius:13px;background:#285c63;display:grid;place-items:center;flex-shrink:0;overflow:hidden;font-size:24px}.student-avatar img{width:100%;height:100%;object-fit:cover}.student-view{font-size:12px;color:#b9e8db;white-space:nowrap}.student-details{margin-top:16px;padding:20px;background:#10242e;border:1px solid #5e999060;border-radius:18px}.student-details h3{font-weight:850;font-size:20px}.student-details h4{font-weight:800;margin:20px 0 12px}.student-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:15px}.student-facts>div{padding:12px;border-radius:11px;background:#ffffff0a;border:1px solid #ffffff16}.student-facts small,.student-facts strong{display:block}.student-facts small{color:#a7c1c5;font-size:11px}.student-facts strong{margin-top:5px;overflow-wrap:anywhere}.week-attendance{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.week-day{padding:10px 4px;border-radius:10px;background:#ffffff0b;text-align:center;border:1px solid #ffffff17}.week-day small,.week-day strong{display:block;font-size:11px}.week-day strong{font-size:10px;margin-top:6px;overflow-wrap:anywhere;color:#bccbd0}.week-day strong[data-status="Present"]{color:#70e0ac}.week-day strong[data-status="Absent"]{color:#ff8e9d}.week-day strong[data-status="Leave"]{color:#ffd08a}.student-note{font-size:12px;color:#b3c8cb;margin-top:12px}.leave-request-link{display:inline-flex;align-items:center;justify-content:center;min-height:45px;margin:16px 16px 24px auto;padding:11px 17px;border-radius:13px;background:#168a81;color:white;text-decoration:none;font-weight:800;box-shadow:0 8px 18px #0003;width:max-content;max-width:calc(100% - 32px)}.leave-request-link:focus-visible{outline:3px solid #ffd68c;outline-offset:3px}
+.student-directory{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px}.student-directory-item{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;background:#142c35;border:1px solid #537c7b66;border-radius:16px;color:#f6ffff;min-width:0}.student-directory-item:hover,.student-directory-item:focus-visible{border-color:#69d4ba;background:#1a3b40}.student-directory-item span:nth-child(2){min-width:0;flex:1}.student-directory-item strong,.student-directory-item small{display:block;overflow-wrap:anywhere}.student-directory-item small{color:#b7cbcd;margin-top:4px;font-size:12px}.student-avatar{width:52px;height:52px;border-radius:13px;background:#285c63;display:grid;place-items:center;flex-shrink:0;overflow:hidden;font-size:24px}.student-avatar img{width:100%;height:100%;object-fit:cover}.student-view{font-size:12px;color:#b9e8db;white-space:nowrap}.student-details{margin-top:16px;padding:20px;background:#10242e;border:1px solid #5e999060;border-radius:18px}.student-details h3{font-weight:850;font-size:20px}.student-details h4{font-weight:800;margin:20px 0 12px}.student-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:15px}.student-facts>div{padding:12px;border-radius:11px;background:#ffffff0a;border:1px solid #ffffff16}.student-facts small,.student-facts strong{display:block}.student-facts small{color:#a7c1c5;font-size:11px}.student-facts strong{margin-top:5px;overflow-wrap:anywhere}.week-attendance{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.week-day{padding:10px 4px;border-radius:10px;background:#ffffff0b;text-align:center;border:1px solid #ffffff17}.week-day small,.week-day strong{display:block;font-size:11px}.week-day strong{font-size:10px;margin-top:6px;overflow-wrap:anywhere;color:#bccbd0}.week-day strong[data-status="Present"]{color:#70e0ac}.week-day strong[data-status="Absent"]{color:#ff8e9d}.week-day strong[data-status="Leave"]{color:#ffd08a}.week-day.cal-marked{background:#124638;border-color:#468d72}.week-day.cal-unmarked{background:#4c2331;border-color:#954e61}.week-day.cal-holiday,.week-day.cal-unavailable{background:#33414c;border-color:#647886}.week-day.cal-partial{background:#564024;border-color:#9c7a45}.student-note{font-size:12px;color:#b3c8cb;margin-top:12px}.leave-request-link{display:inline-flex;align-items:center;justify-content:center;min-height:45px;margin:16px 16px 24px auto;padding:11px 17px;border-radius:13px;background:#168a81;color:white;text-decoration:none;font-weight:800;box-shadow:0 8px 18px #0003;width:max-content;max-width:calc(100% - 32px)}.leave-request-link:focus-visible{outline:3px solid #ffd68c;outline-offset:3px}
 @media(max-width:620px){.week-attendance{grid-template-columns:repeat(4,minmax(0,1fr))}.student-directory{grid-template-columns:1fr}.student-details{padding:14px}.student-view{font-size:11px}}
-</style></head>
+.homework-checklist{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;max-height:120px;overflow:auto}.homework-subject{display:inline-flex;gap:4px;align-items:center;border:1px solid #ffffff25;border-radius:8px;padding:4px 6px;font-size:10px;color:#e8f5f2;background:#102b31}.homework-subject.done{background:#145645;border-color:#4aaf83}.attendance-correction{border:1px solid #7f97a1;color:#bff1ec;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:800}.attendance-correction:disabled,.att-btn:disabled{opacity:.5;cursor:not-allowed}.attendance-note{font-size:11px;color:#b0c9c7;display:block}.att-btn{min-height:42px;touch-action:manipulation}.teacher-attendance-review{color:#ffd28f}.teacher-attendance-uncertain{color:#ffc0b6}.att-row{min-width:0}.att-row .student-label{min-width:0;overflow-wrap:anywhere}@media(max-width:620px){.att-row{align-items:flex-start!important}.att-row .att-actions{width:100%;flex-wrap:wrap;justify-content:flex-start}.att-row .att-actions .att-btn{flex:1 1 22%;min-width:65px}.overview-tile:has(#homeworkSubjectChecklist){min-height:160px}}</style></head>
 <body class="bg-[#081425] text-slate-100 font-sans min-h-screen">
 
     <!-- Header -->
@@ -89,11 +90,11 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="hero-decoration" aria-hidden="true"><span>✦</span><div class="hero-circle">📚</div><small>INSPIRE · TEACH · GROW</small></div>
 </section>
 <section class="overview-grid" aria-label="Teacher quick overview">
- <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">My Students</span><strong id="statStudents">—</strong><small>Assigned class</small></div>
- <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small></div>
- <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Entries posted</small></div>
- <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><small>Attendance alerts</small></div>
- <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small>Saved student attendance</small></div>
+ <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">My Students</span><strong id="statStudents">—</strong><div class="overview-gender-line"><span>👦 Boys <b id="statStudentsBoys">—</b></span><span>👧 Girls <b id="statStudentsGirls">—</b></span></div><small id="statStudentsGender">Class roster pending</small></div>
+ <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small><small id="statClassAttendanceStatus" class="attendance-completion-label">Today’s attendance is loading…</small></div>
+ <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Homework published today by subject</small><div id="homeworkSubjectChecklist" class="homework-checklist" role="status">Loading subjects…</div></div>
+ <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><div class="overview-gender-line"><span>👦 Boys <b id="statAbsentBoys">—</b></span><span>👧 Girls <b id="statAbsentGirls">—</b></span></div><small id="statAbsentGender">Saved attendance not verified</small></div>
+ <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><div class="overview-gender-line"><span>👦 Boys <b id="statPresentBoys">—</b></span><span>👧 Girls <b id="statPresentGirls">—</b></span></div><small id="statPresentGender">Saved attendance not verified</small></div>
  <div class="overview-tile"><span class="tile-icon">👦👧</span><span class="tile-label">Boys &amp; Girls</span><div class="flex items-center gap-5 mt-2"><div><small>Boys</small><strong id="statBoys" class="block">—</strong></div><div class="h-10 w-px bg-slate-600" aria-hidden="true"></div><div><small>Girls</small><strong id="statGirls" class="block">—</strong></div></div><small id="genderMissingNote">Assigned class</small></div>
 </section>
 <section class="employee-panel" aria-label="Employee identity card">
@@ -131,9 +132,20 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
                 <h2 class="text-xs font-black uppercase text-cyan-400">Mark Attendance</h2>
                 <div class="flex items-center gap-2">
                     <input type="date" id="attDate" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2">
-                    <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
+                    <button id="saveTeacherAttendance" onclick="saveAttendance()" disabled class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save changes</button>
                 </div>
             </div>
+            <p class="text-xs text-slate-300">Only your assigned class. Previously saved marks are locked until you tap <strong>Edit attendance</strong>. Tap Save changes to submit corrections, then Verify saved attendance to check the Google Sheet.</p>
+            <div class="flex flex-wrap gap-2 items-center"><button type="button" id="verifyTeacherAttendance" class="bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs px-4 py-2 rounded-xl">↻ Verify saved attendance</button><span id="teacherAttendanceStatus" role="status" aria-live="polite" class="text-xs text-amber-200">Loading saved class attendance…</span></div>
+            <div id="teacherAttendanceStats" class="attendance-day-stats" aria-live="polite"></div>
+            <section class="teacher-calendar-panel" aria-label="Class attendance calendar">
+              <div class="teacher-calendar-top"><div><h3>Class attendance calendar</h3><p>Tap a date to view or correct saved attendance for your class.</p></div>
+               <div class="teacher-calendar-nav"><button type="button" id="teacherCalendarPrev" aria-label="Previous month">‹</button><strong id="teacherCalendarMonth">November 2026</strong><button type="button" id="teacherCalendarNext" aria-label="Next month">›</button></div>
+              </div>
+              <div class="teacher-calendar-legend" aria-label="Calendar status legend"><span><i class="cal-key cal-marked"></i>Green: Marked</span><span><i class="cal-key cal-unmarked"></i>Red: Not marked</span><span><i class="cal-key cal-partial"></i>Amber: Partial / review</span><span><i class="cal-key cal-holiday"></i>Gray: Holiday</span></div>
+              <p id="teacherCalendarNote" class="text-xs text-slate-300">Calendar status uses verified saved records. Saturday is not automatically a holiday.</p>
+              <div id="teacherAttendanceCalendar" class="teacher-calendar-grid" role="group" aria-label="Choose attendance date"></div>
+            </section>
             <div id="attendanceList" class="space-y-2"></div>
             <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
         </section>
@@ -222,7 +234,45 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
     <style>
         .tab-btn { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 8px 14px; border-radius: 10px; background: #1e293b; color: #94a3b8; transition: all .15s; }
         .tab-btn.active { background: #4f46e5; color: white; }
-    </style>
+    
+.attendance-completion-label{margin-top:7px;font-weight:750!important;line-height:1.5}.attendance-completion-label.attendance-complete{color:#8decc4!important}.attendance-completion-label.attendance-incomplete{color:#ffd38e!important}.attendance-completion-label.attendance-unverified{color:#cbd8e1!important}
+.overview-gender-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 3px;width:100%}
+.overview-gender-line span{font-size:11px;color:#deedf2;background:#0d2b34;border:1px solid #46697770;border-radius:8px;padding:6px;min-width:0}
+.overview-gender-line b{display:block;font-size:18px;color:#f3fcff;margin-top:2px}
+.attendance-day-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.attendance-stat{border:1px solid #37525e;background:#112d37;border-radius:11px;padding:9px;min-width:0}
+.attendance-stat small{font-size:11px;color:#b2ced4;display:block}.attendance-stat b{font-size:22px;color:#f1f8fc}
+.attendance-stat span{display:block;font-size:11px;color:#a8c4cc;line-height:1.5}
+.teacher-calendar-panel{border:1px solid #335966;border-radius:15px;padding:14px;background:#0f2732}
+.teacher-calendar-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.teacher-calendar-top h3{color:#d7fbff;font-weight:850;font-size:14px}
+.teacher-calendar-top p{color:#abc5ca;font-size:11px;line-height:1.4}
+.teacher-calendar-nav{display:flex;gap:6px;align-items:center}
+.teacher-calendar-nav strong{min-width:122px;text-align:center;font-size:12px}
+.teacher-calendar-nav button{min-width:36px;min-height:38px;background:#244550;border:1px solid #557783;border-radius:9px;font-size:20px;color:#fff}
+.teacher-calendar-legend{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0;font-size:10px;color:#d1e3e5}
+.teacher-calendar-legend span{display:inline-flex;gap:4px;align-items:center}
+.cal-key{width:11px;height:11px;border-radius:3px;display:inline-block}
+.cal-key.cal-marked,.calendar-day.cal-marked{background:#136b52;border-color:#4cc99b;color:#fff}
+.cal-key.cal-unmarked,.calendar-day.cal-unmarked{background:#692330;border-color:#ec6f7f;color:#fff}
+.cal-key.cal-partial,.calendar-day.cal-partial{background:#7a561c;border-color:#e3b65e;color:#fff}
+.cal-key.cal-holiday,.calendar-day.cal-holiday{background:#526475;border-color:#8798a8;color:#fff}
+.teacher-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.teacher-calendar-weekday{text-align:center;color:#a6c8d0;font-size:10px;font-weight:800;padding:5px 0}
+.calendar-day{border:1px solid #486370;border-radius:8px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#e9f4f7;background:#20313a;font-size:12px;font-weight:800;touch-action:manipulation}
+.calendar-day small{font-size:9px;font-weight:600}
+.calendar-day.cal-future{color:#aec0c4;background:#1c2b35}
+.calendar-day.cal-unavailable{color:#c6d0d3;background:#38434b}
+.calendar-day.cal-selected{outline:2px solid #63ebec;outline-offset:1px}
+.calendar-day:focus-visible{outline:3px solid #f6d66c;outline-offset:1px}
+.att-student-main{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.att-photo{width:48px;height:60px;object-fit:cover;border-radius:9px;border:1px solid #4d7c82;flex-shrink:0;background:#1a3b44}
+.att-photo-empty{width:48px;height:60px;border:1px solid #4d7c82;border-radius:9px;display:grid;place-items:center;background:#22414c;font-size:23px;flex-shrink:0}
+.att-save-badge{font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #4d876a;color:#c6f7d7;background:#185a3b;display:inline-block;margin-top:5px}
+.att-save-badge.att-pending{border-color:#caa45a;background:#644819;color:#ffe9b0}
+@media(max-width:620px){.teacher-calendar-panel{padding:9px}.teacher-calendar-grid{gap:3px}.calendar-day{min-height:48px;font-size:12px}.calendar-day small{font-size:8px}.attendance-day-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+</style>
 
     <script>
 const $=id=>document.getElementById(id);
@@ -230,6 +280,10 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
+const TeacherRegister=LamaTeacherRegister;
+let rosterReady=false,attendanceReady=false,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceVerifying=false,attendanceUncertain=false,attendanceWriteUncertain=false,attendanceSaveNote='',lastAttendanceVerifiedAt=0;
+let draftAttendance=new Map(),editingAttendance=new Set(),selectedAttendanceDay='';
+let calendarMonth='',schoolHolidayEvents=[],schoolCalendarReady=false,schoolCalendarIssue='';
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
@@ -238,12 +292,12 @@ function myStudent(id){return myStudents.find(s=>String(s.id)===String(id))}
 function mine(r){return norm(r.teacherId)===norm(me.teacherId||me.id)}
 function published(r){return r.isPublished===true||r.published===true||norm(r.status)==='published'||norm(r.status)==='sent'}
 function message(t){alert(t)}
-function switchTab(t){if(t==='absentees')refresh().catch(e=>message('Could not sync attendance: '+e.message));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
+function switchTab(t){if(t==='absentees'){loadAbsentees();if(!attendanceSaving&&!draftAttendance.size)verifyTeacherAttendance();}if(t==='attendance'&&rosterReady&&!attendanceSaving&&!attendanceVerifying&&!attendanceWriteUncertain&&!draftAttendance.size&&Date.now()-lastAttendanceVerifiedAt>15000)verifyTeacherAttendance();document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
 function handleLogout(){LamaAPI.logout('teacher');location.replace('../../main-dashboard.html')}
 function updateTeacherOverview(){
  $('welcomeTeacher').textContent=(me.name||'Teacher').split(/\s+/)[0];
  $('heroSummary').textContent=`${me.schoolName||'Your school'} · ${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'Teaching'}`;
- $('statClass').textContent=me.assignedClass||'—';$('statSection').textContent=me.section?'Section '+me.section:'Assigned class';
+ $('statClass').textContent=me.assignedClass||'—';$('statSection').textContent=(me.assignedSection||me.section?'Section '+(me.assignedSection||me.section)+' · ':'')+(rosterReady?myStudents.length+' students':'Assigned class');
  $('empName').textContent=me.name||'Teacher';
  $('empId').textContent=me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—';
  $('empDesignation').textContent=me.designation||'Teacher';
@@ -253,56 +307,281 @@ function updateTeacherOverview(){
  $('miniDesignation').textContent=me.designation||'Teacher';
  $('miniEmployeeId').textContent='ID · '+(me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—');
 }
-function todayAbsentees(){return attendance.filter(a=>String(a.date||'').slice(0,10)===localDate()&&norm(a.status)==='absent')}
+function attendanceSnapshot(day=$('attDate').value){return TeacherRegister.snapshot(attendance,myStudents,day)}
+function getClassStats(day=$('attDate').value){
+ return TeacherRegister.totals(myStudents,attendanceSnapshot(day),draftAttendance);
+}
+function confirmedTodayAbsentees(){
+ if(!attendanceReady||attendanceUncertain)return [];
+ const snap=attendanceSnapshot(localDate());
+ return myStudents.filter(st=>snap.unique.get(TeacherRegister.rosterId(st))?.status==='Absent');
+}
+function todayAbsentees(){return confirmedTodayAbsentees()}
+function statusLabel(id){
+ const entry=attendanceSnapshot($('attDate').value);
+ return draftAttendance.get(id)||entry.unique.get(id)?.status||'';
+}
+function showAttendanceFeedback(){
+ const span=$('teacherAttendanceStatus'),button=$('saveTeacherAttendance'),verify=$('verifyTeacherAttendance');
+ if(!span||!button)return;
+ const snap=attendanceSnapshot($('attDate').value);
+ const blocked=attendanceSaving||attendanceVerifying||!rosterReady||!attendanceReady||attendanceUncertain||snap.duplicates.size>0||snap.unmatched.length>0;
+ button.disabled=blocked||draftAttendance.size===0;
+ if(verify)verify.disabled=attendanceSaving||attendanceVerifying;
+ if(attendanceSaving){span.textContent='Saving '+draftAttendance.size+' change(s)… Do not submit again.';span.className='text-xs text-amber-200';return}
+ if(attendanceVerifying){span.textContent='Verifying saved attendance. Marking is temporarily paused…';span.className='text-xs text-amber-200';return}
+ if(attendanceUncertain){span.textContent='⚠ '+(attendanceWriteUncertain?'Save outcome not verified':'Saved attendance cannot be verified')+(attendanceIssue?': '+attendanceIssue:'')+'. Marks remain selected. Use Verify saved attendance before continuing.';span.className='text-xs teacher-attendance-uncertain';return}
+ if(!attendanceReady){span.textContent='⚠ Saved attendance unavailable'+(attendanceIssue?': '+attendanceIssue:'')+'. Marking is disabled until verified.';span.className='text-xs teacher-attendance-uncertain';return}
+ if(snap.duplicates.size||snap.unmatched.length){span.textContent='⚠ '+snap.duplicates.size+' duplicate student(s) and '+snap.unmatched.length+' unmatched row(s) need administrator review. Do not overwrite them.';span.className='text-xs teacher-attendance-review';return}
+ if(draftAttendance.size){span.textContent=draftAttendance.size+' unsaved change(s). Tap Save changes, then wait for verification.';span.className='text-xs text-amber-200';return}
+ const saved=snap.unique.size,total=myStudents.length;
+ const completed=total>0&&saved===total&&draftAttendance.size===0;
+ const messageText=completed?'✓ Attendance completed and verified: '+saved+' / '+total+' students on '+$('attDate').value:
+   saved?'◐ Register verified; '+saved+' / '+total+' students saved on '+$('attDate').value+'. Attendance is not yet complete.':
+   '○ Register verified but attendance has not been marked for '+$('attDate').value+'.';
+ span.textContent=messageText+(attendanceSaveNote?' '+attendanceSaveNote:'');
+ span.className='text-xs '+(completed?'text-emerald-300':saved?'text-amber-200':'text-rose-200');
+}
+function showTeacherHomeworkStatus(day=localDate()){
+ const el=$('homeworkSubjectChecklist'),counter=$('statHomework');
+ if(!el||!counter)return;
+ if(!homeworkReady){counter.textContent='—';el.textContent='Homework data unavailable';return}
+ const list=TeacherRegister.homeworkChecklist(myStudents,homework,me,day);
+ counter.textContent=list.filter(entry=>entry.done).length+' / '+list.length;
+ if(!list.length){el.textContent='Subjects are not configured for this class yet.';return}
+ el.innerHTML=list.map(item=>'<span class="homework-subject '+(item.done?'done':'')+'">'+(item.done?'✓':'○')+' '+esc(item.name)+' · '+(item.done?'Posted':'Not posted')+'</span>').join('');
+}
 function updateStats(){
- $('statStudents').textContent=myStudents.length;
- $('statHomework').textContent=homework.filter(h=>mine(h)).length;
- const today=localDate();
- const latest=new Map();
- for(const a of attendance){
-  if(String(a.date||'').slice(0,10)!==today)continue;
-  const student=myStudents.find(s=>String(s.id??s._id??s.studentId??'')===String(a.studentId??a.studentID??a.enrlNo??'')||String(s.enrlNo??s.enrollmentNo??'')===String(a.enrlNo??a.studentId??''));
-  if(student)latest.set(String(student.id??student._id??student.studentId),String(a.status||'').trim().toLowerCase());
+ const classStats=TeacherRegister.totals(myStudents,attendanceSnapshot(localDate()),$('attDate').value===localDate()?draftAttendance:new Map());
+ const boys=classStats.Students.boys,girls=classStats.Students.girls,unknown=classStats.Students.unspecified;
+ $('statStudents').textContent=rosterReady?myStudents.length:'—';
+ $('statStudentsGender').textContent=rosterReady?'Boys '+boys+' · Girls '+girls+(unknown?' · Not specified '+unknown:''):'Class roster unavailable';
+ $('statStudentsBoys').textContent=rosterReady?boys:'—';$('statStudentsGirls').textContent=rosterReady?girls:'—';
+ $('statBoys').textContent=rosterReady?boys:'—';
+ $('statGirls').textContent=rosterReady?girls:'—';
+  $('genderMissingNote').textContent=!rosterReady?'Roster unavailable':unknown?unknown+' without recorded gender':'Assigned class';
+ const todaySnap=attendanceSnapshot(localDate()),savedToday=todaySnap.unique.size;
+ const cardStatus=$('statClassAttendanceStatus');
+ if(!rosterReady||!attendanceReady||attendanceUncertain){
+  cardStatus.textContent='Today’s attendance not verified';
+  cardStatus.className='attendance-completion-label attendance-unverified';
+ }else if(todaySnap.duplicates.size||todaySnap.unmatched.length){
+  cardStatus.textContent='Today’s attendance needs administrator review';
+  cardStatus.className='attendance-completion-label attendance-incomplete';
+ }else if(myStudents.length&&savedToday===myStudents.length&&!(draftAttendance.size&&$('attDate').value===localDate())){
+  cardStatus.textContent='✓ Today’s attendance completed · '+savedToday+' / '+myStudents.length+' saved';
+  cardStatus.className='attendance-completion-label attendance-complete';
+ }else{
+  cardStatus.textContent='○ Today’s attendance '+savedToday+' / '+myStudents.length+' saved'+(draftAttendance.size&&$('attDate').value===localDate()?' · unsaved changes pending':'');
+  cardStatus.className='attendance-completion-label attendance-incomplete';
  }
- const statuses=[...latest.values()];
- $('statPresent').textContent=statuses.filter(x=>x==='present'||x==='p').length;
- $('statAbsent').textContent=statuses.filter(x=>x==='absent'||x==='a').length;
- const gender=s=>String(s.gender??s.sex??'').trim().toLowerCase();
- const boys=myStudents.filter(s=>['male','boy','m'].includes(gender(s))).length;
- const girls=myStudents.filter(s=>['female','girl','f'].includes(gender(s))).length;
- const unknown=myStudents.length-boys-girls;
- $('statBoys').textContent=boys;
- $('statGirls').textContent=girls;
- $('genderMissingNote').textContent=unknown?unknown+' without recorded gender':'Assigned class';
+ $('statSection').textContent=(me.assignedSection||me.section?'Section '+(me.assignedSection||me.section)+' · ':'')+(rosterReady?myStudents.length+' students':'Class roster unavailable');
+ showTeacherHomeworkStatus();
+ if(!attendanceReady||attendanceUncertain){
+  $('statPresent').textContent='—';$('statAbsent').textContent='—';
+  for(const key of ['statPresentBoys','statPresentGirls','statAbsentBoys','statAbsentGirls'])$(key).textContent='—';
+  $('statPresentGender').textContent='Saved attendance not verified';
+  $('statAbsentGender').textContent='Saved attendance not verified';
+ }else{
+  for(const [label,key] of [['Present','statPresent'],['Absent','statAbsent']]){
+   const stat=classStats[label];
+   $(key).textContent=stat.total;
+   $(key+'Boys').textContent=stat.boys;$(key+'Girls').textContent=stat.girls;
+   $(key+'Gender').textContent='Boys '+stat.boys+' · Girls '+stat.girls+(stat.unspecified?' · Not specified '+stat.unspecified:'')+(draftAttendance.size?' · Unsaved preview':'');
+  }
+ }
+ showAttendanceFeedback();
 }
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('headerAssignedClass').textContent=me.assignedClass||'Not assigned';$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 let refreshPromise=null;
+function withDeadline(promise,label,ms=30000){
+ let timer;
+ return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' timed out after '+Math.round(ms/1000)+' seconds')),ms)})])
+  .finally(()=>clearTimeout(timer));
+}
+function scopedAttendanceRows(rows){
+ // The backend already restricts teacher reads to the assigned class.
+ // Preserve class-matching but unmatched records so conflicts are flagged,
+ // rather than silently treating a mismatched saved mark as Unmarked.
+ return rows.filter(row=>schoolMatch(row)&&(
+   classMatch(row)||
+   myStudent(row.studentId??row.studentID??row.student_id)||
+   (!String(row.studentId??row.studentID??row.student_id??'').trim()&&myStudents.some(st=>TeacherRegister.enrollment(st)===String(row.enrlNo??row.enrollmentNo??'')))
+ ));
+}
+async function loadSavedAttendance(expected=null){
+ const rows=await withDeadline(LamaAPI.list('attendance'),'Attendance history',30000);
+ if(!Array.isArray(rows))throw Error('Attendance response is invalid');
+ const scoped=scopedAttendanceRows(rows);
+ const snap=TeacherRegister.snapshot(scoped,myStudents,$('attDate').value);
+ attendance=scoped;attendanceReady=true;attendanceIssue='';
+ if(snap.duplicates.size||snap.unmatched.length){
+  attendanceUncertain=true;
+  throw Error('Attendance has duplicate or unmatched records. Ask an administrator to review before writing.');
+ }
+ if(expected){
+  const mismatch=[...expected].filter(([id,status])=>snap.unique.get(id)?.status!==status);
+  if(mismatch.length){
+   attendanceUncertain=true;
+   throw Error(mismatch.length+' requested attendance mark(s) are not confirmed by saved records. Do not retry automatically.');
+  }
+  draftAttendance.clear();editingAttendance.clear();attendanceWriteUncertain=false;
+ }
+ attendanceUncertain=false;lastAttendanceVerifiedAt=Date.now();
+ return snap;
+}
 async function refresh(){
  if(refreshPromise)return refreshPromise;
+ if(attendanceSaving||attendanceVerifying)return;
  refreshPromise=(async()=>{
-  const timeout=(promise,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out after 20 seconds')),20000))]);
-  const students=await timeout(LamaAPI.list('students'),'Student register');
-  if(!Array.isArray(students))throw Error('Student register response is invalid');
-  myStudents=students.filter(scope);
-  attendance=[];homework=[];notices=[];results=[];
+  // Never discard a teacher's selected marks just because a network read failed.
+  if(!rosterReady){
+   const students=await withDeadline(LamaAPI.list('students'),'Student register',30000);
+   if(!Array.isArray(students))throw Error('Student register response is invalid');
+   myStudents=students.filter(scope);rosterReady=true;
+  }
+  const jobs=[
+   async()=>{try{await loadSavedAttendance(attendanceWriteUncertain?new Map(draftAttendance):null)}
+     catch(error){attendanceReady=false;attendanceIssue=error.message;console.warn('Saved attendance read failed',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('homework'),'Homework history',25000);
+     if(!Array.isArray(rows))throw Error('Homework response invalid');
+     homework=rows.filter(scope);homeworkReady=true;
+     }catch(error){homeworkReady=false;console.warn('Homework read failed',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('notifications'),'Notices',25000);
+     if(!Array.isArray(rows))throw Error('Notices response invalid');
+     notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'));
+     }catch(error){console.warn('Notices read failed; previous notices preserved',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('resources'),'Published school calendar',25000);
+      if(!Array.isArray(rows))throw Error('School calendar returned an invalid response');
+      schoolHolidayEvents=[...TeacherRegister.calendarHolidays(rows.filter(schoolMatch)),...deviceSchoolHolidays()];
+      schoolCalendarReady=true;schoolCalendarIssue='';
+     }catch(error){schoolCalendarReady=false;schoolCalendarIssue=error.message;console.warn('School calendar read failed',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('results'),'Results',25000);
+     if(!Array.isArray(rows))throw Error('Results response invalid');
+     results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId));
+     }catch(error){console.warn('Results read failed; previous results preserved',error)}}
+  ];
+  await Promise.all(jobs.map(job=>job()));
   renderAll();
-  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId))}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
-  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else console.warn(name+' response invalid')}catch(e){console.warn(name+' failed',e)}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
 }
-function renderAll(){updateStats();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+async function verifyTeacherAttendance(){
+ if(attendanceSaving||attendanceVerifying)return;
+ if(refreshPromise){
+  $('teacherAttendanceStatus').textContent='The dashboard is already refreshing. Verify again once the refresh finishes.';
+  return;
+ }
+ // Verify draft values only when a SAVE response was actually uncertain.
+ const expected=attendanceWriteUncertain?new Map(draftAttendance):null;
+ attendanceVerifying=true;
+ $('verifyTeacherAttendance').disabled=true;
+ $('teacherAttendanceStatus').textContent='Reading saved attendance from Google Sheets…';
+ let resultText='';
+ try{
+  await loadSavedAttendance(expected);
+  resultText='✓ Saved attendance register verified for '+$('attDate').value+'.'+(draftAttendance.size?' '+draftAttendance.size+' unsaved change(s) are still selected.':'');
+ }catch(error){
+  attendanceReady=false;
+  attendanceUncertain=true;
+  attendanceIssue=error.message;
+  resultText='⚠ Could not verify saved attendance: '+error.message+'. Selected marks remain visible; do not resubmit blindly.';
+  console.warn('Teacher verification failed',error);
+ }finally{
+  attendanceVerifying=false;
+  renderAll();
+  $('teacherAttendanceStatus').textContent=resultText;
+ }
+}
+$('verifyTeacherAttendance').addEventListener('click',verifyTeacherAttendance);
+function renderAll(){updateStats();renderTeacherStats();renderAttendanceCalendar();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+function safeStudentPhoto(student){
+ const raw=String(student?.photo||student?.photoUrl||student?.studentPhoto||'').trim();
+ if(/^https:\/\/[^\s"'<>]+$/i.test(raw))return raw;
+ if(/^data:image\/(?:jpeg|jpg|png|webp);base64,[a-z0-9+/=]+$/i.test(raw)&&raw.length<=500000)return raw;
+ return '';
+}
+function calendarWeeklyOffDays(){
+ let fromDevice;
+ try{
+  const schoolId=String(me.schoolId||'').trim();
+  if(schoolId)fromDevice=JSON.parse(localStorage.getItem('lama_teacher_holidays_'+schoolId+'_weekly')||'null');
+ }catch(_){fromDevice=null}
+ const raw=me.weeklyOffDays??me.schoolWeeklyOff??me.weekendDays??fromDevice;
+ const parsed=Array.isArray(raw)?raw:typeof raw==='string'?
+  (()=>{try{const json=JSON.parse(raw);if(Array.isArray(json))return json}catch(_){}return raw.split(/[,\s]+/)})():[0];
+ const result=parsed.map(value=>Number(value)).filter(day=>day===0||day===6);
+ return [...new Set(result)];
+}
+function deviceSchoolHolidays(){
+ const schoolId=String(me.schoolId||'').trim();
+ if(!schoolId)return [];
+ try{
+  const saved=JSON.parse(localStorage.getItem('lama_teacher_holidays_'+schoolId)||'{}');
+  if(!saved||typeof saved!=='object'||Array.isArray(saved))return [];
+  return Object.entries(saved).filter(([date,label])=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&typeof label==='string')
+    .map(([date,title])=>({start:date,end:date,title:title.trim()||'School holiday'}));
+ }catch(_){return []}
+}
+function renderAttendanceCalendar(){
+ const root=$('teacherAttendanceCalendar'),title=$('teacherCalendarMonth'),note=$('teacherCalendarNote');
+ if(!root||!title||!note)return;
+ const month=calendarMonth||($('attDate').value||localDate()).slice(0,7),days=TeacherRegister.monthDays(month);
+ if(!days.length){root.textContent='Invalid calendar month';return}
+ const [yy,mm]=month.split('-').map(Number);
+ title.textContent=new Date(yy,mm-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+ const weeklyOff=calendarWeeklyOffDays();
+ const inputs={students:myStudents,records:attendance,today:localDate(),
+  verified:rosterReady&&attendanceReady&&!attendanceUncertain,calendarReady:schoolCalendarReady,
+  holidays:schoolHolidayEvents,weeklyOff};
+ const weekHeaders=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+ const first=(days[0].weekday+6)%7;
+ let html=weekHeaders.map(d=>'<span class="teacher-calendar-weekday">'+d+'</span>').join('');
+ html+='<span aria-hidden="true"></span>'.repeat(first);
+ const states={marked:0,unmarked:0,partial:0,holiday:0};
+ for(const date of days){
+  const result=TeacherRegister.calendarDayState(date.date,inputs);
+  if(Object.prototype.hasOwnProperty.call(states,result.state))states[result.state]++;
+  const detail=result.state==='marked'?'Marked '+result.marked+'/'+result.total:
+    result.state==='partial'?'Partially marked / needs review '+result.marked+'/'+result.total:
+    result.state==='unmarked'?'Not marked':result.state==='holiday'?'Holiday':result.state==='future'?'Upcoming':'Unverified';
+  const abbreviation=result.state==='marked'?'✓':result.state==='unmarked'?'○':result.state==='holiday'?'Off':
+    result.state==='partial'?result.marked+'/'+result.total:result.state==='unavailable'?'?':'·';
+  const titleText=date.date+' · '+detail+(result.holiday?' · '+result.holiday:'');
+  html+='<button type="button" class="calendar-day cal-'+result.state+(date.date===$('attDate').value?' cal-selected':'')+
+   '" data-calendar-day="'+date.date+'" aria-label="'+esc(titleText)+'" title="'+esc(titleText)+
+   '" aria-pressed="'+(date.date===$('attDate').value)+'"><b>'+date.day+'</b><small>'+esc(abbreviation)+'</small></button>';
+ }
+ root.innerHTML=html;
+ note.textContent=(schoolCalendarReady?'School calendar checked.':'School calendar unavailable; unmarked days are not assumed to be school days. ')+
+ ' Green = saved class attendance complete; red = no saved marks on a school day; amber = partial or needs review; gray = school holiday. '+
+ ' Sunday is off by default; Saturday is closed only when configured. Holidays published in the school calendar are shared; device-only staff holiday settings work on this device. 9 November is labeled Iqbal Day. '+
+ (schoolCalendarIssue?'Calendar read issue: '+schoolCalendarIssue+'. ':'')+
+ ' Never marks students absent automatically.';
+}
+function shiftTeacherCalendar(delta){
+ const month=calendarMonth||($('attDate').value||localDate()).slice(0,7);
+ const [year,number]=month.split('-').map(Number),next=new Date(year,number-1+delta,1);
+ calendarMonth=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0');
+ renderAttendanceCalendar();
+}
+$('teacherCalendarPrev').addEventListener('click',()=>shiftTeacherCalendar(-1));
+$('teacherCalendarNext').addEventListener('click',()=>shiftTeacherCalendar(1));
+$('teacherAttendanceCalendar').addEventListener('click',event=>{
+ const cell=event.target.closest('button[data-calendar-day]');
+ if(cell)selectTeacherAttendanceDate(cell.dataset.calendarDay);
+});
 function renderStudentDirectory(){
  const el=$('studentDirectory');if(!el)return;
  if(!myStudents.length){el.innerHTML='<p class="text-slate-300">No students found in your assigned class.</p>';$('studentDetails').classList.add('hidden');return}
  el.replaceChildren();
  myStudents.forEach(st=>{
  const button=document.createElement('button');button.type='button';button.className='student-directory-item';
- const photo=st.photo||st.photoUrl||st.studentPhoto||'';
+ const photo=safeStudentPhoto(st);
  const avatar=document.createElement('span');avatar.className='student-avatar';
- if(photo&&/^https:\/\//i.test(String(photo))){const img=document.createElement('img');img.src=photo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>avatar.replaceChildren(document.createTextNode('👤'));avatar.append(img)}else avatar.textContent='👤';
- const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=st.name||'Student';const info=document.createElement('small');info.textContent='Enrollment: '+(st.enrlNo||st.enrollmentNo||'—')+' · '+(st.class||me.assignedClass||'');copy.append(name,info);
+ if(photo){const img=document.createElement('img');img.src=photo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>avatar.replaceChildren(document.createTextNode('👤'));avatar.append(img)}else avatar.textContent='👤';
+ const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=st.name||'Student';const info=document.createElement('small');info.textContent='Enrollment: '+(st.enrlNo||st.enrollmentNo||'—')+' · Parent/Guardian: '+TeacherRegister.guardian(st)+' · '+(st.class||me.assignedClass||'');copy.append(name,info);
  const arrow=document.createElement('span');arrow.textContent='View record ›';arrow.className='student-view';button.append(avatar,copy,arrow);button.onclick=()=>showStudentRecord(st.id);el.append(button)
  })
 }
@@ -311,44 +590,153 @@ function showStudentRecord(id){
  const el=$('studentDetails');el.replaceChildren();el.classList.remove('hidden');
  const heading=document.createElement('h3');heading.textContent=(st.name||'Student')+' · Class record';el.append(heading);
  const grid=document.createElement('div');grid.className='student-facts';
- const facts=[['Enrollment',st.enrlNo||st.enrollmentNo],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Father / Guardian',st.fatherName||st.father||st.guardianName],['Gender',st.gender],['Roll number',st.rollNo||st.rollNumber]];
+ const facts=[['Enrollment',st.enrlNo||st.enrollmentNo],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Father / Guardian',TeacherRegister.guardian(st)],['Gender',st.gender],['Roll number',st.rollNo||st.rollNumber]];
  for(const [label,value] of facts){if(!value)continue;const cell=document.createElement('div');const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=String(value);cell.append(l,v);grid.append(cell)}el.append(grid);
  const h=document.createElement('h4');h.textContent='Last 7 days · Attendance history';el.append(h);
  const strip=document.createElement('div');strip.className='week-attendance';
- for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const a=attendance.find(x=>String(x.studentId)===String(st.id)&&String(x.date).slice(0,10)===date);const item=document.createElement('div');item.className='week-day';const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=a?.status||'Not marked';status.dataset.status=a?.status||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
- const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows saved records only. To mark or change attendance, open the Attendance tab.';el.append(note);el.scrollIntoView({behavior:'smooth',block:'nearest'})
+ for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const snap=attendanceSnapshot(date),a=snap.unique.get(String(st.id));const dayState=TeacherRegister.calendarDayState(date,{students:myStudents,records:attendance,today:localDate(),verified:attendanceReady&&!attendanceUncertain,calendarReady:schoolCalendarReady,holidays:schoolHolidayEvents,weeklyOff:calendarWeeklyOffDays()});const item=document.createElement('div');item.className='week-day cal-'+(!attendanceReady||attendanceUncertain?'unavailable':snap.duplicates.has(String(st.id))?'partial':a?'marked':dayState.state==='holiday'?'holiday':dayState.state==='future'?'future':dayState.state==='unavailable'?'unavailable':'unmarked');const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=!attendanceReady||attendanceUncertain?'Unverified':snap.duplicates.has(String(st.id))?'Needs review':a?.status||(dayState.state==='holiday'?'Holiday':'Not marked');status.dataset.status=a?.status||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
+ const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows verified saved records only. Use Edit attendance in the Attendance tab to correct a saved mark.';el.append(note);el.scrollIntoView({behavior:'smooth',block:'nearest'})
 }
-function loadAttendanceList(){const day=$('attDate').value;const el=$('attendanceList');$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);el.innerHTML=myStudents.map(s=>{const a=attendance.find(x=>String(x.studentId)===String(s.id)&&x.date===day);const status=a?.status||'';return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span></span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`}).join('')}
-function setAttStatus(btn,status){const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
+function loadAttendanceList(){
+ const day=$('attDate').value,el=$('attendanceList');
+ $('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);
+ const snap=attendanceSnapshot(day),blocked=!attendanceReady||attendanceSaving||attendanceVerifying||attendanceUncertain||snap.duplicates.size>0||snap.unmatched.length>0;
+ el.innerHTML=myStudents.map(student=>{
+  const id=TeacherRegister.rosterId(student),saved=snap.unique.get(id),duplicate=snap.duplicates.has(id);
+  const current=draftAttendance.get(id)||saved?.status||'',isEditing=editingAttendance.has(id);
+  const savedStatus=saved?.status||'',isSaved=!!saved;
+  const markable=!blocked&&(!isSaved||isEditing)&&!duplicate;
+  const statusLine=duplicate?'⚠ Duplicate saved entries need administrator review':
+    draftAttendance.has(id)?'● Unsaved change (previous: '+(savedStatus||'Unmarked')+')':
+    isSaved?(attendanceReady&&!attendanceUncertain?'Saved: ':'Last known mark (not reverified): ')+savedStatus:'Not marked';
+  const guardian=TeacherRegister.guardian(student);
+  const info='Enrollment: '+(TeacherRegister.enrollment(student)||'—')+' · Parent/Guardian: '+guardian;
+  const picture=safeStudentPhoto(student);
+  const photoNode=picture?'<img class="att-photo" loading="lazy" referrerpolicy="no-referrer" alt="Photo of '+esc(student.name||'student')+'" src="'+esc(picture)+'">':'<span class="att-photo-empty" aria-label="No student photo available">👤</span>';
+  const savedBadge=duplicate?'⚠ Review saved records':draftAttendance.has(id)?'● Unsaved change':isSaved?(attendanceReady&&!attendanceUncertain?'✓ Saved and verified':'◷ Last known · not reverified'):'○ Not marked';
+  return '<div class="att-row flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(id)+'">'+
+    '<div class="att-student-main">'+photoNode+'<div class="student-label"><strong class="text-xs font-bold">'+esc(student.name||'Unnamed student')+'</strong>'+
+    '<div class="attendance-note">'+esc(info)+'</div><div class="attendance-note '+(duplicate?'teacher-attendance-review':'')+'">'+esc(statusLine)+'</div>'+
+    '<span class="att-save-badge '+(draftAttendance.has(id)||duplicate?'att-pending':'')+'">'+esc(savedBadge)+'</span></div></div>'+
+    '<div class="att-actions flex gap-2 items-center">'+
+    (isSaved?'<button type="button" class="attendance-correction" data-edit-id="'+esc(id)+'" '+(blocked?'disabled':'')+'>'+(isEditing?'Cancel edit':'✎ Edit attendance')+'</button>':'')+
+    contact(student)+
+    ['Present','Absent','Leave'].map(value=>'<button type="button" class="att-btn '+(current===value?'att-active-'+value.toLowerCase():'')+'" data-status="'+value+'" data-id="'+esc(id)+'" aria-pressed="'+(current===value)+'" '+(markable?'':'disabled')+'>'+value+'</button>').join('')+
+    '</div></div>';
+ }).join('');
+}
+function setAttStatus(btn,status){
+ if(attendanceSaving||attendanceVerifying||!attendanceReady||attendanceUncertain)return;
+ const row=btn.closest('[data-student-id]');if(!row||btn.disabled)return;
+ const key=row.dataset.studentId,snap=attendanceSnapshot($('attDate').value);
+ if(snap.duplicates.size||snap.unmatched.length||snap.duplicates.has(key))return;
+ const current=snap.unique.get(key);
+ if(current&&!editingAttendance.has(key))return;
+ if(!['Present','Absent','Leave'].includes(status))return;
+ if(status===current?.status)draftAttendance.delete(key);
+ else draftAttendance.set(key,status);
+ for(const cell of row.querySelectorAll('.att-btn')){
+  const selected=cell.dataset.status===status;
+  cell.className='att-btn'+(selected?' att-active-'+status.toLowerCase():'');
+  cell.setAttribute('aria-pressed',String(selected));
+ }
+ // The saved-status note is followed by a badge; :last-child never matches it.
+ const text=row.querySelectorAll('.attendance-note')[1]||null;
+ if(text)text.textContent=draftAttendance.has(key)?'● Unsaved change (previous: '+(current?.status||'Unmarked')+')':current?'Saved: '+current.status:'Not marked';
+ const badge=row.querySelector('.att-save-badge');
+ if(badge){badge.textContent=draftAttendance.has(key)?'● Unsaved change':current?'✓ Saved and verified':'○ Not marked';badge.classList.toggle('att-pending',draftAttendance.has(key));}
+ renderTeacherStats();updateStats();
+}
+function toggleTeacherAttendanceEdit(key){
+ if(!attendanceReady||attendanceSaving||attendanceVerifying||attendanceUncertain)return;
+ const snap=attendanceSnapshot($('attDate').value);
+ if(snap.duplicates.size||snap.unmatched.length)return;
+ const existing=snap.unique.get(key);if(!existing)return;
+ if(editingAttendance.has(key)){editingAttendance.delete(key);draftAttendance.delete(key)}
+ else editingAttendance.add(key);
+ loadAttendanceList();renderTeacherStats();updateStats();
+}
+$('attendanceList').addEventListener('click',event=>{
+ const edit=event.target.closest('button[data-edit-id]');
+ if(edit){toggleTeacherAttendanceEdit(edit.dataset.editId);return}
+ const btn=event.target.closest('button[data-status]');
+ if(btn)setAttStatus(btn,btn.dataset.status);
+});
+function renderTeacherStats(){
+ const day=$('attDate').value,stats=TeacherRegister.totals(myStudents,attendanceSnapshot(day),draftAttendance);
+ const info=$('teacherAttendanceStats');if(!info)return;
+ if(!attendanceReady||attendanceUncertain){
+  info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Saved totals NOT VERIFIED. '+
+   draftAttendance.size+' selected change(s) retained on this device. Use Verify saved attendance.';
+  return;
+ }
+ info.innerHTML=['Students','Present','Absent','Leave','Unmarked','Review'].map(key=>{
+  const value=stats[key],label=key==='Review'?'Needs review':key;
+  return '<div class="attendance-stat"><small>'+label+'</small><b>'+value.total+'</b>'+
+   '<span>👦 Boys '+value.boys+' · 👧 Girls '+value.girls+
+   (value.unspecified?' · Gender not specified '+value.unspecified:'')+'</span></div>';
+ }).join('');
+ if(draftAttendance.size)info.insertAdjacentHTML('beforeend','<p class="text-xs text-amber-200" style="grid-column:1/-1">'+draftAttendance.size+' unsaved change(s). Totals above are a preview until Google Sheets verification.</p>');
+
+}
 async function saveAttendance(){
- if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');
- const day=$('attDate').value;if(!day)return message('Choose date');
- const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
- if(saveButton?.disabled)return;
- if(saveButton){saveButton.disabled=true;saveButton.dataset.previousText=saveButton.textContent;saveButton.textContent='Saving attendance…'}
- let ok=0,fail=0;const errors=[];
+ if(attendanceSaving||attendanceVerifying)return;
+ if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment.');
+ const day=$('attDate').value;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return message('Choose a valid attendance date.');
+ const snap=attendanceSnapshot(day);
+ if(!attendanceReady||attendanceUncertain||snap.duplicates.size||snap.unmatched.length){
+  $('teacherAttendanceStatus').textContent='Cannot save until the stored register is verified and duplicate records are resolved.';
+  return;
+ }
+ const expected=new Map(draftAttendance);
+ if(!expected.size){$('teacherAttendanceStatus').textContent='No attendance changes to save.';return}
+ if(expected.size>myStudents.length){$('teacherAttendanceStatus').textContent='Attendance selection invalid; no records submitted.';return}
+ if(day!==selectedAttendanceDay)return message('Selected attendance date changed. Load the correct date before saving.');
+ const edits=[...expected].filter(([id])=>snap.unique.has(id)).length;
+ if(!confirm('Submit '+expected.size+' attendance change(s) for Class '+me.assignedClass+' on '+day+'? '+edits+' existing saved mark(s) will be corrected.'))return;
+ const records=[...expected].map(([id,status])=>{
+  const student=myStudent(id);
+  if(!student||!['Present','Absent','Leave'].includes(status))throw Error('Invalid student or status; no attendance submitted.');
+  return {studentId:id,enrlNo:TeacherRegister.enrollment(student),status};
+ });
+ attendanceSaving=true;attendanceSaveNote='';updateStats();
+ let requestStarted=false;
  try{
-  for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){
-   const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');
-   if(!student||!btn)continue;
-   const old=attendance.find(x=>String(x.studentId)===String(student.id)&&String(x.date).slice(0,10)===day);
-   const status=btn.dataset.status;
-   try{
-    if(old){
-     // Existing records must only receive editable fields; the server rejects reassignment keys.
-     await LamaAPI.update('attendance',old.id,{status,date:day,teacherId:me.teacherId||me.id});
-    }else{
-     await LamaAPI.add('attendance',{schoolId:me.schoolId,class:me.assignedClass,section:me.assignedSection||me.section||'',studentId:student.id,enrlNo:student.enrlNo||student.enrollmentNo||'',studentName:student.name,date:day,status,teacherId:me.teacherId||me.id});
-    }
-    ok++;
-   }catch(e){fail++;errors.push(student.name+': '+(e.message||'Unknown error'));console.error('Attendance save failed',e)}
-  }
-  try{await refresh()}catch(e){errors.push('Reload failed: '+e.message)}
-  const detail=errors.length?'\n'+errors.slice(0,3).join('\n')+(errors.length>3?'\nAnd '+(errors.length-3)+' more errors.':''):'';
-  message('Attendance saved: '+ok+'. Failed: '+fail+'.'+(fail?' Review errors below.':'')+detail);
- }finally{if(saveButton){saveButton.disabled=false;saveButton.textContent=saveButton.dataset.previousText||'Save'}}
+  requestStarted=true;attendanceWriteUncertain=true;
+  const result=await withDeadline(LamaAPI.bulkAttendance(day,records),'Attendance save response',60000);
+  if(!result||Number(result.saved)!==records.length)throw Error('Bulk save response did not confirm all requested records.');
+  // Do not reload the entire student roster after a successful write.
+  await loadSavedAttendance(expected);
+  attendanceSaveNote=records.length+' change(s) saved and verified against Google Sheets.'+(result.auditWarning?' Audit: '+result.auditWarning:'')+(result.notifications?.error?' Parent notifications require review.':'');
+  $('teacherAttendanceStatus').textContent='✓ '+attendanceSaveNote;
+ }catch(error){
+  if(requestStarted)attendanceUncertain=true;
+  attendanceIssue=error.message;
+  attendanceReady=false;
+  $('teacherAttendanceStatus').textContent='⚠ Save result not verified: '+error.message+'. '+expected.size+' selected mark(s) remain visible. Use Verify saved attendance; do not submit the same batch again.';
+  console.warn('Teacher attendance write/readback unverified',error);
+ }finally{
+  attendanceSaving=false;
+  renderAll();
+ }
 }
-function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
+function loadAbsentees(){
+ const a=todayAbsentees(),list=$('absenteesList');
+ if(!attendanceReady||attendanceUncertain||($('attDate').value===localDate()&&draftAttendance.size)){
+  $('absenteesEmpty').classList.add('hidden');
+  list.textContent='Attendance is unverified or has unsaved changes. Verify saved attendance before contacting parents.';
+  return;
+ }
+ $('absenteesEmpty').classList.toggle('hidden',!!a.length);
+ list.innerHTML=a.map(student=>{
+  const n=String(student.whatsapp||student.contact||'').replace(/\D/g,'');
+  const msg=encodeURIComponent('Dear Parent/Guardian, '+student.name+' was marked absent on '+localDate()+'. — '+(me.name||'Class Teacher'));
+  return '<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2">'+
+   '<span class="text-xs">'+esc(student.name)+' · '+esc(TeacherRegister.enrollment(student))+' · '+esc(TeacherRegister.guardian(student))+'</span>'+
+   (n?'<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/'+n+'?text='+msg+'">WhatsApp</a>':'<span class="text-xs text-slate-500">No contact</span>')+'</div>';
+ }).join('');
+}
 function loadHomework(){let items=homework.filter(h=>mine(h));const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':'Draft'}</p></div><button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button></div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
 async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');if(me.subject&&norm(subject)!==norm(me.subject))return message('Use your assigned subject');try{await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();message('Published for your class')}catch(e){message('Save failed: '+e.message)}}
 async function deleteHomework(id){const x=homework.find(h=>String(h.id)===String(id));if(!x||!mine(x))return message('Only your entries can be removed');if(!confirm('Delete homework?'))return;try{await LamaAPI.remove('homework',id);await refresh()}catch(e){message(e.message)}}
@@ -365,9 +753,27 @@ function updatePromoteCount(){$('promoteSelectedCount').textContent=document.que
 function selectAllPassing(){document.querySelectorAll('.promote-check-teacher').forEach(x=>{const s=myStudent(x.dataset.id);x.checked=computeStudentResult(s).passed===true});updatePromoteCount()}
 function selectNonePromote(){document.querySelectorAll('.promote-check-teacher').forEach(x=>x.checked=false);updatePromoteCount()}
 async function promoteMyClass(){message('Promotion is restricted to school administrators to protect enrollment history and prevent accidental record changes. Please use the admin promotion workflow.')}
-async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',loadAttendanceList);try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
-window.addEventListener('focus',()=>{if(me.schoolId)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
+function selectTeacherAttendanceDate(next){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(next||''))){
+  $('attDate').value=selectedAttendanceDay;return false;
+ }
+ if(attendanceSaving||attendanceVerifying||attendanceUncertain){
+  $('attDate').value=selectedAttendanceDay;
+  message('Verify the previous attendance save before changing dates.');
+  return false;
+ }
+ if(next===selectedAttendanceDay){$('attDate').value=selectedAttendanceDay;return true}
+ if(draftAttendance.size&&!confirm('Discard '+draftAttendance.size+' unsaved attendance mark(s) and change date?')){
+  $('attDate').value=selectedAttendanceDay;return false;
+ }
+ draftAttendance.clear();editingAttendance.clear();selectedAttendanceDay=next;calendarMonth=next.slice(0,7);
+ $('attDate').value=next;
+ renderTeacherStats();loadAttendanceList();updateStats();renderAttendanceCalendar();
+ return true;
+}
+async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};window.LamaTeacherSchoolTimeZone=me.timezone||me.timeZone||me.schoolTimezone||'Asia/Karachi';header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();selectedAttendanceDay=$('attDate').value;calendarMonth=selectedAttendanceDay.slice(0,7);$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>selectTeacherAttendanceDate($('attDate').value));try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId&&!attendanceSaving&&!draftAttendance.size)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
+window.addEventListener('focus',()=>{if(me.schoolId&&!attendanceSaving&&!draftAttendance.size)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 init();
     </script>
     <style>

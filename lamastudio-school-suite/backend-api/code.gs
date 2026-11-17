@@ -2131,7 +2131,22 @@ function handleRequest(params) {
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
                 const result=bulkAttendanceRecords(params);
-                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'bulkAttendance','attendance','',null,{count:Array.isArray(result)?result.length:undefined});
+                // Attendance is already committed. An audit-log outage must not
+                // produce a misleading "save failed" response and cause retries.
+                try {
+                  if(params.role==='teacher'){
+                    const scoped=authorizeTeacher(params.schoolId,params.teacherId,params.apiKey);
+                    const actor={id:scoped.teacher.id,name:scoped.teacher.name,role:'teacher'};
+                    writeAudit(scoped.ss,params.schoolId,actor,'bulkAttendance','attendance','',null,
+                      {count:result.saved,class:scoped.teacher.assignedClass,source:'teacherPortal'});
+                  }else{
+                    writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,
+                      'bulkAttendance','attendance','',null,{count:result.saved,source:'schoolAdmin'});
+                  }
+                }catch(auditError){
+                  console.error('Attendance saved; audit logging failed:',auditError);
+                  result.auditWarning='Attendance saved but audit log could not be confirmed.';
+                }
                 return {status:'success',result};
             case 'list':
                 return { status: 'success', records: listRecords(resolveContext(params), params.collection) };

@@ -1,0 +1,37 @@
+name: Teacher Portal Saved Attendance and Class Overview
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/portals/teacher/index.html'
+      - 'lamastudio-school-suite/js/teacher-register-helpers.js'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-verified-dashboard.cjs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-bulk-save-readback.cjs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-refresh-preserves-marks.cjs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-session-scoping.cjs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-attendance-calendar.cjs'
+      - 'lamastudio-school-suite/portals/teacher/test-teacher-tap-feedback.cjs'
+      - '.github/workflows/teacher-portal-attendance-overview.yml'
+  push:
+    branches:
+      - 'fix/teacher-verified-attendance-homework-20261117'
+permissions:
+  contents: read
+jobs:
+  teacher-portal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify teacher dashboard, roster and subject diary
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-verified-dashboard.cjs
+      - name: Verify 51-student batch submission and timeout-safe readback
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-bulk-save-readback.cjs
+      - name: Verify independent timeout recovery preserves saved marks
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-refresh-preserves-marks.cjs
+      - name: Verify teacher API calls never borrow school administrator session
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-session-scoping.cjs
+      - name: Verify calendar days, photos and class gender summaries
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-attendance-calendar.cjs
+      - name: Verify instant attendance tap feedback without API writes
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-tap-feedback.cjs

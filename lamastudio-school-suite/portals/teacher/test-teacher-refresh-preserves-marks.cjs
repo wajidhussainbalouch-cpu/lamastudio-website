@@ -35,7 +35,7 @@ const $=id=>id==='attDate'?{value:'2026-11-17'}:id==='verifyTeacherAttendance'?{
 stub.$=$;
 const declarations=[
  "let myStudents=[student],attendance=[old],homework=[],notices=[],results=[];",
- "let rosterReady=true,attendanceReady=true,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceUncertain=false;",
+ "let rosterReady=true,attendanceReady=true,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceUncertain=false,attendanceWriteUncertain=true;",
  "let draftAttendance=new Map([['s1','Present']]),editingAttendance=new Set(),selectedAttendanceDay='2026-11-17';",
  source.slice(i,j),
  "globalThis.api={refresh,loadSavedAttendance,verifyTeacherAttendance,state:()=>({attendance,attendanceReady,attendanceUncertain,attendanceIssue,drafts:[...draftAttendance],studentCount:myStudents.length})};"
@@ -58,6 +58,15 @@ vm.runInContext(declarations,ctx);
  assert.equal(recovered.drafts.length,0,'Correct readback clears pending draft only after match');
  assert.equal(recovered.attendanceReady,true);
  assert.equal(recovered.attendanceUncertain,false);
+ assert.equal(vm.runInContext('attendanceWriteUncertain',ctx),false,'Confirmed saved marks release uncertain-write hold');
+ // Verifying an UNSUBMITTED correction must not compare it with saved records.
+ vm.runInContext("draftAttendance=new Map([['s1','Absent']]);attendanceWriteUncertain=false;attendanceUncertain=false;",ctx);
+ await ctx.api.verifyTeacherAttendance();
+ const pendingDraft=ctx.api.state();
+ assert.equal(pendingDraft.drafts.length,1,'Verifying does not discard a never-submitted edit');
+ assert.equal(pendingDraft.drafts[0][1],'Absent');
+ assert.equal(pendingDraft.attendanceReady,true);
+ assert.equal(pendingDraft.attendanceUncertain,false,'A draft differing from saved status is not an uncertain write');
  assert.equal(studentReads,0,'Verify saved attendance needs no full student register request');
  assert.ok(attendanceReads>=2);
  assert.ok(renderCount>=2);

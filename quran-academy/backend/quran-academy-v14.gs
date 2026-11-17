@@ -89,7 +89,7 @@ function q14Build_(studentId,practiceRows,assessmentRows,today,guardian,includeL
     if(x.review){
       var d=q14Date_(x.review.revisionDueOn);
       var state=String(x.review.reviewStatus||'');
-      if(Q14_ACTIONS_ && state in tracks[x.track].reviewStatuses)
+      if(Object.prototype.hasOwnProperty.call(tracks[x.track].reviewStatuses,state))
         tracks[x.track].reviewStatuses[state]++;
       tracks[x.track].assessedLessons++;
       if(d && d<=today)tracks[x.track].revisionDue++;

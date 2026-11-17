@@ -282,6 +282,7 @@ let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
 const TeacherRegister=LamaTeacherRegister;
 let rosterReady=false,attendanceReady=false,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceVerifying=false,attendanceUncertain=false,attendanceWriteUncertain=false,attendanceSaveNote='';
 let draftAttendance=new Map(),editingAttendance=new Set(),selectedAttendanceDay='';
+let calendarMonth='',schoolHolidayEvents=[],schoolCalendarReady=false,schoolCalendarIssue='';
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
@@ -460,7 +461,68 @@ async function verifyTeacherAttendance(){
  }
 }
 $('verifyTeacherAttendance').addEventListener('click',verifyTeacherAttendance);
-function renderAll(){updateStats();renderTeacherStats();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+function renderAll(){updateStats();renderTeacherStats();renderAttendanceCalendar();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
+function safeStudentPhoto(student){
+ const raw=String(student?.photo||student?.photoUrl||student?.studentPhoto||'').trim();
+ if(/^https:\/\/[^\s"'<>]+$/i.test(raw))return raw;
+ if(/^data:image\/(?:jpeg|jpg|png|webp);base64,[a-z0-9+/=]+$/i.test(raw)&&raw.length<=500000)return raw;
+ return '';
+}
+function calendarWeeklyOffDays(){
+ const raw=me.weeklyOffDays??me.schoolWeeklyOff??me.weekendDays;
+ const parsed=Array.isArray(raw)?raw:typeof raw==='string'?
+  (()=>{try{const json=JSON.parse(raw);if(Array.isArray(json))return json}catch(_){}return raw.split(/[,\s]+/)})():[0];
+ const result=parsed.map(value=>Number(value)).filter(day=>day===0||day===6);
+ return [...new Set(result)];
+}
+function renderAttendanceCalendar(){
+ const root=$('teacherAttendanceCalendar'),title=$('teacherCalendarMonth'),note=$('teacherCalendarNote');
+ if(!root||!title||!note)return;
+ const month=calendarMonth||($('attDate').value||localDate()).slice(0,7),days=TeacherRegister.monthDays(month);
+ if(!days.length){root.textContent='Invalid calendar month';return}
+ const [yy,mm]=month.split('-').map(Number);
+ title.textContent=new Date(yy,mm-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+ const weeklyOff=calendarWeeklyOffDays();
+ const inputs={students:myStudents,records:attendance,today:localDate(),
+  verified:rosterReady&&attendanceReady&&!attendanceUncertain,calendarReady:schoolCalendarReady,
+  holidays:schoolHolidayEvents,weeklyOff};
+ const weekHeaders=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+ const first=(days[0].weekday+6)%7;
+ let html=weekHeaders.map(d=>'<span class="teacher-calendar-weekday">'+d+'</span>').join('');
+ html+='<span aria-hidden="true"></span>'.repeat(first);
+ const states={marked:0,unmarked:0,partial:0,holiday:0};
+ for(const date of days){
+  const result=TeacherRegister.calendarDayState(date.date,inputs);
+  if(Object.prototype.hasOwnProperty.call(states,result.state))states[result.state]++;
+  const detail=result.state==='marked'?'Marked '+result.marked+'/'+result.total:
+    result.state==='partial'?'Partially marked / needs review '+result.marked+'/'+result.total:
+    result.state==='unmarked'?'Not marked':result.state==='holiday'?'Holiday':result.state==='future'?'Upcoming':'Unverified';
+  const abbreviation=result.state==='marked'?'✓':result.state==='unmarked'?'○':result.state==='holiday'?'Off':
+    result.state==='partial'?result.marked+'/'+result.total:result.state==='unavailable'?'?':'·';
+  const titleText=date.date+' · '+detail+(result.holiday?' · '+result.holiday:'');
+  html+='<button type="button" class="calendar-day cal-'+result.state+(date.date===$('attDate').value?' cal-selected':'')+
+   '" data-calendar-day="'+date.date+'" aria-label="'+esc(titleText)+'" title="'+esc(titleText)+
+   '" aria-pressed="'+(date.date===$('attDate').value)+'"><b>'+date.day+'</b><small>'+esc(abbreviation)+'</small></button>';
+ }
+ root.innerHTML=html;
+ note.textContent=(schoolCalendarReady?'School calendar checked.':'School calendar unavailable; unmarked days are not assumed to be school days. ')+
+ ' Green = saved class attendance complete; red = no saved marks on a school day; amber = partial or needs review; gray = school holiday. '+
+ ' Sunday is off by default; Saturday remains a school day unless configured. 9 November is labeled Iqbal Day. '+
+ (schoolCalendarIssue?'Calendar read issue: '+schoolCalendarIssue+'. ':'')+
+ ' Never marks students absent automatically.';
+}
+function shiftTeacherCalendar(delta){
+ const month=calendarMonth||($('attDate').value||localDate()).slice(0,7);
+ const [year,number]=month.split('-').map(Number),next=new Date(year,number-1+delta,1);
+ calendarMonth=next.getFullYear()+'-'+String(next.getMonth()+1).padStart(2,'0');
+ renderAttendanceCalendar();
+}
+$('teacherCalendarPrev').addEventListener('click',()=>shiftTeacherCalendar(-1));
+$('teacherCalendarNext').addEventListener('click',()=>shiftTeacherCalendar(1));
+$('teacherAttendanceCalendar').addEventListener('click',event=>{
+ const cell=event.target.closest('button[data-calendar-day]');
+ if(cell)selectTeacherAttendanceDate(cell.dataset.calendarDay);
+});
 function renderStudentDirectory(){
  const el=$('studentDirectory');if(!el)return;
  if(!myStudents.length){el.innerHTML='<p class="text-slate-300">No students found in your assigned class.</p>';$('studentDetails').classList.add('hidden');return}

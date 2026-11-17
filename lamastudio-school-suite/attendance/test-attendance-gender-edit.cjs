@@ -61,6 +61,19 @@ assert.deepEqual(card('Needs review'),{total:'0',details:'Boys: 0 · Girls: 0'})
 assert.match($('list').innerHTML,/data-edit="s1"/,'Saved rows show an Edit attendance button');
 assert.match($('list').innerHTML,/data-edit="s2"/);
 assert.doesNotMatch($('list').innerHTML,/data-edit="s4"/,'Unmarked rows should allow direct marking');
+state.chosen.set('s5',{status:'Absent',savedStatus:'Absent',saved:true,recordId:''});
+ui.render();
+assert.match($('list').innerHTML,/data-edit="s5"/,'Legacy saved rows without IDs must still allow deliberate edit');
+ui.choose('s5','Present');
+assert.equal(state.chosen.get('s5').status,'Absent','Legacy saved row remains locked until Edit');
+ui.toggleAttendanceEdit('s5');
+ui.choose('s5','Present');
+assert.equal(state.dirty.has('s5'),true);
+ui.toggleAttendanceEdit('s5');
+assert.equal(state.chosen.get('s5').status,'Absent','Cancel restores legacy saved attendance');
+state.chosen.delete('s5');
+ui.render();
+
 ui.choose('s1','Absent');
 assert.equal(state.chosen.get('s1').status,'Present','Saved marks cannot change without Edit');
 assert.equal(state.dirty.size,0);

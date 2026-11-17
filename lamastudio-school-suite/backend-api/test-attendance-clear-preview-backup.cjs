@@ -62,7 +62,7 @@ const Utilities={
  },
  base64EncodeWebSafe(bytes){return Buffer.from(bytes).toString('base64url')},
  formatDate(){return '261115_085958'},
- getUuid(){uuid++;return 'mock-unique-'+uuid}
+ getUuid(){uuid++;return String(uuid).padStart(8,'0')+'-mock-uuid'}
 };
 const attendanceSchoolDayKey_=raw=>{
  if(raw instanceof Date)return raw.toISOString().slice(0,10);

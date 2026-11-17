@@ -1038,7 +1038,7 @@ function renderTeacherAttendanceAnalytics(teachers,records,meta=null){
  // If the teachers endpoint is unavailable, use the saved attendance roster rather than falsely displaying 0/0.
  const savedIds=new Set(todayRecords.map(recordId).filter(Boolean));
  const rosterMissing=rosterIds.size===0;
- const mismatch=rosterIds.size>0&&savedIds.size>0&&![...savedIds].some(id=>rosterIds.has(id));
+ const mismatch=rosterIds.size>0&&savedIds.size>0&&[...savedIds].some(id=>!rosterIds.has(id));
  const allowed=rosterMissing?null:rosterIds;
  if(mismatch||(rosterMissing&&savedIds.size)){
   renderTeacherAttendanceAnalytics(teachers,records,{verified:false,rosterVerified:!rosterMissing});

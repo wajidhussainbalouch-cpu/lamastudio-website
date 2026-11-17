@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null;
+let rows=[],teachers=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -189,6 +189,7 @@ async function printTimetable(){
   const profile=await printProfile();
   const output=buildTimetablePrint(profile);
   $('printSheet').innerHTML=output;
+  printPrepared=true;
   const img=$('printSheet').querySelector('img.print-school-logo');
   if(img&&typeof img.decode==='function'){
    // A logo that cannot load should not prevent the timetable from printing.
@@ -196,6 +197,7 @@ async function printTimetable(){
   }
   window.print();
  }catch(error){
+  printPrepared=false;
   status('Print view not opened: '+error.message);
  }finally{
   button.disabled=false;
@@ -203,10 +205,13 @@ async function printTimetable(){
  }
 }
 window.addEventListener('beforeprint',()=>{
- // Support the browser's own Print command without exposing the editable UI.
- try{$('printSheet').innerHTML=buildTimetablePrint(printSchoolProfile||printProfileFallback())}
+ // Support the browser's own Print command without replacing a logo
+ // whose bytes have already been loaded for the print-button preview.
+ if(printPrepared)return;
+ try{$('printSheet').innerHTML=buildTimetablePrint(printSchoolProfile||printProfileFallback());printPrepared=true}
  catch(error){status('Unable to prepare print: '+error.message)}
 });
+window.addEventListener('afterprint',()=>{printPrepared=false});
 async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

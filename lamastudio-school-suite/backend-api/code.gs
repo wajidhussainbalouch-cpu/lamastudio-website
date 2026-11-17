@@ -71,7 +71,7 @@ const COLLECTIONS = {
         tab: 'Teachers',
         headers: ['id', 'name', 'email', 'loginId', 'passwordHash', 'apiKey', 'subject', 'assignedClass', 'assignedSection',
                   'contact', 'status', 'createdAt',
-                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'experience', 'photo', 'medicalNotes', 'designation']
+                  'cnic', 'dob', 'gender', 'qualification', 'joiningDate', 'address', 'emergencyContact', 'experience', 'photo', 'medicalNotes', 'designation', 'whatsapp', 'staffCode', 'employmentType', 'specialization', 'emergencyContactName']
     },
     activities: {
         tab: 'Activities',
@@ -688,6 +688,44 @@ function adminResetPassword(adminApiKey, schoolId) {
 // TEACHERS  (role: 'teacher') — created by School Admin, not self-registered
 // ============================================================================
 
+/** Never expose account credentials through a teacher directory response. */
+function safeTeacherPublicRecord_(teacher){
+    const safe=Object.assign({},teacher);
+    delete safe.passwordHash;delete safe.password;delete safe.apiKey;delete safe.salt;
+    return safe;
+}
+/** School-admin-only password reset; current password hashes cannot be reversed. */
+function resetTeacherPassword_(p){
+    const actor=requireSchoolAdminWrite(p);
+    const teacherId=String(p.teacherId||'').trim();
+    const password=String(p.newPassword||'');
+    if(!teacherId)throw Error('Choose a teacher account.');
+    if(password.length<8||password.length>128||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password))
+        throw Error('New password must be 8–128 characters and include a letter and a number.');
+    if(!p.confirmReset)throw Error('Explicit teacher password reset confirmation required.');
+    const lock=LockService.getScriptLock();
+    if(!lock.tryLock(20000))throw Error('Teacher account is busy. Refresh before retrying.');
+    try{
+        const ctx=resolveContext(p);
+        const info=getCollectionSheet(ctx,'teachers'),sheet=info.sheet,headers=info.headers;
+        const data=sheet.getDataRange().getValues(),col=headers.indexOf('id');
+        const matches=[];
+        for(let i=1;i<data.length;i++)if(String(data[i][col])===teacherId)matches.push(i);
+        if(matches.length!==1)throw Error(matches.length?'Duplicate teacher account IDs: administrator review required.':'Teacher not found.');
+        const i=matches[0],old=rowToRecord(headers,data[i]);
+        if(old.status==='Deleted')throw Error('Archived teacher accounts cannot reset passwords.');
+        const next=Object.assign({},old,{
+            passwordHash:hashPassword(password,teacherId),
+            apiKey:Utilities.getUuid()
+        });
+        sheet.getRange(i+1,1,1,headers.length).setValues([recordToRow(headers,next)]);
+        writeAudit(ctx.ss,p.schoolId,actor,'resetTeacherPassword','teachers',teacherId,
+            {loginId:old.loginId,status:old.status},{loginId:old.loginId,status:old.status});
+        // Rotating the API key also expires any existing teacher session.
+        return {teacherId,loginId:String(old.loginId||old.id),reset:true,sessionsRevoked:true};
+    }finally{lock.releaseLock();}
+}
+
 /** School Admin action: create a teacher account inside their own school's sheet. */
 function addTeacher(schoolId, apiKey, p) {
     assertSchoolWritable(schoolId);
@@ -723,7 +761,9 @@ function addTeacher(schoolId, apiKey, p) {
         contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString(),
         cnic: p.cnic || '', dob: p.dob || '', gender: p.gender || '', qualification: p.qualification || '',
         joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || '',
-        experience:p.experience||'',designation:p.designation||'',photo:p.photo||''
+        experience:p.experience||'',designation:p.designation||'',photo:p.photo||'',
+        whatsapp:p.whatsapp||'',staffCode:p.staffCode||'',employmentType:p.employmentType||'',
+        specialization:p.specialization||'',emergencyContactName:p.emergencyContactName||''
     };
     sheet.appendRow(recordToRow(headers, record));
     const safe = Object.assign({}, record); delete safe.passwordHash; delete safe.apiKey;
@@ -988,6 +1028,7 @@ function listRecords(ctx, collection) {
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests' || collection === 'timetable')) {
         records = records.filter(r => collection === 'datesheet' ? recordAppliesToClass(r, ctx.student.class) : (recordAppliesToClass(r, ctx.student.class) && sameSection(r,ctx.student.section)));
     }
+    if(collection==='teachers')records=records.map(safeTeacherPublicRecord_);
     return records;
 }
 
@@ -1006,7 +1047,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && ['students','attendance','homework'].indexOf(collection)!==-1 && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class/section.');
-            return r;
+            return collection==='teachers'?safeTeacherPublicRecord_(r):r;
         }
     }
     return null;
@@ -1098,7 +1139,7 @@ function updateRecord(ctx, collection, id, patch) {
                 delete patch.receivedByAdminName;
             }
             if(collection==='teachers'){
-                const allowed=['name','email','subject','assignedClass','assignedSection','contact','status','cnic','dob','gender','qualification','joiningDate','address','emergencyContact','experience','photo','medicalNotes','designation'];
+                const allowed=['name','email','subject','assignedClass','assignedSection','contact','status','cnic','dob','gender','qualification','joiningDate','address','emergencyContact','experience','photo','medicalNotes','designation','whatsapp','staffCode','employmentType','specialization','emergencyContactName'];
                 if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1))throw Error('Invalid teacher profile field.');
                 if(patch.status&&!['Active','Suspended','Deleted'].includes(String(patch.status)))throw Error('Invalid teacher status.');
                 if(patch.name!==undefined&&!String(patch.name).trim())throw Error('Teacher name cannot be empty.');
@@ -1109,7 +1150,7 @@ function updateRecord(ctx, collection, id, patch) {
             const updated = Object.assign({}, existing, patch, { id });
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
             if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'update',collection,id,existing,updated);
-            if(collection==='teachers'){const safe=Object.assign({},updated);delete safe.passwordHash;delete safe.apiKey;delete safe.password;return safe;}
+            if(collection==='teachers'){const safe=Object.assign({},updated);delete safe.passwordHash;delete safe.apiKey;delete safe.password;delete safe.salt;return safe;}
             return updated;
         }
     }
@@ -1808,7 +1849,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = action === 'resetTeacherPassword' || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
@@ -1817,7 +1858,7 @@ function handleRequest(params) {
             if (!schoolRecord || schoolRecord.obj.status !== 'Active') throw new Error('School is not active.');
             params.apiKey = schoolRecord.obj.apiKey;
         }
-        const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+        const protectedActions=['resetTeacherPassword','waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
         }
@@ -2099,6 +2140,8 @@ function handleRequest(params) {
                 const t=addTeacher(params.schoolId, params.apiKey, params.teacher || {});
                 writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'add','teachers',t.id,null,t);
                 return {status:'success',teacher:t};
+            case 'resetTeacherPassword':
+                return {status:'success',result:resetTeacherPassword_(params)};
             case 'teacherLogin':
                 return { status: 'success', teacher: teacherLogin(params.schoolId, params.email, params.password) };
 

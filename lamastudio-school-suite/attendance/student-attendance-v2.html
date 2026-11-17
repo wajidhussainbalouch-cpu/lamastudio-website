@@ -94,7 +94,23 @@ function holdUnverified(){state.writeHold=true;try{sessionStorage.setItem(attend
 function savedHoldExists(){try{return sessionStorage.getItem(attendanceHoldKey())==='review required';}catch(_){return state.writeHold;}}
 function registerNeedsReview(){return state.conflicts.size>0||state.unmatched>0||state.writeHold;}
 function validAdminWriteSession(){try{const a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null'),school=LamaAPI.getSession('school');return !!(a&&a.token&&a.schoolId&&school&&String(a.schoolId)===String(school.schoolId))}catch(_){return false}}
-function recentAttendance(student){const today=state.loadedDate||$('date').value;const days=[];let cursor=new Date(today+'T12:00:00Z');for(let n=0;n<14&&days.length<7;n++){cursor.setUTCDate(cursor.getUTCDate()-1);const weekday=cursor.getUTCDay();if(weekday!==0&&weekday!==6)days.push(cursor.toISOString().slice(0,10))}const rows=state.history.filter(r=>days.includes(asDate(r.date))&&matchRecord(r,student));const byDay=new Map(rows.map(r=>[asDate(r.date),status(r.status)]));return days.map(d=>d.slice(5)+': '+(byDay.get(d)||'Not marked')).join(' · ')}
+function recentAttendance(student){
+ const current=state.loadedDate||$('date').value,days=[];
+ let cursor=new Date(current+'T12:00:00Z');
+ for(let n=0;n<7;n++){cursor.setUTCDate(cursor.getUTCDate()-1);days.push(cursor.toISOString().slice(0,10))}
+ const grouped=new Map();
+ for(const row of state.history){
+   const day=asDate(row.date);
+   if(!days.includes(day)||!matchRecord(row,student))continue;
+   if(!grouped.has(day))grouped.set(day,[]);
+   grouped.get(day).push(row);
+ }
+ return days.map(day=>{
+   const rows=grouped.get(day)||[];
+   const value=rows.length>1?'Needs review':rows.length===1?status(rows[0].status)||'Needs review':'No saved mark';
+   return day.slice(5)+': '+value;
+ }).join(' · ');
+}
 function message(s,error=false){$('notice').textContent=s;$('notice').className=error?'error':''}
 function classStudents(){const selected=$('class').value;return state.students.filter(s=>!selected||cls(s)===selected)}
 function visible(){return classStudents().filter(s=>(!$('search').value||[s.name,enr(s),s.fatherName].join(' ').toLowerCase().includes($('search').value.toLowerCase()))&&(!$('filter').value||(state.chosen.get(id(s))?.status||'Unmarked')===$('filter').value))}

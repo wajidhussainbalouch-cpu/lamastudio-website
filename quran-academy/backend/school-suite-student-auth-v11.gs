@@ -112,6 +112,11 @@ function q11Provision_(p){
   try{
     var info=q11Sheet_(match,true),found=q11Find_(info,'id',id);
     if(!found)throw Error('Student is not enrolled in this school.');
+    // v12: compare credential generation inside this locked mutation, not only
+    // during a separate preview (prevents stale challenges and reset races).
+    if(Object.prototype.hasOwnProperty.call(p,'expectedCredentialVersion') &&
+       Number(found.record.q11Version||0)!==Number(p.expectedCredentialVersion))
+       throw Error('Student credentials changed since preview. Restart recovery.');
     q11StrongPassword_(p.newPassword,found.record);
     var salt=(Utilities.getUuid()+Utilities.getUuid()).replace(/-/g,'');
     var hash=q11Derive_(p.newPassword,settings,p.schoolId,id,salt,settings.rounds);

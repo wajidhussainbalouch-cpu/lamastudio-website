@@ -1,30 +1,39 @@
-# LAMA Quran & Islamic Learning Academy — v12 supervised account recovery
-Date: 2026-11-14. **DEVELOPMENT ONLY. DO NOT DEPLOY OR MERGE TO MAIN.**
+# LAMA Quran & Islamic Learning Academy — Version 12 supervised recovery handoff
 
-## Scope
-The product name remains LAMA Quran & Islamic Learning Academy. Continue using the **existing School Suite school and student IDs**, student login UI, and the v11 gated student-auth addon. No new student registry, independent login system, guardian self-service reset or public signup.
+**Development branch only · 2026-11-17 · NOT DEPLOYED · DO NOT MERGE TO MAIN**
 
-## Changes on this branch
-1. `lamastudio-school-suite/js/api-client.js`: new `quranV12RecoverStudent(targetStudentId,newPassword,verificationMethod,verified)` method; it requires a currently held school-admin test token and explicit verification acknowledgment and calls the pre-existing `quranV11ProvisionStudentAuth` action by POST (never URL query string). The server independently verifies the school, admin, pilot gate, learner identity, and password rules.
-2. `lamastudio-school-suite/portals/admin/quran-student-recovery-pilot.html`: a **disabled-by-default** administrator recovery screen. It requires a developer to configure an exact fictional school ID and explicitly enable the page **only after cloning the API client with a separate Apps Script TEST deployment URL**. No real school/student information should be entered.
-3. No production router, Apps Script deployment, GitHub `main`, Vercel, real student credentials or school records were modified.
-4. Separate downloadable v12 PWA demo: fictional recovery lab inside **Pilot QA** with 2 simulated schools, 3 fictional learners, 4 role choices, reset/expiry/deny checks, local event CSV export, and English/Urdu labels. The teaching modules from v11 are preserved. The PWA frontend has **no live recovery API calls**.
+## What Version 12 now implements
+- `quran-academy/backend/school-suite-student-recovery-v12.gs`: a two-phase school-admin recovery add-on that uses the **existing** School Suite student record and v11 shared student-auth implementation. No new student registry or login service.
+- `quranV12RecoveryPreview`: verifies the existing school admin, the exact fictional test school allowlist, offline learner identity attestation and existing student ID; provides a **five-minute** server-held, single-use challenge. The response includes student ID, class, initial/reset indicator and token, **not passwords or API keys**.
+- `quranV12RecoveryCommit`: requires the same school administrator, verified identity, exact `RECOVER studentId` confirmation, strong new password, matching learner and an unconsumed challenge. It atomically consumes the challenge, then calls `q11Provision_` with an expected credential version. The v11 module checks that version **inside its locked spreadsheet update**, so a reset after a stale preview is denied.
+- `lamastudio-school-suite/backend-api/code.gs`: both new actions are POST-only. When v12 recovery is enabled for its exact school, the older direct v11 provisioning action cannot bypass this two-step flow.
+- `lamastudio-school-suite/js/api-client.js`: adds `quranV12PreviewStudentRecovery` and `quranV12CommitStudentRecovery` and retires the old direct reset method. Both use POST JSON, with no password/token in the URL.
+- `lamastudio-school-suite/portals/admin/quran-student-recovery-pilot.html`: updated test-only two-step preview and commit UI. **Disabled by default.** It must be copied with a client pointing to a completely separate disposable Apps Script test deployment.
+- Standalone Version 12 PWA prototype (downloaded separately): fictional recovery lab in Pilot QA with two fake schools, student/admin/teacher/guardian views, explicit simulated expiry/replay/version checks, 12 local scenarios and CSV export; all previous educational sections retained. This app demo does **not** call the backend.
 
-## Test results
-- **7/7** simulated client/route checks passed using the **current GitHub v12 API client**, mocked fetch and storage: missing attestation, missing admin token, invalid verification type, correct scoped POST, request body, and existing backend route.
-- **Chromium 390px and 1280px**: teacher denied, cross-school admin denied, correct-school admin with offline confirmation allowed, previous fictional session revoked, new fictional session accepted, simulated expiry, reset, Urdu labels; no page JavaScript errors or horizontal overflow.
-- All **18 frontend JavaScript** files syntax-checked successfully. The earlier v11 cryptographic-transcription test passed **8/8** against Node crypto. None of this proves real Apps Script cryptographic performance, live identity correctness, or penetration-test security.
-- The v12 downloadable ZIP contains 64 files; its archive integrity test passed.
+## Required server-side properties — all test-only
+The existing v11 pilot properties remain required, including `QURAN_V11_STUDENT_AUTH_ENABLED=true`, exact `QURAN_V11_STUDENT_AUTH_SCHOOLS`, and a random server-only `QURAN_V11_STUDENT_AUTH_PEPPER` at least 40 characters long. Additionally the new independent v12 gate requires:
 
-## Test-only recovery flow
-1. Clone School Suite and v8/v9/v11 add-ons into the SAME Apps Script TEST project and a **disposable** master registry with **two** fake school sheets. The shared API client used by the test admin page must point to the **TEST** script URL, not the current production URL.
-2. Set the v11 student-auth feature flag and allowlist **only** to the exact fictional school ID, plus an unpredictable server-only pepper and benchmarked PBKDF2 cost.
-3. Enable `Q12_ISOLATED_TEST_BUILD` and `Q12_EXPECTED_TEST_SCHOOL_ID` in a copied **test** admin page. **Never enable while using the production API URL.**
-4. Sign in with the correct test school-admin token, confirm the fictional learner by ID in the school's existing Students table, verify offline identity, select a long new passphrase, and type the exact confirmation.
-5. Server must audit the reset, invalidate prior sessions, clear the test learner's old persistent key/legacy password, and increment credential version. Check all opposite-role, cross-school, missing/duplicate student-ID, wrong-password and expiry denials.
+- `QURAN_V12_RECOVERY_ENABLED=true`
+- `QURAN_V12_RECOVERY_ENVIRONMENT=ISOLATED_TEST`
+- `QURAN_V12_RECOVERY_SCHOOLS` with only the exact fictional test school ID
+- `QURAN_V12_EXPECTED_TEST_SCHOOL_ID` equal to that exact school ID
 
-## Blockers for real users
-- PBKDF2 implementation/Google Apps Script execution cost, concurrent login rate-limit resilience, password-reset replay/idempotency, student/guardian consent, privacy policy and retention, secure browser token handling, reviewed rollback from irreversible legacy credential clearing, and two-school end-to-end integration tests.
-- Independent review of Islamic content, licensed human recitation, Urdu Arabic script accuracy, Android installation and accessibility.
+**These flags do not establish actual isolation**: the Apps Script project, deployment URL, Master Registry and each school spreadsheet must separately be verified as disposable test resources. A feature flag must never be interpreted as a privacy/security control by itself.
 
-**Do not deploy to production. The static frontend recovery simulator is not an authentication test.**
+## Test evidence from this development run
+- **21 / 21** backend recovery workflow checks passed when executing the actual current GitHub v11 and v12 source with synthetic in-memory Sheets, CacheService, LockService and a fake fast password derivation. Tests included flags, admin/identity checks, scoped preview, no credential exposure, original row unchanged on preview, wrong confirmation/learner denial, valid reset, replay rejection, credential-version race check, unchanged sibling, audit redaction and released locks.
+- **10 / 10** API-client and router tests passed against current source with mocked fetch/storage. Both preview and commit were POST JSON, admin school-scoped, GET-blocked; direct v11 route bypass denied for the configured v12 school.
+- **12 / 12** fictional local UI checks passed at both 390px and 1280px in headless Chromium. Manually clicked preview, commit, replay, expiry, role denial, language switch, Qaida and Qur'an tabs. No page JavaScript errors or horizontal overflow at those widths.
+- Prior v11 **8** locally runnable independent PBKDF2 sanity assertions passed in the bundled standalone source. They do not measure real Apps Script hashing performance.
+- The complete standalone Version 12 ZIP has 64 files and passed ZIP integrity validation.
+
+## Security and rollout blockers — do not enable for real children
+1. **Irreversible legacy credential clearing**: v11 provisioning clears both plaintext legacy password and persistent student API key. Disabling flags cannot restore these. Use disposable records only; implement backed-up migration, recovery, consent, rollback and support escalation first.
+2. **Actual Google Apps Script execution** not tested: HMAC/PBKDF2 performance, concurrency, transient CacheService evictions, real admin tokens, data write audit, multi-school isolation and password-reset response after partial failures require a separate deployment.
+3. Preview challenge one-use is maintained in best-effort CacheService. Test concurrent commits and retries; independent identity-security review required before public deployment.
+4. Current School Suite student sessions remain in browser storage; review XSS, cookie/session architecture, device compromise, missing/failed logout, retention, rate limiting and incident response.
+5. Guardian-to-child consent, guardian verified recovery, external audio licensing, Islamic scholar review (Arabic/Tajweed/Salah/Wudu), Urdu content, accessibility and Android PWA testing remain outstanding.
+6. No permission to merge, update production Apps Script, or deploy Vercel was granted.
+
+**No real school records, children's information, production branches, live Apps Script deployment or Vercel production site were modified.**

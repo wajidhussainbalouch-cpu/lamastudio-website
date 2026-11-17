@@ -4,6 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const base=path.join(__dirname,'../');
 const backend=fs.readFileSync(path.join(base,'backend-api/code.gs'),'utf8');
 const api=fs.readFileSync(path.join(base,'js/api-client.js'),'utf8');
+new vm.Script(backend,{filename:'school backend Apps Script'});
 const html=fs.readFileSync(path.join(__dirname,'manage-teachers.html'),'utf8');
 function section(src,a,b){
  const x=src.indexOf(a),y=src.indexOf(b,x+a.length);

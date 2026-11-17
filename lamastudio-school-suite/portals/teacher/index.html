@@ -428,7 +428,7 @@ async function refresh(){
      }catch(error){console.warn('Notices read failed; previous notices preserved',error)}},
    async()=>{try{const rows=await withDeadline(LamaAPI.list('resources'),'Published school calendar',25000);
       if(!Array.isArray(rows))throw Error('School calendar returned an invalid response');
-      schoolHolidayEvents=TeacherRegister.calendarHolidays(rows.filter(schoolMatch));
+      schoolHolidayEvents=[...TeacherRegister.calendarHolidays(rows.filter(schoolMatch)),...deviceSchoolHolidays()];
       schoolCalendarReady=true;schoolCalendarIssue='';
      }catch(error){schoolCalendarReady=false;schoolCalendarIssue=error.message;console.warn('School calendar read failed',error)}},
    async()=>{try{const rows=await withDeadline(LamaAPI.list('results'),'Results',25000);
@@ -477,11 +477,26 @@ function safeStudentPhoto(student){
  return '';
 }
 function calendarWeeklyOffDays(){
- const raw=me.weeklyOffDays??me.schoolWeeklyOff??me.weekendDays;
+ let fromDevice;
+ try{
+  const schoolId=String(me.schoolId||'').trim();
+  if(schoolId)fromDevice=JSON.parse(localStorage.getItem('lama_teacher_holidays_'+schoolId+'_weekly')||'null');
+ }catch(_){fromDevice=null}
+ const raw=me.weeklyOffDays??me.schoolWeeklyOff??me.weekendDays??fromDevice;
  const parsed=Array.isArray(raw)?raw:typeof raw==='string'?
   (()=>{try{const json=JSON.parse(raw);if(Array.isArray(json))return json}catch(_){}return raw.split(/[,\s]+/)})():[0];
  const result=parsed.map(value=>Number(value)).filter(day=>day===0||day===6);
  return [...new Set(result)];
+}
+function deviceSchoolHolidays(){
+ const schoolId=String(me.schoolId||'').trim();
+ if(!schoolId)return [];
+ try{
+  const saved=JSON.parse(localStorage.getItem('lama_teacher_holidays_'+schoolId)||'{}');
+  if(!saved||typeof saved!=='object'||Array.isArray(saved))return [];
+  return Object.entries(saved).filter(([date,label])=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&typeof label==='string')
+    .map(([date,title])=>({start:date,end:date,title:title.trim()||'School holiday'}));
+ }catch(_){return []}
 }
 function renderAttendanceCalendar(){
  const root=$('teacherAttendanceCalendar'),title=$('teacherCalendarMonth'),note=$('teacherCalendarNote');
@@ -515,7 +530,7 @@ function renderAttendanceCalendar(){
  root.innerHTML=html;
  note.textContent=(schoolCalendarReady?'School calendar checked.':'School calendar unavailable; unmarked days are not assumed to be school days. ')+
  ' Green = saved class attendance complete; red = no saved marks on a school day; amber = partial or needs review; gray = school holiday. '+
- ' Sunday is off by default; Saturday remains a school day unless configured. 9 November is labeled Iqbal Day. '+
+ ' Sunday is off by default; Saturday is closed only when configured. Holidays published in the school calendar are shared; device-only staff holiday settings work on this device. 9 November is labeled Iqbal Day. '+
  (schoolCalendarIssue?'Calendar read issue: '+schoolCalendarIssue+'. ':'')+
  ' Never marks students absent automatically.';
 }

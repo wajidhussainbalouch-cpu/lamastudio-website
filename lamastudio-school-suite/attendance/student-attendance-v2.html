@@ -136,20 +136,10 @@ function genderTotals(students){
  return totals;
 }
 function enable(){const ready=state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!registerNeedsReview();$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
-function render(){enable();const all=classStudents(),rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
- const review=$('reviewDetails');
- if(state.historyReady&&(state.conflicts.size||state.unmatched)){
-   const groups=[...state.conflicts.entries()].slice(0,12).map(([key,saved])=>{
-     const student=state.students.find(s=>id(s)===key)||{};
-     const statuses=saved.map(r=>escapeHtml(String(r.status||'Unknown')+' (row '+String(r.id??r._id??'no ID')+')'));
-     return '<li><strong>'+escapeHtml(student.name||key)+'</strong> · '+saved.length+' rows: '+statuses.join(' / ')+'</li>';
-   });
-   const extra=state.reviewUnknown.slice(0,5).map(r=>
-     '<li>Unmatched row '+escapeHtml(String(r.id??r._id??'no ID'))+' · '+escapeHtml(String(r.class||'no class'))+' · '+escapeHtml(String(r.status||'no status'))+'</li>');
-   review.innerHTML='<div style="padding:12px;border:1px solid #efb5b5;border-radius:12px;background:#fff0f0;color:#8b1c28"><strong>⚠ Attendance needs administrator review</strong><ul>'+groups.concat(extra).join('')+'</ul><p>Back up the original Google Sheet before correcting duplicates. Clearing the entire date is not a duplicate-repair tool. Export CSV to inspect saved row IDs.</p></div>';
- }else if(state.writeHold)review.textContent='⚠ Previous write result unverified. Check the original sheet, backup and audit before continuing.';
- else review.textContent='';
- $('classContext').textContent=$('class').value?'Class '+$('class').value+' only · '+$('date').value+' · Totals, register, coverage and follow-up are for this class.':'All classes · '+$('date').value+' · Whole-school totals.';
+function renderRegisterCount(visibleCount,totalCount){
+ $('count').textContent=visibleCount+' visible of '+totalCount+($('class').value?' students in '+$('class').value:' students in the school')+(registerNeedsReview()?' · ⚠ requires administrator review':state.dirty.size?' · '+state.dirty.size+' unsaved change(s): totals are a preview until Save changes':state.historyReady?' · saved attendance verified':' · roster preview only');
+}
+function renderTotals(all){
  const summaryGroups=[
   ['Students',all,state.rosterReady],
   ['Present',all.filter(s=>state.chosen.get(id(s))?.status==='Present'),state.historyReady],
@@ -163,7 +153,23 @@ function render(){enable();const all=classStudents(),rows=visible(),count=x=>all
   const details=ready?'Boys: '+g.boys+' · Girls: '+g.girls+(g.unspecified?' · Gender not specified: '+g.unspecified:''):'Gender counts unavailable';
   return '<div class="panel attendance-summary-card"><div class="muted">'+label+'</div><h2>'+ (ready?group.length:'—') +'</h2><p class="gender-breakdown">'+details+'</p></div>';
  }).join('');
- $('count').textContent=rows.length+' visible of '+all.length+($('class').value?' students in '+$('class').value:' students in the school')+(registerNeedsReview()?' · ⚠ requires administrator review':state.dirty.size?' · '+state.dirty.size+' unsaved change(s): totals are a preview until Save changes':state.historyReady?' · saved attendance verified':' · roster preview only');
+}
+function render(){enable();const all=classStudents(),rows=visible();
+ const review=$('reviewDetails');
+ if(state.historyReady&&(state.conflicts.size||state.unmatched)){
+   const groups=[...state.conflicts.entries()].slice(0,12).map(([key,saved])=>{
+     const student=state.students.find(s=>id(s)===key)||{};
+     const statuses=saved.map(r=>escapeHtml(String(r.status||'Unknown')+' (row '+String(r.id??r._id??'no ID')+')'));
+     return '<li><strong>'+escapeHtml(student.name||key)+'</strong> · '+saved.length+' rows: '+statuses.join(' / ')+'</li>';
+   });
+   const extra=state.reviewUnknown.slice(0,5).map(r=>
+     '<li>Unmatched row '+escapeHtml(String(r.id??r._id??'no ID'))+' · '+escapeHtml(String(r.class||'no class'))+' · '+escapeHtml(String(r.status||'no status'))+'</li>');
+   review.innerHTML='<div style="padding:12px;border:1px solid #efb5b5;border-radius:12px;background:#fff0f0;color:#8b1c28"><strong>⚠ Attendance needs administrator review</strong><ul>'+groups.concat(extra).join('')+'</ul><p>Back up the original Google Sheet before correcting duplicates. Clearing the entire date is not a duplicate-repair tool. Export CSV to inspect saved row IDs.</p></div>';
+ }else if(state.writeHold)review.textContent='⚠ Previous write result unverified. Check the original sheet, backup and audit before continuing.';
+ else review.textContent='';
+ $('classContext').textContent=$('class').value?'Class '+$('class').value+' only · '+$('date').value+' · Totals, register, coverage and follow-up are for this class.':'All classes · '+$('date').value+' · Whole-school totals.';
+ renderTotals(all);
+ renderRegisterCount(rows.length,all.length);
  $('list').innerHTML=rows.map(s=>{
   const k=id(s),entry=state.chosen.get(k)||{},v=entry.status||'';
   const saved=entry.saved===true||!!entry.recordId,editing=state.editing.has(k);

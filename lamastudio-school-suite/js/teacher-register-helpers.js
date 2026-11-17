@@ -3,14 +3,29 @@
 const str=value=>String(value??'').trim();
 const norm=value=>str(value).toLowerCase();
 function day(value){
- const localDate=x=>[x.getFullYear(),String(x.getMonth()+1).padStart(2,'0'),String(x.getDate()).padStart(2,'0')].join('-');
- if(value instanceof Date&&!Number.isNaN(value.valueOf()))return localDate(value);
+ const localDate=x=>{
+  const zone=str(root.LamaTeacherSchoolTimeZone)||'Asia/Karachi';
+  try{
+   const parts=new Intl.DateTimeFormat('en-GB',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(x);
+   const part=k=>parts.find(p=>p.type===k)?.value||'';
+   return part('year')+'-'+part('month')+'-'+part('day');
+  }catch(_){return ''} // Unknown timezone: never assign a saved mark to a guessed day.
+ };
+ if(value instanceof Date)return Number.isNaN(value.valueOf())?'':localDate(value);
  const raw=str(value);
  if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
  if(/^\d{4}-\d{2}-\d{2}[T\s]/.test(raw)){
   const parsed=new Date(raw);
-  if(!Number.isNaN(parsed.valueOf()))return localDate(parsed);
-  return raw.slice(0,10);
+  return Number.isNaN(parsed.valueOf())?'':localDate(parsed);
+ }
+ const numeric=raw.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+ if(numeric){
+  const first=+numeric[1],second=+numeric[2],year=+numeric[3];
+  const month=first>12?second:first,dayNum=first>12?first:second;
+  if(month<1||month>12||dayNum<1||dayNum>31)return '';
+  const test=new Date(Date.UTC(year,month-1,dayNum));
+  if(test.getUTCFullYear()!==year||test.getUTCMonth()!==month-1||test.getUTCDate()!==dayNum)return '';
+  return year+'-'+String(month).padStart(2,'0')+'-'+String(dayNum).padStart(2,'0');
  }
  return '';
 }

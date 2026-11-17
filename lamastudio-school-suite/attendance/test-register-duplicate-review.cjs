@@ -48,7 +48,7 @@ state.unmatched=0;state.writeHold=true;
 assert.equal(helper.registerNeedsReview(),true,'Unverified write must continue to block edits');
 assert.match(src,/Register loaded — review required/);
 assert.match(src,/Needs review/);
-for(const action of ["$('save').onclick","$('clearDate').onclick","$('bulk').onclick","function enable()","function choose(k,v)"]){
+for(const action of ["$('save').onclick","$('clearDate').onclick","$('bulk').onclick","function enable()","function choose(k,v,button)"]){
  const pos=src.indexOf(action);assert.ok(pos>=0,'Action absent '+action);
  assert.ok(src.slice(pos,pos+500).includes('registerNeedsReview()'),'Unsafe action not guarded: '+action);
 }

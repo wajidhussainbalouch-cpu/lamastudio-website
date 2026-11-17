@@ -570,9 +570,13 @@ function loadAttendanceList(){
     isSaved?(attendanceReady&&!attendanceUncertain?'Saved: ':'Last known mark (not reverified): ')+savedStatus:'Not marked';
   const guardian=TeacherRegister.guardian(student);
   const info='Enrollment: '+(TeacherRegister.enrollment(student)||'—')+' · Parent/Guardian: '+guardian;
+  const picture=safeStudentPhoto(student);
+  const photoNode=picture?'<img class="att-photo" loading="lazy" referrerpolicy="no-referrer" alt="Photo of '+esc(student.name||'student')+'" src="'+esc(picture)+'">':'<span class="att-photo-empty" aria-label="No student photo available">👤</span>';
+  const savedBadge=duplicate?'⚠ Review saved records':draftAttendance.has(id)?'● Unsaved change':isSaved?'✓ Saved and verified':'○ Not marked';
   return '<div class="att-row flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(id)+'">'+
-    '<div class="student-label"><strong class="text-xs font-bold">'+esc(student.name||'Unnamed student')+'</strong>'+
-    '<div class="attendance-note">'+esc(info)+'</div><div class="attendance-note '+(duplicate?'teacher-attendance-review':'')+'">'+esc(statusLine)+'</div></div>'+
+    '<div class="att-student-main">'+photoNode+'<div class="student-label"><strong class="text-xs font-bold">'+esc(student.name||'Unnamed student')+'</strong>'+
+    '<div class="attendance-note">'+esc(info)+'</div><div class="attendance-note '+(duplicate?'teacher-attendance-review':'')+'">'+esc(statusLine)+'</div>'+
+    '<span class="att-save-badge '+(draftAttendance.has(id)||duplicate?'att-pending':'')+'">'+esc(savedBadge)+'</span></div></div>'+
     '<div class="att-actions flex gap-2 items-center">'+
     (isSaved?'<button type="button" class="attendance-correction" data-edit-id="'+esc(id)+'" '+(blocked?'disabled':'')+'>'+(isEditing?'Cancel edit':'✎ Edit attendance')+'</button>':'')+
     contact(student)+
@@ -617,12 +621,19 @@ $('attendanceList').addEventListener('click',event=>{
 function renderTeacherStats(){
  const day=$('attDate').value,stats=TeacherRegister.totals(myStudents,attendanceSnapshot(day),draftAttendance);
  const info=$('teacherAttendanceStats');if(!info)return;
- if(!attendanceReady||attendanceUncertain){info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Saved totals not verified. '+draftAttendance.size+' selected change(s) retained on this device. Use Verify saved attendance.';return}
- const text=entry=>entry.total+' (boys '+entry.boys+', girls '+entry.girls+(entry.unspecified?', unspecified '+entry.unspecified:'')+')';
- info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Students '+text(stats.Students)+
-  ' · Present '+text(stats.Present)+' · Absent '+text(stats.Absent)+' · Leave '+text(stats.Leave)+
-  ' · Unmarked '+text(stats.Unmarked)+(stats.Review.total?' · Needs review '+stats.Review.total:'')+
-  (draftAttendance.size?' · '+draftAttendance.size+' UNSAVED preview':'');
+ if(!attendanceReady||attendanceUncertain){
+  info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Saved totals NOT VERIFIED. '+
+   draftAttendance.size+' selected change(s) retained on this device. Use Verify saved attendance.';
+  return;
+ }
+ info.innerHTML=['Students','Present','Absent','Leave','Unmarked','Review'].map(key=>{
+  const value=stats[key],label=key==='Review'?'Needs review':key;
+  return '<div class="attendance-stat"><small>'+label+'</small><b>'+value.total+'</b>'+
+   '<span>👦 Boys '+value.boys+' · 👧 Girls '+value.girls+
+   (value.unspecified?' · Gender not specified '+value.unspecified:'')+'</span></div>';
+ }).join('');
+ if(draftAttendance.size)info.insertAdjacentHTML('beforeend','<p class="text-xs text-amber-200" style="grid-column:1/-1">'+draftAttendance.size+' unsaved change(s). Totals above are a preview until Google Sheets verification.</p>');
+
 }
 async function saveAttendance(){
  if(attendanceSaving||attendanceVerifying)return;

@@ -409,3 +409,13 @@ The dashboard is now an actual learner welcome screen: **Learn coding from zero*
 For optional accounts, the browser-only Supabase snapshot is staged as **lama-coding-academy-cloud-v2**, with four course records and the separate 150-question score record, maximum 240 KB and local restore rollback. The RLS-protected database setup is in backend/cloud-progress-setup.sql; the account feature stays **enabled:false**, no secret keys are in the app, and no data goes to the live PPSC project. The separate security and rollout checklist is in backend/SUPABASE-LEARNER-ACCOUNTS.md. Real account creation/cloud sync is not active or verified; the owner must provision an isolated Coding Academy project, review privacy/email confirmation settings and pass two-account RLS tests before activation.
 
 The Android v0.17 QA build uses its own app package ID, so v0.16 work is preserved. To transfer results, explicitly export **My Journey → Complete Academy Backup** in the old test app and import it in v0.17. CI includes first-screen mobile onboarding, drawer and bottom navigation, 62-activity progression, five-store v2 cloud serialization, and security regression checks. Native phone testing and a real Supabase project end-to-end validation remain outstanding.
+
+
+## Phase 18 — Optional tour and private learner profile (17 November 2026)
+
+The learner-first home now has an optional **1-minute guide**. It presents three bilingual English/Urdu steps: start a short lesson; edit a line and run the preview; practise and track/backup work. Learners may skip it or open it later, and it does not record any account, telemetry, or device identifier. The dialog supports keyboard navigation, Back, Next, Escape and Start first lesson.
+
+Cloud-account preparation was extended with a separately staged learner profile: optional display name and EN/UR preference, each owned by a signed-in Supabase Auth user. A dedicated SQL file `backend/learner-profile-setup.sql` enables RLS, own-user SELECT/INSERT/UPDATE/DELETE rules, server-maintained timestamps and strict length/language constraints. The Account page has a deliberate Save private profile action that does not sync learning data. All real cloud functionality remains **disabled**; no Supabase migration was applied or PPSC data accessed. Manual two-account RLS testing and appropriate privacy review are mandatory before activation.
+
+The v0.18 Android QA build remains separate from v0.17, so transferring local work requires an explicit Complete Academy Backup. CI tests include a static security contract for the staged profile and real-browser mobile tour interaction. No production merge, Play Store release or live account launch.
+

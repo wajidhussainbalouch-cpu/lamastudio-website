@@ -551,7 +551,7 @@ header#topOverview{background:var(--lama-header)!important}
         <!-- KPI matrix -->
         <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(139,92,246,.18)"><p class="section-kicker">Students</p><p id="totalStudentsCount" class="text-2xl font-black text-purple-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">active database records</p></div>
-            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Attendance</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">— absent today</p></div>
+            <div class="metric-card rounded-2xl p-4" style="--glow:rgba(34,211,238,.18)"><p class="section-kicker">Present among marked</p><p id="attendanceRatioDisplay" class="text-2xl font-black text-cyan-300 mt-2">—</p><p id="absentTodayCount" class="text-[10px] text-slate-500 mt-1">Awaiting saved registers</p><p id="attendanceCompletionNote" class="text-[10px] text-slate-500 mt-1">Class completion will be shown after verification</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(52,211,153,.18)"><p class="section-kicker">Teachers</p><p id="teacherAttDisplay" class="text-2xl font-black text-emerald-300 mt-2">—</p><p id="notMarkedDisplay" class="text-[10px] text-slate-500 mt-1">— not marked</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(251,191,36,.18)"><p class="section-kicker">Today Collection</p><p id="todayCollectionDisplay" class="text-xl font-black text-amber-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">paid records today</p></div>
             <div class="metric-card rounded-2xl p-4" style="--glow:rgba(236,72,153,.18)"><p class="section-kicker">This Month</p><p id="monthCollectionDisplay" class="text-xl font-black text-pink-300 mt-2">—</p><p class="text-[10px] text-slate-500 mt-1">fee collection</p></div>
@@ -597,7 +597,7 @@ header#topOverview{background:var(--lama-header)!important}
             <div class="attendance-kpi col-span-2 lg:col-span-1"><p class="section-kicker">Not marked</p><strong id="studentAttUnmarked" class="text-cyan-300">—</strong></div>
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Daily attendance rate</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
+            <div><div class="flex justify-between items-center gap-2 mb-2"><span class="text-xs font-black">Present among marked students</span><strong id="studentAttRate" class="text-lg text-emerald-300">—</strong></div><div class="attendance-track" aria-label="Student attendance distribution"><span id="studentAttPresentBar" style="background:#34d399;width:0%"></span><span id="studentAttAbsentBar" style="background:#fb7185;width:0%"></span><span id="studentAttLeaveBar" style="background:#fbbf24;width:0%"></span></div><p id="studentAttHint" class="text-xs text-slate-400 mt-3">Waiting for today's student register.</p></div>
             <div><div class="flex justify-between gap-2 items-center mb-1"><p class="text-xs font-black">Class-wise register</p><span id="studentAttClassCount" class="text-[10px] text-slate-400">—</span></div><div id="studentAttClasses" class="max-h-44 overflow-y-auto pr-1"><p class="text-xs text-slate-400">Loading…</p></div></div>
           </div>
           <div class="mt-4 border-t border-slate-700/40 pt-4"><div class="flex flex-wrap justify-between items-center gap-2"><div><p class="text-xs font-black">Absent / Leave — Parent follow-up</p><p class="text-[11px] text-slate-400">Recognize students and contact parents from the attendance register.</p></div><div class="flex gap-2 flex-wrap"><a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Open follow-up →</a><a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">One bulk portal notification →</a></div></div><div id="dashboardAbsentFollowup" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3"><p class="text-xs text-slate-400">Loading attendance follow-up…</p></div></div>
@@ -780,6 +780,18 @@ header#topOverview{background:var(--lama-header)!important}
         const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
         const money = v => `Rs. ${Number(v || 0).toLocaleString()}`;
         async function safeList(key){ try { const r=await LamaAPI.list(key); return Array.isArray(r)?r:Array.isArray(r?.records)?r.records:Array.isArray(r?.data)?r.data:Array.isArray(r?.items)?r.items:[]; } catch(e){ console.warn('Unable to load '+key,e); return []; } }
+async function verifiedRegisterList(key){
+  try{
+    const raw=await LamaAPI.list(key);
+    const rows=Array.isArray(raw)?raw:Array.isArray(raw?.records)?raw.records:Array.isArray(raw?.data)?raw.data:Array.isArray(raw?.items)?raw.items:null;
+    if(!rows)throw Error('Invalid '+key+' register response');
+    return {ok:true,rows};
+  }catch(error){
+    console.warn('Verified school register could not be loaded: '+key,error);
+    return {ok:false,rows:[],error:String(error?.message||error||'Unknown error')};
+  }
+}
+
         function handleLogout(){ LamaAPI.logout('school'); sessionStorage.removeItem('lama_school_admin_auth'); window.location.replace('main-dashboard.html'); }
         function destroyChart(k){ if(charts[k]){charts[k].destroy();charts[k]=null;} }
         function chartDefaults(){const cs=getComputedStyle(document.documentElement);const text=cs.getPropertyValue('--chartText').trim()||'#cbd5e1',muted=cs.getPropertyValue('--muted').trim()||'#94a3b8',grid=cs.getPropertyValue('--grid').trim()||'rgba(148,163,184,.06)';return {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:text,font:{size:10,weight:'700'},boxWidth:10}}},scales:{x:{ticks:{color:muted,font:{size:9}},grid:{color:grid}},y:{ticks:{color:muted,font:{size:9}},grid:{color:grid}}}};}
@@ -813,14 +825,20 @@ header#topOverview{background:var(--lama-header)!important}
             document.getElementById('engineState').innerText='loading'; document.getElementById('dbUpdated').innerText=`synced ${new Date().toLocaleTimeString()}`;
             let stats={}; try{stats=await LamaAPI.getDashboardStats()||{};}catch(e){console.warn(e)}
             document.getElementById('totalStudentsCount').innerText=stats.totalStudents??'—';
-            document.getElementById('absentTodayCount').innerText=`${stats.absentToday??0} absent today`;
-            document.getElementById('attendanceRatioDisplay').innerText=stats.attendanceRatio!=null?`${stats.attendanceRatio}%`:'—';
+            // Do not present script-calculated partial-class or pre-verification
+            // attendance figures as confirmed school-wide daily totals.
+            document.getElementById('absentTodayCount').textContent='Checking saved student attendance…';
+            document.getElementById('attendanceRatioDisplay').textContent='—';
             /* Collection headlines are populated from the saved fee records in renderFinanceR4(). */
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
-            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})]); window.__schoolClassOptions=schoolClassOptions; window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
-            document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
-            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
+            const [studentsRead,teachersRead,attendanceRead,fees,notifications,tests,teacherRead,expenses,income,schoolClassOptions]=await Promise.all([verifiedRegisterList('students'),verifiedRegisterList('teachers'),verifiedRegisterList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),verifiedRegisterList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})]);
+            const students=studentsRead.rows,teachers=teachersRead.rows,attendance=attendanceRead.rows,teacherAttendance=teacherRead.rows;
+            const verified={students:studentsRead.ok,teachers:teachersRead.ok,attendance:attendanceRead.ok,teacherAttendance:teacherRead.ok};
+            window.__dashboardVerified=verified;window.__schoolClassOptions=schoolClassOptions;
+            window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
+            document.getElementById('engineState').innerText=Object.values(verified).every(Boolean)?'synced':'partial · attendance data unavailable';document.getElementById('totalStudentsCount').textContent=verified.students?students.length.toLocaleString():'—';renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students,{verified:verified.students&&verified.attendance}); renderTeacherAttendanceAnalytics(teachers,teacherAttendance,{verified:verified.teachers&&verified.teacherAttendance,rosterVerified:verified.teachers}); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
+            renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); if(verified.students&&verified.attendance)renderAttendanceChart(attendance,students);else showUnverifiedClassAttendance(); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); if(verified.students&&verified.attendance)renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
 
         function localISODate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}

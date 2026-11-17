@@ -67,7 +67,7 @@ $('class').value='4';
 state.conflicts.set('s1',[{id:'row-x',status:'Present'},{id:'row-y',status:'Absent'}]);
 state.chosen.delete('s1');state.reviewUnknown=[];
 f.render();
-assert.match($('summary').innerHTML,/Needs review<\\/div><h2>1<\\/h2>/,'Duplicate student must be counted for review');
+assert.ok($('summary').innerHTML.includes('Needs review</div><h2>1</h2>'),'Duplicate student must be counted for review');
 assert.match($('reviewDetails').innerHTML,/Ali/);
 assert.match($('reviewDetails').innerHTML,/row-x/);
 assert.match($('reviewDetails').innerHTML,/row-y/);

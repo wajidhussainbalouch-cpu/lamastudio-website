@@ -8,8 +8,8 @@ const core=window.LAMA_CODING_CLOUD_CORE;
 const byId=id=>document.getElementById(id);
 const clientVersion="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm";
 const readyConfig=Boolean(config.enabled&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.url||"")&&
-  /^sb_publishable_[a-zA-Z0-9_-]+$/.test(config.publishableKey||"")&&config.table==="lama_coding_progress");
-let client=null,user=null,remote=null,busy=false,mode="login",recovery=false;
+  /^sb_publishable_[a-zA-Z0-9_-]+$/.test(config.publishableKey||"")&&config.table==="lama_coding_progress"&&config.profileTable==="lama_coding_learners");
+let client=null,user=null,remote=null,profile=null,busy=false,mode="login",recovery=false;
 function text(id,msg){byId(id).textContent=String(msg);}
 function report(target,message,type){
  const el=byId(target);el.className="status"+(type?" "+type:"");el.textContent=String(message);
@@ -23,6 +23,8 @@ function buttonState(){
  byId("authSubmit").disabled=!client||busy;
  byId("signOut").disabled=!client||busy;
  byId("clearLocal").disabled=busy;
+ byId("profileSave").disabled=!online;
+ byId("profileRefresh").disabled=!online;
  byId("deleteAccount").disabled=!online||config.accountDeletionEnabled!==true||
    byId("deletePhrase").value.trim()!=="DELETE ACCOUNT"||
    byId("deletePassword").value.length<8;
@@ -57,8 +59,11 @@ function renderSession(){
  byId("signedIn").hidden=!user||recovery;
  byId("recovery").hidden=!recovery;
  byId("accountDeleteArea").hidden=!(client&&user&&!recovery&&config.accountDeletionEnabled===true);
+ byId("profileCard").hidden=!user||recovery||!client;
  text("accountEmail",user?.email||"Signed-in learner");
- if(!user){remote=null;byId("syncConsent").checked=false;}
+ if(!user){remote=null;profile=null;byId("syncConsent").checked=false;
+   byId("displayName").value="";byId("preferredLanguage").value="en";
+ }
  describeRemote();describeLocal();buttonState();
 }
 function changeMode(next){
@@ -101,6 +106,51 @@ async function refreshRemote(){
   report("syncStatus","Could not check the cloud copy: "+String(e.message||e),"error");
  }finally{setBusy(false);}
 }
+async function refreshProfile(){
+ if(!client||!user||recovery)return;
+ try{
+  const verified=await requireUser();
+  const {data,error}=await client.from(config.profileTable)
+   .select("display_name,preferred_language,updated_at")
+   .eq("user_id",verified.id).maybeSingle();
+  if(error)throw error;
+  if(!user||user.id!==verified.id)return;
+  profile=data||null;
+  byId("displayName").value=profile?.display_name||"";
+  byId("preferredLanguage").value=profile?.preferred_language==="ur"?"ur":"en";
+  report("profileStatus",profile?
+   "Your private profile was loaded. No learning progress was changed.":
+   "No saved profile yet. You may enter a display name and choose a language.");
+ }catch(e){
+  report("profileStatus","Could not load your private profile: "+String(e.message||e),"error");
+ }
+}
+async function saveProfile(event){
+ event.preventDefault();
+ if(!client||!user||recovery||busy)return;
+ const displayName=byId("displayName").value.trim().replace(/\s+/g," ");
+ const lang=byId("preferredLanguage").value;
+ if(displayName.length>60||/[\u0000-\u001f\u007f]/.test(displayName)||!["en","ur"].includes(lang)){
+  report("profileStatus","Enter a display name up to 60 characters and a valid language.","error");
+  return;
+ }
+ setBusy(true);
+ try{
+  const verified=await requireUser();
+  // Only the signed-in learner's own row is writable under database RLS.
+  // Profile submission NEVER reads or uploads code, quiz scores or other apps.
+  const {data,error}=await client.from(config.profileTable)
+   .upsert({user_id:verified.id,display_name:displayName,preferred_language:lang},
+     {onConflict:"user_id"})
+   .select("display_name,preferred_language,updated_at").maybeSingle();
+  if(error)throw error;
+  if(!data)throw Error("The profile write was not confirmed by the server.");
+  profile=data;
+  report("profileStatus","Private learner profile saved. Course and question progress were not uploaded.","good");
+ }catch(e){
+  report("profileStatus","Could not save profile: "+String(e.message||e),"error");
+ }finally{setBusy(false);}
+}
 async function refreshSession(){
  if(!client)return;
  try{
@@ -108,7 +158,7 @@ async function refreshSession(){
   user=error?null:data.user||null;
  }catch(e){user=null;}
  renderSession();
- if(user&&!recovery)await refreshRemote();
+ if(user&&!recovery){await refreshRemote();await refreshProfile();}
 }
 async function registerOrLogin(event){
  event.preventDefault();
@@ -282,7 +332,7 @@ async function deleteAccount(event){
   if(error)throw error;
   if(!data||data.deleted!==true)throw Error("Deletion was not confirmed by the server.");
   try{await client.auth.signOut({scope:"local"});}catch(e){}
-  user=null;remote=null;recovery=false;
+  user=null;remote=null;profile=null;recovery=false;
   if(localErase){
    try{eraseLocalLearning();}
    catch(e){report("eraseStatus","Your account was deleted, but local learning data could not be fully erased: "+String(e.message||e),"error");renderSession();return;}
@@ -365,6 +415,8 @@ byId("showConfirm").addEventListener("click",()=>togglePassword("confirmPassword
 byId("authForm").addEventListener("submit",registerOrLogin);
 byId("recoveryForm").addEventListener("submit",updatePassword);
 byId("signOut").addEventListener("click",logout);
+byId("profileForm").addEventListener("submit",saveProfile);
+byId("profileRefresh").addEventListener("click",refreshProfile);
 byId("syncConsent").addEventListener("change",buttonState);
 byId("upload").addEventListener("click",upload);
 byId("refresh").addEventListener("click",refreshRemote);

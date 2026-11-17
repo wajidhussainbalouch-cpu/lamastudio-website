@@ -138,7 +138,16 @@ function genderTotals(students){
 }
 function enable(){const ready=state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!registerNeedsReview();$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
 function renderRegisterCount(visibleCount,totalCount){
- $('count').textContent=visibleCount+' visible of '+totalCount+($('class').value?' students in '+$('class').value:' students in the school')+(registerNeedsReview()?' · ⚠ requires administrator review':state.dirty.size?' · '+state.dirty.size+' unsaved change(s): totals are a preview until Save changes':state.historyReady?' · saved attendance verified':' · roster preview only');
+ const students=classStudents();
+ const reviewed=students.filter(student=>state.conflicts.has(id(student))).length;
+ const marked=students.filter(student=>state.chosen.get(id(student))?.status&&!state.conflicts.has(id(student))).length;
+ let stateText=' · roster preview only';
+ if(registerNeedsReview())stateText=' · ⚠ requires administrator review';
+ else if(state.dirty.size)stateText=' · '+state.dirty.size+' unsaved change(s): totals are a preview until Save changes';
+ else if(state.historyReady){
+  stateText=' · '+marked+' / '+totalCount+' saved · '+(totalCount>0&&marked===totalCount?'✓ attendance completed':'◐ attendance partly marked')+' · saved attendance verified';
+ }
+ $('count').textContent=visibleCount+' visible of '+totalCount+($('class').value?' students in '+$('class').value:' students in the school')+stateText;
 }
 function renderTotals(all){
  const summaryGroups=[

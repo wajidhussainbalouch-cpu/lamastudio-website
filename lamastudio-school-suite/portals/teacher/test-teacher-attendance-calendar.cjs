@@ -64,6 +64,39 @@ assert.match(html,/class="att-save-badge/);
 assert.match(html,/function selectTeacherAttendanceDate\(next\)/);
 assert.match(html,/data-calendar-day/);
 assert.match(html,/id="teacherAttendanceStats" class="attendance-day-stats"/);
+assert.match(html,/id="statClassAttendanceStatus"/);
+const weekStart=html.indexOf('function calendarWeeklyOffDays(){'),weekEnd=html.indexOf('function deviceSchoolHolidays(){',weekStart);
+assert.ok(weekStart>=0&&weekEnd>weekStart);
+const weekly=new Function('me','localStorage',html.slice(weekStart,weekEnd)+'return calendarWeeklyOffDays;')(
+ {schoolId:'school-1'},
+ {getItem:key=>key==='lama_teacher_holidays_school-1_weekly'?'[0,6]':null}
+);
+assert.deepEqual(weekly(),[0,6],'Use the school-specific admin weekly-off setting when on the same device');
+const statusStart=html.indexOf('function showAttendanceFeedback(){'),statusEnd=html.indexOf('function showTeacherHomeworkStatus(',statusStart);
+assert.ok(statusStart>=0&&statusEnd>statusStart);
+const statusFn=html.slice(statusStart,statusEnd)+'return showAttendanceFeedback;';
+function feedback(savedCount,{verified=true,writeUncertain=false}={}){
+ const nodes={teacherAttendanceStatus:{textContent:'',className:''},saveTeacherAttendance:{disabled:false},verifyTeacherAttendance:{disabled:false},attDate:{value:'2026-11-17'}};
+ const get=id=>nodes[id];
+ const selected=Array.from({length:savedCount},(_,i)=>['s'+(i+1),{status:'Present'}]);
+ const handler=new Function('
+assert.match(html,/Saturday is closed only when configured/);
+const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(Boolean);
+for(const inline of scripts)new vm.Script(inline,{filename:'teacher/index.html inline'});
+console.log('PASS: teacher photo validation, guardian, class boy/girl cards, calendar date actions and all saved/partial/unmarked/holiday/unverified states.');
+,'attendanceSnapshot','rosterReady','attendanceReady','attendanceUncertain','attendanceSaving',
+   'attendanceVerifying','attendanceWriteUncertain','attendanceIssue','attendanceSaveNote','draftAttendance','myStudents',statusFn)(
+   get,()=>({unique:new Map(selected),duplicates:new Map(),unmatched:[]}),true,verified,!verified,false,false,
+   writeUncertain,'','',new Map(),students
+ );
+ handler();
+ return nodes.teacherAttendanceStatus.textContent;
+}
+assert.match(feedback(0),/has not been marked/,'Verified empty register is NOT attendance completed');
+assert.match(feedback(1),/not yet complete/,'A partly marked class is NOT attendance completed');
+assert.match(feedback(2),/Attendance completed and verified/,'Every saved student should give a clear completion badge');
+assert.match(feedback(2,{verified:false}),/not verified/i,'Failed saved read must not show completed status');
+
 assert.match(html,/Saturday is closed only when configured/);
 const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(Boolean);
 for(const inline of scripts)new vm.Script(inline,{filename:'teacher/index.html inline'});

@@ -12,7 +12,7 @@ function harness(readbackOk){
   "const day='2026-11-17';",
   "const me={schoolId:'school-1',assignedClass:'1'};",
   "const myStudents=roster;",
-  "let attendanceSaving=false,attendanceReady=true,attendanceUncertain=false,attendanceWriteUncertain=false,attendanceIssue='',attendanceSaveNote='';",
+  "let attendanceSaving=false,attendanceVerifying=false,attendanceReady=true,attendanceUncertain=false,attendanceWriteUncertain=false,attendanceIssue='',attendanceSaveNote='';",
   "let draftAttendance=new Map(roster.map(s=>[s.id,'Present']));",
   "let editingAttendance=new Set(),selectedAttendanceDay=day;",
   "const status={textContent:''};",
@@ -25,6 +25,7 @@ function harness(readbackOk){
   "let requests=0,reads=0,rendered=0;",
   "const LamaAPI={bulkAttendance:async(date,records)=>{assert.equal(date,day);assert.equal(records.length,51);assert.ok(records.every(x=>x.status==='Present'));requests++;return {saved:records.length,updated:0,inserted:records.length}}};",
   "const loadSavedAttendance=async(expected)=>{reads++;assert.equal(expected.size,51);if(!readbackOk)throw Error('Student register timed out after 20 seconds');draftAttendance.clear();editingAttendance.clear();attendanceWriteUncertain=false;};",
+  "const withDeadline=async(promise,label)=>{if(readbackOk==='writeTimeout')throw Error(label+' timed out after 60 seconds');return await promise};",
   "const updateStats=()=>{};",
   "const renderAll=()=>{rendered++};",
   saveCode,
@@ -53,5 +54,11 @@ function harness(readbackOk){
  assert.match(pending.status,/not verified/i);
  await fail.saveAttendance();
  assert.equal(fail.readState().requests,1,'Unknown outcome must never be resubmitted automatically');
+ const stalled=harness('writeTimeout');await stalled.saveAttendance();
+ const timed=stalled.readState();
+ assert.equal(timed.requests,1,'Timed-out network request is never submitted twice');
+ assert.equal(timed.dirty,51,'All 51 draft marks survive an ambiguous write timeout');
+ assert.equal(timed.attendanceWriteUncertain,true);
+ assert.match(timed.status,/not verified/i);
  console.log('PASS: 51 marks use one bulk write; successful readback clears drafts, timeout retains marks and blocks retry.');
 })().catch(error=>{console.error(error);process.exitCode=1});

@@ -51,7 +51,9 @@ label.check input{width:18px;height:18px;flex:none;margin:2px}
     <label class="field" for="confirmation">Type <code>RECOVER student_ID</code> to confirm this exact fictional learner</label>
     <input id="confirmation" autocomplete="off" placeholder="RECOVER test_student_01">
     <label class="check"><input type="checkbox" id="verified"><span>I personally verified the learner identity and understand this will invalidate existing sessions and clear legacy credentials in the test database.</span></label>
-    <button id="submit" type="submit" disabled>Reset fictional student's password</button>
+    <button id="preview" type="button" disabled>1. Verify fictional student & request approval</button>
+    <div id="previewBox" role="status" aria-live="polite" class="card warning" hidden></div>
+    <button id="submit" type="submit" disabled>2. Reset fictional student's password</button>
   </form>
   <p id="status" role="status" aria-live="polite"></p>
 </div>
@@ -65,42 +67,82 @@ label.check input{width:18px;height:18px;flex:none;margin:2px}
 <script src="../../js/api-client.js"></script>
 <script>
 'use strict';
-// Developer must edit BOTH settings below only on a cloned, isolated TEST deployment.
-// Do not enable while ../../js/api-client.js still targets the production API URL.
-const Q12_ISOLATED_TEST_BUILD = false;
-const Q12_EXPECTED_TEST_SCHOOL_ID = ''; // exact fictional test school ID
+// Developer must edit BOTH settings only on a cloned TEST deployment, never live.
+const Q12_ISOLATED_TEST_BUILD=false;
+const Q12_EXPECTED_TEST_SCHOOL_ID=''; // exact fictional test school ID
 const $=id=>document.getElementById(id);
 const ready=Q12_ISOLATED_TEST_BUILD && /^[A-Za-z0-9_-]{1,90}$/.test(Q12_EXPECTED_TEST_SCHOOL_ID);
+let approval=null;
 $('gateText').textContent=ready
-  ? 'Pilot configured: verify this page is connected to the separate TEST backend.'
-  : 'Recovery disabled. A separate test API and explicit test-school configuration are required.';
-$('submit').disabled=!ready;
+  ? 'TEST mode configured: confirm the API client targets the separate TEST backend.'
+  : 'Recovery disabled. A separate TEST API and fictional test-school configuration are required.';
+$('preview').disabled=!ready;
+function eraseApproval(){
+  approval=null;
+  $('previewBox').hidden=true;
+  $('previewBox').textContent='';
+  $('submit').disabled=true;
+}
+['studentId','method','verified'].forEach(id=>$(id).addEventListener('change',eraseApproval));
+$('studentId').addEventListener('input',eraseApproval);
+function checkContext(){
+  if(!ready)throw Error('Recovery is not enabled in this test build.');
+  const admin=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
+  if(!admin||admin.schoolId!==Q12_EXPECTED_TEST_SCHOOL_ID||!admin.token)
+    throw Error('Verified administrator sign-in to the exact fictional test school required.');
+  const id=$('studentId').value.trim();
+  if(!/^[A-Za-z0-9_-]{1,90}$/.test(id))throw Error('Enter a valid fictional student ID.');
+  const method=$('method').value;
+  if(!['in-person','verified-school-record'].includes(method)||!$('verified').checked)
+    throw Error('Verify this student identity with the school first.');
+  return {id,method};
+}
+$('preview').addEventListener('click',async()=>{
+  eraseApproval();$('status').textContent='';
+  $('preview').disabled=true;
+  try{
+    const {id,method}=checkContext();
+    if(typeof LamaAPI?.quranV12PreviewStudentRecovery!=='function')
+      throw Error('Test client lacks the two-step recovery method.');
+    const result=await LamaAPI.quranV12PreviewStudentRecovery(id,method,true);
+    if(!result||result.studentId!==id||!/^[a-f0-9]{64}$/.test(String(result.recoveryToken||'')))
+      throw Error('Unexpected test recovery response. No change was made.');
+    approval={id,method,token:result.recoveryToken,expiry:Date.now()+Math.min(300,Number(result.expiresInSeconds)||300)*1000};
+    $('previewBox').hidden=false;
+    $('previewBox').textContent='TEST STUDENT CONFIRMED: '+id+
+      ' · Class: '+String(result.className||'not recorded')+
+      ' · '+(result.needsInitialProvision?'First secure password':'Existing secure password reset')+
+      '. Approval expires in about 5 minutes. This is NOT confirmation that the password was changed.';
+    $('submit').disabled=false;
+  }catch(err){$('status').textContent='Preview blocked: '+String(err?.message||'Unknown error');}
+  finally{$('preview').disabled=!ready;}
+});
 $('recover').addEventListener('submit',async e=>{
   e.preventDefault();$('status').textContent='';
-  if(!ready){$('status').textContent='Blocked: no isolated pilot configured.';return}
-  const admin=(()=>{try{return JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch(_){return null}})();
-  if(!admin || admin.schoolId!==Q12_EXPECTED_TEST_SCHOOL_ID || !admin.token){
-    $('status').textContent='Verified administrator sign-in to the exact pilot school required.';return;
-  }
-  const id=$('studentId').value.trim();
-  if(!/^[A-Za-z0-9_-]{1,90}$/.test(id)){ $('status').textContent='Invalid fictional student ID.';return; }
-  if($('newPassword').value!==$('confirmPassword').value){
-    $('status').textContent='Passphrases do not match.';return;
-  }
-  if($('confirmation').value.trim()!==('RECOVER '+id)||!$('verified').checked||!$('method').value){
-    $('status').textContent='Complete the offline verification and exact confirmation first.';return;
-  }
-  $('submit').disabled=true;
-  try {
-    if(typeof LamaAPI?.quranV12RecoverStudent!=='function')throw Error('Test client is missing student recovery method.');
-    await LamaAPI.quranV12RecoverStudent(id,$('newPassword').value,$('method').value,true);
-    $('status').textContent='Test learner password changed; existing sessions invalidated. Audit the server-side event before proceeding.';
+  let id='',method='';
+  try{
+    ({id,method}=checkContext());
+    if(!approval||approval.id!==id||approval.method!==method||approval.expiry<=Date.now())
+      throw Error('Recovery approval expired or changed. Request another preview.');
+    if($('newPassword').value!==$('confirmPassword').value)
+      throw Error('New passphrases do not match.');
+    if($('confirmation').value.trim()!==('RECOVER '+id))
+      throw Error('Type RECOVER followed by the exact test student ID.');
+    if(typeof LamaAPI?.quranV12CommitStudentRecovery!=='function')
+      throw Error('Test client lacks recovery commit method.');
+    $('submit').disabled=true;
+    const token=approval.token;eraseApproval(); // never retry a one-time token
+    const result=await LamaAPI.quranV12CommitStudentRecovery(
+      id,$('newPassword').value,method,true,token,'RECOVER '+id);
+    if(!result||!result.recovered)throw Error('Server did not confirm recovery.');
+    $('status').textContent='Fictional learner recovered on TEST server; earlier student sessions invalidated.';
     $('recover').reset();
-  } catch(err) {
+  }catch(err){
     $('status').textContent='Recovery not completed: '+String(err?.message||'Request failed');
-  } finally {
+    eraseApproval();
+  }finally{
     $('newPassword').value='';$('confirmPassword').value='';
-    $('submit').disabled=!ready;
+    $('submit').disabled=true;
   }
 });
 </script>

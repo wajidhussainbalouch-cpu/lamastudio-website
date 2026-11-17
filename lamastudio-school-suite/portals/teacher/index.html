@@ -349,6 +349,7 @@ function updateStats(){
  const boys=classStats.Students.boys,girls=classStats.Students.girls,unknown=classStats.Students.unspecified;
  $('statStudents').textContent=rosterReady?myStudents.length:'—';
  $('statStudentsGender').textContent=rosterReady?'Boys '+boys+' · Girls '+girls+(unknown?' · Not specified '+unknown:''):'Class roster unavailable';
+ $('statStudentsBoys').textContent=rosterReady?boys:'—';$('statStudentsGirls').textContent=rosterReady?girls:'—';
  $('statBoys').textContent=rosterReady?boys:'—';
  $('statGirls').textContent=rosterReady?girls:'—';
  $('genderMissingNote').textContent=!rosterReady?'Roster unavailable':unknown?unknown+' without recorded gender':'Assigned class';
@@ -356,12 +357,14 @@ function updateStats(){
  showTeacherHomeworkStatus();
  if(!attendanceReady||attendanceUncertain){
   $('statPresent').textContent='—';$('statAbsent').textContent='—';
+  for(const key of ['statPresentBoys','statPresentGirls','statAbsentBoys','statAbsentGirls'])$(key).textContent='—';
   $('statPresentGender').textContent='Saved attendance not verified';
   $('statAbsentGender').textContent='Saved attendance not verified';
  }else{
   for(const [label,key] of [['Present','statPresent'],['Absent','statAbsent']]){
    const stat=classStats[label];
    $(key).textContent=stat.total;
+   $(key+'Boys').textContent=stat.boys;$(key+'Girls').textContent=stat.girls;
    $(key+'Gender').textContent='Boys '+stat.boys+' · Girls '+stat.girls+(stat.unspecified?' · Not specified '+stat.unspecified:'')+(draftAttendance.size?' · Unsaved preview':'');
   }
  }
@@ -423,6 +426,11 @@ async function refresh(){
      if(!Array.isArray(rows))throw Error('Notices response invalid');
      notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'));
      }catch(error){console.warn('Notices read failed; previous notices preserved',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('resources'),'Published school calendar',25000);
+      if(!Array.isArray(rows))throw Error('School calendar returned an invalid response');
+      schoolHolidayEvents=TeacherRegister.calendarHolidays(rows.filter(schoolMatch));
+      schoolCalendarReady=true;schoolCalendarIssue='';
+     }catch(error){schoolCalendarReady=false;schoolCalendarIssue=error.message;console.warn('School calendar read failed',error)}},
    async()=>{try{const rows=await withDeadline(LamaAPI.list('results'),'Results',25000);
      if(!Array.isArray(rows))throw Error('Results response invalid');
      results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId));
@@ -529,9 +537,9 @@ function renderStudentDirectory(){
  el.replaceChildren();
  myStudents.forEach(st=>{
  const button=document.createElement('button');button.type='button';button.className='student-directory-item';
- const photo=st.photo||st.photoUrl||st.studentPhoto||'';
+ const photo=safeStudentPhoto(st);
  const avatar=document.createElement('span');avatar.className='student-avatar';
- if(photo&&/^https:\/\//i.test(String(photo))){const img=document.createElement('img');img.src=photo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>avatar.replaceChildren(document.createTextNode('👤'));avatar.append(img)}else avatar.textContent='👤';
+ if(photo){const img=document.createElement('img');img.src=photo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>avatar.replaceChildren(document.createTextNode('👤'));avatar.append(img)}else avatar.textContent='👤';
  const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=st.name||'Student';const info=document.createElement('small');info.textContent='Enrollment: '+(st.enrlNo||st.enrollmentNo||'—')+' · Parent/Guardian: '+TeacherRegister.guardian(st)+' · '+(st.class||me.assignedClass||'');copy.append(name,info);
  const arrow=document.createElement('span');arrow.textContent='View record ›';arrow.className='student-view';button.append(avatar,copy,arrow);button.onclick=()=>showStudentRecord(st.id);el.append(button)
  })

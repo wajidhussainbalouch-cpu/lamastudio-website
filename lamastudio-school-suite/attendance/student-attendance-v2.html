@@ -3,6 +3,14 @@
 
 /* Responsive school-branded attendance workspace */
 :root{--ink:#173b42;--teal:#075f66;--line:#dce8e6;--soft:#f3f8f7}body{background:var(--soft);line-height:1.45}header{background:linear-gradient(120deg,#073f4b,#08767b);padding:16px max(16px,calc((100vw - 1100px)/2));box-shadow:0 8px 25px #073f4b24}.brandbar{display:flex;align-items:center;gap:14px;min-width:0}.school-logo{width:64px;height:64px;flex:0 0 64px;object-fit:contain;background:white;border-radius:16px;padding:5px;border:2px solid #ffffff55}.school-fallback{display:grid;place-items:center;color:#075f66;font-weight:900;font-size:19px}.brand-copy{min-width:0}.brand-copy h1{font-size:clamp(18px,3.7vw,26px);line-height:1.2;overflow-wrap:anywhere}.brand-copy p{margin:5px 0 0;color:#d5f4f0;font-size:13px}.topnav{margin-top:14px}.topnav a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#ffffff17;border:1px solid #ffffff60;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px}.panel{box-shadow:0 5px 20px #163b4210;border-color:var(--line)}.panel>h2{font-size:clamp(18px,3vw,23px)}label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:750}label input,label select{width:100%;min-width:0;height:46px}.controls button{min-height:44px;white-space:normal}.actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.actions button{width:100%;min-width:0}.actions #save{background:#08666c;color:#fff}.actions #reload{background:#e4f4f1;color:#075f66}.actions #bulk{background:#d7f5e7;color:#07543d}.actions #clearDate{grid-column:span 2}.student{border:1px solid var(--line);border-radius:13px;margin:9px 0;padding:14px;background:#fff}.student>div:first-child{min-width:0;flex:1 1 170px;overflow-wrap:anywhere}.student>.controls{flex:0 1 auto}.student>.controls button{min-width:74px}.student .selected{font-weight:850}.student .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#summary{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}#summary .panel{margin:0;padding:15px}#summary h2{font-size:27px}#stage{font-weight:750}#progress{accent-color:#0b7a79}#notice:not(:empty){background:#f1f8f7;border-radius:10px;padding:12px}#notice.error{background:#fff0f0}#count{margin-top:0}@media(max-width:620px){main{padding:10px}header{padding:14px}.school-logo{width:54px;height:54px;flex-basis:54px}.panel{padding:14px;margin:11px 0;border-radius:15px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid label:nth-child(3){grid-column:1/-1}.actions{grid-template-columns:repeat(2,minmax(0,1fr))}.actions #clearDate{grid-column:1/-1}.student{display:block}.student>.controls{margin-top:12px;width:100%}.student>.controls button{min-width:0;padding:10px 4px;font-size:13px}.topnav a{min-height:40px}#summary{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:350px){.grid{grid-template-columns:1fr}.grid label:nth-child(3){grid-column:auto}}@media print{header{background:#fff;color:#173b42;box-shadow:none}.brand-copy p{color:#173b42}.panel{box-shadow:none}}
+<style>
+.attendance-summary-card{min-width:0}
+.attendance-summary-card h2{margin:4px 0 6px;font-size:clamp(1.6rem,4vw,2.2rem)}
+.gender-breakdown{font-weight:700;color:#315d63;font-size:clamp(.76rem,2.2vw,.9rem);line-height:1.5;margin:0;overflow-wrap:anywhere}
+.attendance-edit-btn{background:#fff6db;color:#875b04;border-color:#d8b65b}
+.attendance-edit-btn:hover:not(:disabled){background:#fbe6b0}
+.student .controls small{flex-basis:100%}
+@media(max-width:560px){.attendance-summary-card{padding:12px}.student .controls{width:100%;justify-content:flex-start}.attendance-edit-btn{width:100%;margin-bottom:2px}}
 </style></head><body><header><div class="brandbar"><div id="schoolLogo" class="school-logo school-fallback" aria-label="School logo">LS</div><div class="brand-copy"><h1 id="schoolName">LAMA School Suite</h1><p id="schoolSubtitle">Student Attendance · Daily Register</p></div></div><nav class="controls topnav no-print"><a href="../dashboard.html">← School Dashboard</a></nav></header><main>
 <section class="panel"><h2>Daily Attendance Register</h2><p id="classContext" class="muted" role="status" aria-live="polite">Showing all classes</p><div class="grid"><label>Date<input id="date" type="date"></label><label>Class<select id="class"><option value="">All classes</option></select></label><label>Search<input id="search" placeholder="Name or enrollment"></label><label>Status<select id="filter"><option value="">All statuses</option><option>Present</option><option>Absent</option><option>Leave</option><option value="Unmarked">Unmarked</option></select></label></div><p id="stage" role="status">Not loaded</p><progress id="progress" max="100" value="0"></progress><p id="elapsed" class="muted">Elapsed: 0s</p><p id="notice" role="alert"></p><div id="reviewDetails" class="muted" role="status" aria-live="polite"></div><div class="actions no-print"><button id="reload" class="primary">Refresh</button><button id="bulk" disabled>Mark visible present</button><button id="save" class="primary" disabled>Save changes</button><button id="csv">Export CSV</button><button id="clearDate" class="danger" disabled>Admin: clear selected date</button><button onclick="print()">Print</button></div></section>
 <section class="grid" id="summary"></section><section class="panel"><h2>Students</h2><p id="count" class="muted">Waiting for student roster…</p><div id="list"></div></section>
@@ -47,7 +55,7 @@ function readAttendanceRequest(search){
 }
 const attendanceRequest=readAttendanceRequest(window.location.search);
 let requestedClassPending=!!attendanceRequest.className;
-const state={students:[],history:[],chosen:new Map(),dirty:new Set(),rosterReady:false,historyReady:false,loading:false,saving:false,stream:null,loop:false,loadedDate:'',conflicts:new Map(),unmatched:0,reviewUnknown:[],writeHold:false};
+const state={students:[],history:[],chosen:new Map(),dirty:new Set(),rosterReady:false,historyReady:false,loading:false,saving:false,stream:null,loop:false,loadedDate:'',conflicts:new Map(),unmatched:0,reviewUnknown:[],writeHold:false,editing:new Set()};
 const status=x=>{const s=String(x??'').toLowerCase();return ['p','present'].includes(s)?'Present':['a','absent'].includes(s)?'Absent':['l','leave'].includes(s)?'Leave':''};
 const matchRecord=(r,s)=>{const rid=String(r.studentId??r.student_id??'');return rid?rid===id(s):!!enr(s)&&String(r.enrlNo??r.enrollmentNo??r.enrollment??'')===enr(s)};
 function verifiedCard(raw){let card;try{card=JSON.parse(String(raw||''))}catch(_){return {error:'Unrecognized QR format: use an official LAMA student ID card'}}const session=LamaAPI.getSession?.();if(!card||card.type!=='lama-student-card'||Number(card.v)!==1||String(card.schoolId||'')!==String(session?.schoolId||'')||!card.studentId||!String(card.enrlNo||'').trim()||!String(card.class||'').trim())return {error:'Invalid or different-school student card'};const student=state.students.find(s=>id(s)===String(card.studentId));if(!student)return {error:'Student not found in this school register'};if(enr(student)!==String(card.enrlNo).trim()||cls(student).toLowerCase()!==String(card.class).trim().toLowerCase())return {error:'Card details do not match school records'};return {student}}
@@ -85,7 +93,7 @@ function inspectSavedDayAttendance(rows,students,day){
   if(records.length>1){conflicts.set(key,records);continue;}
   const row=records[0],value=status(row.status);
   if(!value){conflicts.set(key,records);continue;}
-  chosen.set(key,{status:value,recordId:String(row.id??row._id??'')});
+  chosen.set(key,{status:value,savedStatus:value,recordId:String(row.id??row._id??'')});
  }
  return {chosen,conflicts,unknown};
 }
@@ -114,6 +122,20 @@ function recentAttendance(student){
 function message(s,error=false){$('notice').textContent=s;$('notice').className=error?'error':''}
 function classStudents(){const selected=$('class').value;return state.students.filter(s=>!selected||cls(s)===selected)}
 function visible(){return classStudents().filter(s=>(!$('search').value||[s.name,enr(s),s.fatherName].join(' ').toLowerCase().includes($('search').value.toLowerCase()))&&(!$('filter').value||(state.chosen.get(id(s))?.status||'Unmarked')===$('filter').value))}
+function studentGender(student){
+ const raw=String(student?.gender??student?.sex??student?.studentGender??'').trim().toLowerCase();
+ if(['male','m','boy','boys'].includes(raw))return 'boy';
+ if(['female','f','girl','girls'].includes(raw))return 'girl';
+ return 'unspecified';
+}
+function genderTotals(students){
+ const totals={boys:0,girls:0,unspecified:0};
+ for(const student of students){
+  const group=studentGender(student);
+  if(group==='boy')totals.boys++;else if(group==='girl')totals.girls++;else totals.unspecified++;
+ }
+ return totals;
+}
 function enable(){const ready=state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!registerNeedsReview();$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
 function render(){enable();const all=classStudents(),rows=visible(),count=x=>all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
  const review=$('reviewDetails');
@@ -129,19 +151,70 @@ function render(){enable();const all=classStudents(),rows=visible(),count=x=>all
  }else if(state.writeHold)review.textContent='⚠ Previous write result unverified. Check the original sheet, backup and audit before continuing.';
  else review.textContent='';
  $('classContext').textContent=$('class').value?'Class '+$('class').value+' only · '+$('date').value+' · Totals, register, coverage and follow-up are for this class.':'All classes · '+$('date').value+' · Whole-school totals.';
- $('summary').innerHTML=[['Students',state.rosterReady?all.length:'—'],['Present',state.historyReady?count('Present'):'—'],['Absent',state.historyReady?count('Absent'):'—'],['Leave',state.historyReady?count('Leave'):'—'],['Needs review',state.historyReady?all.filter(s=>state.conflicts.has(id(s))).length:'—'],['Unmarked',state.historyReady?all.length-count('Present')-count('Absent')-count('Leave')-all.filter(s=>state.conflicts.has(id(s))).length:'—']].map(([k,v])=>'<div class="panel"><div class="muted">'+k+'</div><h2>'+v+'</h2></div>').join('');
+ const summaryGroups=[
+  ['Students',all,state.rosterReady],
+  ['Present',all.filter(s=>state.chosen.get(id(s))?.status==='Present'),state.historyReady],
+  ['Absent',all.filter(s=>state.chosen.get(id(s))?.status==='Absent'),state.historyReady],
+  ['Leave',all.filter(s=>state.chosen.get(id(s))?.status==='Leave'),state.historyReady],
+  ['Unmarked',all.filter(s=>!state.chosen.get(id(s))?.status&&!state.conflicts.has(id(s))),state.historyReady],
+  ['Needs review',all.filter(s=>state.conflicts.has(id(s))),state.historyReady]
+ ];
+ $('summary').innerHTML=summaryGroups.map(([label,group,ready])=>{
+  const g=genderTotals(group);
+  const details=ready?'Boys: '+g.boys+' · Girls: '+g.girls+(g.unspecified?' · Gender not specified: '+g.unspecified:''):'Gender counts unavailable';
+  return '<div class="panel attendance-summary-card"><div class="muted">'+label+'</div><h2>'+ (ready?group.length:'—') +'</h2><p class="gender-breakdown">'+details+'</p></div>';
+ }).join('');
  $('count').textContent=rows.length+' visible of '+all.length+($('class').value?' students in '+$('class').value:' students in the school')+(registerNeedsReview()?' · ⚠ requires administrator review':state.historyReady?' · saved attendance verified':' · roster preview only');
- $('list').innerHTML=rows.map(s=>{const k=id(s),v=state.chosen.get(k)?.status||'';return '<div class="student"><div><strong>'+escapeHtml(s.name||'Unnamed')+'</strong> <span class="muted">('+escapeHtml(enr(s))+')</span><div class="muted">'+escapeHtml(cls(s))+' · '+escapeHtml(s.fatherName||s.fatherGuardian||'')+'</div></div><div class="controls">'+['Present','Absent','Leave'].map(x=>'<button data-id="'+escapeHtml(k)+'" data-status="'+x+'" class="'+(v===x?'selected '+x.toLowerCase():'')+'" '+(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview()?'disabled':'')+'>'+x+'</button>').join('')+'</div></div>'}).join('');
+ $('list').innerHTML=rows.map(s=>{
+  const k=id(s),entry=state.chosen.get(k)||{},v=entry.status||'';
+  const saved=!!entry.recordId,editing=state.editing.has(k);
+  const blocked=!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview();
+  const canMark=!blocked&&(!saved||editing);
+  const editButton=saved?'<button type="button" data-edit="'+escapeHtml(k)+'" class="attendance-edit-btn" '+(blocked?'disabled':'')+'>'+(editing?'Cancel edit':'Edit attendance')+'</button>':'';
+  const savedLabel=editing?'<small class="muted">Saved: '+escapeHtml(entry.savedStatus||v)+' · Choose correction, then Save changes</small>':'';
+  const gender=studentGender(s),genderLabel=gender==='boy'?'Boy':gender==='girl'?'Girl':'Gender not specified';
+  return '<div class="student"><div><strong>'+escapeHtml(s.name||'Unnamed')+'</strong> <span class="muted">('+escapeHtml(enr(s))+')</span><div class="muted">'+escapeHtml(cls(s))+' · '+escapeHtml(genderLabel)+' · '+escapeHtml(s.fatherName||s.fatherGuardian||'')+'</div>'+savedLabel+'</div><div class="controls">'+editButton+['Present','Absent','Leave'].map(x=>'<button data-id="'+escapeHtml(k)+'" data-status="'+x+'" class="'+(v===x?'selected '+x.toLowerCase():'')+'" '+(!canMark?'disabled':'')+'>'+x+'</button>').join('')+'</div></div>';
+ }).join('');
  const classes=[...new Set(all.map(cls))];$('coverage').innerHTML=classes.map(c=>{const ss=all.filter(s=>cls(s)===c),marked=ss.filter(s=>state.chosen.get(id(s))?.status).length;return state.historyReady?'<p><strong>'+escapeHtml(c)+'</strong>: '+marked+' / '+ss.length+' verified ('+(ss.length?Math.round(marked/ss.length*100):0)+'%)</p>':'<p><strong>'+escapeHtml(c)+'</strong>: Attendance unverified</p>'}).join('');
  $('followup').innerHTML=!state.historyReady?'<p class="muted">Parent follow-up unavailable until attendance is verified.</p>':all.filter(s=>['Absent','Leave'].includes(state.chosen.get(id(s))?.status)).map(s=>{const raw=String(s.whatsapp||s.contact||s.guardianCell||'').replace(/\D/g,'');const n=raw.startsWith('0')&&raw.length===11?'92'+raw.slice(1):raw;const valid=/^\d{10,15}$/.test(n);const body='Dear Parent/Guardian, '+(s.name||'your child')+' is recorded '+state.chosen.get(id(s)).status+' on '+$('date').value+'. Please contact the school if assistance is needed. Thank you.';return '<div class="student"><div><strong>'+escapeHtml(s.name)+' · '+escapeHtml(cls(s))+'</strong><div class="muted">Previous 7 calendar days (saved records): '+escapeHtml(recentAttendance(s))+'</div></div><div class="controls">'+(valid?'<a target="_blank" rel="noopener" href="https://wa.me/'+n+'?text='+encodeURIComponent(body)+'">Prepare WhatsApp</a><a href="tel:+'+n+'">Call parent</a>':'<span class="muted">No valid parent number</span>')+'<button type="button" data-confirm-contact="'+escapeHtml(id(s))+'">Record confirmed parent contact</button></div></div>'}).join('')||'<p class="muted">No absent or on-leave students in the current register.</p>';
 }
 $('followup').addEventListener('click',async event=>{const button=event.target.closest('button[data-confirm-contact]');if(!button)return;const key=button.dataset.confirmContact,student=state.students.find(s=>id(s)===key),marked=state.chosen.get(key)?.status,date=state.loadedDate;if(!student||!['Absent','Leave'].includes(marked)||!state.historyReady||registerNeedsReview()||date!==$('date').value||state.dirty.size||qrSaving||state.saving){message('Save and verify attendance before recording parent contact.',true);return}if(!confirm('Confirm that you actually contacted the parent of '+student.name+'. This will save a follow-up record, not send a WhatsApp message.'))return;button.disabled=true;try{const record=await LamaAPI.add('notifications',{title:'Attendance parent follow-up — '+date,message:'School staff confirmed contact with the parent/guardian about '+marked.toLowerCase()+' attendance.',studentId:String(student.id??student._id??key),class:cls(student),section:student.section||'',date,attendanceStatus:marked,notificationType:'attendanceFollowupContact',channel:'Manual confirmation',status:'Contact confirmed',createdAt:new Date().toISOString()});if(!record||!record.id)throw Error('Backend did not return a saved notification ID. Verify before retrying.');message('Parent contact record saved for '+student.name+'. No WhatsApp delivery is claimed.')}catch(error){message('Parent contact record not verified: '+error.message,true)}finally{button.disabled=false}});
 $('bulkPortalNotify').onclick=async()=>{const label=$('bulkPortalStatus'),date=state.loadedDate;if(portalPublishing||qrSaving||state.saving||state.loading||!state.historyReady||date!==$('date').value||state.dirty.size||registerNeedsReview()){label.textContent='Save and verify attendance before publishing.';return}const recipients=classStudents().filter(student=>['Absent','Leave'].includes(state.chosen.get(id(student))?.status));if(!recipients.length){label.textContent='No saved absent or leave students for this date.';return}portalPublishing=true;render();try{label.textContent='Checking existing portal notifications…';const result=await timeout(LamaAPI.list('notifications'),'Notification preflight');const existing=array(result);if(!existing)throw Error('Could not verify existing notifications. Nothing published.');const key=student=>String(student.id??student._id??id(student));const already=new Set(existing.filter(n=>asDate(n.date)===date&&n.notificationType==='attendanceFollowup'&&n.studentId).map(n=>String(n.studentId)));const pending=recipients.filter(student=>!already.has(key(student)));if(!pending.length){label.textContent='All '+recipients.length+' student notices already exist. No duplicates created.';return}if(!confirm('Publish '+pending.length+' new portal notices for '+date+'? '+(recipients.length-pending.length)+' already exist. Keep this page open. No WhatsApp or push delivery is claimed.')){label.textContent='Cancelled; nothing published.';return}let saved=0;for(const student of pending){const st=state.chosen.get(id(student)).status;label.textContent='Publishing '+saved+'/'+pending.length+' new student notices…';const rec=await LamaAPI.add('notifications',{title:'Attendance follow-up — '+date,message:'Dear Parent/Guardian, '+(student.name||'your child')+' was recorded '+st.toLowerCase()+' on '+date+'. Please contact the school if clarification is needed.',studentId:key(student),enrlNo:enr(student),class:cls(student),section:student.section||'',date,attendanceStatus:st,notificationType:'attendanceFollowup',channel:'Portal',status:'Published',isPublished:true,createdAt:new Date().toISOString()});if(!rec||!rec.id)throw Error('Record '+(saved+1)+' returned no ID; verify notifications before retrying.');saved++}label.textContent='✓ '+saved+' student portal records created. Portal visibility and push delivery require separate verification.';}catch(error){label.textContent='Stopped: '+error.message+' Refresh and review saved notifications before any retry; earlier records may have been created.';}finally{portalPublishing=false;render()}};
-function choose(k,v){if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;const old=state.chosen.get(k)||{};if(old.status===v)return;state.chosen.set(k,{...old,status:v});state.dirty.add(k);render()}
-$('list').onclick=e=>{const b=e.target.closest('button[data-id]');if(b)choose(b.dataset.id,b.dataset.status)};
+function choose(k,v){
+ if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;
+ const old=state.chosen.get(k)||{};
+ if(old.recordId&&!state.editing.has(k))return;
+ if(old.status===v)return;
+ state.chosen.set(k,{...old,status:v});
+ if(old.recordId&&v===old.savedStatus)state.dirty.delete(k);
+ else state.dirty.add(k);
+ render();
+}
+function toggleAttendanceEdit(k){
+ if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;
+ const entry=state.chosen.get(k);
+ if(!entry?.recordId)return;
+ const student=state.students.find(s=>id(s)===k);
+ if(state.editing.has(k)){
+  state.editing.delete(k);
+  state.dirty.delete(k);
+  state.chosen.set(k,{...entry,status:entry.savedStatus});
+  message('Edit cancelled for '+(student?.name||'student')+'. Original saved attendance restored on screen.');
+ }else{
+  state.editing.add(k);
+  message('Editing '+(student?.name||'student')+' · saved '+entry.savedStatus+'. Select the correct status and press Save changes.');
+ }
+ render();
+}
+$('list').onclick=event=>{
+ const edit=event.target.closest('button[data-edit]');
+ if(edit){toggleAttendanceEdit(edit.dataset.edit);return;}
+ const button=event.target.closest('button[data-id]');
+ if(button)choose(button.dataset.id,button.dataset.status);
+};
 ['class','filter','search'].forEach(x=>$(x).addEventListener(x==='search'?'input':'change',render));
 function timeout(p,label){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error(label+' timed out after 40 seconds')),40000);Promise.resolve(p).then(x=>{clearTimeout(t);resolve(x)},e=>{clearTimeout(t);reject(e)})})}
-async function load(){if(state.loading||state.saving)return;state.loading=true;state.loadedDate='';state.historyReady=false;state.rosterReady=false;state.dirty.clear();state.chosen.clear();state.conflicts.clear();state.unmatched=0;state.reviewUnknown=[];stop();message('');const begin=Date.now();$('progress').value=0;$('stage').textContent='Connecting to school records…';render();const tick=setInterval(()=>{$('elapsed').textContent='Elapsed: '+Math.floor((Date.now()-begin)/1000)+'s';if(!$('progress').value)$('progress').value=10},500);
+async function load(){if(state.loading||state.saving)return;state.loading=true;state.loadedDate='';state.historyReady=false;state.rosterReady=false;state.dirty.clear();state.editing.clear();state.chosen.clear();state.conflicts.clear();state.unmatched=0;state.reviewUnknown=[];stop();message('');const begin=Date.now();$('progress').value=0;$('stage').textContent='Connecting to school records…';render();const tick=setInterval(()=>{$('elapsed').textContent='Elapsed: '+Math.floor((Date.now()-begin)/1000)+'s';if(!$('progress').value)$('progress').value=10},500);
  try{
   const requests=await Promise.allSettled([timeout(LamaAPI.list('students'),'Student roster').then(v=>{const a=array(v);if(!a)throw Error('Invalid roster response');state.students=a.filter(s=>id(s));state.rosterReady=true;const previous=$('class').value;$('class').innerHTML='<option value="">All classes</option>'+[...new Set(state.students.map(cls))].sort().map(c=>'<option value="'+escapeHtml(c)+'">'+escapeHtml(c)+'</option>').join('');
    const desired=requestedClassPending?attendanceRequest.className:previous;

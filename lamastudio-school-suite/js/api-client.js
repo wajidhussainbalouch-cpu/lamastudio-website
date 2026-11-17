@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = (action === 'quranV11ProvisionStudentAuth' || action === 'quranV12RecoveryPreview' || action === 'quranV12RecoveryCommit') || (['quranV9ApproveGuardian','quranV9RevokeGuardian','quranV9ListGuardianLinks'].includes(action) && !!sessionStorage.getItem('lama_school_admin_auth')) || ((action.startsWith('quranV8') || action === 'quranV13GetAssessment') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = (action === 'quranV11ProvisionStudentAuth' || action === 'quranV12RecoveryPreview' || action === 'quranV12RecoveryCommit') || (['quranV9ApproveGuardian','quranV9RevokeGuardian','quranV9ListGuardianLinks'].includes(action) && !!sessionStorage.getItem('lama_school_admin_auth')) || ((action.startsWith('quranV8') || action === 'quranV13GetAssessment' || action === 'quranV14GetLearnerReport' || action === 'quranV14ClassDashboard') && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = action === 'quranV11StudentLogout' ? getSession('student') :
       action === 'quranV13SaveAssessment' ? getSession('teacher') :
       (schoolScoped ? (getSession('school') || getSession()) : getSession());
@@ -113,6 +113,14 @@ const LamaAPI = (() => {
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
+    // v14: reports use existing School Suite student IDs and read-only data.
+    // Server separately verifies teacher class/section or school administrator.
+    quranV14GetLearnerReport:async targetStudentId=>
+      (await callApi('quranV14GetLearnerReport',{targetStudentId},'POST')).result,
+    quranV14ClassDashboard:async (className,section,offset=0,limit=25)=>
+      (await callApi('quranV14ClassDashboard',{className,section,offset,limit},'POST')).result,
+    quranV14GuardianReport:(schoolId,guardianToken,targetStudentId)=>
+      guardianPublicCall('quranV14GuardianReport',{schoolId,guardianToken,targetStudentId}),
     // v13: server verifies existing assigned teacher and school class+section;
     // this is not automatic Tajweed or Hifz certification.
     quranV13SaveAssessment:async details=>(await callApi('quranV13SaveAssessment',details,'POST')).result,

@@ -91,7 +91,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 </section>
 <section class="overview-grid" aria-label="Teacher quick overview">
  <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">My Students</span><strong id="statStudents">—</strong><div class="overview-gender-line"><span>👦 Boys <b id="statStudentsBoys">—</b></span><span>👧 Girls <b id="statStudentsGirls">—</b></span></div><small id="statStudentsGender">Class roster pending</small></div>
- <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small></div>
+ <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small><small id="statClassAttendanceStatus" class="attendance-completion-label">Today’s attendance is loading…</small></div>
  <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Homework published today by subject</small><div id="homeworkSubjectChecklist" class="homework-checklist" role="status">Loading subjects…</div></div>
  <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><div class="overview-gender-line"><span>👦 Boys <b id="statAbsentBoys">—</b></span><span>👧 Girls <b id="statAbsentGirls">—</b></span></div><small id="statAbsentGender">Saved attendance not verified</small></div>
  <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><div class="overview-gender-line"><span>👦 Boys <b id="statPresentBoys">—</b></span><span>👧 Girls <b id="statPresentGirls">—</b></span></div><small id="statPresentGender">Saved attendance not verified</small></div>
@@ -235,6 +235,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
         .tab-btn { font-size: 11px; font-weight: 900; text-transform: uppercase; padding: 8px 14px; border-radius: 10px; background: #1e293b; color: #94a3b8; transition: all .15s; }
         .tab-btn.active { background: #4f46e5; color: white; }
     
+.attendance-completion-label{margin-top:7px;font-weight:750!important;line-height:1.5}.attendance-completion-label.attendance-complete{color:#8decc4!important}.attendance-completion-label.attendance-incomplete{color:#ffd38e!important}.attendance-completion-label.attendance-unverified{color:#cbd8e1!important}
 .overview-gender-line{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 3px;width:100%}
 .overview-gender-line span{font-size:11px;color:#deedf2;background:#0d2b34;border:1px solid #46697770;border-radius:8px;padding:6px;min-width:0}
 .overview-gender-line b{display:block;font-size:18px;color:#f3fcff;margin-top:2px}
@@ -333,7 +334,13 @@ function showAttendanceFeedback(){
  if(!attendanceReady){span.textContent='⚠ Saved attendance unavailable'+(attendanceIssue?': '+attendanceIssue:'')+'. Marking is disabled until verified.';span.className='text-xs teacher-attendance-uncertain';return}
  if(snap.duplicates.size||snap.unmatched.length){span.textContent='⚠ '+snap.duplicates.size+' duplicate student(s) and '+snap.unmatched.length+' unmatched row(s) need administrator review. Do not overwrite them.';span.className='text-xs teacher-attendance-review';return}
  if(draftAttendance.size){span.textContent=draftAttendance.size+' unsaved change(s). Tap Save changes, then wait for verification.';span.className='text-xs text-amber-200';return}
- span.textContent='✓ Saved attendance verified for '+$('attDate').value+'. '+(attendanceSaveNote||'You may edit an existing mark.');span.className='text-xs text-emerald-300';
+ const saved=snap.unique.size,total=myStudents.length;
+ const completed=total>0&&saved===total&&draftAttendance.size===0;
+ const messageText=completed?'✓ Attendance completed and verified: '+saved+' / '+total+' students on '+$('attDate').value:
+   saved?'◐ Register verified; '+saved+' / '+total+' students saved on '+$('attDate').value+'. Attendance is not yet complete.':
+   '○ Register verified but attendance has not been marked for '+$('attDate').value+'.';
+ span.textContent=messageText+(attendanceSaveNote?' '+attendanceSaveNote:'');
+ span.className='text-xs '+(completed?'text-emerald-300':saved?'text-amber-200':'text-rose-200');
 }
 function showTeacherHomeworkStatus(day=localDate()){
  const el=$('homeworkSubjectChecklist'),counter=$('statHomework');
@@ -352,7 +359,22 @@ function updateStats(){
  $('statStudentsBoys').textContent=rosterReady?boys:'—';$('statStudentsGirls').textContent=rosterReady?girls:'—';
  $('statBoys').textContent=rosterReady?boys:'—';
  $('statGirls').textContent=rosterReady?girls:'—';
- $('genderMissingNote').textContent=!rosterReady?'Roster unavailable':unknown?unknown+' without recorded gender':'Assigned class';
+  $('genderMissingNote').textContent=!rosterReady?'Roster unavailable':unknown?unknown+' without recorded gender':'Assigned class';
+ const todaySnap=attendanceSnapshot(localDate()),savedToday=todaySnap.unique.size;
+ const cardStatus=$('statClassAttendanceStatus');
+ if(!rosterReady||!attendanceReady||attendanceUncertain){
+  cardStatus.textContent='Today’s attendance not verified';
+  cardStatus.className='attendance-completion-label attendance-unverified';
+ }else if(todaySnap.duplicates.size||todaySnap.unmatched.length){
+  cardStatus.textContent='Today’s attendance needs administrator review';
+  cardStatus.className='attendance-completion-label attendance-incomplete';
+ }else if(myStudents.length&&savedToday===myStudents.length&&!(draftAttendance.size&&$('attDate').value===localDate())){
+  cardStatus.textContent='✓ Today’s attendance completed · '+savedToday+' / '+myStudents.length+' saved';
+  cardStatus.className='attendance-completion-label attendance-complete';
+ }else{
+  cardStatus.textContent='○ Today’s attendance '+savedToday+' / '+myStudents.length+' saved'+(draftAttendance.size&&$('attDate').value===localDate()?' · unsaved changes pending':'');
+  cardStatus.className='attendance-completion-label attendance-incomplete';
+ }
  $('statSection').textContent=(me.assignedSection||me.section?'Section '+(me.assignedSection||me.section)+' · ':'')+(rosterReady?myStudents.length+' students':'Class roster unavailable');
  showTeacherHomeworkStatus();
  if(!attendanceReady||attendanceUncertain){

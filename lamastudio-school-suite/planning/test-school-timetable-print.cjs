@@ -56,6 +56,21 @@ assert.match(class1,/Urdu/);
 assert.ok(!class1.includes('Quran Shareef'),'A class-specific page must not include another class');
 const withCalendar=print.printMarkup({school,records,scope:'all',calendar:true,calendarMonth:'November 2026',calendarContent:'<b>Mon</b>',calendarEvents:'<p>No events</p>'});
 assert.match(withCalendar,/Academic Calendar — November 2026/);
+const cleanCalendar=print.printMarkup({
+ school,records,scope:'all',calendar:true,calendarMonth:'November 2026',
+ calendarContent:'<b>Mon</b>',
+ calendarItems:[
+  {type:'Holiday',title:'Iqbal Day',start:'2026-11-09',end:'2026-11-09',description:'School closed'},
+  {type:'School Event',title:'<script>alert(1)</script>',start:'2026-11-17',end:'2026-11-17',description:'<img src=x onerror=alert(1)>'}
+ ]
+});
+assert.match(cleanCalendar,/Iqbal Day/);
+assert.match(cleanCalendar,/School closed/);
+assert.doesNotMatch(cleanCalendar,/<button|data-edit-event|data-remove-event/,'Printed event list must not contain admin editing controls');
+assert.doesNotMatch(cleanCalendar,/<script>alert\(1\)<\/script>|<img src=x onerror=alert\(1\)>/,'Event descriptions must be escaped');
+assert.match(cleanCalendar,/&lt;script&gt;/);
+assert.match(planning,/calendarItems:data\('event'\)/,'Printed calendar uses event data rather than the editable DOM');
+assert.match(html,/choose <strong>A4<\/strong>/,'Mobile print controls must explain selecting A4 rather than Letter');
 assert.ok(!all.includes('print-calendar-block'),'Calendar printing must be optional');
 assert.equal(print.safeLogo({logo:'javascript:alert(1)'}),'');
 assert.equal(print.safeLogo({logo:'data:image/svg+xml,<svg onload=alert(1)>'}),'');

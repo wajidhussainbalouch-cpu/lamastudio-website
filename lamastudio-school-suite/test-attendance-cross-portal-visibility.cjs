@@ -6,6 +6,8 @@ const root=__dirname;
 const admin=fs.readFileSync(path.join(root,'attendance/student-attendance-v2.html'),'utf8');
 const teacher=fs.readFileSync(path.join(root,'portals/teacher/index.html'),'utf8');
 const helper=fs.readFileSync(path.join(root,'js/teacher-register-helpers.js'),'utf8');
+const server=fs.readFileSync(path.join(root,'backend-api/bulk-attendance-backend.gs'),'utf8');
+assert.match(server,/ctx\.ss\.getSpreadsheetTimeZone\(\)/,'The bulk attendance backend must match legacy dates in the school sheet timezone');
 function between(text,a,b){const start=text.indexOf(a),end=text.indexOf(b,start+a.length);assert.ok(start>=0&&end>start,'Missing source '+a);return text.slice(start,end)}
 const parts=[
  between(admin,'const id=s=>','const asDate=v=>'),

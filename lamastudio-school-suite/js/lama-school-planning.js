@@ -111,10 +111,13 @@ $('sessionForm').onsubmit=async e=>{
   // indistinguishable academic sessions.
   const latest=await LamaAPI.list('resources');
   if(!Array.isArray(latest))throw Error('Cannot verify existing sessions. No session was saved.');
-  if(sessionDuplicate(p,editingId,latest))
-   throw Error('This academic session name already exists. Use its Edit button instead of creating a duplicate.');
-  if(editingId&&!sessionRecords(latest).some(s=>String(s.id)===String(editingId)))
+  const prior=editingId?sessionRecords(latest).find(s=>String(s.id)===String(editingId)):null;
+  if(editingId&&!prior)
    throw Error('The session being edited no longer exists. Refresh before saving.');
+  // Permit correction/deactivation of already duplicated legacy sessions,
+  // while refusing any new duplicate session name.
+  if((!editingId||sessionKey(prior.name)!==sessionKey(p.name))&&sessionDuplicate(p,editingId,latest))
+   throw Error('This academic session name already exists. Use its Edit button instead of creating a duplicate.');
   if(p.active&&sessionRecords(latest).some(s=>String(s.id)!==String(editingId)&&s.active))
    throw Error('Deactivate the previous active session before activating another.');
   attemptedWrite=true;

@@ -430,35 +430,113 @@ function showStudentRecord(id){
  for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const a=attendance.find(x=>String(x.studentId)===String(st.id)&&String(x.date).slice(0,10)===date);const item=document.createElement('div');item.className='week-day';const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=a?.status||'Not marked';status.dataset.status=a?.status||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
  const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows saved records only. To mark or change attendance, open the Attendance tab.';el.append(note);el.scrollIntoView({behavior:'smooth',block:'nearest'})
 }
-function loadAttendanceList(){const day=$('attDate').value;const el=$('attendanceList');$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);el.innerHTML=myStudents.map(s=>{const a=attendance.find(x=>String(x.studentId)===String(s.id)&&x.date===day);const status=a?.status||'';return `<div class="flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="${esc(s.id)}"><span class="text-xs font-bold">${esc(s.name)} <span class="text-slate-400">(${esc(s.enrlNo||s.enrollmentNo||'—')})</span></span><div class="flex gap-2 items-center">${contact(s)}${['Present','Absent','Leave'].map(x=>`<button class="att-btn ${status===x?'att-active-'+x.toLowerCase():''}" data-status="${x}" onclick="setAttStatus(this,'${x}')">${x}</button>`).join('')}</div></div>`}).join('')}
-function setAttStatus(btn,status){const row=btn.closest('[data-student-id]');row.querySelectorAll('.att-btn').forEach(x=>x.className='att-btn');btn.className='att-btn att-active-'+status.toLowerCase()}
+function loadAttendanceList(){
+ const day=$('attDate').value,el=$('attendanceList');
+ $('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);
+ const snap=attendanceSnapshot(day),blocked=!attendanceReady||attendanceSaving||attendanceUncertain||snap.duplicates.size>0||snap.unmatched.length>0;
+ el.innerHTML=myStudents.map(student=>{
+  const id=TeacherRegister.rosterId(student),saved=snap.unique.get(id),duplicate=snap.duplicates.has(id);
+  const current=draftAttendance.get(id)||saved?.status||'',isEditing=editingAttendance.has(id);
+  const savedStatus=saved?.status||'',isSaved=!!saved;
+  const markable=!blocked&&(!isSaved||isEditing)&&!duplicate;
+  const statusLine=duplicate?'⚠ Duplicate saved entries need administrator review':
+    draftAttendance.has(id)?'● Unsaved change (previous: '+(savedStatus||'Unmarked')+')':
+    isSaved?'Saved: '+savedStatus:'Not marked';
+  const guardian=TeacherRegister.guardian(student);
+  const info='Enrollment: '+(TeacherRegister.enrollment(student)||'—')+' · Parent/Guardian: '+guardian;
+  return '<div class="att-row flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(id)+'">'+
+    '<div class="student-label"><strong class="text-xs font-bold">'+esc(student.name||'Unnamed student')+'</strong>'+
+    '<div class="attendance-note">'+esc(info)+'</div><div class="attendance-note '+(duplicate?'teacher-attendance-review':'')+'">'+esc(statusLine)+'</div></div>'+
+    '<div class="att-actions flex gap-2 items-center">'+
+    (isSaved?'<button type="button" class="attendance-correction" data-edit-id="'+esc(id)+'" '+(blocked?'disabled':'')+'>'+(isEditing?'Cancel edit':'✎ Edit attendance')+'</button>':'')+
+    contact(student)+
+    ['Present','Absent','Leave'].map(value=>'<button type="button" class="att-btn '+(current===value?'att-active-'+value.toLowerCase():'')+'" data-status="'+value+'" data-id="'+esc(id)+'" aria-pressed="'+(current===value)+'" '+(markable?'':'disabled')+'>'+value+'</button>').join('')+
+    '</div></div>';
+ }).join('');
+}
+function setAttStatus(btn,status){
+ if(attendanceSaving||!attendanceReady||attendanceUncertain)return;
+ const row=btn.closest('[data-student-id]');if(!row||btn.disabled)return;
+ const key=row.dataset.studentId,snap=attendanceSnapshot($('attDate').value);
+ if(snap.duplicates.size||snap.unmatched.length||snap.duplicates.has(key))return;
+ const current=snap.unique.get(key);
+ if(current&&!editingAttendance.has(key))return;
+ if(!['Present','Absent','Leave'].includes(status))return;
+ if(status===current?.status)draftAttendance.delete(key);
+ else draftAttendance.set(key,status);
+ for(const cell of row.querySelectorAll('.att-btn')){
+  const selected=cell.dataset.status===status;
+  cell.className='att-btn'+(selected?' att-active-'+status.toLowerCase():'');
+  cell.setAttribute('aria-pressed',String(selected));
+ }
+ const text=row.querySelector('.attendance-note:last-child');
+ if(text)text.textContent=draftAttendance.has(key)?'● Unsaved change (previous: '+(current?.status||'Unmarked')+')':current?'Saved: '+current.status:'Not marked';
+ updateStats();
+}
+function toggleTeacherAttendanceEdit(key){
+ if(!attendanceReady||attendanceSaving||attendanceUncertain)return;
+ const snap=attendanceSnapshot($('attDate').value);
+ if(snap.duplicates.size||snap.unmatched.length)return;
+ const existing=snap.unique.get(key);if(!existing)return;
+ if(editingAttendance.has(key)){editingAttendance.delete(key);draftAttendance.delete(key)}
+ else editingAttendance.add(key);
+ loadAttendanceList();updateStats();
+}
+$('attendanceList').addEventListener('click',event=>{
+ const edit=event.target.closest('button[data-edit-id]');
+ if(edit){toggleTeacherAttendanceEdit(edit.dataset.editId);return}
+ const btn=event.target.closest('button[data-status]');
+ if(btn)setAttStatus(btn,btn.dataset.status);
+});
+function renderTeacherStats(){
+ const day=$('attDate').value,stats=TeacherRegister.totals(myStudents,attendanceSnapshot(day),draftAttendance);
+ const info=$('teacherAttendanceStats');if(!info)return;
+ const text=entry=>entry.total+' (boys '+entry.boys+', girls '+entry.girls+(entry.unspecified?', unspecified '+entry.unspecified:'')+')';
+ info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Students '+text(stats.Students)+
+  ' · Present '+text(stats.Present)+' · Absent '+text(stats.Absent)+' · Leave '+text(stats.Leave)+
+  ' · Unmarked '+text(stats.Unmarked)+(stats.Review.total?' · Needs review '+stats.Review.total:'')+
+  (draftAttendance.size?' · '+draftAttendance.size+' UNSAVED preview':'');
+}
 async function saveAttendance(){
- if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment');
- const day=$('attDate').value;if(!day)return message('Choose date');
- const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
- if(saveButton?.disabled)return;
- if(saveButton){saveButton.disabled=true;saveButton.dataset.previousText=saveButton.textContent;saveButton.textContent='Saving attendance…'}
- let ok=0,fail=0;const errors=[];
+ if(attendanceSaving)return;
+ if(!me.schoolId||!me.assignedClass)return message('Missing school/class assignment.');
+ const day=$('attDate').value;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return message('Choose a valid attendance date.');
+ const snap=attendanceSnapshot(day);
+ if(!attendanceReady||attendanceUncertain||snap.duplicates.size||snap.unmatched.length){
+  $('teacherAttendanceStatus').textContent='Cannot save until the stored register is verified and duplicate records are resolved.';
+  return;
+ }
+ const expected=new Map(draftAttendance);
+ if(!expected.size){$('teacherAttendanceStatus').textContent='No attendance changes to save.';return}
+ if(expected.size>myStudents.length){$('teacherAttendanceStatus').textContent='Attendance selection invalid; no records submitted.';return}
+ if(day!==selectedAttendanceDay)return message('Selected attendance date changed. Load the correct date before saving.');
+ const edits=[...expected].filter(([id])=>snap.unique.has(id)).length;
+ if(!confirm('Submit '+expected.size+' attendance change(s) for Class '+me.assignedClass+' on '+day+'? '+edits+' existing saved mark(s) will be corrected.'))return;
+ const records=[...expected].map(([id,status])=>{
+  const student=myStudent(id);
+  if(!student||!['Present','Absent','Leave'].includes(status))throw Error('Invalid student or status; no attendance submitted.');
+  return {studentId:id,enrlNo:TeacherRegister.enrollment(student),status};
+ });
+ attendanceSaving=true;updateStats();
+ let requestStarted=false;
  try{
-  for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){
-   const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');
-   if(!student||!btn)continue;
-   const old=attendance.find(x=>String(x.studentId)===String(student.id)&&String(x.date).slice(0,10)===day);
-   const status=btn.dataset.status;
-   try{
-    if(old){
-     // Existing records must only receive editable fields; the server rejects reassignment keys.
-     await LamaAPI.update('attendance',old.id,{status,date:day,teacherId:me.teacherId||me.id});
-    }else{
-     await LamaAPI.add('attendance',{schoolId:me.schoolId,class:me.assignedClass,section:me.assignedSection||me.section||'',studentId:student.id,enrlNo:student.enrlNo||student.enrollmentNo||'',studentName:student.name,date:day,status,teacherId:me.teacherId||me.id});
-    }
-    ok++;
-   }catch(e){fail++;errors.push(student.name+': '+(e.message||'Unknown error'));console.error('Attendance save failed',e)}
-  }
-  try{await refresh()}catch(e){errors.push('Reload failed: '+e.message)}
-  const detail=errors.length?'\n'+errors.slice(0,3).join('\n')+(errors.length>3?'\nAnd '+(errors.length-3)+' more errors.':''):'';
-  message('Attendance saved: '+ok+'. Failed: '+fail+'.'+(fail?' Review errors below.':'')+detail);
- }finally{if(saveButton){saveButton.disabled=false;saveButton.textContent=saveButton.dataset.previousText||'Save'}}
+  requestStarted=true;
+  const result=await LamaAPI.bulkAttendance(day,records);
+  if(!result||Number(result.saved)!==records.length)throw Error('Bulk save response did not confirm all requested records.');
+  // Do not reload the entire student roster after a successful write.
+  await loadSavedAttendance(expected);
+  $('teacherAttendanceStatus').textContent='✓ '+records.length+' attendance change(s) saved and verified against Google Sheets.';
+ }catch(error){
+  if(requestStarted)attendanceUncertain=true;
+  attendanceIssue=error.message;
+  attendanceReady=false;
+  $('teacherAttendanceStatus').textContent='⚠ Save result not verified: '+error.message+'. '+expected.size+' selected mark(s) remain visible. Use Verify saved attendance; do not submit the same batch again.';
+  console.warn('Teacher attendance write/readback unverified',error);
+ }finally{
+  attendanceSaving=false;
+  renderAll();
+ }
 }
 function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
 function loadHomework(){let items=homework.filter(h=>mine(h));const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':'Draft'}</p></div><button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button></div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}

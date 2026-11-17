@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false;
+let rows=[],teachers=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -135,7 +135,78 @@ $('eventForm').onsubmit=async e=>{e.preventDefault();try{const p={sessionId:fiel
 $('clearPeriod').onclick=()=>{$('periodForm').reset();$('periodId').value=''};$('clearEvent').onclick=()=>{$('eventForm').reset();$('eventId').value=''};$('clearSession').onclick=()=>{$('sessionForm').reset();$('sessionId').value='';status('Ready to add a new academic session.')};
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const pingId=b.getAttribute('data-ping-period');if(pingId){(async()=>{try{authorized();const p=data('period').find(x=>x.id===pingId);if(!p?.teacherId)throw Error('No assigned teacher');const msg='Period reminder: '+p.day+' '+p.start+'–'+p.end+', '+p.subject+', Class '+p.grade+(p.section?' '+p.section:'')+'.';await LamaAPI.pingTeacher(p.teacherId,msg);status('In-app teacher ping queued. This does not send WhatsApp.')}catch(err){status('Ping failed: '+err.message)}})();return}for(const kind of ['period','session','event']){const editId=b.getAttribute('data-edit-'+kind),removeId=b.getAttribute('data-remove-'+kind);if(editId){edit(kind,editId);return}if(removeId){remove(kind,removeId).catch(err=>status(err.message));return}}});
 for(const id of ['viewSession','viewGrade','viewDay'])$(id).onchange=render;
-$('prevMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('nextMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};$('reload').onclick=load;$('print').onclick=()=>window.print();
-async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load()}
+$('prevMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('nextMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};$('reload').onclick=load;$('print').onclick=printTimetable;
+function printProfileFallback(){
+ const schoolRole=role==='school';
+ return {
+  name:session?.schoolName||session?.instituteName||(schoolRole?session?.name:'')||'',
+  logo:session?.schoolLogo||session?.logo||session?.logoUrl||''
+ };
+}
+async function printProfile(){
+ if(printSchoolProfile)return printSchoolProfile;
+ const fallback=printProfileFallback();
+ if(adminMode&&typeof LamaAPI.getActiveSchool==='function'){
+  try{
+   const school=await LamaAPI.getActiveSchool();
+   if(school&&typeof school==='object'){
+    printSchoolProfile={...fallback,...school,
+     name:school.name||school.schoolName||fallback.name,
+     logo:school.logo||school.logoUrl||school.schoolLogo||fallback.logo};
+   }
+  }catch(error){console.warn('School branding unavailable; using logged-in school profile',error)}
+ }
+ return printSchoolProfile||(printSchoolProfile=fallback);
+}
+function buildTimetablePrint(profile){
+ const selectedSession=activeSession();
+ const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
+ const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p));
+ const mode=field('printScope');
+ const cls=field('viewGrade');
+ const calendarIncluded=$('printCalendar').checked;
+ const calMonth=$('monthTitle').textContent;
+ return LamaTimetablePrint.printMarkup({
+  school:profile,
+  schoolFallback:printProfileFallback(),
+  sessionName:name,
+  records:periods,
+  scope:mode,
+  selectedClass:cls,
+  calendar:calendarIncluded,
+  calendarMonth:calMonth,
+  calendarContent:$('monthGrid').innerHTML,
+  calendarEvents:$('eventRows').innerHTML
+ });
+}
+async function printTimetable(){
+ const button=$('print');
+ if(button.disabled)return;
+ button.disabled=true;
+ const original=button.textContent;
+ button.textContent='Preparing school timetable…';
+ try{
+  const profile=await printProfile();
+  const output=buildTimetablePrint(profile);
+  $('printSheet').innerHTML=output;
+  const img=$('printSheet').querySelector('img.print-school-logo');
+  if(img&&typeof img.decode==='function'){
+   // A logo that cannot load should not prevent the timetable from printing.
+   await Promise.race([img.decode().catch(()=>{}),new Promise(resolve=>setTimeout(resolve,1800))]);
+  }
+  window.print();
+ }catch(error){
+  status('Print view not opened: '+error.message);
+ }finally{
+  button.disabled=false;
+  button.textContent=original;
+ }
+}
+window.addEventListener('beforeprint',()=>{
+ // Support the browser's own Print command without exposing the editable UI.
+ try{$('printSheet').innerHTML=buildTimetablePrint(printSchoolProfile||printProfileFallback())}
+ catch(error){status('Unable to prepare print: '+error.message)}
+});
+async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

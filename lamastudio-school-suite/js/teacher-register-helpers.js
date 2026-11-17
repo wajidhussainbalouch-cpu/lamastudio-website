@@ -155,8 +155,8 @@ function calendarDayState(date,{students=[],records=[],today,verified=false,cale
  const total=students.length;
  if(marked===total&&total>0&&review===0)return {state:'marked',marked,total,holiday};
  if(marked>0||review>0)return {state:'partial',marked,total,holiday,review};
- if(!calendarReady)return {state:'unavailable',marked:0,total,holiday};
  if(holiday)return {state:'holiday',marked:0,total,holiday};
+ if(!calendarReady)return {state:'unavailable',marked:0,total,holiday};
  return {state:total?'unmarked':'unavailable',marked:0,total,holiday};
 }
 function monthDays(yyyyMm){

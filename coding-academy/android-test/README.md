@@ -54,3 +54,12 @@ This file includes all four course modules plus 150-question scores. Prior four-
 ## v0.16: actionable help after a wrong answer
 
 The independent v0.16 Android TEST build introduces offline, English/Urdu lesson recommendations. Start Practice Questions, answer one question incorrectly, and tap the Practise this idea link to open a relevant lesson. The home screen lists outstanding mistakes by topic. A lesson still locked in the foundation course redirects to the next unlocked lesson, so recommendations never bypass course progression. After a correct retry, the weak-area entry disappears. No login or remote analysis is involved. Test links on a real phone before any production release.
+
+
+## v0.18 owner test — clear onboarding and staged private profiles
+
+The v0.18 Android test app adds an optional **1-minute English/Urdu walkthrough**. Open the home page, tap New here? See the 1-minute app guide, move through the three screens, then tap Start my first lesson. The walkthrough never requires registration or uploads learner records. Verify that the dialog and new sidebar are usable with touch and device back/keyboard controls.
+
+The Account page also includes a **private learner profile** form (optional display name and English/Urdu preference), but it remains unavailable until a dedicated Supabase backend passes real RLS and privacy tests. A staged SQL setup and contract tests are included; do not claim the form is live, or enter real learner data during pre-release testing.
+
+This package uses `pk.lamastudio.codingacademy.testing.v18`; it is separately installable from v0.17. Transfer existing progress only via the user-controlled Complete Academy Backup.

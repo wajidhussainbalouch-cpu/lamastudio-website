@@ -12,7 +12,7 @@ function harness(readbackOk){
   "const day='2026-11-17';",
   "const me={schoolId:'school-1',assignedClass:'1'};",
   "const myStudents=roster;",
-  "let attendanceSaving=false,attendanceReady=true,attendanceUncertain=false,attendanceIssue='',attendanceSaveNote='';",
+  "let attendanceSaving=false,attendanceReady=true,attendanceUncertain=false,attendanceWriteUncertain=false,attendanceIssue='',attendanceSaveNote='';",
   "let draftAttendance=new Map(roster.map(s=>[s.id,'Present']));",
   "let editingAttendance=new Set(),selectedAttendanceDay=day;",
   "const status={textContent:''};",
@@ -24,11 +24,11 @@ function harness(readbackOk){
   "const message=t=>{throw Error('Unexpected message: '+t)};",
   "let requests=0,reads=0,rendered=0;",
   "const LamaAPI={bulkAttendance:async(date,records)=>{assert.equal(date,day);assert.equal(records.length,51);assert.ok(records.every(x=>x.status==='Present'));requests++;return {saved:records.length,updated:0,inserted:records.length}}};",
-  "const loadSavedAttendance=async(expected)=>{reads++;assert.equal(expected.size,51);if(!readbackOk)throw Error('Student register timed out after 20 seconds');draftAttendance.clear();editingAttendance.clear();};",
+  "const loadSavedAttendance=async(expected)=>{reads++;assert.equal(expected.size,51);if(!readbackOk)throw Error('Student register timed out after 20 seconds');draftAttendance.clear();editingAttendance.clear();attendanceWriteUncertain=false;};",
   "const updateStats=()=>{};",
   "const renderAll=()=>{rendered++};",
   saveCode,
-  "globalThis.output={saveAttendance,readState:()=>({requests,reads,rendered,attendanceReady,attendanceUncertain,attendanceIssue,dirty:draftAttendance.size,saving:attendanceSaving,status:status.textContent})};"
+  "globalThis.output={saveAttendance,readState:()=>({requests,reads,rendered,attendanceReady,attendanceUncertain,attendanceWriteUncertain,attendanceIssue,dirty:draftAttendance.size,saving:attendanceSaving,status:status.textContent})};"
  ].join('\n');
  const context={roster,assert,readbackOk,console:{warn(){}}};
  vm.runInNewContext(source,context);
@@ -42,11 +42,13 @@ function harness(readbackOk){
  assert.equal(good.dirty,0);
  assert.equal(good.attendanceReady,true);
  assert.equal(good.attendanceUncertain,false);
+ assert.equal(good.attendanceWriteUncertain,false,'Verified readback resolves write hold');
  const fail=harness(false);await fail.saveAttendance();
  const pending=fail.readState();
  assert.equal(pending.requests,1);
  assert.equal(pending.dirty,51,'Do not throw away 51 selected marks on readback timeout');
  assert.equal(pending.attendanceUncertain,true);
+ assert.equal(pending.attendanceWriteUncertain,true,'Readback timeout retains a write-uncertain hold');
  assert.equal(pending.attendanceReady,false);
  assert.match(pending.status,/not verified/i);
  await fail.saveAttendance();

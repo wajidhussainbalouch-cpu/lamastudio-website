@@ -245,7 +245,7 @@ function myStudent(id){return myStudents.find(s=>String(s.id)===String(id))}
 function mine(r){return norm(r.teacherId)===norm(me.teacherId||me.id)}
 function published(r){return r.isPublished===true||r.published===true||norm(r.status)==='published'||norm(r.status)==='sent'}
 function message(t){alert(t)}
-function switchTab(t){if(t==='absentees'&&!attendanceSaving&&!draftAttendance.size)verifyTeacherAttendance();document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
+function switchTab(t){if(t==='absentees'){loadAbsentees();if(!attendanceSaving&&!draftAttendance.size)verifyTeacherAttendance();}document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
 function handleLogout(){LamaAPI.logout('teacher');location.replace('../../main-dashboard.html')}
 function updateTeacherOverview(){
  $('welcomeTeacher').textContent=(me.name||'Teacher').split(/\s+/)[0];
@@ -470,7 +470,7 @@ function setAttStatus(btn,status){
  }
  const text=row.querySelector('.attendance-note:last-child');
  if(text)text.textContent=draftAttendance.has(key)?'● Unsaved change (previous: '+(current?.status||'Unmarked')+')':current?'Saved: '+current.status:'Not marked';
- updateStats();
+ renderTeacherStats();updateStats();
 }
 function toggleTeacherAttendanceEdit(key){
  if(!attendanceReady||attendanceSaving||attendanceUncertain)return;
@@ -479,7 +479,7 @@ function toggleTeacherAttendanceEdit(key){
  const existing=snap.unique.get(key);if(!existing)return;
  if(editingAttendance.has(key)){editingAttendance.delete(key);draftAttendance.delete(key)}
  else editingAttendance.add(key);
- loadAttendanceList();updateStats();
+ loadAttendanceList();renderTeacherStats();updateStats();
 }
 $('attendanceList').addEventListener('click',event=>{
  const edit=event.target.closest('button[data-edit-id]');

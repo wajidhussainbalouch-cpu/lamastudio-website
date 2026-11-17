@@ -636,7 +636,8 @@ function setAttStatus(btn,status){
   cell.className='att-btn'+(selected?' att-active-'+status.toLowerCase():'');
   cell.setAttribute('aria-pressed',String(selected));
  }
- const text=row.querySelector('.attendance-note:last-child');
+ // The saved-status note is followed by a badge; :last-child never matches it.
+ const text=row.querySelectorAll('.attendance-note')[1]||null;
  if(text)text.textContent=draftAttendance.has(key)?'● Unsaved change (previous: '+(current?.status||'Unmarked')+')':current?'Saved: '+current.status:'Not marked';
  const badge=row.querySelector('.att-save-badge');
  if(badge){badge.textContent=draftAttendance.has(key)?'● Unsaved change':current?'✓ Saved and verified':'○ Not marked';badge.classList.toggle('att-pending',draftAttendance.has(key));}

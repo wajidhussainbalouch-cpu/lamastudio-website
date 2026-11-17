@@ -1,0 +1,23 @@
+name: Academic Session Safe Delete and Duplicate Prevention
+on:
+  push:
+    branches:
+      - 'fix/planning-academic-sessions-safe-delete-20261117'
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/planning/index.html'
+      - 'lamastudio-school-suite/js/lama-school-planning.js'
+      - 'lamastudio-school-suite/planning/test-academic-session-safe-delete.cjs'
+      - 'lamastudio-school-suite/planning/test-academic-session-duplicate-save.cjs'
+      - '.github/workflows/planning-session-safety.yml'
+permissions:
+  contents: read
+jobs:
+  academic-session-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected deletion and exact-record confirmation
+        run: node lamastudio-school-suite/planning/test-academic-session-safe-delete.cjs
+      - name: Verify duplicate prevention and no double-save
+        run: node lamastudio-school-suite/planning/test-academic-session-duplicate-save.cjs

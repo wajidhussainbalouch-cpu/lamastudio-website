@@ -53,6 +53,21 @@ assert.equal(saved[1][3],'HASH(19:t1)');
 assert.equal(saved[1][4],'NEW_KEY','Old teacher API key must be rotated');
 assert.equal(writes,1);assert.equal(audits,1);assert.equal(locked,false);
 assert.ok(tokenValidated>=1);
+const photoSource=section(backend,'function validateTeacherPhoto_(value){','/** School-admin-only password reset');
+const validatePhoto=new Function('Utilities',photoSource+'return validateTeacherPhoto_;')({
+ base64Decode:x=>Array.from(Buffer.from(x,'base64'),v=>v>=128?v-256:v)
+});
+function dummyJpeg(width,height,bytes){
+ const data=Buffer.alloc(bytes);
+ data.set([255,216,255,192,0,17,8,(height>>8)&255,height&255,(width>>8)&255,width&255,3,1,17,0,2,17,0,3,17,0],0);
+ data[bytes-2]=255;data[bytes-1]=217;
+ return 'data:image/jpeg;base64,'+data.toString('base64');
+}
+assert.equal(validatePhoto(dummyJpeg(600,800,18*1024)).length>100,true,'Correctly sized JPEG accepted');
+assert.throws(()=>validatePhoto(dummyJpeg(601,800,18*1024)),/exactly 600/);
+assert.throws(()=>validatePhoto(dummyJpeg(600,800,14*1024)),/15 KB/);
+assert.throws(()=>validatePhoto(dummyJpeg(600,800,31*1024)),/30 KB/);
+assert.throws(()=>validatePhoto('https://example.com/portrait.jpg'),/not a photo URL/);
 assert.match(backend,/collection==='teachers'\)records=records\.map\(safeTeacherPublicRecord_\)/);
 assert.match(backend,/collection==='teachers'\?safeTeacherPublicRecord_\(r\):r/);
 assert.match(api,/resetTeacherPassword:async\(teacherId,newPassword\)/);

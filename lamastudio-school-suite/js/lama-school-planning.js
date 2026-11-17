@@ -176,7 +176,7 @@ function buildTimetablePrint(profile){
   calendar:calendarIncluded,
   calendarMonth:calMonth,
   calendarContent:$('monthGrid').innerHTML,
-  calendarEvents:$('eventRows').innerHTML
+  calendarItems:data('event').filter(event=>event.sessionId===selectedSession&&allowed(event)&&event.published!==false).sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')))
  });
 }
 async function printTimetable(){

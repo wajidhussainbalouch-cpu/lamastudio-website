@@ -54,7 +54,7 @@ function weeklyMatrix(records){
  return '<table class="school-timetable weekly-matrix"><caption class="sr-print">Weekly subject grid by day and period</caption>'+
   thead+'<tbody>'+tbody+'</tbody></table>';
 }
-function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',calendar=false,calendarMonth='',calendarContent='',calendarEvents=''}={}){
+function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null}={}){
  const profile={...schoolFallback,...school};
  const name=schoolName(profile);
  const logo=safeLogo(profile);
@@ -82,9 +82,18 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  }else throw Error('Unrecognized timetable print option.');
  let calendarSection='';
  if(calendar){
+  // Print from event data, not on-screen editable admin row markup.
+  // This prevents Edit/Delete controls leaking into the PDF.
+  const printableEvents=Array.isArray(calendarItems)?
+   (calendarItems.length?calendarItems.map(event=>
+    '<div><strong>'+esc(event.type||'Event')+'</strong> · '+esc(event.title||'Untitled')+
+    ' · '+esc(event.start||'')+' – '+esc(event.end||'')+
+    (event.description?' · '+esc(event.description):'')+'</div>').join(''):
+    '<p>No events for this session.</p>'):
+   calendarEvents;
   calendarSection='<section class="print-calendar-block"><h3>Academic Calendar'+(calendarMonth?' — '+esc(calendarMonth):'')+'</h3>'+
    '<div class="print-calendar-grid">'+calendarContent+'</div>'+
-   '<h4>Events and holidays</h4><div class="print-events">'+calendarEvents+'</div></section>';
+   '<h4>Events and holidays</h4><div class="print-events">'+printableEvents+'</div></section>';
  }
  const meta='<div class="print-meta"><span>Academic session: <b>'+esc(sessionName||'Not selected')+
   '</b></span><span>'+esc(description)+'</span><span>Printed '+esc(shownDate)+'</span></div>';

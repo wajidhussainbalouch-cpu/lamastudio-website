@@ -50,6 +50,88 @@ function admin(){try{return JSON.parse(sessionStorage.getItem('lama_school_admin
 function identity(){const s=session(),a=admin();schoolId=String(s.schoolId||a.schoolId||'').trim();$('schoolName').textContent=s.name||s.schoolName||a.schoolName||a.name||'School Teacher Management';$('schoolId').textContent=schoolId?'School ID: '+schoolId:'School ID unavailable';return Boolean(schoolId&&(s.apiKey||a.token))}
 function display(){const q=$('search').value.trim().toLowerCase();const items=teachers.filter(t=>[t.name,t.loginId,t.email,t.subject,t.assignedClass].join(' ').toLowerCase().includes(q));$('teachers').replaceChildren();if(!items.length){const p=document.createElement('p');p.className='muted';p.textContent=!loaded?'Teacher records could not be verified because the database request failed.':q?'No teachers match your search.': 'No teacher records available. Use Add Teacher to create the first account.';$('teachers').append(p);return}for(const t of items){const row=document.createElement('div');row.className='teacher';const name=document.createElement('strong');name.textContent=t.name||'Unnamed teacher';const detail=document.createElement('span');detail.className='muted';detail.textContent=[t.loginId||t.id,t.assignedClass,t.assignedSection,t.subject,t.status].filter(Boolean).join(' • ');const edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.style.marginTop='10px';edit.textContent='Assign / Change Class';edit.onclick=()=>openAssignment(t);const profileBtn=document.createElement('button');profileBtn.type='button';profileBtn.className='secondary';profileBtn.style.margin='10px 0 0 8px';profileBtn.textContent='Edit / Status';profileBtn.onclick=()=>openProfile(t);row.append(name,detail,edit,profileBtn);$('teachers').append(row)}}
 const profileFields=['name','email','contact','subject','designation','qualification','experience','joiningDate','dob','gender','cnic','emergencyContact','address','whatsapp','staffCode','employmentType','specialization','emergencyContactName'];
+
+function safePhotoSource(value){
+ const source=String(value||'').trim();
+ return /^(https:\/\/[^\s"'<>]+|data:image\/(?:jpeg|png|gif|webp);base64,[a-z0-9+/=\s-]+)$/i.test(source)?source:'';
+}
+function showPhoto(prefix,value,description){
+ const img=$(prefix+'_photoPreview'),status=$(prefix+'_photoStatus'),safe=safePhotoSource(value);
+ if(safe){img.src=safe;img.classList.remove('hidden');}
+ else{img.removeAttribute('src');img.classList.add('hidden');}
+ status.textContent=description||(safe?'Current teacher photo loaded. Choose another photo to replace it.':'No photo selected. Select from gallery or camera.');
+}
+async function processTeacherPhoto(prefix,file){
+ const profile=prefix==='p';
+ if(profile?profilePhotoBusy:newPhotoBusy)return;
+ if(profile)profilePhotoBusy=true;else newPhotoBusy=true;
+ const status=$(prefix+'_photoStatus'),save=$(profile?'saveProfile':'save');
+ save.disabled=true;status.textContent='Resizing and compressing teacher photo…';
+ try{
+  if(typeof LamaTeacherPhotos==='undefined')throw Error('Photo processor unavailable. Refresh while online.');
+  const result=await LamaTeacherPhotos.resize(file);
+  if(profile){profilePhoto=result.dataUrl;profilePhotoChanged=true;}
+  else newTeacherPhoto=result.dataUrl;
+  showPhoto(prefix,result.dataUrl,'Photo ready: 600 × 800 pixels · '+(result.size/1024).toFixed(1)+' KB (JPEG).');
+ }catch(error){
+  status.textContent='Photo not changed: '+error.message;
+  notice(error.message,true,profile?'profileStatus':'formStatus');
+ }finally{
+  if(profile)profilePhotoBusy=false;else newPhotoBusy=false;
+  save.disabled=busy;
+  $(prefix+'_photoGallery').value='';
+  $(prefix+'_photoCamera').value='';
+ }
+}
+for(const prefix of ['p','new']){
+ for(const type of ['Gallery','Camera']){
+  $(prefix+'_photo'+type).addEventListener('change',event=>{
+   const file=event.target.files&&event.target.files[0];
+   if(file)processTeacherPhoto(prefix,file);
+  });
+ }
+ $(prefix+'_photoRemove').onclick=()=>{
+  if(prefix==='p'){profilePhoto='';profilePhotoChanged=true;showPhoto('p','','Photo removal will be applied when you save the profile.');}
+  else{newTeacherPhoto='';showPhoto('new','','Photo removed from this new account.');}
+ };
+}
+document.addEventListener('click',event=>{
+ const button=event.target.closest('button[data-password-toggle]');
+ if(!button)return;
+ const field=$(button.dataset.passwordToggle);
+ if(!field)return;
+ field.type=field.type==='password'?'text':'password';
+ button.textContent=field.type==='text'?'Hide':'Show';
+});
+$('copyTeacherLogin').onclick=()=>{
+ const value=$('p_loginId').value;
+ if(!value)return;
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(value)
+  .then(()=>notice('Teacher login ID copied.',false,'profileStatus'))
+  .catch(()=>notice('Select the username and copy it manually.',true,'profileStatus'));
+ else notice('Select the username and copy it manually.',true,'profileStatus');
+};
+$('resetTeacherPassword').onclick=async()=>{
+ if(!selectedTeacher||busy)return;
+ if(typeof LamaAPI.resetTeacherPassword!=='function'){notice('The published Apps Script version does not yet support password reset.',true,'profileStatus');return;}
+ const fresh=$('p_newPassword').value,confirmation=$('p_confirmPassword').value;
+ if(fresh.length<8||fresh.length>128||!/[A-Za-z]/.test(fresh)||!/\d/.test(fresh)||fresh!==confirmation){
+  notice('New password must contain 8–128 characters with a letter and number, and both entries must match.',true,'profileStatus');return;
+ }
+ const teacherId=selectedTeacher.id,displayName=selectedTeacher.name||'teacher';
+ if(!confirm('Reset '+displayName+' password? Existing teacher sessions will be revoked.'))return;
+ busy=true;$('resetTeacherPassword').disabled=true;
+ notice('Resetting teacher password securely…',false,'profileStatus');
+ try{
+  const result=await LamaAPI.resetTeacherPassword(teacherId,fresh);
+  if(!result||result.reset!==true||String(result.teacherId)!==String(teacherId))throw Error('Backend did not confirm the password change.');
+  $('p_newPassword').value='';$('p_confirmPassword').value='';
+  $('p_newPassword').type='password';$('p_confirmPassword').type='password';
+  notice('Password reset confirmed. Username: '+(result.loginId||$('p_loginId').value)+'. Share the new password privately; old teacher sessions were revoked.',false,'profileStatus');
+ }catch(error){
+  notice('Password reset not verified: '+error.message+'. Check the account before retrying.',true,'profileStatus');
+ }finally{busy=false;$('resetTeacherPassword').disabled=false;}
+};
 function openProfile(t){selectedTeacher=t;profilePhoto=String(t.photo||'');profilePhotoChanged=false;$('p_loginId').value=String(t.loginId||t.id||'');$('p_newPassword').value='';$('p_confirmPassword').value='';$('profileTeacher').textContent=(t.name||'Teacher')+' • '+(t.loginId||t.id||'');for(const f of profileFields){$('p_'+f).value=String(t[f]||'').slice(0,300)}showPhoto('p',profilePhoto);$('profilePanel').classList.remove('hidden');$('profileStatus').classList.add('hidden');$('suspendTeacher').disabled=t.status==='Suspended'||t.status==='Deleted';$('restoreTeacher').disabled=t.status==='Active';$('deleteTeacher').disabled=t.status==='Deleted';$('profilePanel').scrollIntoView({behavior:'smooth',block:'start'})}
 async function updateProfile(patch,success){if(!selectedTeacher||busy)return;const id=selectedTeacher.id;busy=true;$('saveProfile').disabled=true;notice('Saving teacher changes…',false,'profileStatus');try{await LamaAPI.update('teachers',id,patch);selectedTeacher=null;$('profilePanel').classList.add('hidden');busy=false;await refresh();notice(success)}catch(e){notice('Changes were not confirmed: '+e.message,true,'profileStatus')}finally{busy=false;$('saveProfile').disabled=false}}
 $('closeProfile').onclick=()=>{$('profilePanel').classList.add('hidden');selectedTeacher=null};

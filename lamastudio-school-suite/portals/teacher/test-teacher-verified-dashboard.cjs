@@ -1,5 +1,6 @@
 'use strict';
 // Uses synthetic students and saved attendance only. No network or school data.
+process.env.TZ='Asia/Karachi';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -22,6 +23,7 @@ const saved=[
  {id:'r2',studentId:'b',date:day,status:'Absent'}
 ];
 assert.equal(h.day(day+'T00:00:00.000Z'),day);
+assert.equal(h.day('2026-11-16T22:30:00Z'),day,'Homework entered after midnight Pakistan time counts on the correct local day');
 assert.equal(h.guardian(students[0]),'Guardian A');
 assert.equal(h.countGender(students).boys,1);
 assert.equal(h.countGender(students).girls,1);

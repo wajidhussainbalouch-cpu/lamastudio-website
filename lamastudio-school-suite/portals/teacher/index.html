@@ -7,6 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../../assets/css/config.css">
 <script src="../../js/api-client.js"></script>
+<script src="../../js/teacher-register-helpers.js"></script>
 <style id="teacher-modern-ui">
 :root{--ink:#f5f9ff;--muted:#a6b6cd;--line:rgba(156,188,230,.17)}
 body{background:radial-gradient(circle at 10% 0%,#17314f 0,transparent 36%),radial-gradient(circle at 92% 14%,#173c49 0,transparent 34%),#081425!important}
@@ -45,7 +46,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 /* Student records, weekly history and non-obstructive mobile controls. */
 .student-directory{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px}.student-directory-item{display:flex;align-items:center;gap:12px;text-align:left;padding:14px;background:#142c35;border:1px solid #537c7b66;border-radius:16px;color:#f6ffff;min-width:0}.student-directory-item:hover,.student-directory-item:focus-visible{border-color:#69d4ba;background:#1a3b40}.student-directory-item span:nth-child(2){min-width:0;flex:1}.student-directory-item strong,.student-directory-item small{display:block;overflow-wrap:anywhere}.student-directory-item small{color:#b7cbcd;margin-top:4px;font-size:12px}.student-avatar{width:52px;height:52px;border-radius:13px;background:#285c63;display:grid;place-items:center;flex-shrink:0;overflow:hidden;font-size:24px}.student-avatar img{width:100%;height:100%;object-fit:cover}.student-view{font-size:12px;color:#b9e8db;white-space:nowrap}.student-details{margin-top:16px;padding:20px;background:#10242e;border:1px solid #5e999060;border-radius:18px}.student-details h3{font-weight:850;font-size:20px}.student-details h4{font-weight:800;margin:20px 0 12px}.student-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:15px}.student-facts>div{padding:12px;border-radius:11px;background:#ffffff0a;border:1px solid #ffffff16}.student-facts small,.student-facts strong{display:block}.student-facts small{color:#a7c1c5;font-size:11px}.student-facts strong{margin-top:5px;overflow-wrap:anywhere}.week-attendance{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}.week-day{padding:10px 4px;border-radius:10px;background:#ffffff0b;text-align:center;border:1px solid #ffffff17}.week-day small,.week-day strong{display:block;font-size:11px}.week-day strong{font-size:10px;margin-top:6px;overflow-wrap:anywhere;color:#bccbd0}.week-day strong[data-status="Present"]{color:#70e0ac}.week-day strong[data-status="Absent"]{color:#ff8e9d}.week-day strong[data-status="Leave"]{color:#ffd08a}.student-note{font-size:12px;color:#b3c8cb;margin-top:12px}.leave-request-link{display:inline-flex;align-items:center;justify-content:center;min-height:45px;margin:16px 16px 24px auto;padding:11px 17px;border-radius:13px;background:#168a81;color:white;text-decoration:none;font-weight:800;box-shadow:0 8px 18px #0003;width:max-content;max-width:calc(100% - 32px)}.leave-request-link:focus-visible{outline:3px solid #ffd68c;outline-offset:3px}
 @media(max-width:620px){.week-attendance{grid-template-columns:repeat(4,minmax(0,1fr))}.student-directory{grid-template-columns:1fr}.student-details{padding:14px}.student-view{font-size:11px}}
-</style></head>
+.homework-checklist{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;max-height:120px;overflow:auto}.homework-subject{display:inline-flex;gap:4px;align-items:center;border:1px solid #ffffff25;border-radius:8px;padding:4px 6px;font-size:10px;color:#e8f5f2;background:#102b31}.homework-subject.done{background:#145645;border-color:#4aaf83}.attendance-correction{border:1px solid #7f97a1;color:#bff1ec;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:800}.attendance-correction:disabled,.att-btn:disabled{opacity:.5;cursor:not-allowed}.attendance-note{font-size:11px;color:#b0c9c7;display:block}.att-btn{min-height:42px;touch-action:manipulation}.teacher-attendance-review{color:#ffd28f}.teacher-attendance-uncertain{color:#ffc0b6}.att-row{min-width:0}.att-row .student-label{min-width:0;overflow-wrap:anywhere}@media(max-width:620px){.att-row{align-items:flex-start!important}.att-row .att-actions{width:100%;flex-wrap:wrap;justify-content:flex-start}.att-row .att-actions .att-btn{flex:1 1 22%;min-width:65px}.overview-tile:has(#homeworkSubjectChecklist){min-height:160px}}</style></head>
 <body class="bg-[#081425] text-slate-100 font-sans min-h-screen">
 
     <!-- Header -->
@@ -89,11 +90,11 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="hero-decoration" aria-hidden="true"><span>✦</span><div class="hero-circle">📚</div><small>INSPIRE · TEACH · GROW</small></div>
 </section>
 <section class="overview-grid" aria-label="Teacher quick overview">
- <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">My Students</span><strong id="statStudents">—</strong><small>Assigned class</small></div>
+ <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">My Students</span><strong id="statStudents">—</strong><small id="statStudentsGender">Boys — · Girls —</small></div>
  <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small></div>
- <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Entries posted</small></div>
- <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><small>Attendance alerts</small></div>
- <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small>Saved student attendance</small></div>
+ <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Homework published today by subject</small><div id="homeworkSubjectChecklist" class="homework-checklist" role="status">Loading subjects…</div></div>
+ <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><small id="statAbsentGender">Boys — · Girls —</small></div>
+ <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small id="statPresentGender">Boys — · Girls —</small></div>
  <div class="overview-tile"><span class="tile-icon">👦👧</span><span class="tile-label">Boys &amp; Girls</span><div class="flex items-center gap-5 mt-2"><div><small>Boys</small><strong id="statBoys" class="block">—</strong></div><div class="h-10 w-px bg-slate-600" aria-hidden="true"></div><div><small>Girls</small><strong id="statGirls" class="block">—</strong></div></div><small id="genderMissingNote">Assigned class</small></div>
 </section>
 <section class="employee-panel" aria-label="Employee identity card">
@@ -131,9 +132,12 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
                 <h2 class="text-xs font-black uppercase text-cyan-400">Mark Attendance</h2>
                 <div class="flex items-center gap-2">
                     <input type="date" id="attDate" class="bg-slate-950 border border-slate-700 text-white text-xs rounded-xl px-3 py-2">
-                    <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
+                    <button id="saveTeacherAttendance" onclick="saveAttendance()" disabled class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save changes</button>
                 </div>
             </div>
+            <p class="text-xs text-slate-300">Only your assigned class. Previously saved marks are locked until you tap <strong>Edit attendance</strong>. Tap Save changes to submit corrections, then Verify saved attendance to check the Google Sheet.</p>
+            <div class="flex flex-wrap gap-2 items-center"><button type="button" id="verifyTeacherAttendance" class="bg-teal-700 hover:bg-teal-600 text-white font-bold text-xs px-4 py-2 rounded-xl">↻ Verify saved attendance</button><span id="teacherAttendanceStatus" role="status" aria-live="polite" class="text-xs text-amber-200">Loading saved class attendance…</span></div>
+            <div id="teacherAttendanceStats" class="text-xs text-slate-300" aria-live="polite"></div>
             <div id="attendanceList" class="space-y-2"></div>
             <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
         </section>

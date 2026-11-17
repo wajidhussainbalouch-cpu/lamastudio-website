@@ -3,11 +3,16 @@
 const str=value=>String(value??'').trim();
 const norm=value=>str(value).toLowerCase();
 function day(value){
- if(value instanceof Date&&!Number.isNaN(value.valueOf()))
-  return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-');
- const valueString=str(value);
- const m=valueString.match(/^(\d{4}-\d{2}-\d{2})(?:$|[T\s])/);
- return m?m[1]:'';
+ const localDate=x=>[x.getFullYear(),String(x.getMonth()+1).padStart(2,'0'),String(x.getDate()).padStart(2,'0')].join('-');
+ if(value instanceof Date&&!Number.isNaN(value.valueOf()))return localDate(value);
+ const raw=str(value);
+ if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
+ if(/^\d{4}-\d{2}-\d{2}[T\s]/.test(raw)){
+  const parsed=new Date(raw);
+  if(!Number.isNaN(parsed.valueOf()))return localDate(parsed);
+  return raw.slice(0,10);
+ }
+ return '';
 }
 function gender(student){
  const text=norm(student?.gender??student?.sex);

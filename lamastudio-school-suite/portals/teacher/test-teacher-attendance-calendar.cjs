@@ -32,6 +32,7 @@ assert.equal(state('2026-11-08',[]).state,'holiday','Sunday defaults to school h
 assert.equal(state('2026-11-07',[]).state,'unmarked','Saturday must not be assumed closed');
 assert.equal(state('2026-11-07',[],{weeklyOff:[0,6]}).state,'holiday','Configured Saturday closure is gray');
 assert.equal(state('2026-11-09',[]).state,'holiday','Iqbal Day 9 Nov appears gray when unmarked');
+assert.equal(state('2026-11-09',[],{calendarReady:false}).state,'holiday','Known Iqbal Day remains gray when optional school calendar times out');
 assert.match(state('2026-11-09',[]).holiday,/Iqbal/);
 assert.equal(state('2026-11-09',saved.map(record=>({...record,date:'2026-11-09'}))).state,'marked','Saved school marks take priority over holiday highlighting');
 assert.equal(state('2026-11-18',[]).state,'holiday','Published holiday from school calendar is gray');
@@ -63,7 +64,7 @@ assert.match(html,/class="att-save-badge/);
 assert.match(html,/function selectTeacherAttendanceDate\(next\)/);
 assert.match(html,/data-calendar-day/);
 assert.match(html,/id="teacherAttendanceStats" class="attendance-day-stats"/);
-assert.match(html,/Saturday remains a school day unless configured/);
+assert.match(html,/Saturday is closed only when configured/);
 const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(Boolean);
 for(const inline of scripts)new vm.Script(inline,{filename:'teacher/index.html inline'});
 console.log('PASS: teacher photo validation, guardian, class boy/girl cards, calendar date actions and all saved/partial/unmarked/holiday/unverified states.');

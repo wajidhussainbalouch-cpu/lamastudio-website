@@ -92,7 +92,7 @@ function inspectSavedDayAttendance(rows,students,day){
   if(records.length>1){conflicts.set(key,records);continue;}
   const row=records[0],value=status(row.status);
   if(!value){conflicts.set(key,records);continue;}
-  chosen.set(key,{status:value,savedStatus:value,recordId:String(row.id??row._id??'')});
+  chosen.set(key,{status:value,savedStatus:value,saved:true,recordId:String(row.id??row._id??'')});
  }
  return {chosen,conflicts,unknown};
 }
@@ -166,7 +166,7 @@ function render(){enable();const all=classStudents(),rows=visible(),count=x=>all
  $('count').textContent=rows.length+' visible of '+all.length+($('class').value?' students in '+$('class').value:' students in the school')+(registerNeedsReview()?' · ⚠ requires administrator review':state.dirty.size?' · '+state.dirty.size+' unsaved change(s): totals are a preview until Save changes':state.historyReady?' · saved attendance verified':' · roster preview only');
  $('list').innerHTML=rows.map(s=>{
   const k=id(s),entry=state.chosen.get(k)||{},v=entry.status||'';
-  const saved=!!entry.recordId,editing=state.editing.has(k);
+  const saved=entry.saved===true||!!entry.recordId,editing=state.editing.has(k);
   const blocked=!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview();
   const canMark=!blocked&&(!saved||editing);
   const editButton=saved?'<button type="button" data-edit="'+escapeHtml(k)+'" class="attendance-edit-btn" '+(blocked?'disabled':'')+'>'+(editing?'Cancel edit':'Edit attendance')+'</button>':'';
@@ -182,17 +182,17 @@ $('bulkPortalNotify').onclick=async()=>{const label=$('bulkPortalStatus'),date=s
 function choose(k,v){
  if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;
  const old=state.chosen.get(k)||{};
- if(old.recordId&&!state.editing.has(k))return;
+ if((old.saved===true||old.recordId)&&!state.editing.has(k))return;
  if(old.status===v)return;
  state.chosen.set(k,{...old,status:v});
- if(old.recordId&&v===old.savedStatus)state.dirty.delete(k);
+ if((old.saved===true||old.recordId)&&v===old.savedStatus)state.dirty.delete(k);
  else state.dirty.add(k);
  render();
 }
 function toggleAttendanceEdit(k){
  if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;
  const entry=state.chosen.get(k);
- if(!entry?.recordId)return;
+ if(!(entry?.saved===true||entry?.recordId))return;
  const student=state.students.find(s=>id(s)===k);
  if(state.editing.has(k)){
   state.editing.delete(k);
@@ -240,7 +240,7 @@ async function load(){if(state.loading||state.saving)return;state.loading=true;s
 $('reload').onclick=()=>{if(state.dirty.size&&!confirm('Discard unsaved attendance changes?'))return;load()};
 $('date').onchange=()=>{if(state.dirty.size&&!confirm('Discard unsaved changes and change date?')){$('date').value=state.loadedDate;return}load()};
 $('bulk').onclick=()=>{if(!state.historyReady||registerNeedsReview())return;for(const s of visible())if(!state.chosen.get(id(s))?.status)choose(id(s),'Present');render()};
-$('save').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('date').value||state.saving||qrSaving||registerNeedsReview()||!state.dirty.size)return;const records=state.students.filter(s=>state.dirty.has(id(s))).map(s=>({date:$('date').value,studentId:String(s.id??s._id??id(s)),enrlNo:enr(s),class:cls(s),status:state.chosen.get(id(s)).status}));if(!validAdminWriteSession()){message('School Admin sign-in is required to save attendance. Open the School Suite admin login, sign in, then return here. No save request was sent.',true);return}const corrections=records.filter(record=>!!state.chosen.get(record.studentId)?.recordId).length;if(!confirm('Save '+records.length+' attendance change(s) for '+$('date').value+'? '+corrections+' existing saved mark(s) will be corrected. Verify the register after saving.'))return;state.saving=true;render();message('Saving…');try{const r=await LamaAPI.bulkAttendance($('date').value,records);if(!r||r.success===false||!Number.isInteger(Number(r.saved))||Number(r.saved)!==records.length||Number(r.inserted??0)+Number(r.updated??0)!==records.length)throw Error('Backend bulk-save count not verified. No automatic retry. Check the original register before submitting again.');message('Server accepted '+records.length+' records. Reloading to verify…');state.saving=false;state.dirty.clear();await load();if(state.historyReady){const mismatch=records.filter(x=>{const student=state.students.find(s=>String(s.id??s._id??id(s))===x.studentId);return !student||state.chosen.get(id(student))?.status!==x.status});if(mismatch.length||registerNeedsReview()){holdUnverified();message('Server accepted save, but '+mismatch.length+' requested record(s) are not confirmed or saved attendance needs review. Do not submit again.',true);}else message('✓ '+records.length+' attendance records saved and verified.')}else{holdUnverified();message('Save response received but attendance reload failed. Do not retry until verified.',true)}}catch(e){state.saving=false;holdUnverified();message('Save not verified: '+e.message+'. No automatic retry: administrator must inspect saved records and audit.',true)}finally{render()}};
+$('save').onclick=async()=>{if(!state.historyReady||state.loadedDate!==$('date').value||state.saving||qrSaving||registerNeedsReview()||!state.dirty.size)return;const records=state.students.filter(s=>state.dirty.has(id(s))).map(s=>({date:$('date').value,studentId:String(s.id??s._id??id(s)),enrlNo:enr(s),class:cls(s),status:state.chosen.get(id(s)).status}));if(!validAdminWriteSession()){message('School Admin sign-in is required to save attendance. Open the School Suite admin login, sign in, then return here. No save request was sent.',true);return}const corrections=records.filter(record=>{const entry=state.chosen.get(record.studentId);return entry?.saved===true||!!entry?.recordId}).length;if(!confirm('Save '+records.length+' attendance change(s) for '+$('date').value+'? '+corrections+' existing saved mark(s) will be corrected. Verify the register after saving.'))return;state.saving=true;render();message('Saving…');try{const r=await LamaAPI.bulkAttendance($('date').value,records);if(!r||r.success===false||!Number.isInteger(Number(r.saved))||Number(r.saved)!==records.length||Number(r.inserted??0)+Number(r.updated??0)!==records.length)throw Error('Backend bulk-save count not verified. No automatic retry. Check the original register before submitting again.');message('Server accepted '+records.length+' records. Reloading to verify…');state.saving=false;state.dirty.clear();await load();if(state.historyReady){const mismatch=records.filter(x=>{const student=state.students.find(s=>String(s.id??s._id??id(s))===x.studentId);return !student||state.chosen.get(id(student))?.status!==x.status});if(mismatch.length||registerNeedsReview()){holdUnverified();message('Server accepted save, but '+mismatch.length+' requested record(s) are not confirmed or saved attendance needs review. Do not submit again.',true);}else message('✓ '+records.length+' attendance records saved and verified.')}else{holdUnverified();message('Save response received but attendance reload failed. Do not retry until verified.',true)}}catch(e){state.saving=false;holdUnverified();message('Save not verified: '+e.message+'. No automatic retry: administrator must inspect saved records and audit.',true)}finally{render()}};
 $('clearDate').onclick=async()=>{
  if(!state.historyReady||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving||registerNeedsReview())return;
  if(state.dirty.size){message('Save or discard unsaved changes before clearing attendance.',true);return;}

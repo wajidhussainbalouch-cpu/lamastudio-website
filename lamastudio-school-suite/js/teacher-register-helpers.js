@@ -100,7 +100,10 @@ function homeworkChecklist(students,homeworks,teacher,selectedDay){
  const list=[...subjects.entries()].slice(0,40).map(([key,name])=>{
   const done=homeworks.some(entry=>{
    const state=norm(entry.status);
-   const published=entry.isPublished===true||entry.published===true||state==='published'||state==='sent';
+   // Legacy Homework rows persist without status/isPublished columns. A saved
+   // record with no publication flags represents a posted homework entry.
+   const explicitlyDraft=state==='draft'||state==='unpublished'||entry.isPublished===false||entry.published===false;
+   const published=!explicitlyDraft&&(entry.isPublished===true||entry.published===true||state==='published'||state==='sent'||(!state&&entry.isPublished===undefined&&entry.published===undefined));
    return norm(entry.subject)===key&&published&&day(entry.createdAt||entry.postedAt)===selectedDay;
   });
   return {name,done};

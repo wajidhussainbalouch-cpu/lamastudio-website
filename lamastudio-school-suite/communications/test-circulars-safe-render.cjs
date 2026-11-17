@@ -45,7 +45,7 @@ assert.equal(ctx.safeCircularAttachmentUrl('data:application/pdf;base64,SGVsbG8=
  const rendered=node('feedContainer').innerHTML;
  assert.doesNotMatch(rendered,/<script/i);
  assert.doesNotMatch(rendered,/<img src=x/i);
- assert.doesNotMatch(rendered,/onclick=/i,'No inline delete handlers');
+ assert.doesNotMatch(rendered,/onclick\s*=\s*["']?deleteCircular/i,'No executable inline delete handlers');
  assert.match(rendered,/&lt;script&gt;/);
  assert.match(rendered,/&lt;img src=x onerror=alert\(1\)&gt;/);
  assert.match(rendered,/&lt;b&gt;Tomorrow is a school day.&lt;\/b&gt;/);

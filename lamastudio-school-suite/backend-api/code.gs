@@ -2197,6 +2197,11 @@ function handleRequest(params) {
             case 'quranV11StudentLogout':
                 if(typeof q11Logout_!=='function')throw Error('Student auth pilot addon unavailable.');
                 return {status:'success',result:q11Logout_(params)};
+            case 'quranV14GetLearnerReport':
+            case 'quranV14ClassDashboard':
+            case 'quranV14GuardianReport':
+                if (typeof quranV14Run_ !== 'function') throw new Error('Unified Quran progress pilot unavailable.');
+                return { status:'success', result:quranV14Run_(params) };
             case 'quranV13SaveAssessment':
             case 'quranV13GetAssessment':
             case 'quranV13GuardianSummary':
@@ -2249,7 +2254,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['quranV13SaveAssessment','quranV13GetAssessment','quranV13GuardianSummary','quranV12RecoveryPreview','quranV12RecoveryCommit','studentLogin','quranV11ProvisionStudentAuth','quranV11StudentLogout','quranV8ListLearners','quranV8GetProgress','quranV8LogPractice','quranV8TeacherReview','quranV8ParentChildren','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove','quranV9ApproveGuardian','quranV9ListGuardianLinks','quranV9RevokeGuardian','quranV9RequestGuardianCode','quranV9VerifyGuardianCode','quranV9GuardianChildren','quranV9GuardianProgress','quranV9GuardianLogout'];
+    const blocked=['quranV14GetLearnerReport','quranV14ClassDashboard','quranV14GuardianReport','quranV13SaveAssessment','quranV13GetAssessment','quranV13GuardianSummary','quranV12RecoveryPreview','quranV12RecoveryCommit','studentLogin','quranV11ProvisionStudentAuth','quranV11StudentLogout','quranV8ListLearners','quranV8GetProgress','quranV8LogPractice','quranV8TeacherReview','quranV8ParentChildren','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove','quranV9ApproveGuardian','quranV9ListGuardianLinks','quranV9RevokeGuardian','quranV9RequestGuardianCode','quranV9VerifyGuardianCode','quranV9GuardianChildren','quranV9GuardianProgress','quranV9GuardianLogout'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }

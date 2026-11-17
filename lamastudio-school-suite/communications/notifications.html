@@ -169,58 +169,74 @@
             }
         }
 
+        function escapeCircularHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char =>
+                ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+        }
+        function safeCircularAttachmentUrl(raw) {
+            const value=String(raw||'').trim();
+            if(/^https:\/\/[^\s"'<>]+$/i.test(value))return value;
+            if(/^data:(?:image\/(?:png|jpeg|gif|webp)|application\/(?:pdf|msword|vnd\.openxmlformats-officedocument\.wordprocessingml\.document));base64,[a-z0-9+/=\s-]+$/i.test(value))return value;
+            return '';
+        }
         async function renderFeed() {
             let items;
+            const container=document.getElementById('feedContainer');
+            const empty=document.getElementById('emptyState');
             try {
-                items = await LamaAPI.list(NOTIFICATIONS);
-            } catch (e) {
-                console.warn('Could not load circulars: ' + e.message);
-                items = [];
+                items=await LamaAPI.list(NOTIFICATIONS);
+                if(!Array.isArray(items))throw Error('Invalid circulars response');
+            } catch(error) {
+                console.warn('Could not load circulars:',error);
+                container.textContent='Circulars could not be loaded. Check your connection and refresh. Existing notices have not been deleted.';
+                empty.classList.add('hidden');
+                return;
             }
-            items = items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-            if (activeFilter !== 'All') {
-                items = items.filter(i => i.status === activeFilter);
-            }
-
-            const container = document.getElementById('feedContainer');
-            document.getElementById('emptyState').classList.toggle('hidden', items.length > 0);
-
-            container.innerHTML = items.map(item => `
-                <div class="circular-feed-card card-gradient rounded-3xl p-4 sm:p-5 flex flex-col gap-3 border border-slate-800/80 shadow-xl transition hover:border-purple-500/30">
+            items=items.slice().sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+            if(activeFilter!=='All')items=items.filter(i=>i.status===activeFilter);
+            empty.classList.toggle('hidden',items.length>0);
+            container.innerHTML=items.map(item=>{
+                const title=escapeCircularHtml(item.title||'Untitled circular');
+                const audience=escapeCircularHtml(item.audience||'—');
+                const channel=escapeCircularHtml(item.channel||'—');
+                const date=escapeCircularHtml(formatDate(item.createdAt));
+                const status=escapeCircularHtml(item.status||'Draft');
+                const message=escapeCircularHtml(item.message||'');
+                const media=safeCircularAttachmentUrl(item.fileData);
+                const fileName=escapeCircularHtml(item.fileName||'attachment');
+                const preview=item.fileType&&String(item.fileType).startsWith('image/')&&media;
+                const attachment=media
+                    ?preview
+                        ?`<div class="rounded-2xl overflow-hidden border border-slate-800 bg-black/40 p-2 max-h-60 flex justify-center"><img src="${escapeCircularHtml(media)}" alt="Circular attachment" loading="lazy" class="max-h-52 max-w-full object-contain rounded-xl"></div>`
+                        :`<a href="${escapeCircularHtml(media)}" download="${fileName}" class="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 p-3 rounded-2xl border border-slate-700 text-xs text-purple-300 font-bold transition"><span>📎</span><span class="truncate">${escapeCircularHtml(item.fileName||'Download Attached File')}</span></a>`
+                    :'';
+                return `
+                <article class="circular-feed-card card-gradient rounded-3xl p-4 sm:p-5 flex flex-col gap-3 border border-slate-800/80 shadow-xl transition hover:border-purple-500/30">
                     <div class="flex flex-wrap justify-between items-start gap-3">
-                        <div>
-                            <h4 class="text-sm font-extrabold text-white tracking-wide break-words">${item.title}</h4>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-sm font-extrabold text-white tracking-wide break-words">${title}</h4>
                             <p class="text-[10px] text-slate-400 mt-1 font-medium flex flex-wrap items-center gap-2">
-                                <span class="text-purple-400">${formatDate(item.createdAt)}</span> •
-                                <span class="bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300">${item.audience}</span> •
-                                <span class="text-indigo-300 font-semibold">${item.channel}</span>
+                                <span class="text-purple-400">${date}</span> •
+                                <span class="bg-slate-800/80 px-2 py-0.5 rounded-md text-slate-300">${audience}</span> •
+                                <span class="text-indigo-300 font-semibold">${channel}</span>
                             </p>
                         </div>
-                        <span class="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border ${STATUS_STYLES[item.status] || STATUS_STYLES['Draft']}">${item.status}</span>
+                        <span class="text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border ${STATUS_STYLES[item.status]||STATUS_STYLES.Draft}">${status}</span>
                     </div>
-                    <p class="circular-message text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/50">${item.message}</p>
-                    
-                    ${item.fileData ? `
-                        <div class="mt-2">
-                            ${item.fileType && item.fileType.startsWith('image/') ? 
-                                `<div class="rounded-2xl overflow-hidden border border-slate-800 bg-black/40 p-2 max-h-60 flex justify-center"><img src="${item.fileData}" class="max-h-52 object-contain rounded-xl"></div>` :
-                                `<a href="${item.fileData}" download="${item.fileName || 'attachment'}" class="flex items-center gap-2 bg-slate-800/80 hover:bg-slate-700/80 p-3 rounded-2xl border border-slate-700 text-xs text-purple-300 font-bold transition">
-                                    <span class="text-base">📎</span>
-                                    <span class="truncate">${item.fileName || 'Download Attached File'}</span>
-                                </a>`
-                            }
-                        </div>
-                    ` : ''}
-
+                    <p class="circular-message text-xs text-slate-300 leading-relaxed bg-slate-950/40 p-3.5 rounded-2xl border border-slate-800/50">${message}</p>
+                    ${attachment}
                     <div class="flex flex-wrap justify-between items-center gap-3 pt-2 border-t border-slate-800/80 mt-1">
                         <span class="text-[10px] text-emerald-400 font-medium">⚡ Synced to Main Dashboard</span>
-                        <button onclick="deleteCircular('${item.id}')" class="text-[11px] font-bold text-red-400 hover:text-red-300 transition flex items-center gap-1 bg-red-500/10 px-3 py-1.5 rounded-xl border border-red-500/20">🗑️ Delete</button>
+                        <button type="button" data-delete-circular="${escapeCircularHtml(item.id||'')}" class="text-[11px] font-bold text-red-400 hover:text-red-300 transition flex items-center gap-1 bg-red-500/10 px-3 py-1.5 rounded-xl border border-red-500/20">🗑️ Delete</button>
                     </div>
-                </div>
-            `).join('');
-
+                </article>`;
+            }).join('');
             await syncToMainDashboard();
         }
+        document.getElementById('feedContainer').addEventListener('click',event=>{
+            const button=event.target.closest('button[data-delete-circular]');
+            if(button)deleteCircular(button.getAttribute('data-delete-circular'));
+        });
 
         function openCircularModal() {
             document.getElementById('inTitle').value = '';

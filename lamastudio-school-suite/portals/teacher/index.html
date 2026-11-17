@@ -601,6 +601,8 @@ function setAttStatus(btn,status){
  }
  const text=row.querySelector('.attendance-note:last-child');
  if(text)text.textContent=draftAttendance.has(key)?'● Unsaved change (previous: '+(current?.status||'Unmarked')+')':current?'Saved: '+current.status:'Not marked';
+ const badge=row.querySelector('.att-save-badge');
+ if(badge){badge.textContent=draftAttendance.has(key)?'● Unsaved change':current?'✓ Saved and verified':'○ Not marked';badge.classList.toggle('att-pending',draftAttendance.has(key));}
  renderTeacherStats();updateStats();
 }
 function toggleTeacherAttendanceEdit(key){
@@ -709,12 +711,24 @@ function updatePromoteCount(){$('promoteSelectedCount').textContent=document.que
 function selectAllPassing(){document.querySelectorAll('.promote-check-teacher').forEach(x=>{const s=myStudent(x.dataset.id);x.checked=computeStudentResult(s).passed===true});updatePromoteCount()}
 function selectNonePromote(){document.querySelectorAll('.promote-check-teacher').forEach(x=>x.checked=false);updatePromoteCount()}
 async function promoteMyClass(){message('Promotion is restricted to school administrators to protect enrollment history and prevent accidental record changes. Please use the admin promotion workflow.')}
-async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();selectedAttendanceDay=$('attDate').value;$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>{
- const next=$('attDate').value;
- if(attendanceSaving||attendanceVerifying||attendanceUncertain){$('attDate').value=selectedAttendanceDay;message('Verify the previous attendance save before changing dates.');return}
- if(draftAttendance.size&&!confirm('Discard '+draftAttendance.size+' unsaved attendance mark(s) and change date?')){$('attDate').value=selectedAttendanceDay;return}
- draftAttendance.clear();editingAttendance.clear();selectedAttendanceDay=next;renderTeacherStats();loadAttendanceList();updateStats();
-});try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
+function selectTeacherAttendanceDate(next){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(next||''))){
+  $('attDate').value=selectedAttendanceDay;return false;
+ }
+ if(attendanceSaving||attendanceVerifying||attendanceUncertain){
+  $('attDate').value=selectedAttendanceDay;
+  message('Verify the previous attendance save before changing dates.');
+  return false;
+ }
+ if(draftAttendance.size&&!confirm('Discard '+draftAttendance.size+' unsaved attendance mark(s) and change date?')){
+  $('attDate').value=selectedAttendanceDay;return false;
+ }
+ draftAttendance.clear();editingAttendance.clear();selectedAttendanceDay=next;calendarMonth=next.slice(0,7);
+ $('attDate').value=next;
+ renderTeacherStats();loadAttendanceList();updateStats();renderAttendanceCalendar();
+ return true;
+}
+async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();selectedAttendanceDay=$('attDate').value;calendarMonth=selectedAttendanceDay.slice(0,7);$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>selectTeacherAttendanceDate($('attDate').value));try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId&&!attendanceSaving&&!draftAttendance.size)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 window.addEventListener('focus',()=>{if(me.schoolId&&!attendanceSaving&&!draftAttendance.size)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 init();

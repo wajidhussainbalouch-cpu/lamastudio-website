@@ -43,3 +43,21 @@ The browser account UI, v2 cloud snapshot validation, staged SQL and local tests
 The Android test APKs have distinct app IDs and therefore distinct device-local storage. Use the **Complete Academy Backup** on My Journey to carry data between QA versions until live account sync passes the above security checks.
 
 **References:** Supabase [password-based Auth](https://supabase.com/docs/guides/auth/passwords), [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security), and [Securing the Data API](https://supabase.com/docs/guides/api/securing-your-api).
+
+
+## Phase 18 — Private learner profile (STAGED, NOT LIVE)
+
+The new **learner-profile-setup.sql** creates a second RLS-protected Coding Academy table: public.lama_coding_learners. It stores only:
+- user_id: UUID foreign key to Supabase Auth, on delete cascade;
+- display_name: optional self-chosen name (up to 60 characters);
+- preferred_language: en or ur;
+- creation and server-maintained modification timestamps.
+
+Only a signed-in, verified user can create, read, update or remove their **own** row. Grants for anonymous/public access are revoked; SELECT, INSERT, UPDATE and DELETE each require an ownership policy, with WITH CHECK on writes. No user-metadata JWT claims are used for authorisation.
+
+The existing account form now has a profile section shown only after sign-in. The learner must explicitly press **Save private profile** before a profile row is written. Profile saving does not upload lesson code, exam/question scores, or school data. Saved profile values are loaded only after authentication; signing out clears those controls. Accounts still remain disabled in `cloud-config.js`.
+
+**Do not apply** either SQL file to LAMA PPSC Academy. Neither project nor tables were created or modified in Supabase by this Phase 18 development work. After a separate Coding Academy project is provisioned, verify real two-user account isolation, email verification, deletion cascade, cross-browser session handling, profile length/locale constraints, and failed/unauthorized writes before enabling profile or progress uploads.
+
+For any future common LAMA Studio login across apps: separate Supabase projects do **not** automatically share Auth identities. A consolidated authentication authority and per-product authorization rules require a separately approved architecture, security model, migration and privacy review.
+

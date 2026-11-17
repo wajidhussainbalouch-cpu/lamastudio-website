@@ -115,5 +115,61 @@ function homeworkChecklist(students,homeworks,teacher,selectedDay){
  });
  return list;
 }
-root.LamaTeacherRegister={day,gender,guardian,rosterId,enrollment,countGender,snapshot,totals,subjectNames,homeworkChecklist};
+/**
+ * School calendar: only published "Holiday" events close dates.
+ * Saturday stays a working day unless explicitly configured otherwise.
+ * The user-requested Iqbal Day (9 November) is a dated observance,
+ * never an attendance record; existing saved marks always take precedence.
+ */
+function calendarHolidays(resources){
+ const events=[];
+ for(const row of resources||[]){
+  if(row?.category!=='planning-event')continue;
+  let event;
+  try{event=typeof row.description==='string'?JSON.parse(row.description):row.description}catch(_){continue}
+  if(!event||typeof event!=='object'||event.published===false||norm(event.type)!=='holiday')continue;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(str(event.start))||!/^\d{4}-\d{2}-\d{2}$/.test(str(event.end)))continue;
+  if(event.end<event.start)continue;
+  events.push({start:event.start,end:event.end,title:str(event.title)||'School holiday'});
+ }
+ return events;
+}
+function calendarHoliday(date,events=[],weeklyOff=[0]){
+ const iso=str(date);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(iso))return '';
+ const match=events.find(event=>event.start<=iso&&event.end>=iso);
+ if(match)return match.title||'School holiday';
+ // This national observance does not erase or replace saved school records.
+ if(iso.slice(5)==='11-09')return 'Iqbal Day · 9 November';
+ const d=new Date(iso+'T12:00:00');
+ if(Number.isNaN(d.getTime()))return '';
+ const day=d.getDay();
+ if(weeklyOff.includes(day))return day===0?'Sunday · Weekly holiday':day===6?'Saturday · School closed':'Weekly holiday';
+ return '';
+}
+function calendarDayState(date,{students=[],records=[],today,verified=false,calendarReady=false,holidays=[],weeklyOff=[0]}={}){
+ const holiday=calendarHoliday(date,holidays,weeklyOff);
+ if(date>today)return {state:'future',marked:0,total:students.length,holiday};
+ if(!verified)return {state:'unavailable',marked:0,total:students.length,holiday};
+ const snap=snapshot(records,students,date),marked=snap.unique.size,review=snap.duplicates.size+snap.unmatched.length;
+ const total=students.length;
+ if(marked===total&&total>0&&review===0)return {state:'marked',marked,total,holiday};
+ if(marked>0||review>0)return {state:'partial',marked,total,holiday,review};
+ if(!calendarReady)return {state:'unavailable',marked:0,total,holiday};
+ if(holiday)return {state:'holiday',marked:0,total,holiday};
+ return {state:total?'unmarked':'unavailable',marked:0,total,holiday};
+}
+function monthDays(yyyyMm){
+ if(!/^\d{4}-\d{2}$/.test(str(yyyyMm)))return [];
+ const [year,month]=yyyyMm.split('-').map(Number);
+ if(month<1||month>12||year<2000||year>2100)return [];
+ const count=new Date(year,month,0).getDate(),days=[];
+ for(let n=1;n<=count;n++){
+  const iso=yyyyMm+'-'+String(n).padStart(2,'0');
+  days.push({date:iso,day:n,weekday:new Date(iso+'T12:00:00').getDay()});
+ }
+ return days;
+}
+
+root.LamaTeacherRegister={day,gender,guardian,rosterId,enrollment,countGender,snapshot,totals,subjectNames,homeworkChecklist,calendarHolidays,calendarHoliday,calendarDayState,monthDays};
 })(typeof window!=='undefined'?window:globalThis);

@@ -44,12 +44,14 @@ assert.equal(h.snapshot([{id:'r',studentId:'unknown',enrlNo:'1936',date:day,stat
 const homeworks=[
  {subject:'Mathematics',status:'published',isPublished:true,createdAt:day+'T11:00:00Z'},
  {subject:'English',status:'Draft',isPublished:false,createdAt:day+'T10:00:00Z'},
- {subject:'Urdu',status:'published',createdAt:'2026-11-16T11:00:00Z'}
+ {subject:'Urdu',status:'published',createdAt:'2026-11-16T11:00:00Z'},
+ {subject:'Science',id:'HW-42',createdAt:day+'T10:00:00Z'}
 ];
 const checklist=h.homeworkChecklist(students,homeworks,{subject:'English'},day);
 assert.equal(checklist.find(x=>x.name==='Mathematics').done,true);
 assert.equal(checklist.find(x=>x.name==='English').done,false,'Draft homework must not tick');
 assert.equal(checklist.find(x=>x.name==='Urdu').done,false,'Yesterday’s homework must not tick today');
+assert.equal(checklist.find(x=>x.name==='Science').done,true,'Persisted legacy homework without publication fields is a posted entry');
 assert.match(portal,/id="statStudentsGender"/);
 assert.match(portal,/id="statPresentGender"/);
 assert.match(portal,/id="statAbsentGender"/);

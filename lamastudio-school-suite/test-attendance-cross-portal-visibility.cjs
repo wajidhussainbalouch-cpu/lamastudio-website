@@ -65,9 +65,24 @@ assert.equal(teacherStatus(teacherClass,'s-001'),'Absent','Teacher must see admi
 assert.equal(selectedStatus(adminRead(),'s-001'),'Absent');
 assert.equal(adminRead().chosen.size,3,'Correction must update an existing row, not append another');
 const completionSource=between(admin,'function renderRegisterCount(visibleCount,totalCount){','function renderTotals(all){');
-const countNode={textContent:''},classInput={value:''};
-const checked=adminRead();
-const renderCount=new Function('state','classStudents','
+const countNode={textContent:''};
+const selectNode={value:''};
+const renderCountFactory=new Function('state','classStudents','select','id','registerNeedsReview',
+ completionSource.replaceAll(String.fromCharCode(36),'select')+'return renderRegisterCount;');
+const allResult=adminRead();
+const selected=allResult.chosen;
+const fullCount=renderCountFactory({chosen:selected,conflicts:new Map(),dirty:new Set(),historyReady:true},
+ ()=>allStudents,key=>key==='count'?countNode:selectNode,adminApi.id,()=>false);
+fullCount(3,3);
+assert.match(countNode.textContent,/attendance completed/,'Whole school completed when all registered marks are saved');
+selected.delete('s-003');
+fullCount(3,3);
+assert.match(countNode.textContent,/attendance partly marked/,'Incomplete school cannot be called completed');
+const classCount=renderCountFactory({chosen:adminRead(selectedClass).chosen,conflicts:new Map(),dirty:new Set(),historyReady:true},
+ ()=>selectedClass,key=>key==='count'?countNode:({value:'4'}),adminApi.id,()=>false);
+classCount(2,2);
+assert.match(countNode.textContent,/students in 4.*attendance completed/,'Class 4 completed independently of Class 5');
+
 assert.equal(teacherApi.totals(selectedClass,teacherClass,new Map()).Absent.total,1);
 assert.equal(teacherApi.totals(selectedClass,teacherClass,new Map()).Absent.boys,1);
 assert.equal(teacherApi.totals(selectedClass,teacherClass,new Map()).Present.girls,1);

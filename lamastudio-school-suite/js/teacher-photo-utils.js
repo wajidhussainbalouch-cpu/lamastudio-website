@@ -14,7 +14,7 @@ function padSmallJpeg(dataUrl,minBytes=MIN_BYTES){
  const prefix='data:image/jpeg;base64,';
  const raw=atob(dataUrl.slice(prefix.length));
  if(raw.charCodeAt(0)!==255||raw.charCodeAt(1)!==216)throw Error('Image is not JPEG.');
- const n=minBytes-current,contentLength=n-4;
+ const n=Math.max(4,minBytes-current),contentLength=n-4;
  if(n<4||contentLength>65531)throw Error('Photo cannot be adjusted to required file size.');
  const len=contentLength+2;
  const com=String.fromCharCode(255,254,(len>>>8)&255,len&255)+' '.repeat(contentLength);

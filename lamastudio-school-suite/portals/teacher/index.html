@@ -234,6 +234,9 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
+const TeacherRegister=LamaTeacherRegister;
+let rosterReady=false,attendanceReady=false,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceUncertain=false;
+let draftAttendance=new Map(),editingAttendance=new Set(),selectedAttendanceDay='';
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
@@ -247,7 +250,7 @@ function handleLogout(){LamaAPI.logout('teacher');location.replace('../../main-d
 function updateTeacherOverview(){
  $('welcomeTeacher').textContent=(me.name||'Teacher').split(/\s+/)[0];
  $('heroSummary').textContent=`${me.schoolName||'Your school'} · ${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'Teaching'}`;
- $('statClass').textContent=me.assignedClass||'—';$('statSection').textContent=me.section?'Section '+me.section:'Assigned class';
+ $('statClass').textContent=me.assignedClass||'—';$('statSection').textContent=(me.assignedSection||me.section?'Section '+(me.assignedSection||me.section)+' · ':'')+(rosterReady?myStudents.length+' students':'Assigned class');
  $('empName').textContent=me.name||'Teacher';
  $('empId').textContent=me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—';
  $('empDesignation').textContent=me.designation||'Teacher';
@@ -257,27 +260,66 @@ function updateTeacherOverview(){
  $('miniDesignation').textContent=me.designation||'Teacher';
  $('miniEmployeeId').textContent='ID · '+(me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—');
 }
-function todayAbsentees(){return attendance.filter(a=>String(a.date||'').slice(0,10)===localDate()&&norm(a.status)==='absent')}
+function attendanceSnapshot(day=$('attDate').value){return TeacherRegister.snapshot(attendance,myStudents,day)}
+function getClassStats(day=$('attDate').value){
+ return TeacherRegister.totals(myStudents,attendanceSnapshot(day),draftAttendance);
+}
+function confirmedTodayAbsentees(){
+ if(!attendanceReady||attendanceUncertain)return [];
+ const snap=attendanceSnapshot(localDate());
+ return myStudents.filter(st=>snap.unique.get(TeacherRegister.rosterId(st))?.status==='Absent');
+}
+function todayAbsentees(){return confirmedTodayAbsentees()}
+function statusLabel(id){
+ const entry=attendanceSnapshot($('attDate').value);
+ return draftAttendance.get(id)||entry.unique.get(id)?.status||'';
+}
+function showAttendanceFeedback(){
+ const span=$('teacherAttendanceStatus'),button=$('saveTeacherAttendance'),verify=$('verifyTeacherAttendance');
+ if(!span||!button)return;
+ const snap=attendanceSnapshot($('attDate').value);
+ const blocked=attendanceSaving||!rosterReady||!attendanceReady||attendanceUncertain||snap.duplicates.size>0||snap.unmatched.length>0;
+ button.disabled=blocked||draftAttendance.size===0;
+ if(verify)verify.disabled=attendanceSaving;
+ if(attendanceSaving){span.textContent='Saving '+draftAttendance.size+' change(s)… Do not submit again.';span.className='text-xs text-amber-200';return}
+ if(attendanceUncertain){span.textContent='⚠ Save outcome not verified. Marks are retained on this screen. Use Verify saved attendance before attempting another save.';span.className='text-xs teacher-attendance-uncertain';return}
+ if(!attendanceReady){span.textContent='⚠ Saved attendance unavailable'+(attendanceIssue?': '+attendanceIssue:'')+'. Marking is disabled until verified.';span.className='text-xs teacher-attendance-uncertain';return}
+ if(snap.duplicates.size||snap.unmatched.length){span.textContent='⚠ '+snap.duplicates.size+' duplicate student(s) and '+snap.unmatched.length+' unmatched row(s) need administrator review. Do not overwrite them.';span.className='text-xs teacher-attendance-review';return}
+ if(draftAttendance.size){span.textContent=draftAttendance.size+' unsaved change(s). Tap Save changes, then wait for verification.';span.className='text-xs text-amber-200';return}
+ span.textContent='✓ Saved attendance verified for '+$('attDate').value+'. You may edit an existing mark.';span.className='text-xs text-emerald-300';
+}
+function showTeacherHomeworkStatus(day=localDate()){
+ const el=$('homeworkSubjectChecklist'),counter=$('statHomework');
+ if(!el||!counter)return;
+ if(!homeworkReady){counter.textContent='—';el.textContent='Homework data unavailable';return}
+ const todayRecords=homework.filter(h=>TeacherRegister.day(h.createdAt||h.postedAt)===day&&published(h));
+ counter.textContent=todayRecords.length;
+ const list=TeacherRegister.homeworkChecklist(myStudents,homework,me,day);
+ if(!list.length){el.textContent='Subjects are not configured for this class yet.';return}
+ el.innerHTML=list.map(item=>'<span class="homework-subject '+(item.done?'done':'')+'">'+(item.done?'✓':'○')+' '+esc(item.name)+' · '+(item.done?'Posted':'Not posted')+'</span>').join('');
+}
 function updateStats(){
- $('statStudents').textContent=myStudents.length;
- $('statHomework').textContent=homework.filter(h=>mine(h)).length;
- const today=localDate();
- const latest=new Map();
- for(const a of attendance){
-  if(String(a.date||'').slice(0,10)!==today)continue;
-  const student=myStudents.find(s=>String(s.id??s._id??s.studentId??'')===String(a.studentId??a.studentID??a.enrlNo??'')||String(s.enrlNo??s.enrollmentNo??'')===String(a.enrlNo??a.studentId??''));
-  if(student)latest.set(String(student.id??student._id??student.studentId),String(a.status||'').trim().toLowerCase());
+ const classStats=getClassStats(localDate());
+ const boys=classStats.Students.boys,girls=classStats.Students.girls,unknown=classStats.Students.unspecified;
+ $('statStudents').textContent=rosterReady?myStudents.length:'—';
+ $('statStudentsGender').textContent=rosterReady?'Boys '+boys+' · Girls '+girls+(unknown?' · Not specified '+unknown:''):'Class roster unavailable';
+ $('statBoys').textContent=rosterReady?boys:'—';
+ $('statGirls').textContent=rosterReady?girls:'—';
+ $('genderMissingNote').textContent=!rosterReady?'Roster unavailable':unknown?unknown+' without recorded gender':'Assigned class';
+ $('statSection').textContent=(me.assignedSection||me.section?'Section '+(me.assignedSection||me.section)+' · ':'')+(rosterReady?myStudents.length+' students':'Class roster unavailable');
+ showTeacherHomeworkStatus();
+ if(!attendanceReady||attendanceUncertain){
+  $('statPresent').textContent='—';$('statAbsent').textContent='—';
+  $('statPresentGender').textContent='Saved attendance not verified';
+  $('statAbsentGender').textContent='Saved attendance not verified';
+ }else{
+  for(const [label,key] of [['Present','statPresent'],['Absent','statAbsent']]){
+   const stat=classStats[label];
+   $(key).textContent=stat.total;
+   $(key+'Gender').textContent='Boys '+stat.boys+' · Girls '+stat.girls+(stat.unspecified?' · Not specified '+stat.unspecified:'')+(draftAttendance.size?' · Unsaved preview':'');
+  }
  }
- const statuses=[...latest.values()];
- $('statPresent').textContent=statuses.filter(x=>x==='present'||x==='p').length;
- $('statAbsent').textContent=statuses.filter(x=>x==='absent'||x==='a').length;
- const gender=s=>String(s.gender??s.sex??'').trim().toLowerCase();
- const boys=myStudents.filter(s=>['male','boy','m'].includes(gender(s))).length;
- const girls=myStudents.filter(s=>['female','girl','f'].includes(gender(s))).length;
- const unknown=myStudents.length-boys-girls;
- $('statBoys').textContent=boys;
- $('statGirls').textContent=girls;
- $('genderMissingNote').textContent=unknown?unknown+' without recorded gender':'Assigned class';
+ showAttendanceFeedback();
 }
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('headerAssignedClass').textContent=me.assignedClass||'Not assigned';$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}

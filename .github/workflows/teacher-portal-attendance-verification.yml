@@ -1,0 +1,21 @@
+name: Teacher Portal Attendance Verification
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/portals/teacher/index.html'
+      - 'lamastudio-school-suite/test-teacher-portal-attendance-verification.cjs'
+      - '.github/workflows/teacher-portal-attendance-verification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-teacher-attendance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify read-back, date mapping, duplicates and uncertain-save locks
+        run: node lamastudio-school-suite/test-teacher-portal-attendance-verification.cjs

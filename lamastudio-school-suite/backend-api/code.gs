@@ -1012,6 +1012,149 @@ function getRecord(ctx, collection, id) {
     return null;
 }
 
+
+/**
+ * Atomic legacy attendance insert for school administrators and class teachers.
+ * Uses the same ScriptLock as bulkAttendanceRecords; no duplicate student/day
+ * rows can be appended by concurrent generic add operations.
+ * Existing historical duplicates are never deleted or silently chosen.
+ */
+function attendanceSchoolDayKey_(raw, zone){
+  const timezone=zone||'Asia/Karachi';
+  if(raw instanceof Date){
+    if(isNaN(raw.getTime()))return '';
+    return Utilities.formatDate(raw,timezone,'yyyy-MM-dd');
+  }
+  const text=String(raw==null?'':raw).trim();
+  let date='';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text))date=text;
+  else if(/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)){
+    const parsed=new Date(text);
+    if(isNaN(parsed.getTime()))return '';
+    date=Utilities.formatDate(parsed,timezone,'yyyy-MM-dd');
+  }else{
+    const local=text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(local)date=local[3]+'-'+('0'+local[2]).slice(-2)+'-'+('0'+local[1]).slice(-2);
+  }
+  if(!date)return '';
+  const sample=new Date(date+'T12:00:00Z');
+  return !isNaN(sample.getTime())&&sample.toISOString().slice(0,10)===date?date:'';
+}
+function attendanceStatusKey_(raw){
+  const status=String(raw==null?'':raw).trim().toLowerCase();
+  return status==='present'||status==='p'?'Present':
+         status==='absent'||status==='a'?'Absent':
+         status==='leave'||status==='l'||status==='on leave'?'Leave':'';
+}
+/**
+ * Resolve the canonical student from this school's own roster before adding
+ * attendance. A client-submitted ID, enrollment or class is not authority.
+ */
+function attendanceRosterStudent_(ctx,record){
+  const id=String(record.studentId||'').trim();
+  if(!id)throw Error('Attendance requires a student ID from the school roster.');
+  const source=getCollectionSheet(ctx,'students');
+  const matches=source.sheet.getDataRange().getValues().slice(1)
+    .map(row=>rowToRecord(source.headers,row))
+    .filter(student=>String(student.id||'').trim()===id);
+  if(matches.length!==1)
+    throw Error('Student ID is missing or ambiguous in this school roster. No attendance was saved.');
+  const student=matches[0];
+  const savedEnrollment=String(student.enrlNo||student.enrollmentNo||'').trim();
+  if(record.enrlNo && String(record.enrlNo).trim()!==savedEnrollment)
+    throw Error('Attendance enrollment does not match the student roster.');
+  if(record.class && !sameClass(record.class,student.class))
+    throw Error('Attendance class does not match the student roster.');
+  if(record.section && String(record.section).trim().toLowerCase()!==String(student.section||'').trim().toLowerCase())
+    throw Error('Attendance section does not match the student roster.');
+  if(ctx.role==='teacher'&&!teacherOwns(ctx,student))
+    throw Error('Student is outside this teacher\'s assigned class/section.');
+  return student;
+}
+function addAttendanceRecordWithLock_(ctx,record,sheet,headers){
+  const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+    ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+  const date=attendanceSchoolDayKey_(record.date,zone);
+  const studentId=String(record.studentId||'').trim();
+  const enrl=String(record.enrlNo||'').trim();
+  const cls=String(record.class||'').trim().toLowerCase();
+  const status=attendanceStatusKey_(record.status);
+  if(!date||!studentId||!status)throw Error('Attendance requires a valid student ID, date and Present/Absent/Leave status.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance register is busy. Refresh before retrying.');
+  try{
+    const student=attendanceRosterStudent_(ctx,record);
+    const canonicalEnrollment=String(student.enrlNo||student.enrollmentNo||'').trim();
+    const canonicalClass=String(student.class||'').trim();
+    const canonicalSection=String(student.section||'').trim();
+    const canonicalName=String(student.name||'').trim();
+    const data=sheet.getDataRange().getValues(),matches=[];
+    for(let i=1;i<data.length;i++){
+      const old=rowToRecord(headers,data[i]);
+      if(attendanceSchoolDayKey_(old.date,zone)!==date)continue;
+      const oldId=String(old.studentId||'').trim();
+      const oldEnrollment=String(old.enrlNo||'').trim();
+      const oldClass=String(old.class||'').trim().toLowerCase();
+      // The canonical ID wins. An older row with missing ID is matched
+      // only when enrollment AND class both identify the same student.
+      const sameStudent=oldId?oldId===studentId:
+        !!(canonicalEnrollment&&oldEnrollment===canonicalEnrollment&&canonicalClass&&sameClass(oldClass,canonicalClass));
+      if(sameStudent)matches.push(old);
+    }
+    if(matches.length>1)
+      throw Error('Duplicate saved attendance records for this student and date. Ask the administrator to review the backed-up sheet; no new row was added.');
+    if(matches.length===1){
+      if(attendanceStatusKey_(matches[0].status)===status){
+        // Idempotent response: a timed-out previous request may have saved.
+        // Never insert the same attendance twice.
+        return matches[0];
+      }
+      throw Error('Attendance already exists for this student/date with a different status. Refresh and use Update, not Add.');
+    }
+    const full=Object.assign({},record,{id:genId('att'),studentId:String(student.id),enrlNo:canonicalEnrollment,class:canonicalClass,section:canonicalSection,studentName:canonicalName,date,status,createdAt:new Date().toISOString()});
+    sheet.appendRow(recordToRow(headers,full));
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','attendance',full.id,null,full);
+    return full;
+  }finally{lock.releaseLock();}
+}
+
+
+/** Idempotent, locked staff attendance insert; does not alter history. */
+function addTeacherAttendanceWithLock_(ctx,record,sheet,headers){
+  const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+    ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+  const date=attendanceSchoolDayKey_(record.date,zone);
+  const teacherId=String(record.teacherId||'').trim();
+  const status=attendanceStatusKey_(record.status);
+  const remarks=String(record.remarks||'').trim();
+  if(!date||!teacherId||!status)throw Error('Teacher attendance requires teacher ID, valid date and Present/Absent/Leave status.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Staff attendance register is busy. Refresh before retrying.');
+  try{
+    const teacherInfo=getCollectionSheet(ctx,'teachers');
+    const teachers=teacherInfo.sheet.getDataRange().getValues();
+    const isKnownTeacher=teachers.slice(1).some(row=>
+      String(rowToRecord(teacherInfo.headers,row).id||'').trim()===teacherId);
+    if(!isKnownTeacher)throw Error('Teacher ID not found in this school. No attendance was saved.');
+    const saved=sheet.getDataRange().getValues(),matches=[];
+    for(let i=1;i<saved.length;i++){
+      const old=rowToRecord(headers,saved[i]);
+      if(String(old.teacherId||'').trim()===teacherId &&
+         attendanceSchoolDayKey_(old.date,zone)===date)matches.push(old);
+    }
+    if(matches.length>1)throw Error('Duplicate staff attendance records for teacher/date. Administrator must reconcile the backed-up sheet.');
+    if(matches.length===1){
+      if(attendanceStatusKey_(matches[0].status)===status &&
+         String(matches[0].remarks||'').trim()===remarks)return matches[0];
+      throw Error('Staff attendance already exists with a different status or remark. Refresh and use Update.');
+    }
+    const full=Object.assign({},record,{id:genId('tatt'),date,status,remarks,createdAt:new Date().toISOString()});
+    sheet.appendRow(recordToRow(headers,full));
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'add','teacherAttendance',full.id,null,full);
+    return full;
+  }finally{lock.releaseLock();}
+}
+
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
@@ -1029,6 +1172,8 @@ function addRecord(ctx, collection, record) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || record.section || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
     const { sheet, headers } = getCollectionSheet(ctx, collection);
+    if(collection==='attendance')return addAttendanceRecordWithLock_(ctx,record,sheet,headers);
+    if(collection==='teacherAttendance')return addTeacherAttendanceWithLock_(ctx,record,sheet,headers);
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
     if (collection === 'fees' && ctx.role === 'school' && ctx.auditActor) {
@@ -1055,15 +1200,100 @@ function validateTeacherAssignment_(sheet,headers,teacherId,assignedClass,assign
   }
 }
 
+/**
+ * Serialized, duplicate-aware attendance status corrections.
+ * Add and Update use the same Apps Script lock; a stale client cannot
+ * silently edit one row when a second person/day row exists.
+ */
+function updateAttendanceRecordWithLock_(ctx,collection,id,patch){
+  const staff=collection==='teacherAttendance';
+  if(collection!=='attendance'&&!staff)throw Error('Invalid attendance collection.');
+  if(!id||!patch||typeof patch!=='object'||Array.isArray(patch))
+    throw Error('Attendance update requires a saved record ID and a valid patch.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance register is busy. Refresh before retrying.');
+  try{
+    const dataSource=getCollectionSheet(ctx,collection);
+    const sheet=dataSource.sheet,headers=dataSource.headers;
+    const rows=sheet.getDataRange().getValues(),idColumn=headers.indexOf('id');
+    if(idColumn<0)throw Error('Attendance sheet is missing its record ID header.');
+    const matches=[];
+    for(let i=1;i<rows.length;i++){
+      if(String(rows[i][idColumn])===String(id))matches.push({rowIndex:i,record:rowToRecord(headers,rows[i])});
+    }
+    if(matches.length!==1)
+      throw Error(matches.length?'Duplicate attendance record IDs. Administrator must review the backed-up sheet.':'Record not found: '+id);
+    const target=matches[0],existing=target.record;
+    if(ctx.role==='teacher'){
+      if(staff||!teacherOwns(ctx,existing))throw Error('Attendance record outside assigned class/section.');
+      teacherStudentAccess_(ctx,existing);
+    }
+    const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+      ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+    const date=attendanceSchoolDayKey_(existing.date,zone);
+    if(!date)throw Error('Saved attendance date is invalid. Administrator review required.');
+    if(patch.date!==undefined&&attendanceSchoolDayKey_(patch.date,zone)!==date)
+      throw Error('Cannot move saved attendance to another date via Update.');
+    const immutable=staff?['teacherId','schoolId']:['studentId','enrlNo','class','section','schoolId'];
+    for(const field of immutable){
+      if(patch[field]===undefined)continue;
+      const prior=String(existing[field]??'').trim(),incoming=String(patch[field]??'').trim();
+      const equivalent=field==='class'?sameClass(prior,incoming):prior===incoming;
+      if(!equivalent)throw Error('Cannot change saved attendance identity or '+field+' via Update.');
+    }
+    if(patch.id!==undefined&&String(patch.id)!==String(id))
+      throw Error('Cannot change saved attendance record ID.');
+    const personField=staff?'teacherId':'studentId',personId=String(existing[personField]||'').trim();
+    const enrollment=String(existing.enrlNo||'').trim(),className=String(existing.class||'').trim();
+    if(staff&&!personId)throw Error('Staff attendance has no teacher ID; administrator review required.');
+    if(!staff&&!personId&&!(enrollment&&className))
+      throw Error('Attendance has no unambiguous student identity; administrator review required.');
+    let samePersonAndDay=0;
+    for(let i=1;i<rows.length;i++){
+      const other=rowToRecord(headers,rows[i]);
+      if(attendanceSchoolDayKey_(other.date,zone)!==date)continue;
+      const otherId=String(other[personField]||'').trim();
+      const equivalent=staff?otherId===personId:
+        (personId&&otherId?otherId===personId:
+          !!(enrollment&&className&&enrollment===String(other.enrlNo||'').trim()&&
+            sameClass(className,other.class)));
+      if(equivalent)samePersonAndDay++;
+    }
+    if(samePersonAndDay!==1)
+      throw Error('Duplicate saved attendance for this person/date. Back up and reconcile before editing.');
+    const next=Object.assign({},existing,patch,{id:existing.id,date:existing.date});
+    for(const field of immutable)next[field]=existing[field];
+    const status=attendanceStatusKey_(next.status);
+    if(!status)throw Error('Attendance status must be Present, Absent or Leave.');
+    next.status=status;
+    sheet.getRange(target.rowIndex+1,1,1,headers.length).setValues([recordToRow(headers,next)]);
+    if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'update',collection,id,existing,next);
+    return next;
+  }finally{lock.releaseLock();}
+}
+
 function updateRecord(ctx, collection, id, patch) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'update', collection);
+    if(collection==='attendance'||collection==='teacherAttendance')
+        return updateAttendanceRecordWithLock_(ctx,collection,id,patch);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const data = sheet.getDataRange().getValues();
     const idCol = headers.indexOf('id');
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
             const existing = rowToRecord(headers, data[i]);
+            if(collection==='attendance'||collection==='teacherAttendance'){
+                const zone=(ctx.ss&&typeof ctx.ss.getSpreadsheetTimeZone==='function'?
+                    ctx.ss.getSpreadsheetTimeZone():Session.getScriptTimeZone())||'Asia/Karachi';
+                const oldDay=attendanceSchoolDayKey_(existing.date,zone);
+                if(patch.date!==undefined && attendanceSchoolDayKey_(patch.date,zone)!==oldDay)
+                    throw Error('Cannot move saved attendance to another date via Update. Ask the administrator to correct the backed-up register.');
+                const identity=collection==='attendance'?'studentId':'teacherId';
+                if(patch[identity]!==undefined&&String(patch[identity])!==String(existing[identity]))
+                    throw Error('Cannot reassign an existing attendance record to another person.');
+            }
+
             if (ctx.role === 'teacher' && collection === 'students' && !sameClass(existing.class, ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }
@@ -1667,47 +1897,80 @@ function adminGetAudit(p){
 
 
 /** Admin-only, school-scoped attendance cleanup with an independent recoverable snapshot. */
+/**
+ * Admin-only attendance date clearing.
+ * Preview records a digest; destructive execution re-reads rows INSIDE the
+ * same Apps Script lock as Add/Update/Bulk, and refuses a changed snapshot.
+ * Deletion is intentionally not auto-retried.
+ */
 function clearStudentAttendanceDate_(p) {
   const actor=requireSchoolAdminWrite(p);
   assertSchoolWritable(p.schoolId);
-  const date=String(p.date||'');
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw Error('Valid YYYY-MM-DD date required.');
-  const classFilter=String(p.className||'').trim().toLowerCase();
   const ctx=resolveContext(p);
-  const info=getCollectionSheet(ctx,'attendance'),sheet=info.sheet,headers=info.headers;
-  const data=sheet.getDataRange().getValues();
-  const dateCol=headers.indexOf('date'),classCol=headers.indexOf('class');
-  if(dateCol<0)throw Error('Attendance date column is missing.');
-  const toDate=v=>{
-    if(v instanceof Date)return Utilities.formatDate(v,Session.getScriptTimeZone(),'yyyy-MM-dd');
-    const t=String(v||'').trim();
-    if(/^\d{4}-\d{2}-\d{2}/.test(t))return t.slice(0,10);
-    const m=t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    return m?m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2):'';
-  };
-  const matches=[];
-  for(let i=1;i<data.length;i++){
-    if(toDate(data[i][dateCol])!==date)continue;
-    if(classFilter&&(classCol<0||String(data[i][classCol]||'').trim().toLowerCase()!==classFilter))continue;
-    matches.push(i);
-  }
-  if(p.previewOnly)return {count:matches.length,date:date,className:p.className||'',previewOnly:true};
-  if(String(p.confirmText||'')!=='REMOVE '+date)throw Error('Confirmation phrase is required.');
-  if(!matches.length)return {count:0,date:date};
-  const lock=LockService.getScriptLock();lock.waitLock(30000);
+  const date=String(p.date||'').trim();
+  const zone=(ctx.ss.getSpreadsheetTimeZone&&ctx.ss.getSpreadsheetTimeZone())||
+    Session.getScriptTimeZone()||'Asia/Karachi';
+  if(attendanceSchoolDayKey_(date,zone)!==date)
+    throw Error('Valid YYYY-MM-DD attendance date required.');
+  const classFilter=String(p.className||'').trim();
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(20000))throw Error('Attendance register busy. Refresh before retrying.');
   try{
-    // The archive is created before any deletion. Rows are retained with original column order.
-    const backupName='Attendance_Backup_'+Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyMMdd_HHmmss');
+    // An independently saved roster snapshot is required before any removal.
+    const info=getCollectionSheet(ctx,'attendance'),sheet=info.sheet,headers=info.headers;
+    const dateCol=headers.indexOf('date'),classCol=headers.indexOf('class');
+    if(dateCol<0||headers.indexOf('id')<0)throw Error('Required attendance columns missing.');
+    const values=sheet.getDataRange().getValues();
+    const matches=[];
+    for(let i=1;i<values.length;i++){
+      if(attendanceSchoolDayKey_(values[i][dateCol],zone)!==date)continue;
+      if(classFilter&&(classCol<0||!sameClass(values[i][classCol],classFilter)))continue;
+      matches.push({row:i+1,values:values[i]});
+    }
+    const canonical=matches.map(item=>item.values.map(value=>
+      value instanceof Date?value.toISOString():String(value==null?'':value)));
+    const digest=Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,JSON.stringify({date,classFilter,headers,canonical}),
+      Utilities.Charset.UTF_8);
+    const previewToken=Utilities.base64EncodeWebSafe(digest).replace(/=+$/,'');
+    if(p.previewOnly)return {count:matches.length,date,className:classFilter,previewOnly:true,previewToken};
+
+    if(String(p.confirmText||'')!=='REMOVE '+date)
+      throw Error('Confirmation phrase is required.');
+    const expected=String(p.previewToken||'').trim();
+    if(!expected||expected!==previewToken)
+      throw Error('Attendance changed since preview. Nothing removed. Refresh, back up and review before trying again.');
+    if(p.expectedCount!==undefined&&Number(p.expectedCount)!==matches.length)
+      throw Error('Attendance count changed since preview. Nothing removed.');
+    if(!matches.length)return {count:0,date,previewToken};
+    if(matches.length>75)
+      throw Error('This operation exceeds the 75-row safety limit. Export and reconcile the register in smaller supervised batches.');
+    // Do not use a stale pre-lock row index, and never delete until a
+    // complete independent sheet snapshot is read back and verified.
+    const backupName='Attendance_Backup_'+Utilities.formatDate(new Date(),zone,'yyMMdd_HHmmss')+
+      '_'+Utilities.getUuid().replace(/-/g,'').slice(0,8);
     const backup=ctx.ss.insertSheet(backupName);
     backup.getRange(1,1,1,headers.length).setValues([headers]);
-    backup.getRange(2,1,matches.length,headers.length).setValues(matches.map(i=>data[i]));
+    backup.getRange(2,1,matches.length,headers.length).setValues(matches.map(m=>m.values));
     backup.setFrozenRows(1);
-    for(let j=matches.length-1;j>=0;j--)sheet.deleteRow(matches[j]+1);
-    writeAudit(ctx.ss,p.schoolId,actor,'clearAttendanceDate','attendance',date,{count:matches.length,className:p.className||'',backupSheet:backupName},null);
-    return {count:matches.length,date:date,backupSheet:backupName};
-  }finally{lock.releaseLock()}
+    const archived=backup.getDataRange().getValues();
+    const same=(left,right)=>JSON.stringify(left.map(row=>row.map(value=>
+      value instanceof Date?value.toISOString():String(value==null?'':value))))===
+      JSON.stringify(right.map(row=>row.map(value=>
+      value instanceof Date?value.toISOString():String(value==null?'':value))));
+    if(archived.length!==matches.length+1||
+      !same(archived.slice(0,1),[headers])||
+      !same(archived.slice(1),matches.map(m=>m.values)))
+      throw Error('Backup verification failed. No attendance was deleted. Inspect the backup.');
+    writeAudit(ctx.ss,p.schoolId,actor,'attendanceClearBackupPrepared','attendance',date,
+      {count:matches.length,className:classFilter,backupSheet:backupName},null);
+    // Always delete descending so earlier row numbers remain stable.
+    for(let i=matches.length-1;i>=0;i--)sheet.deleteRow(matches[i].row);
+    writeAudit(ctx.ss,p.schoolId,actor,'clearAttendanceDate','attendance',date,
+      {count:matches.length,className:classFilter,backupSheet:backupName},null);
+    return {count:matches.length,date,backupSheet:backupName,previewToken};
+  }finally{lock.releaseLock();}
 }
-
 
 const SUPPORT_HEADERS_=['ticketId','schoolId','schoolName','category','subject','description','status','reply','createdAt','updatedAt','submittedBy'];
 function supportDirectory_(){
@@ -2131,7 +2394,22 @@ function handleRequest(params) {
             case 'bulkAttendance':
                 assertSchoolWritable(params.schoolId);
                 const result=bulkAttendanceRecords(params);
-                writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,'bulkAttendance','attendance','',null,{count:Array.isArray(result)?result.length:undefined});
+                // Attendance is already committed. An audit-log outage must not
+                // produce a misleading "save failed" response and cause retries.
+                try {
+                  if(params.role==='teacher'){
+                    const scoped=authorizeTeacher(params.schoolId,params.teacherId,params.apiKey);
+                    const actor={id:scoped.teacher.id,name:scoped.teacher.name,role:'teacher'};
+                    writeAudit(scoped.ss,params.schoolId,actor,'bulkAttendance','attendance','',null,
+                      {count:result.saved,class:scoped.teacher.assignedClass,source:'teacherPortal'});
+                  }else{
+                    writeAudit(adminUsers(params.schoolId).ss,params.schoolId,params._auditActor,
+                      'bulkAttendance','attendance','',null,{count:result.saved,source:'schoolAdmin'});
+                  }
+                }catch(auditError){
+                  console.error('Attendance saved; audit logging failed:',auditError);
+                  result.auditWarning='Attendance saved but audit log could not be confirmed.';
+                }
                 return {status:'success',result};
             case 'list':
                 return { status: 'success', records: listRecords(resolveContext(params), params.collection) };

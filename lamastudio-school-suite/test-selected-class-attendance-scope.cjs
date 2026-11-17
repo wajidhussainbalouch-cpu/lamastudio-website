@@ -21,14 +21,14 @@ const students=[
 ];
 const state={students,chosen:new Map([
  ['s1',{status:'Absent'}],['s2',{status:'Present'}],['s3',{status:'Leave'}]
-]),dirty:new Set(),rosterReady:true,historyReady:true,
+ ]),editing:new Set(),dirty:new Set(),conflicts:new Map(),unmatched:0,reviewUnknown:[],writeHold:false,rosterReady:true,historyReady:true,
  loadedDate:'2026-11-12',loading:false,saving:false};
 const cls=s=>String(s.class);
 const id=s=>String(s.id);
 const enr=s=>String(s.enrlNo);
 const escapeHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const f=new Function('$','state','cls','id','enr','escapeHtml','recentAttendance','qrSaving','portalPublishing',
- src.slice(start,end)+'return {classStudents,visible,render};'
+ 'const registerNeedsReview=()=>false;'+src.slice(start,end)+'return {classStudents,visible,render};'
 )($,state,cls,id,enr,escapeHtml,()=>'No previous records',false,false);
 function checks(c,expected){
  $('class').value=c;$('search').value='';$('filter').value='';
@@ -57,6 +57,23 @@ checks('Playgroup',{total:2,present:1,absent:0,leave:1,unmarked:0,classes:1,
  names:['Rukhsana','Jabir'],excluded:['Ali'],followup:['Jabir'],noFollowup:['Ali']});
 checks('',{total:3,present:1,absent:1,leave:1,unmarked:0,classes:2,
  names:['Ali','Rukhsana','Jabir'],excluded:[],followup:['Ali','Jabir'],noFollowup:[]});
+state.historyReady=false;
+f.render();
+assert.ok($('summary').innerHTML.includes('Present</div><h2>—</h2>'),'Failed history load must not show old Present totals');
+assert.ok($('summary').innerHTML.includes('Unmarked</div><h2>—</h2>'),'Failed history load must not label everyone unmarked');
+assert.match($('followup').innerHTML,/unavailable until attendance is verified/,'Do not prompt parents from stale saved history');
+state.historyReady=true;
+$('class').value='4';
+state.conflicts.set('s1',[{id:'row-x',status:'Present'},{id:'row-y',status:'Absent'}]);
+state.chosen.delete('s1');state.reviewUnknown=[];
+f.render();
+assert.ok($('summary').innerHTML.includes('Needs review</div><h2>1</h2>'),'Duplicate student must be counted for review');
+assert.match($('reviewDetails').innerHTML,/Ali/);
+assert.match($('reviewDetails').innerHTML,/row-x/);
+assert.match($('reviewDetails').innerHTML,/row-y/);
+assert.match($('reviewDetails').innerHTML,/not a duplicate-repair tool/);
+assert.equal($('save').disabled,true,'Save disabled until duplicate review');
+state.conflicts.clear();
 assert.match(src,/const recipients=classStudents\(\)\.filter\(student=>\[/,
  'Bulk parent notices must not include other classes');
 assert.match(src,/if\(\$\('class'\)\.value&&cls\(student\)!==\$\('class'\)\.value\)/,

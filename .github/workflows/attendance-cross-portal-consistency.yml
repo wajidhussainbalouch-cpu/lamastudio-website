@@ -1,0 +1,30 @@
+name: Cross-Portal Student Attendance Consistency
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/attendance/student-attendance-v2.html'
+      - 'lamastudio-school-suite/portals/teacher/index.html'
+      - 'lamastudio-school-suite/js/teacher-register-helpers.js'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/backend-api/code.gs'
+      - 'lamastudio-school-suite/backend-api/bulk-attendance-backend.gs'
+      - 'lamastudio-school-suite/test-attendance-cross-portal-visibility.cjs'
+      - '.github/workflows/attendance-cross-portal-consistency.yml'
+  push:
+    branches:
+      - 'release/attendance-cross-portal-staging-20261117'
+permissions:
+  contents: read
+jobs:
+  cross-portal-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify admin and teacher view the same saved class and whole-school attendance
+        run: node lamastudio-school-suite/test-attendance-cross-portal-visibility.cjs
+      - name: Verify fast admin attendance and edit/undo with gender totals
+        run: node lamastudio-school-suite/attendance/test-attendance-gender-edit.cjs
+      - name: Verify teacher class attendance and timeout-safe 51-student saving
+        run: node lamastudio-school-suite/portals/teacher/test-teacher-bulk-save-readback.cjs
+      - name: Verify full Apps Script backend parses
+        run: node -e "const fs=require('fs'),vm=require('vm');new vm.Script(fs.readFileSync('lamastudio-school-suite/backend-api/code.gs','utf8'));new vm.Script(fs.readFileSync('lamastudio-school-suite/backend-api/bulk-attendance-backend.gs','utf8'));console.log('PASS Apps Script parses')"

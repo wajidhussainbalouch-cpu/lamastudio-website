@@ -18,10 +18,13 @@ const nodes=new Map(),document={getElementById:id=>{
  return nodes.get(id);
 }};
 const day='2026-11-12';
-const functions=new Function('document','localISODate','normalizeAttendanceDate',
+const dateOf=value=>String(value).slice(0,10);
+const verifiedStudentDayRows=new Function('normalizeAttendanceDate',
+ section(dash,'function verifiedStudentDayRows(attendance,students,day){',"\n        document.getElementById('studentAttClasses')")+'return verifiedStudentDayRows;')(dateOf);
+const functions=new Function('document','localISODate','normalizeAttendanceDate','verifiedStudentDayRows',
   section(dash,'function classAttendanceUrl(','function renderFeeChart(')
   +'return {classAttendanceUrl,renderAttendanceChart};'
-)(document,()=>day,value=>String(value).slice(0,10));
+)(document,()=>day,dateOf,verifiedStudentDayRows);
 assert.equal(functions.classAttendanceUrl('4',day),'attendance/student-attendance.html?class=4&date=2026-11-12');
 const special='Nursery & A/B';
 assert.equal(new URL(functions.classAttendanceUrl(special,day),'https://www.lamastudio.pk/lamastudio-school-suite/dashboard.html')

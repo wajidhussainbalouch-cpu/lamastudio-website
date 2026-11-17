@@ -37,7 +37,7 @@ function quranV8Id_(v,label){
 }
 function quranV8Lesson_(v){
  var id=quranV8Id_(v,'lesson ID');
- if(!/^(letters-[1-4]|harakat|joining|tanween|sukoon|shaddah|madd|mixed|bridge|child-(0[1-9]|1[0-2])|hifz-(fatiha|asr|kawthar|ikhlas|falaq|nas)|surah-(1|103|108|112|113|114))$/.test(id))throw Error('Unknown lesson ID.');
+ if(!/^(letters-[1-4]|harakat|joining|tanween|sukoon|shaddah|madd|mixed|bridge|child-(0[1-9]|1[0-2])|hifz-(fatiha|asr|kawthar|ikhlas|falaq|nas)|surah-(1|103|108|112|113|114)|nazra-juz-(0[1-9]|[12][0-9]|30))$/.test(id))throw Error('Unknown lesson ID.');
  return id;
 }
 function quranV8Note_(value){

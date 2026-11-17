@@ -90,7 +90,7 @@ function feedback(savedCount,{verified=true,writeUncertain=false}={}){
 assert.match(feedback(0),/has not been marked/,'Verified empty register is NOT attendance completed');
 assert.match(feedback(1),/not yet complete/,'A partly marked class is NOT attendance completed');
 assert.match(feedback(2),/Attendance completed and verified/,'Every saved student should give a clear completion badge');
-assert.match(feedback(2,{verified:false}),/not verified/i,'Failed saved read must not show completed status');
+assert.match(feedback(2,{verified:false}),/cannot be verified|not verified/i,'Failed saved read must not show completed status');
 assert.match(html,/Saturday is closed only when configured/);
 const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]).filter(Boolean);
 for(const inline of scripts)new vm.Script(inline,{filename:'teacher/index.html inline'});

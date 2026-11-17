@@ -235,7 +235,7 @@ const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[];
 const TeacherRegister=LamaTeacherRegister;
-let rosterReady=false,attendanceReady=false,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceUncertain=false,attendanceSaveNote='';
+let rosterReady=false,attendanceReady=false,homeworkReady=false,attendanceIssue='',attendanceSaving=false,attendanceUncertain=false,attendanceWriteUncertain=false,attendanceSaveNote='';
 let draftAttendance=new Map(),editingAttendance=new Set(),selectedAttendanceDay='';
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
@@ -282,7 +282,7 @@ function showAttendanceFeedback(){
  button.disabled=blocked||draftAttendance.size===0;
  if(verify)verify.disabled=attendanceSaving;
  if(attendanceSaving){span.textContent='Saving '+draftAttendance.size+' change(s)… Do not submit again.';span.className='text-xs text-amber-200';return}
- if(attendanceUncertain){span.textContent='⚠ Save outcome not verified'+(attendanceIssue?': '+attendanceIssue:'')+'. Marks remain selected. Use Verify saved attendance before retrying.';span.className='text-xs teacher-attendance-uncertain';return}
+ if(attendanceUncertain){span.textContent='⚠ '+(attendanceWriteUncertain?'Save outcome not verified':'Saved attendance cannot be verified')+(attendanceIssue?': '+attendanceIssue:'')+'. Marks remain selected. Use Verify saved attendance before continuing.';span.className='text-xs teacher-attendance-uncertain';return}
  if(!attendanceReady){span.textContent='⚠ Saved attendance unavailable'+(attendanceIssue?': '+attendanceIssue:'')+'. Marking is disabled until verified.';span.className='text-xs teacher-attendance-uncertain';return}
  if(snap.duplicates.size||snap.unmatched.length){span.textContent='⚠ '+snap.duplicates.size+' duplicate student(s) and '+snap.unmatched.length+' unmatched row(s) need administrator review. Do not overwrite them.';span.className='text-xs teacher-attendance-review';return}
  if(draftAttendance.size){span.textContent=draftAttendance.size+' unsaved change(s). Tap Save changes, then wait for verification.';span.className='text-xs text-amber-200';return}
@@ -350,7 +350,7 @@ async function loadSavedAttendance(expected=null){
    attendanceUncertain=true;
    throw Error(mismatch.length+' requested attendance mark(s) are not confirmed by saved records. Do not retry automatically.');
   }
-  draftAttendance.clear();editingAttendance.clear();
+  draftAttendance.clear();editingAttendance.clear();attendanceWriteUncertain=false;
  }
  attendanceUncertain=false;
  return snap;
@@ -366,7 +366,7 @@ async function refresh(){
    myStudents=students.filter(scope);rosterReady=true;
   }
   const jobs=[
-   async()=>{try{await loadSavedAttendance(draftAttendance.size&&attendanceUncertain?new Map(draftAttendance):null)}
+   async()=>{try{await loadSavedAttendance(attendanceWriteUncertain?new Map(draftAttendance):null)}
      catch(error){attendanceReady=false;attendanceIssue=error.message;console.warn('Saved attendance read failed',error)}},
    async()=>{try{const rows=await withDeadline(LamaAPI.list('homework'),'Homework history',25000);
      if(!Array.isArray(rows))throw Error('Homework response invalid');
@@ -388,11 +388,13 @@ async function refresh(){
 }
 function verifyTeacherAttendance(){
  if(attendanceSaving)return;
- const expected=draftAttendance.size?new Map(draftAttendance):null;
+ // Unsubmitted edits are a preview, not an unverified write. Only compare
+ // them against server rows when a previous SAVE actually had an uncertain outcome.
+ const expected=attendanceWriteUncertain?new Map(draftAttendance):null;
  $('teacherAttendanceStatus').textContent='Reading saved attendance from Google Sheets…';
  return loadSavedAttendance(expected).then(()=>{
   renderAll();
-  $('teacherAttendanceStatus').textContent='✓ Attendance verified against saved records for '+$('attDate').value+'.';
+  $('teacherAttendanceStatus').textContent='✓ Saved attendance register verified for '+$('attDate').value+'.'+(draftAttendance.size?' '+draftAttendance.size+' unsaved change(s) are still selected.':'');
  }).catch(error=>{
   attendanceReady=false;
   attendanceUncertain=true;
@@ -521,7 +523,7 @@ async function saveAttendance(){
  attendanceSaving=true;attendanceSaveNote='';updateStats();
  let requestStarted=false;
  try{
-  requestStarted=true;
+  requestStarted=true;attendanceWriteUncertain=true;
   const result=await LamaAPI.bulkAttendance(day,records);
   if(!result||Number(result.saved)!==records.length)throw Error('Bulk save response did not confirm all requested records.');
   // Do not reload the entire student roster after a successful write.

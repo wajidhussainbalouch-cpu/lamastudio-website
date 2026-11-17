@@ -14,8 +14,8 @@ const session=new Map([
 const localStorage={getItem:k=>local.get(k)||null,setItem:(k,v)=>local.set(k,v),removeItem:k=>local.delete(k)};
 const sessionStorage={getItem:k=>session.get(k)||null,setItem:(k,v)=>session.set(k,v),removeItem:k=>session.delete(k)};
 const sent=[];
-const ctx={localStorage,sessionStorage,URLSearchParams,fetch:async (_url,opts)=>{
- const request=JSON.parse(opts.body||'{}');sent.push(request);
+const ctx={localStorage,sessionStorage,URLSearchParams,fetch:async (url,opts)=>{
+ const request=opts.method==='GET'?Object.fromEntries(new URL(url).searchParams):JSON.parse(opts.body||'{}');sent.push(request);
  return {ok:true,status:200,text:async()=>{
   if(request.action==='list')return JSON.stringify({status:'success',records:[]});
   if(request.action==='bulkAttendance')return JSON.stringify({status:'success',result:{saved:1,updated:0,inserted:1}});

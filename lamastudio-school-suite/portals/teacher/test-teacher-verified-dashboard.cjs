@@ -23,6 +23,15 @@ const saved=[
  {id:'r2',studentId:'b',date:day,status:'Absent'}
 ];
 assert.equal(h.day(day+'T00:00:00.000Z'),day);
+assert.equal(h.day('2026-11-16T19:00:00.000Z'),'2026-11-17','Admin-saved Sheets UTC timestamp must display under Pakistan school day');
+assert.equal(h.day('2026-11-17T23:30:00.000Z'),'2026-11-18','Timezone rollover cannot show yesterday');
+assert.equal(h.day('17/11/2026'),'2026-11-17','Teacher must handle legacy date text');
+assert.equal(h.day('11/17/2026'),'2026-11-17','Teacher must handle unambiguous US date text');
+const foreignTimeZone={window:{LamaTeacherSchoolTimeZone:'America/Los_Angeles'}};
+vm.createContext(foreignTimeZone);
+vm.runInContext(helpersSource,foreignTimeZone);
+assert.equal(foreignTimeZone.window.LamaTeacherRegister.day('2026-11-16T19:00:00Z'),'2026-11-16','A configured alternate school timezone controls saved dates rather than the viewing phone');
+
 assert.equal(h.day('2026-11-16T22:30:00Z'),day,'Homework entered after midnight Pakistan time counts on the correct local day');
 assert.equal(h.guardian(students[0]),'Guardian A');
 assert.equal(h.countGender(students).boys,1);

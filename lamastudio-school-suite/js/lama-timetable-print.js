@@ -34,6 +34,26 @@ function rowsTable(records,{combined=false}={}){
   '<tr><td colspan="'+heads.length+'" class="empty-print">No timetable periods saved for this selection.</td></tr>';
  return '<table class="school-timetable"><caption class="sr-print">School weekly subject timetable</caption>'+header+'<tbody>'+body+'</tbody></table>';
 }
+function weeklyMatrix(records){
+ const showDays=days.filter(d=>d!=='Sunday'||records.some(p=>String(p.day||'').toLowerCase()==='sunday'));
+ const periods=[...new Set(records.map(r=>Number(r.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
+ if(!periods.length)return '<p class="empty-print">No timetable periods saved for this class.</p>';
+ const thead='<thead><tr><th scope="col">Period</th>'+showDays.map(d=>'<th scope="col">'+esc(d.slice(0,3))+'</th>').join('')+'</tr></thead>';
+ const tbody=periods.map(n=>{
+  const cells=showDays.map(day=>{
+   const current=sorted(records.filter(p=>Number(p.period)===n&&String(p.day||'').toLowerCase()===day.toLowerCase()),'class');
+   if(!current.length)return '<td class="timetable-free">—</td>';
+   return '<td>'+current.map(entry=>'<div class="timetable-slot"><strong>'+esc(entry.subject||'—')+'</strong>'+
+    (sectionOf(entry)?'<small>Section '+esc(sectionOf(entry))+'</small>':'')+
+    '<small>'+esc(timeLabel(entry)||'Time not set')+'</small>'+
+    '<small>'+esc(entry.teacherName||'Unassigned')+'</small>'+
+    (entry.room?'<small>'+esc(entry.room)+'</small>':'')+'</div>').join('')+'</td>';
+  }).join('');
+  return '<tr><th scope="row">P'+n+'</th>'+cells+'</tr>';
+ }).join('');
+ return '<table class="school-timetable weekly-matrix"><caption class="sr-print">Weekly subject grid by day and period</caption>'+
+  thead+'<tbody>'+tbody+'</tbody></table>';
+}
 function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',calendar=false,calendarMonth='',calendarContent='',calendarEvents=''}={}){
  const profile={...schoolFallback,...school};
  const name=schoolName(profile);
@@ -50,7 +70,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   const subset=baseRecords.filter(p=>gradeOf(p).toLowerCase()===String(selectedClass).trim().toLowerCase());
   title='Class '+selectedClass+' — Weekly Timetable';
   description='One selected class';
-  content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+rowsTable(subset,{combined:true})+'</section>';
+  content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+weeklyMatrix(subset)+'</section>';
  }else if(scope==='by-class'){
   const labels=[...new Set(baseRecords.map(classLabel).filter(Boolean))].sort(natural);
   title='Class-wise Weekly Timetables';
@@ -78,12 +98,12 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
    const subset=baseRecords.filter(p=>classLabel(p)===label);
    const classMeta='<div class="print-meta"><span>Academic session: <b>'+esc(sessionName||'Not selected')+
     '</b></span><span>Class '+esc(label)+'</span><span>Printed '+esc(shownDate)+'</span></div>';
-   const table='<section class="print-class-block"><h3>Class '+esc(label)+' — Weekly Timetable</h3>'+rowsTable(subset)+'</section>';
+   const table='<section class="print-class-block"><h3>Class '+esc(label)+' — Weekly Timetable</h3>'+weeklyMatrix(subset)+'</section>';
    return '<article class="print-class-page">'+head+classMeta+table+footer+'</article>';
   }).join('');
   return pages+calendarSection;
  }
  return head+meta+content+calendarSection+footer;
 }
-root.LamaTimetablePrint={safeLogo,schoolName,gradeOf,classLabel,timeLabel,sorted,rowsTable,printMarkup};
+root.LamaTimetablePrint={safeLogo,schoolName,gradeOf,classLabel,timeLabel,sorted,rowsTable,weeklyMatrix,printMarkup};
 })(typeof window!=='undefined'?window:globalThis);

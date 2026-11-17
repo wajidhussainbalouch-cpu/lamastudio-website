@@ -39,7 +39,7 @@ const id=s=>String(s.id),enr=s=>String(s.enrlNo),cls=s=>String(s.class);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const messages=[];
 const code=segment('function classStudents(){',"$('followup').addEventListener")+
- segment('function choose(k,v){',"['class','filter','search']")+
+ segment('function updateMarkFeedback(k,value,button,previousDirtyCount){',"['class','filter','search']")+
  'return {classStudents,render,choose,toggleAttendanceEdit,genderTotals,studentGender};';
 const ui=new Function('$','state','cls','id','enr','escapeHtml','recentAttendance','qrSaving','portalPublishing','registerNeedsReview','message',code)(
  $,state,cls,id,enr,esc,()=> 'No saved history',false,false,

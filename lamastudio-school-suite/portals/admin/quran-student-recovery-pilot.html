@@ -70,12 +70,22 @@ label.check input{width:18px;height:18px;flex:none;margin:2px}
 // Developer must edit BOTH settings only on a cloned TEST deployment, never live.
 const Q12_ISOLATED_TEST_BUILD=false;
 const Q12_EXPECTED_TEST_SCHOOL_ID=''; // exact fictional test school ID
+const Q12_EXPECTED_TEST_API_URL=''; // exact disposable Apps Script TEST deployment
+// Defense in depth: do not permit the known production endpoint, even when
+// someone accidentally flips the developer-only page configuration.
+const Q12_KNOWN_PRODUCTION_API_URL="https://script.google.com/macros/s/AKfycbz8Num29Df94i-TNlX4ggN6nveyVLpoPDo4feStMXV3DuAx-JoRD3nZH1Q90kVuEH57/exec";
 const $=id=>document.getElementById(id);
-const ready=Q12_ISOLATED_TEST_BUILD && /^[A-Za-z0-9_-]{1,90}$/.test(Q12_EXPECTED_TEST_SCHOOL_ID);
+const safeTestApi=typeof API_URL==='string' &&
+  /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(Q12_EXPECTED_TEST_API_URL) &&
+  API_URL===Q12_EXPECTED_TEST_API_URL &&
+  API_URL!==Q12_KNOWN_PRODUCTION_API_URL;
+const safeOrigin=!['lamastudio.pk','www.lamastudio.pk'].includes(location.hostname);
+const ready=Q12_ISOLATED_TEST_BUILD &&
+  /^[A-Za-z0-9_-]{1,90}$/.test(Q12_EXPECTED_TEST_SCHOOL_ID) && safeTestApi && safeOrigin;
 let approval=null;
 $('gateText').textContent=ready
   ? 'TEST mode configured: confirm the API client targets the separate TEST backend.'
-  : 'Recovery disabled. A separate TEST API and fictional test-school configuration are required.';
+  : 'Recovery disabled. Configure a different disposable TEST API URL, an exact fictional test school, and a non-production origin.';
 $('preview').disabled=!ready;
 function eraseApproval(){
   approval=null;

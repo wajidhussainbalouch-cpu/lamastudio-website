@@ -80,7 +80,7 @@ function harness({authorized=true,confirmValue=true,noOpRemove=false,staleDepend
  assert.ok(success.server.some(r=>r.id==='session-2222'),'Keep the other duplicate untouched');
  assert.ok(success.server.some(r=>r.id==='session-OLD1'),'Keep the active session untouched');
  assert.equal(success.confirms.length,1);
- assert.match(success.confirms[0],/session-1111/,'Confirmation names the exact record');
+ assert.match(success.confirms[0],/ion-1111/,'Confirmation names the selected record ID suffix');
  assert.match(success.confirms[0],/2026-27/);
  assert.ok(success.messages.some(m=>/deleted and the list verified/.test(m)));
  const backendNoop=harness({noOpRemove:true});

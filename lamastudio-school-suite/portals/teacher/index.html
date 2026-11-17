@@ -292,9 +292,8 @@ function showTeacherHomeworkStatus(day=localDate()){
  const el=$('homeworkSubjectChecklist'),counter=$('statHomework');
  if(!el||!counter)return;
  if(!homeworkReady){counter.textContent='—';el.textContent='Homework data unavailable';return}
- const todayRecords=homework.filter(h=>TeacherRegister.day(h.createdAt||h.postedAt)===day&&published(h));
- counter.textContent=todayRecords.length;
  const list=TeacherRegister.homeworkChecklist(myStudents,homework,me,day);
+ counter.textContent=list.filter(entry=>entry.done).length+' / '+list.length;
  if(!list.length){el.textContent='Subjects are not configured for this class yet.';return}
  el.innerHTML=list.map(item=>'<span class="homework-subject '+(item.done?'done':'')+'">'+(item.done?'✓':'○')+' '+esc(item.name)+' · '+(item.done?'Posted':'Not posted')+'</span>').join('');
 }

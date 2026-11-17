@@ -324,20 +324,86 @@ function updateStats(){
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('headerAssignedClass').textContent=me.assignedClass||'Not assigned';$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 let refreshPromise=null;
+function withDeadline(promise,label,ms=30000){
+ let timer;
+ return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' timed out after '+Math.round(ms/1000)+' seconds')),ms)})])
+  .finally(()=>clearTimeout(timer));
+}
+function scopedAttendanceRows(rows){
+ return rows.filter(row=>schoolMatch(row)&&(
+   myStudent(row.studentId??row.studentID??row.student_id)||
+   (!String(row.studentId??row.studentID??row.student_id??'').trim()&&myStudents.some(st=>TeacherRegister.enrollment(st)===String(row.enrlNo??row.enrollmentNo??'')))
+ ));
+}
+async function loadSavedAttendance(expected=null){
+ const rows=await withDeadline(LamaAPI.list('attendance'),'Attendance history',30000);
+ if(!Array.isArray(rows))throw Error('Attendance response is invalid');
+ const scoped=scopedAttendanceRows(rows);
+ const snap=TeacherRegister.snapshot(scoped,myStudents,$('attDate').value);
+ attendance=scoped;attendanceReady=true;attendanceIssue='';
+ if(snap.duplicates.size||snap.unmatched.length){
+  attendanceUncertain=true;
+  throw Error('Attendance has duplicate or unmatched records. Ask an administrator to review before writing.');
+ }
+ if(expected){
+  const mismatch=[...expected].filter(([id,status])=>snap.unique.get(id)?.status!==status);
+  if(mismatch.length){
+   attendanceUncertain=true;
+   throw Error(mismatch.length+' requested attendance mark(s) are not confirmed by saved records. Do not retry automatically.');
+  }
+  draftAttendance.clear();editingAttendance.clear();
+ }
+ attendanceUncertain=false;
+ return snap;
+}
 async function refresh(){
  if(refreshPromise)return refreshPromise;
+ if(attendanceSaving)return;
  refreshPromise=(async()=>{
-  const timeout=(promise,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out after 20 seconds')),20000))]);
-  const students=await timeout(LamaAPI.list('students'),'Student register');
-  if(!Array.isArray(students))throw Error('Student register response is invalid');
-  myStudents=students.filter(scope);
-  attendance=[];homework=[];notices=[];results=[];
+  // Never discard a teacher's selected marks just because a network read failed.
+  if(!rosterReady){
+   const students=await withDeadline(LamaAPI.list('students'),'Student register',30000);
+   if(!Array.isArray(students))throw Error('Student register response is invalid');
+   myStudents=students.filter(scope);rosterReady=true;
+  }
+  const jobs=[
+   async()=>{try{await loadSavedAttendance(draftAttendance.size&&attendanceUncertain?new Map(draftAttendance):null)}
+     catch(error){attendanceReady=false;attendanceIssue=error.message;console.warn('Saved attendance read failed',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('homework'),'Homework history',25000);
+     if(!Array.isArray(rows))throw Error('Homework response invalid');
+     homework=rows.filter(scope);homeworkReady=true;
+     }catch(error){homeworkReady=false;console.warn('Homework read failed',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('notifications'),'Notices',25000);
+     if(!Array.isArray(rows))throw Error('Notices response invalid');
+     notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'));
+     }catch(error){console.warn('Notices read failed; previous notices preserved',error)}},
+   async()=>{try{const rows=await withDeadline(LamaAPI.list('results'),'Results',25000);
+     if(!Array.isArray(rows))throw Error('Results response invalid');
+     results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId));
+     }catch(error){console.warn('Results read failed; previous results preserved',error)}}
+  ];
+  await Promise.all(jobs.map(job=>job()));
   renderAll();
-  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId))}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
-  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else console.warn(name+' response invalid')}catch(e){console.warn(name+' failed',e)}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
 }
+function verifyTeacherAttendance(){
+ if(attendanceSaving)return;
+ const expected=draftAttendance.size?new Map(draftAttendance):null;
+ $('teacherAttendanceStatus').textContent='Reading saved attendance from Google Sheets…';
+ return loadSavedAttendance(expected).then(()=>{
+  renderAll();
+  $('teacherAttendanceStatus').textContent='✓ Attendance verified against saved records for '+$('attDate').value+'.';
+ }).catch(error=>{
+  attendanceReady=false;
+  attendanceUncertain=true;
+  attendanceIssue=error.message;
+  renderAll();
+  $('teacherAttendanceStatus').textContent='⚠ Could not verify saved attendance: '+error.message+'. Selected marks remain visible; do not resubmit blindly.';
+  console.warn('Teacher verification failed',error);
+ });
+}
+$('verifyTeacherAttendance').addEventListener('click',verifyTeacherAttendance);
 function renderAll(){updateStats();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
 function renderStudentDirectory(){
  const el=$('studentDirectory');if(!el)return;
@@ -348,7 +414,7 @@ function renderStudentDirectory(){
  const photo=st.photo||st.photoUrl||st.studentPhoto||'';
  const avatar=document.createElement('span');avatar.className='student-avatar';
  if(photo&&/^https:\/\//i.test(String(photo))){const img=document.createElement('img');img.src=photo;img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>avatar.replaceChildren(document.createTextNode('👤'));avatar.append(img)}else avatar.textContent='👤';
- const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=st.name||'Student';const info=document.createElement('small');info.textContent='Enrollment: '+(st.enrlNo||st.enrollmentNo||'—')+' · '+(st.class||me.assignedClass||'');copy.append(name,info);
+ const copy=document.createElement('span');const name=document.createElement('strong');name.textContent=st.name||'Student';const info=document.createElement('small');info.textContent='Enrollment: '+(st.enrlNo||st.enrollmentNo||'—')+' · Parent/Guardian: '+TeacherRegister.guardian(st)+' · '+(st.class||me.assignedClass||'');copy.append(name,info);
  const arrow=document.createElement('span');arrow.textContent='View record ›';arrow.className='student-view';button.append(avatar,copy,arrow);button.onclick=()=>showStudentRecord(st.id);el.append(button)
  })
 }
@@ -357,7 +423,7 @@ function showStudentRecord(id){
  const el=$('studentDetails');el.replaceChildren();el.classList.remove('hidden');
  const heading=document.createElement('h3');heading.textContent=(st.name||'Student')+' · Class record';el.append(heading);
  const grid=document.createElement('div');grid.className='student-facts';
- const facts=[['Enrollment',st.enrlNo||st.enrollmentNo],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Father / Guardian',st.fatherName||st.father||st.guardianName],['Gender',st.gender],['Roll number',st.rollNo||st.rollNumber]];
+ const facts=[['Enrollment',st.enrlNo||st.enrollmentNo],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Father / Guardian',TeacherRegister.guardian(st)],['Gender',st.gender],['Roll number',st.rollNo||st.rollNumber]];
  for(const [label,value] of facts){if(!value)continue;const cell=document.createElement('div');const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=String(value);cell.append(l,v);grid.append(cell)}el.append(grid);
  const h=document.createElement('h4');h.textContent='Last 7 days · Attendance history';el.append(h);
  const strip=document.createElement('div');strip.className='week-attendance';

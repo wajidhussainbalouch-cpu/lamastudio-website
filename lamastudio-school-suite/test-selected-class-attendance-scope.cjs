@@ -21,7 +21,7 @@ const students=[
 ];
 const state={students,chosen:new Map([
  ['s1',{status:'Absent'}],['s2',{status:'Present'}],['s3',{status:'Leave'}]
- ]),dirty:new Set(),conflicts:new Map(),unmatched:0,reviewUnknown:[],writeHold:false,rosterReady:true,historyReady:true,
+ ]),editing:new Set(),dirty:new Set(),conflicts:new Map(),unmatched:0,reviewUnknown:[],writeHold:false,rosterReady:true,historyReady:true,
  loadedDate:'2026-11-12',loading:false,saving:false};
 const cls=s=>String(s.class);
 const id=s=>String(s.id);

@@ -440,7 +440,7 @@ function loadAttendanceList(){
   const markable=!blocked&&(!isSaved||isEditing)&&!duplicate;
   const statusLine=duplicate?'⚠ Duplicate saved entries need administrator review':
     draftAttendance.has(id)?'● Unsaved change (previous: '+(savedStatus||'Unmarked')+')':
-    isSaved?'Saved: '+savedStatus:'Not marked';
+    isSaved?(attendanceReady&&!attendanceUncertain?'Saved: ':'Last known mark (not reverified): ')+savedStatus:'Not marked';
   const guardian=TeacherRegister.guardian(student);
   const info='Enrollment: '+(TeacherRegister.enrollment(student)||'—')+' · Parent/Guardian: '+guardian;
   return '<div class="att-row flex flex-wrap justify-between items-center gap-3 bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(id)+'">'+
@@ -490,6 +490,7 @@ $('attendanceList').addEventListener('click',event=>{
 function renderTeacherStats(){
  const day=$('attDate').value,stats=TeacherRegister.totals(myStudents,attendanceSnapshot(day),draftAttendance);
  const info=$('teacherAttendanceStats');if(!info)return;
+ if(!attendanceReady||attendanceUncertain){info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Saved totals not verified. '+draftAttendance.size+' selected change(s) retained on this device. Use Verify saved attendance.';return}
  const text=entry=>entry.total+' (boys '+entry.boys+', girls '+entry.girls+(entry.unspecified?', unspecified '+entry.unspecified:'')+')';
  info.textContent='Class '+(me.assignedClass||'—')+' · '+day+' · Students '+text(stats.Students)+
   ' · Present '+text(stats.Present)+' · Absent '+text(stats.Absent)+' · Leave '+text(stats.Leave)+

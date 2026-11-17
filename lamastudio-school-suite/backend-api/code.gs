@@ -694,6 +694,35 @@ function safeTeacherPublicRecord_(teacher){
     delete safe.passwordHash;delete safe.password;delete safe.apiKey;delete safe.salt;
     return safe;
 }
+/** Enforce a real 600×800 JPEG and 15–30 KB even for forged API clients. */
+function validateTeacherPhoto_(value){
+    if(value===undefined||value===null||value==='')return '';
+    const raw=String(value);
+    if(!/^data:image\/jpeg;base64,[a-z0-9+/=]+$/i.test(raw))
+        throw Error('Teacher photo must be an uploaded 600×800 JPEG, not a photo URL.');
+    const bytes=Utilities.base64Decode(raw.split(',')[1]);
+    if(bytes.length<15*1024||bytes.length>30*1024)
+        throw Error('Teacher photo must be between 15 KB and 30 KB.');
+    const u=i=>bytes[i]<0?bytes[i]+256:bytes[i];
+    if(u(0)!==255||u(1)!==216||u(bytes.length-2)!==255||u(bytes.length-1)!==217)
+        throw Error('Invalid teacher JPEG file.');
+    let pos=2,dimensions=null;
+    while(pos<bytes.length-4){
+      if(u(pos)!==255){pos++;continue;}
+      let marker=u(pos+1);pos+=2;
+      if(marker===216||marker===217||marker===1||(marker>=208&&marker<=215))continue;
+      if(marker===218)break;
+      if(pos+1>=bytes.length)break;
+      const len=u(pos)*256+u(pos+1);
+      if(len<2||pos+len>bytes.length)break;
+      if([192,193,194,195,198,199,201,202,203,205,206,207].indexOf(marker)!==-1 && len>=7)
+        dimensions={height:u(pos+3)*256+u(pos+4),width:u(pos+5)*256+u(pos+6)};
+      pos+=len;
+    }
+    if(!dimensions||dimensions.width!==600||dimensions.height!==800)
+        throw Error('Teacher photo must be exactly 600 × 800 pixels.');
+    return raw;
+}
 /** School-admin-only password reset; current password hashes cannot be reversed. */
 function resetTeacherPassword_(p){
     const actor=requireSchoolAdminWrite(p);
@@ -761,7 +790,7 @@ function addTeacher(schoolId, apiKey, p) {
         contact: p.contact || '', status: 'Active', createdAt: new Date().toISOString(),
         cnic: p.cnic || '', dob: p.dob || '', gender: p.gender || '', qualification: p.qualification || '',
         joiningDate: p.joiningDate || '', address: p.address || '', emergencyContact: p.emergencyContact || '',
-        experience:p.experience||'',designation:p.designation||'',photo:p.photo||'',
+        experience:p.experience||'',designation:p.designation||'',photo:validateTeacherPhoto_(p.photo||''),
         whatsapp:p.whatsapp||'',staffCode:p.staffCode||'',employmentType:p.employmentType||'',
         specialization:p.specialization||'',emergencyContactName:p.emergencyContactName||''
     };
@@ -1144,6 +1173,7 @@ function updateRecord(ctx, collection, id, patch) {
                 if(patch.status&&!['Active','Suspended','Deleted'].includes(String(patch.status)))throw Error('Invalid teacher status.');
                 if(patch.name!==undefined&&!String(patch.name).trim())throw Error('Teacher name cannot be empty.');
                 if(patch.email!==undefined&&patch.email&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(patch.email)))throw Error('Invalid email.');
+                if(Object.prototype.hasOwnProperty.call(patch,'photo'))patch.photo=validateTeacherPhoto_(patch.photo);
                 const next=Object.assign({},existing,patch);
                 validateTeacherAssignment_(sheet,headers,id,next.assignedClass,next.assignedSection,next.status);
             }

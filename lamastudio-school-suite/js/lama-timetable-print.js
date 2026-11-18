@@ -64,8 +64,8 @@ function masterGrid(records,selectedClasses=null,{maxClasses=6}={}){
  const all=[...new Set(published.map(classLabel).filter(Boolean))].sort(natural);
  const selection=Array.isArray(selectedClasses)?[...new Set(selectedClasses.map(v=>String(v).trim()).filter(Boolean))]:all;
  if(!selection.length)return '<p class="empty-print">No classes selected for this timetable.</p>';
- const labels=selection.filter(v=>all.some(x=>x.toLowerCase()===v.toLowerCase()));
- if(!labels.length)return '<p class="empty-print">No saved timetable periods for the selected classes.</p>';
+ const labels=selection;
+ if(!labels.length)return '<p class="empty-print">No classes selected.</p>';
  const included=published.filter(p=>labels.some(x=>x.toLowerCase()===classLabel(p).toLowerCase()));
  const showDays=days.filter(d=>d!=='Sunday'||included.some(p=>String(p.day).toLowerCase()==='sunday'));
  const max=Math.max(1,Math.min(10,Number(maxClasses)||6));
@@ -80,7 +80,7 @@ function masterGrid(records,selectedClasses=null,{maxClasses=6}={}){
    const rows=nums.map(n=>{
     const matching=today.filter(p=>Number(p.period)===n);
     const times=[...new Set(matching.map(timeLabel).filter(Boolean))];
-    const time=times.length?times.map(esc).join('<div class="master-time-item">'):'—';
+    const time=times.length?times.map(x=>'<div class="master-time-item">'+esc(x)+'</div>').join(''):'—';
     const cells=group.map(c=>{
      const entries=sorted(matching.filter(p=>classLabel(p).toLowerCase()===c.toLowerCase()),'class');
      if(!entries.length)return '<td class="master-empty">—</td>';
@@ -111,7 +111,8 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  let content='',title='',description='';
  if(scope==='selected'){
   if(!selectedClass)throw Error('Choose a class from the Class dropdown before printing a class timetable.');
-  const subset=baseRecords.filter(p=>gradeOf(p).toLowerCase()===String(selectedClass).trim().toLowerCase());
+  const requested=String(selectedClass).trim().toLowerCase();
+  const subset=baseRecords.filter(p=>classLabel(p).toLowerCase()===requested||(!requested.includes('· section ')&&gradeOf(p).toLowerCase()===requested));
   title='Class '+selectedClass+' — Weekly Timetable';
   description='One selected class';
   content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+weeklyMatrix(subset)+'</section>';

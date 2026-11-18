@@ -28,13 +28,13 @@ function render(classes,escape){
   const availableGroups=root.LamaClassSubjectChoices.groupsFor(item.name);
   const view=groupViews[i]||availableGroups[0]?.id||'';
   const groups=root.LamaClassSubjectChoices.categories(item.name,selected,view);
+  // A renamed catalog entry must not appear twice under its former and new names.
+  const previousNames=new Set(Object.values(item.aliases||{}).flatMap(a=>Array.isArray(a)?a:[]).map(norm));
   function chip(name){
-   const priorMatch=selected.find(subject=>(Array.isArray(item.aliases?.[subject])?item.aliases[subject]:[]).some(old=>norm(old)===norm(name)));
-   const match=selected.find(subject=>norm(subject)===norm(name))||priorMatch||null;
-   const on=!!match,display=priorMatch&&norm(priorMatch)!==norm(name)?priorMatch:name;
-   const note=priorMatch&&norm(priorMatch)!==norm(name)?'<small class="subject-renamed-note">Edited from '+escape(name)+'</small>':'';
-   return '<button type="button" class="subject-pick'+(on?' is-selected':'')+'" data-toggle-subject="'+i+'" data-subject-name="'+escape(match||name)+'" aria-pressed="'+on+'"><span class="pick-icon" aria-hidden="true">'+(on?'✓':'+')+'</span><span>'+escape(display)+note+'</span></button>';
+   const on=current.has(norm(name));
+   return '<button type="button" class="subject-pick'+(on?' is-selected':'')+'" data-toggle-subject="'+i+'" data-subject-name="'+escape(name)+'" aria-pressed="'+on+'"><span class="pick-icon" aria-hidden="true">'+(on?'✓':'+')+'</span><span>'+escape(name)+'</span></button>';
   }
+  const visible=names=>names.filter(name=>!previousNames.has(norm(name)));
   let content='';
   if(item.enabled){
    content+='<input data-sections-index="'+i+'" value="'+escape((item.sections||[]).join(', '))+'" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings['+i+'].sections=this.value.split(\',\').map(x=>x.trim()).filter(Boolean)">';
@@ -46,8 +46,8 @@ function render(classes,escape){
        +availableGroups.map(g=>'<button type="button" data-view-group="'+i+'" data-group-id="'+escape(g.id)+'" class="stream-tab'+(g.id===view?' active':'')+'" aria-pressed="'+(g.id===view)+'">'+escape(g.name)+'</button>').join('')
        +'</div><small class="text-slate-400">Switching groups changes the suggestions only. Tap each subject to select it; subject combinations must follow your board and academic session.</small></div>';
    }
-   content+='<div class="space-y-2"><p class="text-slate-200 text-xs font-black">Tap subjects to select / unselect</p><div class="subject-select-grid">'+groups.recommended.map(chip).join('')+'</div></div>';
-   content+='<details class="subject-more" data-more-class="'+i+'"'+(expanded[i]?' open':'')+'><summary>More optional subjects — browse all subjects</summary><div class="subject-select-grid">'+groups.more.map(chip).join('')+'</div></details>';
+   content+='<div class="space-y-2"><p class="text-slate-200 text-xs font-black">Tap subjects to select / unselect</p><div class="subject-select-grid">'+visible(groups.recommended).map(chip).join('')+'</div></div>';
+   content+='<details class="subject-more" data-more-class="'+i+'"'+(expanded[i]?' open':'')+'><summary>More optional subjects — browse all subjects</summary><div class="subject-select-grid">'+visible(groups.more).map(chip).join('')+'</div></details>';
    content+='<div class="subject-tools"><input id="customSubject-'+i+'" maxlength="70" placeholder="Other subject name" aria-label="Add a subject for '+escape(item.name)+'" class="bg-slate-800 border border-white/20 rounded-lg p-2 text-white"><button type="button" data-add-subject="'+i+'" class="bg-cyan-800 text-white">+ Add &amp; select</button><button type="button" data-clear-subjects="'+i+'" class="bg-slate-700 text-white">Clear selection</button></div>';
    content+='<p class="text-slate-400 text-[11px]">Only green selected subjects are saved. Tap ✎ Edit beside a selected subject to rename it for this school/class.</p></div>';
   }

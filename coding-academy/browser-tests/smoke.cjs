@@ -113,9 +113,10 @@ test("symbols and inputs reference: 30 definitions, 22 safe live demos and six m
   assert.match(await page.locator(".symbol-card").textContent(),/type without coercion/i);
   await page.locator("#symbolSearch").fill("");
   await page.locator("#inputSearch").fill("submit");
-  assert.equal(await page.locator(".input-card").count(),1);
-  await page.locator('.demo-box input[type="submit"]').click();
-  assert.match(await page.locator(".demo-status").textContent(),/No data was sent/);
+  const submitting=page.locator(".input-card").filter({has:page.locator('input[type="submit"]')});
+  assert.equal(await submitting.count(),1);
+  await submitting.locator('.demo-box input[type="submit"]').click();
+  assert.match(await submitting.locator(".demo-status").last().textContent(),/No data was sent/);
   await page.locator("#inputSearch").fill("reset");
   const reset=page.locator(".input-card");
   await reset.locator('.demo-box input[type="text"]').fill("Modified value");

@@ -63,3 +63,10 @@ The v0.18 Android test app adds an optional **1-minute English/Urdu walkthrough*
 The Account page also includes a **private learner profile** form (optional display name and English/Urdu preference), but it remains unavailable until a dedicated Supabase backend passes real RLS and privacy tests. A staged SQL setup and contract tests are included; do not claim the form is live, or enter real learner data during pre-release testing.
 
 This package uses `pk.lamastudio.codingacademy.testing.v18`; it is separately installable from v0.17. Transfer existing progress only via the user-controlled Complete Academy Backup.
+
+
+## v0.19 owner test — 22 HTML inputs and 30 programming symbols
+
+A separately installable v0.19 Android test build adds the **Symbols & HTML Inputs** entry in the Academy sidebar and home. The new lab contains 22 actual form controls and 30 explanatory symbol cards, with a six-question knowledge check. It is original content authored for LAMA and checked against MDN/WHATWG HTML references, inspired by the subject matter in a user-provided Facebook screenshot. The demo does not save or submit sensitive data.
+
+For acceptance on a low-cost Android phone, check the picker behavior for `week` and `datetime-local`, the radio/checkbox controls, local file-picker wording, submit and reset prevention, no horizontal clipping, and the filtered symbol cards. This build is not a production release and should not be used to enter real credentials or student records.

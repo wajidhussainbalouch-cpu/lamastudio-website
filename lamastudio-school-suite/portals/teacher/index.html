@@ -244,7 +244,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[],attendanceModel=null,attendanceReady=false;
+let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[],attendanceModel=null,attendanceReady=false,homeworkReady=false,homeworkLoadError='';
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
@@ -268,28 +268,56 @@ function updateTeacherOverview(){
  $('miniDesignation').textContent=me.designation||'Teacher';
  $('miniEmployeeId').textContent='ID · '+(me.loginId||me.personnelNumber||me.employeeId||me.teacherId||me.id||'—');
 }
-function todayAbsentees(){return attendance.filter(a=>String(a.date||'').slice(0,10)===localDate()&&norm(a.status)==='absent')}
-function updateStats(){
- $('statStudents').textContent=myStudents.length;
- $('statHomework').textContent=homework.filter(h=>mine(h)).length;
- const today=localDate();
- const latest=new Map();
- for(const a of attendance){
-  if(String(a.date||'').slice(0,10)!==today)continue;
-  const student=myStudents.find(s=>String(s.id??s._id??s.studentId??'')===String(a.studentId??a.studentID??a.enrlNo??'')||String(s.enrlNo??s.enrollmentNo??'')===String(a.enrlNo??a.studentId??''));
-  if(student)latest.set(String(student.id??student._id??student.studentId),String(a.status||'').trim().toLowerCase());
- }
- const statuses=[...latest.values()];
- $('statPresent').textContent=statuses.filter(x=>x==='present'||x==='p').length;
- $('statAbsent').textContent=statuses.filter(x=>x==='absent'||x==='a').length;
- const gender=s=>String(s.gender??s.sex??'').trim().toLowerCase();
- const boys=myStudents.filter(s=>['male','boy','m'].includes(gender(s))).length;
- const girls=myStudents.filter(s=>['female','girl','f'].includes(gender(s))).length;
- const unknown=myStudents.length-boys-girls;
- $('statBoys').textContent=boys;
- $('statGirls').textContent=girls;
- $('genderMissingNote').textContent=unknown?unknown+' without recorded gender':'Assigned class';
+
+function attendanceDate(){return $('attDate').value||localDate()}
+function classSubjectKey(){return 'lama_teacher_subjects_v1:'+encodeURIComponent(String(me.schoolId||''))+':'+encodeURIComponent(normalizeClass(me.assignedClass))+':'+encodeURIComponent(norm(me.assignedSection||me.section))}
+function savedSubjectChoices(){try{const raw=localStorage.getItem(classSubjectKey());if(!raw)return null;const list=JSON.parse(raw);return Array.isArray(list)?list:null}catch(_){return null}}
+function availableSubjects(){return LamaTeacherDaily.subjects(myStudents,homework,me.subject,savedSubjectChoices())}
+function renderHomeworkProgress(){
+ const day=$('homeworkCheckDate').value||localDate(),subjects=availableSubjects();
+ const result=LamaTeacherDaily.homeworkStatus(homework,subjects,day,homeworkReady,me.timezone||me.timeZone||'Asia/Karachi');
+ $('statHomework').textContent=homeworkReady?(result.total?result.done+'/'+result.total:'Set subjects'):'—';
+ if(!subjects.length){$('homeworkProgressText').textContent=homeworkReady?'No class subject list yet. Use Manage subjects to set the subjects to monitor.':'Waiting for subject information…';$('subjectChecklist').innerHTML='<p class="report-caption">Add your class subjects to begin the daily checklist.</p>';return}
+ $('homeworkProgressText').textContent=homeworkReady?result.done+' of '+result.total+' subjects posted on '+day:'Saved homework could not be verified. '+(homeworkLoadError||'Refresh the portal.');
+ $('subjectChecklist').innerHTML=result.items.map((item,i)=>'<button type="button" class="subject-chip '+(!homeworkReady?'unknown':item.done?'done':'missing')+'" data-subject-index="'+i+'" title="Open '+esc(item.subject)+' homework editor"><span>'+esc(item.subject)+'</span><span class="status">'+(!homeworkReady?'? Unknown':item.done?'✓ Done':'○ Not posted')+'</span></button>').join('');
 }
+function openHomeworkSubject(subject){
+ if(!subject)return;
+ switchTab('homework');
+ if(me.subject&&norm(me.subject)!==norm(subject)){message('This class tracks '+subject+', but your assigned teaching subject is '+me.subject+'. You can view the checklist; only an authorized teacher may post this subject.');return}
+ $('hwSubject').value=subject;
+ $('hwSubject').focus();
+}
+function renderDailyAttendance(){
+ const day=attendanceDate(),snap=LamaTeacherDaily.attendance(myStudents,attendanceModel,day,attendanceReady);
+ $('attendanceReportDate').textContent='Date: '+day+' · Class '+(me.assignedClass||'—');
+ $('statStudents').textContent=myStudents.length;
+ const sex=s=>LamaTeacherDaily.gender(s);
+ $('statBoys').textContent=myStudents.filter(s=>sex(s)==='boys').length;
+ $('statGirls').textContent=myStudents.filter(s=>sex(s)==='girls').length;
+ const missingGender=myStudents.filter(s=>sex(s)==='unknown').length;
+ $('genderMissingNote').textContent=missingGender?missingGender+' student(s) without recorded gender':'Enrolled girls';
+ if(!snap.ready){
+  $('statPresent').textContent='—';$('statAbsent').textContent='—';$('statLeaveUnmarked').textContent='—';
+  $('attendanceCompletion').textContent='Saved register unavailable';
+  $('attendanceCompletion').className='report-state pending';
+  $('attendanceBreakdown').innerHTML='<p class="report-caption">Cannot verify saved attendance. Refresh before relying on totals.</p>';
+  $('attendanceDateSummary').textContent='Saved class attendance is not loaded. Do not infer absent from missing data.';
+  return;
+ }
+ const g=snap.groups,t=g.total;
+ $('statPresent').textContent=t.present;$('statAbsent').textContent=t.absent;
+ $('statLeaveUnmarked').textContent=t.leave+' / '+t.unmarked;
+ const completion=snap.complete?'✓ Register complete':!snap.marked?'Not marked yet':snap.marked+' / '+t.total+' marked';
+ $('attendanceCompletion').textContent=completion;
+ $('attendanceCompletion').className='report-state '+(snap.complete?'complete':'pending');
+ $('attendanceDateSummary').textContent='Saved for '+day+': '+t.present+' Present · '+t.absent+' Absent · '+t.leave+' Leave · '+t.unmarked+' Not marked ('+snap.marked+'/'+t.total+' students)';
+ const breakdown=[['Present','present','present'],['Absent','absent','absent'],['Leave','leave','leave'],['Unmarked','unmarked','unmarked']];
+ $('attendanceBreakdown').innerHTML=breakdown.map(([label,key,cls])=>'<div class="breakdown-card '+cls+'"><span>'+label+'</span><strong>'+t[key]+'</strong><small>👦 '+g.boys[key]+' boys · 👧 '+g.girls[key]+' girls'+(g.unknown[key]?' · '+g.unknown[key]+' gender unknown':'')+'</small></div>').join('');
+}
+
+function todayAbsentees(){if(!attendanceReady||!attendanceModel)return [];return myStudents.filter(s=>attendanceModel.get(s,localDate())==='Absent').map(s=>({studentId:s.id,date:localDate(),status:'Absent'}))}
+function updateStats(){renderDailyAttendance();renderHomeworkProgress()}
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('headerAssignedClass').textContent=me.assignedClass||'Not assigned';$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
 function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
 let refreshPromise=null;
@@ -300,10 +328,10 @@ async function refresh(){
   const students=await timeout(LamaAPI.list('students'),'Student register');
   if(!Array.isArray(students))throw Error('Student register response is invalid');
   myStudents=students.filter(scope);
-  attendance=[];attendanceReady=false;attendanceModel=null;homework=[];notices=[];results=[];
+  attendance=[];attendanceReady=false;attendanceModel=null;homework=[];homeworkReady=false;homeworkLoadError='';notices=[];results=[];
   renderAll();
-  const tasks=[['attendance',rows=>{const studentIds=new Set(myStudents.map(s=>String(s.id??s._id??'')).filter(Boolean)),enrollments=new Set(myStudents.map(s=>String(s.enrlNo??s.enrollmentNo??'')).filter(Boolean));attendance=rows.filter(a=>schoolMatch(a)&&(studentIds.has(String(a.studentId??a.student_id??''))||enrollments.has(String(a.enrlNo??a.enrollmentNo??''))));attendanceModel=LamaAttendanceHistory.make(myStudents,attendance);attendanceReady=true}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
-  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else console.warn(name+' response invalid')}catch(e){console.warn(name+' failed',e)}finally{renderAll()}}));
+  const tasks=[['attendance',rows=>{const studentIds=new Set(myStudents.map(s=>String(s.id??s._id??'')).filter(Boolean)),enrollments=new Set(myStudents.map(s=>String(s.enrlNo??s.enrollmentNo??'')).filter(Boolean));attendance=rows.filter(a=>schoolMatch(a)&&(studentIds.has(String(a.studentId??a.student_id??''))||enrollments.has(String(a.enrlNo??a.enrollmentNo??''))));attendanceModel=LamaAttendanceHistory.make(myStudents,attendance);attendanceReady=true}],['homework',rows=>{homework=rows.filter(scope);homeworkReady=true}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
+  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else{if(name==='homework')homeworkLoadError='Invalid homework response.';console.warn(name+' response invalid')}}catch(e){if(name==='homework')homeworkLoadError=e.message||'Request failed';console.warn(name+' failed',e)}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
 }

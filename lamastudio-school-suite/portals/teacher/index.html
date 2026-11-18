@@ -94,7 +94,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">Total Students</span><strong id="statStudents">—</strong><small>Assigned class</small></div>
  <div class="overview-tile"><span class="tile-icon">👦</span><span class="tile-label">Total Boys</span><strong id="statBoys">—</strong><small>Enrolled boys</small></div>
  <div class="overview-tile"><span class="tile-icon">👧</span><span class="tile-label">Total Girls</span><strong id="statGirls">—</strong><small id="genderMissingNote">Enrolled girls</small></div>
- <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework Today</span><strong id="statHomework">—</strong><small>Subjects posted / tracked</small></div>
+ <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework Today</span><strong id="statHomework">—</strong><small id="homeworkCardNote">Subjects posted / tracked</small></div>
  <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present</span><strong id="statPresent">—</strong><small>Saved for selected date</small></div>
  <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent</span><strong id="statAbsent">—</strong><small>Saved for selected date</small></div>
  <div class="overview-tile"><span class="tile-icon">📋</span><span class="tile-label">Leave / Unmarked</span><strong id="statLeaveUnmarked">—</strong><small>Not counted as absent</small></div>
@@ -276,7 +276,8 @@ function renderHomeworkProgress(){
  const day=$('homeworkCheckDate').value||localDate(),subjects=availableSubjects();
  const loaded=homeworkReady&&curriculumReady;
  const result=LamaTeacherDaily.homeworkStatus(homework,subjects,day,loaded,me.timezone||me.timeZone||'Asia/Karachi');
- $('statHomework').textContent=loaded?(result.total?result.done+'/'+result.total:'Admin setup'):'—';
+ $('statHomework').textContent=loaded&&result.total?result.done+'/'+result.total:'—';
+ $('homeworkCardNote').textContent=curriculumReady&&!subjects.length?'Admin must configure subjects':'Subjects posted / tracked';
  const dateHint=day+' · '+(me.assignedClass||'assigned class');
  if(!curriculumReady){$('homeworkProgressText').textContent='Curriculum unavailable. '+(curriculumError||'Reload the teacher dashboard.');$('subjectChecklist').innerHTML='<p class="report-caption">Subjects cannot be verified at present.</p>';return}
  if(!subjects.length){$('homeworkProgressText').textContent='No subjects assigned for '+dateHint+'. Ask School Admin to open Settings → Classes & Sections Offered and add them.';$('subjectChecklist').innerHTML='<p class="report-caption">School curriculum not configured for this class. Existing homework records remain unchanged.</p>';return}

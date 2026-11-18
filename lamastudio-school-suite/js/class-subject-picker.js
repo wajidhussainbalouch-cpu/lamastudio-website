@@ -29,8 +29,11 @@ function render(classes,escape){
   const view=groupViews[i]||availableGroups[0]?.id||'';
   const groups=root.LamaClassSubjectChoices.categories(item.name,selected,view);
   function chip(name){
-   const on=current.has(norm(name));
-   return '<button type="button" class="subject-pick'+(on?' is-selected':'')+'" data-toggle-subject="'+i+'" data-subject-name="'+escape(name)+'" aria-pressed="'+on+'"><span class="pick-icon" aria-hidden="true">'+(on?'✓':'+')+'</span><span>'+escape(name)+'</span></button>';
+   const priorMatch=selected.find(subject=>(Array.isArray(item.aliases?.[subject])?item.aliases[subject]:[]).some(old=>norm(old)===norm(name)));
+   const match=selected.find(subject=>norm(subject)===norm(name))||priorMatch||null;
+   const on=!!match,display=priorMatch&&norm(priorMatch)!==norm(name)?priorMatch:name;
+   const note=priorMatch&&norm(priorMatch)!==norm(name)?'<small class="subject-renamed-note">Edited from '+escape(name)+'</small>':'';
+   return '<button type="button" class="subject-pick'+(on?' is-selected':'')+'" data-toggle-subject="'+i+'" data-subject-name="'+escape(match||name)+'" aria-pressed="'+on+'"><span class="pick-icon" aria-hidden="true">'+(on?'✓':'+')+'</span><span>'+escape(display)+note+'</span></button>';
   }
   let content='';
   if(item.enabled){

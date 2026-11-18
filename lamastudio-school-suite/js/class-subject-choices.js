@@ -33,15 +33,15 @@
  const SSC=[
   {id:'science-bio',name:'Science — Biology',subjects:['English','Urdu','Mathematics','Islamiat','Pakistan Studies','Tarjuma-tul-Quran','Physics','Chemistry','Biology','Art']},
   {id:'science-computer',name:'Science — Computer',subjects:['English','Urdu','Mathematics','Islamiat','Pakistan Studies','Tarjuma-tul-Quran','Physics','Chemistry','Computer Science & Entrepreneurship','Art']},
-  {id:'humanities',name:'Humanities / Arts',subjects:['English','Urdu','General Mathematics','General Science','Islamiat','Pakistan Studies','Tarjuma-tul-Quran','Economics','Education','Civics','Geography','History','Computer Science','Art']},
+  {id:'humanities',name:'Humanities / Arts',subjects:['English','Urdu','Mathematics','General Science','Islamiat','Pakistan Studies','Tarjuma-tul-Quran','Economics','Education','Civics','Geography','History','Computer Science','Art']},
   {id:'matric-tech',name:'Matric-Tech',subjects:['English','Urdu','Mathematics','Islamiat','Pakistan Studies','Tarjuma-tul-Quran','Physics','Chemistry','Technical & Vocational Education','Computer Science & Entrepreneurship']}
  ];
  const HSSC=[
   {id:'pre-medical',name:'F.Sc Pre-Medical',subjects:['English','Urdu','Islamiat','Pakistan Studies','Biology','Physics','Chemistry','Tarjuma-tul-Quran']},
   {id:'pre-engineering',name:'F.Sc Pre-Engineering',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Physics','Chemistry','Tarjuma-tul-Quran']},
-  {id:'ics-physics',name:'ICS — Physics',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Physics','Computer Science','Tarjuma-tul-Quran']},
-  {id:'ics-statistics',name:'ICS — Statistics',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Statistics','Computer Science','Tarjuma-tul-Quran']},
-  {id:'general-science',name:'General Science',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Statistics','Economics','Physics','Computer Science']},
+  {id:'ics-physics',name:'ICS — Physics',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Physics','Computer Science and Entrepreneurship','Tarjuma-tul-Quran']},
+  {id:'ics-statistics',name:'ICS — Statistics',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Statistics','Computer Science and Entrepreneurship','Tarjuma-tul-Quran']},
+  {id:'general-science',name:'General Science',subjects:['English','Urdu','Islamiat','Pakistan Studies','Mathematics','Statistics','Economics','Physics','Computer Science and Entrepreneurship']},
   {id:'i-com',name:'I.Com / Commerce',subjects:['English','Urdu','Islamiat','Pakistan Studies','Principles of Accounting','Principles of Commerce','Principles of Economics','Business Mathematics','Business Statistics','Banking','Commercial Geography','Computerized Accounting']},
   {id:'fa-humanities',name:'F.A / Humanities',subjects:['English','Urdu','Islamiat','Pakistan Studies','Education','Economics','Civics','History','Geography','Sociology','Psychology','Arabic','Persian','Punjabi','Fine Arts','Computer Science']},
   {id:'home-economics',name:'Home Economics',subjects:['English','Urdu','Islamiat','Pakistan Studies','Home Economics','Food & Nutrition','Chemistry','Biology','Fine Arts']},

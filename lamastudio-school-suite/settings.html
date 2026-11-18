@@ -182,10 +182,10 @@
         function renderClassSettings(){
           document.getElementById('offeredClasses').innerHTML=classSettings.map((item,i)=>`
             <div class="bg-slate-950/80 border border-white/10 rounded-xl p-3 space-y-2">
-              <label class="flex items-center gap-2"><input type="checkbox" data-class-index="${i}" ${item.enabled?'checked':''} onchange="classSettings[${i}].enabled=this.checked"><span class="font-semibold">${escapeText(item.name)}</span></label>
-              <input data-sections-index="${i}" value="${escapeText(item.sections.join(', '))}" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings[${i}].sections=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
-              <label class="text-slate-300 text-[11px] font-bold block" for="subjects-${i}">Subjects taught in this class</label>
-              <textarea id="subjects-${i}" rows="2" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics" oninput="classSettings[${i}].subjects=this.value.replaceAll(String.fromCharCode(10),',').replaceAll(';',',').split(',').map(s=>s.trim()).filter(Boolean)">${escapeText((item.subjects||[]).join(', '))}</textarea>
+              <label class="flex items-center gap-2"><input type="checkbox" data-class-index="${i}" ${item.enabled?'checked':''} onchange="classSettings[${i}].enabled=this.checked;renderClassSettings()"><span class="font-semibold">${escapeText(item.name)}</span></label>
+              <input data-sections-index="${i}" style="${item.enabled?'':'display:none'}" value="${escapeText(item.sections.join(', '))}" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings[${i}].sections=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
+              <label class="text-slate-300 text-[11px] font-bold block" for="subjects-${i}" style="${item.enabled?'':'display:none'}">Subjects taught in this class</label>
+              <textarea id="subjects-${i}" rows="2" style="${item.enabled?'':'display:none'}" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics" oninput="classSettings[${i}].subjects=this.value.replaceAll(String.fromCharCode(10),',').replaceAll(';',',').split(',').map(s=>s.trim()).filter(Boolean)">${escapeText((item.subjects||[]).join(', '))}</textarea>
             </div>`).join('');
         }
         function renderFeeSettings(){

@@ -52,7 +52,7 @@ function getSchoolGuideAnswer(prompt,pagePath='/'){
     return 'Open Timetable & Academic Calendar: https://www.lamastudio.pk/lamastudio-school-suite/planning/index.html. School Admin creates a session, adds class periods and calendar events, and can edit or delete entries where allowed. For printing, choose All classes, Selected class or Class-wise separate pages, then Print / Save as PDF.'+manual;
   if(has(/\b(admission|enroll|student import|import students|upload students|student record|student directory|manage students)\b/u)||/داخلہ/u.test(q))
     return 'School Admin opens Admissions or Manage Students from the dashboard. Choose the class, enter enrollment and guardian details, check for duplicates, then save and verify. For bulk uploads, use Student Import and review its preview and duplicate warnings before confirmation.'+manual;
-  if(has(/\b(teacher account|add teacher|teacher login|assigned class|employee id|staff profile)\b/u))
+  if(has(/\b(teacher account|add teacher|teacher login|assigned class|staff profile)\b/u))
     return 'School Admin manages teacher profiles and class assignments from Manage Teachers. Teachers sign in through their own portal using the School ID and issued account, then see only their permitted class. School Admin should correct an incorrect or missing class assignment.'+manual;
   if(has(/\b(exam|paper|question bank|marks|result|assessment|omr|smart marker|date sheet)\b/u)||/امتحان|نتیجہ|پرچہ/u.test(q))
     return 'Go to the School Admin Dashboard → Assessments for examination tools. Select the right class, subject, dates and marking scheme, then check saved question papers, marks and results. Student/Parent accounts can view their own published results. Smart Marker and OMR availability depends on the current deployment.'+manual;
@@ -66,7 +66,7 @@ function getSchoolGuideAnswer(prompt,pagePath='/'){
     return 'Use the Identity Cards or Certificate Center tools allowed by your role. Teachers can view their own employee ID and families their own student ID or published certificates. Verify the name and school branding before printing.'+manual;
   if(has(/\b(color|colors|dark mode|light mode|theme|palette)\b/u))
     return 'On the School Admin Dashboard, use the Colors palette in the top bar to choose a display theme. This changes the appearance, not the stored school records.'+manual;
-  if(has(/\b(owner|school administrators|add admin|administrator account|super admin)\b/u))
+  if(has(/\b(owner|school administrators?|school admin(?:istrator)? accounts?|add admin|administrator account|admin accounts?|super admin)\b/u))
     return 'Open School Owner · Administrators from the School Admin sidebar to manage authorized school administration accounts. The School Suite Super Admin is separate from your school administrators; do not give unrestricted credentials to an unapproved user.'+manual;
   if(has(/\b(save failed|not saving|stuck|blank page|error|not loading|does not work|support ticket|report a problem|help support)\b/u)||/خرابی|مسئلہ/u.test(q))
     return 'If you are stuck: check your role, School ID, class/date filters and connection. If a save is uncertain, inspect the saved register before retrying to avoid duplicates. School Admin can submit a ticket at https://www.lamastudio.pk/lamastudio-school-suite/help-support.html. Do not send passwords or private student data to Ask LAMA.'+manual;

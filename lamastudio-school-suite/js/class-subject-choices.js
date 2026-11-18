@@ -14,7 +14,7 @@
  const clean=x=>String(x??'').trim(), norm=x=>clean(x).toLowerCase().replace(/\s+/g,' ');
  const key=x=>norm(x).replace(/^(class|grade|standard|std)[\s._-]*/,'').replace(/^0+(?=\d)/,'');
  const core={
-  early:['English','Urdu','Mathematics','Islamiat','General Knowledge','Nazra Quran','Computer','Drawing / Art','Physical Education'],
+  early:['English','Urdu','Mathematics','Islamiat','General Knowledge','Nazra Quran','Computer','Drawing / Art','Physical Education','Music'],
   lower:['English','Urdu','Mathematics','Islamiat','General Knowledge','Nazra Quran','Science','Social Studies (SST)','Computer'],
   primary:['English','Urdu','Mathematics','Islamiat','Science','Social Studies (SST)','General Knowledge','Computer','Nazra Quran'],
   middle:['English','Urdu','Mathematics','Science','Islamiat','Arabic','Geography','History','Computer','Social Studies (SST)','Nazra Quran'],

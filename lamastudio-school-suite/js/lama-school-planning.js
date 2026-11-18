@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false;
+let rows=[],teachers=[],offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -11,7 +11,13 @@ const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school admi
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
 function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
-async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');rows=(Array.isArray(all)?all:[]).filter(r=>Object.values(type).includes(r.category));if(adminMode){teachers=await LamaAPI.list('teachers').catch(()=>[]);const sel=$('teacher');sel.replaceChildren(new Option('Select teacher',''));for(const t of teachers){const o=new Option((t.name||t.fullName||t.teacherName||'Teacher')+' · '+(t.subject||''),t.id);sel.add(o)}}render();status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.');return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
+async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');rows=(Array.isArray(all)?all:[]).filter(r=>Object.values(type).includes(r.category));if(adminMode){
+ const config=await LamaAPI.getSchoolConfig().catch(()=>null);
+ try{const offered=JSON.parse(config?.offeredClassesJson||'[]');offeredClasses=Array.isArray(offered)?offered.filter(c=>c&&c.name).map(c=>({name:String(c.name),sections:Array.isArray(c.sections)?c.sections:[]})):[]}catch(_){offeredClasses=[]}
+ const resource=(Array.isArray(all)?all:[]).find(r=>r.category==='school-curriculum'&&r.title==='LAMA School Class Subjects');
+ try{const doc=JSON.parse(resource?.description||'{}');curriculumClasses=doc.schoolId===schoolId&&Array.isArray(doc.classes)?doc.classes:[]}catch(_){curriculumClasses=[]}
+}else{offeredClasses=[];curriculumClasses=[]}
+if(adminMode){teachers=await LamaAPI.list('teachers').catch(()=>[]);const sel=$('teacher');sel.replaceChildren(new Option('Select teacher',''));for(const t of teachers){const o=new Option((t.name||t.fullName||t.teacherName||'Teacher')+' · '+(t.subject||''),t.id);sel.add(o)}}render();status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.');return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
 async function save(kind,id,payload){authorized();const title=kind==='period'?[payload.day,payload.grade,payload.period].join(' · '):kind==='session'?payload.name:payload.title;const record={category:type[kind],title,description:JSON.stringify(payload),link:''};if(id)await LamaAPI.update('resources',id,record);else await LamaAPI.add('resources',record);return await load()}
 function sessionKey(name){
  return String(name||'').normalize('NFKC').replace(/[‐‑‒–—−]/g,'-').replace(/\s+/g,'').toLowerCase();
@@ -64,6 +70,73 @@ async function remove(kind,id){
   status('Academic session "'+live.name+'" deleted and the list verified. Other school records were not changed.');
  }finally{sessionBusy=false}
 }
+
+function timetableForSession(){return data('period').filter(p=>p.sessionId===activeSession()&&allowed(p))}
+function visibleClasses(periods=timetableForSession()){
+ return LamaTimetableGrid.labels(periods,adminMode?[...offeredClasses,...curriculumClasses]:[]);
+}
+function renderPrintClassPicker(periods,sessionId){
+ const classes=visibleClasses(periods);
+ if(!printSelection||printSelectionSession!==sessionId){printSelection=new Set(classes);printSelectionSession=sessionId}
+ else printSelection=new Set([...printSelection].filter(c=>classes.includes(c)));
+ $('printClassList').innerHTML=classes.length?classes.map(c=>'<label class="print-class-option"><input type="checkbox" data-print-class="'+esc(c)+'" '+(printSelection.has(c)?'checked':'')+'><span>'+esc(c)+'</span></label>').join(''):'<p class="text-slate-400 text-xs">No classes available yet. Add them in School Settings or the Period editor.</p>';
+ const sel=$('printOneClass'),old=sel.value;sel.replaceChildren(new Option('Choose a class / section',''));
+ for(const c of classes)sel.add(new Option(c,c));if(classes.includes(old))sel.value=old;
+ updatePrintCount();
+}
+function updatePrintCount(){
+ const total=$('printClassList').querySelectorAll('[data-print-class]').length;
+ $('printClassStatus').textContent=(printSelection?.size||0)+' of '+total+' classes selected. Select Print layout to choose master, individual or separate class pages.';
+}
+function renderQuickGrid(periods=timetableForSession()){
+ if(!adminMode)return;
+ $('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,visibleClasses(periods),field('quickDay')||'Monday',Number(field('quickPeriods'))||8);
+}
+function subjectOptionsFor(grade){
+ const match=curriculumClasses.find(c=>LamaTimetableGrid.classKey(c.name)===LamaTimetableGrid.classKey(grade));
+ $('quickSubjects').replaceChildren();
+ for(const subj of match?.subjects||[])$('quickSubjects').append(new Option(subj,subj));
+}
+function openQuickEditor(b){
+ authorized();
+ const day=b.dataset.quickDay,num=Number(b.dataset.quickPeriod),cls=b.dataset.quickClass;
+ const parts=LamaTimetableGrid.splitLabel(cls),periods=timetableForSession();
+ const matches=periods.filter(p=>same(p.day,day)&&Number(p.period)===num&&LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p))===LamaTimetableGrid.classKey(cls));
+ if(matches.length>1){status('This cell has multiple saved periods. Use the detailed editor to choose the correct one.');return}
+ const old=matches[0],t=LamaTimetableGrid.timesFor(periods,day,num);
+ for(const [id,v] of Object.entries({quickPeriodId:old?.id||'',quickGrade:parts.grade,quickSection:parts.section,quickPeriodDay:day,quickPeriodNumber:num,quickStart:old?.start||t.start,quickEnd:old?.end||t.end,quickSubject:old?.subject||'',quickRoom:old?.room||''}))$(id).value=v;
+ $('quickPublished').checked=old?.published!==false;
+ $('quickTeacher').replaceChildren(new Option('Unassigned',''));
+ for(const teacher of teachers)$('quickTeacher').add(new Option(teacher.name||teacher.fullName||teacher.teacherName||'Teacher',teacher.id));
+ $('quickTeacher').value=old?.teacherId||'';
+ subjectOptionsFor(parts.grade);
+ $('quickTarget').textContent=(old?'Edit':'Add')+' · '+cls+' · '+day+' · P'+num;
+ $('quickEditor').classList.remove('hidden');
+ $('quickEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function saveQuickPeriod(){
+ authorized();
+ if(quickBusy)throw Error('Another period save is in progress.');
+ const id=field('quickPeriodId'),grade=field('quickGrade'),section=field('quickSection'),day=field('quickPeriodDay'),period=Number(field('quickPeriodNumber')),start=field('quickStart'),end=field('quickEnd'),subject=field('quickSubject'),teacherId=field('quickTeacher');
+ const sessionId=activeSession();
+ if(!sessionId)throw Error('Create an academic session first.');
+ if(!grade||!subject||!start||!end)throw Error('Class, subject, start and end time are required.');
+ if(start>=end)throw Error('End time must be after start time.');
+ if(!Number.isInteger(period)||period<1||period>30)throw Error('Invalid period number.');
+ const conflicts=timetableForSession().filter(x=>String(x.id)!==id&&same(x.day,day)&&x.start<end&&x.end>start&&
+  ((LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(grade+(section?' · Section '+section:'')))||(teacherId&&String(x.teacherId)===teacherId)));
+ if(conflicts.length)throw Error('Time conflict: class/section or teacher is already scheduled during these times.');
+ const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:(teachers.find(x=>String(x.id)===teacherId)?.name||teachers.find(x=>String(x.id)===teacherId)?.fullName||teachers.find(x=>String(x.id)===teacherId)?.teacherName||''),room:field('quickRoom'),published:$('quickPublished').checked};
+ quickBusy=true;$('quickSave').disabled=true;
+ try{
+  const loaded=await save('period',id,payload);
+  if(!loaded)throw Error('Save response received, but the timetable was not reloaded. Verify before retrying.');
+  const saved=timetableForSession().filter(x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(grade+(section?' · Section '+section:''))&&same(x.day,day)&&Number(x.period)===period&&x.start===start&&x.end===end&&x.subject===subject);
+  if(saved.length!==1)throw Error('The saved period could not be uniquely verified. Check the list before retrying.');
+  $('quickEditor').classList.add('hidden');
+  status('✓ Saved and verified: '+grade+(section?' / '+section:'')+' · '+day+' P'+period+' · '+subject);
+ }finally{quickBusy=false;$('quickSave').disabled=false}
+}
 function sessions(){return data('session').sort((a,b)=>a.start.localeCompare(b.start))}
 function activeSession(){return field('viewSession')||sessions().find(s=>s.active)?.id||sessions()[0]?.id||''}
 function render(){const list=sessions(),old=field('viewSession');for(const id of ['viewSession','periodSession','eventSession']){const el=$(id);el.replaceChildren();for(const s of list)el.add(new Option(s.name+(s.active?' (active)':''),s.id));if(list.some(s=>s.id===old))el.value=old}
@@ -89,7 +162,7 @@ $('sessionList').innerHTML=list.map(s=>{
   '<button type="button" class="text-rose-300 border border-rose-800 rounded-lg min-h-10 px-3 disabled:opacity-40 disabled:cursor-not-allowed" data-remove-session="'+esc(s.id)+'" aria-label="Delete session '+esc(s.name)+'" title="'+esc(reason||'Delete this unlinked academic session')+'" '+(reason?'disabled':'')+'>Delete</button>'+
   '</div></div>';
 }).join('');
-renderCalendar();
+renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode)renderQuickGrid(periods);
 }
 function renderCalendar(){const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));$('monthTitle').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});const y=month.getFullYear(),m=month.getMonth(),offset=(new Date(y,m,1).getDay()+6)%7,last=new Date(y,m+1,0).getDate();let h=days.map(d=>'<b class="p-2 text-cyan-300">'+d.slice(0,3)+'</b>').join('');for(let i=0;i<offset;i++)h+='<div></div>';for(let d=1;d<=last;d++){const date=[y,String(m+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-'),hits=events.filter(e=>e.start<=date&&e.end>=date);h+='<div class="border border-slate-700 rounded-lg min-h-16 p-1 text-left"><b>'+d+'</b>'+hits.slice(0,2).map(e=>'<p class="text-[10px] text-amber-300 truncate" title="'+esc(e.title)+'">'+esc(e.title)+'</p>').join('')+'</div>'}$('monthGrid').innerHTML=h;
 $('eventRows').innerHTML=events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No events for this session.</p>'}
@@ -134,6 +207,41 @@ $('sessionForm').onsubmit=async e=>{
 $('eventForm').onsubmit=async e=>{e.preventDefault();try{const p={sessionId:field('eventSession'),type:field('eventType'),title:field('eventTitle'),start:field('eventStart'),end:field('eventEnd'),description:field('eventDescription'),published:$('eventPublished').checked};if(!p.sessionId)throw Error('Create an academic session first');if(p.start>p.end)throw Error('Event start must precede end');await save('event',field('eventId'),p);$('eventId').value='';status('Event saved')}catch(err){status(err.message)}};
 $('clearPeriod').onclick=()=>{$('periodForm').reset();$('periodId').value=''};$('clearEvent').onclick=()=>{$('eventForm').reset();$('eventId').value=''};$('clearSession').onclick=()=>{$('sessionForm').reset();$('sessionId').value='';status('Ready to add a new academic session.')};
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const pingId=b.getAttribute('data-ping-period');if(pingId){(async()=>{try{authorized();const p=data('period').find(x=>x.id===pingId);if(!p?.teacherId)throw Error('No assigned teacher');const msg='Period reminder: '+p.day+' '+p.start+'–'+p.end+', '+p.subject+', Class '+p.grade+(p.section?' '+p.section:'')+'.';await LamaAPI.pingTeacher(p.teacherId,msg);status('In-app teacher ping queued. This does not send WhatsApp.')}catch(err){status('Ping failed: '+err.message)}})();return}for(const kind of ['period','session','event']){const editId=b.getAttribute('data-edit-'+kind),removeId=b.getAttribute('data-remove-'+kind);if(editId){edit(kind,editId);return}if(removeId){remove(kind,removeId).catch(err=>status(err.message));return}}});
+
+$('printClassList').addEventListener('change',event=>{
+ const input=event.target.closest('input[data-print-class]');if(!input)return;
+ if(input.checked)printSelection.add(input.dataset.printClass);
+ else printSelection.delete(input.dataset.printClass);
+ updatePrintCount();
+});
+$('selectAllPrintClasses').onclick=()=>{
+ printSelection=new Set(visibleClasses());renderPrintClassPicker(timetableForSession(),activeSession());
+};
+$('clearPrintClasses').onclick=()=>{
+ printSelection=new Set();renderPrintClassPicker(timetableForSession(),activeSession());
+};
+$('quickDay').onchange=()=>renderQuickGrid();
+$('quickPeriods').onchange=()=>{const n=Number($('quickPeriods').value);$('quickPeriods').value=String(Math.max(1,Math.min(14,Number.isFinite(n)?n:8)));renderQuickGrid()};
+$('quickGrid').addEventListener('click',event=>{
+ const button=event.target.closest('button[data-quick-class]');
+ if(!button)return;
+ try{openQuickEditor(button)}catch(e){status(e.message)}
+});
+$('quickForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ try{await saveQuickPeriod()}catch(error){status('Quick save not verified: '+error.message)}
+});
+$('quickCancel').onclick=()=>$('quickEditor').classList.add('hidden');
+$('quickOpenFull').onclick=()=>{
+ if(!adminMode)return;
+ for(const [id,v] of Object.entries({
+  periodId:field('quickPeriodId'),periodSession:activeSession(),day:field('quickPeriodDay'),
+  period:field('quickPeriodNumber'),start:field('quickStart'),end:field('quickEnd'),
+  grade:field('quickGrade'),section:field('quickSection'),subject:field('quickSubject'),
+  teacher:field('quickTeacher'),room:field('quickRoom')}))$(id).value=v;
+ $('published').checked=$('quickPublished').checked;
+ $('quickEditor').classList.add('hidden');$('periodForm').scrollIntoView({behavior:'smooth'});
+};
 for(const id of ['viewSession','viewGrade','viewDay'])$(id).onchange=render;
 $('prevMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('nextMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};$('reload').onclick=load;$('print').onclick=printTimetable;
 function printProfileFallback(){
@@ -163,7 +271,8 @@ function buildTimetablePrint(profile){
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
  const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p));
  const mode=field('printScope');
- const cls=field('viewGrade');
+ const cls=field('printOneClass')||field('viewGrade');
+ const selectedClasses=Array.isArray(printSelection)?[...printSelection]:null;
  const calendarIncluded=$('printCalendar').checked;
  const calMonth=$('monthTitle').textContent;
  return LamaTimetablePrint.printMarkup({
@@ -173,6 +282,7 @@ function buildTimetablePrint(profile){
   records:periods,
   scope:mode,
   selectedClass:cls,
+  selectedClasses:mode==='selected'?null:selectedClasses,
   calendar:calendarIncluded,
   calendarMonth:calMonth,
   calendarContent:$('monthGrid').innerHTML,
@@ -212,6 +322,6 @@ window.addEventListener('beforeprint',()=>{
  catch(error){status('Unable to prepare print: '+error.message)}
 });
 window.addEventListener('afterprint',()=>{printPrepared=false});
-async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
+async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden');$('quickBuilder').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

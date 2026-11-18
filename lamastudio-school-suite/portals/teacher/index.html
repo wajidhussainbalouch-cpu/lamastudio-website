@@ -411,6 +411,29 @@ function selectAllPassing(){document.querySelectorAll('.promote-check-teacher').
 function selectNonePromote(){document.querySelectorAll('.promote-check-teacher').forEach(x=>x.checked=false);updatePromoteCount()}
 async function promoteMyClass(){message('Promotion is restricted to school administrators to protect enrollment history and prevent accidental record changes. Please use the admin promotion workflow.')}
 async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>{loadAttendanceList();renderDailyAttendance()});try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
+$('homeworkCheckDate').value=localDate();
+$('homeworkCheckDate').addEventListener('change',renderHomeworkProgress);
+$('editSubjectList').addEventListener('click',()=>{
+ const panel=$('subjectConfig');
+ panel.classList.toggle('hidden');
+ $('subjectConfigInput').value=availableSubjects().join(', ');
+ if(!panel.classList.contains('hidden'))$('subjectConfigInput').focus();
+});
+$('saveSubjectConfig').addEventListener('click',()=>{
+ const list=$('subjectConfigInput').value.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
+ if(!list.length||list.length>18||list.some(x=>x.length>50))return message('Enter 1 to 18 subject names (max 50 characters each).');
+ try{localStorage.setItem(classSubjectKey(),JSON.stringify(LamaTeacherDaily.subjects([],[],null,list)))}catch(e){return message('Unable to save local subject list: '+e.message)}
+ $('subjectConfig').classList.add('hidden');renderHomeworkProgress();
+});
+$('resetSubjectConfig').addEventListener('click',()=>{
+ try{localStorage.removeItem(classSubjectKey())}catch(e){return message('Unable to reset local subject list: '+e.message)}
+ $('subjectConfig').classList.add('hidden');renderHomeworkProgress();
+});
+$('subjectChecklist').addEventListener('click',event=>{
+ const b=event.target.closest('[data-subject-index]');if(!b)return;
+ const subject=availableSubjects()[Number(b.dataset.subjectIndex)];
+ if(subject)openHomeworkSubject(subject);
+});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 window.addEventListener('focus',()=>{if(me.schoolId)refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 init();

@@ -65,7 +65,13 @@
   if(n!==null&&n>=4&&n<=5)return [...core.primary];
   if(n!==null&&n>=6&&n<=8)return [...core.middle];
   const groups=groupsFor(className);
-  if(groups.length){const picked=groups.find(g=>g.id===groupId)||groups[0];return [...picked.subjects]}
+  if(groups.length){
+   const picked=groups.find(g=>g.id===groupId)||groups[0];
+   const omitted=(n===9||n===11)?'Pakistan Studies':(n===10||n===12)?'Islamiat':'';
+   // Current Punjab schemes generally place Islamiat in 9/11 and Pakistan Studies in 10/12.
+   // Omitted subjects remain available under "More subjects" if a school needs them.
+   return picked.subjects.filter(subject=>subject!==omitted);
+  }
   return [...core.early];
  }
  function categories(className,selected=[],groupId){

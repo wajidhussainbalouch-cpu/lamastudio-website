@@ -136,8 +136,8 @@ async function load(){
   const [students,records]=await Promise.all([LamaAPI.list('students'),LamaAPI.list('attendance')]);
   if(!Array.isArray(students)||!Array.isArray(records))throw Error('The register returned an invalid response.');
   state.students=role==='teacher'?students.filter(s=>normalizeClass(klass(s))===normalizeClass(state.session.assignedClass)&&(!state.session.assignedSection||!s.section||String(s.section).toLowerCase()===String(state.session.assignedSection).toLowerCase())):students;
-  const ids=new Set(state.students.map(personId));
-  state.records=role==='teacher'?records.filter(r=>ids.has(String(r.studentId??r.student_id??''))):records;
+  const ids=new Set(state.students.map(personId)),enrollmentNumbers=new Set(state.students.map(enrol).filter(Boolean));
+  state.records=role==='teacher'?records.filter(r=>ids.has(String(r.studentId??r.student_id??''))||enrollmentNumbers.has(String(r.enrlNo??r.enrollmentNo??r.enrollment??''))):records;
   state.model=LamaAttendanceHistory.make(state.students,state.records);
   state.loaded=true;
   if(role==='teacher'){

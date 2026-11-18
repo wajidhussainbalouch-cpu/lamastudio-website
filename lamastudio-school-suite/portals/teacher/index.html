@@ -371,13 +371,14 @@ async function saveAttendance(){
  const saveButton=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');
  if(saveButton?.disabled)return;
  if(saveButton){saveButton.disabled=true;saveButton.dataset.previousText=saveButton.textContent;saveButton.textContent='Saving attendance…'}
- let ok=0,fail=0;const errors=[];
+ let ok=0,fail=0;const errors=[],savedChanges=[];
  try{
   for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){
    const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');
    if(!student||!btn)continue;
    const old=attendance.find(x=>(String(x.studentId??x.student_id??'')===String(student.id)||!!(student.enrlNo||student.enrollmentNo)&&String(x.enrlNo??x.enrollmentNo??'')===String(student.enrlNo||student.enrollmentNo))&&LamaAttendanceHistory.dateKey(x.date)===day);
    const status=btn.dataset.status;
+   if(attendanceModel.get(student,day)===status)continue;
    try{
     if(old){
      // Existing records must only receive editable fields; the server rejects reassignment keys.
@@ -385,12 +386,15 @@ async function saveAttendance(){
     }else{
      await LamaAPI.add('attendance',{schoolId:me.schoolId,class:me.assignedClass,section:me.assignedSection||me.section||'',studentId:student.id,enrlNo:student.enrlNo||student.enrollmentNo||'',studentName:student.name,date:day,status,teacherId:me.teacherId||me.id});
     }
-    ok++;
+    ok++;savedChanges.push({studentId:String(student.id),status});
    }catch(e){fail++;errors.push(student.name+': '+(e.message||'Unknown error'));console.error('Attendance save failed',e)}
   }
+  if(!ok&&!fail){message('No changes to save. Selected statuses match saved attendance.');return;}
   try{await refresh()}catch(e){errors.push('Reload failed: '+e.message)}
+  const mismatch=savedChanges.filter(x=>{const student=myStudent(x.studentId);return !attendanceReady||!student||attendanceModel.get(student,day)!==x.status});
+  if(mismatch.length)errors.push(mismatch.length+' saved marks not verified after reload. Review the register before trying again.');
   const detail=errors.length?'\n'+errors.slice(0,3).join('\n')+(errors.length>3?'\nAnd '+(errors.length-3)+' more errors.':''):'';
-  message('Attendance saved: '+ok+'. Failed: '+fail+'.'+(fail?' Review errors below.':'')+detail);
+  message('Attendance: '+ok+' accepted, '+(ok-mismatch.length)+' verified, '+fail+' failed.'+detail);
  }finally{if(saveButton){saveButton.disabled=false;saveButton.textContent=saveButton.dataset.previousText||'Save'}}
 }
 function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}

@@ -35,8 +35,14 @@
  }
  function subjectKey(x){
   const n=lower(x);
-  return n==='math'||n==='maths'||n==='mathematics'?'mathematics':
-   n==='english language'?'english':n==='urdu language'?'urdu':n==='islamic studies'||n==='islamiyat'?'islamiat':n;
+  if(['math','maths','mathematics'].includes(n))return 'mathematics';
+  if(['islamiyat','islamiat','islamic studies'].includes(n))return 'islamiat';
+  if(['social studies','social studies (sst)','sst'].includes(n))return 'social studies';
+  if(['nazra quran','nazra-e-quran','nazra','quran reading'].includes(n))return 'nazra quran';
+  if(['general knowledge','gk'].includes(n))return 'general knowledge';
+  if(n==='english language')return 'english';
+  if(n==='urdu language')return 'urdu';
+  return n;
  }
  function namesFromSubjectsJson(students){
   const collected=[];

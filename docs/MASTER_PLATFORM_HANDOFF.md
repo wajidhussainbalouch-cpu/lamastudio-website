@@ -205,3 +205,14 @@ Request: Teacher Playgroup dashboard displayed "Set subjects". The user confirme
 - Potential future upgrade: a true atomic administrator configuration endpoint, term/year-scoped curriculum versions, section-specific overrides and reuse in timetable/exams/planning.
 - Static JS syntax and fixture tests only; authenticated live Settings save and teacher refresh must be tested against an active school. Do not claim any school curriculum has been populated automatically.
 
+
+## 2026-11-18 — School Admin tap-to-select subject catalogue
+
+Based on School Settings mobile feedback, class subjects are no longer typed in comma-separated fields. The school administrator selects the offered classes, then taps optional subject buttons (grey not selected, green checked/selected); **only clicked subjects** are persisted when Save & Broadcast is pressed. No catalogue subjects are automatically assigned or changed in existing school curriculum records.
+
+- `lamastudio-school-suite/js/class-subject-choices.js`: shared suggestions by group: ECE/Playgroup/Nursery/Prep; Classes 1–3; Classes 4–5; Classes 6–8; Classes 9–10; Classes 11–12. Optional catalog includes English, Urdu, Mathematics, Islamiat, Nazra Quran, General Knowledge, Computer, Science, Social Studies (SST), Arabic, Geography, History, Pakistan Studies, Physics, Chemistry, Biology, Computer Science, Quran Translation, Tajweed, Drawing / Art, Physical Education, Music, Environmental Studies, Ethics, Punjabi, Sindhi, Economics and Civics. These are suggestions and **not claims of mandatory curricula**.
+- `js/class-subject-picker.js` and `assets/css/class-subject-picker.css`: accessible `aria-pressed` buttons, green selection, mobile 2-column layout, expandable additional subjects, optional custom subject entry, clear choices, and selection counter for each enabled class.
+- `settings.html`: loads catalog/picker in the existing administrator-only School Settings flow. Existing curriculum saved in Resources remains the source of truth, unchanged until Save & Broadcast. Schools with different curricula retain their saved choices. Unchecked classes cannot have subject choices saved.
+- `js/teacher-daily-overview.js`: accepts normal aliases Math/Mathematics, SST/Social Studies, Islamiat/Islamiyat, Nazra/Nazra Quran and GK/General Knowledge to prevent falsely red homework indicators for legacy posted subjects.
+- No Apps Script, authentication, School Registry or database migration. No historical homework, student or attendance record modifications. Only a frontend change; real authenticated administrator save and teacher refresh should be verified before claiming the school's particular subject selections are saved.
+

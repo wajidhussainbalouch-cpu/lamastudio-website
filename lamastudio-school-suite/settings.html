@@ -37,6 +37,9 @@
         .custom-gradient { background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #6366f1 100%); }
     </style>
 <script src="js/school-curriculum.js"></script>
+<link rel="stylesheet" href="assets/css/class-subject-picker.css">
+<script src="js/class-subject-choices.js"></script>
+<script src="js/class-subject-picker.js"></script>
 </head>
 <body class="bg-[#030712] text-slate-100 font-sans min-h-screen flex flex-col items-center py-10 px-4 relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
 
@@ -134,12 +137,7 @@
 
 <section class="rounded-2xl border border-cyan-500/30 bg-slate-900/70 p-4 space-y-3">
  <h2 class="text-base font-black text-cyan-300">Classes & Sections Offered</h2>
- <p class="text-slate-400">Choose exactly the classes your school offers. School level does not automatically add classes. Sections are optional and separated by commas.</p>
- <div class="rounded-xl bg-slate-950/70 border border-cyan-600/30 p-3 space-y-2">
- <label for="commonSubjects" class="block text-cyan-200 font-bold">Common subjects (optional)</label>
- <textarea id="commonSubjects" rows="2" class="w-full bg-slate-900 border border-white/20 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics, Islamiat"></textarea>
- <button type="button" onclick="applyCommonSubjects()" class="bg-cyan-800 px-3 py-2 rounded-lg font-bold">Apply to selected classes</button>
- <p class="text-slate-400 text-[11px]">Adjust each class's list below. Only school administrators save curriculum.</p></div>
+ <p class="text-slate-300 text-xs">Select classes, then <strong>tap subjects to turn them green</strong>. Only green subjects will belong to this school's curriculum after you press <strong>Save &amp; Broadcast to Dashboard</strong>. Suggestions are optional; you can add any other subject.</p>
  <p id="curriculumStatus" role="status" class="text-amber-200 text-xs">Loading school curriculum…</p>
  <div id="offeredClasses" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
  <div class="flex gap-2"><input id="customClass" maxlength="80" placeholder="Custom class (e.g. Montessori)" class="flex-1 min-w-0 bg-slate-950 border border-white/20 rounded-xl p-3"><button type="button" onclick="addCustomClass()" class="bg-cyan-700 px-4 rounded-xl font-bold">Add</button></div>
@@ -180,25 +178,14 @@
         let classSettings=[],feeSettings=[],curriculumRecord=null,curriculumReady=false,curriculumSchoolId='';
         function escapeText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function renderClassSettings(){
-          document.getElementById('offeredClasses').innerHTML=classSettings.map((item,i)=>`
-            <div class="bg-slate-950/80 border border-white/10 rounded-xl p-3 space-y-2">
-              <label class="flex items-center gap-2"><input type="checkbox" data-class-index="${i}" ${item.enabled?'checked':''} onchange="classSettings[${i}].enabled=this.checked;renderClassSettings()"><span class="font-semibold">${escapeText(item.name)}</span></label>
-              <input data-sections-index="${i}" style="${item.enabled?'':'display:none'}" value="${escapeText(item.sections.join(', '))}" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings[${i}].sections=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
-              <label class="text-slate-300 text-[11px] font-bold block" for="subjects-${i}" style="${item.enabled?'':'display:none'}">Subjects taught in this class</label>
-              <textarea id="subjects-${i}" rows="2" style="${item.enabled?'':'display:none'}" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics" oninput="classSettings[${i}].subjects=this.value.replaceAll(String.fromCharCode(10),',').replaceAll(';',',').split(',').map(s=>s.trim()).filter(Boolean)">${escapeText((item.subjects||[]).join(', '))}</textarea>
-            </div>`).join('');
+          document.getElementById('offeredClasses').innerHTML=LamaClassSubjectPicker.render(classSettings,escapeText);
         }
+        LamaClassSubjectPicker.bind(document.getElementById('offeredClasses'),()=>classSettings,renderClassSettings,
+          text=>{document.getElementById('curriculumStatus').textContent=text},
+          error=>showMessage('errorBanner',error));
         function renderFeeSettings(){
           document.getElementById('feeCategories').innerHTML=feeSettings.map((item,i)=>`
             <label class="flex gap-2 items-center bg-slate-950/80 border border-white/10 rounded-xl p-3"><input type="checkbox" ${item.enabled?'checked':''} onchange="feeSettings[${i}].enabled=this.checked"><span>${escapeText(item.name)}</span></label>`).join('');
-        }
-        function applyCommonSubjects(){
-         try{const list=LamaSchoolCurriculum.subjects(document.getElementById('commonSubjects').value);
-           if(!list.length)throw Error('Enter at least one subject.');
-           classSettings.filter(x=>x.enabled).forEach(x=>x.subjects=[...list]);
-           renderClassSettings();
-           document.getElementById('curriculumStatus').textContent='Subjects copied to selected classes. Save to publish.';
-         }catch(e){showMessage('errorBanner',e.message)}
         }
         function addCustomClass(){
           const input=document.getElementById('customClass'),name=input.value.trim();

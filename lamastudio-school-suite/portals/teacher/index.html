@@ -288,7 +288,7 @@ async function refresh(){
   myStudents=students.filter(scope);
   attendance=[];attendanceReady=false;attendanceModel=null;homework=[];notices=[];results=[];
   renderAll();
-  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&!!myStudent(a.studentId));attendanceModel=LamaAttendanceHistory.make(myStudents,attendance);attendanceReady=true}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
+  const tasks=[['attendance',rows=>{attendance=rows.filter(a=>schoolMatch(a)&&(myStudents.some(s=>String(s.id??s._id??'')===String(a.studentId??a.student_id??'')&&!!a.studentId)||myStudents.some(s=>String(s.enrlNo??s.enrollmentNo??'')===String(a.enrlNo??a.enrollmentNo??'')&&!!a.enrlNo)));attendanceModel=LamaAttendanceHistory.make(myStudents,attendance);attendanceReady=true}],['homework',rows=>{homework=rows.filter(scope)}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
   await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else console.warn(name+' response invalid')}catch(e){console.warn(name+' failed',e)}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}

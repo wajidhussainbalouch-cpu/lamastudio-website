@@ -7,8 +7,19 @@
  const personId=s=>str(s.id??s._id??s.studentId);
  const enrollment=s=>str(s.enrlNo??s.enrollmentNo??s.enrollment);
  const normalize=v=>{const x=str(v).toLowerCase();return x==='p'||x==='present'?'Present':x==='a'||x==='absent'?'Absent':x==='l'||x==='leave'?'Leave':''};
- function dateKey(value){
+ function dateKey(value,zone='Asia/Karachi'){
   const v=str(value);
+  if(/^\d{4}-\d{2}-\d{2}T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(v)){
+   const d=new Date(v);
+   if(!Number.isNaN(d.getTime())){
+    try{
+     const parts=new Intl.DateTimeFormat('en-GB',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+     const get=k=>parts.find(p=>p.type===k)?.value||'';
+     if(get('year')&&get('month')&&get('day'))return get('year')+'-'+get('month')+'-'+get('day');
+    }catch(error){console.warn('Attendance history timezone not valid',error)}
+   }
+   return '';
+  }
   if(/^\d{4}-\d{2}-\d{2}/.test(v))return v.slice(0,10);
   const match=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   return match?match[3]+'-'+match[2].padStart(2,'0')+'-'+match[1].padStart(2,'0'):'';
@@ -49,8 +60,15 @@
   }
   function absenceInfo(student,anchor){
    const days=recent(student,anchor,7);
-   let streak=0;
-   for(const day of days){if(day.status==='Absent')streak++;else break}
+   // Skip dates with no saved class register; never infer absent from missing marks.
+   let streak=0,checked=0;
+   for(const date of previousDays(anchor,18)){
+    if(!classDayRegistered(student,date))continue;
+    checked++;
+    if(get(student,date)==='Absent')streak++;
+    else break;
+    if(checked>=7)break;
+   }
    const absentDays=days.filter(day=>day.status==='Absent').length;
    return {days,streak,absentDays,weekAlert:streak>=5};
   }

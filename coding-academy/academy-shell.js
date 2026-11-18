@@ -19,6 +19,8 @@ function start(){
    ["🛠️","Project Studio","./studio.html","studio.html"],
    ["📈","My Journey","./progress.html","progress.html"],
    ["🎯","Career Paths","./index.html#paths","paths"]]},
+  {name:"LEARNING REFERENCE",links:[
+   ["🔣","Symbols & HTML Inputs","./reference.html","reference.html"]]},
   {name:"MY ACCOUNT & HELP",links:[
    ["👤","Account & Cloud Backup","./account.html","account.html"],
    ["🔒","Privacy","./privacy.html","privacy.html"],

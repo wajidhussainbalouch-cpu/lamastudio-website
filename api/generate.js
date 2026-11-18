@@ -79,6 +79,15 @@ function getSiteAnswer(prompt, pagePath = '/') {
   const q = String(prompt || '').toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   if (!q) return null;
   const has = re => re.test(q);
+  // Exact counts are read directly from the published academy paper registry
+  // in AskLAMA on academy pages. On other pages, guide users to that live count;
+  // never invent a number or count draft/unpublished mock papers.
+  if ((String(pagePath||'').startsWith('/education-academy/') ||
+       has(/\b(ppsc|academy|competitive|headmaster|headmistress)\b/u)) &&
+      has(/\b(how many|number of|total|count|available|kitne|kitnay)\b/u) &&
+      has(/\b(mock|practice|papers?|tests?|exams?)\b/u)) {
+    return 'The number of published mock papers depends on the preparation job. Open the LAMA PPSC Preparation Academy Question Bank Library at https://www.lamastudio.pk/education-academy/section.html?view=papers, choose your job, and check its published full-length papers. Only verified public papers count; drafts and planned papers are excluded. If you ask AskLAMA from the academy dashboard after the paper list loads, it can report the counts shown in that live public registry.';
+  }
   const ppsc = has(/\b(ppsc|pps c|headmaster|headmistress|competitive (?:exam|test)|preparation academy|public service commission|hm bs 17|shm bs 18)\b/u)
     || /پنجاب پبلک سروس|پی پی ایس سی|ہیڈ ماسٹر|ہیڈ مسٹریس/u.test(q);
   const school = has(/\b(school|schools|erp|management software|school suite|school suit)\b/u)
@@ -251,8 +260,8 @@ export default async function handler(req, res) {
   }
   return res.status(503).json({
     error: retryableFailure
-      ? 'The AI service is temporarily unavailable. Ask me about LAMA Studio, School Suite pricing, app features, registration or contact information, or try your broader question later.'
-      : 'The AI service is unavailable. You can still ask about LAMA Studio products.'
+      ? 'The AI provider could not answer right now. LAMA product and School Suite guidance remains available. For the academy mock-paper count, open the Question Bank Library and choose your job. Try other general questions later.'
+      : 'The AI provider is unavailable. AskLAMA can still answer LAMA product and School Suite help questions.'
   });
 }
 

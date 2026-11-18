@@ -36,6 +36,7 @@
         .glass-pill { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .custom-gradient { background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #6366f1 100%); }
     </style>
+<script src="js/school-curriculum.js"></script>
 </head>
 <body class="bg-[#030712] text-slate-100 font-sans min-h-screen flex flex-col items-center py-10 px-4 relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
 
@@ -134,6 +135,12 @@
 <section class="rounded-2xl border border-cyan-500/30 bg-slate-900/70 p-4 space-y-3">
  <h2 class="text-base font-black text-cyan-300">Classes & Sections Offered</h2>
  <p class="text-slate-400">Choose exactly the classes your school offers. School level does not automatically add classes. Sections are optional and separated by commas.</p>
+ <div class="rounded-xl bg-slate-950/70 border border-cyan-600/30 p-3 space-y-2">
+ <label for="commonSubjects" class="block text-cyan-200 font-bold">Common subjects (optional)</label>
+ <textarea id="commonSubjects" rows="2" class="w-full bg-slate-900 border border-white/20 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics, Islamiat"></textarea>
+ <button type="button" onclick="applyCommonSubjects()" class="bg-cyan-800 px-3 py-2 rounded-lg font-bold">Apply to selected classes</button>
+ <p class="text-slate-400 text-[11px]">Adjust each class's list below. Only school administrators save curriculum.</p></div>
+ <p id="curriculumStatus" role="status" class="text-amber-200 text-xs">Loading school curriculum…</p>
  <div id="offeredClasses" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
  <div class="flex gap-2"><input id="customClass" maxlength="80" placeholder="Custom class (e.g. Montessori)" class="flex-1 min-w-0 bg-slate-950 border border-white/20 rounded-xl p-3"><button type="button" onclick="addCustomClass()" class="bg-cyan-700 px-4 rounded-xl font-bold">Add</button></div>
 </section>
@@ -170,23 +177,33 @@
 
         const standardClasses=['ECE','Nursery','Playgroup','Prep',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
         const standardFees=['Tuition Fee','Admission Fee','Examination Fee','Parking Fee','Uniform Fee','Books Fee'];
-        let classSettings=[],feeSettings=[];
+        let classSettings=[],feeSettings=[],curriculumRecord=null,curriculumReady=false,curriculumSchoolId='';
         function escapeText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function renderClassSettings(){
           document.getElementById('offeredClasses').innerHTML=classSettings.map((item,i)=>`
             <div class="bg-slate-950/80 border border-white/10 rounded-xl p-3 space-y-2">
               <label class="flex items-center gap-2"><input type="checkbox" data-class-index="${i}" ${item.enabled?'checked':''} onchange="classSettings[${i}].enabled=this.checked"><span class="font-semibold">${escapeText(item.name)}</span></label>
               <input data-sections-index="${i}" value="${escapeText(item.sections.join(', '))}" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings[${i}].sections=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
+              <label class="text-slate-300 text-[11px] font-bold block" for="subjects-${i}">Subjects taught in this class</label>
+              <textarea id="subjects-${i}" rows="2" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics" oninput="classSettings[${i}].subjects=this.value.split(',').map(s=>s.trim()).filter(Boolean)">${escapeText((item.subjects||[]).join(', '))}</textarea>
             </div>`).join('');
         }
         function renderFeeSettings(){
           document.getElementById('feeCategories').innerHTML=feeSettings.map((item,i)=>`
             <label class="flex gap-2 items-center bg-slate-950/80 border border-white/10 rounded-xl p-3"><input type="checkbox" ${item.enabled?'checked':''} onchange="feeSettings[${i}].enabled=this.checked"><span>${escapeText(item.name)}</span></label>`).join('');
         }
+        function applyCommonSubjects(){
+         try{const list=LamaSchoolCurriculum.subjects(document.getElementById('commonSubjects').value);
+           if(!list.length)throw Error('Enter at least one subject.');
+           classSettings.filter(x=>x.enabled).forEach(x=>x.subjects=[...list]);
+           renderClassSettings();
+           document.getElementById('curriculumStatus').textContent='Subjects copied to selected classes. Save to publish.';
+         }catch(e){showMessage('errorBanner',e.message)}
+        }
         function addCustomClass(){
           const input=document.getElementById('customClass'),name=input.value.trim();
           if(!name||classSettings.some(x=>x.name.toLowerCase()===name.toLowerCase()))return;
-          classSettings.push({name,sections:[],enabled:true});input.value='';renderClassSettings();
+          classSettings.push({name,sections:[],subjects:[],enabled:true});input.value='';renderClassSettings();
         }
         function addCustomFee(){
           const input=document.getElementById('customFee'),name=input.value.trim();
@@ -200,13 +217,27 @@
           if(!Array.isArray(storedClasses))storedClasses=[];
           if(!Array.isArray(storedFees))storedFees=[];
           const configured=Boolean(school.offeredClassesJson);
-          classSettings=standardClasses.map(name=>{const old=storedClasses.find(x=>x.name===name);return {name,sections:Array.isArray(old?.sections)?old.sections:[],enabled:!!old};});
-          for(const item of storedClasses)if(item?.name&&!classSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))classSettings.push({name:item.name,sections:Array.isArray(item.sections)?item.sections:[],enabled:true});
+          classSettings=standardClasses.map(name=>{const old=storedClasses.find(x=>x.name===name);return {name,sections:Array.isArray(old?.sections)?old.sections:[],subjects:[],enabled:!!old};});
+          for(const item of storedClasses)if(item?.name&&!classSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))classSettings.push({name:item.name,sections:Array.isArray(item.sections)?item.sections:[],subjects:[],enabled:true});
           feeSettings=standardFees.map(name=>({name,enabled:!!storedFees.find(x=>x.name===name&&x.enabled)}));
           for(const item of storedFees)if(item?.name&&!feeSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))feeSettings.push({name:item.name,enabled:!!item.enabled});
           renderClassSettings();renderFeeSettings();
         }
 
+        async function loadCurriculum(school){
+         curriculumReady=false;curriculumRecord=null;
+         const s=typeof LamaAPI.getSession==='function'?LamaAPI.getSession('school')||{}:{};
+         curriculumSchoolId=String(s.schoolId||school.schoolId||'').trim();
+         const label=document.getElementById('curriculumStatus');
+         if(!curriculumSchoolId||typeof LamaAPI.list!=='function'){label.textContent='Please sign in as school administrator to manage curriculum.';return}
+         try{
+           const found=LamaSchoolCurriculum.read(await LamaAPI.list('resources'),curriculumSchoolId);
+           curriculumRecord=found.record;
+           classSettings.forEach(klass=>klass.subjects=LamaSchoolCurriculum.forClass(found.doc,klass.name));
+           curriculumReady=true;renderClassSettings();
+           label.textContent=found.record?'✓ Saved school curriculum loaded. Edit and save to update teachers.':'No school subjects configured yet. Add them to your classes and save.';
+         }catch(e){label.textContent='Unable to verify curriculum. Saving disabled: '+e.message;showMessage('errorBanner',label.textContent)}
+        }
         function handleSchoolTypeChange() {
             const type = document.getElementById('inType').value;
             const wrapper = document.getElementById('privateSubCategoryWrapper');
@@ -315,6 +346,7 @@
 
             handleSchoolTypeChange();
             initializeChoices(school);
+            await loadCurriculum(school);
 
             const preview = document.getElementById('logoPreview');
             if (school.logo) {
@@ -352,11 +384,23 @@
             patch.feeCategoriesJson=JSON.stringify(feeSettings.filter(x=>x.enabled));
             if (pendingLogo) patch.logo = pendingLogo;
 
+            let schoolProfileSaved=false;
             try {
+                if(!curriculumReady)throw Error('Curriculum not loaded. Reload settings before saving.');
+                const doc=LamaSchoolCurriculum.documentFor(classSettings,curriculumSchoolId),description=JSON.stringify(doc);
                 await LamaAPI.updateSchoolConfig(patch);
-                showMessage('successBanner', '🚀 Settings successfully updated and broadcasted to Dashboard and Portal views!');
-            } catch (err) {
-                showMessage('errorBanner', err.message || 'Failed to update settings.');
+                schoolProfileSaved=true;
+                const saved=curriculumRecord?.id
+                  ?await LamaAPI.update('resources',curriculumRecord.id,{description})
+                  :await LamaAPI.add('resources',{category:LamaSchoolCurriculum.CATEGORY,title:LamaSchoolCurriculum.TITLE,description,link:''});
+                if(!saved?.id)throw Error('Curriculum save was not confirmed. Inspect before retrying.');
+                const verified=LamaSchoolCurriculum.read(await LamaAPI.list('resources'),curriculumSchoolId);
+                if(JSON.stringify(verified.doc)!==description)throw Error('Curriculum could not be verified after reload.');
+                curriculumRecord=verified.record;
+                document.getElementById('curriculumStatus').textContent='✓ Curriculum saved for '+doc.classes.length+' classes. Teachers can now see shared subjects.';
+                showMessage('successBanner','✓ School settings and class subjects saved and verified.');
+            } catch(err){
+                showMessage('errorBanner',(schoolProfileSaved?'School profile saved, but curriculum not verified: ':'Nothing was saved: ')+(err.message||'Unknown error'));
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Save & Broadcast to Dashboard';

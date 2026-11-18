@@ -241,3 +241,14 @@ User requested an accessible, plain-language guide and Ask LAMA entry in the Sch
 - `api/generate.js`: verified public-only, School Suite-scoped task instructions for attendance, history, subjects/curriculum, homework, calendar, fees, exams, admission, privacy and troubleshooting. Direct answers work when the optional Gemini provider is unavailable. Unrecognized questions may require external AI and should not be represented as guaranteed. Never claim to retrieve live private records.
 - No backend Google Apps Script data/schema/auth changes. School administrative/teacher/student data untouched. Full authenticated, mobile and live Vercel production checks are necessary after build readiness. Follow Vercel build-rate limits; do not equate merged GitHub code with live deploy.
 
+
+## 2026-11-18 — AskLAMA mock-paper count resilience
+
+User screenshot at approximately 20:12 PKT: AskLAMA correctly opened on mobile, but the question "How many mock papers" resulted in the generic AI service unavailable alert. Verified production Vercel function logs around 15:12 UTC: Gemini `gemini-3.8-flash` HTTP 503, followed by `gemini-3.1-flash-lite` and `gemini-3.5-flash-lite` `AbortError` timeouts. The existing `GEMINI_API_KEY` environment variable is configured, but the underlying provider's outage/timeout requires independent provider monitoring; source changes do not restore upstream availability.
+
+Frontend `ask-lama.js` now answers **generic published mock-paper count** questions directly from the already-loaded public `window.LamaPpscPaperLibrary` when the visitor is in the Academy. This uses `list()`, `selectedJob()`, and `forJob()` to count *approved, public* 100-MCQ papers with no private records, no hardcoded count, no Gemini request, and no requests to the Supabase database. It identifies selected-job count separately from all-job unique published count and rejects job-specific count questions that don't match the current selected track.
+
+Backend `api/generate.js` recognizes public PPSC mock-paper count questions even if Gemini is unavailable and directs the visitor to the live Question Bank Library if the browser registry wasn't available. It never guesses a count or uses private school records. From a School Suite page, a generic question about school mock paper totals isn't misclassified as the public PPSC academy library; an explicit PPSC question is still answered. Existing pricing and access routing are unchanged.
+
+`test-asklama.cjs` adds a simulated 25-paper public registry / 20-paper selected job regression where the AI service is unavailable and asserts zero AI network requests for that count. Existing API fallbacks and endpoint 503 behavior for unrelated questions remain: this is a *knowledge fallback*, not a guarantee that generative AI will work when the provider returns 503. Production status must be checked separately after merge.
+

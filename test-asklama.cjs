@@ -125,6 +125,25 @@ async function clientChecks() {
   await promise;
   assert.equal(ui.isBusy(),false);
 
+  // A public academy count must use the loaded registry and must work when
+  // the Gemini endpoint is unavailable. No private account data is consulted.
+  const priorCalls=fetchCalls.length;
+  window.location={pathname:'/education-academy/index.html'};
+  window.LamaPpscPaperLibrary={
+    list:()=>Array.from({length:25},(_,i)=>({id:'P'+i})),
+    selectedJob:()=>({id:'teaching:0',label:'Headmaster / Headmistress'}),
+    forJob:()=>Array.from({length:20},(_,i)=>({id:'HM'+i}))
+  };
+  responder=async()=>({ok:false,json:async()=>({error:'Gemini unavailable'})});
+  input.value='How many mock papers';
+  await ui.handleUserMessage({preventDefault(){}});
+  assert.equal(fetchCalls.length,priorCalls,'Public academy paper count must not call the AI service');
+  assert.match($('askLamaMessages').children.at(-1).textContent,/25 full-length practice papers?/);
+  assert.match($('askLamaMessages').children.at(-1).textContent,/20 published papers?/);
+  assert.match($('askLamaStatus').textContent,/published academy paper library/);
+  window.location={pathname:'/'};
+  delete window.LamaPpscPaperLibrary;
+
   $('askLamaClearBtn').listeners.click();
   assert.equal($('askLamaMessages').children.length,1);
   assert.match($('askLamaStatus').textContent,/cleared/);
@@ -217,6 +236,12 @@ async function backendChecks(){
     assert.match(reply.data.text,/education-academy/);
     assert.doesNotMatch(reply.data.text,/rather than exam preparation|does not offer preparation|no PPSC/i);
   }
+  const academyCount=makeResponse();
+  await ctx.handler({method:'POST',body:{prompt:'How many mock papers?',pagePath:'/education-academy/index.html'}},academyCount);
+  assert.equal(academyCount.code,200);
+  assert.equal(academyCount.data.source,'site-guide');
+  assert.match(academyCount.data.text,/Question Bank Library/);
+  assert.doesNotMatch(academyCount.data.text,/\b25\b|\b20\b/,'API guidance must not guess totals');
   assert.equal(requests.length,0,'Verified PPSC answers cannot call Gemini');
   const greeting=makeResponse();
   await ctx.handler({method:'POST',body:{prompt:'Hello'}},greeting);

@@ -207,6 +207,41 @@ $('sessionForm').onsubmit=async e=>{
 $('eventForm').onsubmit=async e=>{e.preventDefault();try{const p={sessionId:field('eventSession'),type:field('eventType'),title:field('eventTitle'),start:field('eventStart'),end:field('eventEnd'),description:field('eventDescription'),published:$('eventPublished').checked};if(!p.sessionId)throw Error('Create an academic session first');if(p.start>p.end)throw Error('Event start must precede end');await save('event',field('eventId'),p);$('eventId').value='';status('Event saved')}catch(err){status(err.message)}};
 $('clearPeriod').onclick=()=>{$('periodForm').reset();$('periodId').value=''};$('clearEvent').onclick=()=>{$('eventForm').reset();$('eventId').value=''};$('clearSession').onclick=()=>{$('sessionForm').reset();$('sessionId').value='';status('Ready to add a new academic session.')};
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const pingId=b.getAttribute('data-ping-period');if(pingId){(async()=>{try{authorized();const p=data('period').find(x=>x.id===pingId);if(!p?.teacherId)throw Error('No assigned teacher');const msg='Period reminder: '+p.day+' '+p.start+'–'+p.end+', '+p.subject+', Class '+p.grade+(p.section?' '+p.section:'')+'.';await LamaAPI.pingTeacher(p.teacherId,msg);status('In-app teacher ping queued. This does not send WhatsApp.')}catch(err){status('Ping failed: '+err.message)}})();return}for(const kind of ['period','session','event']){const editId=b.getAttribute('data-edit-'+kind),removeId=b.getAttribute('data-remove-'+kind);if(editId){edit(kind,editId);return}if(removeId){remove(kind,removeId).catch(err=>status(err.message));return}}});
+
+$('printClassList').addEventListener('change',event=>{
+ const input=event.target.closest('input[data-print-class]');if(!input)return;
+ if(input.checked)printSelection.add(input.dataset.printClass);
+ else printSelection.delete(input.dataset.printClass);
+ updatePrintCount();
+});
+$('selectAllPrintClasses').onclick=()=>{
+ printSelection=new Set(visibleClasses());renderPrintClassPicker(timetableForSession(),activeSession());
+};
+$('clearPrintClasses').onclick=()=>{
+ printSelection=new Set();renderPrintClassPicker(timetableForSession(),activeSession());
+};
+$('quickDay').onchange=()=>renderQuickGrid();
+$('quickPeriods').onchange=()=>{const n=Number($('quickPeriods').value);$('quickPeriods').value=String(Math.max(1,Math.min(14,Number.isFinite(n)?n:8)));renderQuickGrid()};
+$('quickGrid').addEventListener('click',event=>{
+ const button=event.target.closest('button[data-quick-class]');
+ if(!button)return;
+ try{openQuickEditor(button)}catch(e){status(e.message)}
+});
+$('quickForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ try{await saveQuickPeriod()}catch(error){status('Quick save not verified: '+error.message)}
+});
+$('quickCancel').onclick=()=>$('quickEditor').classList.add('hidden');
+$('quickOpenFull').onclick=()=>{
+ if(!adminMode)return;
+ for(const [id,v] of Object.entries({
+  periodId:field('quickPeriodId'),periodSession:activeSession(),day:field('quickPeriodDay'),
+  period:field('quickPeriodNumber'),start:field('quickStart'),end:field('quickEnd'),
+  grade:field('quickGrade'),section:field('quickSection'),subject:field('quickSubject'),
+  teacher:field('quickTeacher'),room:field('quickRoom')}))$(id).value=v;
+ $('published').checked=$('quickPublished').checked;
+ $('quickEditor').classList.add('hidden');$('periodForm').scrollIntoView({behavior:'smooth'});
+};
 for(const id of ['viewSession','viewGrade','viewDay'])$(id).onchange=render;
 $('prevMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('nextMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};$('reload').onclick=load;$('print').onclick=printTimetable;
 function printProfileFallback(){
@@ -287,6 +322,6 @@ window.addEventListener('beforeprint',()=>{
  catch(error){status('Unable to prepare print: '+error.message)}
 });
 window.addEventListener('afterprint',()=>{printPrepared=false});
-async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
+async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden');$('quickBuilder').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

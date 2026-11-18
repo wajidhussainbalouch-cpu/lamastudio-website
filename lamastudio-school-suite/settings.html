@@ -185,7 +185,7 @@
               <label class="flex items-center gap-2"><input type="checkbox" data-class-index="${i}" ${item.enabled?'checked':''} onchange="classSettings[${i}].enabled=this.checked"><span class="font-semibold">${escapeText(item.name)}</span></label>
               <input data-sections-index="${i}" value="${escapeText(item.sections.join(', '))}" placeholder="Sections: A, B (optional)" maxlength="500" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2" onchange="classSettings[${i}].sections=this.value.split(',').map(x=>x.trim()).filter(Boolean)">
               <label class="text-slate-300 text-[11px] font-bold block" for="subjects-${i}">Subjects taught in this class</label>
-              <textarea id="subjects-${i}" rows="2" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics" oninput="classSettings[${i}].subjects=this.value.split(',').map(s=>s.trim()).filter(Boolean)">${escapeText((item.subjects||[]).join(', '))}</textarea>
+              <textarea id="subjects-${i}" rows="2" class="w-full bg-slate-800 border border-white/10 rounded-lg p-2 text-white" placeholder="English, Urdu, Mathematics" oninput="classSettings[${i}].subjects=this.value.replaceAll(String.fromCharCode(10),',').replaceAll(';',',').split(',').map(s=>s.trim()).filter(Boolean)">${escapeText((item.subjects||[]).join(', '))}</textarea>
             </div>`).join('');
         }
         function renderFeeSettings(){
@@ -388,6 +388,12 @@
             try {
                 if(!curriculumReady)throw Error('Curriculum not loaded. Reload settings before saving.');
                 const doc=LamaSchoolCurriculum.documentFor(classSettings,curriculumSchoolId),description=JSON.stringify(doc);
+                // Avoid silently overwriting another administrator's changes.
+                const remote=LamaSchoolCurriculum.read(await LamaAPI.list('resources'),curriculumSchoolId);
+                if(String(remote.record?.id||'')!==String(curriculumRecord?.id||'')||
+                   String(remote.record?.description||'')!==String(curriculumRecord?.description||'')){
+                     throw Error('Curriculum changed in another administrator session. Reload School Settings before saving.');
+                }
                 await LamaAPI.updateSchoolConfig(patch);
                 schoolProfileSaved=true;
                 const saved=curriculumRecord?.id

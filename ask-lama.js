@@ -105,6 +105,38 @@
     return node;
   }
 
+  // Derive academy paper counts from the actual published browser registry.
+  // These totals include only approved, public 100-MCQ papers, not drafts.
+  // Unlike a hardcoded number, this stays current when the academy publishes papers.
+  function academyPaperAnswer(question) {
+    const path = String(window.location?.pathname || '');
+    if (!path.startsWith('/education-academy/')) return null;
+    const q = String(question || '').toLocaleLowerCase('en').trim();
+    const countQuestion = /\b(how many|number of|total|count|available|kitne|kitnay)\b/.test(q)
+      && /\b(mock|practice|papers?|tests?|exams?)\b/.test(q);
+    if (!countQuestion) return null;
+    // Do not pretend to know another job's total based on the active job.
+    if (/\b(information officer|junior clerk|headmaster|headmistress|shm|assistant|stenographer)\b/.test(q)) return null;
+    const library = window.LamaPpscPaperLibrary;
+    if (!library || typeof library.list !== 'function' || typeof library.forJob !== 'function') return null;
+    try {
+      const publicPapers = library.list();
+      if (!Array.isArray(publicPapers)) return null;
+      const currentJob = typeof library.selectedJob === 'function' ? library.selectedJob() : null;
+      const jobPapers = currentJob?.id ? library.forJob(currentJob.id) : null;
+      const total = publicPapers.length;
+      const selected = Array.isArray(jobPapers) ? jobPapers.length : null;
+      const parts = ['The published LAMA PPSC Preparation Academy library currently lists ' + total +
+        ' full-length practice paper' + (total === 1 ? '' : 's') + ' across its available job categories.'];
+      if (selected !== null) {
+        parts.push('Your selected track (' + (currentJob.label || 'current job') + ') has ' +
+          selected + ' published paper' + (selected === 1 ? '' : 's') + '.');
+      }
+      parts.push('Choose a different job in Question Bank Library to see its published papers. Drafts and upcoming papers are not included.');
+      return parts.join(' ');
+    } catch (_) { return null; }
+  }
+
   async function handleUserMessage(event) {
     if (event) event.preventDefault();
     if (busy) return;
@@ -124,10 +156,13 @@
     const reply = bubble('Thinking…', 'bot loading');
     status.textContent = 'Generating a reply…';
 
+    const localPaperAnswer = academyPaperAnswer(question);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 34000);
+    const timeout = localPaperAnswer ? null : setTimeout(() => controller.abort(), 34000);
     try {
-      const response = await fetch('/api/generate', {
+      const response = localPaperAnswer ? {
+        ok:true, json: async () => ({text:localPaperAnswer,source:'academy-paper-registry'})
+      } : await fetch('/api/generate', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         credentials: 'same-origin',
@@ -146,7 +181,7 @@
       reply.classList.remove('loading');
       history.push({role:'user',text:question}, {role:'model',text:answer});
       history = history.slice(-8);
-      status.textContent = data.source === 'site-guide' ? 'From verified LAMA Studio product information. Ask a follow-up.' : 'AI reply received. Ask a follow-up question.';
+      status.textContent = data.source === 'academy-paper-registry' ? 'From the currently loaded published academy paper library.' : data.source === 'site-guide' ? 'From LAMA Studio help information. Ask a follow-up.' : 'AI reply received. Ask a follow-up question.';
     } catch (error) {
       reply.classList.remove('loading');
       reply.classList.add('error');
@@ -157,7 +192,7 @@
           : String(error.message || 'Unable to get a reply. Please try again.');
       status.textContent = 'Reply not received. You can try again.';
     } finally {
-      clearTimeout(timeout);
+      if (timeout !== null) clearTimeout(timeout);
       busy = false;
       send.disabled = false;
       clear.disabled = false;

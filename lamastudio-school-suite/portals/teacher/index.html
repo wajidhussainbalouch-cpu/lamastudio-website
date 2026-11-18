@@ -6,7 +6,7 @@
 <title id="pageTitle">Teacher Home | Lama School Suite</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../../assets/css/config.css">
-<script src="../../js/api-client.js"></script><script src="../../js/attendance-history.js"></script>
+<script src="../../js/api-client.js"></script><script src="../../js/attendance-history.js"></script><script src="../../js/teacher-daily-overview.js"></script><link rel="stylesheet" href="../../assets/css/teacher-daily-overview.css">
 <style id="teacher-modern-ui">
 :root{--ink:#f5f9ff;--muted:#a6b6cd;--line:rgba(156,188,230,.17)}
 body{background:radial-gradient(circle at 10% 0%,#17314f 0,transparent 36%),radial-gradient(circle at 92% 14%,#173c49 0,transparent 34%),#081425!important}
@@ -90,12 +90,26 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="hero-decoration" aria-hidden="true"><span>✦</span><div class="hero-circle">📚</div><small>INSPIRE · TEACH · GROW</small></div>
 </section>
 <section class="overview-grid" aria-label="Teacher quick overview">
- <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">My Students</span><strong id="statStudents">—</strong><small>Assigned class</small></div>
+ <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">Total Students</span><strong id="statStudents">—</strong><small>Assigned class</small></div>
+ <div class="overview-tile"><span class="tile-icon">👦</span><span class="tile-label">Total Boys</span><strong id="statBoys">—</strong><small>Enrolled boys</small></div>
+ <div class="overview-tile"><span class="tile-icon">👧</span><span class="tile-label">Total Girls</span><strong id="statGirls">—</strong><small id="genderMissingNote">Enrolled girls</small></div>
  <div class="overview-tile"><span class="tile-icon">🏫</span><span class="tile-label">My Class</span><strong id="statClass">—</strong><small id="statSection">Class assignment</small></div>
- <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework</span><strong id="statHomework">—</strong><small>Entries posted</small></div>
- <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent Today</span><strong id="statAbsent">—</strong><small>Attendance alerts</small></div>
- <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present Today</span><strong id="statPresent">—</strong><small>Saved student attendance</small></div>
- <div class="overview-tile"><span class="tile-icon">👦👧</span><span class="tile-label">Boys &amp; Girls</span><div class="flex items-center gap-5 mt-2"><div><small>Boys</small><strong id="statBoys" class="block">—</strong></div><div class="h-10 w-px bg-slate-600" aria-hidden="true"></div><div><small>Girls</small><strong id="statGirls" class="block">—</strong></div></div><small id="genderMissingNote">Assigned class</small></div>
+ <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present</span><strong id="statPresent">—</strong><small>Saved for selected date</small></div>
+ <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent</span><strong id="statAbsent">—</strong><small>Saved for selected date</small></div>
+ <div class="overview-tile"><span class="tile-icon">📋</span><span class="tile-label">Leave / Unmarked</span><strong id="statLeaveUnmarked">—</strong><small>Not counted as absent</small></div>
+ <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework Today</span><strong id="statHomework">—</strong><small>Subjects posted / tracked</small></div>
+</section>
+<section class="teacher-daily-report cyber-card" aria-labelledby="dailyReportHeading">
+ <div class="report-head"><div><h2 id="dailyReportHeading">📊 Class Attendance Summary</h2><p class="report-caption" id="attendanceReportDate">Showing selected attendance date</p></div><span class="report-state" id="attendanceCompletion">Loading saved attendance…</span></div>
+ <div id="attendanceBreakdown" class="breakdown-grid" aria-live="polite">Loading attendance…</div>
+ <p class="report-hint">Saved attendance only. Missing marks are not absences. Use the date selector in Mark Attendance to view previous days.</p>
+</section>
+<section class="teacher-daily-report cyber-card" aria-labelledby="homeworkProgressHeading">
+ <div class="report-head"><div><h2 id="homeworkProgressHeading">📚 Daily Subject Homework</h2><p class="report-caption">Green: saved homework · Red: not posted · Grey: unavailable</p></div><label class="report-date-label">Checklist date<input id="homeworkCheckDate" type="date"></label></div>
+ <div class="report-head"><p id="homeworkProgressText" class="report-caption" aria-live="polite">Checking saved homework…</p><button type="button" id="editSubjectList" class="report-secondary">Manage subjects</button></div>
+ <div id="subjectConfig" class="subject-config hidden"><label for="subjectConfigInput">Subjects for this class (comma separated)</label><textarea id="subjectConfigInput" rows="2" placeholder="English, Urdu, Mathematics, Islamiat, General Knowledge"></textarea><p>This subject list is saved on this device for this school/class. Homework records remain in the school's database.</p><div class="config-actions"><button id="saveSubjectConfig" type="button">Save subjects</button><button id="resetSubjectConfig" type="button">Use detected subjects</button></div></div>
+ <div id="subjectChecklist" class="subjects-grid">Loading subjects…</div>
+ <p class="report-hint">Tap a subject to open the homework editor. The checklist tracks when homework was posted, not its due date.</p>
 </section>
 <section class="employee-panel" aria-label="Employee identity card">
  <div class="employee-details">
@@ -135,7 +149,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
                     <button onclick="saveAttendance()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">💾 Save</button>
                 </div>
             </div>
-            <div id="attendanceList" class="space-y-2"></div>
+            <p id="attendanceDateSummary" class="text-xs text-slate-300" aria-live="polite">Loading saved attendance…</p><div id="attendanceList" class="space-y-2"></div>
             <p id="attendanceEmpty" class="text-center text-sm text-slate-400 py-6 hidden">No students found in your assigned class yet.</p>
         </section>
 

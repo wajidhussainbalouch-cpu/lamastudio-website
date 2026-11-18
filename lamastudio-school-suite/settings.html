@@ -220,7 +220,7 @@
          try{
            const found=LamaSchoolCurriculum.read(await LamaAPI.list('resources'),curriculumSchoolId);
            curriculumRecord=found.record;
-           classSettings.forEach(klass=>klass.subjects=LamaSchoolCurriculum.forClass(found.doc,klass.name));
+           classSettings.forEach(klass=>{klass.subjects=LamaSchoolCurriculum.forClass(found.doc,klass.name);klass.aliases=LamaSchoolCurriculum.aliasesForClass(found.doc,klass.name)});
            curriculumReady=true;renderClassSettings();
            label.textContent=found.record?'✓ Saved school curriculum loaded. Edit and save to update teachers.':'No school subjects configured yet. Add them to your classes and save.';
          }catch(e){label.textContent='Unable to verify curriculum. Saving disabled: '+e.message;showMessage('errorBanner',label.textContent)}

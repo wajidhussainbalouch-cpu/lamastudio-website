@@ -74,10 +74,13 @@
   if(assignedSubject)add(assignedSubject);
   return out;
  }
- function homeworkStatus(records,subjects,day,loaded,zone='Asia/Karachi'){
+ function homeworkStatus(records,subjects,day,loaded,zone='Asia/Karachi',subjectAliases={}){
   const values=(subjects||[]).map(subject=>{
+   const savedAliases=subjectAliases&&typeof subjectAliases==='object'?subjectAliases[subject]:null;
+   const names=[subject,...(Array.isArray(savedAliases)?savedAliases:[])];
+   const keys=new Set(names.map(subjectKey));
    const selected=(records||[]).filter(h=>
-    subjectKey(h.subject)===subjectKey(subject)&&dateKey(h.createdAt??h.date,zone)===day);
+    keys.has(subjectKey(h.subject))&&dateKey(h.createdAt??h.date,zone)===day);
    const posted=selected.some(h=>{
     const stage=norm(h.status),explicitNo=h.isPublished===false||h.published===false||['draft','pending','archived','rejected'].includes(stage);
     const confirmed=h.isPublished===true||h.published===true||['published','sent'].includes(stage);

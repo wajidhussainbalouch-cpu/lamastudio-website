@@ -213,3 +213,18 @@ The browser test instructions are in coding-academy/browser-tests/README.md; its
 - [ ] When enabled after approval, test explicit profile save/refresh, 60-character display name, Urdu/English preference, sign-out, email verification, password reset and account deletion cascades.
 - [ ] Verify **Save private profile** does not upload code or question answers; learning progress upload remains separate and explicit with consent.
 - [ ] Confirm the new v0.18 QA package installs beside v0.17 without erasing the older app. Use a Complete Academy Backup for voluntary transfer.
+
+
+## Phase 19 — Symbols and HTML inputs acceptance on Android
+
+- [ ] Confirm new menu item **Symbols & HTML Inputs** opens without internet and the new page is easily found from the Academy home.
+- [ ] The Inputs Lab must show **22 types**, each with a genuine native form control, displayed source code, and simple explanation.
+- [ ] Test `date`, `time`, `week`, `color`, `range`, `checkbox`, `radio`, `file`, `submit`, `reset`, and `image` on the actual Infinix phone. Some picker UIs legitimately depend on Android WebView support.
+- [ ] Select a disposable, non-sensitive demo file. The lab must **not** read or upload it or display its filename.
+- [ ] Type harmless sample text in a demo and click Submit. Nothing should navigate away or send a network request.
+- [ ] Change the text beside Reset, tap Reset, and verify its original default returns.
+- [ ] Confirm the hidden-field lesson clearly says it is **not secret**, and the password lesson says masking is **not encryption**.
+- [ ] Symbols Lab has **30 cards** in three levels, searchable by symbol and name. Check differences between JavaScript `===`, `++`, `&&` and Python alternatives.
+- [ ] Complete the six-question knowledge check; verify right/wrong explanations and replay. Scores from this informal reference quiz are not stored.
+- [ ] Check 360/390px mobile width, keyboard focus, screen reader labels, offline PWA cache and v0.19 APK on a physical phone.
+- [ ] Do not copy third-party Facebook images, proprietary questions or infographics. Research provenance and limitations are documented separately.

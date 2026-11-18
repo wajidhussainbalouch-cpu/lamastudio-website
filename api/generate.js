@@ -15,6 +15,58 @@ const LAMA_SITE_FACTS = [
   'Do not request or display private school records, passwords, student details or billing history.'
 ].join('\n');
 
+
+/* Verified, public-only School Suite task guidance. Does not read a school session,
+ * database, private student/teacher information, or execute any school action.
+ * Available even when the generative AI provider is offline.
+ */
+const SCHOOL_MANUAL_URL='https://www.lamastudio.pk/lamastudio-school-suite/user-manual.html';
+function getSchoolGuideAnswer(prompt,pagePath='/'){
+  const path=String(pagePath||'');
+  if(!path.startsWith('/lamastudio-school-suite/'))return null;
+  const q=String(prompt||'').toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+  if(!q)return null;
+  const has=re=>re.test(q);
+  const manual=' For detailed steps, open '+SCHOOL_MANUAL_URL;
+  if(has(/\b(password|otp|secret|private student data|student personal record|admin token|bank details|api key)\b/u)&&has(/\b(show|give|tell|retrieve|find|access|share|what is|send)\b/u))
+    return 'Ask LAMA cannot retrieve passwords, private student records, administrator tokens or bank details. Sign in through your authorized school portal or ask your School Admin for help.'+manual;
+  if(has(/\b(manual|help guide|user guide|tutorial|instructions|how to use the software|learn this system|training)\b/u)||/رہنمائی|استعمال کا طریقہ|مینول/u.test(q))
+    return 'Open the LAMA School Suite User Manual: '+SCHOOL_MANUAL_URL+'. It has searchable instructions for School Admin, Teacher, and Student/Parent users. Choose a role, search for your task, and follow the steps.';
+  if(has(/\b(duplicate|repeated|double|delete session|remove session)\b/u)&&has(/\b(session|calendar|timetable|schedule)\b/u))
+    return 'Open Timetable & Academic Calendar: https://www.lamastudio.pk/lamastudio-school-suite/planning/index.html. In Academic Sessions, use Edit to correct a repeated name. Delete is allowed only for an inactive session with no linked timetable periods or calendar events. Check the saved list before trying again.'+manual;
+  if(has(/\b(monthly|month|csv|weekly|week|last 7|seven days|attendance history|consecutive)\b/u)&&has(/\b(attendance|register|absent|present|student)\b/u))
+    return 'Open Monthly Attendance Register: https://www.lamastudio.pk/lamastudio-school-suite/attendance/student-register.html. Choose the class and month to see saved P/A/L marks, print or export CSV. The daily attendance screen also shows the previous seven possible school days. A missing mark is not an absence.'+manual;
+  if(has(/\b(qr|scan|scanner|camera|barcode)\b/u)&&has(/\b(attendance|teacher|student|staff|class)\b/u))
+    return 'Open the student or teacher attendance page and find the QR panel if enabled. Allow camera permission, scan the correct code and verify that the attendance was actually saved. If scanning fails, use the manual attendance option.'+manual;
+  if(has(/\b(teacher|staff|employee)\b/u)&&has(/\b(attendance|present|absent|leave|register)\b/u))
+    return 'School Admin can open Staff Attendance at https://www.lamastudio.pk/lamastudio-school-suite/attendance/teacher-attendance.html. Choose the date, record Present/Absent/Leave and verify the save. Staff attendance is separate from student attendance.'+manual;
+  if(has(/\b(attendance|present|absent|leave|unmarked|not marked|roll call)\b/u)||/حاضری|غیر حاضر|حاضر/u.test(q))
+    return 'Open Student Attendance at https://www.lamastudio.pk/lamastudio-school-suite/attendance/student-attendance-v2.html (School Admin) or the Attendance tab of the Teacher Portal. Choose the date/class, mark each student Present, Absent or Leave, then Save. Confirm saved totals after reload. Unmarked means not recorded, not Absent.'+manual;
+  if(has(/\b(subject|curriculum|islamiyat|islamiat|nazra|art|music|class combination|study group|science group|ics)\b/u)&&has(/\b(add|change|edit|select|choose|rename|set|class|settings|save|assign|school)\b/u))
+    return 'School Admin sets class subjects from School Settings: https://www.lamastudio.pk/lamastudio-school-suite/settings.html. Enable the class, tap the required subjects (green means selected), optionally edit a selected subject name, and press Save & Broadcast. Teachers then refresh their portal to see the centrally saved class subjects. Group suggestions for Classes 9–12 are optional.'+manual;
+  if(has(/\b(homework|assignment|class diary|diary|posted subjects)\b/u)||/ہوم ورک|ڈائری/u.test(q))
+    return 'Teacher: open https://www.lamastudio.pk/lamastudio-school-suite/portals/teacher/index.html and find Daily Subject Homework. Choose the assigned subject, enter title, instructions and due date, and publish. Green means a saved homework post on the selected date, red means no saved post, and grey means records are unavailable. Ask the School Admin to configure missing class subjects.'+manual;
+  if(has(/\b(timetable|calendar|holiday|academic session|period|schedule|print timetable|print calendar)\b/u)||/ٹائم ٹیبل|کیلنڈر/u.test(q))
+    return 'Open Timetable & Academic Calendar: https://www.lamastudio.pk/lamastudio-school-suite/planning/index.html. School Admin creates a session, adds class periods and calendar events, and can edit or delete entries where allowed. For printing, choose All classes, Selected class or Class-wise separate pages, then Print / Save as PDF.'+manual;
+  if(has(/\b(admission|enroll|student import|import students|upload students|student record|student directory|manage students)\b/u)||/داخلہ/u.test(q))
+    return 'School Admin opens Admissions or Manage Students from the dashboard. Choose the class, enter enrollment and guardian details, check for duplicates, then save and verify. For bulk uploads, use Student Import and review its preview and duplicate warnings before confirmation.'+manual;
+  if(has(/\b(teacher account|add teacher|teacher login|assigned class|employee id|staff profile)\b/u))
+    return 'School Admin manages teacher profiles and class assignments from Manage Teachers. Teachers sign in through their own portal using the School ID and issued account, then see only their permitted class. School Admin should correct an incorrect or missing class assignment.'+manual;
+  if(has(/\b(exam|paper|question bank|marks|result|assessment|omr|smart marker|date sheet)\b/u)||/امتحان|نتیجہ|پرچہ/u.test(q))
+    return 'Go to the School Admin Dashboard → Assessments for examination tools. Select the right class, subject, dates and marking scheme, then check saved question papers, marks and results. Student/Parent accounts can view their own published results. Smart Marker and OMR availability depends on the current deployment.'+manual;
+  if(has(/\b(fee|finance|receipt|payment|expenses|income|collection|cash)\b/u)||/فیس|اخراجات/u.test(q))
+    return 'For fees open https://www.lamastudio.pk/lamastudio-school-suite/finance/fees.html. For income and expenses open https://www.lamastudio.pk/lamastudio-school-suite/finance/finance-center.html. Enter and verify saved transactions before relying on totals; Ask LAMA cannot view your school finances.'+manual;
+  if(has(/\b(notice|notification|whatsapp|contact parents|parents|communication|message)\b/u))
+    return 'School Admin can use the Communication Center and Notifications module for approved school messages. Teachers can use assigned-class notices where permitted. A saved in-app notification does not prove a WhatsApp message was delivered.'+manual;
+  if(has(/\b(student portal|parent portal|my diary|my results|my id card|student login)\b/u))
+    return 'Open your School Board and sign in to your Student/Parent Portal. There you can view your own ID, diary, class information, published results and school notices as permitted. Ask your School Admin for an account or a correction.'+manual;
+  if(has(/\b(save failed|not saving|stuck|blank page|error|not loading|does not work|support ticket|report a problem|help support)\b/u)||/خرابی|مسئلہ/u.test(q))
+    return 'If you are stuck: check your role, School ID, class/date filters and connection. If a save is uncertain, inspect the saved register before retrying to avoid duplicates. School Admin can submit a ticket at https://www.lamastudio.pk/lamastudio-school-suite/help-support.html. Do not send passwords or private student data to Ask LAMA.'+manual;
+  if(has(/\b(what can i do|what is this page|what is this dashboard|where should i start|first time|new user)\b/u))
+    return 'Start with the LAMA School Suite User Manual: '+SCHOOL_MANUAL_URL+'. School Admin manages students, teachers, settings and reports; teachers manage their assigned class; students/parents see their own records. For the exact screen you are using, ask me a question such as “How do I save attendance?”';
+  return null;
+}
+
 function getSiteAnswer(prompt, pagePath = '/') {
   const q = String(prompt || '').toLocaleLowerCase('en').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   if (!q) return null;
@@ -120,7 +172,7 @@ export default async function handler(req, res) {
     return res.status(400).json({error:'Please enter a question of up to 1,200 characters.'});
   }
 
-  const directAnswer = getSiteAnswer(prompt, body.pagePath);
+  const directAnswer = getSchoolGuideAnswer(prompt, body.pagePath) || getSiteAnswer(prompt, body.pagePath);
   if (directAnswer) return res.status(200).json({text:directAnswer,source:'site-guide'});
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -197,4 +249,4 @@ export default async function handler(req, res) {
 }
 
 // Expose pure helpers for unit tests only; no credentials.
-export const __askLamaHelpers = {parseRequest, buildContents, extractText, getSiteAnswer, getPageContext};
+export const __askLamaHelpers = {parseRequest, buildContents, extractText, getSiteAnswer, getPageContext, getSchoolGuideAnswer};

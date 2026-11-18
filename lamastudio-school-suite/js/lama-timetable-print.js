@@ -17,6 +17,12 @@ function schoolName(profile){
 const gradeOf=p=>String(p?.grade??p?.class??'').trim();
 const sectionOf=p=>String(p?.section??'').trim();
 const classLabel=p=>gradeOf(p)+(sectionOf(p)?' · Section '+sectionOf(p):'');
+const classKey=label=>{
+ const v=String(label??'').trim(),m=v.match(/^(.*?)\s*·\s*Section\s+(.+)$/i);
+ const g=String(m?m[1]:v).toLowerCase().replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/^0+(?=\d)/,'').replace(/\s+/g,'');
+ return g+(m?'|'+String(m[2]).toLowerCase().replace(/\s+/g,''):'');
+};
+const sameClass=(a,b)=>classKey(a)===classKey(b);
 const timeLabel=p=>[String(p.start||'').trim(),String(p.end||'').trim()].filter(Boolean).join(' – ');
 function sorted(records,mode){
  return [...records].sort((a,b)=>{
@@ -66,14 +72,14 @@ function masterGrid(records,selectedClasses=null,{maxClasses=6}={}){
  if(!selection.length)return '<p class="empty-print">No classes selected for this timetable.</p>';
  const labels=selection;
  if(!labels.length)return '<p class="empty-print">No classes selected.</p>';
- const included=published.filter(p=>labels.some(x=>x.toLowerCase()===classLabel(p).toLowerCase()));
+ const included=published.filter(p=>labels.some(x=>sameClass(x,classLabel(p))));
  const showDays=days.filter(d=>d!=='Sunday'||included.some(p=>String(p.day).toLowerCase()==='sunday'));
  const max=Math.max(1,Math.min(10,Number(maxClasses)||6));
  const panels=[];
  for(let start=0;start<labels.length;start+=max){
   const group=labels.slice(start,start+max);
   const dayBlocks=showDays.map(day=>{
-   const today=included.filter(p=>String(p.day||'').toLowerCase()===day.toLowerCase()&&group.some(v=>v.toLowerCase()===classLabel(p).toLowerCase()));
+   const today=included.filter(p=>String(p.day||'').toLowerCase()===day.toLowerCase()&&group.some(v=>sameClass(v,classLabel(p))));
    const nums=[...new Set(included.map(p=>Number(p.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
    if(!nums.length)return '<section class="master-day-block"><h4>'+esc(day)+'</h4><p class="master-empty">No saved lessons on '+esc(day)+'.</p></section>';
    const headers='<thead><tr><th scope="col" class="master-number">Period</th><th scope="col" class="master-time">Time</th>'+group.map(c=>'<th scope="col">'+esc(c)+'</th>').join('')+'</tr></thead>';
@@ -82,7 +88,7 @@ function masterGrid(records,selectedClasses=null,{maxClasses=6}={}){
     const times=[...new Set(matching.map(timeLabel).filter(Boolean))];
     const time=times.length?times.map(x=>'<div class="master-time-item">'+esc(x)+'</div>').join(''):'—';
     const cells=group.map(c=>{
-     const entries=sorted(matching.filter(p=>classLabel(p).toLowerCase()===c.toLowerCase()),'class');
+     const entries=sorted(matching.filter(p=>sameClass(classLabel(p),c)),'class');
      if(!entries.length)return '<td class="master-empty">—</td>';
      return '<td>'+entries.map(p=>'<div class="master-lesson"><strong>'+esc(p.subject||'—')+'</strong>'+(p.teacherName?'<small>'+esc(p.teacherName)+'</small>':'')+(p.room?'<small>Room '+esc(p.room)+'</small>':'')+'</div>').join('')+'</td>';
     }).join('');
@@ -107,12 +113,12 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  const availableLabels=[...new Set(baseRecords.map(classLabel).filter(Boolean))].sort(natural);
  const requestedClasses=Array.isArray(selectedClasses)?[...new Set(selectedClasses.map(x=>String(x).trim()).filter(Boolean))]:availableLabels;
  if(scope!=='selected'&&Array.isArray(selectedClasses)&&requestedClasses.length===0)throw Error('Select at least one class to print.');
- const filteredBase=baseRecords.filter(p=>requestedClasses.some(c=>c.toLowerCase()===classLabel(p).toLowerCase()));
+ const filteredBase=baseRecords.filter(p=>requestedClasses.some(c=>sameClass(c,classLabel(p))));
  let content='',title='',description='';
  if(scope==='selected'){
   if(!selectedClass)throw Error('Choose a class from the Class dropdown before printing a class timetable.');
   const requested=String(selectedClass).trim().toLowerCase();
-  const subset=baseRecords.filter(p=>classLabel(p).toLowerCase()===requested||(!requested.includes('· section ')&&gradeOf(p).toLowerCase()===requested));
+  const subset=baseRecords.filter(p=>sameClass(classLabel(p),requested)||(!requested.includes('· section ')&&gradeOf(p).toLowerCase()===requested));
   title='Class '+selectedClass+' — Weekly Timetable';
   description='One selected class';
   content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+weeklyMatrix(subset)+'</section>';
@@ -160,7 +166,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   // Each class gets a complete school letterhead; a page break never
   // leaves the school name or logo behind on the preceding class sheet.
   const pages=labels.map(label=>{
-   const subset=filteredBase.filter(p=>classLabel(p)===label);
+   const subset=filteredBase.filter(p=>sameClass(classLabel(p),label));
    const classMeta='<div class="print-meta"><span>Academic session: <b>'+esc(sessionName||'Not selected')+
     '</b></span><span>Class '+esc(label)+'</span><span>Printed '+esc(shownDate)+'</span></div>';
    const table='<section class="print-class-block"><h3>Class '+esc(label)+' — Weekly Timetable</h3>'+weeklyMatrix(subset)+'</section>';

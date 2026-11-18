@@ -43,8 +43,8 @@
   for(const s of students||[]){
    let data=s.subjects??s.subjectsJson;
    if(typeof data==='string'){try{data=JSON.parse(data)}catch(_){data=null}}
-   if(Array.isArray(data))for(const x of data){const subject=typeof x==='string'?x:x?.subject??x?.name??'';if(subject)collected.push(subject)}
-   else if(data&&typeof data==='object'&&!Array.isArray(data)){
+   if(Array.isArray(data)){for(const x of data){const subject=typeof x==='string'?x:x?.subject??x?.name??'';if(subject)collected.push(subject)}}
+   else if(data&&typeof data==='object'){
     for(const [key,value] of Object.entries(data)){
      if(/^(?:total|percentage|position|result|remarks|average|marks|grade|class|section|status|attendance|\d+)$/i.test(key))continue;
      if(typeof value==='object'&&value&&value.subject)collected.push(value.subject);

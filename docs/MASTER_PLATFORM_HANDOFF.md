@@ -184,3 +184,10 @@ Requested after a verified daily class register screenshot (38 students, 23 Pres
 - No Apps Script/backend deployment, schema change, or Google Sheets data edit is necessary for these frontend features; the report reuses authenticated `LamaAPI.list('students')` and `LamaAPI.list('attendance')`.
 
 Keep school-admin and teacher read scopes distinct. In future, integrate official school holidays and section-wise class distinctions; do not count unavailable dates as absences.
+
+## 2026-11-18 — Teacher dashboard daily attendance and homework (preview implementation)
+
+- Canonical `lamastudio-school-suite/portals/teacher/index.html`: total students, boys, girls first; class, saved Present/Absent, Leave/Unmarked and subject homework progress follow. Date-selected attendance summary includes boys/girls for every status and distinguishes unmarked from absent.
+- Tap Present/Absent to see a clearly labelled **UNSAVED PREVIEW** (gender-wise), while dashboard metrics use only verified saved records. Save skips unchanged marks and reload-verifies changed records. Previous seven-day history labels simplified for mobile.
+- New `js/teacher-daily-overview.js` and `assets/css/teacher-daily-overview.css`: daily subject checklist uses class-scoped saved homework posting dates, detects subjects from student records and historic homework, and supports manual override stored **locally on this device**. Green means a confirmed saved row for that date, red means not saved, grey means history unavailable.
+- Standard Apps Script Homework sheet has no persisted published flag. Green means **saved entry**, not proof of parent portal delivery. No backend or Sheets migrations; authenticated teacher session and live parent visibility remain to be verified.

@@ -85,6 +85,55 @@ async function assertNoOverflow(page,label){
 async function cleanup(view){
  if(view)await view.context.close();
 }
+test("symbols and inputs reference: 30 definitions, 22 safe live demos and six mobile questions",async(browser,origin)=>{
+ const view=await browserPage(browser,{width:360,height:780});
+ try{
+  const {page,pageErrors}=view;
+  await page.goto(insideApp(origin,"index.html"));
+  await page.locator('.home-tool-grid a[href="./reference.html"]').click();
+  await page.locator(".input-card").first().waitFor();
+  assert.equal(await page.locator(".input-card").count(),22);
+  assert.equal(await page.locator(".symbol-card").count(),30);
+  assert.equal(await page.locator(".demo-box input[type=week]").count(),1);
+  assert.equal(await page.locator(".demo-box input[type=color]").count(),1);
+  assert.equal(await page.locator(".demo-box input[type=hidden]").count(),1);
+  assert.equal(await page.locator(".demo-box input[type=password]").count(),1);
+  assert.equal(await page.locator(".demo-box input[type=image]").count(),1);
+  await assertNoOverflow(page,"22 interactive HTML inputs at 360px");
+  await page.locator("#inputSearch").fill("password");
+  assert.equal(await page.locator(".input-card").count(),1);
+  assert.match(await page.locator(".input-card").textContent(),/does not encrypt/i);
+  await page.locator("#inputSearch").fill("");
+  await page.locator("#symbolsLevel").selectOption("2");
+  assert.equal(await page.locator(".symbol-card").count(),10);
+  await page.locator("#symbolsLevel").selectOption("all");
+  await page.locator("#symbolSearch").fill("Strict equality");
+  assert.equal(await page.locator(".symbol-card").count(),1);
+  await page.locator(".symbol-card summary").click();
+  assert.match(await page.locator(".symbol-card").textContent(),/type without coercion/i);
+  await page.locator("#symbolSearch").fill("");
+  await page.locator("#inputSearch").fill("submit");
+  assert.equal(await page.locator(".input-card").count(),1);
+  await page.locator('.demo-box input[type="submit"]').click();
+  assert.match(await page.locator(".demo-status").textContent(),/No data was sent/);
+  await page.locator("#inputSearch").fill("reset");
+  const reset=page.locator(".input-card");
+  await reset.locator('.demo-box input[type="text"]').fill("Modified value");
+  await reset.locator('.demo-box input[type="reset"]').click();
+  assert.match(await reset.locator('.demo-box input[type="text"]').inputValue(),/Change this text/);
+  await page.locator("#inputSearch").fill("file");
+  assert.match(await page.locator(".input-card").textContent(),/never uploads|not read/i);
+  await page.locator("#inputSearch").fill("");
+  await page.getByRole("heading",{name:"Quick knowledge check"}).waitFor();
+  await page.locator("#questionArea button").nth(1).click();
+  assert.match(await page.locator("#quizResult").textContent(),/Correct!/);
+  await page.locator("#quizNext").click();
+  assert.match(await page.locator("#questionArea").textContent(),/Question 2/);
+  await page.locator(".lama-shell-menu").click();
+  assert.equal(await page.locator('.lama-shell-sidebar a[href="./reference.html"]').count(),1);
+  assert.equal(pageErrors.length,0,"Uncaught errors: "+pageErrors.join(" | "));
+ }finally{await cleanup(view);}
+});
 test("optional bilingual onboarding tour works on Android-sized screens without cloud connection",async(browser,origin)=>{
  const view=await browserPage(browser,{width:360,height:780});
  try{
@@ -134,7 +183,7 @@ test("mobile onboarding, prominent academy brand, sidebar and direct bottom tabs
   const top=await page.locator(".lama-shell-header").boundingBox();
   assert.ok(top&&top.height<=72,"Header should use one compact row on phones.");
   await page.getByRole("heading",{name:"Learn coding from zero"}).waitFor();
-  assert.equal(await page.locator(".home-tool-grid a").count(),4);
+  assert.equal(await page.locator(".home-tool-grid a").count(),5);
   const start=page.getByRole("button",{name:/Start my first lesson/});
   const startBox=await start.boundingBox();
   assert.ok(startBox&&startBox.y+startBox.height<520,
@@ -146,7 +195,7 @@ test("mobile onboarding, prominent academy brand, sidebar and direct bottom tabs
   assert.equal(await opener.getAttribute("aria-expanded"),"true");
   await page.locator(".lama-shell-sidebar").waitFor({state:"visible"});
   assert.equal(await page.locator(".lama-shell-sidebar").isVisible(),true);
-  assert.equal(await page.locator(".lama-shell-sidebar nav a").count(),12);
+  assert.equal(await page.locator(".lama-shell-sidebar nav a").count(),13);
   await page.keyboard.press("Escape");
   assert.equal(await opener.getAttribute("aria-expanded"),"false");
   await page.locator('.lama-bottom-nav a[href="./index.html#learn"]').click();
@@ -743,7 +792,7 @@ async function auditAccessibility(browser,origin,pages){
  }finally{await cleanup(view);}
 }
 test("WCAG browser audit: learning activities",async(browser,origin)=>{
- await auditAccessibility(browser,origin,["index.html","quiz.html","practice.html","python.html","studio.html"]);
+ await auditAccessibility(browser,origin,["index.html","quiz.html","practice.html","python.html","studio.html","reference.html"]);
 });
 test("WCAG browser audit: progress, privacy and account",async(browser,origin)=>{
  await auditAccessibility(browser,origin,["progress.html","account.html","privacy.html","diagnostics.html"]);
@@ -773,6 +822,9 @@ test("installed PWA serves offline pages without caching auth recovery queries",
   await page.goto(insideApp(origin,"quiz.html"));
   await page.getByRole("heading",{name:/Learn coding, one small question/}).waitFor();
   assert.equal(await page.evaluate(()=>window.LAMA_CODING_QUESTIONS.items.length),150);
+  await page.goto(insideApp(origin,"reference.html"));
+  await page.locator(".symbol-card").first().waitFor();
+  assert.equal(await page.locator(".input-card").count(),22);
   await page.goto(insideApp(origin,"diagnostics.html"));
   await page.getByRole("heading",{name:"Can this device learn to code?"}).waitFor();
   await context.setOffline(false);

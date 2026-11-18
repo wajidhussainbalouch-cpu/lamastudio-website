@@ -63,7 +63,7 @@ function demo(item){
   form.append(label,input);
  }
  if(type==="reset"){
-  const extra=make("input");extra.type="text";extra.value="Change this text, then tap Reset";
+  const extra=make("input");extra.type="text";extra.defaultValue="Change this text, then tap Reset";
   extra.setAttribute("aria-label","Text to reset");
   extra.autocomplete="off";
   form.insertBefore(extra,input);

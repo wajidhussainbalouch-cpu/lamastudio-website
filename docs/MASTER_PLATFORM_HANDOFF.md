@@ -229,3 +229,15 @@ Following admin feedback, retain ONE-TAP elective subject selection and add EDIT
 - Admin saves through the existing protected school Settings + Resources persistence. No actual curriculum subjects were selected/renamed by this change, and no student, attendance, homework, or other school data has been edited.
 - QA to be completed with an authenticated school and teacher session: edit Art, save, reload School Settings, verify teacher status and cross-device display. Unit/schema/static checks and Vercel preview can verify code existence but NOT a real saved school record.
 
+
+## 2026-11-18 — School Suite searchable User Manual and Ask LAMA support
+
+User requested an accessible, plain-language guide and Ask LAMA entry in the School Admin sidebar (photo showed Direct Tools > Help & Support). The existing `help-support.html` ticketing workflow must remain intact.
+
+- `lamastudio-school-suite/user-manual.html`: mobile-first searchable and printable manual, 16 sections with admin/teacher/student role filters. Covers logins, school profile/subjects, admissions/import, daily/monthly student attendance, staff/QR attendance, calendar/timetable, homework, examinations, fees, messages, identity/cards and troubleshooting. Has sample Ask LAMA question buttons and Urdu quick-start. This is a public learning guide, **not private school record lookup**.
+- `lamastudio-school-suite/dashboard.html`: Admin sidebar Direct Tools now includes 📘 User Manual and an in-place 💬 Ask LAMA button (existing `ask-lama.js` overlay), retaining Help & Support link. The chatbot does not read School ID, school records, session tokens, attendance, student information or financial data. It sends only the question typed by a user, short conversation history and public page path to its same-origin `/api/generate` endpoint. Warn users against sharing secrets.
+- `main-dashboard.html`: explicit public manual and Ask LAMA onboarding actions. `portals/teacher/index.html` and `portals/student/index.html`: role-specific manual links and Ask LAMA buttons.
+- `help-support.html`: convenience manual/chat links, preserving authenticated ticket creation and reply tracking. Existing build-time Ask LAMA injector intentionally excludes private pages; the three portal homes explicitly load the existing widget without modifying the build injector.
+- `api/generate.js`: verified public-only, School Suite-scoped task instructions for attendance, history, subjects/curriculum, homework, calendar, fees, exams, admission, privacy and troubleshooting. Direct answers work when the optional Gemini provider is unavailable. Unrecognized questions may require external AI and should not be represented as guaranteed. Never claim to retrieve live private records.
+- No backend Google Apps Script data/schema/auth changes. School administrative/teacher/student data untouched. Full authenticated, mobile and live Vercel production checks are necessary after build readiness. Follow Vercel build-rate limits; do not equate merged GitHub code with live deploy.
+

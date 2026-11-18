@@ -82,10 +82,10 @@ function getSiteAnswer(prompt, pagePath = '/') {
   // Exact counts are read directly from the published academy paper registry
   // in AskLAMA on academy pages. On other pages, guide users to that live count;
   // never invent a number or count draft/unpublished mock papers.
-  if ((String(pagePath||'').startsWith('/education-academy/') ||
-       has(/\b(ppsc|academy|competitive|headmaster|headmistress)\b/u)) &&
-      has(/\b(how many|number of|total|count|available|kitne|kitnay)\b/u) &&
-      has(/\b(mock|practice|papers?|tests?|exams?)\b/u)) {
+  if (has(/\b(how many|number of|total|count|available|kitne|kitnay)\b/u) &&
+      has(/\b(mock|practice|papers?|tests?|exams?)\b/u) &&
+      (!String(pagePath||'').startsWith('/lamastudio-school-suite/') ||
+       has(/\b(ppsc|academy|competitive|headmaster|headmistress)\b/u))) {
     return 'The number of published mock papers depends on the preparation job. Open the LAMA PPSC Preparation Academy Question Bank Library at https://www.lamastudio.pk/education-academy/section.html?view=papers, choose your job, and check its published full-length papers. Only verified public papers count; drafts and planned papers are excluded. If you ask AskLAMA from the academy dashboard after the paper list loads, it can report the counts shown in that live public registry.';
   }
   const ppsc = has(/\b(ppsc|pps c|headmaster|headmistress|competitive (?:exam|test)|preparation academy|public service commission|hm bs 17|shm bs 18)\b/u)

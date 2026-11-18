@@ -191,3 +191,17 @@ Keep school-admin and teacher read scopes distinct. In future, integrate officia
 - Tap Present/Absent to see a clearly labelled **UNSAVED PREVIEW** (gender-wise), while dashboard metrics use only verified saved records. Save skips unchanged marks and reload-verifies changed records. Previous seven-day history labels simplified for mobile.
 - New `js/teacher-daily-overview.js` and `assets/css/teacher-daily-overview.css`: daily subject checklist uses class-scoped saved homework posting dates, detects subjects from student records and historic homework, and supports manual override stored **locally on this device**. Green means a confirmed saved row for that date, red means not saved, grey means history unavailable.
 - Standard Apps Script Homework sheet has no persisted published flag. Green means **saved entry**, not proof of parent portal delivery. No backend or Sheets migrations; authenticated teacher session and live parent visibility remain to be verified.
+
+
+## 2026-11-18 — School Admin–owned class curriculum and teacher homework subjects
+
+Request: Teacher Playgroup dashboard displayed "Set subjects". The user confirmed that subject configuration belongs to School Admin, centrally configured for each offered class, and automatically visible in all teacher logins.
+
+- The School Settings page (`lamastudio-school-suite/settings.html`) now offers class-level subject lists next to the existing classes/sections selector, plus a common-subjects copy action. Only enabled classes are included in the saved school curriculum.
+- Curriculum is centrally stored once per school in the existing school-private `Resources` sheet, record `category=school-curriculum`, `title=LAMA School Class Subjects`, `description={version:1,schoolId,classes:[{name,subjects}]}`. It is not stored on the teacher's phone. `lamastudio-school-suite/js/school-curriculum.js` handles validation, school isolation and class normalization.
+- Existing Google Apps Script backend supports school-admin-only `add/update` for Resources and teacher read-only access to Resources, so this change needs no backend code/schema deployment. Updated API client sends resources list via POST.
+- School Settings uses existing authenticated admin-controlled `updateSchoolConfig` for class/section metadata and Resources add/update for curriculum; after writing, it rereads the curriculum to verify. Reads fail closed; concurrent saves are checked to avoid overwriting another admin's curriculum. If school profile saves but curriculum fails, the UI explicitly warns that the save is partial. No student, attendance or homework data is modified.
+- Teacher dashboard reads school-scoped Resources with teacher credentials and uses subjects for its assigned class. Teacher-side Manage subjects/localStorage editor was removed. The card shows a small "—" if no official subjects are configured, and directs the teacher to ask the School Admin. Homework post validation respects the configured class list, while unconfigured schools can continue legacy homework entry to avoid interruption.
+- Potential future upgrade: a true atomic administrator configuration endpoint, term/year-scoped curriculum versions, section-specific overrides and reuse in timetable/exams/planning.
+- Static JS syntax and fixture tests only; authenticated live Settings save and teacher refresh must be tested against an active school. Do not claim any school curriculum has been populated automatically.
+

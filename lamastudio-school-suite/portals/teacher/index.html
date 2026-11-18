@@ -6,7 +6,8 @@
 <title id="pageTitle">Teacher Home | Lama School Suite</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../../assets/css/config.css">
-<script src="../../js/api-client.js"></script><script src="../../js/attendance-history.js"></script><script src="../../js/teacher-daily-overview.js"></script><link rel="stylesheet" href="../../assets/css/teacher-daily-overview.css">
+<script src="../../js/api-client.js"></script><script src="../../js/attendance-history.js"></script><script src="../../js/teacher-daily-overview.js"></script>
+<script src="../../js/school-curriculum.js"></script><link rel="stylesheet" href="../../assets/css/teacher-daily-overview.css">
 <style id="teacher-modern-ui">
 :root{--ink:#f5f9ff;--muted:#a6b6cd;--line:rgba(156,188,230,.17)}
 body{background:radial-gradient(circle at 10% 0%,#17314f 0,transparent 36%),radial-gradient(circle at 92% 14%,#173c49 0,transparent 34%),#081425!important}
@@ -93,7 +94,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
  <div class="overview-tile"><span class="tile-icon">👥</span><span class="tile-label">Total Students</span><strong id="statStudents">—</strong><small>Assigned class</small></div>
  <div class="overview-tile"><span class="tile-icon">👦</span><span class="tile-label">Total Boys</span><strong id="statBoys">—</strong><small>Enrolled boys</small></div>
  <div class="overview-tile"><span class="tile-icon">👧</span><span class="tile-label">Total Girls</span><strong id="statGirls">—</strong><small id="genderMissingNote">Enrolled girls</small></div>
- <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework Today</span><strong id="statHomework">—</strong><small>Subjects posted / tracked</small></div>
+ <div class="overview-tile"><span class="tile-icon">📝</span><span class="tile-label">Homework Today</span><strong id="statHomework">—</strong><small id="homeworkCardNote">Subjects posted / tracked</small></div>
  <div class="overview-tile"><span class="tile-icon">✅</span><span class="tile-label">Present</span><strong id="statPresent">—</strong><small>Saved for selected date</small></div>
  <div class="overview-tile"><span class="tile-icon">🔔</span><span class="tile-label">Absent</span><strong id="statAbsent">—</strong><small>Saved for selected date</small></div>
  <div class="overview-tile"><span class="tile-icon">📋</span><span class="tile-label">Leave / Unmarked</span><strong id="statLeaveUnmarked">—</strong><small>Not counted as absent</small></div>
@@ -106,8 +107,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 </section>
 <section class="teacher-daily-report cyber-card" aria-labelledby="homeworkProgressHeading">
  <div class="report-head"><div><h2 id="homeworkProgressHeading">📚 Daily Subject Homework</h2><p class="report-caption">Green: saved homework · Red: not posted · Grey: unavailable</p></div><label class="report-date-label">Checklist date<input id="homeworkCheckDate" type="date"></label></div>
- <div class="report-head"><p id="homeworkProgressText" class="report-caption" aria-live="polite">Checking saved homework…</p><button type="button" id="editSubjectList" class="report-secondary">Manage subjects</button></div>
- <div id="subjectConfig" class="subject-config hidden"><label for="subjectConfigInput">Subjects for this class (comma separated)</label><textarea id="subjectConfigInput" rows="2" placeholder="English, Urdu, Mathematics, Islamiat, General Knowledge"></textarea><p>This subject list is saved on this device for this school/class. Homework records remain in the school's database.</p><div class="config-actions"><button id="saveSubjectConfig" type="button">Save subjects</button><button id="resetSubjectConfig" type="button">Use detected subjects</button></div></div>
+ <div class="report-head"><p id="homeworkProgressText" class="report-caption" aria-live="polite">Checking saved homework…</p><span class="report-caption">Subjects are managed by School Admin in School Settings.</span></div>
  <div id="subjectChecklist" class="subjects-grid">Loading subjects…</div>
  <p class="report-hint">Tap a subject to open the homework editor. The checklist tracks when homework was posted, not its due date.</p>
 </section>
@@ -170,8 +170,8 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
         <section id="tab-homework" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
             <h2 class="text-xs font-black uppercase text-amber-400">Assign Homework</h2>
             <div class="grid sm:grid-cols-2 gap-3 text-xs">
-                <input id="hwSubject" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input type="date" id="hwDueDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <input id="hwSubject" list="schoolSubjectOptions" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+                <datalist id="schoolSubjectOptions"></datalist><input type="date" id="hwDueDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <input id="hwTitle" placeholder="Title" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
                 <textarea id="hwDescription" rows="2" placeholder="Description / instructions" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
             </div>
@@ -244,7 +244,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').trim().toLowerCase();
 const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[],attendanceModel=null,attendanceReady=false,homeworkReady=false,homeworkLoadError='',lastAttendanceViewDate='';
+let me={},myStudents=[],attendance=[],homework=[],notices=[],results=[],attendanceModel=null,attendanceReady=false,homeworkReady=false,homeworkLoadError='',lastAttendanceViewDate='',curriculumReady=false,curriculumDoc=null,curriculumError='';
 function schoolMatch(r){return !!me.schoolId && (!String(r.schoolId||'').trim() || norm(r.schoolId)===norm(me.schoolId))}
 const normalizeClass=v=>norm(v).replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 function classMatch(r){const assigned=normalizeClass(me.assignedClass);const section=norm(me.assignedSection||me.section);return !!assigned&&normalizeClass(r.class||r.assignedClass||r.className||r.grade)===assigned&&(!section||!norm(r.section||r.assignedSection)||norm(r.section||r.assignedSection)===section)}
@@ -270,16 +270,19 @@ function updateTeacherOverview(){
 }
 
 function attendanceDate(){return $('attDate').value||localDate()}
-function classSubjectKey(){return 'lama_teacher_subjects_v1:'+encodeURIComponent(String(me.schoolId||''))+':'+encodeURIComponent(normalizeClass(me.assignedClass))+':'+encodeURIComponent(norm(me.assignedSection||me.section))}
-function savedSubjectChoices(){try{const raw=localStorage.getItem(classSubjectKey());if(!raw)return null;const list=JSON.parse(raw);return Array.isArray(list)?list:null}catch(_){return null}}
-function availableSubjects(){return LamaTeacherDaily.subjects(myStudents,homework,me.subject,savedSubjectChoices())}
+function availableSubjects(){return LamaSchoolCurriculum.forClass(curriculumDoc,me.assignedClass)}
 function renderHomeworkProgress(){
+ $('schoolSubjectOptions').innerHTML=availableSubjects().map(s=>'<option value="'+esc(s)+'"></option>').join('');
  const day=$('homeworkCheckDate').value||localDate(),subjects=availableSubjects();
- const result=LamaTeacherDaily.homeworkStatus(homework,subjects,day,homeworkReady,me.timezone||me.timeZone||'Asia/Karachi');
- $('statHomework').textContent=homeworkReady?(result.total?result.done+'/'+result.total:'Set subjects'):'—';
- if(!subjects.length){$('homeworkProgressText').textContent=homeworkReady?'No class subject list yet. Use Manage subjects to set the subjects to monitor.':'Waiting for subject information…';$('subjectChecklist').innerHTML='<p class="report-caption">Add your class subjects to begin the daily checklist.</p>';return}
- $('homeworkProgressText').textContent=homeworkReady?result.done+' of '+result.total+' subjects posted on '+day:'Saved homework could not be verified. '+(homeworkLoadError||'Refresh the portal.');
- $('subjectChecklist').innerHTML=result.items.map((item,i)=>'<button type="button" class="subject-chip '+(!homeworkReady?'unknown':item.done?'done':'missing')+'" data-subject-index="'+i+'" title="Open '+esc(item.subject)+' homework editor"><span>'+esc(item.subject)+'</span><span class="status">'+(!homeworkReady?'? Unknown':item.done?'✓ Done':'○ Not posted')+'</span></button>').join('');
+ const loaded=homeworkReady&&curriculumReady;
+ const result=LamaTeacherDaily.homeworkStatus(homework,subjects,day,loaded,me.timezone||me.timeZone||'Asia/Karachi');
+ $('statHomework').textContent=loaded&&result.total?result.done+'/'+result.total:'—';
+ $('homeworkCardNote').textContent=curriculumReady&&!subjects.length?'Admin must configure subjects':'Subjects posted / tracked';
+ const dateHint=day+' · '+(me.assignedClass||'assigned class');
+ if(!curriculumReady){$('homeworkProgressText').textContent='Curriculum unavailable. '+(curriculumError||'Reload the teacher dashboard.');$('subjectChecklist').innerHTML='<p class="report-caption">Subjects cannot be verified at present.</p>';return}
+ if(!subjects.length){$('homeworkProgressText').textContent='No subjects assigned for '+dateHint+'. Ask School Admin to open Settings → Classes & Sections Offered and add them.';$('subjectChecklist').innerHTML='<p class="report-caption">School curriculum not configured for this class. Existing homework records remain unchanged.</p>';return}
+ $('homeworkProgressText').textContent=loaded?result.done+' of '+result.total+' subjects posted on '+dateHint:'Homework records could not be verified. '+(homeworkLoadError||'Please retry.');
+ $('subjectChecklist').innerHTML=result.items.map((item,i)=>'<button type="button" class="subject-chip '+(!loaded?'unknown':item.done?'done':'missing')+'" data-subject-index="'+i+'" title="Open '+esc(item.subject)+' homework editor"><span>'+esc(item.subject)+'</span><span class="status">'+(!loaded?'? Unknown':item.done?'✓ Done':'○ Not posted')+'</span></button>').join('');
 }
 function openHomeworkSubject(subject){
  if(!subject)return;
@@ -328,10 +331,10 @@ async function refresh(){
   const students=await timeout(LamaAPI.list('students'),'Student register');
   if(!Array.isArray(students))throw Error('Student register response is invalid');
   myStudents=students.filter(scope);
-  attendance=[];attendanceReady=false;attendanceModel=null;homework=[];homeworkReady=false;homeworkLoadError='';notices=[];results=[];
+  attendance=[];attendanceReady=false;attendanceModel=null;homework=[];homeworkReady=false;homeworkLoadError='';curriculumReady=false;curriculumDoc=null;curriculumError='';notices=[];results=[];
   renderAll();
-  const tasks=[['attendance',rows=>{const studentIds=new Set(myStudents.map(s=>String(s.id??s._id??'')).filter(Boolean)),enrollments=new Set(myStudents.map(s=>String(s.enrlNo??s.enrollmentNo??'')).filter(Boolean));attendance=rows.filter(a=>schoolMatch(a)&&(studentIds.has(String(a.studentId??a.student_id??''))||enrollments.has(String(a.enrlNo??a.enrollmentNo??''))));attendanceModel=LamaAttendanceHistory.make(myStudents,attendance);attendanceReady=true}],['homework',rows=>{homework=rows.filter(scope);homeworkReady=true}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
-  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else{if(name==='homework')homeworkLoadError='Invalid homework response.';console.warn(name+' response invalid')}}catch(e){if(name==='homework')homeworkLoadError=e.message||'Request failed';console.warn(name+' failed',e)}finally{renderAll()}}));
+  const tasks=[['attendance',rows=>{const studentIds=new Set(myStudents.map(s=>String(s.id??s._id??'')).filter(Boolean)),enrollments=new Set(myStudents.map(s=>String(s.enrlNo??s.enrollmentNo??'')).filter(Boolean));attendance=rows.filter(a=>schoolMatch(a)&&(studentIds.has(String(a.studentId??a.student_id??''))||enrollments.has(String(a.enrlNo??a.enrollmentNo??''))));attendanceModel=LamaAttendanceHistory.make(myStudents,attendance);attendanceReady=true}],['homework',rows=>{homework=rows.filter(scope);homeworkReady=true}],['resources',rows=>{const result=LamaSchoolCurriculum.read(rows,me.schoolId);curriculumDoc=result.doc;curriculumReady=true}],['notifications',rows=>{notices=rows.filter(n=>schoolMatch(n)&&(classMatch(n)||norm(n.audience)==='all'||norm(n.audience)==='school'))}],['results',rows=>{results=rows.filter(r=>schoolMatch(r)&&!!myStudent(r.studentId))}]];
+  await Promise.allSettled(tasks.map(async ([name,apply])=>{try{const rows=await timeout(LamaAPI.list(name),name);if(Array.isArray(rows))apply(rows);else{if(name==='homework')homeworkLoadError='Invalid homework response.';if(name==='resources')curriculumError='Invalid curriculum response.';console.warn(name+' response invalid')}}catch(e){if(name==='homework')homeworkLoadError=e.message||'Request failed';if(name==='resources')curriculumError=e.message||'Request failed';console.warn(name+' failed',e)}finally{renderAll()}}));
  })();
  try{return await refreshPromise}finally{refreshPromise=null}
 }
@@ -416,7 +419,7 @@ async function saveAttendance(){
 }
 function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
 function loadHomework(){let items=homework.slice();const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':h.id&&!('status'in h)&&!('isPublished'in h)?'Saved entry':'Draft'}</p></div>${mine(h)?`<button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button>`:`<span class="text-slate-400 text-xs">Class homework</span>`}</div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
-async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');try{const saved=await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});if(!saved||!saved.id)throw Error('Backend did not confirm a saved homework ID. Review history before retrying.');['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();const checked=LamaTeacherDaily.homeworkStatus(homework,[subject],localDate(),homeworkReady);message(checked.ready&&checked.done?'✓ '+subject+' homework saved and verified.':'Homework accepted, but today\'s register could not verify it. Refresh before trying again.')}catch(e){message('Save failed: '+e.message)}}
+async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');if(curriculumReady&&availableSubjects().length&&!availableSubjects().some(s=>LamaTeacherDaily.subjectKey(s)===LamaTeacherDaily.subjectKey(subject)))return message('Select a subject configured by School Admin for this class.');try{const saved=await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});if(!saved||!saved.id)throw Error('Backend did not confirm a saved homework ID. Review history before retrying.');['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();const checked=LamaTeacherDaily.homeworkStatus(homework,[subject],localDate(),homeworkReady);message(checked.ready&&checked.done?'✓ '+subject+' homework saved and verified.':'Homework accepted, but today\'s register could not verify it. Refresh before trying again.')}catch(e){message('Save failed: '+e.message)}}
 async function deleteHomework(id){const x=homework.find(h=>String(h.id)===String(id));if(!x||!mine(x))return message('Only your entries can be removed');if(!confirm('Delete homework?'))return;try{await LamaAPI.remove('homework',id);await refresh()}catch(e){message(e.message)}}
 $('homeworkList').addEventListener('click',e=>{const b=e.target.closest('[data-delete-hw]');if(b)deleteHomework(b.dataset.deleteHw)});
 function populateMarksStudentSelect(){const sel=$('marksStudentSelect'),previous=sel.value;sel.innerHTML=myStudents.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.enrlNo||'—')})</option>`).join('');if(myStudent(previous))sel.value=previous;onMarksStudentChange()}
@@ -434,22 +437,6 @@ async function promoteMyClass(){message('Promotion is restricted to school admin
 async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>{if(hasAttendanceDrafts()&&!confirm('Discard your unsaved attendance selections to change date?')){$('attDate').value=lastAttendanceViewDate;return}loadAttendanceList();renderDailyAttendance()});try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
 $('homeworkCheckDate').value=localDate();
 $('homeworkCheckDate').addEventListener('change',renderHomeworkProgress);
-$('editSubjectList').addEventListener('click',()=>{
- const panel=$('subjectConfig');
- panel.classList.toggle('hidden');
- $('subjectConfigInput').value=availableSubjects().join(', ');
- if(!panel.classList.contains('hidden'))$('subjectConfigInput').focus();
-});
-$('saveSubjectConfig').addEventListener('click',()=>{
- const list=$('subjectConfigInput').value.split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
- if(!list.length||list.length>18||list.some(x=>x.length>50))return message('Enter 1 to 18 subject names (max 50 characters each).');
- try{localStorage.setItem(classSubjectKey(),JSON.stringify(LamaTeacherDaily.subjects([],[],null,list)))}catch(e){return message('Unable to save local subject list: '+e.message)}
- $('subjectConfig').classList.add('hidden');renderHomeworkProgress();
-});
-$('resetSubjectConfig').addEventListener('click',()=>{
- try{localStorage.removeItem(classSubjectKey())}catch(e){return message('Unable to reset local subject list: '+e.message)}
- $('subjectConfig').classList.add('hidden');renderHomeworkProgress();
-});
 $('subjectChecklist').addEventListener('click',event=>{
  const b=event.target.closest('[data-subject-index]');if(!b)return;
  const subject=availableSubjects()[Number(b.dataset.subjectIndex)];

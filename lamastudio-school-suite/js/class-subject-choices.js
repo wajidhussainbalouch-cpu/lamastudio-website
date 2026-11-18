@@ -93,7 +93,7 @@
   const aliases=item.aliases&&typeof item.aliases==='object'&&!Array.isArray(item.aliases)?item.aliases:{};
   const prior=Array.isArray(aliases[oldName])?aliases[oldName]:[];
   const priorNames=[...new Set([...prior,oldName])].filter(x=>norm(x)!==newKey);
-  const newMap={};
+  const newMap=Object.create(null);
   for(const [k,v] of Object.entries(aliases))if(norm(k)!==oldKey&&norm(k)!==newKey)newMap[k]=v;
   newMap[nextName]=priorNames.slice(0,12);
   item.subjects=item.subjects.map(s=>norm(s)===oldKey?nextName:s);

@@ -62,6 +62,26 @@ footer{text-align:center;color:#5c7476;padding:25px;font-size:12px}
 <button id="print" type="button">🖨 Print / Save manual</button>
 </div>
 <p class="print-note">Ask LAMA gives general instructions; it does not access your school's private data or change records. Never enter passwords, student information or payment details in AI chat.</p>
+<div class="no-print" style="margin:15px 0 2px">
+ <strong style="font-size:13px">Common questions — tap one to prepare it in Ask LAMA:</strong>
+ <div class="controls" style="margin-top:8px">
+  <button type="button" data-ask-question="How do I save student attendance?">Attendance</button>
+  <button type="button" data-ask-question="How can School Admin set class subjects?">Class subjects</button>
+  <button type="button" data-ask-question="How does a teacher publish homework?">Homework</button>
+  <button type="button" data-ask-question="How can I print a class-wise timetable?">Timetable</button>
+ </div>
+</div>
+<details lang="ur" dir="rtl" style="margin-top:15px;padding:12px;border:1px solid #c9ddd6;border-radius:12px;background:#f7faf7">
+ <summary style="font-weight:800;cursor:pointer">اردو میں مختصر رہنمائی</summary>
+ <ol style="padding-right:22px">
+  <li>سب سے پہلے اپنے اسکول بورڈ پر جائیں اور درست اسکول آئی ڈی کے ساتھ متعلقہ پورٹل میں لاگ اِن کریں۔</li>
+  <li>اسکول ایڈمن سیٹنگز میں کلاسیں اور مضامین منتخب کرکے محفوظ کرتا ہے۔</li>
+  <li>استاد اپنی کلاس کی حاضری محفوظ کرتا ہے اور ہر مضمون کا ہوم ورک درج کرتا ہے۔</li>
+  <li>حاضری میں خالی ریکارڈ کا مطلب غیر حاضر نہیں ہوتا؛ محفوظ شدہ ریکارڈ ضرور چیک کریں۔</li>
+  <li>مشکل پیش آنے پر Ask LAMA سے اردو میں سوال کریں یا اسکول ایڈمن کے ذریعے سپورٹ ٹکٹ بھیجیں۔</li>
+ </ol>
+</details>
+
 <p id="count" role="status" aria-live="polite"></p>
 </section>
 <div class="cols">
@@ -297,6 +317,14 @@ function apply(){
 }
 search.addEventListener('input',apply);role.addEventListener('change',apply);apply();
 document.getElementById('print').addEventListener('click',()=>window.print());
+document.querySelectorAll('[data-ask-question]').forEach(button=>button.addEventListener('click',()=>{
+ const question=button.dataset.askQuestion;
+ if(typeof window.toggleLamaChat!=='function'){count.textContent='Ask LAMA is unavailable. Search this manual instead.';return}
+ window.toggleLamaChat(true);
+ const field=document.getElementById('askLamaInput');
+ if(field)field.value=question;
+}));
+
 document.getElementById('ask').addEventListener('click',()=>{
  if(typeof window.toggleLamaChat==='function')window.toggleLamaChat(true);
  else count.textContent='Ask LAMA is unavailable right now. Use the manual search or contact Help & Support.';

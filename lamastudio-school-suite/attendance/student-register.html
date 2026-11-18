@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Monthly Student Attendance Register — LAMA School Suite</title>
+<script src="../js/api-client.js"></script>
+<script src="../js/attendance-history.js"></script>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#153c43;background:#eff7f5}*{box-sizing:border-box}body{margin:0}
+header{background:linear-gradient(110deg,#063e4a,#08777a);color:#fff;padding:17px max(14px,calc((100vw - 1200px)/2))}
+h1{font-size:clamp(20px,4vw,28px);margin:0}h2{font-size:20px;margin:0 0 9px}
+main{max-width:1240px;margin:auto;padding:14px}.panel{background:white;border:1px solid #cee0df;border-radius:16px;padding:16px;margin:14px 0;box-shadow:0 5px 15px #16414b0b}
+nav{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:9px}a{color:inherit}nav a{display:inline-block;padding:8px 12px;border-radius:9px;border:1px solid #ffffff77;text-decoration:none}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.controls label{display:grid;gap:5px;font-weight:700;font-size:13px}.controls input,.controls select{font:inherit;background:#fff;color:#143e48;border:1px solid #a7c9c6;border-radius:9px;padding:11px;min-width:160px}
+button{font:inherit;font-weight:700;border:1px solid #a7c9c6;border-radius:9px;padding:11px 14px;background:#e9f6f3;color:#155b5e;cursor:pointer}button.primary{background:#075f66;color:#fff}button:disabled{opacity:.5}
+.muted{color:#60777a;font-size:13px}.error{color:#ae2135}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}.metric{background:#f1f8f6;padding:12px;border-radius:11px}.metric strong{display:block;font-size:24px}
+.key{display:inline-flex;align-items:center;gap:5px;margin:3px 12px 4px 0;font-size:12px}.swatch{display:inline-block;border:1px solid #cbd5d6;border-radius:6px;padding:5px 8px;min-width:28px;text-align:center}
+.present{background:#c4efdb;color:#056444}.absent{background:#ffe0e1;color:#a41f34}.leave{background:#fff0c0;color:#7c5400}.missing{background:#eef0f3;color:#596572}.sunday{background:#e9f0f0;color:#708080}
+.table-wrap{overflow:auto;max-height:72vh;border:1px solid #d5e4e4;border-radius:11px}
+table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12px}th,td{border-right:1px solid #dce6e5;border-bottom:1px solid #dce6e5;padding:8px 7px;text-align:center;white-space:nowrap}
+thead th{position:sticky;top:0;background:#0b6670;color:white;z-index:2}th.student-name,td.student-name{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:180px;max-width:240px;white-space:normal}
+thead th.student-name{z-index:3;background:#0b6670}.risk{border-left:4px solid #b32535;background:#fff4f3;padding:9px 12px;margin:8px 0;border-radius:7px}.risk strong{display:block}.risk small{color:#5c6067}
+.hidden{display:none!important}
+@media(max-width:620px){main{padding:9px}.panel{padding:12px}.controls label{flex:1 1 45%}.controls input,.controls select{min-width:0;width:100%}.table-wrap{max-height:67vh}th.student-name,td.student-name{min-width:134px;max-width:165px}}
+@media print{@page{size:A4 landscape;margin:8mm}header nav,.no-print{display:none!important}header{background:white;color:#000;padding:0}main{max-width:none;padding:0}.panel{box-shadow:none;border:0;margin:6px 0;padding:0}.table-wrap{overflow:visible;max-height:none;border:0}table{font-size:8px;width:100%;min-width:0}th,td{padding:4px 2px}thead th{background:#ddd!important;color:#000!important;position:static}th.student-name,td.student-name{position:static;min-width:95px;max-width:125px}tr{break-inside:avoid}.risk{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><h1 id="schoolName">Student Attendance Register</h1><p id="subtitle">Monthly register · LAMA School Suite</p>
+<nav class="no-print"><a id="back" href="../dashboard.html">← Back to attendance</a></nav>
+</header>
+<main>
+<section class="panel no-print">
+<h2>Open Monthly Attendance Register</h2>
+<p class="muted">Read-only saved records from this school. A dash means no saved mark, not Absent. Saturday is supported; Sundays are shaded. Local holidays need calendar integration.</p>
+<div class="controls">
+<label>Month<input type="month" id="month"></label>
+<label id="classHolder">Class<select id="class"><option value="">All classes</option></select></label>
+<button type="button" class="primary" id="refresh">Refresh register</button>
+<button type="button" id="csv" disabled>Export monthly CSV</button>
+<button type="button" id="print" disabled>Print register</button>
+</div>
+<p id="status" role="status">Checking login…</p>
+</section>
+<section class="panel">
+<h2>Attendance Summary</h2>
+<div id="summary" class="stats"><p class="muted">Loading saved records…</p></div>
+</section>
+<section class="panel" id="registerPanel">
+<h2 id="registerTitle">Class / School Monthly Register</h2>
+<div class="key no-print"><span class="swatch present">P</span> Present</div>
+<div class="key no-print"><span class="swatch absent">A</span> Absent</div>
+<div class="key no-print"><span class="swatch leave">L</span> Leave</div>
+<div class="key no-print"><span class="swatch missing">—</span> Not recorded</div>
+<div class="key no-print"><span class="swatch sunday">S</span> Sunday</div>
+<div class="table-wrap"><table id="register"><thead></thead><tbody></tbody></table></div>
+<p class="muted">Monthly totals count only explicit saved Present, Absent and Leave entries. Unmarked and closed days are not counted as absences.</p>
+</section>
+<section class="panel no-print">
+<h2>Students needing attention</h2>
+<p class="muted">Alerts use the seven previous possible school days, excluding Sundays. A 5-day warning requires five consecutive explicit Absent marks; missing entries never count as Absent.</p>
+<div id="riskList">Loading…</div>
+</section>
+</main>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),safe=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
+const query=new URLSearchParams(location.search);
+const role=query.get('role')==='teacher'?'teacher':'school';
+const dateKey=LamaAttendanceHistory.dateKey,personId=s=>String(s.id??s._id??s.studentId??''),enrol=s=>String(s.enrlNo??s.enrollmentNo??s.enrollment??''),klass=s=>String(s.class??s.grade??s.className??'Unassigned').trim()||'Unassigned';
+const normalizeClass=v=>String(v??'').trim().toLowerCase().replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
+const monthNow=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const state={students:[],records:[],model:null,loaded:false,session:null,loading:false};
+function statusText(x,error=false){$('status').textContent=x;$('status').className=error?'error':'muted'}
+function currentStudents(){
+ const c=$('class').value;
+ return state.students.filter(s=>!c||normalizeClass(klass(s))===normalizeClass(c));
+}
+function datesInMonth(month){
+ if(!/^\d{4}-\d{2}$/.test(month))return [];
+ const year=Number(month.slice(0,4)),m=Number(month.slice(5));
+ if(year<2020||year>2100||m<1||m>12)return [];
+ const length=new Date(Date.UTC(year,m,0)).getUTCDate();
+ return Array.from({length},(_,i)=>month+'-'+String(i+1).padStart(2,'0'));
+}
+function render(){
+ if(!state.loaded||!state.model)return;
+ const month=$('month').value,days=datesInMonth(month),students=currentStudents(),model=state.model;
+ const label=$('class').value||'All Classes';
+ $('registerTitle').textContent=label+' — '+month+' · '+students.length+' students';
+ let totals={P:0,A:0,L:0};
+ const heads=['<th scope="col" class="student-name">Student / Enrollment</th>'];
+ for(const d of days){const sun=new Date(d+'T12:00:00Z').getUTCDay()===0;heads.push('<th scope="col" title="'+d+'" class="'+(sun?'sunday':'')+'">'+d.slice(8)+(sun?' S':'')+'</th>')}
+ heads.push('<th>P</th><th>A</th><th>L</th><th>Marked</th>');
+ $('register').querySelector('thead').innerHTML='<tr>'+heads.join('')+'</tr>';
+ $('register').querySelector('tbody').innerHTML=students.map(s=>{
+  const counts={P:0,A:0,L:0};
+  const cells=days.map(d=>{
+   const v=model.get(s,d),sun=new Date(d+'T12:00:00Z').getUTCDay()===0;
+   const letter=v?v.slice(0,1):sun?'S':'—';
+   if(v){counts[letter]++;totals[letter]++}
+   return '<td class="'+(v?v.toLowerCase():sun?'sunday':'missing')+'" title="'+safe(d+' '+(v||'Not recorded'))+'">'+letter+'</td>';
+  });
+  return '<tr><td class="student-name"><strong>'+safe(s.name||'Unnamed')+'</strong><br><span class="muted">'+safe(enrol(s))+' · '+safe(klass(s))+'</span></td>'+cells.join('')+'<td>'+counts.P+'</td><td>'+counts.A+'</td><td>'+counts.L+'</td><td>'+(counts.P+counts.A+counts.L)+'</td></tr>';
+ }).join('')||'<tr><td colspan="'+(days.length+5)+'">No students in this class.</td></tr>';
+ const values=[['Students',students.length],['Present marks',totals.P],['Absent marks',totals.A],['Leave marks',totals.L],['Total marked days',totals.P+totals.A+totals.L]];
+ $('summary').innerHTML=values.map(([label,v])=>'<div class="metric"><small>'+label+'</small><strong>'+v+'</strong></div>').join('');
+ const yesterdayReference=new Date();yesterdayReference.setDate(yesterdayReference.getDate()+1);
+ const reference=dateKey(yesterdayReference.getFullYear()+'-'+String(yesterdayReference.getMonth()+1).padStart(2,'0')+'-'+String(yesterdayReference.getDate()).padStart(2,'0'));
+ const flagged=students.map(s=>({s,info:model.absenceInfo(s,reference)})).filter(x=>x.info.weekAlert||x.info.absentDays>=3).sort((a,b)=>b.info.streak-a.info.streak||b.info.absentDays-a.info.absentDays);
+ $('riskList').innerHTML=flagged.map(({s,info})=>'<div class="risk"><strong>'+safe(s.name||'Student')+' · '+safe(klass(s))+'</strong><small>'+(info.weekAlert?'5+ consecutive recorded absences':'Absent '+info.absentDays+' of previous 7 possible school days')+' · Enrollment '+safe(enrol(s))+'</small></div>').join('')||'<p class="muted">No students meet the alert threshold in the available seven-day saved records.</p>';
+ $('csv').disabled=false;$('print').disabled=false;
+}
+function exportCsv(){
+ if(!state.loaded)return;
+ const dates=datesInMonth($('month').value);
+ const rows=[['Student Name','Enrollment','Class',...dates,'Present','Absent','Leave','Marked Days']];
+ for(const s of currentStudents()){
+  const vals=dates.map(d=>state.model.get(s,d)||'');
+  const P=vals.filter(x=>x==='Present').length,A=vals.filter(x=>x==='Absent').length,L=vals.filter(x=>x==='Leave').length;
+  rows.push([s.name||'',enrol(s),klass(s),...vals,P,A,L,P+A+L]);
+ }
+ // Protect spreadsheets from formula injection when opened in Excel.
+ const cell=v=>{let text=String(v??'');if(/^[\s]*[=+@-]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};
+ const csv='\ufeff'+rows.map(row=>row.map(cell).join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');
+ a.href=url;a.download='LAMA-monthly-attendance-'+$('month').value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+async function load(){
+ if(state.loading)return;
+ state.loading=true;state.loaded=false;$('csv').disabled=true;$('print').disabled=true;
+ statusText('Loading students and saved attendance from the school database…');
+ try{
+  const [students,records]=await Promise.all([LamaAPI.list('students'),LamaAPI.list('attendance')]);
+  if(!Array.isArray(students)||!Array.isArray(records))throw Error('The register returned an invalid response.');
+  state.students=role==='teacher'?students.filter(s=>normalizeClass(klass(s))===normalizeClass(state.session.assignedClass)&&(!state.session.assignedSection||!s.section||String(s.section).toLowerCase()===String(state.session.assignedSection).toLowerCase())):students;
+  const ids=new Set(state.students.map(personId)),enrollmentNumbers=new Set(state.students.map(enrol).filter(Boolean));
+  state.records=role==='teacher'?records.filter(r=>ids.has(String(r.studentId??r.student_id??''))||enrollmentNumbers.has(String(r.enrlNo??r.enrollmentNo??r.enrollment??''))):records;
+  state.model=LamaAttendanceHistory.make(state.students,state.records);
+  state.loaded=true;
+  if(role==='teacher'){
+   $('class').innerHTML='<option value="'+safe(state.session.assignedClass)+'">'+safe(state.session.assignedClass)+'</option>';
+   $('class').value=state.session.assignedClass;$('class').disabled=true;$('classHolder').classList.add('hidden');
+  }else{
+   const previous=$('class').value||query.get('class')||'';
+   $('class').innerHTML='<option value="">All classes</option>'+[...new Set(state.students.map(klass))].sort().map(c=>'<option value="'+safe(c)+'">'+safe(c)+'</option>').join('');
+   if([...$('class').options].some(x=>x.value===previous))$('class').value=previous;
+  }
+  statusText('✓ Saved register loaded · '+state.students.length+' students · '+state.records.length+' attendance records available.');
+  render();
+ }catch(error){
+  statusText('Register not available: '+error.message+'. No attendance records have been changed.',true);
+  $('summary').innerHTML='<p class="error">Unable to verify saved attendance.</p>';
+  $('register').querySelector('tbody').innerHTML='';
+ }finally{state.loading=false}
+}
+$('refresh').onclick=load;$('class').onchange=render;$('month').onchange=render;
+$('csv').onclick=exportCsv;$('print').onclick=()=>{if(state.loaded)window.print()};
+(async()=>{
+ $('month').value=/^\d{4}-\d{2}$/.test(query.get('month')||'')?query.get('month'):monthNow();
+ const loginPage=role==='teacher'?'../teacher-login.html':'../login.html';
+ if(!LamaAPI.requireLogin(role,loginPage))return;
+ state.session=LamaAPI.getSession(role);
+ if(role==='teacher'&&!state.session?.assignedClass){statusText('Your teacher account has no assigned class.',true);return}
+ $('schoolName').textContent=(state.session.schoolName||state.session.nameOfSchool||state.session.name||state.session.school?.name||'LAMA School Suite')+' — Attendance Register';
+ $('subtitle').textContent=role==='teacher'?'Teacher · Assigned class monthly register':'School Admin · Class-wise / Whole-school monthly register';
+ $('back').href=role==='teacher'?'../portals/teacher/index.html':'student-attendance-v2.html';
+ await load();
+})();
+</script>
+</body>
+</html>

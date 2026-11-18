@@ -171,3 +171,16 @@ Commit `9bef4e0f` adds guarded `Publish absent/leave portal notices` to V2. It r
 
 ### 2026-11-07 — Live V2 write failure: School Admin login required
 User verified V2 loaded the expected 3 students in 4–6 seconds on the official site. First test save displayed `Save not verified: School Admin login required`, with one Present count visible but no persisted write verified. Root-cause candidate identified in `js/api-client.js`: `callApi` schoolScoped routing included student/attendance list but omitted `bulkAttendance`, causing writes to use active role instead of school admin session token. Commit `6cfa3b5e` adds `bulkAttendance`, `clearStudentAttendanceDate`, and school-admin notification list/add to school-scoped authentication routing. This is a source-code fix only; requires deployment and live save/readback validation. Do not retry uncertain write until refresh and verification. Do not clear attendance or switch production route yet.
+
+## 2026-11-18 — Student attendance history and monthly register (PR #119)
+
+Requested after a verified daily class register screenshot (38 students, 23 Present, 15 Absent). Source branch `feature/attendance-history-register-20261118` contains frontend-only additions:
+
+- `lamastudio-school-suite/js/attendance-history.js`: school-aware date normalization, seven previous possible school days (Saturday included; Sunday skipped), saved P/A/L lookup, five consecutive explicit Absent marks on class-recorded days for alerting. Missing records are **never** inferred to mean Absent; school-specific holidays are not yet integrated.
+- `lamastudio-school-suite/attendance/student-attendance-v2.html`: compact seven-day status markers beside every pupil and repeated-absence notices, with a link to a monthly report. QR and manually saved attendance use the same refreshed history.
+- `lamastudio-school-suite/attendance/student-register.html`: **read-only** class-wise/whole-school monthly attendance register, print on A4 landscape, CSV export, P/A/L and marked-day totals, current seven-day follow-up list; no writing, migration, or deletion.
+- Teacher portal `portals/teacher/index.html`: visible per-student saved history, assigned-class monthly register link, and fail-closed save behavior if the saved attendance list fails to load. Alternate teacher page and admin dashboard have register links.
+- Vercel **preview** built READY and all main HTML/static helper routes returned HTTP 200. JavaScript parsed; synthetic absence-streak/date-normalization tests passed. Live authenticated read reconciliation, tenant scoping from real sessions, and mobile browser appearance **have not yet been verified**. Vercel build status does not establish saved data correctness.
+- No Apps Script/backend deployment, schema change, or Google Sheets data edit is necessary for these frontend features; the report reuses authenticated `LamaAPI.list('students')` and `LamaAPI.list('attendance')`.
+
+Keep school-admin and teacher read scopes distinct. In future, integrate official school holidays and section-wise class distinctions; do not count unavailable dates as absences.

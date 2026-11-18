@@ -210,7 +210,7 @@ const symbols=[
   "level": 3,
   "token": "*",
   "name": "Multiplication",
-  "meaning": "Multiplies numbers.",
+  "meaning": "Multiplies two numeric values to find their product.",
   "language": "JavaScript / Python",
   "example": "6 * 5 // 30",
   "tip": "In SQL, SELECT * means all columns, not multiplication."

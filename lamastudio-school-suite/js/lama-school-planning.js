@@ -93,7 +93,7 @@ function renderQuickGrid(periods=timetableForSession()){
  $('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,visibleClasses(periods),field('quickDay')||'Monday',Number(field('quickPeriods'))||8);
 }
 function subjectOptionsFor(grade){
- const match=curriculumClasses.find(c=>same(c.name,grade));
+ const match=curriculumClasses.find(c=>LamaTimetableGrid.classKey(c.name)===LamaTimetableGrid.classKey(grade));
  $('quickSubjects').replaceChildren();
  for(const subj of match?.subjects||[])$('quickSubjects').append(new Option(subj,subj));
 }
@@ -101,7 +101,7 @@ function openQuickEditor(b){
  authorized();
  const day=b.dataset.quickDay,num=Number(b.dataset.quickPeriod),cls=b.dataset.quickClass;
  const parts=LamaTimetableGrid.splitLabel(cls),periods=timetableForSession();
- const matches=periods.filter(p=>same(p.day,day)&&Number(p.period)===num&&same(LamaTimetableGrid.classLabel(p),cls));
+ const matches=periods.filter(p=>same(p.day,day)&&Number(p.period)===num&&LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p))===LamaTimetableGrid.classKey(cls));
  if(matches.length>1){status('This cell has multiple saved periods. Use the detailed editor to choose the correct one.');return}
  const old=matches[0],t=LamaTimetableGrid.timesFor(periods,day,num);
  for(const [id,v] of Object.entries({quickPeriodId:old?.id||'',quickGrade:parts.grade,quickSection:parts.section,quickPeriodDay:day,quickPeriodNumber:num,quickStart:old?.start||t.start,quickEnd:old?.end||t.end,quickSubject:old?.subject||'',quickRoom:old?.room||''}))$(id).value=v;
@@ -124,14 +124,14 @@ async function saveQuickPeriod(){
  if(start>=end)throw Error('End time must be after start time.');
  if(!Number.isInteger(period)||period<1||period>30)throw Error('Invalid period number.');
  const conflicts=timetableForSession().filter(x=>String(x.id)!==id&&same(x.day,day)&&x.start<end&&x.end>start&&
-  ((same(x.grade,grade)&&same(x.section,section))||(teacherId&&String(x.teacherId)===teacherId)));
+  ((LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(grade+(section?' · Section '+section:'')))||(teacherId&&String(x.teacherId)===teacherId)));
  if(conflicts.length)throw Error('Time conflict: class/section or teacher is already scheduled during these times.');
- const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:teachers.find(x=>String(x.id)===teacherId)?.name||'',room:field('quickRoom'),published:$('quickPublished').checked};
+ const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:(teachers.find(x=>String(x.id)===teacherId)?.name||teachers.find(x=>String(x.id)===teacherId)?.fullName||teachers.find(x=>String(x.id)===teacherId)?.teacherName||''),room:field('quickRoom'),published:$('quickPublished').checked};
  quickBusy=true;$('quickSave').disabled=true;
  try{
   const loaded=await save('period',id,payload);
   if(!loaded)throw Error('Save response received, but the timetable was not reloaded. Verify before retrying.');
-  const saved=timetableForSession().filter(x=>same(x.grade,grade)&&same(x.section,section)&&same(x.day,day)&&Number(x.period)===period&&x.start===start&&x.end===end&&x.subject===subject);
+  const saved=timetableForSession().filter(x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(grade+(section?' · Section '+section:''))&&same(x.day,day)&&Number(x.period)===period&&x.start===start&&x.end===end&&x.subject===subject);
   if(saved.length!==1)throw Error('The saved period could not be uniquely verified. Check the list before retrying.');
   $('quickEditor').classList.add('hidden');
   status('✓ Saved and verified: '+grade+(section?' / '+section:'')+' · '+day+' P'+period+' · '+subject);

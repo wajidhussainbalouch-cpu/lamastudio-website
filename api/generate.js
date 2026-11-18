@@ -30,7 +30,7 @@ function getSchoolGuideAnswer(prompt,pagePath='/'){
   const manual=' For detailed steps, open '+SCHOOL_MANUAL_URL;
   if(has(/\b(password|otp|secret|private student data|student personal record|admin token|bank details|api key)\b/u)&&has(/\b(show|give|tell|retrieve|find|access|share|what is|send)\b/u))
     return 'Ask LAMA cannot retrieve passwords, private student records, administrator tokens or bank details. Sign in through your authorized school portal or ask your School Admin for help.'+manual;
-  if(has(/\b(manual|help guide|user guide|tutorial|instructions|how to use the software|learn this system|training)\b/u)||/رہنمائی|استعمال کا طریقہ|مینول/u.test(q))
+  if(has(/\b(manual|help guide|user guide|tutorial|instructions|how to use (?:the|this) (?:software|system)|learn this system|training)\b/u)||/رہنمائی|استعمال کا طریقہ|مینول/u.test(q))
     return 'Open the LAMA School Suite User Manual: '+SCHOOL_MANUAL_URL+'. It has searchable instructions for School Admin, Teacher, and Student/Parent users. Choose a role, search for your task, and follow the steps.';
   if(has(/\b(duplicate|repeated|double|delete session|remove session)\b/u)&&has(/\b(session|calendar|timetable|schedule)\b/u))
     return 'Open Timetable & Academic Calendar: https://www.lamastudio.pk/lamastudio-school-suite/planning/index.html. In Academic Sessions, use Edit to correct a repeated name. Delete is allowed only for an inactive session with no linked timetable periods or calendar events. Check the saved list before trying again.'+manual;
@@ -58,11 +58,11 @@ function getSchoolGuideAnswer(prompt,pagePath='/'){
     return 'Go to the School Admin Dashboard → Assessments for examination tools. Select the right class, subject, dates and marking scheme, then check saved question papers, marks and results. Student/Parent accounts can view their own published results. Smart Marker and OMR availability depends on the current deployment.'+manual;
   if(has(/\b(fees?|finance|receipt|payments?|expenses?|income|collection|cash|dues?)\b/u)||/فیس|اخراجات/u.test(q))
     return 'For fees open https://www.lamastudio.pk/lamastudio-school-suite/finance/fees.html. For income and expenses open https://www.lamastudio.pk/lamastudio-school-suite/finance/finance-center.html. Enter and verify saved transactions before relying on totals; Ask LAMA cannot view your school finances.'+manual;
-  if(has(/\b(notice|notification|whatsapp|contact parents|parents|communication|message)\b/u))
+  if(has(/\b(notices?|notifications?|whatsapp|contact parents|parents|communications?|messages?)\b/u))
     return 'School Admin can use the Communication Center and Notifications module for approved school messages. Teachers can use assigned-class notices where permitted. A saved in-app notification does not prove a WhatsApp message was delivered.'+manual;
   if(has(/\b(student portal|parent portal|my diary|my results|my id card|student login)\b/u))
     return 'Open your School Board and sign in to your Student/Parent Portal. There you can view your own ID, diary, class information, published results and school notices as permitted. Ask your School Admin for an account or a correction.'+manual;
-  if(has(/\b(identity card|employee id|teacher id card|student id card|certificate|certificates)\b/u))
+  if(has(/\b(id card|identity card|employee id|teacher id card|student id card|certificates?)\b/u))
     return 'Use the Identity Cards or Certificate Center tools allowed by your role. Teachers can view their own employee ID and families their own student ID or published certificates. Verify the name and school branding before printing.'+manual;
   if(has(/\b(color|colors|dark mode|light mode|theme|palette)\b/u))
     return 'On the School Admin Dashboard, use the Colors palette in the top bar to choose a display theme. This changes the appearance, not the stored school records.'+manual;

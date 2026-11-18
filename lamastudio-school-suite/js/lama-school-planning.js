@@ -70,6 +70,73 @@ async function remove(kind,id){
   status('Academic session "'+live.name+'" deleted and the list verified. Other school records were not changed.');
  }finally{sessionBusy=false}
 }
+
+function timetableForSession(){return data('period').filter(p=>p.sessionId===activeSession()&&allowed(p))}
+function visibleClasses(periods=timetableForSession()){
+ return LamaTimetableGrid.labels(periods,adminMode?[...offeredClasses,...curriculumClasses]:[]);
+}
+function renderPrintClassPicker(periods,sessionId){
+ const classes=visibleClasses(periods);
+ if(!printSelection||printSelectionSession!==sessionId){printSelection=new Set(classes);printSelectionSession=sessionId}
+ else printSelection=new Set([...printSelection].filter(c=>classes.includes(c)));
+ $('printClassList').innerHTML=classes.length?classes.map(c=>'<label class="print-class-option"><input type="checkbox" data-print-class="'+esc(c)+'" '+(printSelection.has(c)?'checked':'')+'><span>'+esc(c)+'</span></label>').join(''):'<p class="text-slate-400 text-xs">No classes available yet. Add them in School Settings or the Period editor.</p>';
+ const sel=$('printOneClass'),old=sel.value;sel.replaceChildren(new Option('Choose a class / section',''));
+ for(const c of classes)sel.add(new Option(c,c));if(classes.includes(old))sel.value=old;
+ updatePrintCount();
+}
+function updatePrintCount(){
+ const total=$('printClassList').querySelectorAll('[data-print-class]').length;
+ $('printClassStatus').textContent=(printSelection?.size||0)+' of '+total+' classes selected. Select Print layout to choose master, individual or separate class pages.';
+}
+function renderQuickGrid(periods=timetableForSession()){
+ if(!adminMode)return;
+ $('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,visibleClasses(periods),field('quickDay')||'Monday',Number(field('quickPeriods'))||8);
+}
+function subjectOptionsFor(grade){
+ const match=curriculumClasses.find(c=>same(c.name,grade));
+ $('quickSubjects').replaceChildren();
+ for(const subj of match?.subjects||[])$('quickSubjects').append(new Option(subj,subj));
+}
+function openQuickEditor(b){
+ authorized();
+ const day=b.dataset.quickDay,num=Number(b.dataset.quickPeriod),cls=b.dataset.quickClass;
+ const parts=LamaTimetableGrid.splitLabel(cls),periods=timetableForSession();
+ const matches=periods.filter(p=>same(p.day,day)&&Number(p.period)===num&&same(LamaTimetableGrid.classLabel(p),cls));
+ if(matches.length>1){status('This cell has multiple saved periods. Use the detailed editor to choose the correct one.');return}
+ const old=matches[0],t=LamaTimetableGrid.timesFor(periods,day,num);
+ for(const [id,v] of Object.entries({quickPeriodId:old?.id||'',quickGrade:parts.grade,quickSection:parts.section,quickPeriodDay:day,quickPeriodNumber:num,quickStart:old?.start||t.start,quickEnd:old?.end||t.end,quickSubject:old?.subject||'',quickRoom:old?.room||''}))$(id).value=v;
+ $('quickPublished').checked=old?.published!==false;
+ $('quickTeacher').replaceChildren(new Option('Unassigned',''));
+ for(const teacher of teachers)$('quickTeacher').add(new Option(teacher.name||teacher.fullName||teacher.teacherName||'Teacher',teacher.id));
+ $('quickTeacher').value=old?.teacherId||'';
+ subjectOptionsFor(parts.grade);
+ $('quickTarget').textContent=(old?'Edit':'Add')+' · '+cls+' · '+day+' · P'+num;
+ $('quickEditor').classList.remove('hidden');
+ $('quickEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function saveQuickPeriod(){
+ authorized();
+ if(quickBusy)throw Error('Another period save is in progress.');
+ const id=field('quickPeriodId'),grade=field('quickGrade'),section=field('quickSection'),day=field('quickPeriodDay'),period=Number(field('quickPeriodNumber')),start=field('quickStart'),end=field('quickEnd'),subject=field('quickSubject'),teacherId=field('quickTeacher');
+ const sessionId=activeSession();
+ if(!sessionId)throw Error('Create an academic session first.');
+ if(!grade||!subject||!start||!end)throw Error('Class, subject, start and end time are required.');
+ if(start>=end)throw Error('End time must be after start time.');
+ if(!Number.isInteger(period)||period<1||period>30)throw Error('Invalid period number.');
+ const conflicts=timetableForSession().filter(x=>String(x.id)!==id&&same(x.day,day)&&x.start<end&&x.end>start&&
+  ((same(x.grade,grade)&&same(x.section,section))||(teacherId&&String(x.teacherId)===teacherId)));
+ if(conflicts.length)throw Error('Time conflict: class/section or teacher is already scheduled during these times.');
+ const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:teachers.find(x=>String(x.id)===teacherId)?.name||'',room:field('quickRoom'),published:$('quickPublished').checked};
+ quickBusy=true;$('quickSave').disabled=true;
+ try{
+  const loaded=await save('period',id,payload);
+  if(!loaded)throw Error('Save response received, but the timetable was not reloaded. Verify before retrying.');
+  const saved=timetableForSession().filter(x=>same(x.grade,grade)&&same(x.section,section)&&same(x.day,day)&&Number(x.period)===period&&x.start===start&&x.end===end&&x.subject===subject);
+  if(saved.length!==1)throw Error('The saved period could not be uniquely verified. Check the list before retrying.');
+  $('quickEditor').classList.add('hidden');
+  status('✓ Saved and verified: '+grade+(section?' / '+section:'')+' · '+day+' P'+period+' · '+subject);
+ }finally{quickBusy=false;$('quickSave').disabled=false}
+}
 function sessions(){return data('session').sort((a,b)=>a.start.localeCompare(b.start))}
 function activeSession(){return field('viewSession')||sessions().find(s=>s.active)?.id||sessions()[0]?.id||''}
 function render(){const list=sessions(),old=field('viewSession');for(const id of ['viewSession','periodSession','eventSession']){const el=$(id);el.replaceChildren();for(const s of list)el.add(new Option(s.name+(s.active?' (active)':''),s.id));if(list.some(s=>s.id===old))el.value=old}

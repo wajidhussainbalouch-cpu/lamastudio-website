@@ -419,3 +419,17 @@ Cloud-account preparation was extended with a separately staged learner profile:
 
 The v0.18 Android QA build remains separate from v0.17, so transferring local work requires an explicit Complete Academy Backup. CI tests include a static security contract for the staged profile and real-browser mobile tour interaction. No production merge, Play Store release or live account launch.
 
+
+
+## Phase 19 — User-requested symbol and HTML input reference (18 November 2026)
+
+A learner supplied a **Coding with Parvez** Facebook screenshot listing 22 HTML input types, in addition to an earlier 30-symbol programming reference. A public web search found an indexed HTML-series overview but could not authenticate the full Facebook page or its post URL. Research limits and primary standards are recorded in [RESEARCH-CODING-WITH-PARVEZ.md](RESEARCH-CODING-WITH-PARVEZ.md).
+
+Added a fully original, offline-first [**Symbols & HTML Inputs**](reference.html) learning lab, accessible from the mobile Academy sidebar and beginner home. It has:
+- **22 real HTML input types:** text, password, email, number, tel, url, search, date, time, datetime-local, month, week, color, range, checkbox, radio, file, hidden, button, submit, reset and image. Each has a meaning, accessible live demo, source example and concise usage warning.
+- **30 language-aware programming symbols**, grouped in three levels with filterable, tap-to-expand examples explaining HTML/CSS/JavaScript/Python differences.
+- **Six original knowledge-check questions** with answer explanations and unlimited retries. This supplemental guide does not alter existing lesson completion or the official 62-activity progress count.
+- No user-entered demo data is read, persisted or sent online. Every form submission is prevented; file demos report only whether a file was selected, not its name or contents. No external images or copied question graphics.
+- PWA allowlist and Android test asset pack include the new static files, with Node and real Chromium browser checks covering mobile navigation, actual browser control behavior, question feedback, and offline usage.
+
+The owner-only **v0.19 Android TEST** uses a new package ID, `pk.lamastudio.codingacademy.testing.v19`, so older v0.18 app progress is not overwritten. The two test apps do not automatically share stored progress; if needed, export the Complete Academy Backup from the earlier version, then import the selected JSON into the newer test app. The live website remains unchanged, and learner cloud accounts remain disabled pending security review.

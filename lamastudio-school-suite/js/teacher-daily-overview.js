@@ -72,7 +72,11 @@
   const values=(subjects||[]).map(subject=>{
    const selected=(records||[]).filter(h=>
     subjectKey(h.subject)===subjectKey(subject)&&dateKey(h.createdAt??h.date,zone)===day);
-   const posted=selected.some(h=>h.isPublished===true||h.published===true||['published','sent'].includes(norm(h.status))||(!(Object.prototype.hasOwnProperty.call(h,'isPublished')||Object.prototype.hasOwnProperty.call(h,'published')||Object.prototype.hasOwnProperty.call(h,'status'))&&!!h.id));
+   const posted=selected.some(h=>{
+    const stage=norm(h.status),explicitNo=h.isPublished===false||h.published===false||['draft','pending','archived','rejected'].includes(stage);
+    const confirmed=h.isPublished===true||h.published===true||['published','sent'].includes(stage);
+    return confirmed||(!explicitNo&&!stage&&!!h.id); // Legacy saved Homework rows have no publication columns.
+   });
    // Legacy Homework rows contain no publication status. A dated, saved row is proof of entry.
    return {subject,done:posted,record:posted?selected.find(h=>h.id):null};
   });

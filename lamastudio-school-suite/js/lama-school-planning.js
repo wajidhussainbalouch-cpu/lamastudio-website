@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false;
+let rows=[],teachers=[],offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -11,7 +11,13 @@ const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school admi
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
 function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
-async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');rows=(Array.isArray(all)?all:[]).filter(r=>Object.values(type).includes(r.category));if(adminMode){teachers=await LamaAPI.list('teachers').catch(()=>[]);const sel=$('teacher');sel.replaceChildren(new Option('Select teacher',''));for(const t of teachers){const o=new Option((t.name||t.fullName||t.teacherName||'Teacher')+' · '+(t.subject||''),t.id);sel.add(o)}}render();status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.');return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
+async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');rows=(Array.isArray(all)?all:[]).filter(r=>Object.values(type).includes(r.category));if(adminMode){
+ const config=await LamaAPI.getSchoolConfig().catch(()=>null);
+ try{const offered=JSON.parse(config?.offeredClassesJson||'[]');offeredClasses=Array.isArray(offered)?offered.filter(c=>c&&c.name).map(c=>({name:String(c.name),sections:Array.isArray(c.sections)?c.sections:[]})):[]}catch(_){offeredClasses=[]}
+ const resource=(Array.isArray(all)?all:[]).find(r=>r.category==='school-curriculum'&&r.title==='LAMA School Class Subjects');
+ try{const doc=JSON.parse(resource?.description||'{}');curriculumClasses=doc.schoolId===schoolId&&Array.isArray(doc.classes)?doc.classes:[]}catch(_){curriculumClasses=[]}
+}else{offeredClasses=[];curriculumClasses=[]}
+if(adminMode){teachers=await LamaAPI.list('teachers').catch(()=>[]);const sel=$('teacher');sel.replaceChildren(new Option('Select teacher',''));for(const t of teachers){const o=new Option((t.name||t.fullName||t.teacherName||'Teacher')+' · '+(t.subject||''),t.id);sel.add(o)}}render();status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.');return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
 async function save(kind,id,payload){authorized();const title=kind==='period'?[payload.day,payload.grade,payload.period].join(' · '):kind==='session'?payload.name:payload.title;const record={category:type[kind],title,description:JSON.stringify(payload),link:''};if(id)await LamaAPI.update('resources',id,record);else await LamaAPI.add('resources',record);return await load()}
 function sessionKey(name){
  return String(name||'').normalize('NFKC').replace(/[‐‑‒–—−]/g,'-').replace(/\s+/g,'').toLowerCase();
@@ -89,7 +95,7 @@ $('sessionList').innerHTML=list.map(s=>{
   '<button type="button" class="text-rose-300 border border-rose-800 rounded-lg min-h-10 px-3 disabled:opacity-40 disabled:cursor-not-allowed" data-remove-session="'+esc(s.id)+'" aria-label="Delete session '+esc(s.name)+'" title="'+esc(reason||'Delete this unlinked academic session')+'" '+(reason?'disabled':'')+'>Delete</button>'+
   '</div></div>';
 }).join('');
-renderCalendar();
+renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode)renderQuickGrid(periods);
 }
 function renderCalendar(){const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));$('monthTitle').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});const y=month.getFullYear(),m=month.getMonth(),offset=(new Date(y,m,1).getDay()+6)%7,last=new Date(y,m+1,0).getDate();let h=days.map(d=>'<b class="p-2 text-cyan-300">'+d.slice(0,3)+'</b>').join('');for(let i=0;i<offset;i++)h+='<div></div>';for(let d=1;d<=last;d++){const date=[y,String(m+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-'),hits=events.filter(e=>e.start<=date&&e.end>=date);h+='<div class="border border-slate-700 rounded-lg min-h-16 p-1 text-left"><b>'+d+'</b>'+hits.slice(0,2).map(e=>'<p class="text-[10px] text-amber-300 truncate" title="'+esc(e.title)+'">'+esc(e.title)+'</p>').join('')+'</div>'}$('monthGrid').innerHTML=h;
 $('eventRows').innerHTML=events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No events for this session.</p>'}
@@ -163,7 +169,8 @@ function buildTimetablePrint(profile){
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
  const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p));
  const mode=field('printScope');
- const cls=field('viewGrade');
+ const cls=field('printOneClass')||field('viewGrade');
+ const selectedClasses=Array.isArray(printSelection)?[...printSelection]:null;
  const calendarIncluded=$('printCalendar').checked;
  const calMonth=$('monthTitle').textContent;
  return LamaTimetablePrint.printMarkup({
@@ -173,6 +180,7 @@ function buildTimetablePrint(profile){
   records:periods,
   scope:mode,
   selectedClass:cls,
+  selectedClasses:mode==='selected'?null:selectedClasses,
   calendar:calendarIncluded,
   calendarMonth:calMonth,
   calendarContent:$('monthGrid').innerHTML,

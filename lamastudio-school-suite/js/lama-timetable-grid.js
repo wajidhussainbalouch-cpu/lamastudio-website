@@ -4,19 +4,30 @@ const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunda
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const value=x=>String(x??'').trim(),norm=x=>value(x).toLowerCase();
 const classLabel=p=>value(p.grade??p.class)+(value(p.section)?' · Section '+value(p.section):'');
+const classKey=text=>{
+ const raw=value(text),match=raw.match(/^(.*?)\s*·\s*Section\s+(.+)$/i);
+ const grade=value(match?match[1]:raw).toLowerCase().replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/^0+(?=\d)/,'').replace(/\s+/g,'');
+ return grade+(match?'|'+value(match[2]).toLowerCase().replace(/\s+/g,''):'');
+};
 const natural=(a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true,sensitivity:'base'});
 function labels(rows=[],offered=[]){
- const set=new Set();
- for(const r of [...offered,...rows]){
-  if(typeof r==='string'&&value(r)){set.add(value(r));continue}
+ const set=new Map();
+ function add(label){if(!value(label))return;const k=classKey(label);if(k&&!set.has(k))set.set(k,value(label))}
+ // Prefer the official class names from School Settings over legacy numeric grades.
+ for(const r of offered||[]){
+  if(typeof r==='string'){add(r);continue}
   if(!r)continue;
   const grade=value(r.grade??r.name??r.class),section=value(r.section);
   if(!grade)continue;
-  if(section)set.add(grade+' · Section '+section);
-  else if(Array.isArray(r.sections)&&r.sections.length){for(const s of r.sections)if(value(s))set.add(grade+' · Section '+value(s))}
-  else set.add(grade);
+  if(section)add(grade+' · Section '+section);
+  else if(Array.isArray(r.sections)&&r.sections.length){for(const sec of r.sections)if(value(sec))add(grade+' · Section '+value(sec))}
+  else add(grade);
  }
- return [...set].sort(natural);
+ for(const r of rows||[]){
+  if(typeof r==='string'){add(r);continue}
+  if(r)add(classLabel(r));
+ }
+ return [...set.values()].sort(natural);
 }
 function splitLabel(text){
  const m=value(text).match(/^(.*?)\s*·\s*Section\s+(.+)$/i);
@@ -33,7 +44,7 @@ function gridMarkup(periods=[],classes=[],day='Monday',count=8){
  const body=Array.from({length:max},(_,i)=>{
   const period=i+1,{start,end}=timesFor(today,day,period);
   const cells=classes.map(c=>{
-   const found=today.filter(p=>Number(p.period)===period&&norm(classLabel(p))===norm(c));
+   const found=today.filter(p=>Number(p.period)===period&&classKey(classLabel(p))===classKey(c));
    const subject=found.length?found.map(p=>value(p.subject)||'Untitled').join(' / '):'＋ Add';
    const teacher=found.length?found.map(p=>value(p.teacherName)).filter(Boolean).join(' / '):'';
    return '<td><button type="button" class="quick-cell '+(found.length?'filled':'empty')+'" data-quick-class="'+esc(c)+'" data-quick-period="'+period+'" data-quick-day="'+esc(day)+'" title="'+esc((found.length?'Edit lesson':'Add lesson')+' · '+c+' · '+day+' · Period '+period)+'"><strong>'+esc(subject)+'</strong>'+(teacher?'<small>'+esc(teacher)+'</small>':'')+'</button></td>';
@@ -42,5 +53,5 @@ function gridMarkup(periods=[],classes=[],day='Monday',count=8){
  }).join('');
  return '<table class="quick-matrix">'+header+'<tbody>'+body+'</tbody></table>';
 }
-root.LamaTimetableGrid={days,labels,classLabel,splitLabel,timesFor,gridMarkup};
+root.LamaTimetableGrid={days,labels,classLabel,classKey,splitLabel,timesFor,gridMarkup};
 })(window);

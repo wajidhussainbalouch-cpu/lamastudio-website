@@ -113,6 +113,7 @@ async function load(){
 }
 $('anchor').value=today();$('month').value=today().slice(0,7);$('from').value=today();$('to').value=today();
 if(role==='teacher'){$('teacherLabel').classList.add('hidden');$('back').href='../portals/teacher/index.html';$('accessLabel').textContent='My posted homework · assigned class and section only'}
-for(const id of ['period','anchor','month','term','from','to','classFilter','teacherFilter','subjectFilter'])$(id).onchange=render;
+$('period').onchange=()=>{if(['term','custom'].includes($('period').value)){$('from').value='';$('to').value=''}render()};
+for(const id of ['anchor','month','term','from','to','classFilter','teacherFilter','subjectFilter'])$(id).onchange=render;
 $('refresh').onclick=load;$('print').onclick=async()=>{if(!ready||busy||$('print').disabled)return;const img=$('report').querySelector('img');if(img?.decode)await Promise.race([img.decode().catch(()=>{}),new Promise(r=>setTimeout(r,1500))]);window.print()};load();
 </script></body></html>

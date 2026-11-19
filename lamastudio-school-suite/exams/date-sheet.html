@@ -726,7 +726,7 @@
         function renderAll() {
             const currentFilter = document.getElementById('filterClass').value;
             initFilterDropdown();
-            document.getElementById('filterClass').value = currentFilter;
+            document.getElementById('filterClass').value = savedGrades().includes(currentFilter)?currentFilter:'ALL';
             renderMatrixSheet();
             renderRecordsList();
             updatePrintLayoutClass();
@@ -811,14 +811,8 @@
                 return;
             }
 
-            let csv = 'Date,Day,' + ALL_GRADES.join(',') + '\n';
-            publishedEntries.forEach(e => {
-                let row = `"${e.date || ''}","${e.day || ''}"`;
-                ALL_GRADES.forEach(g => {
-                    row += `,"${e.subjects && e.subjects[g] ? e.subjects[g] : ''}"`;
-                });
-                csv += row + '\n';
-            });
+            const grades=savedGrades(),csvCell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+            const csv='\uFEFF'+[['Date','Day',...grades],...publishedEntries.map(e=>[e.date,e.day,...grades.map(g=>e.subjects?.[g]||'')])].map(r=>r.map(csvCell).join(',')).join('\r\n');
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);

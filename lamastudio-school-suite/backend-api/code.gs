@@ -2478,7 +2478,7 @@ function lamaFeeApply_(state,e,schoolId){
  if(!e||e.version!==1||e.schoolId!==schoolId||!e.actorId||!e.at||typeof e.fingerprint!=='string'||state.events.has(e.id))lamaFeeFail_('Invalid or duplicate fee journal event. Reconciliation required.');
  lamaFeeToken_(e.id);
  if(e.type==='issue'){
-  if(!Array.isArray(e.demands)||!e.demands.length||e.demands.length>50)lamaFeeFail_('Invalid issue event.');
+  if(!Array.isArray(e.demands)||e.demands.length>50||(!e.demands.length&&(!Array.isArray(e.skipped)||!e.skipped.length)))lamaFeeFail_('Invalid issue event.');
   const ids=new Set(),keys=new Set();
   for(const d of e.demands){
    lamaFeePaisa_(d.amountPaisa);lamaFeeDate_(d.dueDate);lamaFeeMonth_(d.month);
@@ -2524,6 +2524,7 @@ function lamaFeeIssueRows_(school,students,request,state,now){
  if(categories.length!==names.length)lamaFeeFail_('Fee category unavailable.');
  const classes=new Set(lamaFeeArray_(school.offeredClassesJson).map(c=>lamaFeeClassKey_(c.name)));
  const byId=new Map(students.map(s=>[String(s.id),s])),newDemands=[],skipped=[];
+ for(const c of categories){if(Array.from(state.demands.values()).some(d=>lamaFeeKey_(d.category)===lamaFeeKey_(c.name)&&d.cadence!==c.cadence))lamaFeeFail_('Billing frequency changed for an issued category. Reconciliation required before issuing again.');}
  const keys=new Set(state.keys);
  for(const id of studentIds){
   const st=byId.get(id);if(!st||!classes.has(lamaFeeClassKey_(st.class)))lamaFeeFail_('Student is not in a configured school class.');
@@ -2532,7 +2533,7 @@ function lamaFeeIssueRows_(school,students,request,state,now){
    const rates=(Array.isArray(cat.rates)?cat.rates:[]).filter(r=>lamaFeeClassKey_(r.className)===lamaFeeClassKey_(st.class));
    if(rates.length!==1||typeof rates[0].amount!=='number'||!Number.isFinite(rates[0].amount)||rates[0].amount<0||Math.abs(rates[0].amount*100-Math.round(rates[0].amount*100))>1e-6)lamaFeeFail_('Missing or invalid class rate for '+cat.name+'.');
    const amount=Math.round(rates[0].amount*100);if(!amount){skipped.push({studentId:id,category:cat.name,reason:'zero-rate'});continue;}lamaFeePaisa_(amount);
-   const period=cadence==='monthly'?month:cadence==='one-time'?'once':lamaFeeKey_(lamaFeeText_(request.eventRef,80));
+   const period=cadence==='monthly'?'month:'+month:cadence==='one-time'?'once':'event:'+lamaFeeKey_(lamaFeeText_(request.eventRef,80));
    const key=JSON.stringify([id,lamaFeeKey_(cat.name),period]);
    if(keys.has(key)){skipped.push({studentId:id,category:cat.name,reason:'existing-demand'});continue;}
    keys.add(key);
@@ -2554,6 +2555,7 @@ function lamaFeeAction_(p){
   const verifiedActor=verifySchoolAdminToken(p),fresh=authorizeSchool(schoolId,p.apiKey).obj;
   if(verifiedActor.id!==actor.id)lamaFeeFail_('Administrator changed.');
   if(!read)assertSchoolWritable(schoolId);
+  if(PropertiesService.getScriptProperties().getProperty('LAMA_FEE_LEDGER_PILOT_'+schoolId)!=='true')lamaFeeFail_('Fee ledger pilot is disabled.');
   const ss=SpreadsheetApp.openById(fresh.sheetId);
   let sheet=ss.getSheetByName(LAMA_FEE_JOURNAL_TAB_);
   let events=[];
@@ -2574,7 +2576,6 @@ function lamaFeeAction_(p){
   if(p.action==='feeLedgerIssue'){
    const ctx={role:'school',schoolId,ss},students=listRecords(ctx,'students');
    const batch=lamaFeeIssueRows_(fresh,students,request,state,now);
-   if(!batch.demands.length)return {replayed:false,event:null,skipped:batch.skipped,report:lamaFeeReport_(state,today)};
    Object.assign(e,{type:'issue',demands:batch.demands,skipped:batch.skipped});
   }else if(p.action==='feeLedgerPay'){
    // Existing demands can still be settled after a school type/rate change.

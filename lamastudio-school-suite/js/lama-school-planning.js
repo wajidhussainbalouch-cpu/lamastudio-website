@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],teacherDirectoryLoaded=false,offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false,hiddenGrid=new Map();
+let rows=[],teachers=[],teacherDirectoryLoaded=false,offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false,hiddenGrid=new Map(),quickScopePreference='day',quickCustomDays=days.slice(0,6),quickSession='',periodNeedsRefresh=false;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -11,7 +11,7 @@ const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school admi
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
 function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
-async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
+async function load(allowBusy=false){if(quickBusy&&allowBusy!==true)return false;if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
  // The public client exports getSchoolClassOptions and getActiveSchool,
  // not getSchoolConfig (which is an internal Apps Script action).
  offeredClasses=[];
@@ -32,8 +32,8 @@ async function load(){if(!schoolId){status('School session missing. Sign in agai
  const resource=(Array.isArray(all)?all:[]).find(r=>r.category==='school-curriculum'&&r.title==='LAMA School Class Subjects');
  try{const doc=JSON.parse(resource?.description||'{}');curriculumClasses=doc.schoolId===schoolId&&Array.isArray(doc.classes)?doc.classes:[]}catch(_){curriculumClasses=[]}
 }else{offeredClasses=[];curriculumClasses=[]}
-if(adminMode){await loadTeacherDirectory();populateTeacherPicker('teacher',field('subject'),field('teacher'));populateTeacherPicker('quickTeacher',field('quickSubject'),field('quickTeacher'))}render();status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.'+(adminMode?(teacherDirectoryLoaded?' '+teachers.length+' active teacher(s) available.':' Teacher directory unavailable. Refresh before assigning a lesson.') :''));return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
-async function save(kind,id,payload){authorized();const title=kind==='period'?[payload.day,payload.grade,payload.period].join(' · '):kind==='session'?payload.name:payload.title;const record={category:type[kind],title,description:JSON.stringify(payload),link:''};if(id)await LamaAPI.update('resources',id,record);else await LamaAPI.add('resources',record);return await load()}
+if(adminMode){await loadTeacherDirectory();populateTeacherPicker('teacher',field('subject'),field('teacher'));populateTeacherPicker('quickTeacher',field('quickSubject'),field('quickTeacher'))}render();periodNeedsRefresh=false;status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.'+(adminMode?(teacherDirectoryLoaded?' '+teachers.length+' active teacher(s) available.':' Teacher directory unavailable. Refresh before assigning a lesson.') :''));return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
+async function save(kind,id,payload){authorized();if(kind==='period'){if(quickBusy||periodNeedsRefresh)throw Error('Finish the timetable operation or refresh before saving.');quickBusy=true;try{await writePeriod(id,payload);render();return true}catch(e){periodNeedsRefresh=true;throw Error('Save could not be confirmed. Reload the timetable before retrying. '+e.message)}finally{quickBusy=false}}const title=kind==='period'?[payload.day,payload.grade,payload.period].join(' · '):kind==='session'?payload.name:payload.title;const record={category:type[kind],title,description:JSON.stringify(payload),link:''};if(id)await LamaAPI.update('resources',id,record);else await LamaAPI.add('resources',record);return await load()}
 function sessionKey(name){
  return String(name||'').normalize('NFKC').replace(/[‐‑‒–—−]/g,'-').replace(/\s+/g,'').toLowerCase();
 }
@@ -198,14 +198,45 @@ async function clearGridAxis(kind,value){
   if(targets.length&&!confirm('Delete '+targets.length+' saved lesson(s) for '+label+' on '+day+' in the selected session? Other days, classes and school settings will remain unchanged.'))return;
   if(!targets.length&&!confirm('Hide empty '+label+' from this day’s grid? You can restore it.'))return;
   for(const item of targets)await LamaAPI.remove('resources',item.id);
-  if(!await load())throw Error('Could not verify removal. Refresh before retrying.');
+  if(!await load(true))throw Error('Could not verify removal. Refresh before retrying.');
   if(timetableForSession().some(match))throw Error('Some lessons remain. Review before retrying.');
   const hidden=gridState();if(kind==='period')hidden.periods.add(Number(value));else hidden.classes.add(LamaTimetableGrid.classKey(value));
   renderQuickGrid();status('Removed '+label+' from '+day+' grid. '+targets.length+' saved lesson(s) deleted and verified.');
  }finally{quickBusy=false}
 }
+// The generic resources API returns the saved record after the sheet write.
+async function writePeriod(id,payload){
+ const record={category:type.period,title:[payload.day,payload.grade,payload.period].join(' · '),description:JSON.stringify(payload),link:''};
+ const saved=id?await LamaAPI.update('resources',id,record):await LamaAPI.add('resources',record);
+ if(!saved?.id||(id&&String(saved.id)!==String(id))||saved.category!==type.period)throw Error('Missing or invalid server acknowledgement.');
+ const actual=parsed(saved);
+ if(Object.keys(payload).some(k=>actual[k]!==payload[k]))throw Error('Server acknowledgement did not match the submitted lesson.');
+ const index=rows.findIndex(r=>String(r.id)===String(saved.id));
+ if(index<0)rows.push(saved);else rows[index]=saved;
+}
+function quickScopeDays(){
+ const mode=field('quickApplyScope');
+ return mode==='week'?days.slice(0,6):mode==='custom'?days.filter(d=>quickCustomDays.includes(d)):[field('quickPeriodDay')];
+}
+function updateQuickScope(){
+ const mode=field('quickApplyScope'),selected=quickScopeDays();
+ $('quickCustomDays').classList.toggle('hidden',mode!=='custom');
+ $('quickScopeSummary').textContent=selected.length?'Applies to '+selected.join(', ')+'. Existing different lessons on other days require confirmation.':'Select at least one day.';
+ $('quickSave').textContent=selected.length>1?'✓ Save for '+selected.length+' days':'✓ Save class period';
+}
+function setupQuickScope(){
+ const box=document.createElement('div');
+ box.className='space-y-2 my-3';
+ box.innerHTML='<label for="quickApplyScope">Apply this period to</label><select id="quickApplyScope" style="width:100%"><option value="day">Selected day only</option><option value="week">Full school week (Monday–Saturday)</option><option value="custom">Choose specific days</option></select><div id="quickCustomDays" class="hidden flex flex-wrap gap-3" role="group" aria-label="Select weekdays">'+days.map(d=>'<label style="display:inline-flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" value="'+d+'" '+(quickCustomDays.includes(d)?'checked':'')+'> '+d.slice(0,3)+'</label>').join('')+'</div><p id="quickScopeSummary" class="text-xs text-slate-300"></p><p id="quickSaveStatus" class="text-sm" role="status" aria-live="polite"></p>';
+ $('quickForm').insertBefore(box,$('quickSave').parentElement);
+ $('quickApplyScope').onchange=()=>{quickScopePreference=field('quickApplyScope');updateQuickScope()};
+ $('quickCustomDays').onchange=()=>{quickCustomDays=[...$('quickCustomDays').querySelectorAll('input:checked')].map(c=>c.value);updateQuickScope()};
+}
 function openQuickEditor(b){
  authorized();
+ if(quickBusy)throw Error('Please finish the current save first.');
+ if(periodNeedsRefresh)throw Error('Previous save uncertain. Reload the timetable before editing.');
+ quickSession=activeSession();
  const day=b.dataset.quickDay,num=Number(b.dataset.quickPeriod),cls=b.dataset.quickClass;
  const parts=LamaTimetableGrid.splitLabel(cls),periods=timetableForSession();
  const matches=periods.filter(p=>same(p.day,day)&&Number(p.period)===num&&LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p))===LamaTimetableGrid.classKey(cls));
@@ -216,33 +247,64 @@ function openQuickEditor(b){
  subjectOptionsFor(parts.grade,'quickSubject',old?.subject||'');
  populateTeacherPicker('quickTeacher',field('quickSubject'),old?.teacherId||'');
  $('quickTarget').textContent=(old?'Edit':'Add')+' · '+cls+' · '+day+' · P'+num;
+ $('quickApplyScope').value=old?'day':quickScopePreference;$('quickSaveStatus').textContent='';updateQuickScope();
  $('quickEditor').classList.remove('hidden');
  $('quickEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function saveQuickPeriod(){
  authorized();
  if(quickBusy)throw Error('Another period save is in progress.');
- const id=field('quickPeriodId'),grade=field('quickGrade'),section=field('quickSection'),day=field('quickPeriodDay'),period=Number(field('quickPeriodNumber')),start=field('quickStart'),end=field('quickEnd'),subject=field('quickSubject'),teacherId=field('quickTeacher');
- const sessionId=activeSession();
- if(!sessionId)throw Error('Create an academic session first.');
+ if(periodNeedsRefresh)throw Error('Previous save uncertain. Reload the timetable before retrying.');
+ const id=field('quickPeriodId'),grade=field('quickGrade'),section=field('quickSection'),period=Number(field('quickPeriodNumber')),start=field('quickStart'),end=field('quickEnd'),subject=field('quickSubject'),teacherId=field('quickTeacher');
+ const sessionId=activeSession(),targetDays=quickScopeDays(),sourceDay=field('quickPeriodDay');
+ if(!sessionId||quickSession!==sessionId)throw Error('Session changed. Reopen the correct timetable cell.');
+ if(!targetDays.length)throw Error('Choose at least one day.');
  if(!grade||!subject||!start||!end)throw Error('Class, subject, start and end time are required.');
  requireSubject(grade,subject,data('period').find(x=>String(x.id)===id));
  const selectedTeacher=requireTeacher(teacherId);
- if(start>=end)throw Error('End time must be after start time.');
+ if(start>=end)throw Error('End time must be after start time (check AM/PM).');
  if(!Number.isInteger(period)||period<1||period>30)throw Error('Invalid period number.');
- const conflicts=timetableForSession().filter(x=>String(x.id)!==id&&same(x.day,day)&&x.start<end&&x.end>start&&
-  ((LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(grade+(section?' · Section '+section:'')))||(teacherId&&String(x.teacherId)===teacherId)));
- if(conflicts.length)throw Error('Time conflict: class/section or teacher is already scheduled during these times.');
- const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:selectedTeacher.name,room:field('quickRoom'),published:$('quickPublished').checked};
- quickBusy=true;$('quickSave').disabled=true;
+ const classKey=LamaTimetableGrid.classKey(grade+(section?' · Section '+section:''));
+ const sameClass=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===classKey;
+ const existing=timetableForSession(),jobs=[],replaceDays=[];
+ for(const day of targetDays){
+  const hits=existing.filter(x=>same(x.day,day)&&Number(x.period)===period&&sameClass(x));
+  if(hits.length>1)throw Error(day+': duplicate class periods exist. Resolve them in the detailed editor first.');
+  const old=hits[0],oldId=old?String(old.id):'';
+  if(day===sourceDay&&id!==oldId)throw Error('This period changed. Reopen the timetable cell.');
+  const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:selectedTeacher.name,room:field('quickRoom'),published:$('quickPublished').checked};
+  const conflicts=existing.filter(x=>String(x.id)!==oldId&&same(x.day,day)&&x.start<end&&x.end>start&&(sameClass(x)||String(x.teacherId)===teacherId));
+  if(conflicts.length)throw Error(day+': class/section or teacher is already scheduled during these times.');
+  const unchanged=old&&Object.keys(payload).every(k=>old[k]===payload[k]);
+  if(unchanged)continue;
+  if(old&&day!==sourceDay)replaceDays.push(day);
+  jobs.push({id:oldId,payload});
+ }
+ if(replaceDays.length&&!confirm('Replace existing different lessons for this class and period on '+replaceDays.join(', ')+'? Other periods will not change.'))return;
+ if(!jobs.length){$('quickEditor').classList.add('hidden');status('Already saved for all selected days. No duplicate records created.');return}
+ quickBusy=true;
+ const form=$('quickForm'),controls=[...form.querySelectorAll('input,select,button')],previous=controls.map(c=>c.disabled);
+ controls.forEach(c=>c.disabled=true);
+ let completed=0;
  try{
-  const loaded=await save('period',id,payload);
-  if(!loaded)throw Error('Save response received, but the timetable was not reloaded. Verify before retrying.');
-  const saved=timetableForSession().filter(x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(grade+(section?' · Section '+section:''))&&same(x.day,day)&&Number(x.period)===period&&x.start===start&&x.end===end&&x.subject===subject&&String(x.teacherId)===teacherId);
-  if(saved.length!==1)throw Error('The saved period could not be uniquely verified. Check the list before retrying.');
+  for(const job of jobs){
+   const message='Saving '+job.payload.day+' ('+(completed+1)+' of '+jobs.length+')…';
+   $('quickSaveStatus').textContent=message;status(message);
+   await writePeriod(job.id,job.payload);
+   completed++;
+   renderQuickGrid();
+  }
+  render();
   $('quickEditor').classList.add('hidden');
-  status('✓ Saved and verified: '+grade+(section?' / '+section:'')+' · '+day+' P'+period+' · '+subject);
- }finally{quickBusy=false;$('quickSave').disabled=false}
+  status('✓ Saved: '+grade+(section?' / '+section:'')+' · P'+period+' · '+subject+' · '+targetDays.join(', ')+' ('+completed+' changed, '+(targetDays.length-completed)+' already saved).');
+ }catch(error){
+  periodNeedsRefresh=true;
+  render();
+  throw Error(completed+' of '+jobs.length+' changes confirmed. Remaining save status uncertain. Reload before retrying. '+error.message);
+ }finally{
+  quickBusy=false;
+  controls.forEach((c,i)=>c.disabled=previous[i]);
+ }
 }
 function sessions(){return data('session').sort((a,b)=>a.start.localeCompare(b.start))}
 function activeSession(){return field('viewSession')||sessions().find(s=>s.active)?.id||sessions()[0]?.id||''}
@@ -327,7 +389,8 @@ $('selectAllPrintClasses').onclick=()=>{
 $('clearPrintClasses').onclick=()=>{
  printSelection=new Set();renderPrintClassPicker(timetableForSession(),activeSession());
 };
-$('quickDay').onchange=()=>renderQuickGrid();
+setupQuickScope();
+$('quickDay').onchange=()=>{if(!quickBusy)$('quickEditor').classList.add('hidden');renderQuickGrid()};
 $('quickPeriods').onchange=()=>{const n=Number($('quickPeriods').value);$('quickPeriods').value=String(Math.max(1,Math.min(14,Number.isFinite(n)?n:8)));renderQuickGrid()};
 $('grade').onchange=()=>{populateClassEditor(field('grade'));populateTeacherPicker('teacher',field('subject'))};
 $('subject').onchange=()=>populateTeacherPicker('teacher',field('subject'),field('teacher'));
@@ -341,11 +404,11 @@ $('quickGrid').addEventListener('click',event=>{
 });
 $('quickForm').addEventListener('submit',async event=>{
  event.preventDefault();
- try{await saveQuickPeriod()}catch(error){status('Quick save not verified: '+error.message)}
+ try{await saveQuickPeriod()}catch(error){$('quickSaveStatus').textContent=error.message;status('Quick save not verified: '+error.message)}
 });
 $('quickCancel').onclick=()=>$('quickEditor').classList.add('hidden');
 $('quickOpenFull').onclick=()=>{
- if(!adminMode)return;
+ if(!adminMode||quickBusy)return;
  populateClassEditor(field('quickGrade'),field('quickSection'),field('quickSubject'));
  for(const [id,v] of Object.entries({
   periodId:field('quickPeriodId'),periodSession:activeSession(),day:field('quickPeriodDay'),
@@ -355,7 +418,7 @@ $('quickOpenFull').onclick=()=>{
  $('published').checked=$('quickPublished').checked;
  $('quickEditor').classList.add('hidden');$('periodForm').scrollIntoView({behavior:'smooth'});
 };
-for(const id of ['viewSession','viewGrade','viewDay'])$(id).onchange=render;
+for(const id of ['viewSession','viewGrade','viewDay'])$(id).onchange=()=>{if(id==='viewSession'&&!quickBusy)$('quickEditor').classList.add('hidden');render()};
 $('prevMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar()};$('nextMonth').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar()};$('reload').onclick=load;$('print').onclick=printTimetable;
 function printProfileFallback(){
  const schoolRole=role==='school';

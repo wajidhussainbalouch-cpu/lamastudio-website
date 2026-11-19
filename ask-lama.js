@@ -5,7 +5,7 @@
 
   const stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
-  stylesheet.href = '/ask-lama.css?v=2';
+  stylesheet.href = '/ask-lama.css?v=3';
   document.head.appendChild(stylesheet);
 
   const root = document.createElement('div');
@@ -23,7 +23,9 @@
       "<div class='asklama-messages' id='askLamaMessages' role='log' aria-live='polite' aria-relevant='additions text'>",
         "<div class='asklama-msg bot'>Hello! 👋 I’m AskLama, your LAMA Studio guide. How can I help you today?</div>",
       "</div>",
+      "<div class='asklama-voice-tools'><label for='askLamaVoiceLang'>Voice language</label><select id='askLamaVoiceLang'><option value='en-PK'>English</option><option value='ur-PK'>اردو</option></select><button type='button' id='askLamaReadBtn' disabled>Listen to reply</button></div>",
       "<form class='asklama-compose' id='askLamaForm'>",
+        "<button type='button' class='asklama-mic' id='askLamaMicBtn' aria-label='Speak question' aria-pressed='false' title='Speak question'>🎙️</button>",
         "<input type='text' id='askLamaInput' name='question' placeholder='Type your question…' aria-label='Message to AskLama' autocomplete='off' maxlength='1200' required>",
         "<button type='submit' id='askLamaSendBtn'>Send</button>",
       "</form>",
@@ -51,6 +53,35 @@
   let busy = false;
   let returnFocus = null;
   let history = [];
+  const mic=get('askLamaMicBtn'), lang=get('askLamaVoiceLang'), read=get('askLamaReadBtn');
+  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let recognition=null,lastAnswer='',speaking=false;
+  function stopVoice(){
+    if(recognition){const active=recognition;recognition=null;try{active.abort()}catch(_){}}
+    mic.setAttribute('aria-pressed','false');mic.textContent='🎙️';
+    if(speaking&&window.speechSynthesis){window.speechSynthesis.cancel();speaking=false;read.textContent='Listen to reply'}
+  }
+  if(!Recognition){mic.disabled=true;mic.title='Voice input unavailable on this browser';mic.setAttribute('aria-label','Voice input unavailable; type your question')}
+  mic.addEventListener('click',()=>{
+    if(!Recognition||busy)return;
+    if(recognition){recognition.stop();return}
+    if(input.value.trim()&&!confirm('Replace the current question with a voice transcript?'))return;
+    if(!confirm('Use your microphone for general software questions? Your browser may send audio to its speech recognition provider. Do not speak passwords or student records.'))return;
+    try{
+      const r=new Recognition();recognition=r;r.lang=lang.value;r.continuous=false;r.interimResults=false;r.maxAlternatives=1;
+      r.onstart=()=>{if(recognition!==r)return;mic.setAttribute('aria-pressed','true');mic.textContent='■';status.textContent='Listening… tap again to stop.'};
+      r.onresult=e=>{if(recognition!==r||!open)return;const text=Array.from(e.results).map(v=>v[0]?.transcript||'').join(' ').trim().slice(0,1200);if(text){input.value=text;status.textContent='Voice question transcribed. Review it and press Send.'}};
+      r.onerror=e=>{if(recognition===r)status.textContent='Voice recognition unavailable ('+e.error+'). You can type instead.'};
+      r.onend=()=>{if(recognition!==r)return;recognition=null;mic.setAttribute('aria-pressed','false');mic.textContent='🎙️';if(status.textContent.startsWith('Listening'))status.textContent='Listening stopped. Review your question or type it.'};
+      r.start();
+    }catch(e){stopVoice();status.textContent='Could not start microphone. Use typing instead.'}
+  });
+  read.addEventListener('click',()=>{
+    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance||!lastAnswer)return;
+    if(speaking){window.speechSynthesis.cancel();speaking=false;read.textContent='Listen to reply';return}
+    const u=new SpeechSynthesisUtterance(lastAnswer);const language=/[\u0600-\u06ff]/.test(lastAnswer)?'ur-PK':lang.value;u.lang=language;const voices=window.speechSynthesis.getVoices();const voice=voices.find(v=>v.lang.toLowerCase().startsWith(language.slice(0,2)));if(voice)u.voice=voice;
+    u.onend=u.onerror=()=>{speaking=false;read.textContent='Listen to reply'};speaking=true;read.textContent='Stop reading';window.speechSynthesis.speak(u)
+  });
 
   function mobile() {
     return window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
@@ -87,6 +118,7 @@
       if (!mobile()) input.focus();
       messages.scrollTop = messages.scrollHeight;
     } else {
+      stopVoice();
       if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
       returnFocus = null;
     }
@@ -147,7 +179,9 @@
       return;
     }
 
+    stopVoice();lastAnswer='';read.disabled=true;
     busy = true;
+    mic.disabled=true;
     send.disabled = true;
     clear.disabled = true;
     send.textContent = 'Sending…';
@@ -178,6 +212,7 @@
       const answer = typeof data.text === 'string' ? data.text.trim() : '';
       if (!answer) throw new Error('No reply was returned. Please try again.');
       reply.textContent = answer;
+      lastAnswer=answer;read.disabled=!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
       reply.classList.remove('loading');
       history.push({role:'user',text:question}, {role:'model',text:answer});
       history = history.slice(-8);
@@ -194,6 +229,7 @@
     } finally {
       if (timeout !== null) clearTimeout(timeout);
       busy = false;
+      mic.disabled=!Recognition;
       send.disabled = false;
       clear.disabled = false;
       send.textContent = 'Send';
@@ -207,6 +243,7 @@
   form.addEventListener('submit', handleUserMessage);
   clear.addEventListener('click', () => {
     if (busy) return;
+    stopVoice();lastAnswer='';read.disabled=true;
     messages.replaceChildren();
     bubble(welcome, 'bot');
     history = [];
@@ -221,6 +258,7 @@
     window.visualViewport.addEventListener('scroll', fitMobileKeyboard);
   }
   window.addEventListener('resize', fitMobileKeyboard);
+  window.addEventListener('pagehide',stopVoice);
 
   // Expose a minimal test interface; this contains no credentials or secrets.
   window.__askLamaUI = {setOpen, handleUserMessage, isOpen:()=>open, isBusy:()=>busy};

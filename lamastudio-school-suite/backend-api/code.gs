@@ -1836,6 +1836,7 @@ function handleRequest(params) {
         }
         if (['staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance'].indexOf(action)!==-1)
             return {status:'success',result:lamaStaffAction_(params)};
+        if (action==='planningSaveBatch')return {status:'success',result:lamaPlanningSaveBatch_(params)};
         if (action==='teacherHomeworkBatch')return {status:'success',result:lamaTeacherHomeworkBatch_(params)};
         if (action==='teacherUpdateStudentProfile')return {status:'success',result:lamaTeacherUpdateStudentProfile_(params)};
         if (/^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action)) return {status:'success',result:lamaFeeAction_(params)};
@@ -2192,7 +2193,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -2898,4 +2899,47 @@ function lamaStudentPlanningVisible_(row,student){
  if(!String(student.class||'').trim())return false;
  if(!grade)return row.category==='planning-event'&&!section&&!String(p.teacherId||'').trim();
  return sameClass(grade,student.class)&&(!section||(!!String(student.section||'').trim()&&sameClass(section,student.section)));
+}
+
+/** Save a prepared group of lessons in one authenticated request. No whole-sheet replacement. */
+function lamaPlanningSaveBatch_(p){
+ const ctx=lamaStaffAdminContext_(p,true),jobs=p.jobs;
+ if(!Array.isArray(jobs)||!jobs.length||jobs.length>100)throw Error('Submit 1–100 changed lessons.');
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Timetable is busy. Retry.');
+ try{
+  const data=lamaStaffRows_(ctx,'resources'),all=data.items,parse=r=>{try{return JSON.parse(r.description||'{}')}catch(e){return {}}};
+  const dayNames=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const time=v=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v||''));
+  const cls=r=>normalizeSchoolClass(r.grade)+'|'+String(r.section||'').trim().toLowerCase().replace(/\s+/g,'');
+  const sameSlot=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&Number(a.period)===Number(b.period)&&cls(a)===cls(b);
+  const overlaps=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&a.start<b.end&&a.end>b.start&&(cls(a)===cls(b)||String(a.teacherId)===String(b.teacherId));
+  const periods=all.filter(x=>x.record.category==='planning-period').map(x=>({row:x.row,record:x.record,payload:parse(x.record)}));
+  const teachers=lamaStaffRows_(ctx,'teachers').items.map(x=>x.record).filter(t=>String(t.status||'Active').toLowerCase()==='active');
+  const curr=all.find(x=>x.record.category==='school-curriculum'&&x.record.title==='LAMA School Class Subjects'),doc=curr?parse(curr.record):{};
+  const configured=String(doc.schoolId)===String(ctx.schoolId)&&Array.isArray(doc.classes)?doc.classes:[];
+  const updates=[],seenIds=new Set(),now=new Date().toISOString();
+  for(const j of jobs){
+   const r=j.payload||{},id=String(j.id||''),old=id?periods.find(x=>String(x.record.id)===id):null;
+   if(id&&(!old||seenIds.has(id)))throw Error('Lesson changed or repeated. Reload before saving.');
+   if(old&&JSON.stringify(old.payload)!==JSON.stringify(j.expected))throw Error('A saved lesson changed. Reload before saving.');
+   if(id)seenIds.add(id);
+   if(!all.some(x=>x.record.category==='planning-session'&&String(x.record.id)===String(r.sessionId)))throw Error('Academic session unavailable.');
+   if(!dayNames.includes(r.day)||!Number.isInteger(r.period)||r.period<1||r.period>30||!time(r.start)||!time(r.end)||r.start>=r.end||!String(r.grade||'').trim()||!String(r.subject||'').trim()||typeof r.published!=='boolean')throw Error('Invalid lesson details.');
+   if(old&&!sameSlot(old.payload,r))throw Error('Batch editing cannot move a saved lesson to a different slot.');
+   const c=configured.find(x=>sameClass(x.name,r.grade)),sub=String(r.subject);
+   if(!(Array.isArray(c?.subjects)&&c.subjects.includes(sub))&&!(old&&old.payload.subject===sub))throw Error('Subject is not configured for '+r.grade+'.');
+   const t=teachers.find(x=>String(x.id)===String(r.teacherId));if(!t)throw Error('Choose an active teacher.');
+   const payload={sessionId:String(r.sessionId),day:r.day,period:r.period,start:r.start,end:r.end,grade:String(r.grade),section:String(r.section||''),subject:sub,teacherId:String(t.id),teacherName:String(t.name||t.fullName||t.teacherName||''),room:String(r.room||'').slice(0,80),published:r.published};
+   const record=Object.assign({},old?.record||{id:genId('res'),createdAt:now},{category:'planning-period',title:[payload.day,payload.grade,payload.period].join(' · '),description:JSON.stringify(payload),link:''});
+   updates.push({old,payload,record});
+  }
+  const remaining=periods.filter(x=>!seenIds.has(String(x.record.id))).map(x=>x.payload);
+  for(const u of updates){if(remaining.some(x=>sameSlot(x,u.payload)||overlaps(x,u.payload)))throw Error(u.payload.day+' P'+u.payload.period+': class or teacher conflict. No changes saved.');remaining.push(u.payload)}
+  // Validate the entire batch before writing, then write contiguous changed rows and new rows.
+  const edits=updates.filter(u=>u.old).sort((a,b)=>a.old.row-b.old.row),adds=updates.filter(u=>!u.old),sheet=data.info.sheet,headers=data.info.headers;
+  for(let i=0;i<edits.length;){let k=i+1;while(k<edits.length&&edits[k].old.row===edits[k-1].old.row+1)k++;sheet.getRange(edits[i].old.row,1,k-i,headers.length).setValues(edits.slice(i,k).map(u=>recordToRow(headers,u.record)));i=k}
+  if(adds.length){const first=sheet.getLastRow()+1;const extra=first+adds.length-1-sheet.getMaxRows();if(extra>0)sheet.insertRowsAfter(sheet.getMaxRows(),extra);sheet.getRange(first,1,adds.length,headers.length).setValues(adds.map(u=>recordToRow(headers,u.record)))}
+  SpreadsheetApp.flush();
+  return {records:updates.map(u=>u.record)};
+ }finally{lock.releaseLock()}
 }

@@ -176,7 +176,7 @@
 
         const standardClasses=['Kachi','ECCE','ECE','Playgroup','Nursery','KG','Prep',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
         const standardFees=['Tuition Fee','Admission Fee','Examination Fee','Parking Fee','Uniform Fee','Books Fee','Authorized School Fund','Transport Fee','Stationery Fee'];
-        let classSettings=[],feeSettings=[],curriculumRecord=null,curriculumReady=false,curriculumSchoolId='',schoolProfileReady=false;
+        let classSettings=[],feeSettings=[],curriculumRecord=null,curriculumReady=false,curriculumSchoolId='',schoolProfileReady=false,feeProfileSnapshot='';
         function escapeText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function renderClassSettings(){
           document.getElementById('offeredClasses').innerHTML=LamaClassSubjectPicker.render(classSettings,escapeText);renderFeeSettings();
@@ -184,6 +184,7 @@
         LamaClassSubjectPicker.bind(document.getElementById('offeredClasses'),()=>classSettings,renderClassSettings,
           text=>{document.getElementById('curriculumStatus').textContent=text},
           error=>showMessage('errorBanner',error));
+        function feeProfileVersion(s){return JSON.stringify([s.type||'',s.privateSub||'',s.offeredClassesJson||'',s.feeCategoriesJson||''])}
         function feeSchool(){return {type:document.getElementById('inType').value,privateSub:document.getElementById('inPrivateSub').value}}
         function renderFeeSettings(){
           const cls=classSettings.filter(c=>c.enabled).map(c=>c.name),school=feeSchool(),privateMode=LamaFeePolicy.vouchersAllowed(school);
@@ -337,7 +338,7 @@
         async function loadSettings() {
             let school = {};
             try {
-                school = await LamaAPI.getActiveSchool() || {};schoolProfileReady=!!school.schoolId;
+                school = await LamaAPI.getVerifiedSchoolConfig();schoolProfileReady=!!school.schoolId;feeProfileSnapshot=feeProfileVersion(school);
             } catch(e) {}
             
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
@@ -396,6 +397,7 @@
             try {
                 if(!curriculumReady||!schoolProfileReady)throw Error('School profile or curriculum not loaded. Reload settings before saving.');
                 patch.feeCategoriesJson=LamaFeePolicy.schedule(patch,feeSettings,classSettings.filter(x=>x.enabled).map(x=>x.name));
+                if(feeProfileVersion(await LamaAPI.getVerifiedSchoolConfig())!==feeProfileSnapshot)throw Error('School fee or class settings changed in another session. Reload before saving.');
                 const doc=LamaSchoolCurriculum.documentFor(classSettings,curriculumSchoolId),description=JSON.stringify(doc);
                 // Avoid silently overwriting another administrator's changes.
                 const remote=LamaSchoolCurriculum.read(await LamaAPI.list('resources'),curriculumSchoolId);
@@ -404,7 +406,7 @@
                      throw Error('Curriculum changed in another administrator session. Reload School Settings before saving.');
                 }
                 const updated=await LamaAPI.updateSchoolConfig(patch);
-                schoolProfileSaved=true;
+                schoolProfileSaved=true;feeProfileSnapshot=feeProfileVersion(updated);
                 if(JSON.stringify(LamaFeePolicy.categories(updated))!==JSON.stringify(LamaFeePolicy.categories(patch)))throw Error('Fee schedule save could not be verified. Reload settings.');
                 const saved=curriculumRecord?.id
                   ?await LamaAPI.update('resources',curriculumRecord.id,{description})

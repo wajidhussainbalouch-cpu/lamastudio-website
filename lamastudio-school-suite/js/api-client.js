@@ -97,6 +97,12 @@ const LamaAPI = (() => {
     try { const d=await callApi('getSchoolConfig',{},'POST'); const merged=Object.assign({},session,d.school); merged.schoolId=session.schoolId; merged.apiKey=session.apiKey; localStorage.setItem(key('school'),JSON.stringify(merged)); return merged; }
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
+  async function getVerifiedSchoolConfig() {
+    const session=getSession('school');if(!session?.schoolId)throw Error('School sign-in required.');
+    const d=await callApi('getSchoolConfig',{},'POST'),school=d.school;
+    if(!school||String(school.schoolId)!==String(session.schoolId))throw Error('School profile verification failed.');
+    return school;
+  }
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
   function deriveShortCode(name) { return String(name||'SCH').split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,3)||'SCH'; }
   return {
@@ -113,7 +119,7 @@ const LamaAPI = (() => {
     schoolAdminLogin: (schoolId, adminUsername, adminPassword) => callApi('schoolAdminLogin',{schoolId,adminUsername,adminPassword}),
     schoolAdminVerify: (schoolId, token) => callApi('schoolAdminVerify',{schoolId,token}),
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
-    getActiveSchool,updateSchoolConfig,deriveShortCode,
+    getActiveSchool,getVerifiedSchoolConfig,updateSchoolConfig,deriveShortCode,
     getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,

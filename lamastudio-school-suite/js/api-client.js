@@ -1,7 +1,7 @@
 /** Lama School Suite — role-isolated Google Apps Script API client */
 const API_URL = 'https://script.google.com/macros/s/AKfycbz8Num29Df94i-TNlX4ggN6nveyVLpoPDo4feStMXV3DuAx-JoRD3nZH1Q90kVuEH57/exec';
 const LamaAPI = (() => {
-  const ROLES = ['school','teacher','student','admin'];
+  const ROLES = ['school','teacher','student','admin','staff'];
   const legacyKey = 'lamastudio_session';
   const key = role => 'lamastudio_session_' + role;
   const activeKey = 'lamastudio_active_role';
@@ -29,13 +29,14 @@ const LamaAPI = (() => {
   function isLoggedIn(role) { return !!getSession(role); }
   function authFieldsFor(session) {
     if (!session) return {};
+    if (session.role === 'staff') return { role:'staff', schoolId:session.schoolId, staffId:session.staffId, apiKey:session.apiKey };
     if (session.role === 'teacher') return { role:'teacher', schoolId:session.schoolId, teacherId:session.teacherId || session.id, apiKey:session.apiKey };
     if (session.role === 'student') return { role:'student', schoolId:session.schoolId, studentId:session.studentId || session.id, apiKey:session.apiKey };
     if (session.role === 'admin') return { role:'admin', adminApiKey:session.adminApiKey };
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (activeRole()==='school' && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth'))));
+    const schoolScoped = ['staffAdminDirectory','staffAdminSave','staffSavePolicy'].includes(action) || (['list','get','add','update','remove'].includes(action) && payload.collection==='teacherAttendance' && activeRole()==='school') || /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (activeRole()==='school' && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth'))));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -115,6 +116,11 @@ const LamaAPI = (() => {
     reviewSchoolApplication:async(requestId,decision)=>(await callApi('reviewSchoolApplication',{requestId,decision})).result,
     login:(email,password)=>loginResult('login',{email,password},'school','school'),
     teacherLogin:(schoolId,email,password)=>loginResult('teacherLogin',{schoolId,email,password},'teacher','teacher'),
+    staffLogin:(schoolId,loginId,password)=>loginResult('staffLogin',{schoolId,loginId,password,role:'staff',apiKey:'',staffId:''},'result','staff'),
+    staffAdminDirectory:async()=>(await callApi('staffAdminDirectory')).result,
+    staffAdminSave:async staff=>(await callApi('staffAdminSave',{staff})).result,
+    staffSavePolicy:async policy=>(await callApi('staffSavePolicy',{policy})).result,
+    staffOwnAttendance:async month=>(await callApi('staffOwnAttendance',{month})).result,
     studentLogin:(schoolId,enrlNo,password)=>loginResult('studentLogin',{schoolId,enrlNo,password},'student','student'),
     schoolAdminSetup: (schoolId, ownerEmail, ownerPassword, adminUsername, adminPassword) => callApi('schoolAdminSetup',{schoolId,ownerEmail,ownerPassword,adminUsername,adminPassword}),
     schoolAdminLogin: (schoolId, adminUsername, adminPassword) => callApi('schoolAdminLogin',{schoolId,adminUsername,adminPassword}),
@@ -155,7 +161,7 @@ const LamaAPI = (() => {
     listSyllabusPlans:async()=>(await callApi('syllabusListPlans',{},'POST')).plans,
     getAdminSyllabusPlan:async planId=>{const data=await callApi('syllabusAdminReadPlan',{planId},'POST');return {plan:data.plan,audit:data.audit};},
     getPublishedSyllabusPlan:async planId=>(await callApi('syllabusPublishedPlans',{planId},'POST')).plan,
-    list:async collection=>(await callApi('list',{collection},['teachers','students','attendance','resources','homework'].includes(collection)?'POST':'GET')).records,
+    list:async collection=>(await callApi('list',{collection},['teachers','students','attendance','resources','homework','teacherAttendance'].includes(collection)?'POST':'GET')).records,
     get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,
     clearStudentAttendanceDate:async(date,className,previewOnly,confirmText)=>(await callApi('clearStudentAttendanceDate',{date,className,previewOnly,confirmText})).result,
     bulkDeleteStudents:async ids=>(await callApi('bulkDeleteStudents',{ids})).result,

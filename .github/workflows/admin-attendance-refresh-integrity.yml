@@ -1,0 +1,19 @@
+name: Admin Attendance Refresh Integrity
+on:
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/dashboard.html'
+      - 'lamastudio-school-suite/test-admin-attendance-refresh-truth.cjs'
+      - '.github/workflows/admin-attendance-refresh-integrity.yml'
+  push:
+    branches:
+      - 'fix/admin-attendance-refresh-truth-20261117'
+permissions:
+  contents: read
+jobs:
+  saved-register-truth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify actual staff and student saved register counts
+        run: node lamastudio-school-suite/test-admin-attendance-refresh-truth.cjs

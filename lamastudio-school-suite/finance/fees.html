@@ -6,7 +6,7 @@
 <title id="pageTitle">Fee Collection</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../assets/css/config.css">
-<script src="../js/api-client.js"></script>
+<script src="../js/api-client.js?v=20261119ledger"></script>
 <style>
 :root{color-scheme:dark}body{background:#081221;color:#e7f0f8;font-family:Inter,ui-sans-serif,system-ui,sans-serif}main{max-width:1240px!important}section.cyber-card,section.cyber-card-emerald{background:linear-gradient(145deg,#122238,#0d1a2d);border:1px solid #29425a;box-shadow:0 14px 35px #02091440;border-radius:22px}input,select{min-height:40px}button{transition:filter .18s,transform .18s}button:hover{filter:brightness(1.12)}button:active{transform:scale(.99)}#classFeeGrid label{display:flex;flex-direction:column;gap:4px;background:#152b40;border:1px solid #33526c;padding:12px;border-radius:14px;font-weight:700}#classFeeGrid input{font-size:15px;font-weight:700}#bulkMessage{font-weight:650}.r3-sub{color:#9cb3c8;font-size:12px}.r3-top{background:linear-gradient(110deg,#065f56,#0e5678);border-radius:18px;padding:17px 20px;color:white}.r3-date{letter-spacing:.3px}body.light-mode{background:#f1f6fa;color:#172b40;color-scheme:light}body.light-mode section.cyber-card,body.light-mode section.cyber-card-emerald{background:#fff;border-color:#c9d9e5;box-shadow:0 10px 26px #233f5d14}body.light-mode input,body.light-mode select{background:#f8fbff!important;color:#13283e!important;border-color:#b7ccda!important}body.light-mode .text-slate-400,body.light-mode .text-slate-500,body.light-mode .text-slate-300{color:#4e6379!important}body.light-mode #classFeeGrid label{background:#f1f8fd;color:#24394f;border-color:#cadfe9}body.light-mode .bg-slate-900,body.light-mode .bg-slate-950{background:#edf4fa!important}body.light-mode .text-white{color:#17324a!important}body.light-mode .r3-top .text-white{color:#fff!important}body.light-mode header a,body.light-mode header button{color:#fff!important}body.light-mode #classFeeGrid input{color:#102d43!important}body.light-mode td{color:#1e364c}body.light-mode .text-amber-300{color:#9a5a04!important}@media(max-width:640px){section.cyber-card,section.cyber-card-emerald{padding:15px!important}#classFeeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
@@ -30,10 +30,10 @@
 
     <main class="max-w-5xl mx-auto px-4 py-5 space-y-5">
 
-        <div class="r3-top"><h2 class="text-xl font-black text-white">Fee Management Workspace</h2><p class="text-xs text-white mt-1">1. Set class fees → 2. Generate list → 3. Edit student fees → 4. Save pending demands. Payments are recorded separately.</p></div>
+        <div class="r3-top"><h2 class="text-xl font-black text-white">Fee Management Workspace</h2><p class="text-xs text-white mt-1">Configure your school fee rates once in School Settings. View saved class rates and prepare filtered voucher estimates without modifying payment records.</p><div class="flex flex-wrap gap-2 mt-3"><a class="bg-white text-teal-900 font-bold text-xs px-4 py-3 rounded-xl" href="../settings.html">School Fee Settings</a><a class="bg-white text-teal-900 font-bold text-xs px-4 py-3 rounded-xl" href="fee-plan.html">Class Rates &amp; Voucher Estimates</a><a class="bg-white text-teal-900 font-bold text-xs px-4 py-3 rounded-xl" href="fee-ledger.html">Fee Ledger (pilot)</a></div></div>
         <!-- Bulk class billing -->
         <section class="cyber-card-emerald rounded-2xl p-5 space-y-3" aria-label="Class-wise bulk fee generation">
-          <h2 class="text-sm font-black text-emerald-400">Class-wise Monthly Fee Generator</h2>
+          <h2 class="text-sm font-black text-emerald-400">Legacy Class-wise Fee Entry</h2>
           <p class="text-xs text-slate-400">Set a different fee for each class, preview every student, edit individual amounts, then save. Existing entries for the same student and fee month are skipped by default. Preview does not save anything.</p>
           <div class="grid sm:grid-cols-3 gap-3 text-xs">
             <label>Fee month <input id="bulkMonth" type="month" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></label>
@@ -46,7 +46,7 @@
           <p id="bulkMessage" class="text-xs text-amber-300" aria-live="polite"></p>
           <div id="bulkPreviewWrap" class="hidden overflow-x-auto max-h-[450px] overflow-y-auto border border-slate-700 rounded-xl"><table class="w-full min-w-[650px] text-xs"><thead class="sticky top-0 bg-slate-900"><tr><th class="p-2">Include</th><th>Student</th><th>Enrollment</th><th>Class</th><th>Fee (Rs.)</th><th>Note</th></tr></thead><tbody id="bulkPreviewBody"></tbody></table></div>
           <button type="button" id="saveBulk" disabled class="bg-cyan-700 disabled:opacity-40 px-4 py-2.5 rounded-xl text-xs font-bold">Save selected fee entries</button>
-          <p class="text-[11px] text-slate-400">Class fee defaults are stored on this device only, not in Google Sheets. Existing legacy fee records without a billing month cannot always be matched reliably; review the preview before saving. Bulk saving uses existing API calls and may take time.</p>
+          <p class="text-[11px] text-slate-400">This legacy generator uses device-only amounts. The new shared class rates are in School Fee Settings and Class Rates &amp; Voucher Estimates. Do not use both workflows to bill the same student. Existing legacy fee records without a billing month cannot always be matched reliably; review the preview before saving. Bulk saving uses existing API calls and may take time.</p>
         </section>
 
         <!-- Add Fee Entry -->

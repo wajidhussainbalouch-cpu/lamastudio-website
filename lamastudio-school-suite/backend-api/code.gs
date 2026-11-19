@@ -428,6 +428,8 @@ function getSchoolConfig(schoolId, apiKey) {
 }
 
 function updateSchoolConfig(schoolId, apiKey, patch) {
+    const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('School settings are busy. Retry.');
+    try{
     assertSchoolWritable(schoolId);
     const match = authorizeSchool(schoolId, apiKey);
     const registry = getRegistrySheet();
@@ -472,6 +474,7 @@ function updateSchoolConfig(schoolId, apiKey, patch) {
     const newRow = latestHeaders.map(h => updated[h] !== undefined ? updated[h] : '');
     registry.getRange(match.rowIndex, 1, 1, latestHeaders.length).setValues([newRow]);
     return getSchoolConfig(schoolId, apiKey);
+    }finally{lock.releaseLock();}
 }
 
 // ============================================================================
@@ -1808,7 +1811,7 @@ function handleRequest(params) {
         }
         // Authenticate school administrators before resolving teacher-management credentials.
         // The API key remains server-side and is never returned to the browser.
-        const teacherScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
+        const teacherScoped = /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
             (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
@@ -1817,6 +1820,7 @@ function handleRequest(params) {
             if (!schoolRecord || schoolRecord.obj.status !== 'Active') throw new Error('School is not active.');
             params.apiKey = schoolRecord.obj.apiKey;
         }
+        if (/^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action)) return {status:'success',result:lamaFeeAction_(params)};
         const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
           params._auditActor=requireSchoolAdminWrite(params);
@@ -2168,7 +2172,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -2450,4 +2454,145 @@ function activateSchoolApplication_(p){
     setApplication_(a.sh,a.headers,row.index,{status:'Active',activatedAt:new Date().toISOString(),schoolId:school.schoolId,tokenHash:'',expiresAt:''});
     return {schoolId:school.schoolId,status:'Active'};
   }finally{lock.releaseLock();}
+}
+
+
+/* FEE LEDGER V1 — isolated, append-only journal. No generic CRUD access.
+ * Every operation is one row containing its complete balanced event.
+ * Enable only on a reconciled pilot school via Script Properties:
+ * LAMA_FEE_LEDGER_PILOT_<schoolId> = true
+ */
+const LAMA_FEE_JOURNAL_HEADERS_=['eventId','payload'];
+const LAMA_FEE_JOURNAL_TAB_='FeeLedgerJournalV1';
+function lamaFeeFail_(msg){throw Error(msg);}
+function lamaFeeText_(v,max){if(typeof v!=='string'||!v.trim()||v.trim().length>max)lamaFeeFail_('Invalid text field.');return v.trim();}
+function lamaFeeToken_(v){if(typeof v!=='string'||!/^[A-Za-z0-9_-]{12,100}$/.test(v))lamaFeeFail_('A stable request ID is required.');return v;}
+function lamaFeePaisa_(v){if(!Number.isSafeInteger(v)||v<=0||v>1000000000)lamaFeeFail_('Amount must be a positive integer in paisa.');return v;}
+function lamaFeeDate_(v){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)||!Number.isFinite(Date.parse(v+'T00:00:00Z'))||new Date(v+'T00:00:00Z').toISOString().slice(0,10)!==v)lamaFeeFail_('Valid date required.');return v;}
+function lamaFeeMonth_(v){if(typeof v!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(v))lamaFeeFail_('Valid billing month required.');return v;}
+function lamaFeeKey_(v){return String(v||'').trim().toLowerCase().replace(/\s+/g,' ');}
+function lamaFeeClassKey_(v){return String(v||'').trim().toLowerCase().replace(/^(class|grade|standard|std)[\s._-]+(?=\d)/,'').replace(/^0+(?=\d)/,'').replace(/\s+/g,'');}
+function lamaFeeTuition_(v){return ['tuitionfee','monthlyfee','schoolfee','tuition'].indexOf(lamaFeeKey_(v).replace(/\s+/g,''))!==-1;}
+function lamaFeePrivate_(s){return lamaFeeKey_(s.type)==='private'&&lamaFeeKey_(s.privateSub)==='standard private';}
+function lamaFeeArray_(v){let a=JSON.parse(v||'[]');if(!Array.isArray(a))lamaFeeFail_('Invalid school fee configuration.');return a;}
+function lamaFeePolicyStamp_(s){return JSON.stringify([s.type||'',s.privateSub||'',s.offeredClassesJson||'',s.feeCategoriesJson||'']);}
+function lamaFeeState_(){return {events:new Map(),demands:new Map(),keys:new Set(),receipts:new Map(),reversed:new Set(),paid:new Map()};}
+function lamaFeeApply_(state,e,schoolId){
+ if(!e||e.version!==1||e.schoolId!==schoolId||!e.actorId||!e.at||typeof e.fingerprint!=='string'||state.events.has(e.id))lamaFeeFail_('Invalid or duplicate fee journal event. Reconciliation required.');
+ lamaFeeToken_(e.id);
+ if(e.type==='issue'){
+  if(!Array.isArray(e.demands)||e.demands.length>50||(!e.demands.length&&(!Array.isArray(e.skipped)||!e.skipped.length)))lamaFeeFail_('Invalid issue event.');
+  const ids=new Set(),keys=new Set();
+  for(const d of e.demands){
+   lamaFeePaisa_(d.amountPaisa);lamaFeeDate_(d.dueDate);lamaFeeMonth_(d.month);
+   if(!d.id||!d.key||!d.studentId||!d.category||ids.has(d.id)||keys.has(d.key)||state.demands.has(d.id)||state.keys.has(d.key))lamaFeeFail_('Duplicate or invalid demand.');
+   ids.add(d.id);keys.add(d.key);
+  }
+  for(const d of e.demands){state.demands.set(d.id,d);state.keys.add(d.key);state.paid.set(d.id,0);}
+ }else if(e.type==='payment'){
+  lamaFeePaisa_(e.amountPaisa);
+  if(!e.studentId||!Array.isArray(e.allocations)||!e.allocations.length||e.allocations.length>50)lamaFeeFail_('Invalid receipt.');
+  const seen=new Set();let total=0;
+  for(const a of e.allocations){
+   const d=state.demands.get(a.demandId);lamaFeePaisa_(a.amountPaisa);
+   if(!d||d.studentId!==e.studentId||seen.has(a.demandId)||a.amountPaisa>d.amountPaisa-state.paid.get(d.id))lamaFeeFail_('Payment exceeds outstanding balance or has an invalid allocation.');
+   seen.add(a.demandId);total+=a.amountPaisa;
+  }
+  if(total!==e.amountPaisa)lamaFeeFail_('Receipt and allocations must balance exactly.');
+  for(const a of e.allocations)state.paid.set(a.demandId,state.paid.get(a.demandId)+a.amountPaisa);
+  state.receipts.set(e.id,e);
+ }else if(e.type==='reverse'){
+  const receipt=state.receipts.get(e.receiptId);
+  if(!receipt||state.reversed.has(e.receiptId)||!e.reason)lamaFeeFail_('Receipt unavailable or already reversed.');
+  for(const a of receipt.allocations)if(state.paid.get(a.demandId)<a.amountPaisa)lamaFeeFail_('Inconsistent payment journal.');
+  for(const a of receipt.allocations)state.paid.set(a.demandId,state.paid.get(a.demandId)-a.amountPaisa);
+  state.reversed.add(e.receiptId);
+ }else lamaFeeFail_('Unknown fee event.');
+ state.events.set(e.id,e);return e;
+}
+function lamaFeeReplay_(events,schoolId){const state=lamaFeeState_();for(const e of events)lamaFeeApply_(state,e,schoolId);return state;}
+function lamaFeeReport_(state,asOf){
+ const demands=Array.from(state.demands.values()).map(d=>{const paidPaisa=state.paid.get(d.id),balancePaisa=d.amountPaisa-paidPaisa;return Object.assign({},d,{paidPaisa,balancePaisa,status:balancePaisa===0?'Paid':paidPaisa?'Partial':'Unpaid',overdue:balancePaisa>0&&d.dueDate<asOf});});
+ return {demands,receipts:Array.from(state.receipts.values()).map(r=>({id:r.id,studentId:r.studentId,amountPaisa:r.amountPaisa,method:r.method,at:r.at,actorId:r.actorId,allocations:r.allocations,reversed:state.reversed.has(r.id)})),totals:demands.reduce((o,d)=>({billedPaisa:o.billedPaisa+d.amountPaisa,paidPaisa:o.paidPaisa+d.paidPaisa,balancePaisa:o.balancePaisa+d.balancePaisa}),{billedPaisa:0,paidPaisa:0,balancePaisa:0})};
+}
+function lamaFeeIssueRows_(school,students,request,state,now){
+ if(!lamaFeePrivate_(school))lamaFeeFail_('Issued private-school vouchers are disabled for this school type.');
+ if(request.policyStamp!==lamaFeePolicyStamp_(school))lamaFeeFail_('Fee policy changed. Reload and review the current class rates.');
+ const month=lamaFeeMonth_(request.month),dueDate=lamaFeeDate_(request.dueDate);
+ const studentIds=request.studentIds,categoryNames=request.categoryNames;
+ if(!Array.isArray(studentIds)||!studentIds.length||studentIds.length>50||new Set(studentIds).size!==studentIds.length||studentIds.some(id=>typeof id!=='string'||!id))lamaFeeFail_('Select 1–50 unique students.');
+ if(!Array.isArray(categoryNames)||!categoryNames.length||categoryNames.length>12||categoryNames.some(n=>typeof n!=='string'||!n.trim()))lamaFeeFail_('Select fee categories.');
+ const names=categoryNames.map(lamaFeeKey_);if(new Set(names).size!==names.length)lamaFeeFail_('Duplicate category.');
+ const categories=lamaFeeArray_(school.feeCategoriesJson).filter(c=>c.enabled===true&&names.indexOf(lamaFeeKey_(c.name))!==-1);
+ if(categories.length!==names.length)lamaFeeFail_('Fee category unavailable.');
+ const classes=new Set(lamaFeeArray_(school.offeredClassesJson).map(c=>lamaFeeClassKey_(c.name)));
+ const byId=new Map(students.map(s=>[String(s.id),s])),newDemands=[],skipped=[];
+ for(const c of categories){if(Array.from(state.demands.values()).some(d=>lamaFeeKey_(d.category)===lamaFeeKey_(c.name)&&d.cadence!==c.cadence))lamaFeeFail_('Billing frequency changed for an issued category. Reconciliation required before issuing again.');}
+ const keys=new Set(state.keys);
+ for(const id of studentIds){
+  const st=byId.get(id);if(!st||!classes.has(lamaFeeClassKey_(st.class)))lamaFeeFail_('Student is not in a configured school class.');
+  for(const cat of categories){
+   const cadence=cat.cadence;if(['monthly','one-time','as-needed'].indexOf(cadence)===-1)lamaFeeFail_('Set category frequency in School Settings first.');
+   const rates=(Array.isArray(cat.rates)?cat.rates:[]).filter(r=>lamaFeeClassKey_(r.className)===lamaFeeClassKey_(st.class));
+   if(rates.length!==1||typeof rates[0].amount!=='number'||!Number.isFinite(rates[0].amount)||rates[0].amount<0||Math.abs(rates[0].amount*100-Math.round(rates[0].amount*100))>1e-6)lamaFeeFail_('Missing or invalid class rate for '+cat.name+'.');
+   const amount=Math.round(rates[0].amount*100);if(!amount){skipped.push({studentId:id,category:cat.name,reason:'zero-rate'});continue;}lamaFeePaisa_(amount);
+   const period=cadence==='monthly'?'month:'+month:cadence==='one-time'?'once':'event:'+lamaFeeKey_(lamaFeeText_(request.eventRef,80));
+   const key=JSON.stringify([id,lamaFeeKey_(cat.name),period]);
+   if(keys.has(key)){skipped.push({studentId:id,category:cat.name,reason:'existing-demand'});continue;}
+   keys.add(key);
+   newDemands.push({id:genId('fd'),key,studentId:id,studentName:String(st.name||'').slice(0,150),enrollment:String(st.enrlNo||'').slice(0,80),className:String(st.class||''),section:String(st.section||''),category:cat.name,cadence,period,month,dueDate,amountPaisa:amount,issuedAt:now});
+  }
+ }
+ if(newDemands.length>50)lamaFeeFail_('Limit each issue batch to 50 fee items.');
+ return {demands:newDemands,skipped};
+}
+function lamaFeeAction_(p){
+ if((p.role||'school')!=='school')lamaFeeFail_('Verified school administrator required.');
+ const actor=verifySchoolAdminToken(p),school=authorizeSchool(p.schoolId,p.apiKey).obj,schoolId=String(school.schoolId);
+ const pilot=PropertiesService.getScriptProperties().getProperty('LAMA_FEE_LEDGER_PILOT_'+schoolId)==='true';
+ if(!pilot)lamaFeeFail_('Fee ledger pilot is not enabled for this school. Existing finance records are unchanged.');
+ const read=p.action==='feeLedgerRead';if(!read)assertSchoolWritable(schoolId);
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))lamaFeeFail_('Fee journal is busy. Retry using the same request ID.');
+ try{
+  // Re-authorize after acquiring the lock. Keep original legacy Fees tab isolated.
+  const verifiedActor=verifySchoolAdminToken(p),fresh=authorizeSchool(schoolId,p.apiKey).obj;
+  if(verifiedActor.id!==actor.id)lamaFeeFail_('Administrator changed.');
+  if(!read)assertSchoolWritable(schoolId);
+  if(PropertiesService.getScriptProperties().getProperty('LAMA_FEE_LEDGER_PILOT_'+schoolId)!=='true')lamaFeeFail_('Fee ledger pilot is disabled.');
+  const ss=SpreadsheetApp.openById(fresh.sheetId);
+  let sheet=ss.getSheetByName(LAMA_FEE_JOURNAL_TAB_);
+  let events=[];
+  if(sheet){
+   const rows=sheet.getDataRange().getValues();
+   if(JSON.stringify(rows[0])!==JSON.stringify(LAMA_FEE_JOURNAL_HEADERS_))lamaFeeFail_('Unexpected fee journal headers. Reconciliation required.');
+   events=rows.slice(1).map(row=>{const e=JSON.parse(row[1]);if(row[0]!==e.id)lamaFeeFail_('Journal ID mismatch.');return e;});
+  }
+  const state=lamaFeeReplay_(events,schoolId),today=Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd');
+  if(read)return {version:1,schoolId,policyStamp:lamaFeePolicyStamp_(fresh),privateVouchers:lamaFeePrivate_(fresh),writable:!subscriptionView(fresh).readOnly,report:lamaFeeReport_(state,today)};
+  const id=lamaFeeToken_(p.requestId),request=p.request;
+  if(!request||typeof request!=='object'||Array.isArray(request))lamaFeeFail_('Request details required.');
+  const fingerprint=JSON.stringify([p.action,request]);if(fingerprint.length>12000)lamaFeeFail_('Request is too large.');
+  const previous=state.events.get(id);
+  if(previous){if(previous.fingerprint!==fingerprint)lamaFeeFail_('Request ID was already used for different details.');return {replayed:true,event:previous,report:lamaFeeReport_(state,today)};}
+  const now=new Date().toISOString();
+  const e={version:1,id,schoolId,actorId:actor.id,actorName:String(actor.name||''),at:now,fingerprint};
+  if(p.action==='feeLedgerIssue'){
+   const ctx={role:'school',schoolId,ss},students=listRecords(ctx,'students');
+   const batch=lamaFeeIssueRows_(fresh,students,request,state,now);
+   Object.assign(e,{type:'issue',demands:batch.demands,skipped:batch.skipped});
+  }else if(p.action==='feeLedgerPay'){
+   // Existing demands can still be settled after a school type/rate change.
+   Object.assign(e,{type:'payment',studentId:lamaFeeText_(request.studentId,150),amountPaisa:lamaFeePaisa_(request.amountPaisa),method:lamaFeeText_(request.method,40),allocations:Array.isArray(request.allocations)?request.allocations.map(a=>({demandId:lamaFeeText_(a.demandId,150),amountPaisa:lamaFeePaisa_(a.amountPaisa)})):null});
+   if(['Cash','Bank','Online','Other'].indexOf(e.method)===-1)lamaFeeFail_('Choose a valid payment method.');
+  }else if(p.action==='feeLedgerReverse'){
+   Object.assign(e,{type:'reverse',receiptId:lamaFeeToken_(request.receiptId),reason:lamaFeeText_(request.reason,300)});
+  }else lamaFeeFail_('Unknown fee ledger action.');
+  lamaFeeApply_(state,e,schoolId);
+  const payload=JSON.stringify(e);if(payload.length>45000)lamaFeeFail_('Journal event is too large. Use a smaller batch.');
+  if(!sheet){sheet=ss.insertSheet(LAMA_FEE_JOURNAL_TAB_);sheet.appendRow(LAMA_FEE_JOURNAL_HEADERS_);sheet.setFrozenRows(1);}
+  // One append stores allocations and receipt together. Uncertain network outcomes
+  // must be retried with the exact request ID; never issue a new payment ID on retry.
+  sheet.appendRow([e.id,payload]);SpreadsheetApp.flush();
+  return {replayed:false,event:e,report:lamaFeeReport_(state,today)};
+ }finally{lock.releaseLock();}
 }

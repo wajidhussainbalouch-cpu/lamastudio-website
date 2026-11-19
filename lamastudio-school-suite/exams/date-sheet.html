@@ -131,7 +131,7 @@
 }
 @media screen { .print-copy { display:none!important; } }
     </style>
-</head>
+<script src="../js/school-curriculum.js"></script><script src="../js/academic-config.js?v=20261119"></script></head>
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
     <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-md dark:shadow-lg no-print">
@@ -257,7 +257,7 @@
 
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Subject Presets by Level</label>
+                        <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Subjects from School Settings</label>
                     </div>
                     <div class="flex gap-1 mb-2">
                         <button type="button" onclick="switchPresetLevel('primary')" id="tab-primary" class="flex-1 py-1 px-2 text-[11px] font-bold rounded-lg bg-sky-600 text-white transition">Primary</button>
@@ -354,27 +354,17 @@
     </main>
 
     <script>
-        const ALL_GRADES = [
-            'PG', 'KG', 'Prep', 'ECCE',
-            'Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5',
-            'Grade-6', 'Grade-7', 'Grade-8', 'Grade-9', 'Grade-10',
-            'Grade-11', 'Grade-12'
-        ];
-
-        const SUBJECT_PRESETS_BY_LEVEL = {
-            primary: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'G Knowledge', 'Science', 'SSt', 'Nazra', 'Computer', 'Drawing', 'Dictation'],
-            middle: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Science', 'History', 'Geography', 'Arabic', 'Tarjama-tul-Quran', 'Computer', 'Drawing'],
-            high: ['English', 'Urdu', 'Mathematics', 'Islamiat', 'Physics', 'Chemistry', 'Biology', 'Pakistan Studies', 'Computer Studies', 'Tarjama-tul-Quran'],
-            higher: ['English', 'Urdu', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Economics', 'Statistics', 'Islamic Education', 'Pakistan Studies']
-        };
-
+        let ALL_GRADES=[],academicConfig=null;
+        const savedGrades=()=>LamaAcademicConfig.union(academicConfig,dateSheetEntries.flatMap(e=>Object.keys(e.subjects||{})));
+        function editorGrades(){const id=document.getElementById('editId').value;const old=dateSheetEntries.find(e=>String(e.id||e._id)===id);return LamaAcademicConfig.union(academicConfig,Object.keys(old?.subjects||{}))}
+        function configureRanges(){for(const id of ['rangeStart','rangeEnd']){const el=document.getElementById(id);el.replaceChildren(...ALL_GRADES.map(g=>new Option(g,g)));if(id==='rangeEnd'&&ALL_GRADES.length)el.value=ALL_GRADES.at(-1)}}
         let currentPresetLevel = 'primary';
         let dateSheetEntries = [];
         let activeSchoolName = "School";
         let activeSchoolLogo = "";
         let activeSchoolId = "";
         let schoolAdminAuthorized = false;
-        let rememberedGradeSelection = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+        let rememberedGradeSelection = [];
         let rememberedGradeMode = 'custom';
         let rememberedExamTitle = 'SBA First Term Examination 2026';
 
@@ -441,7 +431,7 @@
         function initFilterDropdown() {
             const select = document.getElementById('filterClass');
             select.innerHTML = `<option value="ALL">All Classes (Full Matrix)</option>` +
-                ALL_GRADES.map(g => `<option value="${g}">${g}</option>`).join('');
+                savedGrades().map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
         }
 
         function updatePrintLayoutClass() {
@@ -520,10 +510,10 @@
 
         function initGradeCheckboxes() {
             const container = document.getElementById('gradeCheckboxes');
-            container.innerHTML = ALL_GRADES.map(g => `
+            container.innerHTML = editorGrades().map(g => `
                 <label class="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                    <input type="checkbox" value="${g}" class="grade-cb rounded border-slate-300 text-sky-600 focus:ring-0" ${rememberedGradeSelection.includes(g) ? 'checked' : ''} onchange="updateGradeInputs()">
-                    <span>${g}</span>
+                    <input type="checkbox" value="${escapeHtml(g)}" class="grade-cb rounded border-slate-300 text-sky-600 focus:ring-0" ${rememberedGradeSelection.includes(g) ? 'checked' : ''} onchange="updateGradeInputs()">
+                    <span>${escapeHtml(g)}</span>
                 </label>
             `).join('');
         }
@@ -541,23 +531,13 @@
             initPresets();
         }
 
-        function initPresets() {
-            const container = document.getElementById('presetChips');
-            const subjects = SUBJECT_PRESETS_BY_LEVEL[currentPresetLevel] || [];
-            container.innerHTML = subjects.map(sub => `
-                <button type="button" onclick="insertSubjectPreset('${sub}')" class="px-2 py-1 bg-white dark:bg-slate-800 hover:bg-sky-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium transition">
-                    + ${sub}
-                </button>
-            `).join('');
+        function initPresets(){
+            const container=document.getElementById('presetChips');container.replaceChildren();
+            const values=[...new Set(getSelectedGrades().flatMap(g=>LamaAcademicConfig.subjects(academicConfig,g)))];
+            for(const sub of values){const b=document.createElement('button');b.type='button';b.className='px-2 py-1 border rounded-lg text-xs';b.textContent='+ '+sub;b.onclick=()=>insertSubjectPreset(sub);container.append(b)}
+            if(!values.length)container.textContent='Select classes with saved subjects in School Settings.';
         }
-
-        function insertSubjectPreset(sub) {
-            const firstInput = document.querySelector('.grade-subject-input');
-            if (firstInput) {
-                firstInput.value = sub;
-                triggerAutoFill(firstInput);
-            }
-        }
+        function insertSubjectPreset(sub){for(const input of document.querySelectorAll('.grade-subject-input'))if([...input.options].some(o=>o.value===sub))input.value=sub;renderMatrixSheet();}
 
         function onGradeModeChange() {
             const mode = document.getElementById('gradeMode').value;
@@ -582,28 +562,29 @@
                 if (sIdx <= eIdx && sIdx !== -1 && eIdx !== -1) {
                     return ALL_GRADES.slice(sIdx, eIdx + 1);
                 }
-                return [start];
+                return ALL_GRADES.includes(start)?[start]:[];
             } else {
                 const cbs = document.querySelectorAll('.grade-cb:checked');
                 const list = Array.from(cbs).map(cb => cb.value);
-                return list.length > 0 ? list : ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+                return list;
             }
         }
 
-        function updateGradeInputs(existingValues = {}) {
-            const grades = getSelectedGrades();
-            rememberedGradeSelection = grades;
-            const container = document.getElementById('gradesContainer');
-
-            container.innerHTML = grades.map((g, idx) => {
-                const val = existingValues[g] || (idx === 0 ? (document.querySelector('.grade-subject-input')?.value || '') : '');
-                return `
-                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800">
-                        <span class="w-24 text-xs font-bold text-slate-700 dark:text-slate-300 truncate">${g}</span>
-                        <input type="text" data-grade="${g}" value="${val}" placeholder="Subject name" oninput="triggerAutoFill(this)" class="grade-subject-input flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-sky-500">
-                    </div>
-                `;
-            }).join('');
+        function updateGradeInputs(existingValues = {}){
+            const grades=getSelectedGrades();rememberedGradeSelection=grades;
+            const container=document.getElementById('gradesContainer');
+            const previous=Object.fromEntries([...container.querySelectorAll('.grade-subject-input')].map(x=>[x.dataset.grade,x.value]));
+            const editId=document.getElementById('editId').value,old=dateSheetEntries.find(e=>String(e.id||e._id)===editId);
+            container.replaceChildren();
+            for(const g of grades){
+                const row=document.createElement('div');row.className='flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border';
+                const label=document.createElement('span');label.className='w-24 text-xs font-bold';label.textContent=g;
+                const sel=document.createElement('select');sel.className='grade-subject-input flex-1 min-w-0 bg-white dark:bg-slate-800 border rounded px-2 py-2 text-xs';sel.dataset.grade=g;
+                const values=[...LamaAcademicConfig.subjects(academicConfig,g)],historical=old?.subjects?.[g];if(historical&&!values.includes(historical))values.push(historical);
+                LamaAcademicConfig.list(sel,values,values.length?'Choose subject':'No configured subjects',existingValues[g]??previous[g]??'');
+                sel.onchange=()=>triggerAutoFill(sel);row.append(label,sel);container.append(row)
+            }
+            initPresets();
         }
 
         let lastFirstVal = '';
@@ -613,7 +594,7 @@
                 const newVal = input.value;
                 for (let i = 1; i < inputs.length; i++) {
                     if (!inputs[i].value || inputs[i].value === lastFirstVal) {
-                        inputs[i].value = newVal;
+                        if([...inputs[i].options].some(o=>o.value===newVal))inputs[i].value = newVal;
                     }
                 }
                 lastFirstVal = newVal;
@@ -645,6 +626,8 @@
                 subjects[inp.dataset.grade] = inp.value.trim();
             });
 
+            const prior=dateSheetEntries.find(e=>String(e.id||e._id)===editId);
+            if(!Object.keys(subjects).length||Object.entries(subjects).some(([g,sub])=>!sub||(!LamaAcademicConfig.matches(academicConfig,g,sub)&&prior?.subjects?.[g]!==sub)))return alert('Select a configured subject for each selected class.');
             const record = {
                 id: editId || 'entry-' + Date.now(),
                 examTitle,
@@ -699,7 +682,7 @@
             document.getElementById('invigilator').value = '';
             document.getElementById('isPublished').checked = false;
             document.getElementById('examTitle').value = rememberedExamTitle;
-            updateGradeInputs();
+            rememberedGradeSelection=rememberedGradeSelection.filter(g=>ALL_GRADES.includes(g));initGradeCheckboxes();document.getElementById('gradesContainer').replaceChildren();updateGradeInputs();
         }
 
         function editEntry(id) {
@@ -717,7 +700,7 @@
             const subjectsMap = item.subjects || {};
             const grades = Object.keys(subjectsMap);
             if (grades.length > 0) {
-                rememberedGradeSelection = grades;
+                rememberedGradeSelection = grades;document.getElementById('gradeMode').value='custom';document.getElementById('customGradesBox').classList.remove('hidden');document.getElementById('rangeGradesBox').classList.add('hidden');initGradeCheckboxes();
                 document.querySelectorAll('.grade-cb').forEach(cb => {
                     cb.checked = grades.includes(cb.value);
                 });
@@ -765,9 +748,9 @@
                     Object.keys(e.subjects).forEach(g => gradeSet.add(g));
                 }
             });
-            let activeGrades = ALL_GRADES.filter(g => gradeSet.has(g));
+            let activeGrades = savedGrades().filter(g => gradeSet.has(g));
             if (activeGrades.length === 0) {
-                activeGrades = ['Grade-1', 'Grade-2', 'Grade-3', 'Grade-4', 'Grade-5'];
+                activeGrades = ALL_GRADES.slice();
             }
 
             if (filterClass !== 'ALL') {
@@ -879,7 +862,8 @@
             try {
                 await fetchSchoolProfile();
                 await loadEntries();
-                initGradeCheckboxes();
+                try{academicConfig=await LamaAcademicConfig.load()}catch(e){academicConfig=null;const note=document.createElement('p');note.className='no-print text-sm text-amber-500 p-3';note.textContent='Curriculum unavailable: '+e.message+'. Existing dates remain readable.';document.querySelector('main').before(note)}
+                ALL_GRADES=LamaAcademicConfig.names(academicConfig);rememberedGradeSelection=ALL_GRADES.slice();configureRanges();initGradeCheckboxes();
                 initPresets();
                 document.getElementById('examTitle').value = rememberedExamTitle;
                 updateGradeInputs();

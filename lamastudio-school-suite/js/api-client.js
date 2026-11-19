@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -98,9 +98,10 @@ const LamaAPI = (() => {
     catch(e) { console.warn('School profile unavailable:',e.message); return session; }
   }
   async function getVerifiedSchoolConfig() {
-    const session=getSession('school');if(!session?.schoolId)throw Error('School sign-in required.');
+    const session=getSession('school'),auth=parse(sessionStorage.getItem('lama_school_admin_auth'));const expected=session?.schoolId||auth?.schoolId;if(!expected)throw Error('School sign-in required.');
+    if(session?.schoolId&&auth?.schoolId&&String(session.schoolId)!==String(auth.schoolId))throw Error('School login and administrator session do not match.');
     const d=await callApi('getSchoolConfig',{},'POST'),school=d.school;
-    if(!school||String(school.schoolId)!==String(session.schoolId))throw Error('School profile verification failed.');
+    if(!school||String(school.schoolId)!==String(expected))throw Error('School profile verification failed.');
     return school;
   }
   async function updateSchoolConfig(patch) { const d=await callApi('updateSchoolConfig',{patch}); setSession(Object.assign({},getSession(),d.school)); return d.school; }
@@ -121,6 +122,11 @@ const LamaAPI = (() => {
     adminLogin:password=>loginResult('adminLogin',{password},'admin','admin'),
     getActiveSchool,getVerifiedSchoolConfig,updateSchoolConfig,deriveShortCode,
     getDashboardStats:async()=> (await callApi('getDashboardStats',{},'GET')).stats,
+    // Pilot ledger: keep requestId and the exact payload for uncertain retries.
+    feeLedgerRead:async()=> (await callApi('feeLedgerRead',{},'POST')).result,
+    feeLedgerIssue:async(requestId,request)=> (await callApi('feeLedgerIssue',{requestId,request},'POST')).result,
+    feeLedgerPay:async(requestId,request)=> (await callApi('feeLedgerPay',{requestId,request},'POST')).result,
+    feeLedgerReverse:async(requestId,request)=> (await callApi('feeLedgerReverse',{requestId,request},'POST')).result,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,
     pingTeacher:async(teacherId,message)=>(await callApi('pingTeacher',{teacherId,message})).ping,

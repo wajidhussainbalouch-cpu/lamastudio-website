@@ -79,7 +79,15 @@ const COLLECTIONS = {
     },
     teacherAttendance: {
         tab: 'TeacherAttendance',
-        headers: ['id', 'teacherId', 'teacherName', 'date', 'status', 'markedBy', 'createdAt', 'remarks']
+        headers: ['id', 'teacherId', 'teacherName', 'date', 'status', 'markedBy', 'createdAt', 'remarks', 'leaveType']
+    },
+    nonTeachingStaff: {
+        tab: 'NonTeachingStaff',
+        headers: ['id','name','loginId','passwordHash','apiKey','designation','contact','joiningDate','status','createdAt']
+    },
+    staffAttendancePolicy: {
+        tab: 'StaffAttendancePolicy',
+        headers: ['id','policyJson','createdAt']
     },
     studentRequests: {
         tab: 'StudentRequests',
@@ -924,6 +932,7 @@ function teacherStudentAccess_(ctx,record){
 }
 
 function checkPermission(ctx, action, collection) {
+    if (['nonTeachingStaff','staffAttendancePolicy'].indexOf(collection)!==-1) throw Error('Use the dedicated staff management actions.');
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
         if (collection === 'studentRequests' && ['list','get','update'].indexOf(action) !== -1) return;
@@ -1817,13 +1826,15 @@ function handleRequest(params) {
         // The API key remains server-side and is never returned to the browser.
         const teacherScoped = /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].indexOf(action)!==-1 && params.collection === 'notifications') || action === 'syllabusSchoolProgress' || action === 'syllabusAdminProgress' || action === 'syllabusCreateDraft' || action === 'syllabusChangeStatus' || action === 'syllabusListPlans' || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getTeacherManagementBootstrap' || action === 'getSchoolClassOptions' || action === 'addTeacher' ||
             (['list','get','add','update','remove','delete'].indexOf(action) !== -1 && params.collection === 'teachers') ||
-            (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school');
+            (action === 'list' && ['students','attendance'].indexOf(params.collection) !== -1 && (params.role || 'school') === 'school') || (['list','get','add','update','remove'].indexOf(action)!==-1 && params.collection==='teacherAttendance' && (params.role||'school')==='school');
         if (teacherScoped && params.token && params.schoolId && (params.role || 'school') === 'school') {
             verifySchoolAdminToken(params);
             const schoolRecord = findSchoolRow(getRegistrySheet(), r => String(r.schoolId) === String(params.schoolId));
             if (!schoolRecord || schoolRecord.obj.status !== 'Active') throw new Error('School is not active.');
             params.apiKey = schoolRecord.obj.apiKey;
         }
+        if (['staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance'].indexOf(action)!==-1)
+            return {status:'success',result:lamaStaffAction_(params)};
         if (action==='teacherHomeworkBatch')return {status:'success',result:lamaTeacherHomeworkBatch_(params)};
         if (action==='teacherUpdateStudentProfile')return {status:'success',result:lamaTeacherUpdateStudentProfile_(params)};
         if (/^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action)) return {status:'success',result:lamaFeeAction_(params)};
@@ -2148,8 +2159,10 @@ function handleRequest(params) {
             case 'get':
                 return { status: 'success', record: getRecord(resolveContext(params), params.collection, params.id) };
             case 'add':
+                if(params.collection==='teacherAttendance')return {status:'success',record:lamaStaffAttendanceWrite_(params,'add')};
                 return { status: 'success', record: addRecord(resolveContext(params), params.collection, params.record || {}) };
             case 'update':
+                if(params.collection==='teacherAttendance')return {status:'success',record:lamaStaffAttendanceWrite_(params,'update')};
                 return { status: 'success', record: updateRecord(resolveContext(params), params.collection, params.id, params.patch || {}) };
             case 'remove':
                 removeRecord(resolveContext(params), params.collection, params.id);
@@ -2178,7 +2191,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -2727,4 +2740,136 @@ function lamaTeacherHomeworkBatch_(p){
   }
   return {records:[],skipped,replayed:false};
  }finally{lock.releaseLock();}
+}
+
+// ==== Staff attendance and non-teaching employee accounts, November 2026 ====
+function lamaStaffRows_(ctx,collection){
+ const info=getCollectionSheet(ctx,collection),data=info.sheet.getDataRange().getValues();
+ return {info:info,items:data.slice(1).map(function(r,i){return {row:i+2,record:rowToRecord(info.headers,r)}}).filter(function(x){return !!x.record.id})};
+}
+function lamaStaffSafe_(r){return {id:r.id,name:r.name,loginId:r.loginId,designation:r.designation,contact:r.contact,joiningDate:r.joiningDate,status:r.status,staffType:'nonTeaching'}}
+function lamaStaffDate_(v){
+ if(v instanceof Date&&!isNaN(v.getTime()))return Utilities.formatDate(v,'Asia/Karachi','yyyy-MM-dd');
+ const x=String(v||'').trim();
+ if(/^\d{4}-\d{2}-\d{2}$/.test(x)&&!isNaN(Date.parse(x+'T00:00:00Z'))&&new Date(x+'T00:00:00Z').toISOString().slice(0,10)===x)return x;
+ if(/^\d{4}-\d{2}-\d{2}T/.test(x)&&!isNaN(Date.parse(x)))return Utilities.formatDate(new Date(x),'Asia/Karachi','yyyy-MM-dd');
+ const m=x.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);return m?lamaStaffDate_(m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0')):'';
+}
+function lamaStaffPolicy_(ctx){
+ const list=lamaStaffRows_(ctx,'staffAttendancePolicy').items;
+ const entry=list.find(function(x){return x.record.id==='staff-attendance-policy'}),p=entry&&entry.record.policy;
+ return p&&typeof p==='object'?p:null;
+}
+function lamaStaffValidatePolicy_(p){
+ if(!p||typeof p!=='object')throw Error('Attendance policy required.');
+ const limit=p.casualLimit;
+ if(typeof limit!=='number'||!Number.isInteger(limit)||limit<0||limit>31)throw Error('Casual leave limit must be 0 to 31 days per month.');
+ if(p.weeklyOff!==null&&(!Array.isArray(p.weeklyOff)||p.weeklyOff.some(function(d){return !Number.isInteger(d)||d<0||d>6})))throw Error('Choose valid weekly off-days or use the academic timetable.');
+ const holidays=p.holidays||{};
+ if(typeof holidays!=='object'||Array.isArray(holidays)||Object.keys(holidays).length>500)throw Error('Invalid custom holidays.');
+ const clean={};
+ Object.keys(holidays).forEach(function(d){if(lamaStaffDate_(d)!==d)throw Error('Invalid holiday date.');const label=String(holidays[d]||'').trim();if(!label||label.length>100)throw Error('Holiday name required (100 characters maximum).');clean[d]=label});
+ return {casualLimit:limit,weeklyOff:p.weeklyOff===null?null:[...new Set(p.weeklyOff)].sort(),holidays:clean};
+}
+function lamaStaffClosed_(date,policy,resources){
+ if(policy&&policy.holidays&&policy.holidays[date])return true;
+ const sessions=resources.filter(function(r){return r.category==='planning-session'}).map(function(r){try{return Object.assign(JSON.parse(r.description),{id:r.id})}catch(e){return {}}}).filter(function(x){return x.start<=date&&date<=x.end});
+ const selected=sessions.find(function(x){return x.active===true})||sessions[0],inside=function(x){return x&&x.from<=date&&date<=x.to};
+ if(selected&&Object.values(selected.vacations||{}).some(inside))return true;
+ if(resources.some(function(r){if(r.category!=='planning-event')return false;try{const e=JSON.parse(r.description);return e.published!==false&&/holiday|vacation/i.test(e.type||'')&&e.start<=date&&date<=e.end&&(!selected||e.sessionId===selected.id)}catch(_){return false}}))return true;
+ const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+ if(policy&&Array.isArray(policy.weeklyOff))return policy.weeklyOff.indexOf(weekday)!==-1;
+ const season=selected&&[selected.schoolTiming,selected.summerTiming].find(inside);
+ if(season&&season.hours){const day=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][weekday];return season.hours[day]&&season.hours[day].open!==true}
+ return weekday===0;
+}
+function lamaStaffCasualCount_(records,employee,date,excludeId,closed){
+ const used=new Set();
+ records.forEach(function(r){const d=lamaStaffDate_(r.date);if(String(r.teacherId)===String(employee)&&String(r.id)!==String(excludeId||'')&&d.slice(0,7)===date.slice(0,7)&&r.status==='Leave'&&r.leaveType==='Casual'&&!closed(d))used.add(d)});
+ return used.size;
+}
+function lamaStaffAdminContext_(p,write){
+ if((p.role||'school')!=='school')throw Error('School administrator required.');
+ const actor=verifySchoolAdminToken(p),match=findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(p.schoolId)});
+ if(!match||match.obj.status!=='Active')throw Error('School inactive.');
+ if(write)assertSchoolWritable(p.schoolId);
+ return {role:'school',schoolId:p.schoolId,ss:SpreadsheetApp.openById(match.obj.sheetId),auditActor:actor};
+}
+function lamaStaffAction_(p){
+ const action=p.action;
+ if(action==='staffLogin'){
+  if(!p.schoolId||!p.loginId||!p.password)throw Error('School ID, staff login ID and password required.');
+  const match=findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(p.schoolId)});
+  if(!match||match.obj.status!=='Active')throw Error('Invalid staff login.');
+  const ctx={ss:SpreadsheetApp.openById(match.obj.sheetId)},entry=lamaStaffRows_(ctx,'nonTeachingStaff').items.find(function(x){const r=x.record;return String(r.loginId).toLowerCase()===String(p.loginId).trim().toLowerCase()&&r.status==='Active'});
+  if(!entry||hashPassword(p.password,entry.record.id)!==entry.record.passwordHash)throw Error('Invalid staff login.');
+  const r=entry.record;return {schoolId:p.schoolId,staffId:r.id,apiKey:r.apiKey,name:r.name,designation:r.designation,schoolName:match.obj.name};
+ }
+ if(action==='staffOwnAttendance'){
+  let ctx,employee,profile;
+  if(p.role==='teacher'){
+   const a=authorizeTeacher(p.schoolId,p.teacherId,p.apiKey);ctx={ss:a.ss};employee=a.teacher.id;profile={name:a.teacher.name,designation:a.teacher.designation||'Teacher'};
+  }else if(p.role==='staff'){
+   const match=findSchoolRow(getRegistrySheet(),function(r){return String(r.schoolId)===String(p.schoolId)});
+   if(!match||match.obj.status!=='Active'||!p.staffId||!p.apiKey)throw Error('Invalid staff session.');
+   ctx={ss:SpreadsheetApp.openById(match.obj.sheetId)};
+   const entry=lamaStaffRows_(ctx,'nonTeachingStaff').items.find(function(x){const r=x.record;return String(r.id)===String(p.staffId)&&r.apiKey===p.apiKey&&r.status==='Active'});
+   if(!entry)throw Error('Invalid or disabled staff session.');
+   employee=entry.record.id;profile={name:entry.record.name,designation:entry.record.designation};
+  }else throw Error('Employee login required.');
+  const month=String(p.month||'');if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('Valid month required.');
+  const records=lamaStaffRows_(ctx,'teacherAttendance').items.map(function(x){return x.record}).filter(function(r){return String(r.teacherId)===String(employee)&&lamaStaffDate_(r.date).slice(0,7)===month}).map(function(r){return {date:lamaStaffDate_(r.date),status:r.status,leaveType:r.leaveType||'',remarks:r.remarks||''}});
+  const policy=lamaStaffPolicy_(ctx),resources=lamaStaffRows_(ctx,'resources').items.map(function(x){return x.record});
+  const n=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5)),0)).getUTCDate(),closed=[];
+  for(let i=1;i<=n;i++){const d=month+'-'+String(i).padStart(2,'0');if(lamaStaffClosed_(d,policy,resources))closed.push(d)}
+  return {profile:profile,records:records,closedDates:closed,casualLimit:policy?policy.casualLimit:null};
+ }
+ const ctx=lamaStaffAdminContext_(p,action!=='staffAdminDirectory');
+ if(action==='staffAdminDirectory')return {staff:lamaStaffRows_(ctx,'nonTeachingStaff').items.map(function(x){return lamaStaffSafe_(x.record)}),policy:lamaStaffPolicy_(ctx),version:1};
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Staff register is busy. Retry.');
+ try{
+  if(action==='staffSavePolicy'){
+   const policy=lamaStaffValidatePolicy_(p.policy),rows=lamaStaffRows_(ctx,'staffAttendancePolicy'),old=rows.items.find(function(x){return x.record.id==='staff-attendance-policy'}),next={id:'staff-attendance-policy',policy:policy,createdAt:old?old.record.createdAt:new Date().toISOString()};
+   const row=recordToRow(rows.info.headers,next);if(old)rows.info.sheet.getRange(old.row,1,1,row.length).setValues([row]);else rows.info.sheet.appendRow(row);
+   writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'save','staffAttendancePolicy',next.id,old&&old.record,next);return policy;
+  }
+  if(action==='staffAdminSave'){
+   const raw=p.staff||{},name=String(raw.name||'').trim(),designation=String(raw.designation||'').trim(),loginId=String(raw.loginId||'').trim().toLowerCase(),password=String(raw.password||''),staffId=String(raw.id||'');
+   if(!name||name.length>120||!designation||designation.length>80||!/^[a-z0-9._-]{3,40}$/.test(loginId))throw Error('Name, designation and valid login ID required.');
+   const roster=lamaStaffRows_(ctx,'nonTeachingStaff'),old=roster.items.find(function(x){return String(x.record.id)===staffId});
+   if(staffId&&!old)throw Error('Staff record not found.');
+   if((!old||password)&&password.length<8)throw Error('Password must contain at least 8 characters.');
+   if(password.length>128)throw Error('Password too long.');
+   if(roster.items.some(function(x){return x!==old&&String(x.record.loginId).toLowerCase()===loginId}))throw Error('Staff login ID already exists.');
+   const employeeId=old?old.record.id:genId('stf'),state=raw.status||'Active';if(['Active','Suspended'].indexOf(state)===-1)throw Error('Invalid staff status.');
+   const joining=String(raw.joiningDate||'');if(joining&&lamaStaffDate_(joining)!==joining)throw Error('Invalid joining date.');
+   const next={id:employeeId,name:name,loginId:loginId,passwordHash:password?hashPassword(password,employeeId):old.record.passwordHash,apiKey:!old||password||state!==old.record.status?Utilities.getUuid():old.record.apiKey,designation:designation,contact:String(raw.contact||'').slice(0,80),joiningDate:joining,status:state,createdAt:old?old.record.createdAt:new Date().toISOString()};
+   const row=recordToRow(roster.info.headers,next);if(old)roster.info.sheet.getRange(old.row,1,1,row.length).setValues([row]);else roster.info.sheet.appendRow(row);
+   writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,old?'update':'add','nonTeachingStaff',employeeId,old&&lamaStaffSafe_(old.record),lamaStaffSafe_(next));return lamaStaffSafe_(next);
+  }
+  throw Error('Unknown staff action.');
+ }finally{lock.releaseLock()}
+}
+function lamaStaffAttendanceWrite_(p,action){
+ if((p.role||'school')!=='school'||!p._auditActor)throw Error('School administrator required.');
+ const ctx=resolveContext(p),lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Staff attendance is busy. Retry.');
+ try{
+  const records=lamaStaffRows_(ctx,'teacherAttendance').items.map(function(x){return x.record});
+  const old=action==='update'?records.find(function(r){return String(r.id)===String(p.id)}):null;
+  if(action==='update'&&!old)throw Error('Attendance record not found.');
+  const raw=Object.assign({},old||{},action==='update'?p.patch:p.record),date=lamaStaffDate_(raw.date),employee=String(raw.teacherId||''),state=String(raw.status||''),leave=state==='Leave'?String(raw.leaveType||''):'';
+  if(!date||!employee||['Present','Absent','Leave'].indexOf(state)===-1||['','Casual','Medical','Other'].indexOf(leave)===-1)throw Error('Invalid staff attendance entry.');
+  if(old&&(String(old.teacherId)!==employee||lamaStaffDate_(old.date)!==date))throw Error('Attendance employee and date cannot be reassigned.');
+  if(records.some(function(r){return String(r.id)!==String(old&&old.id||'')&&String(r.teacherId)===employee&&lamaStaffDate_(r.date)===date}))throw Error('Duplicate attendance entry. Refresh and correct the existing record.');
+  const roster=lamaStaffRows_(ctx,'teachers').items.concat(lamaStaffRows_(ctx,'nonTeachingStaff').items);
+  const person=roster.find(function(x){return String(x.record.id)===employee});
+  if(!person||(!old&&String(person.record.status||'Active')!=='Active'))throw Error('Active staff member not found.');
+  const policy=lamaStaffPolicy_(ctx),resources=lamaStaffRows_(ctx,'resources').items.map(function(x){return x.record}),closed=function(d){return lamaStaffClosed_(d,policy,resources)};
+  // Preserve old clients' behavior until a school publishes a policy.
+  if(policy&&closed(date))throw Error('Attendance is closed on this holiday.');
+  if(policy&&state==='Leave'&&!leave)throw Error('Select Casual, Medical or Other leave using the updated register.');
+  if(policy&&leave==='Casual'&&lamaStaffCasualCount_(records,employee,date,old&&old.id,closed)>=policy.casualLimit)throw Error('Monthly casual leave limit of '+policy.casualLimit+' days reached.');
+  const clean={teacherId:employee,teacherName:String(person.record.name||raw.teacherName||''),date:date,status:state,leaveType:leave,remarks:state==='Present'?'':String(raw.remarks||'').slice(0,1000),markedBy:p._auditActor.name};
+  return old?updateRecord(ctx,'teacherAttendance',p.id,clean):addRecord(ctx,'teacherAttendance',clean);
+ }finally{lock.releaseLock()}
 }

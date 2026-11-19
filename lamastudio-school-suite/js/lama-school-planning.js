@@ -121,7 +121,7 @@ function normalizeTeachers(records){
   if(!id||!name||String(t.status||'Active').trim().toLowerCase()!=='active')continue;
   unique.set(id,{id,name,subject:String(t.subject||'').trim(),assignedClass:String(t.assignedClass||'').trim(),assignedSection:String(t.assignedSection||'').trim(),loginId:String(t.loginId||'').trim()});
  }
- return [...unique.values()].sort((a,b)=>a.name.localeCompare(b.name)||a.id.localeCompare(b.id));
+ return [...unique.values()].sort(LamaClassOrder.teachers);
 }
 async function loadTeacherDirectory(){
  teacherDirectoryLoaded=false;teachers=[];
@@ -141,7 +141,7 @@ function teacherSubjectMatch(t,subject){
  return !!key(subject)&&String(t.subject||'').split(/[,;|/]/).some(s=>key(s)===key(subject));
 }
 function teacherChoices(subject){
- return [...teachers].sort((a,b)=>Number(teacherSubjectMatch(b,subject))-Number(teacherSubjectMatch(a,subject))||a.name.localeCompare(b.name)||a.id.localeCompare(b.id));
+ return [...teachers].sort((a,b)=>LamaClassOrder.compare(LamaTimetableGrid.classLabel({grade:a.assignedClass,section:a.assignedSection}),LamaTimetableGrid.classLabel({grade:b.assignedClass,section:b.assignedSection}))||Number(teacherSubjectMatch(b,subject))-Number(teacherSubjectMatch(a,subject))||LamaClassOrder.teachers(a,b));
 }
 function populateTeacherPicker(id,subject,previous=''){
  const select=$(id),choices=teacherChoices(subject);
@@ -149,8 +149,8 @@ function populateTeacherPicker(id,subject,previous=''){
  select.disabled=!teacherDirectoryLoaded||!choices.length;
  for(const t of choices){
   const duplicated=choices.filter(x=>same(x.name,t.name)).length>1;
-  const detail=[t.subject,t.assignedClass+(t.assignedSection?' / '+t.assignedSection:''),duplicated?(t.loginId||t.id):''].filter(Boolean).join(' · ');
-  select.add(new Option(t.name+(detail?' · '+detail:''),t.id));
+  const detail=[t.subject,duplicated?(t.loginId||t.id):''].filter(Boolean).join(' · ');
+  select.add(new Option((t.assignedClass||'Unassigned')+(t.assignedSection?' / '+t.assignedSection:'')+' — '+t.name+(detail?' · '+detail:''),t.id));
  }
  select.value=choices.some(t=>t.id===String(previous))?String(previous):'';
 }
@@ -248,8 +248,8 @@ function sessions(){return data('session').sort((a,b)=>a.start.localeCompare(b.s
 function activeSession(){return field('viewSession')||sessions().find(s=>s.active)?.id||sessions()[0]?.id||''}
 function render(){const list=sessions(),old=field('viewSession');for(const id of ['viewSession','periodSession','eventSession']){const el=$(id);el.replaceChildren();for(const s of list)el.add(new Option(s.name+(s.active?' (active)':''),s.id));if(list.some(s=>s.id===old))el.value=old}
 const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chosen&&allowed(p));
-const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort();$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
-const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||a.start.localeCompare(b.start));
+const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort(LamaClassOrder.compare);$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
+const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||LamaClassOrder.compare(LamaTimetableGrid.classLabel(a),LamaTimetableGrid.classLabel(b))||String(a.start||'').localeCompare(String(b.start||'')));
 const view=periods.filter(p=>(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
 $('periodRows').innerHTML=view.length?view.map(p=>'<tr class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
 $('sessionList').innerHTML=list.map(s=>{

@@ -10,7 +10,7 @@ const same=(a,b)=>String(a??'').trim().toLowerCase()===String(b??'').trim().toLo
 const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school administrator required')};
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
-function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
+function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(r.type&&r.title&&r.start&&r.end&&!r.grade&&!r.teacherId)return true;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
 async function load(allowBusy=false){if((quickBusy||timingBusy)&&allowBusy!==true)return false;if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
  // The public client exports getSchoolClassOptions and getActiveSchool,
  // not getSchoolConfig (which is an internal Apps Script action).
@@ -32,7 +32,7 @@ async function load(allowBusy=false){if((quickBusy||timingBusy)&&allowBusy!==tru
  const resource=(Array.isArray(all)?all:[]).find(r=>r.category==='school-curriculum'&&r.title==='LAMA School Class Subjects');
  try{const doc=JSON.parse(resource?.description||'{}');curriculumClasses=doc.schoolId===schoolId&&Array.isArray(doc.classes)?doc.classes:[]}catch(_){curriculumClasses=[]}
 }else{offeredClasses=[];curriculumClasses=[]}
-if(adminMode){await loadTeacherDirectory();populateTeacherPicker('teacher',field('subject'),field('teacher'));populateTeacherPicker('quickTeacher',field('quickSubject'),field('quickTeacher'))}render();periodNeedsRefresh=false;status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.'+(adminMode?(teacherDirectoryLoaded?' '+teachers.length+' active teacher(s) available.':' Teacher directory unavailable. Refresh before assigning a lesson.') :''));return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
+if(adminMode){await loadTeacherDirectory();populateTeacherPicker('teacher',field('subject'),field('teacher'));populateTeacherPicker('quickTeacher',field('quickSubject'),field('quickTeacher'))}timingFormSession='';if($('vacationForm'))$('vacationForm').dataset.session='';render();periodNeedsRefresh=false;status('Schedule loaded. '+data('period').length+' period entries, '+data('event').length+' calendar entries.'+(adminMode?(teacherDirectoryLoaded?' '+teachers.length+' active teacher(s) available.':' Teacher directory unavailable. Refresh before assigning a lesson.') :''));return true}catch(e){status('Unable to load schedule: '+e.message);return false}}
 async function save(kind,id,payload){authorized();if(kind==='period'){if(quickBusy||periodNeedsRefresh)throw Error('Finish the timetable operation or refresh before saving.');quickBusy=true;try{await writePeriod(id,payload);render();return true}catch(e){periodNeedsRefresh=true;throw Error('Save could not be confirmed. Reload the timetable before retrying. '+e.message)}finally{quickBusy=false}}const title=kind==='period'?[payload.day,payload.grade,payload.period].join(' · '):kind==='session'?payload.name:payload.title;const record={category:type[kind],title,description:JSON.stringify(payload),link:''};if(id)await LamaAPI.update('resources',id,record);else await LamaAPI.add('resources',record);return await load()}
 function sessionKey(name){
  return String(name||'').normalize('NFKC').replace(/[‐‑‒–—−]/g,'-').replace(/\s+/g,'').toLowerCase();
@@ -219,71 +219,140 @@ function validTime(v){return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(v)}
 function validateTiming(t){
  if(!t||!validDate(t.from)||!validDate(t.to)||t.from>t.to)throw Error('Choose a valid season start and end date.');
  if(!t.hours||!days.some(d=>t.hours[d]?.open===true))throw Error('Choose at least one working day.');
- if(!validTime(t.breakStart)||!validTime(t.breakEnd)||t.breakStart>=t.breakEnd)throw Error('Choose a valid lunch break.');
- for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||t.breakStart<h.start||t.breakEnd>h.end))throw Error(d+': school hours must contain the lunch break.')}
+ if((t.breakStart||t.breakEnd)&&(!validTime(t.breakStart)||!validTime(t.breakEnd)||t.breakStart>=t.breakEnd))throw Error('Choose a valid lunch break or leave both fields empty.');
+ for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||(t.breakStart&&(t.breakStart<h.start||t.breakEnd>h.end))))throw Error(d+': school hours must contain the lunch break.')}
  return t;
 }
-function schoolTiming(sid=activeSession()){
- const t=sessions().find(x=>x.id===sid)?.schoolTiming;
+const seasonKeys={winter:'schoolTiming',summer:'summerTiming'};
+const vacationKeys={summerVacation:'Summer vacations',winterVacation:'Winter vacations'};
+const calendarColors={winter:'#38bdf8',summer:'#4ade80',summerVacation:'#fbbf24',winterVacation:'#a78bfa',holiday:'#fb7185',event:'#60a5fa'};
+const calendarLabels={winter:'Winter timings',summer:'Summer timings',summerVacation:'Summer vacations',winterVacation:'Winter vacations',holiday:'Weekly / public holiday',event:'Exams / events'};
+function sessionRecord(sid=activeSession()){return sessions().find(x=>String(x.id)===String(sid))}
+function schoolTiming(sid=activeSession(),season='winter'){
+ const t=sessionRecord(sid)?.[seasonKeys[season]];
  try{return validateTiming(t)}catch(_){return null}
+}
+function vacationsFor(sid=activeSession()){
+ const v=sessionRecord(sid)?.vacations||{};
+ return Object.fromEntries(Object.keys(vacationKeys).filter(k=>validDate(v[k]?.from)&&validDate(v[k]?.to)&&v[k].from<=v[k].to).map(k=>[k,v[k]]));
 }
 function formatTime(v){const [h,m]=v.split(':').map(Number);return (h%12||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')}
 function formatDate(v){return new Date(v+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})}
-function timingSummary(t){
+function timingSummary(t,season='winter'){
  if(!t)return null;
  const groups=new Map();
  for(const d of days){const h=t.hours[d],key=h?.open===true?formatTime(h.start)+' – '+formatTime(h.end):'Closed / weekly holiday';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(d)}
- return {title:'Winter School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),breakTime:'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd)};
+ return {title:(season==='summer'?'Summer':'Winter')+' School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),breakTime:t.breakStart?'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd):'No lunch break configured'};
 }
-function workingWeek(){const t=schoolTiming();return t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6)}
+function scheduleSummaries(sid=activeSession()){
+ const list=['winter','summer'].map(k=>timingSummary(schoolTiming(sid,k),k)).filter(Boolean);
+ const v=vacationsFor(sid);
+ for(const k of Object.keys(vacationKeys))if(v[k])list.push({title:vacationKeys[k],dates:formatDate(v[k].from)+' – '+formatDate(v[k].to),lines:[],breakTime:''});
+ return list;
+}
+function dateInside(date,t){return !!t&&t.from<=date&&date<=t.to}
+function dateToday(){const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month+'-'+parts.day}
+function seasonForDate(date,sid=activeSession()){return ['winter','summer'].find(k=>dateInside(date,schoolTiming(sid,k)))||''}
+function chosenSeason(){const picker=$('quickSeason');return picker?picker.value:seasonForDate(dateToday())}
+function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason());return t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6)}
+function calendarDay(date,sid,events=[]){
+ const season=seasonForDate(date,sid),t=season?schoolTiming(sid,season):null;
+ const v=vacationsFor(sid),vacation=Object.keys(vacationKeys).find(k=>dateInside(date,v[k]));
+ const weekday=days[(new Date(date+'T12:00:00Z').getUTCDay()+6)%7];
+ const hits=events.filter(e=>e.start<=date&&date<=e.end);
+ const publicHoliday=hits.some(e=>/holiday|vacation/i.test(e.type||''));
+ const closed=!!t&&t.hours[weekday]?.open!==true;
+ const kind=vacation||(publicHoliday||closed?'holiday':hits.length?'event':season);
+ return {kind,label:vacation?vacationKeys[vacation]:publicHoliday?'Holiday':closed?'Weekly holiday':hits.length?'School event':season?calendarLabels[season]:'',hits};
+}
+function overlap(a,b){return !!a&&!!b&&a.from<=b.to&&b.from<=a.to}
+function validateSessionRange(t,p,label){
+ if(t&&(t.from<p.start||t.to>p.end))throw Error(label+' dates must fall inside the selected academic session.');
+}
 function setupTiming(){
  const section=document.createElement('section');section.id='schoolTimings';section.className='no-print hidden bg-slate-900 rounded-2xl p-4 border border-slate-700 mb-5';
- section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">School timings</h2><div id="schoolTimingSummary" class="mt-2 text-sm space-y-1"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure winter school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Settings apply only to the selected school and academic session. The editable example is not published until you save it.</p><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Lunch break starts<input id="timingBreakStart" type="time" required></label><label>Lunch break ends<input id="timingBreakEnd" type="time" required></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details>';
+ section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">Seasonal school timings &amp; vacations</h2><div id="schoolTimingSummary" class="mt-2 text-sm grid gap-3 md:grid-cols-2"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure seasonal school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Applies only to the selected school and academic session. Save each season separately. Blank summer timings are not published.</p><label>Season<select id="timingSeason"><option value="winter">Winter school timings</option><option value="summer">Summer school timings</option></select></label><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Lunch break starts (optional)<input id="timingBreakStart" type="time"></label><label>Lunch break ends (optional)<input id="timingBreakEnd" type="time"></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button> <button id="removeTiming" type="button" class="mt-3 text-rose-300 border border-rose-800 rounded-xl px-3 py-2">Clear published season</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details><details id="vacationAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure summer &amp; winter vacations</summary><form id="vacationForm" class="mt-3"><p class="text-xs text-slate-300">Leave both dates empty if a vacation is not configured. Dates are inclusive.</p>'+Object.entries(vacationKeys).map(([k,label])=>'<fieldset class="mt-3 border border-slate-600 rounded-lg p-3"><legend>'+label+'</legend><div class="grid grid-cols-2 gap-3"><label>From<input type="date" id="'+k+'From"></label><label>To<input type="date" id="'+k+'To"></label></div></fieldset>').join('')+'<button id="saveVacations" type="submit" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl">Save and publish vacations</button><p id="vacationStatus" class="mt-2 text-sm text-amber-200" role="status"></p></form></details>';
  $('status').after(section);
+ const legend=document.createElement('div');legend.id='calendarLegend';legend.className='flex flex-wrap gap-2 mb-3 text-xs';legend.innerHTML=calendarLegendMarkup();$('monthGrid').before(legend);
+ const quickSeason=document.createElement('label');quickSeason.innerHTML='Working week for seasonal hours<select id="quickSeason"><option value="">Default school week</option></select><small>Changes working days for full-week saving only; saved subjects and periods remain unchanged.</small>';
+ $('quickDay').closest('label').parentElement.append(quickSeason);
+ $('quickSeason').onchange=()=>{if($('quickApplyScope'))updateQuickScope()};
  for(let i=0;i<days.length;i++)$('timingOpen'+i).onchange=()=>toggleTimingDay(i);
- $('timingForm').onsubmit=saveTiming;
+ $('timingSeason').onchange=()=>{timingFormSession='';renderTiming()};
+ $('timingForm').onsubmit=e=>{e.preventDefault();void saveTiming(false)};
+ $('removeTiming').onclick=()=>{void saveTiming(true)};
+ $('vacationForm').onsubmit=e=>{e.preventDefault();void saveVacations()};
 }
+function calendarLegendMarkup(){return Object.keys(calendarColors).map(k=>'<span class="calendar-key" style="display:inline-block;border-left:5px solid '+calendarColors[k]+';padding:2px 6px;margin:2px 4px">'+esc(calendarLabels[k])+'</span>').join('')}
 function toggleTimingDay(i){const on=$('timingOpen'+i).checked;for(const k of ['timingStart','timingEnd']){$(k+i).disabled=!on;$(k+i).required=on}}
 function renderTiming(){
- const sid=activeSession(),ss=sessions().find(x=>x.id===sid),t=schoolTiming(sid),summary=timingSummary(t);
- const section=$('schoolTimings');section.classList.toggle('hidden',!sid||(!adminMode&&!summary));
- $('schoolTimingSummary').innerHTML=summary?'<strong>'+esc(summary.title)+'</strong><p>'+esc(summary.dates)+'</p>'+summary.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+'<p class="text-amber-200 font-medium">'+esc(summary.breakTime)+'</p>':'<p>No school timings published for this session.</p>';
- $('timingAdmin').classList.toggle('hidden',!adminMode||!verified||!ss);
- if(!adminMode||!ss||timingFormSession===sid)return;
- timingFormSession=sid;
- const year=Number(String(ss.start||'').slice(0,4))||new Date().getFullYear();
- const example={from:year+'-10-16',to:(year+1)+'-03-31',breakStart:'12:15',breakEnd:'12:30',hours:Object.fromEntries(days.map((d,i)=>[d,{open:i<5,start:'08:45',end:i===4?'12:30':'13:30'}]))};
- const v=t||example;
- for(const [id,k] of Object.entries({timingFrom:'from',timingTo:'to',timingBreakStart:'breakStart',timingBreakEnd:'breakEnd'}))$(id).value=v[k];
- for(let i=0;i<days.length;i++){const h=v.hours[days[i]]||{};$('timingOpen'+i).checked=h.open===true;$('timingStart'+i).value=h.start||'08:45';$('timingEnd'+i).value=h.end||'13:30';toggleTimingDay(i)}
- $('timingStatus').textContent='';
+ const sid=activeSession(),ss=sessionRecord(sid),summaries=scheduleSummaries(sid),section=$('schoolTimings');
+ section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length));
+ $('schoolTimingSummary').innerHTML=summaries.length?summaries.map(t=>'<div class="border border-slate-600 rounded-xl p-3"><strong>'+esc(t.title)+'</strong><p>'+esc(t.dates)+'</p>'+t.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+(t.breakTime?'<p class="text-amber-200 font-medium">'+esc(t.breakTime)+'</p>':'')+'</div>').join(''):'<p>No seasonal timings or vacations published for this session.</p>';
+ for(const id of ['timingAdmin','vacationAdmin'])$(id).classList.toggle('hidden',!adminMode||!verified||!ss);
+ const picker=$('quickSeason'),previous=picker.value;
+ picker.replaceChildren(new Option('Default school week',''));
+ for(const k of ['winter','summer'])if(schoolTiming(sid,k))picker.add(new Option(k==='winter'?'Winter':'Summer',k));
+ const preferred=picker.dataset.session===sid&&[...picker.options].some(o=>o.value===previous)?previous:seasonForDate(dateToday(),sid)||(schoolTiming(sid,'winter')?'winter':schoolTiming(sid,'summer')?'summer':'');
+ picker.value=preferred;picker.dataset.session=sid;
+ if(!adminMode||!ss)return;
+ const season=field('timingSeason'),formKey=sid+'|'+season;
+ if(timingFormSession!==formKey){
+  timingFormSession=formKey;
+  const year=Number(String(ss.start||'').slice(0,4))||new Date().getFullYear();
+  const example=season==='winter'?{from:year+'-10-16',to:(year+1)+'-03-31',breakStart:'12:15',breakEnd:'12:30',hours:Object.fromEntries(days.map((d,i)=>[d,{open:i<5,start:'08:45',end:i===4?'12:30':'13:30'}]))}:{from:'',to:'',breakStart:'',breakEnd:'',hours:Object.fromEntries(days.map((d,i)=>[d,{open:i<5,start:'',end:''}]))};
+  const v=schoolTiming(sid,season)||example;
+  for(const [id,k] of Object.entries({timingFrom:'from',timingTo:'to',timingBreakStart:'breakStart',timingBreakEnd:'breakEnd'}))$(id).value=v[k]||'';
+  for(let i=0;i<days.length;i++){const h=v.hours[days[i]]||{};$('timingOpen'+i).checked=h.open===true;$('timingStart'+i).value=h.start||'';$('timingEnd'+i).value=h.end||'';toggleTimingDay(i)}
+  $('timingStatus').textContent='';
+ }
+ const form=$('vacationForm');
+ if(form.dataset.session!==sid){
+  form.dataset.session=sid;const v=vacationsFor(sid);
+  for(const k of Object.keys(vacationKeys)){ $(k+'From').value=v[k]?.from||'';$(k+'To').value=v[k]?.to||'' }
+  $('vacationStatus').textContent='';
+ }
 }
-async function saveTiming(e){
- e.preventDefault();
- if(timingBusy||quickBusy||sessionBusy||periodNeedsRefresh)return;
- const note=$('timingStatus');let attempted=false;
+async function updateSessionSettings(note,apply){
+ if(timingBusy||quickBusy||sessionBusy||periodNeedsRefresh){note.textContent='Finish the current operation or refresh before saving.';return}
+ let attempted=false;const sid=activeSession();
  try{
-  authorized();
-  const sid=activeSession();
-  if(!sid||timingFormSession!==sid)throw Error('Select the correct academic session.');
-  const t=validateTiming({from:field('timingFrom'),to:field('timingTo'),breakStart:field('timingBreakStart'),breakEnd:field('timingBreakEnd'),hours:Object.fromEntries(days.map((d,i)=>[d,{open:$('timingOpen'+i).checked,start:field('timingStart'+i),end:field('timingEnd'+i)}]))});
-  timingBusy=true;$('saveTiming').disabled=true;
+  authorized();if(!sid)throw Error('Select the correct academic session.');
+  timingBusy=true;for(const id of ['saveTiming','removeTiming','saveVacations'])$(id).disabled=true;
   const latest=await LamaAPI.list('resources');if(!Array.isArray(latest))throw Error('Could not verify the selected session.');
-  const prev=latest.find(r=>r.category===type.session&&String(r.id)===String(sid));
-  if(!prev)throw Error('Session no longer exists. Refresh before saving.');
-  const p=parsed(prev);
-  if(t.from<p.start||t.to>p.end)throw Error('Winter dates must fall inside the selected academic session.');
+  const prev=latest.find(r=>r.category===type.session&&String(r.id)===String(sid));if(!prev)throw Error('Session no longer exists. Refresh before saving.');
   if(activeSession()!==sid)throw Error('Academic session changed; reopen settings.');
-  const record={category:type.session,title:prev.title,description:JSON.stringify({...p,schoolTiming:t}),link:prev.link||''};
-  attempted=true;
-  const saved=await LamaAPI.update('resources',sid,record);
-  if(!saved?.id||String(saved.id)!==String(sid)||JSON.stringify(parsed(saved).schoolTiming)!==JSON.stringify(t))throw Error('The server did not confirm the published timings.');
+  const p=parsed(prev),next=apply(p);if(!next)return;
+  const record={category:type.session,title:prev.title,description:JSON.stringify(next),link:prev.link||''};
+  attempted=true;const saved=await LamaAPI.update('resources',sid,record);
+  if(!saved?.id||String(saved.id)!==String(sid)||JSON.stringify(parsed(saved))!==JSON.stringify(next))throw Error('Server did not confirm the published settings.');
   const i=rows.findIndex(r=>String(r.id)===String(sid));if(i>=0)rows[i]=saved;else rows.push(saved);
-  timingFormSession='';render();if($('quickApplyScope'))updateQuickScope();
-  note.textContent='✓ Timings saved and published to timetable and print views.';
-  status('Winter school timings saved for the selected school session.');
+  timingFormSession='';$('vacationForm').dataset.session='';render();if($('quickApplyScope'))updateQuickScope();
+  note.textContent='✓ Settings saved and published.';status('Seasonal school settings saved.');
  }catch(err){if(attempted){periodNeedsRefresh=true;note.textContent='Save uncertain. Refresh before retrying. '+err.message}else note.textContent=err.message}
- finally{timingBusy=false;$('saveTiming').disabled=false}
+ finally{timingBusy=false;for(const id of ['saveTiming','removeTiming','saveVacations'])$(id).disabled=false}
+}
+async function saveTiming(clear){
+ const note=$('timingStatus'),sid=activeSession(),season=field('timingSeason'),key=seasonKeys[season];
+ if(!key||timingFormSession!==sid+'|'+season){note.textContent='Select the correct academic session and season.';return}
+ let t;
+ try{if(!clear)t=validateTiming({from:field('timingFrom'),to:field('timingTo'),breakStart:field('timingBreakStart'),breakEnd:field('timingBreakEnd'),hours:Object.fromEntries(days.map((d,i)=>[d,{open:$('timingOpen'+i).checked,start:field('timingStart'+i),end:field('timingEnd'+i)}]))})}catch(e){note.textContent=e.message;return}
+ await updateSessionSettings(note,p=>{
+  if(clear){if(!p[key])throw Error('No published season to clear.');if(!confirm('Clear the published '+season+' timings? Saved lessons and vacations remain unchanged.'))return null;const next={...p};delete next[key];return next}
+  validateSessionRange(t,p,season);
+  if(overlap(t,p[seasonKeys[season==='winter'?'summer':'winter']]))throw Error('Summer and winter timing date ranges must not overlap.');
+  return {...p,[key]:t};
+ });
+}
+async function saveVacations(){
+ const note=$('vacationStatus'),sid=activeSession();if($('vacationForm').dataset.session!==sid){note.textContent='Select the correct academic session.';return}
+ const v={};
+ try{for(const k of Object.keys(vacationKeys)){const from=field(k+'From'),to=field(k+'To');if(!from&&!to)continue;if(!validDate(from)||!validDate(to)||from>to)throw Error(vacationKeys[k]+': select a valid start and end date.');v[k]={from,to}}if(overlap(v.summerVacation,v.winterVacation))throw Error('Summer and winter vacations must not overlap.')}catch(e){note.textContent=e.message;return}
+ await updateSessionSettings(note,p=>{
+  for(const k of Object.keys(v))validateSessionRange(v[k],p,vacationKeys[k]);
+  if(Object.keys(p.vacations||{}).some(k=>!v[k])&&!confirm('Remove cleared vacation dates from the calendar?'))return null;
+  return {...p,vacations:v};
+ });
 }
 function quickScopeDays(){
  const mode=field('quickApplyScope');
@@ -292,7 +361,7 @@ function quickScopeDays(){
 function updateQuickScope(){
  const mode=field('quickApplyScope'),selected=quickScopeDays(),source=field('quickPeriodDay'),target=field('quickTargetDay');
  const weekOption=$('quickApplyScope').querySelector('option[value="week"]');
- if(weekOption)weekOption.textContent=(schoolTiming()?'Configured school week':'Full school week')+' ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';
+ if(weekOption)weekOption.textContent=(schoolTiming(activeSession(),chosenSeason())?'Configured school week':'Full school week')+' ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';
  const anotherDay=mode==='day'&&target!==source;
  const canMove=anotherDay&&!!field('quickPeriodId');
  $('quickTargetDay').disabled=mode!=='day';
@@ -433,8 +502,20 @@ if(adminMode)$('sessionList').innerHTML=list.map(s=>{
 }).join('');
 renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);}
 }
-function renderCalendar(){const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));$('monthTitle').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});const y=month.getFullYear(),m=month.getMonth(),offset=(new Date(y,m,1).getDay()+6)%7,last=new Date(y,m+1,0).getDate();let h=days.map(d=>'<b class="p-2 text-cyan-300">'+d.slice(0,3)+'</b>').join('');for(let i=0;i<offset;i++)h+='<div></div>';for(let d=1;d<=last;d++){const date=[y,String(m+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-'),hits=events.filter(e=>e.start<=date&&e.end>=date);h+='<div class="border border-slate-700 rounded-lg min-h-16 p-1 text-left"><b>'+d+'</b>'+hits.slice(0,2).map(e=>'<p class="text-[10px] text-amber-300 truncate" title="'+esc(e.title)+'">'+esc(e.title)+'</p>').join('')+'</div>'}$('monthGrid').innerHTML=h;
-$('eventRows').innerHTML=events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No events for this session.</p>'}
+function renderCalendar(){
+ const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));
+ $('monthTitle').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+ const y=month.getFullYear(),m=month.getMonth(),offset=(new Date(y,m,1).getDay()+6)%7,last=new Date(y,m+1,0).getDate();
+ let h=days.map(d=>'<b class="p-2 text-cyan-300">'+d.slice(0,3)+'</b>').join('');
+ for(let i=0;i<offset;i++)h+='<div></div>';
+ for(let d=1;d<=last;d++){
+  const date=[y,String(m+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-'),mark=calendarDay(date,chosen,events),color=calendarColors[mark.kind];
+  h+='<div class="calendar-date border border-slate-700 rounded-lg min-h-16 p-1 text-left" '+(color?'style="border-top:4px solid '+color+';background:'+color+'22"':'')+'><b>'+d+'</b>'+(mark.label?'<p class="calendar-day-label text-[10px] break-words" style="color:'+color+'">'+esc(mark.label)+'</p>':'')+mark.hits.slice(0,2).map(e=>'<p class="text-[10px] text-amber-300 break-words" title="'+esc(e.title)+'">'+esc(e.title)+'</p>').join('')+'</div>';
+ }
+ $('monthGrid').innerHTML=h;
+ const vacationRows=Object.entries(vacationsFor(chosen)).map(([k,v])=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(vacationKeys[k])+'</b> · '+esc(formatDate(v.from))+' – '+esc(formatDate(v.to))+'</div>').join('');
+ $('eventRows').innerHTML=vacationRows+(events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No additional events for this session.</p>');
+}
 function edit(kind,id){const p=data(kind).find(r=>r.id===id);if(!p)return;const fields=kind==='period'?{periodId:'id',periodSession:'sessionId',day:'day',period:'period',start:'start',end:'end',grade:'grade',section:'section',subject:'subject',teacher:'teacherId',room:'room',published:'published'}:kind==='event'?{eventId:'id',eventSession:'sessionId',eventType:'type',eventTitle:'title',eventStart:'start',eventEnd:'end',eventDescription:'description',eventPublished:'published'}:{sessionId:'id',sessionName:'name',sessionStart:'start',sessionEnd:'end',sessionActive:'active'};if(kind==='period')populateClassEditor(p.grade,p.section||'',p.subject||'');for(const [input,key] of Object.entries(fields)){if($(input).type==='checkbox')$(input).checked=p[key]!==false;else if(kind!=='period'||!['grade','section','subject'].includes(input))$(input).value=p[key]??''}window.scrollTo({top:0,behavior:'smooth'})}
 $('periodForm').onsubmit=async e=>{e.preventDefault();try{authorized();const p={sessionId:field('periodSession'),day:field('day'),period:Number(field('period')),start:field('start'),end:field('end'),grade:field('grade'),section:field('section'),subject:field('subject'),teacherId:field('teacher'),teacherName:requireTeacher(field('teacher')).name,room:field('room'),published:$('published').checked};if(!p.sessionId)throw Error('Create an academic session first');requireSubject(p.grade,p.subject,data('period').find(x=>String(x.id)===field('periodId')));if(p.start>=p.end)throw Error('Period end must be after start');const clashClass=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));const conflict=data('period').find(x=>String(x.id)!==field('periodId')&&x.sessionId===p.sessionId&&same(x.day,p.day)&&((clashClass(x)&&Number(x.period)===p.period)||(x.start<p.end&&x.end>p.start&&(clashClass(x)||(p.teacherId&&String(x.teacherId)===p.teacherId)))));if(conflict)throw Error('Time conflict: class/section or teacher is already assigned');if(!await save('period',field('periodId'),p))throw Error('Period save could not be verified. Refresh before retrying.');$('periodId').value='';status('Period saved')}catch(err){status(err.message)}};
 $('sessionForm').onsubmit=async e=>{
@@ -462,7 +543,7 @@ $('sessionForm').onsubmit=async e=>{
    throw Error('This academic session name already exists. Use its Edit button instead of creating a duplicate.');
   if(p.active&&sessionRecords(latest).some(s=>String(s.id)!==String(editingId)&&s.active))
    throw Error('Deactivate the previous active session before activating another.');
-  if(prior?.schoolTiming)p.schoolTiming=prior.schoolTiming;
+  if(prior){for(const key of ['schoolTiming','summerTiming','vacations'])if(prior[key])p[key]=prior[key];for(const key of ['schoolTiming','summerTiming'])validateSessionRange(p[key],p,key);for(const [key,v] of Object.entries(p.vacations||{}))validateSessionRange(v,p,key)}
   attemptedWrite=true;
   const refreshed=await save('session',editingId,p);
   if(!refreshed)throw Error('Session save response received but the updated list could not be verified.');
@@ -557,7 +638,8 @@ function buildTimetablePrint(profile){
   school:profile,
   schoolFallback:printProfileFallback(),
   sessionName:name,
-  timing:timingSummary(schoolTiming(selectedSession)),
+  timing:scheduleSummaries(selectedSession),
+  calendarLegend:calendarLegendMarkup(),
   records:periods,
   scope:mode,
   selectedClass:cls,

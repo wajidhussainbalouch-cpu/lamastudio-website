@@ -95,7 +95,7 @@ const COLLECTIONS = {
     },
     homework: {
         tab: 'Homework',
-        headers: ['id', 'class', 'subject', 'title', 'description', 'dueDate', 'assignedBy', 'createdAt']
+        headers: ['id', 'class', 'subject', 'title', 'description', 'dueDate', 'assignedBy', 'createdAt', 'section', 'teacherId', 'batchId', 'batchHash']
     },
     fees: {
         tab: 'Fees',
@@ -991,6 +991,7 @@ function listRecords(ctx, collection) {
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests' || collection === 'timetable')) {
         records = records.filter(r => collection === 'datesheet' ? recordAppliesToClass(r, ctx.student.class) : (recordAppliesToClass(r, ctx.student.class) && sameSection(r,ctx.student.section)));
     }
+    if(ctx.role==='teacher'&&collection==='students')records=records.map(lamaTeacherStudentSafe_);
     return records;
 }
 
@@ -1009,7 +1010,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && ['students','attendance','homework'].indexOf(collection)!==-1 && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class/section.');
-            return r;
+            return ctx.role==='teacher'&&collection==='students'?lamaTeacherStudentSafe_(r):r;
         }
     }
     return null;
@@ -1113,7 +1114,7 @@ function updateRecord(ctx, collection, id, patch) {
             sheet.getRange(i + 1, 1, 1, headers.length).setValues([recordToRow(headers, updated)]);
             if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'update',collection,id,existing,updated);
             if(collection==='teachers'){const safe=Object.assign({},updated);delete safe.passwordHash;delete safe.apiKey;delete safe.password;return safe;}
-            return updated;
+            return ctx.role==='teacher'&&collection==='students'?lamaTeacherStudentSafe_(updated):updated;
         }
     }
     throw new Error('Record not found: ' + id);
@@ -1820,6 +1821,8 @@ function handleRequest(params) {
             if (!schoolRecord || schoolRecord.obj.status !== 'Active') throw new Error('School is not active.');
             params.apiKey = schoolRecord.obj.apiKey;
         }
+        if (action==='teacherHomeworkBatch')return {status:'success',result:lamaTeacherHomeworkBatch_(params)};
+        if (action==='teacherUpdateStudentProfile')return {status:'success',result:lamaTeacherUpdateStudentProfile_(params)};
         if (/^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action)) return {status:'success',result:lamaFeeAction_(params)};
         const protectedActions=['waConnect','waDisconnect','waSendTemplates','bulkDeleteStudents','clearStudentAttendanceDate','updateSchoolConfig','pingTeacher','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
         if(protectedActions.indexOf(action)!==-1 && (params.role||'school')==='school') {
@@ -2172,7 +2175,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -2594,5 +2597,125 @@ function lamaFeeAction_(p){
   // must be retried with the exact request ID; never issue a new payment ID on retry.
   sheet.appendRow([e.id,payload]);SpreadsheetApp.flush();
   return {replayed:false,event:e,report:lamaFeeReport_(state,today)};
+ }finally{lock.releaseLock();}
+}
+
+/* Teacher diary and student profile: existing school spreadsheet, verified teacher session.
+ * Profile fields are explicitly allowed, checked against a fresh snapshot and audited.
+ * Homework is one batch of subject rows written under the script lock.
+ */
+const LAMA_TEACHER_PROFILE_FIELDS_={fatherGuardian:150,contact:40,whatsapp:40,address:500,guardianName:150,guardianRelation:80,guardianCell:40,teacherRemarks:1000};
+function lamaTeacherStudentSafe_(record){
+ const safe=Object.assign({},record);
+ for(const name of Object.keys(safe))if(/password|api.?key|token|salt|secret|cnic|monthlyIncome/i.test(name))delete safe[name];
+ return safe;
+}
+function lamaTeacherContext_(params){
+ if((params.role||'')!=='teacher')throw Error('Teacher login required.');
+ const ctx=resolveContext(params);
+ if(!String(ctx.teacher.assignedClass||'').trim())throw Error('No assigned class. Ask School Admin.');
+ assertSchoolWritable(ctx.schoolId);
+ return ctx;
+}
+function lamaTeacherText_(value,max,required){
+ if(typeof value!=='string'||value.length>max||/^\s*=/.test(value))throw Error('Invalid text or formula-like value.');
+ const v=value.trim();if(required&&!v)throw Error('Required field is empty.');return v;
+}
+function lamaTeacherProfilePatch_(patch,expected,existing){
+ if(!patch||typeof patch!=='object'||Array.isArray(patch)||!expected||typeof expected!=='object'||Array.isArray(expected))throw Error('Invalid profile update.');
+ const fields=Object.keys(patch);
+ if(!fields.length||fields.some(k=>!Object.prototype.hasOwnProperty.call(LAMA_TEACHER_PROFILE_FIELDS_,k)||!Object.prototype.hasOwnProperty.call(expected,k)))throw Error('Only permitted class contact and teacher-note fields may be edited.');
+ const out={};
+ for(const k of fields){
+  if(String(existing[k]??'')!==String(expected[k]??''))throw Error('Student record changed. Reload before editing.');
+  const val=lamaTeacherText_(patch[k],LAMA_TEACHER_PROFILE_FIELDS_[k],false);
+  if(['contact','whatsapp','guardianCell'].includes(k)&&val&&!/^[0-9+ ()-]{3,40}$/.test(val))throw Error('Invalid contact number.');
+  out[k]=val;
+ }
+ return out;
+}
+function lamaTeacherUpdateStudentProfile_(p){
+ if(typeof p.studentId!=='string'||!p.studentId.trim())throw Error('Student ID required.');
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Student register is busy. Retry.');
+ try{
+  const ctx=lamaTeacherContext_(p),info=getCollectionSheet(ctx,'students'),rows=info.sheet.getDataRange().getValues();
+  const idCol=info.headers.indexOf('id'),matches=[];
+  for(let i=1;i<rows.length;i++)if(String(rows[i][idCol])===p.studentId)matches.push(i);
+  if(matches.length!==1)throw Error('Student not found or duplicate record. Ask School Admin.');
+  const i=matches[0],old=rowToRecord(info.headers,rows[i]);
+  if(!teacherOwns(ctx,old))throw Error('Student outside assigned class/section.');
+  const patch=lamaTeacherProfilePatch_(p.patch,p.expected,old),updated=Object.assign({},old,patch);
+  // Limit changes to the requested cells, not the full official identity row.
+  for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);if(col<0)throw Error('Student field unavailable.');}
+  // Preserve a before/after audit for permitted fields; no credentials in the audit.
+  const before={},after={};for(const k of Object.keys(patch)){before[k]=old[k]??'';after[k]=patch[k];}
+  writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'teacherProfileUpdate','students',p.studentId,before,after);
+  for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);info.sheet.getRange(i+1,col+1,1,1).setValue(patch[k]);}
+  SpreadsheetApp.flush();
+  const verified=rowToRecord(info.headers,info.sheet.getRange(i+1,1,1,info.headers.length).getValues()[0]);
+  if(Object.keys(patch).some(k=>String(verified[k]??'')!==patch[k]))throw Error('Profile could not be fully verified. Reload record before retry.');
+  return lamaTeacherStudentSafe_(verified);
+ }finally{lock.releaseLock();}
+}
+function lamaTeacherSubjectKey_(x){
+ const n=String(x??'').trim().toLowerCase().replace(/\s+/g,' ');
+ const aliases={'math':'mathematics','maths':'mathematics','islamiyat':'islamiat','islamic studies':'islamiat','social studies (sst)':'social studies','sst':'social studies','nazra-e-quran':'nazra quran','nazra':'nazra quran','quran reading':'nazra quran','gk':'general knowledge','english language':'english','urdu language':'urdu'};
+ return Object.prototype.hasOwnProperty.call(aliases,n)?aliases[n]:n;
+}
+function lamaTeacherCurriculum_(ctx){
+ const info=getCollectionSheet(ctx,'resources'),rows=info.sheet.getDataRange().getValues().slice(1).map(r=>rowToRecord(info.headers,r));
+ const found=rows.filter(r=>String(r.category||'').toLowerCase()==='school-curriculum'&&String(r.title||'')==='LAMA School Class Subjects');
+ if(found.length!==1)throw Error('School curriculum missing or duplicated. Ask School Admin to save class subjects.');
+ const doc=JSON.parse(found[0].description||'{}');
+ if(doc.version!==1||String(doc.schoolId)!==String(ctx.schoolId)||!Array.isArray(doc.classes))throw Error('Invalid school curriculum.');
+ const cls=doc.classes.find(c=>sameClass(c.name,ctx.teacher.assignedClass));
+ if(!cls||!Array.isArray(cls.subjects)||!cls.subjects.length)throw Error('No subjects configured for this class.');
+ return cls;
+}
+function lamaTeacherHomeworkEntries_(entries,cls){
+ if(!Array.isArray(entries)||!entries.length||entries.length>30)throw Error('Enter homework for 1–30 subjects.');
+ const seen=new Set(),out=[];
+ for(const item of entries){
+  if(!item||typeof item!=='object')throw Error('Invalid homework entry.');
+  const subject=cls.subjects.find(v=>String(v).trim()===String(item.subject||'').trim());
+  if(!subject)throw Error('Select a subject saved by School Admin.');
+  const key=lamaTeacherSubjectKey_(subject);if(seen.has(key))throw Error('Repeated subject.');seen.add(key);
+  const description=lamaTeacherText_(item.description||'',3000,false),title=lamaTeacherText_(item.title||'',160,false)||subject+' Homework';
+  if(!description&&!String(item.title||'').trim())throw Error('Enter homework instructions or a title.');
+  const dueDate=String(item.dueDate||'');
+  if(dueDate)lamaFeeDate_(dueDate);
+  out.push({subject,title,description,dueDate});
+ }
+ return out;
+}
+function lamaTeacherHomeworkBatch_(p){
+ const batchId=lamaFeeToken_(p.batchId);
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Homework register is busy. Retry using the same batch.');
+ try{
+  const ctx=lamaTeacherContext_(p),cls=lamaTeacherCurriculum_(ctx),entries=lamaTeacherHomeworkEntries_(p.entries,cls);
+  const hash=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify(entries)).map(b=>(b<0?b+256:b).toString(16).padStart(2,'0')).join('');
+  const info=getCollectionSheet(ctx,'homework'),rows=info.sheet.getDataRange().getValues().slice(1).map(r=>rowToRecord(info.headers,r));
+  const sameBatch=rows.filter(r=>String(r.batchId||'')===batchId);
+  if(sameBatch.length){
+   if(sameBatch.some(r=>String(r.teacherId)!==String(ctx.teacher.id)||r.batchHash!==hash||!teacherOwns(ctx,r)))throw Error('Batch identifier was used for different homework.');
+   return {records:sameBatch,skipped:entries.filter(e=>!sameBatch.some(r=>r.subject===e.subject)).map(e=>e.subject),replayed:true};
+  }
+  const day=Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd');
+  if(p.day!==day)throw Error('The posting date changed. Reload the daily diary before saving.');
+  const today=rows.filter(r=>teacherOwns(ctx,r)&&r.id&&r.createdAt&&Utilities.formatDate(new Date(r.createdAt),'Asia/Karachi','yyyy-MM-dd')===day);
+  const selected=[],skipped=[];
+  for(const entry of entries){
+   const aliasKeys=new Set([entry.subject,...(Array.isArray(cls.aliases?.[entry.subject])?cls.aliases[entry.subject]:[])].map(lamaTeacherSubjectKey_));
+   if(today.some(r=>aliasKeys.has(lamaTeacherSubjectKey_(r.subject)))){skipped.push(entry.subject);continue;}
+   selected.push(Object.assign({},entry,{id:genId('hom'),class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||'',teacherId:ctx.teacher.id,assignedBy:ctx.teacher.name,createdAt:new Date().toISOString(),batchId,batchHash:hash}));
+  }
+  if(selected.length){
+   info.sheet.getRange(info.sheet.getLastRow()+1,1,selected.length,info.headers.length).setValues(selected.map(r=>recordToRow(info.headers,r)));
+   SpreadsheetApp.flush();
+   const actual=info.sheet.getDataRange().getValues().slice(1).map(r=>rowToRecord(info.headers,r)).filter(r=>r.batchId===batchId);
+   if(actual.length!==selected.length||selected.some(s=>!actual.some(r=>r.id===s.id&&r.subject===s.subject&&r.batchHash===hash)))throw Error('Homework batch not verified. Retry same batch.');
+   return {records:actual,skipped,replayed:false};
+  }
+  return {records:[],skipped,replayed:false};
  }finally{lock.releaseLock();}
 }

@@ -2649,11 +2649,12 @@ function lamaTeacherUpdateStudentProfile_(p){
   for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);if(col<0)throw Error('Student field unavailable.');}
   // Preserve a before/after audit for permitted fields; no credentials in the audit.
   const before={},after={};for(const k of Object.keys(patch)){before[k]=old[k]??'';after[k]=patch[k];}
-  writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'teacherProfileUpdate','students',p.studentId,before,after);
-  for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);info.sheet.getRange(i+1,col+1,1,1).setValue(patch[k]);}
+  writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'teacherProfileUpdateAttempt','students',p.studentId,before,after);
+  for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);const cell=info.sheet.getRange(i+1,col+1,1,1);cell.setNumberFormat('@');cell.setValue(patch[k]);}
   SpreadsheetApp.flush();
   const verified=rowToRecord(info.headers,info.sheet.getRange(i+1,1,1,info.headers.length).getValues()[0]);
   if(Object.keys(patch).some(k=>String(verified[k]??'')!==patch[k]))throw Error('Profile could not be fully verified. Reload record before retry.');
+  writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'teacherProfileUpdateVerified','students',p.studentId,before,after);
   return lamaTeacherStudentSafe_(verified);
  }finally{lock.releaseLock();}
 }
@@ -2692,17 +2693,19 @@ function lamaTeacherHomeworkBatch_(p){
  const batchId=lamaFeeToken_(p.batchId);
  const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Homework register is busy. Retry using the same batch.');
  try{
-  const ctx=lamaTeacherContext_(p),cls=lamaTeacherCurriculum_(ctx),entries=lamaTeacherHomeworkEntries_(p.entries,cls);
-  const hash=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify(entries)).map(b=>(b<0?b+256:b).toString(16).padStart(2,'0')).join('');
+  const ctx=lamaTeacherContext_(p);
+  if(!Array.isArray(p.entries)||p.entries.length>30||JSON.stringify(p.entries).length>105000)throw Error('Invalid homework batch.');
+  const hash=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,JSON.stringify([p.day,p.entries])).map(b=>(b<0?b+256:b).toString(16).padStart(2,'0')).join('');
   const info=getCollectionSheet(ctx,'homework'),rows=info.sheet.getDataRange().getValues().slice(1).map(r=>rowToRecord(info.headers,r));
   const sameBatch=rows.filter(r=>String(r.batchId||'')===batchId);
   if(sameBatch.length){
    if(sameBatch.some(r=>String(r.teacherId)!==String(ctx.teacher.id)||r.batchHash!==hash||!teacherOwns(ctx,r)))throw Error('Batch identifier was used for different homework.');
-   return {records:sameBatch,skipped:entries.filter(e=>!sameBatch.some(r=>r.subject===e.subject)).map(e=>e.subject),replayed:true};
+   return {records:sameBatch,skipped:p.entries.filter(e=>!sameBatch.some(r=>r.subject===e.subject)).map(e=>e.subject),replayed:true};
   }
+  const cls=lamaTeacherCurriculum_(ctx),entries=lamaTeacherHomeworkEntries_(p.entries,cls);
   const day=Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd');
   if(p.day!==day)throw Error('The posting date changed. Reload the daily diary before saving.');
-  const today=rows.filter(r=>teacherOwns(ctx,r)&&r.id&&r.createdAt&&Utilities.formatDate(new Date(r.createdAt),'Asia/Karachi','yyyy-MM-dd')===day);
+  const today=rows.filter(r=>teacherOwns(ctx,r)&&r.id&&r.createdAt&&Number.isFinite(new Date(r.createdAt).getTime())&&Utilities.formatDate(new Date(r.createdAt),'Asia/Karachi','yyyy-MM-dd')===day);
   const selected=[],skipped=[];
   for(const entry of entries){
    const aliasKeys=new Set([entry.subject,...(Array.isArray(cls.aliases?.[entry.subject])?cls.aliases[entry.subject]:[])].map(lamaTeacherSubjectKey_));

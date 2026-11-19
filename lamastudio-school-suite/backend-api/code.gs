@@ -1000,6 +1000,7 @@ function listRecords(ctx, collection) {
     if (ctx.role === 'student' && (collection === 'homework' || collection === 'datesheet' || collection === 'tests' || collection === 'timetable')) {
         records = records.filter(r => collection === 'datesheet' ? recordAppliesToClass(r, ctx.student.class) : (recordAppliesToClass(r, ctx.student.class) && sameSection(r,ctx.student.section)));
     }
+    if(ctx.role==='student'&&collection==='resources')records=records.filter(r=>lamaStudentPlanningVisible_(r,ctx.student));
     if(ctx.role==='teacher'&&collection==='students')records=records.map(lamaTeacherStudentSafe_);
     return records;
 }
@@ -2884,4 +2885,17 @@ function lamaStaffAttendanceWrite_(p,action){
   const clean={teacherId:employee,teacherName:String(person.record.name||raw.teacherName||''),date:date,status:state,leaveType:leave,remarks:state==='Present'?'':String(raw.remarks||'').slice(0,1000),markedBy:p._auditActor.name};
   return old?updateRecord(ctx,'teacherAttendance',p.id,clean):addRecord(ctx,'teacherAttendance',clean);
  }finally{lock.releaseLock()}
+}
+
+// Student access to published planning resources is bound to authenticated student identity.
+function lamaStudentPlanningVisible_(row,student){
+ if(['planning-period','planning-event','planning-session'].indexOf(row.category)===-1)return true;
+ let p;try{p=JSON.parse(row.description||'{}')}catch(e){return false}
+ if(!p||typeof p!=='object')return false;
+ if(row.category==='planning-session')return true;
+ if(p.published!==true&&String(p.published).toLowerCase()!=='true')return false;
+ const grade=String(p.grade||'').trim(),section=String(p.section||'').trim();
+ if(!String(student.class||'').trim())return false;
+ if(!grade)return row.category==='planning-event'&&!section&&!String(p.teacherId||'').trim();
+ return sameClass(grade,student.class)&&(!section||(!!String(student.section||'').trim()&&sameClass(section,student.section)));
 }

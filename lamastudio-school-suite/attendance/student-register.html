@@ -7,6 +7,7 @@
 <title>Monthly Student Attendance Register — LAMA School Suite</title>
 <script src="../js/api-client.js"></script>
 <script src="../js/attendance-history.js"></script>
+<script src="../js/attendance-register-pdf.js?v=20261119"></script>
 <style>
 :root{font-family:system-ui,-apple-system,sans-serif;color:#153c43;background:#eff7f5}*{box-sizing:border-box}body{margin:0}
 header{background:linear-gradient(110deg,#063e4a,#08777a);color:#fff;padding:17px max(14px,calc((100vw - 1200px)/2))}
@@ -58,13 +59,14 @@ thead th.student-name{z-index:3;background:#0b6670}.risk{border-left:4px solid #
 <main>
 <section class="panel no-print">
 <h2>Open Monthly Attendance Register</h2>
-<p class="muted">Print using A4 Landscape in the system print dialog. Read-only saved records from this school. A dash means no saved mark, not Absent. Saturday is supported; Sundays are shaded. Local holidays need calendar integration.</p>
+<p class="muted">Use Download A4 PDF for fixed landscape pages without Android print scaling. Browser Print is also available. Read-only saved records from this school. A dash means no saved mark, not Absent. Saturday is supported; Sundays are shaded. Local holidays need calendar integration.</p>
 <div class="controls">
 <label>Month<input type="month" id="month"></label>
 <label id="classHolder">Class<select id="class"><option value="">All classes</option></select></label>
 <button type="button" class="primary" id="refresh">Refresh register</button>
 <button type="button" id="csv" disabled>Export monthly CSV</button>
-<button type="button" id="print" disabled>Print landscape register</button>
+<button type="button" class="primary" id="downloadPdf" disabled>Download A4 PDF</button>
+<button type="button" id="print" disabled>Browser print</button>
 </div>
 <p id="status" role="status">Checking login…</p>
 </section>
@@ -96,7 +98,7 @@ const role=query.get('role')==='teacher'?'teacher':'school';
 const dateKey=LamaAttendanceHistory.dateKey,personId=s=>String(s.id??s._id??s.studentId??''),enrol=s=>String(s.enrlNo??s.enrollmentNo??s.enrollment??''),klass=s=>String(s.class??s.grade??s.className??'Unassigned').trim()||'Unassigned';
 const normalizeClass=v=>String(v??'').trim().toLowerCase().replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 const monthNow=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
-const state={students:[],records:[],model:null,loaded:false,session:null,loading:false};
+const state={students:[],records:[],model:null,loaded:false,session:null,loading:false};let pdfBusy=false;
 function statusText(x,error=false){$('status').textContent=x;$('status').className=error?'error':'muted'}
 function currentStudents(){
  const c=$('class').value;
@@ -135,7 +137,7 @@ function render(){
  const reference=dateKey(yesterdayReference.getFullYear()+'-'+String(yesterdayReference.getMonth()+1).padStart(2,'0')+'-'+String(yesterdayReference.getDate()).padStart(2,'0'));
  const flagged=students.map(s=>({s,info:model.absenceInfo(s,reference)})).filter(x=>x.info.weekAlert||x.info.absentDays>=3).sort((a,b)=>b.info.streak-a.info.streak||b.info.absentDays-a.info.absentDays);
  $('riskList').innerHTML=flagged.map(({s,info})=>'<div class="risk"><strong>'+safe(s.name||'Student')+' · '+safe(klass(s))+'</strong><small>'+(info.weekAlert?'5+ consecutive recorded absences':'Absent '+info.absentDays+' of previous 7 possible school days')+' · Enrollment '+safe(enrol(s))+'</small></div>').join('')||'<p class="muted">No students meet the alert threshold in the available seven-day saved records.</p>';
- $('csv').disabled=false;$('print').disabled=false;
+ $('csv').disabled=false;$('print').disabled=false;$('downloadPdf').disabled=pdfBusy;
 }
 function exportCsv(){
  if(!state.loaded)return;
@@ -154,7 +156,7 @@ function exportCsv(){
 }
 async function load(){
  if(state.loading)return;
- state.loading=true;state.loaded=false;$('csv').disabled=true;$('print').disabled=true;
+ state.loading=true;state.loaded=false;$('csv').disabled=true;$('print').disabled=true;$('downloadPdf').disabled=true;
  statusText('Loading students and saved attendance from the school database…');
  try{
   const [students,records]=await Promise.all([LamaAPI.list('students'),LamaAPI.list('attendance')]);
@@ -181,6 +183,23 @@ async function load(){
  }finally{state.loading=false}
 }
 $('refresh').onclick=load;$('class').onchange=render;$('month').onchange=render;
+async function downloadRegisterPdf(){
+ if(!state.loaded||pdfBusy)return;
+ pdfBusy=true;$('downloadPdf').disabled=true;
+ try{
+  const month=$('month').value,days=datesInMonth(month),label=$('class').value||'All Classes';
+  const rows=currentStudents().map(s=>({name:s.name||'Unnamed',enrollment:enrol(s),className:klass(s),marks:days.map(d=>({Present:'P',Absent:'A',Leave:'L'}[state.model.get(s,d)]||''))}));
+  const school=String($('schoolName').textContent).replace(/ — Attendance Register$/,'');
+  statusText('Preparing fixed A4 landscape PDF…');
+  const result=await LamaRegisterPdf.create({school,label,month,days,rows});
+  const url=URL.createObjectURL(result.blob),a=document.createElement('a');
+  a.href=url;a.download='LAMA-Attendance-'+month+'-'+label.replace(/[^a-z0-9_-]+/gi,'_')+'.pdf';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  statusText('A4 landscape PDF prepared: '+result.pages+' page(s), '+rows.length+' students. Check Downloads.');
+ }catch(error){statusText('PDF generation failed: '+error.message+'. You can still use Browser print or CSV.',true)}
+ finally{pdfBusy=false;$('downloadPdf').disabled=!state.loaded}
+}
+$('downloadPdf').onclick=downloadRegisterPdf;
 $('csv').onclick=exportCsv;$('print').onclick=()=>{if(state.loaded)window.print()};
 (async()=>{
  $('month').value=/^\d{4}-\d{2}$/.test(query.get('month')||'')?query.get('month'):monthNow();

@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],teacherDirectoryLoaded=false,offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false,hiddenGrid=new Map(),quickScopePreference='day',quickCustomDays=days.slice(0,6),quickSession='',periodNeedsRefresh=false;
+let rows=[],teachers=[],teacherDirectoryLoaded=false,offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false,hiddenGrid=new Map(),quickScopePreference='day',quickCustomDays=days.slice(0,6),quickSession='',periodNeedsRefresh=false,timingFormSession='',timingBusy=false;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -11,7 +11,7 @@ const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school admi
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
 function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
-async function load(allowBusy=false){if(quickBusy&&allowBusy!==true)return false;if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
+async function load(allowBusy=false){if((quickBusy||timingBusy)&&allowBusy!==true)return false;if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
  // The public client exports getSchoolClassOptions and getActiveSchool,
  // not getSchoolConfig (which is an internal Apps Script action).
  offeredClasses=[];
@@ -53,7 +53,7 @@ async function remove(kind,id){
   if(!confirm('Delete this '+kind+'?'))return;
   await LamaAPI.remove('resources',id);await load();return;
  }
- if(sessionBusy){status('Another academic session operation is running.');return}
+ if(sessionBusy||timingBusy){status('Another academic session operation is running.');return}
  const target=data('session').find(r=>String(r.id)===String(id));
  if(!target)throw Error('Session not found. Refresh the schedule before deleting.');
 
@@ -214,12 +214,85 @@ async function writePeriod(id,payload){
  const index=rows.findIndex(r=>String(r.id)===String(saved.id));
  if(index<0)rows.push(saved);else rows[index]=saved;
 }
+function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v}
+function validTime(v){return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(v)}
+function validateTiming(t){
+ if(!t||!validDate(t.from)||!validDate(t.to)||t.from>t.to)throw Error('Choose a valid season start and end date.');
+ if(!t.hours||!days.some(d=>t.hours[d]?.open===true))throw Error('Choose at least one working day.');
+ if(!validTime(t.breakStart)||!validTime(t.breakEnd)||t.breakStart>=t.breakEnd)throw Error('Choose a valid lunch break.');
+ for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||t.breakStart<h.start||t.breakEnd>h.end))throw Error(d+': school hours must contain the lunch break.')}
+ return t;
+}
+function schoolTiming(sid=activeSession()){
+ const t=sessions().find(x=>x.id===sid)?.schoolTiming;
+ try{return validateTiming(t)}catch(_){return null}
+}
+function formatTime(v){const [h,m]=v.split(':').map(Number);return (h%12||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')}
+function formatDate(v){return new Date(v+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})}
+function timingSummary(t){
+ if(!t)return null;
+ const groups=new Map();
+ for(const d of days){const h=t.hours[d],key=h?.open===true?formatTime(h.start)+' – '+formatTime(h.end):'Closed / weekly holiday';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(d)}
+ return {title:'Winter School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),breakTime:'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd)};
+}
+function workingWeek(){const t=schoolTiming();return t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6)}
+function setupTiming(){
+ const section=document.createElement('section');section.id='schoolTimings';section.className='no-print hidden bg-slate-900 rounded-2xl p-4 border border-slate-700 mb-5';
+ section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">School timings</h2><div id="schoolTimingSummary" class="mt-2 text-sm space-y-1"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure winter school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Settings apply only to the selected school and academic session. The editable example is not published until you save it.</p><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Lunch break starts<input id="timingBreakStart" type="time" required></label><label>Lunch break ends<input id="timingBreakEnd" type="time" required></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details>';
+ $('status').after(section);
+ for(let i=0;i<days.length;i++)$('timingOpen'+i).onchange=()=>toggleTimingDay(i);
+ $('timingForm').onsubmit=saveTiming;
+}
+function toggleTimingDay(i){const on=$('timingOpen'+i).checked;for(const k of ['timingStart','timingEnd']){$(k+i).disabled=!on;$(k+i).required=on}}
+function renderTiming(){
+ const sid=activeSession(),ss=sessions().find(x=>x.id===sid),t=schoolTiming(sid),summary=timingSummary(t);
+ const section=$('schoolTimings');section.classList.toggle('hidden',!sid||(!adminMode&&!summary));
+ $('schoolTimingSummary').innerHTML=summary?'<strong>'+esc(summary.title)+'</strong><p>'+esc(summary.dates)+'</p>'+summary.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+'<p class="text-amber-200 font-medium">'+esc(summary.breakTime)+'</p>':'<p>No school timings published for this session.</p>';
+ $('timingAdmin').classList.toggle('hidden',!adminMode||!verified||!ss);
+ if(!adminMode||!ss||timingFormSession===sid)return;
+ timingFormSession=sid;
+ const year=Number(String(ss.start||'').slice(0,4))||new Date().getFullYear();
+ const example={from:year+'-10-16',to:(year+1)+'-03-31',breakStart:'12:15',breakEnd:'12:30',hours:Object.fromEntries(days.map((d,i)=>[d,{open:i<5,start:'08:45',end:i===4?'12:30':'13:30'}]))};
+ const v=t||example;
+ for(const [id,k] of Object.entries({timingFrom:'from',timingTo:'to',timingBreakStart:'breakStart',timingBreakEnd:'breakEnd'}))$(id).value=v[k];
+ for(let i=0;i<days.length;i++){const h=v.hours[days[i]]||{};$('timingOpen'+i).checked=h.open===true;$('timingStart'+i).value=h.start||'08:45';$('timingEnd'+i).value=h.end||'13:30';toggleTimingDay(i)}
+ $('timingStatus').textContent='';
+}
+async function saveTiming(e){
+ e.preventDefault();
+ if(timingBusy||quickBusy||sessionBusy||periodNeedsRefresh)return;
+ const note=$('timingStatus');let attempted=false;
+ try{
+  authorized();
+  const sid=activeSession();
+  if(!sid||timingFormSession!==sid)throw Error('Select the correct academic session.');
+  const t=validateTiming({from:field('timingFrom'),to:field('timingTo'),breakStart:field('timingBreakStart'),breakEnd:field('timingBreakEnd'),hours:Object.fromEntries(days.map((d,i)=>[d,{open:$('timingOpen'+i).checked,start:field('timingStart'+i),end:field('timingEnd'+i)}]))});
+  timingBusy=true;$('saveTiming').disabled=true;
+  const latest=await LamaAPI.list('resources');if(!Array.isArray(latest))throw Error('Could not verify the selected session.');
+  const prev=latest.find(r=>r.category===type.session&&String(r.id)===String(sid));
+  if(!prev)throw Error('Session no longer exists. Refresh before saving.');
+  const p=parsed(prev);
+  if(t.from<p.start||t.to>p.end)throw Error('Winter dates must fall inside the selected academic session.');
+  if(activeSession()!==sid)throw Error('Academic session changed; reopen settings.');
+  const record={category:type.session,title:prev.title,description:JSON.stringify({...p,schoolTiming:t}),link:prev.link||''};
+  attempted=true;
+  const saved=await LamaAPI.update('resources',sid,record);
+  if(!saved?.id||String(saved.id)!==String(sid)||JSON.stringify(parsed(saved).schoolTiming)!==JSON.stringify(t))throw Error('The server did not confirm the published timings.');
+  const i=rows.findIndex(r=>String(r.id)===String(sid));if(i>=0)rows[i]=saved;else rows.push(saved);
+  timingFormSession='';render();if($('quickApplyScope'))updateQuickScope();
+  note.textContent='✓ Timings saved and published to timetable and print views.';
+  status('Winter school timings saved for the selected school session.');
+ }catch(err){if(attempted){periodNeedsRefresh=true;note.textContent='Save uncertain. Refresh before retrying. '+err.message}else note.textContent=err.message}
+ finally{timingBusy=false;$('saveTiming').disabled=false}
+}
 function quickScopeDays(){
  const mode=field('quickApplyScope');
- return mode==='week'?days.slice(0,6):mode==='custom'?days.filter(d=>quickCustomDays.includes(d)):[field('quickTargetDay')];
+ return mode==='week'?workingWeek():mode==='custom'?days.filter(d=>quickCustomDays.includes(d)):[field('quickTargetDay')];
 }
 function updateQuickScope(){
  const mode=field('quickApplyScope'),selected=quickScopeDays(),source=field('quickPeriodDay'),target=field('quickTargetDay');
+ const weekOption=$('quickApplyScope').querySelector('option[value="week"]');
+ if(weekOption)weekOption.textContent=(schoolTiming()?'Configured school week':'Full school week')+' ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';
  const anotherDay=mode==='day'&&target!==source;
  const canMove=anotherDay&&!!field('quickPeriodId');
  $('quickTargetDay').disabled=mode!=='day';
@@ -335,13 +408,13 @@ async function saveQuickPeriod(){
 }
 function sessions(){return data('session').sort((a,b)=>a.start.localeCompare(b.start))}
 function activeSession(){return field('viewSession')||sessions().find(s=>s.active)?.id||sessions()[0]?.id||''}
-function render(){const list=sessions(),old=field('viewSession');for(const id of ['viewSession','periodSession','eventSession']){const el=$(id);el.replaceChildren();for(const s of list)el.add(new Option(s.name+(s.active?' (active)':''),s.id));if(list.some(s=>s.id===old))el.value=old}
+function render(){const list=sessions(),old=field('viewSession');for(const id of ['viewSession','periodSession','eventSession']){const el=$(id);if(!el)continue;el.replaceChildren();for(const s of list)el.add(new Option(s.name+(s.active?' (active)':''),s.id));if(list.some(s=>s.id===old))el.value=old}
 const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chosen&&allowed(p));
 const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort(LamaClassOrder.compare);$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
 const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||LamaClassOrder.compare(LamaTimetableGrid.classLabel(a),LamaTimetableGrid.classLabel(b))||String(a.start||'').localeCompare(String(b.start||'')));
 const view=periods.filter(p=>(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
 $('periodRows').innerHTML=view.length?view.map(p=>'<tr class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
-$('sessionList').innerHTML=list.map(s=>{
+if(adminMode)$('sessionList').innerHTML=list.map(s=>{
  const refs=sessionReferences(s.id),used=refs.periods+refs.events;
  const duplicate=list.some(other=>other.id!==s.id&&sessionKey(other.name)===sessionKey(s.name));
  const reason=used?'Move or delete '+refs.periods+' timetable period(s) and '+refs.events+' calendar event(s) before deleting.':'';
@@ -358,7 +431,7 @@ $('sessionList').innerHTML=list.map(s=>{
   '<button type="button" class="text-rose-300 border border-rose-800 rounded-lg min-h-10 px-3 disabled:opacity-40 disabled:cursor-not-allowed" data-remove-session="'+esc(s.id)+'" aria-label="Delete session '+esc(s.name)+'" title="'+esc(reason||'Delete this unlinked academic session')+'" '+(reason?'disabled':'')+'>Delete</button>'+
   '</div></div>';
 }).join('');
-renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);}
+renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);}
 }
 function renderCalendar(){const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));$('monthTitle').textContent=month.toLocaleDateString(undefined,{month:'long',year:'numeric'});const y=month.getFullYear(),m=month.getMonth(),offset=(new Date(y,m,1).getDay()+6)%7,last=new Date(y,m+1,0).getDate();let h=days.map(d=>'<b class="p-2 text-cyan-300">'+d.slice(0,3)+'</b>').join('');for(let i=0;i<offset;i++)h+='<div></div>';for(let d=1;d<=last;d++){const date=[y,String(m+1).padStart(2,'0'),String(d).padStart(2,'0')].join('-'),hits=events.filter(e=>e.start<=date&&e.end>=date);h+='<div class="border border-slate-700 rounded-lg min-h-16 p-1 text-left"><b>'+d+'</b>'+hits.slice(0,2).map(e=>'<p class="text-[10px] text-amber-300 truncate" title="'+esc(e.title)+'">'+esc(e.title)+'</p>').join('')+'</div>'}$('monthGrid').innerHTML=h;
 $('eventRows').innerHTML=events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No events for this session.</p>'}
@@ -366,7 +439,7 @@ function edit(kind,id){const p=data(kind).find(r=>r.id===id);if(!p)return;const 
 $('periodForm').onsubmit=async e=>{e.preventDefault();try{authorized();const p={sessionId:field('periodSession'),day:field('day'),period:Number(field('period')),start:field('start'),end:field('end'),grade:field('grade'),section:field('section'),subject:field('subject'),teacherId:field('teacher'),teacherName:requireTeacher(field('teacher')).name,room:field('room'),published:$('published').checked};if(!p.sessionId)throw Error('Create an academic session first');requireSubject(p.grade,p.subject,data('period').find(x=>String(x.id)===field('periodId')));if(p.start>=p.end)throw Error('Period end must be after start');const clashClass=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));const conflict=data('period').find(x=>String(x.id)!==field('periodId')&&x.sessionId===p.sessionId&&same(x.day,p.day)&&((clashClass(x)&&Number(x.period)===p.period)||(x.start<p.end&&x.end>p.start&&(clashClass(x)||(p.teacherId&&String(x.teacherId)===p.teacherId)))));if(conflict)throw Error('Time conflict: class/section or teacher is already assigned');if(!await save('period',field('periodId'),p))throw Error('Period save could not be verified. Refresh before retrying.');$('periodId').value='';status('Period saved')}catch(err){status(err.message)}};
 $('sessionForm').onsubmit=async e=>{
  e.preventDefault();
- if(sessionBusy){status('Academic session is being saved. Please do not submit twice.');return}
+ if(sessionBusy||timingBusy){status('Academic session is being saved. Please do not submit twice.');return}
  sessionBusy=true;
  const submit=$('saveSession');submit.disabled=true;
  let attemptedWrite=false;
@@ -389,6 +462,7 @@ $('sessionForm').onsubmit=async e=>{
    throw Error('This academic session name already exists. Use its Edit button instead of creating a duplicate.');
   if(p.active&&sessionRecords(latest).some(s=>String(s.id)!==String(editingId)&&s.active))
    throw Error('Deactivate the previous active session before activating another.');
+  if(prior?.schoolTiming)p.schoolTiming=prior.schoolTiming;
   attemptedWrite=true;
   const refreshed=await save('session',editingId,p);
   if(!refreshed)throw Error('Session save response received but the updated list could not be verified.');
@@ -416,6 +490,7 @@ $('selectAllPrintClasses').onclick=()=>{
 $('clearPrintClasses').onclick=()=>{
  printSelection=new Set();renderPrintClassPicker(timetableForSession(),activeSession());
 };
+setupTiming();
 setupQuickScope();
 $('quickDay').onchange=()=>{renderQuickGrid();if(!quickBusy&&!$('quickEditor').classList.contains('hidden')){$('quickTargetDay').value=field('quickDay');$('quickApplyScope').value='day';$('quickDayAction').value='copy';updateQuickScope();$('quickSaveStatus').textContent='Day changed. Lesson details retained; save to apply.'}};
 $('quickPeriods').onchange=()=>{const n=Number($('quickPeriods').value);$('quickPeriods').value=String(Math.max(1,Math.min(14,Number.isFinite(n)?n:8)));renderQuickGrid()};
@@ -482,6 +557,7 @@ function buildTimetablePrint(profile){
   school:profile,
   schoolFallback:printProfileFallback(),
   sessionName:name,
+  timing:timingSummary(schoolTiming(selectedSession)),
   records:periods,
   scope:mode,
   selectedClass:cls,

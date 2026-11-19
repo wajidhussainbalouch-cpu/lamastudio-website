@@ -7,7 +7,7 @@
 <title>Monthly Student Attendance Register — LAMA School Suite</title>
 <script src="../js/api-client.js"></script>
 <script src="../js/attendance-history.js"></script>
-<script src="../js/attendance-register-pdf.js?v=20261119c"></script>
+<script src="../js/attendance-register-pdf.js?v=20261119d"></script>
 <style id="pageOrientation">@page{size:A4 portrait;margin:7mm}</style>
 <style>
 :root{font-family:system-ui,-apple-system,sans-serif;color:#153c43;background:#eff7f5}*{box-sizing:border-box}body{margin:0}
@@ -54,6 +54,26 @@ thead th.student-name{z-index:3;background:#0b6670}.risk{border-left:4px solid #
  .letterhead{display:flex;justify-content:space-between;align-items:center;gap:12px}.letterhead h1{font-weight:850;font-size:clamp(24px,4vw,34px);line-height:1.2}.letterhead h2{font-size:16px;margin:6px 0 0;font-weight:650}.school-logo{width:66px;height:66px;object-fit:contain;flex:none}.school-logo[hidden]{display:none}.serial{min-width:36px;width:36px;position:sticky;left:0;background:#fff;z-index:2}thead .serial{background:#0b6670;z-index:4}th.student-name,td.student-name{left:36px}.holiday{background:#fff0cf;color:#795500}.calendar-note{font-size:12px;line-height:1.5}.month-info{font-size:13px;line-height:1.5;margin:8px 0}.controls button{min-height:44px}
  @media(max-width:620px){.controls{gap:8px}.controls button{flex:1 1 45%;font-size:12px;padding:9px 7px}.school-logo{width:54px;height:54px}.letterhead h2{font-size:14px}}
  @media print{.letterhead h1{font-size:19pt;font-weight:850}.letterhead h2{font-size:11pt}.school-logo{width:18mm;height:18mm}.serial,thead .serial{position:static!important;width:6mm!important;min-width:0!important}.month-info,.calendar-note{font-size:7pt;margin:1mm 0}.key{font-size:6pt}.holiday{print-color-adjust:exact;-webkit-print-color-adjust:exact}th.student-name,td.student-name{width:36mm!important}th:last-child,td:last-child{width:auto}.table-wrap{overflow:visible!important}.panel{margin:1mm 0}.no-print{display:none!important}}
+
+.register-repeat{display:none}.enrollment-col{min-width:85px}.father-col{min-width:140px;text-align:left;white-space:normal;overflow-wrap:anywhere}.class-col{min-width:90px;white-space:normal}
+th.student-name,td.student-name{position:static;min-width:140px;max-width:200px}
+@media print{
+ header,#registerTitle,#monthInfo,.calendar-note,#registerPanel>p{display:none!important}
+ .register-repeat{display:table-row!important}
+ tfoot{display:table-footer-group!important}
+ .register-repeat th,.register-repeat td{background:#fff!important;color:#111!important;border:0!important;width:auto!important;text-align:left!important;padding:1mm 0!important;font-size:6.5pt}
+ .print-register-heading{display:flex;align-items:center;justify-content:space-between;gap:3mm;margin-bottom:2mm}
+ .print-register-heading strong,.print-register-heading b,.print-register-heading span{display:block}
+ .print-register-heading strong{font-size:17pt;line-height:1.16;font-weight:850}.print-register-heading b{font-size:10pt}.print-register-heading span{font-size:8pt;margin-top:1mm}
+ .print-register-heading img{width:15mm;height:15mm;object-fit:contain}
+ th.enrollment-col,td.enrollment-col{width:15mm!important;min-width:0!important}
+ th.student-name,td.student-name{width:34mm!important;min-width:0!important}
+ th.father-col,td.father-col{width:32mm!important;min-width:0!important}
+ th.class-col,td.class-col{width:16mm!important;min-width:0!important}
+ #registerPanel[data-orientation="portrait"] th.enrollment-col,#registerPanel[data-orientation="portrait"] td.enrollment-col{width:10mm!important}
+ #registerPanel[data-orientation="portrait"] th.student-name,#registerPanel[data-orientation="portrait"] td.student-name,#registerPanel[data-orientation="portrait"] th.father-col,#registerPanel[data-orientation="portrait"] td.father-col{width:23mm!important}
+ #registerPanel[data-orientation="portrait"] th.class-col,#registerPanel[data-orientation="portrait"] td.class-col{width:11mm!important}
+}
 </style>
 </head>
 <body>
@@ -63,7 +83,7 @@ thead th.student-name{z-index:3;background:#0b6670}.risk{border-left:4px solid #
 <main>
 <section class="panel no-print">
 <h2>Open Monthly Attendance Register</h2>
-<p class="muted">Use Download / Print A4 PDF to generate the actual paper size. Auto chooses portrait for small registers and landscape for larger classes; you may override it. The published school calendar supplies holidays. Saturday is a working day unless a holiday is recorded.</p>
+<p class="muted">Use Download / Print A4 PDF to generate the actual paper size. Auto uses landscape when the full monthly register needs wider identity columns; you may override it. The published school calendar supplies holidays. Saturday is a working day unless a holiday is recorded.</p>
 <div class="controls">
 <label>Month<input type="month" id="month"></label>
 <label id="classHolder">Class<select id="class"><option value="">All classes</option></select></label>
@@ -76,13 +96,13 @@ thead th.student-name{z-index:3;background:#0b6670}.risk{border-left:4px solid #
 <p id="status" role="status">Checking login…</p>
 </section>
 <section class="panel" id="registerPanel">
-<h2 id="registerTitle">Class / School Monthly Register</h2><p class="month-info" id="monthInfo">Loading calendar…</p><p class="calendar-note">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days. S = Sunday; blank = future working date. WD/NW/H describe the full month.</p>
-<div class="key no-print"><span class="swatch present">P</span> Present</div>
+<h2 id="registerTitle">Class / School Monthly Register</h2><div class="key no-print"><span class="swatch present">P</span> Present</div>
 <div class="key no-print"><span class="swatch absent">A</span> Absent</div>
 <div class="key no-print"><span class="swatch leave">L</span> Leave</div>
 <div class="key no-print"><span class="swatch missing">—</span> Not recorded</div>
 <div class="key no-print"><span class="swatch sunday">S</span> Sunday</div>
-<div class="table-wrap"><table id="register"><thead></thead><tbody></tbody></table></div>
+<div class="table-wrap"><table id="register"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
+<p class="month-info" id="monthInfo">Loading calendar…</p><p class="calendar-note">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days. S = Sunday; blank = future working date. WD/NW/H describe the full month.</p>
 <p class="muted">Monthly totals count only explicit saved Present, Absent and Leave entries. Unmarked and closed days are not counted as absences.</p>
 </section>
 <section class="panel no-print">
@@ -97,6 +117,7 @@ const $=id=>document.getElementById(id),safe=x=>String(x??'').replace(/[&<>"']/g
 const query=new URLSearchParams(location.search);
 const role=query.get('role')==='teacher'?'teacher':'school';
 const dateKey=LamaAttendanceHistory.dateKey,personId=s=>String(s.id??s._id??s.studentId??''),enrol=s=>String(s.enrlNo??s.enrollmentNo??s.enrollment??''),klass=s=>String(s.class??s.grade??s.className??'Unassigned').trim()||'Unassigned';
+const father=s=>String(s.fatherName||s.father||s.father_name||s.guardianName||'').trim(),showClassColumn=()=>!$('class').value;
 const normalizeClass=v=>String(v??'').trim().toLowerCase().replace(/^(?:class|grade|standard|std)[\s._-]*/,'').replace(/\s+/g,' ');
 const monthNow=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
 const state={students:[],records:[],model:null,loaded:false,session:null,loading:false,calendarResources:null,logo:""};let pdfBusy=false;
@@ -119,15 +140,19 @@ function render(){
  $('registerTitle').textContent=label+' — '+month+' · '+students.length+' students';
  const cal=LamaRegisterPdf.calendar(days,state.calendarResources,dateKey(new Date().toISOString()));
  $('monthInfo').textContent='Calendar days: '+days.length+' · Working: '+cal.working+' · Non-working: '+cal.nonworking+' · Holidays: '+(cal.holidays??'Unknown')+' · Sundays (not separately recorded as holidays): '+cal.sundays+(cal.available?'':' · Provisional: holiday calendar unavailable');
- const heads=['<th scope="col" class="serial">No.</th>','<th scope="col" class="student-name">Student / Enrollment</th>'];
+ const showClass=showClassColumn(),identityCount=showClass?5:4,colCount=identityCount+days.length+LamaRegisterPdf.summaryHeaders.length;
+ const heads=['<th scope="col" class="serial">No.</th>','<th scope="col" class="enrollment-col">Enrollment No.</th>','<th scope="col" class="student-name">Student Name</th>','<th scope="col" class="father-col">Father Name</th>'];
+ if(showClass)heads.push('<th scope="col" class="class-col">Class</th>');
  for(const [i,d] of days.entries()){const k=cal.kinds[i];heads.push('<th scope="col" title="'+d+'" class="'+(k==='H'?'holiday':k==='S'?'sunday':'')+'">'+d.slice(8)+(k==='W'?'':' '+k)+'</th>')}
  for(const h of LamaRegisterPdf.summaryHeaders)heads.push('<th scope="col">'+h+'</th>');
- $('register').querySelector('thead').innerHTML='<tr>'+heads.join('')+'</tr>';
+ const heading='<div class="print-register-heading"><div><strong>'+safe($('schoolName').textContent)+'</strong><b>Monthly Student Attendance Register</b><span>'+safe(label)+' · '+safe(month)+' · '+students.length+' students</span></div>'+(state.logo?'<img src="'+safe(state.logo)+'" alt="School logo">':'')+'</div>';
+ $('register').querySelector('thead').innerHTML='<tr class="register-repeat"><th colspan="'+colCount+'">'+heading+'</th></tr><tr>'+heads.join('')+'</tr>';
+ $('register').querySelector('tfoot').innerHTML='<tr class="register-repeat"><td colspan="'+colCount+'">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days · S = Sunday · — = Not marked · Blank = Future working day. '+(cal.available?'WD/NW/H cover the full month.':'Holiday calendar unavailable; WD/NW provisional.')+'</td></tr>';
  $('register').querySelector('tbody').innerHTML=students.map((s,i)=>{
   const marks=days.map(d=>({Present:'P',Absent:'A',Leave:'L'}[model.get(s,d)]||''));
   const cells=days.map((d,j)=>{const v=LamaRegisterPdf.markFor(marks[j],d,cal.kinds[j],cal.asOf);const cls={P:'present',A:'absent',L:'leave',H:'holiday',S:'sunday'}[v]||'missing';return '<td class="'+cls+'" title="'+safe(d+' '+v)+'">'+safe(v)+'</td>'});
-  return '<tr><td class="serial">'+(i+1)+'</td><td class="student-name"><strong>'+safe(s.name||'Unnamed')+'</strong><br><span class="muted">'+safe(enrol(s))+' · '+safe(klass(s))+'</span></td>'+cells.join('')+LamaRegisterPdf.rowSummary(marks,days,cal).map(n=>'<td>'+safe(n)+'</td>').join('')+'</tr>';
- }).join('')||'<tr><td colspan="'+(days.length+9)+'">No students in this class.</td></tr>';
+  return '<tr><td class="serial">'+(i+1)+'</td><td class="enrollment-col">'+safe(enrol(s)||'—')+'</td><td class="student-name"><strong>'+safe(s.name||'Unnamed')+'</strong></td><td class="father-col">'+safe(father(s)||'—')+'</td>'+(showClass?'<td class="class-col">'+safe(klass(s))+'</td>':'')+cells.join('')+LamaRegisterPdf.rowSummary(marks,days,cal).map(n=>'<td>'+safe(n)+'</td>').join('')+'</tr>';
+ }).join('')||'<tr><td colspan="'+colCount+'">No students in this class.</td></tr>';
  updatePageOrientation();
  const yesterdayReference=new Date();yesterdayReference.setDate(yesterdayReference.getDate()+1);
  const reference=dateKey(yesterdayReference.getFullYear()+'-'+String(yesterdayReference.getMonth()+1).padStart(2,'0')+'-'+String(yesterdayReference.getDate()).padStart(2,'0'));
@@ -139,11 +164,11 @@ function exportCsv(){
  if(!state.loaded)return;
  const dates=datesInMonth($('month').value);
  const calendar=LamaRegisterPdf.calendar(dates,state.calendarResources,dateKey(new Date().toISOString()));
- const rows=[['No.','Student Name','Enrollment','Class',...dates,'Present','Absent','Leave','Working days (full month)','Non-working days (full month)','Holidays (full month)','Unmarked elapsed working days']];
+ const rows=[['No.','Enrollment No.','Student Name','Father Name',...(showClassColumn()?['Class']:[]),...dates,'Present','Absent','Leave','Working days (full month)','Non-working days (full month)','Holidays (full month)','Unmarked elapsed working days']];
  for(const s of currentStudents()){
   const vals=dates.map(d=>state.model.get(s,d)||'');
   const P=vals.filter(x=>x==='Present').length,A=vals.filter(x=>x==='Absent').length,L=vals.filter(x=>x==='Leave').length;
-  const marks=vals.map(v=>({Present:'P',Absent:'A',Leave:'L'}[v]||''));rows.push([rows.length,s.name||'',enrol(s),klass(s),...marks.map((v,i)=>LamaRegisterPdf.markFor(v,dates[i],calendar.kinds[i],calendar.asOf)),...LamaRegisterPdf.rowSummary(marks,dates,calendar)]);
+  const marks=vals.map(v=>({Present:'P',Absent:'A',Leave:'L'}[v]||''));rows.push([rows.length,enrol(s),s.name||'',father(s),...(showClassColumn()?[klass(s)]:[]),...marks.map((v,i)=>LamaRegisterPdf.markFor(v,dates[i],calendar.kinds[i],calendar.asOf)),...LamaRegisterPdf.rowSummary(marks,dates,calendar)]);
  }
  // Protect spreadsheets from formula injection when opened in Excel.
  const cell=v=>{let text=String(v??'');if(/^[\s]*[=+@-]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'};
@@ -186,11 +211,11 @@ async function downloadRegisterPdf(){
  pdfBusy=true;$('downloadPdf').disabled=true;
  try{
   const month=$('month').value,days=datesInMonth(month),label=$('class').value||'All Classes';
-  const rows=currentStudents().map(s=>({name:s.name||'Unnamed',enrollment:enrol(s),className:klass(s),marks:days.map(d=>({Present:'P',Absent:'A',Leave:'L'}[state.model.get(s,d)]||''))}));
+  const rows=currentStudents().map(s=>({name:s.name||'Unnamed',enrollment:enrol(s),fatherName:father(s),className:klass(s),marks:days.map(d=>({Present:'P',Absent:'A',Leave:'L'}[state.model.get(s,d)]||''))}));
   const school=String($('schoolName').textContent);
   statusText('Preparing A4 attendance PDF…');
   const calendar=LamaRegisterPdf.calendar(days,state.calendarResources,dateKey(new Date().toISOString()));
-  const result=await LamaRegisterPdf.create({school,label,month,days,rows,calendar,logo:state.logo},$('orientation').value);
+  const result=await LamaRegisterPdf.create({school,label,month,days,rows,calendar,logo:state.logo,showClass:showClassColumn()},$('orientation').value);
   const url=URL.createObjectURL(result.blob),a=document.createElement('a');
   a.href=url;a.download='LAMA-Attendance-'+month+'-'+label.replace(/[^a-z0-9_-]+/gi,'_')+'.pdf';
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
@@ -199,7 +224,7 @@ async function downloadRegisterPdf(){
  finally{pdfBusy=false;$('downloadPdf').disabled=!state.loaded}
 }
 $('downloadPdf').onclick=downloadRegisterPdf;
-function updatePageOrientation(){const plan=LamaRegisterPdf.layout({rows:currentStudents()},$('orientation').value);$('pageOrientation').textContent='@page{size:A4 '+plan.orientation+';margin:7mm}';$('registerPanel').dataset.orientation=plan.orientation;}
+function updatePageOrientation(){const plan=LamaRegisterPdf.layout({rows:currentStudents(),showClass:showClassColumn()},$('orientation').value);$('pageOrientation').textContent='@page{size:A4 '+plan.orientation+';margin:7mm}';$('registerPanel').dataset.orientation=plan.orientation;}
 $('orientation').onchange=updatePageOrientation;
 $('csv').onclick=exportCsv;$('print').onclick=()=>{if(state.loaded){updatePageOrientation();window.print()}};
 async function loadBranding(){

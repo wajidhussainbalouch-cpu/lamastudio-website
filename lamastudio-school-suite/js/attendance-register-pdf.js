@@ -3,11 +3,12 @@
  */
 (function(root){
 'use strict';
-const MM=72/25.4,M=7,TOP=36,HEAD=6,ROW=4.0;
+const MM=72/25.4,M=7,TOP=27,HEAD=6,ROW=4.0,FOOT=20;
 function layout(report,choice='auto'){
- const portrait=choice==='portrait'||(choice==='auto'&&report.rows.length<=15);
+ // Choose orientation by width as well as student count; full-month identity columns need space.
+ const portrait=choice==='portrait';
  const W=portrait?210:297,H=portrait?297:210;
- return {W,H,orientation:portrait?'portrait':'landscape',capacity:Math.floor((H-12-TOP-HEAD)/ROW)};
+ return {W,H,orientation:portrait?'portrait':'landscape',capacity:Math.floor((H-FOOT-TOP-HEAD)/ROW)};
 }
 function paginate(rows,capacity=37){
  const pages=[];for(let i=0;i<rows.length;i+=capacity)pages.push(rows.slice(i,i+capacity));
@@ -67,18 +68,20 @@ function drawPage(canvas,report,rows,index,count,plan,logo){
  text(report.school,M,10,5.5,{bold:true,max:W-2*M-(logo?23:0)});
  text('MONTHLY STUDENT ATTENDANCE REGISTER',M,17,3.8,{bold:true,max:W-2*M-(logo?23:0)});
  text(report.label+'  |  '+report.month+'  |  Students: '+report.rows.length,M,23,2.8,{max:W-2*M-(logo?23:0)});
- text('P Present · A Absent · L Leave · WD Working days · NW Non-working · H Holidays · U Unmarked elapsed working days',M,29,2.35,{max:W-2*M});
- text((cal.available?'Full-month calendar: Sundays + published holidays.':'Holiday calendar unavailable; WD/NW are provisional (Sundays only).')+'  S Sunday · – unmarked · blank future working day',M,33,2.2,{max:W-2*M});
- const portrait=plan.orientation==='portrait',serialW=6,nameW=portrait?38:49,numW=portrait?5.5:7,dayW=(W-2*M-serialW-nameW-numW*7)/report.days.length;
- const cols=[serialW,nameW,...report.days.map(()=>dayW),...summaryHeaders.map(()=>numW)];
- const labels=['No.','Student / Enrollment / Class',...report.days.map(d=>d.slice(-2)),...summaryHeaders];
- let x=M;cols.forEach((w,i)=>{const kind=i>=2&&i<report.days.length+2?cal.kinds[i-2]:'';cell(x,TOP,w,HEAD,kind==='H'?'#f9e6c6':kind==='S'?'#dce5e8':'#e2eff0');text(labels[i],i===1?x+1:x+w/2,TOP+HEAD/2,2.35,{bold:true,align:i===1?'left':'center',max:w-.6});x+=w});
+ const portrait=plan.orientation==='portrait',showClass=report.showClass??report.label==='All Classes';
+ const identity=[{label:'No.',w:6,value:(r,n)=>n},{label:'Enrol.',w:portrait?13:17,value:r=>r.enrollment},{label:'Student Name',w:portrait?27:38,value:r=>r.name,left:true},{label:'Father Name',w:portrait?26:37,value:r=>r.fatherName,left:true}];
+ if(showClass)identity.push({label:'Class',w:portrait?13:19,value:r=>r.className,left:true});
+ const numW=portrait?4.5:6,dayW=(W-2*M-identity.reduce((n,v)=>n+v.w,0)-numW*7)/report.days.length;
+ const cols=[...identity.map(v=>v.w),...report.days.map(()=>dayW),...summaryHeaders.map(()=>numW)];
+ const labels=[...identity.map(v=>v.label),...report.days.map(d=>d.slice(-2)),...summaryHeaders];
+ let x=M;cols.forEach((w,i)=>{const j=i-identity.length,kind=j>=0&&j<report.days.length?cal.kinds[j]:'';cell(x,TOP,w,HEAD,kind==='H'?'#f9e6c6':kind==='S'?'#dce5e8':'#e2eff0');text(labels[i],x+w/2,TOP+HEAD/2,2.35,{bold:true,align:'center',max:w-.6});x+=w});
  rows.forEach((row,i)=>{
   const y=TOP+HEAD+i*ROW;let x=M;
-  cell(x,y,serialW,ROW);text(index*capacity+i+1,x+serialW/2,y+ROW/2,2.4,{align:'center'});x+=serialW;
-  cell(x,y,nameW,ROW,i%2?'#f5f8f8':'#fff');
-  text(row.name,x+1,y+1.12,2.65,{bold:true,max:nameW-2});
-  text([row.enrollment,row.className].filter(Boolean).join(' · '),x+1,y+2.9,2.05,{max:nameW-2,color:'#50636a'});x+=nameW;
+  for(const col of identity){
+   cell(x,y,col.w,ROW,i%2?'#f5f8f8':'#fff');
+   text(col.value(row,index*capacity+i+1)||'—',col.left?x+.7:x+col.w/2,y+ROW/2,2.5,{bold:col.label==='Student Name',align:col.left?'left':'center',max:col.w-1.2});
+   x+=col.w;
+  }
   row.marks.forEach((mark,j)=>{
    const kind=cal.kinds[j],v=markFor(mark,report.days[j],kind,cal.asOf);
    const fill={P:'#e0f4e8',A:'#fbe4e4',L:'#fff1cf',H:'#f9e6c6',S:'#e8edef'}[v]||'#fff';
@@ -87,9 +90,11 @@ function drawPage(canvas,report,rows,index,count,plan,logo){
   for(const v of rowSummary(row.marks,report.days,cal)){cell(x,y,numW,ROW,'#f4f8f8');text(v,x+numW/2,y+ROW/2,2.4,{align:'center',max:numW-.6});x+=numW}
  });
  if(!rows.length)text('No students in this selection.',M+1,TOP+HEAD+3,2.7);
- text('Saved P/A/L marks are retained even on calendar closures. WD/NW/H refer to the full month.',M,H-10,2.15,{max:W-2*M});
- text('LAMA School Suite · LamaStudio.pk',M,H-6,2.25,{color:'#52666c'});
- text('Page '+(index+1)+' of '+count,W-M,H-6,2.25,{align:'right'});
+ text('P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays',M,H-16,2.25,{max:W-2*M});
+ text('U = Unmarked elapsed working days · S = Sunday · – = Not marked · Blank = Future working day',M,H-12,2.25,{max:W-2*M});
+ text(cal.available?'WD/NW/H cover the full month; saved marks are retained on closures.':'Holiday calendar unavailable; WD/NW provisional (Sundays only).',M,H-8.5,2.05,{max:W-2*M});
+ text('LAMA School Suite · LamaStudio.pk',M,H-4.5,2.1,{color:'#52666c'});
+ text('Page '+(index+1)+' of '+count,W-M,H-4.5,2.1,{align:'right'});
 }
 async function loadLogo(url){
  if(!url)return null;

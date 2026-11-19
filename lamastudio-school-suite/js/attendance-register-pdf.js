@@ -1,9 +1,9 @@
-/* Client-side A4 landscape register PDF, no network or external libraries.
+/* Client-side adaptive A4 register PDF, no external PDF libraries.
  * Canvas preserves Unicode names using device fonts. PDF pages have fixed physical dimensions.
  */
 (function(root){
 'use strict';
-const MM=72/25.4,M=7,TOP=36,HEAD=6,ROW=4.15;
+const MM=72/25.4,M=7,TOP=36,HEAD=6,ROW=4.0;
 function layout(report,choice='auto'){
  const portrait=choice==='portrait'||(choice==='auto'&&report.rows.length<=15);
  const W=portrait?210:297,H=portrait?297:210;
@@ -78,7 +78,7 @@ function drawPage(canvas,report,rows,index,count,plan,logo){
   cell(x,y,serialW,ROW);text(index*capacity+i+1,x+serialW/2,y+ROW/2,2.4,{align:'center'});x+=serialW;
   cell(x,y,nameW,ROW,i%2?'#f5f8f8':'#fff');
   text(row.name,x+1,y+1.12,2.65,{bold:true,max:nameW-2});
-  text([row.enrollment,row.className].filter(Boolean).join(' · '),x+1,y+3.02,2.05,{max:nameW-2,color:'#50636a'});x+=nameW;
+  text([row.enrollment,row.className].filter(Boolean).join(' · '),x+1,y+2.9,2.05,{max:nameW-2,color:'#50636a'});x+=nameW;
   row.marks.forEach((mark,j)=>{
    const kind=cal.kinds[j],v=markFor(mark,report.days[j],kind,cal.asOf);
    const fill={P:'#e0f4e8',A:'#fbe4e4',L:'#fff1cf',H:'#f9e6c6',S:'#e8edef'}[v]||'#fff';
@@ -99,6 +99,7 @@ async function loadLogo(url){
 async function create(report,choice='auto'){
  if(!report||!Array.isArray(report.rows)||!Array.isArray(report.days)||report.days.length<28||report.days.length>31)throw Error('Select a valid month and load the saved register first.');
  if(report.rows.some(r=>!Array.isArray(r.marks)||r.marks.length!==report.days.length||r.marks.some(v=>!['','P','A','L'].includes(v))))throw Error('Attendance data is incomplete.');
+ if(!report.calendar||report.calendar.kinds?.length!==report.days.length)throw Error('Attendance calendar is incomplete.');
  const plan=layout(report,choice),pages=paginate(report.rows,plan.capacity),images=[];
  const logo=await loadLogo(report.logo);
  for(let i=0;i<pages.length;i++){

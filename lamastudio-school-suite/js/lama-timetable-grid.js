@@ -27,7 +27,7 @@ function labels(rows=[],offered=[]){
   if(typeof r==='string'){add(r);continue}
   if(r)add(classLabel(r));
  }
- return [...set.values()].sort(natural);
+ return [...set.values()].sort(root.LamaClassOrder.compare);
 }
 function splitLabel(text){
  const m=value(text).match(/^(.*?)\s*·\s*Section\s+(.+)$/i);

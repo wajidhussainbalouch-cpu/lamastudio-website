@@ -1,0 +1,93 @@
+# Lama English Speaking Academy — Project Handover
+Updated: 2026-10-31 (curriculum UI and CI refinement)
+Status: Development prototype; no verified APK or revenue integration.
+
+## Isolation
+Repository: wajidhussainbalouch-cpu/lamastudio-website
+Branch: dev/lama-english-speaking-academy
+Root: apps/lama-english-speaking-academy/
+No production merge, Vercel deployment or Play publication without authorization.
+
+## Verified source inventory
+- Native Kotlin, Jetpack Compose starter Android application.
+- Four original A1 lessons (greetings, daily routine, classroom, shopping), with Urdu explanations and TEN quiz questions each (40 total).
+- JSON lesson parser, basic local SharedPreferences completion tracking and >=70% pass rule.
+- Android TextToSpeech dialogue playback source; not device-tested.
+- Microphone permission declared; speech recognition UI is not implemented.
+- LessonValidator and three tests; AcademyPolicy and four policy tests; RewardPolicy and three reward tests.
+- GitHub Actions workflow source exists, but successful build and APK have not been verified.
+
+## Deep audit findings
+1. Only four lessons and eight quiz questions; insufficient for production curriculum.
+2. Current level selector and data model do not provide a full A1-C2 course map.
+3. Vocabulary now appears in the lesson UI; speaker labels are still lost in the parser.
+4. Dialogues lose speaker labels in the parser.
+5. No robust offline speech recognition, proficiency assessment, spaced repetition or Room database. Reward coins use local SharedPreferences, not a tamper-resistant server ledger.
+6. No AdMob SDK, real ad placements, subscription billing or verified premium entitlements.
+7. TTS initialization/device availability and lifecycle need build/device validation.
+8. CI pins Gradle 8.9 and installs Android SDK 35; Gradle wrapper and successful CI run are outstanding.
+9. UI needs accessibility, responsive layout and commercial design review.
+10. Existing lessons require editorial expansion and review for progression, accuracy and variety.
+
+## Commercial learning architecture
+- Easy A1-A2: accessible beginner courses with free ad-supported lessons.
+- Medium B1-B2: free introduction and premium expansion.
+- Hard C1-C2: selected free previews and premium professional modules.
+- CEFR bands are curriculum alignment goals, not accredited proficiency certificates.
+- Premium: ad-free experience, advanced modules and enhanced practice.
+- Ads: only eligible non-child free accounts on home or lesson-completion screens; never during speaking, quizzes or certificates.
+- Advertising must remain disabled until consent, age suitability, real SDK integration, testing and policy review are complete.
+- Google Play Billing required for digital subscriptions; entitlement validation must not rely on a local toggle.
+- No hardcoded real ad IDs, billing secrets or cloud AI keys.
+
+## Latest committed changes
+- Expanded question bank from 8 to 40 original A1 multiple-choice questions (10 per lesson); editorial and build validation still required.
+- Added one-time 25-coin rewards for first successful lesson completion; repeated passes do not mint extra coins.
+- Added certificate eligibility after all four A1 lessons are passed; current UI is a completion preview, NOT an issued personalized certificate or PDF.
+- Added three unit tests for passing threshold, coin awards and certificate eligibility.
+- Build cannot be verified in the current local environment (no Gradle or Android SDK available); CI workflow source exists, but no successful run was confirmed.
+
+- Parsed vocabulary items and CEFR level into the lesson data model, preserving backwards-compatible constructor defaults for existing tests.
+- Displayed vocabulary words, Urdu meanings and usage examples in lesson cards.
+- Added beginner course completion progress bar.
+- Pinned CI Gradle 8.9 and Android SDK platform 35. Builds and tests remain unverified.
+
+## Next engineering gates
+1. Establish reproducible Gradle build, run JVM tests, fix failures and verify debug APK.
+2. Expand schema to include level, module, vocabulary, speaker labels and practice types.
+3. Add polished course map and unlock logic, with no fake premium purchases.
+4. Add AdMob test-mode integration and age-appropriate consent architecture.
+5. Add Play Billing integration with entitlement verification, then professional curriculum and speaking improvements.
+6. Record build/test outcomes here; do not declare release ready until verified.
+
+## Product direction reaffirmed
+The core product is a professional English-speaking academy, not a certificate or reward-coin app. Prioritize Android build verification, learner experience, A1-C2 structured curriculum, listening and speaking practice, vocabulary and grammar, meaningful assessments, then ad-supported Free and optional Premium monetization. Certificates and reward coins are optional finishing features after real learning outcomes and quality gates. Do not divert engineering priority to certificate artwork or issuance before the core app is working. Continue on this isolated development branch only; no merge, deployment or publishing without approval.
+
+## Speaking-first usability increment
+- Lesson screen now explicitly guides learners through Listen, Repeat, and Quiz.
+- Quiz now shows answer feedback before the learner advances; incorrect answers reveal the expected response for revision.
+- Learning dashboard includes a daily practice goal. These are source changes, not verified on a device.
+- Speech recognition, pronunciation assessment, broader A1-C2 curriculum, AdMob and billing remain pending.
+- APK build and unit tests remain unverified.
+
+## Speech recognition implementation — 2026-11-01
+- Added SpeakingPractice.kt with Android RecognizerIntent, runtime RECORD_AUDIO permission request, transcript display, cancellation/no-result handling, and no-recognizer fallback.
+- Embedded speaking practice in lesson UI with listen, repeat and compare steps.
+- Speech recognition is device-dependent and may use cloud processing; no local audio recording/storage is implemented.
+- This is transcript practice, NOT validated pronunciation scoring.
+- Local environment inspection: Java is installed; neither gradle nor an Android SDK was found. No local APK compilation or successful CI run has been confirmed. Do not claim a verified APK.
+- Next: obtain a successful Android CI run and resolve compilation failures, then build a sentence-by-sentence dialogue practice flow and device tests.
+
+## GitHub-first verification protocol — 2026-11-01
+- GitHub development branch is the sole source of truth; Vercel is not involved in Android development.
+- After every create/update, read the exact file back from GitHub using the same branch and verify its expected content and blob SHA before reporting success.
+- Distinguish GitHub file commit confirmation from successful Android CI and APK verification.
+- Do not merge to main, trigger production deployments or publish without explicit approval.
+
+## APK readiness checkpoint — 2026-11-01
+- Debug APK is NOT verified and NOT yet available for installation.
+- Updated Android CI to run tests with stack traces and assert that app-debug.apk exists and is nonempty before uploading it.
+- Added explicit androidx.core:core-ktx dependency for permission handling.
+- Both changes were committed and read back successfully from GitHub.
+- GitHub commit-associated workflow lookup returned no runs for the updated workflow commit; cannot claim compilation passed.
+- Do not merge to main or publish. Next gate: run Android Actions workflow on dev/lama-english-speaking-academy, inspect errors, fix and confirm artifact.

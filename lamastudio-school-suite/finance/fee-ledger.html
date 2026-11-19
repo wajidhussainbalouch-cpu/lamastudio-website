@@ -1,0 +1,145 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fee Ledger | LAMA School Suite</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0b1925;color:#edf7fa}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0}main{max-width:1250px;margin:auto;padding:16px}a{color:#9ce2dd}section{border:1px solid #3b5969;background:#142c3b;border-radius:15px;padding:16px;margin:12px 0}h1{font-size:clamp(22px,4vw,32px)}h2{font-size:18px}p{line-height:1.5}.muted{color:#bfd1db;font-size:13px}.warning{color:#ffdda4}.error{color:#ffb5b0}.good{color:#8ee0ba}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.grid label{display:flex;flex-direction:column;gap:6px;min-width:0}input,select,button{font:inherit;color:inherit;border:1px solid #52727f;background:#183b4b;border-radius:8px;padding:10px;min-width:0}button{cursor:pointer;font-weight:700}button:disabled{opacity:.45;cursor:default}.primary{background:#087a6b}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}.scroll{overflow:auto;max-height:460px}table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}th,td{border-bottom:1px solid #456271;padding:9px;text-align:left;vertical-align:top}th{background:#1c4d5c;position:sticky;top:0}.num{text-align:right;white-space:nowrap}.metric{padding:12px;border:1px solid #52727f;border-radius:10px}.metric strong{display:block;font-size:21px;margin-top:5px}.print-slip{background:white;color:#172b34;padding:14px;border:1px solid #9aaeb7;break-inside:avoid;page-break-inside:avoid}.print-slip h3{margin:0;font-size:17px}.print-slip table{min-width:0;color:#172b34;font-size:11px}.print-slip th{background:#e7eff1;position:static}.print-slip td,.print-slip th{border:1px solid #9daeb2;padding:5px}.print-slip p{font-size:11px;margin:6px 0}#printArea{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:650px){main{padding:9px}section{padding:12px}#printArea{grid-template-columns:1fr}}@page{size:A4 portrait;margin:10mm}@media print{html,body{background:white;color:#111}main{padding:0;max-width:none}main>header,main>section:not(#printSection),.no-print{display:none!important}#printSection{padding:0;border:0;background:white;margin:0}#printArea{grid-template-columns:1fr 1fr;gap:5mm}}
+</style><script src="../js/api-client.js?v=20261119ledger"></script><script src="../js/school-fee-policy.js?v=20261119ledger"></script></head><body><main>
+<header><a href="../dashboard.html">Dashboard</a> · <a href="../settings.html">School Settings</a> · <a href="fees.html">Existing Fee Records</a> · <a href="fee-plan.html">Class Fee Rates</a><h1 id="title">LAMA School Suite — Fee Ledger</h1><p class="muted">Pilot accounting workspace. New ledger records are separate from historical fees. No legacy amount is automatically imported or treated as paid.</p></header>
+<section><h2>Ledger availability</h2><p id="status" role="status">Checking administrator authorization and backend availability…</p><button id="reload" type="button">Refresh / Verify</button><p id="pendingText" class="warning" hidden></p><button id="retry" type="button" hidden disabled>Retry exact pending request</button></section>
+<section id="totals" hidden><h2>Verified ledger totals</h2><div class="grid"><div class="metric">Billed<strong id="billed">—</strong></div><div class="metric">Received<strong id="received">—</strong></div><div class="metric">Outstanding<strong id="balance">—</strong></div></div></section>
+<section id="issuePanel" hidden><h2>1. Generate class fee bills</h2><p class="muted">Amounts come from School Settings. One category per batch (up to 50 students); repeat for remaining students and other categories. No duplicate monthly or event charge is issued by the server.</p><div class="grid"><label>Class<select id="classFilter"></select></label><label>Fee category<select id="category"></select></label><label>Billing month<input id="month" type="month"></label><label>Due date<input id="dueDate" type="date"></label><label id="eventLabel" hidden>Event reference<input id="eventRef" maxlength="80" placeholder="e.g. Annual exam 2026"></label></div><div class="actions"><button id="preview" type="button">Preview next batch</button><button id="issue" type="button" class="primary" disabled>Issue reviewed bills</button></div><p id="issueNote" class="muted"></p><div id="issuePreview" class="scroll"></div></section>
+<section id="reportPanel" hidden><h2>2. Ledger, vouchers & outstanding fees</h2><div class="grid"><label>Class<select id="reportClass"></select></label><label>Month<input id="reportMonth" type="month"></label><label>Category<select id="reportCategory"></select></label><label>Status<select id="reportStatus"><option value="">All statuses</option><option>Unpaid</option><option>Partial</option><option>Paid</option><option value="overdue">Overdue</option></select></label><label>Student / enrollment<input id="query" type="search"></label></div><div class="actions"><button id="voucher" type="button">Preview filtered unpaid vouchers</button></div><p id="filteredTotal" class="muted"></p><div class="scroll"><table><thead><tr><th>Student</th><th>Class</th><th>Month / fee</th><th>Billed</th><th>Received</th><th>Balance</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div></section>
+<section id="paymentPanel" hidden><h2>3. Receive full or partial payment</h2><p class="muted">Choose one student and enter how much is received against each outstanding bill. Amounts cannot exceed balances. The receipt is posted only after confirmation.</p><label>Student<select id="payStudent"></select></label><div class="scroll"><table><thead><tr><th>Month / category</th><th>Outstanding</th><th>Receive (Rs.)</th></tr></thead><tbody id="allocations"></tbody></table></div><div class="grid"><label>Payment method<select id="method"><option>Cash</option><option>Bank</option><option>Online</option><option>Other</option></select></label><div class="metric">Payment total<strong id="payTotal">Rs. 0</strong></div></div><div class="actions"><button id="pay" class="primary" type="button" disabled>Confirm payment</button></div></section>
+<section id="receiptPanel" hidden><h2>4. Payment receipts</h2><p class="muted">Print recorded payments. Reversal requires a reason and preserves the original receipt; it is not a cash refund.</p><div class="scroll"><table><thead><tr><th>Reference / date</th><th>Student</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead><tbody id="receipts"></tbody></table></div></section>
+<section id="printSection" hidden><div class="actions no-print"><button id="print" type="button">Print / Save PDF</button><button id="closePrint" type="button">Close preview</button></div><div id="printArea"></div></section>
+</main><script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),P=LamaFeePolicy,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),money=n=>'Rs. '+(Number(n)/100).toLocaleString('en-PK',{minimumFractionDigits:0,maximumFractionDigits:2});
+const panels=['totals','issuePanel','reportPanel','paymentPanel','receiptPanel'];
+let school,students=[],ledger=null,pending=null,reviewed=null,busy=false,storageKey='';
+const methodMap={issue:'feeLedgerIssue',pay:'feeLedgerPay',reverse:'feeLedgerReverse'};
+const message=(s,bad=false)=>{$('status').textContent=s;$('status').className=bad?'error':'good'};
+const stamp=s=>JSON.stringify([s.type||'',s.privateSub||'',s.offeredClassesJson||'',s.feeCategoriesJson||'']);
+function localDate(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fillSelect(id,entries,first){const el=$(id),old=el.value;el.replaceChildren(new Option(first,''));for(const [key,label] of entries)el.add(new Option(label,key));if([...el.options].some(o=>o.value===old))el.value=old;}
+function canWrite(){return !!ledger?.writable&&!busy&&!pending}
+function demands(){return ledger?.report?.demands||[]}
+function nameOf(id){return students.find(s=>String(s.id)===String(id))?.name||demands().find(d=>d.studentId===id)?.studentName||id}
+function classOf(st){return String(st.class||st.className||'')}
+function closePrint(){$('printSection').hidden=true;$('printArea').replaceChildren()}
+function invalidate(){reviewed=null;$('issue').disabled=true;$('issuePreview').replaceChildren();$('issueNote').textContent=''}
+function setControls(){
+ $('preview').disabled=!canWrite()||!ledger?.privateVouchers||stamp(school)!==ledger?.policyStamp;
+ $('issue').disabled=!canWrite()||!reviewed;
+ $('retry').hidden=!pending;$('retry').disabled=busy||!pending||!ledger?.writable;
+ $('pendingText').hidden=!pending;
+ $('pendingText').textContent=pending?'Unresolved '+pending.kind+' request '+pending.id+'. Retry the same request; do not collect cash or issue a new bill again. Contact support if this request is repeatedly rejected.':'';
+ $('reload').disabled=busy;
+ calcPayment();
+ for(const b of $('receipts').querySelectorAll('[data-reverse]'))b.disabled=!canWrite();
+}
+function render(){
+ if(!ledger)return;
+ for(const id of panels)$(id).hidden=false;
+ $('issuePanel').hidden=!ledger.privateVouchers;
+ for(const [id,key] of [['billed','billedPaisa'],['received','paidPaisa'],['balance','balancePaisa']])$(id).textContent=money(ledger.report.totals[key]);
+ const classNames=[...new Set([...P.classes(school),...demands().map(d=>d.className)])].filter(Boolean);
+ fillSelect('reportClass',classNames.map(c=>[c,c]),'All classes');
+ const cats=[...new Set(demands().map(d=>d.category))];fillSelect('reportCategory',cats.map(c=>[c,c]),'All categories');
+ fillSelect('classFilter',P.classes(school).map(c=>[c,c]),'Choose class');
+ fillSelect('category',P.categories(school).filter(c=>P.permitted(c,school)).map(c=>[c.name,c.name+' · '+c.cadence]),'Choose fee category');
+ const ids=[...new Set(demands().filter(d=>d.balancePaisa>0).map(d=>d.studentId))];
+ fillSelect('payStudent',ids.map(id=>[id,nameOf(id)+' · '+(demands().find(d=>d.studentId===id)?.enrollment||id)]),'Choose student');
+ renderReport();renderAllocations();renderReceipts();toggleEvent();setControls();
+}
+function filtered(){
+ const cls=$('reportClass').value,month=$('reportMonth').value,cat=$('reportCategory').value,status=$('reportStatus').value,q=$('query').value.trim().toLowerCase();
+ return demands().filter(d=>(!cls||P.key(d.className)===P.key(cls))&&(!month||d.month===month)&&(!cat||d.category===cat)&&(!status||(status==='overdue'?d.overdue:d.status===status))&&(!q||[d.studentName,d.enrollment].some(v=>String(v||'').toLowerCase().includes(q))));
+}
+function renderReport(){
+ const rows=filtered();$('rows').innerHTML=rows.map(d=>'<tr><td>'+esc(d.studentName)+'<br><small>'+esc(d.enrollment)+'</small></td><td>'+esc(d.className)+'</td><td>'+esc(d.month)+'<br>'+esc(d.category)+'</td><td class="num">'+money(d.amountPaisa)+'</td><td class="num">'+money(d.paidPaisa)+'</td><td class="num">'+money(d.balancePaisa)+'</td><td>'+esc(d.status)+(d.overdue?' · Overdue':'')+'</td></tr>').join('')||'<tr><td colspan="7">No matching issued bills.</td></tr>';
+ $('filteredTotal').textContent=rows.length+' fee items · Outstanding '+money(rows.reduce((sum,d)=>sum+d.balancePaisa,0));
+ closePrint();
+}
+function toggleEvent(){const cat=P.categories(school||{}).find(c=>c.name===$('category').value);$('eventLabel').hidden=cat?.cadence!=='as-needed'}
+function buildPreview(){
+ invalidate();if(!canWrite()||!ledger.privateVouchers)return;
+ try{
+ const cls=$('classFilter').value,cat=P.categories(school).find(c=>c.name===$('category').value),month=$('month').value,dueDate=$('dueDate').value,eventRef=$('eventRef').value.trim();
+ if(!cls||!cat||!month||!dueDate)throw Error('Choose class, category, billing month and due date.');
+ if(cat.cadence==='as-needed'&&!eventRef)throw Error('Enter a unique event reference.');
+ const rate=P.ratesFor(cat,cls);if(rate===null||rate<=0)throw Error('No positive rate configured for this class/category.');
+ const period=cat.cadence==='monthly'?'month:'+month:cat.cadence==='one-time'?'once':'event:'+P.nameKey(eventRef);
+ const existing=new Set(demands().map(d=>d.key));
+ const matching=students.filter(st=>P.key(classOf(st))===P.key(cls)&&String(st.id||''));
+ const eligible=matching.filter(st=>!existing.has(JSON.stringify([String(st.id),P.nameKey(cat.name),period])));
+ const batch=eligible.slice(0,50);
+ if(!batch.length)throw Error('No new eligible students. Existing bills are not duplicated.');
+ reviewed={request:{studentIds:batch.map(st=>String(st.id)),categoryNames:[cat.name],month,dueDate,eventRef,policyStamp:ledger.policyStamp},totalPaisa:Math.round(rate*100)*batch.length};
+ $('issuePreview').innerHTML='<table><thead><tr><th>Student</th><th>Enrollment</th><th>Category</th><th>Fee</th></tr></thead><tbody>'+batch.map(st=>'<tr><td>'+esc(st.name)+'</td><td>'+esc(st.enrlNo)+'</td><td>'+esc(cat.name)+'</td><td>'+money(Math.round(rate*100))+'</td></tr>').join('')+'</tbody></table>';
+ $('issueNote').textContent=batch.length+' of '+eligible.length+' eligible students · '+money(reviewed.totalPaisa)+' · '+(matching.length-eligible.length)+' existing bills skipped.';
+ }catch(e){$('issueNote').textContent=e.message}
+ setControls();
+}
+function outstanding(){return demands().filter(d=>d.studentId===$('payStudent').value&&d.balancePaisa>0)}
+function renderAllocations(){
+ $('allocations').innerHTML=outstanding().map(d=>'<tr><td>'+esc(d.month+' · '+d.category)+'</td><td>'+money(d.balancePaisa)+'</td><td><input data-demand="'+esc(d.id)+'" type="number" step=".01" min="0" max="'+(d.balancePaisa/100)+'" placeholder="0" style="width:110px"></td></tr>').join('')||'<tr><td colspan="3">Select a student with outstanding fees.</td></tr>';calcPayment();
+}
+function allocations(){
+ const byId=new Map(outstanding().map(d=>[d.id,d]));const out=[];
+ for(const input of $('allocations').querySelectorAll('[data-demand]')){const n=P.amount(input.value);if(n===null||n===0)continue;const d=byId.get(input.dataset.demand),p=Math.round(n*100);if(!d||p>d.balancePaisa)throw Error('Payment exceeds outstanding amount.');out.push({demandId:d.id,amountPaisa:p})}
+ return out;
+}
+function calcPayment(){try{const a=allocations(),n=a.reduce((s,v)=>s+v.amountPaisa,0);$('payTotal').textContent=money(n);$('pay').disabled=!canWrite()||!n||a.length>50||n>1000000000}catch(e){$('payTotal').textContent=e.message;$('pay').disabled=true}}
+function renderReceipts(){$('receipts').innerHTML=ledger.report.receipts.slice().reverse().map(r=>'<tr><td>'+esc(r.id)+'<br>'+esc(String(r.at).slice(0,10))+'</td><td>'+esc(nameOf(r.studentId))+'</td><td>'+money(r.amountPaisa)+'</td><td>'+esc(r.method)+'</td><td>'+(r.reversed?'Reversed':'Recorded')+'</td><td><button type="button" data-receipt="'+esc(r.id)+'">Print</button> '+(r.reversed?'':'<button type="button" data-reverse="'+esc(r.id)+'">Reverse</button>')+'</td></tr>').join('')||'<tr><td colspan="6">No receipts recorded.</td></tr>'}
+function showPrint(html){$('printArea').innerHTML=html;$('printSection').hidden=!html;if(html)$('printSection').scrollIntoView({behavior:'smooth'})}
+function slipHeading(title){return '<h3>'+esc(school.name||'School')+'</h3><p><strong>'+esc(title)+'</strong></p>'}
+function printVouchers(){
+ if(!ledger.privateVouchers){message('Vouchers disabled for this school type.',true);return}
+ const groups=new Map();for(const d of filtered().filter(d=>d.balancePaisa>0)){if(!groups.has(d.studentId))groups.set(d.studentId,[]);groups.get(d.studentId).push(d)}
+ showPrint([...groups.values()].map(items=>{const st=items[0];return '<article class="print-slip">'+slipHeading('FEE VOUCHER — ISSUED OBLIGATIONS')+'<p>'+esc(st.studentName)+' · '+esc(st.enrollment)+' · '+esc(st.className)+'</p><table><thead><tr><th>Fee / due date / ref</th><th>Billed</th><th>Paid</th><th>Due</th></tr></thead><tbody>'+items.map(d=>'<tr><td>'+esc(d.month+' '+d.category)+'<br>'+esc(d.dueDate)+'<br>'+esc(d.id)+'</td><td>'+money(d.amountPaisa)+'</td><td>'+money(d.paidPaisa)+'</td><td>'+money(d.balancePaisa)+'</td></tr>').join('')+'</tbody></table><p><strong>Selected balance: '+money(items.reduce((s,d)=>s+d.balancePaisa,0))+'</strong></p><p>Only selected fee items. LAMA School Suite · LamaStudio.pk</p></article>'}).join(''));
+ if(!groups.size)message('No unpaid bills match your filters.',true);
+}
+function printReceipt(id){
+ const r=ledger.report.receipts.find(x=>x.id===id);if(!r)return;
+ const byId=new Map(demands().map(d=>[d.id,d]));
+ showPrint('<article class="print-slip">'+slipHeading(r.reversed?'REVERSED PAYMENT — NOT A VALID RECEIPT':'PAYMENT RECEIPT')+'<p>Ref: '+esc(r.id)+'<br>Date: '+esc(String(r.at).slice(0,10))+'<br>Student: '+esc(nameOf(r.studentId))+'<br>Method: '+esc(r.method)+'</p><table><thead><tr><th>Allocated fee</th><th>Received</th></tr></thead><tbody>'+r.allocations.map(a=>{const d=byId.get(a.demandId);return '<tr><td>'+esc(d?d.month+' '+d.category:a.demandId)+'</td><td>'+money(a.amountPaisa)+'</td></tr>'}).join('')+'</tbody></table><p><strong>Original receipt amount: '+money(r.amountPaisa)+'</strong></p><p>Authorized signature: __________</p><p>LAMA School Suite · LamaStudio.pk</p></article>');
+}
+function readPending(){const v=localStorage.getItem(storageKey);if(!v)return null;const p=JSON.parse(v);if(!p||!methodMap[p.kind]||typeof p.id!=='string'||!p.request||p.schoolId!==school.schoolId)throw Error('Invalid pending request. Contact support before posting.');return p}
+function persist(p){localStorage.setItem(storageKey,JSON.stringify(p));if(localStorage.getItem(storageKey)!==JSON.stringify(p))throw Error('Cannot preserve safe retry reference.');pending=p}
+async function send(kind,request){
+ if(!canWrite())return;
+ if(!globalThis.crypto?.randomUUID)throw Error('Secure request IDs unavailable on this browser.');
+ const action=async()=>{if(readPending())throw Error('Another pending fee request exists. Refresh before continuing.');persist({schoolId:school.schoolId,kind,id:crypto.randomUUID(),request});await retry()};
+ // Serialize new operations across same-browser tabs where the browser supports locks.
+ if(navigator.locks?.request)await navigator.locks.request(storageKey,{ifAvailable:true},async lock=>{if(!lock)throw Error('Another tab is posting a fee operation.');await action()});else await action();
+}
+async function retry(){
+ if(busy||!pending||!ledger?.writable)return;
+ busy=true;setControls();const p=pending;try{
+ const result=await LamaAPI[methodMap[p.kind]](p.id,p.request);
+ if(!result?.report||result.event?.id!==p.id)throw Error('Operation confirmation incomplete.');
+ ledger={...ledger,report:result.report};localStorage.removeItem(storageKey);pending=null;invalidate();render();message(result.replayed?'Verified previous request; no duplicate payment or charge created.':p.kind==='issue'?'Verified issue: '+result.event.demands.length+' fee items saved.':p.kind==='pay'?'Payment recorded and verified.':'Receipt reversal recorded and verified.');
+ }catch(e){message('Request not confirmed. '+e.message+' Preserve the same reference and retry; do not submit a second payment.',true)}finally{busy=false;setControls()}
+}
+async function init(){
+ if(busy)return;busy=true;ledger=null;reviewed=null;for(const id of panels)$(id).hidden=true;closePrint();
+ try{
+ const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
+ if(!auth?.schoolId||!auth?.token)throw Error('Sign in through School Administrator before using the fee ledger.');
+ school=await LamaAPI.getVerifiedSchoolConfig();if(String(school.schoolId)!==String(auth.schoolId))throw Error('School session mismatch.');
+ $('title').textContent=(school.name||'School')+' — Fee Ledger';storageKey='lama_fee_pending_v1_'+school.schoolId;pending=readPending();
+ const result=await LamaAPI.feeLedgerRead();if(result?.version!==1||result.schoolId!==school.schoolId||!Array.isArray(result.report?.demands)||!Array.isArray(result.report?.receipts))throw Error('New fee ledger backend is not verified.');
+ students=await LamaAPI.list('students');if(!Array.isArray(students))throw Error('Student directory unavailable.');
+ ledger=result;render();message(result.writable?'Verified pilot ledger. Historical Fees remain separate.':'Verified read-only ledger. Financial writes are disabled.');
+ }catch(e){message('Ledger unavailable: '+e.message+' No new financial records can be created here. Use existing fee records or class-rate previews.',true)}finally{busy=false;setControls()}
+}
+$('reload').onclick=init;$('retry').onclick=retry;
+for(const id of ['classFilter','category','month','dueDate','eventRef'])$(id).addEventListener('change',()=>{invalidate();toggleEvent()});
+$('preview').onclick=buildPreview;$('issue').onclick=async()=>{if(!reviewed||!canWrite())return;const p=reviewed;if(confirm('Issue '+p.request.studentIds.length+' reviewed bills totaling '+money(p.totalPaisa)+'? Existing recorded fees are not imported.'))try{await send('issue',p.request)}catch(e){message(e.message,true)}};
+for(const id of ['reportClass','reportMonth','reportCategory','reportStatus','query'])$(id).addEventListener('input',renderReport);
+$('payStudent').onchange=renderAllocations;$('allocations').addEventListener('input',calcPayment);$('pay').onclick=async()=>{try{if(!canWrite())return;const a=allocations(),amountPaisa=a.reduce((s,v)=>s+v.amountPaisa,0),studentId=$('payStudent').value;if(!amountPaisa||!studentId)return;if(confirm('Record '+money(amountPaisa)+' actually received from '+nameOf(studentId)+'?'))await send('pay',{studentId,amountPaisa,allocations:a,method:$('method').value})}catch(e){message(e.message,true)}};
+$('receipts').onclick=async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.receipt){printReceipt(b.dataset.receipt);return}if(b.dataset.reverse&&canWrite()){const reason=prompt('Reason for reversing this receipt (not a cash refund):');if(!reason?.trim())return;if(confirm('Reverse this receipt and restore its outstanding fee balance?'))try{await send('reverse',{receiptId:b.dataset.reverse,reason:reason.trim()})}catch(e){message(e.message,true)}}};
+$('voucher').onclick=printVouchers;$('print').onclick=()=>{if(!$('printSection').hidden)window.print()};$('closePrint').onclick=closePrint;
+window.addEventListener('storage',e=>{if(storageKey&&e.key===storageKey){try{pending=readPending();invalidate();setControls()}catch(err){ledger=null;for(const id of panels)$(id).hidden=true;message(err.message,true)}}});
+$('month').value=localDate().slice(0,7);$('dueDate').value=localDate();init();
+})();
+</script></body></html>

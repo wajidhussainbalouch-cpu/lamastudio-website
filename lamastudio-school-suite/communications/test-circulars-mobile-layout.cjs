@@ -1,0 +1,22 @@
+'use strict';
+// Static mobile-layout regression; source-only, no credentials or school records.
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'notifications.html'),'utf8');
+const header=source.split('<!-- Mobile-first: full-width identity above a 2x2 navigation grid. -->')[1]?.split('<!-- Filter Bar -->')[0]||'';
+assert.ok(header,'Responsive header present');
+assert.match(source,/name="viewport" content="width=device-width, initial-scale=1\.0"/);
+assert.match(source,/\.circular-header-actions\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+assert.match(source,/@media\s*\(min-width:\s*640px\)\s*\{\s*\.circular-header-actions\s*\{[^}]*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
+assert.match(source,/\.circular-school-copy\s*\{[^}]*min-width:\s*0/);
+assert.match(source,/#headerSchoolName\s*\{[^}]*overflow-wrap:\s*anywhere/);
+assert.match(source,/\.circular-message\s*\{[^}]*white-space:\s*pre-wrap/);
+assert.match(source,/\.circular-feed-card h4,\s*\.circular-feed-card \.circular-message\s*\{[^}]*overflow-wrap:\s*anywhere/);
+const nav=header.split('<nav class="circular-header-actions mt-4"')[1]?.split('</nav>')[0]||'';
+assert.ok(nav,'Actions are in a separate navigation row');
+for(const label of ['New Circular','Main Dashboard','Hub','Logout'])assert.ok(nav.includes(label),label+' action missing');
+assert.equal((nav.match(/<\/a>|<\/button>/g)||[]).length,4,'Exactly four header actions');
+assert.ok(!/flex-shrink-0[^"]* flex items-center gap-2/.test(header),'Old single-line header toolbar should be absent');
+assert.match(source,/class="circular-feed-card card-gradient/);
+assert.match(source,/class="flex flex-wrap justify-between items-center gap-3 pt-2/);
+console.log('PASS: circulars page has a phone-safe 2x2 header, wrapping school name, nav and feed content.');

@@ -35,7 +35,7 @@ const LamaAPI = (() => {
     return { role:'school', schoolId:session.schoolId, apiKey:session.apiKey };
   }
   async function callApi(action, payload = {}, method = 'POST') {
-    const schoolScoped = /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth')));
+    const schoolScoped = /^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action) || action === 'bulkAttendance' || action === 'clearStudentAttendanceDate' || (['list','add'].includes(action) && payload.collection === 'notifications' && !!sessionStorage.getItem('lama_school_admin_auth')) || action === 'syllabusAdminReadPlan' || action === 'pingTeacher' || action === 'getSchoolConfig' || action === 'getSchoolClassOptions' || action === 'getTeacherManagementBootstrap' || action === 'addTeacher' || (['list','get','add','create','update','remove','delete'].includes(action) && payload.collection === 'teachers') || (action === 'list' && ['students','attendance'].includes(payload.collection) && (activeRole()==='school' && (getSession()?.role === 'school' || !!sessionStorage.getItem('lama_school_admin_auth'))));
     const session = schoolScoped ? (getSession('school') || getSession()) : getSession();
     const body = Object.assign({action}, authFieldsFor(session), payload);
     // Administrator login can be token-only: never require or fabricate a school API key.
@@ -126,6 +126,8 @@ const LamaAPI = (() => {
     feeLedgerRead:async()=> (await callApi('feeLedgerRead',{},'POST')).result,
     feeLedgerIssue:async(requestId,request)=> (await callApi('feeLedgerIssue',{requestId,request},'POST')).result,
     feeLedgerPay:async(requestId,request)=> (await callApi('feeLedgerPay',{requestId,request},'POST')).result,
+    teacherHomeworkBatch:async(batchId,day,entries)=>(await callApi('teacherHomeworkBatch',{batchId,day,entries},'POST')).result,
+    teacherUpdateStudentProfile:async(studentId,patch,expected)=>(await callApi('teacherUpdateStudentProfile',{studentId,patch,expected},'POST')).result,
     feeLedgerReverse:async(requestId,request)=> (await callApi('feeLedgerReverse',{requestId,request},'POST')).result,
     getStudentFeeSummary:async studentId=>(await callApi('getStudentFeeSummary',{studentId},'GET')).summary,
     getMainDashboardData:async()=> (await callApi('getMainDashboardData',{},'GET')).data,
@@ -153,7 +155,7 @@ const LamaAPI = (() => {
     listSyllabusPlans:async()=>(await callApi('syllabusListPlans',{},'POST')).plans,
     getAdminSyllabusPlan:async planId=>{const data=await callApi('syllabusAdminReadPlan',{planId},'POST');return {plan:data.plan,audit:data.audit};},
     getPublishedSyllabusPlan:async planId=>(await callApi('syllabusPublishedPlans',{planId},'POST')).plan,
-    list:async collection=>(await callApi('list',{collection},['teachers','students','attendance','resources'].includes(collection)?'POST':'GET')).records,
+    list:async collection=>(await callApi('list',{collection},['teachers','students','attendance','resources','homework'].includes(collection)?'POST':'GET')).records,
     get:async(collection,id)=>(await callApi('get',{collection,id},'GET')).record,
     clearStudentAttendanceDate:async(date,className,previewOnly,confirmText)=>(await callApi('clearStudentAttendanceDate',{date,className,previewOnly,confirmText})).result,
     bulkDeleteStudents:async ids=>(await callApi('bulkDeleteStudents',{ids})).result,

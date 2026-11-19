@@ -428,6 +428,8 @@ function getSchoolConfig(schoolId, apiKey) {
 }
 
 function updateSchoolConfig(schoolId, apiKey, patch) {
+    const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('School settings are busy. Retry.');
+    try{
     assertSchoolWritable(schoolId);
     const match = authorizeSchool(schoolId, apiKey);
     const registry = getRegistrySheet();
@@ -472,6 +474,7 @@ function updateSchoolConfig(schoolId, apiKey, patch) {
     const newRow = latestHeaders.map(h => updated[h] !== undefined ? updated[h] : '');
     registry.getRange(match.rowIndex, 1, 1, latestHeaders.length).setValues([newRow]);
     return getSchoolConfig(schoolId, apiKey);
+    }finally{lock.releaseLock();}
 }
 
 // ============================================================================
@@ -2565,7 +2568,7 @@ function lamaFeeAction_(p){
    events=rows.slice(1).map(row=>{const e=JSON.parse(row[1]);if(row[0]!==e.id)lamaFeeFail_('Journal ID mismatch.');return e;});
   }
   const state=lamaFeeReplay_(events,schoolId),today=Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd');
-  if(read)return {version:1,policyStamp:lamaFeePolicyStamp_(fresh),privateVouchers:lamaFeePrivate_(fresh),report:lamaFeeReport_(state,today)};
+  if(read)return {version:1,schoolId,policyStamp:lamaFeePolicyStamp_(fresh),privateVouchers:lamaFeePrivate_(fresh),writable:!subscriptionView(fresh).readOnly,report:lamaFeeReport_(state,today)};
   const id=lamaFeeToken_(p.requestId),request=p.request;
   if(!request||typeof request!=='object'||Array.isArray(request))lamaFeeFail_('Request details required.');
   const fingerprint=JSON.stringify([p.action,request]);if(fingerprint.length>12000)lamaFeeFail_('Request is too large.');

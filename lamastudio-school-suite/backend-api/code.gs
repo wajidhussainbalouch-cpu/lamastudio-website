@@ -2717,7 +2717,9 @@ function lamaTeacherHomeworkBatch_(p){
    selected.push(Object.assign({},entry,{id:genId('hom'),class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||'',teacherId:ctx.teacher.id,assignedBy:ctx.teacher.name,createdAt:new Date().toISOString(),batchId,batchHash:hash}));
   }
   if(selected.length){
-   info.sheet.getRange(info.sheet.getLastRow()+1,1,selected.length,info.headers.length).setValues(selected.map(r=>recordToRow(info.headers,r)));
+   const start=info.sheet.getLastRow()+1,needed=start+selected.length-1-info.sheet.getMaxRows();
+   if(needed>0)info.sheet.insertRowsAfter(info.sheet.getMaxRows(),needed);
+   info.sheet.getRange(start,1,selected.length,info.headers.length).setValues(selected.map(r=>recordToRow(info.headers,r)));
    SpreadsheetApp.flush();
    const actual=info.sheet.getDataRange().getValues().slice(1).map(r=>rowToRecord(info.headers,r)).filter(r=>r.batchId===batchId);
    if(actual.length!==selected.length||selected.some(s=>!actual.some(r=>r.id===s.id&&r.subject===s.subject&&r.batchHash===hash)))throw Error('Homework batch not verified. Retry same batch.');

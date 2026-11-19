@@ -11,9 +11,24 @@ const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school admi
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
 function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
-async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');rows=(Array.isArray(all)?all:[]).filter(r=>Object.values(type).includes(r.category));if(adminMode){
- const config=await LamaAPI.getSchoolConfig().catch(()=>null);
- try{const offered=JSON.parse(config?.offeredClassesJson||'[]');offeredClasses=Array.isArray(offered)?offered.filter(c=>c&&c.name).map(c=>({name:String(c.name),sections:Array.isArray(c.sections)?c.sections:[]})):[]}catch(_){offeredClasses=[]}
+async function load(){if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
+ // The public client exports getSchoolClassOptions and getActiveSchool,
+ // not getSchoolConfig (which is an internal Apps Script action).
+ offeredClasses=[];
+ try{
+  if(typeof LamaAPI.getSchoolClassOptions==='function'){
+   const options=await LamaAPI.getSchoolClassOptions();
+   if(Array.isArray(options))offeredClasses=options.map(c=>typeof c==='string'?{name:c}:{name:String(c?.class||c?.name||c?.grade||''),section:String(c?.section||'')}).filter(c=>c.name.trim());
+  }
+ }catch(error){console.warn('Class options unavailable; trying school profile',error.message)}
+ if(!offeredClasses.length){
+  let config=session;
+  try{if(typeof LamaAPI.getActiveSchool==='function')config=await LamaAPI.getActiveSchool()||session}catch(error){console.warn('School profile unavailable; retaining saved timetable',error.message)}
+  try{
+   const raw=config?.offeredClassesJson||'[]',offered=Array.isArray(raw)?raw:JSON.parse(raw);
+   offeredClasses=Array.isArray(offered)?offered.map(c=>typeof c==='string'?{name:c}:{name:String(c?.name||c?.class||''),sections:Array.isArray(c?.sections)?c.sections:[]}).filter(c=>c.name.trim()):[];
+  }catch(_){offeredClasses=[]}
+ }
  const resource=(Array.isArray(all)?all:[]).find(r=>r.category==='school-curriculum'&&r.title==='LAMA School Class Subjects');
  try{const doc=JSON.parse(resource?.description||'{}');curriculumClasses=doc.schoolId===schoolId&&Array.isArray(doc.classes)?doc.classes:[]}catch(_){curriculumClasses=[]}
 }else{offeredClasses=[];curriculumClasses=[]}
@@ -73,7 +88,11 @@ async function remove(kind,id){
 
 function timetableForSession(){return data('period').filter(p=>p.sessionId===activeSession()&&allowed(p))}
 function visibleClasses(periods=timetableForSession()){
- return LamaTimetableGrid.labels(periods,adminMode?[...offeredClasses,...curriculumClasses]:[]);
+ const extra=adminMode?[...offeredClasses]:[];
+ if(adminMode)for(const c of curriculumClasses){
+  if(!offeredClasses.some(o=>LamaTimetableGrid.classKey(o.name)===LamaTimetableGrid.classKey(c.name)))extra.push(c);
+ }
+ return LamaTimetableGrid.labels(periods,extra);
 }
 function renderPrintClassPicker(periods,sessionId){
  const classes=visibleClasses(periods);
@@ -272,7 +291,7 @@ function buildTimetablePrint(profile){
  const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p));
  const mode=field('printScope');
  const cls=field('printOneClass')||field('viewGrade');
- const selectedClasses=Array.isArray(printSelection)?[...printSelection]:null;
+ const selectedClasses=printSelection instanceof Set?[...printSelection]:null;
  const calendarIncluded=$('printCalendar').checked;
  const calMonth=$('monthTitle').textContent;
  return LamaTimetablePrint.printMarkup({

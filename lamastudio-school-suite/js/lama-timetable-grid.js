@@ -37,19 +37,19 @@ function timesFor(periods,day,num){
  const p=periods.find(p=>norm(p.day)===norm(day)&&Number(p.period)===Number(num)&&value(p.start)&&value(p.end));
  return {start:value(p?.start),end:value(p?.end)};
 }
-function gridMarkup(periods=[],classes=[],day='Monday',count=8){
+function gridMarkup(periods=[],classes=[],day='Monday',count=8,hiddenPeriods=[]){
  const today=periods.filter(p=>norm(p.day)===norm(day)),max=Math.min(14,Math.max(1,Number(count)||8));
  if(!classes.length)return '<p class="quick-empty">No classes configured. Add an offered class in School Settings or save the first period with the Period editor.</p>';
- const header='<thead><tr><th class="quick-fixed" scope="col">Period / time</th>'+classes.map(x=>'<th scope="col">'+esc(x)+'</th>').join('')+'</tr></thead>';
+ const header='<thead><tr><th class="quick-fixed" scope="col">Period / time</th>'+classes.map(x=>'<th scope="col">'+esc(x)+' <button type="button" class="quick-remove" data-clear-class="'+esc(x)+'" aria-label="Remove '+esc(x)+' from this day">×</button></th>').join('')+'</tr></thead>';
  const body=Array.from({length:max},(_,i)=>{
-  const period=i+1,{start,end}=timesFor(today,day,period);
+  const period=i+1;if(hiddenPeriods.includes(period))return '';const {start,end}=timesFor(today,day,period);
   const cells=classes.map(c=>{
    const found=today.filter(p=>Number(p.period)===period&&classKey(classLabel(p))===classKey(c));
    const subject=found.length?found.map(p=>value(p.subject)||'Untitled').join(' / '):'＋ Add';
    const teacher=found.length?found.map(p=>value(p.teacherName)).filter(Boolean).join(' / '):'';
    return '<td><button type="button" class="quick-cell '+(found.length?'filled':'empty')+'" data-quick-class="'+esc(c)+'" data-quick-period="'+period+'" data-quick-day="'+esc(day)+'" title="'+esc((found.length?'Edit lesson':'Add lesson')+' · '+c+' · '+day+' · Period '+period)+'"><strong>'+esc(subject)+'</strong>'+(teacher?'<small>'+esc(teacher)+'</small>':'')+'</button></td>';
   }).join('');
-  return '<tr><th scope="row" class="quick-fixed">P'+period+'<small>'+esc(start&&end?start+'–'+end:'Set time')+'</small></th>'+cells+'</tr>';
+  return '<tr><th scope="row" class="quick-fixed">P'+period+'<small>'+esc(start&&end?start+'–'+end:'Set time')+'</small><button type="button" class="quick-remove" data-clear-period="'+period+'" aria-label="Remove period '+period+' from this day">×</button></th>'+cells+'</tr>';
  }).join('');
  return '<table class="quick-matrix">'+header+'<tbody>'+body+'</tbody></table>';
 }

@@ -61,46 +61,35 @@ function weeklyMatrix(records){
   thead+'<tbody>'+tbody+'</tbody></table>';
 }
 
-/* Printable master matrix: weekdays/periods down the page, classes across.
- * Split large selections into six-class panels to avoid microscopic A4 text.
- * Only published periods are printable, and all text is escaped.
+/* Compact school-wide landscape matrix: classes as rows, periods as columns.
+ * Identical lessons across weekdays are grouped, with day labels and exact
+ * times retained when the timetable varies. No arbitrary six-class page split.
  */
-function masterGrid(records,selectedClasses=null,{maxClasses=6}={}){
+function masterGrid(records,selectedClasses=null,{printDay=''}={}){
  const published=(Array.isArray(records)?records:[]).filter(p=>p&&p.published!==false);
- const all=[...new Set(published.map(classLabel).filter(Boolean))].sort(natural);
- const selection=Array.isArray(selectedClasses)?[...new Set(selectedClasses.map(v=>String(v).trim()).filter(Boolean))]:all;
- if(!selection.length)return '<p class="empty-print">No classes selected for this timetable.</p>';
- const labels=selection;
- if(!labels.length)return '<p class="empty-print">No classes selected.</p>';
- const included=published.filter(p=>labels.some(x=>sameClass(x,classLabel(p))));
- const showDays=days.filter(d=>d!=='Sunday'||included.some(p=>String(p.day).toLowerCase()==='sunday'));
- const max=Math.max(1,Math.min(10,Number(maxClasses)||6));
- const panels=[];
- for(let start=0;start<labels.length;start+=max){
-  const group=labels.slice(start,start+max);
-  const dayBlocks=showDays.map(day=>{
-   const today=included.filter(p=>String(p.day||'').toLowerCase()===day.toLowerCase()&&group.some(v=>sameClass(v,classLabel(p))));
-   const nums=[...new Set(included.map(p=>Number(p.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
-   if(!nums.length)return '<section class="master-day-block"><h4>'+esc(day)+'</h4><p class="master-empty">No saved lessons on '+esc(day)+'.</p></section>';
-   const headers='<thead><tr><th scope="col" class="master-number">Period</th><th scope="col" class="master-time">Time</th>'+group.map(c=>'<th scope="col">'+esc(c)+'</th>').join('')+'</tr></thead>';
-   const rows=nums.map(n=>{
-    const matching=today.filter(p=>Number(p.period)===n);
-    const times=[...new Set(matching.map(timeLabel).filter(Boolean))];
-    const time=times.length?times.map(x=>'<div class="master-time-item">'+esc(x)+'</div>').join(''):'—';
-    const cells=group.map(c=>{
-     const entries=sorted(matching.filter(p=>sameClass(classLabel(p),c)),'class');
-     if(!entries.length)return '<td class="master-empty">—</td>';
-     return '<td>'+entries.map(p=>'<div class="master-lesson"><strong>'+esc(p.subject||'—')+'</strong>'+(p.teacherName?'<small>'+esc(p.teacherName)+'</small>':'')+(p.room?'<small>Room '+esc(p.room)+'</small>':'')+'</div>').join('')+'</td>';
-    }).join('');
-    return '<tr><th scope="row">P'+n+'</th><td class="master-time-cell">'+time+'</td>'+cells+'</tr>';
-   }).join('');
-   return '<section class="master-day-block"><h4>'+esc(day)+'</h4><table class="school-timetable master-matrix"><caption class="sr-print">'+esc(day)+' timetable: '+group.map(esc).join(', ')+'</caption>'+headers+'<tbody>'+rows+'</tbody></table></section>';
-  }).join('');
-  panels.push('<article class="master-class-panel"><div class="master-panel-title">Classes: '+group.map(esc).join(' · ')+'</div>'+dayBlocks+'</article>');
- }
- return '<div class="master-timetable">'+panels.join('')+'</div>';
+ const all=[...new Map(published.map(p=>[classKey(classLabel(p)),classLabel(p)])).values()].sort(natural);
+ const labels=Array.isArray(selectedClasses)?[...new Map(selectedClasses.map(v=>[classKey(v),String(v).trim()])).values()].filter(Boolean):all;
+ if(!labels.length)return '<p class="empty-print">No classes selected for this timetable.</p>';
+ const included=published.filter(p=>labels.some(x=>sameClass(x,classLabel(p)))&&(!printDay||dayRank(p.day)===dayRank(printDay)));
+ const nums=[...new Set(included.map(p=>Number(p.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
+ if(!nums.length)return '<p class="empty-print">No published lessons for this selection.</p>';
+ const heads=nums.map(n=>{
+  const times=[...new Set(included.filter(p=>Number(p.period)===n).map(timeLabel).filter(Boolean))];
+  return '<th scope="col">P'+n+(times.length===1?'<small>'+esc(times[0])+'</small>':'')+'</th>';
+ }).join('');
+ const body=labels.map(label=>{
+  return '<tr><th scope="row">'+esc(label)+'</th>'+nums.map(n=>{
+   const matches=sorted(included.filter(p=>sameClass(classLabel(p),label)&&Number(p.period)===n),'class');
+   if(!matches.length)return '<td class="master-empty">—</td>';
+   const times=[...new Set(included.filter(p=>Number(p.period)===n).map(timeLabel).filter(Boolean))];
+   const groups=new Map();
+   for(const p of matches){const key=JSON.stringify([p.subject,p.teacherName,p.room,timeLabel(p)]);if(!groups.has(key))groups.set(key,{p,days:new Set()});groups.get(key).days.add(p.day);}
+   return '<td>'+[...groups.values()].map(({p,days:ds})=>'<div class="master-lesson">'+(!printDay?'<small class="lesson-days">'+[...ds].sort((a,b)=>dayRank(a)-dayRank(b)).map(d=>esc(String(d).slice(0,3))).join(', ')+'</small>':'')+'<strong>'+esc(p.subject||'—')+'</strong>'+(p.teacherName?'<small>'+esc(p.teacherName)+'</small>':'')+(times.length!==1&&timeLabel(p)?'<small>'+esc(timeLabel(p))+'</small>':'')+(p.room?'<small>'+esc(p.room)+'</small>':'')+'</div>').join('')+'</td>';
+  }).join('')+'</tr>';
+ }).join('');
+ return '<table class="school-timetable compact-master"><caption class="sr-print">Master timetable for all selected classes</caption><thead><tr><th scope="col">Class / Section</th>'+heads+'</tr></thead><tbody>'+body+'</tbody></table>';
 }
-function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',selectedClasses=null,calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null}={}){
+function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',selectedClasses=null,printDay='',calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null}={}){
  const profile={...schoolFallback,...school};
  const name=schoolName(profile);
  const logo=safeLogo(profile);
@@ -128,8 +117,8 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   description=labels.length+' classes / sections';
  }else if(scope==='all'){
   title='All Classes — Weekly Timetable';
-  description=filteredBase.length+' saved period'+(filteredBase.length===1?'':'s')+' · '+requestedClasses.length+' selected class(es)';
-  content='<section class="print-class-block"><h3>'+title+'</h3>'+masterGrid(filteredBase,requestedClasses)+'</section>';
+  description=(printDay?'Day: '+printDay:'Full week')+' · '+requestedClasses.length+' selected class(es)';
+  content='<section class="print-class-block"><h3>'+title+'</h3>'+masterGrid(filteredBase,requestedClasses,{printDay})+'</section>';
  }else throw Error('Unrecognized timetable print option.');
  let calendarSection='';
  if(calendar){
@@ -150,15 +139,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   '</b></span><span>'+esc(description)+'</span><span>Printed '+esc(shownDate)+'</span></div>';
  const footer='<footer class="print-timetable-footer">Generated by LAMA School Suite · LamaStudio.pk</footer>';
  if(scope==='all'){
-  // Repeat a full school letterhead on each printed six-class panel.
-  // This also makes large multi-class timetables readable on A4 landscape.
-  const chunks=[];
-  for(let i=0;i<requestedClasses.length;i+=6)chunks.push(requestedClasses.slice(i,i+6));
-  const pages=chunks.map((names,i)=>{
-   const section='<section class="print-class-block"><h3>Weekly Timetable — '+esc(names.join(' · '))+'</h3>'+masterGrid(filteredBase,names,{maxClasses:6})+'</section>';
-   return '<article class="master-print-page">'+head+meta+section+footer+'</article>';
-  }).join('');
-  return pages+calendarSection;
+  return '<article class="master-print-page">'+head+meta+'<section class="print-class-block"><h3>Master Timetable — '+esc(printDay||'Full week')+'</h3>'+masterGrid(filteredBase,requestedClasses,{printDay})+'</section>'+footer+'</article>'+calendarSection;
  }
  if(scope==='by-class'){
   const labels=requestedClasses;

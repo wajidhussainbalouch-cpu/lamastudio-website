@@ -1032,6 +1032,7 @@ function addRecord(ctx, collection, record) {
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {
         record = Object.assign({}, record, { class: ctx.teacher.assignedClass, section: ctx.teacher.assignedSection || record.section || '', markedBy: ctx.teacher.name, assignedBy: ctx.teacher.name });
     }
+    if(ctx.role==='teacher'&&collection==='homework')record=Object.assign({},record,{teacherId:ctx.teacher.id,section:ctx.teacher.assignedSection||'',batchId:'',batchHash:''});
     const { sheet, headers } = getCollectionSheet(ctx, collection);
     const id = genId(collection.slice(0, 3));
     const full = Object.assign({}, record, { id, createdAt: new Date().toISOString() });
@@ -1078,6 +1079,7 @@ function updateRecord(ctx, collection, id, patch) {
                     if(Object.keys(patch).some(k=>allowed.indexOf(k)===-1)) throw new Error('Teachers may only update student marks and teacher remarks.');
                 } else if(TEACHER_WRITE_COLLECTIONS.indexOf(collection)!==-1) {
                     if(!teacherOwns(ctx,existing)) throw new Error('Record outside assigned class/section.');
+                    if(collection==='homework'){if(!lamaTeacherOwnsHomework_(ctx,existing))throw Error('Teachers may only change their own homework.');if(Object.keys(patch).some(k=>['title','description','dueDate','subject'].indexOf(k)===-1))throw Error('Invalid homework update.');}
                     if(collection==='attendance') { if(patch.studentId||patch.enrlNo||patch.class||patch.section)throw new Error('Teacher cannot reassign an attendance record.');teacherStudentAccess_(ctx,existing); }
                     patch=Object.assign({},patch,{class:ctx.teacher.assignedClass,section:ctx.teacher.assignedSection||''});
                 }
@@ -1131,6 +1133,7 @@ function removeRecord(ctx, collection, id) {
         if (data[i][idCol] === id) {
             if(ctx.role==='teacher' && !teacherOwns(ctx,rowToRecord(headers,data[i]))) throw new Error('Record outside assigned class/section.');
             const previous=rowToRecord(headers,data[i]);
+            if(ctx.role==='teacher'&&collection==='homework'&&!lamaTeacherOwnsHomework_(ctx,previous))throw Error('Teachers may only delete their own homework.');
             if(ctx.auditActor)writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'remove',collection,id,previous,null);
             sheet.deleteRow(i + 1);
             return true;
@@ -2605,6 +2608,7 @@ function lamaFeeAction_(p){
  * Homework is one batch of subject rows written under the script lock.
  */
 const LAMA_TEACHER_PROFILE_FIELDS_={fatherGuardian:150,contact:40,whatsapp:40,address:500,guardianName:150,guardianRelation:80,guardianCell:40,teacherRemarks:1000};
+function lamaTeacherOwnsHomework_(ctx,record){return record.teacherId?String(record.teacherId)===String(ctx.teacher.id):!!record.assignedBy&&String(record.assignedBy).trim().toLowerCase()===String(ctx.teacher.name||'').trim().toLowerCase();}
 function lamaTeacherStudentSafe_(record){
  const safe=Object.assign({},record);
  for(const name of Object.keys(safe))if(/password|api.?key|token|salt|secret|cnic|monthlyIncome/i.test(name))delete safe[name];

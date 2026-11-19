@@ -11,7 +11,7 @@
 <label id="termLabel" class="hidden">Term name<select id="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option><option>Other term</option></select></label>
 <label>From<input id="from" type="date" readonly></label><label>To<input id="to" type="date" readonly></label>
 <label>Class / section<select id="classFilter"><option value="">All available classes</option></select></label>
-<label id="teacherLabel">Teacher<select id="teacherFilter"><option value="">All teachers</option></select></label>
+<label id="teacherScopeLabel" class="hidden">Report scope<select id="teacherScope"><option value="class">Assigned class — all saved homework</option><option value="own">My entries — verified teacher ID only</option></select></label><label id="teacherLabel">Teacher<select id="teacherFilter"><option value="">All teachers</option></select></label>
 <label>Subject<select id="subjectFilter"><option value="">All subjects</option></select></label>
 </div><div class="actions"><button id="refresh" type="button">Refresh saved records</button><button id="print" class="primary" type="button" disabled>Print / Save as PDF</button></div><p id="status" role="status" class="notice">Checking access…</p><div class="stats"><div class="stat"><span>Homework entries</span><strong id="count">—</strong></div><div class="stat"><span>Posting dates</span><strong id="dateCount">—</strong></div><div class="stat"><span>Subjects</span><strong id="subjectCount">—</strong></div></div></section>
 <article id="report" class="sheet hidden" aria-label="Official homework register"></article></main>
@@ -50,13 +50,13 @@ function prepare(rows,session,access){
   if(!r||!saved(r)||(str(r.schoolId)&&str(r.schoolId)!==str(session.schoolId)))continue;
   if(access==='teacher'){
    if(!classNorm(session.assignedClass)||classNorm(r.class)!==classNorm(session.assignedClass)||(str(session.assignedSection||session.section)&&norm(r.section)!==norm(session.assignedSection||session.section)))continue;
-   if(!teacherOwn(r,session)){if(!str(r.teacherId)&&norm(r.assignedBy)&&norm(r.assignedBy)===norm(session.name))legacy++;continue}
+   if(!str(r.teacherId))legacy++;
   }
   const day=postedDate(r.createdAt);
   if(!day){undated++;continue}
   const id=str(r.id);if(ids.has(id))continue;ids.add(id);
   const grade=str(r.class)||'Unspecified class',section=str(r.section),teacher=str(r.assignedBy)||(str(r.teacherId)?'Teacher '+str(r.teacherId):'Unattributed');
-  out.push({id,day,grade,section,teacher,teacherKey:str(r.teacherId)?'id:'+str(r.teacherId):'name:'+norm(teacher),classKey:JSON.stringify([classNorm(grade),norm(section)]),subject:str(r.subject)||'Unspecified subject',title:str(r.title),description:String(r.description??''),due:postedDate(r.dueDate),teacherVerified:!!str(r.teacherId)});
+  out.push({id,day,grade,section,teacher,teacherKey:str(r.teacherId)?'id:'+str(r.teacherId):'name:'+norm(teacher),classKey:JSON.stringify([classNorm(grade),norm(section)]),subject:str(r.subject)||'Unspecified subject',title:str(r.title),description:String(r.description??''),due:postedDate(r.dueDate),teacherVerified:!!str(r.teacherId),own:access==='teacher'&&teacherOwn(r,session)});
  }
  return {rows:out,undated,legacy};
 }
@@ -66,12 +66,13 @@ function selectRows(rows,{from,to,cls='',teacher='',subject=''}){
 function groupRows(rows){const groups=new Map();for(const r of rows){const key=JSON.stringify([r.day,r.classKey,r.teacherKey]);if(!groups.has(key))groups.set(key,{day:r.day,grade:r.grade,section:r.section,teacher:r.teacher,teacherVerified:r.teacherVerified,items:[]});groups.get(key).items.push(r)}return [...groups.values()]}
 function displayDate(v){return isoDate(v)?new Date(v+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'—'}
 function options(id,values,all){const el=$(id),old=el.value;el.replaceChildren(new Option(all,''));for(const [key,label] of values)el.add(new Option(label,key));if([...el.options].some(o=>o.value===old))el.value=old}
-function fillFilters(){const classes=new Map(),teachers=new Map(),subjects=new Map();for(const r of records){classes.set(r.classKey,r.grade+(r.section?' · '+r.section:''));teachers.set(r.teacherKey,r.teacher+(r.teacherVerified?'':' (name only)'));subjects.set(norm(r.subject),r.subject)}const sorted=m=>[...m].sort((a,b)=>a[1].localeCompare(b[1],undefined,{numeric:true}));options('classFilter',sorted(classes),'All available classes');options('teacherFilter',sorted(teachers),'All teachers');options('subjectFilter',sorted(subjects),'All subjects')}
+function reportRecords(){return role==='teacher'&&$('teacherScope').value==='own'?records.filter(r=>r.own):records}
+function fillFilters(){const classes=new Map(),teachers=new Map(),subjects=new Map();for(const r of reportRecords()){classes.set(r.classKey,r.grade+(r.section?' · '+r.section:''));teachers.set(r.teacherKey,r.teacher+(r.teacherVerified?'':' (name only)'));subjects.set(norm(r.subject),r.subject)}const sorted=m=>[...m].sort((a,b)=>a[1].localeCompare(b[1],undefined,{numeric:true}));options('classFilter',sorted(classes),'All available classes');options('teacherFilter',sorted(teachers),'All teachers');options('subjectFilter',sorted(subjects),'All subjects')}
 function logoSrc(v){const x=str(v);return /^https:\/\/[^\s"'<>]+$/i.test(x)||/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(x)&&x.length<1200000?x:''}
 function reportHTML(rows,meta){
  const groups=groupRows(rows),logo=logoSrc(meta.logo);
  const tables=groups.map(g=>'<section class="group"><h3>'+esc(displayDate(g.day))+' · '+esc(g.grade)+(g.section?' / '+esc(g.section):'')+' · '+esc(g.teacher)+(g.teacherVerified?'':' (name recorded; ID unavailable)')+'</h3><div class="tablewrap"><table><colgroup><col style="width:24%"><col style="width:58%"><col style="width:18%"></colgroup><thead><tr><th>Subject</th><th>Homework / assigned work</th><th>Due date</th></tr></thead><tbody>'+g.items.map(r=>'<tr><td class="subject">'+esc(r.subject)+'</td><td class="work" dir="auto">'+(r.title&&norm(r.title)!==norm(r.subject+' Homework')?'<strong>'+esc(r.title)+'</strong>'+(r.description?'\n':''):'')+esc(r.description||(!r.title?'—':''))+'</td><td class="due">'+esc(displayDate(r.due))+'</td></tr>').join('')+'</tbody></table></div></section>').join('');
- return '<div class="letterhead"><div><h2>'+esc(meta.schoolName)+'</h2><p>Official Homework &amp; Teaching Diary Register</p></div>'+(logo?'<img class="logo" alt="School logo" src="'+esc(logo)+'">':'')+'</div><div class="reportmeta"><b>'+esc(meta.label)+'</b> · '+esc(displayDate(meta.from))+' – '+esc(displayDate(meta.to))+'<br>Class / section: '+esc(meta.cls)+' · Teacher: '+esc(meta.teacher)+' · Subject: '+esc(meta.subject)+'<br>'+rows.length+' saved homework entries · '+new Set(rows.map(r=>r.day)).size+' posting dates · '+new Set(rows.map(r=>norm(r.subject))).size+' subjects</div>'+tables+'<p class="smallnote">This register records saved class homework, not individual attendance, lesson delivery or homework completion. Dates are posting dates; due dates appear separately.</p><div class="signature"><div>Teacher / Prepared by</div><div>Head Teacher / Verified by</div></div><div class="footer">Generated by LAMA School Suite · LamaStudio.pk · '+esc(displayDate(meta.generated))+' · Based on currently saved records; changes or deletions may alter subsequent reports.</div>';
+ return '<div class="letterhead"><div><h2>'+esc(meta.schoolName)+'</h2><p>Official Homework &amp; Teaching Diary Register</p></div>'+(logo?'<img class="logo" alt="School logo" src="'+esc(logo)+'">':'')+'</div><div class="reportmeta"><b>'+esc(meta.label)+'</b> · '+esc(displayDate(meta.from))+' – '+esc(displayDate(meta.to))+'<br>Class / section: '+esc(meta.cls)+' · Teacher: '+esc(meta.teacher)+' · Subject: '+esc(meta.subject)+'<br>'+rows.length+' saved homework entries · '+new Set(rows.map(r=>r.day)).size+' posting dates · '+new Set(rows.map(r=>norm(r.subject))).size+' subjects</div>'+tables+'<p class="smallnote">This register records saved class homework, not individual attendance, lesson delivery or homework completion. Dates are posting dates; due dates appear separately. Where a teacher ID is unavailable, the recorded name is not verified ownership; the Head Teacher may verify attribution when signing.</p><div class="signature"><div>Teacher / Prepared by</div><div>Head Teacher / Verified by</div></div><div class="footer">Generated by LAMA School Suite · LamaStudio.pk · '+esc(displayDate(meta.generated))+' · Based on currently saved records; changes or deletions may alter subsequent reports.</div>';
 }
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error)}
 function disablePrint(){document.body.classList.add('print-disabled');$('print').disabled=true;$('report').classList.add('hidden');$('report').replaceChildren()}
@@ -87,12 +88,12 @@ function chosenText(id){return $(id).selectedOptions[0]?.textContent||'All'}
 function render(){
  const range=updateRange();disablePrint();if(!ready||busy)return;
  if(!range){status('Select a valid date range.',true);return}
- const [from,to]=range,rows=selectRows(records,{from,to,cls:$('classFilter').value,teacher:$('teacherFilter').value,subject:$('subjectFilter').value});
+ const [from,to]=range,rows=selectRows(reportRecords(),{from,to,cls:$('classFilter').value,teacher:$('teacherFilter').value,subject:$('subjectFilter').value});
  $('count').textContent=rows.length;$('dateCount').textContent=new Set(rows.map(r=>r.day)).size;$('subjectCount').textContent=new Set(rows.map(r=>norm(r.subject))).size;
- const excludedText=(excluded?' '+excluded+' saved entry/entries had no valid posting date and were excluded.':'')+(legacyCount?' '+legacyCount+' older name-only entry/entries excluded from your personal report; ask the administrator for the class record.':'');
+ const excludedText=(excluded?' '+excluded+' saved entry/entries had no valid posting date and were excluded.':'')+(role==='teacher'&&$('teacherScope').value==='own'&&legacyCount?' '+legacyCount+' name-only record(s) are available under Assigned class.':'')+(rows.some(r=>!r.teacherVerified)?' '+rows.filter(r=>!r.teacherVerified).length+' saved record(s) lack a teacher ID; attribution is shown as recorded.':'');
  if(!rows.length){status('No matching saved homework in this date range.'+excludedText);return}
  const label=$('period').value==='term'?chosenText('term'):chosenText('period');
- $('report').innerHTML=reportHTML(rows,{schoolName:school.name||school.schoolName||me.schoolName||'School name not configured',logo:school.logo||school.schoolLogo||school.logoUrl||me.schoolLogo,label,from,to,cls:chosenText('classFilter'),teacher:role==='teacher'?me.name||'Signed-in teacher':chosenText('teacherFilter'),subject:chosenText('subjectFilter'),generated:today()});
+ $('report').innerHTML=reportHTML(rows,{schoolName:school.name||school.schoolName||me.schoolName||'School name not configured',logo:school.logo||school.schoolLogo||school.logoUrl||me.schoolLogo,label,from,to,cls:chosenText('classFilter'),teacher:role==='teacher'?($('teacherScope').value==='own'?(me.name||'Signed-in teacher'):'Class record — see recorded teacher below'):chosenText('teacherFilter'),subject:chosenText('subjectFilter'),generated:today()});
  $('report').classList.remove('hidden');document.body.classList.remove('print-disabled');$('print').disabled=false;status('Saved homework register ready.'+excludedText);
 }
 async function load(){
@@ -112,7 +113,7 @@ async function load(){
  finally{busy=false;$('refresh').disabled=false;if(ready)render()}
 }
 $('anchor').value=today();$('month').value=today().slice(0,7);$('from').value=today();$('to').value=today();
-if(role==='teacher'){$('teacherLabel').classList.add('hidden');$('back').href='../portals/teacher/index.html';$('accessLabel').textContent='My posted homework · assigned class and section only'}
+if(role==='teacher'){$('teacherLabel').classList.add('hidden');$('teacherScopeLabel').classList.remove('hidden');$('teacherScope').onchange=()=>{fillFilters();render()};$('back').href='../portals/teacher/index.html';$('accessLabel').textContent='Assigned class and section · saved homework records'}
 $('period').onchange=()=>{if(['term','custom'].includes($('period').value)){$('from').value='';$('to').value=''}render()};
 for(const id of ['anchor','month','term','from','to','classFilter','teacherFilter','subjectFilter'])$(id).onchange=render;
 $('refresh').onclick=load;$('print').onclick=async()=>{if(!ready||busy||$('print').disabled)return;const img=$('report').querySelector('img');if(img?.decode)await Promise.race([img.decode().catch(()=>{}),new Promise(r=>setTimeout(r,1500))]);window.print()};load();

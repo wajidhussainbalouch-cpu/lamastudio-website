@@ -8,7 +8,7 @@ const nameKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const isTuition=n=>['tuitionfee','monthlyfee','schoolfee','tuition'].includes(key(n));
 function parse(v){if(Array.isArray(v))return v;if(!v)return [];const a=JSON.parse(v);if(!Array.isArray(a))throw Error('Invalid saved settings.');return a}
 function mode(s){return String(s?.type||'').toLowerCase()==='government'?'government':/pef/i.test(String(s?.privateSub||''))?'pef':'private'}
-function vouchersAllowed(s){return String(s?.type||'').toLowerCase()==='private'&&mode(s)==='private'}
+function vouchersAllowed(s){return nameKey(s?.type)==='private'&&nameKey(s?.privateSub)==='standard private'}
 function amount(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);if(!Number.isFinite(n)||n<0||n>10000000||Math.abs(n*100-Math.round(n*100))>1e-6)throw Error('Enter a fee from 0 to 10,000,000 with at most two decimals.');return Math.round(n*100)/100}
 function classes(s){return parse(s?.offeredClassesJson).map(c=>String(c.name||'').trim()).filter(Boolean)}
 function categories(s){return parse(s?.feeCategoriesJson).filter(c=>c&&typeof c.name==='string').map(c=>({...c,enabled:c.enabled===true,cadence:['monthly','one-time','as-needed'].includes(c.cadence)?c.cadence:(isTuition(c.name)?'monthly':'as-needed'),rates:Array.isArray(c.rates)?c.rates:[]}))}

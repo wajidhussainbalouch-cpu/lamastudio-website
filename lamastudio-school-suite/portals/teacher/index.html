@@ -385,7 +385,10 @@ function renderStudentDirectory(){
  const arrow=document.createElement('span');arrow.textContent='View record ›';arrow.className='student-view';button.append(avatar,copy,arrow);button.onclick=()=>showStudentRecord(st.id);el.append(button)
  })
 }
-const PROFILE_EDIT_FIELDS=[['fatherGuardian','Father / guardian name',150],['contact','Contact number',40],['whatsapp','WhatsApp number',40],['address','Home address',500],['guardianName','Guardian name',150],['guardianRelation','Guardian relationship',80],['guardianCell','Guardian contact',40],['teacherRemarks','Teacher remarks',1000]];
+const PROFILE_EDIT_FIELDS=[['fatherGuardian','Father / guardian name',150],['contact','Contact number',40],['whatsapp','WhatsApp number',40],['address','Home address',500],['guardianName','Guardian name',150],['guardianRelation','Guardian relationship',80],['guardianCell','Guardian contact',40],['dob','Date of birth',10],['gender','Gender',12],['profession','Parent occupation',100],['guardianProfession','Guardian occupation',100],['guardianAddress','Guardian address',500],['distanceFromSchool','Distance from school',60],['canRead','Can read',12],['canWrite','Can write',12],['canCount','Can count',12],['teacherRemarks','Teacher remarks',1000]];
+const PROFILE_ALIASES={photo:['photoUrl','studentPhoto','photoURL'],fatherGuardian:['fatherName','father','father_name'],dob:['dateOfBirth','birthDate'],contact:['phone','mobile','contactNo'],whatsapp:['whatsappNo'],address:['homeAddress']};
+function profileExisting(st,k){for(const field of [k,...(PROFILE_ALIASES[k]||[])]){const val=st[field];if(val!==undefined&&val!==null&&String(val).trim()!=='')return String(val)}return ''}
+async function compressStudentPhoto(file){if(!file||!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>15000000)throw Error('Choose a JPEG, PNG or WebP image under 15 MB.');const url=URL.createObjectURL(file);try{const im=new Image();await new Promise((ok,fail)=>{im.onload=ok;im.onerror=()=>fail(Error('Could not read image.'));im.src=url});if(!im.naturalWidth||!im.naturalHeight)throw Error('Invalid image.');const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');for(const size of [400,320,240,180]){const scale=Math.min(1,size/Math.max(im.naturalWidth,im.naturalHeight));canvas.width=Math.max(1,Math.round(im.naturalWidth*scale));canvas.height=Math.max(1,Math.round(im.naturalHeight*scale));ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(im,0,0,canvas.width,canvas.height);for(const quality of [.8,.65,.5]){const data=canvas.toDataURL('image/jpeg',quality);if(data.length<=45000)return data}}throw Error('Image is too large after compression. Try a simpler photo.')}finally{URL.revokeObjectURL(url)}}
 let profileSaving=false;
 function showStudentRecord(id,scroll=true){
  const st=myStudent(id);if(!st)return;
@@ -394,7 +397,7 @@ function showStudentRecord(id,scroll=true){
  const grid=document.createElement('div');grid.className='student-facts';
  const facts=[['Student name',st.name],['Enrollment No.',st.enrlNo||st.enrollmentNo],['Student code',st.studentCode],['Father / Guardian',studentFather(st)],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Gender',st.gender],['Date of birth',st.dob],['Roll number',st.rollNo||st.rollNumber],['Admission number',st.admissionNo||st.schoolAdmissionNo],['Admission date',st.admissionDate],['Academic session',st.academicSession],['Contact number',st.contact],['WhatsApp',st.whatsapp],['Home address',st.address],['Guardian name',st.guardianName],['Guardian relationship',st.guardianRelation],['Guardian contact',st.guardianCell],['Distance from school',st.distanceFromSchool],['Can read',st.canRead],['Can write',st.canWrite],['Can count',st.canCount],['Teacher remarks',st.teacherRemarks],['Principal remarks',st.principalRemarks]];
  for(const [label,value] of facts){const cell=document.createElement('div');const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=value===undefined||value===null||String(value).trim()===''?'Not recorded':String(value);cell.append(l,v);grid.append(cell)}el.append(grid);
- const edit=document.createElement('button');edit.type='button';edit.className='profile-edit-button';edit.textContent='Edit contact details & teacher remarks';edit.onclick=()=>renderProfileEditor(st);el.append(edit);
+ const edit=document.createElement('button');edit.type='button';edit.className='profile-edit-button';edit.textContent='Complete missing student details / photo';edit.onclick=()=>renderProfileEditor(st);el.append(edit);
  const editBox=document.createElement('div');editBox.id='profileEditor';el.append(editBox);
  const h=document.createElement('h4');h.textContent='Last 7 days · Attendance history';el.append(h);
  const strip=document.createElement('div');strip.className='week-attendance';
@@ -404,20 +407,28 @@ function showStudentRecord(id,scroll=true){
 function renderProfileEditor(st){
  const box=$('profileEditor');if(!box||profileSaving)return;
  const form=document.createElement('form');form.className='profile-editor';
- const note=document.createElement('p');note.className='text-xs text-slate-300';note.textContent='Official name, enrollment, date of birth, gender, class and admission data are read-only. Save only verified corrections to contact and guardian information.';form.append(note);
+ const note=document.createElement('p');note.className='text-xs text-slate-300';note.textContent='Complete verified missing details only. Saved values, official name, enrollment, class and admission records remain protected; ask School Admin to correct them. Teacher remarks remain editable.';form.append(note);
  const fields=document.createElement('div');fields.className='profile-edit-grid';
- const expected={};
+ const expected={};let pendingPhoto='',photoBusy=false;
  for(const [key,label,max] of PROFILE_EDIT_FIELDS){
-  const l=document.createElement('label');l.textContent=label;const input=document.createElement(['address','teacherRemarks'].includes(key)?'textarea':'input');
-  input.dataset.profileField=key;input.maxLength=max;input.value=String(st[key]??'');expected[key]=input.value;if(['contact','whatsapp','guardianCell'].includes(key))input.inputMode='tel';l.append(input);fields.append(l);
+  const previous=profileExisting(st,key);if(previous.trim()&&key!=='teacherRemarks')continue;
+  const l=document.createElement('label');l.textContent=label;const choices=key==='gender'?['Male','Female','Other']:['canRead','canWrite','canCount'].includes(key)?['Yes','No']:null;
+  const input=document.createElement(choices?'select':['address','guardianAddress','teacherRemarks'].includes(key)?'textarea':'input');
+  if(choices)input.replaceChildren(new Option('Select',''),...choices.map(x=>new Option(x,x)));else if(key==='dob'){input.type='date';input.max=localDate()}else{input.maxLength=max;if(input.tagName==='TEXTAREA')input.rows=3}
+  input.dataset.profileField=key;input.value=previous;expected[key]=previous;if(['contact','whatsapp','guardianCell'].includes(key))input.inputMode='tel';l.append(input);fields.append(l);
+ }
+ if(!profileExisting(st,'photo')){
+  expected.photo='';const l=document.createElement('label');l.textContent='Missing student photo';const picker=document.createElement('input');picker.type='file';picker.accept='image/jpeg,image/png,image/webp';const preview=document.createElement('img');preview.alt='Selected student photo';preview.style.cssText='width:100px;max-height:130px;object-fit:contain;display:none;border-radius:10px';const info=document.createElement('small');info.textContent='Choose a verified photo. It will be compressed before saving.';
+  picker.onchange=async()=>{pendingPhoto='';preview.removeAttribute('src');preview.style.display='none';if(!picker.files?.[0])return;photoBusy=true;picker.disabled=true;try{pendingPhoto=await compressStudentPhoto(picker.files[0]);preview.src=pendingPhoto;preview.style.display='block';info.textContent='Photo ready; press Save changes to store it.'}catch(e){info.textContent=e.message;picker.value=''}finally{photoBusy=false;picker.disabled=false}};l.append(picker,preview,info);fields.append(l)
  }
  const status=document.createElement('p');status.className='text-xs text-amber-200';status.setAttribute('role','status');
  const save=document.createElement('button');save.type='submit';save.className='profile-edit-button';save.textContent='Save changes';
  const cancel=document.createElement('button');cancel.type='button';cancel.className='profile-edit-button secondary';cancel.textContent='Cancel';cancel.onclick=()=>{if(!profileSaving)box.replaceChildren()};
  form.append(fields,status,save,cancel);box.replaceChildren(form);
  form.onsubmit=async e=>{
-  e.preventDefault();if(profileSaving)return;const patch={},old={};
+  e.preventDefault();if(profileSaving||photoBusy)return;const patch={},old={};
   for(const input of fields.querySelectorAll('[data-profile-field]')){const k=input.dataset.profileField,v=input.value.trim();if(v!==expected[k]){patch[k]=v;old[k]=expected[k]}}
+  if(pendingPhoto){patch.photo=pendingPhoto;old.photo=''}
   if(!Object.keys(patch).length){status.textContent='No changes to save.';return}
   if(!confirm('Save these permitted profile changes for '+(st.name||'this student')+'?'))return;
   profileSaving=true;save.disabled=true;cancel.disabled=true;status.textContent='Saving and verifying student record…';
@@ -631,6 +642,6 @@ init();
         .att-active-leave { background: #d97706; color: white; }
         .contact-icon { font-size: 13px; padding: 2px 4px; border-radius: 6px; background: #1e293b; text-decoration: none; }
     </style>
-<a href="leave-request.html" class="leave-request-link">📝 Leave Request</a><script defer src="/ask-lama.js?v=2"></script>
+<a href="leave-request.html" class="leave-request-link">📝 Leave Request</a><script defer src="/ask-lama.js?v=3"></script>
 </body>
 </html>

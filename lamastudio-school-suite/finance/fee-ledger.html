@@ -114,6 +114,7 @@ async function send(kind,request){
 }
 async function retry(){
  if(busy||!pending||!ledger?.writable)return;
+ try{const stored=readPending();if(!stored||stored.id!==pending.id){await init();return}}catch(e){message(e.message,true);return}
  busy=true;setControls();const p=pending;try{
  const result=await LamaAPI[methodMap[p.kind]](p.id,p.request);
  if(!result?.report||result.event?.id!==p.id)throw Error('Operation confirmation incomplete.');
@@ -139,7 +140,7 @@ for(const id of ['reportClass','reportMonth','reportCategory','reportStatus','qu
 $('payStudent').onchange=renderAllocations;$('allocations').addEventListener('input',calcPayment);$('pay').onclick=async()=>{try{if(!canWrite())return;const a=allocations(),amountPaisa=a.reduce((s,v)=>s+v.amountPaisa,0),studentId=$('payStudent').value;if(!amountPaisa||!studentId)return;if(confirm('Record '+money(amountPaisa)+' actually received from '+nameOf(studentId)+'?'))await send('pay',{studentId,amountPaisa,allocations:a,method:$('method').value})}catch(e){message(e.message,true)}};
 $('receipts').onclick=async e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.receipt){printReceipt(b.dataset.receipt);return}if(b.dataset.reverse&&canWrite()){const reason=prompt('Reason for reversing this receipt (not a cash refund):');if(!reason?.trim())return;if(confirm('Reverse this receipt and restore its outstanding fee balance?'))try{await send('reverse',{receiptId:b.dataset.reverse,reason:reason.trim()})}catch(e){message(e.message,true)}}};
 $('voucher').onclick=printVouchers;$('print').onclick=()=>{if(!$('printSection').hidden)window.print()};$('closePrint').onclick=closePrint;
-window.addEventListener('storage',e=>{if(storageKey&&e.key===storageKey){try{pending=readPending();invalidate();setControls()}catch(err){ledger=null;for(const id of panels)$(id).hidden=true;message(err.message,true)}}});
+window.addEventListener('storage',e=>{if(storageKey&&e.key===storageKey&&!busy){init()}});
 $('month').value=localDate().slice(0,7);$('dueDate').value=localDate();init();
 })();
 </script></body></html>

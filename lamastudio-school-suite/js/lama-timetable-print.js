@@ -26,7 +26,7 @@ const sameClass=(a,b)=>classKey(a)===classKey(b);
 const timeLabel=p=>[String(p.start||'').trim(),String(p.end||'').trim()].filter(Boolean).join(' – ');
 function sorted(records,mode){
  return [...records].sort((a,b)=>{
-  if(mode==='all')return dayRank(a.day)-dayRank(b.day)||Number(a.period||0)-Number(b.period||0)||natural(classLabel(a),classLabel(b))||natural(a.start,b.start);
+  if(mode==='all')return dayRank(a.day)-dayRank(b.day)||Number(a.period||0)-Number(b.period||0)||root.LamaClassOrder.compare(classLabel(a),classLabel(b))||natural(a.start,b.start);
   return dayRank(a.day)-dayRank(b.day)||Number(a.period||0)-Number(b.period||0)||natural(a.start,b.start);
  });
 }
@@ -67,7 +67,7 @@ function weeklyMatrix(records){
  */
 function masterGrid(records,selectedClasses=null,{printDay=''}={}){
  const published=(Array.isArray(records)?records:[]).filter(p=>p&&p.published!==false);
- const all=[...new Map(published.map(p=>[classKey(classLabel(p)),classLabel(p)])).values()].sort(natural);
+ const all=[...new Map(published.map(p=>[classKey(classLabel(p)),classLabel(p)])).values()].sort(root.LamaClassOrder.compare);
  const labels=Array.isArray(selectedClasses)?[...new Map(selectedClasses.map(v=>[classKey(v),String(v).trim()])).values()].filter(Boolean):all;
  if(!labels.length)return '<p class="empty-print">No classes selected for this timetable.</p>';
  const included=published.filter(p=>labels.some(x=>sameClass(x,classLabel(p)))&&(!printDay||dayRank(p.day)===dayRank(printDay)));
@@ -99,7 +99,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   '<h1>'+esc(name)+'</h1><p>School Timetable & Academic Calendar</p></div>'+logoView+'</header>';
  const shownDate=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
  const baseRecords=records.filter(p=>p&&p.published!==false);
- const availableLabels=[...new Set(baseRecords.map(classLabel).filter(Boolean))].sort(natural);
+ const availableLabels=[...new Set(baseRecords.map(classLabel).filter(Boolean))].sort(root.LamaClassOrder.compare);
  const requestedClasses=Array.isArray(selectedClasses)?[...new Set(selectedClasses.map(x=>String(x).trim()).filter(Boolean))]:availableLabels;
  if(scope!=='selected'&&Array.isArray(selectedClasses)&&requestedClasses.length===0)throw Error('Select at least one class to print.');
  const filteredBase=baseRecords.filter(p=>requestedClasses.some(c=>sameClass(c,classLabel(p))));
@@ -112,7 +112,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   description='One selected class';
   content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+weeklyMatrix(subset)+'</section>';
  }else if(scope==='by-class'){
-  const labels=[...new Set(filteredBase.map(classLabel).filter(Boolean))].sort(natural);
+  const labels=[...new Set(filteredBase.map(classLabel).filter(Boolean))].sort(root.LamaClassOrder.compare);
   title='Class-wise Weekly Timetables';
   description=labels.length+' classes / sections';
  }else if(scope==='all'){

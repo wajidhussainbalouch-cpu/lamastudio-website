@@ -2620,7 +2620,13 @@ function lamaFeeAction_(p){
  * Profile fields are explicitly allowed, checked against a fresh snapshot and audited.
  * Homework is one batch of subject rows written under the script lock.
  */
-const LAMA_TEACHER_PROFILE_FIELDS_={fatherGuardian:150,contact:40,whatsapp:40,address:500,guardianName:150,guardianRelation:80,guardianCell:40,teacherRemarks:1000};
+const LAMA_TEACHER_PROFILE_FIELDS_={fatherGuardian:150,contact:40,whatsapp:40,address:500,guardianName:150,guardianRelation:80,guardianCell:40,teacherRemarks:1000,photo:45000,dob:10,gender:12,profession:100,guardianProfession:100,guardianAddress:500,distanceFromSchool:60,canRead:12,canWrite:12,canCount:12};
+const LAMA_TEACHER_PROFILE_ALIASES_={photo:['photoUrl','studentPhoto','photoURL'],fatherGuardian:['fatherName','father','father_name'],dob:['dateOfBirth','birthDate'],contact:['phone','mobile','contactNo'],whatsapp:['whatsappNo'],address:['homeAddress']};
+function lamaTeacherProfileExisting_(record,key){
+ const keys=[key].concat(LAMA_TEACHER_PROFILE_ALIASES_[key]||[]);
+ for(const k of keys){const v=record[k];if(v!==null&&v!==undefined&&String(v).trim()!=='')return String(v);}
+ return '';
+}
 function lamaTeacherOwnsHomework_(ctx,record){return record.teacherId?String(record.teacherId)===String(ctx.teacher.id):!!record.assignedBy&&String(record.assignedBy).trim().toLowerCase()===String(ctx.teacher.name||'').trim().toLowerCase();}
 function lamaTeacherStudentSafe_(record){
  const safe=Object.assign({},record);
@@ -2641,12 +2647,18 @@ function lamaTeacherText_(value,max,required){
 function lamaTeacherProfilePatch_(patch,expected,existing){
  if(!patch||typeof patch!=='object'||Array.isArray(patch)||!expected||typeof expected!=='object'||Array.isArray(expected))throw Error('Invalid profile update.');
  const fields=Object.keys(patch);
- if(!fields.length||fields.some(k=>!Object.prototype.hasOwnProperty.call(LAMA_TEACHER_PROFILE_FIELDS_,k)||!Object.prototype.hasOwnProperty.call(expected,k)))throw Error('Only permitted class contact and teacher-note fields may be edited.');
+ if(!fields.length||fields.some(k=>!Object.prototype.hasOwnProperty.call(LAMA_TEACHER_PROFILE_FIELDS_,k)||!Object.prototype.hasOwnProperty.call(expected,k)))throw Error('Only permitted missing profile fields and teacher remarks may be edited.');
  const out={};
  for(const k of fields){
-  if(String(existing[k]??'')!==String(expected[k]??''))throw Error('Student record changed. Reload before editing.');
-  const val=lamaTeacherText_(patch[k],LAMA_TEACHER_PROFILE_FIELDS_[k],false);
+  const previous=lamaTeacherProfileExisting_(existing,k);
+  if(previous!==String(expected[k]??''))throw Error('Student record changed. Reload before editing.');
+  if(k!=='teacherRemarks'&&previous.trim()!=='')throw Error('This field already has a saved value. Ask School Admin to correct it.');
+  const val=lamaTeacherText_(patch[k],LAMA_TEACHER_PROFILE_FIELDS_[k],k!=='teacherRemarks');
   if(['contact','whatsapp','guardianCell'].includes(k)&&val&&!/^[0-9+ ()-]{3,40}$/.test(val))throw Error('Invalid contact number.');
+  if(k==='photo'&&!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(val))throw Error('Upload a compressed JPEG student photo.');
+  if(k==='dob'){const d=new Date(val+'T12:00:00Z');if(!/^\d{4}-\d{2}-\d{2}$/.test(val)||!Number.isFinite(d.getTime())||d.toISOString().slice(0,10)!==val||val>Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd'))throw Error('Invalid date of birth.');}
+  if(k==='gender'&&!['Male','Female','Other'].includes(val))throw Error('Invalid gender.');
+  if(['canRead','canWrite','canCount'].includes(k)&&!['Yes','No'].includes(val))throw Error('Choose Yes or No.');
   out[k]=val;
  }
  return out;
@@ -2665,7 +2677,7 @@ function lamaTeacherUpdateStudentProfile_(p){
   // Limit changes to the requested cells, not the full official identity row.
   for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);if(col<0)throw Error('Student field unavailable.');}
   // Preserve a before/after audit for permitted fields; no credentials in the audit.
-  const before={},after={};for(const k of Object.keys(patch)){before[k]=old[k]??'';after[k]=patch[k];}
+  const before={},after={};for(const k of Object.keys(patch)){before[k]=k==='photo'?(old[k]?'Photo present':'No photo'):(old[k]??'');after[k]=k==='photo'?'Student photo added':patch[k];}
   writeAudit(ctx.ss,ctx.schoolId,ctx.auditActor,'teacherProfileUpdateAttempt','students',p.studentId,before,after);
   for(const k of Object.keys(patch)){const col=info.headers.indexOf(k);const cell=info.sheet.getRange(i+1,col+1,1,1);cell.setNumberFormat('@');cell.setValue(patch[k]);}
   SpreadsheetApp.flush();

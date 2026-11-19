@@ -493,10 +493,10 @@ function setDiaryPending(p){
  try{if(p)sessionStorage.setItem(diaryStorageKey(),JSON.stringify(p));else sessionStorage.removeItem(diaryStorageKey())}catch(_){}
 }
 function loadDiaryPending(){
- try{const p=JSON.parse(sessionStorage.getItem(diaryStorageKey())||'null');if(p&&typeof p.id==='string'&&Array.isArray(p.entries))diaryPending=p}catch(_){}
+ try{const p=JSON.parse(sessionStorage.getItem(diaryStorageKey())||'null');if(p&&typeof p.id==='string'&&Array.isArray(p.entries)&&['batch','legacy'].includes(p.mode))diaryPending=p}catch(_){}
 }
-function diarySnapshot(){
- const day=diaryDate(),subjects=availableSubjects(),aliases=LamaSchoolCurriculum.aliasesForClass(curriculumDoc,me.assignedClass);
+function diarySnapshot(day=diaryDate()){
+ const subjects=availableSubjects(),aliases=LamaSchoolCurriculum.aliasesForClass(curriculumDoc,me.assignedClass);
  return LamaTeacherDaily.homeworkStatus(homework,subjects,day,homeworkReady&&curriculumReady,'Asia/Karachi',aliases);
 }
 function diaryDraft(subject){return diaryDrafts.get(subject)||{title:'',description:'',dueDate:''}}
@@ -540,7 +540,7 @@ async function postDiary(){
  try{
   if(p.mode==='legacy'){
    await readDiary();
-   if(!p.entries.every(e=>exactHomework(e,p.day)))throw Error('The old backend cannot safely retry an uncertain write. Review saved history before starting another batch.');
+   if(!p.entries.every(e=>exactHomework(e,p.day)||diarySnapshot(p.day).items.some(i=>i.subject===e.subject&&i.done)))throw Error('The old backend cannot safely retry an uncertain write. Review saved history before starting another batch.');
   }else{
    let result;
    try{result=await LamaAPI.teacherHomeworkBatch(p.id,p.day,p.entries)}
@@ -549,8 +549,9 @@ async function postDiary(){
     if(me.assignedSection||me.section)throw Error('Section-specific batch posting requires the updated Apps Script backend.');
     // Legacy compatibility runs only after an explicit unsupported-action response.
     setDiaryPending({...p,mode:'legacy'});await readDiary();
+    if(p.day!==diaryDate())throw Error('Posting date changed. Review previous day history before starting another batch.');
     for(const entry of p.entries){
-     if(diarySnapshot().items.some(i=>i.subject===entry.subject&&i.done))continue;
+     if(diarySnapshot(p.day).items.some(i=>i.subject===entry.subject&&i.done))continue;
      const saved=await LamaAPI.add('homework',{...entry,class:me.assignedClass,teacherId:me.teacherId||me.id,assignedBy:me.name||'',isPublished:true,published:true,status:'published'});
      if(!saved?.id)throw Error('Legacy homework save was not confirmed.');
      await readDiary();if(!homework.some(h=>String(h.id)===String(saved.id))||!exactHomework(entry,p.day))throw Error('Legacy homework could not be verified. Review history before retry.');
@@ -558,7 +559,7 @@ async function postDiary(){
    }
    await readDiary();
    if(result&&(!Array.isArray(result.records)||!Array.isArray(result.skipped)||result.records.some(r=>!homework.some(h=>String(h.id)===String(r.id)))))throw Error('Batch response not verified in saved history.');
-   if(!p.entries.every(e=>diarySnapshot().items.some(i=>i.subject===e.subject&&i.done)))throw Error('Some subjects were not verified.');
+   if(!p.entries.every(e=>diarySnapshot(p.day).items.some(i=>i.subject===e.subject&&i.done)))throw Error('Some subjects were not verified.');
   }
   for(const e of p.entries)diaryDrafts.delete(e.subject);setDiaryPending(null);diaryNotice='✓ Homework posted and verified for selected subjects. Previously posted subjects were not duplicated.';
  }catch(e){diaryNotice='Homework not fully confirmed: '+e.message+' Your entered text is retained. Review the saved register before retrying.'}
@@ -568,7 +569,7 @@ $('postDiary').onclick=postDiary;$('retryDiary').onclick=postDiary;
 $('clearDiaryPending').onclick=async()=>{
  if(diaryBusy||!diaryPending||diaryPending.mode!=='legacy')return;
  try{await readDiary();if(!confirm('Review the saved homework history. Clear this unresolved legacy request only after confirming which subjects have been saved? Already posted subjects remain excluded.'))return;
- for(const e of diaryPending.entries)if(diarySnapshot().items.some(i=>i.subject===e.subject&&i.done))diaryDrafts.delete(e.subject);setDiaryPending(null);diaryNotice='Review complete. Fill only subjects still not posted.';renderDiary()}catch(e){diaryNotice=e.message;renderDiary()}
+ for(const e of diaryPending.entries)if(diarySnapshot(diaryPending.day).items.some(i=>i.subject===e.subject&&i.done))diaryDrafts.delete(e.subject);setDiaryPending(null);diaryNotice='Review complete. Fill only subjects still not posted.';renderDiary()}catch(e){diaryNotice=e.message;renderDiary()}
 };
 async function deleteHomework(id){const x=homework.find(h=>String(h.id)===String(id));if(!x||!mine(x))return message('Only your entries can be removed');if(!confirm('Delete homework?'))return;try{await LamaAPI.remove('homework',id);await refresh()}catch(e){message(e.message)}}
 $('homeworkList').addEventListener('click',e=>{const b=e.target.closest('[data-delete-hw]');if(b)deleteHomework(b.dataset.deleteHw)});

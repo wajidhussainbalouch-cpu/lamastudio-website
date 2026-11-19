@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Class Fee Structure | LAMA School Suite</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0a1723;color:#eef7fa}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:18px}h1{font-size:clamp(22px,4vw,32px);margin:8px 0}h2{font-size:18px}p{line-height:1.5}a{color:#8ad5d1}section{background:#122838;border:1px solid #38586a;border-radius:14px;padding:16px;margin:14px 0}.muted{color:#bacbd5;font-size:13px}.error{color:#ffb9af}button,select,input{font:inherit;color:inherit}button,select,input[type=month],input[type=search]{padding:10px;border:1px solid #4a6877;background:#183747;border-radius:9px}button{cursor:pointer;font-weight:700}button:disabled{opacity:.5;cursor:default}.primary{background:#087c72}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px}.grid label{display:flex;flex-direction:column;gap:5px;min-width:0}.grid input,.grid select{width:100%}#heads label{flex-direction:row;align-items:center;background:#1b3948;border:1px solid #42606c;padding:10px;border-radius:8px}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border:1px solid #51707c;text-align:left;vertical-align:top}th{background:#1a5360}td.num{text-align:right;white-space:nowrap}.actions{display:flex;gap:8px;flex-wrap:wrap}.slip{color:#172b32;background:#fff;padding:14px;border:1px solid #b9c8cb;border-radius:4px;break-inside:avoid;page-break-inside:avoid}.slip h3{margin:0;font-size:16px}.slip p{margin:6px 0;font-size:12px}.slip th{background:#e0edf0}.slip th,.slip td{border-color:#b0c0c4}.slip .warning{font-size:11px;font-weight:700}#preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#preview:empty{display:none}@media(max-width:620px){main{padding:10px}#preview{grid-template-columns:1fr}}@page{size:A4 portrait;margin:10mm}@media print{html,body{background:#fff!important;color:#111!important}main{max-width:none;padding:0}main>header,main>section:not(#previewSection),.no-print{display:none!important}#previewSection{border:0;background:#fff;padding:0;margin:0}#preview{display:grid;grid-template-columns:1fr 1fr;gap:5mm}.slip{border:1px solid #777}.slip th{print-color-adjust:exact;-webkit-print-color-adjust:exact}a{color:#111}}
+</style><script src="../js/api-client.js"></script><script src="../js/school-fee-policy.js?v=20261119"></script></head>
+<body><main><header><a href="../settings.html">← School Settings</a> · <a href="fees.html">Fee Collection</a><h1 id="schoolTitle">School fee structure</h1><p class="muted">Saved class rates, configured once by the school administrator. No financial records are written by this page.</p></header>
+<section><h2>Current school policy</h2><p id="status" role="status">Loading verified settings…</p><div class="scroll" id="schedule"></div></section>
+<section id="controls" hidden><h2>Prepare class-wise voucher estimates</h2><p class="muted">Choose categories, class and month. These are draft estimates only, not issued demands or balances. One-time and as-needed categories are never selected automatically. Existing fee records must be reconciled before distribution.</p>
+<div class="grid"><label>Class<select id="cls"><option value="">All configured classes</option></select></label><label>Billing month<input type="month" id="month"></label><label>Find student<input type="search" id="search" placeholder="Name / enrollment"></label></div>
+<h3>Include fee categories</h3><div class="grid" id="heads"></div><div class="actions" style="margin-top:12px"><button class="primary" id="build" type="button">Build estimates</button><button id="print" disabled type="button">Print draft estimates</button></div><p id="message" role="status" class="muted"></p></section>
+<section id="previewSection" hidden><h2 class="no-print">Review drafts</h2><div id="preview"></div></section>
+</main><script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),P=LamaFeePolicy,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),money=v=>'Rs. '+Number(v).toLocaleString('en-PK',{maximumFractionDigits:2});
+let school=null,students=[],verified=false;
+function invalidate(){$('preview').replaceChildren();$('previewSection').hidden=true;$('print').disabled=true;$('message').textContent=''}
+function table(){
+ const cs=P.classes(school),heads=P.categories(school).filter(c=>P.permitted(c,school));
+ if(!cs.length||!heads.length){$('schedule').innerHTML='<p>Configure classes and permitted fee categories in School Settings first.</p>';return}
+ $('schedule').innerHTML='<table><thead><tr><th>Class</th>'+heads.map(c=>'<th>'+esc(c.name)+'<br><small>'+esc(c.cadence)+'</small></th>').join('')+'</tr></thead><tbody>'+cs.map(cls=>'<tr><th>'+esc(cls)+'</th>'+heads.map(c=>{const a=P.ratesFor(c,cls);return '<td class="num">'+(a===null?'Not set':money(a))+'</td>'}).join('')+'</tr>').join('')+'</tbody></table>';
+}
+function build(){
+ invalidate();if(!verified||!P.vouchersAllowed(school))return;
+ try{
+  const month=$('month').value;if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('Choose a valid billing month.');
+  const cls=$('cls').value,q=$('search').value.trim().toLowerCase(),selected=[...$('heads').querySelectorAll('input:checked')].map(x=>x.value);
+  const matches=students.filter(s=>(!cls||P.key(s.class||s.className)===P.key(cls))&&(!q||[s.name,s.enrlNo,s.enrollmentNo].some(v=>String(v||'').toLowerCase().includes(q))));
+  const all=P.preview(school,matches,selected),drafts=all.filter(x=>!x.missing.length&&x.total>0),incomplete=all.filter(x=>x.missing.length);
+  $('message').textContent=drafts.length+' draft(s) · '+incomplete.length+' skipped (missing category rate) · '+(all.length-incomplete.length-drafts.length)+' zero-fee student(s). Students outside configured classes are excluded. No issued invoices or payment balances are calculated.';
+  $('preview').innerHTML=drafts.map(({student,lines,total})=>'<article class="slip"><h3>'+esc(school.name||'School')+'</h3><p class="warning">DRAFT FEE ESTIMATE — NOT ISSUED</p><p>Month: '+esc(month)+'</p><p>Student: <strong>'+esc(student.name)+'</strong><br>Enrollment: '+esc(student.enrlNo||student.enrollmentNo||'—')+'<br>Class: '+esc(student.class||student.className||'—')+'</p><table><thead><tr><th>Fee category</th><th>Amount</th></tr></thead><tbody>'+lines.map(l=>'<tr><td>'+esc(l.name)+'</td><td>'+money(l.amount)+'</td></tr>').join('')+'<tr><th>Estimated total</th><th>'+money(total)+'</th></tr></tbody></table><p class="warning">Excludes arrears, concessions and payments. Not a request for payment.</p><p>LAMA School Suite · LamaStudio.pk</p></article>').join('');
+  $('previewSection').hidden=!drafts.length;$('print').disabled=!drafts.length;
+ }catch(e){$('message').textContent=e.message}
+}
+async function init(){
+ if(!LamaAPI.requireLogin('school','../login.html'))return;
+ try{
+  school=await LamaAPI.getActiveSchool();if(!school?.schoolId)throw Error('School profile unavailable.');
+  $('schoolTitle').textContent=(school.name||'School')+' — Fee Structure';table();
+  const mode=P.mode(school);
+  $('status').textContent=mode==='private'?'Standard private school · approved settings used for draft estimates.':'Government / PEF school · vouchers disabled; permitted collection rates shown for reference.';
+  if(!P.vouchersAllowed(school))return;
+  students=await LamaAPI.list('students');if(!Array.isArray(students))throw Error('Unable to verify student records.');
+  for(const c of P.classes(school))$('cls').add(new Option(c,c));
+  for(const c of P.categories(school).filter(c=>P.permitted(c,school))){const lab=document.createElement('label'),i=document.createElement('input');i.type='checkbox';i.value=c.name;i.checked=c.cadence==='monthly';lab.append(i,document.createTextNode(c.name+' ('+c.cadence+')'));$('heads').append(lab)}
+  const d=new Date();$('month').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  verified=true;$('controls').hidden=false;
+ }catch(e){$('status').textContent='Could not load verified settings: '+e.message;$('status').className='error'}
+}
+$('controls').addEventListener('change',invalidate);$('search').addEventListener('input',invalidate);$('build').onclick=build;$('print').onclick=()=>{if(verified&&!$('print').disabled)window.print()};init();
+})();
+</script></body></html>

@@ -37,6 +37,7 @@
         .custom-gradient { background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #6366f1 100%); }
     </style>
 <script src="js/school-curriculum.js"></script>
+<script src="js/school-fee-policy.js?v=20261119"></script>
 <link rel="stylesheet" href="assets/css/class-subject-picker.css">
 <script src="js/class-subject-choices.js"></script>
 <script src="js/class-subject-picker.js"></script>
@@ -143,9 +144,9 @@
  <div class="flex gap-2"><input id="customClass" maxlength="80" placeholder="Custom class (e.g. Montessori)" class="flex-1 min-w-0 bg-slate-950 border border-white/20 rounded-xl p-3"><button type="button" onclick="addCustomClass()" class="bg-cyan-700 px-4 rounded-xl font-bold">Add</button></div>
 </section>
 <section class="rounded-2xl border border-emerald-500/30 bg-slate-900/70 p-4 space-y-3">
- <h2 class="text-base font-black text-emerald-300">Fee Categories</h2>
- <p class="text-slate-400">Enable only the fees your school collects. Add your own fee names. This defines categories; it does not create charges or change existing fee records.</p>
- <div id="feeCategories" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+ <h2 class="text-base font-black text-emerald-300">Fee Structure &amp; Collections</h2><p id="feeScheduleMode" class="text-xs text-amber-200"></p>
+ <p class="text-slate-400">Enable only permitted collections. Set amounts for each offered class once, choose a billing frequency, and save. Blank means not configured; 0 means no charge. This does not issue invoices or change existing payment records.</p>
+ <div id="feeCategories" class="space-y-3"></div><a href="finance/fee-plan.html" class="inline-block text-emerald-300 underline text-xs">Open saved class fee schedule / voucher preview</a>
  <div class="flex gap-2"><input id="customFee" maxlength="80" placeholder="Other fee type" class="flex-1 min-w-0 bg-slate-950 border border-white/20 rounded-xl p-3"><button type="button" onclick="addCustomFee()" class="bg-emerald-700 px-4 rounded-xl font-bold">Add</button></div>
 </section>
             <button type="submit" id="submitBtn" class="neon-glow w-full custom-gradient hover:opacity-95 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-xl transition shadow-xl mt-4 cursor-pointer">
@@ -173,20 +174,38 @@
         };
 
 
-        const standardClasses=['ECE','Nursery','Playgroup','Prep',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
-        const standardFees=['Tuition Fee','Admission Fee','Examination Fee','Parking Fee','Uniform Fee','Books Fee'];
-        let classSettings=[],feeSettings=[],curriculumRecord=null,curriculumReady=false,curriculumSchoolId='';
+        const standardClasses=['Kachi','ECCE','ECE','Playgroup','Nursery','KG','Prep',...Array.from({length:12},(_,i)=>'Class '+(i+1))];
+        const standardFees=['Tuition Fee','Admission Fee','Examination Fee','Parking Fee','Uniform Fee','Books Fee','Authorized School Fund','Transport Fee','Stationery Fee'];
+        let classSettings=[],feeSettings=[],curriculumRecord=null,curriculumReady=false,curriculumSchoolId='',schoolProfileReady=false;
         function escapeText(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
         function renderClassSettings(){
-          document.getElementById('offeredClasses').innerHTML=LamaClassSubjectPicker.render(classSettings,escapeText);
+          document.getElementById('offeredClasses').innerHTML=LamaClassSubjectPicker.render(classSettings,escapeText);renderFeeSettings();
         }
         LamaClassSubjectPicker.bind(document.getElementById('offeredClasses'),()=>classSettings,renderClassSettings,
           text=>{document.getElementById('curriculumStatus').textContent=text},
           error=>showMessage('errorBanner',error));
+        function feeSchool(){return {type:document.getElementById('inType').value,privateSub:document.getElementById('inPrivateSub').value}}
         function renderFeeSettings(){
-          document.getElementById('feeCategories').innerHTML=feeSettings.map((item,i)=>`
-            <label class="flex gap-2 items-center bg-slate-950/80 border border-white/10 rounded-xl p-3"><input type="checkbox" ${item.enabled?'checked':''} onchange="feeSettings[${i}].enabled=this.checked"><span>${escapeText(item.name)}</span></label>`).join('');
+          const cls=classSettings.filter(c=>c.enabled).map(c=>c.name),school=feeSchool(),privateMode=LamaFeePolicy.vouchersAllowed(school);
+          document.getElementById('feeScheduleMode').textContent=privateMode?'Standard private: optional fee categories and class-wise voucher previews.':'Government / PEF: tuition and voucher previews disabled here. Record only collections authorized for your school.';
+          document.getElementById('feeCategories').innerHTML=feeSettings.map((item,i)=>{
+            const blocked=LamaFeePolicy.isTuition(item.name)&&!privateMode;
+            return '<section class="bg-slate-950/80 border border-white/10 rounded-xl p-3 space-y-2"><label class="flex gap-2 items-center"><input type="checkbox" data-fee-enable="'+i+'" '+(item.enabled?'checked':'')+' '+(blocked&&!item.enabled?'disabled':'')+'><span class="font-bold">'+escapeText(item.name)+'</span></label>'+
+              (blocked?'<p class="text-xs text-amber-200">Not available for this school type. '+(item.enabled?'Uncheck before saving.':'')+'</p>':'')+
+              (item.enabled&&!blocked?'<label class="block text-xs">Collection frequency<select data-fee-cadence="'+i+'" class="w-full bg-slate-900 border border-white/20 p-2 rounded-lg">'+['monthly','one-time','as-needed'].map(v=>'<option '+(item.cadence===v?'selected':'')+' value="'+v+'">'+v+'</option>').join('')+'</select></label>'+
+              '<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">'+cls.map((n,j)=>{const old=(item.rates||[]).find(r=>LamaFeePolicy.key(r.className)===LamaFeePolicy.key(n));return '<label class="text-xs min-w-0">'+escapeText(n)+' (Rs.)<input type="number" min="0" max="10000000" step=".01" data-fee-rate="'+i+'" data-rate-class="'+escapeText(n)+'" value="'+escapeText(old?.amount??'')+'" placeholder="Not set" class="w-full bg-slate-900 border border-white/20 rounded-lg p-2"></label>'}).join('')+'</div>'+(!cls.length?'<p class="text-xs text-slate-400">Select offered classes above first.</p>':''):'')+'</section>';
+          }).join('');
         }
+        document.getElementById('feeCategories').addEventListener('change',e=>{
+          const t=e.target;
+          if(t.dataset.feeEnable!==undefined){feeSettings[Number(t.dataset.feeEnable)].enabled=t.checked;renderFeeSettings()}
+          if(t.dataset.feeCadence!==undefined)feeSettings[Number(t.dataset.feeCadence)].cadence=t.value;
+          if(t.dataset.feeRate!==undefined){
+            const item=feeSettings[Number(t.dataset.feeRate)],name=t.dataset.rateClass;
+            item.rates=(item.rates||[]).filter(r=>LamaFeePolicy.key(r.className)!==LamaFeePolicy.key(name));
+            item.rates.push({className:name,amount:t.value});
+          }
+        });
         function addCustomClass(){
           const input=document.getElementById('customClass'),name=input.value.trim();
           if(!name||classSettings.some(x=>x.name.toLowerCase()===name.toLowerCase()))return;
@@ -195,7 +214,7 @@
         function addCustomFee(){
           const input=document.getElementById('customFee'),name=input.value.trim();
           if(!name||feeSettings.some(x=>x.name.toLowerCase()===name.toLowerCase()))return;
-          feeSettings.push({name,enabled:true});input.value='';renderFeeSettings();
+          feeSettings.push({name,enabled:true,cadence:'as-needed',rates:[]});input.value='';renderFeeSettings();
         }
         function initializeChoices(school){
           let storedClasses=[],storedFees=[];
@@ -206,8 +225,8 @@
           const configured=Boolean(school.offeredClassesJson);
           classSettings=standardClasses.map(name=>{const old=storedClasses.find(x=>x.name===name);return {name,sections:Array.isArray(old?.sections)?old.sections:[],subjects:[],enabled:!!old};});
           for(const item of storedClasses)if(item?.name&&!classSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))classSettings.push({name:item.name,sections:Array.isArray(item.sections)?item.sections:[],subjects:[],enabled:true});
-          feeSettings=standardFees.map(name=>({name,enabled:!!storedFees.find(x=>x.name===name&&x.enabled)}));
-          for(const item of storedFees)if(item?.name&&!feeSettings.some(x=>x.name.toLowerCase()===String(item.name).toLowerCase()))feeSettings.push({name:item.name,enabled:!!item.enabled});
+          const saved=LamaFeePolicy.categories({feeCategoriesJson:storedFees});feeSettings=standardFees.map(name=>saved.find(x=>LamaFeePolicy.nameKey(x.name)===LamaFeePolicy.nameKey(name))||{name,enabled:false,cadence:LamaFeePolicy.isTuition(name)?'monthly':'as-needed',rates:[]});
+          for(const item of saved)if(item?.name&&!feeSettings.some(x=>LamaFeePolicy.nameKey(x.name)===LamaFeePolicy.nameKey(item.name)))feeSettings.push(item);
           renderClassSettings();renderFeeSettings();
         }
 
@@ -244,10 +263,12 @@
             } else {
                 wrapper.classList.add('hidden');
                 policyTitle.innerText = 'Fee Structure Policy: Government Institution';
-                policyDesc.innerText = 'Government schools provide free education with zero mandatory tuition fees. Fee collection is hidden on dashboards.';
+                policyDesc.innerText = 'Tuition and vouchers are disabled here. Configure only authorized non-tuition collections, if applicable.';
             }
         }
 
+        document.getElementById('inType').addEventListener('change',renderFeeSettings);
+        document.getElementById('inPrivateSub').addEventListener('change',renderFeeSettings);
         function handleLogout() {
             LamaAPI.logout();
             window.location.href = 'login.html';
@@ -316,7 +337,7 @@
         async function loadSettings() {
             let school = {};
             try {
-                school = await LamaAPI.getActiveSchool() || {};
+                school = await LamaAPI.getActiveSchool() || {};schoolProfileReady=!!school.schoolId;
             } catch(e) {}
             
             document.getElementById('pageTitle').innerText = `${school.name || 'School'} | Settings`;
@@ -368,12 +389,13 @@
             }
 
             patch.offeredClassesJson=JSON.stringify(classSettings.filter(x=>x.enabled).map(x=>({name:x.name,sections:x.sections})));
-            patch.feeCategoriesJson=JSON.stringify(feeSettings.filter(x=>x.enabled));
+            
             if (pendingLogo) patch.logo = pendingLogo;
 
             let schoolProfileSaved=false;
             try {
-                if(!curriculumReady)throw Error('Curriculum not loaded. Reload settings before saving.');
+                if(!curriculumReady||!schoolProfileReady)throw Error('School profile or curriculum not loaded. Reload settings before saving.');
+                patch.feeCategoriesJson=LamaFeePolicy.schedule(patch,feeSettings,classSettings.filter(x=>x.enabled).map(x=>x.name));
                 const doc=LamaSchoolCurriculum.documentFor(classSettings,curriculumSchoolId),description=JSON.stringify(doc);
                 // Avoid silently overwriting another administrator's changes.
                 const remote=LamaSchoolCurriculum.read(await LamaAPI.list('resources'),curriculumSchoolId);
@@ -381,8 +403,9 @@
                    String(remote.record?.description||'')!==String(curriculumRecord?.description||'')){
                      throw Error('Curriculum changed in another administrator session. Reload School Settings before saving.');
                 }
-                await LamaAPI.updateSchoolConfig(patch);
+                const updated=await LamaAPI.updateSchoolConfig(patch);
                 schoolProfileSaved=true;
+                if(JSON.stringify(LamaFeePolicy.categories(updated))!==JSON.stringify(LamaFeePolicy.categories(patch)))throw Error('Fee schedule save could not be verified. Reload settings.');
                 const saved=curriculumRecord?.id
                   ?await LamaAPI.update('resources',curriculumRecord.id,{description})
                   :await LamaAPI.add('resources',{category:LamaSchoolCurriculum.CATEGORY,title:LamaSchoolCurriculum.TITLE,description,link:''});

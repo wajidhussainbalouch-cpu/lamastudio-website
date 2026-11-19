@@ -6,7 +6,7 @@
 <title id="pageTitle">Teacher Home | Lama School Suite</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../../assets/css/config.css">
-<script src="../../js/api-client.js"></script><script src="../../js/attendance-history.js"></script><script src="../../js/teacher-daily-overview.js"></script>
+<script src="../../js/api-client.js?v=20261119diary"></script><script src="../../js/attendance-history.js"></script><script src="../../js/teacher-daily-overview.js"></script>
 <script src="../../js/school-curriculum.js"></script><link rel="stylesheet" href="../../assets/css/teacher-daily-overview.css">
 <style id="teacher-modern-ui">
 :root{--ink:#f5f9ff;--muted:#a6b6cd;--line:rgba(156,188,230,.17)}
@@ -59,6 +59,17 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 .attendance-father{font-size:12px;line-height:1.4;color:#c6d5dc;margin-top:4px;overflow-wrap:anywhere}
 @media(min-width:751px){.overview-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.overview-tile{grid-column:span 2}.overview-primary{grid-column:span 3}}
 @media(max-width:390px){.overview-tile{min-height:112px;padding:12px}.attendance-identity .student-avatar{width:48px;height:48px}}
+
+.diary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.diary-card{border:1px solid #44646c;background:#0e2631;border-radius:14px;padding:13px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.diary-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}.diary-head span{font-size:11px;color:#ffca8d}
+.diary-done{border-color:#448968}.diary-done .diary-head span{color:#9ee6b8}.diary-saved{font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.diary-card label,.profile-editor label{font-size:12px;display:flex;flex-direction:column;gap:5px;color:#bcd1d5;min-width:0}
+.diary-card input,.diary-card textarea,.profile-editor input,.profile-editor textarea{width:100%;background:#091823;border:1px solid #405d70;border-radius:8px;padding:10px;color:#f4f9fa;font-size:14px;min-height:44px}
+.diary-card textarea,.profile-editor textarea{resize:vertical}.profile-heading{display:flex;align-items:center;gap:12px}.profile-heading .student-avatar{width:64px;height:64px}
+.profile-edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px}.profile-editor{margin-top:12px;border:1px solid #41616b;padding:12px;border-radius:12px;display:grid;gap:10px}
+.profile-edit-button{background:#147b75;color:white;font-size:13px;font-weight:700;padding:10px 14px;border-radius:10px;margin-top:12px;min-height:44px}.profile-edit-button.secondary{background:#334d5d}
+@media(max-width:400px){.student-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.student-facts>div{padding:9px}.student-facts strong{font-size:12px}.diary-grid{grid-template-columns:1fr}}
 </style></head>
 <body class="bg-[#081425] text-slate-100 font-sans min-h-screen">
 
@@ -182,14 +193,12 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 
         <!-- HOMEWORK TAB -->
         <section id="tab-homework" class="tab-panel cyber-card rounded-2xl p-5 space-y-4 hidden">
-            <h2 class="text-xs font-black uppercase text-amber-400">Assign Homework</h2>
-            <div class="grid sm:grid-cols-2 gap-3 text-xs">
-                <input id="hwSubject" list="schoolSubjectOptions" placeholder="Subject" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <datalist id="schoolSubjectOptions"></datalist><input type="date" id="hwDueDate" class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <input id="hwTitle" placeholder="Title" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
-                <textarea id="hwDescription" rows="2" placeholder="Description / instructions" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white"></textarea>
-            </div>
-            <button onclick="postHomework()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition">+ Post Homework</button>
+            <h2 class="text-base font-black text-amber-300">Daily Class Homework</h2>
+            <p id="diaryClass" class="text-sm text-slate-300"></p>
+            <p class="text-xs text-slate-300">All subjects come from School Settings. Fill the subjects you need, leave others blank, and post together. Already posted subjects remain visible.</p>
+            <p id="diaryStatus" class="text-xs text-amber-200" role="status">Loading configured subjects…</p>
+            <div id="diarySubjects" class="diary-grid"></div>
+            <div class="flex flex-wrap gap-2"><button id="postDiary" type="button" disabled class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm px-4 py-3 rounded-xl transition disabled:opacity-50">Post All Filled Subjects</button><button id="retryDiary" hidden type="button" class="bg-slate-800 px-4 py-3 rounded-xl text-xs font-bold">Verify / Retry saved batch</button><button id="clearDiaryPending" hidden type="button" class="bg-slate-800 px-4 py-3 rounded-xl text-xs font-bold">Review unresolved batch</button></div>
             <div class="flex justify-between items-center border-t border-slate-800 pt-3">
                 <h3 class="text-[10px] font-black uppercase text-slate-400">History</h3>
                 <select id="hwFilter" onchange="loadHomework()" class="bg-slate-950 border border-slate-700 text-white text-[10px] rounded-lg px-2 py-1.5">
@@ -267,7 +276,7 @@ function myStudent(id){return myStudents.find(s=>String(s.id)===String(id))}
 function mine(r){return r.teacherId?norm(r.teacherId)===norm(me.teacherId||me.id):!!r.assignedBy&&norm(r.assignedBy)===norm(me.name)}
 function published(r){return r.isPublished===true||r.published===true||norm(r.status)==='published'||norm(r.status)==='sent'}
 function message(t){alert(t)}
-function switchTab(t){if(t==='absentees')refresh().catch(e=>message('Could not sync attendance: '+e.message));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
+function switchTab(t){if(t==='homework')renderDiary();if(t==='absentees')refresh().catch(e=>message('Could not sync attendance: '+e.message));document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+t).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===t))}
 function handleLogout(){LamaAPI.logout('teacher');location.replace('../../main-dashboard.html')}
 function updateTeacherOverview(){
  $('welcomeTeacher').textContent=(me.name||'Teacher').split(/\s+/)[0];
@@ -286,7 +295,7 @@ function updateTeacherOverview(){
 function attendanceDate(){return $('attDate').value||localDate()}
 function availableSubjects(){return LamaSchoolCurriculum.forClass(curriculumDoc,me.assignedClass)}
 function renderHomeworkProgress(){
- $('schoolSubjectOptions').innerHTML=availableSubjects().map(s=>'<option value="'+esc(s)+'"></option>').join('');
+ renderDiary();
  const day=$('homeworkCheckDate').value||localDate(),subjects=availableSubjects();
  const loaded=homeworkReady&&curriculumReady;
  const result=LamaTeacherDaily.homeworkStatus(homework,subjects,day,loaded,me.timezone||me.timeZone||'Asia/Karachi',LamaSchoolCurriculum.aliasesForClass(curriculumDoc,me.assignedClass));
@@ -302,8 +311,7 @@ function openHomeworkSubject(subject){
  if(!subject)return;
  switchTab('homework');
  
- $('hwSubject').value=subject;
- $('hwSubject').focus();
+ const card=[...$('diarySubjects').querySelectorAll('[data-diary-card]')].find(el=>el.dataset.diaryCard===subject);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.querySelector('textarea:not(:disabled)')?.focus()}
 }
 function renderDailyAttendance(){
  const day=attendanceDate(),snap=LamaTeacherDaily.attendance(myStudents,attendanceModel,day,attendanceReady);
@@ -353,7 +361,7 @@ async function refresh(){
  try{return await refreshPromise}finally{refreshPromise=null}
 }
 function renderAll(){updateStats();renderStudentDirectory();loadAttendanceList();loadAbsentees();loadHomework();loadNotices();populateMarksStudentSelect();renderPromoteList()}
-function studentFather(st){return String(st.fatherName||st.father||st.father_name||st.guardianName||'').trim()}
+function studentFather(st){return String(st.fatherGuardian||st.fatherName||st.father||st.father_name||st.guardianName||'').trim()}
 function studentAvatar(st){
  const avatar=document.createElement('span');avatar.className='student-avatar';avatar.textContent='👤';avatar.setAttribute('aria-label','Student photo unavailable');
  const photo=String(st.photo||st.photoUrl||st.studentPhoto||st.photoURL||'').trim();
@@ -375,17 +383,50 @@ function renderStudentDirectory(){
  const arrow=document.createElement('span');arrow.textContent='View record ›';arrow.className='student-view';button.append(avatar,copy,arrow);button.onclick=()=>showStudentRecord(st.id);el.append(button)
  })
 }
-function showStudentRecord(id){
+const PROFILE_EDIT_FIELDS=[['fatherGuardian','Father / guardian name',150],['contact','Contact number',40],['whatsapp','WhatsApp number',40],['address','Home address',500],['guardianName','Guardian name',150],['guardianRelation','Guardian relationship',80],['guardianCell','Guardian contact',40],['teacherRemarks','Teacher remarks',1000]];
+let profileSaving=false;
+function showStudentRecord(id,scroll=true){
  const st=myStudent(id);if(!st)return;
  const el=$('studentDetails');el.replaceChildren();el.classList.remove('hidden');
- const heading=document.createElement('h3');heading.textContent=(st.name||'Student')+' · Class record';el.append(heading);
+ const head=document.createElement('div');head.className='profile-heading';const heading=document.createElement('h3');heading.textContent=(st.name||'Student')+' · Class record';head.append(studentAvatar(st),heading);el.append(head);
  const grid=document.createElement('div');grid.className='student-facts';
- const facts=[['Enrollment',st.enrlNo||st.enrollmentNo],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Father / Guardian',studentFather(st)],['Gender',st.gender],['Roll number',st.rollNo||st.rollNumber]];
- for(const [label,value] of facts){if(!value)continue;const cell=document.createElement('div');const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=String(value);cell.append(l,v);grid.append(cell)}el.append(grid);
+ const facts=[['Student name',st.name],['Enrollment No.',st.enrlNo||st.enrollmentNo],['Student code',st.studentCode],['Father / Guardian',studentFather(st)],['Class',st.class||me.assignedClass],['Section',st.section||me.assignedSection],['Gender',st.gender],['Date of birth',st.dob],['Roll number',st.rollNo||st.rollNumber],['Admission number',st.admissionNo||st.schoolAdmissionNo],['Admission date',st.admissionDate],['Academic session',st.academicSession],['Contact number',st.contact],['WhatsApp',st.whatsapp],['Home address',st.address],['Guardian name',st.guardianName],['Guardian relationship',st.guardianRelation],['Guardian contact',st.guardianCell],['Distance from school',st.distanceFromSchool],['Can read',st.canRead],['Can write',st.canWrite],['Can count',st.canCount],['Teacher remarks',st.teacherRemarks],['Principal remarks',st.principalRemarks]];
+ for(const [label,value] of facts){const cell=document.createElement('div');const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=value===undefined||value===null||String(value).trim()===''?'Not recorded':String(value);cell.append(l,v);grid.append(cell)}el.append(grid);
+ const edit=document.createElement('button');edit.type='button';edit.className='profile-edit-button';edit.textContent='Edit contact details & teacher remarks';edit.onclick=()=>renderProfileEditor(st);el.append(edit);
+ const editBox=document.createElement('div');editBox.id='profileEditor';el.append(editBox);
  const h=document.createElement('h4');h.textContent='Last 7 days · Attendance history';el.append(h);
  const strip=document.createElement('div');strip.className='week-attendance';
- for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const a=attendance.find(x=>String(x.studentId)===String(st.id)&&String(x.date).slice(0,10)===date);const item=document.createElement('div');item.className='week-day';const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=a?.status||'Not marked';status.dataset.status=a?.status||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
- const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows saved records only. To mark or change attendance, open the Attendance tab.';el.append(note);el.scrollIntoView({behavior:'smooth',block:'nearest'})
+ for(let i=6;i>=0;i--){const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-i);const date=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const a=attendanceReady&&attendanceModel?attendanceModel.get(st,date):null;const item=document.createElement('div');item.className='week-day';const label=document.createElement('small');label.textContent=d.toLocaleDateString(undefined,{weekday:'short',day:'numeric'});const status=document.createElement('strong');status.textContent=!attendanceReady?'Unavailable':a||((d.getDay()===0)?'Sunday':'Not marked');status.dataset.status=a||'Unmarked';item.append(label,status);strip.append(item)}el.append(strip);
+ const note=document.createElement('p');note.className='student-note';note.textContent='Attendance history shows saved records only. To mark or change attendance, open the Attendance tab.';el.append(note);if(scroll)el.scrollIntoView({behavior:'smooth',block:'nearest'})
+}
+function renderProfileEditor(st){
+ const box=$('profileEditor');if(!box||profileSaving)return;
+ const form=document.createElement('form');form.className='profile-editor';
+ const note=document.createElement('p');note.className='text-xs text-slate-300';note.textContent='Official name, enrollment, date of birth, gender, class and admission data are read-only. Save only verified corrections to contact and guardian information.';form.append(note);
+ const fields=document.createElement('div');fields.className='profile-edit-grid';
+ const expected={};
+ for(const [key,label,max] of PROFILE_EDIT_FIELDS){
+  const l=document.createElement('label');l.textContent=label;const input=document.createElement(['address','teacherRemarks'].includes(key)?'textarea':'input');
+  input.dataset.profileField=key;input.maxLength=max;input.value=String(st[key]??'');expected[key]=input.value;if(['contact','whatsapp','guardianCell'].includes(key))input.inputMode='tel';l.append(input);fields.append(l);
+ }
+ const status=document.createElement('p');status.className='text-xs text-amber-200';status.setAttribute('role','status');
+ const save=document.createElement('button');save.type='submit';save.className='profile-edit-button';save.textContent='Save changes';
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='profile-edit-button secondary';cancel.textContent='Cancel';cancel.onclick=()=>{if(!profileSaving)box.replaceChildren()};
+ form.append(fields,status,save,cancel);box.replaceChildren(form);
+ form.onsubmit=async e=>{
+  e.preventDefault();if(profileSaving)return;const patch={},old={};
+  for(const input of fields.querySelectorAll('[data-profile-field]')){const k=input.dataset.profileField,v=input.value.trim();if(v!==expected[k]){patch[k]=v;old[k]=expected[k]}}
+  if(!Object.keys(patch).length){status.textContent='No changes to save.';return}
+  if(!confirm('Save these permitted profile changes for '+(st.name||'this student')+'?'))return;
+  profileSaving=true;save.disabled=true;cancel.disabled=true;status.textContent='Saving and verifying student record…';
+  try{
+   const updated=await LamaAPI.teacherUpdateStudentProfile(String(st.id),patch,old);
+   if(!updated||String(updated.id)!==String(st.id)||!scope(updated)||Object.keys(patch).some(k=>String(updated[k]??'')!==patch[k]))throw Error('Student update was not verified. Reload before retrying.');
+   myStudents=myStudents.map(x=>String(x.id)===String(st.id)?{...x,...updated}:x);
+   renderStudentDirectory();if(!hasAttendanceDrafts())loadAttendanceList();showStudentRecord(st.id,false);message('✓ Student profile updated and verified.');
+  }catch(err){status.textContent=/Unknown action/.test(err.message)?'This edit needs the updated Apps Script backend. Ask School Admin to deploy it.':err.message+' Reload the record before retrying if the save was interrupted.'}
+  finally{profileSaving=false;save.disabled=false;cancel.disabled=false}
+ };
 }
 function teacherHistoryHTML(student,day){if(!attendanceReady||!attendanceModel)return '<small class="text-slate-400">Saved history loading…</small>';const data=attendanceModel.absenceInfo(student,day),cells=data.days.slice().reverse().map(entry=>'<span class="day '+(entry.status?entry.status.toLowerCase():'missing')+'" title="'+esc(entry.date+': '+(entry.status||'Not recorded'))+'"><small>'+esc(entry.date.slice(-2))+'</small><b>'+(entry.status?entry.status.charAt(0):'—')+'</b></span>').join('');return '<div class="mt-2 text-slate-400 text-[10px]">Previous 7 possible school days (Sunday excluded)</div><div class="teacher-history">'+cells+'</div>'+(data.weekAlert?'<div class="teacher-alert">⚠ 5+ consecutive marked absences — follow up</div>':data.absentDays>=3?'<div class="teacher-alert">⚠ '+data.absentDays+' absences in 7 days</div>':'')}
 function hasAttendanceDrafts(){if(!attendanceReady||!attendanceModel)return false;const day=lastAttendanceViewDate||attendanceDate();return Array.from(document.querySelectorAll('#attendanceList [data-student-id]')).some(row=>{const student=myStudent(row.dataset.studentId);if(!student)return false;const selected=row.querySelector('.att-btn[class*="att-active"]')?.dataset.status||'';return selected!==attendanceModel.get(student,day)})}
@@ -442,7 +483,94 @@ async function saveAttendance(){
 }
 function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
 function loadHomework(){let items=homework.slice();const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)} — ${esc(h.title)}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Due ${esc(h.dueDate||'—')} · ${published(h)?'Published':h.id&&!('status'in h)&&!('isPublished'in h)?'Saved entry':'Draft'}</p></div>${mine(h)?`<button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button>`:`<span class="text-slate-400 text-xs">Class homework</span>`}</div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
-async function postHomework(){const subject=$('hwSubject').value.trim(),title=$('hwTitle').value.trim();if(!subject||!title)return message('Subject and title required');if(curriculumReady&&availableSubjects().length&&!availableSubjects().some(s=>LamaTeacherDaily.subjectKey(s)===LamaTeacherDaily.subjectKey(subject)))return message('Select a subject configured by School Admin for this class.');try{const saved=await LamaAPI.add('homework',{schoolId:me.schoolId,class:me.assignedClass,section:me.section||'',teacherId:me.teacherId||me.id,subject,title,description:$('hwDescription').value.trim(),dueDate:$('hwDueDate').value,isPublished:true,published:true,status:'published',createdAt:new Date().toISOString()});if(!saved||!saved.id)throw Error('Backend did not confirm a saved homework ID. Review history before retrying.');['hwTitle','hwDescription','hwDueDate'].forEach(x=>$(x).value='');await refresh();const checked=LamaTeacherDaily.homeworkStatus(homework,[subject],localDate(),homeworkReady);message(checked.ready&&checked.done?'✓ '+subject+' homework saved and verified.':'Homework accepted, but today\'s register could not verify it. Refresh before trying again.')}catch(e){message('Save failed: '+e.message)}}
+// Keep entered homework in memory while background refreshes update saved history.
+const diaryDrafts=new Map();
+let diaryBusy=false,diaryPending=null,diaryNotice='';
+const diaryDate=()=>LamaTeacherDaily.dateKey(new Date().toISOString(),'Asia/Karachi');
+const diaryStorageKey=()=>['lama_diary_pending_v1',me.schoolId,me.teacherId||me.id,me.assignedClass,me.assignedSection||me.section||''].join(':');
+function setDiaryPending(p){
+ diaryPending=p;
+ try{if(p)sessionStorage.setItem(diaryStorageKey(),JSON.stringify(p));else sessionStorage.removeItem(diaryStorageKey())}catch(_){}
+}
+function loadDiaryPending(){
+ try{const p=JSON.parse(sessionStorage.getItem(diaryStorageKey())||'null');if(p&&typeof p.id==='string'&&Array.isArray(p.entries)&&['batch','legacy'].includes(p.mode))diaryPending=p}catch(_){}
+}
+function diarySnapshot(day=diaryDate()){
+ const subjects=availableSubjects(),aliases=LamaSchoolCurriculum.aliasesForClass(curriculumDoc,me.assignedClass);
+ return LamaTeacherDaily.homeworkStatus(homework,subjects,day,homeworkReady&&curriculumReady,'Asia/Karachi',aliases);
+}
+function diaryDraft(subject){return diaryDrafts.get(subject)||{title:'',description:'',dueDate:''}}
+function diaryFilled(){return diarySnapshot().items.filter(i=>!i.done).map(i=>({subject:i.subject,...diaryDraft(i.subject)})).filter(x=>x.title.trim()||x.description.trim()).map(x=>({subject:x.subject,title:x.title.trim()||x.subject+' Homework',description:x.description.trim(),dueDate:x.dueDate}))}
+function diaryButtons(){
+ $('postDiary').disabled=diaryBusy||!!diaryPending||!homeworkReady||!curriculumReady||!diaryFilled().length;
+ $('retryDiary').hidden=!diaryPending;$('retryDiary').disabled=diaryBusy;
+ $('clearDiaryPending').hidden=!diaryPending||diaryPending.mode!=='legacy';$('clearDiaryPending').disabled=diaryBusy;
+}
+function renderDiary(){
+ const box=$('diarySubjects');if(!box)return;
+ $('diaryClass').textContent=(me.assignedClass||'Assigned class')+(me.assignedSection?' · '+me.assignedSection:'')+' · '+diaryDate();
+ const snap=diarySnapshot();
+ $('diaryStatus').textContent=diaryNotice||(diaryPending?'Unresolved homework batch. Verify / retry before posting anything new.':!curriculumReady?'Waiting for school curriculum. '+(curriculumError||''):!snap.total?'No class subjects configured. Ask School Admin to save subjects in School Settings.':!homeworkReady?'Saved homework unavailable; posting disabled. '+homeworkLoadError:snap.done+' of '+snap.total+' subjects posted today.');
+ box.innerHTML=snap.items.map((i,index)=>{
+  const draft=diaryDraft(i.subject),saved=i.record||{},disabled=(!snap.ready||i.done||diaryBusy||diaryPending)?' disabled':'';
+  return '<article class="diary-card '+(snap.ready&&i.done?'diary-done':'')+'" data-diary-card="'+esc(i.subject)+'"><div class="diary-head"><strong>'+ (index+1)+'. '+esc(i.subject)+'</strong><span>'+(snap.ready?(i.done?'✓ Posted':'Not posted'):'Checking…')+'</span></div>'+
+   (snap.ready&&i.done?'<p class="diary-saved"><b>'+esc(saved.title||i.subject)+'</b><br>'+esc(saved.description||'')+'</p><p class="text-xs text-slate-400">Due: '+esc(saved.dueDate||'Not set')+'</p>':
+   '<label>Title (optional)<input maxlength="160" data-diary-field="title" value="'+esc(draft.title)+'" placeholder="'+esc(i.subject+' Homework')+'"'+disabled+'></label><label>Homework / instructions<textarea rows="3" maxlength="3000" data-diary-field="description" placeholder="Write homework for this subject…"'+disabled+'>'+esc(draft.description)+'</textarea></label><label>Due date (optional)<input type="date" data-diary-field="dueDate" value="'+esc(draft.dueDate)+'"'+disabled+'></label>')+'</article>';
+ }).join('');
+ diaryButtons();
+}
+$('diarySubjects').addEventListener('input',e=>{
+ const field=e.target.dataset.diaryField,card=e.target.closest('[data-diary-card]');if(!field||!card)return;
+ const subject=card.dataset.diaryCard;diaryDrafts.set(subject,{...diaryDraft(subject),[field]:e.target.value});diaryButtons();
+});
+async function readDiary(){
+ const rows=await LamaAPI.list('homework');if(!Array.isArray(rows))throw Error('Homework history could not be verified.');
+ homework=rows.filter(scope);homeworkReady=true;homeworkLoadError='';loadHomework();renderHomeworkProgress();return homework;
+}
+function exactHomework(entry,day){
+ return homework.some(h=>String(h.id||'')&&LamaTeacherDaily.dateKey(h.createdAt,'Asia/Karachi')===day&&LamaTeacherDaily.subjectKey(h.subject)===LamaTeacherDaily.subjectKey(entry.subject)&&String(h.title||'').trim()===entry.title&&String(h.description||'').trim()===entry.description&&String(h.dueDate||'').slice(0,10)===entry.dueDate);
+}
+async function postDiary(){
+ if(diaryBusy||!curriculumReady||!homeworkReady)return;
+ if(!diaryPending){const entries=diaryFilled();if(!entries.length)return;if(!confirm('Post homework for '+entries.length+' subjects together? Blank subjects will not be posted.'))return;
+  if(!globalThis.crypto?.randomUUID){diaryNotice='Secure batch IDs are unavailable. Use a supported browser.';renderDiary();return}
+  setDiaryPending({id:crypto.randomUUID(),day:diaryDate(),entries,mode:'batch'});
+ }
+ const p=diaryPending;diaryBusy=true;diaryNotice='Saving and verifying homework…';renderDiary();
+ try{
+  if(p.mode==='legacy'){
+   await readDiary();
+   if(!p.entries.every(e=>exactHomework(e,p.day)||diarySnapshot(p.day).items.some(i=>i.subject===e.subject&&i.done)))throw Error('The old backend cannot safely retry an uncertain write. Review saved history before starting another batch.');
+  }else{
+   let result;
+   try{result=await LamaAPI.teacherHomeworkBatch(p.id,p.day,p.entries)}
+   catch(e){
+    if(!/Unknown action:\s*teacherHomeworkBatch/i.test(e.message))throw e;
+    if(me.assignedSection||me.section)throw Error('Section-specific batch posting requires the updated Apps Script backend.');
+    // Legacy compatibility runs only after an explicit unsupported-action response.
+    setDiaryPending({...p,mode:'legacy'});await readDiary();
+    if(p.day!==diaryDate())throw Error('Posting date changed. Review previous day history before starting another batch.');
+    for(const entry of p.entries){
+     if(diarySnapshot(p.day).items.some(i=>i.subject===entry.subject&&i.done))continue;
+     const saved=await LamaAPI.add('homework',{...entry,class:me.assignedClass,teacherId:me.teacherId||me.id,assignedBy:me.name||'',isPublished:true,published:true,status:'published'});
+     if(!saved?.id)throw Error('Legacy homework save was not confirmed.');
+     await readDiary();if(!homework.some(h=>String(h.id)===String(saved.id))||!exactHomework(entry,p.day))throw Error('Legacy homework could not be verified. Review history before retry.');
+    }
+   }
+   await readDiary();
+   if(result&&(!Array.isArray(result.records)||!Array.isArray(result.skipped)||result.records.some(r=>!homework.some(h=>String(h.id)===String(r.id)))))throw Error('Batch response not verified in saved history.');
+   if(!p.entries.every(e=>diarySnapshot(p.day).items.some(i=>i.subject===e.subject&&i.done)))throw Error('Some subjects were not verified.');
+  }
+  for(const e of p.entries)diaryDrafts.delete(e.subject);setDiaryPending(null);diaryNotice='✓ Homework posted and verified for selected subjects. Previously posted subjects were not duplicated.';
+ }catch(e){diaryNotice='Homework not fully confirmed: '+e.message+' Your entered text is retained. Review the saved register before retrying.'}
+ finally{diaryBusy=false;renderHomeworkProgress()}
+}
+$('postDiary').onclick=postDiary;$('retryDiary').onclick=postDiary;
+$('clearDiaryPending').onclick=async()=>{
+ if(diaryBusy||!diaryPending||diaryPending.mode!=='legacy')return;
+ try{await readDiary();if(!confirm('Review the saved homework history. Clear this unresolved legacy request only after confirming which subjects have been saved? Already posted subjects remain excluded.'))return;
+ for(const e of diaryPending.entries)if(diarySnapshot(diaryPending.day).items.some(i=>i.subject===e.subject&&i.done))diaryDrafts.delete(e.subject);setDiaryPending(null);diaryNotice='Review complete. Fill only subjects still not posted.';renderDiary()}catch(e){diaryNotice=e.message;renderDiary()}
+};
 async function deleteHomework(id){const x=homework.find(h=>String(h.id)===String(id));if(!x||!mine(x))return message('Only your entries can be removed');if(!confirm('Delete homework?'))return;try{await LamaAPI.remove('homework',id);await refresh()}catch(e){message(e.message)}}
 $('homeworkList').addEventListener('click',e=>{const b=e.target.closest('[data-delete-hw]');if(b)deleteHomework(b.dataset.deleteHw)});
 function populateMarksStudentSelect(){const sel=$('marksStudentSelect'),previous=sel.value;sel.innerHTML=myStudents.map(s=>`<option value="${esc(s.id)}">${esc(s.name)} (${esc(s.enrlNo||'—')})</option>`).join('');if(myStudent(previous))sel.value=previous;onMarksStudentChange()}
@@ -457,7 +585,7 @@ function updatePromoteCount(){$('promoteSelectedCount').textContent=document.que
 function selectAllPassing(){document.querySelectorAll('.promote-check-teacher').forEach(x=>{const s=myStudent(x.dataset.id);x.checked=computeStudentResult(s).passed===true});updatePromoteCount()}
 function selectNonePromote(){document.querySelectorAll('.promote-check-teacher').forEach(x=>x.checked=false);updatePromoteCount()}
 async function promoteMyClass(){message('Promotion is restricted to school administrators to protect enrollment history and prevent accidental record changes. Please use the admin promotion workflow.')}
-async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();$('hwSubject').value=me.subject||'';$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>{if(hasAttendanceDrafts()&&!confirm('Discard your unsaved attendance selections to change date?')){$('attDate').value=lastAttendanceViewDate;return}loadAttendanceList();renderDailyAttendance()});try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
+async function init(){if(!LamaAPI.requireLogin('teacher','../../teacher-login.html'))return;me=LamaAPI.getSession()||{};header();updateTeacherOverview();if(!me.schoolId||!me.assignedClass){document.querySelector('main').innerHTML='<section class="cyber-card p-6 rounded-xl text-rose-300">Your school ID or assigned class is missing. Ask the administrator to update your teacher account.</section>';return}$('attDate').value=localDate();loadDiaryPending();if(diaryPending)for(const e of diaryPending.entries)diaryDrafts.set(e.subject,{title:e.title,description:e.description,dueDate:e.dueDate});$('marksStudentSelect').addEventListener('change',onMarksStudentChange);$('attDate').addEventListener('change',()=>{if(hasAttendanceDrafts()&&!confirm('Discard your unsaved attendance selections to change date?')){$('attDate').value=lastAttendanceViewDate;return}loadAttendanceList();renderDailyAttendance()});try{await refresh();switchTab('attendance')}catch(e){document.querySelector('main').insertAdjacentHTML('afterbegin',`<p class="text-rose-400">Could not load teacher records: ${esc(e.message)}</p>`)}}
 $('homeworkCheckDate').value=localDate();
 $('homeworkCheckDate').addEventListener('change',renderHomeworkProgress);
 $('subjectChecklist').addEventListener('click',event=>{
@@ -465,8 +593,8 @@ $('subjectChecklist').addEventListener('click',event=>{
  const subject=availableSubjects()[Number(b.dataset.subjectIndex)];
  if(subject)openHomeworkSubject(subject);
 });
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId&&!hasAttendanceDrafts())refresh().catch(e=>console.warn('Dashboard sync failed',e))});
-window.addEventListener('focus',()=>{if(me.schoolId&&!hasAttendanceDrafts())refresh().catch(e=>console.warn('Dashboard sync failed',e))});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&me.schoolId&&!diaryBusy&&!profileSaving&&!hasAttendanceDrafts())refresh().catch(e=>console.warn('Dashboard sync failed',e))});
+window.addEventListener('focus',()=>{if(me.schoolId&&!diaryBusy&&!profileSaving&&!hasAttendanceDrafts())refresh().catch(e=>console.warn('Dashboard sync failed',e))});
 init();
     </script>
     <style>

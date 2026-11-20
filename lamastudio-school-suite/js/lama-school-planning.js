@@ -845,7 +845,7 @@ if(adminMode)$('sessionList').innerHTML=list.map(s=>{
   '<button type="button" class="text-rose-300 border border-rose-800 rounded-lg min-h-10 px-3 disabled:opacity-40 disabled:cursor-not-allowed" data-remove-session="'+esc(s.id)+'" aria-label="Delete session '+esc(s.name)+'" title="'+esc(reason||'Delete this unlinked academic session')+'" '+(reason?'disabled':'')+'>Delete</button>'+
   '</div></div>';
 }).join('');
-renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);renderClassBuilder();renderConflictReport();}syncPrintFilters();queuePrintPreview();
+renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);renderClassBuilder();renderConflictReport();}try{syncPrintFilters();queuePrintPreview()}catch(error){console.warn('Print preview refresh skipped:',error.message)}
 }
 function renderCalendar(){
  const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));
@@ -1107,7 +1107,8 @@ function setupPrintPreview(){
  window.addEventListener('resize',()=>{if(field('printPreviewZoom')!=='actual')queuePrintPreview()});
 }
 
-setupPrintPreview();
+// Optional preview controls must never prevent loading the school schedule.
+try{setupPrintPreview()}catch(error){console.warn('Print preview setup skipped:',error.message)}
 async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden');$('quickBuilder').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

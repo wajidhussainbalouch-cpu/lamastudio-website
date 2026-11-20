@@ -106,6 +106,7 @@ function renderPrintClassPicker(periods,sessionId){
 function updatePrintCount(){
  const total=$('printClassList').querySelectorAll('[data-print-class]').length;
  $('printClassStatus').textContent=(printSelection?.size||0)+' of '+total+' classes selected. Select Print layout to choose master, individual or separate class pages.';
+ queuePrintPreview();
 }
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
@@ -844,7 +845,7 @@ if(adminMode)$('sessionList').innerHTML=list.map(s=>{
   '<button type="button" class="text-rose-300 border border-rose-800 rounded-lg min-h-10 px-3 disabled:opacity-40 disabled:cursor-not-allowed" data-remove-session="'+esc(s.id)+'" aria-label="Delete session '+esc(s.name)+'" title="'+esc(reason||'Delete this unlinked academic session')+'" '+(reason?'disabled':'')+'>Delete</button>'+
   '</div></div>';
 }).join('');
-renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);renderClassBuilder();renderConflictReport();}
+renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);renderClassBuilder();renderConflictReport();}syncPrintFilters();queuePrintPreview();
 }
 function renderCalendar(){
  const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));
@@ -858,7 +859,7 @@ function renderCalendar(){
  }
  $('monthGrid').innerHTML=h;
  const vacationRows=Object.entries(vacationsFor(chosen)).map(([k,v])=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(vacationKeys[k])+'</b> · '+esc(formatDate(v.from))+' – '+esc(formatDate(v.to))+'</div>').join('');
- $('eventRows').innerHTML=vacationRows+(events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No additional events for this session.</p>');
+ $('eventRows').innerHTML=vacationRows+(events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No additional events for this session.</p>');queuePrintPreview();
 }
 function edit(kind,id){if(quickBusy)return;const p=data(kind).find(r=>r.id===id);if(!p)return;$('admin').classList.remove('class-grid-collapsed');if($('cbSettings'))$('cbSettings').textContent='Hide session & calendar editors';const fields=kind==='period'?{periodId:'id',periodSession:'sessionId',day:'day',period:'period',start:'start',end:'end',grade:'grade',section:'section',subject:'subject',teacher:'teacherId',room:'room',published:'published'}:kind==='event'?{eventId:'id',eventSession:'sessionId',eventType:'type',eventTitle:'title',eventStart:'start',eventEnd:'end',eventDescription:'description',eventPublished:'published'}:{sessionId:'id',sessionName:'name',sessionStart:'start',sessionEnd:'end',sessionActive:'active'};if(kind==='period')populateClassEditor(p.grade,p.section||'',p.subject||'');for(const [input,key] of Object.entries(fields)){if($(input).type==='checkbox')$(input).checked=p[key]!==false;else if(kind!=='period'||!['grade','section','subject'].includes(input))$(input).value=p[key]??''}if(kind==='period')populateTeacherPicker('teacher',p.subject,p.teacherId);$(kind==='period'?'periodForm':kind==='event'?'eventForm':'sessionForm').scrollIntoView({behavior:'smooth',block:'start'})}
 $('periodForm').onsubmit=async e=>{e.preventDefault();try{authorized();const p={sessionId:field('periodSession'),day:field('day'),period:Number(field('period')),start:field('start'),end:field('end'),grade:field('grade'),section:field('section'),subject:field('subject'),teacherId:field('teacher'),teacherName:requireTeacher(field('teacher')).name,room:field('room'),published:$('published').checked};if(!p.sessionId)throw Error('Create an academic session first');requireSubject(p.grade,p.subject,data('period').find(x=>String(x.id)===field('periodId')));if(p.start>=p.end)throw Error('Period end must be after start');lastConflictAttempt=null;rejectTimetableConflicts(checkProposedConflicts(data('period'),[{id:field('periodId'),payload:p}]),p.sessionId);renderConflictReport();if(!await save('period',field('periodId'),p))throw Error('Period save could not be verified. Refresh before retrying.');$('periodId').value='';status('Period saved')}catch(err){status(err.message)}};
@@ -976,7 +977,9 @@ function buildTimetablePrint(profile){
  const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;const printWork=LamaSchoolWeek.working(schoolWeekResources,dayTiming?days.filter(d=>dayTiming.hours[d]?.open===true):workingWeek());
  const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&printWork.includes(p.day));
  const mode=field('printScope');
- const cls=field('printOneClass')||field('viewGrade');
+ if(!selectedSession)throw Error('Load an academic session before previewing or printing.');
+ if(field('printDay')&&!printWork.includes(field('printDay')))throw Error('Choose a working day for the selected season.');
+ const cls=field('printOneClass');
  const selectedClasses=printSelection instanceof Set?[...printSelection]:null;
  const inCharge={};for(const label of [...visibleClasses(),cls]){if(!label)continue;const parts=LamaTimetableGrid.splitLabel(label);const assigned=teachers.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||same(t.assignedSection,parts.section)));if(assigned.length===1){const t=assigned[0];inCharge[label]=t.name+(t.designation?' ('+t.designation+')':'');}}
  const seasonLabel=season==='winter'?'Winter':season==='summer'?'Summer':'';const printTiming=dayTiming?[timingSummary(dayTiming,season)]:[{title:seasonLabel?seasonLabel+' school timings not published':'Seasonal school timings not published for this date',lines:['School opening, closing, assembly and break times require published seasonal settings.']}];
@@ -1026,7 +1029,8 @@ async function printTimetable(){
   button.textContent=original;
  }
 }
-function setPrintOrientation(){let style=document.getElementById('dynamicPrintPage');if(!style){style=document.createElement('style');style.id='dynamicPrintPage';document.head.append(style)}style.textContent='@page{size:A4 '+(field('printScope')==='all'||!field('printDay')?'landscape':'portrait')+';margin:10mm}'}
+function printOrientation(){return field('printScope')==='all'||!field('printDay')?'landscape':'portrait'}
+function setPrintOrientation(){let style=document.getElementById('dynamicPrintPage');if(!style){style=document.createElement('style');style.id='dynamicPrintPage';document.head.append(style)}style.textContent='@page{size:A4 '+printOrientation()+';margin:10mm}'}
 window.addEventListener('beforeprint',()=>{setPrintOrientation();
  // Support the browser's own Print command without replacing a logo
  // whose bytes have already been loaded for the print-button preview.
@@ -1035,6 +1039,70 @@ window.addEventListener('beforeprint',()=>{setPrintOrientation();
  catch(error){status('Unable to prepare print: '+error.message)}
 });
 window.addEventListener('afterprint',()=>{printPrepared=false});
+
+let previewGeneration=0,previewTimer=null;
+function previewDocument(markup,styles,orientation,scale){
+ const width=orientation==='landscape'?297:210;
+ // Use the same print markup and the page's print CSS, with print media rules
+ // enabled on screen. Scrolling is contained inside the sandboxed frame.
+ return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &apos;none&apos;; img-src https: data:; style-src &apos;unsafe-inline&apos;; base-uri &apos;none&apos;; form-action &apos;none&apos;"><style>'+styles.replace(/<\/style/gi,'<\\/style')+'\n*{box-sizing:border-box}html,body{min-height:100%;background:#e2e8f0!important}body{overflow:auto}main{width:'+width+'mm;min-height:'+(orientation==='landscape'?210:297)+'mm;background:#fff!important;padding:10mm!important;zoom:'+scale+';box-sizing:border-box}#printSheet{width:100%;} .print-class-page+.print-class-page,.print-calendar-block{border-top:2px dashed #94a3b8;margin-top:10mm;padding-top:10mm}@media print{body{background:white}}</style></head><body><main><div id="printSheet" class="print-only">'+markup+'</div></main></body></html>';
+}
+function syncPrintFilters(){
+ const single=field('printScope')==='selected';
+ $('printClassList').hidden=single;
+ $('printClassList').style.display=single?'none':'';
+ $('selectAllPrintClasses').hidden=single;$('clearPrintClasses').hidden=single;
+ $('printClassStatus').hidden=single;
+ $('printOneClassWrap').hidden=!single;
+ $('printOneClass').disabled=!single;
+ // Day options must reflect the season being printed, not the builder's season.
+ if(activeSession()){
+  const season=field('printSeason')||seasonForDate(dateToday(),activeSession()),t=season?schoolTiming(activeSession(),season):null;
+  const work=LamaSchoolWeek.working(schoolWeekResources,t?days.filter(d=>t.hours[d]?.open===true):workingWeek());
+  for(const o of $('printDay').options)o.disabled=!!o.value&&!work.includes(o.value);
+  if(field('printDay')&&!work.includes(field('printDay')))$('printDay').value='';
+ }
+}
+function queuePrintPreview(){
+ clearTimeout(previewTimer);
+ if(!$('printPreviewPanel')||$('printPreviewPanel').hidden)return;
+ // Immediately hide the old document so it cannot be mistaken for a new filter.
+ previewGeneration++;$('printPreviewFrame').hidden=true;$('printPreviewStatus').textContent='Preparing preview…';
+ previewTimer=setTimeout(()=>void refreshPrintPreview(),60);
+}
+async function refreshPrintPreview(){
+ const generation=++previewGeneration,frame=$('printPreviewFrame'),note=$('printPreviewStatus');
+ if($('printPreviewPanel').hidden)return;
+ frame.hidden=true;note.textContent='Preparing preview…';
+ try{
+  syncPrintFilters();
+  if(adminMode&&!verified)throw Error('Sign in as school administrator first.');
+  if(periodNeedsRefresh)throw Error('Refresh saved timetable records before previewing.');
+  const profile=await printProfile();
+  if(generation!==previewGeneration||$('printPreviewPanel').hidden)return;
+  const markup=buildTimetablePrint(profile),orientation=printOrientation();
+  const available=$('printPreviewPanel').clientWidth-28;
+  const scale=field('printPreviewZoom')==='actual'?1:Math.max(.2,Math.min(1,available/((orientation==='landscape'?297:210)*96/25.4)));
+  const styles=[...document.querySelectorAll('head style')].map(el=>el.textContent).filter(css=>/@media\s+print\b/.test(css)&&!/\.print-preview-frame/.test(css)).join('\n').replace(/@media\s+print\b/g,'@media all');
+  frame.srcdoc=previewDocument(markup,styles,orientation,scale);
+  frame.hidden=false;
+  const cls=field('printScope')==='selected'?field('printOneClass'):(printSelection?.size||0)+' selected class(es)';
+  note.textContent=cls+' · '+(field('printDay')||'Full week')+' · A4 '+orientation+' · Saved published records only. '+(adminMode&&classDraftDirty?'Unsaved editor changes are not included. ':'')+'Print pagination may vary by device.';
+ }catch(e){if(generation!==previewGeneration)return;frame.srcdoc='';note.textContent=e.message+' Select the appropriate filters and try again.'}
+}
+function setupPrintPreview(){
+ syncPrintFilters();
+ $('previewTimetable').onclick=()=>{$('printPreviewPanel').hidden=false;syncPrintFilters();queuePrintPreview();$('printPreviewPanel').scrollIntoView({behavior:'smooth',block:'nearest'})};
+ $('closePrintPreview').onclick=()=>{previewGeneration++;clearTimeout(previewTimer);$('printPreviewPanel').hidden=true;$('printPreviewFrame').srcdoc='';$('previewTimetable').focus()};
+ $('refreshPrintPreview').onclick=()=>{syncPrintFilters();queuePrintPreview()};
+ $('previewPrint').onclick=()=>void printTimetable();
+ $('previewEdit').hidden=!adminMode;
+ $('previewEdit').onclick=()=>{$('classBuilder').scrollIntoView({behavior:'smooth',block:'start'})};
+ for(const id of ['printScope','printOneClass','printDay','printSeason','printRooms','printCalendar','printPreviewZoom'])$(id).addEventListener('change',()=>{syncPrintFilters();queuePrintPreview()});
+ window.addEventListener('resize',()=>{if(field('printPreviewZoom')!=='actual')queuePrintPreview()});
+}
+
+setupPrintPreview();
 async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden');$('quickBuilder').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

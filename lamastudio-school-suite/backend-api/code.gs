@@ -1082,7 +1082,7 @@ function updateRecord(ctx, collection, id, patch) {
         if (data[i][idCol] === id) {
             const existing = rowToRecord(headers, data[i]);
             if(collection==='attendance')lamaAssertSchoolAttendanceDay_(ctx,patch.date||existing.date);
-            if(collection==='resources')lamaAssertPlanningDay_(ctx,Object.assign({},existing,patch));
+            if(collection==='resources'){const next=Object.assign({},existing,patch);if(existing.category==='planning-period'){const prior=JSON.parse(existing.description||'{}');if(prior.supportId)throw Error('Edit lessons with additional staff using the Easy timetable builder.');}lamaAssertPlanningDay_(ctx,next);}
             if (ctx.role === 'teacher' && collection === 'students' && !sameClass(existing.class, ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }
@@ -2919,7 +2919,7 @@ function lamaPlanningSaveBatch_(p){
   const time=v=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v||''));
   const cls=r=>normalizeSchoolClass(r.grade)+'|'+String(r.section||'').trim().toLowerCase().replace(/\s+/g,'');
   const sameSlot=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&Number(a.period)===Number(b.period)&&cls(a)===cls(b);
-  const overlaps=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&a.start<b.end&&a.end>b.start&&(cls(a)===cls(b)||String(a.teacherId)===String(b.teacherId));
+  const overlaps=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&a.start<b.end&&a.end>b.start&&(cls(a)===cls(b)||lamaPlanningStaffKeys_(a).some(k=>lamaPlanningStaffKeys_(b).includes(k)));
   const periods=all.filter(x=>x.record.category==='planning-period').map(x=>({row:x.row,record:x.record,payload:parse(x.record)}));
   const teachers=lamaStaffRows_(ctx,'teachers').items.map(x=>x.record).filter(t=>String(t.status||'Active').toLowerCase()==='active');
   const curr=all.find(x=>x.record.category==='school-curriculum'&&x.record.title==='LAMA School Class Subjects'),doc=curr?parse(curr.record):{};
@@ -2938,6 +2938,7 @@ function lamaPlanningSaveBatch_(p){
    if(!(Array.isArray(c?.subjects)&&c.subjects.includes(sub))&&!(old&&old.payload.subject===sub))throw Error('Subject is not configured for '+r.grade+'.');
    const t=teachers.find(x=>String(x.id)===String(r.teacherId));if(!t)throw Error('Choose an active teacher.');
    const payload={sessionId:String(r.sessionId),day:r.day,period:r.period,start:r.start,end:r.end,grade:String(r.grade),section:String(r.section||''),subject:sub,teacherId:String(t.id),teacherName:String(t.name||t.fullName||t.teacherName||''),room:String(r.room||'').slice(0,80),published:r.published};
+   if(r.supportId){const kind=String(r.supportKind||'');if(!['teacher','staff'].includes(kind))throw Error('Invalid additional staff type.');const list=kind==='teacher'?teachers:lamaStaffRows_(ctx,'nonTeachingStaff').items.map(x=>x.record).filter(x=>x.status==='Active');const extra=list.find(x=>String(x.id)===String(r.supportId));if(!extra||kind==='teacher'&&String(extra.id)===String(t.id))throw Error('Choose a different active additional staff member.');payload.supportId=String(extra.id);payload.supportKind=kind;payload.supportName=String(extra.name||extra.fullName||extra.teacherName||'');payload.supportRole=kind==='teacher'?'Teacher':String(extra.designation||'Support staff');}
    const record=Object.assign({},old?.record||{id:genId('res'),createdAt:now},{category:'planning-period',title:[payload.day,payload.grade,payload.period].join(' · '),description:JSON.stringify(payload),link:''});
    updates.push({old,payload,record});
   }
@@ -2983,3 +2984,5 @@ function lamaAssertPlanningDay_(ctx,record){
  const lesson=JSON.parse(record.description||'{}'),n=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(lesson.day);
  if(p.weeklyOff.includes(n))throw Error(lesson.day+' is a school-wide weekly holiday.');
 }
+
+function lamaPlanningStaffKeys_(p){const keys=[];if(p.teacherId)keys.push('teacher:'+String(p.teacherId));if(p.supportId&&['teacher','staff'].includes(p.supportKind))keys.push(p.supportKind+':'+String(p.supportId));return keys;}

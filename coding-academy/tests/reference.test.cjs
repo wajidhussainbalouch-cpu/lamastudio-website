@@ -57,3 +57,12 @@ const sw=read("sw.js");
 for(const file of ["reference.html","reference-data.js","reference-app.js"])
  assert.ok(sw.includes("'./"+file+"'"),file+" must be bundled with the offline app.");
 console.log("PASS: 30 original programming symbols, 22 HTML input demos, safe no-upload form behavior and offline inclusion.");
+
+// Phase 20: original HTML formatting lesson remains separate from input demos.
+assert.equal((html.match(/class="format-card"/g)||[]).length,12);
+assert.equal((html.match(/class="format-question"/g)||[]).length,6);
+assert.ok(html.includes('href="#formatting"'));
+assert.ok(html.includes('sandbox srcdoc='));
+assert.ok(html.includes('&lt;strong&gt;') && html.includes('&lt;sub&gt;'));
+assert.ok(html.includes('href="./studio.html"'));
+console.log("PASS: 12 rendered HTML formatting examples and six reveal-answer questions.");

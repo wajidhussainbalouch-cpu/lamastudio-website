@@ -269,10 +269,56 @@ function overlap(a,b){return !!a&&!!b&&a.from<=b.to&&b.from<=a.to}
 function validateSessionRange(t,p,label){
  if(t&&(t.from<p.start||t.to>p.end))throw Error(label+' dates must fall inside the selected academic session.');
 }
+function validateAcademicTerms(terms,session){
+ if(!Array.isArray(terms)||terms.length>12)throw Error('Use at most 12 academic terms per session.');
+ const names=new Set(), result=terms.map(t=>{
+  const name=String(t.name||'').trim(),from=String(t.from||''),to=String(t.to||'');
+  if(!name||name.length>80||names.has(name.toLowerCase()))throw Error('Each term needs a unique name (up to 80 characters).');
+  names.add(name.toLowerCase());
+  if(!validDate(from)||!validDate(to)||from>to||from<session.start||to>session.end)throw Error(name+': dates must be valid and inside the academic session.');
+  return {name,from,to};
+ }).sort((a,b)=>a.from.localeCompare(b.from));
+ for(let i=1;i<result.length;i++)if(result[i].from<=result[i-1].to)throw Error('Academic terms must not overlap.');
+ return result;
+}
+function renderAcademicTerms(sid,session){
+ const box=$('termSettings'),summary=$('termSummary'),form=$('academicTermForm');
+ if(!box)return;
+ box.classList.toggle('hidden',!session||(!adminMode&&!session.terms?.length));
+ form.classList.toggle('hidden',!adminMode||!verified||!session);
+ summary.replaceChildren();
+ if(!session)return;
+ let terms=[];try{terms=validateAcademicTerms(session.terms||[],session)}catch(e){summary.textContent='Saved term configuration needs review: '+e.message;return}
+ for(const t of terms){const p=document.createElement('p');p.className='text-sm';p.textContent=t.name+' · '+formatDate(t.from)+' – '+formatDate(t.to);summary.append(p)}
+ if(!terms.length)summary.textContent='No academic terms published for this session.';
+ if(form.dataset.session===sid)return;
+ form.dataset.session=sid;
+ $('termRows').replaceChildren();
+ for(const t of terms)addAcademicTermRow(t);
+ if(!terms.length)addAcademicTermRow({name:'Term 1'});
+}
+function addAcademicTermRow(t={}){
+ const row=document.createElement('div');row.className='grid gap-2 border border-slate-700 rounded-xl p-2 my-2 md:grid-cols-4';
+ for(const [label,key,type] of [['Term name','name','text'],['Start date','from','date'],['End date','to','date']]){
+  const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.type=type;input.dataset.termKey=key;input.value=t[key]||'';input.required=true;if(key==='name')input.maxLength=80;l.append(input);row.append(l)
+ }
+ const b=document.createElement('button');b.type='button';b.className='text-rose-300 p-2';b.textContent='Remove';b.onclick=()=>row.remove();row.append(b);$('termRows').append(row)
+}
+function setupAcademicTerms(section){
+ const box=document.createElement('div');box.id='termSettings';box.className='mt-5 border-t border-slate-700 pt-4';
+ box.innerHTML='<h3 class="font-bold text-cyan-200">Academic terms</h3><div id="termSummary" class="space-y-1 mt-2 text-sm"></div><form id="academicTermForm" class="hidden mt-4"><p class="text-xs text-slate-300">Set term names and dates for the selected academic session. Published terms are used in the homework register. Changing dates does not delete historical records.</p><div id="termRows"></div><div class="flex flex-wrap gap-2"><button type="button" id="addAcademicTerm" class="bg-slate-700 rounded-lg px-3 py-2">+ Add term</button><button id="saveAcademicTerms" type="submit" class="bg-cyan-600 rounded-lg px-3 py-2 font-bold">Publish academic terms</button></div><p id="termStatus" role="status" class="text-sm text-amber-200 mt-2"></p></form>';
+ section.append(box);
+ $('addAcademicTerm').onclick=()=>{if($('termRows').children.length<12)addAcademicTermRow();else $('termStatus').textContent='Maximum 12 terms.'};
+ $('academicTermForm').onsubmit=async e=>{e.preventDefault();const form=$('academicTermForm'),note=$('termStatus'),sid=activeSession();if(form.dataset.session!==sid)return;
+  const terms=[...$('termRows').children].map(row=>Object.fromEntries([...row.querySelectorAll('[data-term-key]')].map(input=>[input.dataset.termKey,input.value])));
+  await updateSessionSettings(note,p=>{const clean=validateAcademicTerms(terms,p);if((p.terms||[]).some(t=>!clean.some(x=>x.name===t.name&&x.from===t.from&&x.to===t.to))&&!confirm('Update the published term dates? Existing homework and examination records will not be deleted.'))return null;return {...p,terms:clean}});
+ };
+}
+
 function setupTiming(){
  const section=document.createElement('section');section.id='schoolTimings';section.className='no-print hidden bg-slate-900 rounded-2xl p-4 border border-slate-700 mb-5';
  section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">Seasonal school timings &amp; vacations</h2><div id="schoolTimingSummary" class="mt-2 text-sm grid gap-3 md:grid-cols-2"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure seasonal school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Applies only to the selected school and academic session. Save each season separately. Blank summer timings are not published.</p><label>Season<select id="timingSeason"><option value="winter">Winter school timings</option><option value="summer">Summer school timings</option></select></label><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Lunch break starts (optional)<input id="timingBreakStart" type="time"></label><label>Lunch break ends (optional)<input id="timingBreakEnd" type="time"></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button> <button id="removeTiming" type="button" class="mt-3 text-rose-300 border border-rose-800 rounded-xl px-3 py-2">Clear published season</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details><details id="vacationAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure summer &amp; winter vacations</summary><form id="vacationForm" class="mt-3"><p class="text-xs text-slate-300">Leave both dates empty if a vacation is not configured. Dates are inclusive.</p>'+Object.entries(vacationKeys).map(([k,label])=>'<fieldset class="mt-3 border border-slate-600 rounded-lg p-3"><legend>'+label+'</legend><div class="grid grid-cols-2 gap-3"><label>From<input type="date" id="'+k+'From"></label><label>To<input type="date" id="'+k+'To"></label></div></fieldset>').join('')+'<button id="saveVacations" type="submit" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl">Save and publish vacations</button><p id="vacationStatus" class="mt-2 text-sm text-amber-200" role="status"></p></form></details>';
- $('status').after(section);
+ $('status').after(section);setupAcademicTerms(section);
  const legend=document.createElement('div');legend.id='calendarLegend';legend.className='flex flex-wrap gap-2 mb-3 text-xs';legend.innerHTML=calendarLegendMarkup();$('monthGrid').before(legend);
  const quickSeason=document.createElement('label');quickSeason.innerHTML='Working week for seasonal hours<select id="quickSeason"><option value="">Default school week</option></select><small>Changes working days for full-week saving only; saved subjects and periods remain unchanged.</small>';
  $('quickDay').closest('label').parentElement.append(quickSeason);
@@ -287,7 +333,7 @@ function calendarLegendMarkup(){return Object.keys(calendarColors).map(k=>'<span
 function toggleTimingDay(i){const on=$('timingOpen'+i).checked;for(const k of ['timingStart','timingEnd']){$(k+i).disabled=!on;$(k+i).required=on}}
 function renderTiming(){
  const sid=activeSession(),ss=sessionRecord(sid),summaries=scheduleSummaries(sid),section=$('schoolTimings');
- section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length));
+ section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length&&!ss?.terms?.length));renderAcademicTerms(sid,ss);
  $('schoolTimingSummary').innerHTML=summaries.length?summaries.map(t=>'<div class="border border-slate-600 rounded-xl p-3"><strong>'+esc(t.title)+'</strong><p>'+esc(t.dates)+'</p>'+t.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+(t.breakTime?'<p class="text-amber-200 font-medium">'+esc(t.breakTime)+'</p>':'')+'</div>').join(''):'<p>No seasonal timings or vacations published for this session.</p>';
  for(const id of ['timingAdmin','vacationAdmin'])$(id).classList.toggle('hidden',!adminMode||!verified||!ss);
  const picker=$('quickSeason'),previous=picker.value;
@@ -318,7 +364,7 @@ async function updateSessionSettings(note,apply){
  let attempted=false;const sid=activeSession();
  try{
   authorized();if(!sid)throw Error('Select the correct academic session.');
-  timingBusy=true;for(const id of ['saveTiming','removeTiming','saveVacations'])$(id).disabled=true;
+  timingBusy=true;for(const id of ['saveTiming','removeTiming','saveVacations','saveAcademicTerms'])$(id).disabled=true;
   const latest=await LamaAPI.list('resources');if(!Array.isArray(latest))throw Error('Could not verify the selected session.');
   const prev=latest.find(r=>r.category===type.session&&String(r.id)===String(sid));if(!prev)throw Error('Session no longer exists. Refresh before saving.');
   if(activeSession()!==sid)throw Error('Academic session changed; reopen settings.');
@@ -327,10 +373,10 @@ async function updateSessionSettings(note,apply){
   attempted=true;const saved=await LamaAPI.update('resources',sid,record);
   if(!saved?.id||String(saved.id)!==String(sid)||JSON.stringify(parsed(saved))!==JSON.stringify(next))throw Error('Server did not confirm the published settings.');
   const i=rows.findIndex(r=>String(r.id)===String(sid));if(i>=0)rows[i]=saved;else rows.push(saved);
-  timingFormSession='';$('vacationForm').dataset.session='';render();if($('quickApplyScope'))updateQuickScope();
+  timingFormSession='';$('vacationForm').dataset.session='';$('academicTermForm').dataset.session='';render();if($('quickApplyScope'))updateQuickScope();
   note.textContent='✓ Settings saved and published.';status('Seasonal school settings saved.');
  }catch(err){if(attempted){periodNeedsRefresh=true;note.textContent='Save uncertain. Refresh before retrying. '+err.message}else note.textContent=err.message}
- finally{timingBusy=false;for(const id of ['saveTiming','removeTiming','saveVacations'])$(id).disabled=false}
+ finally{timingBusy=false;for(const id of ['saveTiming','removeTiming','saveVacations','saveAcademicTerms'])$(id).disabled=false}
 }
 async function saveTiming(clear){
  const note=$('timingStatus'),sid=activeSession(),season=field('timingSeason'),key=seasonKeys[season];
@@ -642,7 +688,7 @@ $('sessionForm').onsubmit=async e=>{
    throw Error('This academic session name already exists. Use its Edit button instead of creating a duplicate.');
   if(p.active&&sessionRecords(latest).some(s=>String(s.id)!==String(editingId)&&s.active))
    throw Error('Deactivate the previous active session before activating another.');
-  if(prior){for(const key of ['schoolTiming','summerTiming','vacations'])if(prior[key])p[key]=prior[key];for(const key of ['schoolTiming','summerTiming'])validateSessionRange(p[key],p,key);for(const [key,v] of Object.entries(p.vacations||{}))validateSessionRange(v,p,key)}
+  if(prior){for(const key of ['schoolTiming','summerTiming','vacations','terms'])if(prior[key])p[key]=prior[key];for(const key of ['schoolTiming','summerTiming'])validateSessionRange(p[key],p,key);for(const [key,v] of Object.entries(p.vacations||{}))validateSessionRange(v,p,key);if(p.terms)validateAcademicTerms(p.terms,p)}
   attemptedWrite=true;
   const refreshed=await save('session',editingId,p);
   if(!refreshed)throw Error('Session save response received but the updated list could not be verified.');

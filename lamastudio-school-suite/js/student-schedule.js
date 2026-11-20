@@ -57,7 +57,7 @@ function mount(container,student,schoolId){
    const card=node('div',undefined,'rounded-xl bg-slate-900/80 p-3 text-sm');card.append(node('strong',title),node('p',fmtDate(t.from)+' – '+fmtDate(t.to),'text-slate-400'));
    const groups=new Map();for(const d of days){const h=t.hours[d],off=data.weeklyOff;const closed=Array.isArray(off)?off.includes(LamaSchoolWeek.names.indexOf(d)):h?.open===false;const line=closed?'Closed':h?.open===true&&time(h.start)&&time(h.end)?fmtTime(h.start)+' – '+fmtTime(h.end):'Hours not configured';if(!groups.has(line))groups.set(line,[]);groups.get(line).push(d.slice(0,3))}
    for(const [line,ds] of groups)card.append(node('p',ds.join(', ')+': '+line));
-   if(time(t.breakStart)&&time(t.breakEnd))card.append(node('p','Lunch break: '+fmtTime(t.breakStart)+' – '+fmtTime(t.breakEnd),'text-amber-200'));box.append(card)
+   if(time(t.assemblyStart)&&time(t.assemblyEnd))card.append(node('p','Morning assembly: '+fmtTime(t.assemblyStart)+' – '+fmtTime(t.assemblyEnd),'text-amber-200'));if(time(t.breakStart)&&time(t.breakEnd))card.append(node('p','Lunch break: '+fmtTime(t.breakStart)+' – '+fmtTime(t.breakEnd),'text-amber-200'));box.append(card)
   }
   if(!box.children.length)box.append(node('p','Seasonal hours have not been published yet.','text-sm text-slate-400'));
   const terms=Array.isArray(selected?.terms)?selected.terms.filter(t=>str(t?.name)&&range(t)&&t.from>=selected.start&&t.to<=selected.end).sort((a,b)=>a.from.localeCompare(b.from)):[];
@@ -69,7 +69,7 @@ function mount(container,student,schoolId){
   for(const day of week){if(!work.includes(day)){box.append(node('p',day+' — weekly holiday','text-sm text-slate-400'));continue}const items=records.filter(p=>p.day===day);if(!items.length&&!filter)continue;
    const card=node('div',undefined,'rounded-xl bg-slate-900/70 border border-slate-700 p-3');card.append(node('h4',day,'font-bold text-cyan-200 mb-2'));
    if(!items.length)card.append(node('p','No published lessons for this day.','text-sm text-slate-400'));
-   for(const p of items){const line=node('div',undefined,'py-2 border-t border-slate-700 text-sm');line.append(node('b',str(p.subject)),node('p',fmtTime(p.start)+' – '+fmtTime(p.end)+(p.period?' · Period '+p.period:''),'text-slate-300'),node('p',str(p.teacherName)||'Teacher not published','text-slate-400'));if(str(p.room))line.append(node('p','Room: '+p.room,'text-slate-400'));card.append(line)}box.append(card)
+   for(const p of items){const line=node('div',undefined,'py-2 border-t border-slate-700 text-sm');line.append(node('b',str(p.subject)),node('p',fmtTime(p.start)+' – '+fmtTime(p.end)+(p.period?' · Period '+p.period:''),'text-slate-300'),node('p',str(p.teacherName)||'Teacher not published','text-slate-400'));if(str(p.supportName))line.append(node('p',p.supportName+' · '+(p.supportRole||'Additional staff'),'text-slate-400'));if(str(p.room))line.append(node('p','Room: '+p.room,'text-slate-400'));card.append(line)}box.append(card)
   }
   if(!box.children.length)box.append(node('p','No published timetable for your class and section yet.','text-sm text-slate-400'));
   if(records.length)box.append(node('p','Weekly lesson pattern. Check the calendar for holidays and special events.','text-xs text-slate-400'));

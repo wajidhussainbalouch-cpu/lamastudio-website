@@ -16,22 +16,15 @@ function paginate(rows,capacity=37){
 }
 function calendar(days,resources,asOf){
  const available=Array.isArray(resources);
- const holidays=new Set();
- for(const item of resources||[]){
-  if(item.category!=='planning-event')continue;
-  try{const e=JSON.parse(item.description||'{}');if(e.published===false||String(e.type).toLowerCase()!=='holiday'||!/^\d{4}-\d{2}-\d{2}$/.test(e.start)||!/^\d{4}-\d{2}-\d{2}$/.test(e.end))continue;
-   for(const d of days)if(d>=e.start&&d<=e.end)holidays.add(d);
-  }catch(_){}
- }
- const kinds=days.map(d=>holidays.has(d)?'H':new Date(d+'T12:00:00Z').getUTCDay()===0?'S':'W');
+ const kinds=days.map(d=>{const n=new Date(d+'T12:00:00Z').getUTCDay();if(!available)return n===0?'S':'W';const reason=root.LamaSchoolWeek.reason(resources,d);return reason?(n===0&&/weekly holiday/i.test(reason)?'S':'H'):'W'});
  const count=k=>kinds.filter(x=>x===k).length;
  return {available,kinds,working:count('W'),holidays:available?count('H'):null,nonworking:count('H')+count('S'),sundays:count('S'),elapsedWorking:days.filter((d,i)=>d<=asOf&&kinds[i]==='W').length,asOf};
 }
 function rowSummary(marks,days,cal){
- const n=k=>marks.filter(x=>x===k).length;
+ const n=k=>marks.filter((x,i)=>x===k&&cal.kinds[i]==='W').length;
  return [n('P'),n('A'),n('L'),cal.working,cal.nonworking,cal.holidays??'?',days.filter((d,i)=>d<=cal.asOf&&cal.kinds[i]==='W'&&!marks[i]).length];
 }
-function markFor(mark,day,kind,asOf){return mark||(kind==='H'?'H':kind==='S'?'S':day>asOf?'':'–')}
+function markFor(mark,day,kind,asOf){return kind==='H'||kind==='S'?(mark?kind+'*':kind):mark||(day>asOf?'':'–')}
 const summaryHeaders=['P','A','L','WD','NW','H','U'];
 function pack(images,{W=297,H=210}={}){
  const enc=new TextEncoder(),chunks=[],offsets=[0];let length=0;

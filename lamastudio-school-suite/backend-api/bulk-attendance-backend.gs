@@ -30,6 +30,7 @@ function bulkAttendanceRecords(params) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) throw new Error('Attendance is busy. Retry in a moment.');
   try {
+    lamaAssertSchoolAttendanceDay_(ctx,date);
     const studentsData = getCollectionSheet(ctx, 'students');
     const studentRows = studentsData.sheet.getDataRange().getValues();
     const byStudentId = new Map();

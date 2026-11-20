@@ -110,7 +110,7 @@ function updatePrintCount(){
 }
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
- if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','printDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(days.includes(el.value)&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
+ if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(days.includes(el.value)&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
  const hidden=gridState(),classes=visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),counts=Object.fromEntries(classes.map(c=>[countKey(c),effectivePeriodCount(activeSession(),c,periods)]));$('quickPeriods').value=String(Math.max(1,...Object.values(counts)));$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,classes,field('quickDay')||'Monday',Math.max(1,...Object.values(counts)),[...hidden.periods],counts);
 }
 function teacherLabel(t){return String(t?.name||t?.fullName||t?.teacherName||'').trim()}
@@ -973,6 +973,7 @@ async function printProfile(){
 }
 function buildTimetablePrint(profile){
  const selectedSession=activeSession();
+ if(adminMode&&!verified)throw Error('Sign in as school administrator first.');
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
  const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;const printWork=LamaSchoolWeek.working(schoolWeekResources,dayTiming?days.filter(d=>dayTiming.hours[d]?.open===true):workingWeek());
  const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&printWork.includes(p.day));
@@ -1009,6 +1010,7 @@ async function printTimetable(){
  const original=button.textContent;
  button.textContent='Preparing school timetable…';
  try{
+  if(periodNeedsRefresh)throw Error('Refresh saved timetable records before printing.');
   if(adminMode&&(classDraftDirty||pendingPeriodCounts.size)&&!confirm('There are unsaved timetable changes or period counts. Print the currently saved records only?'))return;
   const profile=await printProfile();
   const output=buildTimetablePrint(profile);
@@ -1035,6 +1037,7 @@ window.addEventListener('beforeprint',()=>{setPrintOrientation();
  // Support the browser's own Print command without replacing a logo
  // whose bytes have already been loaded for the print-button preview.
  if(printPrepared)return;
+ $('printSheet').replaceChildren();
  try{$('printSheet').innerHTML=buildTimetablePrint(printSchoolProfile||printProfileFallback());printPrepared=true}
  catch(error){status('Unable to prepare print: '+error.message)}
 });

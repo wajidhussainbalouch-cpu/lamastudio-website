@@ -1,0 +1,11 @@
+# Privacy and Release Checklist
+- [x] No internet permission in initial Android manifest.
+- [x] No ad SDK, analytics SDK or account login in initial source.
+- [x] Local progress only; no child identifiers collected.
+- [ ] Parent gate usability and bypass resistance tested on a device.
+- [ ] Accessibility, Urdu RTL and font rendering checked.
+- [ ] Content checked by qualified educators and mapped to approved grade curriculum.
+- [ ] Google Play Families and target-audience declarations reviewed against current policy.
+- [ ] Play Billing, premium restore and parental consent designed before monetization.
+- [ ] Build, unit tests, device tests and signed release completed.
+- [ ] Owner explicitly approves any merge, distribution or publication.

@@ -101,6 +101,10 @@ const COLLECTIONS = {
         tab: 'Attendance',
         headers: ['id', 'studentId', 'studentName', 'class', 'date', 'status', 'markedBy', 'createdAt', 'enrlNo', 'section']
     },
+    homeworkCompletion: {
+        tab: 'HomeworkCompletion',
+        headers: ['id','studentId','homeworkId','completed','updatedAt']
+    },
     homework: {
         tab: 'Homework',
         headers: ['id', 'class', 'subject', 'title', 'description', 'dueDate', 'assignedBy', 'createdAt', 'section', 'teacherId', 'batchId', 'batchHash']
@@ -932,6 +936,7 @@ function teacherStudentAccess_(ctx,record){
 }
 
 function checkPermission(ctx, action, collection) {
+    if(collection==='homeworkCompletion')throw Error('Use dedicated homework completion actions.');
     if (['nonTeachingStaff','staffAttendancePolicy'].indexOf(collection)!==-1) throw Error('Use the dedicated staff management actions.');
     if (ctx.role === 'school') return; // full access, unchanged
     if (ctx.role === 'teacher') {
@@ -1850,6 +1855,7 @@ function handleRequest(params) {
             return {status:'success',result:lamaStaffAction_(params)};
         if (action==='saveSchoolWorkingWeek')return {status:'success',result:lamaSaveSchoolWorkingWeek_(params)};
         if (action==='planningSaveBatch')return {status:'success',result:lamaPlanningSaveBatch_(params)};
+        if (['studentHomeworkCompletion','studentHomeworkSetCompletion','homeworkCompletionReport'].includes(action))return {status:'success',result:lamaHomeworkCompletionAction_(params)};
         if (action==='teacherHomeworkBatch')return {status:'success',result:lamaTeacherHomeworkBatch_(params)};
         if (action==='teacherUpdateStudentProfile')return {status:'success',result:lamaTeacherUpdateStudentProfile_(params)};
         if (/^feeLedger(?:Read|Issue|Pay|Reverse)$/.test(action)) return {status:'success',result:lamaFeeAction_(params)};
@@ -2206,7 +2212,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['saveSchoolWorkingWeek','planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['studentHomeworkCompletion','studentHomeworkSetCompletion','homeworkCompletionReport','saveSchoolWorkingWeek','planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -3019,4 +3025,48 @@ function lamaPlanningAssertHours_(resources,p,date){
  if(!clock(p.start)||!clock(p.end)||p.start>=p.end)err('Invalid lesson times');
  if(p.start<h.start||p.end>h.end)err('Outside school hours '+h.start+'–'+h.end);
  for(const [a,b,label] of [[t.assemblyStart,t.assemblyEnd,'Morning assembly'],[t.breakStart,t.breakEnd,'Lunch break']])if(clock(a)&&clock(b)&&a<b&&a>=h.start&&b<=h.end&&p.start<b&&p.end>a)err('Overlaps '+label+' '+a+'–'+b);
+}
+
+/** Homework completion is a student's self-report, not teacher verification. */
+function lamaHomeworkVisible_(r,student){
+ const s=v=>String(v==null?'':v).trim().toLowerCase(),status=s(r.status);
+ if(!r.id||s(r.published)==='false'||s(r.isPublished)==='false'||['draft','archived','rejected','deleted','cancelled','pending approval'].includes(status))return false;
+ if(status&&!['published','posted','saved','sent','completed','pending'].includes(status)&&s(r.isPublished)!=='true'&&s(r.published)!=='true'&&s(r.visibility)!=='public')return false;
+ return !!normalizeSchoolClass(student.class)&&sameClass(r.class,student.class)&&(!s(r.section)||sameClass(r.section,student.section));
+}
+function lamaHomeworkCompletionAction_(p){
+ const action=p.action,isReport=action==='homeworkCompletionReport';
+ const ctx=isReport&&p.role==='school'?lamaStaffAdminContext_(p,false):resolveContext(p);
+ if(isReport? !['school','teacher'].includes(ctx.role):ctx.role!=='student')throw Error('Access denied.');
+ if(ctx.role==='teacher'&&!String(ctx.teacher.assignedClass||'').trim())throw Error('No assigned class.');
+ const lock=action==='studentHomeworkSetCompletion'?LockService.getScriptLock():null;
+ if(lock&&!lock.tryLock(15000))throw Error('Homework checklist busy. Refresh before retrying.');
+ try{
+ const homework=lamaStaffRows_(ctx,'homework').items.map(x=>x.record);
+ const data=lamaStaffRows_(ctx,'homeworkCompletion');
+ const str=v=>String(v==null?'':v).trim();
+ const marked=r=>r.completed===true||str(r.completed).toLowerCase()==='true';
+ if(!isReport){
+  const sid=str(ctx.student.id),own=homework.filter(h=>lamaHomeworkVisible_(h,ctx.student)),ids=new Set(own.map(h=>str(h.id)));
+  if(action==='studentHomeworkCompletion')return {completedIds:[...new Set(data.items.filter(x=>str(x.record.studentId)===sid&&ids.has(str(x.record.homeworkId))&&marked(x.record)).map(x=>str(x.record.homeworkId)))]};
+  assertSchoolWritable(ctx.schoolId);
+  const hid=str(p.homeworkId);if(!hid||!ids.has(hid)||typeof p.completed!=='boolean')throw Error('Invalid homework checklist item.');
+  const hits=data.items.filter(x=>str(x.record.studentId)===sid&&str(x.record.homeworkId)===hid);
+  if(hits.length>1)throw Error('Duplicate completion records. Contact school.');
+  const record={id:hits[0]?.record.id||genId('hc'),studentId:sid,homeworkId:hid,completed:p.completed,updatedAt:new Date().toISOString()};
+  if(hits.length)data.info.sheet.getRange(hits[0].row,1,1,data.info.headers.length).setValues([recordToRow(data.info.headers,record)]);
+  else data.info.sheet.appendRow(recordToRow(data.info.headers,record));
+  SpreadsheetApp.flush();
+  return {homeworkId:hid,completed:p.completed};
+ }
+ const day=lamaStaffDate_(p.date);if(!day||day!==p.date)throw Error('Valid posting date required.');
+ const students=lamaStaffRows_(ctx,'students').items.map(x=>x.record).filter(s=>normalizeSchoolClass(s.class)&&(ctx.role==='school'||teacherOwns(ctx,s)));
+ const assignments=homework.filter(h=>lamaStaffDate_(h.createdAt)===day);
+ const set=new Set(data.items.filter(x=>marked(x.record)).map(x=>JSON.stringify([str(x.record.studentId),str(x.record.homeworkId)])));
+ return {date:day,students:students.map(s=>{
+ const applicable=assignments.filter(h=>lamaHomeworkVisible_(h,s));
+ const items=applicable.map(h=>({id:str(h.id),subject:str(h.subject),completed:set.has(JSON.stringify([str(s.id),str(h.id)]))}));
+ return {id:str(s.id),name:str(s.name),enrlNo:str(s.enrlNo),class:str(s.class),section:str(s.section),items};
+ })};
+ }finally{if(lock)lock.releaseLock();}
 }

@@ -42,3 +42,14 @@ Important distinction: **practice events are not exam results, Qur'an memorizati
 6. Obtain explicit approval before deployment or enabling real schools.
 
 **No GitHub main merge, live Apps Script update, Vercel production deployment, or real student record mutation was performed.**
+
+
+## 20 November 2026 — Version 14.1 follow-up
+
+- Backend commit `757960f068d88bc58bb47971270ca84cf41e1fa5`: revision dates must represent actual calendar days (including leap-day validation); class reports index practice and assessment rows by the learners on the requested page once, instead of scanning the two full school logs for every learner.
+- **17/17 additional focused checks passed** against the actual current v13/v14 aggregation helpers with mock date services and invented data. Verified invalid dates, leap dates, matching indexed/unindexed reports, separate practice and assessment totals, due/upcoming counters, unclassified entries and guardian redaction. These are not a real authenticated deployment test.
+- Rebuilt the downloadable local Version 14.1 PWA from the previously delivered v13 ZIP. It retains 12 prior screens and adds the Unified Report screen with invented practice samples, local Teacher Studio assessment synchronization, track-specific report filtering, authorized fictional class overview, English/Urdu headings and print layout. All student data remains fictional; this frontend is NOT wired to real student progress APIs. Role switching only demonstrates permissions.
+- Local Playwright/Chromium tests at 390px and 1280px passed totals, track filtering, teacher updates, guardian note hiding, no guardian class report, student denial, class dropdown scope and visibility, learner/date print layout, language switch, Qaida navigation, no JS exceptions and no horizontal page overflow. Print media CSS tested, not physical printing or PDF output.
+- New ZIP contains 72 files and passed integrity verification. Service worker runtime caching now only permits explicitly listed static assets. Actual same-origin PWA installation and offline behavior remain untested.
+- No full frontend source upload to this branch; downloadable preview and ZIP supplied separately in the conversation. Legacy lesson classification still treats the existing `surah-*` IDs as Hifz-related practice; no equivalence to memorization or mastery is implied. Legacy v8 simple teacher review logs are not yet merged into the v14 structured-assessment totals.
+- All production and child-data safeguards and release blockers above remain in place. **No deployment, real accounts, or live school records were changed.**

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Official Homework Register | LAMA School Suite</title>
-<script src="../js/api-client.js?v=20261119staff"></script>
+<script src="../js/api-client.js?v=20261119staff"></script><script src="../js/school-week.js?v=20261120hours"></script>
 <style>
 *{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:#0b1924;color:#edf8fa}header{padding:18px max(14px,calc((100vw - 1100px)/2));background:#10434a;border-bottom:1px solid #457379}header a{color:#c9f4e7}h1{font-size:clamp(21px,4vw,30px);margin:9px 0}h2{font-size:19px;margin:0 0 9px}p{line-height:1.5}main{max-width:1100px;margin:auto;padding:15px}.panel{background:#142c37;border:1px solid #42616a;border-radius:18px;padding:16px;margin-bottom:14px}.muted{font-size:13px;color:#b6ccd1}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:12px}label{font-size:12px;font-weight:700;display:block}input,select{width:100%;padding:10px;border:1px solid #587b86;border-radius:9px;background:#0c202b;color:#fff;margin-top:6px;font:inherit;min-height:44px;color-scheme:dark}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}button{border:1px solid #53848b;background:#24505b;color:#fff;font:700 14px system-ui;border-radius:10px;padding:11px 16px;cursor:pointer;min-height:45px}button.primary{background:#08765b;border-color:#41a58a}button:disabled{opacity:.45;cursor:not-allowed}.hidden{display:none!important}.notice{padding:10px 12px;border-left:4px solid #63b8bd;background:#122c36;font-size:13px}.error{border-color:#f87171;color:#fecaca}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.stat{background:#10242d;border:1px solid #42616a;border-radius:12px;padding:10px}.stat strong{display:block;font-size:21px}.sheet{background:#fff;color:#192e35;border-radius:13px;padding:20px}.letterhead{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px solid #1e5960;padding-bottom:9px;margin-bottom:10px}.letterhead h2{font-size:22px;overflow-wrap:anywhere}.letterhead p{margin:2px 0;font-size:12px}.logo{max-width:65px;max-height:65px;object-fit:contain}.reportmeta{font-size:12px;line-height:1.55;margin:9px 0}.group{margin:14px 0;break-inside:auto}.group h3{font-size:14px;background:#e8f2f1;color:#164e54;border-bottom:1px solid #aac9c9;padding:8px;margin:0;break-after:avoid}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}th,td{border:1px solid #afc3c7;padding:7px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#eff5f4;font-size:12px}td.work{white-space:pre-wrap}td.subject{font-weight:650}.due{font-size:12px}.signature{display:flex;justify-content:space-between;gap:15px;margin:28px 0 8px;font-size:12px;break-inside:avoid}.signature div{width:45%;border-top:1px solid #536b70;padding-top:5px}.footer{font-size:10px;color:#50666b;border-top:1px solid #b8c9c9;padding-top:6px;line-height:1.45}.smallnote{font-size:11px;color:#50666b}.stamp{font-size:11px;color:#50666b;text-align:right} @media(max-width:560px){main{padding:10px}.panel{padding:12px}.sheet{padding:12px}.letterhead h2{font-size:17px}.letterhead .logo{max-width:45px;max-height:45px}.stats .stat{padding:8px;font-size:11px}table{font-size:11px}th,td{padding:5px}.actions button{flex:1 1 130px}}
 @media print{@page{size:A4 portrait;margin:11mm}body{background:white!important;color:#111!important}header,.no-print{display:none!important}main{max-width:none;margin:0;padding:0}.sheet{padding:0;border:0;border-radius:0}.tablewrap{overflow:visible}.letterhead{break-after:avoid}.group h3{break-after:avoid}thead{display:table-header-group}tr{break-inside:avoid}table{font-size:10pt}th{font-size:9pt}td,th{padding:5px}.group{margin:10px 0}.group h3,th{-webkit-print-color-adjust:exact;print-color-adjust:exact}.footer{font-size:8pt}.signature{margin-top:22px}.print-disabled #report{display:none!important}}
@@ -19,7 +19,7 @@
 'use strict';
 const $=id=>document.getElementById(id),str=v=>String(v??'').trim(),norm=v=>str(v).toLocaleLowerCase().replace(/\s+/g,' '),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const role=new URLSearchParams(location.search).get('role')==='teacher'?'teacher':'school',zone='Asia/Karachi';
-let me={},school={},records=[],ready=false,busy=false,excluded=0,legacyCount=0,termRanges=new Map(),termLoadError='';
+let me={},school={},records=[],ready=false,busy=false,excluded=0,legacyCount=0,termRanges=new Map(),termLoadError='',planningRows=null,planningError='';
 function isoDate(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return '';const d=new Date(v+'T12:00:00Z');return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===v?v:''}
 function postedDate(v){
  const text=str(v);if(isoDate(text))return text;
@@ -63,16 +63,53 @@ function prepare(rows,session,access){
 function selectRows(rows,{from,to,cls='',teacher='',subject=''}){
  return rows.filter(r=>r.day>=from&&r.day<=to&&(!cls||r.classKey===cls)&&(!teacher||r.teacherKey===teacher)&&(!subject||norm(r.subject)===subject)).sort((a,b)=>a.day.localeCompare(b.day)||a.grade.localeCompare(b.grade,undefined,{numeric:true})||a.section.localeCompare(b.section)||a.teacher.localeCompare(b.teacher)||a.subject.localeCompare(b.subject)||a.id.localeCompare(b.id));
 }
-function groupRows(rows){const groups=new Map();for(const r of rows){const key=JSON.stringify([r.day,r.classKey,r.teacherKey]);if(!groups.has(key))groups.set(key,{day:r.day,grade:r.grade,section:r.section,teacher:r.teacher,teacherVerified:r.teacherVerified,items:[]});groups.get(key).items.push(r)}return [...groups.values()]}
+function groupRows(rows){const groups=new Map();for(const r of rows){const key=JSON.stringify([r.day,r.classKey]);if(!groups.has(key))groups.set(key,{day:r.day,grade:r.grade,section:r.section,items:[]});groups.get(key).items.push(r)}return [...groups.values()]}
+function readPlanning(rows,schoolId){
+ if(!Array.isArray(rows))throw Error('Invalid planning response.');
+ return rows.filter(r=>r&&r.id&&(!r.schoolId||str(r.schoolId)===str(schoolId))).filter(r=>{try{const v=JSON.parse(r.description||'{}');return v&&(!v.schoolId||str(v.schoolId)===str(schoolId))}catch{return false}});
+}
+function scheduledLessons(rows,group){
+ if(!Array.isArray(rows))return [];
+ const parsed=rows.map(r=>{try{return {...JSON.parse(r.description||'{}'),id:str(r.id),category:r.category}}catch{return {}}});
+ const date=group.day,weekday=LamaSchoolWeek.names[new Date(date+'T12:00:00Z').getUTCDay()];
+ const candidates=parsed.filter(p=>p.category==='planning-session'&&isoDate(p.start)&&isoDate(p.end)&&p.start<=date&&date<=p.end);
+ const active=candidates.filter(p=>p.active===true),session=active.length===1?active[0]:candidates.length===1?candidates[0]:null;
+ if(!session)return [];
+ try{if(LamaSchoolWeek.reason(rows,date))return []}catch{return []}
+ const timing=LamaSchoolWeek.seasonTiming(session,date)?.timing,clock=v=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(str(v));
+ const periods=parsed.filter(p=>p.category==='planning-period'&&(p.published===true||norm(p.published)==='true')&&str(p.sessionId)===session.id&&p.day===weekday&&classNorm(p.grade)===classNorm(group.grade)&&(!str(p.section)||norm(p.section)===norm(group.section))&&clock(p.start)&&clock(p.end)&&p.start<p.end&&!LamaSchoolWeek.lessonIssue(timing,p));
+ return periods.sort((a,b)=>a.start.localeCompare(b.start)||a.end.localeCompare(b.end)||Number(a.period)-Number(b.period));
+}
+function orderedHomework(group,rows){
+ const periods=scheduledLessons(rows,group);
+ return group.items.map(r=>{
+  let matches=periods.filter(p=>norm(p.subject)===norm(r.subject));
+  if(str(group.section)&&matches.some(p=>norm(p.section)===norm(group.section)))matches=matches.filter(p=>norm(p.section)===norm(group.section));
+  const unique=new Map();for(const p of matches){const cover=p.supportKind==='teacher'&&sessionCover(rows,p.sessionId)&&str(p.supportId)&&str(p.supportId)!==str(p.teacherId);const teacher=cover?(str(p.supportName)||'Cover teacher not named'):(str(p.teacherName)||'Teacher not named');const key=JSON.stringify([p.start,p.end,teacher]);unique.set(key,{start:p.start,end:p.end,teacher});}
+  const lessons=[...unique.values()];
+  return {...r,lessons};
+ }).sort((a,b)=>(a.lessons[0]?.start||'99:99').localeCompare(b.lessons[0]?.start||'99:99')||a.subject.localeCompare(b.subject)||a.id.localeCompare(b.id));
+}
+function sessionCover(rows,id){const row=rows?.find(r=>r.category==='planning-session'&&str(r.id)===str(id));try{return JSON.parse(row?.description||'{}').teacherSchedulingMode==='multi-class'}catch{return false}}
+function teacherCell(r){
+ const names=[...new Set(r.lessons.map(p=>p.teacher))],author=r.teacher+(r.teacherVerified?'':' (name recorded)');
+ if(!names.length)return '<span class="smallnote">Not scheduled</span><br>Posted by: '+esc(author);
+ return names.map(esc).join('<br>')+(names.some(n=>norm(n)===norm(r.teacher))&&names.length===1&&r.teacherVerified?'':'<br><span class="smallnote">Posted by: '+esc(author)+'</span>');
+}
+function timeCell(r){return r.lessons.length?r.lessons.map(p=>esc(LamaSchoolWeek.formatClock(p.start)+' – '+LamaSchoolWeek.formatClock(p.end))).join('<br>'):'<span class="smallnote">Not scheduled</span>'}
 function displayDate(v){return isoDate(v)?new Date(v+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'—'}
 function options(id,values,all){const el=$(id),old=el.value;el.replaceChildren(new Option(all,''));for(const [key,label] of values)el.add(new Option(label,key));if([...el.options].some(o=>o.value===old))el.value=old}
 function reportRecords(){return role==='teacher'&&$('teacherScope').value==='own'?records.filter(r=>r.own):records}
 function fillFilters(){const classes=new Map(),teachers=new Map(),subjects=new Map();for(const r of reportRecords()){classes.set(r.classKey,r.grade+(r.section?' · '+r.section:''));teachers.set(r.teacherKey,r.teacher+(r.teacherVerified?'':' (name only)'));subjects.set(norm(r.subject),r.subject)}const sorted=m=>[...m].sort((a,b)=>a[1].localeCompare(b[1],undefined,{numeric:true}));options('classFilter',sorted(classes),'All available classes');options('teacherFilter',sorted(teachers),'All teachers');options('subjectFilter',sorted(subjects),'All subjects')}
 function logoSrc(v){const x=str(v);return /^https:\/\/[^\s"'<>]+$/i.test(x)||/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(x)&&x.length<1200000?x:''}
 function reportHTML(rows,meta){
- const groups=groupRows(rows),logo=logoSrc(meta.logo);
- const tables=groups.map(g=>'<section class="group"><h3>'+esc(displayDate(g.day))+' · '+esc(g.grade)+(g.section?' / '+esc(g.section):'')+' · '+esc(g.teacher)+(g.teacherVerified?'':' (name recorded; ID unavailable)')+'</h3><div class="tablewrap"><table><colgroup><col style="width:24%"><col style="width:58%"><col style="width:18%"></colgroup><thead><tr><th>Subject</th><th>Homework / assigned work</th><th>Due date</th></tr></thead><tbody>'+g.items.map(r=>'<tr><td class="subject">'+esc(r.subject)+'</td><td class="work" dir="auto">'+(r.title&&norm(r.title)!==norm(r.subject+' Homework')?'<strong>'+esc(r.title)+'</strong>'+(r.description?'\n':''):'')+esc(r.description||(!r.title?'—':''))+'</td><td class="due">'+esc(displayDate(r.due))+'</td></tr>').join('')+'</tbody></table></div></section>').join('');
- return '<div class="letterhead"><div><h2>'+esc(meta.schoolName)+'</h2><p>Official Homework &amp; Teaching Diary Register</p></div>'+(logo?'<img class="logo" alt="School logo" src="'+esc(logo)+'">':'')+'</div><div class="reportmeta"><b>'+esc(meta.label)+'</b> · '+esc(displayDate(meta.from))+' – '+esc(displayDate(meta.to))+'<br>Class / section: '+esc(meta.cls)+' · Teacher: '+esc(meta.teacher)+' · Subject: '+esc(meta.subject)+'<br>'+rows.length+' saved homework entries · '+new Set(rows.map(r=>r.day)).size+' posting dates · '+new Set(rows.map(r=>norm(r.subject))).size+' subjects</div>'+tables+'<p class="smallnote">This register records saved class homework, not individual attendance, lesson delivery or homework completion. Dates are posting dates; due dates appear separately. Where a teacher ID is unavailable, the recorded name is not verified ownership; the Head Teacher may verify attribution when signing.</p><div class="signature"><div>Teacher / Prepared by</div><div>Head Teacher / Verified by</div></div><div class="footer">Generated by LAMA School Suite · LamaStudio.pk · '+esc(displayDate(meta.generated))+' · Based on currently saved records; changes or deletions may alter subsequent reports.</div>';
+ const groups=groupRows(rows),logo=logoSrc(meta.logo),showDue=rows.some(r=>!!r.due),schedule=meta.planning;
+ const widths=showDue?[18,18,20,30,14]:[19,20,23,38];
+ const tables=groups.map(g=>{
+ const items=orderedHomework(g,schedule);
+ return '<section class="group"><h3>'+esc(displayDate(g.day))+' · '+esc(g.grade)+(g.section?' / '+esc(g.section):'')+'</h3><div class="tablewrap"><table><colgroup>'+widths.map(w=>'<col style="width:'+w+'%">').join('')+'</colgroup><thead><tr><th>Subject</th><th>Scheduled time</th><th>Teacher</th><th>Homework / assigned work</th>'+(showDue?'<th>Due date</th>':'')+'</tr></thead><tbody>'+items.map(r=>'<tr><td class="subject">'+esc(r.subject)+'</td><td class="due">'+timeCell(r)+'</td><td>'+teacherCell(r)+'</td><td class="work" dir="auto">'+(r.title&&norm(r.title)!==norm(r.subject+' Homework')?'<strong>'+esc(r.title)+'</strong>'+(r.description?'\n':''):'')+esc(r.description||(!r.title?'—':''))+'</td>'+(showDue?'<td class="due">'+esc(displayDate(r.due))+'</td>':'')+'</tr>').join('')+'</tbody></table></div></section>';
+ }).join('');
+ return '<div class="letterhead"><div><h2>'+esc(meta.schoolName)+'</h2><p>Official Homework &amp; Teaching Diary Register</p></div>'+(logo?'<img class="logo" alt="School logo" src="'+esc(logo)+'">':'')+'</div><div class="reportmeta"><b>'+esc(meta.label)+'</b> · '+esc(displayDate(meta.from))+' – '+esc(displayDate(meta.to))+'<br>Class / section: '+esc(meta.cls)+' · Teacher filter: '+esc(meta.teacher)+' · Subject: '+esc(meta.subject)+'<br>'+rows.length+' saved homework entries · '+new Set(rows.map(r=>r.day)).size+' posting dates · '+new Set(rows.map(r=>norm(r.subject))).size+' subjects</div>'+tables+'<p class="smallnote">Subjects follow the currently published timetable for the homework posting date and class. Scheduled time and teacher are not proof of actual lesson delivery. Unmatched subjects appear last; the recorded posting teacher is identified separately if different or unverified.'+(showDue?' Due dates are shown only when saved.':'')+(!Array.isArray(schedule)?' Timetable data unavailable; no lesson times have been inferred.':'')+'</p><div class="signature"><div>Teacher / Prepared by</div><div>Head Teacher / Verified by</div></div><div class="footer">Generated by LAMA School Suite · LamaStudio.pk · '+esc(displayDate(meta.generated))+' · Based on currently saved records; changes or deletions may alter subsequent reports.</div>';
 }
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error)}
 function disablePrint(){document.body.classList.add('print-disabled');$('print').disabled=true;$('report').classList.add('hidden');$('report').replaceChildren()}
@@ -101,8 +138,8 @@ function render(){
  const excludedText=(excluded?' '+excluded+' saved entry/entries had no valid posting date and were excluded.':'')+(role==='teacher'&&$('teacherScope').value==='own'&&legacyCount?' '+legacyCount+' name-only record(s) are available under Assigned class.':'')+(rows.some(r=>!r.teacherVerified)?' '+rows.filter(r=>!r.teacherVerified).length+' saved record(s) lack a teacher ID; attribution is shown as recorded.':'');
  if(!rows.length){status('No matching saved homework in this date range.'+excludedText);return}
  const label=$('period').value==='term'?chosenText('term'):chosenText('period');
- $('report').innerHTML=reportHTML(rows,{schoolName:school.name||school.schoolName||me.schoolName||'School name not configured',logo:school.logo||school.schoolLogo||school.logoUrl||me.schoolLogo,label,from,to,cls:chosenText('classFilter'),teacher:role==='teacher'?($('teacherScope').value==='own'?(me.name||'Signed-in teacher'):'Class record — see recorded teacher below'):chosenText('teacherFilter'),subject:chosenText('subjectFilter'),generated:today()});
- $('report').classList.remove('hidden');document.body.classList.remove('print-disabled');$('print').disabled=false;status('Saved homework register ready.'+excludedText);
+ $('report').innerHTML=reportHTML(rows,{schoolName:school.name||school.schoolName||me.schoolName||'School name not configured',logo:school.logo||school.schoolLogo||school.logoUrl||me.schoolLogo,label,from,to,cls:chosenText('classFilter'),teacher:role==='teacher'?($('teacherScope').value==='own'?(me.name||'Signed-in teacher'):'Class record — see recorded teacher below'):chosenText('teacherFilter'),subject:chosenText('subjectFilter'),generated:today(),planning:planningRows});
+ $('report').classList.remove('hidden');document.body.classList.remove('print-disabled');$('print').disabled=false;status('Saved homework register ready.'+excludedText+(planningError?' '+planningError:''));
 }
 async function load(){
  if(busy)return;busy=true;ready=false;disablePrint();$('refresh').disabled=true;for(const id of ['count','dateCount','subjectCount'])$(id).textContent='—';status('Loading saved school homework…');
@@ -115,8 +152,8 @@ async function load(){
    await LamaAPI.schoolAdminVerify(me.schoolId,auth.token);
    school=await LamaAPI.getVerifiedSchoolConfig();
   }else school={name:me.schoolName,logo:me.schoolLogo};
-  termRanges=new Map();termLoadError='';
- const [result,termResult]=await Promise.all([LamaAPI.list('homework'),LamaAPI.list('resources').then(rows=>readAcademicTerms(rows,me.schoolId)).catch(e=>{termLoadError='Academic terms unavailable: '+e.message+'. Use Custom date range instead.';return new Map()})]);termRanges=termResult;fillTerms();if(!Array.isArray(result))throw Error('Invalid homework response.');
+  termRanges=new Map();termLoadError='';planningRows=null;planningError='';
+ const [result,resources]=await Promise.all([LamaAPI.list('homework'),LamaAPI.list('resources').then(rows=>readPlanning(rows,me.schoolId)).catch(e=>{planningError='Published timetable unavailable. Refresh to retry.';termLoadError='Academic terms unavailable. Use Custom date range instead.';return null})]);planningRows=resources;if(resources)termRanges=readAcademicTerms(resources,me.schoolId);fillTerms();if(!Array.isArray(result))throw Error('Invalid homework response.');
   const data=prepare(result,me,role);records=data.rows;excluded=data.undated;legacyCount=data.legacy;fillFilters();ready=true;
  }catch(e){records=[];status('Unable to load official register: '+e.message,true)}
  finally{busy=false;$('refresh').disabled=false;if(ready)render()}

@@ -23,7 +23,7 @@ const classKey=label=>{
  return g+(m?'|'+String(m[2]).toLowerCase().replace(/\s+/g,''):'');
 };
 const sameClass=(a,b)=>classKey(a)===classKey(b);
-const staffLabel=p=>[p.teacherName||'Unassigned',p.supportName?p.supportName+' ('+(p.supportRole||'Additional staff')+')':''].filter(Boolean).join(' / ');
+const staffLabel=p=>[ (p.teacherName||'Unassigned')+(p.coveredByTeacher?' (original / covered)':''),p.supportName?p.supportName+' ('+(p.coveredByTeacher?'Cover teacher':p.supportRole||'Additional staff')+')':''].filter(Boolean).join(' / ');
 const timeLabel=p=>[String(p.start||'').trim(),String(p.end||'').trim()].filter(Boolean).join(' – ');
 function sorted(records,mode){
  return [...records].sort((a,b)=>{

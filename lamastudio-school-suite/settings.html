@@ -24,7 +24,7 @@
         }
     </script>
     <link rel="stylesheet" href="assets/css/config.css" onerror="console.warn('config.css missing; using inline Tailwind styling fallback.');">
-    <script src="js/api-client.js?v=20261119ledger" onerror="console.warn('api-client.js missing; using fallback data engine.');"></script>
+    <script src="js/api-client.js?v=20261120week" onerror="console.warn('api-client.js missing; using fallback data engine.');"></script>
     <style>
         @keyframes floatOrb { 0%, 100% { transform: translate(0,0) scale(1); } 50% { transform: translate(30px,-40px) scale(1.12); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -41,7 +41,7 @@
 <link rel="stylesheet" href="assets/css/class-subject-picker.css">
 <script src="js/class-subject-choices.js"></script>
 <script src="js/class-subject-picker.js"></script>
-</head>
+<script src="js/school-week.js?v=20261120"></script></head>
 <body class="bg-[#030712] text-slate-100 font-sans min-h-screen flex flex-col items-center py-10 px-4 relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
 
     <div class="orb w-96 h-96 bg-purple-600/20 top-[-10rem] -left-20"></div>
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Settings Form -->
-        <a href="academics/configuration-center.html" class="block rounded-xl border border-cyan-500/40 p-3 text-cyan-300 font-bold">⌕ Configuration &amp; Module Center — find settings, subjects and features</a><form id="settingsForm" class="space-y-4 text-xs">
+        <a href="academics/configuration-center.html" class="block rounded-xl border border-cyan-500/40 p-3 text-cyan-300 font-bold">⌕ Configuration &amp; Module Center — find settings, subjects and features</a><section id="workingWeek" class="my-4 rounded-2xl p-4 border border-cyan-500/30 bg-slate-900/60"><h2 class="font-bold text-cyan-300">Working Days &amp; Holidays</h2><p class="text-xs text-slate-300 mt-2">Set once for all connected modules. Checked days are weekly holidays. This policy overrides weekday choices in seasonal hours; continue to configure the opening and closing times separately. Historical entries are retained, but weekly-off dates are excluded from working-day totals.</p><div id="weekBoxes" class="grid grid-cols-2 gap-2 mt-3"></div><div class="flex flex-wrap gap-2 mt-3"><button type="button" id="weekFive" class="rounded-lg bg-slate-700 px-3 py-2 text-sm">Mon–Fri</button><button type="button" id="weekSix" class="rounded-lg bg-slate-700 px-3 py-2 text-sm">Mon–Sat</button><button type="button" id="weekRefresh" class="rounded-lg bg-slate-700 px-3 py-2 text-sm">Refresh</button><button type="button" id="weekSave" disabled class="rounded-lg bg-emerald-700 px-3 py-2 text-sm">Publish working week</button></div><p id="weekStatus" role="status" class="text-xs text-amber-200 mt-2">Loading saved policy…</p></section><form id="settingsForm" class="space-y-4 text-xs">
             <div>
                 <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">School Name</label>
                 <input required id="inName" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition shadow-inner">
@@ -429,5 +429,14 @@
             loadSettings();
         }
     </script>
-</body>
+<script>
+(function(){'use strict';const $=id=>document.getElementById(id),api=LamaSchoolWeek;let ready=false,busy=false,snapshot='';
+for(const i of [1,2,3,4,5,6,0]){const l=document.createElement('label'),c=document.createElement('input');c.type='checkbox';c.dataset.off=i;l.className='flex gap-2 items-center text-sm p-2 rounded-lg border border-slate-600';l.append(c,document.createTextNode(api.names[i]+' closed'));$('weekBoxes').append(l)}
+const boxes=()=>[...$('weekBoxes').querySelectorAll('input')];function set(off){for(const c of boxes())c.checked=off.includes(Number(c.dataset.off))}
+function controls(){for(const c of boxes())c.disabled=!ready||busy;for(const id of ['weekFive','weekSix','weekSave'])$(id).disabled=!ready||busy;$('weekRefresh').disabled=busy}
+async function load(){if(busy)return;busy=true;ready=false;controls();try{const me=LamaAPI.getSession('school'),auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');if(!me?.schoolId||!auth?.token||String(auth.schoolId)!==String(me.schoolId))throw Error('Verified school administrator login required.');await LamaAPI.schoolAdminVerify(me.schoolId,auth.token);const p=api.read(await LamaAPI.list('resources'));snapshot=p?.snapshot||'';set(p?.weeklyOff||[0]);ready=true;$('weekStatus').textContent=p?'Published policy loaded.':'No school-wide working week published yet. Select and publish your school’s actual days.'}catch(e){$('weekStatus').textContent=e.message}finally{busy=false;controls()}}
+$('weekFive').onclick=()=>set([0,6]);$('weekSix').onclick=()=>set([0]);$('weekRefresh').onclick=load;
+$('weekSave').onclick=async()=>{if(!ready||busy)return;const off=boxes().filter(c=>c.checked).map(c=>Number(c.dataset.off)).sort();if(!api.valid(off))return $('weekStatus').textContent='Select at least one working day.';if(!confirm('Publish this working week for the whole school? Existing attendance records are retained; working-day totals may change for past dates.'))return;busy=true;controls();try{const saved=await LamaAPI.saveSchoolWorkingWeek(off,snapshot),p=api.read([saved]);if(!p||JSON.stringify(p.weeklyOff)!==JSON.stringify(off))throw Error('Save not verified. Refresh before retrying.');snapshot=p.snapshot;$('weekStatus').textContent='✓ Published: '+api.names.filter((d,i)=>off.includes(i)).join(', ')+' closed. '+(7-off.length)+' working days.'}catch(e){ready=false;$('weekStatus').textContent='Not confirmed: '+e.message+'. Refresh before retrying.'}finally{busy=false;controls()}};
+load();})();
+</script></body>
 </html>

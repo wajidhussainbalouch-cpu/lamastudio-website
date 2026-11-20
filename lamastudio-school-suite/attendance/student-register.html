@@ -102,7 +102,7 @@ th.student-name,td.student-name{position:static;min-width:140px;max-width:200px}
 <div class="key no-print"><span class="swatch missing">—</span> Not recorded</div>
 <div class="key no-print"><span class="swatch sunday">S</span> Sunday</div>
 <div class="table-wrap"><table id="register"><thead></thead><tbody></tbody><tfoot></tfoot></table></div>
-<p class="month-info" id="monthInfo">Loading calendar…</p><p class="calendar-note">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days. S = Sunday; blank = future working date. WD/NW/H describe the full month.</p>
+<p class="month-info" id="monthInfo">Loading calendar…</p><p class="calendar-note">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days. S = Sunday holiday; H*/S* = historical attendance on a closed date (not counted); blank = future working date. WD/NW/H describe the full month.</p>
 <p class="muted">Monthly totals count only explicit saved Present, Absent and Leave entries. Unmarked and closed days are not counted as absences.</p>
 </section>
 <section class="panel no-print">
@@ -147,10 +147,10 @@ function render(){
  for(const h of LamaRegisterPdf.summaryHeaders)heads.push('<th scope="col">'+h+'</th>');
  const heading='<div class="print-register-heading"><div><strong>'+safe($('schoolName').textContent)+'</strong><b>Monthly Student Attendance Register</b><span>'+safe(label)+' · '+safe(month)+' · '+students.length+' students</span></div>'+(state.logo?'<img src="'+safe(state.logo)+'" alt="School logo">':'')+'</div>';
  $('register').querySelector('thead').innerHTML='<tr class="register-repeat"><th colspan="'+colCount+'">'+heading+'</th></tr><tr>'+heads.join('')+'</tr>';
- $('register').querySelector('tfoot').innerHTML='<tr class="register-repeat"><td colspan="'+colCount+'">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days · S = Sunday · — = Not marked · Blank = Future working day. '+(cal.available?'WD/NW/H cover the full month.':'Holiday calendar unavailable; WD/NW provisional.')+'</td></tr>';
+ $('register').querySelector('tfoot').innerHTML='<tr class="register-repeat"><td colspan="'+colCount+'">P = Present · A = Absent · L = Leave · WD = Working days · NW = Non-working days · H = Holidays · U = Unmarked elapsed working days · S = Sunday holiday; H*/S* = historical attendance on a closed date (not counted) · — = Not marked · Blank = Future working day. '+(cal.available?'WD/NW/H cover the full month.':'Holiday calendar unavailable; WD/NW provisional.')+'</td></tr>';
  $('register').querySelector('tbody').innerHTML=students.map((s,i)=>{
   const marks=days.map(d=>({Present:'P',Absent:'A',Leave:'L'}[model.get(s,d)]||''));
-  const cells=days.map((d,j)=>{const v=LamaRegisterPdf.markFor(marks[j],d,cal.kinds[j],cal.asOf);const cls={P:'present',A:'absent',L:'leave',H:'holiday',S:'sunday'}[v]||'missing';return '<td class="'+cls+'" title="'+safe(d+' '+v)+'">'+safe(v)+'</td>'});
+  const cells=days.map((d,j)=>{const v=LamaRegisterPdf.markFor(marks[j],d,cal.kinds[j],cal.asOf);const cls={P:'present',A:'absent',L:'leave',H:'holiday',S:'sunday'}[v.replace('*','')]||'missing';return '<td class="'+cls+'" title="'+safe(d+' '+v)+'">'+safe(v)+'</td>'});
   return '<tr><td class="serial">'+(i+1)+'</td><td class="enrollment-col">'+safe(enrol(s)||'—')+'</td><td class="student-name"><strong>'+safe(s.name||'Unnamed')+'</strong></td><td class="father-col">'+safe(father(s)||'—')+'</td>'+(showClass?'<td class="class-col">'+safe(klass(s))+'</td>':'')+cells.join('')+LamaRegisterPdf.rowSummary(marks,days,cal).map(n=>'<td>'+safe(n)+'</td>').join('')+'</tr>';
  }).join('')||'<tr><td colspan="'+colCount+'">No students in this class.</td></tr>';
  updatePageOrientation();
@@ -182,7 +182,7 @@ async function load(){
  statusText('Loading students and saved attendance from the school database…');
  try{
   const [students,records,calendarResources]=await Promise.all([LamaAPI.list('students'),LamaAPI.list('attendance'),Promise.resolve().then(()=>LamaAPI.list('resources')).catch(()=>null)]);
-  state.calendarResources=Array.isArray(calendarResources)?calendarResources:null;
+  if(!Array.isArray(calendarResources))throw Error('School calendar unavailable. Refresh before generating registers.');LamaSchoolWeek.read(calendarResources);state.calendarResources=calendarResources;
   if(!Array.isArray(students)||!Array.isArray(records))throw Error('The register returned an invalid response.');
   state.students=role==='teacher'?students.filter(s=>normalizeClass(klass(s))===normalizeClass(state.session.assignedClass)&&(!state.session.assignedSection||!s.section||String(s.section).toLowerCase()===String(state.session.assignedSection).toLowerCase())):students;
   const ids=new Set(state.students.map(personId)),enrollmentNumbers=new Set(state.students.map(enrol).filter(Boolean));

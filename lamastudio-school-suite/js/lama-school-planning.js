@@ -109,7 +109,7 @@ function updatePrintCount(){
 }
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
- if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','periodDay','cbDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(!work.includes(el.value))el.value=work[0]||'';}
+ if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','printDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(el.value&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
  const hidden=gridState();$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),field('quickDay')||'Monday',Number(field('quickPeriods'))||8,[...hidden.periods]);
 }
 function teacherLabel(t){return String(t?.name||t?.fullName||t?.teacherName||'').trim()}
@@ -242,7 +242,7 @@ function formatDate(v){return new Date(v+'T12:00:00Z').toLocaleDateString('en-GB
 function timingSummary(t,season='winter'){
  if(!t)return null;
  const groups=new Map();
- for(const d of days){const h=t.hours[d],key=h?.open===true?formatTime(h.start)+' – '+formatTime(h.end):'Closed / weekly holiday';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(d)}
+ for(const d of days){const h=t.hours[d],policy=LamaSchoolWeek.read(schoolWeekResources),closed=policy?policy.weeklyOff.includes(LamaSchoolWeek.names.indexOf(d)):h?.open!==true,key=closed?'Closed / weekly holiday':h?.open===true?formatTime(h.start)+' – '+formatTime(h.end):'Working day — hours not configured';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(d)}
  return {title:(season==='summer'?'Summer':'Winter')+' School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),breakTime:t.breakStart?'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd):'No lunch break configured'};
 }
 function scheduleSummaries(sid=activeSession()){
@@ -781,7 +781,7 @@ async function printProfile(){
 function buildTimetablePrint(profile){
  const selectedSession=activeSession();
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
- const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p));
+ const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&workingWeek().includes(p.day));
  const mode=field('printScope');
  const cls=field('printOneClass')||field('viewGrade');
  const selectedClasses=printSelection instanceof Set?[...printSelection]:null;

@@ -109,7 +109,7 @@ function updatePrintCount(){
 }
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
- if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','printDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(el.value&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
+ if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','printDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(days.includes(el.value)&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
  const hidden=gridState();$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),field('quickDay')||'Monday',Number(field('quickPeriods'))||8,[...hidden.periods]);
 }
 function teacherLabel(t){return String(t?.name||t?.fullName||t?.teacherName||'').trim()}
@@ -501,7 +501,7 @@ async function saveClassDraft(){
     const hits=existing.filter(x=>x.day===d&&Number(x.period)===r.i&&sameCls(x));if(hits.length>1)throw Error(d+' P'+r.i+': resolve duplicate saved lessons first.');
     const old=hits[0];const payload={sessionId:sid,day:d,period:r.i,start,end,grade:old?.grade||parts.grade,section:old?.section??parts.section,subject,teacherId:teacher.id,teacherName:teacher.name,room:old?.room||'',published:old?.published!==false};
     if(old&&Object.keys(payload).every(k=>old[k]===payload[k]))continue;
-    if(old&&d!==day)replace.push(d+' P'+r.i);
+    if(old&&d!==day)replace.push(r.classLabel+' '+d+' P'+r.i);
     const expected=old?parsed(rows.find(x=>String(x.id)===String(old.id))):null;
     jobs.push({id:old?.id||'',expected,payload});
    }
@@ -509,7 +509,7 @@ async function saveClassDraft(){
   if(!jobs.length)throw Error('No changed lessons to save for the selected days.');
   if(jobs.length>500)throw Error('Save at most 500 lessons at a time. Reduce periods or save one day at a time.');
   const ids=new Set(jobs.map(j=>String(j.id)).filter(Boolean)),remaining=existing.filter(x=>!ids.has(String(x.id)));
-  for(const j of jobs){const p=j.payload,sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));if(remaining.some(x=>x.day===p.day&&(sameCls(x)&&Number(x.period)===p.period||x.start<p.end&&x.end>p.start&&(sameCls(x)||String(x.teacherId)===p.teacherId))))throw Error(p.day+' P'+p.period+': class or teacher time conflict. Correct the lesson before saving.');remaining.push(p)}
+  for(const j of jobs){const p=j.payload,sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));if(remaining.some(x=>x.day===p.day&&(sameCls(x)&&Number(x.period)===p.period||x.start<p.end&&x.end>p.start&&(sameCls(x)||String(x.teacherId)===p.teacherId))))throw Error(p.grade+(p.section?' / '+p.section:'')+' '+p.day+' P'+p.period+': class or teacher time conflict. Correct the lesson before saving.');remaining.push(p)}
   if(week.length>1&&!confirm('Apply '+jobs.length+' changed lesson(s) to '+week.join(', ')+'?'+(replace.length?' Existing lessons will be updated: '+replace.join(', '):'')))return;
   classDraftBusy=true;quickBusy=true;$('classBuilder').querySelectorAll('input,select,button').forEach(e=>e.disabled=true);note.textContent='Saving '+jobs.length+' lesson(s) in one request…';
   attempted=true;

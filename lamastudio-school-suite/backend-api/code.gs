@@ -2919,7 +2919,8 @@ function lamaPlanningSaveBatch_(p){
   const time=v=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v||''));
   const cls=r=>normalizeSchoolClass(r.grade)+'|'+String(r.section||'').trim().toLowerCase().replace(/\s+/g,'');
   const sameSlot=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&Number(a.period)===Number(b.period)&&cls(a)===cls(b);
-  const overlaps=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&a.start<b.end&&a.end>b.start&&(cls(a)===cls(b)||lamaPlanningStaffKeys_(a).some(k=>lamaPlanningStaffKeys_(b).includes(k)));
+  const multiSessions=new Set(all.filter(x=>x.record.category==='planning-session'&&parse(x.record).teacherSchedulingMode==='multi-class').map(x=>String(x.record.id)));
+  const overlaps=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&a.start<b.end&&a.end>b.start&&(cls(a)===cls(b)||lamaPlanningBlockingStaff_(a,b,multiSessions.has(String(a.sessionId))));
   const periods=all.filter(x=>x.record.category==='planning-period').map(x=>({row:x.row,record:x.record,payload:parse(x.record)}));
   const teachers=lamaStaffRows_(ctx,'teachers').items.map(x=>x.record).filter(t=>String(t.status||'Active').toLowerCase()==='active');
   const curr=all.find(x=>x.record.category==='school-curriculum'&&x.record.title==='LAMA School Class Subjects'),doc=curr?parse(curr.record):{};
@@ -2985,8 +2986,16 @@ function lamaAssertPlanningDay_(ctx,record){
  if(p&&p.weeklyOff.includes(n))throw Error(lesson.day+' is a school-wide weekly holiday.');
  if(lesson.supportId)throw Error('Use Easy timetable builder to save additional staff.');
  for(const r of resources){if(r.category!=='planning-period'||String(r.id)===String(record.id||''))continue;let old;try{old=JSON.parse(r.description)}catch(e){continue}
-  if(old.supportId&&String(old.sessionId)===String(lesson.sessionId)&&old.day===lesson.day&&old.start<lesson.end&&old.end>lesson.start&&lamaPlanningStaffKeys_(old).some(k=>lamaPlanningStaffKeys_(lesson).includes(k)))throw Error('Assigned teacher is already working in another lesson.');
+  if(String(old.sessionId)!==String(lesson.sessionId)||old.day!==lesson.day)continue;
+  const sameCls=normalizeSchoolClass(old.grade)===normalizeSchoolClass(lesson.grade)&&String(old.section||'').trim().toLowerCase().replace(/\s+/g,'')===String(lesson.section||'').trim().toLowerCase().replace(/\s+/g,'');
+  const multi=resources.some(x=>x.category==='planning-session'&&String(x.id)===String(lesson.sessionId)&&JSON.parse(x.description||'{}').teacherSchedulingMode==='multi-class');
+  if(sameCls&&Number(old.period)===Number(lesson.period)||old.start<lesson.end&&lesson.start<old.end&&(sameCls||lamaPlanningBlockingStaff_(old,lesson,multi)))throw Error('Conflict: '+lesson.day+' '+lesson.grade+' P'+lesson.period+' '+lesson.start+'–'+lesson.end+' / '+old.grade+' P'+old.period+' '+old.start+'–'+old.end);
  }
 }
 
 function lamaPlanningStaffKeys_(p){const keys=[];if(p.teacherId)keys.push('teacher:'+String(p.teacherId));if(p.supportId&&['teacher','staff'].includes(p.supportKind))keys.push(p.supportKind+':'+String(p.supportId));return keys;}
+
+// Only shared registered teachers may overlap across different class/section slots in multi-class mode. Non-teaching staff remain strict.
+function lamaPlanningBlockingStaff_(a,b,multi){
+ return lamaPlanningStaffKeys_(a).some(k=>lamaPlanningStaffKeys_(b).includes(k)&&(!multi||!k.startsWith('teacher:')));
+}

@@ -263,7 +263,7 @@ function calendarDay(date,sid,events=[]){
  const weekday=days[(new Date(date+'T12:00:00Z').getUTCDay()+6)%7];
  const hits=events.filter(e=>e.start<=date&&date<=e.end);
  const publicHoliday=hits.some(e=>/holiday|vacation/i.test(e.type||''));
- const configured=LamaSchoolWeek.read(schoolWeekResources);const closed=configured?configured.weeklyOff.includes(new Date(date+'T12:00:00Z').getUTCDay()):!!t&&t.hours[weekday]?.open!==true;
+ const configured=LamaSchoolWeek.read(schoolWeekResources);const closed=configured?configured.weeklyOff.includes(new Date(date+'T12:00:00Z').getUTCDay()):t?t.hours[weekday]?.open!==true:weekday==='Sunday';
  const kind=vacation||(publicHoliday||closed?'holiday':hits.length?'event':season);
  return {kind,label:vacation?vacationKeys[vacation]:publicHoliday?'Holiday':closed?'Weekly holiday':hits.length?'School event':season?calendarLabels[season]:'',hits};
 }
@@ -447,7 +447,7 @@ function renderClassBuilder(force=false){
  const sid=activeSession(),classes=visibleClasses(),old=$('cbClass').value,sessionList=sessions();
  $('cbSession').replaceChildren(...sessionList.map(s=>new Option(s.name+(s.active?' (active)':''),s.id)));$('cbSession').value=sid;
  $('cbClass').replaceChildren(new Option('All classes — edit together','__all__'),...classes.map(c=>new Option(c,c)));$('cbClass').value=old==='__all__'||classes.includes(old)?old:classes[0]||'';
- const day=workingWeek().includes(field('cbDay'))?field('cbDay'):workingWeek()[0],cls=field('cbClass'),num=Math.min(14,Math.max(1,Math.floor(Number(field('cbCount'))||8)));$('cbCount').value=num;
+ const day=workingWeek().includes(field('cbDay'))?field('cbDay'):workingWeek()[0];$('cbDay').value=day||'';const cls=field('cbClass'),num=Math.min(14,Math.max(1,Math.floor(Number(field('cbCount'))||8)));$('cbCount').value=num;
  const previousClass=classDraftKey?JSON.parse(classDraftKey)[1]:'';classDraftKey=JSON.stringify([sid,cls,day,String(num)]);classDraftRows=[];const out=$('cbRows');out.replaceChildren();
  const periods=timetableForSession(),parts=LamaTimetableGrid.splitLabel(cls);
  const choices=teacherChoices('').sort((a,b)=>Number(LamaTimetableGrid.classKey(b.assignedClass)===LamaTimetableGrid.classKey(parts.grade))-Number(LamaTimetableGrid.classKey(a.assignedClass)===LamaTimetableGrid.classKey(parts.grade)));
@@ -482,7 +482,7 @@ function draftChanged(r){
 }
 function draftSelected(r){return draftChanged(r)||(field('cbScope')==='copyweek'&&!r.duplicate&&!!r.subject.value)}
 function updateClassDraft(){
- const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;r.card.style.borderColor=changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — use detailed editor':changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
+ const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';const copyOption=$('cbScope').querySelector('option[value="copyweek"]');if(copyOption)copyOption.textContent='Copy all filled periods to '+workingWeek().map(d=>d.slice(0,3)).join(', ');$('cbTeacher').disabled=field('cbClass')==='__all__'||classDraftBusy;let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;r.card.style.borderColor=changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — use detailed editor':changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
  classDraftDirty=count>0;const selected=classDraftRows.filter(draftSelected).length;$('cbSave').disabled=!selected||!teacherDirectoryLoaded||classDraftBusy||quickBusy||periodNeedsRefresh;$('cbSave').textContent=field('cbScope')==='copyweek'&&selected?'Copy '+selected+' filled periods to working week':count?'Save '+count+' changed period'+(count===1?'':'s'):'No unsaved changes';
 }
 async function saveClassDraft(){

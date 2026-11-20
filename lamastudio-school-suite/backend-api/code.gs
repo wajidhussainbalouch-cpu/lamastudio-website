@@ -2993,9 +2993,9 @@ function lamaAssertPlanningDay_(ctx,record){
  }
 }
 
-function lamaPlanningStaffKeys_(p){const keys=[];if(p.teacherId)keys.push('teacher:'+String(p.teacherId));if(p.supportId&&['teacher','staff'].includes(p.supportKind))keys.push(p.supportKind+':'+String(p.supportId));return keys;}
+function lamaPlanningStaffKeys_(p,multi=false){const keys=[];const covered=multi&&p.supportKind==='teacher'&&p.supportId&&String(p.supportId)!==String(p.teacherId);if(p.teacherId&&!covered)keys.push('teacher:'+String(p.teacherId));if(p.supportId&&['teacher','staff'].includes(p.supportKind))keys.push(p.supportKind+':'+String(p.supportId));return keys;}
 
 // Only shared registered teachers may overlap across different class/section slots in multi-class mode. Non-teaching staff remain strict.
 function lamaPlanningBlockingStaff_(a,b,multi){
- return lamaPlanningStaffKeys_(a).some(k=>lamaPlanningStaffKeys_(b).includes(k)&&(!multi||!k.startsWith('teacher:')));
+ return lamaPlanningStaffKeys_(a,multi).some(k=>lamaPlanningStaffKeys_(b,multi).includes(k)&&(!multi||!k.startsWith('teacher:')));
 }

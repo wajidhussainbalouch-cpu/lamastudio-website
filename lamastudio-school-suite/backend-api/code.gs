@@ -1855,6 +1855,7 @@ function handleRequest(params) {
             return {status:'success',result:lamaStaffAction_(params)};
         if (action==='saveSchoolWorkingWeek')return {status:'success',result:lamaSaveSchoolWorkingWeek_(params)};
         if (action==='planningSaveBatch')return {status:'success',result:lamaPlanningSaveBatch_(params)};
+        if(action==='lessonPlanner')return {status:'success',result:lamaLessonPlanner_(params)};
         if (['studentHomeworkCompletion','studentHomeworkSetCompletion','homeworkCompletionReport'].includes(action))return {status:'success',result:lamaHomeworkCompletionAction_(params)};
         if (action==='teacherHomeworkBatch')return {status:'success',result:lamaTeacherHomeworkBatch_(params)};
         if (action==='teacherUpdateStudentProfile')return {status:'success',result:lamaTeacherUpdateStudentProfile_(params)};
@@ -2212,7 +2213,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['studentHomeworkCompletion','studentHomeworkSetCompletion','homeworkCompletionReport','saveSchoolWorkingWeek','planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['lessonPlanner','studentHomeworkCompletion','studentHomeworkSetCompletion','homeworkCompletionReport','saveSchoolWorkingWeek','planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -3073,4 +3074,82 @@ function lamaHomeworkCompletionAction_(p){
  return {id:str(s.id),name:str(s.name),enrlNo:str(s.enrlNo),class:str(s.class),section:str(s.section),items};
  })};
  }finally{if(lock)lock.releaseLock();}
+}
+
+/* Lesson plans: dedicated protected tab, never exposed through generic collections. */
+function lamaLessonPlanner_(p){
+ const op=String(p.operation||''),role=p.role;
+ if(!['teacher','school'].includes(role))throw Error('Teacher or verified school administrator required.');
+ const write=op!=='load',ctx=role==='school'?lamaStaffAdminContext_(p,write):resolveContext(p);
+ if(role==='teacher'&&!String(ctx.teacher.assignedClass||'').trim())throw Error('No assigned class.');
+ if(write)assertSchoolWritable(ctx.schoolId);
+ const str=v=>String(v??'').trim(),text=(v,max=3000)=>{if(typeof v!=='string'||v.length>max)throw Error('Invalid lesson plan text.');return v.trim()};
+ const date=v=>typeof v==='string'&&lamaStaffDate_(v)===v;
+ const headings=['knowledge','comprehension','application','previous','resources','av','humour','reference','assessment','activities','support','challenge','worksheet','answerKey','source','reflectionGood','reflectionImprove','assessmentResult'];
+ const methods=['Lecture','Discussion','Tech Integration','Student Centered','PBL','Flipped','Blended','Kinesthetic','Activity Based','Montessori','Inquiry Based','Other'];
+ const steps=['Hook','Explore','Explain','Practice','Wrap-up'];
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Lesson planner busy. Refresh before retry.');
+ try{
+ const headers=['id','teacherId','teacherName','designation','class','section','subject','from','to','status','version','payloadJson','reviewJson','deliveryJson','createdAt','updatedAt'];
+ const tab=secureTab(ctx.ss,'_LAMA_LESSON_PLANS',headers),raw=tab.getDataRange().getValues(),actual=raw[0];
+ const items=raw.slice(1).map((row,i)=>({row:i+2,record:rowToRecord(actual,row)})).filter(x=>x.record.id);
+ const own=r=>role==='school'||str(r.teacherId)===str(ctx.teacher.id)&&teacherOwns(ctx,r);
+ const safe=r=>Object.assign({},r,{from:lamaStaffDate_(r.from),to:lamaStaffDate_(r.to)});
+ const resources=lamaStaffRows_(ctx,'resources').items.map(x=>x.record);
+ if(op==='load'){
+  const from=p.from,to=p.to;if(!date(from)||!date(to)||from>to||(+new Date(to)-+new Date(from))/86400000>62)throw Error('Choose a report range of up to 63 days.');
+  const plans=items.map(x=>safe(x.record)).filter(r=>own(r)&&r.from<=to&&r.to>=from);
+  const curriculum=role==='teacher'?lamaTeacherCurriculum_(ctx):null;
+  const profile=role==='teacher'?{id:str(ctx.teacher.id),name:str(ctx.teacher.name),designation:str(ctx.teacher.designation),class:str(ctx.teacher.assignedClass),section:str(ctx.teacher.assignedSection),subjects:curriculum.subjects}:null;
+  const planning=role==='teacher'?resources.filter(r=>['planning-session','planning-period','planning-event','school-working-week'].includes(r.category)).filter(r=>{
+   if(r.category==='planning-session'||r.category==='school-working-week')return true;
+   try{const x=JSON.parse(r.description||'{}');return x.published===true&&(!x.grade||sameClass(x.grade,profile.class))&&(!x.section||sameClass(x.section,profile.section));}catch(e){return false}
+  }).map(r=>({id:r.id,category:r.category,description:r.description})):[];
+  return {plans,profile,planning};
+ }
+ const id=str(p.id),old=items.find(x=>str(x.record.id)===id),prev=old&&safe(old.record);
+ if(id&&!prev)throw Error('Lesson plan not found.');
+ if(prev&&(!own(prev)||Number(prev.version)!==Number(p.version)))throw Error('Plan access denied or changed. Refresh first.');
+ const now=new Date().toISOString();let next;
+ if(op==='save'){
+  if(role!=='teacher'||prev&&!['draft','returned'].includes(prev.status))throw Error('Only teachers may edit their own drafts or returned plans.');
+  const q=p.plan;if(!q||typeof q!=='object'||JSON.stringify(q).length>28000)throw Error('Invalid or oversized lesson plan.');
+  const curriculum=lamaTeacherCurriculum_(ctx),subject=curriculum.subjects.find(s=>str(s)===str(q.subject));
+  if(!subject||!date(q.from)||!date(q.to)||q.from>q.to||(+new Date(q.to)-+new Date(q.from))/86400000>6)throw Error('Choose a configured subject and a period of 1–7 days.');
+  const payload={mode:q.from===q.to?'daily':'weekly',language:['Urdu','English','Bilingual'].includes(q.language)?q.language:'Urdu',chapter:text(q.chapter||'',300),topic:text(q.topic||'',300),session:text(q.session||'',100),syllabusPlanId:text(q.syllabusPlanId||'',100),days:[],methods:[],flow:[]};
+  if(!payload.topic)throw Error('Topic required.');
+  for(const k of headings)payload[k]=text(q[k]||'');
+  if(!Array.isArray(q.days)||q.days.length>35||!Array.isArray(q.methods)||q.methods.some(v=>!methods.includes(v))||!Array.isArray(q.flow)||q.flow.length!==5)throw Error('Invalid planning fields.');
+  payload.methods=[...new Set(q.methods)];
+  const dayKeys=new Set();
+  for(const d of q.days){
+   if(!date(d.date)||d.date<q.from||d.date>q.to)throw Error('Lesson date outside plan range.');
+   const period=Number(d.period||0),slo=Number(d.sloCount||0),minutes=Number(d.minutes||0);if(!Number.isInteger(period)||period<0||period>30||!Number.isInteger(slo)||slo<0||slo>100||!Number.isInteger(minutes)||minutes<0||minutes>360)throw Error('Invalid period, duration or SLO count.');
+   const key=d.date+'|'+period;if(dayKeys.has(key))throw Error('Duplicate day and period.');dayKeys.add(key);
+   payload.days.push({date:d.date,period,minutes,topic:text(d.topic||'',500),sloCount:slo,homework:text(d.homework||'',1500)});
+  }
+  for(let i=0;i<steps.length;i++){const f=q.flow[i],minutes=Number(f.minutes||0);if(!Number.isInteger(minutes)||minutes<0||minutes>360)throw Error('Invalid lesson flow minutes.');payload.flow.push({step:steps[i],minutes,activity:text(f.activity||'',1500)});}
+  const keyClass=str(ctx.teacher.assignedClass),section=str(ctx.teacher.assignedSection),tid=str(ctx.teacher.id);
+  if(items.some(x=>str(x.record.id)!==id&&str(x.record.teacherId)===tid&&sameClass(x.record.class,keyClass)&&sameClass(x.record.section,section)&&str(x.record.subject)===str(subject)&&lamaStaffDate_(x.record.from)===q.from&&lamaStaffDate_(x.record.to)===q.to))throw Error('A plan for this subject and date range already exists. Open it to edit.');
+  next={id:prev?.id||genId('lp'),teacherId:tid,teacherName:str(ctx.teacher.name),designation:str(ctx.teacher.designation),class:keyClass,section,subject,from:q.from,to:q.to,status:prev?.status||'draft',version:Number(prev?.version||0)+1,payload,review:prev?.review||null,delivery:prev?.delivery||null,createdAt:prev?.createdAt||now,updatedAt:now};
+ }else{
+  if(!prev)throw Error('Select a saved plan.');
+  next={...prev,version:Number(prev.version)+1,updatedAt:now};
+  if(op==='submit'&&role==='teacher'&&['draft','returned'].includes(prev.status)){
+   const q=prev.payload;if(!q?.days?.some(d=>d.topic)||!q.knowledge&&!q.comprehension&&!q.application)throw Error('Enter a daily topic and at least one learning outcome before submission.');
+   next.status='submitted';
+  }else if(['approve','return'].includes(op)&&role==='school'&&prev.status==='submitted'){
+   const comment=text(p.comment||'',1000);if(op==='return'&&!comment)throw Error('Give a revision reason.');
+   next.status=op==='approve'?'approved':'returned';next.review={by:str(ctx.auditActor.name||ctx.auditActor.displayName||ctx.auditActor.id),at:now,comment};
+  }else if(op==='reflect'&&role==='teacher'&&prev.status==='approved'){
+   const v=p.delivery||{},state=v.state;if(!['not taught','partly taught','taught'].includes(state))throw Error('Select actual delivery status.');
+   next.delivery={state,good:text(v.good||''),improve:text(v.improve||''),assessment:text(v.assessment||''),at:now};
+  }else throw Error('Action not allowed for this plan status or role.');
+ }
+ const row=recordToRow(actual,next);if(old)tab.getRange(old.row,1,1,row.length).setValues([row]);else tab.appendRow(row);
+ SpreadsheetApp.flush();
+ const check=tab.getDataRange().getValues().slice(1).map(r=>rowToRecord(actual,r)).find(r=>str(r.id)===str(next.id));
+ if(!check||Number(check.version)!==next.version)throw Error('Save not confirmed. Refresh.');
+ return safe(check);
+ }finally{lock.releaseLock();}
 }

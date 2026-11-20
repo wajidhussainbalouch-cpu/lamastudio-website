@@ -2980,9 +2980,13 @@ function lamaAssertSchoolAttendanceDay_(ctx,date){
 }
 function lamaAssertPlanningDay_(ctx,record){
  if(record.category!=='planning-period')return;
- const resources=lamaStaffRows_(ctx,'resources').items.map(x=>x.record),p=lamaSchoolWeekRead_(resources);if(!p)return;
+ const resources=lamaStaffRows_(ctx,'resources').items.map(x=>x.record),p=lamaSchoolWeekRead_(resources);
  const lesson=JSON.parse(record.description||'{}'),n=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(lesson.day);
- if(p.weeklyOff.includes(n))throw Error(lesson.day+' is a school-wide weekly holiday.');
+ if(p&&p.weeklyOff.includes(n))throw Error(lesson.day+' is a school-wide weekly holiday.');
+ if(lesson.supportId)throw Error('Use Easy timetable builder to save additional staff.');
+ for(const r of resources){if(r.category!=='planning-period'||String(r.id)===String(record.id||''))continue;let old;try{old=JSON.parse(r.description)}catch(e){continue}
+  if(old.supportId&&String(old.sessionId)===String(lesson.sessionId)&&old.day===lesson.day&&old.start<lesson.end&&old.end>lesson.start&&lamaPlanningStaffKeys_(old).some(k=>lamaPlanningStaffKeys_(lesson).includes(k)))throw Error('Assigned teacher is already working in another lesson.');
+ }
 }
 
 function lamaPlanningStaffKeys_(p){const keys=[];if(p.teacherId)keys.push('teacher:'+String(p.teacherId));if(p.supportId&&['teacher','staff'].includes(p.supportKind))keys.push(p.supportKind+':'+String(p.supportId));return keys;}

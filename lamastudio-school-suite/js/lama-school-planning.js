@@ -672,6 +672,7 @@ function draftChanged(r){
 function draftSelected(r){return draftChanged(r)||(field('cbScope')==='copyweek'&&!r.duplicate&&!!r.subject.value)}
 function updateClassDraft(){
  const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';const copyOption=$('cbScope').querySelector('option[value="copyweek"]');if(copyOption)copyOption.textContent='Copy all filled periods to '+workingWeek().map(d=>d.slice(0,3)).join(', ');$('cbTeacher').disabled=field('cbClass')==='__all__'||classDraftBusy;let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;r.card.style.borderColor=r.duplicate?'#fb7185':changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — resolve here':changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
+ for(const btn of $('cbRows').querySelectorAll('.duplicate-remove'))btn.disabled=classDraftBusy||quickBusy||periodNeedsRefresh;
  classDraftDirty=count>0;countNotice();const selected=classDraftRows.filter(draftSelected).length;$('cbSave').disabled=!selected||!teacherDirectoryLoaded||classDraftBusy||quickBusy||periodNeedsRefresh;$('cbSave').textContent=field('cbScope')==='copyweek'&&selected?'Copy '+selected+' filled periods to working week':count?'Save '+count+' changed period'+(count===1?'':'s'):'No unsaved changes';
 }
 async function saveClassDraft(){

@@ -110,7 +110,7 @@ function updatePrintCount(){
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
  if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','printDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(days.includes(el.value)&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
- const hidden=gridState(),classes=visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),counts=Object.fromEntries(classes.map(c=>[countKey(c),effectivePeriodCount(activeSession(),c,periods)]));$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,classes,field('quickDay')||'Monday',Math.max(1,...Object.values(counts)),[...hidden.periods],counts);
+ const hidden=gridState(),classes=visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),counts=Object.fromEntries(classes.map(c=>[countKey(c),effectivePeriodCount(activeSession(),c,periods)]));$('quickPeriods').value=String(Math.max(1,...Object.values(counts)));$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,classes,field('quickDay')||'Monday',Math.max(1,...Object.values(counts)),[...hidden.periods],counts);
 }
 function teacherLabel(t){return String(t?.name||t?.fullName||t?.teacherName||'').trim()}
 function normalizeTeachers(records){
@@ -541,7 +541,7 @@ function updateClassDraft(){
  classDraftDirty=count>0;countNotice();const selected=classDraftRows.filter(draftSelected).length;$('cbSave').disabled=!selected||!teacherDirectoryLoaded||classDraftBusy||quickBusy||periodNeedsRefresh;$('cbSave').textContent=field('cbScope')==='copyweek'&&selected?'Copy '+selected+' filled periods to working week':count?'Save '+count+' changed period'+(count===1?'':'s'):'No unsaved changes';
 }
 async function saveClassDraft(){
- if(classDraftBusy||quickBusy||periodNeedsRefresh)return;
+ if(classDraftBusy||quickBusy||timingBusy||sessionBusy||periodNeedsRefresh)return;
  let attempted=false,completed=0;const note=$('cbStatus');
  try{
   authorized();const [sid,cls,day]=JSON.parse(classDraftKey);if(sid!==activeSession())throw Error('Session changed. Reopen class timetable.');

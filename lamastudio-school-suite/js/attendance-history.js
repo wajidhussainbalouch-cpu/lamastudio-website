@@ -24,17 +24,17 @@
   const match=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   return match?match[3]+'-'+match[2].padStart(2,'0')+'-'+match[1].padStart(2,'0'):'';
  }
- function previousDays(anchor,amount){
+ function previousDays(anchor,amount,isClosed){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(anchor))return [];
   const d=new Date(anchor+'T12:00:00Z'),result=[];
   if(Number.isNaN(d.getTime()))return result;
-  for(let i=0;i<45&&result.length<amount;i++){
+  for(let i=0;i<370&&result.length<amount;i++){
    d.setUTCDate(d.getUTCDate()-1);
-   if(d.getUTCDay()!==0)result.push(d.toISOString().slice(0,10)); // Saturday attendance is allowed
+   const date=d.toISOString().slice(0,10);if(isClosed?!isClosed(date):d.getUTCDay()!==0)result.push(date);
   }
   return result;
  }
- function make(students,records,parseDate){
+ function make(students,records,parseDate,isClosed){
   const byId=new Map(),byEnrollment=new Map(),byStudentDate=new Map(),registeredDays=new Map();
   for(const student of students||[]){
    const k=personId(student),e=enrollment(student);
@@ -56,13 +56,13 @@
   }
   function get(student,date){return byStudentDate.get((personId(student)||enrollment(student))+'|'+date)||''}
   function recent(student,anchor,amount=7){
-   return previousDays(anchor,amount).map(date=>({date,status:get(student,date),label:date.slice(5)}));
+   return previousDays(anchor,amount,isClosed).map(date=>({date,status:get(student,date),label:date.slice(5)}));
   }
   function absenceInfo(student,anchor){
    const days=recent(student,anchor,7);
    // Skip dates with no saved class register; never infer absent from missing marks.
    let streak=0,checked=0;
-   for(const date of previousDays(anchor,18)){
+   for(const date of previousDays(anchor,18,isClosed)){
     if(!classDayRegistered(student,date))continue;
     checked++;
     if(get(student,date)==='Absent')streak++;

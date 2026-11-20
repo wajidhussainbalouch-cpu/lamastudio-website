@@ -898,7 +898,7 @@ function resolveContext(p) {
 
 const TEACHER_WRITE_COLLECTIONS = ['attendance', 'homework'];
 const TEACHER_READ_COLLECTIONS = ['students', 'datesheet', 'tests', 'activities', 'teacherPings', 'resources'];
-const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources', 'timetable'];
+const STUDENT_READ_COLLECTIONS = ['homework', 'datesheet', 'tests', 'notifications', 'activities', 'resources', 'timetable', 'attendance'];
 function normalizeSchoolClass(value) {
     return String(value == null ? '' : value).trim().toLowerCase()
       .replace(/^(grade|class|standard|std)[\s._-]*/i, '')
@@ -979,6 +979,14 @@ function listRecords(ctx, collection) {
     for (let i = 1; i < data.length; i++) {
         if (!data[i][headers.indexOf('id')]) continue;
         records.push(rowToRecord(headers, data[i]));
+    }
+    // Student attendance is read-only and scoped to the authenticated immutable ID.
+    // Return minimal fields, never a class-wide register or staff information.
+    if (collection === 'attendance' && ctx.role === 'student') {
+        const sid=String(ctx.student.id == null ? '' : ctx.student.id).trim();
+        if (!sid) throw Error('Student record has no ID. Contact your school.');
+        return records.filter(r=>String(r.studentId == null ? '' : r.studentId).trim()===sid)
+            .map(r=>({studentId:sid,date:lamaStaffDate_(r.date),status:String(r.status == null ? '' : r.status).trim()}));
     }
     if (collection === 'notifications' && ctx.role === 'student') {
         records = records.filter(r => {

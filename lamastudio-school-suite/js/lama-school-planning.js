@@ -119,7 +119,7 @@ function normalizeTeachers(records){
  for(const t of records){
   const id=String(t?.id??'').trim(),name=teacherLabel(t);
   if(!id||!name||String(t.status||'Active').trim().toLowerCase()!=='active')continue;
-  unique.set(id,{id,name,subject:String(t.subject||'').trim(),assignedClass:String(t.assignedClass||'').trim(),assignedSection:String(t.assignedSection||'').trim(),loginId:String(t.loginId||'').trim()});
+  unique.set(id,{id,name,designation:String(t.designation||'').trim(),subject:String(t.subject||'').trim(),assignedClass:String(t.assignedClass||'').trim(),assignedSection:String(t.assignedSection||'').trim(),loginId:String(t.loginId||'').trim()});
  }
  return [...unique.values()].sort(LamaClassOrder.teachers);
 }
@@ -250,7 +250,7 @@ function timingSummary(t,season='winter'){
  if(!t)return null;
  const groups=new Map();
  for(const d of days){const h=t.hours[d],policy=LamaSchoolWeek.read(schoolWeekResources),closed=policy?policy.weeklyOff.includes(LamaSchoolWeek.names.indexOf(d)):h?.open!==true,key=closed?'Closed / weekly holiday':h?.open===true?formatTime(h.start)+' – '+formatTime(h.end):'Working day — hours not configured';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(d)}
- return {title:(season==='summer'?'Summer':'Winter')+' School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),breakTime:t.breakStart?'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd):'No lunch break configured'};
+ return {title:(season==='summer'?'Summer':'Winter')+' School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),assemblyTime:t.assemblyStart?'Morning assembly: '+formatTime(t.assemblyStart)+' – '+formatTime(t.assemblyEnd):'Morning assembly not configured',breakTime:t.breakStart?'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd):'No lunch break configured'};
 }
 function scheduleSummaries(sid=activeSession()){
  const list=['winter','summer'].map(k=>timingSummary(schoolTiming(sid,k),k)).filter(Boolean);
@@ -343,7 +343,7 @@ function toggleTimingDay(i){const on=$('timingOpen'+i).checked;for(const k of ['
 function renderTiming(){
  const sid=activeSession(),ss=sessionRecord(sid),summaries=scheduleSummaries(sid),section=$('schoolTimings');
  section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length&&!ss?.terms?.length));renderAcademicTerms(sid,ss);
- $('schoolTimingSummary').innerHTML=summaries.length?summaries.map(t=>'<div class="border border-slate-600 rounded-xl p-3"><strong>'+esc(t.title)+'</strong><p>'+esc(t.dates)+'</p>'+t.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+(t.breakTime?'<p class="text-amber-200 font-medium">'+esc(t.breakTime)+'</p>':'')+'</div>').join(''):'<p>No seasonal timings or vacations published for this session.</p>';
+ $('schoolTimingSummary').innerHTML=summaries.length?summaries.map(t=>'<div class="border border-slate-600 rounded-xl p-3"><strong>'+esc(t.title)+'</strong><p>'+esc(t.dates)+'</p>'+t.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+(t.assemblyTime?'<p class="text-amber-200 font-medium">'+esc(t.assemblyTime)+'</p>':'')+(t.breakTime?'<p class="text-amber-200 font-medium">'+esc(t.breakTime)+'</p>':'')+'</div>').join(''):'<p>No seasonal timings or vacations published for this session.</p>';
  for(const id of ['timingAdmin','vacationAdmin'])$(id).classList.toggle('hidden',!adminMode||!verified||!ss);
  const picker=$('quickSeason'),previous=picker.value;
  picker.replaceChildren(new Option('Default school week',''));
@@ -973,25 +973,26 @@ async function printProfile(){
 function buildTimetablePrint(profile){
  const selectedSession=activeSession();
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
- const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&workingWeek().includes(p.day));
+ const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;const printWork=LamaSchoolWeek.working(schoolWeekResources,dayTiming?days.filter(d=>dayTiming.hours[d]?.open===true):workingWeek());
+ const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&printWork.includes(p.day));
  const mode=field('printScope');
  const cls=field('printOneClass')||field('viewGrade');
  const selectedClasses=printSelection instanceof Set?[...printSelection]:null;
- const inCharge={};for(const label of [...visibleClasses(),cls]){if(!label)continue;const parts=LamaTimetableGrid.splitLabel(label);const assigned=teachers.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||same(t.assignedSection,parts.section)));if(assigned.length===1)inCharge[label]=assigned[0].name;}
- const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;
+ const inCharge={};for(const label of [...visibleClasses(),cls]){if(!label)continue;const parts=LamaTimetableGrid.splitLabel(label);const assigned=teachers.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||same(t.assignedSection,parts.section)));if(assigned.length===1){const t=assigned[0];inCharge[label]=t.name+(t.designation?' ('+t.designation+')':'');}}
+ const seasonLabel=season==='winter'?'Winter':season==='summer'?'Summer':'';const printTiming=dayTiming?[timingSummary(dayTiming,season)]:[{title:seasonLabel?seasonLabel+' school timings not published':'Seasonal school timings not published for this date',lines:['School opening, closing, assembly and break times require published seasonal settings.']}];
  const calendarIncluded=$('printCalendar').checked;
  const calMonth=$('monthTitle').textContent;
  return LamaTimetablePrint.printMarkup({
   school:profile,
   schoolFallback:printProfileFallback(),
   sessionName:name,
-  timing:scheduleSummaries(selectedSession),
+  timing:printTiming,seasonLabel,showRooms:$('printRooms')?.checked===true,
   calendarLegend:calendarLegendMarkup(),
   records:periods.map(p=>({...p,coveredByTeacher:coverageTeacher(p)})),
   scope:mode,
   selectedClass:cls,
   selectedClasses:mode==='selected'?null:selectedClasses,
-  printDay:field('printDay'),workingDays:workingWeek(),dayTiming,inCharge,
+  printDay:field('printDay'),workingDays:printWork,dayTiming,inCharge,
   calendar:calendarIncluded,
   calendarMonth:calMonth,
   calendarContent:$('monthGrid').innerHTML,
@@ -1005,6 +1006,7 @@ async function printTimetable(){
  const original=button.textContent;
  button.textContent='Preparing school timetable…';
  try{
+  if(adminMode&&(classDraftDirty||pendingPeriodCounts.size)&&!confirm('There are unsaved timetable changes or period counts. Print the currently saved records only?'))return;
   const profile=await printProfile();
   const output=buildTimetablePrint(profile);
   $('printSheet').innerHTML=output;

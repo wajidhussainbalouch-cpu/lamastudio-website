@@ -226,7 +226,9 @@ function validateTiming(t){
  if(!t||!validDate(t.from)||!validDate(t.to)||t.from>t.to)throw Error('Choose a valid season start and end date.');
  if(!t.hours||!days.some(d=>t.hours[d]?.open===true))throw Error('Choose at least one working day.');
  if((t.breakStart||t.breakEnd)&&(!validTime(t.breakStart)||!validTime(t.breakEnd)||t.breakStart>=t.breakEnd))throw Error('Choose a valid lunch break or leave both fields empty.');
- for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||(t.breakStart&&(t.breakStart<h.start||t.breakEnd>h.end))))throw Error(d+': school hours must contain the lunch break.')}
+ if((t.assemblyStart||t.assemblyEnd)&&(!validTime(t.assemblyStart)||!validTime(t.assemblyEnd)||t.assemblyStart>=t.assemblyEnd))throw Error('Choose valid assembly times or leave both blank.');
+ if(t.assemblyStart&&t.breakStart&&t.assemblyStart<t.breakEnd&&t.assemblyEnd>t.breakStart)throw Error('Assembly and lunch break cannot overlap.');
+ for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||(t.breakStart&&(t.breakStart<h.start||t.breakEnd>h.end))||(t.assemblyStart&&(t.assemblyStart<h.start||t.assemblyEnd>h.end))))throw Error(d+': school hours must contain the lunch break.')}
  return t;
 }
 const seasonKeys={winter:'schoolTiming',summer:'summerTiming'};
@@ -324,7 +326,7 @@ function setupAcademicTerms(section){
 
 function setupTiming(){
  const section=document.createElement('section');section.id='schoolTimings';section.className='no-print hidden bg-slate-900 rounded-2xl p-4 border border-slate-700 mb-5';
- section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">Seasonal school timings &amp; vacations</h2><div id="schoolTimingSummary" class="mt-2 text-sm grid gap-3 md:grid-cols-2"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure seasonal school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Applies only to the selected school and academic session. Save each season separately. Blank summer timings are not published.</p><label>Season<select id="timingSeason"><option value="winter">Winter school timings</option><option value="summer">Summer school timings</option></select></label><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Lunch break starts (optional)<input id="timingBreakStart" type="time"></label><label>Lunch break ends (optional)<input id="timingBreakEnd" type="time"></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button> <button id="removeTiming" type="button" class="mt-3 text-rose-300 border border-rose-800 rounded-xl px-3 py-2">Clear published season</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details><details id="vacationAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure summer &amp; winter vacations</summary><form id="vacationForm" class="mt-3"><p class="text-xs text-slate-300">Leave both dates empty if a vacation is not configured. Dates are inclusive.</p>'+Object.entries(vacationKeys).map(([k,label])=>'<fieldset class="mt-3 border border-slate-600 rounded-lg p-3"><legend>'+label+'</legend><div class="grid grid-cols-2 gap-3"><label>From<input type="date" id="'+k+'From"></label><label>To<input type="date" id="'+k+'To"></label></div></fieldset>').join('')+'<button id="saveVacations" type="submit" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl">Save and publish vacations</button><p id="vacationStatus" class="mt-2 text-sm text-amber-200" role="status"></p></form></details>';
+ section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">Seasonal school timings &amp; vacations</h2><div id="schoolTimingSummary" class="mt-2 text-sm grid gap-3 md:grid-cols-2"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure seasonal school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Applies only to the selected school and academic session. Save each season separately. Blank summer timings are not published.</p><label>Season<select id="timingSeason"><option value="winter">Winter school timings</option><option value="summer">Summer school timings</option></select></label><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Morning assembly starts (optional)<input id="timingAssemblyStart" type="time"></label><label>Morning assembly ends (optional)<input id="timingAssemblyEnd" type="time"></label><label>Lunch break starts (optional)<input id="timingBreakStart" type="time"></label><label>Lunch break ends (optional)<input id="timingBreakEnd" type="time"></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button> <button id="removeTiming" type="button" class="mt-3 text-rose-300 border border-rose-800 rounded-xl px-3 py-2">Clear published season</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details><details id="vacationAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure summer &amp; winter vacations</summary><form id="vacationForm" class="mt-3"><p class="text-xs text-slate-300">Leave both dates empty if a vacation is not configured. Dates are inclusive.</p>'+Object.entries(vacationKeys).map(([k,label])=>'<fieldset class="mt-3 border border-slate-600 rounded-lg p-3"><legend>'+label+'</legend><div class="grid grid-cols-2 gap-3"><label>From<input type="date" id="'+k+'From"></label><label>To<input type="date" id="'+k+'To"></label></div></fieldset>').join('')+'<button id="saveVacations" type="submit" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl">Save and publish vacations</button><p id="vacationStatus" class="mt-2 text-sm text-amber-200" role="status"></p></form></details>';
  $('status').after(section);setupAcademicTerms(section);
  const legend=document.createElement('div');legend.id='calendarLegend';legend.className='flex flex-wrap gap-2 mb-3 text-xs';legend.innerHTML=calendarLegendMarkup();$('monthGrid').before(legend);
  const quickSeason=document.createElement('label');quickSeason.innerHTML='Working week for seasonal hours<select id="quickSeason"><option value="">Default school week</option></select><small>Changes working days for full-week saving only; saved subjects and periods remain unchanged.</small>';
@@ -355,7 +357,7 @@ function renderTiming(){
   const year=Number(String(ss.start||'').slice(0,4))||new Date().getFullYear();
   const example=season==='winter'?{from:year+'-10-16',to:(year+1)+'-03-31',breakStart:'12:15',breakEnd:'12:30',hours:Object.fromEntries(days.map((d,i)=>[d,{open:i<5,start:'08:45',end:i===4?'12:30':'13:30'}]))}:{from:'',to:'',breakStart:'',breakEnd:'',hours:Object.fromEntries(days.map((d,i)=>[d,{open:i<5,start:'',end:''}]))};
   const v=schoolTiming(sid,season)||example;
-  for(const [id,k] of Object.entries({timingFrom:'from',timingTo:'to',timingBreakStart:'breakStart',timingBreakEnd:'breakEnd'}))$(id).value=v[k]||'';
+  for(const [id,k] of Object.entries({timingFrom:'from',timingTo:'to',timingBreakStart:'breakStart',timingBreakEnd:'breakEnd',timingAssemblyStart:'assemblyStart',timingAssemblyEnd:'assemblyEnd'}))$(id).value=v[k]||'';
   for(let i=0;i<days.length;i++){const h=v.hours[days[i]]||{};$('timingOpen'+i).checked=h.open===true;$('timingStart'+i).value=h.start||'';$('timingEnd'+i).value=h.end||'';toggleTimingDay(i)}
   $('timingStatus').textContent='';
  }
@@ -389,7 +391,7 @@ async function saveTiming(clear){
  const note=$('timingStatus'),sid=activeSession(),season=field('timingSeason'),key=seasonKeys[season];
  if(!key||timingFormSession!==sid+'|'+season){note.textContent='Select the correct academic session and season.';return}
  let t;
- try{if(!clear)t=validateTiming({from:field('timingFrom'),to:field('timingTo'),breakStart:field('timingBreakStart'),breakEnd:field('timingBreakEnd'),hours:Object.fromEntries(days.map((d,i)=>[d,{open:$('timingOpen'+i).checked,start:field('timingStart'+i),end:field('timingEnd'+i)}]))})}catch(e){note.textContent=e.message;return}
+ try{if(!clear)t=validateTiming({from:field('timingFrom'),to:field('timingTo'),breakStart:field('timingBreakStart'),breakEnd:field('timingBreakEnd'),assemblyStart:field('timingAssemblyStart'),assemblyEnd:field('timingAssemblyEnd'),hours:Object.fromEntries(days.map((d,i)=>[d,{open:$('timingOpen'+i).checked,start:field('timingStart'+i),end:field('timingEnd'+i)}]))})}catch(e){note.textContent=e.message;return}
  await updateSessionSettings(note,p=>{
   if(clear){if(!p[key])throw Error('No published season to clear.');if(!confirm('Clear the published '+season+' timings? Saved lessons and vacations remain unchanged.'))return null;const next={...p};delete next[key];return next}
   validateSessionRange(t,p,season);
@@ -483,7 +485,7 @@ function renderClassBuilder(force=false){
 }
 function draftChanged(r){
  if(r.duplicate)return false;
- if(!r.old)return !!(r.subject.value||r.teacher.value);
+ if(!r.old)return !!(r.subject.value||r.teacher.value||r.support.value);
  return r.subject.value!==String(r.old.subject||'')||r.teacher.value!==String(r.old.teacherId||'')||r.start.value!==String(r.old.start||'')||r.end.value!==String(r.old.end||'')||r.support.value!==(r.old.supportId?r.old.supportKind+':'+r.old.supportId:'');
 }
 function draftSelected(r){return draftChanged(r)||(field('cbScope')==='copyweek'&&!r.duplicate&&!!r.subject.value)}
@@ -792,6 +794,8 @@ function buildTimetablePrint(profile){
  const mode=field('printScope');
  const cls=field('printOneClass')||field('viewGrade');
  const selectedClasses=printSelection instanceof Set?[...printSelection]:null;
+ const inCharge={};for(const label of [...visibleClasses(),cls]){if(!label)continue;const parts=LamaTimetableGrid.splitLabel(label);const assigned=teachers.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||same(t.assignedSection,parts.section)));if(assigned.length===1)inCharge[label]=assigned[0].name;}
+ const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;
  const calendarIncluded=$('printCalendar').checked;
  const calMonth=$('monthTitle').textContent;
  return LamaTimetablePrint.printMarkup({
@@ -804,7 +808,7 @@ function buildTimetablePrint(profile){
   scope:mode,
   selectedClass:cls,
   selectedClasses:mode==='selected'?null:selectedClasses,
-  printDay:field('printDay'),
+  printDay:field('printDay'),workingDays:workingWeek(),dayTiming,inCharge,
   calendar:calendarIncluded,
   calendarMonth:calMonth,
   calendarContent:$('monthGrid').innerHTML,
@@ -821,6 +825,7 @@ async function printTimetable(){
   const profile=await printProfile();
   const output=buildTimetablePrint(profile);
   $('printSheet').innerHTML=output;
+  setPrintOrientation();
   printPrepared=true;
   const img=$('printSheet').querySelector('img.print-school-logo');
   if(img&&typeof img.decode==='function'){
@@ -836,7 +841,8 @@ async function printTimetable(){
   button.textContent=original;
  }
 }
-window.addEventListener('beforeprint',()=>{
+function setPrintOrientation(){let style=document.getElementById('dynamicPrintPage');if(!style){style=document.createElement('style');style.id='dynamicPrintPage';document.head.append(style)}style.textContent='@page{size:A4 '+(field('printScope')==='all'||!field('printDay')?'landscape':'portrait')+';margin:10mm}'}
+window.addEventListener('beforeprint',()=>{setPrintOrientation();
  // Support the browser's own Print command without replacing a logo
  // whose bytes have already been loaded for the print-button preview.
  if(printPrepared)return;

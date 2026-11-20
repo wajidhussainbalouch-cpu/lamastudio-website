@@ -472,7 +472,7 @@ function jumpConflictLesson(p){
   classDraftDirty=false;$('cbClass').value=match;$('cbDay').value=day;renderClassBuilder(true);
   row=classDraftRows.find(r=>r.i===Number(p.period)&&LamaTimetableGrid.classKey(r.classLabel)===LamaTimetableGrid.classKey(cls));
  }
- if(row?.duplicate&&p.id){if(classDraftDirty&&!confirm('Open the detailed editor for this duplicate? Unsaved class changes remain in the builder.'))return;edit('period',String(p.id));return}
+ if(row?.duplicate){const target=[...row.duplicateBox.querySelectorAll('[data-duplicate-id]')].find(e=>e.dataset.duplicateId===String(p.id))||row.duplicateBox;target.classList.add('conflict-focus');target.scrollIntoView({behavior:'smooth',block:'center'});return}
  if(row){for(const old of document.querySelectorAll('.conflict-focus'))old.classList.remove('conflict-focus');row.card.classList.add('conflict-focus');row.card.scrollIntoView({behavior:'smooth',block:'center'});row.subject.focus({preventScroll:true})}
  else status('Open the detailed period editor to review this lesson.');
 }
@@ -568,13 +568,70 @@ function setupClassBuilder(){
  window.addEventListener('beforeunload',e=>{if(classDraftDirty||pendingPeriodCounts.size){e.preventDefault();e.returnValue=''}});
  $('quickBuilder').classList.add('class-grid-collapsed');$('admin').classList.add('class-grid-collapsed');
 }
+
+function duplicateSlot(record,lesson){
+ if(record.category!==type.period)return false;
+ const p=parsed(record);
+ return String(p.sessionId)===String(lesson.sessionId)&&p.day===lesson.day&&Number(p.period)===Number(lesson.period)&&conflictClass(p)===conflictClass(lesson);
+}
+function duplicateSnapshot(records){
+ return JSON.stringify(records.map(r=>[String(r.id),String(r.description||'')]).sort((a,b)=>a[0].localeCompare(b[0])));
+}
+function duplicateDetails(p){
+ return (p.subject||'No subject')+' | '+(p.teacherName||'Unassigned teacher')+(p.supportName?' + '+p.supportName+' ('+(p.supportRole||'Additional staff')+')':'')+' | '+p.start+'–'+p.end+(p.room?' | Room '+p.room:'')+(p.published===false?' | Draft':' | Published');
+}
+async function removeDuplicateEntry(row,lesson){
+ const note=$('cbStatus');if(quickBusy||classDraftBusy||timingBusy||sessionBusy||periodNeedsRefresh)return;
+ const snapshot=rows.filter(r=>duplicateSlot(r,lesson)),id=String(lesson.id);
+ if(snapshot.length<2||!snapshot.some(r=>String(r.id)===id)){note.textContent='Duplicate records changed. Refresh before editing.';return}
+ if(!confirm('Remove ONLY this unwanted duplicate?\n'+conflictDescription(lesson)+'\n'+duplicateDetails(lesson)+'\nRecord: '+id+'\n\nOther saved lessons will remain. You can edit the remaining lesson afterwards.'))return;
+ let attempted=false;
+ quickBusy=true;classDraftBusy=true;
+ const controls=[...$('classBuilder').querySelectorAll('input,select,button')],states=controls.map(e=>e.disabled);controls.forEach(e=>e.disabled=true);
+ note.textContent='Verifying the duplicate before removing it…';
+ try{
+  authorized();
+  const fresh=await LamaAPI.list('resources');if(!Array.isArray(fresh))throw Error('Could not verify saved lessons.');
+  const current=fresh.filter(r=>duplicateSlot(r,lesson));
+  if(current.length<2||duplicateSnapshot(current)!==duplicateSnapshot(snapshot))throw Error('The duplicate records changed elsewhere. Refresh and review them before deleting.');
+  attempted=true;await LamaAPI.remove('resources',id);
+  const verifiedRows=await LamaAPI.list('resources');if(!Array.isArray(verifiedRows)||verifiedRows.some(r=>String(r.id)===id))throw Error('Removal not confirmed.');
+  const remaining=verifiedRows.filter(r=>duplicateSlot(r,lesson));
+  if(duplicateSnapshot(remaining)!==duplicateSnapshot(snapshot.filter(r=>String(r.id)!==id)))throw Error('Other lessons in this slot changed. Refresh and verify the remaining records.');
+  rows=rows.filter(r=>String(r.id)!==id);lastConflictAttempt=null;
+  render();renderClassBuilder(true,true);
+  const currentRow=classDraftRows.find(r=>countKey(r.classLabel)===countKey(row.classLabel)&&r.i===row.i);
+  note.textContent=remaining.length===1?'✓ Duplicate removed. You can now change the subject, teacher or time and save the remaining lesson.':'✓ One duplicate removed. Review the remaining '+remaining.length+' entries.';
+  if(currentRow){currentRow.card.scrollIntoView({behavior:'smooth',block:'center'});if(!currentRow.duplicate)currentRow.subject.focus({preventScroll:true})}
+ }catch(e){
+  if(attempted||/changed elsewhere/.test(e.message))periodNeedsRefresh=true;
+  note.textContent=(attempted?'Removal could not be fully verified. ': '')+e.message+(periodNeedsRefresh?' Refresh before retrying.':'');
+ }finally{
+  classDraftBusy=false;quickBusy=false;
+  controls.forEach((e,i)=>e.disabled=states[i]);updateClassDraft();
+ }
+}
+function showDuplicateEntries(row,hits){
+ const box=document.createElement('div');box.className='duplicate-entry-list';row.duplicateBox=box;
+ const add=(parent,tag,txt,cls)=>{const n=document.createElement(tag);n.textContent=txt;if(cls)n.className=cls;parent.append(n);return n};
+ add(box,'p',hits.length+' saved records for this period. Compare them below. Remove only the unwanted record(s); then edit the remaining lesson normally.','font-bold text-amber-200');
+ for(const [i,p] of hits.entries()){
+  const item=document.createElement('div');item.className='duplicate-entry';item.dataset.duplicateId=String(p.id);box.append(item);
+  add(item,'strong','Saved entry '+(i+1)+' — '+(p.subject||'No subject'));
+  add(item,'p',duplicateDetails(p),'text-sm');
+  add(item,'p','Record: '+String(p.id),'text-xs text-slate-400');
+  const button=add(item,'button','Remove this duplicate','duplicate-remove');button.type='button';button.onclick=()=>void removeDuplicateEntry(row,p);
+ }
+ row.card.append(box);
+}
+
 function renderClassBuilder(force=false,preserve=false){
  if(!adminMode||!verified||!$('classBuilder'))return;
  $('classBuilder').classList.remove('hidden');
  $('cbSchedulingMode').value=multiClassMode(activeSession())?'multi-class':'strict';
  if(classDraftDirty&&!force)return;
  const sid=activeSession(),classes=visibleClasses(),old=$('cbClass').value,sessionList=sessions();
- const snapshots=preserve?new Map(classDraftRows.map(r=>[JSON.stringify([countKey(r.classLabel),r.i]),{subject:r.subject.value,teacher:r.teacher.value,support:r.support.value,start:r.start.value,end:r.end.value}])):new Map();
+ const snapshots=preserve?new Map(classDraftRows.filter(r=>!r.duplicate&&draftChanged(r)).map(r=>[JSON.stringify([countKey(r.classLabel),r.i]),{subject:r.subject.value,teacher:r.teacher.value,support:r.support.value,start:r.start.value,end:r.end.value}])):new Map();
  $('cbSession').replaceChildren(...sessionList.map(s=>new Option(s.name+(s.active?' (active)':''),s.id)));$('cbSession').value=sid;
  $('cbClass').replaceChildren(new Option('All classes — edit together','__all__'),...classes.map(c=>new Option(c,c)));$('cbClass').value=old==='__all__'||classes.includes(old)?old:classes[0]||'';
  const day=workingWeek().includes(field('cbDay'))?field('cbDay'):workingWeek()[0];$('cbDay').value=day||'';const cls=field('cbClass'),num=cls==='__all__'?Math.max(1,...classes.map(c=>effectivePeriodCount(sid,c))):effectivePeriodCount(sid,cls);$('cbCount').replaceChildren(...periodCountOptions(num));$('cbCountLabel').classList.toggle('hidden',cls==='__all__');
@@ -592,7 +649,7 @@ function renderClassBuilder(force=false,preserve=false){
   const n=effectivePeriodCount(sid,classLabel),heading=create('div');heading.className='font-black text-lg text-cyan-200 col-span-full mt-3 flex flex-wrap items-center gap-3';heading.append(create('h3',classLabel+' · '+n+' periods'));if(cls==='__all__'){const pick=create('select');pick.setAttribute('aria-label','Number of periods for '+classLabel);pick.replaceChildren(...periodCountOptions(n));pick.style.width='auto';pick.onchange=()=>changePeriodCount(classLabel,pick.value);heading.append(pick)}out.append(heading);
  for(let i=1;i<=n;i++){
   const hits=periods.filter(x=>x.day===day&&Number(x.period)===i&&matching(x)),old=hits[0],times=LamaTimetableGrid.timesFor(periods,day,i),card=create('article');card.className='cb-period bg-slate-950/60 border rounded-xl p-3';
-  const title=create('div','Period '+i);title.className='font-bold text-cyan-200';const tag=create('span',hits.length>1?'Duplicate — use detailed editor':old?'Saved · editable':'Empty');tag.className='text-xs text-slate-300 ml-2';title.append(tag);card.append(title);
+  const title=create('div','Period '+i);title.className='font-bold text-cyan-200';const tag=create('span',hits.length>1?'Duplicate — resolve here':old?'Saved · editable':'Empty');tag.className='text-xs text-slate-300 ml-2';title.append(tag);card.append(title);
   const grid=create('div');grid.className='grid grid-cols-2 gap-2';card.append(grid);
   const input=(label,type,value,options)=>{const l=create('label',label),x=create(type==='select'?'select':'input');if(type==='select')x.replaceChildren(...options);else x.type=type;x.value=value||'';l.append(x);grid.append(l);x.onchange=updateClassDraft;return x};
   const subjects=curriculumSubjects(parts.grade);if(old?.subject&&!subjects.includes(old.subject))subjects.push(old.subject);
@@ -602,7 +659,7 @@ function renderClassBuilder(force=false,preserve=false){
   const start=input('Start time','time',old?.start||times.start),end=input('End time','time',old?.end||times.end);
   const row={i,classLabel,defaultId,old,duplicate:hits.length>1,card,tag,subject,teacher,support,extras,start,end};classDraftRows.push(row);
   const snap=snapshots.get(JSON.stringify([countKey(classLabel),i]));if(snap&&!row.duplicate){for(const key of ['subject','teacher','support','start','end'])row[key].value=snap[key]}
-  if(row.duplicate)for(const e of [subject,teacher,support,start,end])e.disabled=true;
+  if(row.duplicate){for(const e of [subject,teacher,support,start,end])e.disabled=true;showDuplicateEntries(row,hits)}
   subject.addEventListener('change',()=>{if(subject.value&&!teacher.value){const suggested=cls==='__all__'?defaultId:field('cbTeacher');if(suggested)teacher.value=suggested;}updateClassDraft()});out.append(card);
  }}
  updateClassDraft();$('cbStatus').textContent=teacherDirectoryLoaded?'Edit saved entries or fill empty periods.':'Teacher directory unavailable. Refresh before editing.';
@@ -614,7 +671,7 @@ function draftChanged(r){
 }
 function draftSelected(r){return draftChanged(r)||(field('cbScope')==='copyweek'&&!r.duplicate&&!!r.subject.value)}
 function updateClassDraft(){
- const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';const copyOption=$('cbScope').querySelector('option[value="copyweek"]');if(copyOption)copyOption.textContent='Copy all filled periods to '+workingWeek().map(d=>d.slice(0,3)).join(', ');$('cbTeacher').disabled=field('cbClass')==='__all__'||classDraftBusy;let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;r.card.style.borderColor=changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — use detailed editor':changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
+ const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';const copyOption=$('cbScope').querySelector('option[value="copyweek"]');if(copyOption)copyOption.textContent='Copy all filled periods to '+workingWeek().map(d=>d.slice(0,3)).join(', ');$('cbTeacher').disabled=field('cbClass')==='__all__'||classDraftBusy;let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;r.card.style.borderColor=r.duplicate?'#fb7185':changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — resolve here':changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
  classDraftDirty=count>0;countNotice();const selected=classDraftRows.filter(draftSelected).length;$('cbSave').disabled=!selected||!teacherDirectoryLoaded||classDraftBusy||quickBusy||periodNeedsRefresh;$('cbSave').textContent=field('cbScope')==='copyweek'&&selected?'Copy '+selected+' filled periods to working week':count?'Save '+count+' changed period'+(count===1?'':'s'):'No unsaved changes';
 }
 async function saveClassDraft(){

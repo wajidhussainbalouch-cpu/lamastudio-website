@@ -1029,6 +1029,8 @@ function getRecord(ctx, collection, id) {
 function addRecord(ctx, collection, record) {
     assertSchoolWritable(ctx.schoolId);
     checkPermission(ctx, 'add', collection);
+    if(collection==='attendance')lamaAssertSchoolAttendanceDay_(ctx,record.date);
+    if(collection==='resources')lamaAssertPlanningDay_(ctx,record);
     if (collection === 'studentRequests' && ctx.role === 'student') {
         const type = String(record.requestType || 'help');
         if (['help','sick_leave'].indexOf(type) === -1) throw new Error('Invalid request type.');
@@ -1079,6 +1081,8 @@ function updateRecord(ctx, collection, id, patch) {
     for (let i = 1; i < data.length; i++) {
         if (data[i][idCol] === id) {
             const existing = rowToRecord(headers, data[i]);
+            if(collection==='attendance')lamaAssertSchoolAttendanceDay_(ctx,patch.date||existing.date);
+            if(collection==='resources')lamaAssertPlanningDay_(ctx,Object.assign({},existing,patch));
             if (ctx.role === 'teacher' && collection === 'students' && !sameClass(existing.class, ctx.teacher.assignedClass)) {
                 throw new Error('Teachers can only update students in their own assigned class.');
             }
@@ -1836,6 +1840,7 @@ function handleRequest(params) {
         }
         if (['staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance'].indexOf(action)!==-1)
             return {status:'success',result:lamaStaffAction_(params)};
+        if (action==='saveSchoolWorkingWeek')return {status:'success',result:lamaSaveSchoolWorkingWeek_(params)};
         if (action==='planningSaveBatch')return {status:'success',result:lamaPlanningSaveBatch_(params)};
         if (action==='teacherHomeworkBatch')return {status:'success',result:lamaTeacherHomeworkBatch_(params)};
         if (action==='teacherUpdateStudentProfile')return {status:'success',result:lamaTeacherUpdateStudentProfile_(params)};
@@ -2193,7 +2198,7 @@ function doGet(e) {
     if (!params.action || params.action === 'health') {
         return jsonOut({ status: 'success', app: 'LamaStudio School Suite', message: 'Backend is running', build: 'admin-subscription-2026-10-25' });
     }
-    const blocked=['planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
+    const blocked=['saveSchoolWorkingWeek','planningSaveBatch','staffAdminDirectory','staffAdminSave','staffSavePolicy','staffLogin','staffOwnAttendance','teacherHomeworkBatch','teacherUpdateStudentProfile','feeLedgerRead','feeLedgerIssue','feeLedgerPay','feeLedgerReverse','requestAdministratorRecovery','completeAdministratorRecovery','requestSchoolPasswordRecovery','completeSchoolPasswordRecovery','syllabusReassignProgress','syllabusSchoolProgress','syllabusAdminProgress','syllabusTeacherProgress','syllabusCreateDraft','syllabusChangeStatus','syllabusListPlans','syllabusAdminReadPlan','syllabusPublishedPlans','bulkDeleteStudents','waConnect','waDisconnect','waSendTemplates','schoolAdminSetup','adminSaveSchoolUser','adminSetSubscription','adminSetStatus','adminResetPassword','register','requestSchoolRegistration','reviewSchoolApplication','activateSchoolApplication','updateSchoolConfig','pingTeacher','acknowledgePing','addTeacher','bulkAttendance','importStudentsBatch','previewStudentIds','applyStudentIds','add','update','remove'];
     if(blocked.indexOf(params.action)!==-1)return jsonOut({status:'error',message:'POST required for this action.'});
     return jsonOut(handleRequest(params));
 }
@@ -2792,6 +2797,7 @@ function lamaStaffClosed_(date,policy,resources){
  if(selected&&Object.values(selected.vacations||{}).some(inside))return true;
  if(resources.some(function(r){if(r.category!=='planning-event')return false;try{const e=JSON.parse(r.description);return e.published!==false&&/holiday|vacation/i.test(e.type||'')&&e.start<=date&&date<=e.end&&(!selected||e.sessionId===selected.id)}catch(_){return false}}))return true;
  const weekday=new Date(date+'T12:00:00Z').getUTCDay();
+ const configured=lamaSchoolWeekRead_(resources);if(configured)return configured.weeklyOff.includes(weekday);
  if(policy&&Array.isArray(policy.weeklyOff))return policy.weeklyOff.indexOf(weekday)!==-1;
  const season=selected&&[selected.schoolTiming,selected.summerTiming].find(inside);
  if(season&&season.hours){const day=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][weekday];return season.hours[day]&&season.hours[day].open!==true}
@@ -2880,7 +2886,7 @@ function lamaStaffAttendanceWrite_(p,action){
   if(!person||(!old&&String(person.record.status||'Active')!=='Active'))throw Error('Active staff member not found.');
   const policy=lamaStaffPolicy_(ctx),resources=lamaStaffRows_(ctx,'resources').items.map(function(x){return x.record}),closed=function(d){return lamaStaffClosed_(d,policy,resources)};
   // Preserve old clients' behavior until a school publishes a policy.
-  if(policy&&closed(date))throw Error('Attendance is closed on this holiday.');
+  if((policy||lamaSchoolWeekRead_(resources))&&closed(date))throw Error('Attendance is closed on this holiday.');
   if(policy&&state==='Leave'&&!leave)throw Error('Select Casual, Medical or Other leave using the updated register.');
   if(policy&&leave==='Casual'&&lamaStaffCasualCount_(records,employee,date,old&&old.id,closed)>=policy.casualLimit)throw Error('Monthly casual leave limit of '+policy.casualLimit+' days reached.');
   const clean={teacherId:employee,teacherName:String(person.record.name||raw.teacherName||''),date:date,status:state,leaveType:leave,remarks:state==='Present'?'':String(raw.remarks||'').slice(0,1000),markedBy:p._auditActor.name};
@@ -2904,11 +2910,12 @@ function lamaStudentPlanningVisible_(row,student){
 /** Save a prepared group of lessons in one authenticated request. No whole-sheet replacement. */
 function lamaPlanningSaveBatch_(p){
  const ctx=lamaStaffAdminContext_(p,true),jobs=p.jobs;
- if(!Array.isArray(jobs)||!jobs.length||jobs.length>100)throw Error('Submit 1–100 changed lessons.');
+ if(!Array.isArray(jobs)||!jobs.length||jobs.length>500)throw Error('Submit 1–500 changed lessons.');
  const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('Timetable is busy. Retry.');
  try{
   const data=lamaStaffRows_(ctx,'resources'),all=data.items,parse=r=>{try{return JSON.parse(r.description||'{}')}catch(e){return {}}};
   const dayNames=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const schoolWeek=lamaSchoolWeekRead_(all.map(x=>x.record));
   const time=v=>/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(v||''));
   const cls=r=>normalizeSchoolClass(r.grade)+'|'+String(r.section||'').trim().toLowerCase().replace(/\s+/g,'');
   const sameSlot=(a,b)=>String(a.sessionId)===String(b.sessionId)&&a.day===b.day&&Number(a.period)===Number(b.period)&&cls(a)===cls(b);
@@ -2924,6 +2931,7 @@ function lamaPlanningSaveBatch_(p){
    if(old&&JSON.stringify(old.payload)!==JSON.stringify(j.expected))throw Error('A saved lesson changed. Reload before saving.');
    if(id)seenIds.add(id);
    if(!all.some(x=>x.record.category==='planning-session'&&String(x.record.id)===String(r.sessionId)))throw Error('Academic session unavailable.');
+   if(schoolWeek&&schoolWeek.weeklyOff.includes(['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(r.day)))throw Error(r.day+' is a school-wide weekly holiday.');
    if(!dayNames.includes(r.day)||!Number.isInteger(r.period)||r.period<1||r.period>30||!time(r.start)||!time(r.end)||r.start>=r.end||!String(r.grade||'').trim()||!String(r.subject||'').trim()||typeof r.published!=='boolean')throw Error('Invalid lesson details.');
    if(old&&!sameSlot(old.payload,r))throw Error('Batch editing cannot move a saved lesson to a different slot.');
    const c=configured.find(x=>sameClass(x.name,r.grade)),sub=String(r.subject);
@@ -2942,4 +2950,36 @@ function lamaPlanningSaveBatch_(p){
   SpreadsheetApp.flush();
   return {records:updates.map(u=>u.record)};
  }finally{lock.releaseLock()}
+}
+
+function lamaSchoolWeekRead_(resources){
+ const hits=resources.filter(r=>r.category==='school-working-week');
+ if(!hits.length)return null;if(hits.length!==1)throw Error('Duplicate school working-week settings. Contact administrator.');
+ let p;try{p=JSON.parse(hits[0].description)}catch(e){throw Error('Invalid school working-week settings.')}
+ if(!p||p.version!==1||!Array.isArray(p.weeklyOff)||p.weeklyOff.length>=7||p.weeklyOff.some(n=>!Number.isInteger(n)||n<0||n>6)||new Set(p.weeklyOff).size!==p.weeklyOff.length)throw Error('Invalid school working-week settings.');
+ return p;
+}
+function lamaSaveSchoolWorkingWeek_(p){
+ const ctx=lamaStaffAdminContext_(p,true),off=p.weeklyOff;
+ if(!Array.isArray(off)||off.length>=7||off.some(n=>!Number.isInteger(n)||n<0||n>6)||new Set(off).size!==off.length)throw Error('Select at least one working day.');
+ const lock=LockService.getScriptLock();if(!lock.tryLock(20000))throw Error('School settings busy. Retry.');
+ try{
+  const data=lamaStaffRows_(ctx,'resources'),items=data.items.filter(x=>x.record.category==='school-working-week');
+  if(items.length>1)throw Error('Duplicate school working-week records. Contact administrator.');
+  const old=items[0];if(String(old?.record.description||'')!==String(p.expected||''))throw Error('Working week changed elsewhere. Refresh before saving.');
+  const next={...old?.record,id:old?.record.id||genId('res'),category:'school-working-week',title:'School Working Days and Holidays',description:JSON.stringify({version:1,weeklyOff:off.slice().sort()}),link:'',createdAt:old?.record.createdAt||new Date().toISOString()};
+  const row=recordToRow(data.info.headers,next);if(old)data.info.sheet.getRange(old.row,1,1,row.length).setValues([row]);else data.info.sheet.appendRow(row);
+  return next;
+ }finally{lock.releaseLock()}
+}
+function lamaAssertSchoolAttendanceDay_(ctx,date){
+ const day=lamaStaffDate_(date);if(!day)throw Error('Valid attendance date required.');
+ const resources=lamaStaffRows_(ctx,'resources').items.map(x=>x.record);
+ if(lamaSchoolWeekRead_(resources)&&lamaStaffClosed_(day,null,resources))throw Error('Attendance is closed on this school holiday.');
+}
+function lamaAssertPlanningDay_(ctx,record){
+ if(record.category!=='planning-period')return;
+ const resources=lamaStaffRows_(ctx,'resources').items.map(x=>x.record),p=lamaSchoolWeekRead_(resources);if(!p)return;
+ const lesson=JSON.parse(record.description||'{}'),n=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(lesson.day);
+ if(p.weeklyOff.includes(n))throw Error(lesson.day+' is a school-wide weekly holiday.');
 }

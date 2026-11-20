@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1525">
+<meta name="description" content="Original 150-question HTML, CSS, JavaScript, Python and SQL mobile coding practice. Local and beginner-friendly.">
+<title>Practice Questions · LAMA Coding Academy</title>
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#0a1423;--panel:#14243b;--panel2:#182e44;--border:#38536b;--ink:#f0f6ff;--soft:#c3d5e7;--mint:#70ecc5;--amber:#ffe3aa}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 95% -15%,#294568 0%,transparent 46%),var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);line-height:1.55}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+a{color:var(--mint)}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--mint);outline-offset:3px}
+header{background:#091525e9;border-bottom:1px solid var(--border);padding:15px max(15px,calc((100vw - 1000px)/2));display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:850;letter-spacing:-.4px;font-size:18px}
+.brand span{display:block;font-size:12px;color:var(--soft);font-weight:500;letter-spacing:0}
+nav{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap}
+nav a{font-size:13px;text-decoration:none;border:1px solid var(--border);padding:7px 10px;border-radius:9px}
+main{max-width:1000px;padding:22px 15px 90px;margin:auto}
+h1{font-size:clamp(27px,5vw,39px);line-height:1.14;margin:8px 0 12px}
+h2{font-size:clamp(21px,3.5vw,27px);line-height:1.24;margin:0 0 9px}
+h3{font-size:17px}
+p{color:var(--soft)}
+.kicker{letter-spacing:2px;text-transform:uppercase;color:var(--mint);font-weight:800;font-size:11px}
+.lead{max-width:740px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:17px;padding:18px;margin:16px 0}
+.panel.interactive{background:#152940}
+.controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+label{font-size:13px;color:var(--soft);display:block;margin-bottom:6px;font-weight:700}
+select{width:100%;background:#0c1e32;color:var(--ink);border:1px solid #54708d;border-radius:10px;padding:13px;min-height:48px}
+.controlrow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:14px 0}
+.btn{border:1px solid #607a98;background:#203b52;color:var(--ink);padding:12px 16px;min-height:47px;border-radius:11px;font-weight:750;text-align:center}
+.btn.primary{background:var(--mint);border-color:var(--mint);color:#08261f}
+.btn.secondary{background:#20324a}
+.btn.small{padding:8px 12px;min-height:43px}
+.statrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#142b3e;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat strong{display:block;font-size:25px;color:var(--mint);font-variant-numeric:tabular-nums}
+.stat span{display:block;color:var(--soft);font-size:12px}
+.progressbar{height:8px;background:#35455d;border-radius:99px;overflow:hidden;margin:12px 0 17px}
+.progressbar div{background:var(--mint);height:100%;transition:width .15s}
+.question-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#afdcdf;font-size:12px;font-weight:800;margin-bottom:9px}
+.tag{border-radius:99px;background:#173d41;border:1px solid #428d78;color:#bdf5dd;padding:4px 9px}
+.snippet{background:#09192b;border:1px solid #435975;color:#bbf6df;padding:12px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.55 ui-monospace,monospace;direction:ltr}
+.choices{display:grid;grid-template-columns:1fr;gap:9px;margin:18px 0}
+.choice{display:block;text-align:left;width:100%;background:#0c2033;border:1px solid #5a7491;color:#f0f7ff;border-radius:12px;padding:13px;min-height:52px;overflow-wrap:anywhere}
+.choice.selected{background:#234955;border-color:var(--mint);box-shadow:inset 3px 0 var(--mint)}
+.choice.correct{border-color:#68e8b3;background:#184638;color:#e7ffef}
+.choice.incorrect{border-color:#f4ba87;background:#553b2f;color:#fff1e3}
+.builder{background:#10263b;border:1px dashed #7c99a8;padding:11px;border-radius:11px;margin-top:13px}
+.builder p{margin:3px 0 9px;font-size:13px}
+.sequence{display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-height:54px}
+.token{font:14px/1.35 ui-monospace,monospace;color:#d5f8e8;border:1px solid #658698;background:#21465d;min-height:44px;padding:10px;border-radius:10px;max-width:100%;overflow-wrap:anywhere}
+.token.chosen{background:#285c55;border-color:#80e4bd}
+.token:disabled{opacity:.35}
+.feedback{margin-top:14px;padding:14px;border-radius:12px;border:1px solid #4b6e84;background:#112d3d}
+.feedback.good{background:#174639;border-color:#63c5a5}
+.feedback.bad{background:#493525;border-color:#a78663}
+.feedback strong{display:block;margin-bottom:5px;color:#fff}
+.feedback p{margin:6px 0;color:#e5eef9}
+.feedback code{font:14px/1.6 ui-monospace,monospace;color:#bdffe3;overflow-wrap:anywhere}
+.summary{background:#143745;border:1px solid #60b9a3;padding:17px;border-radius:12px}
+.summary strong{display:block;font-size:30px;color:#bcffe0}
+.tiny{font-size:12px;color:#bfcedd}
+[hidden]{display:none!important}
+@media(max-width:490px){main{padding:16px 12px 75px}header{padding:12px}nav{margin-left:0;width:100%}.panel{padding:14px}.controls{grid-template-columns:1fr}.controlrow .btn{flex:1 1 42%}.stat strong{font-size:22px}.question-meta{gap:5px}}
+@media(prefers-reduced-motion:reduce){.progressbar div{transition:none}}
+.backup-preview{background:#0b2334;border:1px solid #5c9e90;border-radius:12px;padding:14px;margin-top:13px}
+.backup-preview pre{font:13px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#e2fbe9}
+.backup-info{font-size:13px;color:#e4f6ee}
+.backup-warn{border-left:3px solid #e2c284;padding:10px;background:#342d27;color:#fff0d8}
+#quizBackupFile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.coach-panel{background:#122f3c;border:1px solid #507c86;border-radius:15px;padding:17px;margin:18px 0}
+.coach-panel h2{font-size:21px;margin:0 0 5px}
+.coach-panel p{margin:7px 0 12px}
+.coach-list{display:grid;gap:10px}
+.coach-card{background:#102437;border:1px solid #416278;border-radius:11px;padding:12px;min-width:0}
+.coach-card strong{display:block;font-size:14px;color:#effffb}
+.coach-card span{display:block;font-size:12px;color:#d2e9f1;margin:6px 0}
+.coach-card a,.learn-link{display:inline-block;color:#092b22;background:#a2f0d1;border-radius:9px;padding:10px 13px;margin-top:5px;font-size:13px;font-weight:800;text-decoration:none;min-height:42px;max-width:100%;overflow-wrap:anywhere}
+.coach-card .urdu{direction:rtl;text-align:right;color:#f2deb7;line-height:1.8}
+</style>
+<link rel="stylesheet" href="./academy-shell.css">
+<script src="./academy-shell.js" defer></script>
+</head>
+<body>
+<header>
+ <div class="brand">LAMA Coding Academy<span>Tap · Think · Build · Understand</span></div>
+ <nav aria-label="Coding Academy links">
+  <a href="./index.html">← Lessons</a>
+  <a href="./practice.html">Coding Labs</a>
+  <a href="./progress.html">My Journey</a>
+ </nav>
+</header>
+<main>
+ <span class="kicker">New · Original practice questions</span>
+ <h1>Learn coding, one small question at a time.</h1>
+ <p class="lead">150 original questions across HTML, CSS, JavaScript, Python and SQL. Choose a topic, answer <b>10 questions</b>, or assemble a code line by tapping its pieces. Every answer includes a simple explanation. No login, timer, or internet required after installation.</p>
+ <div class="statrow" aria-label="My question practice statistics">
+  <div class="stat"><strong id="answered">0</strong><span>Answers checked</span></div>
+  <div class="stat"><strong id="learned">0</strong><span>Questions answered correctly</span></div>
+  <div class="stat"><strong id="missed">0</strong><span>Questions to revisit</span></div>
+ </div>
+ <section id="coachPanel" class="coach-panel" aria-labelledby="coachHeading">
+  <h2 id="coachHeading">Your next helpful lesson</h2>
+  <p id="coachIntro">Complete a question round. When you find a topic difficult, a short learning suggestion appears here. Mistakes help us decide what to practise next.</p>
+  <div id="coachList" class="coach-list" role="list"></div>
+  <p class="tiny">Suggestions use only your device's quiz results. They never unlock lessons, alter course completion or contact an external service.</p>
+ </section>
+ <section id="setup" class="panel">
+  <h2>Choose your next 10-question round</h2>
+  <div class="controls">
+   <div><label for="track">Coding language</label><select id="track">
+    <option value="mixed">Mixed subjects · keep learning</option>
+    <option value="html">HTML · page structure</option>
+    <option value="css">CSS · styling</option>
+    <option value="javascript">JavaScript · logic</option>
+    <option value="python">Python · beginner programs</option>
+    <option value="sql">SQL · database basics</option>
+   </select></div>
+   <div><label for="level">Question difficulty</label><select id="level">
+    <option value="1">Level 1 · Beginner</option>
+    <option value="2">Level 2 · Intermediate</option>
+    <option value="3">Level 3 · Advanced</option>
+   </select></div>
+  </div>
+  <p class="tiny">Beginner first is recommended. Mixed subjects asks two questions from each of the five languages. Review missed revisits mistakes and removes them from review when you answer correctly. Question results are saved only on this device, separate from the existing 62-activity course progress and its backup.</p>
+  <div class="controlrow">
+   <button class="btn primary" id="start">▶ Start 10 questions</button>
+   <button class="btn secondary" id="review">↻ Review my mistakes</button>
+  </div>
+  <p id="storageWarning" role="status" class="tiny"></p>
+ </section>
+ <section id="play" class="panel interactive" hidden aria-label="Question round">
+  <div class="question-meta">
+   <span id="counter">Question 1 / 10</span>
+   <span class="tag" id="subject">HTML</span>
+   <span id="type">Choose an answer</span>
+  </div>
+  <div class="progressbar" aria-hidden="true"><div id="bar" style="width:0%"></div></div>
+  <h2 id="prompt" tabindex="-1"></h2>
+  <pre class="snippet" id="example" hidden></pre>
+  <div id="options" class="choices" aria-label="Answer options"></div>
+  <div id="build" class="builder" hidden>
+   <p><strong>Code pieces arrive shuffled.</strong> Tap them in the right order. Tap a chosen piece to remove it; the full example appears after checking.</p>
+   <div class="sequence" id="sequence" aria-label="My constructed code"></div>
+   <div class="controlrow"><button type="button" class="btn small" id="clear">Clear pieces</button></div>
+  </div>
+  <div class="controlrow">
+   <button type="button" class="btn primary" id="check" disabled>Check my answer</button>
+   <button type="button" class="btn secondary" id="next" hidden>Next question →</button>
+  </div>
+  <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+ </section>
+ <section id="finish" class="panel" hidden>
+  <h2>Round complete!</h2>
+  <div class="summary" role="status"><strong id="score">0 / 10</strong><span id="closing"></span></div>
+  <p>Every mistake is an opportunity to learn. Revisit it when you are ready; you will never lose a life or be blocked from continuing.</p>
+  <div class="controlrow">
+   <button class="btn primary" id="again">Try another round</button>
+   <button class="btn" id="reviewAfter">Review mistakes</button>
+  </div>
+ </section>
+ <section id="quizBackupSection" class="panel" aria-labelledby="backupHeading">
+  <h2 id="backupHeading">Keep your question progress safe</h2>
+  <p>Save your scores as a private JSON file before changing phones or test apps. Import them into a newer LAMA Coding Academy test version. <strong>This backup contains only the 150-question practice history</strong>, not your lesson code or other apps' data. For one file that contains both coding lessons and question scores, use the <a href="./progress.html#completeBackupPanel">Complete Academy Backup on My Journey</a>.</p>
+  <div class="controlrow">
+   <button type="button" class="btn primary" id="quizExport">↓ Download question scores</button>
+   <button type="button" class="btn" id="quizImport">↑ Import saved scores</button>
+  </div>
+  <input type="file" id="quizBackupFile" accept=".json,application/json" aria-label="Choose a question practice JSON backup">
+  <p id="quizBackupStatus" class="backup-info" role="status" aria-live="polite">Question scores are stored locally; no cloud account is required.</p>
+  <div id="quizPreviewSection" class="backup-preview" hidden>
+   <h3>Review the backup before restoring</h3>
+   <pre id="quizBackupReview"></pre>
+   <p class="backup-warn">Restoring replaces this app's <strong>question-practice scores only</strong>. It does not change the 62-activity learning journey, your code, or other LAMA projects. Save a copy of your current question scores first.</p>
+   <div class="controlrow">
+    <button type="button" id="quizConfirm" class="btn primary" disabled>Confirm question-score restore</button>
+    <button type="button" id="quizCancel" class="btn">Cancel</button>
+   </div>
+  </div>
+  <details>
+   <summary class="tiny" style="cursor:pointer;color:var(--mint)">Reset only my question-practice scores</summary>
+   <p class="tiny">This clears the 150-question scores only after confirmation. It does not erase your coding lessons or other apps. Download a backup first if you want to keep them.</p>
+   <button type="button" id="quizClear" class="btn secondary">Clear question scores on this device</button>
+  </details>
+ </section>
+ <footer><p class="tiny">LAMA Coding Academy · A project of LamaStudio.pk · Original educational questions. These syntax questions are local simulations, not access to a real SQL database or a secure Python sandbox.</p></footer>
+</main>
+<script src="./quiz-data.js" defer></script>
+<script src="./quiz-core.js" defer></script>
+<script src="./quiz-backup.js" defer></script>
+<script src="./quiz-guidance.js" defer></script>
+<script src="./quiz.js" defer></script>
+</body>
+</html>

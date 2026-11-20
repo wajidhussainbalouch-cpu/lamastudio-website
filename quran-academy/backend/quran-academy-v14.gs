@@ -45,7 +45,9 @@ function q14Date_(v) {
     return Utilities.formatDate(v,Session.getScriptTimeZone(),'yyyy-MM-dd');
   }
   var s=String(v||'').trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(s)?s:'';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return '';
+  var parsed=new Date(s+'T00:00:00Z');
+  return !isNaN(parsed.getTime())&&parsed.toISOString().slice(0,10)===s?s:'';
 }
 function q14Timestamp_(v){
   if(v instanceof Date)return isNaN(v.getTime())?'':v.toISOString();
@@ -116,6 +118,16 @@ function q14Load_(ss) {
   return {practice:quranV8Rows_(ss,QURAN_V8_PRACTICE_TAB,QURAN_V8_PRACTICE_HEADERS),
     assessment:quranV8Rows_(ss,Q13_TAB_,Q13_HEADERS_)};
 }
+// Group rows once per class page instead of scanning every school row per learner.
+function q14IndexByStudent_(rows,ids){
+  var index=Object.create(null);
+  ids.forEach(function(id){index[String(id)]=[];});
+  rows.forEach(function(r){
+    var id=String(r.studentId||'');
+    if(Object.prototype.hasOwnProperty.call(index,id))index[id].push(r);
+  });
+  return index;
+}
 function q14StaffContext_(p) {
   var id=q14Gate_(p),ctx=quranV8Guard_(p);
   if(ctx.schoolId!==id || (ctx.role!=='school'&&ctx.role!=='teacher'))
@@ -148,8 +160,13 @@ function q14Class_(p) {
   if(!Number.isInteger(offset)||offset<0||offset>10000||
      !Number.isInteger(limit)||limit<1||limit>50)throw Error('Invalid class page size.');
   var data=q14Load_(ctx.ss),today=q14Today_();
-  var students=records.slice(offset,offset+limit).map(function(s){
-    var report=q14Build_(String(s.id),data.practice,data.assessment,today,false,false);
+  var page=records.slice(offset,offset+limit);
+  var ids=page.map(function(s){return String(s.id);});
+  var practiceIndex=q14IndexByStudent_(data.practice,ids);
+  var assessmentIndex=q14IndexByStudent_(data.assessment,ids);
+  var students=page.map(function(s){
+    var id=String(s.id);
+    var report=q14Build_(id,practiceIndex[id],assessmentIndex[id],today,false,false);
     return {id:String(s.id),name:String(s.name||''),className:String(s.class||''),
       section:String(s.section||''),totals:report.totals};
   });

@@ -2934,6 +2934,7 @@ function lamaPlanningSaveBatch_(p){
    if(!all.some(x=>x.record.category==='planning-session'&&String(x.record.id)===String(r.sessionId)))throw Error('Academic session unavailable.');
    if(schoolWeek&&schoolWeek.weeklyOff.includes(['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(r.day)))throw Error(r.day+' is a school-wide weekly holiday.');
    if(!dayNames.includes(r.day)||!Number.isInteger(r.period)||r.period<1||r.period>30||!time(r.start)||!time(r.end)||r.start>=r.end||!String(r.grade||'').trim()||!String(r.subject||'').trim()||typeof r.published!=='boolean')throw Error('Invalid lesson details.');
+   lamaPlanningAssertHours_(all.map(x=>x.record),r);
    if(old&&!sameSlot(old.payload,r))throw Error('Batch editing cannot move a saved lesson to a different slot.');
    const c=configured.find(x=>sameClass(x.name,r.grade)),sub=String(r.subject);
    if(!(Array.isArray(c?.subjects)&&c.subjects.includes(sub))&&!(old&&old.payload.subject===sub))throw Error('Subject is not configured for '+r.grade+'.');
@@ -2984,6 +2985,7 @@ function lamaAssertPlanningDay_(ctx,record){
  const resources=lamaStaffRows_(ctx,'resources').items.map(x=>x.record),p=lamaSchoolWeekRead_(resources);
  const lesson=JSON.parse(record.description||'{}'),n=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(lesson.day);
  if(p&&p.weeklyOff.includes(n))throw Error(lesson.day+' is a school-wide weekly holiday.');
+ lamaPlanningAssertHours_(resources,lesson);
  if(lesson.supportId)throw Error('Use Easy timetable builder to save additional staff.');
  for(const r of resources){if(r.category!=='planning-period'||String(r.id)===String(record.id||''))continue;let old;try{old=JSON.parse(r.description)}catch(e){continue}
   if(String(old.sessionId)!==String(lesson.sessionId)||old.day!==lesson.day)continue;
@@ -2998,4 +3000,15 @@ function lamaPlanningStaffKeys_(p,multi=false){const keys=[];const covered=multi
 // Only shared registered teachers may overlap across different class/section slots in multi-class mode. Non-teaching staff remain strict.
 function lamaPlanningBlockingStaff_(a,b,multi){
  return lamaPlanningStaffKeys_(a,multi).some(k=>lamaPlanningStaffKeys_(b,multi).includes(k)&&(!multi||!k.startsWith('teacher:')));
+}
+
+function lamaPlanningAssertHours_(resources,p,date){
+ const day=date||Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd');
+ const row=resources.find(r=>r.category==='planning-session'&&String(r.id)===String(p.sessionId));if(!row)return;
+ const ss=JSON.parse(row.description||'{}'),t=[ss.schoolTiming,ss.summerTiming].find(x=>x&&x.from<=day&&day<=x.to&&x.hours);if(!t)return;
+ const h=t.hours[p.day],clock=v=>typeof v==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(v),err=msg=>{throw Error(p.day+' '+p.grade+' P'+p.period+': '+msg)};
+ if(!h||h.open!==true||!clock(h.start)||!clock(h.end)||h.start>=h.end)err('School hours not open / configured');
+ if(!clock(p.start)||!clock(p.end)||p.start>=p.end)err('Invalid lesson times');
+ if(p.start<h.start||p.end>h.end)err('Outside school hours '+h.start+'–'+h.end);
+ for(const [a,b,label] of [[t.assemblyStart,t.assemblyEnd,'Morning assembly'],[t.breakStart,t.breakEnd,'Lunch break']])if(clock(a)&&clock(b)&&a<b&&a>=h.start&&b<=h.end&&p.start<b&&p.end>a)err('Overlaps '+label+' '+a+'–'+b);
 }

@@ -66,29 +66,34 @@ function weeklyMatrix(records,workingDays=null){
  * Identical lessons across weekdays are grouped, with day labels and exact
  * times retained when the timetable varies. No arbitrary six-class page split.
  */
-function masterGrid(records,selectedClasses=null,{printDay=''}={}){
+function masterGrid(records,selectedClasses=null,{printDay='',inCharge={},dayTiming=null,workingDays=null,showRooms=false}={}){
  const published=(Array.isArray(records)?records:[]).filter(p=>p&&p.published!==false);
  const all=[...new Map(published.map(p=>[classKey(classLabel(p)),classLabel(p)])).values()].sort(root.LamaClassOrder.compare);
  const labels=Array.isArray(selectedClasses)?[...new Map(selectedClasses.map(v=>[classKey(v),String(v).trim()])).values()].filter(Boolean):all;
  if(!labels.length)return '<p class="empty-print">No classes selected for this timetable.</p>';
  const included=published.filter(p=>labels.some(x=>sameClass(x,classLabel(p)))&&(!printDay||dayRank(p.day)===dayRank(printDay)));
+ const work=printDay?[printDay]:Array.isArray(workingDays)?workingDays:days.filter(d=>included.some(p=>p.day===d));
  const nums=[...new Set(included.map(p=>Number(p.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
- if(!nums.length)return '<p class="empty-print">No published lessons for this selection.</p>';
- const heads=nums.map(n=>{
-  const times=[...new Set(included.filter(p=>Number(p.period)===n).map(timeLabel).filter(Boolean))];
-  return '<th scope="col">P'+n+(times.length===1?'<small>'+esc(times[0])+'</small>':'')+'</th>';
- }).join('');
- const body=labels.map(label=>{
-  return '<tr><th scope="row">'+esc(label)+'</th>'+nums.map(n=>{
-   const matches=sorted(included.filter(p=>sameClass(classLabel(p),label)&&Number(p.period)===n),'class');
+ const slots=nums.map(n=>{const matches=included.filter(p=>Number(p.period)===n),times=[...new Set(matches.map(timeLabel).filter(Boolean))];return {n,start:matches.map(p=>String(p.start||'')).sort()[0],time:times.length===1?times[0]:'',vary:times.length!==1}});
+ const activities=new Map();for(const day of work)for(const p of fixedActivities(dayTiming,day)){const key=JSON.stringify([p.subject,p.start,p.end]);if(!activities.has(key))activities.set(key,{...p,days:[]});activities.get(key).days.push(day)}
+ for(const p of activities.values())slots.push({...p,time:timeLabel(p)});
+ slots.sort((a,b)=>String(a.start).localeCompare(String(b.start))||Number(!!b.activity)-Number(!!a.activity)||Number(a.n||0)-Number(b.n||0));
+ const normalized=v=>String(v??'').trim().replace(/\s+/g,' ').toLowerCase();
+ const groupKey=p=>JSON.stringify([normalized(p.subject),String(p.teacherId||''),normalized(p.teacherName),String(p.supportId||''),String(p.supportKind||''),normalized(p.supportName),normalized(p.supportRole),!!p.coveredByTeacher,timeLabel(p),...(showRooms?[normalized(p.room)]:[])]);
+ const dayText=ds=>[...ds].sort((a,b)=>dayRank(a)-dayRank(b)).map(d=>esc(String(d).slice(0,3))).join(', ');
+ if(!slots.length)return '<p class="empty-print">No published lessons for this selection.</p>';
+ const heads=slots.map(x=>'<th scope="col">'+esc(x.activity?x.subject:'P'+x.n)+(x.time?'<small>'+esc(x.time)+'</small>':'')+'</th>').join('');
+ const body=labels.map((label,i)=>{
+  const assigned=inCharge[label]||Object.entries(inCharge).find(([k])=>sameClass(k,label))?.[1]||'';
+  return '<tr><th scope="row">'+esc(label)+'<small class="master-incharge">Class in-charge: '+esc(assigned||'Not assigned / verified')+'</small></th>'+slots.map(x=>{
+   if(x.activity)return i===0?'<td rowspan="'+labels.length+'" class="activity-cell"><strong>'+esc(x.subject)+'</strong><small>'+esc(x.time)+'</small>'+(x.days.length!==work.length?'<small>'+dayText(x.days)+'</small>':'')+'</td>':'';
+   const matches=sorted(included.filter(p=>sameClass(classLabel(p),label)&&Number(p.period)===x.n),'class');
    if(!matches.length)return '<td class="master-empty">—</td>';
-   const times=[...new Set(included.filter(p=>Number(p.period)===n).map(timeLabel).filter(Boolean))];
-   const groups=new Map();
-   for(const p of matches){const key=JSON.stringify([p.subject,staffLabel(p),p.room,timeLabel(p)]);if(!groups.has(key))groups.set(key,{p,days:new Set()});groups.get(key).days.add(p.day);}
-   return '<td>'+[...groups.values()].map(({p,days:ds})=>'<div class="master-lesson">'+(!printDay?'<small class="lesson-days">'+[...ds].sort((a,b)=>dayRank(a)-dayRank(b)).map(d=>esc(String(d).slice(0,3))).join(', ')+'</small>':'')+'<strong>'+esc(p.subject||'—')+'</strong>'+(p.teacherName?'<small>'+esc(staffLabel(p))+'</small>':'')+(times.length!==1&&timeLabel(p)?'<small>'+esc(timeLabel(p))+'</small>':'')+(p.room?'<small>'+esc(p.room)+'</small>':'')+'</div>').join('')+'</td>';
+   const groups=new Map();for(const p of matches){const key=groupKey(p);if(!groups.has(key))groups.set(key,{p,days:new Set(),counts:new Map()});const group=groups.get(key);group.days.add(p.day);group.counts.set(p.day,(group.counts.get(p.day)||0)+1)}
+   return '<td>'+[...groups.values()].map(({p,days:ds,counts})=>'<div class="master-lesson">'+(!printDay&&!(groups.size===1&&work.length&&work.every(d=>ds.has(d)))?'<small class="lesson-days">'+dayText(ds)+'</small>':'')+'<strong>'+esc(p.subject||'—')+'</strong><small>'+esc(staffLabel(p))+'</small>'+(x.vary&&timeLabel(p)?'<small>'+esc(timeLabel(p))+'</small>':'')+(showRooms&&p.room?'<small>Room: '+esc(p.room)+'</small>':'')+([...counts.values()].some(n=>n>1)?'<small>Duplicate saved entries — review</small>':'')+'</div>').join('')+'</td>';
   }).join('')+'</tr>';
  }).join('');
- return '<table class="school-timetable compact-master"><caption class="sr-print">Master timetable for all selected classes</caption><thead><tr><th scope="col">Class / Section</th>'+heads+'</tr></thead><tbody>'+body+'</tbody></table>';
+ return '<table class="school-timetable compact-master official-master"><caption class="sr-print">Master timetable for all selected classes</caption><thead><tr><th scope="col">Class / Section</th>'+heads+'</tr></thead><tbody>'+body+'</tbody></table>';
 }
 function fixedActivities(timing,day){
  if(!timing||!day||timing.hours?.[day]?.open!==true)return [];
@@ -106,14 +111,14 @@ function officialMaster(records,labels,activities,inCharge){
  return '<table class="school-timetable compact-master official-master"><thead><tr><th>Classes</th>'+slots.map(x=>'<th>'+esc(x.activity?x.subject:'P'+x.n)+'<small>'+esc(x.time)+'</small></th>').join('')+'</tr></thead><tbody>'+labels.map((label,i)=>'<tr><th>'+esc(label)+(inCharge[label]?'<small style="display:block;font-weight:normal">Class in-charge: '+esc(inCharge[label])+'</small>':'')+'</th>'+slots.map(x=>x.activity?(i===0?'<td rowspan="'+labels.length+'" class="activity-cell">'+esc(x.subject)+'</td>':''):'<td>'+records.filter(p=>sameClass(classLabel(p),label)&&Number(p.period)===x.n).map(p=>'<div><strong>'+esc(p.subject)+'</strong><small>'+esc(staffLabel(p))+'</small>'+(x.time==='Varies by class'?'<small>'+esc(timeLabel(p))+'</small>':'')+'</div>').join('')+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
 }
 function signatures(master){return '<div class="timetable-signatures">'+(master?'':'<span>Class In-Charge</span>')+'<span>Head Teacher / Principal</span></div>'}
-function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',selectedClasses=null,printDay='',calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null,timing=null,calendarLegend='',workingDays=null,dayTiming=null,inCharge={}}={}){
+function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',selectedClasses=null,printDay='',calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null,timing=null,calendarLegend='',workingDays=null,dayTiming=null,inCharge={},seasonLabel='',showRooms=false}={}){
  const profile={...schoolFallback,...school};
  const name=schoolName(profile);
  const logo=safeLogo(profile);
  const logoView=logo?'<img class="print-school-logo" src="'+esc(logo)+'" alt="School logo">':
   '<div class="print-school-logo print-logo-missing" aria-label="No school logo uploaded">Logo</div>';
  const head='<header class="print-letterhead"><div class="print-school-name">'+
-  '<h1>'+esc(name)+'</h1><p>School Timetable & Academic Calendar</p></div>'+logoView+'</header>';
+  '<h1>'+esc(name)+'</h1><p>'+esc(seasonLabel?seasonLabel+' Timetable':'School Timetable & Academic Calendar')+'</p></div>'+logoView+'</header>';
  const shownDate=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
  const baseRecords=records.filter(p=>p&&p.published!==false);
  const availableLabels=[...new Set(baseRecords.map(classLabel).filter(Boolean))].sort(root.LamaClassOrder.compare);
@@ -155,10 +160,10 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  const meta='<div class="print-meta"><span>Academic session: <b>'+esc(sessionName||'Not selected')+
   '</b></span><span>'+esc(description)+'</span><span>Printed '+esc(shownDate)+'</span></div>';
  const timingList=(Array.isArray(timing)?timing:timing?[timing]:[]).filter(t=>t&&Array.isArray(t.lines));
- const timingBlock=timingList.length?'<section class="print-school-timing" style="font-size:8pt;line-height:1.3;border:1px solid #bcd0d5;padding:2mm;margin:2mm 0;break-inside:avoid;color:#153b45">'+timingList.map(t=>'<div style="margin:1mm 0"><strong>'+esc(t.title||'School timings')+' · '+esc(t.dates||'')+'</strong>'+(t.lines.length?'<div>'+t.lines.map(esc).join(' &nbsp; | &nbsp; ')+'</div>':'')+(t.breakTime?'<div><strong>'+esc(t.breakTime)+'</strong></div>':'')+'</div>').join('')+'</section>':'';
+ const timingBlock=timingList.length?'<section class="print-school-timing" style="font-size:8pt;line-height:1.3;border:1px solid #bcd0d5;padding:2mm;margin:2mm 0;break-inside:avoid;color:#153b45">'+timingList.map(t=>'<div style="margin:1mm 0"><strong>'+esc(t.title||'School timings')+' · '+esc(t.dates||'')+'</strong>'+(t.lines.length?'<div>'+t.lines.map(esc).join(' &nbsp; | &nbsp; ')+'</div>':'')+(t.assemblyTime?'<div><strong>'+esc(t.assemblyTime)+'</strong></div>':'')+(t.breakTime?'<div><strong>'+esc(t.breakTime)+'</strong></div>':'')+'</div>').join('')+'</section>':'';
  const footer='<footer class="print-timetable-footer">Generated by LAMA School Suite · LamaStudio.pk</footer>';
  if(scope==='all'){
-  return '<article class="master-print-page">'+head+meta+timingBlock+'<section class="print-class-block"><h3>Master Timetable — '+esc(printDay||'Full week')+'</h3>'+(printDay?officialMaster(filteredBase.filter(p=>p.day===printDay),requestedClasses,fixedActivities(dayTiming,printDay),inCharge):masterGrid(filteredBase,requestedClasses,{printDay}))+'</section>'+signatures(true)+footer+'</article>'+calendarSection;
+  return '<article class="master-print-page">'+head+meta+timingBlock+'<section class="print-class-block"><h3>Master Timetable — '+esc(printDay||'Full week')+'</h3>'+(!printDay&&workingDays?.length?'<p class="print-week-note">Working days: '+esc(workingDays.join(', '))+'. Where no days are listed, the lesson applies to every working day.</p>':'')+masterGrid(filteredBase,requestedClasses,{printDay,inCharge,dayTiming,workingDays,showRooms})+'</section>'+signatures(true)+footer+'</article>'+calendarSection;
  }
  if(scope==='by-class'){
   const labels=requestedClasses;

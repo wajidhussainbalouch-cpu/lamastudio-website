@@ -137,6 +137,7 @@ const LamaAPI = (() => {
     studentHomeworkCompletion:async()=>(await callApi('studentHomeworkCompletion',{},'POST')).result,
     studentHomeworkSetCompletion:async(homeworkId,completed)=>(await callApi('studentHomeworkSetCompletion',{homeworkId,completed},'POST')).result,
     homeworkCompletionReport:async date=>(await callApi('homeworkCompletionReport',{date},'POST')).result,
+    lessonPlanner:async(operation,details={})=>(await callApi('lessonPlanner',{...details,operation},'POST')).result,
     teacherHomeworkBatch:async(batchId,day,entries)=>(await callApi('teacherHomeworkBatch',{batchId,day,entries},'POST')).result,
     teacherUpdateStudentProfile:async(studentId,patch,expected)=>(await callApi('teacherUpdateStudentProfile',{studentId,patch,expected},'POST')).result,
     feeLedgerReverse:async(requestId,request)=> (await callApi('feeLedgerReverse',{requestId,request},'POST')).result,

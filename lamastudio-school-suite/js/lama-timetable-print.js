@@ -129,7 +129,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  if(scope==='selected'){
   if(!selectedClass)throw Error('Choose a class from the Class dropdown before printing a class timetable.');
   const requested=String(selectedClass).trim().toLowerCase();
-  const subset=baseRecords.filter(p=>sameClass(classLabel(p),requested)||(!requested.includes('· section ')&&gradeOf(p).toLowerCase()===requested));
+  const subset=baseRecords.filter(p=>sameClass(classLabel(p),requested));
   title=selectedClass+' — '+(printDay?'Timetable ('+printDay+')':'Weekly Timetable');
   description='One selected class';
   content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+(inCharge[selectedClass]?'<p class="class-incharge">Class In-Charge: '+esc(inCharge[selectedClass])+'</p>':'')+(printDay?dailyClass(subset.filter(p=>p.day===printDay),fixedActivities(dayTiming,printDay)):weeklyMatrix(subset,workingDays))+'</section>'+signatures(false);

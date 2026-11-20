@@ -60,6 +60,8 @@ function mount(container,student,schoolId){
    if(time(t.breakStart)&&time(t.breakEnd))card.append(node('p','Lunch break: '+fmtTime(t.breakStart)+' – '+fmtTime(t.breakEnd),'text-amber-200'));box.append(card)
   }
   if(!box.children.length)box.append(node('p','Seasonal hours have not been published yet.','text-sm text-slate-400'));
+  const terms=Array.isArray(selected?.terms)?selected.terms.filter(t=>str(t?.name)&&range(t)&&t.from>=selected.start&&t.to<=selected.end).sort((a,b)=>a.from.localeCompare(b.from)):[];
+  if(terms.length&&!terms.some((t,i)=>i&&t.from<=terms[i-1].to)){const card=node('div',undefined,'rounded-xl bg-slate-900/80 p-3 text-sm');card.append(node('strong','Academic terms'));for(const t of terms)card.append(node('p',t.name+' · '+fmtDate(t.from)+' – '+fmtDate(t.to),'text-slate-300'));box.append(card)}
  }
  function renderPeriods(){
   const box=$('ssPeriods');box.replaceChildren();const filter=$('ssDay').value,week=filter?[filter]:days;

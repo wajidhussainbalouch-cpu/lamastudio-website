@@ -474,7 +474,7 @@ header#topOverview{background:var(--lama-header)!important}
 #adminLoginRecovery .lama-loading-retry:not([hidden]){display:inline-block;background:#20c7d8;color:#06212b;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800}
 @keyframes lamaLetterGlow{0%,15%,62%,100%{color:#d8ebed;text-shadow:none;transform:translateY(0)}28%,42%{color:#5df4e5;text-shadow:0 0 8px #27e5d7,0 0 24px #19c9c3,0 0 42px #15c5c566;transform:translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){#adminLoginRecovery .lama-brand-letter,#adminLoginRecovery .lama-brand-number{animation:none;color:#5df4e5;text-shadow:0 0 10px #16b9b966}}
-</style></head>
+</style><script src="js/school-week.js?v=20261120"></script></head>
 <body class="bg-[#0b0f19] font-sans text-slate-100 min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
     <div class="scanline"></div>
 
@@ -804,7 +804,8 @@ header#topOverview{background:var(--lama-header)!important}
         function toggleTheme(){applyTheme(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light');}
         try{const saved=localStorage.getItem('lama_theme')||localStorage.getItem('lama_dashboard_theme');applyTheme(saved||'light');}catch(error){console.warn('Dashboard theme initialization:',error);}
 
-        async function renderDashboard(){
+        function dashboardClosed(day){if(!window.__schoolWeekResources)return 'School calendar not verified';try{return LamaSchoolWeek.reason(window.__schoolWeekResources,day)}catch(e){return 'School calendar not verified'}}
+async function renderDashboard(){
             const school=await LamaAPI.getActiveSchool()||{}; const schoolName=school.name||'Campus Command Hub';
             const shortCode=school.shortCode|| (LamaAPI.deriveShortCode?LamaAPI.deriveShortCode(schoolName):'SCH');
             document.getElementById('pageTitle').innerText=`${schoolName} | School Data Command Center`;
@@ -820,7 +821,7 @@ header#topOverview{background:var(--lama-header)!important}
             /* Collection headlines are populated from the saved fee records in renderFinanceR4(). */
             document.getElementById('yearCollectionDisplay').innerText=money(stats.yearTotal); document.getElementById('financeToday').innerText=money(stats.todayCollection); document.getElementById('financeMonth').innerText=money(stats.monthTotal); document.getElementById('financeYear').innerText=money(stats.yearTotal); document.getElementById('teacherAttDisplay').innerText='Loading…';
             document.getElementById('notMarkedDisplay').innerText='Loading staff register…';
-            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;})]); window.__schoolClassOptions=schoolClassOptions; window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
+            const [students,teachers,attendance,fees,notifications,tests,teacherAttendance,expenses,income,schoolClassOptions,schoolWeekResources]=await Promise.all([safeList('students'),safeList('teachers'),safeList('attendance'),safeList('fees'),safeList('notifications'),safeList('tests'),safeList('teacherAttendance'),safeList('expenses'),safeList('income'),LamaAPI.getSchoolClassOptions().catch(e=>{console.warn('Configured classes unavailable',e);return null;}),LamaAPI.list('resources').catch(()=>null)]); window.__schoolWeekResources=Array.isArray(schoolWeekResources)?schoolWeekResources:null;window.__schoolClassOptions=schoolClassOptions; window.__dashboardData={students,teachers,attendance,fees,notifications,tests,expenses,income,incomeSeries:stats.incomeSeries||[],teacherAttendance};
             document.getElementById('engineState').innerText='synced';document.getElementById('totalStudentsCount').textContent=students.length.toLocaleString();renderEngineRows({students,teachers,attendance,fees,notifications,tests}); renderStudentAttendanceCard(attendance,students); renderTeacherAttendanceAnalytics(teachers,teacherAttendance); renderAssessmentAnalytics(tests);renderAssessmentExtraOverview();if(typeof window.lamaRefreshDailyChecklist==='function')window.lamaRefreshDailyChecklist();
             renderClassChart(students); renderAcademicClasses(students); renderGenderChart(students); renderAttendanceChart(attendance,students); renderFeeChart(stats.incomeSeries||[],fees); renderFinanceR4(window.__dashboardData); renderAbsentees(attendance,students); renderNotices(stats.recentNotifications||notifications.slice(-5).reverse());
         }
@@ -851,6 +852,7 @@ header#topOverview{background:var(--lama-header)!important}
           }
         });
                 function renderStudentAttendanceCard(attendance,students){
+ const closure=dashboardClosed(localISODate());if(closure){const put=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};for(const id of ['studentAttPresent','studentAttAbsent','studentAttLeave','studentAttUnmarked','studentAttRate','attendanceRatioDisplay'])put(id,'—');put('studentAttEnrolled',students.length);put('studentAttDate',localISODate());put('absentTodayCount',closure);put('studentAttHint',closure+' — no attendance required.');put('studentAttClasses',closure);put('studentAttClassCount','');put('dashboardAbsentFollowup','No attendance follow-up required.');for(const id of ['studentAttPresentBar','studentAttAbsentBar','studentAttLeaveBar']){const el=document.getElementById(id);if(el)el.style.width='0%'}return;}
           const today=localISODate(),studentKeys=new Set(),byId=new Map(),byEnrollment=new Map();
           students.forEach(s=>{const sid=String(s.id??s._id??'').trim(),en=String(s.enrlNo??s.enrollmentNo??s.enrollment??'').trim();if(sid){studentKeys.add(sid);byId.set(sid,s)}if(en)byEnrollment.set(en,s)});
           const current=new Map();
@@ -953,7 +955,7 @@ function renderTeacherAttendanceAnalytics(teachers,records){
  const put=(k,v)=>{const el=document.getElementById(k);if(el)el.textContent=v};
  put('taTotal',total);put('taPresent',present);put('taAbsent',absent);put('taLeave',leave);
  put('teacherAttDisplay',present+' / '+total);put('notMarkedDisplay',pending+' not marked today');
- put('taPending',([0,6].includes(new Date(today+'T12:00:00').getDay())?'Weekend holiday · ':'')+pending+' teachers not marked today');
+ put('taPending',pending+' teachers not marked today');
  put('taCoverage',marked+' / '+total+' marked · '+(total?Math.round(marked/total*100):0)+'% coverage');
  put('teacherAttDate',new Date().toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}));
  const staffFollowup=document.getElementById('dashboardStaffFollowup');
@@ -971,11 +973,12 @@ function renderTeacherAttendanceAnalytics(teachers,records){
   staffFollowup.innerHTML=affected.length?'<p>'+affected.length+' teacher(s) absent or on leave today · showing up to 3</p>'+cards.join(''):'No teacher absences or leave recorded today.';
  }
  const progress=document.getElementById('taProgress');if(progress)progress.style.width=(total?100*marked/total:0)+'%';
+ const closure=dashboardClosed(today);if(closure){for(const id of ['taPresent','taAbsent','taLeave','teacherAttDisplay'])put(id,'—');for(const id of ['taPending','taCoverage','notMarkedDisplay'])put(id,closure);if(staffFollowup)staffFollowup.textContent='No attendance follow-up required.';if(progress)progress.style.width='0%'}
  const days=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-(6-i));return {key:[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-'),label:d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric'})}});
- const isWeekend=key=>{const day=new Date(key+'T12:00:00').getDay();return day===0||day===6};
+ const isWeekend=key=>!!dashboardClosed(key);
  const series=days.map(d=>{const v=isWeekend(d.key)?[]:[...(byDate.get(d.key)||new Map()).values()];return {present:v.filter(x=>x==='present').length,absent:v.filter(x=>x==='absent').length,leave:v.filter(x=>x==='leave').length}});
  const weekendSaved=days.filter(d=>isWeekend(d.key)&&(byDate.get(d.key)?.size||0)>0).length;
- put('teacherTrendNote',weekendSaved?`${weekendSaved} weekend date(s) contain saved attendance; excluded from working-day chart (records preserved).`:rosterMissing&&todayRows.size?'Using saved teacher attendance records; teacher directory did not load.':mismatch?'Saved attendance teacher IDs differ from teacher directory IDs; check teacher data linkage.':records.length?'Seven-day trend from saved records; missing days are not absences.':'No saved teacher attendance records for this school.');
+ put('teacherTrendNote',weekendSaved?`${weekendSaved} holiday date(s) contain saved attendance; excluded from working-day chart (records preserved).`:rosterMissing&&todayRows.size?'Using saved teacher attendance records; teacher directory did not load.':mismatch?'Saved attendance teacher IDs differ from teacher directory IDs; check teacher data linkage.':records.length?'Seven-day trend from saved records; missing days are not absences.':'No saved teacher attendance records for this school.');
  destroyChart('teacherAttendance');if(typeof Chart==='undefined')return;
  charts.teacherAttendance=new Chart(document.getElementById('teacherAttendanceChart'),{type:'bar',data:{labels:days.map(d=>isWeekend(d.key)?d.label+' · Holiday':d.label),datasets:[{label:'Present',data:series.map(x=>x.present),backgroundColor:'rgba(52,211,153,.8)',borderRadius:5},{label:'Absent',data:series.map(x=>x.absent),backgroundColor:'rgba(251,113,133,.8)',borderRadius:5},{label:'Leave',data:series.map(x=>x.leave),backgroundColor:'rgba(251,191,36,.8)',borderRadius:5}]},options:{...chartDefaults(),scales:{x:{stacked:true,ticks:{color:'#94a3b8'},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
 }
@@ -1013,7 +1016,7 @@ function renderAssessmentAnalytics(tests){
  charts.assessment=new Chart(document.getElementById('assessmentChart'),{type:'bar',data:{labels:entries.map(x=>x[0]),datasets:[{label:'Tests',data:entries.map(x=>x[1]),backgroundColor:'rgba(236,72,153,.72)',borderColor:'#f9a8d4',borderWidth:1,borderRadius:6}]},options:{...chartDefaults(),plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'},grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0,color:'#94a3b8'}}}}});
 }
 
-        function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance today',new Set(d.attendance.filter(r=>normalizeAttendanceDate(r.date)===localISODate()).map(r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??r.id??'')).filter(Boolean)).size,'students with saved attendance today'],['Attendance this month',new Set(d.attendance.map(r=>normalizeAttendanceDate(r.date)).filter(day=>day&&day.startsWith(localISODate().slice(0,7)))).size,'days with saved student attendance'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
+        function renderEngineRows(d){ const rows=[['Students',d.students.length,'student records'],['Teachers',d.teachers.length,'staff records'],['Attendance today',new Set(d.attendance.filter(r=>normalizeAttendanceDate(r.date)===localISODate()&&!dashboardClosed(localISODate())).map(r=>String(r.studentId??r.studentID??r.enrlNo??r.enrollmentNo??r.id??'')).filter(Boolean)).size,'students with saved attendance today'],['Attendance this month',new Set(d.attendance.map(r=>normalizeAttendanceDate(r.date)).filter(day=>day&&day.startsWith(localISODate().slice(0,7))&&!dashboardClosed(day))).size,'days with saved student attendance'],['Fees',d.fees.length,'finance records'],['Tests',d.tests.length,'assessment records'],['Notices',d.notifications.length,'communication records']]; document.getElementById('engineRows').innerHTML=rows.map(r=>`<div class="engine-row"><div><p class="text-[11px] font-black text-white">${esc(r[0])}</p><p class="text-[9px] text-slate-500">${esc(r[2])}</p></div><strong class="text-sm text-cyan-300">${r[1].toLocaleString()}</strong></div>`).join(''); }
         function normalizeDashboardClass(value){
           const raw=String(value??'').trim().replace(/\s+/g,' ').toLowerCase();
           const withoutPrefix=raw.replace(/^(?:class|grade|standard|std)\s*[-:.#]?\s*/i,'').trim();
@@ -1057,12 +1060,13 @@ function renderAssessmentAnalytics(tests){
           return 'attendance/student-attendance.html?class='+encodeURIComponent(String(className))+'&date='+encodeURIComponent(String(date));
         }
         function renderAttendanceChart(attendance,students){
+ const closed=dashboardClosed(localISODate());if(closed){for(const id of ['attendanceClassBars','classBarsDate','attendanceSummary']){const el=document.getElementById(id);if(el)el.textContent=closed+' — attendance not required.'}return;}
           const today=localISODate(),byId=new Map(),byEnrollment=new Map(),unique=new Map(),classes=new Map();
           const escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
           for(const st of students){const key=String(st.id??st._id??st.enrlNo??st.enrollmentNo??'').trim();if(!key)continue;const name=String(st.class??st.grade??st.className??'Unassigned').trim()||'Unassigned';if(!classes.has(name))classes.set(name,{total:0,present:0,absent:0,leave:0});classes.get(name).total++;if(st.id!=null||st._id!=null)byId.set(String(st.id??st._id),{key,name});if(st.enrlNo!=null||st.enrollmentNo!=null)byEnrollment.set(String(st.enrlNo??st.enrollmentNo),{key,name});}
           for(const a of attendance){if(normalizeAttendanceDate(a.date)!==today)continue;const student=byId.get(String(a.studentId??a.student_id??''))||byEnrollment.get(String(a.enrlNo??a.enrollmentNo??''));if(student)unique.set(student.key,{name:student.name,status:String(a.status||'').trim().toLowerCase()})}
           for(const {name,status} of unique.values()){const r=classes.get(name);if(!r)continue;if(['present','p'].includes(status))r.present++;else if(['absent','a'].includes(status))r.absent++;else if(['leave','l','on leave'].includes(status))r.leave++}
-          const weekend=[0,6].includes(new Date(today+'T12:00:00').getDay());
+          const weekend=!!dashboardClosed(today);
           const totals={total:0,present:0,absent:0,leave:0,unmarked:0};
           const rows=[...classes].sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
           const holder=document.getElementById('attendanceClassBars');
@@ -1156,7 +1160,7 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
         function smsLink(number,message){return `sms:${number}?body=${encodeURIComponent(message)}`;}
         function renderAbsentees(attendance,students){
  const today=localISODate(),list=document.getElementById('absenteesList'),empty=document.getElementById('absenteesEmpty');
- if(!list||!empty)return;
+ if(!list||!empty)return;const closure=dashboardClosed(today);if(closure){list.replaceChildren();empty.classList.remove('hidden');empty.textContent=closure;return;}
  const normalize=v=>String(v??'').trim();
  const byId=new Map(),byEnrollment=new Map();
  (Array.isArray(students)?students:[]).forEach(student=>{

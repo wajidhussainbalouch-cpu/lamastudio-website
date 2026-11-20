@@ -1051,6 +1051,7 @@ function previewDocument(markup,styles,orientation,scale){
  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src &apos;none&apos;; img-src https: data:; style-src &apos;unsafe-inline&apos;; base-uri &apos;none&apos;; form-action &apos;none&apos;"><style>'+styles.replace(/<\/style/gi,'<\\/style')+'\n*{box-sizing:border-box}html,body{min-height:100%;background:#e2e8f0!important}body{overflow:auto}main{width:'+width+'mm;min-height:'+(orientation==='landscape'?210:297)+'mm;background:#fff!important;padding:10mm!important;zoom:'+scale+';box-sizing:border-box}#printSheet{width:100%;} .print-class-page+.print-class-page,.print-calendar-block{border-top:2px dashed #94a3b8;margin-top:10mm;padding-top:10mm}@media print{body{background:white}}</style></head><body><main><div id="printSheet" class="print-only">'+markup+'</div></main></body></html>';
 }
 function syncPrintFilters(){
+ if(!$('printOneClassWrap'))return;
  const single=field('printScope')==='selected';
  $('printClassList').hidden=single;
  $('printClassList').style.display=single?'none':'';
@@ -1094,6 +1095,7 @@ async function refreshPrintPreview(){
  }catch(e){if(generation!==previewGeneration)return;frame.srcdoc='';note.textContent=e.message+' Select the appropriate filters and try again.'}
 }
 function setupPrintPreview(){
+ if(!$('printPreviewPanel')||!$('previewTimetable'))return;
  syncPrintFilters();
  $('previewTimetable').onclick=()=>{$('printPreviewPanel').hidden=false;syncPrintFilters();queuePrintPreview();$('printPreviewPanel').scrollIntoView({behavior:'smooth',block:'nearest'})};
  $('closePrintPreview').onclick=()=>{previewGeneration++;clearTimeout(previewTimer);$('printPreviewPanel').hidden=true;$('printPreviewFrame').srcdoc='';$('previewTimetable').focus()};

@@ -37,7 +37,7 @@ function timesFor(periods,day,num){
  const p=periods.find(p=>norm(p.day)===norm(day)&&Number(p.period)===Number(num)&&value(p.start)&&value(p.end));
  return {start:value(p?.start),end:value(p?.end)};
 }
-function gridMarkup(periods=[],classes=[],day='Monday',count=8,hiddenPeriods=[]){
+function gridMarkup(periods=[],classes=[],day='Monday',count=8,hiddenPeriods=[],classCounts=null){
  const today=periods.filter(p=>norm(p.day)===norm(day)),max=Math.min(14,Math.max(1,Number(count)||8));
  if(!classes.length)return '<p class="quick-empty">No classes configured. Add an offered class in School Settings or save the first period with the Period editor.</p>';
  const header='<thead><tr><th class="quick-fixed" scope="col">Period / time</th>'+classes.map(x=>'<th scope="col">'+esc(x)+' <button type="button" class="quick-remove" data-clear-class="'+esc(x)+'" aria-label="Remove '+esc(x)+' from this day">×</button></th>').join('')+'</tr></thead>';
@@ -45,6 +45,7 @@ function gridMarkup(periods=[],classes=[],day='Monday',count=8,hiddenPeriods=[])
   const period=i+1;if(hiddenPeriods.includes(period))return '';const {start,end}=timesFor(today,day,period);
   const cells=classes.map(c=>{
    const found=today.filter(p=>Number(p.period)===period&&classKey(classLabel(p))===classKey(c));
+   if(classCounts&&period>Number(classCounts[classKey(c)])&&!found.length)return '<td class="quick-unused" aria-label="No period scheduled for this class">—</td>';
    const subject=found.length?found.map(p=>value(p.subject)||'Untitled').join(' / '):'＋ Add';
    const teacher=found.length?found.map(p=>value(p.teacherName)).filter(Boolean).join(' / '):'';
    return '<td><button type="button" class="quick-cell '+(found.length?'filled':'empty')+'" data-quick-class="'+esc(c)+'" data-quick-period="'+period+'" data-quick-day="'+esc(day)+'" title="'+esc((found.length?'Edit lesson':'Add lesson')+' · '+c+' · '+day+' · Period '+period)+'"><strong>'+esc(subject)+'</strong>'+(teacher?'<small>'+esc(teacher)+'</small>':'')+'</button></td>';

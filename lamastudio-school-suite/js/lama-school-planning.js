@@ -430,6 +430,79 @@ function updateQuickScope(){
 
 let classDraftDirty=false,classDraftKey='',classDraftRows=[],classDraftBusy=false;
 
+let lastConflictAttempt=null, savedConflictPairs=[];
+function conflictClass(p){return LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p))}
+function conflictStaff(p){
+ const out=[];if(p.teacherId)out.push({key:'teacher:'+p.teacherId,name:p.teacherName||'Unnamed teacher'});
+ if(p.supportId&&p.supportKind)out.push({key:p.supportKind+':'+p.supportId,name:p.supportName||'Unnamed additional staff'});
+ return out;
+}
+function findTimetableConflicts(records,onlyProposed=false){
+ const result=[],groups=new Map();
+ for(const p of records){const key=JSON.stringify([String(p.sessionId),p.day]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p)}
+ for(const group of groups.values())for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++){
+  let a=group[i],b=group[j];if(onlyProposed&&!a.proposed&&!b.proposed)continue;
+  if(a.id&&b.id&&String(a.id)===String(b.id))continue;
+  if(!a.proposed&&b.proposed)[a,b]=[b,a];
+  const classMatch=conflictClass(a)===conflictClass(b),slot=classMatch&&Number(a.period)===Number(b.period);
+  const overlap=validTime(a.start)&&validTime(a.end)&&a.start<a.end&&validTime(b.start)&&validTime(b.end)&&b.start<b.end&&a.start<b.end&&b.start<a.end;
+  const shared=overlap?conflictStaff(a).filter(x=>conflictStaff(b).some(y=>x.key===y.key)):[];
+  const reasons=[];if(slot)reasons.push('Duplicate class period');if(overlap&&classMatch)reasons.push('Class time overlap');if(shared.length)reasons.push('Staff booked twice: '+shared.map(x=>x.name).join(', '));
+  if(reasons.length)result.push({a,b,reasons,overlap:overlap?{start:a.start>b.start?a.start:b.start,end:a.end<b.end?a.end:b.end}:null});
+ }
+ return result.sort((x,y)=>days.indexOf(x.a.day)-days.indexOf(y.a.day)||String(x.a.start).localeCompare(String(y.a.start))||Number(x.a.period)-Number(y.a.period));
+}
+function checkProposedConflicts(existing,jobs,sourceDay=null){
+ const ids=new Set(jobs.map(j=>String(j.id||'')).filter(Boolean));
+ return findTimetableConflicts([...existing.filter(x=>!ids.has(String(x.id))),...jobs.map(j=>({...j.payload,id:j.id||'',proposed:true,sourceDay}))],true);
+}
+function conflictDescription(p){return LamaTimetableGrid.classLabel(p)+' · '+p.day+' · P'+p.period+' · '+(p.start||'—')+'–'+(p.end||'—')}
+function jumpConflictLesson(p){
+ if(!adminMode||!verified||quickBusy||timingBusy||sessionBusy)return;
+ const cls=LamaTimetableGrid.classLabel(p),day=p.sourceDay||p.day;
+ if(p.proposed&&p.sourceDay===null){if($('quickEditor')&&!$('quickEditor').classList.contains('hidden'))$('quickEditor').scrollIntoView({behavior:'smooth',block:'center'});else $('periodForm').scrollIntoView({behavior:'smooth',block:'center'});return}
+ let row=classDraftRows.find(r=>conflictClass({grade:LamaTimetableGrid.splitLabel(r.classLabel).grade,section:LamaTimetableGrid.splitLabel(r.classLabel).section})===conflictClass(p)&&r.i===Number(p.period)&&field('cbDay')===day&&activeSession()===p.sessionId);
+ if(!row){
+  if(!workingWeek().includes(day)){status(day+' is a weekly holiday. Review the existing saved record in the weekly list.');return}
+  if(classDraftDirty&&!confirm('Opening another class or day will discard unsaved lesson edits. Continue?'))return;
+  if(activeSession()!==p.sessionId){status('Switch to the indicated academic session first.');return}
+  const match=visibleClasses().find(c=>LamaTimetableGrid.classKey(c)===LamaTimetableGrid.classKey(cls));
+  if(!match)return status('Class not available in builder. Review the saved timetable.');
+  classDraftDirty=false;$('cbClass').value=match;$('cbDay').value=day;renderClassBuilder(true);
+  row=classDraftRows.find(r=>r.i===Number(p.period)&&LamaTimetableGrid.classKey(r.classLabel)===LamaTimetableGrid.classKey(cls));
+ }
+ if(row){row.card.classList.add('conflict-focus');row.card.scrollIntoView({behavior:'smooth',block:'center'});row.subject.focus({preventScroll:true})}
+ else status('Open the detailed period editor to review this lesson.');
+}
+function renderConflictReport(){
+ const panel=$('timetableConflicts');if(!panel||!adminMode||!verified)return;
+ const sid=activeSession(),periods=timetableForSession().filter(p=>workingWeek().includes(p.day));
+ savedConflictPairs=findTimetableConflicts(periods);
+ const attempt=lastConflictAttempt?.sid===sid?lastConflictAttempt:null;
+ panel.hidden=false;panel.replaceChildren();
+ const node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n};
+ const heading=node('h3','Timetable conflict report','text-lg font-bold');panel.append(heading);
+ const summary=node('p',savedConflictPairs.length+' saved conflict pair(s) across '+periods.length+' saved working-day lessons.','text-sm mt-1');panel.append(summary);
+ const ids=new Set(savedConflictPairs.flatMap(x=>[x.a.id,x.b.id]).filter(Boolean).map(String));
+ if(attempt)for(const pair of attempt.pairs)for(const p of [pair.a,pair.b])if(p.id)ids.add(String(p.id));
+ for(const tr of $('periodRows').querySelectorAll('tr[data-lesson-id]'))tr.classList.toggle('conflict-saved-row',ids.has(tr.dataset.lessonId));
+ const list=(title,pairs)=>{if(!pairs.length)return;panel.append(node('h4',title+' ('+pairs.length+')','font-bold text-rose-200 mt-4'));for(const c of pairs){
+  const card=node('article',undefined,'conflict-pair');card.append(node('p',c.reasons.join(' · '),'font-bold text-rose-200'),node('p',c.overlap?'Overlapping time: '+c.overlap.start+'–'+c.overlap.end:'Same class and period number, even though times differ.','text-sm text-amber-200'));
+  for(const p of [c.a,c.b]){const line=node('div',undefined,'conflict-lesson');line.append(node('strong',conflictDescription(p)),node('p',(p.subject||'No subject')+' · '+(p.teacherName||'Unassigned')+(p.supportName?' · Additional staff: '+p.supportName+(p.supportRole?' ('+p.supportRole+')':''):''),'text-sm'),node('p',p.proposed?'Proposed lesson'+(p.sourceDay&&p.sourceDay!==p.day?' (copied from '+p.sourceDay+')':''):'Saved lesson','text-xs text-slate-300'));const b=node('button',p.proposed?'Go to proposed lesson':'Go to saved lesson','conflict-jump');b.type='button';b.onclick=()=>jumpConflictLesson(p);line.append(b);card.append(line)}
+  panel.append(card);
+ }};
+ if(attempt){panel.append(node('p','Last save blocked — no changes submitted. Correct the lessons, then save again to recheck.','font-bold text-amber-200 mt-2'));list('Conflicts in last save attempt',attempt.pairs)}
+ list('Conflicts already in saved timetable',savedConflictPairs);
+ if(!attempt&&!savedConflictPairs.length)panel.append(node('p','✓ No overlapping class or staff assignments found in the saved working-day timetable.','text-emerald-300 text-sm mt-2'));
+ if($('cbConflictLink')){$('cbConflictLink').textContent=attempt?'Review '+attempt.pairs.length+' blocked-save conflict(s)':savedConflictPairs.length?'Review '+savedConflictPairs.length+' saved conflict(s)':'Check timetable conflicts';$('cbConflictLink').classList.toggle('conflict-link-warning',!!attempt||!!savedConflictPairs.length)}
+}
+function rejectTimetableConflicts(pairs,sid){
+ if(!pairs.length)return;
+ lastConflictAttempt={sid,pairs};renderConflictReport();$('timetableConflicts').scrollIntoView({behavior:'smooth',block:'start'});
+ throw Error(pairs.length+' timetable conflict pair(s). Review both lessons in the conflict report above Weekly subject timetable. No changes saved.');
+}
+
+
 const pendingPeriodCounts=new Map();
 const countKey=label=>LamaTimetableGrid.classKey(label);
 function savedPeriodCount(session,label){
@@ -475,8 +548,8 @@ async function savePeriodCounts(){
 
 function setupClassBuilder(){
  const box=document.createElement('section');box.id='classBuilder';box.className='no-print hidden bg-slate-900 rounded-2xl border border-slate-700 p-4 mb-5';
- box.innerHTML='<h2 class="text-xl font-black text-cyan-200">Easy class timetable builder</h2><p class="text-sm text-slate-300 mt-2">Choose one class or All classes. Edit any lesson or fill several empty periods together, then save once. Green = saved; amber = unsaved change. No need to delete an incorrect teacher or subject.</p><div class="grid grid-cols-2 gap-3 mt-3"><label>Academic session<select id="cbSession"></select></label><label>Class / section<select id="cbClass"></select></label><label>Weekday<select id="cbDay">'+days.map(d=>'<option>'+d+'</option>').join('')+'</select></label><label>Apply changes to<select id="cbScope"><option value="day">Selected day</option><option value="week">Changed periods to working week</option><option value="copyweek">Copy all filled periods to working week</option></select></label><label id="cbCountLabel">Number of periods for this class<select id="cbCount" aria-label="Number of periods for this class"></select></label><label>Default teacher<select id="cbTeacher"><option value="">Choose teacher</option></select></label></div><div class="flex flex-wrap gap-2 mt-3"><button type="button" id="cbCountSave" class="bg-cyan-700 rounded-xl px-3 py-2 font-bold">Save period counts</button><button type="button" id="cbFill" class="bg-slate-700 rounded-xl px-3 py-2">Fill empty teacher fields</button><button type="button" id="cbReset" class="bg-slate-700 rounded-xl px-3 py-2">Discard unsaved changes</button><button type="button" id="cbAdvanced" class="bg-slate-700 rounded-xl px-3 py-2">Show all-class grid</button><button type="button" id="cbSettings" class="bg-slate-700 rounded-xl px-3 py-2">Session &amp; calendar editors</button></div><p class="text-xs text-slate-400 mt-2">Times are suggested from existing school periods where available; review them. Changes to saved lessons retain their record IDs. Blank periods are left unchanged.</p><div id="cbRows" class="grid gap-2 mt-4"></div><div class="sticky bottom-2 mt-4 bg-slate-900 border border-cyan-700 rounded-xl p-3 shadow-lg"><button type="button" id="cbSave" class="bg-emerald-600 text-white rounded-xl px-4 py-3 font-bold w-full disabled:opacity-50">Save changes</button><p id="cbStatus" class="text-sm text-amber-200 mt-2" role="status"></p></div>';
- $('admin').before(box);
+ box.innerHTML='<h2 class="text-xl font-black text-cyan-200">Easy class timetable builder</h2><p class="text-sm text-slate-300 mt-2">Choose one class or All classes. Edit any lesson or fill several empty periods together, then save once. Green = saved; amber = unsaved change. No need to delete an incorrect teacher or subject.</p><div class="grid grid-cols-2 gap-3 mt-3"><label>Academic session<select id="cbSession"></select></label><label>Class / section<select id="cbClass"></select></label><label>Weekday<select id="cbDay">'+days.map(d=>'<option>'+d+'</option>').join('')+'</select></label><label>Apply changes to<select id="cbScope"><option value="day">Selected day</option><option value="week">Changed periods to working week</option><option value="copyweek">Copy all filled periods to working week</option></select></label><label id="cbCountLabel">Number of periods for this class<select id="cbCount" aria-label="Number of periods for this class"></select></label><label>Default teacher<select id="cbTeacher"><option value="">Choose teacher</option></select></label></div><div class="flex flex-wrap gap-2 mt-3"><button type="button" id="cbConflictLink" class="bg-slate-700 rounded-xl px-3 py-2 font-bold">Check timetable conflicts</button><button type="button" id="cbCountSave" class="bg-cyan-700 rounded-xl px-3 py-2 font-bold">Save period counts</button><button type="button" id="cbFill" class="bg-slate-700 rounded-xl px-3 py-2">Fill empty teacher fields</button><button type="button" id="cbReset" class="bg-slate-700 rounded-xl px-3 py-2">Discard unsaved changes</button><button type="button" id="cbAdvanced" class="bg-slate-700 rounded-xl px-3 py-2">Show all-class grid</button><button type="button" id="cbSettings" class="bg-slate-700 rounded-xl px-3 py-2">Session &amp; calendar editors</button></div><p class="text-xs text-slate-400 mt-2">Times are suggested from existing school periods where available; review them. Changes to saved lessons retain their record IDs. Blank periods are left unchanged.</p><div id="cbRows" class="grid gap-2 mt-4"></div><div class="sticky bottom-2 mt-4 bg-slate-900 border border-cyan-700 rounded-xl p-3 shadow-lg"><button type="button" id="cbSave" class="bg-emerald-600 text-white rounded-xl px-4 py-3 font-bold w-full disabled:opacity-50">Save changes</button><p id="cbStatus" class="text-sm text-amber-200 mt-2" role="status"></p></div>';
+ $('admin').before(box);$('cbConflictLink').onclick=()=>{renderConflictReport();$('timetableConflicts').scrollIntoView({behavior:'smooth',block:'start'})};
  for(const id of ['cbSession','cbClass','cbDay'])$(id).onchange=()=>{
   if(classDraftBusy||quickBusy){renderClassBuilder(true);return}
   if(classDraftDirty&&!confirm('Discard unsaved timetable changes before switching?')){const [sid,cls,day,count]=JSON.parse(classDraftKey);$('cbSession').value=sid;$('cbClass').value=cls;$('cbDay').value=day;$('cbCount').value=count;return}
@@ -564,8 +637,7 @@ async function saveClassDraft(){
   }
   if(!jobs.length)throw Error('No changed lessons to save for the selected days.');
   if(jobs.length>500)throw Error('Save at most 500 lessons at a time. Reduce periods or save one day at a time.');
-  const ids=new Set(jobs.map(j=>String(j.id)).filter(Boolean)),remaining=existing.filter(x=>!ids.has(String(x.id)));
-  for(const j of jobs){const p=j.payload,sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));if(remaining.some(x=>x.day===p.day&&(sameCls(x)&&Number(x.period)===p.period||x.start<p.end&&x.end>p.start&&(sameCls(x)||planningStaffKeys(x).some(k=>planningStaffKeys(p).includes(k))))))throw Error(p.grade+(p.section?' / '+p.section:'')+' '+p.day+' P'+p.period+': class or teacher time conflict. Correct the lesson before saving.');remaining.push(p)}
+  lastConflictAttempt=null;rejectTimetableConflicts(checkProposedConflicts(existing,jobs,day),sid);renderConflictReport();
   if(week.length>1&&!confirm('Apply '+jobs.length+' changed lesson(s) to '+week.join(', ')+'?'+(replace.length?' Existing lessons will be updated: '+replace.join(', '):'')))return;
   classDraftBusy=true;quickBusy=true;$('classBuilder').querySelectorAll('input,select,button').forEach(e=>e.disabled=true);note.textContent='Saving '+jobs.length+' lesson(s) in one request…';
   attempted=true;
@@ -642,13 +714,13 @@ async function saveQuickPeriod(){
   if(moving&&old)throw Error(day+': this period already has a lesson. Move is blocked; choose an empty day.');
   if(day===sourceDay&&id!==oldId)throw Error('This period changed. Reopen the timetable cell.');
   const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:selectedTeacher.name,room:field('quickRoom'),published:$('quickPublished').checked};
-  const conflicts=existing.filter(x=>String(x.id)!==oldId&&same(x.day,day)&&x.start<end&&x.end>start&&(sameClass(x)||String(x.teacherId)===teacherId));
-  if(conflicts.length)throw Error(day+': class/section or teacher is already scheduled during these times.');
+
   const unchanged=old&&Object.keys(payload).every(k=>old[k]===payload[k]);
   if(unchanged)continue;
   if(old&&day!==sourceDay)replaceDays.push(day);
   jobs.push({id:moving?id:oldId,payload});
  }
+ lastConflictAttempt=null;rejectTimetableConflicts(checkProposedConflicts(existing,jobs),sessionId);renderConflictReport();
  if(moving&&!confirm('Move this lesson from '+sourceDay+' to '+targetDays[0]+'? The original day will become empty.'))return;
  if(replaceDays.length&&!confirm('Replace existing different lessons for this class and period on '+replaceDays.join(', ')+'? Other periods will not change.'))return;
  if(!jobs.length){const message='Already saved for all selected days. No duplicate records created.';$('quickSaveStatus').textContent=message;status(message);return}
@@ -690,7 +762,7 @@ const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chos
 const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort(LamaClassOrder.compare);$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
 const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||LamaClassOrder.compare(LamaTimetableGrid.classLabel(a),LamaTimetableGrid.classLabel(b))||String(a.start||'').localeCompare(String(b.start||'')));
 const view=periods.filter(p=>workingWeek().includes(p.day)&&(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
-$('periodRows').innerHTML=view.length?view.map(p=>'<tr class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+(p.supportName?'<br>'+esc(p.supportName)+' ('+esc(p.supportRole||'Additional staff')+')':'')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
+$('periodRows').innerHTML=view.length?view.map(p=>'<tr data-lesson-id="'+esc(p.id)+'" class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+(p.supportName?'<br>'+esc(p.supportName)+' ('+esc(p.supportRole||'Additional staff')+')':'')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
 if(adminMode)$('sessionList').innerHTML=list.map(s=>{
  const refs=sessionReferences(s.id),used=refs.periods+refs.events;
  const duplicate=list.some(other=>other.id!==s.id&&sessionKey(other.name)===sessionKey(s.name));
@@ -708,7 +780,7 @@ if(adminMode)$('sessionList').innerHTML=list.map(s=>{
   '<button type="button" class="text-rose-300 border border-rose-800 rounded-lg min-h-10 px-3 disabled:opacity-40 disabled:cursor-not-allowed" data-remove-session="'+esc(s.id)+'" aria-label="Delete session '+esc(s.name)+'" title="'+esc(reason||'Delete this unlinked academic session')+'" '+(reason?'disabled':'')+'>Delete</button>'+
   '</div></div>';
 }).join('');
-renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);renderClassBuilder();}
+renderTiming();renderCalendar();renderPrintClassPicker(periods,chosen);if(adminMode){populateClassEditor(field('grade'),field('section'),field('subject'));renderQuickGrid(periods);renderClassBuilder();renderConflictReport();}
 }
 function renderCalendar(){
  const chosen=activeSession(),events=data('event').filter(e=>e.sessionId===chosen&&allowed(e)).sort((a,b)=>a.start.localeCompare(b.start));
@@ -725,7 +797,7 @@ function renderCalendar(){
  $('eventRows').innerHTML=vacationRows+(events.length?events.map(e=>'<div class="border-b border-slate-700 py-2 text-sm"><b>'+esc(e.type)+'</b> · '+esc(e.title)+' · '+esc(e.start)+' – '+esc(e.end)+(e.description?' · '+esc(e.description):'')+(adminMode?' <button class="text-cyan-300" data-edit-event="'+esc(e.id)+'">Edit</button> <button class="text-rose-300" data-remove-event="'+esc(e.id)+'">Delete</button>':'')+'</div>').join(''):'<p class="text-slate-400 text-sm">No additional events for this session.</p>');
 }
 function edit(kind,id){if(quickBusy)return;const p=data(kind).find(r=>r.id===id);if(!p)return;$('admin').classList.remove('class-grid-collapsed');if($('cbSettings'))$('cbSettings').textContent='Hide session & calendar editors';const fields=kind==='period'?{periodId:'id',periodSession:'sessionId',day:'day',period:'period',start:'start',end:'end',grade:'grade',section:'section',subject:'subject',teacher:'teacherId',room:'room',published:'published'}:kind==='event'?{eventId:'id',eventSession:'sessionId',eventType:'type',eventTitle:'title',eventStart:'start',eventEnd:'end',eventDescription:'description',eventPublished:'published'}:{sessionId:'id',sessionName:'name',sessionStart:'start',sessionEnd:'end',sessionActive:'active'};if(kind==='period')populateClassEditor(p.grade,p.section||'',p.subject||'');for(const [input,key] of Object.entries(fields)){if($(input).type==='checkbox')$(input).checked=p[key]!==false;else if(kind!=='period'||!['grade','section','subject'].includes(input))$(input).value=p[key]??''}if(kind==='period')populateTeacherPicker('teacher',p.subject,p.teacherId);$(kind==='period'?'periodForm':kind==='event'?'eventForm':'sessionForm').scrollIntoView({behavior:'smooth',block:'start'})}
-$('periodForm').onsubmit=async e=>{e.preventDefault();try{authorized();const p={sessionId:field('periodSession'),day:field('day'),period:Number(field('period')),start:field('start'),end:field('end'),grade:field('grade'),section:field('section'),subject:field('subject'),teacherId:field('teacher'),teacherName:requireTeacher(field('teacher')).name,room:field('room'),published:$('published').checked};if(!p.sessionId)throw Error('Create an academic session first');requireSubject(p.grade,p.subject,data('period').find(x=>String(x.id)===field('periodId')));if(p.start>=p.end)throw Error('Period end must be after start');const clashClass=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));const conflict=data('period').find(x=>String(x.id)!==field('periodId')&&x.sessionId===p.sessionId&&same(x.day,p.day)&&((clashClass(x)&&Number(x.period)===p.period)||(x.start<p.end&&x.end>p.start&&(clashClass(x)||(p.teacherId&&String(x.teacherId)===p.teacherId)))));if(conflict)throw Error('Time conflict: class/section or teacher is already assigned');if(!await save('period',field('periodId'),p))throw Error('Period save could not be verified. Refresh before retrying.');$('periodId').value='';status('Period saved')}catch(err){status(err.message)}};
+$('periodForm').onsubmit=async e=>{e.preventDefault();try{authorized();const p={sessionId:field('periodSession'),day:field('day'),period:Number(field('period')),start:field('start'),end:field('end'),grade:field('grade'),section:field('section'),subject:field('subject'),teacherId:field('teacher'),teacherName:requireTeacher(field('teacher')).name,room:field('room'),published:$('published').checked};if(!p.sessionId)throw Error('Create an academic session first');requireSubject(p.grade,p.subject,data('period').find(x=>String(x.id)===field('periodId')));if(p.start>=p.end)throw Error('Period end must be after start');lastConflictAttempt=null;rejectTimetableConflicts(checkProposedConflicts(data('period'),[{id:field('periodId'),payload:p}]),p.sessionId);renderConflictReport();if(!await save('period',field('periodId'),p))throw Error('Period save could not be verified. Refresh before retrying.');$('periodId').value='';status('Period saved')}catch(err){status(err.message)}};
 $('sessionForm').onsubmit=async e=>{
  e.preventDefault();
  if(sessionBusy||timingBusy){status('Academic session is being saved. Please do not submit twice.');return}

@@ -433,3 +433,8 @@ Added a fully original, offline-first [**Symbols & HTML Inputs**](reference.html
 - PWA allowlist and Android test asset pack include the new static files, with Node and real Chromium browser checks covering mobile navigation, actual browser control behavior, question feedback, and offline usage.
 
 The owner-only **v0.19 Android TEST** uses a new package ID, `pk.lamastudio.codingacademy.testing.v19`, so older v0.18 app progress is not overwritten. The two test apps do not automatically share stored progress; if needed, export the Complete Academy Backup from the earlier version, then import the selected JSON into the newer test app. The live website remains unchanged, and learner cloud accounts remain disabled pending security review.
+
+
+## Phase 20 — HTML text formatting lab (20 November 2026)
+
+The existing Symbols & HTML Inputs reference now includes **HTML text formatting · Level 1**: 12 separate code-and-rendered-output examples, six tap-to-reveal review questions, and a short school-announcement challenge linked to Coding Studio. Examples cover heading hierarchy, paragraph/line breaks, strong vs b, em vs i, highlights, small print, sub/sup, document edits and inline code. The heading example is isolated in a static sandboxed iframe. This is supplemental practice; the 62 tracked activities, backups, cloud settings and existing question scores are unchanged. Cache v18 refreshes the offline reference asset. The regression contract was extended; physical device/browser testing and any new APK build remain pending. No production merge or deployment.

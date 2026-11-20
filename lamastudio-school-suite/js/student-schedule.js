@@ -32,13 +32,13 @@ function collect(rows,student,schoolId){
  return {sessions:sessions.sort((a,b)=>a.start.localeCompare(b.start)),periods:periods.filter(p=>ids.has(str(p.sessionId))).sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||a.start.localeCompare(b.start)||Number(a.period)-Number(b.period)),events:events.filter(e=>ids.has(str(e.sessionId))).sort((a,b)=>a.start.localeCompare(b.start))};
 }
 function currentSession(sessions,date){return sessions.find(s=>s.active===true&&s.start<=date&&date<=s.end)||sessions.find(s=>s.start<=date&&date<=s.end)||sessions.find(s=>s.active===true)||sessions.at(-1)||null}
-function classify(date,session,events){
+function classify(date,session,events,weeklyOff=null){
  if(!session||date<session.start||date>session.end)return {kind:'',hits:[]};
  const hits=events.filter(e=>e.start<=date&&date<=e.end);
  const season=inside(date,session.schoolTiming)?'winter':inside(date,session.summerTiming)?'summer':'';
  const schedule=season==='winter'?session.schoolTiming:season==='summer'?session.summerTiming:null;
  const vacation=['summerVacation','winterVacation'].find(k=>inside(date,session.vacations?.[k]));
- const closed=schedule?.hours?.[dayName(date)]?.open===false;
+ const closed=Array.isArray(weeklyOff)?weeklyOff.includes(new Date(date+'T12:00:00Z').getUTCDay()):schedule?.hours?.[dayName(date)]?.open===false;
  const holiday=hits.some(e=>/holiday|vacation/i.test(e.type||''));
  return {kind:vacation||(closed||holiday?'holiday':hits.length?'event':season),hits,schedule};
 }
@@ -55,7 +55,7 @@ function mount(container,student,schoolId){
   for(const [key,title] of [['schoolTiming','Winter school timings'],['summerTiming','Summer school timings']]){
    const t=selected?.[key];if(!range(t)||!t.hours)continue;
    const card=node('div',undefined,'rounded-xl bg-slate-900/80 p-3 text-sm');card.append(node('strong',title),node('p',fmtDate(t.from)+' – '+fmtDate(t.to),'text-slate-400'));
-   const groups=new Map();for(const d of days){const h=t.hours[d];if(!h)continue;const line=h.open===false?'Closed':h.open===true&&time(h.start)&&time(h.end)?fmtTime(h.start)+' – '+fmtTime(h.end):'Not configured';if(!groups.has(line))groups.set(line,[]);groups.get(line).push(d.slice(0,3))}
+   const groups=new Map();for(const d of days){const h=t.hours[d],off=data.weeklyOff;const closed=Array.isArray(off)?off.includes(LamaSchoolWeek.names.indexOf(d)):h?.open===false;const line=closed?'Closed':h?.open===true&&time(h.start)&&time(h.end)?fmtTime(h.start)+' – '+fmtTime(h.end):'Hours not configured';if(!groups.has(line))groups.set(line,[]);groups.get(line).push(d.slice(0,3))}
    for(const [line,ds] of groups)card.append(node('p',ds.join(', ')+': '+line));
    if(time(t.breakStart)&&time(t.breakEnd))card.append(node('p','Lunch break: '+fmtTime(t.breakStart)+' – '+fmtTime(t.breakEnd),'text-amber-200'));box.append(card)
   }
@@ -64,9 +64,9 @@ function mount(container,student,schoolId){
   if(terms.length&&!terms.some((t,i)=>i&&t.from<=terms[i-1].to)){const card=node('div',undefined,'rounded-xl bg-slate-900/80 p-3 text-sm');card.append(node('strong','Academic terms'));for(const t of terms)card.append(node('p',t.name+' · '+fmtDate(t.from)+' – '+fmtDate(t.to),'text-slate-300'));box.append(card)}
  }
  function renderPeriods(){
-  const box=$('ssPeriods');box.replaceChildren();const filter=$('ssDay').value,week=filter?[filter]:days;
+  const box=$('ssPeriods');box.replaceChildren();const filter=$('ssDay').value,work=Array.isArray(data.weeklyOff)?days.filter(d=>!data.weeklyOff.includes(LamaSchoolWeek.names.indexOf(d))):days,week=filter?[filter]:work;
   const records=data.periods.filter(p=>str(p.sessionId)===selected.id);
-  for(const day of week){const items=records.filter(p=>p.day===day);if(!items.length&&!filter)continue;
+  for(const day of week){if(!work.includes(day)){box.append(node('p',day+' — weekly holiday','text-sm text-slate-400'));continue}const items=records.filter(p=>p.day===day);if(!items.length&&!filter)continue;
    const card=node('div',undefined,'rounded-xl bg-slate-900/70 border border-slate-700 p-3');card.append(node('h4',day,'font-bold text-cyan-200 mb-2'));
    if(!items.length)card.append(node('p','No published lessons for this day.','text-sm text-slate-400'));
    for(const p of items){const line=node('div',undefined,'py-2 border-t border-slate-700 text-sm');line.append(node('b',str(p.subject)),node('p',fmtTime(p.start)+' – '+fmtTime(p.end)+(p.period?' · Period '+p.period:''),'text-slate-300'),node('p',str(p.teacherName)||'Teacher not published','text-slate-400'));if(str(p.room))line.append(node('p','Room: '+p.room,'text-slate-400'));card.append(line)}box.append(card)
@@ -79,7 +79,7 @@ function mount(container,student,schoolId){
   $('ssMonth').textContent=first.toLocaleDateString('en-GB',{month:'long',year:'numeric',timeZone:'UTC'});grid.replaceChildren();$('ssDateInfo').textContent='Tap a date for details.';
   for(const d of days)grid.append(node('span',d.slice(0,3),'text-xs text-center text-slate-400'));
   for(let i=0;i<offset;i++)grid.append(node('span'));
-  for(let d=1;d<=last;d++){const date=month+'-'+String(d).padStart(2,'0'),mark=classify(date,selected,events),b=node('button',String(d),'rounded-lg border border-slate-700 bg-slate-900 p-2 text-sm');b.type='button';b.style.minHeight='40px';if(colors[mark.kind]){b.style.borderBottom='4px solid '+colors[mark.kind];b.style.background=colors[mark.kind]+'22'}if(date===dateNow())b.style.outline='2px solid white';b.setAttribute('aria-label',fmtDate(date)+(mark.kind?' '+labels[mark.kind]:''));b.onclick=()=>{$('ssDateInfo').textContent=fmtDate(date)+' · '+(labels[mark.kind]||'No published calendar marking')+(mark.hits.length?' · '+mark.hits.map(e=>e.title).join(' · '):'')};grid.append(b)}
+  for(let d=1;d<=last;d++){const date=month+'-'+String(d).padStart(2,'0'),mark=classify(date,selected,events,data.weeklyOff),b=node('button',String(d),'rounded-lg border border-slate-700 bg-slate-900 p-2 text-sm');b.type='button';b.style.minHeight='40px';if(colors[mark.kind]){b.style.borderBottom='4px solid '+colors[mark.kind];b.style.background=colors[mark.kind]+'22'}if(date===dateNow())b.style.outline='2px solid white';b.setAttribute('aria-label',fmtDate(date)+(mark.kind?' '+labels[mark.kind]:''));b.onclick=()=>{$('ssDateInfo').textContent=fmtDate(date)+' · '+(labels[mark.kind]||'No published calendar marking')+(mark.hits.length?' · '+mark.hits.map(e=>e.title).join(' · '):'')};grid.append(b)}
   const out=$('ssEvents');out.replaceChildren();const from=month+'-01',to=month+'-'+String(last).padStart(2,'0');
   for(const k of ['summerVacation','winterVacation']){const v=selected.vacations?.[k];if(range(v)&&v.from<=to&&v.to>=from)out.append(node('p',labels[k]+': '+fmtDate(v.from)+' – '+fmtDate(v.to),'text-sm text-slate-300'))}
   for(const e of events.filter(e=>e.start<=to&&e.end>=from)){const card=node('div',undefined,'rounded-lg bg-slate-900/70 p-3 text-sm');card.append(node('strong',e.title),node('p',fmtDate(e.start)+' – '+fmtDate(e.end),'text-slate-400'));if(str(e.description))card.append(node('p',e.description));out.append(card)}
@@ -91,7 +91,7 @@ function mount(container,student,schoolId){
  async function load(){if(busy)return;busy=true;const ticket=++seq;$('ssRefresh').disabled=true;$('ssStatus').textContent='Loading published schedule…';$('ssContent').hidden=true;
   try{if(!LamaAPI.requireLogin('student','../../students/student-login.html'))return;const s=LamaAPI.getSession('student');if(!s||str(s.schoolId)!==str(schoolId)||str(s.studentId)!==str(student.id))throw Error('Student session changed. Sign in again.');
    const rows=await LamaAPI.list('resources');if(!Array.isArray(rows))throw Error('Invalid schedule response.');if(ticket!==seq)return;
-   data=collect(rows,student,schoolId);$('ssSession').replaceChildren(...data.sessions.map(x=>new Option(x.name+(x.active===true?' (active)':''),x.id)));select(selected?.id);$('ssStatus').textContent=selected?'Showing your published class schedule and school calendar.':'No academic session published yet.';
+   data=collect(rows,student,schoolId);data.weeklyOff=LamaSchoolWeek.read(rows)?.weeklyOff??null;for(const o of $('ssDay').options){o.disabled=!!o.value&&Array.isArray(data.weeklyOff)&&data.weeklyOff.includes(LamaSchoolWeek.names.indexOf(o.value));if(o.disabled&&o.selected)$('ssDay').value=''};$('ssSession').replaceChildren(...data.sessions.map(x=>new Option(x.name+(x.active===true?' (active)':''),x.id)));select(selected?.id);$('ssStatus').textContent=selected?'Showing your published class schedule and school calendar.':'No academic session published yet.';
   }catch(e){data=null;selected=null;$('ssStatus').textContent='Unable to load schedule: '+e.message}
   finally{busy=false;$('ssRefresh').disabled=false}
  }

@@ -3036,6 +3036,7 @@ function lamaHomeworkVisible_(r,student){
 }
 function lamaHomeworkCompletionAction_(p){
  const action=p.action,isReport=action==='homeworkCompletionReport';
+ if(isReport?!['school','teacher'].includes(p.role):p.role!=='student')throw Error('Access denied.');
  const ctx=isReport&&p.role==='school'?lamaStaffAdminContext_(p,false):resolveContext(p);
  if(isReport? !['school','teacher'].includes(ctx.role):ctx.role!=='student')throw Error('Access denied.');
  if(ctx.role==='teacher'&&!String(ctx.teacher.assignedClass||'').trim())throw Error('No assigned class.');
@@ -3048,6 +3049,7 @@ function lamaHomeworkCompletionAction_(p){
  const marked=r=>r.completed===true||str(r.completed).toLowerCase()==='true';
  if(!isReport){
   const sid=str(ctx.student.id),own=homework.filter(h=>lamaHomeworkVisible_(h,ctx.student)),ids=new Set(own.map(h=>str(h.id)));
+  if(!sid)throw Error('Student ID missing.');
   if(action==='studentHomeworkCompletion')return {completedIds:[...new Set(data.items.filter(x=>str(x.record.studentId)===sid&&ids.has(str(x.record.homeworkId))&&marked(x.record)).map(x=>str(x.record.homeworkId)))]};
   assertSchoolWritable(ctx.schoolId);
   const hid=str(p.homeworkId);if(!hid||!ids.has(hid)||typeof p.completed!=='boolean')throw Error('Invalid homework checklist item.');
@@ -3057,6 +3059,8 @@ function lamaHomeworkCompletionAction_(p){
   if(hits.length)data.info.sheet.getRange(hits[0].row,1,1,data.info.headers.length).setValues([recordToRow(data.info.headers,record)]);
   else data.info.sheet.appendRow(recordToRow(data.info.headers,record));
   SpreadsheetApp.flush();
+  const verified=lamaStaffRows_(ctx,'homeworkCompletion').items.filter(x=>str(x.record.studentId)===sid&&str(x.record.homeworkId)===hid);
+  if(verified.length!==1||marked(verified[0].record)!==p.completed)throw Error('Completion save not confirmed. Refresh before retrying.');
   return {homeworkId:hid,completed:p.completed};
  }
  const day=lamaStaffDate_(p.date);if(!day||day!==p.date)throw Error('Valid posting date required.');

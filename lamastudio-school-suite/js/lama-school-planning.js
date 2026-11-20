@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const role=new URLSearchParams(location.search).get('role')||'school',adminMode=role==='school',session=LamaAPI.getSession(role),schoolId=session?.schoolId;
-let rows=[],teachers=[],teacherDirectoryLoaded=false,offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false,hiddenGrid=new Map(),quickScopePreference='day',quickCustomDays=days.slice(0,6),quickSession='',periodNeedsRefresh=false,timingFormSession='',timingBusy=false;
+let schoolWeekResources=[],rows=[],teachers=[],teacherDirectoryLoaded=false,offeredClasses=[],curriculumClasses=[],month=new Date(new Date().getFullYear(),new Date().getMonth(),1),verified=false,sessionBusy=false,printSchoolProfile=null,printPrepared=false,printSelection=null,printSelectionSession='',quickBusy=false,hiddenGrid=new Map(),quickScopePreference='day',quickCustomDays=days.slice(0,6),quickSession='',periodNeedsRefresh=false,timingFormSession='',timingBusy=false;
 const type={period:'planning-period',session:'planning-session',event:'planning-event'};
 const status=s=>{$('status').textContent=s};
 const field=id=>$(id).value.trim(),parsed=r=>{try{return JSON.parse(r.description||'{}')}catch{return {}}};
@@ -11,7 +11,7 @@ const authorized=()=>{if(!adminMode||!verified)throw Error('Verified school admi
 const matchStudent=r=>same(r.grade,session?.class||session?.grade||session?.studentClass)&&(!session?.section||!r.section||same(r.section,session.section));
 const matchTeacher=r=>same(r.teacherId,session?.teacherId||session?.id);
 function allowed(r){if(adminMode)return true;if(r.published===false)return false;if(r.type&&r.title&&r.start&&r.end&&!r.grade&&!r.teacherId)return true;if(role==='student')return matchStudent(r);if(role==='teacher')return matchTeacher(r);return false}
-async function load(allowBusy=false){if((quickBusy||timingBusy)&&allowBusy!==true)return false;if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
+async function load(allowBusy=false){if((quickBusy||timingBusy)&&allowBusy!==true)return false;if(!schoolId){status('School session missing. Sign in again.');return}try{const all=await LamaAPI.list('resources');if(!Array.isArray(all))throw Error('Invalid saved schedule response. Refresh to retry.');schoolWeekResources=all;LamaSchoolWeek.read(all);rows=all.filter(r=>Object.values(type).includes(r.category));if(adminMode){
  // The public client exports getSchoolClassOptions and getActiveSchool,
  // not getSchoolConfig (which is an internal Apps Script action).
  offeredClasses=[];
@@ -109,7 +109,7 @@ function updatePrintCount(){
 }
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
- if(!adminMode)return;
+ if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','periodDay','cbDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(!work.includes(el.value))el.value=work[0]||'';}
  const hidden=gridState();$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),field('quickDay')||'Monday',Number(field('quickPeriods'))||8,[...hidden.periods]);
 }
 function teacherLabel(t){return String(t?.name||t?.fullName||t?.teacherName||'').trim()}
@@ -206,6 +206,7 @@ async function clearGridAxis(kind,value){
 }
 // The generic resources API returns the saved record after the sheet write.
 async function writePeriod(id,payload){
+ if(!workingWeek().includes(payload.day))throw Error(payload.day+' is not a working day. Change School Settings if required.');
  const record={category:type.period,title:[payload.day,payload.grade,payload.period].join(' · '),description:JSON.stringify(payload),link:''};
  const saved=id?await LamaAPI.update('resources',id,record):await LamaAPI.add('resources',record);
  if(!saved?.id||(id&&String(saved.id)!==String(id))||saved.category!==type.period)throw Error('Missing or invalid server acknowledgement.');
@@ -255,14 +256,14 @@ function dateInside(date,t){return !!t&&t.from<=date&&date<=t.to}
 function dateToday(){const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month+'-'+parts.day}
 function seasonForDate(date,sid=activeSession()){return ['winter','summer'].find(k=>dateInside(date,schoolTiming(sid,k)))||''}
 function chosenSeason(){const picker=$('quickSeason');return picker?picker.value:seasonForDate(dateToday())}
-function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason());return t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6)}
+function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason());return LamaSchoolWeek.working(schoolWeekResources,t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6))}
 function calendarDay(date,sid,events=[]){
  const season=seasonForDate(date,sid),t=season?schoolTiming(sid,season):null;
  const v=vacationsFor(sid),vacation=Object.keys(vacationKeys).find(k=>dateInside(date,v[k]));
  const weekday=days[(new Date(date+'T12:00:00Z').getUTCDay()+6)%7];
  const hits=events.filter(e=>e.start<=date&&date<=e.end);
  const publicHoliday=hits.some(e=>/holiday|vacation/i.test(e.type||''));
- const closed=!!t&&t.hours[weekday]?.open!==true;
+ const configured=LamaSchoolWeek.read(schoolWeekResources);const closed=configured?configured.weeklyOff.includes(new Date(date+'T12:00:00Z').getUTCDay()):!!t&&t.hours[weekday]?.open!==true;
  const kind=vacation||(publicHoliday||closed?'holiday':hits.length?'event':season);
  return {kind,label:vacation?vacationKeys[vacation]:publicHoliday?'Holiday':closed?'Weekly holiday':hits.length?'School event':season?calendarLabels[season]:'',hits};
 }
@@ -403,7 +404,7 @@ async function saveVacations(){
 }
 function quickScopeDays(){
  const mode=field('quickApplyScope');
- return mode==='week'?workingWeek():mode==='custom'?days.filter(d=>quickCustomDays.includes(d)):[field('quickTargetDay')];
+ return mode==='week'?workingWeek():mode==='custom'?workingWeek().filter(d=>quickCustomDays.includes(d)):[field('quickTargetDay')].filter(d=>workingWeek().includes(d));
 }
 function updateQuickScope(){
  const mode=field('quickApplyScope'),selected=quickScopeDays(),source=field('quickPeriodDay'),target=field('quickTargetDay');
@@ -423,7 +424,7 @@ function updateQuickScope(){
 let classDraftDirty=false,classDraftKey='',classDraftRows=[],classDraftBusy=false;
 function setupClassBuilder(){
  const box=document.createElement('section');box.id='classBuilder';box.className='no-print hidden bg-slate-900 rounded-2xl border border-slate-700 p-4 mb-5';
- box.innerHTML='<h2 class="text-xl font-black text-cyan-200">Easy class timetable builder</h2><p class="text-sm text-slate-300 mt-2">Choose one class. Edit any lesson or fill several empty periods together, then save once. Green = saved; amber = unsaved change. No need to delete an incorrect teacher or subject.</p><div class="grid grid-cols-2 gap-3 mt-3"><label>Academic session<select id="cbSession"></select></label><label>Class / section<select id="cbClass"></select></label><label>Weekday<select id="cbDay">'+days.map(d=>'<option>'+d+'</option>').join('')+'</select></label><label>Apply changes to<select id="cbScope"><option value="day">Selected day</option><option value="week">Changed periods to working week</option><option value="copyweek">Copy all filled periods to working week</option></select></label><label>Number of periods<input id="cbCount" type="number" min="1" max="14" value="8"></label><label>Default teacher<select id="cbTeacher"><option value="">Choose teacher</option></select></label></div><div class="flex flex-wrap gap-2 mt-3"><button type="button" id="cbFill" class="bg-slate-700 rounded-xl px-3 py-2">Fill empty teacher fields</button><button type="button" id="cbReset" class="bg-slate-700 rounded-xl px-3 py-2">Discard unsaved changes</button><button type="button" id="cbAdvanced" class="bg-slate-700 rounded-xl px-3 py-2">Show all-class grid</button><button type="button" id="cbSettings" class="bg-slate-700 rounded-xl px-3 py-2">Session &amp; calendar editors</button></div><p class="text-xs text-slate-400 mt-2">Times are suggested from existing school periods where available; review them. Changes to saved lessons retain their record IDs. Blank periods are left unchanged.</p><div id="cbRows" class="grid gap-2 mt-4"></div><div class="sticky bottom-2 mt-4 bg-slate-900 border border-cyan-700 rounded-xl p-3 shadow-lg"><button type="button" id="cbSave" class="bg-emerald-600 text-white rounded-xl px-4 py-3 font-bold w-full disabled:opacity-50">Save changes</button><p id="cbStatus" class="text-sm text-amber-200 mt-2" role="status"></p></div>';
+ box.innerHTML='<h2 class="text-xl font-black text-cyan-200">Easy class timetable builder</h2><p class="text-sm text-slate-300 mt-2">Choose one class or All classes. Edit any lesson or fill several empty periods together, then save once. Green = saved; amber = unsaved change. No need to delete an incorrect teacher or subject.</p><div class="grid grid-cols-2 gap-3 mt-3"><label>Academic session<select id="cbSession"></select></label><label>Class / section<select id="cbClass"></select></label><label>Weekday<select id="cbDay">'+days.map(d=>'<option>'+d+'</option>').join('')+'</select></label><label>Apply changes to<select id="cbScope"><option value="day">Selected day</option><option value="week">Changed periods to working week</option><option value="copyweek">Copy all filled periods to working week</option></select></label><label>Number of periods<input id="cbCount" type="number" min="1" max="14" value="8"></label><label>Default teacher<select id="cbTeacher"><option value="">Choose teacher</option></select></label></div><div class="flex flex-wrap gap-2 mt-3"><button type="button" id="cbFill" class="bg-slate-700 rounded-xl px-3 py-2">Fill empty teacher fields</button><button type="button" id="cbReset" class="bg-slate-700 rounded-xl px-3 py-2">Discard unsaved changes</button><button type="button" id="cbAdvanced" class="bg-slate-700 rounded-xl px-3 py-2">Show all-class grid</button><button type="button" id="cbSettings" class="bg-slate-700 rounded-xl px-3 py-2">Session &amp; calendar editors</button></div><p class="text-xs text-slate-400 mt-2">Times are suggested from existing school periods where available; review them. Changes to saved lessons retain their record IDs. Blank periods are left unchanged.</p><div id="cbRows" class="grid gap-2 mt-4"></div><div class="sticky bottom-2 mt-4 bg-slate-900 border border-cyan-700 rounded-xl p-3 shadow-lg"><button type="button" id="cbSave" class="bg-emerald-600 text-white rounded-xl px-4 py-3 font-bold w-full disabled:opacity-50">Save changes</button><p id="cbStatus" class="text-sm text-amber-200 mt-2" role="status"></p></div>';
  $('admin').before(box);
  for(const id of ['cbSession','cbClass','cbDay','cbCount'])$(id).onchange=()=>{
   if(classDraftBusy||quickBusy){renderClassBuilder(true);return}
@@ -433,7 +434,7 @@ function setupClassBuilder(){
  };
  $('cbScope').onchange=updateClassDraft;
  $('cbReset').onclick=()=>{if(!classDraftDirty||confirm('Discard unsaved changes?')){classDraftDirty=false;renderClassBuilder(true)}};
- $('cbFill').onclick=()=>{const id=field('cbTeacher');if(!id)return $('cbStatus').textContent='Choose a default teacher first.';for(const r of classDraftRows)if(!r.teacher.value&&r.subject.value){r.teacher.value=id}updateClassDraft()};
+ $('cbFill').onclick=()=>{const id=field('cbTeacher'),all=field('cbClass')==='__all__';if(!id&&!all)return $('cbStatus').textContent='Choose a default teacher first.';for(const r of classDraftRows)if(!r.teacher.value&&r.subject.value){r.teacher.value=all?r.defaultId:id}updateClassDraft()};
  $('cbAdvanced').onclick=()=>{if(classDraftBusy)return;if(classDraftDirty&&!confirm('Discard unsaved class timetable changes before opening the all-class grid?'))return;classDraftDirty=false;renderClassBuilder(true);const show=$('quickBuilder').classList.contains('class-grid-collapsed');$('quickBuilder').classList.toggle('class-grid-collapsed',!show);$('cbAdvanced').textContent=show?'Hide all-class grid':'Show all-class grid';if(show)$('quickBuilder').scrollIntoView({behavior:'smooth',block:'start'})};
  $('cbSettings').onclick=()=>{const show=$('admin').classList.contains('class-grid-collapsed');$('admin').classList.toggle('class-grid-collapsed',!show);$('cbSettings').textContent=show?'Hide session & calendar editors':'Session & calendar editors';if(show)$('admin').scrollIntoView({behavior:'smooth',block:'start'})};$('cbSave').onclick=()=>void saveClassDraft();
  window.addEventListener('beforeunload',e=>{if(classDraftDirty){e.preventDefault();e.returnValue=''}});
@@ -445,15 +446,20 @@ function renderClassBuilder(force=false){
  if(classDraftDirty&&!force)return;
  const sid=activeSession(),classes=visibleClasses(),old=$('cbClass').value,sessionList=sessions();
  $('cbSession').replaceChildren(...sessionList.map(s=>new Option(s.name+(s.active?' (active)':''),s.id)));$('cbSession').value=sid;
- $('cbClass').replaceChildren(...classes.map(c=>new Option(c,c)));$('cbClass').value=classes.includes(old)?old:classes[0]||'';
- const day=field('cbDay')||'Monday',cls=field('cbClass'),num=Math.min(14,Math.max(1,Math.floor(Number(field('cbCount'))||8)));$('cbCount').value=num;
+ $('cbClass').replaceChildren(new Option('All classes — edit together','__all__'),...classes.map(c=>new Option(c,c)));$('cbClass').value=old==='__all__'||classes.includes(old)?old:classes[0]||'';
+ const day=workingWeek().includes(field('cbDay'))?field('cbDay'):workingWeek()[0],cls=field('cbClass'),num=Math.min(14,Math.max(1,Math.floor(Number(field('cbCount'))||8)));$('cbCount').value=num;
  const previousClass=classDraftKey?JSON.parse(classDraftKey)[1]:'';classDraftKey=JSON.stringify([sid,cls,day,String(num)]);classDraftRows=[];const out=$('cbRows');out.replaceChildren();
- const parts=LamaTimetableGrid.splitLabel(cls),periods=timetableForSession(),key=LamaTimetableGrid.classKey(cls),matching=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===key;
+ const periods=timetableForSession(),parts=LamaTimetableGrid.splitLabel(cls);
  const choices=teacherChoices('').sort((a,b)=>Number(LamaTimetableGrid.classKey(b.assignedClass)===LamaTimetableGrid.classKey(parts.grade))-Number(LamaTimetableGrid.classKey(a.assignedClass)===LamaTimetableGrid.classKey(parts.grade)));
  const teacherOptions=()=>[new Option('Choose teacher',''),...choices.map(t=>new Option(t.name+' · '+(t.assignedClass||'Unassigned'),t.id))];
  const prevTeacher=$('cbTeacher').value;$('cbTeacher').replaceChildren(...teacherOptions());if(previousClass===cls&&choices.some(t=>t.id===prevTeacher))$('cbTeacher').value=prevTeacher;else {const own=choices.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||!t.assignedSection||same(t.assignedSection,parts.section)));if(own.length===1)$('cbTeacher').value=own[0].id}
- if(!sid||!cls){$('cbStatus').textContent='Configure an academic session and classes first.';$('cbSave').disabled=true;return}
+ if(!sid||!cls||!classes.length||!day){$('cbStatus').textContent='Configure an academic session and classes first.';$('cbSave').disabled=true;return}
  const create=(tag,txt)=>{const x=document.createElement(tag);if(txt!==undefined)x.textContent=txt;return x};
+ for(const classLabel of (cls==='__all__'?classes:[cls])){
+  const parts=LamaTimetableGrid.splitLabel(classLabel),key=LamaTimetableGrid.classKey(classLabel),matching=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===key;
+  const assigned=choices.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||String(t.assignedSection||'').toLowerCase()===String(parts.section).toLowerCase()));
+  const defaultId=cls==='__all__'?(assigned.length===1?assigned[0].id:''):field('cbTeacher');
+  const heading=create('h3',classLabel);heading.className='font-black text-lg text-cyan-200 col-span-full mt-3';out.append(heading);
  for(let i=1;i<=num;i++){
   const hits=periods.filter(x=>x.day===day&&Number(x.period)===i&&matching(x)),old=hits[0],times=LamaTimetableGrid.timesFor(periods,day,i),card=create('article');card.className='cb-period bg-slate-950/60 border rounded-xl p-3';
   const title=create('div','Period '+i);title.className='font-bold text-cyan-200';const tag=create('span',hits.length>1?'Duplicate — use detailed editor':old?'Saved · editable':'Empty');tag.className='text-xs text-slate-300 ml-2';title.append(tag);card.append(title);
@@ -463,10 +469,10 @@ function renderClassBuilder(force=false){
   const subject=input('Subject','select',old?.subject,[new Option('Choose subject',''),...subjects.map(x=>new Option(x,x))]);
   const teacher=input('Teacher','select',old?.teacherId,teacherOptions());if(old?.teacherId&&!choices.some(t=>t.id===String(old.teacherId))){teacher.add(new Option((old.teacherName||'Saved teacher')+' (not active)',old.teacherId));teacher.value=old.teacherId}
   const start=input('Start time','time',old?.start||times.start),end=input('End time','time',old?.end||times.end);
-  const row={i,old,duplicate:hits.length>1,card,tag,subject,teacher,start,end};classDraftRows.push(row);
+  const row={i,classLabel,defaultId,old,duplicate:hits.length>1,card,tag,subject,teacher,start,end};classDraftRows.push(row);
   if(row.duplicate)for(const e of [subject,teacher,start,end])e.disabled=true;
-  subject.addEventListener('change',()=>{if(subject.value&&!teacher.value&&field('cbTeacher'))teacher.value=field('cbTeacher');updateClassDraft()});out.append(card);
- }
+  subject.addEventListener('change',()=>{if(subject.value&&!teacher.value){const suggested=cls==='__all__'?defaultId:field('cbTeacher');if(suggested)teacher.value=suggested;}updateClassDraft()});out.append(card);
+ }}
  updateClassDraft();$('cbStatus').textContent=teacherDirectoryLoaded?'Edit saved entries or fill empty periods.':'Teacher directory unavailable. Refresh before editing.';
 }
 function draftChanged(r){
@@ -484,10 +490,10 @@ async function saveClassDraft(){
  let attempted=false,completed=0;const note=$('cbStatus');
  try{
   authorized();const [sid,cls,day]=JSON.parse(classDraftKey);if(sid!==activeSession())throw Error('Session changed. Reopen class timetable.');
-  const parts=LamaTimetableGrid.splitLabel(cls),key=LamaTimetableGrid.classKey(cls),sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===key;
   const week=field('cbScope')!=='day'?workingWeek():[day],existing=timetableForSession(),jobs=[],replace=[];
-  if(!week.length)throw Error('No working days configured.');
+  if(!week.length||week.some(d=>!workingWeek().includes(d)))throw Error('Select configured working days.');
   for(const r of classDraftRows.filter(draftSelected)){
+   const parts=LamaTimetableGrid.splitLabel(r.classLabel),key=LamaTimetableGrid.classKey(r.classLabel),sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===key;
    const subject=r.subject.value,teacher=requireTeacher(r.teacher.value),start=r.start.value,end=r.end.value;
    if(!subject||!validTime(start)||!validTime(end)||start>=end)throw Error('Period '+r.i+': choose subject, teacher and valid times.');
    requireSubject(parts.grade,subject,r.old);
@@ -501,9 +507,9 @@ async function saveClassDraft(){
    }
   }
   if(!jobs.length)throw Error('No changed lessons to save for the selected days.');
-  if(jobs.length>100)throw Error('Save at most 100 lessons at a time.');
+  if(jobs.length>500)throw Error('Save at most 500 lessons at a time. Reduce periods or save one day at a time.');
   const ids=new Set(jobs.map(j=>String(j.id)).filter(Boolean)),remaining=existing.filter(x=>!ids.has(String(x.id)));
-  for(const j of jobs){const p=j.payload;if(remaining.some(x=>x.day===p.day&&(sameCls(x)&&Number(x.period)===p.period||x.start<p.end&&x.end>p.start&&(sameCls(x)||String(x.teacherId)===p.teacherId))))throw Error(p.day+' P'+p.period+': class or teacher time conflict. Correct the lesson before saving.');remaining.push(p)}
+  for(const j of jobs){const p=j.payload,sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(p));if(remaining.some(x=>x.day===p.day&&(sameCls(x)&&Number(x.period)===p.period||x.start<p.end&&x.end>p.start&&(sameCls(x)||String(x.teacherId)===p.teacherId))))throw Error(p.day+' P'+p.period+': class or teacher time conflict. Correct the lesson before saving.');remaining.push(p)}
   if(week.length>1&&!confirm('Apply '+jobs.length+' changed lesson(s) to '+week.join(', ')+'?'+(replace.length?' Existing lessons will be updated: '+replace.join(', '):'')))return;
   classDraftBusy=true;quickBusy=true;$('classBuilder').querySelectorAll('input,select,button').forEach(e=>e.disabled=true);note.textContent='Saving '+jobs.length+' lesson(s) in one request…';
   attempted=true;
@@ -627,7 +633,7 @@ function render(){const list=sessions(),old=field('viewSession');for(const id of
 const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chosen&&allowed(p));
 const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort(LamaClassOrder.compare);$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
 const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||LamaClassOrder.compare(LamaTimetableGrid.classLabel(a),LamaTimetableGrid.classLabel(b))||String(a.start||'').localeCompare(String(b.start||'')));
-const view=periods.filter(p=>(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
+const view=periods.filter(p=>workingWeek().includes(p.day)&&(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
 $('periodRows').innerHTML=view.length?view.map(p=>'<tr class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
 if(adminMode)$('sessionList').innerHTML=list.map(s=>{
  const refs=sessionReferences(s.id),used=refs.periods+refs.events;

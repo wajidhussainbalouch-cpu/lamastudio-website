@@ -8,7 +8,7 @@
 <main><section class="panel no-print"><h2>Report settings</h2><p class="muted">Choose the actual dates homework was posted. Saved entries only; drafts and undated entries are excluded. All filters apply to the printout.</p><div class="grid">
 <label>Report period<select id="period"><option value="daily">Daily</option><option value="weekly">Weekly (Mon–Sun)</option><option value="monthly">Monthly</option><option value="term">Term-wise</option><option value="custom">Custom date range</option></select></label>
 <label id="anchorLabel">Select date<input id="anchor" type="date"></label><label id="monthLabel" class="hidden">Month<input id="month" type="month"></label>
-<label id="termLabel" class="hidden">Term name<select id="term"><option>Term 1</option><option>Term 2</option><option>Term 3</option><option>Other term</option></select></label>
+<label id="termLabel" class="hidden">Published academic term<select id="term"><option value="">Select academic term</option></select></label>
 <label>From<input id="from" type="date" readonly></label><label>To<input id="to" type="date" readonly></label>
 <label>Class / section<select id="classFilter"><option value="">All available classes</option></select></label>
 <label id="teacherScopeLabel" class="hidden">Report scope<select id="teacherScope"><option value="class">Assigned class — all saved homework</option><option value="own">My entries — verified teacher ID only</option></select></label><label id="teacherLabel">Teacher<select id="teacherFilter"><option value="">All teachers</option></select></label>
@@ -19,7 +19,7 @@
 'use strict';
 const $=id=>document.getElementById(id),str=v=>String(v??'').trim(),norm=v=>str(v).toLocaleLowerCase().replace(/\s+/g,' '),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const role=new URLSearchParams(location.search).get('role')==='teacher'?'teacher':'school',zone='Asia/Karachi';
-let me={},school={},records=[],ready=false,busy=false,excluded=0,legacyCount=0;
+let me={},school={},records=[],ready=false,busy=false,excluded=0,legacyCount=0,termRanges=new Map(),termLoadError='';
 function isoDate(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return '';const d=new Date(v+'T12:00:00Z');return !isNaN(d.getTime())&&d.toISOString().slice(0,10)===v?v:''}
 function postedDate(v){
  const text=str(v);if(isoDate(text))return text;
@@ -76,10 +76,18 @@ function reportHTML(rows,meta){
 }
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error)}
 function disablePrint(){document.body.classList.add('print-disabled');$('print').disabled=true;$('report').classList.add('hidden');$('report').replaceChildren()}
+function readAcademicTerms(rows,schoolId){
+ const out=new Map();if(!Array.isArray(rows))throw Error('Invalid academic sessions response.');
+ for(const r of rows){if(r.category!=='planning-session'||!r.id||(r.schoolId&&String(r.schoolId)!==String(schoolId)))continue;let x;try{x=JSON.parse(r.description)}catch{continue}if(!x||!isoDate(x.start)||!isoDate(x.end)||x.start>x.end||(x.schoolId&&String(x.schoolId)!==String(schoolId))||!Array.isArray(x.terms))continue;
+ const names=new Set(),terms=[];let invalid=false;for(const t of x.terms){const name=str(t?.name),from=isoDate(t?.from),to=isoDate(t?.to);if(!name||names.has(norm(name))||!from||!to||from>to||from<x.start||to>x.end){invalid=true;break}names.add(norm(name));terms.push({name,from,to})}if(invalid)continue;terms.sort((a,b)=>a.from.localeCompare(b.from));if(terms.some((t,i)=>i&&t.from<=terms[i-1].to))continue;for(const t of terms)out.set(JSON.stringify([r.id,t.name]),{...t,label:[x.name||x.start+' – '+x.end,t.name].join(' · ')});
+ }return out;
+}
+function fillTerms(){const el=$('term'),old=el.value;el.replaceChildren(new Option('Select academic term',''));for(const [k,t] of termRanges)el.add(new Option(t.label+' ('+t.from+' – '+t.to+')',k));if(termRanges.has(old))el.value=old}
 function updateRange(){
- const mode=$('period').value,manual=mode==='term'||mode==='custom';
- $('anchorLabel').classList.toggle('hidden',manual||mode==='monthly');$('monthLabel').classList.toggle('hidden',mode!=='monthly');$('termLabel').classList.toggle('hidden',mode!=='term');
+ const mode=$('period').value,manual=mode==='custom';
+ $('anchorLabel').classList.toggle('hidden',manual||mode==='monthly'||mode==='term');$('monthLabel').classList.toggle('hidden',mode!=='monthly');$('termLabel').classList.toggle('hidden',mode!=='term');
  $('from').readOnly=!manual;$('to').readOnly=!manual;
+ if(mode==='term'){const t=termRanges.get($('term').value);$('from').value=t?.from||'';$('to').value=t?.to||'';return t?[t.from,t.to]:null}
  const range=periodRange(mode,$('anchor').value,$('month').value,$('from').value,$('to').value);
  if(range&&!manual){$('from').value=range[0];$('to').value=range[1]}
  return range
@@ -87,7 +95,7 @@ function updateRange(){
 function chosenText(id){return $(id).selectedOptions[0]?.textContent||'All'}
 function render(){
  const range=updateRange();disablePrint();if(!ready||busy)return;
- if(!range){status('Select a valid date range.',true);return}
+ if(!range){for(const id of ['count','dateCount','subjectCount'])$(id).textContent='—';status($('period').value==='term'?(termLoadError||(!termRanges.size?'No terms published for this school. Ask School Admin to configure academic terms, or use Custom date range.':'Select a published academic term.')):'Select a valid date range.',true);return}
  const [from,to]=range,rows=selectRows(reportRecords(),{from,to,cls:$('classFilter').value,teacher:$('teacherFilter').value,subject:$('subjectFilter').value});
  $('count').textContent=rows.length;$('dateCount').textContent=new Set(rows.map(r=>r.day)).size;$('subjectCount').textContent=new Set(rows.map(r=>norm(r.subject))).size;
  const excludedText=(excluded?' '+excluded+' saved entry/entries had no valid posting date and were excluded.':'')+(role==='teacher'&&$('teacherScope').value==='own'&&legacyCount?' '+legacyCount+' name-only record(s) are available under Assigned class.':'')+(rows.some(r=>!r.teacherVerified)?' '+rows.filter(r=>!r.teacherVerified).length+' saved record(s) lack a teacher ID; attribution is shown as recorded.':'');
@@ -107,7 +115,8 @@ async function load(){
    await LamaAPI.schoolAdminVerify(me.schoolId,auth.token);
    school=await LamaAPI.getVerifiedSchoolConfig();
   }else school={name:me.schoolName,logo:me.schoolLogo};
-  const result=await LamaAPI.list('homework');if(!Array.isArray(result))throw Error('Invalid homework response.');
+  termRanges=new Map();termLoadError='';
+ const [result,termResult]=await Promise.all([LamaAPI.list('homework'),LamaAPI.list('resources').then(rows=>readAcademicTerms(rows,me.schoolId)).catch(e=>{termLoadError='Academic terms unavailable: '+e.message+'. Use Custom date range instead.';return new Map()})]);termRanges=termResult;fillTerms();if(!Array.isArray(result))throw Error('Invalid homework response.');
   const data=prepare(result,me,role);records=data.rows;excluded=data.undated;legacyCount=data.legacy;fillFilters();ready=true;
  }catch(e){records=[];status('Unable to load official register: '+e.message,true)}
  finally{busy=false;$('refresh').disabled=false;if(ready)render()}

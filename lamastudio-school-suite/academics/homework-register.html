@@ -13,7 +13,7 @@
 <label>Class / section<select id="classFilter"><option value="">All available classes</option></select></label>
 <label id="teacherScopeLabel" class="hidden">Report scope<select id="teacherScope"><option value="class">Assigned class — all saved homework</option><option value="own">My entries — verified teacher ID only</option></select></label><label id="teacherLabel">Teacher<select id="teacherFilter"><option value="">All teachers</option></select></label>
 <label>Subject<select id="subjectFilter"><option value="">All subjects</option></select></label>
-</div><div class="actions"><button id="refresh" type="button">Refresh saved records</button><button id="print" class="primary" type="button" disabled>Print / Save as PDF</button></div><p id="status" role="status" class="notice">Checking access…</p><div class="stats"><div class="stat"><span>Homework entries</span><strong id="count">—</strong></div><div class="stat"><span>Posting dates</span><strong id="dateCount">—</strong></div><div class="stat"><span>Subjects</span><strong id="subjectCount">—</strong></div></div></section>
+</div><div class="actions"><button id="refresh" type="button">Refresh saved records</button><a id="completionLink" href="homework-completion.html" style="color:#a7f3d0;font-weight:700;align-self:center;margin-right:8px">Student homework progress →</a><button id="print" class="primary" type="button" disabled>Print / Save as PDF</button></div><p id="status" role="status" class="notice">Checking access…</p><div class="stats"><div class="stat"><span>Homework entries</span><strong id="count">—</strong></div><div class="stat"><span>Posting dates</span><strong id="dateCount">—</strong></div><div class="stat"><span>Subjects</span><strong id="subjectCount">—</strong></div></div></section>
 <article id="report" class="sheet hidden" aria-label="Official homework register"></article></main>
 <script>
 'use strict';
@@ -159,7 +159,7 @@ async function load(){
  finally{busy=false;$('refresh').disabled=false;if(ready)render()}
 }
 $('anchor').value=today();$('month').value=today().slice(0,7);$('from').value=today();$('to').value=today();
-if(role==='teacher'){$('teacherLabel').classList.add('hidden');$('teacherScopeLabel').classList.remove('hidden');$('teacherScope').onchange=()=>{fillFilters();render()};$('back').href='../portals/teacher/index.html';$('accessLabel').textContent='Assigned class and section · saved homework records'}
+if(role==='teacher'){$('completionLink').href='homework-completion.html?role=teacher';$('teacherLabel').classList.add('hidden');$('teacherScopeLabel').classList.remove('hidden');$('teacherScope').onchange=()=>{fillFilters();render()};$('back').href='../portals/teacher/index.html';$('accessLabel').textContent='Assigned class and section · saved homework records'}
 $('period').onchange=()=>{if(['term','custom'].includes($('period').value)){$('from').value='';$('to').value=''}render()};
 for(const id of ['anchor','month','term','from','to','classFilter','teacherFilter','subjectFilter'])$(id).onchange=render;
 $('refresh').onclick=load;$('print').onclick=async()=>{if(!ready||busy||$('print').disabled)return;const img=$('report').querySelector('img');if(img?.decode)await Promise.race([img.decode().catch(()=>{}),new Promise(r=>setTimeout(r,1500))]);window.print()};load();

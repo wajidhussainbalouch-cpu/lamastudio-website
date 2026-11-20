@@ -211,6 +211,7 @@ async function clearGridAxis(kind,value){
 // The generic resources API returns the saved record after the sheet write.
 async function writePeriod(id,payload){
  const old=id?data('period').find(x=>String(x.id)===String(id)):null;if(old?.supportId)throw Error('Use Easy timetable builder to edit lessons with additional staff.');
+ assertLessonHours(payload);
  if(!workingWeek().includes(payload.day))throw Error(payload.day+' is not a working day. Change School Settings if required.');
  if(checkProposedConflicts(data('period'),[{id,payload}]).some(c=>!c.warningOnly))throw Error('Blocking timetable conflict. Review the weekly conflict report.');
  const record={category:type.period,title:[payload.day,payload.grade,payload.period].join(' · '),description:JSON.stringify(payload),link:''};
@@ -263,6 +264,8 @@ function scheduleSummaries(sid=activeSession()){
 function dateInside(date,t){return !!t&&t.from<=date&&date<=t.to}
 function dateToday(){const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month+'-'+parts.day}
 function seasonForDate(date,sid=activeSession()){return ['winter','summer'].find(k=>dateInside(date,schoolTiming(sid,k)))||''}
+function currentLessonIssue(p,season=''){const t=LamaSchoolWeek.seasonTiming?.(sessionRecord(p.sessionId),dateToday(),season)?.timing;return LamaSchoolWeek.lessonIssue?.(t,p)||''}
+function assertLessonHours(p){const why=currentLessonIssue(p);if(why)throw Error(p.day+' '+p.grade+' P'+p.period+': '+why)}
 function chosenSeason(){const picker=$('quickSeason');return picker?picker.value:seasonForDate(dateToday())}
 function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason());return LamaSchoolWeek.working(schoolWeekResources,t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6))}
 function calendarDay(date,sid,events=[]){
@@ -480,13 +483,13 @@ function jumpConflictLesson(p){
 }
 function renderConflictReport(){
  const panel=$('timetableConflicts');if(!panel||!adminMode||!verified)return;
- const sid=activeSession(),periods=timetableForSession().filter(p=>workingWeek().includes(p.day));
+ const sid=activeSession(),allPeriods=timetableForSession().filter(p=>workingWeek().includes(p.day)),outside=allPeriods.filter(p=>currentLessonIssue(p,chosenSeason())),periods=allPeriods.filter(p=>!currentLessonIssue(p,chosenSeason()));
  savedConflictPairs=findTimetableConflicts(periods);const hard=savedConflictPairs.filter(c=>!c.warningOnly),advisories=savedConflictPairs.filter(c=>c.warningOnly);
  const attempt=lastConflictAttempt?.sid===sid?lastConflictAttempt:null;
  panel.hidden=false;panel.replaceChildren();
  const node=(tag,value,cls)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;if(cls)n.className=cls;return n};
  const heading=node('h3','Timetable conflict report','text-lg font-bold');panel.append(heading);
- const summary=node('p',(multiClassMode(sid)?'Multi-class teaching mode':'Strict scheduling mode')+' · '+hard.length+' blocking conflict pair(s) · '+advisories.length+' multi-class advisory pair(s) across '+periods.length+' saved working-day lessons.','text-sm mt-1');panel.append(summary);
+ const summary=node('p',(multiClassMode(sid)?'Multi-class teaching mode':'Strict scheduling mode')+' · '+hard.length+' blocking conflict pair(s) · '+advisories.length+' multi-class advisory pair(s) across '+periods.length+' saved working-day lessons.','text-sm mt-1');panel.append(summary);if(outside.length){const details=node('details',undefined,'mt-3 text-amber-200');details.append(node('summary',outside.length+' saved lessons outside seasonal school hours — excluded from published views; review and correct'));for(const p of outside){const line=node('p',conflictDescription(p)+' · '+p.subject+' · '+currentLessonIssue(p,chosenSeason()),'text-sm mt-2');const b=node('button',' Edit lesson','conflict-jump');b.type='button';b.onclick=()=>jumpConflictLesson(p);line.append(b);details.append(line)}panel.append(details)}
  const ids=new Set(),warningIds=new Set();for(const pair of [...savedConflictPairs,...(attempt?.pairs||[])])for(const p of [pair.a,pair.b])if(p.id)(pair.warningOnly?warningIds:ids).add(String(p.id));
  for(const tr of $('periodRows').querySelectorAll('tr[data-lesson-id]')){tr.classList.toggle('conflict-saved-row',ids.has(tr.dataset.lessonId));tr.classList.toggle('conflict-advisory-row',!ids.has(tr.dataset.lessonId)&&warningIds.has(tr.dataset.lessonId))}
  const list=(title,pairs)=>{if(!pairs.length)return;panel.append(node('h4',title+' ('+pairs.length+')','font-bold text-rose-200 mt-4'));for(const c of pairs){
@@ -674,7 +677,7 @@ function draftChanged(r){
 }
 function draftSelected(r){return draftChanged(r)||(field('cbScope')==='copyweek'&&!r.duplicate&&!!r.subject.value)}
 function updateClassDraft(){
- const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';const copyOption=$('cbScope').querySelector('option[value="copyweek"]');if(copyOption)copyOption.textContent='Copy all filled periods to '+workingWeek().map(d=>d.slice(0,3)).join(', ');$('cbTeacher').disabled=field('cbClass')==='__all__'||classDraftBusy;let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;if(r.coverageNote){const extra=r.extras.find(x=>x.kind+':'+x.id===r.support.value);r.coverageNote.textContent=multiClassMode(activeSession())&&extra?.kind==='teacher'&&String(extra.id)!==String(r.teacher.value)?extra.name+' covers this period. Original teacher is free for other lessons.':extra?.kind==='staff'?'Additional staff assist; the primary teacher remains responsible for the lesson.':''}r.card.style.borderColor=r.duplicate?'#fb7185':changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — resolve here':changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
+ const weekOption=$('cbScope').querySelector('option[value="week"]');if(weekOption)weekOption.textContent='Changed periods to week ('+workingWeek().map(d=>d.slice(0,3)).join(', ')+')';const copyOption=$('cbScope').querySelector('option[value="copyweek"]');if(copyOption)copyOption.textContent='Copy all filled periods to '+workingWeek().map(d=>d.slice(0,3)).join(', ');$('cbTeacher').disabled=field('cbClass')==='__all__'||classDraftBusy;let count=0;for(const r of classDraftRows){const changed=draftChanged(r);if(changed)count++;const outside=currentLessonIssue({sessionId:activeSession(),day:field('cbDay'),start:r.start.value,end:r.end.value});if(r.coverageNote){const extra=r.extras.find(x=>x.kind+':'+x.id===r.support.value);r.coverageNote.textContent=multiClassMode(activeSession())&&extra?.kind==='teacher'&&String(extra.id)!==String(r.teacher.value)?extra.name+' covers this period. Original teacher is free for other lessons.':extra?.kind==='staff'?'Additional staff assist; the primary teacher remains responsible for the lesson.':''}r.card.style.borderColor=r.duplicate?'#fb7185':changed?'#f59e0b':r.old?'#25815f':'#475569';r.tag.textContent=r.duplicate?'Duplicate — resolve here':outside&&r.start.value&&r.end.value?'Outside hours — '+outside:changed?'Unsaved change':r.old?'Saved · editable':'Empty'}
  for(const btn of $('cbRows').querySelectorAll('.duplicate-remove'))btn.disabled=classDraftBusy||quickBusy||periodNeedsRefresh;
  classDraftDirty=count>0;countNotice();const selected=classDraftRows.filter(draftSelected).length;$('cbSave').disabled=!selected||!teacherDirectoryLoaded||classDraftBusy||quickBusy||periodNeedsRefresh;$('cbSave').textContent=field('cbScope')==='copyweek'&&selected?'Copy '+selected+' filled periods to working week':count?'Save '+count+' changed period'+(count===1?'':'s'):'No unsaved changes';
 }
@@ -683,7 +686,7 @@ async function saveClassDraft(){
  let attempted=false,completed=0;const note=$('cbStatus');
  try{
   authorized();lastConflictAttempt=null;renderConflictReport();const [sid,cls,day]=JSON.parse(classDraftKey);if(sid!==activeSession())throw Error('Session changed. Reopen class timetable.');
-  const week=field('cbScope')!=='day'?workingWeek():[day],existing=timetableForSession(),jobs=[],replace=[];
+  const week=field('cbScope')!=='day'?workingWeek():[day],existing=timetableForSession(),jobs=[],replace=[],skipped=[];
   if(!week.length||week.some(d=>!workingWeek().includes(d)))throw Error('Select configured working days.');
   for(const r of classDraftRows.filter(draftSelected)){
    const parts=LamaTimetableGrid.splitLabel(r.classLabel),key=LamaTimetableGrid.classKey(r.classLabel),sameCls=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===key;
@@ -691,6 +694,7 @@ async function saveClassDraft(){
    if(!subject||!validTime(start)||!validTime(end)||start>=end)throw Error('Period '+r.i+': choose subject, teacher and valid times.');
    requireSubject(parts.grade,subject,r.old);
    for(const d of week){
+    const why=currentLessonIssue({sessionId:sid,day:d,start,end});if(why){if(week.length===1||d===day)throw Error(r.classLabel+' '+d+' P'+r.i+': '+why);skipped.push(r.classLabel+' '+d+' P'+r.i+' ('+why+')');continue}
     const hits=existing.filter(x=>x.day===d&&Number(x.period)===r.i&&sameCls(x));if(hits.length>1){rejectTimetableConflicts(findTimetableConflicts(hits),sid);throw Error(r.classLabel+' '+d+' P'+r.i+': duplicate saved lessons.');}
     const old=hits[0];const payload={sessionId:sid,day:d,period:r.i,start,end,grade:old?.grade||parts.grade,section:old?.section??parts.section,subject,teacherId:teacher.id,teacherName:teacher.name,room:old?.room||'',published:old?.published!==false};
     const extra=r.extras.find(x=>x.kind+':'+x.id===r.support.value);if(r.support.value&&!extra)throw Error('Select a registered additional staff member.');if(extra){if(extra.kind==='teacher'&&extra.id===teacher.id)throw Error('Primary and additional teacher must be different.');Object.assign(payload,{supportId:String(extra.id),supportKind:extra.kind,supportName:extra.name,supportRole:extra.role})}
@@ -700,17 +704,17 @@ async function saveClassDraft(){
     jobs.push({id:old?.id||'',expected,payload});
    }
   }
-  if(!jobs.length)throw Error('No changed lessons to save for the selected days.');
+  if(!jobs.length)throw Error('No changed lessons to save for the selected days.'+(skipped.length?' Skipped outside school hours: '+skipped.join('; '):''));
   if(jobs.length>500)throw Error('Save at most 500 lessons at a time. Reduce periods or save one day at a time.');
   lastConflictAttempt=null;rejectTimetableConflicts(checkProposedConflicts(existing,jobs,day),sid);renderConflictReport();
-  if(week.length>1&&!confirm('Apply '+jobs.length+' changed lesson(s) to '+week.join(', ')+'?'+(replace.length?' Existing lessons will be updated: '+replace.join(', '):'')))return;
+  if(week.length>1&&!confirm('Apply '+jobs.length+' changed lesson(s) to '+week.join(', ')+'?'+(skipped.length?' Out-of-hours copies will be skipped: '+skipped.join('; ')+'. Existing records are retained.':'')+(replace.length?' Existing lessons will be updated: '+replace.join(', '):'')))return;
   classDraftBusy=true;quickBusy=true;$('classBuilder').querySelectorAll('input,select,button').forEach(e=>e.disabled=true);note.textContent='Saving '+jobs.length+' lesson(s) in one request…';
   attempted=true;
   const result=await LamaAPI.planningSaveBatch(jobs);
   if(!Array.isArray(result?.records)||result.records.length!==jobs.length)throw Error('Incomplete server acknowledgement.');
   for(let i=0;i<jobs.length;i++){const r=result.records[i],j=jobs[i],p=parsed(r);if(!r?.id||(j.id&&String(j.id)!==String(r.id))||r.category!==type.period||Object.keys(j.payload).some(k=>p[k]!==j.payload[k]))throw Error('Saved lesson acknowledgement mismatch.')}
   for(const r of result.records){const i=rows.findIndex(x=>String(x.id)===String(r.id));if(i<0)rows.push(r);else rows[i]=r}completed=jobs.length;
-  classDraftDirty=false;$('cbScope').value='day';render();renderClassBuilder(true);note.textContent='✓ '+completed+' lessons saved and verified.';status(note.textContent);
+  classDraftDirty=false;$('cbScope').value='day';render();renderClassBuilder(true);note.textContent='✓ '+completed+' lessons saved and verified.'+(skipped.length?' '+skipped.length+' out-of-hours copies skipped.':'');status(note.textContent);
  }catch(e){
   if(attempted&&!/Unknown action: planningSaveBatch/i.test(e.message))periodNeedsRefresh=true;
   note.textContent=/Unknown action: planningSaveBatch/i.test(e.message)?'Fast batch save requires the updated Apps Script backend. Your changes are still in this form. No batch was saved.':e.message+(periodNeedsRefresh?' Refresh and verify before retrying.':'');
@@ -778,7 +782,7 @@ async function saveQuickPeriod(){
   const old=hits[0],oldId=old?String(old.id):'';
   if(moving&&old)throw Error(day+': this period already has a lesson. Move is blocked; choose an empty day.');
   if(day===sourceDay&&id!==oldId)throw Error('This period changed. Reopen the timetable cell.');
-  const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:selectedTeacher.name,room:field('quickRoom'),published:$('quickPublished').checked};
+  const payload={sessionId,day,period,start,end,grade,section,subject,teacherId,teacherName:selectedTeacher.name,room:field('quickRoom'),published:$('quickPublished').checked};assertLessonHours(payload);
 
   const unchanged=old&&Object.keys(payload).every(k=>old[k]===payload[k]);
   if(unchanged)continue;
@@ -826,8 +830,8 @@ function render(){const list=sessions(),old=field('viewSession');for(const id of
 const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chosen&&allowed(p));
 const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort(LamaClassOrder.compare);$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
 const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||LamaClassOrder.compare(LamaTimetableGrid.classLabel(a),LamaTimetableGrid.classLabel(b))||String(a.start||'').localeCompare(String(b.start||'')));
-const view=periods.filter(p=>workingWeek().includes(p.day)&&(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
-$('periodRows').innerHTML=view.length?view.map(p=>'<tr data-lesson-id="'+esc(p.id)+'" class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+(coverageTeacher(p)?' (original / covered)':'')+(p.supportName?'<br>'+esc(p.supportName)+' ('+esc(coverageTeacher(p)?'Cover teacher':p.supportRole||'Additional staff')+')':'')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
+const view=periods.filter(p=>workingWeek().includes(p.day)&&(adminMode||!currentLessonIssue(p,chosenSeason()))&&(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
+$('periodRows').innerHTML=view.length?view.map(p=>'<tr data-lesson-id="'+esc(p.id)+'" class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+(adminMode&&currentLessonIssue(p,chosenSeason())?'<br><strong class="text-amber-300">'+esc(currentLessonIssue(p,chosenSeason()))+'</strong>':'')+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+(coverageTeacher(p)?' (original / covered)':'')+(p.supportName?'<br>'+esc(p.supportName)+' ('+esc(coverageTeacher(p)?'Cover teacher':p.supportRole||'Additional staff')+')':'')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
 if(adminMode)$('sessionList').innerHTML=list.map(s=>{
  const refs=sessionReferences(s.id),used=refs.periods+refs.events;
  const duplicate=list.some(other=>other.id!==s.id&&sessionKey(other.name)===sessionKey(s.name));
@@ -976,7 +980,7 @@ function buildTimetablePrint(profile){
  if(adminMode&&!verified)throw Error('Sign in as school administrator first.');
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
  const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;const printWork=LamaSchoolWeek.working(schoolWeekResources,dayTiming?days.filter(d=>dayTiming.hours[d]?.open===true):workingWeek());
- const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&printWork.includes(p.day));
+ const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&printWork.includes(p.day)&&!currentLessonIssue(p,season));
  const mode=field('printScope');
  if(!selectedSession)throw Error('Load an academic session before previewing or printing.');
  if(field('printDay')&&!printWork.includes(field('printDay')))throw Error('Choose a working day for the selected season.');

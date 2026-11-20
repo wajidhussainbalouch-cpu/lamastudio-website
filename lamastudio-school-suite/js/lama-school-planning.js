@@ -772,11 +772,12 @@ async function saveQuickPeriod(){
  if(!Number.isInteger(period)||period<1||period>30)throw Error('Invalid period number.');
  const classKey=LamaTimetableGrid.classKey(grade+(section?' · Section '+section:''));
  const sameClass=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===classKey;
- const existing=timetableForSession(),jobs=[],replaceDays=[];
+ const existing=timetableForSession(),jobs=[],replaceDays=[],skippedDays=[];
  const moving=field('quickApplyScope')==='day'&&field('quickDayAction')==='move'&&targetDays[0]!==sourceDay;
  const original=existing.find(x=>String(x.id)===id&&same(x.day,sourceDay)&&Number(x.period)===period&&sameClass(x));
  if(moving&&!original)throw Error('Original lesson not found. Reopen the timetable cell.');
  for(const day of targetDays){
+  const why=currentLessonIssue({sessionId,day,start,end});if(why){if(targetDays.length===1||day===sourceDay)throw Error(day+' P'+period+': '+why);skippedDays.push(day+' ('+why+')');continue}
   const hits=existing.filter(x=>same(x.day,day)&&Number(x.period)===period&&sameClass(x));
   if(hits.length>1){rejectTimetableConflicts(findTimetableConflicts(hits),sessionId);throw Error(grade+' '+day+' P'+period+': duplicate class periods exist.');}
   const old=hits[0],oldId=old?String(old.id):'';
@@ -791,8 +792,9 @@ async function saveQuickPeriod(){
  }
  lastConflictAttempt=null;rejectTimetableConflicts(checkProposedConflicts(existing,jobs),sessionId);renderConflictReport();
  if(moving&&!confirm('Move this lesson from '+sourceDay+' to '+targetDays[0]+'? The original day will become empty.'))return;
+ if(skippedDays.length&&!confirm('Skip days outside published school hours: '+skippedDays.join('; ')+'? Existing records will be retained.'))return;
  if(replaceDays.length&&!confirm('Replace existing different lessons for this class and period on '+replaceDays.join(', ')+'? Other periods will not change.'))return;
- if(!jobs.length){const message='Already saved for all selected days. No duplicate records created.';$('quickSaveStatus').textContent=message;status(message);return}
+ if(!jobs.length){const message=skippedDays.length?'No eligible changes. Skipped: '+skippedDays.join('; '):'Already saved for all selected days. No duplicate records created.';$('quickSaveStatus').textContent=message;status(message);return}
  quickBusy=true;
  const form=$('quickForm'),controls=[...form.querySelectorAll('input,select,button')],previous=controls.map(c=>c.disabled);
  controls.forEach(c=>c.disabled=true);
@@ -812,7 +814,7 @@ async function saveQuickPeriod(){
   if(anchor){$('quickPeriodId').value=anchor.id;$('quickPeriodDay').value=anchorDay;$('quickTarget').textContent='Edit / copy · '+grade+(section?' / '+section:'')+' · '+anchorDay+' · P'+period;}
   $('quickDayAction').value='copy';
   render();
-  const message='✓ '+(moving?'Moved':'Saved')+': '+grade+(section?' / '+section:'')+' · P'+period+' · '+subject+' · '+targetDays.join(', ')+' ('+completed+' changed, '+(targetDays.length-completed)+' already saved). Change the day to reuse these details.';
+  const message='✓ '+(moving?'Moved':'Saved')+': '+grade+(section?' / '+section:'')+' · P'+period+' · '+subject+' · '+targetDays.join(', ')+' ('+completed+' changed, '+(targetDays.length-completed-skippedDays.length)+' already saved, '+skippedDays.length+' skipped). Change the day to reuse these details.';
   $('quickSaveStatus').textContent=message;status(message);
  }catch(error){
   periodNeedsRefresh=true;

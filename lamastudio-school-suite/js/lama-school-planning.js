@@ -471,7 +471,8 @@ function jumpConflictLesson(p){
   classDraftDirty=false;$('cbClass').value=match;$('cbDay').value=day;renderClassBuilder(true);
   row=classDraftRows.find(r=>r.i===Number(p.period)&&LamaTimetableGrid.classKey(r.classLabel)===LamaTimetableGrid.classKey(cls));
  }
- if(row){row.card.classList.add('conflict-focus');row.card.scrollIntoView({behavior:'smooth',block:'center'});row.subject.focus({preventScroll:true})}
+ if(row?.duplicate&&p.id){if(classDraftDirty&&!confirm('Open the detailed editor for this duplicate? Unsaved class changes remain in the builder.'))return;edit('period',String(p.id));return}
+ if(row){for(const old of document.querySelectorAll('.conflict-focus'))old.classList.remove('conflict-focus');row.card.classList.add('conflict-focus');row.card.scrollIntoView({behavior:'smooth',block:'center'});row.subject.focus({preventScroll:true})}
  else status('Open the detailed period editor to review this lesson.');
 }
 function renderConflictReport(){
@@ -617,7 +618,7 @@ async function saveClassDraft(){
  if(classDraftBusy||quickBusy||timingBusy||sessionBusy||periodNeedsRefresh)return;
  let attempted=false,completed=0;const note=$('cbStatus');
  try{
-  authorized();const [sid,cls,day]=JSON.parse(classDraftKey);if(sid!==activeSession())throw Error('Session changed. Reopen class timetable.');
+  authorized();lastConflictAttempt=null;renderConflictReport();const [sid,cls,day]=JSON.parse(classDraftKey);if(sid!==activeSession())throw Error('Session changed. Reopen class timetable.');
   const week=field('cbScope')!=='day'?workingWeek():[day],existing=timetableForSession(),jobs=[],replace=[];
   if(!week.length||week.some(d=>!workingWeek().includes(d)))throw Error('Select configured working days.');
   for(const r of classDraftRows.filter(draftSelected)){
@@ -626,7 +627,7 @@ async function saveClassDraft(){
    if(!subject||!validTime(start)||!validTime(end)||start>=end)throw Error('Period '+r.i+': choose subject, teacher and valid times.');
    requireSubject(parts.grade,subject,r.old);
    for(const d of week){
-    const hits=existing.filter(x=>x.day===d&&Number(x.period)===r.i&&sameCls(x));if(hits.length>1)throw Error(d+' P'+r.i+': resolve duplicate saved lessons first.');
+    const hits=existing.filter(x=>x.day===d&&Number(x.period)===r.i&&sameCls(x));if(hits.length>1){rejectTimetableConflicts(findTimetableConflicts(hits),sid);throw Error(r.classLabel+' '+d+' P'+r.i+': duplicate saved lessons.');}
     const old=hits[0];const payload={sessionId:sid,day:d,period:r.i,start,end,grade:old?.grade||parts.grade,section:old?.section??parts.section,subject,teacherId:teacher.id,teacherName:teacher.name,room:old?.room||'',published:old?.published!==false};
     const extra=r.extras.find(x=>x.kind+':'+x.id===r.support.value);if(r.support.value&&!extra)throw Error('Select a registered additional staff member.');if(extra){if(extra.kind==='teacher'&&extra.id===teacher.id)throw Error('Primary and additional teacher must be different.');Object.assign(payload,{supportId:String(extra.id),supportKind:extra.kind,supportName:extra.name,supportRole:extra.role})}
     if(old&&String(old.supportId||'')===String(payload.supportId||'')&&Object.keys(payload).every(k=>old[k]===payload[k]))continue;
@@ -709,7 +710,7 @@ async function saveQuickPeriod(){
  if(moving&&!original)throw Error('Original lesson not found. Reopen the timetable cell.');
  for(const day of targetDays){
   const hits=existing.filter(x=>same(x.day,day)&&Number(x.period)===period&&sameClass(x));
-  if(hits.length>1)throw Error(day+': duplicate class periods exist. Resolve them in the detailed editor first.');
+  if(hits.length>1){rejectTimetableConflicts(findTimetableConflicts(hits),sessionId);throw Error(grade+' '+day+' P'+period+': duplicate class periods exist.');}
   const old=hits[0],oldId=old?String(old.id):'';
   if(moving&&old)throw Error(day+': this period already has a lesson. Move is blocked; choose an empty day.');
   if(day===sourceDay&&id!==oldId)throw Error('This period changed. Reopen the timetable cell.');

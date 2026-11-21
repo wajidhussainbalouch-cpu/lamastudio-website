@@ -50,8 +50,25 @@ function sessionDuplicate(candidate,editingId='',source=rows){
 async function remove(kind,id){
  authorized();
  if(kind!=='session'){
-  if(!confirm('Delete this '+kind+'?'))return;
-  await LamaAPI.remove('resources',id);await load();return;
+  if(quickBusy||timingBusy||sessionBusy||periodNeedsRefresh)throw Error('Timetable is busy or needs refresh. Reload before deleting.');
+  const category=type[kind],prior=rows.find(r=>r.category===category&&String(r.id)===String(id));
+  if(!prior)throw Error('Saved '+kind+' not found. Refresh the timetable.');
+  const item=parsed(prior),label=kind==='period'?item.day+' · '+item.grade+' · P'+item.period+' · '+(item.start||'')+'–'+(item.end||''):item.title+' · '+item.start;
+  if(!confirm('Permanently delete this saved '+kind+'?\n'+label+'\n\nOther lessons and settings will not change.'))return;
+  quickBusy=true;let attempted=false;
+  try{
+   const fresh=await LamaAPI.list('resources');
+   if(!Array.isArray(fresh))throw Error('Latest timetable could not be verified. No deletion attempted.');
+   const live=fresh.find(r=>r.category===category&&String(r.id)===String(id));
+   if(!live||String(live.description||'')!==String(prior.description||''))throw Error('The saved period changed. Refresh before deleting.');
+   attempted=true;await LamaAPI.remove('resources',id);
+   const latest=await LamaAPI.list('resources');
+   if(!Array.isArray(latest)||latest.some(r=>String(r.id)===String(id)))throw Error('Deletion not verified in Google Sheets. Refresh before retrying.');
+   if(latest.filter(r=>r.category===category).length!==fresh.filter(r=>r.category===category).length-1)throw Error('Unexpected change in saved periods. Refresh and inspect.');
+   schoolWeekResources=latest;rows=latest.filter(r=>Object.values(type).includes(r.category));
+   render();periodNeedsRefresh=false;status('✓ '+kind+' deleted and verified against saved records.');return;
+  }catch(e){if(attempted)periodNeedsRefresh=true;throw Error((attempted?'Deletion status uncertain. Refresh before trying again. ':'')+e.message)}
+  finally{quickBusy=false}
  }
  if(sessionBusy||timingBusy){status('Another academic session operation is running.');return}
  const target=data('session').find(r=>String(r.id)===String(id));
@@ -87,6 +104,11 @@ async function remove(kind,id){
 }
 
 function timetableForSession(){return data('period').filter(p=>p.sessionId===activeSession()&&allowed(p))}
+function slotOutsideHours(sessionId,day,period,periods,season=chosenSeason()){
+ const exact=periods.filter(p=>p.sessionId===sessionId&&Number(p.period)===Number(period)&&p.day===day&&validTime(p.start)&&validTime(p.end));
+ const known=exact.length?exact:periods.filter(p=>p.sessionId===sessionId&&Number(p.period)===Number(period)&&validTime(p.start)&&validTime(p.end));
+ return !!known.length&&known.every(p=>!!currentLessonIssue({sessionId,day,start:p.start,end:p.end},season));
+}
 function visibleClasses(periods=timetableForSession()){
  const extra=adminMode?[...offeredClasses]:[];
  if(adminMode)for(const c of curriculumClasses){
@@ -829,10 +851,10 @@ async function saveQuickPeriod(){
 function sessions(){return data('session').sort((a,b)=>a.start.localeCompare(b.start))}
 function activeSession(){return field('viewSession')||sessions().find(s=>s.active)?.id||sessions()[0]?.id||''}
 function render(){const list=sessions(),old=field('viewSession');for(const id of ['viewSession','periodSession','eventSession']){const el=$(id);if(!el)continue;el.replaceChildren();for(const s of list)el.add(new Option(s.name+(s.active?' (active)':''),s.id));if(list.some(s=>s.id===old))el.value=old;else if(list.some(s=>s.active))el.value=list.find(s=>s.active).id}
-const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chosen&&allowed(p));
+const chosen=activeSession(),periods=data('period').filter(p=>p.sessionId===chosen&&allowed(p)&&!currentLessonIssue(p,chosenSeason()));
 const grade=field('viewGrade'),oldGrade=grade;const grades=[...new Set(periods.map(p=>p.grade).filter(Boolean))].sort(LamaClassOrder.compare);$('viewGrade').replaceChildren(new Option('All classes',''));for(const g of grades)$('viewGrade').add(new Option(g,g));$('viewGrade').value=grades.includes(oldGrade)?oldGrade:'';
 const selectedGrade=field('viewGrade'),day=field('viewDay');periods.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day)||Number(a.period)-Number(b.period)||LamaClassOrder.compare(LamaTimetableGrid.classLabel(a),LamaTimetableGrid.classLabel(b))||String(a.start||'').localeCompare(String(b.start||'')));
-const view=periods.filter(p=>workingWeek().includes(p.day)&&(adminMode||!currentLessonIssue(p,chosenSeason()))&&(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
+const view=periods.filter(p=>workingWeek().includes(p.day)&&(!selectedGrade||same(p.grade,selectedGrade))&&(!day||p.day===day));
 $('periodRows').innerHTML=view.length?view.map(p=>'<tr data-lesson-id="'+esc(p.id)+'" class="border-b border-slate-700"><td class="p-2">'+esc(p.day)+'</td><td class="p-2">'+esc(p.period)+'</td><td class="p-2">'+esc(p.start)+'–'+esc(p.end)+(adminMode&&currentLessonIssue(p,chosenSeason())?'<br><strong class="text-amber-300">'+esc(currentLessonIssue(p,chosenSeason()))+'</strong>':'')+'</td><td class="p-2">'+esc(p.grade)+(p.section?' / '+esc(p.section):'')+'</td><td class="p-2">'+esc(p.subject)+'</td><td class="p-2">'+esc(p.teacherName||'Unassigned')+(coverageTeacher(p)?' (original / covered)':'')+(p.supportName?'<br>'+esc(p.supportName)+' ('+esc(coverageTeacher(p)?'Cover teacher':p.supportRole||'Additional staff')+')':'')+'</td><td class="p-2 no-print">'+(adminMode?'<button class="text-cyan-300" data-edit-period="'+esc(p.id)+'">Edit</button> <button type="button" class="text-emerald-300" data-copy-period="'+esc(p.id)+'">Copy / change day</button> <button class="text-rose-300" data-remove-period="'+esc(p.id)+'">Delete</button> '+(p.teacherId?'<button class="text-amber-300" data-ping-period="'+esc(p.id)+'">Ping teacher</button>':''):'')+'</td></tr>').join(''):'<tr><td colspan="7" class="p-5 text-slate-400">No published periods for this selection.</td></tr>';
 if(adminMode)$('sessionList').innerHTML=list.map(s=>{
  const refs=sessionReferences(s.id),used=refs.periods+refs.events;
@@ -1115,6 +1137,6 @@ function setupPrintPreview(){
 
 // Optional preview controls must never prevent loading the school schedule.
 try{setupPrintPreview()}catch(error){console.warn('Print preview setup skipped:',error.message)}
-async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden');$('quickBuilder').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
+async function init(){if(!['school','student','teacher'].includes(role)||!schoolId){status('Valid school, student or teacher login required.');return}if(!LamaAPI.requireLogin(role,role==='teacher'?'../teacher-login.html':role==='student'?'../students/student-login.html':'../school-admin-login.html'))return;if(role==='teacher')$('back').href='../portals/teacher/index.html';if(role==='student')$('back').href='../portals/student/index.html';if(adminMode){let a;try{a=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null')}catch{}if(!a?.token||a.schoolId!==schoolId){status('School administrator login required.');return}try{await LamaAPI.schoolAdminVerify(schoolId,a.token);verified=true;$('admin').classList.remove('hidden');$('quickBuilder').classList.remove('hidden')}catch(e){status('Administrator verification failed: '+e.message);return}}else{for(const el of document.querySelectorAll('#admin'))el.remove()}await load();void printProfile()}
 init();
 })();

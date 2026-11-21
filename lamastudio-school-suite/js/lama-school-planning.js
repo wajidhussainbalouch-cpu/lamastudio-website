@@ -401,7 +401,7 @@ async function saveFridayClosing(){
 }
 function renderTiming(){
  const sid=activeSession(),ss=sessionRecord(sid),summaries=scheduleSummaries(sid),section=$('schoolTimings');
- section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length&&!ss?.terms?.length));
+ section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length&&!ss?.terms?.length&&!ss?.fridayClose));
  $('fridayDismissalSettings').classList.toggle('hidden',!sid);
  $('fridayCloseAdmin').classList.toggle('hidden',!adminMode||!verified||!ss);
  $('fridayClosePublished').textContent=validTime(ss?.fridayClose)?'✓ Friday dismissal: '+formatTime(ss.fridayClose)+(ss.fridayActivity?.title?' · Final activity: '+ss.fridayActivity.title+' ('+ss.fridayActivity.start+'–'+ss.fridayActivity.end+')':' · No co-curricular activity saved yet'):'Friday dismissal is not published. Save the closing time and final activity once.';
@@ -1050,6 +1050,7 @@ function buildTimetablePrint(profile){
  const name=sessions().find(item=>item.id===selectedSession)?.name||'Not configured';
  const season=field('printSeason')||seasonForDate(dateToday(),selectedSession);const dayTiming=season?schoolTiming(selectedSession,season):null;const printWork=LamaSchoolWeek.working(schoolWeekResources,dayTiming?days.filter(d=>dayTiming.hours[d]?.open===true):workingWeek());
  const periods=data('period').filter(p=>p.sessionId===selectedSession&&allowed(p)&&printWork.includes(p.day)&&!currentLessonIssue(p,season));
+ const fridayActivity=LamaSchoolWeek.fridayActivity(sessionRecord(selectedSession),LamaSchoolWeek.read(schoolWeekResources)?.weeklyOff);
  const mode=field('printScope');
  if(!selectedSession)throw Error('Load an academic session before previewing or printing.');
  if(field('printDay')&&!printWork.includes(field('printDay')))throw Error('Choose a working day for the selected season.');
@@ -1057,13 +1058,14 @@ function buildTimetablePrint(profile){
  const selectedClasses=printSelection instanceof Set?[...printSelection]:null;
  const inCharge={};for(const label of [...visibleClasses(),cls]){if(!label)continue;const parts=LamaTimetableGrid.splitLabel(label);const assigned=teachers.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||same(t.assignedSection,parts.section)));if(assigned.length===1){const t=assigned[0];inCharge[label]=t.name+(t.designation?' ('+t.designation+')':'');}}
  const seasonLabel=season==='winter'?'Winter':season==='summer'?'Summer':'';const printTiming=dayTiming?[timingSummary(dayTiming,season)]:[{title:seasonLabel?seasonLabel+' school timings not published':'Seasonal school timings not published for this date',lines:['School opening, closing, assembly and break times require published seasonal settings.']}];
+ if(sessionRecord(selectedSession)?.fridayClose)printTiming.push({title:'Friday schedule',lines:['Friday dismissal: '+formatTime(sessionRecord(selectedSession).fridayClose),...(fridayActivity?['Final activity '+fridayActivity.start+'–'+fridayActivity.end+': '+fridayActivity.subject]:[])]});
  const calendarIncluded=$('printCalendar').checked;
  const calMonth=$('monthTitle').textContent;
  return LamaTimetablePrint.printMarkup({
   school:profile,
   schoolFallback:printProfileFallback(),
   sessionName:name,
-  timing:printTiming,seasonLabel,showRooms:$('printRooms')?.checked===true,
+  timing:printTiming,seasonLabel,fridayActivity,showRooms:$('printRooms')?.checked===true,
   calendarLegend:calendarLegendMarkup(),
   records:periods.map(p=>({...p,coveredByTeacher:coverageTeacher(p)})),
   scope:mode,

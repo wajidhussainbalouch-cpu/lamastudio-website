@@ -133,7 +133,12 @@ function updatePrintCount(){
 function gridState(){const key=activeSession()+'|'+field('quickDay');if(!hiddenGrid.has(key))hiddenGrid.set(key,{classes:new Set(),periods:new Set()});return hiddenGrid.get(key)}
 function renderQuickGrid(periods=timetableForSession()){
  if(!adminMode)return;const work=workingWeek();for(const id of ['quickDay','quickTargetDay','day','cbDay','viewDay']){const el=$(id);if(!el)continue;for(const o of el.options)o.disabled=days.includes(o.value)&&!work.includes(o.value);if(days.includes(el.value)&&!work.includes(el.value))el.value=[...el.options].some(o=>o.value==='')?'':work[0]||'';}
- const hidden=gridState(),classes=visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),counts=Object.fromEntries(classes.map(c=>[countKey(c),effectivePeriodCount(activeSession(),c,periods)]));$('quickPeriods').value=String(Math.max(1,...Object.values(counts)));$('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(periods,classes,field('quickDay')||'Monday',Math.max(1,...Object.values(counts)),[...hidden.periods],counts);
+ const hidden=gridState(),day=field('quickDay')||'Monday',sid=activeSession(),safe=periods.filter(p=>!currentLessonIssue(p,chosenSeason()));
+ const classes=visibleClasses(periods).filter(c=>!hidden.classes.has(LamaTimetableGrid.classKey(c))),counts=Object.fromEntries(classes.map(c=>[countKey(c),effectivePeriodCount(sid,c,periods)]));
+ const count=Math.max(1,...Object.values(counts)),hiddenSlots=new Set(hidden.periods);
+ for(let i=1;i<=count;i++)if(slotOutsideHours(sid,day,i,periods))hiddenSlots.add(i);
+ $('quickPeriods').value=String(count);
+ $('quickGrid').innerHTML=LamaTimetableGrid.gridMarkup(safe,classes,day,count,[...hiddenSlots],counts);
 }
 function teacherLabel(t){return String(t?.name||t?.fullName||t?.teacherName||'').trim()}
 function normalizeTeachers(records){
@@ -673,9 +678,10 @@ function renderClassBuilder(force=false,preserve=false){
   const parts=LamaTimetableGrid.splitLabel(classLabel),key=LamaTimetableGrid.classKey(classLabel),matching=x=>LamaTimetableGrid.classKey(LamaTimetableGrid.classLabel(x))===key;
   const assigned=choices.filter(t=>LamaTimetableGrid.classKey(t.assignedClass)===LamaTimetableGrid.classKey(parts.grade)&&(!parts.section||String(t.assignedSection||'').toLowerCase()===String(parts.section).toLowerCase()));
   const defaultId=cls==='__all__'?(assigned.length===1?assigned[0].id:''):field('cbTeacher');
-  const n=effectivePeriodCount(sid,classLabel),heading=create('div');heading.className='font-black text-lg text-cyan-200 col-span-full mt-3 flex flex-wrap items-center gap-3';heading.append(create('h3',classLabel+' · '+n+' periods'));if(cls==='__all__'){const pick=create('select');pick.setAttribute('aria-label','Number of periods for '+classLabel);pick.replaceChildren(...periodCountOptions(n));pick.style.width='auto';pick.onchange=()=>changePeriodCount(classLabel,pick.value);heading.append(pick)}out.append(heading);
+  const n=effectivePeriodCount(sid,classLabel),available=Array.from({length:n},(_,i)=>i+1).filter(i=>!slotOutsideHours(sid,day,i,periods)).length,heading=create('div');heading.className='font-black text-lg text-cyan-200 col-span-full mt-3 flex flex-wrap items-center gap-3';heading.append(create('h3',classLabel+' · '+available+' teaching periods'+(available<n?' ('+(n-available)+' beyond closing hidden)':'')));if(cls==='__all__'){const pick=create('select');pick.setAttribute('aria-label','Number of periods for '+classLabel);pick.replaceChildren(...periodCountOptions(n));pick.style.width='auto';pick.onchange=()=>changePeriodCount(classLabel,pick.value);heading.append(pick)}out.append(heading);
  for(let i=1;i<=n;i++){
-  const hits=periods.filter(x=>x.day===day&&Number(x.period)===i&&matching(x)),old=hits[0],times=LamaTimetableGrid.timesFor(periods,day,i),card=create('article');card.className='cb-period bg-slate-950/60 border rounded-xl p-3';
+  if(slotOutsideHours(sid,day,i,periods))continue;
+  const hits=periods.filter(x=>x.day===day&&Number(x.period)===i&&matching(x)&&!currentLessonIssue(x,chosenSeason())),old=hits[0],times=LamaTimetableGrid.timesFor(periods,day,i),card=create('article');card.className='cb-period bg-slate-950/60 border rounded-xl p-3';
   const title=create('div','Period '+i);title.className='font-bold text-cyan-200';const tag=create('span',hits.length>1?'Duplicate — resolve here':old?'Saved · editable':'Empty');tag.className='text-xs text-slate-300 ml-2';title.append(tag);card.append(title);
   const grid=create('div');grid.className='grid grid-cols-2 gap-2';card.append(grid);
   const input=(label,type,value,options)=>{const l=create('label',label),x=create(type==='select'?'select':'input');if(type==='select')x.replaceChildren(...options);else x.type=type;x.value=value||'';l.append(x);grid.append(l);x.onchange=updateClassDraft;return x};

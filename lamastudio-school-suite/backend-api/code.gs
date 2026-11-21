@@ -3021,14 +3021,20 @@ function lamaPlanningAssertHours_(resources,p,date){
  const day=date||Utilities.formatDate(new Date(),'Asia/Karachi','yyyy-MM-dd');
  const row=resources.find(r=>r.category==='planning-session'&&String(r.id)===String(p.sessionId));if(!row)return;
  const ss=JSON.parse(row.description||'{}'),clock=v=>typeof v==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(v),err=msg=>{throw Error(p.day+' '+p.grade+' P'+p.period+': '+msg)};
- const friday=p.day==='Friday',close=friday&&clock(ss.fridayClose)?ss.fridayClose:'';
+ const friday=p.day==='Friday',close=friday&&clock(ss.fridayClose)?ss.fridayClose:'',
+  policy=lamaSchoolWeekRead_(resources),fridayWork=friday&&!!policy&&!policy.weeklyOff.includes(5);
+ if(policy&&friday&&policy.weeklyOff.includes(5))err('Friday is a published weekly holiday');
  if(!clock(p.start)||!clock(p.end)||p.start>=p.end)err('Invalid lesson times');
  if(close&&p.end>close)err('Friday school closes at '+close);
  const t=[ss.schoolTiming,ss.summerTiming].find(x=>x&&x.from<=day&&day<=x.to&&x.hours);if(!t)return;
  const h=t.hours[p.day];
  if(!h||h.open!==true||!clock(h.start)||!clock(h.end)||h.start>=h.end){
-  if(close)return; // Friday-specific published closing and working-week policy override stale seasonal closed flag.
-  err('School hours not open / configured');
+  if(close){
+   if(clock(h?.start)&&p.start<h.start)err('Before school opening '+h.start);
+   return;
+  }
+  if(!fridayWork||!h||!clock(h.start)||!clock(h.end)||h.start>=h.end)
+   err('School hours not open / configured');
  }
  const end=close||h.end;
  if(p.start<h.start||p.end>end)err('Outside school hours '+h.start+'–'+end);

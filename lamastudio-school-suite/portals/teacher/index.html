@@ -500,7 +500,12 @@ async function saveAttendance(){
   for(const row of document.querySelectorAll('#attendanceList [data-student-id]')){
    const student=myStudent(row.dataset.studentId),btn=row.querySelector('.att-btn[class*="att-active"]');
    if(!student||!btn)continue;
-   const old=attendance.find(x=>(String(x.studentId??x.student_id??'')===String(student.id)||!!(student.enrlNo||student.enrollmentNo)&&String(x.enrlNo??x.enrollmentNo??'')===String(student.enrlNo||student.enrollmentNo))&&LamaAttendanceHistory.dateKey(x.date)===day);
+   const matches=attendance.filter(x=>(String(x.studentId??x.student_id??'')===String(student.id)||!!(student.enrlNo||student.enrollmentNo)&&String(x.enrlNo??x.enrollmentNo??'')===String(student.enrlNo||student.enrollmentNo))&&LamaAttendanceHistory.dateKey(x.date)===day);
+   // AttendanceHistory.make uses the final saved row when duplicates predate
+   // the current register. Update that same row, never the oldest duplicate,
+   // or student/admin portals will continue displaying the previous status.
+   const old=matches[matches.length-1];
+   if(matches.length>1)console.warn('Multiple historical attendance rows for student/date; most recent record selected',student.id,day,matches.length);
    const status=btn.dataset.status;
    if(attendanceModel.get(student,day)===status)continue;
    try{

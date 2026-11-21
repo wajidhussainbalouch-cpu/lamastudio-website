@@ -51,6 +51,7 @@ html.admin-verified #adminLoginRecovery{display:none}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="assets/css/config.css">
     <script src="js/api-client.js"></script>
+<script src="js/parent-absence-message.js?v=20261121followup"></script>
     <style>
         :root{--neon:#8b5cf6;--cyan:#22d3ee;--green:#34d399;--amber:#fbbf24;--red:#fb7185}
         html{scroll-behavior:smooth}
@@ -963,12 +964,10 @@ async function renderDashboard(){
               const raw=String(student.whatsapp||student.contact||student.guardianCell||student.emergencyContact||'');
               const digits=raw.replace(/\D/g,'');const wa=digits.length===11&&digits.startsWith('0')?'92'+digits.slice(1):digits;
               const safe=val=>String(val).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-              const date=new Date().toLocaleDateString('en-GB'),schoolLabel=String(document.getElementById('heroSchoolName')?.textContent||'School Administration').trim();
-              const absent=['absent','a'].includes(status);
-              const english=absent?'We hope you and your family are well. Our attendance record shows that your child '+name+' is absent today. May we kindly ask if you are aware of this absence and whether your child is unwell (for example, has a fever) or there is another reason? Please let us know when convenient so we can offer support. Thank you.':'We hope you and your family are well. '+name+' is recorded as on leave today. Please let us know if any support is needed and, if possible, the expected return date. Thank you.';
-              const urdu=absent?'محترم والدین / سرپرست، امید ہے آپ خیریت سے ہوں گے۔ حاضری کے مطابق آپ کا بچہ '+name+' آج سکول میں غیر حاضر ہے۔ کیا آپ کو اس کا علم ہے؟ کیا بچہ بیمار ہے، مثلاً بخار ہے، یا کوئی دوسری وجہ ہے؟ براہِ کرم ہمیں آگاہ فرمائیں تاکہ ضرورت کے مطابق مدد کی جا سکے۔ شکریہ۔':'محترم والدین / سرپرست، '+name+' آج رخصت پر درج ہے۔ امید ہے بچہ خیریت سے ہوگا۔ براہِ کرم ضرورت کی صورت میں آگاہ فرمائیں اور ممکن ہو تو واپسی کی تاریخ بھی بتا دیں۔ شکریہ۔';
-              const msg=encodeURIComponent('*'+schoolLabel+' — Attendance Follow-up*\n\nDear Parent/Guardian,\n'+english+'\nStudent: '+name+' | Class: '+className+' | Enrollment: '+enrl+' | Date: '+date+'\n\n*'+schoolLabel+' — حاضری کے متعلق اطلاع*\n'+urdu+'\nطالب علم: '+name+' | جماعت: '+className+' | داخلہ نمبر: '+enrl+' | تاریخ: '+date);
-              return `<div class="rounded-xl border border-slate-700/60 p-3 flex gap-3"><div class="shrink-0">${photo?`<img src="${safe(photo)}" alt="Student" class="w-12 h-12 object-cover rounded-lg" loading="lazy">`:'<div class="w-12 h-12 rounded-lg bg-slate-800 text-[9px] flex items-center justify-center">No photo</div>'}</div><div class="min-w-0 flex-1"><p class="text-xs font-black">${safe(name)} · <span class="text-rose-300">${safe(status)}</span></p><p class="text-[11px] text-slate-400">Class ${safe(className)} · Enrl ${safe(enrl)}</p><p class="text-[11px] text-slate-400">${safe(parent)} · ${safe(raw||'No contact')}</p><div class="flex gap-2 flex-wrap mt-2">${wa.length>=10&&wa.length<=15?`<a class="hub-mini-link" href="https://wa.me/${wa}?text=${msg}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`:''}${digits.length>=10?`<a class="hub-mini-link" href="tel:${safe(raw.replace(/[^+\d]/g,''))}">Call</a>`:''}<a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Follow up →</a></div></div></div>`;
+              const schoolLabel=String(document.getElementById('heroSchoolName')?.textContent||'School Administration').trim();
+              const key=window.LamaParentAbsence?.register(student,status,today,schoolLabel)||'';
+              const contact=window.LamaParentAbsence?.pickContact(student);
+              return `<div class="rounded-xl border border-slate-700/60 p-3 flex gap-3"><div class="shrink-0">${photo?`<img src="${safe(photo)}" alt="Student" class="w-12 h-12 object-cover rounded-lg" loading="lazy">`:'<div class="w-12 h-12 rounded-lg bg-slate-800 text-[9px] flex items-center justify-center">No photo</div>'}</div><div class="min-w-0 flex-1"><p class="text-xs font-black">${safe(name)} · <span class="text-rose-300">${safe(status)}</span></p><p class="text-[11px] text-slate-400">Class ${safe(className)} · Enrl ${safe(enrl)}</p><p class="text-[11px] text-slate-400">${safe(parent)} · ${safe(contact?.display||'No valid contact')}</p><div class="flex gap-2 flex-wrap mt-2">${key?`<button type="button" class="hub-mini-link" data-parent-message="${safe(key)}">✉️ Urdu / English message</button>`:''}${contact?`<a class="hub-mini-link" href="tel:${safe(contact.sms)}">Call</a>`:''}<a class="hub-mini-link" href="attendance/student-attendance.html?followup=1#outreachPanel">Full follow-up →</a></div></div></div>`;
             }).join(''):'<p class="text-xs text-slate-400">No absent or leave students recorded today.</p>';
           }
           const total=students.length,marked=counts.present+counts.absent+counts.leave,unmarked=Math.max(0,total-marked),rate=marked?Math.round(100*counts.present/marked):null;
@@ -1276,10 +1275,17 @@ function waLink(number,message){const digits=String(number||'').replace(/[^0-9]/
   const name=student.name||student.studentName||a.studentName||'Student';
   const className=student.class||student.grade||a.class||'-';
   const number=student.whatsapp||student.parentWhatsApp||student.contact||student.phone||'';
-  const msg='Dear Parent, your child '+name+' (Class '+className+') was marked absent from school today. Please contact the school office if this is unexpected.';
-  return '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">'+esc(name)+' <span class="text-slate-500">— Class '+esc(className)+'</span></span><div class="flex gap-1.5">'+(number?'<a href="'+waLink(number,msg)+'" target="_blank" rel="noopener noreferrer" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">WhatsApp</a><a href="'+smsLink(number,msg)+'" class="bg-cyan-600/80 hover:bg-cyan-500 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg">SMS</a>':'<span class="text-[10px] text-slate-500 italic">No contact number</span>')+'</div></div>';
+  const key=window.LamaParentAbsence?.register(student,'absent',today,document.getElementById('heroSchoolName')?.textContent||'School Administration')||'';
+  const contact=window.LamaParentAbsence?.pickContact(student);
+  return '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-slate-950/45 border border-slate-800 p-3"><span class="text-xs font-bold">'+esc(name)+' <span class="text-slate-500">— Class '+esc(className)+'</span></span><div class="flex flex-wrap gap-1.5">'+(key?'<button type="button" data-parent-message="'+esc(key)+'" class="bg-emerald-700 hover:bg-emerald-600 text-white text-[11px] font-bold px-3 py-2 rounded-lg">✉️ Urdu / English message</button>':'')+(contact?'<a href="tel:'+esc(contact.sms)+'" class="bg-cyan-700 text-white text-[11px] font-bold px-3 py-2 rounded-lg">Call parent</a>':'<span class="text-[11px] text-slate-400">No parent number</span>')+'</div></div>';
  }).join('');
 }
+        document.addEventListener('click',event=>{
+          const control=event.target.closest('[data-parent-message]');
+          if(!control||!document.documentElement.classList.contains('admin-verified'))return;
+          event.preventDefault();
+          if(!window.LamaParentAbsence?.open(control.getAttribute('data-parent-message')))console.warn('Parent message unavailable. Refresh saved attendance and check administrator sign-in.');
+        });
         function renderNotices(notices){notices=Array.isArray(notices)?notices:[];document.getElementById('noticesEmpty').classList.toggle('hidden',notices.length>0);document.getElementById('recentNoticesList').innerHTML=notices.slice(0,5).map(n=>`<div class="rounded-xl bg-slate-950/45 border border-slate-800 p-3"><p class="text-[11px] font-black text-white">${esc(n.title||'Notice')}</p><p class="text-[10px] text-slate-400 mt-1 line-clamp-2">${esc(n.message||n.body||'')}</p></div>`).join('');}
         async function refreshDashboard(){const b=document.getElementById('engineState');b.innerText='syncing...';await renderDashboard();b.innerText='online';}
 ;

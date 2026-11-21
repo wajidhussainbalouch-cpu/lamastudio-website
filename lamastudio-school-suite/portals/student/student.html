@@ -44,7 +44,7 @@ async function init(){
  const week=LamaSchoolWeek.read(resources)?.weeklyOff;
  const closed=Array.isArray(week)&&week.includes(LamaSchoolWeek.names.indexOf(weekday));
  const season=valid?LamaSchoolWeek.seasonTiming(active,date)?.timing:null;
- const t=!valid||closed?[]:[...data.periods.filter(p=>String(p.sessionId)===String(active.id)&&p.day===weekday&&!LamaSchoolWeek.lessonIssue(season,p,active?.fridayClose)),...(weekday==='Friday'?[LamaSchoolWeek.fridayActivity(active,week)].filter(Boolean):[])].sort((a,b)=>a.start.localeCompare(b.start)||Number(a.period)-Number(b.period));
+ const t=!valid||closed?[]:[...data.periods.filter(p=>String(p.sessionId)===String(active.id)&&p.day===weekday&&!LamaSchoolWeek.lessonIssue(season,p,active?.fridayClose,week)),...(weekday==='Friday'?[LamaSchoolWeek.fridayActivity(active,week)].filter(Boolean):[])].sort((a,b)=>a.start.localeCompare(b.start)||Number(a.period)-Number(b.period));
  tt.innerHTML=t.map(x=>`<div class="bg-slate-950/50 rounded-xl p-3 flex gap-3"><span class="text-[10px] text-slate-500">${E(x.start)}–${E(x.end)}</span><div><b class="text-xs">${E(x.subject||'Period')}</b><p class="text-[10px] text-slate-500">👨‍🏫 ${E(x.activity?'School-wide activity':x.teacherName||'Teacher not assigned')}</p></div></div>`).join('')||'<p class="text-xs text-slate-400">No lesson scheduled within school hours today.</p>';
  const clock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date()),now=mins(clock);
  const cur=t.find(x=>mins(x.start)<=now&&now<mins(x.end))||t.find(x=>mins(x.start)>now);

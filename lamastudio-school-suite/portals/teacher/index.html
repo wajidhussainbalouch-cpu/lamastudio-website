@@ -84,7 +84,7 @@ button,a,input,select,textarea{touch-action:manipulation}button:focus-visible,a:
 @media(max-width:370px){
  .teacher-school-header .teacher-header-tools .teacher-header-action{font-size:11px;padding:9px 4px!important}
 }
-</style><script src="../../js/school-week.js?v=20261121friday5periods"></script></head>
+</style><script src="../../js/school-week.js?v=20261121friday5periods"></script><script src="../../js/parent-absence-message.js?v=20261121teachercontactfix"></script></head>
 <body class="bg-[#081425] text-slate-100 font-sans min-h-screen">
 
     <!-- Header -->
@@ -360,7 +360,20 @@ function renderDailyAttendance(){
 function todayAbsentees(){if(teacherClosed(localDate())||!attendanceReady||!attendanceModel)return [];return myStudents.filter(s=>attendanceModel.get(s,localDate())==='Absent').map(s=>({studentId:s.id,date:localDate(),status:'Absent'}))}
 function updateStats(){renderDailyAttendance();renderHomeworkProgress()}
 function header(){ $('pageTitle').textContent=(me.schoolName||'School')+' | Teacher Dashboard';$('headerSchoolName').textContent=me.schoolName||'School';$('teacherClassLabel').textContent=`${/^(?:class|grade)\s/i.test(String(me.assignedClass||''))?'':'Class '}${me.assignedClass||'—'} ${me.assignedSection||me.section||''} · ${me.subject||'All subjects'}`;$('headerAssignedClass').textContent=me.assignedClass||'Not assigned';$('teacherNameLabel').textContent=me.name||'Teacher';if(me.schoolLogo){const im=document.createElement('img');im.src=me.schoolLogo;im.alt='School logo';im.className='w-full h-full object-cover rounded-xl';$('schoolLogoBox').replaceChildren(im)}}
-function contact(s){const n=String(s.whatsapp||s.contact||'').replace(/[^\d+]/g,'');if(!n)return '';const digits=n.replace(/\D/g,'');return `<a class="contact-icon" href="tel:${esc(n)}">📞</a><a class="contact-icon" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬</a>`}
+function contact(s,status='',day=''){
+ // Use the EXISTING bilingual school-parent template and standardized Pakistan
+ // numbers, rather than a separate teacher messaging subsystem. Teacher chats
+ // are manually sent via WhatsApp; no delivery/confirmation is assumed.
+ const number=window.LamaParentAbsence?.pickContact(s);
+ if(!number)return '<span class="text-[11px] text-slate-400" title="Add a parent number in the student record">No parent contact</span>';
+ const call='<a class="contact-icon" aria-label="Call parent of '+esc(s.name||'student')+'" href="tel:'+esc(number.sms)+'">📞</a>';
+ if(status!=='Absent'&&status!=='Leave')return call;
+ const msg=window.LamaParentAbsence.message({
+  name:s.name,className:s.class||me.assignedClass,date:day||attendanceDate(),schoolName:me.schoolName||'School Administration',
+  status:status==='Leave'?'leave':'absent'
+ },'both');
+ return call+'<a class="contact-icon" title="Review bilingual absence message and press Send in WhatsApp" aria-label="Prepare Urdu and English WhatsApp message for '+esc(s.name||'student')+'" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+esc(number.wa)+'?text='+encodeURIComponent(msg)+'">💬</a>';
+}
 let refreshPromise=null;
 async function refresh(){
  if(refreshPromise)return refreshPromise;teacherWeekResources=null;
@@ -457,7 +470,7 @@ function renderProfileEditor(st){
 }
 function teacherHistoryHTML(student,day){if(!attendanceReady||!attendanceModel)return '<small class="text-slate-400">Saved history loading…</small>';const data=attendanceModel.absenceInfo(student,day),cells=data.days.slice().reverse().map(entry=>'<span class="day '+(entry.status?entry.status.toLowerCase():'missing')+'" title="'+esc(entry.date+': '+(entry.status||'Not recorded'))+'"><small>'+esc(entry.date.slice(-2))+'</small><b>'+(entry.status?entry.status.charAt(0):'—')+'</b></span>').join('');return '<div class="mt-2 text-slate-400 text-[10px]">Previous 7 possible school days (Sunday excluded)</div><div class="teacher-history">'+cells+'</div>'+(data.weekAlert?'<div class="teacher-alert">⚠ 5+ consecutive marked absences — follow up</div>':data.absentDays>=3?'<div class="teacher-alert">⚠ '+data.absentDays+' absences in 7 days</div>':'')}
 function hasAttendanceDrafts(){if(!attendanceReady||!attendanceModel)return false;const day=lastAttendanceViewDate||attendanceDate();return Array.from(document.querySelectorAll('#attendanceList [data-student-id]')).some(row=>{const student=myStudent(row.dataset.studentId);if(!student)return false;const selected=row.querySelector('.att-btn[class*="att-active"]')?.dataset.status||'';return selected!==attendanceModel.get(student,day)})}
-function loadAttendanceList(){const day=attendanceDate();lastAttendanceViewDate=day;const el=$('attendanceList');const closed=teacherClosed(day),save=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');if(save)save.disabled=!!closed||!attendanceReady;if(closed){el.textContent=closed+' — attendance is read-only.';return}$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);if(!attendanceReady){el.innerHTML='<p class="text-slate-300 text-sm">Loading saved attendance. Marking is disabled until this class register is verified.</p>';return}el.innerHTML=myStudents.map(s=>{const status=attendanceModel.get(s,day),sex=LamaTeacherDaily.gender(s);return '<div class="teacher-attendance-row bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(s.id)+'"><div class="min-w-0 flex-1"><div class="attendance-identity"><span class="attendance-avatar-slot"></span><div class="attendance-identity-copy"><strong class="attendance-name">'+esc(s.name)+' <span class="text-slate-400">('+esc(s.enrlNo||s.enrollmentNo||'—')+')</span></strong><div class="attendance-father">Father / Guardian: '+esc(studentFather(s)||'Not recorded')+'</div></div></div>'+ '<div class="attendance-status '+(status?status.toLowerCase():'')+'">'+(status?esc(status)+' · Saved':'Not marked')+' · '+(sex==='boys'?'Boy':sex==='girls'?'Girl':'Gender not recorded')+'</div>'+teacherHistoryHTML(s,day)+'</div><div class="teacher-attendance-actions">'+contact(s)+['Present','Absent','Leave'].map(x=>'<button class="att-btn '+(status===x?'att-active-'+x.toLowerCase():'')+'" data-status="'+x+'" onclick="setAttStatus(this,\''+x+'\')">'+x+'</button>').join('')+'</div></div>'}).join('');for(const row of el.querySelectorAll('[data-student-id]')){const student=myStudent(row.dataset.studentId),slot=row.querySelector('.attendance-avatar-slot');if(student&&slot)slot.replaceChildren(studentAvatar(student))}renderDraftAttendance()}
+function loadAttendanceList(){const day=attendanceDate();lastAttendanceViewDate=day;const el=$('attendanceList');const closed=teacherClosed(day),save=document.querySelector('#tab-attendance button[onclick*="saveAttendance"]');if(save)save.disabled=!!closed||!attendanceReady;if(closed){el.textContent=closed+' — attendance is read-only.';return}$('attendanceEmpty').classList.toggle('hidden',!!myStudents.length);if(!attendanceReady){el.innerHTML='<p class="text-slate-300 text-sm">Loading saved attendance. Marking is disabled until this class register is verified.</p>';return}el.innerHTML=myStudents.map(s=>{const status=attendanceModel.get(s,day),sex=LamaTeacherDaily.gender(s);return '<div class="teacher-attendance-row bg-slate-950/60 border border-slate-800 rounded-xl p-3" data-student-id="'+esc(s.id)+'"><div class="min-w-0 flex-1"><div class="attendance-identity"><span class="attendance-avatar-slot"></span><div class="attendance-identity-copy"><strong class="attendance-name">'+esc(s.name)+' <span class="text-slate-400">('+esc(s.enrlNo||s.enrollmentNo||'—')+')</span></strong><div class="attendance-father">Father / Guardian: '+esc(studentFather(s)||'Not recorded')+'</div></div></div>'+ '<div class="attendance-status '+(status?status.toLowerCase():'')+'">'+(status?esc(status)+' · Saved':'Not marked')+' · '+(sex==='boys'?'Boy':sex==='girls'?'Girl':'Gender not recorded')+'</div>'+teacherHistoryHTML(s,day)+'</div><div class="teacher-attendance-actions">'+contact(s,status,day)+['Present','Absent','Leave'].map(x=>'<button class="att-btn '+(status===x?'att-active-'+x.toLowerCase():'')+'" data-status="'+x+'" onclick="setAttStatus(this,\''+x+'\')">'+x+'</button>').join('')+'</div></div>'}).join('');for(const row of el.querySelectorAll('[data-student-id]')){const student=myStudent(row.dataset.studentId),slot=row.querySelector('.attendance-avatar-slot');if(student&&slot)slot.replaceChildren(studentAvatar(student))}renderDraftAttendance()}
 function renderDraftAttendance(){
  const el=$('attendanceDraftSummary');if(!attendanceReady||!attendanceModel){el.textContent='Saved attendance unavailable. No verified preview.';return}
  const counts={Present:{boys:0,girls:0,unknown:0},Absent:{boys:0,girls:0,unknown:0},Leave:{boys:0,girls:0,unknown:0},Unmarked:{boys:0,girls:0,unknown:0}};
@@ -508,7 +521,20 @@ async function saveAttendance(){
   message('Attendance: '+ok+' accepted, '+(ok-mismatch.length)+' verified, '+fail+' failed.'+detail);
  }finally{if(saveButton){saveButton.disabled=false;saveButton.textContent=saveButton.dataset.previousText||'Save'}}
 }
-function loadAbsentees(){const a=todayAbsentees();$('absenteesEmpty').classList.toggle('hidden',!!a.length);$('absenteesList').innerHTML=a.map(x=>{const s=myStudent(x.studentId);if(!s)return '';const n=String(s.whatsapp||s.contact||'').replace(/\D/g,'');const msg=encodeURIComponent(`Dear Parent, ${s.name} was marked absent on ${x.date}. — ${me.name||'Teacher'}`);return `<div class="flex justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">${esc(s.name)}</span>${n?`<a class="text-xs text-emerald-400" target="_blank" rel="noopener" href="https://wa.me/${n}?text=${msg}">WhatsApp</a>`:'<span class="text-xs text-slate-500">No contact</span>'}</div>`}).join('')}
+function loadAbsentees(){
+ const a=todayAbsentees();
+ $('absenteesEmpty').classList.toggle('hidden',!!a.length);
+ $('absenteesList').innerHTML=a.map(x=>{
+  const s=myStudent(x.studentId);if(!s)return '';
+  const number=window.LamaParentAbsence?.pickContact(s);
+  const msg=window.LamaParentAbsence?.message({
+   name:s.name,className:s.class||me.assignedClass,date:LamaAttendanceHistory.dateKey(x.date),
+   schoolName:me.schoolName||'School Administration',status:'absent'
+  },'both')||'';
+  return '<div class="flex flex-wrap justify-between items-center bg-slate-950 rounded-xl p-3 gap-2"><span class="text-xs">'+esc(s.name)+'</span>'+
+  (number?'<a class="text-xs text-emerald-300 underline" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+esc(number.wa)+'?text='+encodeURIComponent(msg)+'">Review Urdu / English in WhatsApp</a>':'<span class="text-xs text-slate-500">Parent number not recorded</span>')+'</div>';
+ }).join('');
+}
 function loadHomework(){let items=homework.slice();const f=$('hwFilter').value;const now=new Date();if(f!=='all')items=items.filter(x=>{const d=new Date(x.createdAt||x.dueDate);return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&(f==='year'||d.getMonth()===now.getMonth())});items.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));$('homeworkList').innerHTML=items.length?items.map(h=>`<div class="bg-slate-950 rounded-xl p-3 flex justify-between gap-3"><div><b class="text-xs">${esc(h.subject)}${h.title&&String(h.title).trim()!==String(h.subject)+' Homework'?' — '+esc(h.title):''}</b><p class="text-xs text-slate-400 whitespace-pre-wrap">${esc(h.description)}</p><p class="text-[10px] text-amber-400">Posted ${esc(LamaTeacherDaily.dateKey(h.createdAt,'Asia/Karachi')||'—')}${h.dueDate?' · Due '+esc(LamaTeacherDaily.dateKey(h.dueDate,'Asia/Karachi')||'—'):''} · ${published(h)?'Published':h.id&&!('status'in h)&&!('isPublished'in h)?'Saved entry':'Draft'}</p></div>${mine(h)?`<button class="text-rose-400 text-xs" data-delete-hw="${esc(h.id)}">Delete</button>`:`<span class="text-slate-400 text-xs">Class homework</span>`}</div>`).join(''):'<p class="text-slate-400 text-xs">No diary entries.</p>'}
 // Keep entered homework in memory while background refreshes update saved history.
 const diaryDrafts=new Map();

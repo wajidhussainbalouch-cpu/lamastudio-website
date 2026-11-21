@@ -257,7 +257,7 @@ function validateTiming(t){
  if((t.breakStart||t.breakEnd)&&(!validTime(t.breakStart)||!validTime(t.breakEnd)||t.breakStart>=t.breakEnd))throw Error('Choose a valid lunch break or leave both fields empty.');
  if((t.assemblyStart||t.assemblyEnd)&&(!validTime(t.assemblyStart)||!validTime(t.assemblyEnd)||t.assemblyStart>=t.assemblyEnd))throw Error('Choose valid assembly times or leave both blank.');
  if(t.assemblyStart&&t.breakStart&&t.assemblyStart<t.breakEnd&&t.assemblyEnd>t.breakStart)throw Error('Assembly and lunch break cannot overlap.');
- for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||(t.breakStart&&(t.breakStart<h.start||t.breakEnd>h.end))||(t.assemblyStart&&(t.assemblyStart<h.start||t.assemblyEnd>h.end))))throw Error(d+': school hours must contain the lunch break.')}
+ for(const d of days){const h=t.hours[d];if(h?.open===true&&(!validTime(h.start)||!validTime(h.end)||h.start>=h.end||(d!=='Friday'&&t.breakStart&&(t.breakStart<h.start||t.breakEnd>h.end))||(t.assemblyStart&&(t.assemblyStart<h.start||t.assemblyEnd>h.end))))throw Error(d+': invalid hours, assembly or break for this day.')}
  return t;
 }
 const seasonKeys={winter:'schoolTiming',summer:'summerTiming'};
@@ -279,7 +279,7 @@ function timingSummary(t,season='winter'){
  if(!t)return null;
  const groups=new Map();
  for(const d of days){const h=t.hours[d],policy=LamaSchoolWeek.read(schoolWeekResources),closed=policy?policy.weeklyOff.includes(LamaSchoolWeek.names.indexOf(d)):h?.open!==true,key=closed?'Closed / weekly holiday':h?.open===true?formatTime(h.start)+' – '+formatTime(h.end):'Working day — hours not configured';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(d)}
- return {title:(season==='summer'?'Summer':'Winter')+' School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),assemblyTime:t.assemblyStart?'Morning assembly: '+formatTime(t.assemblyStart)+' – '+formatTime(t.assemblyEnd):'Morning assembly not configured',breakTime:t.breakStart?'Lunch break: '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd):'No lunch break configured'};
+ return {title:(season==='summer'?'Summer':'Winter')+' School Timings',dates:formatDate(t.from)+' – '+formatDate(t.to),lines:[...groups].map(([hours,ds])=>ds.join(', ')+': '+hours),assemblyTime:t.assemblyStart?'Morning assembly: '+formatTime(t.assemblyStart)+' – '+formatTime(t.assemblyEnd):'Morning assembly not configured',breakTime:t.breakStart?'Break (not Friday): '+formatTime(t.breakStart)+' – '+formatTime(t.breakEnd)+' · Friday has no break':'No lunch break configured · Friday has no break'};
 }
 function scheduleSummaries(sid=activeSession()){
  const list=['winter','summer'].map(k=>timingSummary(schoolTiming(sid,k),k)).filter(Boolean);
@@ -291,10 +291,10 @@ function scheduleSummaries(sid=activeSession()){
 function dateInside(date,t){return !!t&&t.from<=date&&date<=t.to}
 function dateToday(){const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month+'-'+parts.day}
 function seasonForDate(date,sid=activeSession()){return ['winter','summer'].find(k=>dateInside(date,schoolTiming(sid,k)))||''}
-function currentLessonIssue(p,season=''){const ss=sessionRecord(p.sessionId),t=LamaSchoolWeek.seasonTiming?.(ss,dateToday(),season)?.timing;return LamaSchoolWeek.lessonIssue?.(t,p,ss?.fridayClose)||''}
+function currentLessonIssue(p,season=''){const ss=sessionRecord(p.sessionId),t=LamaSchoolWeek.seasonTiming?.(ss,dateToday(),season)?.timing,off=LamaSchoolWeek.read(schoolWeekResources)?.weeklyOff??null;return LamaSchoolWeek.lessonIssue?.(t,p,ss?.fridayClose,off)||''}
 function assertLessonHours(p){const why=currentLessonIssue(p);if(why)throw Error(p.day+' '+p.grade+' P'+p.period+': '+why)}
 function chosenSeason(){const picker=$('quickSeason');return picker?picker.value:seasonForDate(dateToday())}
-function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason());return LamaSchoolWeek.working(schoolWeekResources,t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6))}
+function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason()),ss=sessionRecord(activeSession());const fallback=t?days.filter(d=>t.hours[d]?.open===true||d==='Friday'&&validTime(ss?.fridayClose)):days.slice(0,6);return LamaSchoolWeek.working(schoolWeekResources,fallback)}
 function calendarDay(date,sid,events=[]){
  const season=seasonForDate(date,sid),t=season?schoolTiming(sid,season):null;
  const v=vacationsFor(sid),vacation=Object.keys(vacationKeys).find(k=>dateInside(date,v[k]));
@@ -386,9 +386,8 @@ async function saveFridayClosing(){
   note.textContent='The final activity overlaps a saved Friday lesson. Change its start or adjust the lesson before saving.';return;
  }
  const seasonal=[ss?.schoolTiming,ss?.summerTiming].filter(Boolean);
- if(seasonal.some(t=>validTime(t.breakStart)&&validTime(t.breakEnd)&&t.breakStart<value&&t.breakEnd>start)){
-  note.textContent='This activity overlaps a published lunch break. Edit the seasonal break first; both cannot be scheduled at once.';return;
- }
+ // Friday has no lunch break; the final activity may occupy a time normally
+ // used for the Mon–Thu break.
  const button=$('fridayCloseSave');button.disabled=true;
  try{await updateSessionSettings(note,p=>{
   if(!p.start||!p.end)throw Error('Select a valid academic session.');
@@ -961,7 +960,7 @@ $('sessionForm').onsubmit=async e=>{
    throw Error('This academic session name already exists. Use its Edit button instead of creating a duplicate.');
   if(p.active&&sessionRecords(latest).some(s=>String(s.id)!==String(editingId)&&s.active))
    throw Error('Deactivate the previous active session before activating another.');
-  if(prior){for(const key of ['schoolTiming','summerTiming','vacations','terms','classPeriodCounts','teacherSchedulingMode'])if(prior[key])p[key]=prior[key];for(const key of ['schoolTiming','summerTiming'])validateSessionRange(p[key],p,key);for(const [key,v] of Object.entries(p.vacations||{}))validateSessionRange(v,p,key);if(p.terms)validateAcademicTerms(p.terms,p)}
+  if(prior){for(const key of ['schoolTiming','summerTiming','vacations','terms','classPeriodCounts','teacherSchedulingMode','fridayClose','fridayActivity'])if(prior[key])p[key]=prior[key];for(const key of ['schoolTiming','summerTiming'])validateSessionRange(p[key],p,key);for(const [key,v] of Object.entries(p.vacations||{}))validateSessionRange(v,p,key);if(p.terms)validateAcademicTerms(p.terms,p)}
   attemptedWrite=true;
   const refreshed=await save('session',editingId,p);
   if(!refreshed)throw Error('Session save response received but the updated list could not be verified.');

@@ -82,7 +82,7 @@
   const sendWa=btn('Open WhatsApp','#087f53'),sendSms=btn('Open SMS','#08748a'),copy=btn('Copy text','#33527b'),cancel=btn('Close','#50636c');
   sendWa.disabled=!entry.contact;sendSms.disabled=!entry.contact;
   if(!entry.contact){sendWa.style.opacity='.45';sendSms.style.opacity='.45'}
-  sendWa.onclick=()=>{const v=textarea.value.trim();if(!entry.contact||!v)return;const url='https://wa.me/'+entry.contact.wa+'?text='+encodeURIComponent(v);const tab=window.open(url,'_blank','noopener,noreferrer');if(!tab)info.textContent='If WhatsApp did not open, allow popups and try again. No message was sent by the school system.';else info.textContent='WhatsApp opened. Review the recipient and press Send there; delivery is not yet confirmed.'};
+  sendWa.onclick=()=>{const v=textarea.value.trim();if(!entry.contact||!v)return;const url='https://wa.me/'+entry.contact.wa+'?text='+encodeURIComponent(v);window.open(url,'_blank','noopener,noreferrer');info.textContent='If WhatsApp opens, review the parent number and press Send there. If nothing opens, check popup permissions. Delivery is not confirmed.'};
   sendSms.onclick=()=>{const v=textarea.value.trim();if(!entry.contact||!v)return;info.textContent='Opening your SMS app. Press Send in the SMS app to send; charges may apply.';location.href='sms:'+entry.contact.sms+'?body='+encodeURIComponent(v)};
   copy.onclick=async()=>{try{await navigator.clipboard.writeText(textarea.value);info.textContent='Message copied. No contact was sent.'}catch(e){textarea.focus();textarea.select();info.textContent='Select and copy the highlighted message manually.'}};
   function close(){backdrop.remove();document.removeEventListener('keydown',escClose)}

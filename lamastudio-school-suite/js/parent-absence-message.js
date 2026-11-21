@@ -93,5 +93,37 @@
   dialog.append(actions);backdrop.append(dialog);document.body.append(backdrop);select.focus();
   return true;
  }
- root.LamaParentAbsence={register,open,message,phone,pickContact};
+ function showError(messageText){
+  let panel=document.getElementById('lama-parent-message-error');
+  if(!panel){panel=document.createElement('div');panel.id='lama-parent-message-error';panel.setAttribute('role','alert');panel.setAttribute('aria-live','assertive');panel.style.cssText='position:fixed;left:12px;right:12px;bottom:18px;max-width:650px;margin:auto;background:#fff1f2;color:#821b33;border:2px solid #fb7185;border-radius:14px;padding:14px 44px 14px 16px;box-shadow:0 14px 32px #0005;z-index:2147483640;font:600 14px/1.5 system-ui';document.body.append(panel);}
+  panel.textContent=messageText;
+  const close=document.createElement('button');close.type='button';close.textContent='×';close.setAttribute('aria-label','Dismiss message');close.style.cssText='position:absolute;right:12px;top:8px;color:#821b33;background:transparent;border:0;font-size:26px;cursor:pointer';close.onclick=()=>panel.remove();panel.append(close);
+ }
+ function safeOpen(key){
+  if(!verifiedAdmin()){showError('School administrator session needs verification. Please sign in to School Admin again, then refresh the dashboard.');return false;}
+  if(!records.has(norm(key))){showError('The saved student absence could not be found. Refresh the dashboard attendance and try again.');return false;}
+  try{
+   const opened=open(key);
+   if(!opened)showError('Unable to open the parent message. Check administrator access and refresh.');
+   return opened===true;
+  }catch(error){
+   document.getElementById('lama-parent-composer-backdrop')?.remove();
+   console.error('Parent follow-up message failed to open',error);
+   showError('The parent message could not open: '+(error?.message||'Browser error')+'. Please refresh and try again.');
+   return false;
+  }
+ }
+ // A separately installed dashboard click handler remains available even when
+ // chart/data initialization fails. Attendance pages keep their saved-record guards.
+ try{
+  if(String(root.location?.pathname||'').endsWith('/dashboard.html')){
+   document.addEventListener('click',event=>{
+    const target=event.target,button=target&&typeof target.closest==='function'?target.closest('button[data-parent-message]'):null;
+    if(!button)return;
+    event.preventDefault();
+    safeOpen(button.getAttribute('data-parent-message'));
+   },true);
+  }
+ }catch(error){console.warn('Parent follow-up dashboard binding unavailable',error)}
+ root.LamaParentAbsence={register,open:safeOpen,message,phone,pickContact};
 })(typeof window!=='undefined'?window:globalThis);

@@ -77,5 +77,33 @@
   }
   return {get,recent,absenceInfo,classDayRegistered};
  }
- root.LamaAttendanceHistory={make,dateKey,previousDays,normalize};
+ /**
+  * Read-only preparation for the EXISTING attendance follow-up portal-notice action.
+  * Attendance saving may already have published an attendanceAbsence alert; do not
+  * create an extra attendanceFollowup record for the same student and date.
+  * Never interpret unsaved/missing attendance as absent.
+  */
+ function pendingPortalNotices(students,day,history,notifications){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(str(day))||!history||typeof history.get!=='function')
+   throw Error('Verified attendance history required for parent follow-up.');
+  if(!Array.isArray(students)||!Array.isArray(notifications))
+   throw Error('Student roster and existing portal notices must be loaded.');
+  const selected=[],already=[],pending=[];
+  for(const student of students){
+   const sid=personId(student),attendance=history.get(student,day);
+   if(!sid||attendance!=='Absent'&&attendance!=='Leave')continue;
+   selected.push(student);
+   const prior=notifications.some(n=>{
+    if(str(n.studentId)!==sid||dateKey(n.date)!==day)return false;
+    if(str(n.status).toLowerCase()==='resolved'||String(n.isPublished).toLowerCase()==='false')return false;
+    const type=str(n.notificationType);
+    if(type==='attendanceAbsence')return attendance==='Absent';
+    if(type==='attendanceFollowup')return !n.attendanceStatus||normalize(n.attendanceStatus)===attendance;
+    return false;
+   });
+   if(prior)already.push(student);else pending.push(student);
+  }
+  return {selected,already,pending};
+ }
+ root.LamaAttendanceHistory={make,dateKey,previousDays,normalize,pendingPortalNotices};
 })(window);

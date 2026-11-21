@@ -31,7 +31,31 @@ const clock=v=>typeof v==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(v);
 function today(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).reduce((o,p)=>(o[p.type]=p.value,o),{});}
 function schoolDate(){const d=today();return d.year+'-'+d.month+'-'+d.day}
 function seasonTiming(ss,date=schoolDate(),season=''){if(!ss)return null;const list=[['winter',ss.schoolTiming],['summer',ss.summerTiming]].filter(([k,t])=>t&&t.from&&t.to&&t.from<=t.to&&t.hours);const hit=season?list.find(([k])=>k===season):list.find(([k,t])=>inside(date,t));return hit?{name:hit[0],timing:hit[1]}:null}
-function lessonIssue(t,p,fridayClose=''){if(p?.day==='Friday'&&clock(fridayClose)&&clock(p.end)&&p.end>fridayClose)return 'Friday school closes at '+fridayClose;if(!t)return '';const h=t.hours?.[p.day];if(!h||h.open!==true)return 'School hours not open / configured for '+p.day;if(!clock(h.start)||!clock(h.end)||h.start>=h.end)return 'School hours not configured for '+p.day;if(!clock(p.start)||!clock(p.end)||p.start>=p.end)return 'Invalid lesson times';if(p.start<h.start||p.end>h.end)return 'Outside school hours '+h.start+'–'+h.end;for(const [a,b,label] of [[t.assemblyStart,t.assemblyEnd,'Morning assembly'],[t.breakStart,t.breakEnd,'Lunch break']])if(clock(a)&&clock(b)&&a<b&&p.start<b&&p.end>a&&a>=h.start&&b<=h.end)return 'Overlaps '+label+' '+a+'–'+b;return ''}
+function lessonIssue(t,p,fridayClose='',weeklyOff=null){
+ const friday=p?.day==='Friday',hasFridayClosing=friday&&clock(fridayClose);
+ if(friday&&Array.isArray(weeklyOff)&&weeklyOff.includes(5))return 'Friday is a published weekly holiday';
+ if(!clock(p?.start)||!clock(p?.end)||p.start>=p.end)return 'Invalid lesson times';
+ if(hasFridayClosing&&p.end>fridayClose)return 'Friday school closes at '+fridayClose;
+ if(!t)return '';
+ const h=t.hours?.[p.day];
+ // The published Friday dismissal plus the working-week policy takes precedence
+ // over stale seasonal 'closed' flags; never apply the shared lunch break on Friday.
+ if(!h||h.open!==true){
+  if(hasFridayClosing)return '';
+  return 'School hours not open / configured for '+p.day;
+ }
+ if(!clock(h.start)||!clock(h.end)||h.start>=h.end){
+  if(hasFridayClosing)return '';
+  return 'School hours not configured for '+p.day;
+ }
+ const end=hasFridayClosing?fridayClose:h.end;
+ if(p.start<h.start||p.end>end)return 'Outside school hours '+h.start+'–'+end;
+ const blocks=[[t.assemblyStart,t.assemblyEnd,'Morning assembly']];
+ if(!friday)blocks.push([t.breakStart,t.breakEnd,'Lunch break']);
+ for(const [a,b,label] of blocks)
+  if(clock(a)&&clock(b)&&a<b&&p.start<b&&p.end>a&&a>=h.start&&b<=end)return 'Overlaps '+label+' '+a+'–'+b;
+ return '';
+}
 function formatClock(v){if(!clock(v))return 'Not configured';const [h,m]=v.split(':').map(Number);return (h%12||12)+':'+String(m).padStart(2,'0')+' '+(h<12?'AM':'PM')}
 function fridayActivity(ss,weeklyOff=null){
  if(!ss||!clock(ss.fridayClose)||Array.isArray(weeklyOff)&&weeklyOff.includes(5))return null;
@@ -39,7 +63,7 @@ function fridayActivity(ss,weeklyOff=null){
  if(!a||typeof a!=='object'||typeof a.title!=='string'||!a.title.trim()||a.title.length>100||!clock(a.start)||!clock(a.end)||a.start>=a.end||a.end>ss.fridayClose)return null;
  return {day:'Friday',start:a.start,end:a.end,subject:a.title.trim(),label:a.title.trim(),activity:true,period:'Activity'};
 }
-function activities(t,day){const h=t?.hours?.[day];if(h?.open!==true)return [];return [[t.assemblyStart,t.assemblyEnd,'Morning assembly'],[t.breakStart,t.breakEnd,'Lunch break']].filter(([a,b])=>clock(a)&&clock(b)&&a<b&&a>=h.start&&b<=h.end).map(([start,end,label])=>({start,end,label}))}
-function renderHours(box,rows,date=schoolDate()){if(!box)return;box.replaceChildren();const add=(tag,val)=>{const e=document.createElement(tag);e.textContent=val;box.append(e);return e};add('h3','School timings').className='font-bold';if(!Array.isArray(rows)){add('p','School timings unavailable. Refresh to retry.');return}const ss=session(rows,date),season=seasonTiming(ss,date);if(!season){add('p','No complete seasonal hours published for today.');if(clock(ss?.fridayClose))add('p','Friday school closes: '+formatClock(ss.fridayClose)+' (published for this academic session).');const special=fridayActivity(ss,read(rows)?.weeklyOff);if(special)add('p','Friday activity: '+special.subject+' · '+formatClock(special.start)+' – '+formatClock(special.end));return}const {name,timing:t}=season;add('p',(name==='winter'?'Winter':'Summer')+' · '+t.from+' – '+t.to);const off=read(rows)?.weeklyOff;const groups=new Map();for(const d of names.slice(1).concat('Sunday')){const h=t.hours[d],closed=Array.isArray(off)?off.includes(names.indexOf(d)):h?.open!==true;const val=closed?'Holiday':h?.open===true?formatClock(h.start)+' – '+formatClock(h.end):'Hours not configured';if(!groups.has(val))groups.set(val,[]);groups.get(val).push(d.slice(0,3))}for(const [v,ds] of groups)add('p',ds.join(', ')+': '+v);add('p','Morning assembly: '+(clock(t.assemblyStart)&&clock(t.assemblyEnd)?formatClock(t.assemblyStart)+' – '+formatClock(t.assemblyEnd):'Not configured'));add('p','Lunch break: '+(clock(t.breakStart)&&clock(t.breakEnd)?formatClock(t.breakStart)+' – '+formatClock(t.breakEnd):'Not configured'));const special=fridayActivity(ss,off);if(special)add('p','Friday activity: '+special.subject+' · '+formatClock(special.start)+' – '+formatClock(special.end))}
+function activities(t,day){const h=t?.hours?.[day];if(h?.open!==true)return [];const blocks=[[t.assemblyStart,t.assemblyEnd,'Morning assembly']];if(day!=='Friday')blocks.push([t.breakStart,t.breakEnd,'Lunch break']);return blocks.filter(([a,b])=>clock(a)&&clock(b)&&a<b&&a>=h.start&&b<=h.end).map(([start,end,label])=>({start,end,label}))}
+function renderHours(box,rows,date=schoolDate()){if(!box)return;box.replaceChildren();const add=(tag,val)=>{const e=document.createElement(tag);e.textContent=val;box.append(e);return e};add('h3','School timings').className='font-bold';if(!Array.isArray(rows)){add('p','School timings unavailable. Refresh to retry.');return}const ss=session(rows,date),season=seasonTiming(ss,date);if(!season){add('p','No complete seasonal hours published for today.');if(clock(ss?.fridayClose))add('p','Friday school closes: '+formatClock(ss.fridayClose)+' (published for this academic session).');const special=fridayActivity(ss,read(rows)?.weeklyOff);if(special)add('p','Friday activity: '+special.subject+' · '+formatClock(special.start)+' – '+formatClock(special.end));return}const {name,timing:t}=season;add('p',(name==='winter'?'Winter':'Summer')+' · '+t.from+' – '+t.to);const off=read(rows)?.weeklyOff;const groups=new Map();for(const d of names.slice(1).concat('Sunday')){const h=t.hours[d],closed=Array.isArray(off)?off.includes(names.indexOf(d)):h?.open!==true;const val=closed?'Holiday':d==='Friday'&&clock(ss?.fridayClose)?(clock(h?.start)?formatClock(h.start)+' – ':'Until ')+formatClock(ss.fridayClose)+' · no Friday break':h?.open===true?formatClock(h.start)+' – '+formatClock(h.end):'Hours not configured';if(!groups.has(val))groups.set(val,[]);groups.get(val).push(d.slice(0,3))}for(const [v,ds] of groups)add('p',ds.join(', ')+': '+v);add('p','Morning assembly: '+(clock(t.assemblyStart)&&clock(t.assemblyEnd)?formatClock(t.assemblyStart)+' – '+formatClock(t.assemblyEnd):'Not configured'));add('p','Break (other weekdays only): '+(clock(t.breakStart)&&clock(t.breakEnd)?formatClock(t.breakStart)+' – '+formatClock(t.breakEnd):'Not configured'));add('p','Friday: No break scheduled.');const special=fridayActivity(ss,off);if(special)add('p','Friday activity: '+special.subject+' · '+formatClock(special.start)+' – '+formatClock(special.end))}
 root.LamaSchoolWeek={names,category,title,valid,read,reason,working,schoolDate,seasonTiming,lessonIssue,formatClock,activities,fridayActivity,renderHours};
 })(typeof window!=='undefined'?window:globalThis);

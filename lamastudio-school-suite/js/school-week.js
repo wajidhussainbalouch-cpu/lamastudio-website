@@ -40,9 +40,13 @@ function lessonIssue(t,p,fridayClose='',weeklyOff=null){
  const h=t.hours?.[p.day];
  // The published Friday dismissal plus the working-week policy takes precedence
  // over stale seasonal 'closed' flags; never apply the shared lunch break on Friday.
+ const publishedFridayWork=friday&&Array.isArray(weeklyOff)&&!weeklyOff.includes(5);
  if(!h||h.open!==true){
-  if(hasFridayClosing)return '';
-  return 'School hours not open / configured for '+p.day;
+  // School-wide working-week settings override a conflicting seasonal Friday
+  // checkbox. Never turn Friday into a holiday when the published week allows it.
+  if(hasFridayClosing)return clock(h?.start)&&p.start<h.start?'Before school opening '+h.start:'';
+  if(!publishedFridayWork||!h||!clock(h.start)||!clock(h.end)||h.start>=h.end)
+   return 'School hours not open / configured for '+p.day;
  }
  if(!clock(h.start)||!clock(h.end)||h.start>=h.end){
   if(hasFridayClosing)return '';

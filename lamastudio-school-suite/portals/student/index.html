@@ -63,35 +63,47 @@ async function loadMyAttendanceAlerts(){
  const list=el('alertsList'),status=el('alertsStatus');
  list.replaceChildren();status.textContent='Checking your private attendance alerts…';
  try{
-  const rows=await LamaAPI.list('notifications');
-  if(!Array.isArray(rows))throw Error('Invalid notification response');
-  // The existing attendance-save flow publishes attendanceAbsence; the manual
-  // school-wide follow-up action publishes attendanceFollowup. Both belong in
-  // the SAME private student alerts view. Never include another student's alert.
-  const own=rows.filter(n=>
-   (n.notificationType==='attendanceAbsence'||n.notificationType==='attendanceFollowup')&&
-   String(n.studentId||'')===String(myStudentId)&&
-   String(n.status||'').toLowerCase()!=='resolved'&&
-   String(n.isPublished).toLowerCase()!=='false'
-  );
+  // Student attendance reads are restricted by the existing backend to the
+  // authenticated immutable student ID. Verify the saved status before showing
+  // a parent follow-up, because a prior absence may have been corrected.
+  const [rows,attendance]=await Promise.all([LamaAPI.list('notifications'),LamaAPI.list('attendance')]);
+  if(!Array.isArray(rows)||!Array.isArray(attendance))throw Error('Invalid alert or attendance response');
+  const latest=new Map();
+  attendance.forEach(r=>{
+   if(String(r.studentId||'')!==String(myStudentId))return;
+   const date=String(r.date||'').slice(0,10),s=String(r.status||'').toLowerCase();
+   if(date)latest.set(date,s==='a'||s==='absent'?'Absent':s==='l'||s==='leave'?'Leave':s==='p'||s==='present'?'Present':'');
+  });
+  const own=rows.filter(n=>{
+   if((n.notificationType!=='attendanceAbsence'&&n.notificationType!=='attendanceFollowup')||String(n.studentId||'')!==String(myStudentId))return false;
+   if(String(n.status||'').toLowerCase()==='resolved'||String(n.isPublished).toLowerCase()==='false')return false;
+   const date=String(n.date||'').slice(0,10),saved=latest.get(date);
+   if(saved!=='Absent'&&saved!=='Leave')return false;
+   if(n.notificationType==='attendanceAbsence'&&saved!=='Absent')return false;
+   const specified=String(n.attendanceStatus||'').toLowerCase();
+   if(specified&&specified!=='a'&&specified!=='absent'&&specified!=='l'&&specified!=='leave')return false;
+   if(specified&&saved.toLowerCase()!==(specified==='a'?'absent':specified==='l'?'leave':specified))return false;
+   return true;
+  });
   const byDate=new Map();
   own.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).forEach(n=>{
-   const date=String(n.date||'').slice(0,10),key=date||String(n.id||'');
+   const key=String(n.date||'').slice(0,10)||String(n.id||'');
    if(!key)return;
    const previous=byDate.get(key);
    if(!previous||n.notificationType==='attendanceAbsence'&&previous.notificationType!=='attendanceAbsence')
     byDate.set(key,n);
   });
   const display=[...byDate.values()].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  status.textContent=display.length?display.length+' attendance alert(s)':'No attendance alerts for your account.';
+  status.textContent=display.length?display.length+' confirmed attendance alert(s)':'No current attendance alerts for your account.';
   display.slice(0,40).forEach(n=>{
-   const card=document.createElement('article');
-   card.className='rounded-xl bg-rose-950/40 border border-rose-500/40 p-4';
+   const card=document.createElement('article');card.className='rounded-xl bg-rose-950/40 border border-rose-500/40 p-4';
    const heading=document.createElement('strong');heading.textContent=n.title||'Attendance alert';
    const msg=document.createElement('p');msg.className='text-sm text-slate-200 mt-2';msg.textContent=n.message||'';
    card.append(heading,msg);list.append(card);
   });
- }catch(error){status.textContent='Unable to load attendance alerts. Please refresh later.'}
+ }catch(error){
+  status.textContent='Could not verify attendance alerts from saved records. Refresh to try again.';
+ }
 }
 el('reloadAlerts').addEventListener('click',()=>{if(myStudentId)loadMyAttendanceAlerts()});
 async function init(){

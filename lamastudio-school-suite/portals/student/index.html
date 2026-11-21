@@ -60,14 +60,38 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!el('previewOverlay
 el('confirmPrint').addEventListener('click',()=>{closePreview();window.print()});
 async function loadMyCertificates(studentId){const status=el('certificateStatus'),list=el('myCertificates');list.replaceChildren();status.textContent='Checking school certificate register…';try{const rows=await LamaAPI.list('certificates');if(!Array.isArray(rows))throw Error('Unexpected response');const own=rows.filter(r=>String(r.studentId)===String(studentId));status.textContent=own.length?own.length+' issued certificate(s) found.':'No certificates have been issued to your account yet.';for(const r of own){const article=document.createElement('article');article.className='rounded-xl border border-amber-400/30 bg-slate-900/80 p-4';const title=document.createElement('h3');title.className='text-lg font-bold text-amber-300';title.textContent=r.title||r.kind||'School Certificate';const meta=document.createElement('p');meta.className='text-sm text-slate-300 mt-2';meta.textContent=(r.issuedAt||r.createdAt||'')+' · '+(r.reference||'');article.append(title,meta);list.append(article)}}catch(e){status.textContent='Your school has not enabled secure digital certificate delivery yet.'}}let myStudentId='';el('reloadCertificates').addEventListener('click',()=>{if(myStudentId)loadMyCertificates(myStudentId)});
 async function loadMyAttendanceAlerts(){
- const list=el('alertsList'),status=el('alertsStatus');list.replaceChildren();status.textContent='Checking your private attendance alerts…';
+ const list=el('alertsList'),status=el('alertsStatus');
+ list.replaceChildren();status.textContent='Checking your private attendance alerts…';
  try{
   const rows=await LamaAPI.list('notifications');
-  const own=Array.isArray(rows)?rows.filter(n=>n.notificationType==='attendanceAbsence'&&String(n.studentId)===String(myStudentId)&&String(n.status)!=='Resolved'&&String(n.isPublished).toLowerCase()!=='false'):[];
-  own.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  status.textContent=own.length?own.length+' attendance alert(s)':'No attendance alerts for your account.';
-  own.slice(0,40).forEach(n=>{const card=document.createElement('article');card.className='rounded-xl bg-rose-950/40 border border-rose-500/40 p-4';const heading=document.createElement('strong');heading.textContent=n.title||'Attendance alert';const msg=document.createElement('p');msg.className='text-sm text-slate-200 mt-2';msg.textContent=n.message||'';card.append(heading,msg);list.append(card)});
- }catch(e){status.textContent='Unable to load attendance alerts. Please refresh later.'}
+  if(!Array.isArray(rows))throw Error('Invalid notification response');
+  // The existing attendance-save flow publishes attendanceAbsence; the manual
+  // school-wide follow-up action publishes attendanceFollowup. Both belong in
+  // the SAME private student alerts view. Never include another student's alert.
+  const own=rows.filter(n=>
+   (n.notificationType==='attendanceAbsence'||n.notificationType==='attendanceFollowup')&&
+   String(n.studentId||'')===String(myStudentId)&&
+   String(n.status||'').toLowerCase()!=='resolved'&&
+   String(n.isPublished).toLowerCase()!=='false'
+  );
+  const byDate=new Map();
+  own.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).forEach(n=>{
+   const date=String(n.date||'').slice(0,10),key=date||String(n.id||'');
+   if(!key)return;
+   const previous=byDate.get(key);
+   if(!previous||n.notificationType==='attendanceAbsence'&&previous.notificationType!=='attendanceAbsence')
+    byDate.set(key,n);
+  });
+  const display=[...byDate.values()].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  status.textContent=display.length?display.length+' attendance alert(s)':'No attendance alerts for your account.';
+  display.slice(0,40).forEach(n=>{
+   const card=document.createElement('article');
+   card.className='rounded-xl bg-rose-950/40 border border-rose-500/40 p-4';
+   const heading=document.createElement('strong');heading.textContent=n.title||'Attendance alert';
+   const msg=document.createElement('p');msg.className='text-sm text-slate-200 mt-2';msg.textContent=n.message||'';
+   card.append(heading,msg);list.append(card);
+  });
+ }catch(error){status.textContent='Unable to load attendance alerts. Please refresh later.'}
 }
 el('reloadAlerts').addEventListener('click',()=>{if(myStudentId)loadMyAttendanceAlerts()});
 async function init(){

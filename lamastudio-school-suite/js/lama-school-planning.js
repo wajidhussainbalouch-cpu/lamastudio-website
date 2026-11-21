@@ -291,7 +291,7 @@ function scheduleSummaries(sid=activeSession()){
 function dateInside(date,t){return !!t&&t.from<=date&&date<=t.to}
 function dateToday(){const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Karachi',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));return parts.year+'-'+parts.month+'-'+parts.day}
 function seasonForDate(date,sid=activeSession()){return ['winter','summer'].find(k=>dateInside(date,schoolTiming(sid,k)))||''}
-function currentLessonIssue(p,season=''){const t=LamaSchoolWeek.seasonTiming?.(sessionRecord(p.sessionId),dateToday(),season)?.timing;return LamaSchoolWeek.lessonIssue?.(t,p)||''}
+function currentLessonIssue(p,season=''){const ss=sessionRecord(p.sessionId),t=LamaSchoolWeek.seasonTiming?.(ss,dateToday(),season)?.timing;return LamaSchoolWeek.lessonIssue?.(t,p,ss?.fridayClose)||''}
 function assertLessonHours(p){const why=currentLessonIssue(p);if(why)throw Error(p.day+' '+p.grade+' P'+p.period+': '+why)}
 function chosenSeason(){const picker=$('quickSeason');return picker?picker.value:seasonForDate(dateToday())}
 function workingWeek(){const t=schoolTiming(activeSession(),chosenSeason());return LamaSchoolWeek.working(schoolWeekResources,t?days.filter(d=>t.hours[d]?.open===true):days.slice(0,6))}
@@ -358,7 +358,11 @@ function setupAcademicTerms(section){
 function setupTiming(){
  const section=document.createElement('section');section.id='schoolTimings';section.className='no-print hidden bg-slate-900 rounded-2xl p-4 border border-slate-700 mb-5';
  section.innerHTML='<h2 class="text-lg font-bold text-cyan-200">Seasonal school timings &amp; vacations</h2><div id="schoolTimingSummary" class="mt-2 text-sm grid gap-3 md:grid-cols-2"></div><details id="timingAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure seasonal school timings</summary><form id="timingForm" class="mt-3"><p class="text-xs text-slate-300">Applies only to the selected school and academic session. Save each season separately. Blank summer timings are not published.</p><label>Season<select id="timingSeason"><option value="winter">Winter school timings</option><option value="summer">Summer school timings</option></select></label><div class="grid grid-cols-2 gap-3"><label>Effective from<input id="timingFrom" type="date" required></label><label>Effective to<input id="timingTo" type="date" required></label><label>Morning assembly starts (optional)<input id="timingAssemblyStart" type="time"></label><label>Morning assembly ends (optional)<input id="timingAssemblyEnd" type="time"></label><label>Lunch break starts (optional)<input id="timingBreakStart" type="time"></label><label>Lunch break ends (optional)<input id="timingBreakEnd" type="time"></label></div><div class="mt-3 space-y-1">'+days.map((d,i)=>'<div class="grid grid-cols-3 gap-2 items-center"><label class="flex items-center gap-1"><input type="checkbox" class="w-auto" id="timingOpen'+i+'"> '+d+'</label><input type="time" id="timingStart'+i+'" aria-label="'+d+' school opens"><input type="time" id="timingEnd'+i+'" aria-label="'+d+' school closes"></div>').join('')+'</div><button id="saveTiming" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl" type="submit">Save and publish timings</button> <button id="removeTiming" type="button" class="mt-3 text-rose-300 border border-rose-800 rounded-xl px-3 py-2">Clear published season</button><p id="timingStatus" role="status" class="mt-2 text-sm text-amber-200"></p></form></details><details id="vacationAdmin" class="hidden mt-4"><summary class="cursor-pointer text-cyan-300 font-bold">Configure summer &amp; winter vacations</summary><form id="vacationForm" class="mt-3"><p class="text-xs text-slate-300">Leave both dates empty if a vacation is not configured. Dates are inclusive.</p>'+Object.entries(vacationKeys).map(([k,label])=>'<fieldset class="mt-3 border border-slate-600 rounded-lg p-3"><legend>'+label+'</legend><div class="grid grid-cols-2 gap-3"><label>From<input type="date" id="'+k+'From"></label><label>To<input type="date" id="'+k+'To"></label></div></fieldset>').join('')+'<button id="saveVacations" type="submit" class="mt-3 bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded-xl">Save and publish vacations</button><p id="vacationStatus" class="mt-2 text-sm text-amber-200" role="status"></p></form></details>';
- $('status').after(section);setupAcademicTerms(section);
+ $('status').after(section);
+ const fridayBox=document.createElement('div');fridayBox.id='fridayDismissalSettings';fridayBox.className='border border-cyan-700 rounded-xl p-3 mb-4';
+ fridayBox.innerHTML='<h3 class="font-bold text-cyan-200">Friday closing time</h3><p class="text-xs text-slate-300 mb-2">Saved for this school and academic session. Applies to student, teacher, admin and printed timetables even before complete seasonal hours are published.</p><div id="fridayClosePublished" class="text-sm text-amber-200 mb-2"></div><div id="fridayCloseAdmin" class="flex flex-wrap gap-2 items-end"><label class="text-xs">Friday closes<input type="time" id="fridayCloseInput" value="12:30" class="block rounded-lg bg-slate-950 text-white px-3 py-2 mt-1"></label><button type="button" id="fridayCloseSave" class="bg-cyan-600 text-white font-bold rounded-lg px-4 py-2">Save Friday closing</button></div><p id="fridayCloseStatus" class="text-xs mt-2" role="status"></p>';
+ section.prepend(fridayBox);$('fridayCloseSave').onclick=()=>void saveFridayClosing();
+ setupAcademicTerms(section);
  const legend=document.createElement('div');legend.id='calendarLegend';legend.className='flex flex-wrap gap-2 mb-3 text-xs';legend.innerHTML=calendarLegendMarkup();$('monthGrid').before(legend);
  const quickSeason=document.createElement('label');quickSeason.innerHTML='Working week for seasonal hours<select id="quickSeason"><option value="">Default school week</option></select><small>Changes working days for full-week saving only; saved subjects and periods remain unchanged.</small>';
  $('quickDay').closest('label').parentElement.append(quickSeason);
@@ -371,9 +375,24 @@ function setupTiming(){
 }
 function calendarLegendMarkup(){return Object.keys(calendarColors).map(k=>'<span class="calendar-key" style="display:inline-block;border-left:5px solid '+calendarColors[k]+';padding:2px 6px;margin:2px 4px">'+esc(calendarLabels[k])+'</span>').join('')}
 function toggleTimingDay(i){const on=$('timingOpen'+i).checked;for(const k of ['timingStart','timingEnd']){$(k+i).disabled=!on;$(k+i).required=on}}
+async function saveFridayClosing(){
+ const note=$('fridayCloseStatus'),value=$('fridayCloseInput').value;
+ if(!validTime(value)){note.textContent='Choose a valid Friday closing time.';return}
+ const button=$('fridayCloseSave');button.disabled=true;
+ try{await updateSessionSettings(note,p=>{
+  if(!p.start||!p.end)throw Error('Select a valid academic session.');
+  if(p.fridayClose===value){note.textContent='Friday closing is already published.';return null}
+  return {...p,fridayClose:value};
+ });}finally{button.disabled=false}
+}
 function renderTiming(){
  const sid=activeSession(),ss=sessionRecord(sid),summaries=scheduleSummaries(sid),section=$('schoolTimings');
- section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length&&!ss?.terms?.length));renderAcademicTerms(sid,ss);
+ section.classList.toggle('hidden',!sid||(!adminMode&&!summaries.length&&!ss?.terms?.length));
+ $('fridayDismissalSettings').classList.toggle('hidden',!sid);
+ $('fridayCloseAdmin').classList.toggle('hidden',!adminMode||!verified||!ss);
+ $('fridayClosePublished').textContent=validTime(ss?.fridayClose)?'✓ Published Friday dismissal: '+formatTime(ss.fridayClose):'Friday dismissal is not yet saved. Tap Save Friday closing to enforce 12:30 PM for this session.';
+ if(adminMode&&validTime(ss?.fridayClose))$('fridayCloseInput').value=ss.fridayClose;
+ renderAcademicTerms(sid,ss);
  $('schoolTimingSummary').innerHTML=summaries.length?summaries.map(t=>'<div class="border border-slate-600 rounded-xl p-3"><strong>'+esc(t.title)+'</strong><p>'+esc(t.dates)+'</p>'+t.lines.map(l=>'<p>'+esc(l)+'</p>').join('')+(t.assemblyTime?'<p class="text-amber-200 font-medium">'+esc(t.assemblyTime)+'</p>':'')+(t.breakTime?'<p class="text-amber-200 font-medium">'+esc(t.breakTime)+'</p>':'')+'</div>').join(''):'<p>No seasonal timings or vacations published for this session.</p>';
  for(const id of ['timingAdmin','vacationAdmin'])$(id).classList.toggle('hidden',!adminMode||!verified||!ss);
  const picker=$('quickSeason'),previous=picker.value;

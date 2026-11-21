@@ -100,7 +100,7 @@ function fixedActivities(timing,day,fridayActivity=null){
  const special=day==='Friday'&&fridayActivity?[fridayActivity]:[];
  if(!timing||!day||timing.hours?.[day]?.open!==true)return special;
  const h=timing.hours[day],valid=(a,b)=>/^\d{2}:\d{2}$/.test(a||'')&&/^\d{2}:\d{2}$/.test(b||'')&&a<b&&a>=h.start&&b<=h.end;
- return [[timing.assemblyStart,timing.assemblyEnd,'Morning Assembly'],[timing.breakStart,timing.breakEnd,'Lunch Break']].filter(([a,b])=>valid(a,b)).map(([start,end,subject])=>({start,end,subject,activity:true})).concat(special);
+ const blocks=[[timing.assemblyStart,timing.assemblyEnd,'Morning Assembly']];if(day!=='Friday')blocks.push([timing.breakStart,timing.breakEnd,'Lunch Break']);return blocks.filter(([a,b])=>valid(a,b)).map(([start,end,subject])=>({start,end,subject,activity:true})).concat(special);
 }
 function dailyClass(records,activities){
  const combined=[...records,...activities].sort((a,b)=>String(a.start).localeCompare(String(b.start))||Number(a.period||0)-Number(b.period||0));

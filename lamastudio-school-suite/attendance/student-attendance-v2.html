@@ -67,8 +67,8 @@ function message(s,error=false){
 }
 function classStudents(){const selected=$('class').value;return state.students.filter(s=>!selected||cls(s)===selected)}
 function visible(){return classStudents().filter(s=>(!$('search').value||[s.name,enr(s),s.fatherName].join(' ').toLowerCase().includes($('search').value.toLowerCase()))&&(!$('filter').value||(state.chosen.get(id(s))?.status||'Unmarked')===$('filter').value))}
-function enable(){const ready=!attendanceClosed()&&state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing;$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!ready||!!state.dirty.size}
-function render(){enable();const all=classStudents(),rows=visible(),closed=attendanceClosed(),count=x=>closed?0:all.filter(s=>(state.chosen.get(id(s))?.status||'')===x).length;
+function enable(){const ready=!attendanceClosed()&&state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing;$('save').disabled=!ready||!state.dirty.size;$('bulk').disabled=!ready;$('start').disabled=!ready;$('clearDate').disabled=!ready;$('bulkPortalNotify').disabled=!(state.rosterReady&&state.historyReady&&state.loadedDate===$('date').value&&!state.loading&&!state.saving&&!qrSaving&&!portalPublishing&&!state.dirty.size&&validAdminWriteSession())}
+function render(){enable();const all=classStudents(),rows=visible(),closed=attendanceClosed(),count=x=>state.historyReady?all.filter(s=>state.historyModel?.get(s,$('date').value)===x).length:0;
  $('followupDate').value=$('date').value;
  $('classContext').textContent=$('class').value?'Class '+$('class').value+' only · '+$('date').value+' · Totals, register, coverage and follow-up are for this class.':'All classes · '+$('date').value+' · Whole-school totals.';
  $('summary').innerHTML=[['Students',all.length],['Present',count('Present')],['Absent',count('Absent')],['Leave',count('Leave')],['Unmarked',closed?0:all.length-count('Present')-count('Absent')-count('Leave')]].map(([k,v])=>'<div class="panel"><div class="muted">'+k+'</div><h2>'+v+'</h2></div>').join('');
@@ -79,13 +79,13 @@ function render(){enable();const all=classStudents(),rows=visible(),closed=atten
  // Focused follow-up is whole-school; class/search filters only affect the
  // main daily register and must not hide saved absent children.
  const followupRoster=followupMode?state.students:all;
- const affected=followupRoster.filter(s=>['Absent','Leave'].includes(state.chosen.get(id(s))?.status));
+ const affected=state.historyReady&&state.historyModel?followupRoster.filter(s=>['Absent','Leave'].includes(state.historyModel.get(s,$('date').value))):[];
  $('followupSummary').textContent=state.historyReady
   ?affected.length+' absent/leave student(s) for '+$('date').value+' (saved attendance verified)'+(state.dirty.size?' · unsaved changes: messages disabled':'')
   :'Loading saved attendance; student list is not yet verified.';
  $('followup').innerHTML=affected.map(s=>{
   const saved=state.historyReady&&state.loadedDate===$('date').value&&!state.dirty.size&&!state.saving&&!state.loading&&!qrSaving;
-  const status=state.chosen.get(id(s))?.status||'';
+  const status=state.historyModel?.get(s,$('date').value)||'';
   const parent=window.LamaParentAbsence?.pickContact(s);
   const key=window.LamaParentAbsence?.register(s,status,$('date').value,$('schoolName').textContent)||'';
   return '<div class="student"><div><strong>'+escapeHtml(s.name)+' · '+escapeHtml(cls(s))+'</strong><div class="muted">Previous 7 weekdays (saved records): '+escapeHtml(recentAttendance(s))+'</div><div class="muted">Parent contact: '+escapeHtml(parent?.display||'Missing or invalid')+'</div></div><div class="controls">'+(key?'<button type="button" data-parent-message="'+escapeHtml(key)+'" '+(!saved?'disabled title="Save and verify attendance first"':'')+'>✉️ Urdu / English message</button>':'')+(parent?'<a href="tel:'+escapeHtml(parent.sms)+'">Call parent</a>':'<span class="muted">Add a valid parent number</span>')+'<button type="button" data-confirm-contact="'+escapeHtml(id(s))+'">Record confirmed parent contact</button></div></div>';
@@ -93,7 +93,7 @@ function render(){enable();const all=classStudents(),rows=visible(),closed=atten
 }
 $('followup').addEventListener('click',event=>{
  const button=event.target.closest('button[data-parent-message]');if(!button)return;
- const student=state.students.find(s=>id(s)+'|'+$('date').value+'|'+String(state.chosen.get(id(s))?.status||'').toLowerCase()===button.dataset.parentMessage);
+ const student=state.students.find(s=>id(s)+'|'+$('date').value+'|'+String(state.historyModel?.get(s,$('date').value)||'').toLowerCase()===button.dataset.parentMessage);
  if(!student||!validAdminWriteSession()||!state.historyReady||state.dirty.size||state.loadedDate!==$('date').value||state.loading||state.saving||qrSaving){
   message('Save and verify attendance, then open the parent message.',true);return;
  }
@@ -102,7 +102,7 @@ $('followup').addEventListener('click',event=>{
 $('followup').addEventListener('click',async event=>{const button=event.target.closest('button[data-confirm-contact]');if(!button)return;const key=button.dataset.confirmContact,student=state.students.find(s=>id(s)===key),marked=state.chosen.get(key)?.status,date=state.loadedDate;if(!student||!['Absent','Leave'].includes(marked)||!state.historyReady||date!==$('date').value||state.dirty.size||qrSaving||state.saving){message('Save and verify attendance before recording parent contact.',true);return}if(!confirm('Confirm that you actually contacted the parent of '+student.name+'. This will save a follow-up record, not send a WhatsApp message.'))return;button.disabled=true;try{const record=await LamaAPI.add('notifications',{title:'Attendance parent follow-up — '+date,message:'School staff confirmed contact with the parent/guardian about '+marked.toLowerCase()+' attendance.',studentId:String(student.id??student._id??key),class:cls(student),section:student.section||'',date,attendanceStatus:marked,notificationType:'attendanceFollowupContact',channel:'Manual confirmation',status:'Contact confirmed',createdAt:new Date().toISOString()});if(!record||!record.id)throw Error('Backend did not return a saved notification ID. Verify before retrying.');message('Parent contact record saved for '+student.name+'. No WhatsApp delivery is claimed.')}catch(error){message('Parent contact record not verified: '+error.message,true)}finally{button.disabled=false}});
 $('bulkPortalNotify').onclick=async()=>{
  const label=$('bulkPortalStatus'),date=state.loadedDate;
- if(!validAdminWriteSession()||attendanceClosed()||portalPublishing||qrSaving||state.saving||state.loading||!state.historyReady||!state.historyModel||date!==$('date').value||state.dirty.size){
+ if(!validAdminWriteSession()||portalPublishing||qrSaving||state.saving||state.loading||!state.historyReady||!state.historyModel||date!==$('date').value||state.dirty.size){
   label.textContent='Verify the school-admin session, load saved attendance and save any changes before publishing.';return;
  }
  // Use saved, school-wide attendance, not the class/search filter and not unsaved choices.

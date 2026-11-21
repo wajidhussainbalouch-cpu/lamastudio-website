@@ -123,7 +123,7 @@ const COLLECTIONS = {
     },
     notifications: {
         tab: 'Notifications',
-        headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'isPublished', 'createdAt', 'studentId', 'date', 'notificationType']
+        headers: ['id', 'title', 'audience', 'channel', 'message', 'status', 'isPublished', 'createdAt', 'studentId', 'date', 'notificationType', 'attendanceStatus']
     },
     resources: {
         tab: 'Resources',

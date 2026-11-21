@@ -41,8 +41,15 @@
   return lang==='urdu'?urdu:lang==='english'?english:urdu+'\n\n---\n\n'+english;
  }
  function verifiedAdmin(){
+  // The school dashboard already verified the administrator with the backend
+  // before setting admin-verified. Requiring another independent local-storage
+  // check after that was rejecting valid dashboard sessions, especially after
+  // navigating between school and teacher portals in the same browser.
+  const onDashboard=String(root.location?.pathname||'').endsWith('/dashboard.html');
+  if(onDashboard&&document.documentElement.classList.contains('admin-verified'))return true;
   try{
-   const s=root.LamaAPI?.getSession?.('school'),auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
+   const s=root.LamaAPI?.getSession?.('school');
+   const auth=JSON.parse(sessionStorage.getItem('lama_school_admin_auth')||'null');
    return !!(s?.schoolId&&auth?.token&&String(s.schoolId)===String(auth.schoolId));
   }catch(e){return false}
  }

@@ -41,7 +41,7 @@ function rowsTable(records,{combined=false}={}){
   '<tr><td colspan="'+heads.length+'" class="empty-print">No timetable periods saved for this selection.</td></tr>';
  return '<table class="school-timetable"><caption class="sr-print">School weekly subject timetable</caption>'+header+'<tbody>'+body+'</tbody></table>';
 }
-function weeklyMatrix(records,workingDays=null){
+function weeklyMatrix(records,workingDays=null,fridayActivity=null){
  const showDays=Array.isArray(workingDays)?workingDays:days.filter(d=>records.some(p=>String(p.day||'').toLowerCase()===d.toLowerCase()));
  const periods=[...new Set(records.map(r=>Number(r.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
  if(!periods.length)return '<p class="empty-print">No timetable periods saved for this class.</p>';
@@ -58,15 +58,16 @@ function weeklyMatrix(records,workingDays=null){
   }).join('');
   return '<tr><th scope="row">P'+n+'</th>'+cells+'</tr>';
  }).join('');
- return '<table class="school-timetable weekly-matrix"><caption class="sr-print">Weekly subject grid by day and period</caption>'+
-  thead+'<tbody>'+tbody+'</tbody></table>';
+ const extra=fridayActivity&&showDays.includes('Friday')?'<tr><th scope="row">Activity</th>'+showDays.map(day=>'<td>'+(day==='Friday'?'<strong>'+esc(fridayActivity.subject)+'</strong><small>'+esc(timeLabel(fridayActivity))+'</small>':'—')+'</td>').join('')+'</tr>':'';
+  return '<table class="school-timetable weekly-matrix"><caption class="sr-print">Weekly subject grid by day and period</caption>'+
+  thead+'<tbody>'+tbody+extra+'</tbody></table>';
 }
 
 /* Compact school-wide landscape matrix: classes as rows, periods as columns.
  * Identical lessons across weekdays are grouped, with day labels and exact
  * times retained when the timetable varies. No arbitrary six-class page split.
  */
-function masterGrid(records,selectedClasses=null,{printDay='',inCharge={},dayTiming=null,workingDays=null,showRooms=false}={}){
+function masterGrid(records,selectedClasses=null,{printDay='',inCharge={},dayTiming=null,workingDays=null,showRooms=false,fridayActivity=null}={}){
  const published=(Array.isArray(records)?records:[]).filter(p=>p&&p.published!==false);
  const all=[...new Map(published.map(p=>[classKey(classLabel(p)),classLabel(p)])).values()].sort(root.LamaClassOrder.compare);
  const labels=Array.isArray(selectedClasses)?[...new Map(selectedClasses.map(v=>[classKey(v),String(v).trim()])).values()].filter(Boolean):all;
@@ -75,7 +76,7 @@ function masterGrid(records,selectedClasses=null,{printDay='',inCharge={},dayTim
  const work=printDay?[printDay]:Array.isArray(workingDays)?workingDays:days.filter(d=>included.some(p=>p.day===d));
  const nums=[...new Set(included.map(p=>Number(p.period)).filter(n=>Number.isInteger(n)&&n>=1))].sort((a,b)=>a-b);
  const slots=nums.map(n=>{const matches=included.filter(p=>Number(p.period)===n),times=[...new Set(matches.map(timeLabel).filter(Boolean))];return {n,start:matches.map(p=>String(p.start||'')).sort()[0],time:times.length===1?times[0]:'',vary:times.length!==1}});
- const activities=new Map();for(const day of work)for(const p of fixedActivities(dayTiming,day)){const key=JSON.stringify([p.subject,p.start,p.end]);if(!activities.has(key))activities.set(key,{...p,days:[]});activities.get(key).days.push(day)}
+ const activities=new Map();for(const day of work)for(const p of fixedActivities(dayTiming,day,fridayActivity)){const key=JSON.stringify([p.subject,p.start,p.end]);if(!activities.has(key))activities.set(key,{...p,days:[]});activities.get(key).days.push(day)}
  for(const p of activities.values())slots.push({...p,time:timeLabel(p)});
  slots.sort((a,b)=>String(a.start).localeCompare(String(b.start))||Number(!!b.activity)-Number(!!a.activity)||Number(a.n||0)-Number(b.n||0));
  const normalized=v=>String(v??'').trim().replace(/\s+/g,' ').toLowerCase();
@@ -95,10 +96,11 @@ function masterGrid(records,selectedClasses=null,{printDay='',inCharge={},dayTim
  }).join('');
  return '<table class="school-timetable compact-master official-master"><caption class="sr-print">Master timetable for all selected classes</caption><thead><tr><th scope="col">Class / Section</th>'+heads+'</tr></thead><tbody>'+body+'</tbody></table>';
 }
-function fixedActivities(timing,day){
- if(!timing||!day||timing.hours?.[day]?.open!==true)return [];
+function fixedActivities(timing,day,fridayActivity=null){
+ const special=day==='Friday'&&fridayActivity?[fridayActivity]:[];
+ if(!timing||!day||timing.hours?.[day]?.open!==true)return special;
  const h=timing.hours[day],valid=(a,b)=>/^\d{2}:\d{2}$/.test(a||'')&&/^\d{2}:\d{2}$/.test(b||'')&&a<b&&a>=h.start&&b<=h.end;
- return [[timing.assemblyStart,timing.assemblyEnd,'Morning Assembly'],[timing.breakStart,timing.breakEnd,'Lunch Break']].filter(([a,b])=>valid(a,b)).map(([start,end,subject])=>({start,end,subject,activity:true}));
+ return [[timing.assemblyStart,timing.assemblyEnd,'Morning Assembly'],[timing.breakStart,timing.breakEnd,'Lunch Break']].filter(([a,b])=>valid(a,b)).map(([start,end,subject])=>({start,end,subject,activity:true})).concat(special);
 }
 function dailyClass(records,activities){
  const combined=[...records,...activities].sort((a,b)=>String(a.start).localeCompare(String(b.start))||Number(a.period||0)-Number(b.period||0));
@@ -111,7 +113,7 @@ function officialMaster(records,labels,activities,inCharge){
  return '<table class="school-timetable compact-master official-master"><thead><tr><th>Classes</th>'+slots.map(x=>'<th>'+esc(x.activity?x.subject:'P'+x.n)+'<small>'+esc(x.time)+'</small></th>').join('')+'</tr></thead><tbody>'+labels.map((label,i)=>'<tr><th>'+esc(label)+(inCharge[label]?'<small style="display:block;font-weight:normal">Class in-charge: '+esc(inCharge[label])+'</small>':'')+'</th>'+slots.map(x=>x.activity?(i===0?'<td rowspan="'+labels.length+'" class="activity-cell">'+esc(x.subject)+'</td>':''):'<td>'+records.filter(p=>sameClass(classLabel(p),label)&&Number(p.period)===x.n).map(p=>'<div><strong>'+esc(p.subject)+'</strong><small>'+esc(staffLabel(p))+'</small>'+(x.time==='Varies by class'?'<small>'+esc(timeLabel(p))+'</small>':'')+'</div>').join('')+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
 }
 function signatures(master){return '<div class="timetable-signatures">'+(master?'':'<span>Class In-Charge</span>')+'<span>Head Teacher / Principal</span></div>'}
-function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',selectedClasses=null,printDay='',calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null,timing=null,calendarLegend='',workingDays=null,dayTiming=null,inCharge={},seasonLabel='',showRooms=false}={}){
+function printMarkup({school={},schoolFallback={},sessionName='',records=[],scope='all',selectedClass='',selectedClasses=null,printDay='',calendar=false,calendarMonth='',calendarContent='',calendarEvents='',calendarItems=null,timing=null,calendarLegend='',workingDays=null,dayTiming=null,inCharge={},seasonLabel='',showRooms=false,fridayActivity=null}={}){
  const profile={...schoolFallback,...school};
  const name=schoolName(profile);
  const logo=safeLogo(profile);
@@ -132,7 +134,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
   const subset=baseRecords.filter(p=>sameClass(classLabel(p),requested));
   title=selectedClass+' — '+(printDay?'Timetable ('+printDay+')':'Weekly Timetable');
   description='One selected class';
-  content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+(inCharge[selectedClass]?'<p class="class-incharge">Class In-Charge: '+esc(inCharge[selectedClass])+'</p>':'')+(printDay?dailyClass(subset.filter(p=>p.day===printDay),fixedActivities(dayTiming,printDay)):weeklyMatrix(subset,workingDays))+'</section>'+signatures(false);
+  content='<section class="print-class-block"><h3>'+esc(title)+'</h3>'+(inCharge[selectedClass]?'<p class="class-incharge">Class In-Charge: '+esc(inCharge[selectedClass])+'</p>':'')+(printDay?dailyClass(subset.filter(p=>p.day===printDay),fixedActivities(dayTiming,printDay,fridayActivity)):weeklyMatrix(subset,workingDays,fridayActivity))+'</section>'+signatures(false);
  }else if(scope==='by-class'){
   const labels=[...new Set(filteredBase.map(classLabel).filter(Boolean))].sort(root.LamaClassOrder.compare);
   title='Class-wise Weekly Timetables';
@@ -140,7 +142,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  }else if(scope==='all'){
   title='All Classes — Weekly Timetable';
   description=(printDay?'Day: '+printDay:'Full week')+' · '+requestedClasses.length+' selected class(es)';
-  content='<section class="print-class-block"><h3>'+title+'</h3>'+masterGrid(filteredBase,requestedClasses,{printDay})+'</section>';
+  content='<section class="print-class-block"><h3>'+title+'</h3>'+masterGrid(filteredBase,requestedClasses,{printDay,fridayActivity})+'</section>';
  }else throw Error('Unrecognized timetable print option.');
  let calendarSection='';
  if(calendar){
@@ -163,7 +165,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
  const timingBlock=timingList.length?'<section class="print-school-timing" style="font-size:8pt;line-height:1.3;border:1px solid #bcd0d5;padding:2mm;margin:2mm 0;break-inside:avoid;color:#153b45">'+timingList.map(t=>'<div style="margin:1mm 0"><strong>'+esc(t.title||'School timings')+' · '+esc(t.dates||'')+'</strong>'+(t.lines.length?'<div>'+t.lines.map(esc).join(' &nbsp; | &nbsp; ')+'</div>':'')+(t.assemblyTime?'<div><strong>'+esc(t.assemblyTime)+'</strong></div>':'')+(t.breakTime?'<div><strong>'+esc(t.breakTime)+'</strong></div>':'')+'</div>').join('')+'</section>':'';
  const footer='<footer class="print-timetable-footer">Generated by LAMA School Suite · LamaStudio.pk</footer>';
  if(scope==='all'){
-  return '<article class="master-print-page">'+head+meta+timingBlock+'<section class="print-class-block"><h3>Master Timetable — '+esc(printDay||'Full week')+'</h3>'+(!printDay&&workingDays?.length?'<p class="print-week-note">Working days: '+esc(workingDays.join(', '))+'. Where no days are listed, the lesson applies to every working day.</p>':'')+masterGrid(filteredBase,requestedClasses,{printDay,inCharge,dayTiming,workingDays,showRooms})+'</section>'+signatures(true)+footer+'</article>'+calendarSection;
+  return '<article class="master-print-page">'+head+meta+timingBlock+'<section class="print-class-block"><h3>Master Timetable — '+esc(printDay||'Full week')+'</h3>'+(!printDay&&workingDays?.length?'<p class="print-week-note">Working days: '+esc(workingDays.join(', '))+'. Where no days are listed, the lesson applies to every working day.</p>':'')+masterGrid(filteredBase,requestedClasses,{printDay,inCharge,dayTiming,workingDays,showRooms,fridayActivity})+'</section>'+signatures(true)+footer+'</article>'+calendarSection;
  }
  if(scope==='by-class'){
   const labels=requestedClasses;
@@ -174,7 +176,7 @@ function printMarkup({school={},schoolFallback={},sessionName='',records=[],scop
    const subset=filteredBase.filter(p=>sameClass(classLabel(p),label));
    const classMeta='<div class="print-meta"><span>Academic session: <b>'+esc(sessionName||'Not selected')+
     '</b></span><span>Class '+esc(label)+'</span><span>Printed '+esc(shownDate)+'</span></div>';
-   const table='<section class="print-class-block"><h3>'+esc(label)+' — '+esc(printDay||'Weekly')+' Timetable</h3>'+(inCharge[label]?'<p class="class-incharge">Class In-Charge: '+esc(inCharge[label])+'</p>':'')+(printDay?dailyClass(subset.filter(p=>p.day===printDay),fixedActivities(dayTiming,printDay)):weeklyMatrix(subset,workingDays))+'</section>'+signatures(false);
+   const table='<section class="print-class-block"><h3>'+esc(label)+' — '+esc(printDay||'Weekly')+' Timetable</h3>'+(inCharge[label]?'<p class="class-incharge">Class In-Charge: '+esc(inCharge[label])+'</p>':'')+(printDay?dailyClass(subset.filter(p=>p.day===printDay),fixedActivities(dayTiming,printDay,fridayActivity)):weeklyMatrix(subset,workingDays,fridayActivity))+'</section>'+signatures(false);
    return '<article class="print-class-page">'+head+classMeta+timingBlock+table+footer+'</article>';
   }).join('');
   return pages+calendarSection;

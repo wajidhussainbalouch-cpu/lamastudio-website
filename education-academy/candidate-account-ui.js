@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const enabled=Boolean(state&&state.configured);
   byId('accountForms').hidden=!enabled||state.authenticated;
   byId('candidateSignedIn').hidden=!enabled||!state.authenticated;
-  byId('accountAvailability').textContent=enabled?'Candidate signup connects to Supabase Auth. Confirm your email before signing in. Public email delivery and LAMA-branded sender configuration are still being verified.':'Secure registration is not enabled yet. Free practice remains available without an account.';
+  byId('accountAvailability').textContent=enabled?'Candidate signup uses email confirmation. Open the link in your inbox, then return here to log in with the password you created. If an old link opens localhost, try logging in here first; if your email is still unverified, use Resend Confirmation.':'Secure registration is not enabled yet. Free practice remains available without an account.';
   byId('candidateIdentity').textContent=state&&state.user?'Signed in as '+state.user.email:'';
  };
  async function handle(formId,action,success){
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   delete data.confirmPassword;
   const result=await auth.signUp(data);
   if(!result.created)throw Error('Registration could not be confirmed.');
- },'Registration requested. Check your email for a verification link, then sign in.');
+ },'Registration requested. Check your inbox and Spam folder. Open the confirmation link, then return here and sign in with your new password. Do not create a second account.');
  handle('candidateResend',data=>auth.resendSignupEmail(data.email),'If delivery is permitted, a confirmation email has been requested. Check your inbox and Spam.');
  handle('candidateSignIn',async data=>{
   await auth.signIn(data);

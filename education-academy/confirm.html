@@ -1,1 +1,45 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#103d34"><link rel="icon" type="image/png" href="./assets/lama-ppsc-approved-192.png"><title>Email Confirmation · LAMA PPSC Preparation Academy</title><style>body{margin:0;background:#edf5f1;color:#153e33;font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:18px;box-sizing:border-box}.card{max-width:480px;width:100%;background:white;border-radius:20px;padding:28px;box-shadow:0 5px 28px #1232;text-align:center}img{width:110px;height:110px;object-fit:contain}h1{font-size:1.5rem}p{line-height:1.6}a{display:inline-block;background:#13664e;color:white;text-decoration:none;border-radius:10px;padding:14px 18px;font-weight:700}.small{color:#64776d;font-size:.86rem}</style></head><body><main class="card"><img src="./assets/lama-ppsc-approved-512.png" alt="LAMA PPSC Preparation Academy logo"><h1>LAMA PPSC Preparation Academy</h1><p id="status" role="status">Checking your email confirmation…</p><a href="./section.html?view=account">Continue to Login</a><p class="small">A project of LAMA Studio · lamastudio.pk</p></main><script>'use strict';(()=>{const hash=new URLSearchParams(location.hash.slice(1));const query=new URLSearchParams(location.search);const error=hash.get('error_description')||query.get('error_description')||hash.get('error')||query.get('error');const success=hash.get('access_token')||hash.get('type')==='signup'||query.get('type')==='signup';document.getElementById('status').textContent=error?'Email verification could not be completed: '+error+'. Please request a new confirmation email or contact academy support.':success?'Confirmation response received. Please sign in to check that your email was verified successfully.':'Open the confirmation link from your email, then return here and sign in. If login says unverified, request a new email.';if(location.hash)history.replaceState(null,'',location.pathname)})();</script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#103d34"><link rel="icon" type="image/png" href="./assets/lama-ppsc-approved-192.png"><title>Email Confirmation · LAMA PPSC Preparation Academy</title><style>body{margin:0;background:#edf5f1;color:#153e33;font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:100vh;padding:18px;box-sizing:border-box}.card{max-width:480px;width:100%;background:white;border-radius:20px;padding:28px;box-shadow:0 5px 28px #1232;text-align:center}img{width:110px;height:110px;object-fit:contain}h1{font-size:1.5rem}p{line-height:1.6}a{display:inline-block;background:#13664e;color:white;text-decoration:none;border-radius:10px;padding:14px 18px;font-weight:700}.small{color:#64776d;font-size:.86rem}</style></head><body><main class="card"><img src="./assets/lama-ppsc-approved-512.png" alt="LAMA PPSC Preparation Academy logo"><h1>LAMA PPSC Preparation Academy</h1><p id="status" role="status" aria-live="polite">Checking your email confirmation…</p><a href="./index.html#account">Continue to Login</a><p class="small">Already clicked the email link but saw a localhost error? Your confirmation may still have succeeded. Sign in with the password you created. If the academy says your email is unverified, request a new confirmation link from the registration page.</p><p class="small">A project of LAMA Studio · lamastudio.pk</p><script src="./supabase-config.js"></script></main><script>
+'use strict';
+(async()=>{
+ const fragment=new URLSearchParams(location.hash.replace(/^#/,''));
+ const query=new URLSearchParams(location.search);
+ const token=fragment.get('access_token');
+ const error=fragment.get('error_description')||query.get('error_description')||fragment.get('error')||query.get('error');
+ const errorCode=fragment.get('error_code')||query.get('error_code');
+ const status=document.getElementById('status');
+ // Clear confirmation credentials from history immediately, before any network activity.
+ if(location.hash||location.search)history.replaceState(null,'',location.pathname);
+ if(error){
+  status.textContent='The confirmation link could not be verified'+(errorCode==='otp_expired'?' because it has expired':'')+'. Please request a new confirmation email on the academy registration page. '+String(error).slice(0,160);
+  return;
+ }
+ if(!token){
+  status.textContent='No active confirmation session was returned. Try signing in with your registered email and password. If the login reports an unverified email, request a new confirmation link.';
+  return;
+ }
+ const cfg=window.LAMA_PPSC_SUPABASE||{};
+ if(!cfg.enabled||!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(cfg.url||'')||!cfg.publishableKey){
+  status.textContent='Confirmation response received. Please sign in to verify that your account is active.';
+  return;
+ }
+ try{
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
+  let response;
+  try{
+   response=await fetch(cfg.url.replace(/\/$/,'')+'/auth/v1/user',{
+    headers:{apikey:cfg.publishableKey,Authorization:'Bearer '+token},
+    cache:'no-store',signal:controller.signal
+   });
+  }finally{clearTimeout(timeout);}
+  const user=response.ok?await response.json():null;
+  if(user&&user.email_confirmed_at){
+   status.textContent='Email verified successfully! Your LAMA PPSC Academy account is confirmed. Select Continue to Login and enter the email and password you created.';
+  }else{
+   status.textContent='The confirmation link was opened, but verification could not be confirmed here. Try signing in, or request a fresh verification email if the academy says your email is unverified.';
+  }
+ }catch(e){
+  status.textContent='Your confirmation link was received, but the account check could not finish. Try signing in with your registered email and password.';
+ }
+})();
+</script></body></html>

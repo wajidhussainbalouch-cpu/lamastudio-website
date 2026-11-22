@@ -8,6 +8,9 @@ window.LamaAcademyAuth=(()=>{
  const configured=Boolean(settings.enabled&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(settings.url||'')&&typeof settings.publishableKey==='string'&&settings.publishableKey.length>20);
  const base=configured?settings.url.replace(/\/$/,''):'';
  const key=configured?settings.publishableKey:'';
+ // Explicit public destinations. These URLs must also be allow-listed in Supabase Auth > URL Configuration.
+ const confirmationRedirectUrl='https://www.lamastudio.pk/education-academy/confirm.html';
+ const passwordRecoveryRedirectUrl='https://www.lamastudio.pk/education-academy/reset-password.html';
  let accessToken=null;
  let currentUser=null;
  let refreshToken=null;
@@ -39,7 +42,7 @@ window.LamaAcademyAuth=(()=>{
   if(address&&address.length>500)throw Error('Address is too long.');
   if(photoUrl&&(!/^https:\/\//i.test(photoUrl)||photoUrl.length>1000))throw Error('Photo link must be an HTTPS URL.');
   // Supabase stores passwords securely; do not persist credentials in localStorage.
-  const result=await request('signup?redirect_to='+encodeURIComponent('https://www.lamastudio.pk/education-academy/confirm.html'),{email:email.trim().toLowerCase(),password,data:{full_name:fullName.trim(),occupation:(occupation||'').trim(),gender:gender||null,phone:phone?.trim()||null,address:address?.trim()||null,photo_url:photoUrl?.trim()||null}});
+  const result=await request('signup?redirect_to='+encodeURIComponent(confirmationRedirectUrl),{email:email.trim().toLowerCase(),password,data:{full_name:fullName.trim(),occupation:(occupation||'').trim(),gender:gender||null,phone:phone?.trim()||null,address:address?.trim()||null,photo_url:photoUrl?.trim()||null}});
   return {emailVerificationRequired:!result.access_token,created:Boolean(result.user)};
  }
  async function restoreSession(){if(!configured||!refreshToken)return state();try{await token()}catch(e){/* Expired sessions remain signed out */}return state()}
@@ -129,9 +132,10 @@ window.LamaAcademyAuth=(()=>{
  async function resendSignupEmail(email){
   if(!configured)throw Error('Email confirmation is not enabled.');
   if(typeof email!=='string'||!/^\S+@\S+\.\S+$/.test(email)||email.length>254)throw Error('Enter a valid registration email.');
-  await request('resend',{type:'signup',email:email.trim().toLowerCase()});
+  // Without redirect_to, resent links can fall back to a misconfigured localhost Site URL.
+  await request('resend?redirect_to='+encodeURIComponent(confirmationRedirectUrl),{type:'signup',email:email.trim().toLowerCase()});
   return true;
  }
- async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover?redirect_to='+encodeURIComponent('https://www.lamastudio.pk/education-academy/reset-password.html'),{email:email.trim().toLowerCase()});return true}
+ async function resetPassword(email){if(!configured)throw Error('Password reset is not enabled.');if(!/^\S+@\S+\.\S+$/.test(email))throw Error('Enter a valid email address.');await request('recover?redirect_to='+encodeURIComponent(passwordRecoveryRedirectUrl),{email:email.trim().toLowerCase()});return true}
  return Object.freeze({state,restoreSession,signUp,signIn,signOut,resetPassword,profile,createProfile,ensureProfile,practiceHistory,savePracticeAttempt,subscriptions,adminRole,adminCandidates,adminSubscriptions,adminJobs,adminSaveJob,adminRegistrations,adminQuestions,adminSaveQuestion,adminImportQuestions,resendSignupEmail});
 })();

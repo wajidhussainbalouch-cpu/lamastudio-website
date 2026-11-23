@@ -37,7 +37,18 @@ assert.ok(ads.includes('pub-4212196297960637'),'ads.txt publisher account should
 
 // Public hub navigation must not point to removed or never-created local URLs.
 // Keep informational cards without links until a real target exists.
+// Include every public category page to guard against dead links recurring in tools or hubs.
+const categoryHtmlPaths=[];
+function collectCategoryHtml(directory) {
+  for (const entry of fs.readdirSync(directory,{withFileTypes:true})) {
+    const full=path.join(directory,entry.name);
+    if (entry.isDirectory()) collectCategoryHtml(full);
+    else if (entry.isFile() && entry.name.endsWith('.html')) categoryHtmlPaths.push(path.relative(base,full).replaceAll('\\','/'));
+  }
+}
+collectCategoryHtml(path.join(base,'categories'));
 for (const hub of [
+  ...categoryHtmlPaths,
   'index.html',
   'categories/tech/index.html',
   'categories/developer-tools/index.html',

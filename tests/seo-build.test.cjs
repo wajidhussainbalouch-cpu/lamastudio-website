@@ -76,4 +76,25 @@ for (const hub of [
   }
 }
 
+// Developer utilities are public interactive pages: require an accessible heading
+// and a search snippet before canonicalization and sitemap generation.
+const developerUtilities=[
+  'bezier-generator',
+  'dockerfile-validator',
+  'env-sanitizer',
+  'graphql-query-builder',
+  'openapi-tester',
+  'package-json-validator',
+  'redis-cli-syntax',
+  'seo-meta-generator',
+  'tailwind-merger',
+  'webhook-debugger'
+];
+for (const name of developerUtilities) {
+  const relative='categories/developer-tools/'+name+'.html';
+  const html=fs.readFileSync(path.join(base,relative),'utf8');
+  assert.ok(isCandidate(relative),'Developer page must be sitemap candidate: '+relative);
+  assert.ok(isIndexable(html),'Developer page requires title and H1: '+relative);
+  assert.ok(/<meta\b(?=[^>]*name\s*=\s*["']description["'])[^>]*>/i.test(html),'Developer page needs meta description: '+relative);
+}
 console.log('SEO build tests passed');

@@ -14,6 +14,7 @@ const updated=normalize(html,canonical);
 assert.ok(updated.includes('rel="canonical" href="'+canonical+'"'));
 assert.ok(updated.includes('property="og:url" content="'+canonical+'"'));
 assert.ok(isIndexable(updated));
+assert.ok(updated.includes('name="google-adsense-account" content="ca-pub-4212196297960637"'));
 assert.ok(!isIndexable(updated.replace('<title>','<meta name="robots" content="noindex"><title>')));
 assert.equal(normalize(updated,canonical),updated);
 console.log('SEO build tests passed');

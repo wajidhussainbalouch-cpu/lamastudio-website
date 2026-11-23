@@ -41,14 +41,14 @@ function normalize(html,url){
   const tag='<link rel="canonical" href="'+url+'">';
   let seen=false;
   let result=html.replace(re,()=>{if(seen)return '';seen=true;return tag;});
-  if(!seen)result=result.replace(/<\/title\s*>/i,'  if(!seen)result=result.replace(/<\/title\s*>/i,'$&\n'+tag);\n'+tag);
-  // Account identification alone does not activate ads or make any ad placement.
+  if(!seen)result=result.replace(/<\/title\s*>/i,match=>match+'\n'+tag);
+  // Publisher ownership verification. This does not request or display ads.
   const adsense='<meta name="google-adsense-account" content="ca-pub-4212196297960637">';
   const meta=/<meta\b(?=[^>]*\bname\s*=\s*["']google-adsense-account["'])[^>]*>/gi;
-  if(meta.test(result)){meta.lastIndex=0;result=result.replace(meta,adsense);}
-  else result=result.replace(/<\/title\s*>/i,'  if(!seen)result=result.replace(/<\/title\s*>/i,'$&\n'+tag);\n'+adsense);
+  if(meta.test(result)){meta.lastIndex=0;result=result.replace(meta,()=>adsense);}
+  else result=result.replace(/<\/title\s*>/i,match=>match+'\n'+adsense);
   const og=/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:url["'])[^>]*>/gi;
-  return result.replace(og,'<meta property="og:url" content="'+url+'">');
+  return result.replace(og,()=>'<meta property="og:url" content="'+url+'">');
 }
 function walk(dir,fn){
   for(const entry of fs.readdirSync(dir,{withFileTypes:true})){

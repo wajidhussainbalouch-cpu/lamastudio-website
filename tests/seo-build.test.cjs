@@ -34,4 +34,29 @@ assert.ok(home.includes('href="faqs.html"'),'Homepage must link to FAQ');
 assert.ok(fs.readFileSync(path.join(base,'robots.txt'),'utf8').includes('https://www.lamastudio.pk/sitemap.xml'));
 const ads=fs.readFileSync(path.join(base,'ads.txt'),'utf8');
 assert.ok(ads.includes('pub-4212196297960637'),'ads.txt publisher account should match verified account');
+
+// Public hub navigation must not point to removed or never-created local URLs.
+// Keep informational cards without links until a real target exists.
+for (const hub of [
+  'index.html',
+  'categories/tech/index.html',
+  'categories/developer-tools/index.html',
+  'categories/productivity/index.html',
+  'categories/network-security/index.html',
+  'categories/education/index.html'
+]) {
+  const source=fs.readFileSync(path.join(base,hub),'utf8');
+  for (const match of source.matchAll(/\bhref\s*=\s*(["'])([^"']+)\1/gi)) {
+    const href=match[2].trim();
+    if (!href || /^(?:[a-z][a-z\d+.-]*:|\/\/|#|\?)/i.test(href)) continue;
+    const local=href.split(/[?#]/)[0];
+    if (!local) continue;
+    const resolved=path.posix.resolve('/',path.posix.dirname('/'+hub),local);
+    const full=path.join(base,resolved.slice(1));
+    const realFile=fs.existsSync(full)&&fs.statSync(full).isFile();
+    const directoryIndex=fs.existsSync(path.join(full,'index.html'));
+    assert.ok(realFile||directoryIndex,hub+' has broken local link: '+href);
+  }
+}
+
 console.log('SEO build tests passed');

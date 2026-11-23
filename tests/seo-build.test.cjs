@@ -43,7 +43,13 @@ for (const hub of [
   'categories/developer-tools/index.html',
   'categories/productivity/index.html',
   'categories/network-security/index.html',
-  'categories/education/index.html'
+  'categories/education/index.html',
+  'blogs/tech.html',
+  'blogs/network-security.html',
+  'apps/lamasky/index.html',
+  'apps/lamavpnpro/index.html',
+  'apps/lamaiqmaster/index.html',
+  'apps/lamamulticalendar/index.html'
 ]) {
   const source=fs.readFileSync(path.join(base,hub),'utf8');
   for (const match of source.matchAll(/\bhref\s*=\s*(["'])([^"']+)\1/gi)) {

@@ -19,6 +19,7 @@ function isCandidate(relative){
   const s=relative.replaceAll('\\','/').toLowerCase();
   if(rootPages.has(s))return true;
   if(s==='guides/school-attendance-management-pakistan.html')return true;
+  if(s==='solutions/school-management-software-pakistan.html')return true;
   let match;
   if((match=s.match(/^blogs\/([^/]+\.html)$/)))return blogPages.has(match[1]);
   if((match=s.match(/^categories\/([^/]+)\/(index\.html|[a-z0-9-]+\.html)$/)))return categoryHubs.has(match[1]);

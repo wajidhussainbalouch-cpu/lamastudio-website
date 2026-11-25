@@ -1,5 +1,18 @@
 # LAMA PPSC Preparation Academy — Private Question Bank
 
+## Advertisement No. 13/2026 — Junior Patrol Officer and minimum 10-seat rule (25 November 2026)
+
+**New job selection:** The academy owner supplied the PPSC Advertisement 13/2026 PDF link and selected **only Junior Patrol Officer (BS-11), Punjab Ring Road Authority, case 07-RK/2026, 187 advertised posts**. The original session-based PPSC PDF could not be retrieved directly; details are cross-checked against contemporaneous advertisement reproductions and vacancy status is marked unverified. Reported closing date: **7 December 2026**. This is a preparation track, not an official eligibility determination.
+
+**Owner's intake policy for future new ads:** Accept a post only if its own vacancy count is **at least 10**, including reserved seats for the same case; skip jobs with 1–9. Never add vacancies from different job types together to meet 10. A specified owner shortlist (as for this advertisement, **Junior Patrol Officer only**) further narrows selection. The policy helper \`ppsc-intake-policy.js\` is tested and the requested selection is recorded in \`PPSC_ADVERT13_2026_SELECTION.json\`; there is no automatic live PPSC scraping or universal enforcement for manual admin entries. Previously built paper families are not deleted.
+
+**Shared-paper release:** \`JPO-2026-P01\` and \`JPO-2026-P02\` reuse 200 different source questions from the existing Kot Addu and Faisalabad Assistant General Ability practice papers. Each paper has 100 questions, a 90-minute limit and ten editorial practice questions from each of ten syllabus subjects; **no additional original questions were written**. These are deterministic shuffled selections with \`sourceQuestionId\`, adjusted answer positions and separate attempts. If the source pool fails completeness checks, the two papers must not be generated. Human academic review and a General Knowledge alternative to Islamic Studies for non-Muslim candidates remain pending.
+
+**Totals:** 28 originally authored public practice papers (2,800 question positions) plus seven shared-bank derived practice papers (700 reused positions) = **35 selectable variants / 3,500 paper positions**, **not 3,500 independent original MCQs**. Existing five shared Kot Addu papers, 28 original sources and protected Supabase question drafts are preserved. The new JPO entry is present in the RLS-enabled Supabase published *preparation catalog* as recruitment-status \`unverified\`; the editorial bank receives **no duplicate draft questions**.
+
+Code paths: \`jobs.js\`, \`shared-paper-bank.js\`, PWA cache \`sw.js\` v94, \`test-ppsc-advert13-jpo.cjs\`, and \`test-kot-addu-shared-bank.cjs\`. See \`PPSC_ADVERT13_JUNIOR_PATROL_OFFICER_RELEASE.md\` for source limitations, QA and follow-up.
+
+
 ## Shared question-bank and stenographer routing — verified 14 November 2026
 
 **Supabase catalog:** Direct database check found 17 preparation tracks, including all five additional Kot Addu tracks from the owner's PPSC-domain screenshots. All five are published as *preparation tracks* with \`vacancy_status='unverified'\`; being in the practice catalog does **not** establish an open job application window. Bahawalpur Junior Clerk is preserved as the single existing job, not added twice.

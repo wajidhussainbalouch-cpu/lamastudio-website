@@ -38,12 +38,19 @@
   const byId=new Map(),byEnrollment=new Map(),byStudentDate=new Map(),registeredDays=new Map();
   for(const student of students||[]){
    const k=personId(student),e=enrollment(student);
-   if(k)byId.set(k,student);
-   if(e&&!byEnrollment.has(e))byEnrollment.set(e,student);
+   if(k&&!byId.has(k))byId.set(k,student);
+   // A duplicated enrollment is ambiguous. Do not attach someone's historical
+   // attendance to the first student with that number.
+   if(e){
+    if(!byEnrollment.has(e))byEnrollment.set(e,student);
+    else if(byEnrollment.get(e)!==student)byEnrollment.set(e,null);
+   }
   }
   for(const row of records||[]){
    const rid=str(row.studentId??row.student_id??row.studentID),re=str(row.enrlNo??row.enrollmentNo??row.enrollment);
-   const student=(rid&&byId.get(rid))||(re&&byEnrollment.get(re));
+   // A concrete but unknown student ID is not permission to reuse another
+   // student's enrollment. Enrollment fallback is for legacy ID-less rows only.
+   const student=rid?byId.get(rid):(re?byEnrollment.get(re):null);
    if(!student)continue;
    const date=(parseDate||dateKey)(row.date),value=normalize(row.status);
    if(!date||!value)continue;

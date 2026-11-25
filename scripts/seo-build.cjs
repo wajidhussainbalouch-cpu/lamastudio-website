@@ -20,6 +20,11 @@ function isCandidate(relative){
   if(rootPages.has(s))return true;
   if(s==='guides/school-attendance-management-pakistan.html')return true;
   if(s==='solutions/school-management-software-pakistan.html')return true;
+  // Public product/academy homepages and the primary-school learning hub only.
+  // Do not include their private dashboards, login, examination or account routes.
+  if(s==='lamastudio-school-suite/index.html')return true;
+  if(s==='education-academy/index.html')return true;
+  if(s==='categories/education/learn-with-fun/index.html')return true;
   let match;
   if((match=s.match(/^blogs\/([^/]+\.html)$/)))return blogPages.has(match[1]);
   if((match=s.match(/^categories\/([^/]+)\/(index\.html|[a-z0-9-]+\.html)$/)))return categoryHubs.has(match[1]);

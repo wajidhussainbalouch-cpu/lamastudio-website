@@ -97,4 +97,18 @@ for (const name of developerUtilities) {
   assert.ok(isIndexable(html),'Developer page requires title and H1: '+relative);
   assert.ok(/<meta\b(?=[^>]*name\s*=\s*["']description["'])[^>]*>/i.test(html),'Developer page needs meta description: '+relative);
 }
+// Public marketing homepages belong in the sitemap; private modules must not.
+for (const [relative,shouldIndex] of [["lamastudio-school-suite/index.html",true],["education-academy/index.html",true],["categories/education/learn-with-fun/index.html",true],["lamastudio-school-suite/portals/admin/index.html",false],["education-academy/confirm.html",false],["examination-system/index.html",false]]) {
+  assert.equal(isCandidate(relative),shouldIndex,'Sitemap inclusion mismatch: '+relative);
+}
+for (const relative of [
+  'lamastudio-school-suite/index.html',
+  'education-academy/index.html',
+  'categories/education/learn-with-fun/index.html'
+]) {
+  const html=fs.readFileSync(path.join(base,relative),'utf8');
+  assert.ok(isIndexable(html),'Public homepage must have a head, title and H1: '+relative);
+  assert.ok(/<meta\b(?=[^>]*name\s*=\s*["']description["'])[^>]*>/i.test(html),'Public homepage needs description: '+relative);
+  assert.equal(normalize(html,urlFor(relative)).includes('rel="canonical" href="'+urlFor(relative)+'"'),true,'Canonical should use www: '+relative);
+}
 console.log('SEO build tests passed');

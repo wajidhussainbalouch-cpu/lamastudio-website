@@ -75,7 +75,8 @@ assert.equal(job[0].syllabusEvidence.sections[0].percent,100);
 assert.ok(!ctx.window.LAMA_PPSC_JOBS.some(j=>j.advertisementNo==='13/2026'&&j.id!=='junior-patrol-officer-prra-2026'),'No other jobs imported from Advertisement 13');
 for(const name of ['index.html','print.html','answer-key.html']){
  const s=read(name);
- assert.ok(s.indexOf('shared-paper-bank.js')<s.indexOf('paper-library.js'),'Shared bank must load before paper library in '+name);
+ assert.ok(s.includes('shared-paper-bank.js'),'Shared bank must be included in '+name);
+ if(s.includes('paper-library.js'))assert.ok(s.indexOf('shared-paper-bank.js')<s.indexOf('paper-library.js'),'Shared bank must load before paper library in '+name);
 }
 assert.ok(read('sw.js').includes("'./shared-paper-bank.js'"),'PWA cache must load shared questions');
 console.log('PPSC Advert 13/2026 PASS: only Junior Patrol Officer, 187 posts, 2 distinct 100% General Ability shared-bank papers, source traceability, future >=10 vacancy policy.');

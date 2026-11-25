@@ -1,0 +1,29 @@
+name: LAMA School Suite Core Regressions
+on:
+  push:
+    paths:
+      - 'lamastudio-school-suite/js/attendance-history.js'
+      - 'lamastudio-school-suite/js/parent-absence-message.js'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/tests/core-regressions.cjs'
+      - '.github/workflows/school-suite-core-regressions.yml'
+  pull_request:
+    paths:
+      - 'lamastudio-school-suite/js/attendance-history.js'
+      - 'lamastudio-school-suite/js/parent-absence-message.js'
+      - 'lamastudio-school-suite/js/api-client.js'
+      - 'lamastudio-school-suite/tests/core-regressions.cjs'
+      - '.github/workflows/school-suite-core-regressions.yml'
+permissions:
+  contents: read
+jobs:
+  core-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test attendance identity, parent messages and role isolation
+        run: node lamastudio-school-suite/tests/core-regressions.cjs

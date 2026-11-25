@@ -7,7 +7,7 @@
 (()=>{
  const existing=window.LAMA_PPSC_PAPERS;
  const output=[];
- const audit={status:'not-ready',originalPapers:0,sharedPapers:0,juniorClerkPool:{general:0,office:0},itPool:0};
+ const audit={status:'not-ready',originalPapers:0,sharedPapers:0,juniorClerkPool:{general:0,office:0},juniorPatrolPool:0,itPool:0};
  window.LAMA_PPSC_SHARED_PAPERS=output;
  window.LAMA_PPSC_SHARED_BANK_AUDIT=audit;
  if(!Array.isArray(existing)){audit.reason='Source paper registry absent';return}
@@ -25,7 +25,7 @@
  audit.juniorClerkPool={general:general.length,office:office.length};
  if(general.length<160||office.length<40){audit.reason='80/20 source bank lacks 160 distinct General Ability and 40 distinct Office questions';return}
  function derivedQuestion(original,jobId,paperNo,position,group,subject){
-  const idPrefix=group==='junior-clerk-80-20'?(jobId.includes('adc-revenue')?'JCADC':'JCDC'):'JCOP';
+  const idPrefix=group==='junior-clerk-80-20'?(jobId.includes('adc-revenue')?'JCADC':'JCDC'):(group==='general-ability-100'?'JPO':'JCOP');
   const q={...original,options:[...original.options],id:idPrefix+String(paperNo).padStart(2,'0')+'-'+String(position+1).padStart(3,'0'),
    sourceQuestionId:original.id,sharedBankGroup:group,originalSubject:original.subject,
    provenance:'Previously authored LAMA practice item (reused, not newly written)'};
@@ -58,6 +58,27 @@
     n,selected,'junior-clerk-80-20',{generalAbility:80,msOfficeAndComputerSkills:20}));
   }
  }
+ // Junior Patrol Officer — PPSC Advertisement 13/2026 (187 posts), General Ability 100%.
+ // Draw exclusively from the two existing original Assistant General Ability papers.
+ // Balance ten editorial syllabus categories, ten questions per category in each mock.
+ // Paper 1 and Paper 2 are DISJOINT selections, but they may legitimately reuse
+ // source questions assigned to OTHER job families. Do not claim new original MCQs.
+ const jpoJobId='junior-patrol-officer-prra-2026';
+ const jpoSources=['AKD-KOT-ADDU-2026-P01','AFSD-FAISALABAD-2026-P01']
+  .flatMap(id=>byId(id)?.questions||[]);
+ const jpoPool=unique(jpoSources);
+ audit.juniorPatrolPool=jpoPool.length;
+ const jpoSubjects=['General Knowledge','Pakistan Studies','Current Affairs','Islamic Studies',
+  'Geography','Basic Mathematics','English','Urdu','Everyday Science','Basic Computer Studies'];
+ const jpoBuckets=jpoSubjects.map(subject=>permute(jpoPool.filter(q=>q.subject===subject),jpoJobId+':'+subject));
+ if(jpoPool.length>=200&&jpoBuckets.every(bucket=>bucket.length>=20)){
+  for(let n=1;n<=2;n++){
+   const selected=jpoBuckets.flatMap(bucket=>bucket.slice((n-1)*10,n*10));
+   output.push(paper(jpoJobId,'JPO-2026-P'+String(n).padStart(2,'0'),
+    'Paper '+n+' — Junior Patrol Officer (BS-11), Punjab Ring Road Authority · General Ability Practice',
+    n,selected,'general-ability-100',{generalAbility:100}));
+  }
+ }else audit.jpoReason='Two complete non-overlapping 100-MCQ General Ability papers are unavailable';
  // Junior Computer Operator: 100% MS Office / I.T. No GK, English or other subject filler.
  const assistants=['AKD-KOT-ADDU-2026-P01','AFSD-FAISALABAD-2026-P01'].flatMap(id=>(byId(id)?.questions||[]).filter(q=>q.subject==='Basic Computer Studies'));
  const secretary=(byId('SAC-PAMRA-2026-P01')?.questions||[]).filter(q=>q.subject==='Basic Computer Studies');
@@ -76,6 +97,6 @@
    1,totalPool.slice(0,100),'office-it-100',{msOfficeAndInformationTechnology:100}));
  }else{audit.jcoReason='Fewer than 100 distinct qualifying source IT questions; do not publish an incomplete JCO test'}
  audit.originalPapers=existing.length;audit.sharedPapers=output.length;
- audit.status=output.length===5?'ready':'partial';
- // Do not mutate LAMA_PPSC_PAPERS: a generated view is not 500 new editorial questions.
+ audit.status=output.length===7?'ready':'partial';
+ // Never mutate LAMA_PPSC_PAPERS: seven generated views reuse source questions; no new editorial bank rows.
 })();

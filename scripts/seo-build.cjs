@@ -56,6 +56,25 @@ function normalize(html,url){
   const og=/<meta\b(?=[^>]*\bproperty\s*=\s*["']og:url["'])[^>]*>/gi;
   return result.replace(og,()=>'<meta property="og:url" content="'+url+'">');
 }
+/**
+ * Public content should link to the same directory URLs used by its canonical
+ * tags and XML sitemap. Do not rewrite private portal or unknown index paths.
+ * Only anchor href attributes in explicitly indexable public HTML are changed.
+ */
+function normalizePublicIndexLinks(html,relative){
+  const sourceUrl=new URL(relative,base+'/');
+  return html.replace(/<a\b[^>]*>/gi,tag=>tag.replace(/\bhref\s*=\s*(["'])([^"']+)\1/i,(attribute,quote,href)=>{
+    if(!href||/^(?:[a-z][a-z\d+.-]*:|\/\/|#|\?)/i.test(href))return attribute;
+    let target;
+    try{target=new URL(href,sourceUrl)}catch{return attribute;}
+    if(!target.pathname.endsWith('/index.html'))return attribute;
+    const filename=target.pathname.slice(1);
+    if(!isCandidate(filename))return attribute;
+    const canonicalPath=target.pathname.slice(0,-'index.html'.length);
+    return 'href='+quote+canonicalPath+target.search+target.hash+quote;
+  }));
+}
+
 function walk(dir,fn){
   for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
     if(entry.isSymbolicLink())continue;
@@ -71,7 +90,7 @@ function main(){
     const html=fs.readFileSync(file,'utf8');
     if(!isIndexable(html))return;
     const url=urlFor(relative);
-    const updated=normalize(html,url);
+    const updated=normalizePublicIndexLinks(normalize(html,url),relative);
     if(updated!==html){fs.writeFileSync(file,updated,'utf8');changed++;}
     eligible++;urls.push(url);
   });
@@ -85,4 +104,4 @@ function main(){
   console.log('SEO public pages:',JSON.stringify({eligible,canonicalPagesChanged:changed,sitemapUrls:unique.length}));
 }
 if(require.main===module)main();
-module.exports={isCandidate,urlFor,isIndexable,normalize};
+module.exports={isCandidate,urlFor,isIndexable,normalize,normalizePublicIndexLinks};

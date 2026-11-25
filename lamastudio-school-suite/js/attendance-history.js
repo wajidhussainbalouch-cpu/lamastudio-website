@@ -35,7 +35,7 @@
   return result;
  }
  function make(students,records,parseDate,isClosed){
-  const byId=new Map(),byEnrollment=new Map(),byStudentDate=new Map(),registeredDays=new Map();
+  const byId=new Map(),byEnrollment=new Map(),byStudentDate=new Map(),registeredDays=new Map(),duplicateEnrollmentNumbers=new Set(),unmatchedRowsByDate=new Map();
   for(const student of students||[]){
    const k=personId(student),e=enrollment(student);
    if(k&&!byId.has(k))byId.set(k,student);
@@ -43,7 +43,7 @@
    // attendance to the first student with that number.
    if(e){
     if(!byEnrollment.has(e))byEnrollment.set(e,student);
-    else if(byEnrollment.get(e)!==student)byEnrollment.set(e,null);
+    else if(byEnrollment.get(e)!==student){byEnrollment.set(e,null);duplicateEnrollmentNumbers.add(e)}
    }
   }
   for(const row of records||[]){
@@ -51,8 +51,14 @@
    // A concrete but unknown student ID is not permission to reuse another
    // student's enrollment. Enrollment fallback is for legacy ID-less rows only.
    const student=rid?byId.get(rid):(re?byEnrollment.get(re):null);
-   if(!student)continue;
-   const date=(parseDate||dateKey)(row.date),value=normalize(row.status);
+   const date=(parseDate||dateKey)(row.date);
+   if(!student){
+    // Only report unmatched saved rows for the *selected date* to avoid
+    // alarming admins about legitimately archived pupils from older years.
+    if(date)unmatchedRowsByDate.set(date,(unmatchedRowsByDate.get(date)||0)+1);
+    continue;
+   }
+   const value=normalize(row.status);
    if(!date||!value)continue;
    const key=personId(student)||enrollment(student);
    if(!key)continue;
@@ -82,7 +88,11 @@
   function classDayRegistered(student,date){
    return !!registeredDays.get(str(student.class??student.grade??student.className))?.has(date);
   }
-  return {get,recent,absenceInfo,classDayRegistered};
+  function dataQuality(date){
+   return {duplicateEnrollmentNumbers:duplicateEnrollmentNumbers.size,
+    unmatchedAttendanceRows:unmatchedRowsByDate.get(date)||0};
+  }
+  return {get,recent,absenceInfo,classDayRegistered,dataQuality};
  }
  /**
   * Read-only preparation for the EXISTING attendance follow-up portal-notice action.

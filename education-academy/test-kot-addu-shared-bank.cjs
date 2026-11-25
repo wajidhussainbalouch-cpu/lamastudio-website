@@ -22,9 +22,9 @@ const generated=win.LAMA_PPSC_SHARED_PAPERS,audit=win.LAMA_PPSC_SHARED_BANK_AUDI
 assert.equal(audit.status,'ready','Shared source availability: '+JSON.stringify(audit));
 assert.deepEqual(JSON.parse(JSON.stringify(audit.juniorClerkPool)),{general:160,office:40});
 assert.ok(audit.itPool>=100,'At least 100 distinct IT questions required');
-assert.equal(generated.length,5,'Four Junior Clerk practice variants and one JCO IT paper');
+assert.equal(generated.length,7,'Five Kot Addu paper variants plus two JPO General Ability papers');
 assert.equal(base.length,28,'Composition cannot alter original source registry');
-assert.equal(new Set([...base,...generated].map(p=>p.id)).size,33,'Every paper ID distinct');
+assert.equal(new Set([...base,...generated].map(p=>p.id)).size,35,'Every paper ID distinct');
 const jobs=['junior-clerk-kot-addu-dc-bor','junior-clerk-kot-addu-adc-revenue-bor','junior-computer-operator-kot-addu-adc-bor'];
 const allQuestionIds=new Set(base.flatMap(p=>p.questions.map(q=>q.id)));
 const sourceById=new Map(base.flatMap(p=>p.questions.map(q=>[q.id,q])));
@@ -35,7 +35,7 @@ for(const paper of generated){
  assert.equal(paper.newOriginalQuestionCount,0,'Reused questions are not new editorial bank records');
  assert.equal(new Set(paper.questions.map(q=>norm(q.q))).size,100,'No repetition inside generated paper');
  assert.equal(paper.jobIds.length,1);
- assert.ok(jobs.includes(paper.jobIds[0]),'No wrong job ID');
+ assert.ok([...jobs,'junior-patrol-officer-prra-2026'].includes(paper.jobIds[0]),'No wrong job ID');
  for(const q of paper.questions){
   assert.ok(!allQuestionIds.has(q.id),'Duplicate answer-state ID across source/derived papers: '+q.id);
   allQuestionIds.add(q.id);
@@ -109,4 +109,4 @@ assert.ok(paperUi.includes('Shuffled shared-bank practice'),'Exam list must expl
 assert.ok(paperUi.includes('Practical shorthand and typing preparation'),'Steno exam empty-state must be practical, not a fake MCQ');
 assert.ok(subjectUi.includes('Open shorthand & typing trainer'),'Job library must link to skills trainer');
 assert.ok(subjectUi.includes('0 newly authored items'),'Job library must not describe reuse as 500 original questions');
-console.log('PPSC Kot Addu shared bank PASS: 5 new jobs, 5 source-credited paper variants (2+2 Clerk, 1 IT), no new repeated stems per paper, 2 shorthand practice tracks, 28 original papers preserved.');
+console.log('PPSC Kot Addu shared bank PASS: 5 Kot Addu jobs, 5 source-credited paper variants (2+2 Clerk, 1 IT), plus 2 JPO General Ability variants, 2 shorthand practice tracks, 28 original papers preserved.');

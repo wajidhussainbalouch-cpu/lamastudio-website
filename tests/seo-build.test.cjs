@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict');
-const {isCandidate,urlFor,isIndexable,normalize}=require('../scripts/seo-build.cjs');
+const {isCandidate,urlFor,isIndexable,normalize,normalizePublicIndexLinks}=require('../scripts/seo-build.cjs');
 assert.equal(isCandidate('lamastudio-school-suite/attendance/student-attendance.html'),false);
 assert.equal(isCandidate('education-academy/confirm.html'),false);
 assert.equal(isCandidate('blogs/education.html'),true);
@@ -111,4 +111,25 @@ for (const relative of [
   assert.ok(/<meta\b(?=[^>]*name\s*=\s*["']description["'])[^>]*>/i.test(html),'Public homepage needs description: '+relative);
   assert.equal(normalize(html,urlFor(relative)).includes('rel="canonical" href="'+urlFor(relative)+'"'),true,'Canonical should use www: '+relative);
 }
+// Internal links to public directory index pages must match canonical sitemap URLs.
+const fixture=[
+  '<a href="index.html">Current hub</a>',
+  '<a href="../../index.html#apps">Home apps</a>',
+  '<a href="../education/index.html">Education</a>',
+  '<a href="/lamastudio-school-suite/index.html?view=features#faq">School suite</a>',
+  '<a href="/education-academy/index.html">PPSC</a>',
+  '<a href="/lamastudio-school-suite/portals/admin/index.html">Private admin</a>',
+  '<a href="https://other.example/index.html">External</a>',
+  '<a href="mailto:info@example.com">Email</a>'
+].join('\n');
+const aligned=normalizePublicIndexLinks(fixture,'categories/tech/index.html');
+assert.ok(aligned.includes('href="/categories/tech/"'));
+assert.ok(aligned.includes('href="/#apps"'));
+assert.ok(aligned.includes('href="/categories/education/"'));
+assert.ok(aligned.includes('href="/lamastudio-school-suite/?view=features#faq"'));
+assert.ok(aligned.includes('href="/education-academy/"'));
+assert.ok(aligned.includes('href="/lamastudio-school-suite/portals/admin/index.html"'));
+assert.ok(aligned.includes('href="https://other.example/index.html"'));
+assert.equal(normalizePublicIndexLinks(aligned,'categories/tech/index.html'),aligned);
+
 console.log('SEO build tests passed');

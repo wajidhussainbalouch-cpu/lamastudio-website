@@ -48,6 +48,8 @@ model = H.make(duplicate,[
 assert.equal(model.get(duplicate[0],day),'Present');
 assert.equal(model.get(duplicate[1],day),'','duplicate enrollment is ambiguous');
 assert.equal(model.get(duplicate[2],day),'Leave','unique ID-less historical record may match');
+assert.equal(model.dataQuality(day).duplicateEnrollmentNumbers,1,'duplicate enrollment diagnostics');
+assert.equal(model.dataQuality(day).unmatchedAttendanceRows,2,'unmatched rows reported, not guessed');
 const history = H.make(people,records);
 let review = H.pendingPortalNotices(people,day,history,[
  {studentId:'s1',date:day,notificationType:'attendanceAbsence',isPublished:true,status:'Published'}

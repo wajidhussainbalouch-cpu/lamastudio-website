@@ -51,6 +51,32 @@ for(const filename of paths){
  assert(source.includes("records = records.filter(r => lamaNotificationVisible_(ctx,r));"),filename+': list reader not guarded');
  assert(source.includes("collection==='notifications' && !lamaNotificationVisible_(ctx,r)"),filename+': get reader not guarded');
  assert(source.includes("ctx.role==='teacher'&&collection==='notifications'"),filename+': teacher notice sender not scoped');
- console.log('PASS',filename,cases.length,'role visibility scenarios');
+ // Exercise the real generic notification WRITE handler with a forged audience.
+ // The teacher may only publish to their assigned class; no arbitrary studentId.
+ const addStart=source.indexOf('function addRecord(ctx, collection, record) {');
+ const addEnd=source.indexOf('\nfunction ',addStart+10);
+ assert(addStart>=0&&addEnd>addStart,filename+': sender implementation missing');
+ const appended=[];
+ const senderContext={
+  assertSchoolWritable:()=>{},checkPermission:()=>{},
+  getCollectionSheet:()=>({sheet:{appendRow:r=>appended.push(r)},headers:['id','title','message','audience','studentId','class','section','teacherId','status','isPublished']}),
+  genId:()=> 'notice-1',recordToRow:(_,record)=>record,writeAudit:()=>{},
+  Date
+ };
+ const sender=vm.runInNewContext(source.slice(addStart,addEnd)+'\naddRecord;',senderContext);
+ const spoofed=sender({...teacher,schoolId:'school1'},'notifications',{
+  title:'Parents meeting',message:'Class meeting on Monday',
+  audience:'all',studentId:'s2',class:'2',section:'Z',teacherId:'not-me',isPublished:false
+ });
+ assert.equal(spoofed.audience,'Class Playgroup',filename+': teacher can forge audience');
+ assert.equal(spoofed.studentId,undefined,filename+': teacher can forge direct student target');
+ assert.equal(spoofed.class,'Playgroup',filename+': teacher can forge class');
+ assert.equal(spoofed.section,'A',filename+': teacher can forge section');
+ assert.equal(spoofed.teacherId,'t1',filename+': teacher actor must come from session');
+ assert.equal(spoofed.isPublished,true,filename+': class notice should be publishable');
+ assert.equal(appended.length,1,filename+': append should occur exactly once');
+ assert.throws(()=>sender({...teacher,schoolId:'school1'},'notifications',{title:'=IMPORTXML(1)',message:'Unsafe'}),/valid title/,filename+': formula-like title accepted');
+ assert.throws(()=>sender({role:'teacher',schoolId:'school1',teacher:{id:'t1',assignedClass:''}},'notifications',{title:'Hello',message:'Hello'}),/No assigned class/,filename+': unassigned teacher can post class notice');
+ console.log('PASS',filename,cases.length,'read scenarios + scoped teacher notice writes');
 }
 console.log('Notification scope regression gate passed. No network calls or live writes.');

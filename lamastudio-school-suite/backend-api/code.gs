@@ -976,6 +976,32 @@ function getCollectionSheet(ctx, collection) {
     return { sheet, headers: actualHeaders };
 }
 
+/** Private notification visibility. Unknown audiences are not public. */
+function lamaNotificationVisible_(ctx,r){
+ if(!ctx||!r||!['student','teacher'].includes(ctx.role))return false;
+ const status=String(r.status||'').trim().toLowerCase();
+ const published=String(r.isPublished).toLowerCase();
+ if(['false','0','no'].includes(published)||['draft','pending','resolved','archived','deleted','cancelled','rejected'].includes(status))return false;
+ if(published!=='true'&&!['published','sent','active'].includes(status))return false;
+ const audience=String(r.audience||'').trim().toLowerCase();
+ const groups=audience.split(/[,;|]/).map(s=>s.trim()).filter(Boolean);
+ const isClass=audience.startsWith('class ');
+ const target=String(r.studentId||'').trim();
+ const grade=ctx.role==='student'?ctx.student?.class:ctx.teacher?.assignedClass;
+ const section=ctx.role==='student'?ctx.student?.section:ctx.teacher?.assignedSection;
+ if(r.class&&!sameClass(r.class,grade))return false;
+ if(r.section&&!sameClass(r.section,section))return false;
+ if(isClass&&!sameClass(audience.slice(6),grade))return false;
+ if(ctx.role==='student'){
+  const suitable=isClass||groups.some(x=>['all','everyone','school','student','students','parent','parents','guardian','guardians','all students','all parents'].includes(x));
+  if(!suitable)return false;
+  return !target||target===String(ctx.student?.id||'');
+ }
+ if(target)return false; // Student-specific notices are private to that student.
+ if(r.teacherId&&String(r.teacherId)!==String(ctx.teacher?.id||''))return false;
+ return isClass||groups.some(x=>['all','everyone','school','teacher','teachers','staff','all teachers','all staff'].includes(x));
+}
+
 function listRecords(ctx, collection) {
     checkPermission(ctx, 'list', collection);
     const { sheet, headers } = getCollectionSheet(ctx, collection);
@@ -993,12 +1019,8 @@ function listRecords(ctx, collection) {
         return records.filter(r=>String(r.studentId == null ? '' : r.studentId).trim()===sid)
             .map(r=>({studentId:sid,date:lamaStaffDate_(r.date),status:String(r.status == null ? '' : r.status).trim()}));
     }
-    if (collection === 'notifications' && ctx.role === 'student') {
-        records = records.filter(r => {
-            const target = String(r.studentId || '').trim();
-            if (target) return target === String(ctx.student.id) && String(r.isPublished).toLowerCase() !== 'false' && String(r.status) !== 'Resolved';
-            return String(r.audience || '').toLowerCase() !== 'student' && String(r.isPublished).toLowerCase() !== 'false';
-        });
+    if (collection === 'notifications' && (ctx.role === 'student' || ctx.role === 'teacher')) {
+        records = records.filter(r => lamaNotificationVisible_(ctx,r));
     }
     if (collection === 'studentRequests') {
         if (ctx.role === 'student') records = records.filter(r => String(r.studentId) === String(ctx.student.id));
@@ -1033,6 +1055,7 @@ function getRecord(ctx, collection, id) {
                 if (ctx.role === 'teacher' && !teacherOwns(ctx,r)) throw new Error('Request outside assigned class.');
             }
             if(ctx.role==='teacher' && ['students','attendance','homework'].indexOf(collection)!==-1 && !teacherOwns(ctx,r)) throw new Error('Record outside assigned class/section.');
+            if(ctx.role==='teacher' && collection==='notifications' && !lamaNotificationVisible_(ctx,r)) throw new Error('Notice not available to this teacher.');
             return ctx.role==='teacher'&&collection==='students'?lamaTeacherStudentSafe_(r):r;
         }
     }
@@ -1052,6 +1075,16 @@ function addRecord(ctx, collection, record) {
         const from = String(record.leaveFrom || ''), to = String(record.leaveTo || '');
         if (type === 'sick_leave' && (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to)) throw new Error('Enter a valid sick leave date range.');
         record = {studentId:ctx.student.id,studentName:ctx.student.name || '',enrlNo:ctx.student.enrlNo || '',class:ctx.student.class || '',section:ctx.student.section || '',requestType:type,subject:String(record.subject || '').slice(0,120),message:message,leaveFrom:type==='sick_leave'?from:'',leaveTo:type==='sick_leave'?to:'',status:'Pending',teacherReply:'',adminReply:'',assignedTeacherId:'',updatedAt:new Date().toISOString(),reviewedBy:''};
+    }
+    if(ctx.role==='teacher'&&collection==='notifications'){
+        if(!String(ctx.teacher.assignedClass||'').trim())throw Error('No assigned class for teacher notices.');
+        const title=String(record.title||'').trim(),message=String(record.message||'').trim();
+        if(!title||title.length>160||!message||message.length>2000||/^[=+@]/.test(title)||/^[=+@]/.test(message))
+            throw Error('Notice requires a valid title (160) and message (2000).');
+        record={title:title,message:message,class:ctx.teacher.assignedClass,
+          section:ctx.teacher.assignedSection||'',teacherId:ctx.teacher.id,
+          audience:'Class '+ctx.teacher.assignedClass,channel:'Portal',
+          status:'Sent',isPublished:true};
     }
     if (ctx.role === 'teacher' && collection === 'attendance') { const student=teacherStudentAccess_(ctx,record);record=Object.assign({},record,{studentId:student.id,enrlNo:student.enrlNo||'',class:student.class,section:student.section||'',studentName:student.name||''}); }
     if (ctx.role === 'teacher' && TEACHER_WRITE_COLLECTIONS.indexOf(collection) !== -1) {

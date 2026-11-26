@@ -61,7 +61,7 @@ for(const filename of paths){
   assertSchoolWritable:()=>{},checkPermission:()=>{},
   getCollectionSheet:()=>({sheet:{appendRow:r=>appended.push(r)},headers:['id','title','message','audience','studentId','class','section','teacherId','status','isPublished']}),
   genId:()=> 'notice-1',recordToRow:(_,record)=>record,writeAudit:()=>{},
-  Date
+  Date, TEACHER_WRITE_COLLECTIONS:['attendance','homework']
  };
  const sender=vm.runInNewContext(source.slice(addStart,addEnd)+'\naddRecord;',senderContext);
  const spoofed=sender({...teacher,schoolId:'school1'},'notifications',{

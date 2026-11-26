@@ -1,0 +1,31 @@
+name: LAMA School Suite — Parent Notification Privacy
+
+on:
+  push:
+    paths:
+      - "lamastudio-school-suite/backend-api/code.gs"
+      - "lamastudio-school-suite/backend-api/Lama_School_Suite_Master_Updated_30_Oct_2026.gs"
+      - "lamastudio-school-suite/tests/notification-visibility.test.cjs"
+      - ".github/workflows/lama-school-suite-privacy-check.yml"
+  pull_request:
+    paths:
+      - "lamastudio-school-suite/backend-api/code.gs"
+      - "lamastudio-school-suite/backend-api/Lama_School_Suite_Master_Updated_30_Oct_2026.gs"
+      - "lamastudio-school-suite/tests/notification-visibility.test.cjs"
+      - ".github/workflows/lama-school-suite-privacy-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notification-privacy:
+    name: Keep student and teacher notifications private
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Node version
+        run: node --version
+      - name: Execute read-only fixture regression tests
+        run: node lamastudio-school-suite/tests/notification-visibility.test.cjs

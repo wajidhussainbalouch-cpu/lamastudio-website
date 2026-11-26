@@ -1,5 +1,7 @@
 # CURRENT PROJECT HANDOVER — READ FIRST
-**Updated:** 27 October 2026  
+**Updated:** 26 November 2026 (launch gate; historical notes retained)  
+> **26 Nov 2026 commercial release gate:** See [Market Launch Readiness](LAUNCH_READINESS_2026-11-26.md). The live Apps Script version and private role flows must be verified before claiming the ERP is ready for paying schools. GitHub/Vercel source passes fixture tests but this does not validate live school data. The retained `Lama_School_Suite_Master_Updated_30_Oct_2026.gs` is an outdated snapshot and must not replace the active Apps Script project. No existing records were changed by these source-level safety updates.
+
 **Repository:** `wajidhussainbalouch-cpu/lamastudio-website` · **production branch:** `main`  
 **Live website:** https://www.lamastudio.pk/  
 **School Board:** https://www.lamastudio.pk/lamastudio-school-suite/main-dashboard.html

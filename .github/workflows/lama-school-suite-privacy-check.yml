@@ -6,12 +6,18 @@ on:
       - "lamastudio-school-suite/backend-api/code.gs"
       - "lamastudio-school-suite/backend-api/Lama_School_Suite_Master_Updated_30_Oct_2026.gs"
       - "lamastudio-school-suite/tests/notification-visibility.test.cjs"
+      - "lamastudio-school-suite/tests/core-attendance-regression.test.cjs"
+      - "lamastudio-school-suite/js/attendance-history.js"
+      - "lamastudio-school-suite/js/school-week.js"
       - ".github/workflows/lama-school-suite-privacy-check.yml"
   pull_request:
     paths:
       - "lamastudio-school-suite/backend-api/code.gs"
       - "lamastudio-school-suite/backend-api/Lama_School_Suite_Master_Updated_30_Oct_2026.gs"
       - "lamastudio-school-suite/tests/notification-visibility.test.cjs"
+      - "lamastudio-school-suite/tests/core-attendance-regression.test.cjs"
+      - "lamastudio-school-suite/js/attendance-history.js"
+      - "lamastudio-school-suite/js/school-week.js"
       - ".github/workflows/lama-school-suite-privacy-check.yml"
   workflow_dispatch:
 
@@ -27,5 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Node version
         run: node --version
-      - name: Execute read-only fixture regression tests
+      - name: Verify private notification recipients
         run: node lamastudio-school-suite/tests/notification-visibility.test.cjs
+      - name: Verify saved attendance, follow-up and Friday timetable
+        run: node lamastudio-school-suite/tests/core-attendance-regression.test.cjs

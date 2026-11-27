@@ -54,6 +54,10 @@
     sidebarOverlay.addEventListener("click", function (e) {
       if (e.target === sidebarOverlay) closeSidebar();
     });
+    // Close the mobile drawer when following a same-page section link.
+    sidebarOverlay.querySelectorAll('a[href^="#"]').forEach(function (link) {
+      link.addEventListener("click", closeSidebar);
+    });
   }
 
   /* ---------------- Quick View Modal ---------------- */

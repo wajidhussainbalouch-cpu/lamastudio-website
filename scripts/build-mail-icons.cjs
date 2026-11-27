@@ -1,0 +1,12 @@
+'use strict';
+// Generate dependency-free PNG icons matching mail/icon.svg for Chrome's manifest.
+const fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib');
+const dir=path.join(__dirname,'..','mail');
+function crc(b){let c=0xffffffff;for(const v of b){c^=v;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0;}
+function chunk(t,d){const n=Buffer.alloc(4),sum=Buffer.alloc(4),b=Buffer.concat([Buffer.from(t),d]);n.writeUInt32BE(d.length);sum.writeUInt32BE(crc(b));return Buffer.concat([n,b,sum]);}
+function inside(x,y,p){let b=false;for(let i=0,j=p.length-1;i<p.length;j=i++){const [xi,yi]=p[i],[xj,yj]=p[j];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)b=!b;}return b;}
+function dist(x,y,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],t=Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)));return Math.hypot(x-a[0]-t*dx,y-a[1]-t*dy);}
+function rgb(x,y){const envelope=[[96,222],[256,120],[416,222],[416,390],[96,390]],fold=[[96,222],[256,335],[416,222]],lines=[[[96,390],[209,290]],[[416,390],[303,290]]];let c=[6,78,67];if(inside(x,y,envelope))c=[11,103,88];if(envelope.some((p,i)=>dist(x,y,p,envelope[(i+1)%envelope.length])<11.5))c=[255,255,255];const rx=Math.max(165+30,Math.min(347-30,x)),ry=Math.max(108+30,Math.min(298-30,y));if(Math.hypot(x-rx,y-ry)<=30)c=[220,255,244];if(inside(x,y,[[220,151],[258,151],[258,240],[318,240],[318,277],[220,277]]))c=[6,78,67];if(inside(x,y,[[96,222],[256,335],[416,222],[416,390],[96,390]]))c=[11,103,88];if(inside(x,y,[[120,240],[256,315],[392,240],[256,335]]))c=[49,194,137];if(fold.slice(1).some((p,i)=>dist(x,y,fold[i],p)<11.5)||lines.some(p=>dist(x,y,p[0],p[1])<11.5)||dist(x,y,[96,222],[96,390])<11.5||dist(x,y,[416,222],[416,390])<11.5||dist(x,y,[96,390],[416,390])<11.5)c=[255,255,255];return c;}
+function png(n){const h=Buffer.alloc(13);h.writeUInt32BE(n,0);h.writeUInt32BE(n,4);h[8]=8;h[9]=2;const raw=Buffer.alloc(n*(n*3+1));for(let y=0;y<n;y++)for(let x=0;x<n;x++){const c=[0,0,0];for(const dy of [.25,.75])for(const dx of [.25,.75])rgb((x+dx)*512/n,(y+dy)*512/n).forEach((v,i)=>c[i]+=v);const pos=y*(n*3+1)+1+x*3;c.forEach((v,i)=>raw[pos+i]=Math.round(v/4));}return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',h),chunk('IDAT',zlib.deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]);}
+for(const n of [192,512])fs.writeFileSync(path.join(dir,'icon-'+n+'.png'),png(n));
+console.log('Generated LAMA Mail PWA icons: 192 and 512 pixels.');

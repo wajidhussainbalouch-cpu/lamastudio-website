@@ -132,4 +132,44 @@ assert.ok(aligned.includes('href="/lamastudio-school-suite/portals/admin/index.h
 assert.ok(aligned.includes('href="https://other.example/index.html"'));
 assert.equal(normalizePublicIndexLinks(aligned,'categories/tech/index.html'),aligned);
 
+
+// 2026-11-27 Search Console 404 drilldown: redirect only exact old URLs
+// with an existing, closely equivalent target. Never send missing categories
+// or retired editorial pages to an unrelated homepage.
+const vercelConfig=JSON.parse(fs.readFileSync(path.join(base,'vercel.json'),'utf8'));
+const requiredRedirects={
+  "/categories/tech-utilities/": "/categories/developer-tools/",
+  "/categories/devtools/": "/categories/developer-tools/",
+  "/categories/dev/": "/categories/developer-tools/",
+  "/categories/security/": "/categories/network-security/",
+  "/tools/base64/": "/categories/tech/base64-tool.html",
+  "/tools/json-formatter/": "/categories/tech/json-formatter.html",
+  "/tools/jwt-decoder/": "/categories/tech/jwt-decoder.html",
+  "/categories/education/calculator.html": "/categories/education/calculator_utility.html",
+  "/lamastudio-school-suite/Index.html": "/lamastudio-school-suite/",
+  "/apps/lamamulticalendar/login.html": "/signin.html",
+  "/lamasky/": "/apps/lamasky/",
+  "/lamavpnpro/": "/apps/lamavpnpro/",
+  "/lamaiqmaster/": "/apps/lamaiqmaster/",
+  "/account/": "/signin.html"
+};
+const seenRedirects=new Set();
+for(const redirect of vercelConfig.redirects){
+  assert.ok(!seenRedirects.has(redirect.source),'Duplicate redirect source '+redirect.source);
+  seenRedirects.add(redirect.source);
+}
+for(const [source,dest] of Object.entries(requiredRedirects)){
+  const redirect=vercelConfig.redirects.find(item=>item.source===source);
+  assert.ok(redirect,'Missing known-legacy redirect: '+source);
+  assert.equal(redirect.destination,dest,'Unexpected legacy redirect destination: '+source);
+  assert.equal(redirect.permanent,true,'Legacy redirect must be permanent: '+source);
+  const destFile=path.join(base,dest.slice(1));
+  assert.ok((fs.existsSync(destFile)&&fs.statSync(destFile).isFile())||
+    fs.existsSync(path.join(destFile,'index.html')),'Legacy redirect target missing: '+dest);
+}
+for(const category of ['business','travel','sports','fashion','news','weather','health']){
+  assert.ok(!vercelConfig.redirects.some(r=>r.source==='/categories/'+category+'/'),
+    'Retired category should not redirect to a non-equivalent landing page: '+category);
+}
+
 console.log('SEO build tests passed');

@@ -1,4 +1,4 @@
-# LAMA Studio Mail v0.1 — owner-only pilot
+# LAMA Studio Mail v0.2 — owner-only pilot
 
 No paid hosting, no additional database, no billing upgrades. This source contains no credentials and is NOT a deployed mailbox. Incoming mail remains in Gmail; outgoing individual business messages use the verified Brevo sender info@lamastudio.pk. This is not a marketing sender or bulk mail tool.
 
@@ -13,3 +13,6 @@ No paid hosting, no additional database, no billing upgrades. This source contai
 Official documentation: https://developers.google.com/apps-script/guides/web ; https://developers.brevo.com/reference/send-transac-email
 
 Deployment and live sending require owner setup. Do not publish this application in the public LAMA Studio directory or sitemap. Keep public contact links unchanged.
+
+## Project-branded customer replies
+Choose a project in Compose or Reply; the server validates the selected project against its allowlist, sets the Brevo display name, adds the project signature, and records the project in recent accepted send metadata. All messages use info@lamastudio.pk for From and Reply-To. No new aliases, paid plans or automated-mail changes. Existing older records may not have a project. This version uses bounded Script Properties history (not a Google Sheet); it does not import or delete any prior sheet. Update Code.gs and Index.html together in the standalone project. Test the actual delivered display name and signature for each brand. Provider/client display-name behavior may vary. Manual project selection is required; mail sent by other systems does not automatically appear in this dashboard's sent history.

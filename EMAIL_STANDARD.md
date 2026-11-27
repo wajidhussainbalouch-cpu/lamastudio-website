@@ -16,6 +16,9 @@ Updated 27 November 2026.
 - Existing domain renewal is separate from email service fees. Free provider terms and quotas can change; if a free service becomes unavailable, stop and evaluate a free alternative rather than incur charges.
 - Keep existing live mail flows unchanged until the replacement passes delivery/security tests. No changes to DNS, billing, SMTP or destination are implied by this policy.
 
+## Owner decision — single public address
+Use only `info@lamastudio.pk` for all public contact, support, feedback, sales, privacy and business inquiries. Do not create additional aliases at this stage. Keep the existing `no-reply@lamastudio.pk` exclusively for automated messages. Once the free Cloudflare route is verified by an inbound test, replace public personal email links on active project contact pages, footers, privacy pages, help/support pages and notification help text with `mailto:info@lamastudio.pk`. Preserve private owner/admin identities, login accounts, recovery and internal notifications. Do not publish a non-working contact or alter deleted projects. No paid services.
+
 ## Project sender display names
 | Project | From display name |
 |---|---|

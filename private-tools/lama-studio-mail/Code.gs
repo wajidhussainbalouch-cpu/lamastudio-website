@@ -17,7 +17,7 @@ function owner_(){
  if(!owner||active!==owner||effective!==owner) throw new Error('Access denied. Sign in with the authorized owner account.');
  return p;
 }
-function doGet(){owner_();return HtmlService.createHtmlOutputFromFile('Index').setTitle('LAMA Studio Mail');}
+function doGet(){owner_();return HtmlService.createHtmlOutputFromFile('Index').setTitle('LAMA Studio Mail').addMetaTag('viewport','width=device-width, initial-scale=1');}
 function address_(s){s=String(s||'').trim();const m=s.match(/<([^<>]+)>\s*$/);s=(m?m[1]:s).trim().toLowerCase();return /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,63}$/i.test(s)&&s.length<=254?s:'';}
 function isBusiness_(m){return String(m.getTo()).split(/[,;]/).some(x=>address_(x)===ADDRESS);}
 function message_(id){if(!/^[a-zA-Z0-9_-]{1,100}$/.test(String(id)))throw new Error('Invalid message.');const m=GmailApp.getMessageById(id);if(!m||!isBusiness_(m))throw new Error('Not a business email.');return m;}

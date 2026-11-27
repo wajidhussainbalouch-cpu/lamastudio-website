@@ -247,4 +247,13 @@ for(const misleading of ['15 mins ago','45 mins ago','2 hours ago','3 hours ago'
   assert.ok(!educationHub.includes(misleading),'Education hub must not claim unverified data: '+misleading);
 }
 
+
+// The BISE information guide must never manufacture a verified marksheet.
+const biseGuide=fs.readFileSync(path.join(base,'categories/education/bise-results.html'),'utf8');
+assert.ok(biseGuide.includes('https://www.bisedgkhan.edu.pk/'),'BISE guide must link to the real board');
+assert.ok(biseGuide.includes('not affiliated with BISE DG Khan'),'BISE guide needs an independence disclaimer');
+for(const claim of ['Live Official Portal','Verified Record','Official Examination Scorecard','Muhammad Ahmed','458921','handleResultSearch','resultOutput']){
+  assert.ok(!biseGuide.includes(claim),'No fabricated result or private data collection: '+claim);
+}
+
 console.log('SEO build tests passed');

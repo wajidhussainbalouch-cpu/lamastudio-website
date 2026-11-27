@@ -289,4 +289,31 @@ for(const falseClaim of ['let hash = 0','local storage encryption','Live Windy R
   assert.ok(!skyDemo.includes(falseClaim),'LamaSky should not contain misleading public copy: '+falseClaim);
 }
 
+
+// Homepage navigation should prioritize maintained education products while
+// retaining all five category URLs for search engines and existing bookmarks.
+const homepageSource=fs.readFileSync(path.join(base,'index.html'),'utf8');
+const mainStart=homepageSource.indexOf('<main id="main-content"');
+const heroAt=homepageSource.indexOf('class="hero-panel"',mainStart);
+const toolsAt=homepageSource.indexOf('id="free-tools"',mainStart);
+const appAt=homepageSource.indexOf('id="appGrid"',mainStart);
+assert.ok(heroAt>=0 && toolsAt>heroAt && appAt>toolsAt,
+  'Public product hero must precede secondary Free Tools and other apps');
+const schoolCardAt=homepageSource.indexOf('<h3>School Management System</h3>',appAt);
+const ppscCardAt=homepageSource.indexOf('<h3>LAMA PPSC Preparation Academy</h3>',appAt);
+const bazaarCardAt=homepageSource.indexOf('<h3>LAMA Bazaar</h3>',appAt);
+assert.ok(schoolCardAt>appAt && ppscCardAt>schoolCardAt && bazaarCardAt>ppscCardAt,
+  'Prioritize School Suite and PPSC; put pilot marketplace after them');
+for(const slug of ['education','productivity','tech','developer-tools','network-security']){
+  const segment=homepageSource.slice(toolsAt,appAt);
+  assert.ok(segment.includes('href="categories/'+slug+'/"'),
+    'Missing maintained Free Tools navigation: '+slug);
+}
+assert.ok(!homepageSource.includes('id="adBanner"'),
+  'Do not show an empty or placeholder ad container while awaiting AdSense approval');
+assert.ok(homepageSource.includes('website preview is not a live forecast service'),
+  'LamaSky card must not claim fabricated real-time weather data');
+assert.ok(fs.readFileSync(path.join(base,'script.js'),'utf8').includes('querySelectorAll(\'a[href^="#"]\')'),
+  'Mobile drawer should close on same-page navigation');
+
 console.log('SEO build tests passed');

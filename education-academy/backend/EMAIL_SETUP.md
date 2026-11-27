@@ -76,3 +76,8 @@ Do not commit SMTP credentials or any privileged Supabase keys.
 Official docs:
 - https://supabase.com/docs/guides/auth/auth-smtp
 - https://supabase.com/docs/guides/auth/auth-email-templates
+
+## 27 November 2026 — official LAMA Studio sender standard
+Brevo's connected account confirms the domain `lamastudio.pk` is authenticated and verified and the exact sender `no-reply@lamastudio.pk` is active. Reuse this sender with the display name LAMA PPSC Preparation Academy. The owner Gmail remains private for administrative access/recovery. `info@lamastudio.pk` is proposed for support; do not publish or use it as Reply-To until incoming routing and authorized outbound replies pass tests. SMTP settings and end-to-end live delivery were not changed or verified in this audit. Use Brevo SMTP host `smtp-relay.brevo.com`, port 587, with private SMTP login/key configured in Supabase; do not commit credentials. Keep email confirmation enabled. Verify sender, external inbox delivery and confirmation/reset redirects before public rollout.
+
+Shared standard: https://github.com/wajidhussainbalouch-cpu/lamastudio-website/blob/main/EMAIL_STANDARD.md

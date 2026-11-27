@@ -256,4 +256,26 @@ for(const claim of ['Live Official Portal','Verified Record','Official Examinati
   assert.ok(!biseGuide.includes(claim),'No fabricated result or private data collection: '+claim);
 }
 
+
+// AdSense readiness: app privacy URLs must be genuine privacy pages rather than
+// duplicate tool/forecast screens, and should not load ad placements.
+for(const relative of [
+  'apps/lamasky/privacy.html',
+  'apps/lamamulticalendar/privacy.html',
+  'apps/lamavpnpro/privacy.html',
+  'apps/lamaiqmaster/privacy.html'
+]){
+  const content=fs.readFileSync(path.join(base,relative),'utf8');
+  assert.match(content,/<title[^>]*>[^<]*Privacy/i,'Missing privacy page title: '+relative);
+  assert.match(content,/<h1[^>]*>[^<]*Privacy/i,'Missing privacy H1: '+relative);
+  assert.ok(!/pagead2\.googlesyndication\.com|<ins[^>]*class=["'][^"']*adsbygoogle|data-ad-slot=/i.test(content),
+    'Privacy page should not render AdSense ads: '+relative);
+  assert.ok(!content.includes('href="../../lamastudio/favicon.png"'),'Broken favicon on '+relative);
+}
+const skyLanding=fs.readFileSync(path.join(base,'apps/lamasky/index.html'),'utf8');
+const skyPolicy=fs.readFileSync(path.join(base,'apps/lamasky/privacy.html'),'utf8');
+assert.ok(skyLanding.includes('Sample Weather Preview'),'LamaSky web numbers must be described as samples');
+assert.ok(skyLanding.includes('not verified forecasts'),'LamaSky sample disclaimer missing');
+assert.ok(!skyPolicy.includes('data-ad-slot="1234567890"'),'Placeholder ad unit must not appear on privacy page');
+
 console.log('SEO build tests passed');

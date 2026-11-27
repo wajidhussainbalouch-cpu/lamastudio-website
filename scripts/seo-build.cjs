@@ -75,6 +75,27 @@ function normalizePublicIndexLinks(html,relative){
   }));
 }
 
+
+// Public support address rollout. Never touch sign-in, admin, private workspace,
+// or automated sender configuration. Existing support links retain their subject.
+function isPublicContactPage(relative){
+ const p=relative.replaceAll('\\','/').toLowerCase();
+ if(isCandidate(p))return true;
+ if(/^(about|contact|help|support|privacy-policy)\.html$/.test(p))return true;
+ if(/^(lamastudio-school-suite|education-academy)\/(help|help-support|privacy|terms|contact)\.html$/.test(p))return true;
+ const app=p.match(/^apps\/([^/]+)\/(privacy|privacy-policy|terms|help|support|contact)\.html$/);
+ return !!app&&showcaseApps.has(app[1]);
+}
+function publicContact(html){
+ if(!/<\/body\s*>/i.test(html))return html;
+ let result=html.replace(/(mailto:)support@lamastudio\.pk\b/gi,'$1info@lamastudio.pk');
+ result=result.replace(/(<a\b[^>]*href=["']mailto:info@lamastudio\.pk[^"']*["'][^>]*>[^<]*)support@lamastudio\.pk/gi,'$1info@lamastudio.pk');
+ if(/<a\b[^>]*href\s*=\s*["']mailto:info@lamastudio\.pk(?:[?"'])/i.test(result))return result;
+ const block='<p data-lama-public-contact style="text-align:center;padding:12px;margin:0;overflow-wrap:anywhere;font:14px/1.5 system-ui,sans-serif">Contact &amp; support: <a href="mailto:info@lamastudio.pk" style="color:inherit;text-decoration:underline">info@lamastudio.pk</a></p>';
+ if(/<\/footer\s*>/i.test(result))return result.replace(/<\/footer\s*>/i,block+'\n</footer>');
+ return result.replace(/<\/body\s*>/i,'<footer aria-label="Contact information">'+block+'</footer>\n</body>');
+}
+
 function walk(dir,fn){
   for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
     if(entry.isSymbolicLink())continue;
@@ -86,13 +107,14 @@ function walk(dir,fn){
 function main(){
   const urls=[];let eligible=0,changed=0;
   walk(root,(file,relative)=>{
-    if(!isCandidate(relative))return;
+    if(!isPublicContactPage(relative))return;
     const html=fs.readFileSync(file,'utf8');
-    if(!isIndexable(html))return;
-    const url=urlFor(relative);
-    const updated=normalizePublicIndexLinks(normalize(html,url),relative);
+    const contact=publicContact(html);
+    const eligiblePage=isCandidate(relative)&&isIndexable(contact);
+    const url=eligiblePage?urlFor(relative):null;
+    const updated=eligiblePage?normalizePublicIndexLinks(normalize(contact,url),relative):contact;
     if(updated!==html){fs.writeFileSync(file,updated,'utf8');changed++;}
-    eligible++;urls.push(url);
+    if(eligiblePage){eligible++;urls.push(url);}
   });
   if(!urls.includes(base+'/'))throw Error('SEO build aborted: homepage not indexable.');
   const unique=[...new Set(urls)].sort((a,b)=>a===base+'/'?-1:b===base+'/'?1:a.localeCompare(b));
@@ -104,4 +126,4 @@ function main(){
   console.log('SEO public pages:',JSON.stringify({eligible,canonicalPagesChanged:changed,sitemapUrls:unique.length}));
 }
 if(require.main===module)main();
-module.exports={isCandidate,urlFor,isIndexable,normalize,normalizePublicIndexLinks};
+module.exports={isCandidate,urlFor,isIndexable,normalize,normalizePublicIndexLinks,isPublicContactPage,publicContact};

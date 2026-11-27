@@ -8,6 +8,14 @@ Updated 27 November 2026.
 - Keep owner Google account for private admin, recovery, internal notification destinations and forwarding. Do not blindly replace admin identities, account IDs, OAuth identities, or internal notification recipients.
 - Do not use personal Gmail as the customer-facing sender once each project migration has passed its tests.
 
+## Mandatory zero-additional-cost policy
+- Use only free, non-trial email services. No paid email hosting, subscription, add-on, prepaid credits, auto-upgrade, or billable fallback without explicit owner approval.
+- Retain the existing verified Brevo sender on the Free plan: currently 300 outgoing emails per day, shared across projects on that account. Prioritize signup and recovery; rate-limit, queue eligible messages and alert the owner when capacity is exhausted. Never silently disable verification or send expired links.
+- Use Cloudflare free Email Routing for incoming business mail to one owner-confirmed existing Gmail inbox; no separate paid mailbox or storage. Forwarded messages occupy that Gmail account's existing free storage. The owner must confirm the exact destination address privately before configuration. Do not publish it.
+- no-reply is an automated sending identity, not a separate inbox; if an inbound route is required, route it to the same verified inbox. Use info for customer correspondence only after inbound delivery is tested. For branded outbound support replies, use a verified free sending workflow, not an assumed Gmail alias (Google has announced third-party Send as changes from January 2027).
+- Existing domain renewal is separate from email service fees. Free provider terms and quotas can change; if a free service becomes unavailable, stop and evaluate a free alternative rather than incur charges.
+- Keep existing live mail flows unchanged until the replacement passes delivery/security tests. No changes to DNS, billing, SMTP or destination are implied by this policy.
+
 ## Project sender display names
 | Project | From display name |
 |---|---|

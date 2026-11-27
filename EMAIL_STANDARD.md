@@ -1,10 +1,10 @@
 # LAMA Studio official email standard
 Updated 27 November 2026.
 
-## Approved sender and proposed support address
+## Approved sender and verified incoming support address
 - Automated transactional mail: `no-reply@lamastudio.pk` (exact spelling; existing active Brevo sender, ID 2).
 - Brevo reports `lamastudio.pk` DNS authenticated and verified, with Cloudflare as DNS provider.
-- Customer support/business: `info@lamastudio.pk` is the proposed address, not yet verified for incoming mail. Do not publish it as working or set Reply-To until the route/mailbox passes a receiving and reply test.
+- Customer support/business: `info@lamastudio.pk` is the sole public contact address. Cloudflare routing and Gmail destination are verified; an external test message was received on 27 November 2026 at 15:06 PKT (owner screenshot). Incoming contact links are approved. Branded outbound replies and automated Reply-To rollout remain subject to separate testing.
 - Keep owner Google account for private admin, recovery, internal notification destinations and forwarding. Do not blindly replace admin identities, account IDs, OAuth identities, or internal notification recipients.
 - Do not use personal Gmail as the customer-facing sender once each project migration has passed its tests.
 
@@ -38,6 +38,6 @@ Only configure email for tools that need it. Never add unnecessary signup or col
 4. Verify actual From name and address, DKIM/SPF alignment/DMARC, inbox delivery, confirm/reset links, expiry, failure handling and no exposed secrets, separately for every live project. Do not claim launch complete before this.
 
 ## Current evidence
-Brevo sender and domain verified on 27 November 2026. Bazaar has an existing active sender identity, but end-to-end live authentication mail not independently tested in this audit. School Suite source uses MailApp and personal Gmail on the contact page; academy SMTP configuration is not exposed by the connected database tools. Support address receiving and send-as remain unverified. This standard does not itself change live SMTP or email routing.
+Brevo sender and domain verified on 27 November 2026. Bazaar has an existing active sender identity, but end-to-end live authentication mail not independently tested in this audit. School Suite source uses MailApp; public contact links are being migrated to info@lamastudio.pk; academy SMTP configuration is not exposed by the connected database tools. Support address receiving is verified by the owner screenshot; branded send-as remains unverified. This standard does not itself change live SMTP or email routing.
 
 References: https://supabase.com/docs/guides/auth/auth-smtp ; https://help.brevo.com/hc/en-us/articles/7924908994450-Send-transactional-emails-using-Brevo-SMTP ; https://developers.cloudflare.com/email-service/configuration/email-routing-addresses/

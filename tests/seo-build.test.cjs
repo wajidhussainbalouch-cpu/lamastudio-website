@@ -278,4 +278,15 @@ assert.ok(skyLanding.includes('Sample Weather Preview'),'LamaSky web numbers mus
 assert.ok(skyLanding.includes('not verified forecasts'),'LamaSky sample disclaimer missing');
 assert.ok(!skyPolicy.includes('data-ad-slot="1234567890"'),'Placeholder ad unit must not appear on privacy page');
 
+
+// AdSense content quality: LamaSky must not fabricate coordinates or imply
+// encrypted storage or live sample data.
+const skyDemo=fs.readFileSync(path.join(base,'apps/lamasky/index.html'),'utf8');
+assert.ok(skyDemo.includes('Illustrative five-day example — not a current forecast'));
+assert.ok(skyDemo.includes('Try a demo city:'));
+assert.ok(skyDemo.includes('Demo city not available'));
+for(const falseClaim of ['let hash = 0','local storage encryption','Live Windy Radar','Universal Weather &amp; Climate','Search any city worldwide','Global Radar Sync']){
+  assert.ok(!skyDemo.includes(falseClaim),'LamaSky should not contain misleading public copy: '+falseClaim);
+}
+
 console.log('SEO build tests passed');

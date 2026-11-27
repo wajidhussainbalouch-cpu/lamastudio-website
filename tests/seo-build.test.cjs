@@ -172,4 +172,52 @@ for(const category of ['business','travel','sports','fashion','news','weather','
     'Retired category should not redirect to a non-equivalent landing page: '+category);
 }
 
+
+// Ownership-approved SEO scope: only the five active category hubs should be
+// linked and included. Deleted categories and blogs must remain retired.
+// Search Console may retain their historical 404 URLs, which is expected.
+const activeCategorySlugs=['tech','developer-tools','productivity','network-security','education'];
+const retiredCategorySlugs=['business','travel','sports','fashion','news','weather','health'];
+for(const slug of activeCategorySlugs){
+  const f='categories/'+slug+'/index.html';
+  assert.ok(fs.existsSync(path.join(base,f)),'Missing approved category hub: '+f);
+  assert.equal(isCandidate(f),true,'Approved category excluded from SEO: '+f);
+}
+for(const slug of retiredCategorySlugs){
+  const f='categories/'+slug+'/index.html';
+  assert.ok(!fs.existsSync(path.join(base,f)),'Previously retired category reintroduced: '+f);
+  assert.equal(isCandidate(f),false,'Retired category added to sitemap candidate rules: '+f);
+  const blog='blogs/'+slug+'.html';
+  assert.ok(!fs.existsSync(path.join(base,blog)),'Previously retired blog reintroduced: '+blog);
+  assert.equal(isCandidate(blog),false,'Retired blog added to sitemap candidate rules: '+blog);
+  assert.ok(!vercelConfig.redirects.some(r=>r.source==='/categories/'+slug+'/'||
+    r.source==='/categories/'+slug+'/index.html'),
+    'Do not redirect deleted category to unrelated content: '+slug);
+}
+const publicSeoSources=[
+  'index.html','about.html','services.html','faqs.html',
+  ...fs.readdirSync(path.join(base,'blogs')).filter(s=>s.endsWith('.html')).map(s=>'blogs/'+s),
+  ...categoryHtmlPaths,
+  'lamastudio-school-suite/index.html','education-academy/index.html',
+  'solutions/school-management-software-pakistan.html',
+  'guides/school-attendance-management-pakistan.html',
+  ...['lamavpnpro','lamasky','lamaiqmaster','lamamulticalendar','lamaphotoresizer','lamapixelstudio']
+     .map(s=>'apps/'+s+'/index.html')
+];
+const retiredPathPattern=new RegExp('^/categories/(?:'+retiredCategorySlugs.join('|')+')(?:/|$)');
+for(const relative of publicSeoSources){
+  if(!fs.existsSync(path.join(base,relative)))continue;
+  const html=fs.readFileSync(path.join(base,relative),'utf8');
+  const sourceUrl='https://www.lamastudio.pk/'+relative;
+  for(const a of html.matchAll(/<a\b[^>]*\bhref\s*=\s*(["'])([^"']+)\1/gi)){
+    let url;
+    try{url=new URL(a[2],sourceUrl);}catch{continue;}
+    if(url.hostname==='www.lamastudio.pk')assert.ok(!retiredPathPattern.test(url.pathname),
+      'Public page links to retired category: '+relative+' -> '+url.pathname);
+  }
+}
+const robots=fs.readFileSync(path.join(base,'robots.txt'),'utf8');
+for(const slug of retiredCategorySlugs)assert.ok(!robots.includes('Disallow: /categories/'+slug+'/'),
+  'Do not block 404/410 crawling for retired category: '+slug);
+
 console.log('SEO build tests passed');

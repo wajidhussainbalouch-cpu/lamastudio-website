@@ -220,4 +220,19 @@ const robots=fs.readFileSync(path.join(base,'robots.txt'),'utf8');
 for(const slug of retiredCategorySlugs)assert.ok(!robots.includes('Disallow: /categories/'+slug+'/'),
   'Do not block 404/410 crawling for retired category: '+slug);
 
+
+// Public-facing SEO must prioritise real products and keep business contact
+// details consistent. Do not reintroduce retired category names or placeholders.
+const aboutText=fs.readFileSync(path.join(base,'about.html'),'utf8');
+const servicesText=fs.readFileSync(path.join(base,'services.html'),'utf8');
+assert.ok(home.includes('href="lamastudio-school-suite/"'),'Homepage hero must feature School Suite');
+assert.ok(home.includes('href="education-academy/"'),'Homepage hero must feature PPSC Academy');
+assert.ok(aboutText.includes('Dera Ghazi Khan'),'About location should match studio identity');
+assert.ok(servicesText.includes('Dera Ghazi Khan'),'Services location should match studio identity');
+assert.ok(!servicesText.includes('Islamabad, Pakistan'),'Old studio location should not appear');
+for (const filename of ['about.html','services.html','privacy.html']){
+  const doc=fs.readFileSync(path.join(base,filename),'utf8');
+  assert.ok(doc.includes('href="favicon.png"'),'Current public favicon missing: '+filename);
+}
+
 console.log('SEO build tests passed');

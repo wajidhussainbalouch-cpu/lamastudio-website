@@ -235,4 +235,16 @@ for (const filename of ['about.html','services.html','privacy.html']){
   assert.ok(doc.includes('href="favicon.png"'),'Current public favicon missing: '+filename);
 }
 
+
+// AdSense/content quality: do not manufacture live updates, usage or software
+// availability claims on the public Education hub. Link to live resources.
+const educationHub=fs.readFileSync(path.join(base,'categories/education/index.html'),'utf8');
+assert.ok(educationHub.includes('Education Tools, PPSC Practice &amp; Primary Learning'),'Education hub must explain its current focus');
+assert.ok(educationHub.includes('href="../../education-academy/"'),'Education hub must link to the current Academy');
+assert.ok(educationHub.includes('href="learn-with-fun/"'),'Education hub must link to current primary learning activities');
+assert.ok(educationHub.includes('href="https://www.ppsc.gop.pk/"'),'PPSC applicants need an official verification source');
+for(const misleading of ['15 mins ago','45 mins ago','2 hours ago','3 hours ago','Connect with thousands of students','Win/Linux Ready','9 Modules Live','Sponsored Advertisement']){
+  assert.ok(!educationHub.includes(misleading),'Education hub must not claim unverified data: '+misleading);
+}
+
 console.log('SEO build tests passed');

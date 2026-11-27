@@ -11,6 +11,7 @@ let scanned=0,added=0,updated=0,skipped=0,failed=0;
 function isPublic(relative){
  const p=relative.replaceAll('\\','/').toLowerCase();
  if(!/\.html?$/.test(p))return false;
+ if(p.startsWith('mail/')||p.startsWith('private-tools/'))return false;
  if(p.startsWith('lamastudio-school-suite/')){
    return ['index.html','help-support.html','privacy.html','terms.html'].includes(p.slice(24));
  }
